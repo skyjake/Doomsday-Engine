@@ -915,17 +915,19 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
-    GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth(buf, GF_STATUS);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth(buf);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef MAXDIGITS
 #undef Y
@@ -966,6 +968,8 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_INDEX));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     for(i = 0; i < 4; ++i)
     {
@@ -973,7 +977,7 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
         {
             char buf[20];
             dd_snprintf(buf, 20, "%i", hud->numAmmo[i]);
-            GL_DrawTextFragment3(buf, ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
     }
 
@@ -982,8 +986,8 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_CharWidth('0', GF_INDEX) * 3;
-    *drawnHeight = (GL_CharHeight('0', GF_INDEX) + 10) * 4;
+    *drawnWidth = FR_CharWidth('0') * 3;
+    *drawnHeight = (FR_CharHeight('0') + 10) * 4;
 
 #undef MAXDIGITS
 #undef ORIGINY
@@ -1022,6 +1026,8 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_INDEX));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     for(i = 0; i < 4; ++i)
     {
@@ -1029,7 +1035,7 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
         {
             char buf[20];
             dd_snprintf(buf, 20, "%i", hud->maxAmmo[i]);
-            GL_DrawTextFragment3(buf, ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
     }
 
@@ -1038,8 +1044,8 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_CharWidth('0', GF_INDEX) * 3;
-    *drawnHeight = (GL_CharHeight('0', GF_INDEX) + 10) * 4;
+    *drawnWidth = FR_CharWidth('0') * 3;
+    *drawnHeight = (FR_CharHeight('0') + 10) * 4;
 
 #undef MAXDIGITS
 #undef ORIGINY
@@ -1074,17 +1080,20 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
-    GL_DrawChar2('%', X, Y, GF_STATUS);
+
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    FR_DrawChar('%', X, Y);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth(buf, GF_STATUS) + GL_CharWidth('%', GF_STATUS);
-    *drawnHeight = MAX_OF(GL_TextFragmentHeight(buf, GF_STATUS), GL_CharHeight('%', GF_STATUS));
+    *drawnWidth = FR_TextFragmentWidth(buf) + FR_CharWidth('%');
+    *drawnHeight = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%'));
 
 #undef MAXDIGITS
 #undef Y
@@ -1121,18 +1130,20 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
-    GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
-    GL_DrawChar2('%', X, Y, GF_STATUS);
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    FR_DrawChar('%', X, Y);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth(buf, GF_STATUS) + GL_CharWidth('%', GF_STATUS);
-    *drawnHeight = MAX_OF(GL_TextFragmentHeight(buf, GF_STATUS), GL_CharHeight('%', GF_STATUS));
+    *drawnWidth = FR_TextFragmentWidth(buf) + FR_CharWidth('%');
+    *drawnHeight = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%'));
 
 #undef MAXDIGITS
 #undef Y
@@ -1169,17 +1180,19 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
-    GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth(buf, GF_STATUS);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth(buf);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef MAXDIGITS
 #undef Y
@@ -1510,14 +1523,16 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
+    *drawnWidth = FR_TextFragmentWidth(buf);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 }
 
 void drawHealthWidget(int player, float textAlpha, float iconAlpha,
@@ -1538,14 +1553,16 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     sprintf(buf, "%i%%", plr->health);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    GL_DrawTextFragment3(buf, w + 2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, w + 2, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = w + 2 + GL_TextWidth(buf, GF_FONTB);
-    *drawnHeight = MAX_OF(h, GL_TextHeight(buf, GF_FONTB));
+    *drawnWidth = w + 2 + FR_TextFragmentWidth(buf);
+    *drawnHeight = MAX_OF(h, FR_TextFragmentHeight(buf));
 }
 
 void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
@@ -1589,14 +1606,16 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         sprintf(buf, "%i", plr->ammo[ammoType].owned);
 
         DGL_Enable(DGL_TEXTURE_2D);
+
+        FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-        GL_DrawTextFragment3(buf, w+2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+        FR_DrawTextFragment2(buf, w+2, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
-        *drawnWidth += w+2+GL_TextWidth(buf, GF_FONTB);
-        *drawnHeight += MAX_OF(h, GL_TextHeight(buf, GF_FONTB));
+        *drawnWidth += w+2+FR_TextFragmentWidth(buf);
+        *drawnHeight += MAX_OF(h, FR_TextFragmentHeight(buf));
         break;
     }
 }
@@ -1634,7 +1653,7 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
-    int maxArmor, armorOffset, spr, w, h;
+    int armorOffset, spr, w, h;
     char buf[20];
 
     if(hud->statusbarActive)
@@ -1643,26 +1662,29 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
-    maxArmor = MAX_OF(maxArmor, armorPoints[2]);
-    maxArmor = MAX_OF(maxArmor, armorPoints[2]);
-    dd_snprintf(buf, 20, "%i%%", maxArmor);
-    armorOffset = GL_TextWidth(buf, GF_FONTB);
-
-    dd_snprintf(buf, 20, "%i%%", plr->armorPoints);
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTB, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
+    { int maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
+    maxArmor = MAX_OF(maxArmor, armorPoints[2]);
+    dd_snprintf(buf, 20, "%i%%", maxArmor);
+    armorOffset = FR_TextFragmentWidth(buf);
+    }
+    dd_snprintf(buf, 20, "%i%%", plr->armorPoints);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
     ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false);
     ST_HUDSpriteSize(spr, &w, &h);
+
+    FR_SetFont(FID(GF_FONTB));
     *drawnWidth = armorOffset + w + 2;
-    *drawnHeight = MAX_OF(h, GL_TextHeight(buf, GF_FONTB));
+    *drawnHeight = MAX_OF(h, FR_TextFragmentHeight(buf));
 }
 
 void drawKeysWidget(int player, float textAlpha, float iconAlpha,
@@ -1758,14 +1780,16 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth  = GL_TextWidth(buf, GF_FONTA);
+    *drawnHeight = FR_TextFragmentHeight(buf);
+    *drawnWidth  = FR_TextFragmentWidth(buf);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1795,14 +1819,16 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth  = GL_TextWidth(buf, GF_FONTA);
+    *drawnHeight = FR_TextFragmentHeight(buf);
+    *drawnWidth  = FR_TextFragmentWidth(buf);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1833,14 +1859,16 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth  = GL_TextWidth(buf, GF_FONTA);
+    *drawnHeight = FR_TextFragmentHeight(buf);
+    *drawnWidth  = FR_TextFragmentWidth(buf);
 }
 
 typedef struct {

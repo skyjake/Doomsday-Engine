@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 498 <--
-; Other free ordinals: 8 65 97
+; Other free ordinals: 30 235
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -130,7 +130,6 @@ EXPORTS
 
 ; Console.
     Con_Open                    @29 NONAME
-    Con_SetFont                 @30 NONAME
     Con_AddCommand              @31 NONAME
     Con_AddVariable             @32 NONAME
     Con_AddCommandList          @33 NONAME
@@ -467,38 +466,39 @@ EXPORTS
     GL_CheckTextureNumForName   @438 NONAME
 
 ; Graphics: Text
-    R_NewCompositeFont          @106 NONAME
-    R_ResetTextTypeInTimer      @107 NONAME
-    R_CompositeFontNumForName   @131 NONAME
+    FR_FontIdForName			@106 NONAME
+    FR_SafeFontIdForName        @107 NONAME
+    FR_GetCurrentId             @97 NONAME
+    FR_SetFont                  @65 NONAME
+    FR_ResetTypeInTimer         @131 NONAME
 
-    GL_DrawText                 @108 NONAME
+	FR_TextDimensions           @112 NONAME
+	FR_TextWidth                @113 NONAME
+	FR_TextHeight               @116 NONAME
 
-	GL_TextDimensions           @112 NONAME
-	GL_TextWidth                @113 NONAME
-	GL_TextHeight               @116 NONAME
+    FR_DrawText                 @108 NONAME
 
-	GL_DrawTextFragment         @118 NONAME
-	GL_DrawTextFragment2        @120 NONAME
-	GL_DrawTextFragment3        @121 NONAME
-	GL_DrawTextFragment4        @122 NONAME
-	GL_DrawTextFragment5        @123 NONAME
-	GL_DrawTextFragment6        @124 NONAME
-	GL_DrawTextFragment7        @125 NONAME
+	FR_TextFragmentDimensions   @197 NONAME
+	FR_TextFragmentDimensions2  @198 NONAME
 
-	GL_TextFragmentDimensions   @197 NONAME
-	GL_TextFragmentDimensions2  @198 NONAME
+	FR_TextFragmentWidth        @199 NONAME
+	FR_TextFragmentWidth2       @200 NONAME
+	FR_TextFragmentHeight       @201 NONAME
 
-	GL_TextFragmentWidth        @199 NONAME
-	GL_TextFragmentWidth2       @200 NONAME
-	GL_TextFragmentHeight       @201 NONAME
+	FR_DrawTextFragment         @118 NONAME
+	FR_DrawTextFragment2        @120 NONAME
+	FR_DrawTextFragment3        @121 NONAME
+	FR_DrawTextFragment4        @122 NONAME
+	FR_DrawTextFragment5        @123 NONAME
+	FR_DrawTextFragment6        @124 NONAME
+	FR_DrawTextFragment7        @125 NONAME
 
-	GL_DrawChar                 @202 NONAME
-	GL_DrawChar2                @203 NONAME
-	GL_DrawChar3                @204 NONAME
+	FR_DrawChar                 @202 NONAME
+	FR_DrawChar2                @203 NONAME
 
-	GL_CharDimensions           @205 NONAME
-	GL_CharWidth                @206 NONAME
-	GL_CharHeight               @235 NONAME
+	FR_CharDimensions           @204 NONAME
+	FR_CharWidth                @205 NONAME
+	FR_CharHeight               @206 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

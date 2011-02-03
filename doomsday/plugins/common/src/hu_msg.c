@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_msg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * hu_msg.c: Important state change messages.
+ * Important state change messages.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -200,12 +200,14 @@ static void drawMessage(void)
         Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
     }
 
-    GL_DrawText(msgText, x, y, GF_FONTA, DTF_ALIGN_TOP, LEADING, 0, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], 1, cfg.menuGlitter, cfg.menuShadow, false);
-    y += GL_TextHeight(msgText, GF_FONTA);
+    FR_SetFont(FID(GF_FONTA));
+    FR_DrawText(msgText, x, y, FID(GF_FONTA), DTF_ALIGN_TOP, LEADING, 0, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], 1, cfg.menuGlitter, cfg.menuShadow, false);
+    y += FR_TextHeight(msgText, FID(GF_FONTA));
     // An additional blank line between the message and response prompt.
-    y += GL_CharHeight('A', GF_FONTA) * (1+LEADING);
+    y += FR_CharHeight('A') * (1+LEADING);
 
-    GL_DrawTextFragment7(questionString, x, y, GF_FONTA, DTF_ALIGN_TOP, 0, 0, cfg.menuGlitter, cfg.menuShadow);
+    FR_SetFont(FID(GF_FONTA));
+    FR_DrawTextFragment6(questionString, x, y, DTF_ALIGN_TOP, 0, 0, cfg.menuGlitter, cfg.menuShadow);
 
 #undef LEADING
 }
@@ -300,7 +302,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* cont
     if(msgType == MSG_YESNO)
         composeYesNoMessage();
 
-    R_ResetTextTypeInTimer();
+    FR_ResetTypeInTimer();
 
     // If the console is open, close it. This message must be noticed!
     Con_Open(false);

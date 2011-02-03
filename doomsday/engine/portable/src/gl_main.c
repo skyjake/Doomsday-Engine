@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 2003 Grégory Smialek <texel@fr.fm>
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * gl_main.c: Graphics Subsystem
+ * Graphics Subsystem.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -431,99 +431,42 @@ const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
     }
 }
 
-void GL_InitFont(void)
+static fontid_t loadSystemFont(const char* name)
 {
-    FR_Init();
-
-    FR_PrepareFont(GL_ChooseFixedFont());
-    glFontFixed = FR_GetCurrent();
-
-    Con_SetMaxLineLength();
-
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_NORMAL] = FR_GetCurrent();
-
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_BOLD] = FR_GetCurrent();
-
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
-
-    FR_SetFont(glFontFixed);
-
-    Cfont.flags = DDFONT_WHITE;
-    Cfont.height = FR_SingleLineHeight("Con");
-    Cfont.sizeX = 1;
-    Cfont.sizeY = 1;
-    Cfont.drawText = FR_ShadowTextOut;
-    Cfont.getWidth = FR_TextWidth;
-    Cfont.filterText = NULL;
-}
-
-void GL_ShutdownFont(void)
-{
-    FR_Shutdown();
-    glFontFixed =
-        glFontVariable[GLFS_NORMAL] =
-        glFontVariable[GLFS_BOLD] =
-        glFontVariable[GLFS_LIGHT] = 0;
-}
-
-#if 0
-void GL_InitVarFont(void)
-{
-    int         oldFont;
-    //int         i;
-
-    if(novideo) //|| varFontInited)
-        return;
-
-    /*
-    VERBOSE2(Con_Message("GL_InitVarFont.\n"));
-
-    oldFont = FR_GetCurrent();
-    VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", oldFont));
-
-    for(i = 0; i < NUM_GLFS; ++i)
+    assert(name);
     {
-        // The bold font and light fonts are always loaded.
-        if(i == GLFS_BOLD || i == GLFS_LIGHT)
-            continue;
+    ddstring_t searchPath, *searchPath2;
+    fontid_t result;
+    dduri_t* path;
 
-        FR_PrepareFont(GL_ChooseVariableFont(i, theWindow->width, theWindow->height));
-        glFontVariable[i] = FR_GetCurrent();
-        VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n",
-                             glFontVariable[i]));
-    }
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
+    path = Uri_Construct2(Str_Text(&searchPath), RC_NULL);
+    Str_Free(&searchPath);
+    searchPath2 = Uri_Resolved(path);
+    Uri_Destruct(path);
+    result = FR_LoadSystemFont(name, Str_Text(searchPath2));
+    if(searchPath2)
+        Str_Delete(searchPath2);
 
-    FR_SetFont(oldFont);
-    VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", oldFont));
-     */
-    //varFontInited = true;
-}
-
-void GL_ShutdownVarFont(void)
-{
-//    int         i;
-
-    if(novideo) // || !varFontInited)
-        return;
-
-    //FR_SetFont(glFontFixed);
-    /*
-    for(i = 0; i < NUM_GLFS; ++i)
+    if(result == 0)
     {
-        // Keep the bold and light fonts loaded.
-        if(i == GLFS_BOLD || i == GLFS_LIGHT)
-            continue;
-
-        FR_DestroyFont(glFontVariable[i]);
-        glFontVariable[i] = glFontFixed;
+        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
     }
-     */
-    //varFontInited = false;
+    return result;
+    }
 }
-#endif
+
+void GL_LoadSystemFonts(void)
+{
+    assert(initGLOk);
+
+    glFontFixed = loadSystemFont(GL_ChooseFixedFont());
+    glFontVariable[GLFS_NORMAL] = loadSystemFont(GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height));
+    glFontVariable[GLFS_BOLD]   = loadSystemFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
+    glFontVariable[GLFS_LIGHT]  = loadSystemFont(GL_ChooseVariableFont(GLFS_LIGHT, theWindow->width, theWindow->height));
+
+    Con_SetFont(glFontFixed);
+}
 
 static void printDGLConfiguration(void)
 {
@@ -605,9 +548,6 @@ boolean GL_EarlyInit(void)
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
 
-    // Allow font rendering.
-    FR_Init();
-
     initGLOk = true;
     return true;
 }
@@ -633,8 +573,7 @@ void GL_Init(void)
     // Initialize one viewport.
     R_SetViewGrid(1, 1);
 
-    // Initialize font renderer.
-    GL_InitFont();
+    GL_LoadSystemFonts();
 }
 
 /**
@@ -669,7 +608,12 @@ void GL_Shutdown(void)
         return; // Not yet initialized fully.
 
     GL_ShutdownDeferred();
-    GL_ShutdownFont();
+    FR_Shutdown();   
+    glFontFixed =
+        glFontVariable[GLFS_NORMAL] =
+        glFontVariable[GLFS_BOLD] =
+        glFontVariable[GLFS_LIGHT] = 0;
+
     Rend_DestroySkySphere();
     Rend_Reset();
     GL_ShutdownRefresh();
@@ -906,14 +850,17 @@ void GL_TotalReset(void)
     if(isDedicated)
         return;
 
-    //GL_ShutdownVarFont();
-
     // Update the secondary title and the game status.
-    Con_InitUI();
+    Rend_ConsoleUpdateTitle();
 
     // Delete all textures.
     GL_ResetTextureManager();
-    GL_ShutdownFont();
+    FR_Shutdown();    
+    glFontFixed =
+        glFontVariable[GLFS_NORMAL] =
+        glFontVariable[GLFS_BOLD] =
+        glFontVariable[GLFS_LIGHT] = 0;
+    FR_Init();
     GL_ReleaseReservedNames();
 
 #if _DEBUG
@@ -931,8 +878,8 @@ void GL_TotalRestore(void)
 
     // Getting back up and running.
     GL_ReserveNames();
-    GL_InitFont();
-    //GL_InitVarFont();
+    GL_LoadSystemFonts();
+
     GL_Init2DState();
     GL_InitPalettedTexture();
 

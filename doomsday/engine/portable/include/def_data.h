@@ -514,6 +514,17 @@ typedef struct ded_material_s {
     ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
 } ded_material_t;
 
+typedef struct {
+    unsigned char   ch;
+    dduri_t*        path;
+} ded_compositefont_mappedcharacter_t;
+
+typedef struct ded_compositefont_s {
+    ded_stringid_t  id;
+    ded_count_t     charMapCount;
+    ded_compositefont_mappedcharacter_t* charMap;
+} ded_compositefont_t;
+
 // The ded_t structure encapsulates all the data one definition file
 // can contain. This is only an internal representation of the data.
 // An ASCII version is written and read by DED_Write() and DED_Read()
@@ -553,6 +564,7 @@ typedef struct ded_s {
         ded_count_t     lineTypes;
         ded_count_t     sectorTypes;
         ded_count_t     xgClasses;
+        ded_count_t     compositeFonts;
     } count;
 
     // Flag values (for all types of data).
@@ -623,6 +635,9 @@ typedef struct ded_s {
 
     // XG Classes
     ded_xgclass_t*  xgClasses;
+
+    // Composite fonts.
+    ded_compositefont_t* compositeFonts;
 } ded_t;
 
 // Routines for managing DED files.
@@ -658,6 +673,8 @@ int             DED_AddSectorType(ded_t* ded, int id);
 int             DED_AddLineType(ded_t* ded, int id);
 int             DED_AddXGClass(ded_t* ded);
 int             DED_AddXGClassProperty(ded_xgclass_t* xgc);
+int             DED_AddCompositeFont(ded_t* ded, const char* id);
+int             DED_AddCompositeFontMapCharacter(ded_compositefont_t* font);
 
 void            DED_RemoveFlag(ded_t* ded, int index);
 void            DED_RemoveMobj(ded_t* ded, int index);
@@ -682,6 +699,7 @@ void            DED_RemoveGroup(ded_t* ded, int index);
 void            DED_RemoveSectorType(ded_t* ded, int index);
 void            DED_RemoveLineType(ded_t* ded, int index);
 void            DED_RemoveXGClass(ded_t* ded, int index);
+void            DED_RemoveCompositeFont(ded_t* ded, int index);
 
 void*           DED_NewEntries(void** ptr, ded_count_t* cnt,
                                size_t elemSize, int count);
@@ -697,4 +715,3 @@ extern char dedReadError[];
 }
 #endif
 #endif /* LIBDENG_DEFINITION_FILE_H */
-

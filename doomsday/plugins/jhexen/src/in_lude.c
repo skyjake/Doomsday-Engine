@@ -1,10 +1,10 @@
-/**\file
+/**\file in_lude.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * in_lude.c:
+ * Intermission screens - jHexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -407,15 +407,16 @@ static void drawDeathTally(void)
             }
             else
             {
+                FR_SetFont(FID(GF_FONTA));
                 if(bold)
                 {
                     DGL_Color4f(1, 0.7f, 0.3f, 1);
-                    GL_DrawTextFragment3("--", x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+                    FR_DrawTextFragment2("--", x, y, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
                 }
                 else
                 {
                     DGL_Color4f(1, 1, 1, 1);
-                    GL_DrawTextFragment("--", x, y);
+                    FR_DrawTextFragment("--", x, y);
                 }
             }
         }
@@ -442,8 +443,9 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawTextFragment3(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)
@@ -455,6 +457,7 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(1, 0.7f, 0.3f, 1);
-    GL_DrawTextFragment3(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }

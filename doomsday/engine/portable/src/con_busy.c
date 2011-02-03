@@ -82,7 +82,7 @@ static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
 static volatile const char* busyError = NULL;
-static int busyFont = 0;
+static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
@@ -262,19 +262,23 @@ static void Con_BusyLoadTextures(void)
         }
     }
 
+    // Need to load any fonts for log messages etc?
     if((busyMode & BUSYF_CONSOLE_OUTPUT) || busyTaskName)
     {
-        const char*         fontName;
-
-        if(!(theWindow->width > 640))
-            fontName = "normal12";
-        else
-            fontName = "normal18";
-
-        if(FR_PrepareFont(fontName))
+        // These must be real files in the base dir because virtual files haven't
+        // been loaded yet when the engine startup is done.
+        struct busyFont {
+            const char* name;
+            const char* path;
+        } static const fonts[] = {
+           { "normal12", "}data/fonts/normal12.dfn" },
+           { "normal18", "}data/fonts/normal18.dfn" }
+        };
+        int fontIdx = !(theWindow->width > 640)? 0 : 1;
+        if(0 != (busyFont = FR_LoadSystemFont(fonts[fontIdx].name, fonts[fontIdx].path)))
         {
-            busyFont = FR_GetCurrent();
-            busyFontHgt = FR_TextHeight("A");
+            FR_SetFont(busyFont);
+            busyFontHgt = FR_TextFragmentHeight("A");
         }
     }
 }
@@ -284,20 +288,18 @@ static void Con_BusyDeleteTextures(void)
     if(isDedicated)
         return;
 
-    // Destroy the font.
-/*    if(busyFont)
-    {
-        FR_DestroyFont(busyFont);
-    }*/
-
     glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
-
-    busyFont = 0;
 
     // Don't release this yet if doing a transition.
     if(!transitionInProgress)
         Con_ReleaseScreenshotTexture();
+
+    if(0 != busyFont)
+    {
+        FR_DestroyFont(busyFont);
+        busyFont = 0;
+    }
 }
 
 /**
@@ -501,8 +503,9 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     // Draw the task name.
     if(busyTaskName)
     {
+        FR_SetFont(busyFont);
         glColor4f(1.f, 1.f, 1.f, .66f);
-        FR_TextOut(busyTaskName, x+radius, y - busyFontHgt/2);
+        FR_DrawTextFragment2(busyTaskName, x+radius, y, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -627,8 +630,9 @@ void Con_BusyDrawConsoleOutput(void)
         else
             color = 1 - (color - LINE_COUNT);
 
+        FR_SetFont(busyFont);
         glColor4f(1.f, 1.f, 1.f, color);
-        FR_TextOut(line->text, (theWindow->width - FR_TextWidth(line->text))/2, y);
+        FR_DrawTextFragment2(line->text, theWindow->width/2, y, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     }
 
     glDisable(GL_TEXTURE_2D);

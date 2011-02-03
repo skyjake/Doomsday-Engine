@@ -1,10 +1,10 @@
-/**\file
+/**\file ui_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
-#include "rend_console.h" // \todo Move Con_InitUI somewhere more suitable.
+#include "rend_console.h" // \todo Move Rend_ConsoleUpdateTitle somewhere more suitable.
 
 // MACROS ------------------------------------------------------------------
 
@@ -158,7 +158,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
 
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    uiFontHgt = FR_TextHeight("W");
+    uiFontHgt = FR_TextFragmentHeight("W");
 
     // Should the mouse cursor be visible?
     uiShowMouse = !ArgExists("-nomouse");
@@ -188,7 +188,7 @@ void UI_End(void)
     FR_SetFont(glFontFixed);
 
     // Update the secondary title and the game status.
-    Con_InitUI();
+    Rend_ConsoleUpdateTitle();
 
     // Restore the engine state
     tickFrame = true;
@@ -889,7 +889,7 @@ void UIText_Drawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
+    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -897,7 +897,7 @@ void UIText_BrightDrawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
+    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -992,7 +992,7 @@ void UIButton_Drawer(ui_object_t* ob)
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN), true, UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, DTF_NO_TYPEIN | ((ob->flags & UIF_LEFT_ALIGN)? DTF_ALIGN_LEFT : 0));
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1100,7 +1100,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     memset(buf, 0, sizeof(buf));
 
     // Does all of it fit in the box?
-    textWidth = FR_TextWidth(ob->text);
+    textWidth = FR_TextFragmentWidth(ob->text);
     if(textWidth > 0 && (unsigned) textWidth > maxw)
     {   // No, it doesn't fit.
         if(!act)
@@ -1121,7 +1121,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     {   // It fits!
         strcpy(buf, ob->text);
     }
-    UI_TextOutEx(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT), dis ? .2f : 1);
+    UI_TextOutEx2(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), dis ? .2f : 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     if(act && ob->timer & 4)
     {
         // Draw cursor.
@@ -1310,7 +1310,7 @@ void UIList_Drawer(ui_object_t* ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, false, false, UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, UI_Color(UIC_TEXT), alpha);
     glDisable(GL_TEXTURE_2D);
 
     // Is a scroll bar necessary?
@@ -1364,7 +1364,7 @@ void UIList_Drawer(ui_object_t* ob)
                 strcpy(tmp, ptr);
             memset(buf, 0, sizeof(buf));
             strCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
-            UI_TextOutEx(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, false, true, UI_Color(UIC_TEXT), alpha);
+            UI_TextOutEx2(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
             if(!endptr)
                 break;
             ptr = endptr + 1;
@@ -1605,7 +1605,7 @@ void UISlider_Drawer(ui_object_t* ob)
         strcpy(buf, dat->zerotext);
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, false, true, UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1637,7 +1637,8 @@ void UI_InitColumns(ui_object_t* ob)
                 strncpy(temp, ptr, endptr - ptr);
             else
                 strcpy(temp, ptr);
-            w = FR_TextWidth(temp);
+            FR_SetFont(glFontVariable[GLFS_LIGHT]);
+            w = FR_TextFragmentWidth(temp);
             if(w > width[c])
                 width[c] = w;
             if(!endptr)
@@ -1852,25 +1853,19 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t* start, ui_color_t* end,
     glEnd();
 }
 
-void UI_TextOut(const char* text, int x, int y)
-{
-    UI_TextOutEx(text, x, y, false, false, UI_Color(UIC_TEXT), 1);
-}
-
-void UI_TextOutEx(const char* text, int x, int y, int horizCenter, int vertCenter,
-    ui_color_t* color, float alpha)
+void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha,
+    short flags)
 {
     alpha *= uiAlpha;
     if(alpha <= 0) return;
-
-    // Center, if requested.
-    if(horizCenter)
-        x -= FR_TextWidth(text) / 2;
-    if(vertCenter)
-        y -= FR_SingleLineHeight(text)/2 + FR_GlyphTopToAscent(text);
-    // Actual text.
     UI_SetColorA(color, alpha);
-    FR_CustomShadowTextOut(text, x, y, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET, .6f);
+    FR_DrawTextFragment7(text, x, y, flags, DEFAULT_TRACKING, DEFAULT_INITIALCOUNT,
+        DEFAULT_GLITTER_STRENGTH, .6f, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+}
+
+void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha)
+{
+    UI_TextOutEx2(text, x, y, color, alpha, DEFAULT_DRAWFLAGS);
 }
 
 int UI_TextOutWrap(const char* text, int x, int y, int w, int h)
@@ -1899,7 +1894,7 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
                 *wp++ = c; // Hyphens should be included in the word.
             // Time to print the word.
             *wp = 0;
-            len = FR_TextWidth(word);
+            len = FR_TextFragmentWidth(word);
             if(tx + len > x + w) // Doesn't fit?
             {
                 tx = x;
@@ -1908,7 +1903,7 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
             // Can't print any more? (always print the 1st line)
             if(ty + linehgt > y + h && ty != y)
                 return ty;
-            FR_TextOut(word, tx, ty);
+            FR_DrawTextFragment(word, tx, ty);
             tx += len;
             wp = word;
             // React to delimiter.
@@ -1918,7 +1913,7 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
                 return ty; // All of the text has been printed.
 
             case ' ':
-                tx += FR_TextWidth(" ");
+                tx += FR_TextFragmentWidth(" ");
                 break;
 
             case '\n':

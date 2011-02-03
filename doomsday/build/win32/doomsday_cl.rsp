@@ -43,7 +43,6 @@
  .\..\..\engine\portable\src\gl_hq2x.c
  .\..\..\engine\portable\src\gl_font.c
  .\..\..\engine\portable\src\gl_draw.c
- .\..\..\engine\portable\src\gl_drawcompositefont.c
  .\..\..\engine\portable\src\gl_drawvectorgraphic.c
  .\..\..\engine\portable\src\pathdirectory.c
  .\..\..\engine\portable\src\rend_console.c
@@ -101,6 +100,7 @@
  .\..\..\engine\portable\src\dam_main.c
  .\..\..\engine\portable\src\dam_file.c
  .\..\..\engine\portable\src\dam_blockmap.c
+ .\..\..\engine\portable\src\bitmapfont.c
  .\..\..\engine\portable\src\blockset.c
  .\..\..\engine\portable\src\bsp_edge.c
  .\..\..\engine\portable\src\bsp_intersection.c

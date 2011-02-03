@@ -391,9 +391,10 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                 if(count > 1)
                 {
                     char buf[20];
+                    FR_SetFont(FID(GF_SMALLIN));
                     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], slot == selected? textAlpha : textAlpha / 2);
                     dd_snprintf(buf, 20, "%i", count);
-                    GL_DrawTextFragment4(buf, posX + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+                    FR_DrawTextFragment3(buf, posX + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }
             }
 
@@ -485,9 +486,10 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
                 if(count > 1)
                 {
                     char buf[20];
+                    FR_SetFont(FID(GF_SMALLIN));
                     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
                     dd_snprintf(buf, 20, "%i", count);
-                    GL_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+                    FR_DrawTextFragment3(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }
             }
 

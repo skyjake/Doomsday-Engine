@@ -1173,8 +1173,8 @@ void Hu_MenuRegister(void)
 
 static __inline mn_object_t* focusObject(void)
 {
-    if(!mnActive)
-        return NULL;
+    //if(!mnActive)
+    //    return NULL;
     return &mnCurrentPage->_objects[mnFocusObjectIndex];
 }
 
@@ -1340,8 +1340,9 @@ void M_InitEpisodeMenu(void)
         obj->action = M_Episode;
         obj->data2 = i;
         obj->text = GET_TXT(TXT_EPISODE1 + i);
-        obj->font = GF_FONTB;
-        w = GL_TextWidth(obj->text, obj->font);
+        obj->fontIdx = GF_FONTB;
+        FR_SetFont(FID(obj->fontIdx));
+        w = FR_TextFragmentWidth(obj->text);
         if(w > maxw)
             maxw = w;
 # if __JDOOM__
@@ -1396,9 +1397,9 @@ void M_InitPlayerClassMenu(void)
         obj->action = M_ChooseClass;
         obj->data2 = n;
         obj->text = info->niceName;
-        obj->font = GF_FONTB;
+        obj->fontIdx = GF_FONTB;
 
-        n++;
+        ++n;
     }
 
     // Add the random class option.
@@ -1408,7 +1409,7 @@ void M_InitPlayerClassMenu(void)
     ClassItems[n].action = M_ChooseClass;
     ClassItems[n].data2 = -1;
     ClassItems[n].text = GET_TXT(TXT_RANDOMPLAYERCLASS);
-    ClassItems[n].font = GF_FONTB;
+    ClassItems[n].fontIdx = GF_FONTB;
 
     // Finalize setup.
     PlayerClassMenu._objects = ClassItems;
@@ -1450,7 +1451,8 @@ void Hu_MenuInit(void)
     for(i = 0, maxw = 0; i < NUM_SKILL_MODES; ++i)
     {
         SkillItems[i].text = GET_TXT(TXT_SKILL1 + i);
-        w = GL_TextWidth(SkillItems[i].text, SkillItems[i].font);
+        FR_SetFont(FID(SkillItems[i].fontIdx));
+        w = FR_TextFragmentWidth(SkillItems[i].text);
         if(w > maxw)
             maxw = w;
     }
@@ -1549,7 +1551,7 @@ void Hu_MenuTicker(timespan_t ticLength)
     // Move towards the target alpha level for the entire menu.
     if(mnAlpha != mnTargetAlpha)
     {
-#define MENUALPHA_FADE_STEP (.0825)
+#define MENUALPHA_FADE_STEP (.07)
 
         float diff = mnTargetAlpha - mnAlpha;
         if(fabs(diff) > MENUALPHA_FADE_STEP)
@@ -1564,7 +1566,7 @@ void Hu_MenuTicker(timespan_t ticLength)
 #undef MENUALPHA_FADE_STEP
     }
 
-    if(mnActive || mnAlpha > 0)
+    if(mnActive)// || mnAlpha > 0)
     {
         mn_object_t* focusObj = focusObject();
         // Fade in/out the widget background filter
@@ -1618,7 +1620,7 @@ void Hu_MenuTicker(timespan_t ticLength)
     if(!M_RunTrigger(&fixed, ticLength))
         return; // It's too soon.
 
-    if(mnActive || mnAlpha > 0)
+    if(mnActive)// || mnAlpha > 0)
     {
         mnTime++;
 
@@ -1691,7 +1693,7 @@ void MN_GotoPage(mn_page_t* page)
 
     menu_color = 0;
     skull_angle = 0;
-    R_ResetTextTypeInTimer();
+    FR_ResetTypeInTimer();
 }
 
 /**
@@ -1903,7 +1905,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             skull_angle = 0;
             mnCurrentPage = &MainMenu;
             mnFocusObjectIndex = mnCurrentPage->focus;
-            R_ResetTextTypeInTimer();
+            FR_ResetTypeInTimer();
 
             // Enable the menu binding class
             DD_Execute(true, "activatebcontext menu");
@@ -2148,32 +2150,33 @@ int Hu_MenuResponder(event_t* ev)
     return false;
 }
 
-void M_DrawMenuText5(const char* string, int x, int y, compositefontid_t font, short flags,
+void M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags,
     float glitterStrength, float shadowStrength)
 {
     if(cfg.menuEffects == 0)
     {
-        flags |= DTF_NO_TYPEIN;
+        flags |= DTF_NO_TYPEIN|DTF_NO_SHADOW;
         glitterStrength = 0;
         shadowStrength = 0;
     }
 
-    GL_DrawTextFragment7(string, x, y, font, flags, 0, 0, glitterStrength, shadowStrength);
+    FR_SetFont(FID(fontIdx));
+    FR_DrawTextFragment7(string, x, y, flags, 0, 0, glitterStrength, shadowStrength, 0, 0);
 }
 
-void M_DrawMenuText4(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength)
+void M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength)
 {
-    M_DrawMenuText5(string, x, y, font, flags, glitterStrength, cfg.menuShadow);
+    M_DrawMenuText5(string, x, y, fontIdx, flags, glitterStrength, cfg.menuShadow);
 }
 
-void M_DrawMenuText3(const char* string, int x, int y, compositefontid_t font, short flags)
+void M_DrawMenuText3(const char* string, int x, int y, int fontIdx, short flags)
 {
-    M_DrawMenuText4(string, x, y, font, flags, cfg.menuGlitter);
+    M_DrawMenuText4(string, x, y, fontIdx, flags, cfg.menuGlitter);
 }
 
-void M_DrawMenuText2(const char* string, int x, int y, compositefontid_t font)
+void M_DrawMenuText2(const char* string, int x, int y, int fontIdx)
 {
-    M_DrawMenuText3(string, x, y, font, DTF_ALIGN_TOPLEFT);
+    M_DrawMenuText3(string, x, y, fontIdx, DTF_ALIGN_TOPLEFT);
 }
 
 void M_DrawMenuText(const char* string, int x, int y)
@@ -2549,7 +2552,7 @@ void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     if(obj->patch)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, obj->font, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
+        WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, obj->fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -2557,7 +2560,7 @@ void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
 
-    M_DrawMenuText2(obj->text, 0, 0, obj->font);
+    M_DrawMenuText2(obj->text, 0, 0, obj->fontIdx);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -2575,7 +2578,8 @@ void MNText_Dimensions(const mn_object_t* obj, int* width, int* height)
             *height = info.height;
         return;
     }
-    GL_TextFragmentDimensions(width, height, obj->text, obj->font);
+    FR_SetFont(FID(obj->fontIdx));
+    FR_TextFragmentDimensions(width, height, obj->text);
 }
 
 void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
@@ -2592,7 +2596,7 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     boolean isActive = obj == focusObject() && !(obj->flags & MNF_INACTIVE);
     char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
     const char* string;
-    float color[4], light = 1;
+    float light = 1;
 
     y += OFFSET_Y;
 
@@ -2622,26 +2626,37 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    M_DrawSaveLoadBorder(x - 10, y, (edit->maxVisibleChars > 0? MIN_OF(edit->maxVisibleChars, MNDATA_EDIT_TEXT_MAX_LENGTH) : MNDATA_EDIT_TEXT_MAX_LENGTH) * GL_CharWidth('_', obj->font) + 20);
-
-    color[CR] = cfg.menuColors[COLOR_IDX][CR];
-    color[CG] = cfg.menuColors[COLOR_IDX][CG];
-    color[CB] = cfg.menuColors[COLOR_IDX][CB];
-
-    if(isActive)
-    {
-        float t = (menu_color <= 50? (menu_color / 50.0f) : ((100 - menu_color) / 50.0f));
-
-        color[CR] *= t; color[CG] *= t; color[CB] *= t;
-        color[CR] += cfg.flashColor[CR] * (1 - t); color[CG] += cfg.flashColor[CG] * (1 - t); color[CB] += cfg.flashColor[CB] * (1 - t);
+    FR_SetFont(FID(obj->fontIdx));
+    { int width, numVisCharacters;
+    if(edit->maxVisibleChars > 0)
+        numVisCharacters = MIN_OF(edit->maxVisibleChars, MNDATA_EDIT_TEXT_MAX_LENGTH);
+    else
+        numVisCharacters = MNDATA_EDIT_TEXT_MAX_LENGTH;
+    width = numVisCharacters * FR_CharWidth('_') + 20;
+    M_DrawSaveLoadBorder(x - 10, y, width);
     }
-    color[CA] = alpha;
 
-    color[CR] *= light; color[CG] *= light; color[CB] *= light;
-
-    DGL_Color4fv(color);
     if(string)
-        M_DrawMenuText3(string, x, y, obj->font, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    {
+        float color[4];
+        color[CR] = cfg.menuColors[COLOR_IDX][CR];
+        color[CG] = cfg.menuColors[COLOR_IDX][CG];
+        color[CB] = cfg.menuColors[COLOR_IDX][CB];
+
+        if(isActive)
+        {
+            float t = (menu_color <= 50? (menu_color / 50.0f) : ((100 - menu_color) / 50.0f));
+
+            color[CR] *= t; color[CG] *= t; color[CB] *= t;
+            color[CR] += cfg.flashColor[CR] * (1 - t); color[CG] += cfg.flashColor[CG] * (1 - t); color[CB] += cfg.flashColor[CB] * (1 - t);
+        }
+        color[CA] = alpha;
+
+        color[CR] *= light; color[CG] *= light; color[CB] *= light;
+
+        DGL_Color4fv(color);
+        M_DrawMenuText3(string, x, y, obj->fontIdx, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+    }
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2720,7 +2735,8 @@ void MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     {
         const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
         M_DrawMenuText2(item->text, x, y, GF_FONTA);
-        y += GL_TextFragmentHeight(item->text, GF_FONTA) * (1+MNDATA_LIST_LEADING);
+        FR_SetFont(FID(GF_FONTA));
+        y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2754,15 +2770,16 @@ void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
         *width = 0;
     if(height)
         *height = 0;
+    FR_SetFont(FID(GF_FONTA));
     for(i = 0; i < list->count; ++i)
     {
         const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
         int w;
-        if(width && (w = GL_TextFragmentWidth(item->text, GF_FONTA)) > *width)
+        if(width && (w = FR_TextFragmentWidth(item->text)) > *width)
             *width = w;
         if(height)
         {
-            int h = GL_TextFragmentHeight(item->text, GF_FONTA);
+            int h = FR_TextFragmentHeight(item->text);
             *height += h;
             if(i != list->count-1)
                 *height += h * MNDATA_LIST_LEADING;
@@ -2774,10 +2791,11 @@ void MNList_InlineDimensions(const mn_object_t* obj, int* width, int* height)
 {
     const mndata_list_t* list = (const mndata_list_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
+    FR_SetFont(FID(GF_FONTA));
     if(width)
-        *width = GL_TextFragmentWidth(item->text, GF_FONTA);
+        *width = FR_TextFragmentWidth(item->text);
     if(height)
-        *height = GL_TextFragmentHeight(item->text, GF_FONTA);
+        *height = FR_TextFragmentHeight(item->text);
 }
 
 void MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha)
@@ -2818,7 +2836,7 @@ void MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     if(obj->patch)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, obj->font, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
+        WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, obj->fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -2826,7 +2844,7 @@ void MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
 
-    M_DrawMenuText2(text, x, y, obj->font);
+    M_DrawMenuText2(text, x, y, obj->fontIdx);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -2863,7 +2881,8 @@ void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height)
     {
         text = obj->text;
     }
-    GL_TextFragmentDimensions(width, height, text, obj->font);
+    FR_SetFont(FID(obj->fontIdx));
+    FR_TextFragmentDimensions(width, height, text);
 }
 
 void MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha)

@@ -600,6 +600,7 @@ void MPIHelpDrawer(ui_object_t *ob)
 
     if((text = DH_GetString(help, HST_DESCRIPTION)) != NULL)
     {
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutWrap(text, ob->x, UI_ScreenY(yPos[selection]), ob->w,
                        UI_ScreenH(980 - yPos[selection]));
     }

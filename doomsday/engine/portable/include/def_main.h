@@ -90,6 +90,7 @@ int             Def_GetSpriteNum(const char* name);
 int             Def_GetModelNum(const char* id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);
+int             Def_GetCompositeFontNum(const char* id);
 int             Def_EvalFlags(char* ptr);
 ded_mapinfo_t*  Def_GetMapInfo(const char* mapID);
 ded_sky_t*      Def_GetSky(const char* id);

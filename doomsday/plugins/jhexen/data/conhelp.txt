@@ -2,10 +2,6 @@
 # CONSOLE COMMANDS - JHEXEN SPECFIC
 #
 
-[conbg]
-desc = Console background setup.
-inf = Params: conbg (materialname)
-
 [setcolor]
 desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
@@ -121,9 +117,6 @@ desc = Kill all the monsters on the map.
 
 [suicide]
 desc = Kill yourself. What did you think?
-
-[hexenfont]
-desc = Use the Hexen font.
 
 [startinf]
 desc = Start an InFine script.
@@ -738,9 +731,6 @@ desc = 1=Inverse joystick look Y axis.
 
 [ctl-look-joy-delta]
 desc = 1=Joystick values => look angle delta.
-
-[con-zoom]
-desc = Zoom factor for the console background.
 
 [view-size]
 desc = View window size (3-13).

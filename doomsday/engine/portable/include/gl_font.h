@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_font.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,77 +23,55 @@
  */
 
 /**
- * gl_font.h: Font Renderer
+ * Font Renderer.
  */
 
-#ifndef __GL_FONT_RENDERER_H__
-#define __GL_FONT_RENDERER_H__
+#ifndef LIBDENG_GL_FONT_RENDERER_H
+#define LIBDENG_GL_FONT_RENDERER_H
 
-#ifdef WIN32
-#   ifndef WIN32_LEAN_AND_MEAN
-#       define WIN32_LEAN_AND_MEAN
-#       define NOSOUND
-#       define NOCOMM
-#       define NOHELP
-#       define NOCOLOR
-#       define NOCLIPBOARD
-#       define NOCTLMGR
-#       define NOKERNEL
-#   endif
-#   include <windows.h>
-#endif
+#include "bitmapfont.h"
 
-#define MAX_CHARS           256 // Normal 256 ANSI characters.
+#define DEFAULT_LEADING             (.5)
+#define DEFAULT_TRACKING            (0)
+#define DEFAULT_INITIALCOUNT        (0) /// Used for animating type-in effects.
+#define DEFAULT_GLITTER_STRENGTH    (0)
+#define DEFAULT_SHADOW_STRENGTH     (.5)
+#define DEFAULT_SHADOW_XOFFSET      (2)
+#define DEFAULT_SHADOW_YOFFSET      (2)
 
-// Data for a character.
-typedef struct {
-    int             x, y; // The upper left corner of the character.
-    int             w, h; // The width and height.
-} jfrchar_t;
+#define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
 
-// Data for a font.
-typedef struct {
-    int             id;
-    char            name[256];
-    DGLuint         tex; // The name of the texture for this font.
-    int             texWidth, texHeight;
-    boolean         hasEmbeddedShadow;
-    int             marginWidth;
-    int             marginHeight;
-    int             lineHeight;
-    int             glyphHeight;
-    int             ascent;
-    int             descent;
-    jfrchar_t       chars[MAX_CHARS];
-} jfrfont_t;
+/**
+ * Initialize the font renderer.
+ * @return  @c 0, iff there are no errors.
+ */
+int FR_Init(void);
+void FR_Shutdown(void);
 
-int             FR_Init(void);
-void            FR_Shutdown(void);
-jfrfont_t*      FR_GetFont(int id);
+void FR_Ticker(timespan_t ticLength);
 
-#ifdef WIN32
-// Prepare a GDI font. Select it as the current font. Only available
-// on Windows.
-int             FR_PrepareGDIFont(HFONT hfont);
-#endif
+/**
+ * Mark all fonts as requiring a full update. Called during engine/renderer reset.
+ */
+void FR_Update(void);
 
-int             FR_PrepareFont(const char* name);
+/**
+ * Load the specified font as a "system font".
+ */
+fontid_t FR_LoadSystemFont(const char* name, const char* path);
 
-// Change the current font.
-void            FR_SetFont(int id);
-int             FR_GetCurrent(void);
-void            FR_DestroyFont(int id);
-int             FR_CharWidth(int ch);
-int             FR_TextWidth(const char* text);
-int             FR_TextHeight(const char* text);
-int             FR_SingleLineHeight(const char* text);
-int             FR_GlyphTopToAscent(const char* text);
+fontid_t FR_CreateFontFromDef(ded_compositefont_t* def);
 
-// (x,y) is the upper left corner. Returns the length.
-int             FR_TextOut(const char* text, int x, int y);
-int             FR_ShadowTextOut(const char* text, int x, int y);
-int             FR_CustomShadowTextOut(const char* text, int x, int y,
-                                       int shadowX, int shadowY,
-                                       float shadowAlpha);
+/**
+ * @return  Ptr to the font associated with the specified id.
+ */
+bitmapfont_t* FR_Font(fontid_t id);
+void FR_DestroyFont(fontid_t id);
 
-#endif // __OGL_FONT_RENDERER_H__
+// Utility routines:
+int FR_SingleLineHeight(const char* text);
+int FR_GlyphTopToAscent(const char* text);
+
+ddstring_t** FR_CollectFontNames(int* count);
+
+#endif /* LIBDENG_GL_FONT_RENDERER_H */

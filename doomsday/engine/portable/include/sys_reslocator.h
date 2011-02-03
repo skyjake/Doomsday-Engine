@@ -42,6 +42,7 @@ struct dduri_s;
 #define FLATS_RESOURCE_NAMESPACE_NAME       "Flats"
 #define PATCHES_RESOURCE_NAMESPACE_NAME     "Patches"
 #define LIGHTMAPS_RESOURCE_NAMESPACE_NAME   "LightMaps"
+#define FONTS_RESOURCE_NAMESPACE_NAME       "Fonts"
 
 /**
  * Resource Type. Unique identifer attributable to resources (e.g., files).
@@ -65,6 +66,7 @@ typedef enum {
     RT_MOD,
     RT_MID,
     RT_DEH,
+    RT_DFN,
     RT_LAST_INDEX
 } resourcetype_t;
 

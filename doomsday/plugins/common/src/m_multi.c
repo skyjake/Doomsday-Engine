@@ -360,8 +360,9 @@ void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
         short textFlags = DTF_ALIGN_TOPLEFT;
         if(cfg.menuEffects == 0)
             textFlags |= DTF_NO_TYPEIN;
+        FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(1, 1, 1, mnAlpha);
-        GL_DrawTextFragment3("AUTOMATIC", 184,
+        FR_DrawTextFragment2("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__
                       y + 49,
 #elif __JHERETIC__
@@ -369,7 +370,7 @@ void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
 #else
                       y + 64,
 #endif
-                      GF_FONTA, textFlags);
+                      textFlags);
     }
 
 #if __JHEXEN__

@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_stuff.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * hu_stuff.c: Heads-up displays, font handling, text drawing routines
+ * Heads-up displays, font handling, text drawing routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -99,6 +99,8 @@ typedef struct fogeffectdata_s {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+fontid_t fonts[NUM_GAME_FONTS];
 
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
@@ -380,7 +382,7 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
     DGL_End();
 }
 
-void HU_DrawText(const char* str, compositefontid_t font, float x, float y,
+void HU_DrawText(const char* str, int fontIdx, float x, float y,
     float scale, float r, float g, float b, float a, short flags)
 {
     if(!str || !str[0])
@@ -393,8 +395,9 @@ void HU_DrawText(const char* str, compositefontid_t font, float x, float y,
     DGL_Scalef(scale, scale, 1);
     DGL_Translatef(-x, -y, 0);
 
+    FR_SetFont(FID(fontIdx));
     DGL_Color4f(r, g, b, a);
-    GL_DrawTextFragment3(str, x, y, font, flags);
+    FR_DrawTextFragment2(str, x, y, flags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -575,8 +578,9 @@ static void drawTable(float x, float ly, float width, float height,
     colX = calloc(1, sizeof(*colX) * numCols);
     colW = calloc(1, sizeof(*colW) * numCols);
 
+    FR_SetFont(FID(GF_FONTA));
     lineHeight = height / (MAXPLAYERS + 1);
-    fontHeight = GL_CharHeight('A', GF_FONTA);
+    fontHeight = FR_CharHeight('A');
     fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
     fontOffsetY = 0;
     if(fontScale > 1)
@@ -593,7 +597,7 @@ static void drawTable(float x, float ly, float width, float height,
 
         if(columns[n].flags & CF_FIXEDWIDTH)
         {
-            colW[n] = GL_TextWidth(columns[n].label, GF_FONTA) + CELL_PADDING * 2;
+            colW[n] = FR_TextFragmentWidth(columns[n].label) + CELL_PADDING * 2;
             fixedWidth += colW[n];
         }
     }
@@ -779,7 +783,7 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-static void drawMapMetaData(float x, float y, compositefontid_t font, float alpha)
+static void drawMapMetaData(float x, float y, int fontIdx, float alpha)
 {
     static const char*  unnamed = "unnamed";
     const char* lname = P_GetMapNiceName();
@@ -787,17 +791,18 @@ static void drawMapMetaData(float x, float y, compositefontid_t font, float alph
     if(!lname)
         lname = unnamed;
 
+    FR_SetFont(FID(fontIdx));
     DGL_Color4f(1, 1, 1, alpha);
 
     // Map name:
-    GL_DrawTextFragment2("map: ", x, y + 16, font);
-    GL_DrawTextFragment2(lname, x += GL_TextWidth("map: ", font), y + 16, font);
+    FR_DrawTextFragment("map: ", x, y + 16);
+    FR_DrawTextFragment(lname, x += FR_TextFragmentWidth("map: "), y + 16);
 
     x += 8;
 
     // Game mode:
-    GL_DrawTextFragment2("gamemode: ", x += GL_TextWidth(lname, font), y + 16, font);
-    GL_DrawTextFragment2(P_GetGameModeName(), x += GL_TextWidth("gamemode: ", font), y + 16, font);
+    FR_DrawTextFragment("gamemode: ", x += FR_TextFragmentWidth(lname), y + 16);
+    FR_DrawTextFragment(P_GetGameModeName(), x += FR_TextFragmentWidth("gamemode: "), y + 16);
 }
 
 /**
@@ -859,8 +864,9 @@ void HU_DrawScoreBoard(int player)
     DGL_Enable(DGL_TEXTURE_2D);
 
     // Title:
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
-    GL_DrawTextFragment3("ranking", x + width / 2, y + LINE_BORDER, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
@@ -1143,13 +1149,14 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefontid_t font, short flags, int tracking, float r, float g, float b, float a)
+void M_DrawTextFragmentShadowed(const char* string, int x, int y, int fontIdx, short flags, int tracking, float r, float g, float b, float a)
 {
+    FR_SetFont(FID(fontIdx));
     DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawTextFragment4(string, x+2, y+2, font, flags, tracking);
+    FR_DrawTextFragment3(string, x+2, y+2, flags, tracking);
 
     DGL_Color4f(r, g, b, a);
-    GL_DrawTextFragment4(string, x, y, font, flags, tracking);
+    FR_DrawTextFragment3(string, x, y, flags, tracking);
 }
 
 /**
@@ -1165,7 +1172,7 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefonti
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
-    compositefontid_t font, boolean builtin, short flags, float r, float g, float b, float a)
+    int fontIdx, boolean builtin, short flags, float r, float g, float b, float a)
 {
     int patchString = 0, posx = x;
     char def[80], *string;
@@ -1182,7 +1189,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            GL_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+            FR_DrawText(altstring, x, y, FID(fontIdx), translatePatchToTextDrawFlags(flags), .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
             return;
         }
     }
@@ -1212,14 +1219,14 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                GL_DrawText(string, x, y, font, textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+                FR_DrawText(string, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                GL_DrawText(altstring, x, y, font, textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+                FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
                 return;
             }
         }
@@ -1230,14 +1237,14 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
     GL_DrawPatch2(patch, posx, y, flags);
 }
 
-void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin, short flags)
+void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags)
 {
-    WI_DrawPatch4(id, x, y, altstring, font, builtin, flags, 1, 1, 1, 1);
+    WI_DrawPatch4(id, x, y, altstring, fontIdx, builtin, flags, 1, 1, 1, 1);
 }
 
-void WI_DrawPatch2(patchid_t patch, int x, int y, const char* altstring, compositefontid_t font, boolean builtin)
+void WI_DrawPatch2(patchid_t patch, int x, int y, const char* altstring, int fontIdx, boolean builtin)
 {
-    WI_DrawPatch3(patch, x, y, altstring, font, builtin, DPF_ALIGN_TOPLEFT);
+    WI_DrawPatch3(patch, x, y, altstring, fontIdx, builtin, DPF_ALIGN_TOPLEFT);
 }
 
 void WI_DrawPatch(patchid_t patch, int x, int y)
@@ -1640,8 +1647,9 @@ static void drawMapTitle(void)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
+        FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
-        GL_DrawTextFragment3(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        FR_DrawTextFragment2(lname, 0, 0, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
         DGL_Disable(DGL_TEXTURE_2D);
         y += 20;
@@ -1652,8 +1660,9 @@ static void drawMapTitle(void)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
+        FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(.5f, .5f, .5f, alpha);
-        GL_DrawTextFragment3(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        FR_DrawTextFragment2(lauthor, 0, y, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }

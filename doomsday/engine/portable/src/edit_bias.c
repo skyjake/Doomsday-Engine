@@ -1,10 +1,10 @@
-/**\file
+/**\file edit_bias.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * edit_bias.c: Bias light source editor.
+ * Bias light source editor.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -636,7 +636,7 @@ D_CMD(BLEditor)
     return false;
 }
 
-static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
+static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t* c)
 {
     UI_GradientEx(x, y, w, h, 6,
                   c ? c : UI_Color(UIC_BG_MEDIUM),
@@ -646,25 +646,28 @@ static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
                   NULL, .4f, -1);
 }
 
-static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
+static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 {
-    float               eye[3];
-    int                 w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
-    int                 th = FR_TextHeight("a"), h = th * 6 + 16;
-    int                 x, y;
-    char                buf[80];
-    ui_color_t          color;
+    int w, h, th, x, y;
+    ui_color_t color;
+    char buf[80];
+    float eye[3];
 
-    x = theWindow->width - 10 - w - rightX;
+    FR_SetFont(glFontFixed);
+    w = 16 + FR_TextFragmentWidth("R:0.000 G:0.000 B:0.000");
+    th = FR_TextFragmentHeight("Info");
+    h = 16 + th * 6;
+
+    x = theWindow->width  - 10 - w - rightX;
     y = theWindow->height - 10 - h;
 
     eye[0] = vx;
     eye[1] = vz;
     eye[2] = vy;
 
-    color.red = s->color[0];
-    color.green = s->color[1];
-    color.blue = s->color[2];
+    color.red   = s->color[CR];
+    color.green = s->color[CG];
+    color.blue  = s->color[CB];
 
     SBE_DrawBox(x, y, w, h, &color);
     x += 8;
@@ -677,34 +680,32 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     // - intensity
     // - color
 
-    UI_TextOutEx(title, x, y, false, true, UI_Color(UIC_TITLE), alpha);
+    FR_SetFont(glFontFixed);
+    UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
-    sprintf(buf, "# %03i %s", SB_ToIndex(s),
-            s->flags & BLF_LOCKED ? "(lock)" : "");
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
+    sprintf(buf, "# %03i %s", SB_ToIndex(s), (s->flags & BLF_LOCKED ? "(lock)" : ""));
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
     sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
     sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
             (int) (255.0f * s->sectorLevel[0]),
             (int) (255.0f * s->sectorLevel[1]));
 
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
-    sprintf(buf, "R:%.3f G:%.3f B:%.3f",
-            s->color[0], s->color[1], s->color[2]);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
+    sprintf(buf, "R:%.3f G:%.3f B:%.3f", s->color[0], s->color[1], s->color[2]);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
-
 }
 
 
@@ -714,14 +715,13 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
 
 static void SBE_DrawLevelGauge(int x, int y, int height)
 {
-    static sector_t    *lastSector = NULL;
-    static float        minLevel = 0, maxLevel = 0;
+    static sector_t* lastSector = NULL;
+    static float minLevel = 0, maxLevel = 0;
 
-    sector_t           *sector;
-    int                 off = FR_TextWidth("000");
-    int                 secY, maxY = 0, minY = 0, p;
-    char                buf[80];
-    source_t           *src;
+    int off, secY, maxY = 0, minY = 0, p;
+    sector_t* sector;
+    source_t* src;
+    char buf[80];
 
     if(SBE_GetGrabbed())
         src = SBE_GetGrabbed();
@@ -740,6 +740,9 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
         minLevel = sector->lightLevel;
     if(sector->lightLevel > maxLevel)
         maxLevel = sector->lightLevel;
+
+    FR_SetFont(glFontFixed);
+    off = FR_TextFragmentWidth("000");
 
     glBegin(GL_LINES);
     glColor4f(1, 1, 1, .5f);
@@ -779,13 +782,13 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
 
     // The number values.
     sprintf(buf, "%03i", (short) (255.0f * sector->lightLevel));
-    UI_TextOutEx(buf, x, secY, true, true, UI_Color(UIC_TITLE), .7f);
+    UI_TextOutEx2(buf, x, secY, UI_Color(UIC_TITLE), .7f, DTF_NO_TYPEIN);
     if(maxLevel != minLevel)
     {
         sprintf(buf, "%03i", (short) (255.0f * maxLevel));
-        UI_TextOutEx(buf, x + 2*off, maxY, true, true, UI_Color(UIC_TEXT), .7f);
+        UI_TextOutEx2(buf, x + 2*off, maxY, UI_Color(UIC_TEXT), .7f, DTF_NO_TYPEIN);
         sprintf(buf, "%03i", (short) (255.0f * minLevel));
-        UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_Color(UIC_TEXT), .7f);
+        UI_TextOutEx2(buf, x + 2*off, minY, UI_Color(UIC_TEXT), .7f, DTF_NO_TYPEIN);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -812,14 +815,15 @@ void SBE_DrawHUD(void)
 
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS, MAX_BIAS_LIGHTS - numSources);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_TextHeight(buf) + 16;
+    FR_SetFont(glFontFixed);
+    w = FR_TextFragmentWidth(buf) + 16;
+    h = FR_TextFragmentHeight(buf) + 16;
     y = theWindow->height - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
-    UI_TextOutEx(buf, 18, y + h / 2, false, true, UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx2(buf, 18, y + h / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
 
     // The map ID.
-    UI_TextOutEx(P_GetUniqueMapID(map), 18, y - h/2, false, true, UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx2(P_GetUniqueMapID(map), 18, y - h/2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
 
     // Stats for nearest & grabbed:
     if(numSources)
@@ -830,7 +834,10 @@ void SBE_DrawHUD(void)
 
     if((s = SBE_GetGrabbed()) != NULL)
     {
-        SBE_InfoBox(s, FR_TextWidth("0") * 26, "Grabbed", alpha);
+        int x;
+        FR_SetFont(glFontFixed);
+        x = FR_TextFragmentWidth("0") * 26;
+        SBE_InfoBox(s, x, "Grabbed", alpha);
     }
 
     if(SBE_GetGrabbed() || SBE_GetNearest())
@@ -898,8 +905,8 @@ static void SBE_DrawIndex(source_t *src)
 
     // Show the index number of the source.
     sprintf(buf, "%i", SB_ToIndex(src));
-    UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE),
-                 1 - M_Distance(src->pos, eye)/2000);
+    FR_SetFont(glFontFixed);
+    UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

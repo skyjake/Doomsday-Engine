@@ -1,10 +1,10 @@
-/**\file
+/**\file m_defs.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * m_defs.h: Common menu defines and types.
+ * Common menu defines and types.
  */
 
-#ifndef LIBCOMMON_MENU_MAIN_H
-#define LIBCOMMON_MENU_MAIN_H
+#ifndef LIBCOMMON_M_DEFS_H
+#define LIBCOMMON_M_DEFS_H
 
 #include "r_common.h"
 
@@ -76,7 +76,7 @@ typedef struct mn_object_s {
     int             group;
     int             flags; // @see menuObjectFlags.
     const char*     text;
-    compositefontid_t font;
+    int             fontIdx;
     patchid_t*      patch;
     void          (*drawer) (const struct mn_object_s* obj, int x, int y, float alpha);
     void          (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
@@ -271,4 +271,4 @@ void            MN_TickerEx(void); // The extended ticker.
 void            MN_ActivateColorBox(mn_object_t* obj, int option);
 void            M_WGCurrentColor(mn_object_t* obj, int option);
 
-#endif /* LIBCOMMON_MENU_MAIN_H */
+#endif /* LIBCOMMON_M_DEFS_H */

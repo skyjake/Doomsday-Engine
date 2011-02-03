@@ -1,10 +1,10 @@
-/**\file
+/**\file in_lude.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * in_lude.c: Intermission/stat screens.
+ * Intermission/stat screens - jHeretic specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -160,29 +160,33 @@ static yahpt_t YAHspot[3][9] = {
 
 // CODE --------------------------------------------------------------------
 
-void IN_DrawTime(int x, int y, int h, int m, int s, compositefontid_t font, int tracking, float r, float g, float b, float a)
+void IN_DrawTime(int x, int y, int h, int m, int s, int fontIdx, int tracking, float r, float g, float b, float a)
 {
     char buf[20];
 
     dd_snprintf(buf, 20, "%02d", s);
-    M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
-    x -= GL_TextFragmentWidth2(buf, font, tracking) + tracking * 3;
-    M_DrawTextFragmentShadowed(":", x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
-    x -= GL_CharWidth(':', font) + 3;
+    M_DrawTextFragmentShadowed(buf, x, y, fontIdx, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+    FR_SetFont(FID(fontIdx));
+    x -= FR_TextFragmentWidth2(buf, tracking) + tracking * 3;
+    M_DrawTextFragmentShadowed(":", x, y, fontIdx, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+    FR_SetFont(FID(fontIdx));
+    x -= FR_CharWidth(':') + 3;
 
     if(m || h)
     {
         dd_snprintf(buf, 20, "%02d", m);
-        M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
-        x -= GL_TextFragmentWidth2(buf, font, tracking) + tracking * 3;
+        M_DrawTextFragmentShadowed(buf, x, y, fontIdx, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+        FR_SetFont(FID(fontIdx));
+        x -= FR_TextFragmentWidth2(buf, tracking) + tracking * 3;
     }
    
     if(h)
     {
         dd_snprintf(buf, 20, "%02d", h);
-        M_DrawTextFragmentShadowed(":", x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
-        x -= GL_CharWidth(':', font) + tracking * 3;
-        M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+        M_DrawTextFragmentShadowed(":", x, y, fontIdx, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+        FR_SetFont(FID(fontIdx));
+        x -= FR_CharWidth(':') + tracking * 3;
+        M_DrawTextFragmentShadowed(buf, x, y, fontIdx, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
     }
 }
 
@@ -642,11 +646,14 @@ void IN_DrawOldLevel(void)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    GL_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
+    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
-    GL_DrawTextFragment3("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment2("FINISHED", 160, 25, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     if(wbs->currentMap == 8)
     {
@@ -689,11 +696,13 @@ void IN_DrawYAH(void)
 {
     uint i;
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-    GL_DrawTextFragment3("NOW ENTERING:", 160, 10, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment2("NOW ENTERING:", 160, 10, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    GL_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
@@ -721,15 +730,18 @@ void IN_DrawSingleStats(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    GL_DrawTextFragment2("KILLS", 50, 65, GF_FONTB);
-    GL_DrawTextFragment2("ITEMS", 50, 90, GF_FONTB);
-    GL_DrawTextFragment2("SECRETS", 50, 115, GF_FONTB);
 
-    GL_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment("KILLS", 50, 65);
+    FR_DrawTextFragment("ITEMS", 50, 90);
+    FR_DrawTextFragment("SECRETS", 50, 115);
+    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-    GL_DrawTextFragment3("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+    FR_DrawTextFragment2("FINISHED", 160, 25, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -814,8 +826,10 @@ void IN_DrawSingleStats(void)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
+        FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        GL_DrawTextFragment2("TIME", 85, 160, GF_FONTB);
+        FR_DrawTextFragment("TIME", 85, 160);
+
         IN_DrawTime(284, 160, hours, minutes, seconds, GF_FONTB, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -824,11 +838,13 @@ void IN_DrawSingleStats(void)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
+        FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-        GL_DrawTextFragment3("NOW ENTERING:", SCREENWIDTH/2, 160, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        FR_DrawTextFragment2("NOW ENTERING:", SCREENWIDTH/2, 160, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
+        FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        GL_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -846,15 +862,17 @@ void IN_DrawCoopStats(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    GL_DrawTextFragment2("KILLS", 95, 35, GF_FONTB);
-    GL_DrawTextFragment2("BONUS", 155, 35, GF_FONTB);
-    GL_DrawTextFragment2("SECRET", 232, 35, GF_FONTB);
 
-    GL_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment("KILLS", 95, 35);
+    FR_DrawTextFragment("BONUS", 155, 35);
+    FR_DrawTextFragment("SECRET", 232, 35);
+    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-    GL_DrawTextFragment3("FINISHED", SCREENWIDTH/2, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment2("FINISHED", SCREENWIDTH/2, 25, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -920,15 +938,17 @@ void IN_DrawDMStats(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    GL_DrawTextFragment2("TOTAL", 265, 30, GF_FONTB);
+    FR_DrawTextFragment("TOTAL", 265, 30);
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-    GL_DrawTextFragment("VICTIMS", 140, 8);
+    FR_DrawTextFragment("VICTIMS", 140, 8);
 
     for(i = 0; i < 7; ++i)
     {
-        GL_DrawTextFragment(killersText[i], 10, 80 + 9 * i);
+        FR_DrawTextFragment(killersText[i], 10, 80 + 9 * i);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

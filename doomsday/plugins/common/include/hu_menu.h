@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_menu.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * hu_menu.h: Menu widget stuff, episode selection and such.
+ * Menu widget stuff, episode selection and such.
  */
 
-#ifndef __COMMON_HUD_MENU__
-#define __COMMON_HUD_MENU__
+#ifndef LIBCOMMON_HU_MENU_H
+#define LIBCOMMON_HU_MENU_H
 
 #include "dd_types.h"
 #include "m_defs.h"
@@ -108,10 +108,10 @@ void            Hu_MenuCvarSlider(mn_object_t* obj, int option);
 void            Hu_MenuBindings(mn_object_t* obj, int option);
 
 void            M_DrawMenuText(const char* string, int x, int y);
-void            M_DrawMenuText2(const char* string, int x, int y, compositefontid_t font);
-void            M_DrawMenuText3(const char* string, int x, int y, compositefontid_t font, short flags);
-void            M_DrawMenuText4(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength);
-void            M_DrawMenuText5(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength, float shadowStrength);
+void            M_DrawMenuText2(const char* string, int x, int y, int fontIdx);
+void            M_DrawMenuText3(const char* string, int x, int y, int fontIdx, short flags);
+void            M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
+void            M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
 
 void            M_SetEditFieldText(mndata_edit_t* ef, const char* string);
 void            M_ActivateEditField(mn_object_t* obj, int option);
@@ -122,4 +122,4 @@ void            MN_DrawSlider(const mn_page_t* page, int index, int x, int y, in
 D_CMD(MenuAction);
 D_CMD(Shortcut);
 
-#endif
+#endif /* LIBCOMMON_HU_MENU_H */

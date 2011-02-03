@@ -4353,7 +4353,8 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
     glEnable(GL_TEXTURE_2D);
 
     sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
-    UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+    FR_SetFont(glFontFixed);
+    UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
 
     glDisable(GL_TEXTURE_2D);
 

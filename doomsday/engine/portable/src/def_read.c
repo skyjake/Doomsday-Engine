@@ -1553,6 +1553,63 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             }
         }
 
+        if(ISTOKEN("Composite"))
+        {
+            ReadToken();
+            if(ISTOKEN("BitmapFont"))
+            {
+                ded_compositefont_t* cfont;
+
+                idx = DED_AddCompositeFont(ded, "");
+                cfont = &ded->compositeFonts[idx];
+
+                FINDBEGIN;
+                for(;;)
+                {
+                    READLABEL;
+                    if(ISLABEL("ID"))
+                    {
+                        READSTR(cfont->id)
+                        CHECKSC;
+                    }
+                    else if(M_IsStringValidInt(label))
+                    {
+                        ded_compositefont_mappedcharacter_t* mc = 0;
+                        int ascii = atoi(label);
+                        if(ascii < 0 || ascii > 255)
+                        {
+                            SetError("Invalid ascii code.");
+                            retVal = false;
+                            goto ded_end_read;
+                        }
+
+                        { int i;
+                        for(i = 0; i < cfont->charMapCount.num; ++i)
+                            if(cfont->charMap[i].ch == (unsigned char) ascii)
+                                mc = &cfont->charMap[i];
+                        }
+
+                        if(mc == 0)
+                        {
+                            mc = DED_NewEntry((void**)&cfont->charMap, &cfont->charMapCount, sizeof(*mc));
+                            mc->ch = ascii;
+                        }
+
+                        FINDBEGIN;
+                        for(;;)
+                        {
+                            READLABEL;
+                            RV_URI("Texture", &mc->path, PATCHES_RESOURCE_NAMESPACE_NAME)
+                            RV_END
+                            CHECKSC;
+                        }
+                    }
+                    else
+                    RV_END
+                }
+            }
+        }
+
         if(ISTOKEN("Values")) // String Values
         {
             depth = 0;

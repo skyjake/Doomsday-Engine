@@ -1,10 +1,10 @@
-/**\file
+/**\file m_ctrl.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * m_ctrl.c: Common controls menu.
+ * Common controls menu.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -366,7 +366,7 @@ void M_InitControlsMenu(void)
             mn_object_t* obj = &ControlsItems[n++];
             obj->type = MN_TEXT;
             obj->text = (char*) binds->text;
-            obj->font = GF_FONTA;
+            obj->fontIdx = GF_FONTA;
             obj->drawer = MNText_Drawer;
             obj->dimensions = MNText_Dimensions;
             obj->data2 = MENU_COLOR2; 
@@ -387,7 +387,7 @@ void M_InitControlsMenu(void)
             }
             labelObj->drawer = MNText_Drawer;
             labelObj->dimensions = MNText_Dimensions;
-            labelObj->font = GF_FONTA;
+            labelObj->fontIdx = GF_FONTA;
 
             displayObj->type = MN_BINDINGS;
             displayObj->flags = MNF_INACTIVE;
@@ -408,7 +408,10 @@ void M_InitControlsMenu(void)
 
 static void drawSmallText(const char* string, int x, int y)
 {
-    int height = GL_TextHeight(string, GF_FONTA);
+    int height;
+
+    FR_SetFont(FID(GF_FONTA));
+    height = FR_TextFragmentHeight(string);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -418,7 +421,7 @@ static void drawSmallText(const char* string, int x, int y)
     DGL_Translatef(-x, -y - height/2, 0);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    GL_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(string, x, y, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -441,8 +444,9 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name, boole
 
     if(type == MIBT_KEY)
     {
-        width = GL_TextWidth(name, GF_FONTA);
-        height = GL_TextHeight(name, GF_FONTA);
+        FR_SetFont(FID(GF_FONTA));
+        width = FR_TextFragmentWidth(name);
+        height = FR_TextFragmentHeight(name);
 
         DGL_SetNoMaterial();
         DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
@@ -459,8 +463,9 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name, boole
 
         sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
 
-        width = GL_TextWidth(temp, GF_FONTA);
-        height = GL_TextHeight(temp, GF_FONTA);
+        FR_SetFont(FID(GF_FONTA));
+        width = FR_TextFragmentWidth(temp);
+        height = FR_TextFragmentHeight(temp);
 
         DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(temp, d->x, d->y);

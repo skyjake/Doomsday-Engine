@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_api.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * Data Structures for the Engine/Game Interface.
+ * Data Structures for the Engine/Plugin Interfaces.
  */
 
-#ifndef LIBDENG_GAME_API_H
-#define LIBDENG_GAME_API_H
+#ifndef LIBDENG_API_H
+#define LIBDENG_API_H
 
 #include "dd_share.h"
 
@@ -93,7 +93,6 @@ typedef struct {
     void          (*EndFrame) (void);
     void          (*G_Drawer) (int layer);
     void          (*G_Drawer2) (void);
-    void          (*ConsoleBackground) (int* width, int* height);
 
     // Miscellaneous.
     void          (*MobjThinker) ();
@@ -130,4 +129,4 @@ typedef struct {
 
 typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
 
-#endif /* LIBDENG_GAME_API_H */
+#endif /* LIBDENG_API_H */

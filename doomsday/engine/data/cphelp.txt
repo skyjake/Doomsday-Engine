@@ -219,10 +219,6 @@ inf = Params: after (tics) (cmd)\nFor example, 'after 35 "echo End"'.
 [alias]
 desc = Create aliases for a (set of) console commands.
 
-[bgturn]
-desc = Set console background rotation speed.
-inf = Params: bgturn (speed)\nFor example, 'bgturn 20'.\nNegative speeds are allowed.
-
 [bindevent]
 desc = Bind a console command to an event.
 inf = Params: bindevent (event-descriptor) (command)\nExamples:\n  bindevent "key-M-down" {print "M was pressed"}\n  bindevent "mouse-right-up + key-shift" {print "RMB released while Shift down"}
@@ -544,11 +540,20 @@ inf = Params: write (filename)\nFor example, 'write myconfig.cfg'.
 #
 # CONSOLE VARIABLES
 #
-[con-alpha]
+[con-background-alpha]
 desc = Console background translucency.
 
-[con-light]
+[con-background-light]
 desc = Console background light level.
+
+[con-background-material]
+desc = Console background material uri. For example, 'Flats:FLOOR0_1'
+
+[con-background-turn]
+desc = Console background rotation speed. Negative speeds are allowed. 0=Disabled.
+
+[con-background-zoom]
+desc = Zoom factor for the console background.
 
 [con-completion]
 desc = How to complete words when pressing Tab: 0=Show completions, 1=Cycle through them.
@@ -556,20 +561,14 @@ desc = How to complete words when pressing Tab: 0=Show completions, 1=Cycle thro
 [con-dump]
 desc = 1=Dump all console messages to Doomsday.out.
 
-[con-key-activate]
-desc = Key to activate the console (ASCII code, default is tilde, 96).
-
-[con-var-silent]
-desc = 1=Don't show the value of a cvar when setting it.
-
 [con-fps]
 desc = 1=Show FPS counter on screen.
 
+[con-key-activate]
+desc = Key to activate the console (ASCII code, default is tilde, 96).
+
 [con-move-speed]
 desc = Speed of console opening/closing.
-
-[con-text-shadow]
-desc = 1=Text in the console has a shadow (might be slow).
 
 [con-snapback]
 desc = 1=Automatically reset the position of the console history buffer when a new message is printed.
@@ -579,6 +578,12 @@ desc = Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smoot
 
 [con-transition-tics]
 desc = Duration of transition effect in tics. 0= Disabled.
+
+[con-text-shadow]
+desc = 1=Text in the console has a shadow (might be slow with some fonts).
+
+[con-var-silent]
+desc = 1=Don't show the value of a cvar when setting it.
 
 [ui-panel-help]
 desc = 1=Enable help window in Control Panel.

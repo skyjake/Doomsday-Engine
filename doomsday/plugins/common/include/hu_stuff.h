@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_stuff.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * hu_stuff.h:
- */
-
-#ifndef __COMMON_HU_STUFF_H__
-#define __COMMON_HU_STUFF_H__
+#ifndef LIBCOMMON_HU_STUFF_H
+#define LIBCOMMON_HU_STUFF_H
 
 #include "gl_drawpatch.h"
 #if __JHEXEN__
@@ -53,7 +49,7 @@ enum {
     GF_SMALLIN,
 #endif
     NUM_GAME_FONTS
-}; /* compositefontid_t*/
+};
 
 // Vector graphics.
 enum {
@@ -72,6 +68,10 @@ enum {
     VG_XHAIR6,
     NUM_VECTOR_GRAPHICS
 }; /* vectorgraphicid_t*/
+
+#define FID(idx) (fonts[idx])
+
+extern fontid_t fonts[NUM_GAME_FONTS];
 
 extern patchid_t* mapNamePatches; // Name graphics of each map.
 #if __JDOOM__ || __JDOOM64__
@@ -107,7 +107,7 @@ void            Hu_DrawMapTitle(int x, int y, float scale);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
-void            M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefontid_t font, short flags, int tracking, float r, float g, float b, float a);
+void            M_DrawTextFragmentShadowed(const char* string, int x, int y, int fontIdx, short flags, int tracking, float r, float g, float b, float a);
 
 void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);
@@ -115,9 +115,9 @@ void            M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, fl
 
 // Implements patch replacement.
 void            WI_DrawPatch(patchid_t id, int x, int y);
-void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin);
-void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin, short flags);
-void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin, short flags, float r, float g, float b, float a);
+void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin);
+void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags);
+void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags, float r, float g, float b, float a);
 
 /**
  * Misc specialised elements:
@@ -132,4 +132,4 @@ typedef enum border_e {
 void            M_DrawBackgroundBox(float x, float y, float w, float h, boolean background, int border, float red, float green, float blue, float alpha);
 void            M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
 
-#endif
+#endif /* LIBCOMMON_HU_STUFF_H */

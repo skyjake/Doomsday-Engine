@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_log.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * hu_log.c: Player's game message log.
+ * Player's game message log.
  *
  * \todo Chat widget is here and should be moved.
  */
@@ -351,7 +351,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     {
     logmsg_t* msg;
     msg = &log->msgs[n];
-    lineHeight = GL_TextHeight(msg->text, GF_FONTA)+1;
+    lineHeight = FR_TextHeight(msg->text, FID(GF_FONTA))+1;
 
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
         yOffset = -(lineHeight-2) * (1.f - ((float)(msg->ticsRemain)/lineHeight));
@@ -378,8 +378,8 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         int width, height;
         float col[4];
 
-        width = GL_TextWidth(msg->text, GF_FONTA);
-        height = GL_TextHeight(msg->text, GF_FONTA);
+        width = FR_TextWidth(msg->text, FID(GF_FONTA));
+        height = FR_TextHeight(msg->text, FID(GF_FONTA));
 
         // Default colour and alpha.
         col[CR] = cfg.msgColor[CR];
@@ -418,7 +418,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        GL_DrawText(msg->text, 0, y, GF_FONTA, textFlags, .5f, 0, col[CR], col[CG], col[CB], col[CA], 0, 0, false);
+        FR_DrawText(msg->text, 0, y, FID(GF_FONTA), textFlags, .5f, 0, col[CR], col[CG], col[CB], col[CA], 0, 0, false);
 
         if(width > *drawnWidth)
             *drawnWidth = width;
@@ -844,29 +844,30 @@ void Chat_Drawer(int player, float textAlpha, float iconAlpha,
     if(!*chat->buffer.on)
         return;
 
+    FR_SetFont(FID(GF_FONTA));
     if(actualMapTime & 12)
     {
         dd_snprintf(buf, HU_MAXLINELENGTH+1, "%s_", chat->buffer.l.l);
         str = buf;
         if(cfg.msgAlign == 1)
-            xOffset = GL_CharWidth('_', GF_FONTA)/2;
+            xOffset = FR_CharWidth('_')/2;
     }
     else
     {
         str = chat->buffer.l.l;
         if(cfg.msgAlign == 2)
-            xOffset = -GL_CharWidth('_', GF_FONTA);
+            xOffset = -FR_CharWidth('_');
     }
     textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    GL_DrawText(str, xOffset, 0, GF_FONTA, textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+    FR_DrawText(str, xOffset, 0, FID(GF_FONTA), textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = GL_TextWidth(chat->buffer.l.l, GF_FONTA) + GL_CharWidth('_', GF_FONTA);
-    *drawnHeight = MAX_OF(GL_TextHeight(chat->buffer.l.l, GF_FONTA), GL_CharHeight('_', GF_FONTA));
+    *drawnWidth = FR_TextWidth(chat->buffer.l.l, FID(GF_FONTA)) + FR_CharWidth('_');
+    *drawnHeight = MAX_OF(FR_TextHeight(chat->buffer.l.l, FID(GF_FONTA)), FR_CharHeight('_'));
     }
 }
 

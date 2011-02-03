@@ -56,6 +56,8 @@
 #include "de_infine.h"
 #include "de_defs.h"
 
+#include "bitmapfont.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define SC_EMPTY_QUOTE  -1
@@ -131,8 +133,6 @@ static void updateDedicatedConsoleCmdLine(void);
 
 int     CmdReturnValue = 0;
 
-ddfont_t Cfont;                 // The console font.
-
 byte    ConsoleSilent = false;
 
 int     conCompMode = 0;        // Completion mode.
@@ -164,8 +164,13 @@ static execbuff_t *exBuff;
 static int exBuffSize;
 static execbuff_t *curExec;
 
-static uint complPos; // Where is the completion cursor?
+// The console font.
+static fontid_t consoleFont;
+static float consoleFontScale[2];
 
+static void (*consolePrintFilter) (char* text); // Maybe alters text.
+
+static uint complPos; // Where is the completion cursor?
 static uint lastCompletion; // The last completed known word match.
 
 // CODE --------------------------------------------------------------------
@@ -219,37 +224,22 @@ void Con_Register(void)
     Con_DataRegister();
 }
 
-boolean Con_IsActive(void)
+static void resizeHistoryBuffer(void)
 {
-    return ConsoleActive;
+    assert(ConsoleInited);
+    {
+    int cw, maxLength = 70;
+    FR_SetFont(consoleFont);
+    // Do we need to update the console history buffer max line length?
+    if(0 != (cw = FR_TextFragmentWidth("A")))
+    {
+        maxLength = MIN_OF(theWindow->width / cw - 2, 250);
+    }
+    Con_BufferSetMaxLineLength(Con_ConsoleBuffer(), maxLength);
+    }
 }
 
-boolean Con_IsLocked(void)
-{
-    return conInputLock;
-}
-
-boolean Con_InputMode(void)
-{
-    return cmdInsMode;
-}
-
-char* Con_CommandLine(void)
-{
-    return cmdLine;
-}
-
-cbuffer_t* Con_ConsoleBuffer(void)
-{
-    return histBuf;
-}
-
-uint Con_CursorPosition(void)
-{
-    return cmdCursor;
-}
-
-void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
+static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 {
 #define IS_ESC_CHAR(x)  ((x) == '"' || (x) == '\\' || (x) == '{' || (x) == '}')
 
@@ -370,19 +360,25 @@ boolean Con_Init(void)
     oldCmds = Con_NewBuffer(0, CMDLINE_SIZE, CBF_ALWAYSFLUSH);
     ocPos = 0; // No commands yet.
 
-    ConsoleActive = false;
-    ConsoleInited = true;
-    ConsoleTime = 0;
-
-    Rend_ConsoleInit();
+    exBuff = NULL;
+    exBuffSize = 0;
 
     complPos = 0;
     lastCompletion = 0;
 
     cmdCursor = 0;
 
-    exBuff = NULL;
-    exBuffSize = 0;
+    consoleFont = 0;
+    consoleFontScale[0] = 1.f;
+    consoleFontScale[1] = 1.f;
+
+    consolePrintFilter = 0;
+
+    ConsoleTime = 0;
+    ConsoleInited = true;
+    ConsoleActive = false;
+
+    Rend_ConsoleInit();
 
     return true;
 }
@@ -401,11 +397,86 @@ void Con_Shutdown(void)
     Con_ShutdownDatabases();
 }
 
-void Con_SetFont(ddfont_t* cfont)
+boolean Con_IsActive(void)
 {
-    if(!cfont)
+    return ConsoleActive;
+}
+
+boolean Con_IsLocked(void)
+{
+    return conInputLock;
+}
+
+boolean Con_InputMode(void)
+{
+    return cmdInsMode;
+}
+
+char* Con_CommandLine(void)
+{
+    return cmdLine;
+}
+
+cbuffer_t* Con_ConsoleBuffer(void)
+{
+    return histBuf;
+}
+
+uint Con_CursorPosition(void)
+{
+    return cmdCursor;
+}
+
+fontid_t Con_Font(void)
+{
+    if(!ConsoleInited)
+        Con_Error("Con_Font: Console is not yet initialised.");
+    return consoleFont;
+}
+
+void Con_SetFont(fontid_t font)
+{
+    if(!ConsoleInited)
+        Con_Error("Con_SetFont: Console is not yet initialised.");
+    if(consoleFont == font)
         return;
-    memcpy(&Cfont, cfont, sizeof(Cfont));
+    consoleFont = font;
+    resizeHistoryBuffer();
+}
+
+con_textfilter_t Con_PrintFilter(void)
+{
+    if(!ConsoleInited)
+        Con_Error("Con_PrintFilter: Console is not yet initialised.");
+    return consolePrintFilter;
+}
+
+void Con_SetPrintFilter(con_textfilter_t printFilter)
+{
+    if(!ConsoleInited)
+        Con_Error("Con_SetPrintFilter: Console is not yet initialised.");
+    consolePrintFilter = printFilter;
+}
+
+void Con_FontScale(float* scaleX, float* scaleY)
+{
+    if(!ConsoleInited)
+        Con_Error("Con_FontScale: Console is not yet initialised.");
+    if(scaleX)
+        *scaleX = consoleFontScale[0];
+    if(scaleY)
+        *scaleY = consoleFontScale[1];
+}
+
+void Con_SetFontScale(float scaleX, float scaleY)
+{
+    if(!ConsoleInited)
+        Con_Error("Con_SetFont: Console is not yet initialised.");
+    if(scaleX > 0.0001f)
+        consoleFontScale[0] = MAX_OF(.5f, scaleX);
+    if(scaleY > 0.0001f)
+        consoleFontScale[1] = MAX_OF(.5f, scaleY);
+    resizeHistoryBuffer();
 }
 
 /**
@@ -520,26 +591,6 @@ void Con_Ticker(timespan_t time)
         return;                 // We have nothing further to do here.
 
     ConsoleTime += time;        // Increase the ticker.
-}
-
-void Con_SetMaxLineLength(void)
-{
-    int         cw = FR_TextWidth("A");
-    int         length;
-    float       winWidth = theWindow->width? theWindow->width : 640;
-
-    if(!cw)
-    {
-        length = 70;
-    }
-    else
-    {
-        length = winWidth / cw - 2;
-        if(length > 250)
-            length = 250;
-    }
-
-    Con_BufferSetMaxLineLength(histBuf, length);
 }
 
 /**
@@ -1747,7 +1798,7 @@ void Con_Message(const char *message, ...)
     }
 }
 
-void Con_Error(const char *error, ...)
+void Con_Error(const char* error, ...)
 {
     static boolean errorInProgress = false;
     int         i, numBufLines;
@@ -2230,47 +2281,76 @@ D_CMD(Font)
 {
     if(argc == 1 || argc > 3)
     {
+        int listCount, i;
+        ddstring_t** list;
+
         Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
         Con_Printf("Commands: default, name, size, xsize, ysize.\n");
-        Con_Printf
-            ("Names: Fixed, Fixed12, System, System12, Large, Small7, Small8, Small10.\n");
+        Con_Printf("Names: ");
+        list = FR_CollectFontNames(&listCount);
+        for(i = 0; i < listCount-1; ++i)
+        {
+            Con_Printf("%s, ", Str_Text(list[i]));
+            Str_Delete(list[i]);
+        }
+        Con_Printf("%s.\n", Str_Text(list[i]));
+        Str_Delete(list[i]);
+        free(list);
         Con_Printf("Size 1.0 is normal.\n");
         return true;
     }
+
     if(!stricmp(argv[1], "default"))
     {
-        FR_SetFont(glFontFixed);
-        FR_DestroyFont(FR_GetCurrent());
-        FR_PrepareFont(GL_ChooseFixedFont());
-        glFontFixed = FR_GetCurrent();
-        Cfont.flags = DDFONT_WHITE;
-        Cfont.height = FR_SingleLineHeight("Con");
-        Cfont.sizeX = 1;
-        Cfont.sizeY = 1;
-        Cfont.drawText = FR_ShadowTextOut;
-        Cfont.getWidth = FR_TextWidth;
-        Cfont.filterText = NULL;
+        fontid_t newFont = FR_SafeFontIdForName(GL_ChooseFixedFont());
+        if(0 != newFont)
+        {
+            Con_SetFont(newFont);
+            Con_SetFontScale(1, 1);
+        }
+        return true;
     }
-    else if(!stricmp(argv[1], "name") && argc == 3)
+
+    if(!stricmp(argv[1], "name") && argc == 3)
     {
-        FR_SetFont(glFontFixed);
-        FR_DestroyFont(FR_GetCurrent());
-        if(!FR_PrepareFont(argv[2]))
-            FR_PrepareFont(GL_ChooseFixedFont());
-        glFontFixed = FR_GetCurrent();
-        Cfont.height = FR_SingleLineHeight("Con");
+        fontid_t newFont = FR_SafeFontIdForName(argv[2]);
+        if(0 != newFont)
+        {
+            Con_SetFont(newFont);
+            if(0 == BitmapFont_GLTextureWidth(FR_Font(newFont)))
+            {
+                Con_SetFontScale(1.5f, 2);
+            }
+            return true;
+        }
+        Con_Printf("Unknown font '%s'\n", argv[2]);
+        return true;
     }
-    else if(argc == 3)
+
+    if(argc == 3)
     {
+        float newScale[2] = { 1, 1 };
+
         if(!stricmp(argv[1], "xsize") || !stricmp(argv[1], "size"))
-            Cfont.sizeX = strtod(argv[2], NULL);
-        if(!stricmp(argv[1], "ysize") || !stricmp(argv[1], "size"))
-            Cfont.sizeY = strtod(argv[2], NULL);
-        // Make sure the sizes are valid.
-        if(Cfont.sizeX <= 0)
-            Cfont.sizeX = 1;
-        if(Cfont.sizeY <= 0)
-            Cfont.sizeY = 1;
+        {
+            newScale[0] = strtod(argv[2], NULL);
+            if(newScale[0] <= 0)
+                newScale[0] = 1;
+        }
+        if(!stricmp(argv[1], "ysize"))
+        {
+            newScale[1] = strtod(argv[2], NULL);
+            if(newScale[1] <= 0)
+                newScale[1] = 1;
+        }
+        else if(!stricmp(argv[1], "size"))
+        {
+            newScale[1] = newScale[0];
+        }
+
+        Con_SetFontScale(newScale[0], newScale[1]);
+        return true;
     }
-    return true;
+
+    return false;
 }

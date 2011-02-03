@@ -69,8 +69,6 @@ D_CMD(PrintPlayerCoords);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(ScreenShot);
-D_CMD(Doom64Font);
-D_CMD(ConBackground);
 
 void G_UpdateEyeHeight(const cvar_t* cvar);
 
@@ -80,14 +78,8 @@ void G_UpdateEyeHeight(const cvar_t* cvar);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-material_t* consoleBG = NULL;
-float consoleZoom = 1;
-
 // Console variables.
 cvar_t gameCVars[] = {
-// Console
-    {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
-
 // View/Refresh
     {"view-size", 0, CVT_INT, &cfg.setBlocks, 3, 11},
     {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
@@ -214,9 +206,6 @@ ccmd_t  gameCCmds[] = {
     {"suicide",     NULL,   CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
 
-    {"doom64font",  "",     CCmdDoom64Font},
-    {"conbg",       "s",    CCmdConBackground},
-
     {"spawnmobj",   NULL,   CCmdSpawnMobj},
     {"coord",       "",     CCmdPrintPlayerCoords},
 
@@ -247,25 +236,6 @@ void G_ConsoleRegistration(void)
 }
 
 /**
- * Settings for console background drawing.
- * Called EVERY FRAME by the console drawer.
- */
-void D_ConsoleBg(int *width, int *height)
-{
-    if(consoleBG)
-    {
-        DGL_SetMaterial(consoleBG);
-        *width = (int) (64 * consoleZoom);
-        *height = (int) (64 * consoleZoom);
-    }
-    else
-    {
-        DGL_SetNoMaterial();
-        *width = *height = 0;
-    }
-}
-
-/**
  * Called when the player-eyeheight cvar is changed.
  */
 void G_UpdateEyeHeight(const cvar_t* cvar)
@@ -276,66 +246,10 @@ void G_UpdateEyeHeight(const cvar_t* cvar)
 }
 
 /**
- * Draw (char *) text in the game's font.
- * Called by the console drawer.
- */
-int ConTextOut(const char* string, int x, int y)
-{
-    GL_DrawTextFragment3(string, x, y + 1, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
-    return 0;
-}
-
-/**
- * Get the visual width of (char*) text in the game's font.
- */
-int ConTextWidth(const char* string)
-{
-    return GL_TextWidth(string, GF_FONTA);
-}
-
-/**
  * Console command to take a screenshot (duh).
  */
 D_CMD(ScreenShot)
 {
     G_ScreenShot();
-    return true;
-}
-
-/**
- * Configure the console to use the game's font.
- */
-D_CMD(Doom64Font)
-{
-    ddfont_t cfont;
-
-    cfont.flags = DDFONT_WHITE;
-    cfont.height = GL_CharHeight('Q', GF_FONTA);
-    cfont.sizeX = 1.5f;
-    cfont.sizeY = 2;
-    cfont.drawText = ConTextOut;
-    cfont.getWidth = ConTextWidth;
-    cfont.filterText = NULL;
-
-    Con_SetFont(&cfont);
-    return true;
-}
-
-/**
- * Configure the console background.
- */
-D_CMD(ConBackground)
-{
-    material_t* mat;
-
-    if(!stricmp(argv[1], "off") || !stricmp(argv[1], "none"))
-    {
-        consoleBG = NULL;
-        return true;
-    }
-
-    if((mat = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(argv[1]))))
-        consoleBG = mat;
-
     return true;
 }

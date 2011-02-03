@@ -1212,7 +1212,10 @@ static byte* loadImage(image_t* img, const char* imagefn)
         }
     }
 
-    VERBOSE(Con_Message("LoadImage: \"%s\" (%ix%i)\n", M_PrettyPath(img->fileName), img->width, img->height));
+    { ddstring_t path; Str_Init(&path); Str_Set(&path, img->fileName);
+    VERBOSE( Con_Message("LoadImage: \"%s\" (%ix%i)\n", Str_Text(F_PrettyPath(&path)), img->width, img->height) );
+    Str_Free(&path);
+    }
 
     // How about some color-keying?
     if(GL_IsColorKeyed(img->fileName))
@@ -2195,6 +2198,7 @@ void GL_TexReset(void)
     boolean useBusyMode = !Con_IsBusy();
 
     GL_ClearTextureMemory();
+    FR_Update();
     Con_Printf("All DGL textures deleted.\n");
 
     if(useBusyMode)

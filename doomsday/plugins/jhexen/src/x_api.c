@@ -68,7 +68,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     /* Hexen (Death Kings) */
-    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
+    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen: Deathkings of the Dark Citadel", "Raven Software", "deathkings", "dk");
     DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexdd.wad", "MAP59;MAP60");
     DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
@@ -157,7 +157,6 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.EndFrame = X_EndFrame;
-    gx.ConsoleBackground = G_ConsoleBg;
     gx.UpdateState = G_UpdateState;
 #undef Get
     gx.GetInteger = X_GetInteger;

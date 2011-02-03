@@ -29,6 +29,7 @@ Music {
 }
 
 Include "flags.ded";
+Include "fonts.ded";
 Include "objects.ded";
 Include "sprites.ded";
 Include "text.ded";

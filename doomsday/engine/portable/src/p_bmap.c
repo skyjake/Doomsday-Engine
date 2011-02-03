@@ -1,10 +1,10 @@
-/**\file
+/**\file p_bmap.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_bmap.c: Blockmaps
+ * Blockmaps.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -1154,26 +1154,29 @@ static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
 
     sprintf(buf, "Block: %li [%u, %u] Lines: #%i Mobjs: #%i Polyobjs: #%i",
             blockIdx, blockX, blockY, lineCount, moCount, poCount);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_TextHeight(buf) + 16;
+    FR_SetFont(glFontFixed);
+    w = FR_TextFragmentWidth(buf) + 16;
+    h = FR_TextFragmentHeight(buf) + 16;
     x -= w / 2;
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
-                  UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
     UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
+    UI_TextOutEx2(buf, x + 8, y + h / 2, UI_Color(UIC_TITLE), 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
 }
 
 static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
                          float blockWidth, float blockHeight,
                          uint width, uint height)
 {
-    int                 w = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
-    int                 th = FR_TextHeight("a"), h = th * 4 + 16;
-    int                 x, y;
-    char                buf[80];
+    int th, w, h, x, y;
+    char buf[80];
 
-    x = theWindow->width - 10 - w;
+    FR_SetFont(glFontFixed);
+    w = 16 + FR_TextFragmentWidth("(+000.0,+000.0)(+000.0,+000.0)");
+    th = FR_TextFragmentHeight("a");
+    h = th * 4 + 16;
+
+    x = theWindow->width  - 10 - w;
     y = theWindow->height - 10 - h;
 
     UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
@@ -1183,21 +1186,21 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     x += 8;
     y += 8 + th/2;
 
-    UI_TextOutEx("Blockmap", x, y, false, true, UI_Color(UIC_TITLE), 1);
+    UI_TextOutEx2("Blockmap", x, y, UI_Color(UIC_TITLE), 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
     sprintf(buf, "Dimensions:[%u,%u] #%li", width, height,
             width * (long) height);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
     sprintf(buf, "Blksize:[%.2f,%.2f]", blockWidth, blockHeight);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)",
             minX, minY, maxX, maxY);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
     y += th;
 }
 

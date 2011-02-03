@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * Statusbar code.
+ * Statusbar code - jHeretic specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -745,16 +745,18 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth(buf, GF_STATUS);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth(buf);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef MAXDIGITS
 #undef Y
@@ -793,16 +795,18 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    GL_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+
+    FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth2(buf, TRACKING);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef TRACKING
 #undef MAXDIGITS
@@ -842,16 +846,18 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    GL_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+
+    FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth2(buf, TRACKING);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef TRACKING
 #undef MAXDIGITS
@@ -944,16 +950,18 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], iconAlpha);
-    GL_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+
+    FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth2(buf, TRACKING);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef TRACKING
 #undef MAXDIGITS
@@ -1052,8 +1060,9 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
                 char buf[20];
                 dd_snprintf(buf, 20, "%i", count);
 
+                FR_SetFont(FID(GF_SMALLIN));
                 DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-                GL_DrawTextFragment4(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                FR_DrawTextFragment3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
             }
         }
 
@@ -1204,15 +1213,17 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
 
         DGL_Enable(DGL_TEXTURE_2D);
 
+        FR_SetFont(FID(GF_SMALLIN));
         DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-        GL_DrawTextFragment4(buf, 0, *drawnHeight+2, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN, TRACKING);
+
+        FR_DrawTextFragment3(buf, 0, *drawnHeight+2, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN, TRACKING);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
-        w = GL_TextFragmentWidth2(buf, GF_SMALLIN, TRACKING);
+        w = FR_TextFragmentWidth2(buf, TRACKING);
         if(w > *drawnWidth)
             *drawnWidth += w;
-        *drawnHeight += GL_TextFragmentHeight(buf, GF_SMALLIN) + 2;
+        *drawnHeight += FR_TextFragmentHeight(buf) + 2;
 
 #undef TRACKING
 #undef COUNT_Y
@@ -1309,13 +1320,15 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
 
+        FR_SetFont(FID(GF_STATUS));
         DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-        GL_DrawTextFragment4(buf, dp->width+2, -2, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+        FR_DrawTextFragment3(buf, dp->width+2, -2, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
-        *drawnWidth += dp->width + 2 + GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
-        h = GL_TextFragmentHeight(buf, GF_STATUS);
+        *drawnWidth += dp->width + 2 + FR_TextFragmentWidth2(buf, TRACKING);
+        h = FR_TextFragmentHeight(buf);
         if(MAX_OF(dp->height, h) > *drawnHeight)
             *drawnHeight = MAX_OF(dp->height, h);
         break;
@@ -1344,16 +1357,17 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(0, 0, 0, textAlpha * .4f);
-    GL_DrawTextFragment4(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment3(buf, 2, 1, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    GL_DrawTextFragment4(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment3(buf, 0, -1, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = GL_TextFragmentWidth2(buf, GF_FONTB, TRACKING);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_FONTB);
+    *drawnWidth = FR_TextFragmentWidth2(buf, TRACKING);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef TRACKING
 }
@@ -1378,13 +1392,15 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    GL_DrawTextFragment4(buf, -1, -11, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    FR_DrawTextFragment3(buf, -1, -11, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth2(buf, TRACKING);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef TRACKING
 }
@@ -1479,13 +1495,15 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_STATUS));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    GL_DrawTextFragment4(buf, 0, 0, GF_STATUS, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    FR_DrawTextFragment3(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
-    *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
+    *drawnWidth = FR_TextFragmentWidth2(buf, TRACKING);
+    *drawnHeight = FR_TextFragmentHeight(buf);
 
 #undef TRACKING
 }
@@ -1536,9 +1554,10 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             if((count = P_InventoryCount(player, readyItem)) > 1)
             {
                 char buf[20];
+                FR_SetFont(FID(GF_SMALLIN));
                 DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
                 dd_snprintf(buf, 20, "%i", count);
-                GL_DrawTextFragment4(buf, -1, -7, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                FR_DrawTextFragment3(buf, -1, -7, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
             }
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -1597,13 +1616,15 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
+    *drawnHeight = FR_TextFragmentHeight(buf);
+    *drawnWidth = FR_TextFragmentWidth(buf);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1633,13 +1654,15 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
+    *drawnHeight = FR_TextFragmentHeight(buf);
+    *drawnWidth = FR_TextFragmentWidth(buf);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1669,13 +1692,14 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Enable(DGL_TEXTURE_2D);
 
+    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
+    *drawnHeight = FR_TextFragmentHeight(buf);
+    *drawnWidth = FR_TextFragmentWidth(buf);
 }
 
 typedef struct {

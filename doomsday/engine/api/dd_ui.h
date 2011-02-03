@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_ui.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ enum {
 };
 
 #include "dd_animator.h"
-#include "dd_compositefont.h"
+#include "dd_bitmapfont.h"
 #include "dd_vectorgraphic.h"
 
 typedef ident_t fi_objectid_t;
@@ -98,8 +98,10 @@ typedef struct {
 } fi_object_collection_t;
 
 #define FIPAGE_NUM_PREDEFINED_COLORS        NUM_UI_COLORS
-
 #define VALID_FIPAGE_PREDEFINED_COLOR(v)    ((v) < FIPAGE_NUM_PREDEFINED_COLORS)
+
+#define FIPAGE_NUM_PREDEFINED_FONTS         2
+#define VALID_FIPAGE_PREDEFINED_FONT(v)     ((v) < FIPAGE_NUM_PREDEFINED_FONTS)
 
 typedef struct fi_page_s {
     struct fi_page_flags_s {
@@ -130,6 +132,7 @@ typedef struct fi_page_s {
 
     animatorvector4_t _filter;
     animatorvector3_t _preColor[FIPAGE_NUM_PREDEFINED_COLORS];
+    fontid_t _preFont[FIPAGE_NUM_PREDEFINED_FONTS];
 
     uint _timer;
 } fi_page_t;
@@ -191,6 +194,12 @@ void FIPage_SetFilterColorAndAlpha(fi_page_t* page, float red, float green, floa
 /// Sets a predefined color.
 void FIPage_SetPredefinedColor(fi_page_t* page, uint idx, float red, float green, float blue, int steps);
 
+/// Sets a predefined font.
+void FIPage_SetPredefinedFont(fi_page_t* page, uint idx, fontid_t font);
+
+/// @return  Unique identifier of the predefined font.
+fontid_t FIPage_PredefinedFont(fi_page_t* page, uint idx);
+
 /**
  * Rectangle/Image sequence object.
  *
@@ -249,13 +258,14 @@ typedef struct fidata_text_s {
     size_t cursorPos;
     int wait, timer;
     float lineHeight;
-    compositefontid_t font;
+    fontid_t font;
     char* text;
 } fidata_text_t;
 
 void FIData_TextThink(struct fi_object_s* text);
 void FIData_TextDraw(struct fi_object_s* text, const float offset[3]);
 void FIData_TextCopy(struct fi_object_s* text, const char* str);
+void FIData_TextSetFont(struct fi_object_s* text, fontid_t font);
 
 /**
  * @return Length of the current text as a counter.

@@ -2,10 +2,6 @@
 # CONSOLE COMMANDS - JDOOM64 SPECFIC
 #
 
-[conbg]
-desc = Console background setup.
-inf = Params: conbg (materialname)
-
 [setcolor]
 desc = Set player color.
 inf = Params: setcolor (playernum)\nFor example, 'setcolor 4'.
@@ -119,10 +115,7 @@ desc = Leave the current map.
     
 [suicide]
 desc = Kill yourself. What did you think?
-    
-[doom64font]
-desc = Use the Doom64 font in the console.
-    
+
 [startinf]
 desc = Start an InFine script.
 inf = Params: startinf (script-id)\nFor example, 'startinf coolscript'.
@@ -701,9 +694,6 @@ desc = 1=Unhide the HUD when player collects a key.
 
 [menu-quitsound]
 desc = 1=Play a sound when quitting the game.
-
-[con-zoom]
-desc = Zoom factor for the console background.
 
 [view-size]
 desc = View window size (3-13).

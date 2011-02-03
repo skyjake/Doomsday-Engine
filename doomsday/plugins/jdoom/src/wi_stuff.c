@@ -1,10 +1,10 @@
-/**\file
+/**\file wi_stuff.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * wi_stuff.c: Intermission/stat screens - jDoom specific.
+ * Intermission/stat screens - DOOM specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -493,12 +493,13 @@ void WI_drawPercent(int x, int y, int p)
 
     if(p < 0)
         return;
-
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-    GL_DrawChar2('%', x, y, GF_SMALL);
-
     dd_snprintf(buf, 20, "%i", p);
-    GL_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    FR_SetFont(FID(GF_SMALL));
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+
+    FR_DrawChar('%', x, y);
+    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 }
 
 /**
@@ -517,14 +518,15 @@ void WI_drawTime(int x, int y, int t)
         x -= 22;
         
         DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-        GL_DrawChar2(':', x, y, GF_SMALL);
+        FR_SetFont(FID(GF_SMALL));
+        FR_DrawChar(':', x, y);
         if(minutes > 0)
         {
             dd_snprintf(buf, 20, "%d", minutes);
-            GL_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
         dd_snprintf(buf, 20, "%02d", seconds);
-        GL_DrawTextFragment2(buf, x+GL_CharWidth(':', GF_SMALL), y, GF_SMALL);
+        FR_DrawTextFragment(buf, x+FR_CharWidth(':'), y);
         return;
     }
 
@@ -789,9 +791,11 @@ void WI_drawDeathmatchStats(void)
                 char tmp[20];
 
                 sprintf(tmp, "%i", teamInfo[i].members);
+
+                FR_SetFont(FID(GF_FONTA));
                 DGL_Color4f(1, 1, 1, 1);
-                GL_DrawTextFragment(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
-                GL_DrawTextFragment(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
+                FR_DrawTextFragment(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
+                FR_DrawTextFragment(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
             }
         }
         else
@@ -809,7 +813,8 @@ void WI_drawDeathmatchStats(void)
 
     // Draw stats.
     y = DM_MATRIXY + 10;
-    w = GL_CharWidth('0', GF_SMALL);
+    FR_SetFont(FID(GF_SMALL));
+    w = FR_CharWidth('0');
 
     for(i = 0; i < NUM_TEAMS; ++i)
     {
@@ -822,12 +827,12 @@ void WI_drawDeathmatchStats(void)
                 if(teamInfo[j].members)
                 {
                     dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
-                    GL_DrawTextFragment3(buf, x + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+                    FR_DrawTextFragment2(buf, x + w, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
                 }
                 x += DM_SPACINGX;
             }
             dd_snprintf(buf, 20, "%i", dmTotals[i]);
-            GL_DrawTextFragment3(buf, DM_TOTALSX + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, DM_TOTALSX + w, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -999,8 +1004,11 @@ void WI_drawNetgameStats(void)
 {
 #define ORIGINX             (NG_STATSX + starWidth/2 + NG_STATSX*!doFrags)
 
-    int i, x, y, starWidth, pwidth = GL_CharWidth('%', GF_SMALL);
+    int i, x, y, starWidth, pwidth;
     patchinfo_t info;
+
+    FR_SetFont(FID(GF_SMALL));
+    pwidth = FR_CharWidth('%');
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1049,8 +1057,9 @@ void WI_drawNetgameStats(void)
             char tmp[40];
 
             sprintf(tmp, "%i", teamInfo[i].members);
+            FR_SetFont(FID(GF_FONTA));
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
+            FR_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
         }
 
         if(i == myTeam)
@@ -1069,8 +1078,9 @@ void WI_drawNetgameStats(void)
         if(doFrags)
         {
             char buf[20];
+            FR_SetFont(FID(GF_SMALL));
             dd_snprintf(buf, 20, "%i", cntFrags[i]);
-            GL_DrawTextFragment3(buf, x, y + 10, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, x, y + 10, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -1203,7 +1213,10 @@ void WI_updateStats(void)
 
 void WI_drawStats(void)
 {
-    int lh = (3 * GL_CharHeight('0', GF_SMALL)) / 2; // Line height.
+    int lh;
+
+    FR_SetFont(FID(GF_SMALL));
+    lh = (3 * FR_CharHeight('0')) / 2; // Line height.
 
     DGL_Enable(DGL_TEXTURE_2D);
 

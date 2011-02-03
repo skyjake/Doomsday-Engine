@@ -877,6 +877,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\bitmapfont.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\blockset.c"
 				>
 			</File>
@@ -1098,10 +1102,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\gl_draw.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\gl_drawcompositefont.c"
 				>
 			</File>
 			<File
@@ -2530,6 +2530,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\bitmapfont.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\blockset.h"
 				>
 			</File>
@@ -3767,7 +3771,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_compositefont.h"
+				RelativePath="..\..\..\engine\api\dd_bitmapfont.h"
 				>
 			</File>
 			<File

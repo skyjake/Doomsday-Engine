@@ -145,6 +145,7 @@ typedef enum {
     RC_MODEL,
     RC_SOUND,
     RC_MUSIC,
+    RC_FONT,
     RESOURCECLASS_COUNT
 } resourceclass_t;
 

@@ -180,7 +180,6 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
-    void            Con_SetFont(ddfont_t* cfont);
     void            Con_AddCommand(const ccmd_t* cmd);
     void            Con_AddVariable(const cvar_t* var);
     void            Con_AddCommandList(const ccmd_t* cmdList);

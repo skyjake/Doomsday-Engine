@@ -88,7 +88,8 @@ static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
     /* RT_MP3 */        { RC_MUSIC,        {"mp3", 0} },
     /* RT_MOD */        { RC_MUSIC,        {"mod", 0} },
     /* RT_MID */        { RC_MUSIC,        {"mid", 0} },
-    /* RT_DEH */        { RC_UNKNOWN,      {"deh", 0} }
+    /* RT_DEH */        { RC_UNKNOWN,      {"deh", 0} },
+    /* RT_DFN */        { RC_FONT,         {"dfn", 0} }
 };
 
 // Recognized resource types (in order of importance, left to right).
@@ -99,7 +100,8 @@ static const resourcetype_t searchTypeOrder[RESOURCECLASS_COUNT][MAX_TYPEORDER] 
     /* RC_GRAPHIC */    { RT_PNG, RT_TGA, RT_PCX, 0 }, // Favour quality.
     /* RC_MODEL */      { RT_DMD, RT_MD2, 0 }, // Favour DMD over MD2.
     /* RC_SOUND */      { RT_WAV, 0 }, // Only WAV files.
-    /* RC_MUSIC */      { RT_OGG, RT_MP3, RT_WAV, RT_MOD, RT_MID, 0 }
+    /* RC_MUSIC */      { RT_OGG, RT_MP3, RT_WAV, RT_MOD, RT_MID, 0 },
+    /* RC_FONT */       { RT_DFN, 0 } // Only DFN fonts.
 };
 
 static const ddstring_t defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
@@ -108,7 +110,8 @@ static const ddstring_t defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
     /* RC_GRAPHIC */    { GRAPHICS_RESOURCE_NAMESPACE_NAME },
     /* RC_MODEL */      { MODELS_RESOURCE_NAMESPACE_NAME },
     /* RC_SOUND */      { SOUNDS_RESOURCE_NAMESPACE_NAME },
-    /* RC_MUSIC */      { MUSIC_RESOURCE_NAMESPACE_NAME }
+    /* RC_MUSIC */      { MUSIC_RESOURCE_NAMESPACE_NAME },
+    /* RC_FONT */       { FONTS_RESOURCE_NAMESPACE_NAME }
 };
 
 static resourcenamespace_t** namespaces = 0;
@@ -121,7 +124,7 @@ static filedirectory_t* fsLocalPaths;
 
 static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath)
 {
-    ddstring_t* hashName = Str_New(); Str_Init(hashName);
+    ddstring_t* hashName = Str_New();
     F_FileName(hashName, filePath);
     return hashName;
 }
@@ -537,6 +540,7 @@ static void createResourceNamespaces(void)
         { FLATS_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/flats/" },         RNF_USE_VMAP,  "-flatdir",  "-flatdir2" },
         { PATCHES_RESOURCE_NAMESPACE_NAME,     { "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/patches/" },     RNF_USE_VMAP,  "-patdir",   "-patdir2" },
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,   { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/lightmaps/" }, RNF_USE_VMAP,  "-lmdir",    "-lmdir2" },
+        { FONTS_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/fonts/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/fonts/", "$(App.DataPath)/fonts/" }, RNF_USE_VMAP, "-fontdir", "-fontdir2" },
         { NULL }
     };
 
@@ -952,7 +956,8 @@ const char* F_ResourceClassStr(resourceclass_t rclass)
         "RC_GRAPHIC",
         "RC_MODEL",
         "RC_SOUND",
-        "RC_MUSIC"
+        "RC_MUSIC",
+        "RC_FONT"
     };
     return resourceClassNames[(int)rclass];
     }
@@ -1172,7 +1177,7 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
             ddstring_t buf;
             Str_Init(&buf); Str_Set(&buf, ddBasePath);
             Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
-            Str_Copy(dest, &buf);
+            Str_Set(dest, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
@@ -1265,7 +1270,12 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path)
         return str;
     }
 
-    return path; // We don't know how to make this prettier.
+    /// \todo This allocation should be completely unnecessary.
+    {ddstring_t* str = &buffers[index++ % NUM_BUFS];
+    Str_Free(str); Str_Copy(str, path);
+    F_FixSlashes(str);
+    return str;
+    }
 
 #undef NUM_BUFS
 }

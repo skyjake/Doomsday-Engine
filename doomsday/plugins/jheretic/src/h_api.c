@@ -155,7 +155,6 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.ConsoleBackground = H_ConsoleBg;
     gx.UpdateState = G_UpdateState;
 
     gx.GetInteger = H_GetInteger;

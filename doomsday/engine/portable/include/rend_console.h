@@ -29,21 +29,23 @@
 #ifndef LIBDENG_CONSOLE_RENDER_H
 #define LIBDENG_CONSOLE_RENDER_H
 
-extern byte consoleShowFPS, consoleShadowText;
-
-void Con_InitUI(void);
+extern byte consoleShowFPS;
 
 void Rend_ConsoleRegister(void);
 
+/**
+ * Initialize the console renderer (allows re-init).
+ */
 void Rend_ConsoleInit(void);
 void Rend_ConsoleTicker(timespan_t time);
-void Rend_Console(void);
 
-void Rend_ConsoleFPS(int x, int y);
 void Rend_ConsoleOpen(int yes);
 void Rend_ConsoleMove(int numLines);
-
 void Rend_ConsoleToggleFullscreen(void);
 void Rend_ConsoleCursorResetBlink(void);
+void Rend_ConsoleUpdateTitle(void);
+
+void Rend_Console(void);
+void Rend_ConsoleFPS(int x, int y);
 
 #endif /* LIBDENG_CONSOLE_RENDER_H */

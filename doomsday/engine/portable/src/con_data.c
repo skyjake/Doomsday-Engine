@@ -350,7 +350,7 @@ void Con_SetString2(const char* name, char* text, int svflags)
 
     if(cvar->shared.type == CVT_CHARPTR)
     {
-        if(CV_CHARPTR(cvar) && !stricmp(text, CV_CHARPTR(cvar)))
+        if(!CV_CHARPTR(cvar) && strlen(name) != 0 || stricmp(text, CV_CHARPTR(cvar)))
             changed = true;
 
         // Free the old string, if one exists.
@@ -645,7 +645,7 @@ void Con_PrintCVar(ddcvar_t* var, char* prefix)
         Con_Printf("%s %c %g", var->shared.name, equals, CV_FLOAT(var));
         break;
     case CVT_CHARPTR:
-        Con_Printf("%s %c %s", var->shared.name, equals, CV_CHARPTR(var));
+        Con_Printf("%s %c \"%s\"", var->shared.name, equals, CV_CHARPTR(var));
         break;
     default:
         Con_Printf("%s (bad type!)", var->shared.name);

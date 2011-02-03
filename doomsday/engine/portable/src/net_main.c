@@ -890,8 +890,6 @@ void Net_DrawDemoOverlay(void)
     }}
     strcat(buf, "]");
 
-    x -= FR_TextWidth(buf);
-
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -901,7 +899,7 @@ void Net_DrawDemoOverlay(void)
     glEnable(GL_TEXTURE_2D);
 
     glColor3f(1, 1, 1);
-    FR_ShadowTextOut(buf, x, y);
+    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN);
 
     glDisable(GL_TEXTURE_2D);
 

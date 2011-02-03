@@ -372,7 +372,6 @@ boolean R_SetViewGrid(int numCols, int numRows)
 void R_Init(void)
 {
     R_InitRawTexs();
-    R_InitCompositeFonts();
     R_InitVectorGraphics();
     R_InitViewBorder();
     R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
@@ -456,7 +455,7 @@ void R_Update(void)
     RL_DeleteLists();
 
     // Update the secondary title and the game status.
-    Con_InitUI();
+    Rend_ConsoleUpdateTitle();
 
 #if _DEBUG
     Z_CheckHeap();
@@ -469,7 +468,6 @@ void R_Update(void)
 void R_Shutdown(void)
 {
     R_ShutdownModels();
-    R_ShutdownCompositeFonts();
     R_ShutdownVectorGraphics();
     R_ShutdownData();
     R_ShutdownViewBorder();

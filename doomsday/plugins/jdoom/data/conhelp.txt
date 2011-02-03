@@ -21,15 +21,8 @@ desc = Send a chat macro.
 desc = Issue a cheat code using the original DOOM cheats.
 inf = Params: cheat (cheat)\nFor example, 'cheat idclev25'.
 
-[conbg]
-desc = Console background setup.
-inf = Params: conbg (materialname)
-
 [coord]
 desc = Print the coordinates of the consoleplayer.
-
-[doomfont]
-desc = Use the game font in the console.
 
 [endcycle]
 desc = End map rotation.
@@ -705,9 +698,6 @@ desc = 1=Unhide the HUD when player collects a key.
 
 [menu-quitsound]
 desc = 1=Play a sound when quitting the game.
-
-[con-zoom]
-desc = Zoom factor for the console background.
 
 [view-size]
 desc = View window size (3-13).

@@ -100,10 +100,11 @@ typedef struct calias_s {
     char* command;
 } calias_t;
 
+typedef void (*con_textfilter_t) (char* text);
+
 // Console commands can set this when they need to return a custom value
 // e.g. for the game library.
 extern int CmdReturnValue;
-extern ddfont_t Cfont;
 extern byte consoleDump;
 
 void Con_Register(void);
@@ -132,19 +133,23 @@ boolean Con_IsLocked(void);
 
 boolean Con_InputMode(void);
 
-void Con_SetMaxLineLength(void);
-
 uint Con_CursorPosition(void);
-
-/**
- * Changes the console font.
- * \note Part of the Doomsday public API.
- */
-void Con_SetFont(ddfont_t* cfont);
 
 char* Con_CommandLine(void);
 
 cbuffer_t* Con_ConsoleBuffer(void);
+
+fontid_t Con_Font(void);
+
+void Con_SetFont(fontid_t font);
+
+con_textfilter_t Con_PrintFilter(void);
+
+void Con_SetPrintFilter(con_textfilter_t filter);
+
+void Con_FontScale(float* scaleX, float* scaleY);
+
+void Con_SetFontScale(float scaleX, float scaleY);
 
 void Con_AddCommand(const ccmd_t* cmd);
 void Con_AddCommandList(const ccmd_t* cmdList);

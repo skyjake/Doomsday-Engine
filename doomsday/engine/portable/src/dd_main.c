@@ -904,7 +904,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_InitModels();
 
     UI_LoadTextures();
-    //GL_InitFont();
+    //GL_LoadSystemFonts();
     Rend_ParticleLoadExtraTextures();
 
     Def_PostInit();
@@ -913,7 +913,9 @@ static int DD_ChangeGameWorker(void* paramaters)
         Con_SetProgress(150);
 
     DD_ReadGameHelp();
-    Con_InitUI(); // Update the console title display(s).
+
+    // Re-init to update the title, background etc.
+    Rend_ConsoleInit();
 
     // Reset the tictimer so than any fractional accumulation is not added to
     // the tic/game timer of the newly-loaded game.
@@ -1021,7 +1023,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
             // States have changed, the states are unknown.
             ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
 
-            ddpl->inGame = false;
+            //ddpl->inGame = false;
             ddpl->flags &= ~DDPF_CAMERA;
 
             ddpl->fixedColorMap = 0;
@@ -1033,7 +1035,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         P_SetCurrentMap(0);
         Cl_Reset();
 
-        R_ShutdownCompositeFonts();
         R_ShutdownVectorGraphics();
         R_ClearPatchTexs();
 
@@ -1057,7 +1058,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIDs();
 
-        R_InitCompositeFonts();
         R_InitVectorGraphics();
 
         R_InitViewBorder();
@@ -1339,6 +1339,7 @@ int DD_Main(void)
     }
 
     Sys_Init();
+    FR_Init();
 
     // Enter busy mode until startup complete.
     Con_InitProgress(200);

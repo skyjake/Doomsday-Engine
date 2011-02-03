@@ -39,6 +39,7 @@
 #include "de_console.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "de_graphics.h"
 
 #include "pathdirectory.h"
 #include "resourcenamespace.h"
@@ -270,6 +271,17 @@ int Def_GetSoundNum(const char* id)
             return i;
     }
 
+    return -1;
+}
+
+int Def_GetCompositeFont(const char* id)
+{
+    int i;
+    if(!id || !id[0])
+        return -1;
+    for(i = 0; i < defs.count.compositeFonts.num; ++i)
+        if(!strcmp(defs.compositeFonts[i].id, id))
+            return i;
     return -1;
 }
 
@@ -843,6 +855,15 @@ void Def_Read(void)
     // Any definition hooks?
     DD_CallHooks(HOOK_DEFS, 0, &defs);
 
+    // Composite fonts. 
+    for(i = defs.count.compositeFonts.num; i-- > 0; )
+    {
+        ded_compositefont_t* cfont = defs.compositeFonts + i;
+        if(0 != FR_SafeFontIdForName(cfont->id))
+            continue;
+        FR_CreateFontFromDef(cfont);
+    }
+
     // Sprite names.
     DED_NewEntries((void**) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
     for(i = 0; i < countSprNames.num; ++i)
@@ -1090,25 +1111,27 @@ void Def_Read(void)
 
     // Log a summary of the definition database.
     Con_Message("Definitions:\n");
+    Def_CountMsg(defs.count.groups.num, "animation groups");
+    Def_CountMsg(defs.count.compositeFonts.num, "composite fonts");
+    Def_CountMsg(defs.count.details.num, "detail textures");
+    Def_CountMsg(defs.count.finales.num, "finales");
+    Def_CountMsg(defs.count.lights.num, "lights");
+    Def_CountMsg(defs.count.lineTypes.num, "line types");
+    Def_CountMsg(defs.count.mapInfo.num, "map infos");
+    Def_CountMsg(defs.count.materials.num, "materials");
+    Def_CountMsg(defs.count.models.num, "models");
+    Def_CountMsg(defs.count.ptcGens.num, "particle generators");
+    Def_CountMsg(defs.count.skies.num, "skies");
+    Def_CountMsg(defs.count.sectorTypes.num, "sector types");
+    Def_CountMsg(defs.count.music.num, "songs");
+    Def_CountMsg(countSounds.num, "sound effects");
     Def_CountMsg(countSprNames.num, "sprite names");
     Def_CountMsg(countStates.num, "states");
-    Def_CountMsg(countMobjInfo.num, "things");
-    Def_CountMsg(defs.count.models.num, "models");
-    Def_CountMsg(defs.count.lights.num, "lights");
-    Def_CountMsg(countSounds.num, "sound effects");
-    Def_CountMsg(defs.count.music.num, "songs");
-    Def_CountMsg(countTexts.num, "text strings");
-    Def_CountMsg(defs.count.ptcGens.num, "particle generators");
-    Def_CountMsg(defs.count.details.num, "detail textures");
-    Def_CountMsg(defs.count.groups.num, "animation groups");
     Def_CountMsg(defs.count.decorations.num, "surface decorations");
     Def_CountMsg(defs.count.reflections.num, "surface reflections");
-    Def_CountMsg(defs.count.materials.num, "materials");
-    Def_CountMsg(defs.count.mapInfo.num, "map infos");
-    Def_CountMsg(defs.count.skies.num, "skies");
-    Def_CountMsg(defs.count.finales.num, "finales");
-    Def_CountMsg(defs.count.lineTypes.num, "line types");
-    Def_CountMsg(defs.count.sectorTypes.num, "sector types");
+    Def_CountMsg(countTexts.num, "text strings");
+    Def_CountMsg(defs.count.textureEnv.num, "texture environments");
+    Def_CountMsg(countMobjInfo.num, "things");
 
     defsInited = true;
 }

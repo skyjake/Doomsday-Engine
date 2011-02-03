@@ -679,8 +679,9 @@ static __inline uint pageForObjectType(fi_obtype_e type)
 }
 
 /**
- * Find an @c fi_object_t of type with the type-unique name.
+ * Find an object of the specified type with the type-unique name.
  * @param name  Unique name of the object we are looking for.
+
  * @return  Ptr to @c fi_object_t Either:
  *          a) Existing object associated with unique @a name.
  *          b) New object with unique @a name.
@@ -688,12 +689,24 @@ static __inline uint pageForObjectType(fi_obtype_e type)
 static fi_object_t* getObject(finaleinterpreter_t* fi, fi_obtype_e type, const char* name)
 {
     assert(name && name);
-    {
-    fi_objectid_t id;
     // An existing object?
+    { fi_objectid_t id;
     if((id = findObjectIdForName(&fi->_namespace, name, type)))
         return FI_Object(id);
-    return FIPage_AddObject(fi->_pages[pageForObjectType(type)], addObjectToNamespace(&fi->_namespace, name, FI_NewObject(type, name)));
+    }
+
+    // A new object.
+    { fi_object_t* obj = FI_NewObject(type, name);
+    uint pageIdx = pageForObjectType(type);
+    switch(type)
+    {
+    case FI_TEXT:
+        FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[pageIdx], 0));
+        break;
+    default:
+        break;
+    }
+    return FIPage_AddObject(fi->_pages[pageIdx], addObjectToNamespace(&fi->_namespace, name, obj));
     }
 }
 
@@ -852,6 +865,13 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
      */
     fi->_pages[PAGE_PICS] = FI_NewPage(0);
     fi->_pages[PAGE_TEXT] = FI_NewPage(0);
+
+    // Configure the predefined fonts. We only need to configure the Text page.
+    // \todo These are game-domain fonts. Refactor the API either allowing games
+    // to further configure Finale pages once a script has been loaded, or, allow
+    // attributes to be passed along with the call to FinaleInterpreter_LoadScript
+    FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], 0, FR_SafeFontIdForName("a"));
+    FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], 0, FR_SafeFontIdForName("b"));
 
     // Configure the predefined colors. We want the same for both pages.
     { uint i;
@@ -1870,8 +1890,8 @@ DEFFC(DeleteText)
 
 DEFFC(PredefinedColor)
 {
-    FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], MINMAX_OF(1, OP_INT(0), 9)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
-    FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], MINMAX_OF(1, OP_INT(0), 9)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(TextRGB)
@@ -1939,8 +1959,8 @@ DEFFC(Font)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     const char* fontName = OP_CSTRING(1);
-    compositefontid_t font;
-    if((font = R_CompositeFontNumForName(fontName)))
+    fontid_t font;
+    if((font = FR_SafeFontIdForName(fontName)))
     {
         ((fidata_text_t*)obj)->font = font;
         return;
@@ -1951,13 +1971,17 @@ DEFFC(Font)
 DEFFC(FontA)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->font = R_CompositeFontNumForName("a");
+    fontid_t font;
+    if((font = FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 0)))
+        ((fidata_text_t*)obj)->font = font;
 }
 
 DEFFC(FontB)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->font = R_CompositeFontNumForName("b");
+    fontid_t font;
+    if((font = FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 1)))
+        ((fidata_text_t*)obj)->font = font;
 }
 
 DEFFC(NoMusic)

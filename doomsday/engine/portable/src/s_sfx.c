@@ -1,10 +1,10 @@
-/**\file
+/**\file s_sfx.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * s_sfx.c: Sound Effects
+ * Sound Effects.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -1212,28 +1212,31 @@ void Sfx_MapChange(void)
 
 void Sfx_DebugInfo(void)
 {
-    int                 i, lh = FR_TextHeight("W") - 3;
-    sfxchannel_t*       ch;
-    char                buf[200];
-    uint                cachesize, ccnt;
+    int i, lh;
+    sfxchannel_t* ch;
+    char buf[200];
+    uint cachesize, ccnt;
 
     glEnable(GL_TEXTURE_2D);
     glColor3f(1, 1, 0);
+
+    FR_SetFont(glFontFixed);
+    lh = FR_TextFragmentHeight("W") - 3;
     if(!sfxAvail)
     {
-        FR_ShadowTextOut("Sfx disabled", 0, 0);
+        FR_DrawTextFragment2("Sfx disabled", 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
         glDisable(GL_TEXTURE_2D);
         return;
     }
 
     if(refMonitor)
-        FR_ShadowTextOut("!", 0, 0);
+        FR_DrawTextFragment2("!", 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
 
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
     glColor3f(1, 1, 1);
-    FR_ShadowTextOut(buf, 10, 0);
+    FR_DrawTextFragment2(buf, 10, 0, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
@@ -1248,7 +1251,7 @@ void Sfx_DebugInfo(void)
                 !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
                 ch->startTime, ch->buffer ? ch->buffer->endTime : 0);
-        FR_ShadowTextOut(buf, 5, lh * (1 + i * 2));
+        FR_DrawTextFragment2(buf, 5, lh * (1 + i * 2), DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
 
         if(!ch->buffer)
             continue;
@@ -1263,7 +1266,7 @@ void Sfx_DebugInfo(void)
                 id : "", ch->buffer->sample ? ch->buffer->sample->size : 0,
                 ch->buffer->bytes, ch->buffer->rate / 1000, ch->buffer->length,
                 ch->buffer->cursor, ch->buffer->written);
-        FR_ShadowTextOut(buf, 5, lh * (2 + i * 2));
+        FR_DrawTextFragment2(buf, 5, lh * (2 + i * 2), DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
     }
 
     glDisable(GL_TEXTURE_2D);

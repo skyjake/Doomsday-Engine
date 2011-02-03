@@ -887,7 +887,8 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
             glScalef(-scale, -scale, 1);
 
             glEnable(GL_TEXTURE_2D);
-            UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+            FR_SetFont(glFontFixed);
+            UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
             glDisable(GL_TEXTURE_2D);
 
             glMatrixMode(GL_MODELVIEW);

@@ -1,10 +1,10 @@
-/**\file
+/**\file ui2_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,11 +40,11 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-fidata_text_t*      P_CreateText(fi_objectid_t id, const char* name);
-void                P_DestroyText(fidata_text_t* text);
+fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font);
+void P_DestroyText(fidata_text_t* text);
 
-fidata_pic_t*       P_CreatePic(fi_objectid_t id, const char* name);
-void                P_DestroyPic(fidata_pic_t* pic);
+fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name);
+void P_DestroyPic(fidata_pic_t* pic);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -339,7 +339,7 @@ void UI_Shutdown(void)
 void UI2_Ticker(timespan_t ticLength)
 {
     // Always tic.
-    R_TextTicker(ticLength);
+    FR_Ticker(ticLength);
 
     if(!inited)
         return;
@@ -391,7 +391,7 @@ void P_DestroyPic(fidata_pic_t* pic)
     FIObject_Destructor((fi_object_t*)pic);
 }
 
-fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
+fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font)
 {
 #define LEADING             (11.f/7-1)
 
@@ -403,13 +403,13 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
     t->id = id;
     t->flags.looping = false;
     t->animComplete = true;
-    t->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
+    t->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN;
     objectSetName((fi_object_t*)t, name);
     AnimatorVector4_Init(t->color, 1, 1, 1, 1);
     AnimatorVector3_Init(t->scale, 1, 1, 1);
 
     t->wait = 3;
-    t->font = R_CompositeFontNumForName("a");
+    t->font = font;
     t->lineHeight = LEADING;
 
     return t;
@@ -473,8 +473,8 @@ fi_object_t* FI_NewObject(fi_obtype_e type, const char* name)
     fi_object_t* obj;
     switch(type)
     {
-    case FI_TEXT: obj = (fi_object_t*) P_CreateText(objectsUniqueId(&objects), name);   break;
-    case FI_PIC:  obj = (fi_object_t*) P_CreatePic(objectsUniqueId(&objects), name);    break;
+    case FI_TEXT: obj = (fi_object_t*) P_CreateText(objectsUniqueId(&objects), name, 0);   break;
+    case FI_PIC:  obj = (fi_object_t*) P_CreatePic(objectsUniqueId(&objects), name);       break;
     default:
         Con_Error("FI_NewObject: Unknown type %i.", type);
     }
@@ -745,6 +745,20 @@ void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, f
     if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
     AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
+}
+
+void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontid_t font)
+{
+    if(!p) Con_Error("FIPage_SetPredefinedFont: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_SetPredefinedFont: Invalid font id %u.", idx);
+    p->_preFont[idx] = font;
+}
+
+fontid_t FIPage_PredefinedFont(fi_page_t* p, uint idx)
+{
+    if(!p) Con_Error("FIPage_PredefinedFont: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_PredefinedFont: Invalid font id %u.", idx);
+    return p->_preFont[idx];
 }
 
 #if _DEBUG
@@ -1171,7 +1185,7 @@ void FIData_TextThink(fi_object_t* obj)
     t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength((fi_object_t*)t));
 }
 
-static int textLineWidth(const char* text, compositefontid_t font)
+static int textLineWidth(const char* text)
 {
     int width = 0;
 
@@ -1188,7 +1202,7 @@ static int textLineWidth(const char* text, compositefontid_t font)
             if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
                 continue;
         }
-        width += GL_CharWidth(*text, font);
+        width += FR_CharWidth(*text);
     }
 
     return width;
@@ -1226,12 +1240,13 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     glEnable(GL_TEXTURE_2D);
 
     // Draw it.
+    FR_SetFont(t->font);
     // Set color zero (the normal color).
     useColor(t->color, 4);
     for(cnt = 0, ptr = t->text; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
     {
         if(linew < 0)
-            linew = textLineWidth(ptr, t->font);
+            linew = textLineWidth(ptr);
 
         ch = *ptr;
         if(*ptr == '\\') // Escape?
@@ -1278,7 +1293,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
             if(*ptr == 'n' || *ptr == 'N') // Newline?
             {
                 x = 0;
-                y += GL_CharHeight('A', t->font) * (1+t->lineHeight);
+                y += FR_CharHeight('A') * (1+t->lineHeight);
                 linew = -1;
                 cnt++; // Include newlines in the wait count.
                 continue;
@@ -1292,8 +1307,8 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
         if(t->scale[1].value * y + t->pos[1].value >= -t->scale[1].value * t->lineHeight &&
            t->scale[1].value * y + t->pos[1].value < SCREENHEIGHT)
         {
-            GL_DrawChar2(ch, (t->textFlags & DTF_ALIGN_LEFT) ? x : x - linew / 2, y, t->font);
-            x += GL_CharWidth(ch, t->font);
+            FR_DrawChar(ch, (t->textFlags & DTF_ALIGN_LEFT) ? x : x - linew / 2, y);
+            x += FR_CharWidth(ch);
         }
 
         cnt++; // Actual character drawn.
@@ -1357,4 +1372,13 @@ void FIData_TextCopy(fi_object_t* obj, const char* str)
         t->text = Z_Malloc(len, PU_APPSTATIC, 0);
         memcpy(t->text, str, len);
     }
+}
+
+void FIData_TextSetFont(fi_object_t* obj, fontid_t font)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetFont: Not a FI_TEXT.");
+
+    if(font != 0)
+        t->font = font;
 }

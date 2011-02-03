@@ -392,12 +392,16 @@ void R_SkyTicker(void)
 
 void R_SkyUpdate(void)
 {
-    int i;
+    if(novideo || isDedicated)
+        return;
+    { int i;
     for(i = 0; i < MAXSKYLAYERS; ++i)
     {
         skylayer_t* slayer = &skyLayers[i];
+        if(slayer->tex)
+            glDeleteTextures(1, &slayer->tex);
         slayer->tex = 0;
-    }
+    }}
 }
 
 const float* R_SkyAmbientColor(void)

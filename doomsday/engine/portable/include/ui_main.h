@@ -1,10 +1,10 @@
-/**\file
+/**\file ui_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -347,11 +347,9 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* 
 
 void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha, ui_color_t* background, boolean down, boolean disabled, int arrow);
 
-/// Draw white, shadowed text.
-void UI_TextOut(const char* text, int x, int y);
-
 /// Draw shadowed text.
-void UI_TextOutEx(const char* text, int x, int y, int horizCenter, int vertCenter, ui_color_t* color, float alpha);
+void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha);
+void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha, short flags);
 int UI_TextOutWrap(const char* text, int x, int y, int w, int h);
 
 /**

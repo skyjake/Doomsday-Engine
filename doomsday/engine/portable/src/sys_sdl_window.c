@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_sdl_window.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_sdl_window.c: Cross-platform, SDL-based window management.
+ * Cross-platform, SDL-based window management.
  *
  * This code wraps SDL window management routines in order to provide
  * common behavior. The availabilty of features and behavioral traits can
@@ -736,7 +736,6 @@ extern boolean usingFog;
             if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-            R_UnloadCompositeFonts();
             R_UnloadVectorGraphics();
             Rend_ParticleClearExtraTextures();
             GL_ClearSystemTextures();

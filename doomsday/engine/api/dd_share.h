@@ -1032,18 +1032,6 @@ typedef unsigned int colorpaletteid_t;
 #define CBLF_TRANSMIT       0x80000000 /// If server, sent to all clients.
 /*@}*/
 
-// Font flags.
-#define DDFONT_WHITE        0x1 // The font data is white, can be colored.
-
-typedef struct {
-    int             flags;
-    float           sizeX, sizeY;   // The scale.
-    int             height;
-    int           (*drawText) (const char* text, int x, int y);
-    int           (*getWidth) (const char* text);
-    void          (*filterText) (char* text); // Maybe alters text.
-} ddfont_t;
-
 /// Argument type for B_BindingsForControl().
 typedef enum bfcinverse_e {
     BFCI_BOTH,

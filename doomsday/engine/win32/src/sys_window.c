@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_window.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_window.c: Win32-specific window management.
+ * Win32-specific window management.
  *
  * This code wraps system-specific window management routines in order to
  * provide a cross-platform interface and common behavior.
@@ -1198,7 +1198,6 @@ extern boolean usingFog;
             if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-            R_UnloadCompositeFonts();
             R_UnloadVectorGraphics();
             Rend_ParticleClearExtraTextures();
             GL_ClearSystemTextures();
