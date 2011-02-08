@@ -43,9 +43,9 @@ typedef enum {
 /**
  * FileDirectory. Core system component representing a hierarchical file path structure.
  *
- * A specialization of de::PathDirectory which implements a buffered search path list and
- * automatic population of the directory itself from the virtual file system. Also, paths
- * are resolved prior to pushing them into the directory.
+ * A specialization of de::PathDirectory which implements automatic population of the
+ * directory itself from the virtual file system. Also, paths are resolved prior to pushing
+ * them into the directory.
  *
  * @todo Perhaps this should be derived from PathDirectory?
  *
@@ -54,13 +54,6 @@ typedef enum {
 typedef struct filedirectory_s {
     /// First and last nodes in the directory.
     struct filedirectory_node_s* _head, *_tail;
-
-    /// @c true if the record set has been built.
-    boolean _builtRecordSet;
-
-    /// Current search path list.
-    uint _searchPathsCount;
-    struct dduri_s** _searchPaths;
 } filedirectory_t;
 
 filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char delimiter);

@@ -310,47 +310,17 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
     }
 }
 
-static dduri_t* findSearchPath(filedirectory_t* fd, const dduri_t* path)
-{
-    assert(fd && path);
-    { uint i;
-    for(i = 0; i < fd->_searchPathsCount; ++i)
-    {
-        if(Uri_Equality(fd->_searchPaths[i], path))
-            return fd->_searchPaths[i];
-    }}
-    return 0;
-}
-
-static void addPathToSearchPaths(filedirectory_t* fd, const dduri_t* path)
-{
-    assert(fd && path);
-    fd->_searchPaths = realloc(fd->_searchPaths, sizeof(*fd->_searchPaths) * ++fd->_searchPathsCount);
-    fd->_searchPaths[fd->_searchPathsCount-1] = Uri_ConstructCopy(path);
-}
-
-static void addPathsToSearchPaths(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount)
-{
-    assert(fd && paths && pathsCount != 0);
-    { uint i;
-    for(i = 0; *paths && i < pathsCount; ++i, paths++)
-    {
-        if(!findSearchPath(fd, *paths))
-        {   // Add this new path to the list.
-            addPathToSearchPaths(fd, *paths);
-        }
-    }}
-}
-
 static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters)
+    const dduri_t* const* searchPaths, uint searchPathsCount,
+    int (*callback) (const filedirectory_node_t* node, void* paramaters),
+    void* paramaters)
 {
     assert(fd);
     { uint i;
-    for(i = 0; i < fd->_searchPathsCount; ++i)
+    for(i = 0; i < searchPathsCount; ++i)
     {
         ddstring_t* searchPath;
-        if((searchPath = Uri_Resolved(fd->_searchPaths[i])) != 0)
+        if((searchPath = Uri_Resolved(searchPaths[i])) != 0)
         {
             // Let's try to make it a relative path.
             F_RemoveBasePath(searchPath, searchPath);
@@ -361,7 +331,6 @@ static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
             Str_Delete(searchPath);
         }
     }}
-    fd->_builtRecordSet = true;
 }
 
 static void printPaths(const dduri_t* const* paths, size_t pathsCount)
@@ -395,19 +364,12 @@ filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char de
                   "new FileDirectory.", (unsigned long) sizeof(*fd));
 
     fd->_head = fd->_tail = 0;
-    fd->_builtRecordSet = false;
     if(pathList)
     {
         size_t count;
         dduri_t** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        addPathsToSearchPaths(fd, uris, (uint)count);
-        resolveAndAddSearchPathsToDirectory(fd, 0, 0);
+        resolveAndAddSearchPathsToDirectory(fd, uris, (uint)count, 0, 0);
         F_DestroyUriList(uris);
-    }
-    else
-    {
-        fd->_searchPaths = 0;
-        fd->_searchPathsCount = 0;
     }
     return fd;
 }
@@ -457,13 +419,6 @@ filedirectory_t* FileDirectory_ConstructDefault(void)
 void FileDirectory_Destruct(filedirectory_t* fd)
 {
     assert(fd);
-    if(fd->_searchPaths)
-    {
-        uint i;
-        for(i = 0; i < fd->_searchPathsCount; ++i)
-            Uri_Destruct(fd->_searchPaths[i]);
-        free(fd->_searchPaths);
-    }
     clearDirectory(fd);
     free(fd);
 }
@@ -472,7 +427,6 @@ void FileDirectory_Clear(filedirectory_t* fd)
 {
     assert(fd);
     clearDirectory(fd);
-    fd->_builtRecordSet = false;
 }
 
 void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
@@ -489,8 +443,7 @@ void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, u
 
     VERBOSE( Con_Message("Adding paths to FileDirectory ...\n") );
     VERBOSE2( printPaths(paths, pathsCount) );
-    addPathsToSearchPaths(fd, paths, pathsCount);
-    resolveAndAddSearchPathsToDirectory(fd, callback, paramaters);
+    resolveAndAddSearchPathsToDirectory(fd, paths, pathsCount, callback, paramaters);
 }
 
 void FileDirectory_AddPaths2(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
@@ -535,11 +488,6 @@ int FileDirectory_Iterate2(filedirectory_t* fd, filedirectory_pathtype_t type,
     void* paramaters)
 {
     assert(fd && (type == FDT_ANY || VALID_FILEDIRECTORY_PATHTYPE(type)));
-    // Time to build the record set?
-    if(!fd->_builtRecordSet && fd->_searchPathsCount != 0)
-    {
-        resolveAndAddSearchPathsToDirectory(fd, 0, 0);
-    }
     return const_iteratePaths(fd, type, parent, callback, paramaters);
 }
 
@@ -560,12 +508,6 @@ boolean FileDirectory_FindPath(filedirectory_t* fd, const char* _searchPath,
 
     if(!_searchPath || !_searchPath[0])
         return false;
-
-    // Time to build the record set?
-    if(!fd->_builtRecordSet && fd->_searchPathsCount != 0)
-    {
-        resolveAndAddSearchPathsToDirectory(fd, 0, 0);
-    }
 
     // Convert the raw path into one we can process.
     Str_Init(&searchPath); Str_Set(&searchPath, _searchPath);
