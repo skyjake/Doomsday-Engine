@@ -163,7 +163,7 @@ void R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets)
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
 
     if(useOffsets)
     {
@@ -191,7 +191,7 @@ void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, D
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
 
     GL_DrawRectTiled(x, y, w, h, p->width, p->height);
 }
@@ -236,8 +236,10 @@ void R_DrawViewBorder(void)
     mat = Materials_ToMaterial(Materials_NumForName2(borderGraphicsNames[BG_BACKGROUND]));
     if(mat)
     {
-        GL_SetMaterial(mat);
-        GL_DrawCutRectTiled(0, 0, port->width, port->height, mat->width, mat->height, 0, 0,
+        material_snapshot_t ms;
+        Materials_Prepare(&ms, mat, true, NULL);
+        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_DrawCutRectTiled(0, 0, port->width, port->height, ms.width, ms.height, 0, 0,
                             viewwindowx - border, viewwindowy - border,
                             viewwidth + 2 * border, viewheight + 2 * border);
     }
