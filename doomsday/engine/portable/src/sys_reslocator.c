@@ -218,7 +218,6 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* search
     ddstring_t* foundPath, resourcenamespace_t* rnamespace)
 {
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
-
     // Is there a namespace we should use?
     if(rnamespace && ResourceNamespace_Find2(rnamespace, searchPath, foundPath))
     {
@@ -226,11 +225,10 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* search
             F_PrependBasePath(foundPath, foundPath);
         return true;
     }
-
-    if(F_Access(Str_Text(searchPath)))
+    if(0 != F_Access(Str_Text(searchPath)))
     {
         if(foundPath)
-            Str_Copy(foundPath, searchPath);
+            F_PrependBasePath(foundPath, searchPath);
         return true;
     }
     return false;

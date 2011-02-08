@@ -685,18 +685,18 @@ int Zip_Iterate(int (*callback) (const ddstring_t*, void*))
 
 zipindex_t Zip_Find(const char* searchPath)
 {
-    assert(searchPath);
+    assert(searchPath && searchPath[0]);
     {
     zipindex_t begin, end, mid;
-    filename_t fullPath;
+    ddstring_t fullPath;
     int relation;
 
     if(numZipFiles == 0)
         return 0; // None registered yet.
 
     // Convert to an absolute path.
-    strncpy(fullPath, searchPath, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolute(fullPath, FILENAME_T_MAXLEN);
+    Str_Init(&fullPath); Str_Set(&fullPath, searchPath);
+    F_PrependBasePath(&fullPath, &fullPath);
 
     // Init the search.
     begin = 0;
@@ -707,9 +707,10 @@ zipindex_t Zip_Find(const char* searchPath)
         mid = (begin + end) / 2;
 
         // How does this compare?
-        relation = strnicmp(fullPath, Str_Text(&zipFiles[mid].name), FILENAME_T_MAXLEN);
+        relation = Str_CompareIgnoreCase(&fullPath, Str_Text(&zipFiles[mid].name));
         if(!relation)
         {   // Got it! We return a 1-based index.
+            Str_Free(&fullPath);
             return mid + 1;
         }
         if(relation < 0)
@@ -717,7 +718,10 @@ zipindex_t Zip_Find(const char* searchPath)
             if(mid > 0)
                 end = mid - 1;
             else
+            {
+                Str_Free(&fullPath);
                 return 0; // Not found.
+            }
         }
         else
         {   // Then it must be in the second half.
@@ -726,6 +730,7 @@ zipindex_t Zip_Find(const char* searchPath)
     }
 
     // It wasn't found.
+    Str_Free(&fullPath);
     return 0;
     }
 }

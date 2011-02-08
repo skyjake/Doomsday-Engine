@@ -784,15 +784,16 @@ DFILE* F_Open(const char* path, const char* mode)
 
     // Make it a full path.
     M_TranslatePath(trans, path, FILENAME_T_MAXLEN);
-    _fullpath(full, trans, 255);
 
     if(!strchr(mode, 'f')) // Doesn't need to be a real file?
     {
         // First check the Zip directory.
         { zipindex_t foundZip;
-        if((foundZip = Zip_Find(full)) != 0)
+        if((foundZip = Zip_Find(trans)) != 0)
             return F_OpenZip(foundZip, dontBuffer);
         }
+
+        _fullpath(full, trans, 255);
 
         // Check through the dir/WAD direcs.
         { int i;
@@ -803,11 +804,13 @@ DFILE* F_Open(const char* path, const char* mode)
                 return F_OpenLump(rec->lumpName, dontBuffer);
         }}
     }
-
-    if(strchr(mode, 'w'))
+    else if(strchr(mode, 'w'))
+    {
         return NULL; // Must be in a WAD...
+    }
 
     // Try to open as a real file, then.
+    _fullpath(full, trans, 255);
     return F_OpenFile(full, mode);
 }
 
