@@ -89,6 +89,8 @@ Source: "..\..\engine\data\graphics\background.pcx"; DestDir: "{app}\data\graphi
 Source: "..\..\engine\data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "..\..\engine\data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "..\..\engine\data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "..\..\engine\data\fonts\normal12.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
+Source: "..\..\engine\data\fonts\normal18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\jDoom
 Source: "jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\jHeretic
 Source: "jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\jHexen
