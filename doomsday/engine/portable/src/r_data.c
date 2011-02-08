@@ -1838,7 +1838,7 @@ void R_InitFlats(void)
 
 uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
 {
-    char realPath[256], name[9];
+    char name[9];
     const gltexture_t* glTex;
     skinname_t* st;
     int id;
@@ -1846,12 +1846,8 @@ uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
     if(!skin[0])
         return 0;
 
-    // Convert the given skin file to a full pathname.
-    // \fixme Why is this done here and not during init??
-    _fullpath(realPath, skin, 255);
-
     // Have we already created one for this?
-    if((id = R_GetSkinNumForName(realPath)))
+    if((id = R_GetSkinNumForName(skin)))
         return id;
 
     if(M_NumDigits(numSkinNames + 1) > 8)
@@ -1874,12 +1870,12 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
 
-    strncpy(st->path, realPath, FILENAME_T_MAXLEN);
+    strncpy(st->path, skin, FILENAME_T_MAXLEN);
     st->id = glTex->id;
 
     if(verbose)
     {
-        Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin), (long) (1 + (st - skinNames)));
+        Con_Message("SkinTex: \"%s\" -> %li\n", M_PrettyPath(skin), (long) (1 + (st - skinNames)));
     }
     return 1 + (st - skinNames); // 1-based index.
 }
@@ -1900,7 +1896,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         memset(&mydir, 0, sizeof(mydir));
         Dir_FileDir(modelfn, &mydir);
         Str_Appendf(&searchPath, "%s%s;", mydir.path, skin);
-        found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
+        found = 0 != F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath);
     }
 
     if(!found)
@@ -1953,9 +1949,6 @@ uint R_GetSkinNumForName(const char* path)
     return 0;
 }
 
-/**
- * This is called at final shutdown.
- */
 void R_DestroySkins(void)
 {
     M_Free(skinNames);

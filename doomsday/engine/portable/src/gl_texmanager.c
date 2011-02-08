@@ -953,19 +953,16 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* contex
     assert(image && inst);
     {
     skinname_t* sn = &skinNames[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath;
+    ddstring_t foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "%s;", sn->path);
+    // Skin name paths are always absolute, so simply locate using it.
     Str_Init(&foundPath);
-
-    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
+    if(F_FindResource2(RC_GRAPHIC, sn->path, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
-
-    Str_Free(&searchPath);
     Str_Free(&foundPath);
 
     if(result == 0)

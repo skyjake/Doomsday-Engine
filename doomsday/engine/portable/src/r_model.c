@@ -426,20 +426,24 @@ static void R_RegisterModelSkin(model_t* mdl, int index)
 
     if(!mdl->skins[index].id)
     {   // Not found!
-        VERBOSE(Con_Printf("  %s (#%i) not found.\n", mdl->skins[index].name, index));
+        VERBOSE(Con_Printf("  \"%s\" (#%i) not found.\n", mdl->skins[index].name, index));
     }
 }
 
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(char* searchPath)
+static int R_LoadModel(const dduri_t* uri)
 {
+    const char* searchPath;
     ddstring_t foundPath;
     DFILE* file = 0;
     model_t* mdl;
     int index;
 
+    if(!uri)
+        return 0; // No model specified.
+    searchPath = Str_Text(Uri_Path(uri));
     if(!searchPath || !searchPath[0])
         return 0; // No model specified.
 
@@ -840,12 +844,12 @@ float R_GetModelVisualRadius(modeldef_t* mf)
  * Allocate room for a new skin file name. This allows using more than
  * the maximum number of skins.
  */
-static short R_NewModelSkin(model_t *mdl, const char *fileName)
+static short R_NewModelSkin(model_t* mdl, const dduri_t* path)
 {
-    int                 added = mdl->info.numSkins, i;
+    int added = mdl->info.numSkins, i;
+    const char* fileName = Str_Text(Uri_Path(path));
 
-    mdl->skins =
-        M_Realloc(mdl->skins, sizeof(dmd_skin_t) * ++mdl->info.numSkins);
+    mdl->skins = M_Realloc(mdl->skins, sizeof(dmd_skin_t) * ++mdl->info.numSkins);
     memset(mdl->skins + added, 0, sizeof(dmd_skin_t));
     strncpy(mdl->skins[added].name, fileName, 64);
     R_RegisterModelSkin(mdl, added);
@@ -858,8 +862,7 @@ static short R_NewModelSkin(model_t *mdl, const char *fileName)
             // This is the same skin file.
             // We did a lot of unnecessary work...
             mdl->info.numSkins--;
-            mdl->skins =
-                M_Realloc(mdl->skins, sizeof(dmd_skin_t) * mdl->info.numSkins);
+            mdl->skins = M_Realloc(mdl->skins, sizeof(dmd_skin_t) * mdl->info.numSkins);
             return i;
         }
     }
@@ -986,7 +989,7 @@ static void setupModel(ded_model_t *def)
         if(!subdef->filename)
             continue;
 
-        sub->model = R_LoadModel(Str_Text(Uri_Path(subdef->filename)));
+        sub->model = R_LoadModel(subdef->filename);
         if(!sub->model)
             continue;
 
@@ -1001,7 +1004,7 @@ static void setupModel(ded_model_t *def)
         if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
-            sub->skin = R_NewModelSkin(modellist[sub->model], Str_Text(Uri_Path(subdef->skinFilename)));
+            sub->skin = R_NewModelSkin(modellist[sub->model], subdef->skinFilename);
         }
         else
         {
