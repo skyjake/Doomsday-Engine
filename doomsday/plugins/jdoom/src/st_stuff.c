@@ -301,10 +301,10 @@ void ST_Register(void)
 void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-#define WIDTH (ST_WIDTH)
-#define HEIGHT (ST_HEIGHT)
-#define ORIGINX (-WIDTH/2)
-#define ORIGINY (-HEIGHT * hud->showBar)
+#define WIDTH       (ST_WIDTH)
+#define HEIGHT      (ST_HEIGHT)
+#define ORIGINX     ((int)(-WIDTH/2))
+#define ORIGINY     ((int)(-HEIGHT * hud->showBar))
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -898,7 +898,7 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive)
         return;
@@ -955,7 +955,7 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive)
         return;
@@ -1013,7 +1013,7 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive)
         return;
@@ -1063,7 +1063,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive)
         return;
@@ -1113,7 +1113,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive)
         return;
@@ -1163,7 +1163,7 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive || !deathmatch)
         return;
@@ -1209,7 +1209,7 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive)
         return;
@@ -1261,7 +1261,7 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     int i, numDrawnKeys = 0;
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive)
         return;
@@ -1349,7 +1349,7 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
 
     if(!hud->statusbarActive || deathmatch)
@@ -2009,7 +2009,7 @@ void ST_Drawer(int player)
 
         int availHeight, drawnWidth, drawnHeight;
 
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha * hud->showBar, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.

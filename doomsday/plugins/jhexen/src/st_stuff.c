@@ -429,7 +429,7 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
     float healthPos;
     int gemXOffset;
     float gemglow, rgb[3];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive)
         return;
@@ -579,10 +579,10 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
  */
 void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight)
 {
-#define WIDTH (ST_WIDTH)
-#define HEIGHT (ST_HEIGHT)
-#define ORIGINX (-WIDTH/2)
-#define ORIGINY (-HEIGHT * hud->showBar)
+#define WIDTH       (ST_WIDTH)
+#define HEIGHT      (ST_HEIGHT)
+#define ORIGINX     ((int)(-WIDTH/2))
+#define ORIGINY     ((int)(-HEIGHT * hud->showBar))
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1232,7 +1232,7 @@ void drawSBarInventoryWidget(int player, float textAlpha, float iconAlpha,
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive || !Hu_InventoryIsOpen(player))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -1366,7 +1366,7 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive || !deathmatch || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -1416,7 +1416,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive || deathmatch || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -1468,7 +1468,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -1518,7 +1518,7 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive || hud->manaACount <= 0 || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -1567,7 +1567,7 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
     if(!hud->statusbarActive || hud->manaBCount <= 0 || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -1613,7 +1613,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
     inventoryitemtype_t readyItem;
     patchinfo_t boxInfo;
     patchid_t patch;
@@ -1686,7 +1686,7 @@ void drawBlueManaIconWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -1729,7 +1729,7 @@ void drawGreenManaIconWidget(int player, float textAlpha, float iconAlpha,
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    float yOffset = ST_HEIGHT*(1-hud->showBar);
+    int yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
@@ -2382,7 +2382,7 @@ void ST_Drawer(int player)
 
         int posX, posY, availWidth, availHeight, drawnWidth, drawnHeight;
 
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha * hud->showBar, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.
