@@ -495,7 +495,7 @@ static const char* nextToken(finaleinterpreter_t* fi)
  * vector of @c fi_operand_t objects is returned. Ownership of the vector is
  * given to the caller.
  *
- * @return  Ptr to a new vector of @c fi_operand_t or @c NULL.
+ * @return  Ptr to a new vector of @c fi_operand_t or @c 0.
  */
 static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const command_t* cmd, uint* count)
 {
@@ -504,7 +504,7 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
     fi_operand_t* ops = 0;
 
     if(!cmd->operands || !cmd->operands[0])
-        return NULL;
+        return 0;
 
     origCursorPos = fi->_cp;
     numOperands = (uint)strlen(cmd->operands);
@@ -524,8 +524,8 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
                 free(ops);
             if(count)
                 *count = 0;
-            Con_Message("parseCommandArguments: Too few operands for command '%s'.\n", cmd->token);
-            return NULL;
+            Con_Error("parseCommandArguments: Too few operands for command '%s'.\n", cmd->token);
+            return 0; // Unreachable.
         }
 
         switch(typeSymbol)
@@ -537,6 +537,7 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
         case 'o': type = FVT_OBJECT;        break;
         default:
             Con_Error("parseCommandArguments: Invalid symbol '%c' in operand list for command '%s'.", typeSymbol, cmd->token);
+            return 0; // Unreachable.
         }
 
         if(!ops)
@@ -568,8 +569,6 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
             break;
         }
     } while(++i < numOperands);}
-
-    fi->_cp = origCursorPos;
 
     if(count)
         *count = numOperands;
