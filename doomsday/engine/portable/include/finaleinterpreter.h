@@ -1,10 +1,10 @@
-/**\file
+/**\file finaleinterpreter.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,14 @@
 #define FINF_END            0x02
 #define FINF_SCRIPT         0x04 // Script included.
 #define FINF_SKIP           0x10
+
+/**
+ * @defgroup finaleInterpreterCommandDirective Finale Interpreter Command Directive
+ */
+/*@{*/
+#define FID_NORMAL          0
+#define FID_ONLOAD          0x1
+/*@}*/
 
 /**
  * Interactive interpreter for Finale scripts. An instance of which is created
@@ -72,6 +80,11 @@ typedef struct finaleinterpreter_s {
 
     /// Copy of the script being interpreted.
     char* _script;
+
+    /// Beginning of the script (after any directive blocks).
+    char* _scriptBegin;
+
+    /// Current position in the script.
     const char* _cp;
 
     /// Script token read/parse buffer.

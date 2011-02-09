@@ -79,13 +79,19 @@ typedef struct {
 } fi_operand_t;
 
 typedef struct command_s {
-    char*           token;
-    const char*     operands;
-    void          (*func) (const struct command_s* cmd, const fi_operand_t* ops, finaleinterpreter_t* fi);
+    char* token;
+    const char* operands;
+
+    void (*func) (const struct command_s* cmd, const fi_operand_t* ops, finaleinterpreter_t* fi);
+
     struct command_flags_s {
-        char            when_skipping:1;
-        char            when_condition_skipping:1; // Skipping because condition failed.
+        char when_skipping:1;
+        char when_condition_skipping:1; // Skipping because condition failed.
     } flags;
+
+    /// Command execution directives NOT supported by this command.
+    /// @see finaleInterpreterCommandDirective
+    int excludeDirectives;
 } command_t;
 
 typedef struct fi_namespace_record_s {
@@ -169,6 +175,7 @@ DEFFC(Font);
 DEFFC(FontA);
 DEFFC(FontB);
 DEFFC(PredefinedColor);
+DEFFC(PredefinedFont);
 DEFFC(TextRGB);
 DEFFC(TextAlpha);
 DEFFC(TextOffX);
@@ -300,6 +307,7 @@ static const command_t commands[] = {
 
     // Misc.
     { "precolor",   "ifff", FIC_PredefinedColor }, // precolor (num) (r) (g) (b)
+    { "prefont",    "is", FIC_PredefinedFont }, // prefont (num) (font)
 
     // Deprecated Pic commands
     { "delpic",     "o", FIC_Delete }, // delpic (obj)
@@ -452,6 +460,7 @@ static void releaseScript(finaleinterpreter_t* fi)
     if(fi->_script)
         Z_Free(fi->_script);
     fi->_script = 0;
+    fi->_scriptBegin = 0;
     fi->_cp = 0;
 }
 
@@ -497,7 +506,8 @@ static const char* nextToken(finaleinterpreter_t* fi)
  *
  * @return  Ptr to a new vector of @c fi_operand_t or @c 0.
  */
-static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const command_t* cmd, uint* count)
+static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi,
+    const command_t* cmd, uint* count)
 {
     const char* origCursorPos;
     uint numOperands;
@@ -595,7 +605,8 @@ static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 /**
  * Execute one (the next) command, advance script cursor.
  */
-static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString)
+static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString,
+    int directive)
 {
     // Semicolon terminates DO-blocks.
     if(!strcmp(commandString, ";"))
@@ -614,19 +625,23 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
 
     // We're now going to execute a command.
     fi->_cmdExecuted = true;
-    // So unhide our UI page(s).
-    FIPage_MakeVisible(fi->_pages[PAGE_PICS], true);
-    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], true);
 
     // Is this a command we know how to execute?
     {const command_t* cmd;
     if((cmd = findCommand(commandString)))
     {
-        boolean requiredOperands = (cmd->operands && cmd->operands[0]);
-        fi_operand_t* ops = NULL;
+        boolean requiredOperands;
+        fi_operand_t* ops = 0;
         uint numOps;
 
+        // Is this command supported for this directive?
+        if(directive != 0 && cmd->excludeDirectives != 0 &&
+           (cmd->excludeDirectives & directive) == 0)
+            Con_Error("executeCommand: Command \"%s\" is not supported for directive %i.",
+                      cmd->token, directive);
+
         // Check that there are enough operands.
+        requiredOperands = (cmd->operands && cmd->operands[0]);
         if(!requiredOperands || (ops = parseCommandArguments(fi, cmd, &numOps)))
         {
             // Should we skip this command?
@@ -666,7 +681,13 @@ static boolean executeNextCommand(finaleinterpreter_t* fi)
     const char* token;
     if((token = nextToken(fi)))
     {
-        executeCommand(fi, token);
+        executeCommand(fi, token, FID_NORMAL);
+        // Time to unhide the object page(s)?
+        if(fi->_cmdExecuted)
+        {
+            FIPage_MakeVisible(fi->_pages[PAGE_PICS], true);
+            FIPage_MakeVisible(fi->_pages[PAGE_TEXT], true);
+        }
         return true;
     }
     return false;
@@ -807,7 +828,7 @@ static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, con
 static void stopScript(finaleinterpreter_t* fi)
 {
 #ifdef _DEBUG
-    Con_Printf("Finale End - id:%i '%.30s'\n", fi->_id, fi->_script);
+    Con_Printf("Finale End - id:%i '%.30s'\n", fi->_id, fi->_scriptBegin);
 #endif
     fi->flags.stopped = true;
     if(isServer && !(FI_ScriptFlags(fi->_id) & FF_LOCAL))
@@ -846,50 +867,22 @@ void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi)
     Z_Free(fi);
 }
 
-void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
+static __inline void findBegin(finaleinterpreter_t* fi)
 {
-    assert(fi && script && script[0]);
-    {
-    size_t size = strlen(script);
+    const char* token;
+    while(!fi->_gotoEnd && 0 != (token = nextToken(fi)) && stricmp(token, "{")) {}
+}
 
-    /**
-     * InFine imposes a strict object drawing order:
-     *
-     * 1: Background flat (or a single-color background).
-     * 2: Picture objects (globally offseted with OffX and OffY), in the order in which they were created.
-     * 3: Text objects, in the order in which they were created.
-     * 4: Filter.
-     *
-     * For this we'll need two pages; one for it's background and for Pics and another for Text and it's filter.
-     */
-    fi->_pages[PAGE_PICS] = FI_NewPage(0);
-    fi->_pages[PAGE_TEXT] = FI_NewPage(0);
+static __inline void findEnd(finaleinterpreter_t* fi)
+{
+    const char* token;
+    while(!fi->_gotoEnd && 0 != (token = nextToken(fi)) && stricmp(token, "}")) {}
+}
 
-    // Configure the predefined fonts. We only need to configure the Text page.
-    // \todo These are game-domain fonts. Refactor the API either allowing games
-    // to further configure Finale pages once a script has been loaded, or, allow
-    // attributes to be passed along with the call to FinaleInterpreter_LoadScript
-    FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], 0, FR_SafeFontIdForName("a"));
-    FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], 0, FR_SafeFontIdForName("b"));
+static void initDefaultState(finaleinterpreter_t* fi)
+{
+    assert(fi);
 
-    // Configure the predefined colors. We want the same for both pages.
-    { uint i;
-    for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
-    {
-        ui_color_t* color = UI_Color(i);
-        FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], i, color->red, color->green, color->blue, 0);
-        FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], i, color->red, color->green, color->blue, 0);
-    }}
-
-    // Hide our pages until command interpretation begins.
-    FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
-    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
-
-    // Take a copy of the script.
-    fi->_script = Z_Realloc(fi->_script, size + 1, PU_APPSTATIC);
-    memcpy(fi->_script, script, size);
-    fi->_script[size] = '\0';
-    fi->_cp = fi->_script; // Init cursor.
     fi->flags.suspended = false;
     fi->flags.paused = false;
     fi->flags.show_menu = true; // Enabled by default.
@@ -909,6 +902,71 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
     memset(fi->_gotoTarget, 0, sizeof(fi->_gotoTarget));
 
     clearEventHandlers(fi);
+}
+
+void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
+{
+    assert(fi && script && script[0]);
+    {
+    size_t size = strlen(script);
+
+    /**
+     * InFine imposes a strict object drawing order:
+     *
+     * 1: Background flat (or a single-color background).
+     * 2: Picture objects (globally offseted with OffX and OffY), in the order in which they were created.
+     * 3: Text objects, in the order in which they were created.
+     * 4: Filter.
+     *
+     * For this we'll need two pages; one for it's background and for Pics and another for Text and it's filter.
+     */
+    fi->_pages[PAGE_PICS] = FI_NewPage(0);
+    fi->_pages[PAGE_TEXT] = FI_NewPage(0);
+
+    // Hide our pages until command interpretation begins.
+    FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
+    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
+
+    // Take a copy of the script.
+    fi->_script = Z_Realloc(fi->_script, size + 1, PU_APPSTATIC);
+    memcpy(fi->_script, script, size);
+    fi->_script[size] = '\0';
+    fi->_scriptBegin = fi->_script;
+    fi->_cp = fi->_script; // Init cursor.
+
+    initDefaultState(fi);
+
+    // Locate the start of the script.
+    if(0 != nextToken(fi))
+    {
+        // The start of the script may include blocks of event directive
+        // commands. These commands are automatically executed in response
+        // to their associated events.
+        if(!stricmp(fi->_token, "OnLoad"))
+        {
+            findBegin(fi);
+            for(;;)
+            {
+                nextToken(fi);
+                if(!stricmp(fi->_token, "}"))
+                    goto end_read;
+                if(!executeCommand(fi, fi->_token, FID_ONLOAD))
+                    Con_Error("FinaleInterpreter::LoadScript: Unknown error"
+                              "occured executing directive \"OnLoad\".");
+            }
+            findEnd(fi);
+end_read:
+            // Skip over any trailing whitespace to position the read cursor
+            // on the first token.
+            while(*fi->_cp && isspace(*fi->_cp))
+                fi->_cp++;
+
+            // Calculate the new script entry point and restore default state.
+            fi->_scriptBegin = fi->_script + (fi->_cp - fi->_script);
+            fi->_cp = fi->_scriptBegin;
+            initDefaultState(fi);
+        }
+    }
 
     // Any hooks?
     DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, fi->_id, 0);
@@ -1060,7 +1118,7 @@ boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* mark
     fi->_waitingPic = NULL;
 
     // Rewind the script so we can jump anywhere.
-    fi->_cp = fi->_script;
+    fi->_cp = fi->_scriptBegin;
     return true;
 }
 
@@ -1893,6 +1951,20 @@ DEFFC(PredefinedColor)
     FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
+DEFFC(PredefinedFont)
+{
+    const char* fontName = OP_CSTRING(1);
+    fontid_t font;
+    if((font = FR_SafeFontIdForName(fontName)))
+    {
+        int idx = MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS)-1;
+        FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], idx, font);
+        FIPage_SetPredefinedFont(fi->_pages[PAGE_PICS], idx, font);
+        return;
+    }
+    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", fontName);
+}
+
 DEFFC(TextRGB)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
@@ -1961,7 +2033,7 @@ DEFFC(Font)
     fontid_t font;
     if((font = FR_SafeFontIdForName(fontName)))
     {
-        ((fidata_text_t*)obj)->font = font;
+        FIData_TextSetFont(obj, font);
         return;
     }
     Con_Message("FIC_Font: Warning, unknown font '%s'.\n", fontName);
@@ -1970,17 +2042,13 @@ DEFFC(Font)
 DEFFC(FontA)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    fontid_t font;
-    if((font = FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 0)))
-        ((fidata_text_t*)obj)->font = font;
+    FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 0));
 }
 
 DEFFC(FontB)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    fontid_t font;
-    if((font = FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 1)))
-        ((fidata_text_t*)obj)->font = font;
+    FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 1));
 }
 
 DEFFC(NoMusic)

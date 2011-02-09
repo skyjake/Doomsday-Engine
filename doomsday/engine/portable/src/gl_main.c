@@ -115,7 +115,6 @@ float   glNearClip;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initGLOk = false;
-static boolean varFontInited = false;
 
 static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;

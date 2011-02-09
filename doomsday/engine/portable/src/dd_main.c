@@ -439,6 +439,36 @@ void DD_DestroyGameInfo(void)
     currentGameInfoIndex = 0;
 }
 
+/**
+ * Begin the Doomsday title animation sequence.
+ */
+void DD_StartTitle(void)
+{
+    ddstring_t setupCmds;
+    ddfinale_t fin;
+
+    if(!Def_Get(DD_DEF_FINALE, "background", &fin))
+        return;
+
+    Str_Init(&setupCmds);
+    // Configure the predefined fonts.
+    { const char* font = GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height);
+    int i;
+    for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
+        Str_Appendf(&setupCmds, "prefont %i %s\n", i, font);
+    }
+    // Configure the predefined colors.
+    { int i;
+    for(i = 1; i <= MIN_OF(NUM_UI_COLORS, FIPAGE_NUM_PREDEFINED_FONTS); ++i)
+    {
+        ui_color_t* color = UI_Color(i-1);
+        Str_Appendf(&setupCmds, "precolor %i %f %f %f\n", i, color->red, color->green, color->blue);
+    }}
+
+    titleFinale = FI_Execute2(fin.script, FF_LOCAL, Str_Text(&setupCmds));
+    Str_Free(&setupCmds);
+}
+
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
@@ -607,7 +637,7 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
  * \todo dj: This has been moved here so that strings like the game
  * title and author can be overridden (e.g., via DEHACKED). Make it so!
  */
-void printGameInfoBanner(gameinfo_t* info)
+static void printGameInfoBanner(gameinfo_t* info)
 {
     assert(info);
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
@@ -955,11 +985,8 @@ static int DD_ChangeGameWorker(void* paramaters)
         printGameInfoBanner(p->info);
     }
     else
-    {
-        // Lets play a nice title animation.
-        ddfinale_t fin;
-        if(Def_Get(DD_DEF_FINALE, "background", &fin))
-            titleFinale = FI_Execute(fin.script, FF_LOCAL);
+    {   // Lets play a nice title animation.
+        DD_StartTitle();
     }
 
     if(p->initiatedBusyMode)
@@ -1509,10 +1536,7 @@ int DD_Main(void)
         Def_PostInit();
 
         // Lets play a nice title animation.
-        { ddfinale_t fin;
-        if(Def_Get(DD_DEF_FINALE, "background", &fin))
-            titleFinale = FI_Execute(fin.script, FF_LOCAL);
-        }
+        DD_StartTitle();
 
         // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);

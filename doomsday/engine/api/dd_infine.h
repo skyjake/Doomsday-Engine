@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_infine.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,10 +43,14 @@ typedef ident_t finaleid_t;
 
 /**
  * Execute a set of Finale commands.
- * @param commands  One or more commands to be executed.
- * @param flags  @see finaleFlags.
+ * @param script        One or more commands to be executed.
+ * @param flags         @see finaleFlags.
+ * @param setupCmds     One or more commands to be executed immediately during
+ *                      finale setup. Can be used to configure the default page
+ *                      state.
  */
-finaleid_t FI_Execute(const char* commands, int flags);
+finaleid_t FI_Execute2(const char* script, int flags, const char* setupCmds);
+finaleid_t FI_Execute(const char* script, int flags);
 
 /**
  * @return  @c true iff the specified Finale is active.

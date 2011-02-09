@@ -1,10 +1,10 @@
-/**\file
+/**\file fi_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -259,8 +259,11 @@ boolean FI_ScriptCmdExecuted(finaleid_t id)
     return FinaleInterpreter_CommandExecuted(f->_interpreter);
 }
 
-finaleid_t FI_Execute(const char* scriptSrc, int flags)
+finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
 {
+    const char* script = _script;
+    char* tempScript = 0;
+
     if(!inited)
     {
 #ifdef _DEBUG
@@ -268,7 +271,7 @@ finaleid_t FI_Execute(const char* scriptSrc, int flags)
 #endif
         return 0;
     }
-    if(!scriptSrc || !scriptSrc[0])
+    if(!script || !script[0])
     {
 #ifdef _DEBUG
         Con_Printf("FI_Execute: Warning, attempt to play empty script.\n");
@@ -283,17 +286,41 @@ finaleid_t FI_Execute(const char* scriptSrc, int flags)
         return 0;
     }
 
+    if(setupCmds && setupCmds[0])
+    {
+        // Setup commands are included. We must prepend these to the script
+        // in a special control block that will be executed immediately.
+        size_t setupCmdsLen = strlen(setupCmds);
+        size_t scriptLen = strlen(script); 
+        char* p;
+        
+        p = tempScript = malloc(scriptLen + setupCmdsLen + 9 + 2 + 1);
+        strcpy(p, "OnLoad {\n"); p += 9;
+        memcpy(p, setupCmds, setupCmdsLen); p += setupCmdsLen;
+        strcpy(p, "}\n"); p += 2;
+        memcpy(p, script, scriptLen); p += scriptLen;
+        *p = '\0';
+        script = tempScript;
+    }
+
     {finale_t* f = P_CreateFinale();
     f->flags = flags;
-    FinaleInterpreter_LoadScript(f->_interpreter, scriptSrc);
+    FinaleInterpreter_LoadScript(f->_interpreter, script);
     if(!(flags & FF_LOCAL) && isServer)
     {   // Instruct clients to start playing this Finale.
-        Sv_Finale(FINF_BEGIN|FINF_SCRIPT, scriptSrc);
+        Sv_Finale(FINF_BEGIN|FINF_SCRIPT, script);
     }
 #ifdef _DEBUG
-    Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, scriptSrc);
+    Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, _script);
 #endif
+    if(tempScript)
+        free(tempScript);
     return f->id; }
+}
+
+finaleid_t FI_Execute(const char* script, int flags)
+{
+    return FI_Execute2(script, flags, 0);
 }
 
 void FI_ScriptTerminate(finaleid_t id)

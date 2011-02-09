@@ -116,6 +116,7 @@ static void pageClear(fi_page_t* p)
     AnimatorVector4_Init(p->_bg.topColor, 1, 1, 1, 0);
     AnimatorVector4_Init(p->_bg.bottomColor, 1, 1, 1, 0);
     AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
+    memset(p->_preFont, 0, sizeof(p->_preFont));
     {uint i;
     for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
     {
@@ -125,7 +126,9 @@ static void pageClear(fi_page_t* p)
 
 static fi_page_t* newPage(fi_page_t* prevPage)
 {
-    fi_page_t* p = Z_Calloc(sizeof(*p), PU_APPSTATIC, 0);
+    fi_page_t* p = Z_Malloc(sizeof(*p), PU_APPSTATIC, 0);
+    p->flags.hidden = p->flags.paused = p->flags.showBackground = 0;
+    p->_objects.vector = 0;
     p->drawer = FIPage_Drawer;
     p->ticker = FIPage_Ticker;
     p->previous = prevPage;
@@ -1240,9 +1243,9 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     glEnable(GL_TEXTURE_2D);
 
     // Draw it.
-    FR_SetFont(t->font);
-    // Set color zero (the normal color).
+    // Set the normal color.
     useColor(t->color, 4);
+    FR_SetFont(t->font);
     for(cnt = 0, ptr = t->text; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
     {
         if(linew < 0)
@@ -1257,20 +1260,20 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
             // Change of color.
             if(*ptr >= '0' && *ptr <= '9')
             {
-                animatorvector3_t* color;
+                /// \fixme disabled for now as this violates our ownership model.
+                /*animatorvector3_t* color;
                 uint colorIdx = *ptr - '0';
-
-                //if(!colorIdx)
+                if(!colorIdx)
                 {   // Use the default color.
                     color = (animatorvector3_t*) &t->color;
                 }
-                /*else
-                {   /// \fixme disabled for now as this violates our ownership model.
+                else
+                {
                     finale_t* f = finalesById(stackTop());
                     color = &f->_interpreter->_pages[PAGE_TEXT]->_preColor[colorIdx-1];
-                }*/
-
+                }
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, t->color[3].value);
+                */
                 continue;
             }
 
@@ -1311,7 +1314,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
             x += FR_CharWidth(ch);
         }
 
-        cnt++; // Actual character drawn.
+        ++cnt;
     }
 
     glDisable(GL_TEXTURE_2D);

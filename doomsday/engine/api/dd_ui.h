@@ -97,10 +97,10 @@ typedef struct {
     uint size;
 } fi_object_collection_t;
 
-#define FIPAGE_NUM_PREDEFINED_COLORS        NUM_UI_COLORS
+#define FIPAGE_NUM_PREDEFINED_COLORS        (10)
 #define VALID_FIPAGE_PREDEFINED_COLOR(v)    ((v) < FIPAGE_NUM_PREDEFINED_COLORS)
 
-#define FIPAGE_NUM_PREDEFINED_FONTS         2
+#define FIPAGE_NUM_PREDEFINED_FONTS         (10)
 #define VALID_FIPAGE_PREDEFINED_FONT(v)     ((v) < FIPAGE_NUM_PREDEFINED_FONTS)
 
 typedef struct fi_page_s {

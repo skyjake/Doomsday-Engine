@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 498 <--
-; Other free ordinals: 30 235
+; Other free ordinals: 30
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -440,15 +440,16 @@ EXPORTS
 
 ; InFine.
     FI_Execute                  @68 NONAME
-    FI_ScriptTerminate          @69 NONAME
-    FI_ScriptSuspend            @70 NONAME
-    FI_ScriptResume             @77 NONAME
-    FI_ScriptActive             @78 NONAME
-    FI_ScriptSuspended          @95 NONAME
-    FI_ScriptIsMenuTrigger      @96 NONAME
-    FI_ScriptRequestSkip        @98 NONAME
-    FI_ScriptResponder          @99 NONAME
-    FI_ScriptFlags              @100 NONAME
+    FI_Execute2                 @69 NONAME
+    FI_ScriptTerminate          @70 NONAME
+    FI_ScriptSuspend            @77 NONAME
+    FI_ScriptResume             @78 NONAME
+    FI_ScriptActive             @95 NONAME
+    FI_ScriptSuspended          @96 NONAME
+    FI_ScriptIsMenuTrigger      @98 NONAME
+    FI_ScriptRequestSkip        @99 NONAME
+    FI_ScriptResponder          @100 NONAME
+    FI_ScriptFlags              @235 NONAME
 
 ; SVG
     R_NewVectorGraphic          @317 NONAME

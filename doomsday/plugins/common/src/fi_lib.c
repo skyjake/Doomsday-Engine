@@ -1,10 +1,10 @@
-/**\file
+/**\file fi_lib.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -213,8 +213,10 @@ void FI_StackShutdown(void)
 
 void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 {
-    fi_state_t* s;
     gamestate_t prevGamestate;
+    ddstring_t setupCmds;
+    fi_state_t* s;
+    int fontIdx;
 
     if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
 
@@ -231,7 +233,29 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
         FI_ScriptSuspend(s->finaleId);
     }
 
-    s = stackPush(FI_Execute(scriptSrc, flags), mode, prevGamestate);
+    // Configure the predefined fonts.
+    Str_Init(&setupCmds);
+    fontIdx = 1;
+    Str_Appendf(&setupCmds,   "prefont %i %s", fontIdx++, "a");
+    Str_Appendf(&setupCmds, "\nprefont %i %s", fontIdx++, "b");
+    Str_Appendf(&setupCmds, "\nprefont %i %s", fontIdx++, "status");
+#if __JDOOM__
+    Str_Appendf(&setupCmds, "\nprefont %i %s", fontIdx++, "index");
+#endif
+#if __JDOOM__ || __JDOOM64__
+    Str_Appendf(&setupCmds, "\nprefont %i %s", fontIdx++, "small");
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    Str_Appendf(&setupCmds, "\nprefont %i %s", fontIdx++, "smallin");
+#endif
+    // Configure the predefined colors. All white.
+    { int i;
+    for(i = 1; i <= FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+        Str_Appendf(&setupCmds, "\nprecolor %i 1 1 1\n", i);
+    }
+
+    s = stackPush(FI_Execute2(scriptSrc, flags, Str_Text(&setupCmds)), mode, prevGamestate);
+    Str_Free(&setupCmds);
 
     // Do we need to transmit the state conditions to clients?
     if(IS_SERVER && !(flags & FF_LOCAL))
