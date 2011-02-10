@@ -802,7 +802,7 @@ if(ccmd->args == NULL)
                 }
 
                 // Sanity check.
-                if(variant->shared.execFunc == ccmd->execFunc)
+                if(!unique && variant->shared.execFunc == ccmd->execFunc)
                     Con_Error("Con_AddCommand: A CCmd by the name '%s' is "
                               "already registered and the callback funcs are "
                               "the same, is this really what you wanted?",
@@ -882,12 +882,11 @@ ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
     { ddccmd_t* ccmd;
     if((ccmd = Con_FindCommand(args->argv[0])) != 0)
     {
-        boolean invalidArgs = false;
         ddccmd_t* variant = ccmd;
-
         // Check each variant.
         do
         {
+            boolean invalidArgs = false;
             // Are we validating the arguments?
             // \note Strings are considered always valid.
             if(!(variant->minArgs == -1 && variant->maxArgs == -1))
@@ -978,7 +977,12 @@ void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
         // Check for extra info about this ccmd's usage.
         char* str;
         if((str = DH_GetString(DH_Find(ccmd->shared.name), HST_INFO)))
-            Con_Printf("%s\n", str);
+        {
+            // Lets indent for neatness.
+            char* line;
+            while(*(line = M_StrTok(&str, "\n")))
+                Con_Printf("  %s\n", line);
+        }
     }
 }
 
