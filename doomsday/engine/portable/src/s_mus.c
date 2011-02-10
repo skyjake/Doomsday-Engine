@@ -51,7 +51,7 @@
 
 typedef struct interface_info_s {
     audiointerface_music_generic_t** ip;
-    const char*         name;
+    const char* name;
 } interface_info_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -117,66 +117,67 @@ void Mus_Register(void)
  */
 boolean Mus_Init(void)
 {
-    unsigned int        i;
+    unsigned int i;
 
     if(musAvail)
         return true; // Already initialized.
 
     if(isDedicated || ArgExists("-nomusic"))
+    {
+        Con_Message("Music disabled.\n");
         return true;
+    }
+
+    VERBOSE( Con_Message("Initializing Music subsystem ...\n") );
 
     // Use the external music playback facilities, if available.
     if(audioDriver == &audiod_dummy)
     {
-        iMusic = NULL;
-        iCD  = NULL;
-    }
-    else if(audioDriver == &audiod_sdlmixer)
-    {
-        iMusic = (audiointerface_music_t*) &audiod_sdlmixer_music;
-        iCD  = NULL;
+        iMusic = 0;
+        iCD  = 0;
     }
     else
     {
-        iMusic = (audiodExternalIMusic.gen.Init ? &audiodExternalIMusic : 0);
-        iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
-    }
-
 #ifdef MACOSX
-    // On the Mac, just use QuickTime for the music and be done with it.
-    iMusic = &audiodQuickTimeMusic;
+        // On the Mac, just use QuickTime for the music and be done with it.
+        iMusic = &audiodQuickTimeMusic;
+        iCD = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
+#else
+        if(audioDriver == &audiod_sdlmixer)
+        {
+            iMusic = (audiointerface_music_t*) &audiod_sdlmixer_music;
+            iCD  = 0;
+        }
+        else
+        {
+            iMusic = (audiodExternalIMusic.gen.Init ? &audiodExternalIMusic : 0);
+            iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
+        }
 #endif
+    }
 
     // Initialize the chosen interfaces.
     for(i = 0; i < NUM_INTERFACES; ++i)
     {
         if(*interfaces[i].ip && !(*interfaces[i].ip)->Init())
         {
-            Con_Message("Mus_Init: Failed to initialize %s interface.\n",
+            Con_Message("Warning:Mus_Init: Failed to initialize %s interface.\n",
                         interfaces[i].name);
-
             *interfaces[i].ip = NULL;
         }
     }
 
     // Print a list of the chosen interfaces.
-    if(verbose)
+    if(verbose >= 2)
     {
-        char                buf[40];
-
-        Con_Printf("Mus_Init: Interfaces:");
+        char buf[40];
+        Con_Printf("Music configuration:\n");
         for(i = 0; i < NUM_INTERFACES; ++i)
         {
-            if(*interfaces[i].ip)
-            {
-                if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf))
-                    strcpy(buf, "?");
-
-                Con_Printf(" %s", buf);
-            }
+            if(*interfaces[i].ip && !(*interfaces[i].ip)->Get(MUSIP_ID, buf))
+                strcpy(buf, "?");
+            Con_Printf("  %s: %s\n", interfaces[i].name, buf);
         }
-
-        Con_Printf("\n");
     }
 
     currentSong = -1;

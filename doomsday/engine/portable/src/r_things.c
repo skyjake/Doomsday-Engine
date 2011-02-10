@@ -332,7 +332,7 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
  */
 void R_PreInitSprites(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
     int i, numSpritePatches = 0;
     ddstack_t* stack = Stack_New();
@@ -511,7 +511,7 @@ void R_PreInitSprites(void)
         } while((rec = rec->next));
     }
 
-    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**
@@ -625,7 +625,9 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 
 void R_InitSprites(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+
+    VERBOSE( Con_Message("Initializing Sprites ...\n") );
 
     /**
      * \kludge
@@ -667,7 +669,7 @@ void R_InitSprites(void)
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
-    VERBOSE( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 material_t* R_GetMaterialForSprite(int sprite, int frame)

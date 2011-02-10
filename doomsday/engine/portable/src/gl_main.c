@@ -467,11 +467,11 @@ void GL_LoadSystemFonts(void)
     Con_SetFont(glFontFixed);
 }
 
-static void printDGLConfiguration(void)
+static void printConfiguration(void)
 {
-    static const char *yesNo[] = { "disabled", "enabled" };
+    static const char* yesNo[] = { "disabled", "enabled" };
 
-    Con_Message("DGL configuration:\n");
+    Con_Message("Render configuration:\n");
 #ifdef WIN32
     Con_Message("  Multisampling: %s", yesNo[GL_state_ext.wglMultisampleARB? 1:0]);
     if(GL_state_ext.wglMultisampleARB)
@@ -485,8 +485,8 @@ static void printDGLConfiguration(void)
 }
 
 /**
- * One-time initialization of DGL and the renderer. This is done very early
- * on during engine startup, and is supposed to be fast. All subsystems
+ * One-time initialization of GL and the renderer. This is done very early
+ * on during engine startup and is supposed to be fast. All subsystems
  * cannot yet be initialized, such as fonts or texture management, so any
  * rendering occuring before GL_Init() must be done with manually prepared
  * textures.
@@ -499,7 +499,7 @@ boolean GL_EarlyInit(void)
     if(novideo)
         return true;
 
-    VERBOSE( Con_Message("Initializing Doomsday Graphics Library...\n") );
+    Con_Message("Initializing Render subsystem ...\n");
 
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
@@ -515,12 +515,12 @@ boolean GL_EarlyInit(void)
     {
         int bpp;
 
-        Con_Message("  Using restricted texture w/h ratio (1:8).\n");
+        Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
         Sys_GetWindowBPP(windowIDX, &bpp);
         if(bpp == 32)
         {
-            Con_Message("  Warning: Are you sure your video card accelerates a 32 bit mode?\n");
+            Con_Message("Warning: Are you sure your video card accelerates a 32 bit mode?\n");
         }
     }
     // Set a custom maximum size?
@@ -531,18 +531,18 @@ boolean GL_EarlyInit(void)
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
-        Con_Message("  Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
+        Con_Message("Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
     }
     if(ArgCheck("-outlines"))
     {
         fillOutlines = false;
-        Con_Message("  Textures have outlines.\n");
+        Con_Message("Textures have outlines.\n");
     }
 
     renderTextures = !ArgExists("-notex");
     novideo = ArgCheck("-novideo") || isDedicated;
 
-    printDGLConfiguration();
+    VERBOSE( printConfiguration() );
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();

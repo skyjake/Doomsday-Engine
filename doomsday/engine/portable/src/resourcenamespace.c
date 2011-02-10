@@ -1,4 +1,4 @@
-/**\file
+/**\file resourcenamespace.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -188,15 +188,19 @@ static void rebuild(resourcenamespace_t* rn)
         formSearchPathList(&tmp, rn);
         if(Str_Length(&tmp) > 0)
         {
-            uint startTime;
+#if _DEBUG
+            //uint startTime;
             VERBOSE( Con_Message("Rebuilding rnamespace name hash ...\n") );
             VERBOSE2( Con_PrintPathList(Str_Text(&tmp)) );
-            startTime = verbose >= 2? Sys_GetRealTime(): 0;
+            //startTime = verbose >= 2? Sys_GetRealTime(): 0;
+#endif
+
             FileDirectory_AddPathList3(F_LocalPaths(), Str_Text(&tmp), addFilePathWorker, rn);
+
 /*#if _DEBUG
             printPathHash(rn);
-#endif*/
             VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+#endif*/
         }
         Str_Free(&tmp);
         }

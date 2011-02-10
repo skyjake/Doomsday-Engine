@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_system.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_system.c:
+ * Abstract interfaces to platform-level services.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -85,41 +85,34 @@ static void C_DECL handler(int s)
 #endif
 
 /**
- * Initialize machine state.
+ * Initialize platform level services.
  *
  * \note This must be called from the main thread due to issues with the devices
  * we use via the WINAPI, MCI (cdaudio, mixer etc) on the WIN32 platform.
  */
 void Sys_Init(void)
 {
-    uint startTime;
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    Con_Message("Setting up machine state:\n");
+    Con_Message("Setting up platform state ...\n");
 
-#ifdef WIN32
-    if(ArgCheck("-nowsk")) // No Windows system keys?
-    {
-        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.  A bit of a hack, I'm afraid...
-        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
-        Con_Message("  Windows system keys disabled.\n");
-    }
-#endif
-
-    Con_Message("  Initializing timing system ...\n");
+    VERBOSE( Con_Message("Initializing Timing subsystem ...\n") );
     Sys_InitTimer();
 
-    startTime = Sys_GetRealTime();
     if(!isDedicated)
     {
-        Con_Message("  Initializing keyboard, mouse and joystick ...\n");
+        VERBOSE( Con_Message("Initializing Input subsystem ...\n") );
         if(!I_Init())
-            Con_Error("Error, failed to initialize input system.\n");
+            Con_Error("Failed to initialize Input subsystem.\n");
     }
 
     // Virtual devices need to be created even in dedicated mode.
     I_InitVirtualInputDevices();
 
+    VERBOSE( Con_Message("Initializing Audio subsystem ...\n") );
     S_Init();
+
+    VERBOSE( Con_Message("Initializing Network subsystem ...\n") );
     Huff_Init();
     N_Init();
 
@@ -139,7 +132,7 @@ void Sys_Init(void)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**

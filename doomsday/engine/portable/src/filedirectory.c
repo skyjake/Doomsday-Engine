@@ -441,8 +441,10 @@ void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, u
         return;
     }
 
+#if _DEBUG
     VERBOSE( Con_Message("Adding paths to FileDirectory ...\n") );
     VERBOSE2( printPaths(paths, pathsCount) );
+#endif
     resolveAndAddSearchPathsToDirectory(fd, paths, pathsCount, callback, paramaters);
 }
 

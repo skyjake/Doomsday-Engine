@@ -1685,7 +1685,9 @@ static void loadDoomTextureDefs(void)
  */
 void R_InitTextures(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+
+    VERBOSE2( Con_Message("Initializing Textures ...\n") );
 
     numDoomTextureDefs = 0;
     doomTextureDefs = NULL;
@@ -1716,7 +1718,7 @@ void R_InitTextures(void)
         Str_Free(&path);
     }
 
-    VERBOSE( Con_Message("R_InitTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 doomtexturedef_t* R_GetDoomTextureDef(int num)
@@ -1775,11 +1777,12 @@ static int R_NewFlat(lumpnum_t lump)
 
 void R_InitFlats(void)
 {
-    uint startTime = Sys_GetRealTime();
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack = Stack_New();
     ddstring_t path;
     int i;
 
+    VERBOSE( Con_Message("Initializing Flats ...\n") );
     numFlats = 0;
 
     for(i = 0; i < W_NumLumps(); ++i)
@@ -1833,7 +1836,7 @@ void R_InitFlats(void)
     }
     Str_Free(&path);
 
-    VERBOSE( Con_Message("R_InitFlats: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitFlats: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 uint R_CreateSkinTex(const char* skin, boolean isShinySkin)

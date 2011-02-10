@@ -1054,11 +1054,11 @@ boolean Sfx_Init(void)
     // Check if sound has been disabled with a command line option.
     if(ArgExists("-nosfx"))
     {
-        Con_Message("Sfx_Init: Disabled.\n");
+        Con_Message("Sound Effects disabled.\n");
         return true;
     }
 
-    Con_Message("Sfx_Init: Initializing...\n");
+    VERBOSE( Con_Message("Initializing Sound Effects subsystem ...\n") );
 
     // Use the external SFX playback facilities, if available.
     if(audioDriver == &audiod_dummy)

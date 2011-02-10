@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_help.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * dd_help.c: Help Text Strings.
+ * Help Text Strings.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -293,7 +293,8 @@ void DD_InitHelp(void)
     if(helpInited)
         return; // Already inited.
 
-    starttime = Sys_GetSeconds();
+    VERBOSE( Con_Message("Initializing Help subsystem ...\n") );
+    starttime = (verbose >= 2? Sys_GetSeconds() : 0);
 
     // Init the links.
     helpRoot.next = helpRoot.prev = &helpRoot;
@@ -312,7 +313,7 @@ void DD_InitHelp(void)
     // Help is now available.
     helpInited = true;
 
-    VERBOSE(Con_Message("DD_InitHelp: Done in %.2f seconds.\n", Sys_GetSeconds() - starttime));
+    VERBOSE2( Con_Message("DD_InitHelp: Done in %.2f seconds.\n", Sys_GetSeconds() - starttime) );
 }
 
 /**

@@ -385,7 +385,7 @@ boolean Con_Init(void)
 
 void Con_Shutdown(void)
 {
-    Con_Message("Shuting down the console...\n");
+    Con_Message("Shuting down the console ...\n");
 
     Con_DestroyBuffer(histBuf); // The console history buffer.
     Con_DestroyBuffer(oldCmds); // The old commands buffer.

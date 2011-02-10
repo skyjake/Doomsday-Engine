@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_zip.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -493,7 +493,7 @@ static boolean locateCentralDirectory(DFILE* file)
 
 void Zip_Init(void)
 {
-    VERBOSE( Con_Message("Zip_Init: Initializing package system...\n") );
+    VERBOSE( Con_Message("Initializing Package subsystem ...\n") );
 
     zipRoot = NULL;
     zipFiles = 0;

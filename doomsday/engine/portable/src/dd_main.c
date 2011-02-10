@@ -1639,22 +1639,20 @@ static int DD_StartupWorker(void* parm)
     Materials_Initialize();
 
     Con_SetProgress(140);
-    Con_Message("B_Init: Init binding system.\n");
+    Con_Message("Initializing Binding subsystem ...\n");
     B_Init();
 
     Con_SetProgress(150);
-    Con_Message("R_Init: Init the refresh daemon.\n");
     R_Init();
 
     Con_SetProgress(165);
-    Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
     Demo_Init();
 
-    Con_Message("FI_Init: Initializing InFine.\n");
+    Con_Message("Initializing InFine subsystem ...\n");
     FI_Init();
 
-    Con_Message("UI_PageInit: Initializing user interface.\n");
+    Con_Message("Initializing UI subsystem ...\n");
     UI_Init();
 
     Con_SetProgress(190);

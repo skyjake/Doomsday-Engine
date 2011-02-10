@@ -1,10 +1,10 @@
-/**\file
+/**\file s_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * s_main.c: Sound Subsystem
+ * Sound Subsystem.
  *
  * Interface to the Sfx and Mus modules.
  * High-level (and exported) sound control.
@@ -97,97 +97,106 @@ void S_Register(void)
     Mus_Register();
 }
 
+const char* S_GetDriverName(audiodriver_e id)
+{
+    static const char* audioDrivers[AUDIODRIVER_COUNT] = {
+    /* AUDIOD_DUMMY */      "Dummy",
+    /* AUDIOD_SDL_MIXER */  "SDLMixer",
+    /* AUDIOD_OPENAL */     "OpenAL",
+#ifdef WIN32
+    /* AUDIOD_DSOUND */     "DirectSound",
+    /* AUDIOD_WINMM */      "Windows Multimedia"
+#endif
+    };
+    if(VALID_AUDIODRIVER_IDENTIFIER(id))
+        return audioDrivers[id];
+    Con_Error("S_GetDriverName: Unknown driver id %i.\n", id);
+    return 0; // Unreachable.
+}
+
 /**
  * Initializes the audio driver interfaces.
  *
- * @return              @c true, if successful.
+ * @return  @c true iff successful.
  */
 boolean S_InitDriver(audiodriver_e drvid)
 {
-    Con_Printf("  Driver: ");
-
     switch(drvid)
     {
     case AUDIOD_DUMMY:
-        Con_Printf("Dummy\n");
         audioDriver = &audiod_dummy;
         break;
 
     case AUDIOD_SDL_MIXER:
-        Con_Printf("SDLMixer\n");
         audioDriver = &audiod_sdlmixer;
         break;
 
     case AUDIOD_OPENAL:
-        Con_Printf("OpenAL\n");
         if(!(audioDriver = Sys_LoadAudioDriver("openal")))
             return false;
         break;
 
 #ifdef WIN32
     case AUDIOD_DSOUND:
-        Con_Printf("DirectSound\n");
         if(!(audioDriver = Sys_LoadAudioDriver("directsound")))
             return false;
         break;
 
     case AUDIOD_WINMM:
-        Con_Printf("WinMM\n");
         if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
             return false;
         break;
 #endif
-
     default:
         Con_Error("S_InitDriver: Unknown driver id %i.\n", drvid);
+        return false; // Unreachable.
     }
 
-    // Initialize the audioDriver.
+    // Initialize.
     return audioDriver->Init();
+}
+
+audiodriver_e S_ChooseAudioDriver(void)
+{
+    if(isDedicated || ArgExists("-dummy"))
+        return AUDIOD_DUMMY;
+
+    if(ArgExists("-oal"))
+        return AUDIOD_OPENAL;
+
+#ifdef WIN32
+    if(ArgExists("-dsound"))
+        return AUDIOD_DSOUND;
+
+    if(ArgExists("-winmm"))
+        return AUDIOD_WINMM;
+#endif
+
+    // The default audio driver.
+    return AUDIOD_SDL_MIXER;
 }
 
 /**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
  *
- * @return              @c true, if there were no errors.
+ * @return  @c true, if there were no errors.
  */
 boolean S_Init(void)
 {
-    boolean             ok, sfxOK, musOK;
+    boolean ok = false, sfxOK, musOK;
 
-    if(ArgExists("-nosound"))
-        return true;
-
-    // First let's set up the drivers. First we much choose which one we
-    // want to use.
-    if(isDedicated || ArgExists("-dummy"))
+    if(!ArgExists("-nosound"))
     {
-        ok = S_InitDriver(AUDIOD_DUMMY);
-    }
-    else if(ArgExists("-oal"))
-    {
-        ok = S_InitDriver(AUDIOD_OPENAL);
-    }
-#ifdef WIN32
-    else if(ArgExists("-dsound"))
-    {   // DirectSound with 3D sound support, EAX effects.
-        ok = S_InitDriver(AUDIOD_DSOUND);
-    }
-    else if(ArgExists("-winmm"))
-    {   // Windows Multimedia.
-        ok = S_InitDriver(AUDIOD_WINMM);
-    }
-#endif
-    else
-    {   // The default audio driver, sdl_mixer.
-        ok = S_InitDriver(AUDIOD_SDL_MIXER);
+        audiodriver_e drvid = S_ChooseAudioDriver();
+        if(!(ok = S_InitDriver(drvid)))
+            Con_Message("Warning, failed initializing audio driver \"%s\".\n",
+                        S_GetDriverName(drvid));
     }
 
-    // Did we succeed?
     if(!ok)
     {
-        Con_Message("S_Init: Driver init failed. Sound is disabled.\n");
-        return false;
+        Con_Message("Music and Sound Effects disabled.\n");
+        return ArgExists("-nosound");
     }
 
     // Disable random pitch changes?
@@ -196,8 +205,6 @@ boolean S_Init(void)
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
 
-    Con_Message("S_Init: %s.\n", sfxOK &&
-                musOK ? "OK" : "Errors during initialization.");
     return (sfxOK && musOK);
 }
 
