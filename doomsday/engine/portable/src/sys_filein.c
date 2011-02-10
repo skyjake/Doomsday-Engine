@@ -984,28 +984,16 @@ static int C_DECL compareFoundEntryByName(const void* a, const void* b)
     return stricmp(((const foundentry_t*)a)->name, ((const foundentry_t*)b)->name);
 }
 
-/**
- * Descends into subdirectories.
- */
-static int forAllDescend(const ddstring_t* pattern, const ddstring_t* name,
-    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
-    void* paramaters)
+/// Collect a list of paths including those which have been mapped.
+static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCount)
 {
-    assert(pattern && name && !Str_IsEmpty(name) && callback);
-    {
+    int count = 0, max = 16;
+    foundentry_t* found = malloc(max * sizeof(*found));
     ddstring_t wildPath, origWildPath;
-    int result = 0, count, max;
-    foundentry_t* found;
     finddata_t fd;
 
-    // Collect a list of paths including those which have been mapped.
-    count = 0;
-    max = 16;
-    found = malloc(max * sizeof(*found));
-
     Str_Init(&origWildPath);
-    Str_Clear(&origWildPath);
-    Str_Appendf(&origWildPath, "%s*", Str_Text(name));
+    Str_Appendf(&origWildPath, "%s*", Str_Text(searchPath));
 
     Str_Init(&wildPath);
     { int i;
@@ -1032,62 +1020,59 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* name,
                     memset(&found[count], 0, sizeof(*found));
                     strncpy(found[count].name, fd.name, FILENAME_T_MAXLEN);
                     found[count].attrib = fd.attrib;
-                    count++;
+                    ++count;
                 }
             } while(!myfindnext(&fd));
         }
         myfindend(&fd);
     }}
 
-    Str_Free(&wildPath);
-    Str_Free(&origWildPath);
+    if(retCount)
+        *retCount = count;
+    return count > 0? found : 0;
+}
 
-    // Sort all the found entries.
-    qsort(found, count, sizeof(foundentry_t), compareFoundEntryByName);
-
-    { ddstring_t path, localPattern;
-
-    Str_Init(&localPattern);
-    Str_Appendf(&localPattern, "%s%s", Str_Text(name), Str_Text(pattern));
-
-    Str_Init(&path);
-
-    {int i;
-    for(i = 0; i < count; ++i)
+static int iterateFilePaths(const ddstring_t* pattern, const ddstring_t* searchPath,
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
+    void* paramaters)
+{
+    assert(pattern && searchPath && !Str_IsEmpty(searchPath) && callback);
     {
-        // Compile the full pathname of the found file.
-        Str_Clear(&path);
-        Str_Appendf(&path, "%s%s", Str_Text(name), found[i].name);
+    int result = 0, count;
+    foundentry_t* found;
 
-        // Descend recursively into subdirectories.
-        if(found[i].attrib & A_SUBDIR)
+    if(0 != (found = collectFilePaths(searchPath, &count)))
+    {
+        ddstring_t path, localPattern;
+
+        // Sort all the found entries.
+        qsort(found, count, sizeof(foundentry_t), compareFoundEntryByName);
+
+        Str_Init(&localPattern);
+        Str_Appendf(&localPattern, "%s%s", Str_Text(searchPath), Str_Text(pattern));
+
+        Str_Init(&path);
+        {int i;
+        for(i = 0; i < count; ++i)
         {
-            Str_AppendChar(&path, DIR_SEP_CHAR);
-            if((result = forAllDescend(pattern, &path, callback, paramaters)) != 0)
-            {
-                break;
-            }
-        }
-        else
-        {
+            // Compile the full pathname of the found file.
+            Str_Clear(&path);
+            Str_Appendf(&path, "%s%s", Str_Text(searchPath), found[i].name);
+
             // Does this match the pattern?
             if(F_MatchName(Str_Text(&path), Str_Text(&localPattern)))
             {
                 // If the callback returns false, stop immediately.
-                if((result = callback(&path, FDT_FILE, paramaters)) != 0)
+                if(0 != (result = callback(&path, FDT_FILE, paramaters)))
                 {
                     break;
                 }
             }
-        }
-    }}
-
-    Str_Free(&path);
-    Str_Free(&localPattern);
+        }}
+        Str_Free(&path);
+        Str_Free(&localPattern);
+        free(found);
     }
-
-    // Free the memory allocate for the list of found entries.
-    free(found);
 
     return result;
     }
@@ -1154,7 +1139,7 @@ int F_AllResourcePaths2(const ddstring_t* searchPath,
     }
 
     // Finally, check real files on the search path.
-    result = forAllDescend(&searchPathName, &searchPathDirectory.path, callback, paramaters);
+    result = iterateFilePaths(&searchPathName, &searchPathDirectory.path, callback, paramaters);
 
 searchEnded:
     Str_Free(&searchPathDirectory.path);

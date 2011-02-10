@@ -165,10 +165,12 @@ static DFILE* AuxiliaryHandle;
 
 void DD_RegisterVFS(void)
 {
+    C_CMD("dir", "", Dir);
     C_CMD("dir", "s*", Dir);
+    C_CMD("ls", "", Dir);
+    C_CMD("ls", "s*", Dir);
     C_CMD("dump", "s", Dump);
     C_CMD("listfiles", "", ListFiles);
-    C_CMD("ls", "s*", Dir);
 }
 
 static lumpnum_t W_Index(lumpnum_t lump)
@@ -1367,18 +1369,40 @@ D_CMD(Dump)
 }
 
 /**
- * Prints a file name to the console.
+ * Prints the resource path to the console.
  * This is a f_allresourcepaths_callback_t.
  */
-int printFileName(const ddstring_t* fileName, pathdirectory_pathtype_t type, void* paramaters)
+int printResourcePath(const ddstring_t* fileName, pathdirectory_pathtype_t type,
+    void* paramaters)
 {
-    assert(fileName && VALID_PATHDIRECTORY_PATHTYPE(type) && paramaters);
+    assert(fileName && VALID_PATHDIRECTORY_PATHTYPE(type));
     {
-    const ddstring_t* dir = (const ddstring_t*) paramaters;
     boolean makePretty = F_IsRelativeToBasePath(fileName);
     Con_Printf("  %s\n", makePretty? Str_Text(F_PrettyPath(fileName)) : Str_Text(fileName));
     return 0; // Continue the listing.
     }
+}
+
+static void printDirectory(const ddstring_t* path)
+{
+    ddstring_t dir;
+
+    Str_Init(&dir); Str_Copy(&dir, path);
+    Str_Strip(&dir);
+    F_FixSlashes(&dir);
+    // Make sure it ends in a directory separator character.
+    if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&dir, DIR_SEP_CHAR);
+    if(!F_ExpandBasePath(&dir, &dir))
+        F_PrependBasePath(&dir, &dir);
+
+    Con_Printf("Directory: %s\n", Str_Text(F_PrettyPath(&dir)));
+
+    // Make the pattern.
+    Str_AppendChar(&dir, '*');
+    F_AllResourcePaths(&dir, printResourcePath);
+
+    Str_Free(&dir);
 }
 
 /**
@@ -1386,34 +1410,23 @@ int printFileName(const ddstring_t* fileName, pathdirectory_pathtype_t type, voi
  */
 D_CMD(Dir)
 {
-    ddstring_t dir, pattern;
-
-    Str_Init(&dir);
-    Str_Init(&pattern);
-
-    { int i;
-    for(i = 1; i < argc; ++i)
+    ddstring_t path;
+    Str_Init(&path);
+    if(argc > 1)
     {
-        Str_Set(&dir, argv[i]);
-        Str_Strip(&dir);
-        F_FixSlashes(&dir);
-        // Make sure it ends in a directory separator character.
-        if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
-            Str_AppendChar(&dir, DIR_SEP_CHAR);
-
-        if(!F_ExpandBasePath(&dir, &dir))
-            F_PrependBasePath(&dir, &dir);
-
-        Con_Printf("Directory: %s\n", Str_Text(&dir));
-
-        // Make the pattern.
-        Str_Copy(&pattern, &dir);
-        Str_AppendChar(&pattern, '*');
-        F_AllResourcePaths2(&pattern, printFileName, &dir);
-    }}
-
-    Str_Free(&dir);
-    Str_Free(&pattern);
+        int i;
+        for(i = 1; i < argc; ++i)
+        {
+            Str_Set(&path, argv[i]);
+            printDirectory(&path);
+        }
+    }
+    else
+    {
+        Str_Set(&path, "/");
+        printDirectory(&path);
+    }
+    Str_Free(&path);
     return true;
 }
 
