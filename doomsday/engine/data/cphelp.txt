@@ -312,7 +312,7 @@ inf = Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo D
 
 [dir]
 desc = Print contents of directories.
-inf = Params: dir (dirs) ...\nFor example, 'dir data\'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+inf = Params: dir (dirs) ...\nFor example, 'dir data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [dump]
 desc = Dump a data lump currently loaded in memory.
