@@ -48,7 +48,7 @@ desc = The minimum sample rate for all sound effects. Samples with a smaller rat
 [Show status of channels]
 cvar = sound-info
 def = No
-desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin, A = Attenuated, E = Emitter, 3 = 3D, P = Playing, R = Repeat, L = Reload.
+desc = The status of all sound channels is drawn on screen. This is intended for debugging. The displayed information consists of sample cache size, channel flags, volume, frequency, latest start time, cursor positions, buffer flags and sample information.\bO = Origin\nA = Attenuated\nE = Emitter\n3 = 3D\nP = Playing\nR = Repeat\nL = Reload
 
 #
 # GRAPHICS 
