@@ -122,7 +122,7 @@ int Def_GetGameClasses(void)
 {
     xgClassLinks = 0;
 
-    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.GetVariable)
+    if(gx.GetVariable)
         xgClassLinks = (xgclass_t*) gx.GetVariable(DD_XGFUNC_LINK);
 
     if(!xgClassLinks)
