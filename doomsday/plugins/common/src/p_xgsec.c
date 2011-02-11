@@ -1,10 +1,10 @@
-/**\file
+/**\file p_xgsec.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -230,11 +230,11 @@ void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
             break;
 
         case 'f':
-            offset += xsec->SP_floororigheight * FRACUNIT;
+            offset += xsec->SP_floororigheight;
             break;
 
         case 'c':
-            offset += xsec->SP_ceilorigheight * FRACUNIT;
+            offset += xsec->SP_ceilorigheight;
             break;
 
         default:
@@ -1988,6 +1988,10 @@ int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
             lightLevel = P_ToXSector(sector)->origLight;
             break;
 
+        case LIGHTREF_CURRENT:
+            lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+            break;
+
         case LIGHTREF_HIGHEST:
             P_FindSectorSurroundingHighestLight(sector, &lightLevel);
             break;
@@ -2605,14 +2609,15 @@ void XS_UpdateLight(sector_t* sec)
     }
 }
 
-void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
+void XS_DoChain(sector_t* sec, int ch, int activating, void* act_thing)
 {
-    xgsector_t         *xg;
-    sectortype_t       *info;
-    float               flevtime = TIC2FLT(mapTime);
-    linedef_t          *dummyLine;
-    xline_t            *xdummyLine;
-    linetype_t         *ltype;
+    xgsector_t* xg;
+    sectortype_t* info;
+    float flevtime = TIC2FLT(mapTime);
+    linedef_t* dummyLine;
+    xline_t* xdummyLine;
+    linetype_t* ltype;
+    sidedef_t* dummySideDef;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
@@ -2634,15 +2639,17 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
                          FLT2TIC(info->interval[ch][1]));
     }
 
-    // Prepare the dummy line to use for the event.
+    // Prepare the dummies to use for the event.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
     xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
+    dummySideDef = P_AllocDummySideDef();
 
+    P_SetPtrp(dummyLine, DMU_SIDEDEF0, dummySideDef);
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
+    P_SetPtrp(dummySideDef, DMU_LINEDEF, dummyLine);
 
-    xdummyLine->special =
-        (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
+    xdummyLine->special = (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
 
     xdummyLine->tag = P_ToXSector(sec)->tag;
 
@@ -2691,9 +2698,10 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
         }
     }
 
-    // We're done, free the dummy.
+    // We're done, free the dummies.
     Z_Free(xdummyLine->xg);
     P_FreeDummyLine(dummyLine);
+    P_FreeDummySideDef(dummySideDef);
 }
 
 static boolean checkChainRequirements(sector_t* sec, mobj_t* mo, int ch,

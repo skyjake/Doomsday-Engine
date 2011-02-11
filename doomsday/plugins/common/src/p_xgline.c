@@ -1,10 +1,10 @@
-/**\file
+/**\file p_xgline.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1459,7 +1459,7 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
         side = P_GetPtrp(line, DMU_SIDEDEF0);
     }
 
-    XG_Dev("XLTrav_ChangeWallTexture: Line %i", P_ToIndex(line));
+    XG_Dev("XLTrav_ChangeWallMaterial: LineDef %i", P_ToIndex(line));
 
     rgba[0] = info->iparm[9];
     rgba[1] = info->iparm[10];
@@ -2529,34 +2529,44 @@ int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(linedef_t* line, int chain, boolean activating,
-                mobj_t* actThing)
+void XL_DoChain(linedef_t* lineDef, int chain, boolean activating, mobj_t* actThing)
 {
-    linedef_t*          dummyLine;
-    xline_t*            xdummyLine;
+    sidedef_t* dummyFrontSideDef, *dummyBackSideDef;
+    linedef_t* dummyLineDef;
+    xline_t* xdummyLineDef;
 
-    // We'll use a dummy line for the chain.
-    dummyLine = P_AllocDummyLine();
-    xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    // We'll use dummies for the chain.
+    dummyLineDef = P_AllocDummyLine();
+    xdummyLineDef = P_ToXLine(dummyLineDef);
+    xdummyLineDef->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    dummyFrontSideDef = P_AllocDummySideDef();
+    P_SetPtrp(dummyLineDef, DMU_SIDEDEF0, dummyFrontSideDef);
+    P_SetPtrp(dummyFrontSideDef, DMU_LINEDEF, dummyLineDef);
+    P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(lineDef, DMU_FRONT_SECTOR));
+    if(0 != P_GetPtrp(lineDef, DMU_SIDEDEF1))
+    {
+        dummyBackSideDef = P_AllocDummySideDef();
+        P_SetPtrp(dummyLineDef, DMU_SIDEDEF1, dummyBackSideDef);
+        P_SetPtrp(dummyBackSideDef, DMU_LINEDEF, dummyLineDef);
+        P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(lineDef, DMU_BACK_SECTOR));
+    }
 
-    XG_Dev("XL_DoChain: Line %i, chained type %i", P_ToIndex(line), chain);
-    XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
+    XG_Dev("XL_DoChain: LineDef %i, chained type %i", P_ToIndex(lineDef), chain);
+    XG_Dev("  (dummy linedef will show up as %i)", P_ToIndex(dummyLineDef));
 
-    // Copy all properties to the dummy
-    P_CopyLine(dummyLine, line);
+    // Copy all properties to the dummies.
+    P_CopyLine(dummyLineDef, lineDef);
 
-    P_SetPtrp(dummyLine, DMU_SIDEDEF0, NULL);
-    P_SetPtrp(dummyLine, DMU_SIDEDEF1, NULL);
-
-    xdummyLine->xg->active = !activating;
+    xdummyLineDef->xg->active = !activating;
 
     // Make the chain event
-    XL_LineEvent(XLE_CHAIN, chain, dummyLine, 0, actThing);
+    XL_LineEvent(XLE_CHAIN, chain, dummyLineDef, 0, actThing);
 
-    // Free the dummy
-    Z_Free(xdummyLine->xg);
-    P_FreeDummyLine(dummyLine);
+    Z_Free(xdummyLineDef->xg);
+    P_FreeDummyLine(dummyLineDef);
+    P_FreeDummySideDef(dummyFrontSideDef);
+    if(dummyBackSideDef)
+        P_FreeDummySideDef(dummyBackSideDef);
 }
 
 /**
