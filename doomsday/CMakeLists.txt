@@ -786,7 +786,9 @@ IF (APPLE)
         COMMAND cp doomsday.pk3 ${BUNDLE}/Contents/Resources/
         COMMAND mkdir -p ${BUNDLE}/Contents/Resources/Data/
         COMMAND mkdir -p ${BUNDLE}/Contents/Resources/Data/Graphics/
+        COMMAND mkdir -p ${BUNDLE}/Contents/Resources/Data/Fonts/
         COMMAND cp ${CMAKE_SOURCE_DIR}/engine/data/graphics/loading{1,2}.png ${BUNDLE}/Contents/Resources/Data/Graphics/
+        COMMAND cp ${CMAKE_SOURCE_DIR}/engine/data/fonts/normal{12,18}.dfn ${BUNDLE}/Contents/Resources/Data/Fonts/
         )
 ENDIF (APPLE)
 
