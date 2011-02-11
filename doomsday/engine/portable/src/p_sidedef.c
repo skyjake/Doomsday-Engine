@@ -61,6 +61,11 @@ boolean Sidedef_SetProperty(sidedef_t *sid, const setargs_t *args)
     case DMU_FLAGS:
         DMU_SetValue(DMT_SIDEDEF_FLAGS, &sid->flags, args, 0);
         break;
+
+    case DMU_LINEDEF:
+        DMU_SetValue(DMT_SIDEDEF_LINE, &sid->line, args, 0);
+        break;
+
     default:
         Con_Error("Sidedef_SetProperty: Property %s is not writable.\n",
                   DMU_Str(args->prop));

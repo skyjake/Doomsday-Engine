@@ -1,10 +1,10 @@
-/**\file
+/**\file dmu_lib.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,6 +111,9 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList);
 
 linedef_t* P_AllocDummyLine(void);
 void P_FreeDummyLine(linedef_t* line);
+
+sidedef_t* P_AllocDummySideDef(void);
+void P_FreeDummySideDef(sidedef_t* sideDef);
 
 /**
  * Get the sector on the other side of the line that is NOT the given sector.

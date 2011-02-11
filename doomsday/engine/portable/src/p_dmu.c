@@ -1,10 +1,10 @@
-/**\file
+/**\file p_dmu.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,16 +43,22 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct dummysidedef_s {
+    sidedef_t sideDef; // Side data.
+    void* extraData; // Pointer to user data.
+    boolean inUse; // true, if the dummy is being used.
+} dummysidedef_t;
+
 typedef struct dummyline_s {
-    linedef_t       line; // Line data.
-    void*           extraData; // Pointer to user data.
-    boolean         inUse; // true, if the dummy is being used.
+    linedef_t line; // Line data.
+    void* extraData; // Pointer to user data.
+    boolean inUse; // true, if the dummy is being used.
 } dummyline_t;
 
 typedef struct dummysector_s {
-    sector_t        sector; // Sector data.
-    void           *extraData; // Pointer to user data.
-    boolean         inUse; // true, if the dummy is being used.
+    sector_t sector; // Sector data.
+    void* extraData; // Pointer to user data.
+    boolean inUse; // true, if the dummy is being used.
 } dummysector_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -69,6 +75,7 @@ uint dummyCount = 8; // Number of dummies to allocate (per type).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static dummysidedef_t* dummySideDefs;
 static dummyline_t* dummyLines;
 static dummysector_t* dummySectors;
 
@@ -234,6 +241,7 @@ void P_InitMapUpdate(void)
     //   comparisons; if the array is reallocated, its address may change
     //   and all existing dummies are invalidated.
     dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_APPSTATIC, NULL);
+    dummySideDefs = Z_Calloc(dummyCount * sizeof(dummysidedef_t), PU_APPSTATIC, NULL);
     dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_APPSTATIC, NULL);
 }
 
@@ -251,6 +259,21 @@ void* P_AllocDummy(int type, void* extraData)
 
     switch(type)
     {
+    case DMU_SIDEDEF:
+        for(i = 0; i < dummyCount; ++i)
+        {
+            if(!dummySideDefs[i].inUse)
+            {
+                dummySideDefs[i].inUse = true;
+                dummySideDefs[i].extraData = extraData;
+                dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
+                dummySideDefs[i].sideDef.sector = 0;
+                dummySideDefs[i].sideDef.line = 0;
+                return &dummySideDefs[i];
+            }
+        }
+        break;
+
     case DMU_LINEDEF:
         for(i = 0; i < dummyCount; ++i)
         {
@@ -260,7 +283,7 @@ void* P_AllocDummy(int type, void* extraData)
                 dummyLines[i].extraData = extraData;
                 dummyLines[i].line.header.type = DMU_LINEDEF;
                 dummyLines[i].line.L_frontside =
-                    dummyLines[i].line.L_backside = NULL;
+                    dummyLines[i].line.L_backside = 0;
                 return &dummyLines[i];
             }
         }
@@ -297,6 +320,10 @@ void P_FreeDummy(void* dummy)
 
     switch(type)
     {
+    case DMU_SIDEDEF:
+        ((dummysidedef_t*)dummy)->inUse = false;
+        break;
+
     case DMU_LINEDEF:
         ((dummyline_t*)dummy)->inUse = false;
         break;
@@ -318,6 +345,13 @@ void P_FreeDummy(void* dummy)
  */
 int P_DummyType(void* dummy)
 {
+    // Is it a SideDef?
+    if(dummy >= (void*) &dummySideDefs[0] &&
+       dummy <= (void*) &dummySideDefs[dummyCount - 1])
+    {
+        return DMU_SIDEDEF;
+    }
+
     // Is it a line?
     if(dummy >= (void*) &dummyLines[0] &&
        dummy <= (void*) &dummyLines[dummyCount - 1])
@@ -352,6 +386,9 @@ void* P_DummyExtraData(void* dummy)
 {
     switch(P_DummyType(dummy))
     {
+    case DMU_SIDEDEF:
+        return ((dummysidedef_t*)dummy)->extraData;
+
     case DMU_LINEDEF:
         return ((dummyline_t*)dummy)->extraData;
 
@@ -861,8 +898,8 @@ static int setProperty(void* obj, void* context)
      *
      * When setting a property, reference resolution is done hierarchically so
      * that we can update all owner's of the objects being manipulated should
-     * the DMU object's Set routine suggests that a change occured which other
-     * DMU objects may wish/need to respond to.
+     * the DMU object's Set routine suggest that a change occured (which other
+     * DMU objects may wish/need to respond to).
      *
      * 1) Collect references to all current owners of the object.
      * 2) Pass the change delta on to the object.
