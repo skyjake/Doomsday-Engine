@@ -1041,7 +1041,7 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h,
 void CP_Drawer(ui_page_t *page)
 {
     float       alpha = panel_help_offset / (float) HELP_OFFSET;
-    int         x, y, w, h, bor;
+    int         x, y, w, h, bor, lineHeight, verticalSpacing;
     char       *str;
 
     // First call the regular drawer.
@@ -1052,7 +1052,7 @@ void CP_Drawer(ui_page_t *page)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx2(DENGPROJECT_HOMEURL,
                   UI_ScreenW(1000) - UI_BORDER,
-                  UI_ScreenY(25), UI_Color(UIC_TEXT), 0.4f, DTF_ALIGN_RIGHT|DTF_NO_TYPEIN);
+                  UI_ScreenY(25), UI_Color(UIC_TEXT), 0.2f, DTF_ALIGN_RIGHT|DTF_NO_TYPEIN);
 
     // Is the help box visible?
     if(panel_help_offset <= 0 || !panel_help_source)
@@ -1063,39 +1063,38 @@ void CP_Drawer(ui_page_t *page)
 
     // Help box placement.
     bor = 2 * UI_BORDER / 3;
-    x = -bor;
+    x = -UI_BORDER;
     y = UI_ScreenY(0);
     w = HELP_OFFSET;
     h = UI_ScreenH(920);
-    UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha,
+    UI_GradientEx(x, y, w, h, UI_BORDER, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha,
                   alpha);
-    UI_DrawRectEx(x, y, w, h, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
-    x += 2 * bor;
-    y += 2 * bor;
-    w -= 4 * bor;
+    UI_DrawRectEx(x, y, w, h, UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    x += UI_BORDER + 2 * bor;
+    y += UI_BORDER;
+    w -= UI_BORDER + 4 * bor;
     h -= 4 * bor;
 
     // The title (with shadow).
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    /*UI_TextOutWrapEx(panel_help_source->text, x + UI_SHADOW_OFFSET,
-                     y + UI_SHADOW_OFFSET, w, h, UI_Color(UIC_SHADOW), alpha);*/
-    y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h,
-                         UI_Color(UIC_TITLE), alpha) + UI_FontHeight() + 3;
+    lineHeight = FR_SingleLineHeight("Help");
+    verticalSpacing = lineHeight / 4;
+    y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, UI_Color(UIC_TITLE), alpha)
+        + lineHeight + 3;
     UI_Line(x, y, x + w, y, UI_Color(UIC_TEXT), 0, alpha * .5f, 0);
-    y += 2;
+    y += verticalSpacing;
 
     // Cvar?
     if((str = DH_GetString(panel_help, HST_CONSOLE_VARIABLE)))
-        y = CP_LabelText("CVar: ", str, x, y, w, h, alpha) + UI_FontHeight();
+        y = CP_LabelText("CVar: ", str, x, y, w, h, alpha) + lineHeight + verticalSpacing;
 
     // Default?
     if((str = DH_GetString(panel_help, HST_DEFAULT_VALUE)))
-        y = CP_LabelText("Default: ", str, x, y, w, h, alpha) + UI_FontHeight();
+        y = CP_LabelText("Default: ", str, x, y, w, h, alpha) + lineHeight + verticalSpacing;
 
     // Information.
     if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
     {
-        y += UI_FontHeight() / 2;
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutWrapEx(str, x, y, w, h, UI_Color(UIC_TEXT), alpha);
     }
