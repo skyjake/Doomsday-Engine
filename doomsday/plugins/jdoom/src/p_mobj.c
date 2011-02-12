@@ -942,24 +942,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     }
 
     if(type == MT_BOSSTARGET)
-    {
-        if(brain.numTargets >= brain.maxTargets)
-        {
-            // Do we need to alloc more targets?
-            if(brain.numTargets == brain.maxTargets)
-            {
-                brain.maxTargets *= 2;
-                brain.targets = Z_Realloc(brain.targets, brain.maxTargets * sizeof(*brain.targets), PU_MAP);
-            }
-            else
-            {
-                brain.maxTargets = 32;
-                brain.targets = Z_Malloc(brain.maxTargets * sizeof(*brain.targets), PU_MAP, NULL);
-            }
-        }
-
-        brain.targets[brain.numTargets++] = mo;
-    }
+        P_AddMobjToBrainTargets(mo);
 
     // Copy spawn attributes to the new mobj.
     mo->spawnSpot.pos[VX] = x;

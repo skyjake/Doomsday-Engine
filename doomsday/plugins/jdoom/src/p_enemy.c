@@ -1768,6 +1768,33 @@ void C_DECL A_BabyMetal(mobj_t *mo)
     A_Chase(mo);
 }
 
+void P_ClearBrainTargets(void)
+{
+    brain.numTargets = 0;
+    brain.maxTargets = -1;
+    brain.targetOn = 0;
+}
+
+void P_AddMobjToBrainTargets(mobj_t* mo)
+{
+    if(brain.numTargets >= brain.maxTargets)
+    {
+        // Do we need to alloc more targets?
+        if(brain.numTargets == brain.maxTargets)
+        {
+            brain.maxTargets *= 2;
+            brain.targets = Z_Realloc(brain.targets, brain.maxTargets * sizeof(*brain.targets), PU_MAP);
+        }
+        else
+        {
+            brain.maxTargets = 32;
+            brain.targets = Z_Malloc(brain.maxTargets * sizeof(*brain.targets), PU_MAP, NULL);
+        }
+    }
+
+    brain.targets[brain.numTargets++] = mo;
+}
+
 void C_DECL A_BrainAwake(mobj_t* mo)
 {
     S_StartSound(SFX_BOSSIT, NULL);

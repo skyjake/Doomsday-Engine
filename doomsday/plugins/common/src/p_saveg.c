@@ -4336,7 +4336,7 @@ static void P_ArchiveBrain(void)
 
 static void P_UnArchiveBrain(void)
 {
-    int i, ver = 0;
+    int i, numTargets, ver = 0;
 
     if(hdr.version < 3)
         return; // No brain data before version 3.
@@ -4344,23 +4344,23 @@ static void P_UnArchiveBrain(void)
     if(hdr.version >= 8)
         ver = SV_ReadByte();
 
+    P_ClearBrainTargets();
     if(ver >= 1)
     {
-        brain.numTargets = SV_ReadShort();
+        numTargets = SV_ReadShort();
         brain.targetOn = SV_ReadShort();
         brain.easy = SV_ReadByte()!=0? true : false;
     }
     else
     {
-        brain.numTargets = SV_ReadByte();
+        numTargets = SV_ReadByte();
         brain.targetOn = SV_ReadByte();
         brain.easy = false;
     }
 
-    for(i = 0; i < brain.numTargets; ++i)
+    for(i = 0; i < numTargets; ++i)
     {
-        brain.targets[i] = (mobj_t*) (int) SV_ReadShort();
-        brain.targets[i] = SV_GetArchiveThing((int) brain.targets[i], NULL);
+        P_AddMobjToBrainTargets(SV_GetArchiveThing((int) SV_ReadShort(), 0));
     }
 }
 #endif
