@@ -944,7 +944,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     }
 
     if(type == MT_BOSSTARGET)
-        P_AddMobjToBrainTargets(mo);
+        P_BrainAddTarget(mo);
 
     // Copy spawn attributes to the new mobj.
     mo->spawnSpot.pos[VX] = x;

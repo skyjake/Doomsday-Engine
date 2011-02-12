@@ -47,8 +47,10 @@ extern braindata_t brain;
 
 extern boolean bossKilled;
 
-void P_ClearBrainTargets(void);
-void P_AddMobjToBrainTargets(mobj_t* mo);
+void P_BrainInitForMap(void);
+void P_BrainShutdown(void);
+void P_BrainClearTargets(void);
+void P_BrainAddTarget(mobj_t* mo);
 void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 int         P_Massacre(void);
 

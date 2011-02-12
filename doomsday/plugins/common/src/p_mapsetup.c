@@ -871,9 +871,7 @@ static void P_ResetWorldState(void)
 #endif
 
 #if __JDOOM__
-    // Brain info
-    brain.easy = 0; // Always init easy to 0.
-    P_ClearBrainTargets();
+    P_BrainInitForMap();
 #endif
 
 #if __JHERETIC__

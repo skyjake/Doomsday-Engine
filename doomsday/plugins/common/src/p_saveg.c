@@ -4341,7 +4341,7 @@ static void P_UnArchiveBrain(void)
     if(hdr.version >= 8)
         ver = SV_ReadByte();
 
-    P_ClearBrainTargets();
+    P_BrainClearTargets();
     if(ver >= 1)
     {
         numTargets = SV_ReadShort();
@@ -4357,7 +4357,7 @@ static void P_UnArchiveBrain(void)
 
     for(i = 0; i < numTargets; ++i)
     {
-        P_AddMobjToBrainTargets(SV_GetArchiveThing((int) SV_ReadShort(), 0));
+        P_BrainAddTarget(SV_GetArchiveThing((int) SV_ReadShort(), 0));
     }
 }
 #endif

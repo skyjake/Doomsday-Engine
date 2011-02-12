@@ -663,6 +663,7 @@ void G_Shutdown(void)
     P_DestroyIterList(linespecials);
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
+    P_BrainShutdown();
     AM_Shutdown();
     P_FreeWeaponSlots();
     FI_StackShutdown();
