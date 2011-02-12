@@ -251,6 +251,9 @@ void P_Shutdown(void)
     P_DestroySectorTagLists();
     P_ShutdownTerrainTypes();
     P_FreeWeaponSlots();
+#if __JDOOM__
+    P_BrainShutdown();
+#endif
 }
 
 void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
