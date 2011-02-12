@@ -116,7 +116,7 @@ static float calcConsoleTitleBarHeight(void)
 static __inline int calcConsoleMinHeight(void)
 {
     assert(inited);
-    return fontSy * 1.5f + calcConsoleTitleBarHeight() / theWindow->height * 200;
+    return fontSy * 1.5f + calcConsoleTitleBarHeight() / theWindow->height * SCREENHEIGHT;
 }
 
 void Rend_ConsoleInit(void)
@@ -124,7 +124,7 @@ void Rend_ConsoleInit(void)
     if(!inited)
     {   // First init.
         ConsoleY = 0;
-        ConsoleOpenY = 90;
+        ConsoleOpenY = SCREENHEIGHT/2;
         ConsoleDestY = 0;
         ConsoleBlink = 0;
         openingOrClosing = false;
@@ -281,9 +281,9 @@ void Rend_ConsoleToggleFullscreen(void)
 
     minHeight = calcConsoleMinHeight();
     if(ConsoleDestY == minHeight)
-        y = 100;
-    else if(ConsoleDestY == 100)
-        y = 200;
+        y = SCREENHEIGHT/2;
+    else if(ConsoleDestY == SCREENHEIGHT/2)
+        y = SCREENHEIGHT;
     else
         y = minHeight;
 
@@ -331,8 +331,8 @@ void Rend_ConsoleMove(int numLines)
     else
     {
         ConsoleOpenY += fontSy * numLines;
-        if(ConsoleOpenY > 200)
-            ConsoleOpenY = 200;
+        if(ConsoleOpenY > SCREENHEIGHT)
+            ConsoleOpenY = SCREENHEIGHT;
     }
 
     ConsoleDestY = ConsoleOpenY;
