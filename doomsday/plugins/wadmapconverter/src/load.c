@@ -621,6 +621,17 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     {
         mline_t* line = lineList[i];
         line->aFlags |= LAF_POLYOBJ;
+        /**
+         * Due a logic error in hexen.exe, when the column drawer is
+         * presented with polyobj segs built from two-sided linedefs;
+         * clipping is always calculated using the pegging logic for
+         * single-sided linedefs.
+         *
+         * Here we emulate this behavior by automatically applying
+         * bottom unpegging for two-sided linedefs.
+         */
+        if(line->sides[LEFT] != 0)
+            line->ddFlags |= DDLF_DONTPEGBOTTOM;
         po->lineIndices[i] = line - map->lines;
     }
 
