@@ -1,10 +1,10 @@
-/**\file
+/**\file p_setup.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_setup.c: Common map setup routines.
+ * Common map setup routines.
  *
  * Management of extended map data objects (eg xlines) is done here
  */
@@ -872,10 +872,8 @@ static void P_ResetWorldState(void)
 
 #if __JDOOM__
     // Brain info
-    brain.numTargets = 0;
-    brain.maxTargets = -1;
-    brain.targetOn = 0;
     brain.easy = 0; // Always init easy to 0.
+    P_ClearBrainTargets();
 #endif
 
 #if __JHERETIC__
