@@ -1974,13 +1974,10 @@ boolean PTR_AimTraverse(intercept_t* in)
     return false; // Don't go any farther.
 }
 
-float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
+float P_AimLineAttack(mobj_t* t1, angle_t angle, float distance)
 {
-    uint                an;
-    float               pos[2];
-
-    an = angle >> ANGLETOFINESHIFT;
-    shootThing = t1;
+    float pos[2];
+    uint an = angle >> ANGLETOFINESHIFT;
 
     pos[VX] = t1->pos[VX] + distance * FIX2FLT(finecosine[an]);
     pos[VY] = t1->pos[VY] + distance * FIX2FLT(finesine[an]);
@@ -2002,16 +1999,11 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     else
         shootZ += (t1->height / 2) + 8;
 
-#if __JDOOM__ || __JDOOM64__
-    topSlope = 60;
-    bottomSlope = -topSlope;
-#else
-    topSlope = 100;
-    bottomSlope = -100;
-#endif
-
+    topSlope = 100.0/160;
+    bottomSlope = -100.0/160;
     attackRange = distance;
     lineTarget = NULL;
+    shootThing = t1;
 
     P_PathTraverse(t1->pos[VX], t1->pos[VY], pos[VX], pos[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_AimTraverse);
@@ -2023,8 +2015,7 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     }
 
     if(t1->player && cfg.noAutoAim)
-    {
-        // The slope is determined by lookdir.
+    {   // The slope is determined by lookdir.
         return tan(LOOKDIR2RAD(t1->dPlayer->lookDir)) / 1.2;
     }
 
