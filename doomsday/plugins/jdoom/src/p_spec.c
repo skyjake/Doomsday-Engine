@@ -1161,7 +1161,7 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
             return false;
         }
 
-        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_SWTCHX, false, 0);
+        P_ToggleSwitch(P_GetPtrp(line, DMU_SIDEDEF0), SFX_NONE, false, 0);
         xline->special = 0;
         G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
         break;

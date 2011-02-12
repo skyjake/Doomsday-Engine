@@ -852,7 +852,7 @@ D_CMD(CheatGive)
         Con_Printf(" k - keys\n");
         Con_Printf(" p - backpack full of ammo\n");
         Con_Printf(" r - armor\n");
-        Con_Printf(" t - tomb of power\n");
+        Con_Printf(" t - tome of power\n");
         Con_Printf(" w - weapons\n");
         Con_Printf("Example: 'give ikw' gives items, keys and weapons.\n");
         Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
