@@ -654,22 +654,20 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
 /**
  * Called every tic frame that the player origin is in a special sector.
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t   *sector;
-    xsector_t  *xsector;
-    static float pushTab[3] = {
-        (1.0f / 32) * 5,
-        (1.0f / 32) * 10,
-        (1.0f / 32) * 25
+    static const float pushTab[3] = {
+        1.0 / 32 * 5,
+        1.0 / 32 * 10,
+        1.0 / 32 * 25
     };
-
-    sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
-    xsector = P_ToXSector(sector);
+    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    xsector_t* xsector;
 
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
         return; // Player is not touching the floor
 
+    xsector = P_ToXSector(sector);
     switch(xsector->special)
     {
     case 9: // SecretArea
@@ -685,7 +683,7 @@ void P_PlayerInSpecialSector(player_t *player)
 
     case 204:
     case 205:
-    case 206: // Sxcroll_East_xxx
+    case 206: // Scroll_East_xxx
         P_Thrust(player, 0, pushTab[xsector->special - 204]);
         break;
 
@@ -752,11 +750,7 @@ void P_PlayerInSpecialSector(player_t *player)
         break;
 
     default:
-        if(IS_CLIENT)
-            break;
-
-        Con_Error("P_PlayerInSpecialSector: unknown special %i",
-                  xsector->special);
+        break;
     }
 }
 
@@ -814,20 +808,19 @@ void P_SpawnSpecials(void)
         if(IS_CLIENT)
             break;
 
-        if(!xsec->special)
-            continue;
-
         switch(xsec->special)
         {
         case 1: // Phased light
-            // Hardcoded base, use sector->lightLevel as the index
+            // Hardcoded base, use sector->lightLevel as the index.
             P_SpawnPhasedLight(sec, (80.f / 255.0f), -1);
             break;
 
-        case 2:// Phased light sequence start
+        case 2: // Phased light sequence start.
             P_SpawnLightSequence(sec, 1);
             break;
-            // Specials 3 & 4 are used by the phased light sequences
+
+        default:
+            break;
         }
     }
 
@@ -848,13 +841,16 @@ void P_SpawnSpecials(void)
             P_AddObjectToIterList(linespecials, line);
             break;
 
-        case 121:               // Line_SetIdentification
+        case 121: // Line_SetIdentification
             if(xline->arg1)
             {
                 list = P_GetLineIterListForTag((int) xline->arg1, true);
                 P_AddObjectToIterList(list, line);
             }
             xline->special = 0;
+            break;
+
+        default:
             break;
         }
     }
@@ -877,7 +873,7 @@ void P_AnimateSurfaces(void)
         {
         case 201:
         case 202:
-        case 203:               // Scroll_North_xxx
+        case 203: // Scroll_North_xxx
             texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
             texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 201);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
@@ -885,7 +881,7 @@ void P_AnimateSurfaces(void)
 
         case 204:
         case 205:
-        case 206:               // Scroll_East_xxx
+        case 206: // Scroll_East_xxx
             texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
             texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 204);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
@@ -893,7 +889,7 @@ void P_AnimateSurfaces(void)
 
         case 207:
         case 208:
-        case 209:               // Scroll_South_xxx
+        case 209: // Scroll_South_xxx
             texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
             texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 207);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
@@ -901,7 +897,7 @@ void P_AnimateSurfaces(void)
 
         case 210:
         case 211:
-        case 212:               // Scroll_West_xxx
+        case 212: // Scroll_West_xxx
             texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
             texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 210);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
@@ -909,7 +905,7 @@ void P_AnimateSurfaces(void)
 
         case 213:
         case 214:
-        case 215:               // Scroll_NorthWest_xxx
+        case 215: // Scroll_NorthWest_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
             texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
@@ -918,7 +914,7 @@ void P_AnimateSurfaces(void)
 
         case 216:
         case 217:
-        case 218:               // Scroll_NorthEast_xxx
+        case 218: // Scroll_NorthEast_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
             texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
@@ -927,7 +923,7 @@ void P_AnimateSurfaces(void)
 
         case 219:
         case 220:
-        case 221:               // Scroll_SouthEast_xxx
+        case 221: // Scroll_SouthEast_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
             texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
@@ -936,7 +932,7 @@ void P_AnimateSurfaces(void)
 
         case 222:
         case 223:
-        case 224:               // Scroll_SouthWest_xxx
+        case 224: // Scroll_SouthWest_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
             texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
@@ -944,7 +940,7 @@ void P_AnimateSurfaces(void)
             break;
 
         default:
-            // DJS - Is this really necessary every tic?
+            // dj - Is this really necessary every tic?
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, 0);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, 0);
             break;

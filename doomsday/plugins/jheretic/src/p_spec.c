@@ -1342,58 +1342,53 @@ void P_InitLava(void)
     LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-/**
- * Handles sector specials 25 - 39.
- */
-void P_PlayerInWindSector(player_t *player)
+void P_PlayerInWindSector(player_t* player)
 {
-    sector_t *sector =
-        P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
-
-    static int pushTab[5] = {
-        2048 * 5,
-        2048 * 10,
-        2048 * 25,
-        2048 * 30,
-        2048 * 35
+    static const float pushTab[5] = {
+        2048.0 / FRACUNIT * 5,
+        2048.0 / FRACUNIT * 10,
+        2048.0 / FRACUNIT * 25,
+        2048.0 / FRACUNIT * 30,
+        2048.0 / FRACUNIT * 35
     };
+    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    xsector_t* xsector = P_ToXSector(sector);
 
-    switch(P_ToXSector(sector)->special)
+    switch(xsector->special)
     {
-    case 25:
-    case 26:
-    case 27:
-    case 28:
-    case 29:
-        // Scroll_North
-        P_Thrust(player, ANG90, FIX2FLT(pushTab[P_ToXSector(sector)->special - 25]));
-        break;
-
     case 20:
     case 21:
     case 22:
     case 23:
-    case 24:
-        // Scroll_East
-        P_Thrust(player, 0, FIX2FLT(pushTab[P_ToXSector(sector)->special - 20]));
+    case 24: // Scroll_East
+        P_Thrust(player, 0, pushTab[xsector->special - 20]);
+        break;
+
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29: // Scroll_North
+        P_Thrust(player, ANG90, pushTab[xsector->special - 25]);
         break;
 
     case 30:
     case 31:
     case 32:
     case 33:
-    case 34:
-        // Scroll_South
-        P_Thrust(player, ANG270, FIX2FLT(pushTab[P_ToXSector(sector)->special - 30]));
+    case 34: // Scroll_South
+        P_Thrust(player, ANG270, pushTab[xsector->special - 30]);
         break;
 
     case 35:
     case 36:
     case 37:
     case 38:
-    case 39:
-        // Scroll_West
-        P_Thrust(player, ANG180, FIX2FLT(pushTab[P_ToXSector(sector)->special - 35]));
+    case 39: // Scroll_West
+        P_Thrust(player, ANG180, pushTab[xsector->special - 35]);
+        break;
+
+    default:
         break;
     }
 

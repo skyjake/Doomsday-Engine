@@ -374,12 +374,14 @@ float P_MobjGetFriction(mobj_t* mo)
 
 void P_MobjMoveXY(mobj_t* mo)
 {
-    static const int windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
+    static const float windTab[3] = {
+        2048.0 / FRACUNIT * 5,
+        2048.0 / FRACUNIT * 10,
+        2048.0 / FRACUNIT * 25
+    };
 
-    float posTry[2];
+    float posTry[2], mom[2];
     player_t* player;
-    float mom[2];
-    int special;
     angle_t angle;
 
     // $democam: cameramen have their own movement code
@@ -398,33 +400,33 @@ void P_MobjMoveXY(mobj_t* mo)
         return;
     }
 
-    special = P_ToXSectorOfSubsector(mo->subsector)->special;
     if(mo->flags2 & MF2_WINDTHRUST)
     {
+        int special = P_ToXSectorOfSubsector(mo->subsector)->special;
         switch(special)
         {
         case 40:
         case 41:
         case 42: // Wind_East
-            P_ThrustMobj(mo, 0, FIX2FLT(windTab[special - 40]));
+            P_ThrustMobj(mo, 0, windTab[special - 40]);
             break;
 
         case 43:
         case 44:
         case 45: // Wind_North
-            P_ThrustMobj(mo, ANG90, FIX2FLT(windTab[special - 43]));
+            P_ThrustMobj(mo, ANG90, windTab[special - 43]);
             break;
 
         case 46:
         case 47:
         case 48: // Wind_South
-            P_ThrustMobj(mo, ANG270, FIX2FLT(windTab[special - 46]));
+            P_ThrustMobj(mo, ANG270, windTab[special - 46]);
             break;
 
         case 49:
         case 50:
         case 51: // Wind_West
-            P_ThrustMobj(mo, ANG180, FIX2FLT(windTab[special - 49]));
+            P_ThrustMobj(mo, ANG180, windTab[special - 49]);
             break;
         }
     }
