@@ -2534,7 +2534,7 @@ void M_ActivateEditField(mn_object_t* obj, int option)
 
 void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 {
-    uint colorIndex = obj->data2 % NUM_MENU_COLORS;
+    uint colorIndex = (obj->data2 > 0? obj->data2 % NUM_MENU_COLORS : 0);
     float color[4];
 
     color[CR] = cfg.menuColors[colorIndex][CR];
@@ -2804,7 +2804,7 @@ void MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     int act = (obj->flags & MNF_INACTIVE) == 0;
     //int click = (obj->flags & MNF_CLICKED) != 0;
     boolean down = act /*|| click*/;
-    uint colorIndex = (obj->type == MN_BUTTON? obj->data2 : 2) % NUM_MENU_COLORS;
+    uint colorIndex = (obj->type == MN_BUTTON && obj->data2 > 0? obj->data2 % NUM_MENU_COLORS : 0);
     const char* text;
     float color[4];
 
