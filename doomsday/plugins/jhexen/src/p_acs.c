@@ -354,13 +354,17 @@ void P_CheckACSStore(uint map)
         memmove(&ACSStore[i], &ACSStore[i+1], sizeof(acsstore_t) * (ACSStoreSize-i));
     }
 
-    if(ACSStoreSize != origSize)
+    if(ACSStoreSize == origSize)
+        return;
+
+    if(ACSStoreSize)
     {
-        if(ACSStoreSize)
-            ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
-        else
-            Z_Free(ACSStore); ACSStore = NULL;
+        ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+        return;
     }
+
+    Z_Free(ACSStore);
+    ACSStore = 0;
 }
 
 /**
