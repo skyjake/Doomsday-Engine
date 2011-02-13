@@ -117,7 +117,7 @@ typedef struct {
 
 D_CMD(Dir);
 D_CMD(Dump);
-D_CMD(ListFiles);
+D_CMD(ListWadFiles);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -170,7 +170,7 @@ void DD_RegisterVFS(void)
     C_CMD("ls", "", Dir);
     C_CMD("ls", "s*", Dir);
     C_CMD("dump", "s", Dump);
-    C_CMD("listfiles", "", ListFiles);
+    C_CMD("listwadfiles", "", ListWadFiles);
 }
 
 static lumpnum_t W_Index(lumpnum_t lump)
@@ -1430,7 +1430,7 @@ D_CMD(Dir)
     return true;
 }
 
-D_CMD(ListFiles)
+D_CMD(ListWadFiles)
 {
     int i;
     for(i = 0; i < numRecords; ++i)

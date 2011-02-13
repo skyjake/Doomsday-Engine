@@ -314,6 +314,10 @@ inf = Params: demolump (demofile) (lumpfile)\nFor example, 'demolump demo1.dmo D
 desc = Print contents of directories.
 inf = Params: dir (dirs) ...\nFor example, 'dir data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
+[ls]
+desc = Print contents of directories.
+inf = Params: ls (dirs) ...\nFor example, 'ls data/'.\nVirtual files are listed, too.\nPaths are relative to the base path.
+
 [dump]
 desc = Dump a data lump currently loaded in memory.
 inf = Params: dump (name)\nFor example, 'dump PLAYPAL'.
@@ -377,8 +381,8 @@ desc = List all event binding classes.
 [listcmds]
 desc = List all console commands.
 
-[listfiles]
-desc = List all the loaded data files and show information about them.
+[listwadfiles]
+desc = List all loaded WAD data files.
 
 [listgames]
 desc = List all games.
@@ -404,10 +408,6 @@ desc = Terminate remote connection to server console.
 
 [lowres]
 desc = Select the poorest rendering quality.
-
-[ls]
-desc = Print contents of directories.
-inf = Params: ls (dirs) ...\nFor example, 'ls data\'.\nVirtual files are listed, too.\nPaths are relative to the base path.
 
 [mipmap]
 desc = Set the mipmapping mode.
