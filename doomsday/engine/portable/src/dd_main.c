@@ -846,24 +846,6 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_ResetFileIDs();
 
     /**
-     * Create default Auto mappings in the runtime directory.
-     */
-    { ddstring_t temp;
-
-    Str_Init(&temp);
-    // Data class resources.
-    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(p->info)));
-    F_AddResourcePathMapping("auto", Str_Text(&temp));
-
-    Str_Clear(&temp);
-    // Definition class resources.
-    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(p->info)));
-    F_AddResourcePathMapping("auto", Str_Text(&temp));
-
-    Str_Free(&temp);
-    }
-
-    /**
      * Open all the files, load headers, count lumps, etc, etc...
      * \note duplicate processing of the same file is automatically guarded against by
      * the virtual file system layer.
@@ -885,25 +867,43 @@ static int DD_ChangeGameWorker(void* paramaters)
     if(gameStartupFiles && gameStartupFiles[0])
         parseStartupFilePathsAndAddFiles(gameStartupFiles);
 
-    /**
-     * Phase 3: Add real files from the Auto directory.
-     * First ZIPs then WADs (they may contain WAD files).
-     */
-    addFilesFromAutoData(false);
-    if(numGameResourceFileList > 0)
+    if(!DD_IsNullGameInfo(p->info))
     {
-        size_t i;
-        for(i = 0; i < numGameResourceFileList; ++i)
-            if(isZip(Str_Text(gameResourceFileList[i])))
-                W_AddFile(Str_Text(gameResourceFileList[i]), false);
+        ddstring_t temp;
 
-        for(i = 0; i < numGameResourceFileList; ++i)
-            if(isWad(Str_Text(gameResourceFileList[i])))
-                W_AddFile(Str_Text(gameResourceFileList[i]), false);
+        /**
+         * Phase 3: Add real files from the Auto directory.
+         * First ZIPs then WADs (they may contain WAD files).
+         */
+
+        // Create default Auto mappings in the runtime directory.
+        // Data class resources.
+        Str_Init(&temp);
+        Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(p->info)));
+        F_AddResourcePathMapping("auto", Str_Text(&temp));
+
+        // Definition class resources.
+        Str_Clear(&temp);
+        Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(p->info)));
+        F_AddResourcePathMapping("auto", Str_Text(&temp));
+        Str_Free(&temp);
+
+        addFilesFromAutoData(false);
+        if(numGameResourceFileList > 0)
+        {
+            size_t i;
+            for(i = 0; i < numGameResourceFileList; ++i)
+                if(isZip(Str_Text(gameResourceFileList[i])))
+                    W_AddFile(Str_Text(gameResourceFileList[i]), false);
+
+            for(i = 0; i < numGameResourceFileList; ++i)
+                if(isWad(Str_Text(gameResourceFileList[i])))
+                    W_AddFile(Str_Text(gameResourceFileList[i]), false);
+        }
+
+        // Final autoload round.
+        DD_AutoLoad();
     }
-
-    // Final autoload round.
-    DD_AutoLoad();
 
     F_InitDirec();
     Cl_InitTranslations();
