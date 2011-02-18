@@ -40,7 +40,11 @@ HEADERS += \
     src/rules.h \
     src/rectanglerule.h \
     src/derivedrule.h \
-    src/clearvisual.h
+    src/clearvisual.h \
+    src/shaderbank.h \
+    src/vbuffer.h \
+    src/uniform.h \
+    src/program.h
 
 SOURCES += \
     src/clientapp.cc \
@@ -58,5 +62,9 @@ SOURCES += \
     src/constantrule.cc \
     src/rectanglerule.cc \
     src/derivedrule.cc \
-    src/clearvisual.cc
+    src/clearvisual.cc \
+    src/shaderbank.cpp \
+    src/vbuffer.cpp \
+    src/uniform.cpp \
+    src/program.cpp
     
