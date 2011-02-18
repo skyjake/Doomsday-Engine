@@ -881,11 +881,9 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
     {
     detailtex_t* dTex = detailTextures[inst->tex->ofTypeID];
     byte result = 0;
-    if(dTex->external)
+    if(dTex->isExternal)
     {
-        ddstring_t* searchPath, foundPath;
-
-        searchPath = Uri_ComposePath(dTex->external);
+        ddstring_t foundPath, *searchPath = Uri_ComposePath(dTex->filePath);
         Str_AppendChar(searchPath, ';');
 
         Str_Init(&foundPath);
@@ -903,7 +901,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
     }
     else
     {
-        const char* lumpName = W_LumpName(dTex->lump);
+        const char* lumpName = Str_Text(Uri_Path(dTex->filePath));
         DFILE* file;
         if(NULL != (file = F_OpenLump(lumpName, false)))
         {
@@ -2014,20 +2012,18 @@ static void Equalize(byte* pixels, int width, int height,
     hiMul = (max < 255?    (float)255/max  : 1);
     loMul = (min > 0  ? 1-((float)min/255) : 1);
 
-    if(baMul == 1 && hiMul == 1 && loMul == 1)
-        return; // Artist has God-like skillz.
+    if(!(baMul == 1 && hiMul == 1 && loMul == 1))
+        for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+        {
+            // First balance.
+            *pix = (byte) MINMAX_OF(0, ((float)*pix) * baMul, 255);
 
-    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
-    {
-        // First balance.
-        *pix = (byte) MINMAX_OF(0, ((float)*pix) * baMul, 255);
-
-        // Now amplify.
-        if(*pix > 127)
-            *pix = (byte) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
-        else
-            *pix = (byte) MINMAX_OF(0, ((float)*pix) * loMul, 255);
-    }
+            // Now amplify.
+            if(*pix > 127)
+                *pix = (byte) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
+            else
+                *pix = (byte) MINMAX_OF(0, ((float)*pix) * loMul, 255);
+        }
 
     if(rBaMul) *rBaMul = baMul;
     if(rHiMul) *rHiMul = hiMul;
@@ -2720,7 +2716,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 Equalize(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
                 if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
                 {
-                    Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n", texInst->tex->name, baMul, hiMul, loMul);
+                    Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
+                                texInst->tex->name, baMul, hiMul, loMul);
                 }
             }
 

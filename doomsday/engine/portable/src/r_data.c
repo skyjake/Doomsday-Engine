@@ -2291,13 +2291,12 @@ void R_InitAnimGroup(ded_group_t* def)
 
 detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
 {
-    lumpnum_t lump = def->detailTex? W_CheckNumForName(Str_Text(Uri_Path(def->detailTex))) : -1;
     const gltexture_t* glTex;
     detailtex_t* dTex;
     char name[9];
 
     // Have we already created one for this?
-    if((dTex = R_GetDetailTexture(lump, def->isExternal? def->detailTex : 0)))
+    if((dTex = R_GetDetailTexture(def->detailTex, def->isExternal)))
         return NULL;
 
     if(M_NumDigits(numDetailTextures + 1) > 8)
@@ -2317,8 +2316,8 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
 
     dTex = M_Malloc(sizeof(*dTex));
     dTex->id = glTex->id;
-    dTex->lump = lump;
-    dTex->external = def->isExternal? def->detailTex : 0;
+    dTex->isExternal = def->isExternal;
+    dTex->filePath = def->detailTex;
 
     // Add it to the list.
     detailTextures = M_Realloc(detailTextures, sizeof(detailtex_t*) * ++numDetailTextures);
@@ -2327,17 +2326,17 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
     return dTex;
 }
 
-detailtex_t* R_GetDetailTexture(lumpnum_t lump, const dduri_t* external)
+detailtex_t* R_GetDetailTexture(const dduri_t* filePath, boolean isExternal)
 {
-    int i;
+    if(!filePath)
+        return 0;
+    { int i;
     for(i = 0; i < numDetailTextures; ++i)
     {
         detailtex_t* dTex = detailTextures[i];
-        if(dTex->lump == lump &&
-           ((!dTex->external && !external) ||
-             (dTex->external && external && Uri_Equality(dTex->external, external)) ) )
+        if(dTex->isExternal == isExternal && Uri_Equality(dTex->filePath, filePath))
             return dTex;
-    }
+    }}
     return 0;
 }
 
@@ -2346,10 +2345,8 @@ detailtex_t* R_GetDetailTexture(lumpnum_t lump, const dduri_t* external)
  */
 void R_DestroyDetailTextures(void)
 {
-    int                 i;
-
+    { int i;
     for(i = 0; i < numDetailTextures; ++i)
-    {
         M_Free(detailTextures[i]);
     }
 
@@ -2421,10 +2418,8 @@ lightmap_t* R_GetLightMap(const dduri_t* uri)
  */
 void R_DestroyLightMaps(void)
 {
-    int                 i;
-
+    { int i;
     for(i = 0; i < numLightMaps; ++i)
-    {
         M_Free(lightMaps[i]);
     }
 
@@ -2500,10 +2495,8 @@ flaretex_t* R_GetFlareTexture(const dduri_t* uri)
  */
 void R_DestroyFlareTextures(void)
 {
-    int                 i;
-
+    { int i;
     for(i = 0; i < numFlareTextures; ++i)
-    {
         M_Free(flareTextures[i]);
     }
 
@@ -2572,10 +2565,8 @@ shinytex_t* R_GetShinyTexture(const dduri_t* uri)
  */
 void R_DestroyShinyTextures(void)
 {
-    int                 i;
-
+    { int i;
     for(i = 0; i < numShinyTextures; ++i)
-    {
         M_Free(shinyTextures[i]);
     }
 
@@ -2646,10 +2637,8 @@ masktex_t* R_GetMaskTexture(const dduri_t* uri)
  */
 void R_DestroyMaskTextures(void)
 {
-    int                 i;
-
+    { int i;
     for(i = 0; i < numMaskTextures; ++i)
-    {
         M_Free(maskTextures[i]);
     }
 
@@ -2675,4 +2664,3 @@ boolean R_DrawVLightVector(const vlight_t* light, void* context)
     }
     return true; // Continue iteration.
 }
-

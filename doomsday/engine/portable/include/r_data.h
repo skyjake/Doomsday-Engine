@@ -52,8 +52,8 @@
 
 typedef struct detailtex_s {
     gltextureid_t   id;
-    lumpnum_t       lump;
-    const dduri_t*  external;
+    boolean         isExternal;
+    const dduri_t*  filePath;
 } detailtex_t;
 
 typedef struct lightmap_s {
@@ -323,7 +323,7 @@ boolean         R_DrawVLightVector(const vlight_t* light, void* context);
 void            R_InitAnimGroup(ded_group_t* def);
 
 detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
-detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const dduri_t* external);
+detailtex_t*    R_GetDetailTexture(const dduri_t* filePath, boolean isExternal);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
 
 lightmap_t*     R_CreateLightMap(const dduri_t* uri);

@@ -507,24 +507,6 @@ ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
     return NULL;
 }
 
-ded_xgclass_t* Def_GetXGClass(const char* name)
-{
-    ded_xgclass_t*      def;
-    int                 i;
-
-    if(!name || !name[0])
-        return 0;
-
-    for(i = defs.count.xgClasses.num - 1, def = defs.xgClasses + i;
-        i >= 0; i--, def--)
-    {
-        if(!(stricmp(name, def->id)))
-            return def;
-    }
-
-    return 0;
-}
-
 int Def_GetFlagValue(const char* flag)
 {
     int                 i;

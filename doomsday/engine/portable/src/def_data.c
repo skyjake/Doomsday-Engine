@@ -100,7 +100,7 @@ void DED_ZCount(ded_count_t *c)
 
 // DED Code --------------------------------------------------------------
 
-void DED_Init(ded_t *ded)
+void DED_Init(ded_t* ded)
 {
     memset(ded, 0, sizeof(*ded));
     ded->version = DED_VERSION;
@@ -109,32 +109,127 @@ void DED_Init(ded_t *ded)
 void DED_Clear(ded_t* ded)
 {
     if(ded->flags)
+    {
         M_Free(ded->flags);
-    ded->flags = 0;
+        ded->flags = 0;
+    }
+
     if(ded->mobjs)
+    {
         M_Free(ded->mobjs);
-    ded->mobjs = 0;
+        ded->mobjs = 0;
+    }
+
     if(ded->states)
-        M_Free(ded->states);
-    ded->states = 0;
+    {
+        { int i;
+        for(i = 0; i < ded->count.states.num; ++i)
+        {
+            ded_state_t* state = &ded->states[i];
+            if(state->execute)
+                free(state->execute);
+        }}
+        free(ded->states);
+        ded->states = 0;
+    }
+
     if(ded->sprites)
+    {
         M_Free(ded->sprites);
-    ded->sprites = 0;
+        ded->sprites = 0;
+    }
+
     if(ded->lights)
+    {
+        { int i;
+        for(i = 0; i < ded->count.lights.num; ++i)
+        {
+            ded_light_t* li = &ded->lights[i];
+            if(li->up)
+                Uri_Destruct(li->up);
+            if(li->down)
+                Uri_Destruct(li->down);
+            if(li->sides)
+                Uri_Destruct(li->sides);
+            if(li->flare)
+                Uri_Destruct(li->flare);
+        }}
         M_Free(ded->lights);
-    ded->lights = 0;
+        ded->lights = 0;
+    }
+
     if(ded->models)
+    {
+        { int i;
+        for(i = 0; i < ded->count.models.num; ++i)
+        {
+            ded_model_t* mdl = &ded->models[i];
+            int j;
+            for(j = 0; j < DED_MAX_SUB_MODELS; ++j)
+            {
+                ded_submodel_t* sub = &mdl->sub[j];
+                if(sub->filename)
+                    Uri_Destruct(sub->filename);
+                if(sub->skinFilename)
+                    Uri_Destruct(sub->skinFilename);
+            }
+        }}
         M_Free(ded->models);
-    ded->models = 0;
+        ded->models = 0;
+    }
+
     if(ded->sounds)
+    {
+        { int i;
+        for(i = 0; i < ded->count.sounds.num; ++i)
+        {
+            ded_sound_t* snd = &ded->sounds[i];
+            if(snd->ext)
+                Uri_Destruct(snd->ext);
+        }}
         M_Free(ded->sounds);
-    ded->sounds = 0;
+        ded->sounds = 0;
+    }
+
     if(ded->music)
+    {
+        { int i;
+        for(i = 0; i < ded->count.music.num; ++i)
+        {
+            ded_music_t* song = &ded->music[i];
+            if(song->path)
+                Uri_Destruct(song->path);
+        }}
         M_Free(ded->music);
-    ded->music = 0;
+        ded->music = 0;
+    }
+
     if(ded->mapInfo)
-        M_Free(ded->mapInfo);
-    ded->mapInfo = 0;
+    {
+        { int i;
+        for(i = 0; i < ded->count.mapInfo.num; ++i)
+        {
+            ded_mapinfo_t* info = &ded->mapInfo[i];
+            int j;
+            if(info->execute)
+                free(info->execute);
+            for(j = 0; j < NUM_SKY_LAYERS; ++j)
+            {
+                ded_skylayer_t* sl = &info->sky.layers[j];
+                if(sl->material)
+                    Uri_Destruct(sl->material);
+            }
+            for(j = 0; j < NUM_SKY_MODELS; ++j)
+            {
+                ded_skymodel_t* sm = &info->sky.models[j];
+                if(sm->execute)
+                    free(sm->execute);
+            }
+        }}
+        free(ded->mapInfo);
+        ded->mapInfo = 0;
+    }
+
     if(ded->skies)
     {
         { int i;
@@ -148,23 +243,49 @@ void DED_Clear(ded_t* ded)
                 if(sl->material)
                     Uri_Destruct(sl->material);
             }
+            for(j = 0; j < NUM_SKY_MODELS; ++j)
+            {
+                ded_skymodel_t* sm = &sky->models[j];
+                if(sm->execute)
+                    free(sm->execute);
+            }
         }}
         M_Free(ded->skies);
+        ded->skies = 0;
     }
-    ded->skies = 0;
+
+    if(ded->details)
+    {
+        { int i;
+        for(i = 0; i < ded->count.details.num; ++i)
+        {
+            ded_detailtexture_t* dtex = &ded->details[i];
+            if(dtex->material1)
+                Uri_Destruct(dtex->material1);
+            if(dtex->material2)
+                Uri_Destruct(dtex->material2);
+            if(dtex->detailTex)
+                Uri_Destruct(dtex->detailTex);
+        }}
+        M_Free(ded->details);
+        ded->details = 0;
+    }
 
     if(ded->materials)
     {
         { int i;
         for(i = 0; i < ded->count.materials.num; ++i)
         {
-            uint j;
+            ded_material_t* mat = &ded->materials[i];
+            int j;
+            if(mat->id)
+                Uri_Destruct(mat->id);
             for(j = 0; j < DED_MAX_MATERIAL_LAYERS; ++j)
-                M_Free(ded->materials[i].layers[j].stages);
+                M_Free(mat->layers[j].stages);
         }}
         M_Free(ded->materials);
+        ded->materials = 0;
     }
-    ded->materials = 0;
 
     if(ded->text)
     {
@@ -174,8 +295,8 @@ void DED_Clear(ded_t* ded)
             M_Free(ded->text[i].text);
         }}
         M_Free(ded->text);
+        ded->text = 0;
     }
-    ded->text = 0;
 
     if(ded->textureEnv)
     {
@@ -192,8 +313,8 @@ void DED_Clear(ded_t* ded)
             M_Free(tenv->materials);
         }}
         M_Free(ded->textureEnv);
+        ded->textureEnv = 0;
     }
-    ded->textureEnv = 0;
 
     if(ded->compositeFonts)
     {
@@ -210,8 +331,8 @@ void DED_Clear(ded_t* ded)
             M_Free(cfont->charMap);
         }}
         M_Free(ded->compositeFonts);
+        ded->compositeFonts = 0;
     }
-    ded->compositeFonts = 0;
 
     if(ded->values)
     {
@@ -222,12 +343,51 @@ void DED_Clear(ded_t* ded)
             M_Free(ded->values[i].text);
         }}
         M_Free(ded->values);
+        ded->values = 0;
     }
-    ded->values = 0;
 
     if(ded->decorations)
+    {
+        { int i;
+        for(i = 0; i < ded->count.decorations.num; ++i)
+        {
+            ded_decor_t* dec = &ded->decorations[i];
+            if(dec->material)
+                Uri_Destruct(dec->material);
+            { int j;
+            for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
+            {
+                ded_decorlight_t* li = &dec->lights[j];
+                if(li->up)
+                    Uri_Destruct(li->up);
+                if(li->down)
+                    Uri_Destruct(li->down);
+                if(li->sides)
+                    Uri_Destruct(li->sides);
+                if(li->flare)
+                    Uri_Destruct(li->flare);
+            }}
+        }}
         M_Free(ded->decorations);
-    ded->decorations = 0;
+        ded->decorations = 0;
+    }
+
+    if(ded->reflections)
+    {
+        { int i;
+        for(i = 0; i < ded->count.reflections.num; ++i)
+        {
+            ded_reflection_t* ref = &ded->reflections[i];
+            if(ref->material)
+                Uri_Destruct(ref->material);
+            if(ref->shinyMap)
+                Uri_Destruct(ref->shinyMap);
+            if(ref->maskMap)
+                Uri_Destruct(ref->maskMap);
+        }}
+        free(ded->reflections);
+        ded->reflections = 0;
+    }
 
     if(ded->groups)
     {
@@ -242,42 +402,57 @@ void DED_Clear(ded_t* ded)
             M_Free(group->members);
         }}
         M_Free(ded->groups);
+        ded->groups = 0;
     }
-    ded->groups = 0;
 
     if(ded->sectorTypes)
+    {
         M_Free(ded->sectorTypes);
-    ded->sectorTypes = 0;
+        ded->sectorTypes = 0;
+    }
 
     if(ded->lineTypes)
+    {
+        { int i;
+        for(i = 0; i < ded->count.lineTypes.num; ++i)
+        {
+            ded_linetype_t* lt = &ded->lineTypes[i];
+            if(lt->actMaterial)
+                Uri_Destruct(lt->actMaterial);
+            if(lt->deactMaterial)
+                Uri_Destruct(lt->deactMaterial);
+        }}
         M_Free(ded->lineTypes);
-    ded->lineTypes = 0;
+        ded->lineTypes = 0;
+    }
 
     if(ded->ptcGens)
     {
         { int i;
         for(i = 0; i < ded->count.ptcGens.num; ++i)
         {
-            M_Free(ded->ptcGens[i].stages);
+            ded_ptcgen_t* gen = &ded->ptcGens[i];
+            if(gen->material)
+                Uri_Destruct(gen->material);
+            if(gen->stages)
+                M_Free(gen->stages);
         }}
         M_Free(ded->ptcGens);
+        ded->ptcGens = 0;
     }
-    ded->ptcGens = 0;
 
     if(ded->finales)
-        M_Free(ded->finales);
-    ded->finales = 0;
-
-    if(ded->xgClasses)
     {
         { int i;
-        for(i = 0; i < ded->count.xgClasses.num; ++i)
+        for(i = 0; i < ded->count.finales.num; ++i)
         {
-            M_Free(ded->xgClasses[i].properties);
+            ded_finale_t* fin = &ded->finales[i];
+            if(fin->script)
+                free(fin->script);
         }}
-        M_Free(ded->xgClasses);
+        M_Free(ded->finales);
+        ded->finales = 0;
     }
-    ded->xgClasses = 0;
 }
 
 int DED_AddMobj(ded_t *ded, char *idstr)
@@ -293,29 +468,6 @@ void DED_RemoveMobj(ded_t *ded, int index)
 {
     DED_DelEntry(index, (void **) &ded->mobjs, &ded->count.mobjs,
                  sizeof(ded_mobj_t));
-}
-
-int DED_AddXGClass(ded_t *ded)
-{
-    ded_xgclass_t *xgc = DED_NewEntry((void **) &ded->xgClasses,
-                                        &ded->count.xgClasses,
-                                        sizeof(ded_xgclass_t));
-    return xgc - ded->xgClasses;
-}
-
-int DED_AddXGClassProperty(ded_xgclass_t *xgc)
-{
-    ded_xgclass_property_t *xgcp = DED_NewEntry((void **) &xgc->properties,
-                                         &xgc->propertiesCount,
-                                         sizeof(ded_xgclass_property_t));
-
-    return xgcp - xgc->properties;
-}
-
-void DED_RemoveXGClass(ded_t *ded, int index)
-{
-    DED_DelEntry(index, (void **) &ded->xgClasses, &ded->count.xgClasses,
-                 sizeof(ded_xgclass_t));
 }
 
 int DED_AddFlag(ded_t *ded, char *name, char *text, int value)

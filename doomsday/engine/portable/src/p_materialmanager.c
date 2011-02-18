@@ -1099,7 +1099,6 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                 // Do we need to prepare a detail texture?
                 if(detail)
                 {
-                    lumpnum_t lump = detail->detailTex? W_CheckNumForName(Str_Text(Uri_Path(detail->detailTex))) : -1;
                     detailtex_t* dTex;
 
                     /**
@@ -1108,7 +1107,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                      * linked to (and prepared) via the layers (above).
                      */
 
-                    if((dTex = R_GetDetailTexture(lump, detail->isExternal? detail->detailTex : 0)))
+                    if((dTex = R_GetDetailTexture(detail->detailTex, detail->isExternal)))
                     {
                         float contrast = detail->strength * detailFactor;
 

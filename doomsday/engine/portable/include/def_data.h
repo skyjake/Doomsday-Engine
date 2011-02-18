@@ -73,30 +73,6 @@ typedef struct {
 } ded_str_t;
 
 typedef struct {
-    ded_flags_t     id; // ID of this property
-    ded_flags_t     flags;
-    ded_string_t    name;
-    ded_string_t    flagPrefix;
-    int             map;
-} ded_xgclass_property_t;
-
-typedef struct {
-    ded_stringid_t  id;
-    ded_string_t    name;
-    ded_count_t     propertiesCount;
-    ded_xgclass_property_t* properties;
-    // The rest of the properties are retrieved at runtime
-    // by querying the game for the callbacks for the
-    // classes by "name";
-    int (C_DECL *doFunc)();
-    void (*initFunc)(linedef_t* line);
-    int             traverse;
-    int             travRef;
-    int             travData;
-    int             evTypeFlags;
-} ded_xgclass_t;
-
-typedef struct {
     ded_stringid_t  id;
     ded_string_t    text;
     int             value;
@@ -194,9 +170,9 @@ typedef struct {
 
 typedef struct {
     ded_soundid_t   id; // ID of this sound, refered to by others.
-    ded_string_t    lumpName; /* Actual lump name of the sound
-                                 ("DS" not included). */
     ded_string_t    name; // A tag name for the sound.
+    ded_string_t    lumpName; // Actual lump name of the sound ("DS" not included).
+    dduri_t*        ext; // External sound file (WAV).
     ded_soundid_t   link; // Link to another sound.
     int             linkPitch;
     int             linkVolume;
@@ -204,7 +180,6 @@ typedef struct {
     int             channels; // Max number of channels to occupy.
     int             group; // Exclusion group.
     ded_flags_t     flags; // Flags (like chg_pitch).
-    dduri_t*        ext; // External sound file (WAV).
 } ded_sound_t;
 
 typedef struct {
@@ -633,9 +608,6 @@ typedef struct ded_s {
     // XG sector types.
     ded_sectortype_t* sectorTypes;
 
-    // XG Classes
-    ded_xgclass_t*  xgClasses;
-
     // Composite fonts.
     ded_compositefont_t* compositeFonts;
 } ded_t;
@@ -671,8 +643,6 @@ int             DED_AddGroup(ded_t* ded);
 int             DED_AddGroupMember(ded_group_t* grp);
 int             DED_AddSectorType(ded_t* ded, int id);
 int             DED_AddLineType(ded_t* ded, int id);
-int             DED_AddXGClass(ded_t* ded);
-int             DED_AddXGClassProperty(ded_xgclass_t* xgc);
 int             DED_AddCompositeFont(ded_t* ded, const char* id);
 int             DED_AddCompositeFontMapCharacter(ded_compositefont_t* font);
 
@@ -698,7 +668,6 @@ void            DED_RemoveReflection(ded_t* ded, int index);
 void            DED_RemoveGroup(ded_t* ded, int index);
 void            DED_RemoveSectorType(ded_t* ded, int index);
 void            DED_RemoveLineType(ded_t* ded, int index);
-void            DED_RemoveXGClass(ded_t* ded, int index);
 void            DED_RemoveCompositeFont(ded_t* ded, int index);
 
 void*           DED_NewEntries(void** ptr, ded_count_t* cnt,
