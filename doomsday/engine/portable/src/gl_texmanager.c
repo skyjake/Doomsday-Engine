@@ -154,8 +154,8 @@ static boolean highResWithPWAD = false;
 // Image file handlers.
 static const imagehandler_t handlers[] = {
     { "PNG", "png", tryLoadPNG, PNG_LastError },
-    { "TGA", "tga", tryLoadTGA, 0 },
-    { "PCX", "pcx", tryLoadPCX, 0 },
+    { "TGA", "tga", tryLoadTGA, TGA_LastError },
+    { "PCX", "pcx", tryLoadPCX, PCX_LastError },
     { 0 } // Terminate.
 };
 
