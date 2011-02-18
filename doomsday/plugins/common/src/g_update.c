@@ -145,7 +145,6 @@ void G_UpdateState(int step)
         G_RestoreState();
         R_InitRefresh();
         P_Update();
-        //// \fixme Detect gameMode changes (GM_DOOM -> GM_DOOM2, for instance).
 #if !__JHEXEN__
         XG_Update();
 #endif
