@@ -135,6 +135,16 @@ int             M_FloorPow2(int num);
 int             M_RoundPow2(int num);
 int             M_WeightPow2(int num, float weight);
 float           M_CycleIntoRange(float value, float length);
+
+/**
+ * Using Euclid's Algorithm reduce the given numerator and denominator by
+ * their greatest common integer divisor.
+ * @param numerator  Input and output numerator.
+ * @param denominator  Input and output denominator.
+ * @return  Greatest common divisor.
+ */
+int M_RatioReduce(int* numerator, int* denominator);
+
 double          M_SlopeToAngle(double dx, double dy);
 double          M_Length(double x, double y);
 int             M_NumDigits(int num);

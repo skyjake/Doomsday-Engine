@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 498 <--
+; Highest ordinal is currently: --> 499 <--
 ; Other free ordinals: 30
 
 NAME                            "DOOMSDAY"
@@ -538,6 +538,7 @@ EXPORTS
     M_RunTrigger                @341 NONAME
     M_CeilPow2                  @422 NONAME
     M_NumDigits                 @143 NONAME
+    M_RatioReduce               @499 NONAME
 
 ; Math.
     ; Binary angles.

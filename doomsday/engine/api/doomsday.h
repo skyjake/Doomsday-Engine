@@ -107,7 +107,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* d
  * @param rflags        @see resourceFlags
  * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
  *                      Names may include valid absolute, or relative file paths. These paths include
- *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.            
+ *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
  */
 void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
 
@@ -531,6 +531,7 @@ void Con_SetString(const char* name, char* text);
     int             M_ScreenShot(const char* filename, int bits);
     int             M_CeilPow2(int num);
     int             M_NumDigits(int value);
+    int             M_RatioReduce(int* numerator, int* denominator);
 
     // MiscellaneousL: Time utilities.
     boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);

@@ -341,6 +341,40 @@ void RNG_Reset(void)
     rngIndex = 0, rngIndex2 = 0;
 }
 
+int M_RatioReduce(int* numerator, int* denominator)
+{
+    assert(numerator && denominator);
+    {
+    int n, d, temp;
+
+    if(*numerator == *denominator)
+        return 1; // 1:1
+
+    n = abs(*numerator);
+    d = abs(*denominator);
+    // Ensure numerator is larger.
+    if(n < d)
+    {
+        temp = n;
+        n = d;
+        d = temp;
+    }
+
+    // Reduce to the common divisor.
+    while(d != 0)
+    {
+        temp = n;
+        n = d;
+        d = temp % d;
+    }
+
+    // Apply divisor.
+    *numerator   /= n;
+    *denominator /= n;
+    return n;
+    }
+}
+
 /**
  * Finds the power of 2 that is equal to or greater than the specified
  * number.
