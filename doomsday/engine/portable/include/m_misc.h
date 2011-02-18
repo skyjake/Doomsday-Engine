@@ -48,8 +48,13 @@ boolean M_WriteFile(char const* name, void* source, size_t length);
 
 void M_ExtractFileBase(char* dest, const char* path, size_t len);
 void M_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
-char* M_FindFileExtension(char* path);
+const char* M_FindFileExtension(const char* path);
+
+/**
+ * The new extension must not include a dot.
+ */
 void M_ReplaceFileExt(char* path, const char* newext, size_t len);
+
 boolean M_CheckPath(const char* path);
 int M_FileExists(const char* file);
 
@@ -58,7 +63,7 @@ void M_PrependBasePath(char* newpath, const char* path, size_t len);
 void M_RemoveBasePath(char* newPath, const char* absPath, size_t len);
 
 /**
- * @return              A 'prettier' copy of the original path.
+ * @return  A 'prettier' copy of the original path.
  */
 const char* M_PrettyPath(const char* path);
 
@@ -139,7 +144,14 @@ uint            M_CRC32(byte* data, uint length);
 boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
 boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
-// Other utilities.
-int             M_ScreenShot(const char* filename, int bits);
+// Other utilities:
+
+/**
+ * Grabs the current contents of the frame buffer and outputs a Targa file.
+ * Will create/overwrite as necessary.
+ *
+ * @param filePath      Local file path to write to.
+ */
+int M_ScreenShot(const char* filePath, int bits);
 
 #endif /* LIBDENG_M_MISC_H */

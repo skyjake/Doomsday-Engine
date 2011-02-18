@@ -946,26 +946,19 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
     return M_ApproxDistancef(M_ApproxDistancef(dx, dy), dz);
 }
 
-/**
- * Writes a Targa file of the specified depth.
- */
 int M_ScreenShot(const char* filename, int bits)
 {
-    byte*               screen = 0;
-
-    if(bits != 16 && bits != 24)
-        return false;
-
-    // Grab that screen!
-    screen = GL_GrabScreen();
-
-    if(bits == 16)
-        TGA_Save16_rgb888(filename, theWindow->width, theWindow->height, screen);
-    else
-        TGA_Save24_rgb888(filename, theWindow->width, theWindow->height, screen);
-
-    M_Free(screen);
-    return true;
+    if(bits == 16 || bits == 24)
+    {
+        byte* screen = GL_GrabScreen();
+        if(bits == 16)
+            TGA_Save16_rgb888(filename, theWindow->width, theWindow->height, screen);
+        else
+            TGA_Save24_rgb888(filename, theWindow->width, theWindow->height, screen);
+        M_Free(screen);
+        return true;
+    }
+    return false;
 }
 
 void M_PrependBasePath(char* newpath, const char* path, size_t len)
@@ -1096,14 +1089,12 @@ void M_GetFileExt(char* ext, const char* path, size_t len)
     strlwr(ext);
 }
 
-char* M_FindFileExtension(char* path)
+const char* M_FindFileExtension(const char* path)
 {
     if(path && path[0])
     {
         size_t len = strlen(path);
-        char* p = NULL;
-
-        p = path + len - 1;
+        const char* p = path + len - 1;
         if(p - path > 1 && *p != DIR_SEP_CHAR && *p != DIR_WRONG_SEP_CHAR)
         {
             do
@@ -1119,21 +1110,17 @@ char* M_FindFileExtension(char* path)
     return NULL; // Not found.
 }
 
-/**
- * The new extension must not include a dot.
- */
 void M_ReplaceFileExt(char* path, const char* newext, size_t len)
 {
-    char* ptr = M_FindFileExtension(path);
-
+    const char* ptr = M_FindFileExtension(path);
     if(!ptr)
     {
-        strncat(path, ".", FILENAME_T_MAXLEN);
-        strncat(path, newext, FILENAME_T_MAXLEN);
+        strncat(path, ".", len);
+        strncat(path, newext, len);
     }
     else
     {
-        strncpy(ptr, newext, FILENAME_T_MAXLEN);
+        strncpy(path + (ptr - path), newext, len);
     }
 }
 

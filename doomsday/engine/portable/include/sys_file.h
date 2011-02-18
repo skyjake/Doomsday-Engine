@@ -51,14 +51,53 @@ typedef struct {
 } DFILE;
 
 int F_Access(const char* path);
+
+/**
+ * Opens the given file (will be translated) for reading.
+ * "t" = text mode (with real files, lumps are always binary)
+ * "b" = binary
+ * "f" = must be a real file in the local file system.
+ * "x" = just test for access (don't buffer anything)
+ */
 DFILE* F_Open(const char* path, const char* mode);
+
 void F_Close(DFILE* file);
+
+/**
+ * Try to locate the specified lump for reading.
+ *
+ * @param name  Name of the lump to open.
+ * @param dontBuffer  Just test for access (don't buffer anything).
+ *
+ * @return  Non-zero if a lump was found and opened successfully.
+ */
+DFILE* F_OpenLump(const char* name, boolean dontBuffer);
+
+/**
+ * \note Stream position is not affected.
+ * @return  The length of the file, in bytes.
+ */
 size_t F_Length(DFILE* file);
+
+/**
+ * @return  Number of bytes read (at most @a count bytes will be read).
+ */
 size_t F_Read(void* dest, size_t count, DFILE* file);
+
 unsigned char F_GetC(DFILE* file);
 size_t F_Tell(DFILE* file);
+
+/**
+ * @return  The current position in the file, before the move, as an
+ * offset from the beginning of the file.
+ */
 size_t F_Seek(DFILE* file, size_t offset, int whence);
 void F_Rewind(DFILE* file);
+
+/**
+ * @return  The time when the file was last modified, as seconds since
+ * the Epoch else zero if the file is not found.
+ */
 unsigned int F_LastModified(const char* fileName);
 
 void F_ResetFileIDs(void);
@@ -69,7 +108,7 @@ boolean F_ReleaseFileId(const char* path);
  * This is a case-insensitive test.
  * I do hope this algorithm works like it should...
  *
- * @return              @c true, if the string matches the pattern.
+ * @return  @c true, if the string matches the pattern.
  */
 int F_MatchName(const char* string, const char* pattern);
 

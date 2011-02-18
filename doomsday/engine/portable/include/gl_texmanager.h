@@ -101,17 +101,23 @@ typedef struct gltexture_inst_s {
 } gltexture_inst_t;
 
 /**
+ * @defgroup imageFlags Image Flags
+ */
+/*@{*/
+#define IMGF_IS_MASKED          0x1
+/*@}*/
+
+/**
  * This structure is used with GL_LoadImage. When it is no longer needed
  * it must be discarded with GL_DestroyImage.
  */
 typedef struct image_s {
-    filename_t      fileName;
-    int             width;
-    int             height;
-    int             pixelSize;
-    boolean         isMasked;
-    int             originalBits;  // Bits per pixel in the image file.
-    byte*           pixels;
+    int width;
+    int height;
+    int pixelSize;
+    int originalBits; /// Bits per pixel in the image file.
+    int flags; /// @see imageFlags
+    uint8_t* pixels;
 } image_t;
 
 extern int ratioLimit;
@@ -150,8 +156,19 @@ void            GL_SetNoTexture(void);
 void            GL_SetTextureParams(int minMode, int gameTex, int uiTex);
 boolean         GL_IsColorKeyed(const char* path);
 
-byte*           GL_LoadImage(image_t* img, const char* imagefn);
-void            GL_DestroyImage(image_t* img);
+/**
+ * Loads PCX, TGA and PNG images. The returned buffer must be freed
+ * with M_Free. Color keying is done if "-ck." is found in the filename.
+ * The allocated memory buffer always has enough space for 4-component
+ * colors.
+ */
+byte* GL_LoadImage(image_t* img, const char* filePath);
+byte* GL_LoadImageStr(image_t* img, const ddstring_t* filePath);
+
+/**
+ * Release all dynamically allocated memory attached to image.
+ */
+void GL_DestroyImage(image_t* img);
 
 DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  boolean flagAlphaChannel,

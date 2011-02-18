@@ -240,7 +240,7 @@ static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchP
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
     {
     boolean found = false;
-    char* ptr;
+    const char* ptr;
 
     // Has an extension been specified?
     ptr = M_FindFileExtension(Str_Text(searchPath));
@@ -310,7 +310,7 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
         Str_Init(&fn);
 
         // Has an extension been specified?
-        { char* ptr = M_FindFileExtension(Str_Text(searchPath));
+        { const char* ptr = M_FindFileExtension(Str_Text(searchPath));
         if(ptr && *ptr != '*')
         {
             char ext[10];

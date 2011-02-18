@@ -765,27 +765,23 @@ DFILE* F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
     return file;
 }
 
-/**
- * Opens the given file (will be translated) or lump for reading.
- * "t" = text mode (with real files, lumps are always binary)
- * "b" = binary
- * "f" = must be a real file
- * "w" = file must be in a WAD
- * "x" = just test for access (don't buffer anything)
- */
 DFILE* F_Open(const char* path, const char* mode)
 {
+    boolean dontBuffer, reqRealFile;
     filename_t trans, full;
-    boolean dontBuffer;
+
+    if(!path || !path[0])
+        return NULL;
 
     if(!mode)
         mode = "";
-    dontBuffer = (strchr(mode, 'x') != NULL);
+    dontBuffer  = (strchr(mode, 'x') != NULL);
+    reqRealFile = (strchr(mode, 'f') != NULL);
 
     // Make it a full path.
     M_TranslatePath(trans, path, FILENAME_T_MAXLEN);
 
-    if(!strchr(mode, 'f')) // Doesn't need to be a real file?
+    if(!reqRealFile)
     {
         // First check the Zip directory.
         { zipindex_t foundZip;
@@ -795,7 +791,7 @@ DFILE* F_Open(const char* path, const char* mode)
 
         _fullpath(full, trans, 255);
 
-        // Check through the dir/WAD direcs.
+        // Check through the dir/WAD redirects.
         { int i;
         for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
         {
@@ -803,10 +799,6 @@ DFILE* F_Open(const char* path, const char* mode)
             if(!Str_CompareIgnoreCase(&rec->path, full))
                 return F_OpenLump(rec->lumpName, dontBuffer);
         }}
-    }
-    else if(strchr(mode, 'w'))
-    {
-        return NULL; // Must be in a WAD...
     }
 
     // Try to open as a real file, then.
@@ -836,9 +828,6 @@ void F_Close(DFILE* file)
     F_Release(file);
 }
 
-/**
- * @return              The number of bytes read (up to 'count').
- */
 size_t F_Read(void* dest, size_t count, DFILE* file)
 {
     size_t bytesleft;
@@ -890,10 +879,6 @@ size_t F_Tell(DFILE* file)
     return file->pos - (char *) file->data;
 }
 
-/**
- * @return              The current position in the file, before the move,
- *                      as an offset from the beginning of the file.
- */
 size_t F_Seek(DFILE* file, size_t offset, int whence)
 {
     size_t oldpos = F_Tell(file);
@@ -924,11 +909,6 @@ void F_Rewind(DFILE* file)
     F_Seek(file, 0, SEEK_SET);
 }
 
-/**
- * \note Stream position is not affected.
- *
- * @return              The length of the file, in bytes.
- */
 size_t F_Length(DFILE* file)
 {
     size_t length, currentPosition;
@@ -942,10 +922,6 @@ size_t F_Length(DFILE* file)
     return length;
 }
 
-/**
- * @return              The time when the file was last modified, as seconds
- *                      since the Epoch else zero if the file is not found.
- */
 unsigned int F_LastModified(const char* fileName)
 {
     // Try to open the file, but don't buffer any contents.
