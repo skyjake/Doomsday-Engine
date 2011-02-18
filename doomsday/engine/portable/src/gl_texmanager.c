@@ -1147,7 +1147,7 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* c
 
     if(result == 0)
         Con_Message("GL_LoadModelShinySkin: Warning, failed to load \"%s\"\n", sn->path);
- 
+
     return result;
     }
 }
@@ -1209,7 +1209,7 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
 {
     ddstring_t foundPath;
     byte result = 0;
-    
+
     Str_Init(&foundPath);
     if(F_FindResource2(RC_GRAPHIC, name, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
@@ -1253,17 +1253,16 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
 {
     assert(image && inst);
     {
-    flat_t* flat = flats[inst->tex->ofTypeID];
+    flat_t* flat = R_GetFlatForIdx(inst->tex->ofTypeID);
+    byte result = 0;
 
-    // Try to load a high resolution version of this flat?
+    // Try to load a high resolution replacement for this flat?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
-        const char* lumpName = W_LumpName(flat->lump);
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
-        byte result = 0;
 
         // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
-        Str_Init(&searchPath); Str_Appendf(&searchPath, FLATS_RESOURCE_NAMESPACE_NAME":%s;" TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", lumpName, lumpName);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, FLATS_RESOURCE_NAMESPACE_NAME":%s;" TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", flat->name, flat->name);
         Str_Init(&foundPath);
 
         if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
@@ -1280,19 +1279,41 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
     }
 
     // None found. Load the original version.
-    initImage(image);
-    { size_t lumpLength = W_LumpLength(flat->lump);
-    image->pixels = M_Malloc(MAX_OF(lumpLength, 4096));
-    if(lumpLength < 4096)
-        memset(image->pixels, 0, 4096);
-    }
-    W_ReadLump(flat->lump, image->pixels);
+    { DFILE* file;
+    if(NULL != (file = F_OpenLump(flat->name, false)))
+    {
+        if(0 != GL_LoadImageDFile(image, file, flat->name))
+        {
+            result = 1;
+        }
+        else
+        {   // It must be an old-fashioned DOOM flat.
+#define FLAT_WIDTH          64
+#define FLAT_HEIGHT         64
 
-    image->width = flat->width;
-    image->height = flat->height;
-    image->pixelSize = 1;
+            size_t fileLength = F_Length(file);
+            size_t bufSize = MAX_OF(fileLength, 4096);
 
-    return 1;
+            initImage(image);
+            image->pixels = malloc(bufSize);
+            if(fileLength < bufSize)
+                memset(image->pixels, 0, bufSize);
+
+            // Load the raw image data.
+            F_Read(image->pixels, fileLength, file);
+            /// \fixme not all flats are 64x64!
+            image->width = FLAT_WIDTH;
+            image->height = FLAT_HEIGHT;
+            image->pixelSize = 1;
+            result = 1;
+
+#undef FLAT_HEIGHT
+#undef FLAT_WIDTH
+        }
+        F_Close(file);
+    }}
+
+    return result;
     }
 }
 
@@ -2832,13 +2853,13 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
         if(!monochrome)
         {
-        if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
-        {
-            if(image.pixelSize > 1)
+            if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
+            {
+                if(image.pixelSize > 1)
+                    flags |= TXCF_UPLOAD_ARG_RGBDATA;
+            }
+            else if(image.pixelSize > 2 && !(tex->type == GLT_SHINY || tex->type == GLT_MASK || tex->type == GLT_LIGHTMAP))
                 flags |= TXCF_UPLOAD_ARG_RGBDATA;
-        }
-        else if(tmpResult == 2 && !(tex->type == GLT_SHINY || tex->type == GLT_MASK || tex->type == GLT_LIGHTMAP))
-            flags |= TXCF_UPLOAD_ARG_RGBDATA;
         }
 
         if(tex->type == GLT_DETAIL)
@@ -2855,8 +2876,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             flags |= TXCF_MIPMAP;
 
         if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE || tex->type == GLT_FLAT)
-            alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) ||
-                            (tmpResult == 1 && (image.flags & IMGF_IS_MASKED)));
+            alphaChannel = ((/*tmpResult == 2 &&*/ image.pixelSize == 4) ||
+                            (/*tmpResult == 1 &&*/ image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)));
         else
             alphaChannel = image.pixelSize != 3 && !(tex->type == GLT_MASK || tex->type == GLT_SHINY);
 
@@ -3051,7 +3072,7 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     switch(tex->type)
     {
     case GLT_FLAT:
-        return W_LumpFromIWAD(flats[tex->ofTypeID]->lump);
+        return R_GetFlatForIdx(tex->ofTypeID)->isCustom;
 
     case GLT_DOOMTEXTURE:
         return (R_GetDoomTextureDef(tex->ofTypeID)->flags & TXDF_IWAD)? true : false;
@@ -3094,7 +3115,7 @@ float GLTexture_GetWidth(const gltexture_t* tex)
     switch(tex->type)
     {
     case GLT_FLAT:
-        return flats[tex->ofTypeID]->width;
+        return 64; /// \fixme not all flats are 64x64
 
     case GLT_DOOMTEXTURE:
         return R_GetDoomTextureDef(tex->ofTypeID)->width;
@@ -3137,7 +3158,7 @@ float GLTexture_GetHeight(const gltexture_t* tex)
     switch(tex->type)
     {
     case GLT_FLAT:
-        return flats[tex->ofTypeID]->height;
+        return 64; /// \fixme not all flats are 64x64
 
     case GLT_DOOMTEXTURE:
         return R_GetDoomTextureDef(tex->ofTypeID)->height;
@@ -3301,4 +3322,3 @@ D_CMD(MipMap)
     GL_UpdateTexParams(strtol(argv[1], NULL, 0));
     return true;
 }
-

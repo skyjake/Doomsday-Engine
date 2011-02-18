@@ -95,9 +95,6 @@ extern boolean mapSetup; // We are currently setting up a map.
 byte precacheSkins = true;
 byte precacheSprites = true;
 
-int numFlats = 0;
-flat_t** flats = NULL;
-
 int numSpriteTextures = 0;
 spritetex_t** spriteTextures = NULL;
 
@@ -133,6 +130,9 @@ uint numSkinNames = 0;
 skinname_t* skinNames = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int numFlats = 0;
+static flat_t** flats = NULL;
 
 static int numDoomTextureDefs;
 static doomtexturedef_t** doomTextureDefs;
@@ -1734,44 +1734,47 @@ doomtexturedef_t* R_GetDoomTextureDef(int num)
     return doomTextureDefs[num];
 }
 
-/**
- * Returns the new flat index.
- */
-static int R_NewFlat(lumpnum_t lump)
+flat_t* R_GetFlatForIdx(int idx)
 {
-    int i;
-    flat_t** newlist, *ptr;
+    assert(idx >= 0 && idx < numFlats);
+    return flats[idx];
+}
 
-    for(i = 0; i < numFlats; ++i)
+int R_FindFlatIdxForName(const lumpname_t name)
+{
+    if(name && name[0])
     {
-        ptr = flats[i];
-
-        // Is this lump already entered?
-        if(ptr->lump == lump)
-            return i;
-
-        // Is this a known identifer? Newer idents overide old.
-        if(!strnicmp(W_LumpName(ptr->lump), W_LumpName(lump), 8))
+        int i;
+        for(i = 0; i < numFlats; ++i)
         {
-            ptr->lump = lump;
-            return i;
+            if(!stricmp(flats[i]->name, name))
+                return i;
         }
     }
+    return -1;
+}
 
-    newlist = Z_Malloc(sizeof(flat_t*) * ++numFlats, PU_REFRESHTEX, 0);
-    if(numFlats > 1)
+/// @return  Associated flat index.
+static int R_NewFlat(const lumpname_t name, boolean isCustom)
+{
+    assert(name && name[0]);
+
+    // Is this a known identifer?
+    { int idx;
+    if(-1 != (idx = R_FindFlatIdxForName(name)))
     {
-        for(i = 0; i < numFlats -1; ++i)
-            newlist[i] = flats[i];
+        // Update metadata for the new flat.
+        flats[idx]->isCustom = isCustom;
+        return idx;
+    }}
 
-        Z_Free(flats);
+    // A new flat.
+    flats = Z_Realloc(flats, sizeof(flat_t*) * ++numFlats, PU_REFRESHTEX);
+    { flat_t* flat = flats[numFlats - 1] = Z_Malloc(sizeof(*flat), PU_REFRESHTEX, 0);
+    memset(flat->name, 0, sizeof(flat->name));
+    strncpy(flat->name, name, sizeof(flat->name)-1);
+    flat->isCustom = isCustom;
     }
-    flats = newlist;
-    ptr = flats[numFlats - 1] = Z_Calloc(sizeof(flat_t), PU_REFRESHTEX, 0);
-    ptr->lump = lump;
-    ptr->width = 64; /// \fixme not all flats are 64 texels in width!
-    ptr->height = 64; /// \fixme not all flats are 64 texels in height!
-
     return numFlats - 1;
 }
 
@@ -1780,12 +1783,12 @@ void R_InitFlats(void)
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack = Stack_New();
     ddstring_t path;
-    int i;
+
+    assert(numFlats == 0);
 
     VERBOSE( Con_Message("Initializing Flats ...\n") );
-    numFlats = 0;
-
-    for(i = 0; i < W_NumLumps(); ++i)
+    { int i, numLumps = W_NumLumps();
+    for(i = 0; i < numLumps; ++i)
     {
         const char* name = W_LumpName(i);
 
@@ -1810,30 +1813,31 @@ void R_InitFlats(void)
         if(!Stack_Height(stack))
             continue;
 
-        R_NewFlat(i);
-    }
+        R_NewFlat(name, !W_LumpFromIWAD(i));
+    }}
 
     while(Stack_Height(stack))
         Stack_Pop(stack);
     Stack_Delete(stack);
 
     Str_Init(&path);
+    { int i;
     for(i = 0; i < numFlats; ++i)
     {
-        const flat_t* flat = flats[i];
-        const gltexture_t* tex = GL_CreateGLTexture(W_LumpName(flat->lump), i, GLT_FLAT);
+        flat_t* flat = flats[i];
+        const gltexture_t* tex = GL_CreateGLTexture(flat->name, i, GLT_FLAT);
         dduri_t* uri;
 
         // Create a material for this flat.
         // \note that width = 64, height = 64 regardless of the flat dimensions.
         Str_Clear(&path);
-        Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(flat->lump));
+        Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", flat->name);
 
         uri = Uri_Construct2(Str_Text(&path), RC_NULL);
         Materials_New(uri, 64, 64, 0, tex->id, 0, 0);
 
         Uri_Destruct(uri);
-    }
+    }}
     Str_Free(&path);
 
     VERBOSE2( Con_Message("R_InitFlats: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -1955,13 +1959,17 @@ uint R_GetSkinNumForName(const char* path)
 void R_DestroySkins(void)
 {
     M_Free(skinNames);
-    skinNames = 0;
+    skinNames = NULL;
     numSkinNames = 0;
 }
 
 void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
+    flats = NULL;
+    numFlats = 0;
+    doomTextureDefs = NULL;
+    numDoomTextureDefs = 0;
 }
 
 void R_UpdateData(void)

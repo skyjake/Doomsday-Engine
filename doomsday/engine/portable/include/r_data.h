@@ -138,8 +138,8 @@ typedef struct {
 } doomtexturedef_t;
 
 typedef struct flat_s {
-    lumpnum_t       lump;
-    short           width, height;
+    lumpname_t name;
+    boolean isCustom;
 } flat_t;
 
 typedef struct {
@@ -241,9 +241,6 @@ extern int levelFullBright;
 extern float glowingTextures;
 extern byte precacheSprites, precacheSkins;
 
-extern int numFlats;
-extern flat_t** flats;
-
 extern spritetex_t** spriteTextures;
 extern int numSpriteTextures;
 
@@ -287,6 +284,9 @@ void            R_UpdateTexturesAndFlats(void);
 void            R_InitSystemTextures(void);
 void            R_InitTextures(void);
 void            R_InitFlats(void);
+
+/// @return  Flat associated to index# @a idx
+flat_t* R_GetFlatForIdx(int idx);
 
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
