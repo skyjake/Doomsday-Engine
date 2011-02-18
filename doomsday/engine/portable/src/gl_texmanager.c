@@ -1356,7 +1356,7 @@ static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,
 {
     int                 i, len;
     boolean             alphaChannel = false;
-    lumppatch_t*        patch;
+    doompatch_header_t*        patch;
 
     len = width * height;
 
@@ -1373,7 +1373,7 @@ static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,
     {
         const texpatch_t*   patchDef = &texDef->patches[i];
 
-        patch = (lumppatch_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
+        patch = (doompatch_header_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
 
         // Check for big patches?
         if(SHORT(patch->height) > texDef->height && hasBigPatch &&
@@ -1419,8 +1419,8 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
     }
     else
     {
-        lumppatch_t *patch =
-            (lumppatch_t*) W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
+        doompatch_header_t *patch =
+            (doompatch_header_t*) W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
         int     bufHeight =
             SHORT(patch->height) > height ? SHORT(patch->height) : height;
 
@@ -1580,7 +1580,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     // Use data from the normal lump.
     if(p->width * p->height)
     {
-        const lumppatch_t* patch = W_CacheLumpNum(p->lump, PU_APPSTATIC);
+        const doompatch_header_t* patch = W_CacheLumpNum(p->lump, PU_APPSTATIC);
         initImage(image);
         image->pixelSize = 1;
         image->width = SHORT(p->width);
@@ -1619,9 +1619,10 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     if(!image)
         return 0; // Wha?
 
-    sprTex = spriteTextures[inst->tex->ofTypeID];
-    lumpNum = sprTex->lump;
+    sprTex = R_SpriteTextureForIndex(inst->tex->ofTypeID);
+    assert(NULL != sprTex);
 
+    lumpNum = sprTex->lump;
     if(params)
     {
         tmap = params->tmap;
@@ -1664,7 +1665,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
 
     {
     boolean freePatch = false;
-    const lumppatch_t*  patch;
+    const doompatch_header_t*  patch;
     void* tmp = NULL;
 
     initImage(image);
@@ -1680,9 +1681,9 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         // We need to translate the patch.
         tmp = M_Malloc(W_LumpLength(lumpNum));
         W_ReadLump(lumpNum, tmp);
-        GL_TranslatePatch((lumppatch_t*) tmp, &translationTables[MAX_OF(0, offset)]);
+        GL_TranslatePatch((doompatch_header_t*) tmp, &translationTables[MAX_OF(0, offset)]);
 
-        patch = (lumppatch_t*) tmp;
+        patch = (doompatch_header_t*) tmp;
         freePatch = true;
     }
     else
@@ -3078,7 +3079,7 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
         return (R_GetDoomTextureDef(tex->ofTypeID)->flags & TXDF_IWAD)? true : false;
 
     case GLT_SPRITE:
-        return W_LumpFromIWAD(spriteTextures[tex->ofTypeID]->lump);
+        return W_LumpFromIWAD(R_SpriteTextureForIndex(tex->ofTypeID)->lump);
 
     case GLT_DOOMPATCH:
         return !R_FindPatchTex(tex->ofTypeID)->isCustom;
@@ -3121,7 +3122,7 @@ float GLTexture_GetWidth(const gltexture_t* tex)
         return R_GetDoomTextureDef(tex->ofTypeID)->width;
 
     case GLT_SPRITE:
-        return spriteTextures[tex->ofTypeID]->width;
+        return R_SpriteTextureForIndex(tex->ofTypeID)->width;
 
     case GLT_DOOMPATCH:
         return R_FindPatchTex(tex->ofTypeID)->width;
@@ -3164,7 +3165,7 @@ float GLTexture_GetHeight(const gltexture_t* tex)
         return R_GetDoomTextureDef(tex->ofTypeID)->height;
 
     case GLT_SPRITE:
-        return spriteTextures[tex->ofTypeID]->height;
+        return R_SpriteTextureForIndex(tex->ofTypeID)->height;
 
     case GLT_DOOMPATCH:
         return R_FindPatchTex(tex->ofTypeID)->height;
@@ -3257,7 +3258,7 @@ D_CMD(TranslateFont)
     char                name[32];
     int                 i, lump;
     size_t              size;
-    lumppatch_t        *patch;
+    doompatch_header_t        *patch;
     byte                redToWhite[256];
 
     if(argc < 3)

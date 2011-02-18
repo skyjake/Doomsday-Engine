@@ -334,51 +334,29 @@ void R_PreInitSprites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    int i, numSpritePatches = 0;
-    ddstack_t* stack = Stack_New();
-
-    // Free all memory acquired for spritetex_t structures.
-    Z_FreeTags(PU_SPRITE, PU_SPRITE);
+    R_SpriteTexturesClear();
+    R_SpriteTexturesInit();
 
     /**
-     * Step 1: Build database of lumps which *may* describe sprites.
+     * Build database of textures which *may* describe sprites.
      */
     numSpriteRecords = 0;
     spriteRecords = 0;
     spriteRecordBlockSet = ZBlockSet_Construct(sizeof(spriterecord_t), 64, PU_SPRITE),
     spriteRecordFrameBlockSet = ZBlockSet_Construct(sizeof(spriterecord_frame_t), 256, PU_SPRITE);
 
-    for(i = 0; i < W_NumLumps(); ++i)
+    { int i, numSpriteTextures = R_SpriteTexturesCount();
+    for(i = 0; i < numSpriteTextures; ++i)
     {
-        const char* name = W_LumpName(i);
+        spritetex_t* sprTex = R_SpriteTextureForIndex(i);
         spriterecord_t* rec;
+        const char* name;
 
-        if(name[0] == 'S')
-        {
-            if(!strnicmp(name + 1, "_START", 6) ||
-               !strnicmp(name + 2, "_START", 6))
-            {
-                // We've arrived at *a* sprite block.
-                Stack_Push(stack, NULL);
-                continue;
-            }
-            else if(!strnicmp(name + 1, "_END", 4) ||
-                    !strnicmp(name + 2, "_END", 4))
-            {
-                // The sprite block ends.
-                Stack_Pop(stack);
-                continue;
-            }
-        }
-
-        if(!Stack_Height(stack))
-            continue;
-
-        /**
-         * This lump is potentially a sprite.
-         */
+        if(-1 == sprTex->lump)
+            continue; // Not a valid sprite texture.
 
         // Check that the name is valid.
+        name = W_LumpName(sprTex->lump);
         if(!name[4] || !name[5] || (name[6] && !name[7]))
             continue; // This is not a sprite frame.
 
@@ -389,12 +367,7 @@ void R_PreInitSprites(void)
         if(name[7] && (name[7] < '0' || name[7] > '8'))
             continue;
 
-        if(W_LumpLength(i) < 8)
-            continue;
-
-        numSpritePatches++;
-
-        // Its a valid, name. Have we already come accross it?
+        // Its a valid, name. Have we already come across it?
         rec = spriteRecords;
         while(rec)
         {
@@ -413,7 +386,7 @@ void R_PreInitSprites(void)
 
             rec->next = spriteRecords;
             spriteRecords = rec;
-            numSpriteRecords++;
+            ++numSpriteRecords;
         }
 
         // Add the frame(s).
@@ -434,7 +407,15 @@ void R_PreInitSprites(void)
             link = true;
         }
 
-        sprFrame->lump = i;
+        { ddstring_t path; Str_Init(&path);
+        Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s", name);
+
+        sprFrame->mat = Materials_ToMaterial(Materials_NumForName(Str_Text(&path)));
+
+        Str_Free(&path);
+        }
+
+        sprFrame->lump = sprTex->lump;
         sprFrame->frame[0]    = name[4] - 'A' + 1;
         sprFrame->rotation[0] = name[5] - '0';
         if(name[6])
@@ -453,65 +434,9 @@ void R_PreInitSprites(void)
             rec->frames = sprFrame;
         }
         }
-    }
+    }}
 
-    while(Stack_Height(stack))
-        Stack_Pop(stack);
-    Stack_Delete(stack);
-
-    /**
-     * Step 2: Create gltextures and materials for ALL sprite patches.
-     */
-    numSpriteTextures = numSpritePatches;
-    spriteTextures = NULL;
-
-    if(numSpritePatches)
-    {
-        spriterecord_t* rec = spriteRecords;
-        spritetex_t* storage;
-        int idx = 0;
-
-        spriteTextures = Z_Malloc(sizeof(spritetex_t*) * numSpriteTextures, PU_SPRITE, 0);
-        storage = Z_Malloc(sizeof(spritetex_t) * numSpriteTextures, PU_SPRITE, 0);
-
-        do
-        {
-            spriterecord_frame_t* frame = rec->frames;
-
-            do
-            {
-                const lumppatch_t* patch;
-                const gltexture_t* glTex;
-                spritetex_t* sprTex;
-                const char* name;
-
-                spriteTextures[idx] = sprTex = &storage[idx];
-
-                patch = (const lumppatch_t*) W_CacheLumpNum(frame->lump, PU_CACHE);
-                name = W_LumpName(frame->lump);
-
-                sprTex->lump = frame->lump;
-                sprTex->offX = SHORT(patch->leftOffset);
-                sprTex->offY = SHORT(patch->topOffset);
-                sprTex->width = SHORT(patch->width);
-                sprTex->height = SHORT(patch->height);
-
-                glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
-
-                // Create a new material for this sprite patch.
-                { dduri_t* uri;
-                ddstring_t path; Str_Init(&path);
-                Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s", name);
-                uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-                frame->mat = Materials_New(uri, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
-                Uri_Destruct(uri);
-                Str_Free(&path);
-                }
-            } while((frame = frame->next));
-        } while((rec = rec->next));
-    }
-
-    VERBOSE2( Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_PreInitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**
@@ -532,17 +457,16 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 
     if(numSprites)
     {
-        int                 n, idx = 0;
-        spriteframe_t       sprTemp[MAX_FRAMES];
-        int                 maxFrame;
+        spriteframe_t sprTemp[MAX_FRAMES];
+        int maxFrame, n, idx = 0;
 
         sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_APPSTATIC, NULL);
 
         for(n = 0; n < num; ++n)
         {
-            int                 frame;
             const spriterecord_t* rec;
-            spritedef_t*        sprDef = &sprites[n];
+            spritedef_t* sprDef = &sprites[n];
+            int frame;
 
             if(!sprRecords[n])
             {   // A record for a sprite we were unable to locate.
@@ -556,9 +480,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             memset(sprTemp, -1, sizeof(sprTemp));
             maxFrame = -1;
 
-            {
-            const spriterecord_frame_t* frame = rec->frames;
-
+            { const spriterecord_frame_t* frame = rec->frames;
             do
             {
                 installSpriteLump(sprTemp, &maxFrame, frame->mat,
@@ -568,18 +490,18 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
                     installSpriteLump(sprTemp, &maxFrame, frame->mat,
                                       frame->frame[1] - 1, frame->rotation[1],
                                       true);
-            } while((frame = frame->next));
+            } while(NULL != (frame = frame->next));
             }
 
             /**
              * Check the frames that were found for completeness.
              */
-            if(maxFrame == -1)
+            if(-1 == maxFrame)
             {   // Should NEVER happen.
                 sprDef->numFrames = 0;
             }
 
-            maxFrame++;
+            ++maxFrame;
             for(frame = 0; frame < maxFrame; ++frame)
             {
                 switch((int) sprTemp[frame].rotate)
@@ -593,21 +515,17 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
                     break;
 
                 case 1: // Must have all 8 frames.
-                    {
-                    int                 rotation;
+                    { int rotation;
                     for(rotation = 0; rotation < 8; ++rotation)
                     {
                         if(!sprTemp[frame].mats[rotation])
-                            Con_Error("R_InitSprites: Sprite %s frame %c is "
-                                      "missing rotations.", rec->name,
+                            Con_Error("R_InitSprites: Sprite %s frame %c is missing rotations.", rec->name,
                                       frame + 'A');
-                    }
-                    }
+                    }}
                     break;
 
                 default:
-                    Con_Error("R_InitSpriteDefs: Invalid value, "
-                              "sprTemp[frame].rotate = %i.",
+                    Con_Error("R_InitSpriteDefs: Invalid value, sprTemp[frame].rotate = %i.",
                               (int) sprTemp[frame].rotate);
                     break;
                 }
@@ -688,10 +606,10 @@ material_t* R_GetMaterialForSprite(int sprite, int frame)
 
 boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
-    spritedef_t*        sprDef;
-    spriteframe_t*      sprFrame;
-    spritetex_t*        sprTex;
-    material_t*         mat;
+    spritedef_t* sprDef;
+    spriteframe_t* sprFrame;
+    spritetex_t* sprTex;
+    material_t* mat;
     material_load_params_t params;
     material_snapshot_t ms;
 
@@ -717,7 +635,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     params.tex.border = 1;
     Materials_Prepare(&ms, mat, false, &params);
 
-    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    assert(NULL != sprTex);
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
@@ -972,7 +891,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    assert(NULL != sprTex);
 
     params->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
     params->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
@@ -1220,7 +1140,8 @@ void R_ProjectSprite(mobj_t* mo)
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    assert(NULL != sprTex);
 
     // Align to the view plane?
     if(mo->ddFlags & DDMF_VIEWALIGN)
@@ -1556,9 +1477,7 @@ if(!mat)
 
         flareSize = texInst->data.sprite.lumSize;
         // X offset to the flare position.
-        xOffset = (texInst->data.sprite.flareX - (float) ms.width / 2) -
-            (spriteTextures[texInst->tex->ofTypeID]->offX -
-                (float) ms.width / 2);
+        xOffset = (texInst->data.sprite.flareX - (float) ms.width / 2) - (sprTex->offX - (float) ms.width / 2);
 
         // Does the mobj have an active light definition?
         if(def)

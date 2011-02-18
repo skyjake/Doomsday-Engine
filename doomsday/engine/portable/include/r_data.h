@@ -167,13 +167,14 @@ typedef struct patchtex_s {
     short           offX, offY;
 } patchtex_t;
 
-typedef struct lumppatch_s {
-    short           width; // Bounding box size.
-    short           height;
-    short           leftOffset; // Pixels to the left of origin.
-    short           topOffset; // Pixels below the origin.
-    int             columnOfs[8]; // Only [width] used the [0] is &columnofs[width]
-} lumppatch_t;
+#pragma pack(1)
+typedef struct doompatch_header_s {
+    int16_t width; // Bounding box size.
+    int16_t height;
+    int16_t leftOffset; // Pixels to the left of origin.
+    int16_t topOffset; // Pixels below the origin.
+} doompatch_header_t;
+#pragma pack()
 
 // A rawtex is a lump raw graphic that has been prepared for render.
 typedef struct rawtex_s {
@@ -241,9 +242,6 @@ extern int levelFullBright;
 extern float glowingTextures;
 extern byte precacheSprites, precacheSkins;
 
-extern spritetex_t** spriteTextures;
-extern int numSpriteTextures;
-
 extern detailtex_t** detailTextures;
 extern int numDetailTextures;
 
@@ -287,6 +285,23 @@ void            R_InitFlats(void);
 
 /// @return  Flat associated to index# @a idx
 flat_t* R_GetFlatForIdx(int idx);
+
+/**
+ * Initialize the SpriteTexture database from the currently loaded lumps.
+ */
+void R_SpriteTexturesInit(void);
+
+/**
+ * Free all memory acquired for SpriteTextures.
+ * \note  Does nothing about any GLTextures or Materials created from these!
+ */
+void R_SpriteTexturesClear(void);
+
+/// @return  Number of SpriteTextures.
+int R_SpriteTexturesCount(void);
+
+/// @return  SpriteTexture associated to index# @a idx
+spritetex_t* R_SpriteTextureForIndex(int idx);
 
 void            R_UpdateData(void);
 void            R_ShutdownData(void);

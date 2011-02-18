@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_tex.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * gl_tex.c: Image manipulation algorithms.
+ * Image manipulation algorithms.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -437,7 +437,7 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
  *                      buffer really has alpha information.
  */
 int DrawRealPatch(byte* buffer, int texwidth, int texheight,
-                  const lumppatch_t* patch, int origx, int origy,
+                  const doompatch_header_t* patch, int origx, int origy,
                   boolean maskZero, boolean checkForAlpha)
 {
     int                 count, col = 0;
@@ -448,11 +448,13 @@ int DrawRealPatch(byte* buffer, int texwidth, int texheight,
     const byte*         source;
     byte*               dest1, *dest2, *destTop = buffer + origx,
                        *destAlphaTop = buffer + origx + bufsize;
+    // Column offsets begin immediately following the header.
+    const int32_t* columnOfs = (const int32_t*)((const uint8_t*) patch + sizeof(doompatch_header_t));
+    // \todo Validate column offset is within the Patch!
 
     for(; col < w; ++col, destTop++, destAlphaTop++, ++x)
     {
-        column = (const column_t*)
-            ((const byte*) patch + LONG(patch->columnOfs[col]));
+        column = (const column_t*) ((const byte*) patch + LONG(columnOfs[col]));
         top = -1;
 
         // Step through the posts in a column
@@ -531,17 +533,19 @@ int DrawRealPatch(byte* buffer, int texwidth, int texheight,
 /**
  * Translate colors in the specified patch.
  */
-void GL_TranslatePatch(lumppatch_t *patch, byte *transTable)
+void GL_TranslatePatch(doompatch_header_t* patch, byte *transTable)
 {
     int         count;
     int         col = 0;
     column_t   *column;
     byte       *source;
     int         w = SHORT(patch->width);
-
+    // Column offsets begin immediately following the header.
+    int32_t* columnOfs = (int32_t*)((uint8_t*) patch + sizeof(doompatch_header_t));
+    // \todo validate column offset is within the Patch!
     for(; col < w; ++col)
     {
-        column = (column_t *) ((byte *) patch + LONG(patch->columnOfs[col]));
+        column = (column_t *) ((byte *) patch + LONG(columnOfs[col]));
 
         // Step through the posts in a column
         while(column->topdelta != 0xff)

@@ -95,9 +95,6 @@ extern boolean mapSetup; // We are currently setting up a map.
 byte precacheSkins = true;
 byte precacheSprites = true;
 
-int numSpriteTextures = 0;
-spritetex_t** spriteTextures = NULL;
-
 uint numDoomPatchDefs = 0;
 patchtex_t** doomPatchDefs = NULL;
 
@@ -130,6 +127,9 @@ uint numSkinNames = 0;
 skinname_t* skinNames = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int numSpriteTextures = 0;
+static spritetex_t** spriteTextures = NULL;
 
 static int numFlats = 0;
 static flat_t** flats = NULL;
@@ -977,7 +977,7 @@ patchid_t R_RegisterAsPatch(const char* name)
 {
     assert(name);
     {
-    const lumppatch_t* patch;
+    const doompatch_header_t* patch;
     lumpnum_t lump;
     patchid_t id;
     patchtex_t* p;
@@ -993,7 +993,7 @@ patchid_t R_RegisterAsPatch(const char* name)
         return 0;
 
     /// \fixme What about min lump size?
-    patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_APPSTATIC);
+    patch = (const doompatch_header_t*) W_CacheLumpNum(lump, PU_APPSTATIC);
 
     // An entirely new patch.
     p = Z_Calloc(sizeof(*p), PU_PATCH, NULL);
@@ -1841,6 +1841,136 @@ void R_InitFlats(void)
     Str_Free(&path);
 
     VERBOSE2( Con_Message("R_InitFlats: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
+int R_SpriteTexturesCount(void)
+{
+    return numSpriteTextures;
+}
+
+spritetex_t* R_SpriteTextureForIndex(int idx)
+{
+    assert(idx >= 0 && idx < numSpriteTextures);
+    return spriteTextures[idx];
+}
+
+void R_SpriteTexturesInit(void)
+{
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    ddstack_t* stack;
+
+    assert(numSpriteTextures == 0);
+
+    VERBOSE( Con_Message("Initializing Sprite Textures ...\n") );
+
+    /**
+     * Step 1: Collection.
+     */
+    stack = Stack_New();
+    { int i, numLumps = W_NumLumps();
+    for(i = 0; i < numLumps; ++i)
+    {
+        const char* name = W_LumpName(i);
+        spritetex_t* sprTex = NULL;
+
+        if(name[0] == 'S')
+        {
+            if(!strnicmp(name + 1, "_START", 6) ||
+               !strnicmp(name + 2, "_START", 6))
+            {
+                // We've arrived at *a* sprite block.
+                Stack_Push(stack, NULL);
+                continue;
+            }
+            else if(!strnicmp(name + 1, "_END", 4) ||
+                    !strnicmp(name + 2, "_END", 4))
+            {
+                // The sprite block ends.
+                Stack_Pop(stack);
+                continue;
+            }
+        }
+
+        if(!Stack_Height(stack))
+            continue;
+
+        // Is this a known identifer?
+        { int j;
+        for(j = 0; j < numSpriteTextures; ++j)
+        {
+            if(!stricmp(W_LumpName(spriteTextures[j]->lump), name))
+            {
+                // We will need to update the metadata for the new sprite texture.
+                sprTex = spriteTextures[j];
+                break;
+            }
+        }}
+
+        if(NULL == sprTex)
+        {   // A new sprite texture.
+            spriteTextures = Z_Realloc(spriteTextures, sizeof(spritetex_t*) * ++numSpriteTextures, PU_SPRITE);
+            sprTex = spriteTextures[numSpriteTextures-1] = Z_Malloc(sizeof(spritetex_t), PU_SPRITE, 0);
+        }
+
+        sprTex->lump = i;
+    }}
+
+    while(Stack_Height(stack))
+        Stack_Pop(stack);
+    Stack_Delete(stack);
+
+    /**
+     * Step 2: GLTexture and Material creation.
+     */
+    { int i;
+    for(i = 0; i < numSpriteTextures; ++i)
+    {
+        spritetex_t* sprTex = spriteTextures[i];
+        const gltexture_t* glTex;
+        const char* name;
+
+        /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
+        if(W_LumpLength(sprTex->lump) < sizeof(doompatch_header_t))
+        {
+            name = W_LumpName(sprTex->lump);
+            Con_Message("Warning: Lump %s (#%i) does not appear to be a valid Patch.\n", name, sprTex->lump);
+            sprTex->lump = -1;
+            sprTex->width = sprTex->height = 0;
+            sprTex->offX = sprTex->offY = 0;
+            continue;
+        }
+        { const doompatch_header_t* patch = (const doompatch_header_t*) W_CacheLumpNum(sprTex->lump, PU_CACHE);
+        sprTex->width = SHORT(patch->width);
+        sprTex->height = SHORT(patch->height);
+        sprTex->offX = SHORT(patch->leftOffset);
+        sprTex->offY = SHORT(patch->topOffset);
+        }
+
+        // Create a new GLTexture for this.
+        name = W_LumpName(sprTex->lump);
+        glTex = GL_CreateGLTexture(name, i, GLT_SPRITE);
+
+        // Create a new Material for this.
+        { dduri_t* uri;
+        ddstring_t path; Str_Init(&path);
+        Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s", name);
+        uri = Uri_Construct2(Str_Text(&path), RC_NULL);
+        Materials_New(uri, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
+        Uri_Destruct(uri);
+        Str_Free(&path);
+        }
+    }}
+
+    VERBOSE2( Con_Message("R_SpriteTexturesInit: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
+void R_SpriteTexturesClear(void)
+{
+    if(0 == numSpriteTextures)
+        return;
+    Z_FreeTags(PU_SPRITE, PU_SPRITE);
+    spriteTextures = NULL;
+    numSpriteTextures = 0;
 }
 
 uint R_CreateSkinTex(const char* skin, boolean isShinySkin)

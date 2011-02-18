@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_tex.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * gl_tex.h: Texture Manipulation Algorithms.
+ * Texture Manipulation Algorithms.
  */
 
-#ifndef __DOOMSDAY_TEXTURES_H__
-#define __DOOMSDAY_TEXTURES_H__
+#ifndef LIBDENG_TEXTURES_H
+#define LIBDENG_TEXTURES_H
 
 #include "gl_texmanager.h"
 
@@ -69,12 +69,13 @@ int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
 void            amplify(float* rgb);
 void            ColorOutlines(byte* buffer, int width, int height);
 int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
-                              const lumppatch_t* patch, int origx,
+                              const doompatch_header_t* patch, int origx,
                               int origy, boolean maskZero,
                               boolean checkForAlpha);
 boolean         ImageHasAlpha(image_t *image);
-void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
+void            GL_TranslatePatch(doompatch_header_t* patch, byte* transTable);
 
 int             GL_PickSmartScaleMethod(int width, int height);
 void            GL_SmartFilter(int method, byte* in, byte* out, int width, int height);
-#endif
+
+#endif /* LIBDENG_TEXTURES_H */

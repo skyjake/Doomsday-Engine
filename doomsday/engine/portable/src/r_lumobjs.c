@@ -370,19 +370,20 @@ void LO_AddLuminous(mobj_t* mo)
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
        (mo->ddFlags & DDMF_ALWAYSLIT))
     {
-        uint                i;
-        float               mul, center;
-        int                 radius;
-        float               rgb[3], yOffset, size;
-        lumobj_t*           l;
-        ded_light_t*        def = (mo->state? def = stateLights[mo->state - states] : 0);
-        spritedef_t*        sprDef;
-        spriteframe_t*      sprFrame;
-        material_t*         mat;
-        rgbcol_t            autoLightColor;
+        uint i;
+        float mul, center;
+        int radius;
+        float rgb[3], yOffset, size;
+        lumobj_t* l;
+        ded_light_t* def = (mo->state? def = stateLights[mo->state - states] : 0);
+        spritedef_t* sprDef;
+        spriteframe_t* sprFrame;
+        spritetex_t* sprTex;
+        material_t* mat;
+        rgbcol_t autoLightColor;
         material_snapshot_t ms;
         const gltexture_inst_t* texInst;
-
+        
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
         if(mo->state &&
@@ -425,12 +426,13 @@ if(!mat)
         autoLightColor[CG] = texInst->data.sprite.autoLightColor[CG];
         autoLightColor[CB] = texInst->data.sprite.autoLightColor[CB];
 
-        center = spriteTextures[texInst->tex->ofTypeID]->offY -
-            mo->floorClip - R_GetBobOffset(mo) - yOffset;
+        sprTex = R_SpriteTextureForIndex(texInst->tex->ofTypeID);
+        assert(NULL != sprTex);
+
+        center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
         // Will the sprite be allowed to go inside the floor?
-        mul = mo->pos[VZ] + spriteTextures[texInst->tex->ofTypeID]->offY -
-            (float) ms.height - mo->subsector->sector->SP_floorheight;
+        mul = mo->pos[VZ] + sprTex->offY - (float) ms.height - mo->subsector->sector->SP_floorheight;
         if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
         {
             // Must adjust.
