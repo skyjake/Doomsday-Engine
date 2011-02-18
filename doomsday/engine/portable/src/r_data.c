@@ -2291,13 +2291,13 @@ void R_InitAnimGroup(ded_group_t* def)
 
 detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
 {
-    lumpnum_t lump = def->detailLump? W_CheckNumForName(Str_Text(Uri_Path(def->detailLump))) : -1;
+    lumpnum_t lump = def->detailTex? W_CheckNumForName(Str_Text(Uri_Path(def->detailTex))) : -1;
     const gltexture_t* glTex;
     detailtex_t* dTex;
     char name[9];
 
     // Have we already created one for this?
-    if((dTex = R_GetDetailTexture(lump, def->isExternal? def->detailLump : 0)))
+    if((dTex = R_GetDetailTexture(lump, def->isExternal? def->detailTex : 0)))
         return NULL;
 
     if(M_NumDigits(numDetailTextures + 1) > 8)
@@ -2318,7 +2318,7 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
     dTex = M_Malloc(sizeof(*dTex));
     dTex->id = glTex->id;
     dTex->lump = lump;
-    dTex->external = def->isExternal? def->detailLump : 0;
+    dTex->external = def->isExternal? def->detailTex : 0;
 
     // Add it to the list.
     detailTextures = M_Realloc(detailTextures, sizeof(detailtex_t*) * ++numDetailTextures);

@@ -613,7 +613,8 @@ int DED_AddDetail(ded_t* ded, const char* lumpname)
 {
     ded_detailtexture_t* dtl = DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
 
-    dtl->detailLump = Uri_Construct2(lumpname, RC_NULL);
+    if(lumpname && lumpname[0])
+        dtl->detailTex = Uri_Construct2(lumpname, RC_NULL);
     dtl->scale = 1;
     dtl->strength = 1;
     return dtl - ded->details;

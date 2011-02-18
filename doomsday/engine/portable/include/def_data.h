@@ -358,8 +358,8 @@ typedef struct ded_detailtexture_s {
     dduri_t*        material1;
     dduri_t*        material2;
     ded_flags_t     flags;
-    dduri_t*        detailLump; // The lump with the detail texture.
-    boolean         isExternal; // True, if detailLump is external.
+    dduri_t*        detailTex; // The file/lump with the detail texture.
+    boolean         isExternal; // @c true if detailTex is external.
     float           scale;
     float           strength;
     float           maxDist;

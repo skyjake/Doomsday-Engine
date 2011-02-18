@@ -1720,9 +1720,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 
                 memcpy(dtl, prevDetail, sizeof(*dtl));
 
-                if(dtl->material1)  dtl->material1  = Uri_ConstructCopy(dtl->material1);
-                if(dtl->material2)  dtl->material2  = Uri_ConstructCopy(dtl->material2);
-                if(dtl->detailLump) dtl->detailLump = Uri_ConstructCopy(dtl->detailLump);
+                if(dtl->material1) dtl->material1  = Uri_ConstructCopy(dtl->material1);
+                if(dtl->material2) dtl->material2  = Uri_ConstructCopy(dtl->material2);
+                if(dtl->detailTex) dtl->detailTex  = Uri_ConstructCopy(dtl->detailTex);
             }
 
             FINDBEGIN;
@@ -1744,12 +1744,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Lump"))
                 {
-                    READURI(&dtl->detailLump, 0)
+                    READURI(&dtl->detailTex, 0)
                     dtl->isExternal = false;
                 }
                 else if(ISLABEL("File"))
                 {
-                    READURI(&dtl->detailLump, 0)
+                    READURI(&dtl->detailTex, 0)
                     dtl->isExternal = true;
                 }
                 else
