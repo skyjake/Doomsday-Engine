@@ -1613,7 +1613,7 @@ static int DD_StartupWorker(void* parm)
 
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3;", &foundPath) != 0)
+    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) != 0)
         W_AddFile(Str_Text(&foundPath), false);
     else
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
@@ -2193,7 +2193,7 @@ const char* value_Str(int val)
 D_CMD(Load)
 {
     boolean didLoadGame = false, didLoadResource = false;
-    ddstring_t searchPath, foundPath;
+    ddstring_t foundPath;
     int arg = 1;
 
     { gameinfo_t* info;
@@ -2205,19 +2205,15 @@ D_CMD(Load)
         ++arg;
     }}
 
-    Str_Init(&searchPath);
     Str_Init(&foundPath);
     for(; arg < argc; ++arg)
     {
         // Try the resource locator.
-        Str_Clear(&searchPath);
-        Str_Appendf(&searchPath, "%s;", argv[arg]);
-        if(F_FindResourceStr2(RC_UNKNOWN, &searchPath, &foundPath) != 0 &&
+        if(F_FindResource2(RC_UNKNOWN, argv[arg], &foundPath) != 0 &&
            W_AddFile(Str_Text(&foundPath), false))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
-    Str_Free(&searchPath);
 
     if(didLoadResource)
         DD_UpdateEngineState();
@@ -2227,7 +2223,7 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
-    ddstring_t searchPath, foundPath;
+    ddstring_t foundPath;
     int result = 0;
 
     // No arguments; unload the current game if loaded.
@@ -2253,19 +2249,15 @@ D_CMD(Unload)
     }}
 
     /// Try the resource locator.
-    Str_Init(&searchPath);
     Str_Init(&foundPath);
     { int i;
     for(i = 1; i < argc; ++i)
     {
-        Str_Clear(&searchPath);
-        Str_Appendf(&searchPath, "%s;", argv[i]);
-        if(F_FindResourceStr2(RC_UNKNOWN, &searchPath, &foundPath) != 0 &&
+        if(F_FindResource2(RC_UNKNOWN, argv[i], &foundPath) != 0 &&
            W_RemoveFile(Str_Text(&foundPath)))
             result = 1;
     }}
     Str_Free(&foundPath);
-    Str_Free(&searchPath);
     return result != 0;
 }
 

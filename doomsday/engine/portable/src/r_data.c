@@ -2036,13 +2036,13 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         directory_t mydir;
         memset(&mydir, 0, sizeof(mydir));
         Dir_FileDir(modelfn, &mydir);
-        Str_Appendf(&searchPath, "%s%s;", mydir.path, skin);
+        Str_Appendf(&searchPath, "%s%s", mydir.path, skin);
         found = 0 != F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath);
     }
 
     if(!found)
     {   // Try the resource locator.
-        Str_Clear(&searchPath); Str_Appendf(&searchPath, MODELS_RESOURCE_NAMESPACE_NAME":%s;", skin);
+        Str_Clear(&searchPath); Str_Appendf(&searchPath, MODELS_RESOURCE_NAMESPACE_NAME":%s", skin);
         found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
     }
 

@@ -640,85 +640,99 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* _searchPaths,
+dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
     size_t* count)
 {
-    const ddstring_t* searchPaths = _searchPaths;
-    dduri_t* path, **list;
-    const char* result = 0, *p;
-    size_t numPaths, n;
-    ddstring_t temp;
+#define FIXEDSIZE           (8)
 
-    if(!_searchPaths || Str_IsEmpty(_searchPaths))
+    dduri_t** list = 0, *localFixedList[FIXEDSIZE];
+    size_t numPaths = 0, n = 0;
+    ddstring_t buf;
+    const char* p;
+
+    if(!searchPaths || !searchPaths[0])
     {
         if(count)
             *count = 0;
         return 0;
     }
 
-    // Ensure the path list has the required terminator.
-    if(Str_RAt(_searchPaths, 0) != PATH_DELIMIT_CHAR)
+    Str_Init(&buf);
+    numPaths = n = 0;
+    p = searchPaths;
+    do
     {
-        Str_Init(&temp);
-        Str_Appendf(&temp, "%s"PATH_DELIMIT_STR, Str_Text(_searchPaths));
-        searchPaths = &temp;
-    }
+        if(0 != numPaths)
+        {   // Prepare for another round.
+            Str_Clear(&buf);
+        }
 
-    path = Uri_ConstructDefault();
+        for(; *p && *p != PATH_DELIMIT_CHAR; ++p)
+        {
+            Str_PartAppend(&buf, p, 0, 1);
+        }
 
-    numPaths = 0;
-    p = Str_Text(searchPaths);
-    while((p = F_ParseSearchPath2(path, p, PATH_DELIMIT_CHAR, rclass))) { ++numPaths; }
+        // Skip past the delimiter if present.
+        if(*p) ++p;
 
-    n = 0;
-    p = Str_Text(searchPaths);
-    list = malloc((numPaths+1) * sizeof(*list));
-    while((p = F_ParseSearchPath2(path, p, PATH_DELIMIT_CHAR, rclass)))
+        if(0 != Str_Length(&buf))
+        {   // A new path was parsed; add it to the list.
+            if(n == FIXEDSIZE)
+            {
+                list = realloc(list, sizeof(*list) * (numPaths + 1));
+                memcpy(list + (numPaths - FIXEDSIZE), localFixedList, sizeof(*list) * FIXEDSIZE);
+                n = 0;
+            }
+            localFixedList[n++] = Uri_Construct2(Str_Text(&buf), rclass);
+            ++numPaths;
+        }
+    } while(*p);
+
+    if(numPaths <= FIXEDSIZE)
     {
-        list[n++] = Uri_ConstructCopy(path);
+        list = malloc(sizeof(*list) * (numPaths + 1));
+        memcpy(list, localFixedList, sizeof(*list) * numPaths);
     }
-    list[n] = 0; // Terminate.
+    else if(n > 1)
+    {
+        list = realloc(list, sizeof(*list) * (numPaths + 1));
+        memcpy(list + numPaths - n, localFixedList, sizeof(*list) * n);
+    }
+    else
+    {
+        list[numPaths-1] = localFixedList[0];
+    }
+    list[numPaths] = 0; // Terminate.
 
-    Uri_Destruct(path);
-    if(searchPaths != _searchPaths)
-        Str_Free(&temp);
+    Str_Free(&buf);
+
     if(count)
         *count = numPaths;
     return list;
-}
 
-dduri_t** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths)
-{
-    return F_CreateUriListStr2(rclass, searchPaths, 0);
-}
-
-dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* _searchPaths,
-    size_t* count)
-{
-    ddstring_t searchPaths;
-    dduri_t** list;
-
-    if(!_searchPaths || !_searchPaths[0])
-    {
-        if(count)
-            *count = 0;
-        return 0;
-    }
-
-    Str_Init(&searchPaths);
-    Str_Set(&searchPaths, _searchPaths);
-    // Ensure the path list has the required terminating semicolon.
-    if(Str_RAt(&searchPaths, 0) != PATH_DELIMIT_CHAR)
-        Str_AppendChar(&searchPaths, PATH_DELIMIT_CHAR);
-
-    list = F_CreateUriListStr2(rclass, &searchPaths, count);
-    Str_Free(&searchPaths);
-    return list;
+#undef FIXEDSIZE
 }
 
 dduri_t** F_CreateUriList(resourceclass_t rclass, const char* searchPaths)
 {
     return F_CreateUriList2(rclass, searchPaths, 0);
+}
+
+dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths,
+    size_t* count)
+{
+    if(!searchPaths)
+    {
+        if(count)
+            *count = 0;
+        return 0;
+    }
+    return F_CreateUriList2(rclass, Str_Text(searchPaths), count);
+}
+
+dduri_t** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths)
+{
+    return F_CreateUriListStr2(rclass, searchPaths, 0);
 }
 
 void F_DestroyUriList(dduri_t** list)

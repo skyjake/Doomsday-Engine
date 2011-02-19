@@ -731,7 +731,7 @@ static void readAllDefinitions(void)
 
     // Start with engine's own top-level definition file, it is always read first.
     { ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(RC_DEFINITION, "doomsday.ded;", &foundPath) != 0)
+    if(F_FindResource2(RC_DEFINITION, "doomsday.ded", &foundPath) != 0)
         readDefinitionFile(Str_Text(&foundPath));
     else
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");

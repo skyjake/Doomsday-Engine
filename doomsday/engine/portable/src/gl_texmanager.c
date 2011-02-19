@@ -879,7 +879,6 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
     if(dTex->isExternal)
     {
         ddstring_t foundPath, *searchPath = Uri_ComposePath(dTex->filePath);
-        Str_AppendChar(searchPath, ';');
 
         Str_Init(&foundPath);
         if(F_FindResourceStr2(RC_GRAPHIC, searchPath, &foundPath) != 0 &&
@@ -963,7 +962,6 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     byte result = 0;
 
     searchPath = Uri_ComposePath(lmap->external);
-    Str_AppendChar(searchPath, ';');
 
     Str_Init(&foundPath);
     if(F_FindResourceStr3(RC_GRAPHIC, searchPath, &foundPath, &suffix) != 0 &&
@@ -997,7 +995,6 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* con
     byte result = 0;
 
     searchPath = Uri_ComposePath(fTex->external);
-    Str_AppendChar(searchPath, ';');
 
     Str_Init(&foundPath);
     if(F_FindResourceStr3(RC_GRAPHIC, searchPath, &foundPath, &suffix) != 0 &&
@@ -1031,7 +1028,6 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     byte result = 0;
 
     searchPath = Uri_ComposePath(sTex->external);
-    Str_AppendChar(searchPath, ';');
 
     Str_Init(&foundPath);
     if(F_FindResourceStr2(RC_GRAPHIC, searchPath, &foundPath) != 0 &&
@@ -1065,7 +1061,6 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     byte result = 0;
 
     searchPath = Uri_ComposePath(mTex->external);
-    Str_AppendChar(searchPath, ';');
 
     Str_Init(&foundPath);
     if(F_FindResourceStr2(RC_GRAPHIC, searchPath, &foundPath) != 0 &&
@@ -1125,19 +1120,15 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* c
     assert(image && inst);
     {
     skinname_t* sn = &skinNames[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath, suffix = { "-ck" };
+    ddstring_t foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "%s;", sn->path);
     Str_Init(&foundPath);
-
-    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
+    if(F_FindResource3(RC_GRAPHIC, sn->path, &foundPath, "-ck") != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
-
-    Str_Free(&searchPath);
     Str_Free(&foundPath);
 
     if(result == 0)
