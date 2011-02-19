@@ -723,7 +723,7 @@ static void drawConsole(float consoleAlpha)
     glDisable(GL_TEXTURE_2D);
 
     // Draw the cursor in the appropriate place.
-    if(!Con_IsLocked())
+    if(Con_IsActive() && !Con_IsLocked())
     {
         float width, height, halfInterlineHeight = (float)fontScaledY / 8;
         int xOffset, yOffset;

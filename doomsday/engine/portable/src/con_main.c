@@ -1273,11 +1273,12 @@ void Con_Open(int yes)
     {
         ConsoleActive = true;
         ConsoleTime = 0;
+        bLineOff = 0;
+        memset(cmdLine, 0, sizeof(cmdLine));
+        cmdCursor = 0;
     }
     else
     {
-        memset(cmdLine, 0, sizeof(cmdLine));
-        cmdCursor = 0;
         complPos = 0;
         lastCompletion = 0;
         ConsoleActive = false;
