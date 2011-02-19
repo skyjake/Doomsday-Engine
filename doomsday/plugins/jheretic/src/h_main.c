@@ -361,9 +361,12 @@ void H_PostInit(void)
     filename_t file;
     int p;
 
-    // Shareware WAD has different border background
+    /// \kludge Shareware WAD has different border background.
+    /// \fixme Do this properly!
     if(gameMode == heretic_shareware)
         borderGraphics[0] = "Flats:FLOOR04";
+    else
+        borderGraphics[0] = "Flats:FLAT513";
 
     // Common post init routine.
     G_CommonPostInit();

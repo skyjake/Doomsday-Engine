@@ -347,9 +347,12 @@ void D_PostInit(void)
     filename_t file;
     int p;
 
-    // Border background is different in DOOM2.
+    /// \kludge Border background is different in DOOM2.
+    /// \fixme Do this properly!
     if(gameModeBits & GM_ANY_DOOM2)
         borderGraphics[0] = "Flats:GRNROCK";
+    else
+        borderGraphics[0] = "Flats:FLOOR7_2";
 
     // Common post init routine
     G_CommonPostInit();
