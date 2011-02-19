@@ -1898,21 +1898,25 @@ void R_SpriteTexturesInit(void)
         { int j;
         for(j = 0; j < numSpriteTextures; ++j)
         {
-            if(!stricmp(W_LumpName(spriteTextures[j]->lump), name))
+            if(!stricmp(spriteTextures[j]->name, name))
             {
-                // We will need to update the metadata for the new sprite texture.
+                // Update the metadata for the new sprite texture.
                 sprTex = spriteTextures[j];
+                sprTex->isCustom = W_LumpFromIWAD(i);
                 break;
             }
         }}
 
-        if(NULL == sprTex)
-        {   // A new sprite texture.
-            spriteTextures = Z_Realloc(spriteTextures, sizeof(spritetex_t*) * ++numSpriteTextures, PU_SPRITE);
-            sprTex = spriteTextures[numSpriteTextures-1] = Z_Malloc(sizeof(spritetex_t), PU_SPRITE, 0);
-        }
+        if(NULL != sprTex)
+            continue;
 
-        sprTex->lump = i;
+        // A new sprite texture.
+        spriteTextures = Z_Realloc(spriteTextures, sizeof(spritetex_t*) * ++numSpriteTextures, PU_SPRITE);
+        sprTex = spriteTextures[numSpriteTextures-1] = Z_Malloc(sizeof(spritetex_t), PU_SPRITE, 0);
+
+        memset(sprTex->name, 0, sizeof(sprTex->name));
+        strncpy(sprTex->name, name, sizeof(sprTex->name)-1);
+        sprTex->isCustom = W_LumpFromIWAD(i);
     }}
 
     while(Stack_Height(stack))
@@ -1926,20 +1930,19 @@ void R_SpriteTexturesInit(void)
     for(i = 0; i < numSpriteTextures; ++i)
     {
         spritetex_t* sprTex = spriteTextures[i];
+        lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
+        const char* name = sprTex->name;
         const gltexture_t* glTex;
-        const char* name;
 
         /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
-        if(W_LumpLength(sprTex->lump) < sizeof(doompatch_header_t))
+        if(W_LumpLength(lumpNum) < sizeof(doompatch_header_t))
         {
-            name = W_LumpName(sprTex->lump);
-            Con_Message("Warning: Lump %s (#%i) does not appear to be a valid Patch.\n", name, sprTex->lump);
-            sprTex->lump = -1;
+            Con_Message("Warning: Lump %s (#%i) does not appear to be a valid Patch.\n", name, lumpNum);
             sprTex->width = sprTex->height = 0;
             sprTex->offX = sprTex->offY = 0;
             continue;
         }
-        { const doompatch_header_t* patch = (const doompatch_header_t*) W_CacheLumpNum(sprTex->lump, PU_CACHE);
+        { const doompatch_header_t* patch = (const doompatch_header_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
         sprTex->width = SHORT(patch->width);
         sprTex->height = SHORT(patch->height);
         sprTex->offX = SHORT(patch->leftOffset);
@@ -1947,7 +1950,6 @@ void R_SpriteTexturesInit(void)
         }
 
         // Create a new GLTexture for this.
-        name = W_LumpName(sprTex->lump);
         glTex = GL_CreateGLTexture(name, i, GLT_SPRITE);
 
         // Create a new Material for this.

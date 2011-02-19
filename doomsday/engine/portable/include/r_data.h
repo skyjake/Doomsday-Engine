@@ -143,8 +143,9 @@ typedef struct flat_s {
 } flat_t;
 
 typedef struct {
-    lumpnum_t       lump; // Real lump number.
-    short           width, height, offX, offY;
+    lumpname_t name;
+    boolean isCustom;
+    short width, height, offX, offY;
 } spritetex_t;
 
 // Model skin.

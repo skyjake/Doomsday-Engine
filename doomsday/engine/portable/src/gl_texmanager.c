@@ -1556,7 +1556,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     }
 
     // Try to load an external replacement for this version of the patch?
-    if(!noHighResTex && (loadExtAlways || highResWithPWAD || W_LumpFromIWAD(p->lump)))
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD || p->isCustom))
     {
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
@@ -1601,20 +1601,17 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
 }
 
 /**
- * @return              The outcome:
- *                      0 = not loaded.
- *                      1 = loaded data from a lump resource.
- *                      2 = loaded data from an external resource.
+ * @return  0 = not loaded.
+ *          1 = loaded data from an original resource.
+ *          2 = loaded data from a replacement resource.
  */
-byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
-                   void* context)
+byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
 {
     material_load_params_t* params = (material_load_params_t*) context;
     const spritetex_t*  sprTex;
     int tmap = 0, tclass = 0;
     boolean pSprite = false;
     byte border = 0;
-    lumpnum_t lumpNum;
 
     if(!image)
         return 0; // Wha?
@@ -1622,7 +1619,6 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     sprTex = R_SpriteTextureForIndex(inst->tex->ofTypeID);
     assert(NULL != sprTex);
 
-    lumpNum = sprTex->lump;
     if(params)
     {
         tmap = params->tmap;
@@ -1634,19 +1630,18 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     // Attempt to load a high resolution version of this sprite?
     if(!noHighResPatches)
     {
-        const char* lumpName = W_LumpName(lumpNum);
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
         // Compose resource names, prefer translated or psprite versions.
         Str_Init(&searchPath);
-        Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", lumpName);
+        Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", sprTex->name);
         if(pSprite || tclass || tmap)
         {
             if(pSprite)
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", lumpName);
+                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", sprTex->name);
             else // Translated.
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;", lumpName, tclass, tmap);
+                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;", sprTex->name, tclass, tmap);
         }
         Str_Init(&foundPath);
 
@@ -1664,6 +1659,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     }
 
     {
+    lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
     boolean freePatch = false;
     const doompatch_header_t*  patch;
     void* tmp = NULL;
@@ -3073,13 +3069,13 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     switch(tex->type)
     {
     case GLT_FLAT:
-        return R_GetFlatForIdx(tex->ofTypeID)->isCustom;
+        return !R_GetFlatForIdx(tex->ofTypeID)->isCustom;
 
     case GLT_DOOMTEXTURE:
-        return (R_GetDoomTextureDef(tex->ofTypeID)->flags & TXDF_IWAD)? true : false;
+        return (R_GetDoomTextureDef(tex->ofTypeID)->flags & TXDF_IWAD) != 0;
 
     case GLT_SPRITE:
-        return W_LumpFromIWAD(R_SpriteTextureForIndex(tex->ofTypeID)->lump);
+        return !R_SpriteTextureForIndex(tex->ofTypeID)->isCustom;
 
     case GLT_DOOMPATCH:
         return !R_FindPatchTex(tex->ofTypeID)->isCustom;

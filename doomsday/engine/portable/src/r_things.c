@@ -78,17 +78,15 @@ typedef struct {
 } vlightiterparams_t;
 
 typedef struct spriterecord_frame_s {
-    lumpnum_t       lump;
-    byte            frame[2];
-    byte            rotation[2];
-
-    material_t*     mat;
+    byte frame[2];
+    byte rotation[2];
+    material_t* mat;
     struct spriterecord_frame_s* next;
 } spriterecord_frame_t;
 
 typedef struct spriterecord_s {
-    char            name[5];
-    int             numFrames;
+    char name[5];
+    int numFrames;
     spriterecord_frame_t* frames;
     struct spriterecord_s* next;
 } spriterecord_t;
@@ -350,13 +348,12 @@ void R_PreInitSprites(void)
     {
         spritetex_t* sprTex = R_SpriteTextureForIndex(i);
         spriterecord_t* rec;
-        const char* name;
+        const char* name = sprTex->name;
 
-        if(-1 == sprTex->lump)
+        if(0 == sprTex->width && 0 == sprTex->height)
             continue; // Not a valid sprite texture.
 
         // Check that the name is valid.
-        name = W_LumpName(sprTex->lump);
         if(!name[4] || !name[5] || (name[6] && !name[7]))
             continue; // This is not a sprite frame.
 
@@ -415,7 +412,6 @@ void R_PreInitSprites(void)
         Str_Free(&path);
         }
 
-        sprFrame->lump = sprTex->lump;
         sprFrame->frame[0]    = name[4] - 'A' + 1;
         sprFrame->rotation[0] = name[5] - '0';
         if(name[6])
