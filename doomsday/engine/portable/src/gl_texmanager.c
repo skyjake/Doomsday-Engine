@@ -82,9 +82,6 @@ typedef struct gltexture_typedata_s {
 D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
-#ifdef _DEBUG
-D_CMD(TranslateFont);
-#endif
 
 void GL_DoResetDetailTextures(const cvar_t* cvar);
 
@@ -210,9 +207,6 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
-#if _DEBUG
-    C_CMD_FLAGS("translatefont", "ss", TranslateFont, CMDF_NO_DEDICATED);
-#endif
 }
 
 /**
@@ -1627,7 +1621,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
         border = params->tex.border;
     }
 
-    // Attempt to load a high resolution version of this sprite?
+    // Attempt to load a high resolution replacement for this sprite?
     if(!noHighResPatches)
     {
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
@@ -3247,57 +3241,6 @@ D_CMD(LowRes)
     GL_LowRes();
     return true;
 }
-
-#ifdef _DEBUG
-D_CMD(TranslateFont)
-{
-    char                name[32];
-    int                 i, lump;
-    size_t              size;
-    doompatch_header_t        *patch;
-    byte                redToWhite[256];
-
-    if(argc < 3)
-        return false;
-
-    // Prepare the red-to-white table.
-    for(i = 0; i < 256; ++i)
-    {
-        if(i == 176)
-            redToWhite[i] = 168; // Full red -> white.
-        else if(i == 45)
-            redToWhite[i] = 106;
-        else if(i == 46)
-            redToWhite[i] = 107;
-        else if(i == 47)
-            redToWhite[i] = 108;
-        else if(i >= 177 && i <= 191)
-        {
-            redToWhite[i] = 80 + (i - 177) * 2;
-        }
-        else
-            redToWhite[i] = i; // No translation for this.
-    }
-
-    // Translate everything.
-    for(i = 0; i < 256; ++i)
-    {
-        sprintf(name, "%s%.3d", argv[1], i);
-        if((lump = W_CheckNumForName(name)) != -1)
-        {
-            Con_Message("%s...\n", name);
-            size = W_LumpLength(lump);
-            patch = M_Malloc(size);
-            memcpy(patch, W_CacheLumpNum(lump, PU_CACHE), size);
-            GL_TranslatePatch(patch, redToWhite);
-            sprintf(name, "%s%.3d.lmp", argv[2], i);
-            M_WriteFile(name, patch, size);
-            M_Free(patch);
-        }
-    }
-    return true;
-}
-#endif
 
 D_CMD(ResetTextures)
 {
