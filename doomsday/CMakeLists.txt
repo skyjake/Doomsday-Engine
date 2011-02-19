@@ -193,6 +193,10 @@ ENDIF (WIN32)
 ## Where does it go on OSX ? FIXME
 ## Thess .pk3s is generated in the Generate.pk3 target.
 SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
+IF (NOT APPLE)
+    SET (DENG_ENGINE_DATA_GRAPHICS ${CMAKE_SOURCE_DIR}/engine/data/graphics/loading1.png ${CMAKE_SOURCE_DIR}/engine/data/graphics/loading2.png )
+    SET (DENG_ENGINE_DATA_FONTS ${CMAKE_SOURCE_DIR}/engine/data/fonts/normal12.dfn ${CMAKE_SOURCE_DIR}/engine/data/fonts/normal18.dfn )
+ENDIF (NOT APPLE)
 SET (DENG_ENGINE_DATA_DIR ${datadir}/data)
 
 SET (DENG_JDOOM_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 )
@@ -762,6 +766,11 @@ INSTALL(TARGETS doomsday
 RUNTIME DESTINATION ${bindir} 
 LIBRARY DESTINATION ${libdir} )
 INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DENG_ENGINE_DATA_DIR} )
+
+IF (NOT APPLE)
+    INSTALL(FILES ${DENG_ENGINE_DATA_GRAPHICS} DESTINATION ${DENG_ENGINE_DATA_DIR}/graphics/ )
+    INSTALL(FILES ${DENG_ENGINE_DATA_FONTS} DESTINATION ${DENG_ENGINE_DATA_DIR}/fonts/ )
+ENDIF (NOT APPLE)
 
 IF (APPLE)
     # Bundling.
