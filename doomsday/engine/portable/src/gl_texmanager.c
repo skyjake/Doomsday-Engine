@@ -1378,9 +1378,6 @@ static int loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     const int32_t* columnOfs = (const int32_t*)((const uint8_t*) patch + sizeof(doompatch_header_t));
     // \todo Validate column offset is within the Patch!
 
-    if(origx < 0) origx = 0;
-    if(origy < 0) origy = 0;
-
     destTop = buffer + origx;
     destAlphaTop = buffer + origx + bufsize;
 
