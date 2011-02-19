@@ -95,6 +95,8 @@ extern boolean mapSetup; // We are currently setting up a map.
 byte precacheSkins = true;
 byte precacheSprites = true;
 
+byte* translationTables = NULL;
+
 uint numDoomPatchDefs = 0;
 patchtex_t** doomPatchDefs = NULL;
 
@@ -2112,7 +2114,6 @@ void R_UpdateData(void)
 
 void R_InitTranslationTables(void)
 {
-    // Allocate translation tables
     translationTables = Z_Calloc(256 * 3 * 7, PU_REFRESHTRANS, 0);
 }
 

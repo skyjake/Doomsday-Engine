@@ -243,6 +243,8 @@ extern int levelFullBright;
 extern float glowingTextures;
 extern byte precacheSprites, precacheSkins;
 
+extern byte* translationTables;
+
 extern detailtex_t** detailTextures;
 extern int numDetailTextures;
 
@@ -280,6 +282,10 @@ void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
                                float bR, float tR);
 
 void            R_UpdateTexturesAndFlats(void);
+
+void R_InitTranslationTables(void);
+void R_UpdateTranslationTables(void);
+
 void            R_InitSystemTextures(void);
 void            R_InitTextures(void);
 void            R_InitFlats(void);

@@ -3,8 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2002 Graham Jackson <no contact email published>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1255,7 +1256,7 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
     {
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
 
-        // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
+        // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace.
         Str_Init(&searchPath); Str_Appendf(&searchPath, FLATS_RESOURCE_NAMESPACE_NAME":%s;" TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", flat->name, flat->name);
         Str_Init(&foundPath);
 
@@ -1342,20 +1343,149 @@ DGLuint GL_PrepareExtTexture(const char* name,
     return texture;
 }
 
+// Posts are runs of non masked source pixels.
+typedef struct {
+    byte topdelta; // @c -1 is the last post in a column.
+    byte length;
+    // Length data bytes follows.
+} post_t;
+
+// column_t is a list of 0 or more post_t, (uint8_t)-1 terminated
+typedef post_t column_t;
+
+/**
+ * \important: The buffer must have room for the new alpha data!
+ *
+ * @param dstBuf  The destination buffer the patch will be drawn to.
+ * @param texwidth  Width of the dst buffer in pixels.
+ * @param texheight  Height of the dst buffer in pixels.
+ * @param patch  Ptr to the patch structure to draw to the dst buffer.
+ * @param origx  X coordinate in the dst buffer to draw the patch too.
+ * @param origy  Y coordinate in the dst buffer to draw the patch too.
+ * @param trans  If @c >= 0 id number of the translation table to use.
+ * @param maskZero  Used with sky textures.
+ * @param checkForAlpha If @c true, the composited image will be checked
+ *     for alpha pixels and will return accordingly if present.
+ *
+ * @return  If @a checkForAlpha @c = false will return @c false. Else,
+ *          @c true iff the buffer really has alpha information.
+ */
+static int loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
+    const doompatch_header_t* patch, int origx, int origy, int trans,
+    boolean maskZero, boolean checkForAlpha)
+{
+    assert(buffer && texwidth > 0 && texheight > 0 && patch);
+    {
+    int count, col = 0;
+    int x = origx, y, top; // Keep track of pos (clipping).
+    int w = SHORT(patch->width);
+    size_t bufsize = texwidth * texheight;
+    const column_t* column;
+    const uint8_t* source;
+    uint8_t* dest1, *dest2, *destTop, *destAlphaTop;
+    // Column offsets begin immediately following the header.
+    const int32_t* columnOfs = (const int32_t*)((const uint8_t*) patch + sizeof(doompatch_header_t));
+    // \todo Validate column offset is within the Patch!
+
+    if(origx < 0) origx = 0;
+    if(origy < 0) origy = 0;
+
+    destTop = buffer + origx;
+    destAlphaTop = buffer + origx + bufsize;
+
+    for(; col < w; ++col, destTop++, destAlphaTop++, ++x)
+    {
+        column = (const column_t*) ((const uint8_t*) patch + LONG(columnOfs[col]));
+        top = -1;
+
+        // Step through the posts in a column
+        while(column->topdelta != 0xff)
+        {
+            source = (uint8_t*) column + 3;
+
+            if(x < 0 || x >= texwidth)
+                break; // Out of bounds.
+
+            if(column->topdelta <= top)
+                top += column->topdelta;
+            else
+                top = column->topdelta;
+
+            if((count = column->length) > 0)
+            {
+                y = origy + top;
+                dest1 = destTop + y * texwidth;
+                dest2 = destAlphaTop + y * texwidth;
+
+                while(count--)
+                {
+                    uint8_t palidx = *source++;
+
+                    if(trans >= 0)
+                    {
+                        /// \fixme Check bounds!
+                        palidx = *(translationTables + trans + palidx);
+                    }
+
+                    // Is the destination within bounds?
+                    if(y >= 0 && y < texheight)
+                    {
+                        if(!maskZero || palidx)
+                            *dest1 = palidx;
+
+                        if(maskZero)
+                            *dest2 = (palidx ? 0xff : 0);
+                        else
+                            *dest2 = 0xff;
+                    }
+
+                    // One row down.
+                    dest1 += texwidth;
+                    dest2 += texwidth;
+                    ++y;
+                }
+            }
+
+            column = (const column_t*) ((const uint8_t*) column + column->length + 4);
+        }
+    }
+
+    if(checkForAlpha)
+    {
+        boolean allowSingleAlpha = (texwidth < 128 || texheight < 128);
+        int i;
+
+        // Scan through the RGBA buffer and check for sub-0xff alpha.
+        source = buffer + texwidth * texheight;
+        for(i = 0, count = 0; i < texwidth * texheight; ++i)
+        {
+            if(source[i] < 0xff)
+            {
+                /// \kludge 'Small' textures tolerate no alpha.
+                if(allowSingleAlpha)
+                    return true;
+
+                // Big ones can have a single alpha pixel (ZZZFACE3!).
+                if(count++ > 1)
+                    return true; // Has alpha data.
+            }
+        }
+    }
+
+    return false; // Doesn't have alpha data.
+    }
+}
+
 /**
  * Renders the given texture into the buffer.
  */
-static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,
-                             int width, int height, int* hasBigPatch)
+static boolean bufferTexture(const doomtexturedef_t* texDef, uint8_t* buffer,
+ int width, int height, int* hasBigPatch)
 {
-    int                 i, len;
-    boolean             alphaChannel = false;
-    doompatch_header_t*        patch;
-
-    len = width * height;
+    boolean hasAlpha = false;
 
     // Clear the buffer.
-    memset(buffer, 0, 2 * len);
+    memset(buffer, 0, 2 * width * height); // Pal8 plus 8-bit alpha.
 
     // By default zero is put in the big patch height.
     if(hasBigPatch)
@@ -1363,27 +1493,26 @@ static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,
 
     // Draw all the patches. Check for alpha pixels after last patch has
     // been drawn.
+    { int i;
     for(i = 0; i < texDef->patchCount; ++i)
     {
-        const texpatch_t*   patchDef = &texDef->patches[i];
-
-        patch = (doompatch_header_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
+        const texpatch_t* patchDef = &texDef->patches[i];
+        const doompatch_header_t* patch =
+            (doompatch_header_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
 
         // Check for big patches?
-        if(SHORT(patch->height) > texDef->height && hasBigPatch &&
+        if(hasBigPatch && SHORT(patch->height) > texDef->height &&
            *hasBigPatch < SHORT(patch->height))
         {
             *hasBigPatch = SHORT(patch->height);
         }
 
         // Draw the patch in the buffer.
-        alphaChannel =
-            DrawRealPatch(buffer, /*palette,*/ width, height, patch,
-                          patchDef->offX, patchDef->offY,
-                          false, i == texDef->patchCount - 1);
-    }
+        hasAlpha = loadDoomPatch(buffer, /*palette,*/ width, height, patch,
+            patchDef->offX, patchDef->offY, -1, false, i == texDef->patchCount - 1);
+    }}
 
-    return alphaChannel;
+    return hasAlpha;
 }
 
 /**
@@ -1405,9 +1534,9 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
         {
             const texpatch_t*   patchDef = &texDef->patches[i];
 
-            DrawRealPatch(imgdata, /*palette,*/ width, height,
+            loadDoomPatch(imgdata, /*palette,*/ width, height,
                           W_CacheLumpNum(patchDef->lump, PU_CACHE),
-                          patchDef->offX, patchDef->offY,
+                          patchDef->offX, patchDef->offY, -1,
                           zeroMask, false);
         }
     }
@@ -1431,7 +1560,7 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
         // Allocate a large enough buffer.
         numpels = width * bufHeight;
         imgdata = M_Calloc(2 * numpels);
-        DrawRealPatch(imgdata, /*palette,*/ width, bufHeight, patch, 0, 0,
+        loadDoomPatch(imgdata, /*palette,*/ width, bufHeight, patch, 0, 0, -1,
                       zeroMask, false);
     }
 
@@ -1550,7 +1679,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     }
 
     // Try to load an external replacement for this version of the patch?
-    if(!noHighResTex && (loadExtAlways || highResWithPWAD || p->isCustom))
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
@@ -1585,7 +1714,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
             image->height += 2;
         }
         image->pixels = M_Calloc(2 * image->width * image->height);
-        if(DrawRealPatch(image->pixels, image->width, image->height, patch, scaleSharp? 1 : 0, scaleSharp? 1 : 0, false, true))
+        if(loadDoomPatch(image->pixels, image->width, image->height, patch, scaleSharp? 1 : 0, scaleSharp? 1 : 0, -1, false, true))
             image->flags |= IMGF_IS_MASKED;
         W_ChangeCacheTag(p->lump, PU_CACHE);
         return 1;
@@ -1656,7 +1785,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
     lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
     boolean freePatch = false;
     const doompatch_header_t*  patch;
-    void* tmp = NULL;
+    int trans = -1;
 
     initImage(image);
     image->width = sprTex->width+border*2;
@@ -1665,29 +1794,14 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context)
     image->pixels = M_Calloc(2 * image->width * image->height);
 
     if(tclass || tmap)
-    {
-        int offset = -256 + tclass * ((8-1) * 256) + tmap * 256;
-
-        // We need to translate the patch.
-        tmp = M_Malloc(W_LumpLength(lumpNum));
-        W_ReadLump(lumpNum, tmp);
-        GL_TranslatePatch((doompatch_header_t*) tmp, &translationTables[MAX_OF(0, offset)]);
-
-        patch = (doompatch_header_t*) tmp;
-        freePatch = true;
-    }
-    else
-    {
-        patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
+    {   // We need to translate the patch.
+        trans = MAX_OF(0, -256 + tclass * ((8-1) * 256) + tmap * 256);
     }
 
-    if(DrawRealPatch(image->pixels, image->width, image->height, patch, border, border, false, true))
+    patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
+    if(loadDoomPatch(image->pixels, image->width, image->height, patch, border, border, trans, false, true))
         image->flags |= IMGF_IS_MASKED;
-
-    if(freePatch)
-        M_Free(tmp);
-    else
-        W_ChangeCacheTag(lumpNum, PU_CACHE);
+    W_ChangeCacheTag(lumpNum, PU_CACHE);
 
     return 1;
     }

@@ -68,12 +68,8 @@ int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
                                     int line);
 void            amplify(float* rgb);
 void            ColorOutlines(byte* buffer, int width, int height);
-int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
-                              const doompatch_header_t* patch, int origx,
-                              int origy, boolean maskZero,
-                              boolean checkForAlpha);
+
 boolean         ImageHasAlpha(image_t *image);
-void            GL_TranslatePatch(doompatch_header_t* patch, byte* transTable);
 
 int             GL_PickSmartScaleMethod(int width, int height);
 void            GL_SmartFilter(int method, byte* in, byte* out, int width, int height);
