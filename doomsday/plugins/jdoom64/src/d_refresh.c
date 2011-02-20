@@ -1,12 +1,11 @@
-/**\file
+/**\file d_refresh.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +24,7 @@
  */
 
 /**
- * d_refresh.c: - jDoom64 specific
+ * Refresh - Doom64 specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -196,8 +195,6 @@ static void rendPlayerView(int player)
 
 static void rendHUD(int player, int viewW, int viewH)
 {
-    player_t* plr;
-
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
@@ -207,43 +204,37 @@ static void rendHUD(int player, int viewW, int viewH)
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
         return;
 
-    plr = &players[player];
+    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
+        return; // The engine advises not to draw any HUD displays.
 
-    // Draw the automap?
     AM_Drawer(player);
+    ST_Drawer(player);
+    HU_DrawScoreBoard(player);
 
-    // These various HUD's will be drawn unless Doomsday advises not to
-    if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
+    // Level information is shown for a few seconds in the beginning of a level.
+    if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))
     {
-        ST_Drawer(player);
+        int needWidth;
+        float scale;
 
-        HU_DrawScoreBoard(player);
-
-        // Level information is shown for a few seconds in the beginning of a level.
-        if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))
+        if(viewW >= viewH)
         {
-            int needWidth;
-            float scale;
-
-            if(viewW >= viewH)
-            {
-                needWidth = (float)viewH/SCREENHEIGHT * SCREENWIDTH;
-                scale = (float)viewH/SCREENHEIGHT;
-            }
-            else
-            {
-                needWidth = (float)viewW/SCREENWIDTH * SCREENWIDTH;
-                scale = (float)viewW/SCREENWIDTH;
-            }
-            if(needWidth > viewW)
-                scale *= (float)viewW/needWidth;
-
-            scale *= (1+cfg.hudScale)/2;
-            // Make the title 3/4 smaller.
-            scale *= .75f;
-
-            Hu_DrawMapTitle(viewW/2, (float)viewH/SCREENHEIGHT * 6, scale);
+            needWidth = (float)viewH/SCREENHEIGHT * SCREENWIDTH;
+            scale = (float)viewH/SCREENHEIGHT;
         }
+        else
+        {
+            needWidth = (float)viewW/SCREENWIDTH * SCREENWIDTH;
+            scale = (float)viewW/SCREENWIDTH;
+        }
+        if(needWidth > viewW)
+            scale *= (float)viewW/needWidth;
+
+        scale *= (1+cfg.hudScale)/2;
+        // Make the title 3/4 smaller.
+        scale *= .75f;
+
+        Hu_DrawMapTitle(viewW/2, (float)viewH/SCREENHEIGHT * 6, scale);
     }
 }
 
