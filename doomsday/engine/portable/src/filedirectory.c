@@ -513,7 +513,7 @@ boolean FileDirectory_FindPath(filedirectory_t* fd, const char* _searchPath,
 
     // Convert the raw path into one we can process.
     Str_Init(&searchPath); Str_Set(&searchPath, _searchPath);
-    F_FixSlashes(&searchPath);
+    F_FixSlashes(&searchPath, &searchPath);
 
     // Perform the search.
     p.searchPath = &searchPath;

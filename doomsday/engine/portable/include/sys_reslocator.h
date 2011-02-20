@@ -200,24 +200,24 @@ typedef struct directory2_s {
 } directory2_t;
 
 void F_FileDir(const ddstring_t* str, directory2_t* dir);
-void F_FileName(ddstring_t* dest, const ddstring_t* src);
-void F_FileNameAndExtension(ddstring_t* dest, const ddstring_t* src);
+void F_FileName(ddstring_t* dst, const ddstring_t* src);
+void F_FileNameAndExtension(ddstring_t* dst, const ddstring_t* src);
 
-const char* F_ParseSearchPath2(struct dduri_s* dest, const char* src, char delim,
+const char* F_ParseSearchPath2(struct dduri_s* dst, const char* src, char delim,
     resourceclass_t defaultResourceClass);
-const char* F_ParseSearchPath(struct dduri_s* dest, const char* src, char delim);
+const char* F_ParseSearchPath(struct dduri_s* dst, const char* src, char delim);
 
 /**
  * Converts directory slashes to the correct type of slash.
  * @return  @c true iff the path was modified.
  */
-boolean F_FixSlashes(ddstring_t* path);
+boolean F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Convert the symbolic path into a real path.
  * \todo dj: This seems rather redundant; refactor callers.
  */
-void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src);
+void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * @return  @c true, if the given path is absolute (starts with \ or / or the
@@ -233,22 +233,22 @@ boolean F_IsRelativeToBasePath(const ddstring_t* path);
 /**
  * Attempt to remove the base path if found at the beginning of the path.
  *
+ * @param dst           Potential base-relative path written here.
  * @param src           Possibly absolute path.
- * @param dest          Potential base-relative path written here.
  *
  * @return  @c true iff the base path was found and removed.
  */
-boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* src);
+boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
  *
- * @param dest          Expanded path written here.
+ * @param dst           Expanded path written here.
  * @param src           Original path.
  *
  * @return  @c true iff the path was expanded.
  */
-boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
+boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Expands relative path directives like '>'.
@@ -259,14 +259,15 @@ boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
  * ! Handles '~' on UNIX-based platforms.
  * ! No other transform applied to @a src path.
  *
- * @param dest          Expanded path written here.
+ * @param dst           Expanded path written here.
  * @param src           Original path.
  *
  * @return  @c true iff the path was expanded.
  */
-boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src);
+boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
 
 /**
+ * \important Not thread-safe!
  * @return  A prettier copy of the original path.
  */
 const ddstring_t* F_PrettyPath(const ddstring_t* path);

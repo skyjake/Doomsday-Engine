@@ -302,7 +302,7 @@ void DD_InitHelp(void)
     // Parse the control panel help file.
     { ddstring_t helpFileName; Str_Init(&helpFileName);
     Str_Set(&helpFileName, DD_BASEPATH_DATA"cphelp.txt");
-    F_FixSlashes(&helpFileName);
+    F_FixSlashes(&helpFileName, &helpFileName);
     F_ExpandBasePath(&helpFileName, &helpFileName);
 
     DH_ReadStrings(Str_Text(&helpFileName));

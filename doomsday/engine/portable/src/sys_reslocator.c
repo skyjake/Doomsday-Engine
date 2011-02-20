@@ -995,7 +995,7 @@ void F_FileDir(const ddstring_t* str, directory2_t* dir)
     }
 }
 
-void F_FileName(ddstring_t* dest, const ddstring_t* src)
+void F_FileName(ddstring_t* dst, const ddstring_t* src)
 {
 #ifdef WIN32
     char name[_MAX_FNAME];
@@ -1003,10 +1003,10 @@ void F_FileName(ddstring_t* dest, const ddstring_t* src)
     char name[NAME_MAX];
 #endif
     _splitpath(Str_Text(src), 0, 0, name, 0);
-    Str_Set(dest, name);
+    Str_Set(dst, name);
 }
 
-void F_FileNameAndExtension(ddstring_t* dest, const ddstring_t* src)
+void F_FileNameAndExtension(ddstring_t* dst, const ddstring_t* src)
 {
 #ifdef WIN32
     char name[_MAX_FNAME], ext[_MAX_EXT];
@@ -1014,15 +1014,15 @@ void F_FileNameAndExtension(ddstring_t* dest, const ddstring_t* src)
     char name[NAME_MAX], ext[NAME_MAX];
 #endif
     _splitpath(Str_Text(src), 0, 0, name, ext);
-    Str_Clear(dest);
-    Str_Appendf(dest, "%s%s", name, ext);
+    Str_Clear(dst);
+    Str_Appendf(dst, "%s%s", name, ext);
 }
 
 /// \todo dj: Find a suitable home for this.
-const char* F_ParseSearchPath2(dduri_t* dest, const char* src, char delim,
+const char* F_ParseSearchPath2(dduri_t* dst, const char* src, char delim,
     resourceclass_t defaultResourceClass)
 {
-    Uri_Clear(dest);
+    Uri_Clear(dst);
     if(src)
     {
         ddstring_t buf; Str_Init(&buf);
@@ -1030,7 +1030,7 @@ const char* F_ParseSearchPath2(dduri_t* dest, const char* src, char delim,
         {
             Str_PartAppend(&buf, src, 0, 1);
         }
-        Uri_SetUri3(dest, Str_Text(&buf), defaultResourceClass);
+        Uri_SetUri3(dst, Str_Text(&buf), defaultResourceClass);
         Str_Free(&buf);
     }
     if(!*src)
@@ -1039,67 +1039,82 @@ const char* F_ParseSearchPath2(dduri_t* dest, const char* src, char delim,
     return src + 1;
 }
 
-const char* F_ParseSearchPath(dduri_t* dest, const char* src, char delim)
+const char* F_ParseSearchPath(dduri_t* dst, const char* src, char delim)
 {
-    return F_ParseSearchPath2(dest, src, delim, RC_UNKNOWN);
+    return F_ParseSearchPath2(dst, src, delim, RC_UNKNOWN);
 }
 
 /// \todo dj: Find a suitable home for this.
-boolean F_FixSlashes(ddstring_t* str)
+boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 {
-    assert(str);
+    assert(dstStr && srcStr);
     {
     boolean result = false;
-    size_t len = Str_Length(str);
-    if(len != 0)
+    if(!Str_IsEmpty(srcStr))
     {
-        char* path = Str_Text(str);
-        size_t i;
-        for(i = 0; i < len && path[i]; ++i)
+        char* dst = Str_Text(dstStr);
+        const char* src = Str_Text(srcStr);
+
+        if(dstStr != srcStr)
         {
-            if(path[i] != DIR_WRONG_SEP_CHAR)
-                continue;
-            path[i] = DIR_SEP_CHAR;
-            result = true;
+            Str_Clear(dstStr);
+            Str_Reserve(dstStr, Str_Length(srcStr));
         }
+
+        { size_t i;
+        for(i = 0; src[i]; ++i)
+        {
+            if(src[i] != DIR_WRONG_SEP_CHAR)
+            {
+                if(dstStr != srcStr)
+                    Str_AppendChar(dstStr, src[i]);
+                continue;
+            }
+
+            if(dstStr != srcStr)
+                Str_AppendChar(dstStr, DIR_SEP_CHAR);
+            else
+                dst[i] = DIR_SEP_CHAR;
+            result = true;
+        }}
     }
     return result;
     }
 }
 
 /// \todo dj: Find a suitable home for this.
-void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src)
+void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
 {
-    assert(dest && src);
+    assert(dst && src);
 
     // Src path is base-relative?
     if(Str_At(src, 0) == DIR_SEP_CHAR)
     {
-        boolean mustCopy = (dest == src);
+        boolean mustCopy = (dst == src);
         if(mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf);
             Str_Set(&buf, ddBasePath);
             Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
-            Str_Copy(dest, &buf);
+            Str_Copy(dst, &buf);
             return;
         }
 
-        Str_Set(dest, ddBasePath);
-        Str_PartAppend(dest, Str_Text(src), 1, Str_Length(src)-1);
+        Str_Set(dst, ddBasePath);
+        Str_PartAppend(dst, Str_Text(src), 1, Str_Length(src)-1);
         return;
     }
 
     // Src path is workdir-relative.
 
-    if(dest == src)
+    if(dst == src)
     {
-        Str_Prepend(dest, ddRuntimeDir.path);
+        Str_Prepend(dst, ddRuntimeDir.path);
         return;
     }
 
-    Str_Appendf(dest, "%s%s", ddRuntimeDir.path, Str_Text(src));
+    Str_Appendf(dst, "%s%s", ddRuntimeDir.path, Str_Text(src));
 }
 
 /// \todo dj: Find a suitable home for this.
@@ -1110,33 +1125,33 @@ boolean F_IsRelativeToBasePath(const ddstring_t* path)
 }
 
 /// \todo dj: Find a suitable home for this.
-boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* absPath)
+boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
 {
-    assert(dest && absPath);
+    assert(dst && absPath);
 
     if(F_IsRelativeToBasePath(absPath))
     {
-        boolean mustCopy = (dest == absPath);
+        boolean mustCopy = (dst == absPath);
         if(mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf);
             Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath),
                            Str_Length(absPath) - strlen(ddBasePath));
-            Str_Copy(dest, &buf);
+            Str_Copy(dst, &buf);
             Str_Free(&buf);
             return true;
         }
 
-        Str_Clear(dest);
-        Str_PartAppend(dest, Str_Text(absPath), strlen(ddBasePath),
+        Str_Clear(dst);
+        Str_PartAppend(dst, Str_Text(absPath), strlen(ddBasePath),
                        Str_Length(absPath) - strlen(ddBasePath));
         return true;
     }
 
     // Do we need to copy anyway?
-    if(dest != absPath)
-        Str_Copy(dest, absPath);
+    if(dst != absPath)
+        Str_Copy(dst, absPath);
 
     // This doesn't appear to be the base path.
     return false;
@@ -1158,44 +1173,44 @@ boolean F_IsAbsolute(const ddstring_t* str)
 }
 
 /// \todo dj: Find a suitable home for this.
-boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src)
+boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
 {
-    assert(dest && src);
+    assert(dst && src);
 
     if(!F_IsAbsolute(src))
     {
-        if(dest != src)
-            Str_Copy(dest, src);
-        Str_Prepend(dest, ddBasePath);
+        if(dst != src)
+            Str_Copy(dst, src);
+        Str_Prepend(dst, ddBasePath);
         return true;
     }
 
     // Do we need to copy anyway?
-    if(dest != src)
-        Str_Copy(dest, src);
+    if(dst != src)
+        Str_Copy(dst, src);
 
     return false; // Not done.
 }
 
 /// \todo dj: Find a suitable home for this.
-boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
+boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 {
-    assert(dest && src);
+    assert(dst && src);
     if(Str_At(src, 0) == '>' || Str_At(src, 0) == '}')
     {
-        boolean mustCopy = (dest == src);
+        boolean mustCopy = (dst == src);
         if(mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf); Str_Set(&buf, ddBasePath);
             Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
-            Str_Set(dest, Str_Text(&buf));
+            Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
 
-        Str_Set(dest, ddBasePath);
-        Str_PartAppend(dest, Str_Text(src), 1, Str_Length(src)-1);
+        Str_Set(dst, ddBasePath);
+        Str_PartAppend(dst, Str_Text(src), 1, Str_Length(src)-1);
         return true;
     }
 #ifdef UNIX
@@ -1213,7 +1228,7 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
             // Append the rest of the original path.
             Str_PartAppend(&buf, Str_Text(src), 2, Str_Length(src)-2);
 
-            Str_Copy(dest, &buf);
+            Str_Copy(dst, &buf);
             Str_Free(&buf);
             return true;
         }
@@ -1239,7 +1254,7 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
             }
 
             Str_Append(&buf, Str_Text(src) + 1);
-            Str_Copy(dest, &buf);
+            Str_Copy(dst, &buf);
             Str_Free(&buf);
         }
         Str_Free(&userName);
@@ -1250,13 +1265,14 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
 #endif
 
     // Do we need to copy anyway?
-    if(dest != src)
-        Str_Copy(dest, src);
+    if(dst != src)
+        Str_Copy(dst, src);
 
     // No expansion done.
     return false;
 }
 
+/// \todo dj: Find a suitable home for this.
 const ddstring_t* F_PrettyPath(const ddstring_t* path)
 {
 #define NUM_BUFS            8
@@ -1264,31 +1280,40 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path)
     static ddstring_t buffers[NUM_BUFS]; // \fixme: never free'd!
     static uint index = 0;
 
-    size_t basePathLen = strlen(ddBasePath), len = path != 0? Str_Length(path) : 0;
+    size_t len, basePathLen;
+
+    if(!path || Str_IsEmpty(path))
+        return path;
+
+    len = Str_Length(path);
+    if(len > 1 && (Str_At(path, 0) == '}' || Str_At(path, 0) == '>'))
+    {   // Skip over this special character.
+        ddstring_t* str = &buffers[index++ % NUM_BUFS];
+        Str_Clear(str);
+        Str_PartAppend(str, Str_Text(path), 1, len-1);
+        F_FixSlashes(str, str);
+        return str;
+    }
+
+    basePathLen = strlen(ddBasePath);
     if(len > basePathLen && !strnicmp(ddBasePath, Str_Text(path), basePathLen))
     {
         ddstring_t* str = &buffers[index++ % NUM_BUFS];
-        Str_Free(str);
+        Str_Clear(str);
         F_RemoveBasePath(str, path);
-        F_FixSlashes(str);
-        return str;
-    }
-    else if(len > 1 && (Str_At(path, 0) == '}' || Str_At(path, 0) == '>'))
-    {   // Skip over this special character.
-        ddstring_t* str = &buffers[index++ % NUM_BUFS];
-        Str_Free(str);
-        Str_PartAppend(str, Str_Text(path), 1, Str_Length(path)-1);
-        F_FixSlashes(str);
+        F_FixSlashes(str, str);
         return str;
     }
 
-    /// \todo This allocation should be completely unnecessary.
-    {ddstring_t* str = &buffers[index++ % NUM_BUFS];
-    Str_Free(str); Str_Copy(str, path);
-    F_FixSlashes(str);
-    return str;
+    if(strchr(Str_Text(path), DIR_WRONG_SEP_CHAR))
+    {
+        ddstring_t* str = &buffers[index++ % NUM_BUFS];
+        Str_Clear(str);
+        F_FixSlashes(str, path);
+        return str;
     }
+
+    return path;
 
 #undef NUM_BUFS
 }
-

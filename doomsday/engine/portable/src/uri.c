@@ -318,7 +318,7 @@ void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResource
     Str_Strip(&uri->_path);
     // Convert all slashes to the host OS's directory separator,
     // for compatibility with the sys_filein routines.
-    F_FixSlashes(&uri->_path);
+    F_FixSlashes(&uri->_path, &uri->_path);
     parseScheme(uri, defaultResourceClass);
 }
 

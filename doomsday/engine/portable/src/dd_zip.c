@@ -615,7 +615,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
 
         // Convert all slashes to the host OS's directory separator,
         // for compatibility with the sys_filein routines.
-        F_FixSlashes(&entryName);
+        F_FixSlashes(&entryName, &entryName);
 
         // In some cases the path inside the pack is mapped to another virtual location.
         applyMappings(&entryName, &entryName);

@@ -55,7 +55,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
     {
         Str_Set(&info->_mainConfig, mainConfig);
         Str_Strip(&info->_mainConfig);
-        F_FixSlashes(&info->_mainConfig);
+        F_FixSlashes(&info->_mainConfig, &info->_mainConfig);
         Str_PartAppend(&info->_bindingConfig, Str_Text(&info->_mainConfig), 0, Str_Length(&info->_mainConfig)-4);
         Str_Append(&info->_bindingConfig, "-bindings.cfg");
     }

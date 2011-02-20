@@ -406,8 +406,8 @@ boolean ResourceNamespace_Find2(resourcenamespace_t* rn, const ddstring_t* _sear
         rebuild(rn);
 
         // Extract the file name and hash it.
-        Str_Init(&searchPath); Str_Copy(&searchPath, _searchPath);
-        F_FixSlashes(&searchPath);
+        Str_Init(&searchPath);
+        F_FixSlashes(&searchPath, _searchPath);
         hashName = rn->_composeHashName(&searchPath);
 
         result = findPath(rn, hashName, &searchPath, foundPath);

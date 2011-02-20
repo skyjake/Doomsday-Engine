@@ -1389,7 +1389,7 @@ static void printDirectory(const ddstring_t* path)
 
     Str_Init(&dir); Str_Copy(&dir, path);
     Str_Strip(&dir);
-    F_FixSlashes(&dir);
+    F_FixSlashes(&dir, &dir);
     // Make sure it ends in a directory separator character.
     if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
         Str_AppendChar(&dir, DIR_SEP_CHAR);

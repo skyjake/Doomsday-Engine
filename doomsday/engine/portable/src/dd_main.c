@@ -199,7 +199,7 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     ddstring_t* newPath = Str_New();
 
     Str_Set(newPath, rawPath);
-    F_FixSlashes(newPath);
+    F_FixSlashes(newPath, newPath);
     F_ExpandBasePath(newPath, newPath);
 
     *list = realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
@@ -379,7 +379,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     Str_Init(&dataPath);
     Str_Set(&dataPath, _dataPath);
     Str_Strip(&dataPath);
-    F_FixSlashes(&dataPath);
+    F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
     if(Str_RAt(&dataPath, 0) != DIR_SEP_CHAR)
         Str_AppendChar(&dataPath, DIR_SEP_CHAR);
@@ -387,7 +387,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     Str_Init(&defsPath);
     Str_Set(&defsPath, _defsPath);
     Str_Strip(&defsPath);
-    F_FixSlashes(&defsPath);
+    F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
     if(Str_RAt(&defsPath, 0) != DIR_SEP_CHAR)
         Str_AppendChar(&defsPath, DIR_SEP_CHAR);
@@ -822,7 +822,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     if(ArgCheckWith("-config", 1))
     {
         Str_Init(&tmp); Str_Set(&tmp, ArgNext());
-        F_FixSlashes(&tmp);
+        F_FixSlashes(&tmp, &tmp);
         configFileName = &tmp;
     }
     else
@@ -1277,7 +1277,7 @@ int DD_EarlyInit(void)
     Str_Init(&dataPath);
     Str_Set(&dataPath, DD_BASEPATH_DATA);
     Str_Strip(&dataPath);
-    F_FixSlashes(&dataPath);
+    F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
     if(Str_RAt(&dataPath, 0) != DIR_SEP_CHAR)
         Str_AppendChar(&dataPath, DIR_SEP_CHAR);
@@ -1285,7 +1285,7 @@ int DD_EarlyInit(void)
     Str_Init(&defsPath);
     Str_Set(&defsPath, DD_BASEPATH_DEFS);
     Str_Strip(&defsPath);
-    F_FixSlashes(&defsPath);
+    F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
     if(Str_RAt(&defsPath, 0) != DIR_SEP_CHAR)
         Str_AppendChar(&defsPath, DIR_SEP_CHAR);
