@@ -2162,39 +2162,80 @@ void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
 void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-    int days, hours, minutes, seconds;
-    int worldTimer;
-    char buf[60];
+#define ORIGINX         (0)
+#define ORIGINY         (0)
+#define LEADING         (.5)
+#define DRAWFLAGS       (DTF_ALIGN_TOP|DTF_NO_EFFECTS)
+
+    int worldTime, days, hours, minutes, seconds;
+    int counterWidth, spacerWidth, lineHeight, x, y;
+    char buf[20];
 
     if(!AM_IsActive(AM_MapForPlayer(player)))
         return;
 
-    worldTimer = players[player].worldTimer / TICRATE;
-    days = worldTimer / 86400;
-    worldTimer -= days * 86400;
-    hours = worldTimer / 3600;
-    worldTimer -= hours * 3600;
-    minutes = worldTimer / 60;
-    worldTimer -= minutes * 60;
-    seconds = worldTimer;
+    worldTime = players[player].worldTimer / TICRATE;
 
-    dd_snprintf(buf, 60, "%.2d : %.2d : %.2d", hours, minutes, seconds);
+    days = worldTime / 86400;
+    worldTime -= days * 86400;
+    hours = worldTime / 3600;
+    worldTime -= hours * 3600;
+    minutes = worldTime / 60;
+    worldTime -= minutes * 60;
+    seconds = worldTime;
+
+    FR_SetFont(FID(GF_FONTA));
+    FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
+    spacerWidth = FR_TextFragmentWidth(" : ");
+
+    DGL_Color4f(1, 1, 1, textAlpha);
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    x = ORIGINX;
+    y = ORIGINY;
+    dd_snprintf(buf, 20, "%.2d", seconds);
+    FR_DrawTextFragment2(buf, x, y, DRAWFLAGS|DTF_ALIGN_RIGHT);
+    x -= counterWidth + spacerWidth;
+
+    FR_DrawChar2(':', x + spacerWidth/2, y, DRAWFLAGS);
+
+    dd_snprintf(buf, 20, "%.2d", minutes);
+    FR_DrawTextFragment2(buf, x, y, DRAWFLAGS|DTF_ALIGN_RIGHT);
+    x -= counterWidth + spacerWidth;
+
+    FR_DrawChar2(':', x + spacerWidth/2, y, DRAWFLAGS);
+
+    dd_snprintf(buf, 20, "%.2d", hours);
+    FR_DrawTextFragment2(buf, x, y, DRAWFLAGS|DTF_ALIGN_RIGHT);
+    x -= counterWidth;
+    y += lineHeight;
 
     if(days)
     {
-        char buf2[30];
-        dd_snprintf(buf2, 20, "\n%.2d %s", days, days == 1? "day" : "days");
+        y += lineHeight * LEADING;
+        dd_snprintf(buf, 20, "%.2d %s", days, days == 1? "day" : "days");
+        FR_DrawTextFragment2(buf, ORIGINX, y, DRAWFLAGS|DTF_ALIGN_RIGHT);
+        y += lineHeight;
+
         if(days >= 5)
-            strncat(buf2, "\nYOU FREAK!!!", 20);
-        strncat(buf, buf2, 60);
+        {
+            y += lineHeight * LEADING;
+            strncpy(buf, "You Freak!!!", 20);
+            FR_DrawTextFragment2(buf, ORIGINX, y, DRAWFLAGS|DTF_ALIGN_RIGHT);
+            x = -MAX_OF(abs(x), FR_TextFragmentWidth(buf));
+            y += lineHeight;
+        }
     }
 
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText(buf, 0, 0, FID(GF_FONTA), DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, .5f, 0, 1, 1, 1, textAlpha, 0, 0, false);
     DGL_Disable(DGL_TEXTURE_2D);
 
-    *drawnWidth = FR_TextWidth(buf, FID(GF_FONTA));
-    *drawnHeight = FR_TextHeight(buf, FID(GF_FONTA));
+    *drawnWidth  = ORIGINX - x;
+    *drawnHeight = y - ORIGINY;
+
+#undef DRAWFLAGS
+#undef LEADING
+#undef ORIGINY
+#undef ORIGINX
 }
 
 typedef struct {
