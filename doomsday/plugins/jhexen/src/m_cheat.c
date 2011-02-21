@@ -1,10 +1,10 @@
-/**\file
+/**\file m_cheat.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * Cheats.
+ * Cheats - Hexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "jhexen.h"
 
@@ -1017,9 +1018,10 @@ D_CMD(CheatReveal)
 
 D_CMD(CheatGive)
 {
-    char buf[100];
     int player = CONSOLEPLAYER;
     size_t i, stuffLen;
+    player_t* plr;
+    char buf[100];
 
     if(IS_CLIENT)
     {
@@ -1040,6 +1042,7 @@ D_CMD(CheatGive)
         Con_Printf("  give (stuff) (plr)\n");
         Con_Printf("Stuff consists of one or more of (type:id). "
                    "If no id; give all of type:\n");
+        Con_Printf(" a - ammo\n");
         Con_Printf(" i - items\n");
         Con_Printf(" h - health\n");
         Con_Printf(" k - keys\n");
@@ -1065,6 +1068,7 @@ D_CMD(CheatGive)
 
     if(!players[player].plr->inGame)
         return true; // Can't give to a plr who's not playing.
+    plr = &players[player];
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
@@ -1073,6 +1077,38 @@ D_CMD(CheatGive)
     {
         switch(buf[i])
         {
+        case 'a':
+            if(i < stuffLen)
+            {
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
+                    {
+                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
+                                   (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
+                        break;
+                    }
+
+                    // Give one specific ammo type.
+                    plr->update |= PSF_AMMO;
+                    plr->ammo[idx].owned = MAX_MANA;
+                    break;
+                }
+            }
+
+            // Give all ammo.
+            plr->update |= PSF_AMMO;
+            { int j;
+            for(j = 0; j < NUM_AMMO_TYPES; ++j)
+                plr->ammo[j].owned = MAX_MANA;
+            }
+            break;
+
         case 'i':
             Cht_InventoryFunc(NULL, player);
             break;
@@ -1082,61 +1118,66 @@ D_CMD(CheatGive)
             break;
 
         case 'k':
-            {
-            player_t* plr = &players[player];
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
+                    {
+                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
+                                   (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_KEY_TYPES)
-                {   // Give one specific key.
+                    // Give one specific key.
                     plr->update |= PSF_KEYS;
                     plr->keys |= (1 << idx);
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                Cht_GiveKeysFunc(NULL, player);
-            }
+            // Give all keys.
+            Cht_GiveKeysFunc(NULL, player);
             break;
-            }
+
         case 'p':
             Cht_PuzzleFunc(NULL, player);
             break;
 
         case 'w':
-            {
-            player_t* plr = &players[player];
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
+                    {
+                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
+                                   (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
-                {   // Give one specific weapon.
+                    // Give one specific weapon.
                     plr->update |= PSF_OWNED_WEAPONS;
                     plr->weapons[idx].owned = true;
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                giveWeapons(plr);
-            }
+            // Give all weapons.
+            giveWeapons(plr);
             break;
-            }
-        default:
-            // Unrecognized
+
+        default: // Unrecognized.
             Con_Printf("What do you mean, '%c'?\n", buf[i]);
             break;
         }

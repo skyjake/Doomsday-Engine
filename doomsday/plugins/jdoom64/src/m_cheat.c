@@ -1,10 +1,10 @@
-/**\file
+/**\file m_cheat.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * Cheat sequence checking.
+ * Cheats - Doom64 specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "jdoom64.h"
 
@@ -426,7 +427,8 @@ D_CMD(CheatReveal)
 D_CMD(CheatGive)
 {
     char buf[100];
-    player_t* plr = &players[CONSOLEPLAYER];
+    int player = CONSOLEPLAYER;
+    player_t* plr;
     size_t i, stuffLen;
 
     if(IS_CLIENT)
@@ -468,11 +470,9 @@ D_CMD(CheatGive)
 
     if(argc == 3)
     {
-        i = atoi(argv[2]);
-        if(i < 0 || i >= MAXPLAYERS)
+        player = atoi(argv[2]);
+        if(player < 0 || player >= MAXPLAYERS)
             return false;
-
-        plr = &players[i];
     }
 
     if(G_GetGameState() != GS_MAP)
@@ -481,8 +481,9 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if(!plr->plr->inGame)
-        return true; // Can't give to a plr who's not playing.
+    if(!players[player].plr->inGame)
+        return true; // Can't give to a plr who's not playing
+    plr = &players[player];
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
@@ -492,92 +493,95 @@ D_CMD(CheatGive)
         switch(buf[i])
         {
         case 'a':
-            {
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
+                    {
+                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
+                                   (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_AMMO_TYPES)
-                {   // Give one specific ammo type.
+                    // Give one specific ammo type.
                     plr->update |= PSF_AMMO;
                     plr->ammo[idx].owned = plr->ammo[idx].max;
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                Cht_GiveAmmoFunc(plr);
-            }
+            // Give all ammo.
+            Cht_GiveAmmoFunc(plr);
             break;
-            }
-        case 'b':
-            {
+
+        case 'b': {
             cheatseq_t cheat;
             cheat.args[0] = PT_STRENGTH;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
-        case 'f':
-            {
+        }
+        case 'f': {
             cheatseq_t cheat;
             cheat.args[0] = PT_FLIGHT;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
-        case 'g':
-            {
+        }
+        case 'g': {
             cheatseq_t cheat;
             cheat.args[0] = PT_INFRARED;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
+        }
         case 'h':
             P_GiveBody(plr, healthLimit);
             break;
 
-        case 'i':
-            {
+        case 'i': {
             cheatseq_t cheat;
             cheat.args[0] = PT_INVULNERABILITY;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
+        }
         case 'k':
-            {
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
+                    {
+                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
+                                   (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_KEY_TYPES)
-                {   // Give one specific key.
+                    // Give one specific key.
                     plr->update |= PSF_KEYS;
                     plr->keys[idx] = true;
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                Cht_GiveKeysFunc(plr);
-            }
+            // Give all keys.
+            Cht_GiveKeysFunc(plr);
             break;
-            }
-        case 'm':
-            {
+
+        case 'm': {
             cheatseq_t cheat;
             cheat.args[0] = PT_ALLMAP;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
+        }
         case 'p':
             P_GiveBackpack(plr);
             break;
@@ -586,45 +590,46 @@ D_CMD(CheatGive)
             Cht_GiveArmorFunc(plr);
             break;
 
-        case 's':
-            {
+        case 's': {
             cheatseq_t cheat;
             cheat.args[0] = PT_IRONFEET;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
-        case 'v':
-            {
+        }
+        case 'v': {
             cheatseq_t cheat;
             cheat.args[0] = PT_INVISIBILITY;
             Cht_PowerUpFunc(plr, &cheat);
             break;
-            }
+        }
         case 'w':
-            {
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
+                    {
+                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
+                                   (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
-                {   // Give one specific weapon.
+                    // Give one specific weapon.
                     P_GiveWeapon(plr, idx, false);
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                Cht_GiveWeaponsFunc(plr);
-            }
+            // Give all weapons.
+            Cht_GiveWeaponsFunc(plr);
             break;
-            }
-        default:
-            // Unrecognized
+
+        default: // Unrecognized.
             Con_Printf("What do you mean, '%c'?\n", buf[i]);
             break;
         }

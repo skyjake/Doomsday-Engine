@@ -25,8 +25,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __DOOMDEF_H__
-#define __DOOMDEF_H__
+#ifndef LIBDOOM64_DEFS_H
+#define LIBDOOM64_DEFS_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -150,7 +150,8 @@ typedef enum {
 // Key cards.
 //
 typedef enum {
-    KT_BLUECARD,
+    KT_FIRST,
+    KT_BLUECARD = KT_FIRST,
     KT_YELLOWCARD,
     KT_REDCARD,
     KT_BLUESKULL,
@@ -197,7 +198,8 @@ typedef enum {
 
 // Ammunition types defined.
 typedef enum {
-    AT_CLIP, // Pistol / chaingun ammo.
+    AT_FIRST,
+    AT_CLIP = AT_FIRST, // Pistol / chaingun ammo.
     AT_SHELL, // Shotgun / double barreled shotgun.
     AT_CELL, // Plasma rifle, BFG.
     AT_MISSILE, // Missile launcher.
@@ -256,4 +258,4 @@ enum {
     NUM_MENU_COLORS
 };
 
-#endif
+#endif /* LIBDOOM64_DEFS_H */

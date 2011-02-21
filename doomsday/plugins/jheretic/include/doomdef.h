@@ -23,8 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __DOOMDEF_H__
-#define __DOOMDEF_H__
+#ifndef LIBHERETIC_DEFS_H
+#define LIBHERETIC_DEFS_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -146,7 +146,8 @@ typedef enum {
  * Keys (as in, keys to lockables).
  */
 typedef enum {
-    KT_YELLOW,
+    KT_FIRST,
+    KT_YELLOW = KT_FIRST,
     KT_GREEN,
     KT_BLUE,
     NUM_KEY_TYPES
@@ -178,7 +179,8 @@ typedef enum {
  * Ammunition types.
  */
 typedef enum {
-    AT_CRYSTAL,
+    AT_FIRST,
+    AT_CRYSTAL = AT_FIRST,
     AT_ARROW,
     AT_ORB,
     AT_RUNE,
@@ -342,4 +344,4 @@ enum {
     NUM_MENU_COLORS
 };
 
-#endif
+#endif /* LIBHERETIC_DEFS_H */

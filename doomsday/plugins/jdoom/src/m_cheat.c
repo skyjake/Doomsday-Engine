@@ -1,10 +1,10 @@
-/**\file
+/**\file m_cheat.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,13 +24,14 @@
  */
 
 /**
- * Cheat sequence checking.
+ * Cheats - DOOM specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "jdoom.h"
 
@@ -800,29 +801,33 @@ D_CMD(CheatGive)
         switch(buf[i])
         {
         case 'a':
-            {
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
+                    {
+                        Con_Printf("Unknown ammo #%d (valid range %d-%d).\n",
+                                   (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_AMMO_TYPES)
-                {   // Give one specific ammo type.
+                    // Give one specific ammo type.
                     plr->update |= PSF_AMMO;
                     plr->ammo[idx].owned = plr->ammo[idx].max;
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                giveAmmo(plr);
-            }
+            // Give all ammo.
+            giveAmmo(plr);
             break;
-            }
+
         case 'b':
             givePower(plr, PT_STRENGTH);
             break;
@@ -844,29 +849,33 @@ D_CMD(CheatGive)
             break;
 
         case 'k':
-            {
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
+                    {
+                        Con_Printf("Unknown key #%d (valid range %d-%d).\n",
+                                   (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_KEY_TYPES)
-                {   // Give one specific key.
+                    // Give one specific key.
                     plr->update |= PSF_KEYS;
                     plr->keys[idx] = true;
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                giveKeys(plr);
-            }
+            // Give all keys.
+            giveKeys(plr);
             break;
-            }
+
         case 'm':
             givePower(plr, PT_ALLMAP);
             break;
@@ -888,30 +897,33 @@ D_CMD(CheatGive)
             break;
 
         case 'w':
-            {
-            boolean giveAll = true;
-
             if(i < stuffLen)
             {
-                int idx;
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
+                    {
+                        Con_Printf("Unknown weapon #%d (valid range %d-%d).\n",
+                                   (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
+                        break;
+                    }
 
-                idx = ((int) buf[i+1]) - 48;
-                if(idx >= 0 && idx < NUM_WEAPON_TYPES)
-                {   // Give one specific weapon.
+                    // Give one specific weapon.
                     P_GiveWeapon(plr, idx, false);
-                    giveAll = false;
-                    i++;
+                    break;
                 }
             }
 
-            if(giveAll)
-            {
-                giveWeapons(plr);
-            }
+            // Give all weapons.
+            giveWeapons(plr);
             break;
-            }
-        default:
-            // Unrecognized
+
+        default: // Unrecognized.
             Con_Printf("What do you mean, '%c'?\n", buf[i]);
             break;
         }

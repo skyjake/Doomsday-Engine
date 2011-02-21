@@ -195,7 +195,8 @@ typedef enum {
  * Keys (as in, keys to lockables).
  */
 typedef enum {
-    KT_KEY1,
+    KT_FIRST,
+    KT_KEY1 = KT_FIRST,
     KT_KEY2,
     KT_KEY3,
     KT_KEY4,
@@ -235,7 +236,8 @@ typedef enum {
  * Ammunition types.
  */
 typedef enum {
-    AT_BLUEMANA,
+    AT_FIRST,
+    AT_BLUEMANA = AT_FIRST,
     AT_GREENMANA,
     NUM_AMMO_TYPES,
 
