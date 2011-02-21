@@ -113,7 +113,7 @@ typedef unsigned int    angle_t;
 typedef unsigned char   byte;
 typedef uint32_t        ident_t;
 
-typedef uint32_t        gameid_t;
+typedef int             gameid_t;
 typedef uint32_t        patchid_t;
 typedef uint32_t        materialnum_t;
 typedef int             lumpnum_t;

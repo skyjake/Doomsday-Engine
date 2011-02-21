@@ -49,7 +49,7 @@ game_import_t gi;
 game_export_t gx;
 
 // Identifiers given to the games we register during startup.
-gameid_t gameIds[NUM_GAME_MODES];
+static gameid_t gameIds[NUM_GAME_MODES];
 
 static __inline gameid_t toGameId(int gamemode)
 {
@@ -104,7 +104,7 @@ void G_PostInit(gameid_t gameId)
             break;
         }
     if(i == NUM_GAME_MODES)
-        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
+        Con_Error("Failed gamemode lookup for id %i.", gameId);
     }
 
     H_PostInit();

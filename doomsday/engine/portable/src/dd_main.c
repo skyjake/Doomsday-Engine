@@ -115,7 +115,7 @@ static size_t numGameResourceFileList = 0;
 
 /// GameInfo records and associated found-file lists.
 static gameinfo_t** gameInfo = 0;
-static uint numGameInfo = 0, currentGameInfoIndex = 0;
+static int gameInfoCount = 0, currentGameInfoIndex = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -146,11 +146,11 @@ void DD_Register(void)
     FI_Register();
 }
 
-static __inline uint gameInfoIndex(const gameinfo_t* info)
+static __inline int gameInfoIndex(const gameinfo_t* info)
 {
     assert(info);
-    { uint i;
-    for(i = 0; i < numGameInfo; ++i)
+    { int i;
+    for(i = 0; i < gameInfoCount; ++i)
     {
         if(info == gameInfo[i])
             return i+1;
@@ -160,7 +160,7 @@ static __inline uint gameInfoIndex(const gameinfo_t* info)
 
 static gameinfo_t* findGameInfoForId(gameid_t gameId)
 {
-    if(gameId != 0 && gameId <= numGameInfo)
+    if(gameId > 0 && gameId <= gameInfoCount)
         return gameInfo[gameId-1];
     return 0; // Not found.
 }
@@ -168,8 +168,8 @@ static gameinfo_t* findGameInfoForId(gameid_t gameId)
 static gameinfo_t* findGameInfoForIdentityKey(const char* identityKey)
 {
     assert(identityKey && identityKey[0]);
-    { uint i;
-    for(i = 0; i < numGameInfo; ++i)
+    { int i;
+    for(i = 0; i < gameInfoCount; ++i)
     {
         gameinfo_t* info = gameInfo[i];
         if(!stricmp(Str_Text(GameInfo_IdentityKey(info)), identityKey))
@@ -181,8 +181,8 @@ static gameinfo_t* findGameInfoForIdentityKey(const char* identityKey)
 static gameinfo_t* findGameInfoForCmdlineFlag(const char* cmdlineFlag)
 {
     assert(cmdlineFlag && cmdlineFlag[0]);
-    { uint i;
-    for(i = 0; i < numGameInfo; ++i)
+    { int i;
+    for(i = 0; i < gameInfoCount; ++i)
     {
         gameinfo_t* info = gameInfo[i];
         if((GameInfo_CmdlineFlag (info) && !stricmp(Str_Text(GameInfo_CmdlineFlag (info)), cmdlineFlag)) ||
@@ -246,15 +246,27 @@ static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKe
     const ddstring_t* defsPath, const char* mainConfig, const char* title, const char* author,
     const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
-    gameInfo = realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
-    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
-    return gameInfo[numGameInfo++];
+    gameInfo = realloc(gameInfo, sizeof(*gameInfo) * (gameInfoCount + 1));
+    gameInfo[gameInfoCount] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
+    return gameInfo[gameInfoCount++];
+}
+
+int DD_GameInfoCount(void)
+{
+    return gameInfoCount;
 }
 
 gameinfo_t* DD_GameInfo(void)
 {
-    assert(currentGameInfoIndex != 0);
+    assert(currentGameInfoIndex > 0);
     return gameInfo[currentGameInfoIndex-1];
+}
+
+gameinfo_t* DD_GameInfoByIndex(int idx)
+{
+    if(idx > 0 && idx <= gameInfoCount)
+        return gameInfo[idx-1];
+    return NULL;
 }
 
 boolean DD_IsNullGameInfo(gameinfo_t* info)
@@ -278,7 +290,7 @@ void DD_GetGameInfo2(gameid_t gameId, ddgameinfo_t* ex)
     if((info = findGameInfoForId(gameId)))
         populateExtendedInfo(info, ex);
     }
-    Con_Error("DD_GetGameInfo2: Unknown gameid %i.", (int)gameId);
+    Con_Error("DD_GetGameInfo2: Unknown gameid %i.", gameId);
 }
 
 boolean DD_GetGameInfo(ddgameinfo_t* ex)
@@ -298,14 +310,15 @@ Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false
     return false;
 }
 
-void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, const char* _names, void* params)
+void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
+    const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
     resourcerecord_t* rec;
     ddstring_t str;
 
     if(!info || DD_IsNullGameInfo(info))
-        Con_Error("DD_AddGameResource: Error, unknown game id %u.", gameId);
+        Con_Error("DD_AddGameResource: Error, unknown game id %i.", gameId);
     if(!VALID_RESOURCE_CLASS(rclass))
         Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
     if(!_names || !_names[0] || !strcmp(_names, ";"))
@@ -429,13 +442,13 @@ void DD_DestroyGameInfo(void)
 
     if(gameInfo)
     {
-        { uint i;
-        for(i = 0; i < numGameInfo; ++i)
+        { int i;
+        for(i = 0; i < gameInfoCount; ++i)
             P_DestroyGameInfo(gameInfo[i]);
         }
         free(gameInfo); gameInfo = 0;
     }
-    numGameInfo = 0;
+    gameInfoCount = 0;
     currentGameInfoIndex = 0;
 }
 
@@ -543,7 +556,7 @@ static void locateGameResources(gameinfo_t* info)
 {
     assert(info);
     {
-    uint oldGameInfoIndex = currentGameInfoIndex;
+    int oldGameInfoIndex = currentGameInfoIndex;
 
     if(DD_GameInfo() != info)
     {
@@ -1173,15 +1186,15 @@ static void DD_AutoLoad(void)
     }}
 }
 
-static uint countAvailableGames(void)
+static int countAvailableGames(void)
 {
-    uint i, numAvailableGames = 0;
-    for(i = 0; i < numGameInfo; ++i)
+    int i, numAvailableGames = 0;
+    for(i = 0; i < gameInfoCount; ++i)
     {
         gameinfo_t* info = gameInfo[i];
         if(DD_IsNullGameInfo(info) || !allGameResourcesFound(info))
             continue;
-        numAvailableGames++;
+        ++numAvailableGames;
     }
     return numAvailableGames;
 }
@@ -1191,15 +1204,15 @@ static uint countAvailableGames(void)
  */
 void DD_AutoselectGame(void)
 {
-    uint numAvailableGames = countAvailableGames();
+    int numAvailableGames = countAvailableGames();
 
-    if(numAvailableGames == 0)
+    if(0 >= numAvailableGames)
         return;
 
-    if(numAvailableGames == 1)
+    if(1 == numAvailableGames)
     {   // Find this game and select it.
-        uint i;
-        for(i = 0; i < numGameInfo; ++i)
+        int i;
+        for(i = 0; i < gameInfoCount; ++i)
         {
             gameinfo_t* info = gameInfo[i];
             if(DD_IsNullGameInfo(info))
@@ -1214,10 +1227,10 @@ void DD_AutoselectGame(void)
 
     {
     const char* expGame = ArgCheckWith("-game", 1)? ArgNext() : 0;
-    uint pass = expGame? 0 : 1;
+    int pass = expGame? 0 : 1;
     do
     {
-        uint infoIndex = 0;
+        int infoIndex = 0;
         do
         {
             gameinfo_t* info = gameInfo[infoIndex];
@@ -1240,7 +1253,7 @@ void DD_AutoselectGame(void)
                     DD_ChangeGame(info);
                 break;
             }
-        } while(++infoIndex < numGameInfo && DD_IsNullGameInfo(DD_GameInfo()));
+        } while(++infoIndex < gameInfoCount && DD_IsNullGameInfo(DD_GameInfo()));
     } while(++pass < 2 && DD_IsNullGameInfo(DD_GameInfo()));
     }
 }
@@ -1410,8 +1423,8 @@ int DD_Main(void)
 #endif
 
     // Try to locate all required data files for all registered games.
-    { uint i;
-    for(i = 0; i < numGameInfo; ++i)
+    { int i;
+    for(i = 0; i < gameInfoCount; ++i)
     {
         gameinfo_t* info = gameInfo[i];
         if(DD_IsNullGameInfo(info))
@@ -2286,7 +2299,7 @@ static int C_DECL compareGameInfoByName(const void* a, const void* b)
 
 D_CMD(ListGames)
 {
-    uint i, numAvailableGames = 0, numCompleteGames = 0;
+    int i, numAvailableGames = 0, numCompleteGames = 0;
     gameinfo_t** infoPtrs;
 
     Con_FPrintf(CBLF_YELLOW, "Registered Games:\n");
@@ -2294,11 +2307,11 @@ D_CMD(ListGames)
     Con_FPrintf(CBLF_RULER, "");
 
     // Sort a copy of gameInfo so we get a nice alphabetical list.
-    infoPtrs = malloc(sizeof(*infoPtrs) * numGameInfo);
-    memcpy(infoPtrs, gameInfo, sizeof(*infoPtrs) * numGameInfo);
-    qsort(infoPtrs, numGameInfo, sizeof(*infoPtrs), compareGameInfoByName);
+    infoPtrs = malloc(sizeof(*infoPtrs) * gameInfoCount);
+    memcpy(infoPtrs, gameInfo, sizeof(*infoPtrs) * gameInfoCount);
+    qsort(infoPtrs, gameInfoCount, sizeof(*infoPtrs), compareGameInfoByName);
 
-    for(i = 0; i < numGameInfo; ++i)
+    for(i = 0; i < gameInfoCount; ++i)
     {
         gameinfo_t* info = infoPtrs[i];
         if(DD_IsNullGameInfo(info))
@@ -2311,7 +2324,7 @@ D_CMD(ListGames)
             numCompleteGames++;
     }
     Con_FPrintf(CBLF_RULER, "");
-    Con_Printf("%u of %u games playable.\n", numCompleteGames, numAvailableGames);
+    Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
 
     free(infoPtrs);
     return true;

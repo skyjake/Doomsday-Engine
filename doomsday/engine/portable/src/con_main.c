@@ -1113,21 +1113,35 @@ static int completeWord(int mode)
 
             switch((*match)->type)
             {
-            case WT_CVAR:
-                foundWord = ((ddcvar_t*)(*match)->data)->shared.name;
+              case WT_CVAR: {
+                ddcvar_t* cvar = (ddcvar_t*)(*match)->data;
+                foundWord = cvar->shared.name;
                 if(printCompletions)
-                    Con_PrintCVar((ddcvar_t*)(*match)->data, "  ");
+                    Con_PrintCVar(cvar, "  ");
                 break;
-            case WT_CCMD:
-                foundWord = ((ddccmd_t*)(*match)->data)->shared.name;
+              }
+              case WT_CCMD: {
+                ddccmd_t* ccmd = (ddccmd_t*)(*match)->data;
+                foundWord = ccmd->shared.name;
                 if(printCompletions)
-                    Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n", foundWord);
+                    Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", foundWord);
                 break;
-            case WT_CALIAS:
-                foundWord = ((calias_t*)(*match)->data)->name;
+              }
+              case WT_CALIAS: {
+                calias_t* calias = (calias_t*)(*match)->data;
+                foundWord = calias->name;
                 if(printCompletions)
-                    Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n", foundWord);
+                    Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", foundWord,
+                                calias->command);
                 break;
+              }
+              case WT_GAMEINFO: {
+                gameinfo_t* info = (gameinfo_t*)(*match)->data;
+                foundWord = Str_Text(GameInfo_IdentityKey(info));
+                if(printCompletions)
+                    Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", foundWord);
+                break;
+              }
             }
 
             if(!unambiguous[0])
@@ -1148,12 +1162,12 @@ static int completeWord(int mode)
     if(numMatches == 1 || (mode == 1 && numMatches > 1))
     {
         const char* str;
-        
         switch(completeWord->type)
         {
-        case WT_CCMD:   str = ((ddccmd_t*)completeWord->data)->shared.name; break;
-        case WT_CVAR:   str = ((ddcvar_t*)completeWord->data)->shared.name; break;
-        case WT_CALIAS: str = ((calias_t*)completeWord->data)->name; break;
+        case WT_CCMD:     str = ((ddccmd_t*)completeWord->data)->shared.name; break;
+        case WT_CVAR:     str = ((ddcvar_t*)completeWord->data)->shared.name; break;
+        case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
+        case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
         }
 
         if(wordBegin - cmdLine + strlen(str) < CMDLINE_SIZE)

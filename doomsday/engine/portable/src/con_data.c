@@ -205,9 +205,10 @@ static const char* getKnownWordName(const knownword_t* word)
     assert(word);
     switch(word->type)
     {
-    case WT_CCMD:   return ((ddccmd_t*)word->data)->shared.name;
-    case WT_CVAR:   return ((ddcvar_t*)word->data)->shared.name;
-    case WT_CALIAS: return ((calias_t*)word->data)->name;
+    case WT_CCMD:     return ((ddccmd_t*)word->data)->shared.name;
+    case WT_CVAR:     return ((ddcvar_t*)word->data)->shared.name;
+    case WT_CALIAS:   return ((calias_t*)word->data)->name;
+    case WT_GAMEINFO: return Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data));
     }
     assert(0);
     return 0;
@@ -262,7 +263,7 @@ static boolean removeFromKnownWords(knownwordtype_t type, void* data)
  */
 static void updateKnownWords(void)
 {
-    uint c, knownCVars;
+    uint c, knownCVars, knownGames;
     size_t len;
 
     if(!knownWordsNeedUpdate)
@@ -277,8 +278,17 @@ static void updateKnownWords(void)
             ++knownCVars;
     }
 
+    knownGames = 0;
+    { int i, gameInfoCount = DD_GameInfoCount();
+    for(i = 0; i < gameInfoCount; ++i)
+    {
+        gameinfo_t* info = DD_GameInfoByIndex(i+1);
+        if(!DD_IsNullGameInfo(info))
+            ++knownGames;
+    }}
+
     // Build the known words table.
-    numKnownWords = numUniqueNamedCCmds + knownCVars + numCAliases;
+    numKnownWords = numUniqueNamedCCmds + knownCVars + numCAliases + knownGames;
     len = sizeof(knownword_t) * numKnownWords;
     knownWords = realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -297,7 +307,7 @@ static void updateKnownWords(void)
     }}
 
     // Add variables?
-    if(knownCVars != 0)
+    if(0 != knownCVars)
     {
         /// \note cvars array is already sorted.
         ddcvar_t** cvar;
@@ -313,7 +323,7 @@ static void updateKnownWords(void)
     }
 
     // Add aliases?
-    if(numCAliases != 0)
+    if(0 != numCAliases)
     {
         /// \note caliases array is already sorted.
         calias_t** cal;
@@ -322,6 +332,21 @@ static void updateKnownWords(void)
         {
             knownWords[c].type = WT_CALIAS;
             knownWords[c].data = *cal;
+            ++c;
+        }
+    }
+
+    // Add gameinfos?
+    if(0 != knownGames)
+    {
+        int i, gameInfoCount = DD_GameInfoCount();
+        for(i = 0; i < gameInfoCount; ++i)
+        {
+            gameinfo_t* info = DD_GameInfoByIndex(i+1);
+            if(DD_IsNullGameInfo(info))
+                continue;
+            knownWords[c].type = WT_GAMEINFO;
+            knownWords[c].data = info;
             ++c;
         }
     }
@@ -1277,8 +1302,7 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
     assert(word);
     switch(word->type)
     {
-    case WT_CCMD:
-        {
+      case WT_CCMD: {
         ddccmd_t* ccmd = (ddccmd_t*) word->data;
         char* str;
 
@@ -1286,13 +1310,12 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
             return 0; // Skip overloaded variants.
 
         if((str = DH_GetString(DH_Find(ccmd->shared.name), HST_DESCRIPTION)))
-            Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s (%s)\n", ccmd->shared.name, str);
+            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s (%s)\n", ccmd->shared.name, str);
         else
-            Con_FPrintf( CBLF_LIGHT | CBLF_YELLOW, "  %s\n", ccmd->shared.name);
+            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", ccmd->shared.name);
         break;
-        }
-    case WT_CVAR:
-        {
+      }
+      case WT_CVAR: {
         ddcvar_t* cvar = (ddcvar_t*) word->data;
 
         if(cvar->shared.flags & CVF_HIDE)
@@ -1300,13 +1323,17 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
 
         Con_PrintCVar(cvar, "  ");
         break;
-        }
-    case WT_CALIAS:
-        {
+      }
+      case WT_CALIAS: {
         calias_t* cal = (calias_t*) word->data;
         Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", cal->name, cal->command);
         break;
-        }
+      }
+      case WT_GAMEINFO: {
+        gameinfo_t* info = (gameinfo_t*) word->data;
+        Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", Str_Text(GameInfo_IdentityKey(info)));
+        break;
+      }
     }
     return 0; // Continue iteration.
 }

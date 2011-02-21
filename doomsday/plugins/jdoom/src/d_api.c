@@ -134,7 +134,7 @@ void G_PostInit(gameid_t gameId)
             break;
         }
     if(i == NUM_GAME_MODES)
-        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
+        Con_Error("Failed gamemode lookup for id %i.", gameId);
     }
 
     D_PostInit();

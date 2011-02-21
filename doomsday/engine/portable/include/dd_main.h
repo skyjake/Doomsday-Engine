@@ -89,6 +89,16 @@ const char* value_Str(int val);
 gameinfo_t* DD_GameInfo(void);
 
 /**
+ * @return  Current number of GameInfo structures.
+ */
+int DD_GameInfoCount(void);
+
+/**
+ * @return  Ptr the GameInfo with the specified index else @c NULL if invalid.
+ */
+gameinfo_t* DD_GameInfoByIndex(int idx);
+
+/**
  * Is this the special "null-game" object (not a real playable game).
  * \todo Implement a proper null-gameinfo object for this.
  */
