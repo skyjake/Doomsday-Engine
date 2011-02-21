@@ -1379,7 +1379,7 @@ void R_SetupMap(int mode, int flags)
         sprintf(cmd, "init-%s", P_GetMapID(map));
         if(Con_IsValidCommand(cmd))
         {
-            Con_Executef(CMDS_SCRIPT, false, cmd);
+            Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
         }}
 
         // Clear any input events that might have accumulated during the

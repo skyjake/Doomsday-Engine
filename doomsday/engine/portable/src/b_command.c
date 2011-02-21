@@ -1,10 +1,10 @@
-/**\file
+/**\file b_command.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -506,7 +506,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     B_SubstituteInCommand(eb->command, event, eb, &command);
 
     // Do the command.
-    Con_Executef(CMDS_BIND, false, Str_Text(&command));
+    Con_Executef(CMDS_BIND, false, "%s", Str_Text(&command));
 
     Str_Free(&command);
     return true;
