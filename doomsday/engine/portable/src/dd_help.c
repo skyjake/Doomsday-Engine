@@ -230,8 +230,8 @@ static int DH_ReadStrings(const char* fileName)
  */
 void* DH_Find(const char* id)
 {
-    helpnode_t*         n;
-    size_t              length;
+    helpnode_t* n;
+    size_t length;
 
     if(!helpInited)
         return NULL;
@@ -248,7 +248,7 @@ void* DH_Find(const char* id)
         if(strlen(n->id) < length)
             continue;
 
-        if(!strnicmp(id, n->id, length))
+        if(!stricmp(n->id, id))
             return n;
     }
 
