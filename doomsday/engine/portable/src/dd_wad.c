@@ -70,16 +70,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-/**
- * Lump Grouping Tags
- */
-typedef enum {
-    LGT_NONE = 0,
-    LGT_FLATS,
-    LGT_SPRITES,
-    NUM_LGTAGS
-} lumpgrouptag_t;
-
 typedef struct {
     lumpname_t      name; // End in '\0'.
     DFILE*          handle;
@@ -106,10 +96,6 @@ typedef struct {
     DFILE*          handle;
     char            iwad;
 } filerecord_t;
-
-typedef struct {
-    char*           start, *end; // Start and end markers.
-} grouping_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -142,12 +128,6 @@ static int numRecords = 0;
 static filerecord_t* records = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static const grouping_t lumpGroups[] = {
-    { "", "" },
-    { "F_START", "F_END" }, // Flats
-    { "S_START", "S_END" } // Sprites
-};
 
 static lumpinfo_t* PrimaryLumpInfo;
 static int PrimaryNumLumps;
@@ -311,7 +291,8 @@ lumpnum_t W_ScanForName(char* lumpname, int startfrom)
 /**
  * Writes the correct data into a lumpinfo_t entry.
  */
-static void populateLumpInfo(int liIndex, filelump_t* flump, filerecord_t* rec)
+static void populateLumpInfo(int liIndex, const filelump_t* flump,
+    const filerecord_t* rec)
 {
     lumpinfo_t* lump = &lumpInfo[liIndex];
     lump->handle = rec->handle;
@@ -375,53 +356,6 @@ static void insertAndFillLumpRange(int toIndex, filelump_t* lumps, int num, file
 
 static void removeLumpsWithHandle(DFILE* handle)
 {
-#if 0
-    /// \fixme dj: Algorithm does not work as expected (numLumps goes out of sync).
-    int i, k, first, len;
-    for(i = 0, first = -1; i < numLumps; ++i)
-    {
-        if(first < 0 && lumpInfo[i].handle == handle)
-        {
-            // Start a region.
-            first = i;
-            continue;
-        }
-
-        // Does a region end?
-        if(first >= 0)
-            if(lumpInfo[i].handle != handle || i == numLumps - 1 ||
-               markerForLumpGroup(lumpInfo[i].name, true) ||
-               markerForLumpGroup(lumpInfo[i].name, false))
-            {
-                if(lumpInfo[i].handle == handle && i == numLumps - 1)
-                    i++; // Also free the last one.
-
-                // The length of the region.
-                len = i - first;
-
-                // Free the memory allocated for the region.
-                for(k = first; k < i; ++k)
-                {
-                    if(!lumpCache[k])
-                        continue;
-
-                    // If the block has a user, it must be explicitly freed.
-                    if(Z_GetTag(lumpCache[k]) < PU_MAP)
-                        Z_ChangeTag(lumpCache[k], PU_MAP);
-                    // Mark the memory pointer in use, but unowned.
-                    Z_ChangeUser(lumpCache[k], (void *) 0x2);
-                }
-
-                // Move the data in the lump storage.
-                moveLumps(i, numLumps - i, -len);
-                numLumps -= len;
-                i -= len;
-                // Make it possible to begin a new region.
-                first = -1;
-            }
-    }
-#endif
-
     // Do this one lump at a time...
     { int i;
     for(i = 0; i < numLumps; ++i)
@@ -487,22 +421,6 @@ static void resizeLumpStorage(int numItems)
 }
 
 /**
- * @return              One of the grouping tags.
- */
-static int markerForLumpGroup(char* name, boolean begin)
-{
-    assert(name && name[0]);
-    { int i;
-    for(i = 1; i < NUM_LGTAGS; ++i)
-        if(!strnicmp(name, begin ? lumpGroups[i].start : lumpGroups[i].end, 8) ||
-           !strnicmp(name + 1, begin ? lumpGroups[i].start : lumpGroups[i].end, 7))
-            return i;
-    }
-    // No matches...
-    return LGT_NONE;
-}
-
-/**
  * Inserts the lumps in the fileinfo/record to their correct places in the
  * lumpInfo. Also maintains lumpInfo/records that all data is valid.
  *
@@ -512,15 +430,13 @@ static int markerForLumpGroup(char* name, boolean begin)
  */
 static void insertLumps(filelump_t* fileinfo, filerecord_t* rec)
 {
-    int i, to, num;
     filelump_t* flump = fileinfo;
-    int inside = LGT_NONE; // Not inside any group.
-    int groupFirst = 0; // First lump in the current group.
     int maxNumLumps = numLumps + rec->numLumps; // This must be enough.
 
     // Allocate more memory for the lumpInfo.
     resizeLumpStorage(maxNumLumps);
 
+    { int i;
     for(i = 0; i < rec->numLumps; ++i, flump++)
     {
         /**
@@ -529,48 +445,14 @@ static void insertLumps(filelump_t* fileinfo, filerecord_t* rec)
          * \todo: Ensure that this doesn't break other IWADs. The 0x80-0xff
          * range isn't normally used in lump names, right??
          */
-        for(to = 0; to < 8; to++)
-        {
+        { int to;
+        for(to = 0; to < 8; ++to)
             flump->name[to] = flump->name[to] & 0x7f;
         }
 
-        if(inside == LGT_NONE)
-        {
-            // We are currently not inside any group.
-            if((inside = markerForLumpGroup(flump->name, true)) != LGT_NONE)
-            {
-                // We have entered a group! Go to the next lump.
-                groupFirst = i + 1;
-                continue;
-            }
-
-            // This lump is very ordinary. Just append it to the lumpInfo.
-            populateLumpInfo(numLumps++, flump, rec);
-        }
-        else
-        {
-            if(markerForLumpGroup(flump->name, false) == inside) // Group ends?
-            {
-                // This is how many lumps we'll add.
-                num = i - groupFirst;
-
-                // Find the existing group.
-                to = W_ScanForName(lumpGroups[inside].end, 0);
-                if(to < 0)
-                {
-                    // There is no existing group. Include the start and
-                    // end markers in the range of lumps to add.
-                    groupFirst--;
-                    num += 2;
-                    to = numLumps;
-                }
-                insertAndFillLumpRange(to, &fileinfo[groupFirst], num, rec);
-
-                // We exit this group.
-                inside = LGT_NONE;
-            }
-        }
-    }
+        populateLumpInfo(numLumps, flump, rec);
+        ++numLumps;
+    }}
 
     // It may be that all lumps weren't added. Make sure we don't have
     // excess memory allocated (=synchronize the storage size with the
