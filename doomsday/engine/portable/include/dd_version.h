@@ -45,7 +45,7 @@
 
 #define DOOMSDAY_VERSION_BASE   "1.9.7"
 #define DOOMSDAY_VERSION_NUMBER 1,9,7,0 // For WIN32 version info.
-#define DOOMSDAY_RELEASE_NAME   ""
+//#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
