@@ -1441,17 +1441,13 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
             otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);
             othersec = neighbor->L_sector(otherSide);
 
-            // Exclude 'special' neighbors which we pretend to be solid.
-            if(LINE_SELFREF(neighbor) ||
-               ((R_IsSkySurface(&othersec->SP_planesurface(planeId)) ||
-                 R_IsSkySurface(&othersec->SP_planesurface(PLN_CEILING))) &&
-                othersec->SP_floorvisheight >= othersec->SP_ceilvisheight))
-            {
-                sideOpen[i] = 1;
-            }
-            else if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1, false))
+            if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1, false))
             {
                 sideOpen[i] = 0;
+            }
+            else if(LINE_SELFREF(neighbor))
+            {
+                sideOpen[i] = 1;
             }
             else
             {   // Its a normal neighbor.
