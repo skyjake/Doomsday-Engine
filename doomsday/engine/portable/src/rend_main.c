@@ -722,7 +722,6 @@ int Rend_MidMaterialPos(float* bottomleft, float* bottomright,
         if(side == 0 && texoffy)
             *texoffy = 0;
 
-        // We don't allow vertical tiling.
         if(lowerUnpeg)
         {
             *(side? bottomright : bottomleft) += tcyoff;
@@ -2520,10 +2519,10 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
                     clipTop = false;
             }
 
-            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop, 0, suf->visOffset[VY], mat->height, unpegBottom, clipTop, clipBottom))
+            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop, &texOffset[VY], suf->visOffset[VY], mat->height, unpegBottom, clipTop, clipBottom))
             {
                 texOffset[VX] = suf->visOffset[VX] + segOffset;
-                texOffset[VY] = 0;
+                //texOffset[VY] = 0;
 
                 return true;
             }
