@@ -309,7 +309,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
-    float armsBGX = ST_ARMSBGX - armsBackground.offset;
+    float armsBGX = ST_ARMSBGX + armsBackground.offset;
     float cw, cw2, ch;
 
     if(!hud->statusbarActive)
