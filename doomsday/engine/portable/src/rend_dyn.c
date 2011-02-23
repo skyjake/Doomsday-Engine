@@ -387,38 +387,38 @@ static void buildUpRight(pvec3_t up, pvec3_t right, const pvec3_t normal)
 /**
  * Generate texcoords on surface centered on point.
  *
- * @param point         Point on surface around which texture is centered.
- * @param scale         Scale multiplier for texture.
- * @param s             Texture s coords written back here.
- * @param t             Texture t coords written back here.
- * @param v1            Top left vertex of the surface being projected on.
- * @param v2            Bottom right vertex of the surface being projected on.
- * @param normal        Normal of the surface being projected on.
+ * @param point  Point on surface around which texture is centered.
+ * @param scale  Scale multiplier for texture.
+ * @param s  Texture s coords written back here.
+ * @param t  Texture t coords written back here.
+ * @param v1  Top left vertex of the surface being projected on.
+ * @param v2  Bottom right vertex of the surface being projected on.
+ * @param normal  Normal of the surface being projected on.
  *
- * @return              @c true, if the generated coords are within bounds.
+ * @return  @c true, if the generated coords are within bounds.
  */
-static boolean genTexCoords(const pvec3_t point, float scale,
-                            pvec2_t s, pvec2_t t, const pvec3_t v1,
-                            const pvec3_t v2, const pvec3_t normal)
+static boolean genTexCoords(const pvec3_t point, float scale, pvec2_t s,
+    pvec2_t t, const pvec3_t v1, const pvec3_t v2, const pvec3_t normal)
 {
-    vec3_t              vToPoint, right, up;
+    vec3_t vToPoint, right, up;
 
     buildUpRight(up, right, normal);
     up[VZ] *= 1.08f; // Counteract aspect correction slightly (not too round mind).
     V3_Subtract(vToPoint, v1, point);
     s[0] = V3_DotProduct(vToPoint, right) * scale + .5f;
-    t[0] = V3_DotProduct(vToPoint, up) * scale + .5f;
+    t[0] = V3_DotProduct(vToPoint, up)    * scale + .5f;
+
+    // Is the origin point visible?
+    if(s[0] >= 1 || t[0] >= 1)
+        return false; // Right on the X axis or below on the Y axis.
 
     V3_Subtract(vToPoint, v2, point);
     s[1] = V3_DotProduct(vToPoint, right) * scale + .5f;
-    t[1] = V3_DotProduct(vToPoint, up) * scale + .5f;
+    t[1] = V3_DotProduct(vToPoint, up)    * scale + .5f;
 
-    // Would the light be visible?
-    if(!(s[0] <= 1 || s[1] >= 0))
-        return false; // Is right/left on the X axis.
-
-    if(!(t[0] <= 1 || t[1] >= 0))
-        return false; // Is above/below on the Y axis.
+    // Is the end point visible?
+    if(s[1] <= 0 || t[1] <= 0)
+        return false; // Left on the X axis or above on the Y axis.
 
     return true;
 }
