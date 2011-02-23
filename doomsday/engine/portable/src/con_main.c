@@ -1295,6 +1295,7 @@ void Con_Open(int yes)
     {
         complPos = 0;
         lastCompletion = 0;
+        ocPos = Con_BufferNumLines(oldCmds);
         ConsoleActive = false;
     }
 
