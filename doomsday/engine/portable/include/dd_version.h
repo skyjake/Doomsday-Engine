@@ -31,7 +31,7 @@
 #define __DOOMSDAY_VERSION_H__
 
 /**
- * Version number rules: (major).(minor).(revision)-(release)
+ * Version number rules: (major).(minor).(revision)-(release name)
  *
  * Major version will be 1 for now (few things short of a complete
  * rewrite will increase the major version).
@@ -43,7 +43,9 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_RELEASE_NAME   "beta7.0"
+#define DOOMSDAY_VERSION_BASE   "1.9.7"
+#define DOOMSDAY_VERSION_NUMBER 1,9,7,0 // For WIN32 version info.
+#define DOOMSDAY_RELEASE_NAME   ""
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
@@ -52,11 +54,10 @@
  */
 #define DOOMSDAY_VERSION        10900 // Don't touch; see above.
 #if defined(DOOMSDAY_RELEASE_NAME)
-#  define DOOMSDAY_VERSION_TEXT "1.9.0-" DOOMSDAY_RELEASE_NAME
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME
 #else
-#  define DOOMSDAY_VERSION_TEXT "1.9.0"
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE
 #endif
-#define DOOMSDAY_VERSION_NUMBER 1,9,0,0 // For WIN32 version info.
 
 #define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
 
@@ -66,6 +67,6 @@
  * for example, an alpha/beta/release candidate/etc and the SpecialBuild
  * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
  */
-//#define DOOMSDAY_RELEASE_FULL   1
+#define DOOMSDAY_RELEASE_FULL   1
 
 #endif
