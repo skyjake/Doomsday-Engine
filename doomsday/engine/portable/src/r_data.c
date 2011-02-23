@@ -1765,9 +1765,15 @@ static int R_NewFlat(const lumpname_t name, boolean isCustom)
     { int idx;
     if(-1 != (idx = R_FindFlatIdxForName(name)))
     {
-        // Update metadata for the new flat.
+        // Update metadata and move the flat to the end (relative indices must be respected).
         flats[idx]->isCustom = isCustom;
-        return idx;
+        if(idx != numFlats-1)
+        {
+            flat_t* ptr = flats[idx];
+            memmove(flats+idx, flats+idx+1, sizeof(flat_t*) * (numFlats-1-idx));
+            flats[numFlats-1] = ptr;
+        }
+        return numFlats-1;
     }}
 
     // A new flat.
@@ -1902,10 +1908,15 @@ void R_SpriteTexturesInit(void)
         {
             if(!stricmp(spriteTextures[j]->name, name))
             {
-                // Update the metadata for the new sprite texture.
-                sprTex = spriteTextures[j];
-                sprTex->isCustom = W_LumpFromIWAD(i);
-                break;
+                // Update metadata and move the sprite to the end (relative indices must be respected).
+                spriteTextures[j]->isCustom = W_LumpFromIWAD(i);
+                if(j != numSpriteTextures-1)
+                {
+                    spritetex_t* ptr = spriteTextures[j];
+                    memmove(spriteTextures+j, spriteTextures+j+1, sizeof(spritetex_t*) * (numSpriteTextures-1-j));
+                    spriteTextures[numSpriteTextures-1] = ptr;
+                }
+                sprTex = spriteTextures[numSpriteTextures-1];
             }
         }}
 
