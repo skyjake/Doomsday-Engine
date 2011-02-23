@@ -402,6 +402,8 @@ IF (WIN32)
     ENDIF (MINGW)
 ENDIF (WIN32)
 
+SET (USE_STATIC_PNG "NO")
+
 IF (APPLE)
 	ADD_DEFINITIONS ( -DMACOSX )
 
@@ -411,6 +413,11 @@ IF (APPLE)
 	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
 	ADD_DEFINITIONS ( -DMACOS_10_4 )
 	
+	# 10.4 doesn't appear to have libpng.dylib as a system library.
+	# So we'll use a statically linked one instead.
+	SET (USE_STATIC_PNG "YES")
+	SET (PNG_LIBRARY_STATIC "/opt/local/lib/libpng.a") # MacPorts (with both archs)
+
 	SET (BUILDSYSTEM MACOSX)
 
 	## Add needed Compiler and Linker flags for OSX
@@ -641,9 +648,16 @@ ENDIF (COMMAND cmake_policy)
 
 ADD_EXECUTABLE (doomsday ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 
+IF (USE_STATIC_PNG STREQUAL "YES")
+    SET (DENG_PNG_LIB "${PNG_LIBRARY_STATIC}")
+ELSE()
+    SET (DENG_PNG_LIB "${PNG_LIBRARY} ${PNG_LIBRARIES}")
+ENDIF()
+MESSAGE( STATUS "Using PNG library: ${DENG_PNG_LIB}" )
+
 TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLNET_LIBRARY} 
-    ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARY} 
-    ${PNG_LIBRARIES} ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
+    ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${DENG_PNG_LIB} 
+    ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
 
 IF (UNIX)
     IF (NOT WIN32)
