@@ -45,6 +45,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <assert.h>
 
 // This plugin accesses the internal definition arrays. This dependency
 // should be removed entirely, either by making the plugin modify the
@@ -958,9 +959,11 @@ static boolean HandleKey(const struct Key *keys, void *structure,
     return true;
 }
 
-static boolean ReadChars(char **stuff, int size, boolean skipJunk)
+static boolean ReadChars(char** stuff, int size, boolean skipJunk)
 {
-    char   *str = *stuff;
+    assert(stuff);
+    {
+    char* str = *stuff;
 
     if(!size)
     {
@@ -970,7 +973,7 @@ static boolean ReadChars(char **stuff, int size, boolean skipJunk)
 
     do
     {
-        // Ignore carriage returns
+        // Ignore carriage returns.
         if(*PatchPt != '\r')
             *str++ = *PatchPt;
         else
@@ -989,6 +992,7 @@ static boolean ReadChars(char **stuff, int size, boolean skipJunk)
     }
 
     return true;
+    }
 }
 
 void ReplaceSpecialChars(char *str)
@@ -2122,6 +2126,8 @@ int PatchText(int oldSize)
         {
             if(!includenotext)
             {
+                stripwhite(newStr);
+
                 patchSpriteNames(oldStr, newStr);
                 patchMusicLumpNames(oldStr, newStr);
                 patchText(oldStr, newStr);
