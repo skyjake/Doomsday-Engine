@@ -30,8 +30,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef MACOS_10_4
 #include <stdint.h>
 typedef uint64_t io_user_reference_t;
+#endif
 
 #include "doomsday.h"
 #include "sys_audiod.h"

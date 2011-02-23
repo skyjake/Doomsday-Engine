@@ -14,8 +14,10 @@
     Feel free to customize this file to suit your needs
 */
 
+#ifdef MACOS_10_4
 #include <stdint.h>
 typedef uint64_t      io_user_reference_t; 
+#endif
 
 #import "SDL.h"
 #import "../include/SDLMain.h"

@@ -1,6 +1,6 @@
 ## Copyright (c) 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
 ## Copyright (c) 2007 - 2008 Daniel Swanson <danij@dengine.net>
-## Copyright (c) 2008 - 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+## Copyright (c) 2008 - 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
@@ -99,7 +99,6 @@ IF (NOT APPLE AND FINK)
     MESSAGE( FATAL_ERROR
     "FINK build option is only available on OSX")
 ENDIF (NOT APPLE AND FINK)
-
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     MESSAGE( FATAL_ERROR
@@ -228,7 +227,6 @@ IF (NOT BUILDDEDICATED)
 ENDIF (NOT BUILDDEDICATED)
 
 FIND_PACKAGE(SDL REQUIRED)
-##INCLUDE (${CMAKE_ROOT}/Modules/FindSDL.cmake)
 
 IF (NOT BUILDDEDICATED)
     FIND_PACKAGE(SDL_mixer REQUIRED)
@@ -406,10 +404,12 @@ ENDIF (WIN32)
 
 IF (APPLE)
 	ADD_DEFINITIONS ( -DMACOSX )
-	##SET (CMAKE_OSX_ARCHITECTURES ppc;i386)
-	##SET (CMAKE_OSX_SYSROOT /Developer/SDKs/MacOSX10.4u.sdk)
-	##SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
-	##SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
+
+	SET (CMAKE_OSX_ARCHITECTURES "ppc;i386")
+	SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
+	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
+	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
+	ADD_DEFINITIONS ( -DMACOS_10_4 )
 	
 	SET (BUILDSYSTEM MACOSX)
 
@@ -418,31 +418,31 @@ IF (APPLE)
 
 		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace" )
 		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
 
 		SET (CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 		SET (CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} ${PNG_LIBRARY_STATIC} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 		SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 		SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
 
@@ -641,7 +641,9 @@ ENDIF (COMMAND cmake_policy)
 
 ADD_EXECUTABLE (doomsday ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 
-TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
+TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLNET_LIBRARY} 
+    ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARY} 
+    ${PNG_LIBRARIES} ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
 
 IF (UNIX)
     IF (NOT WIN32)
@@ -737,6 +739,10 @@ ENDIF (CMAKE_BUILD_TYPE STREQUAL MinSizeRel)
 MESSAGE( STATUS "CMAKE_C_COMPILER:             " ${CMAKE_C_COMPILER} )
 MESSAGE( STATUS "CMAKE_SOURCE_DIR:             " ${CMAKE_SOURCE_DIR} )
 MESSAGE( STATUS "CMAKE_BINARY_DIR:             " ${CMAKE_BINARY_DIR} )
+IF (APPLE)
+    MESSAGE( STATUS "CMAKE_OSX_ARCHITECTURES:      ${CMAKE_OSX_ARCHITECTURES}" )
+	MESSAGE( STATUS "CMAKE_OSX_SYSROOT:            ${CMAKE_OSX_SYSROOT}" )
+ENDIF()
 MESSAGE( STATUS "BUILDJDOOM:                   " ${BUILDJDOOM} )
 MESSAGE( STATUS "BUILDJHERETIC:                " ${BUILDJHERETIC} )
 MESSAGE( STATUS "BUILDJHEXEN:                  " ${BUILDJHEXEN} )
