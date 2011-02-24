@@ -65,8 +65,9 @@ extern "C" {
 
 // The case-independent strcmps have different names.
 #if WIN32
-# define strcasecmp stricmp
-# define strncasecmp strnicmp
+# define strcasecmp _stricmp
+# define strncasecmp _strnicmp
+# define strlwr _strlwr
 #endif
 
 #if UNIX

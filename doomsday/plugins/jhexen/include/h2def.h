@@ -34,12 +34,16 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#ifdef WIN32
-#pragma warning(disable:4244)
-#endif
-
 #include <stdio.h>
 #include <string.h>
+
+#ifdef WIN32
+#  pragma warning(disable:4244)
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#  define strlwr _strlwr
+#  define strupr _strupr
+#endif
 
 #include "doomsday.h"
 #include "dd_api.h"

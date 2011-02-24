@@ -1,4 +1,4 @@
-#!/usr/bin/python
+﻿#!/usr/bin/python
 import os, sys, shutil, time, glob
 
 LAUNCH_DIR = os.getcwd()
@@ -6,12 +6,15 @@ DOOMSDAY_DIR = os.path.join(os.getcwd(), '..', 'doomsday')
 SNOWBERRY_DIR = os.path.join(LAUNCH_DIR, '..', 'snowberry')
 WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
 OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
-DOOMSDAY_VERSION = "0.0.0"
+DOOMSDAY_VERSION = "0.0.0-Name"
+DOOMSDAY_VERSION_PLAIN = "0.0.0"
 TIMESTAMP = time.strftime('%y-%m-%d')
+
 
 def exit_with_error():
     os.chdir(LAUNCH_DIR)
     sys.exit(1)
+    
     
 def mkdir(n):
     try:
@@ -19,11 +22,13 @@ def mkdir(n):
     except OSError:
         print 'Directory', n, 'already exists.'
         
+        
 def remkdir(n):
     if os.path.exists(n):
         print n, 'exists, clearing it...'
         shutil.rmtree(n, True)
     os.mkdir(n)
+        
         
 def remove(n):
     try:
@@ -31,36 +36,14 @@ def remove(n):
     except OSError:
         print 'Cannot remove', n
         
+        
 def copytree(s, d):
     try:
         shutil.copytree(s, d)
     except Exception, x:
         print x
         print 'Cannot copy', s, 'to', d
-
-
-def main():
-    prepare_work_dir()
-    find_version()
-
-    print "Checking OS...",
-
-    try:
-        if sys.platform == "darwin":
-            print "Mac OS X"
-            mac_release()
-        else:
-            print "Unknown!"
-            print "I don't know how to make a release on this platform."
-            exit_with_error()
-    except Exception, x:
-        print "Creating the release failed!"
-        print x
-        exit_with_error()
-
-    os.chdir(LAUNCH_DIR)
-    print "Done."
-    
+   
     
 def find_version():
     print "Determining Doomsday version number...",
@@ -70,7 +53,7 @@ def find_version():
     
     f = file(os.path.join(DOOMSDAY_DIR, "engine", "portable", "include", "dd_version.h"), 'rt')
     for line in f.readlines():
-        if "#define" not in line: continue
+        if line[:7] != "#define": continue
         baseAt = line.find("DOOMSDAY_VERSION_BASE")
         nameAt = line.find("DOOMSDAY_RELEASE_NAME")
         if baseAt > 0:
@@ -79,6 +62,8 @@ def find_version():
             versionName = line[nameAt + 21:].replace('\"','').strip()
 
     global DOOMSDAY_VERSION
+    global DOOMSDAY_VERSION_PLAIN
+    DOOMSDAY_VERSION_PLAIN = versionBase
     DOOMSDAY_VERSION = versionBase
     if versionName:
         DOOMSDAY_VERSION += "-" + versionName    
@@ -94,9 +79,8 @@ def prepare_work_dir():
 """The Mac OS X release procedure."""
 def mac_release():
     # First we need to make a release build.
-    os.chdir(WORK_DIR)
-
     print "Building the release..."
+    os.chdir(WORK_DIR)
     mkdir('release_build')
     os.chdir('release_build')
     if os.system('cmake ' + DOOMSDAY_DIR + ' && make'):
@@ -183,7 +167,43 @@ def mac_release():
     os.system('hdiutil detach -quiet imaging')
     os.system('hdiutil convert imaging.dmg -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
     remove('imaging.dmg')
+
+
+"""The Mac OS X release procedure."""
+def win_release():
+    # Generate the Inno Setup configuration file.
+    script = file('win32\setup.iss.template', 'rt').read()
+    file('win32\setup.iss', 'wt').write(script
+        .replace('${YEAR}', time.strftime('%Y'))
+        .replace('${VERSION}', DOOMSDAY_VERSION)
+        .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_PLAIN))
     
+
+def main():
+    prepare_work_dir()
+    find_version()
+
+    print "Checking OS...",
+
+    try:
+        if sys.platform == "darwin":
+            print "Mac OS X"
+            mac_release()
+        elif sys.platform == "win32":
+            print "Windows"
+            win_release()
+        else:
+            print "Unknown!"
+            print "I don't know how to make a release on this platform."
+            exit_with_error()
+    except Exception, x:
+        print "Creating the release failed!"
+        print x
+        exit_with_error()
+
+    os.chdir(LAUNCH_DIR)
+    print "Done."
+   
    
 if __name__ == '__main__':
     main()
