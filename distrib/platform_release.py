@@ -183,7 +183,14 @@ def win_release():
     os.chdir('win32')
     if os.system('dorel.bat'):
         raise Exception("Failure in the Windows release script.")
-    
+        
+        
+"""The Linux release procedure."""
+def linux_release():
+    os.chdir(WORK_DIR)
+    if os.system('cmake -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && make package'):
+        raise Exception("Failure to build from source.")
+           
 
 def main():
     prepare_work_dir()
@@ -198,6 +205,9 @@ def main():
         elif sys.platform == "win32":
             print "Windows"
             win_release()
+        elif sys.platform == "linux2":
+            print "Linux"
+            linux_release()
         else:
             print "Unknown!"
             print "I don't know how to make a release on this platform."

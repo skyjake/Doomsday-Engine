@@ -1,10 +1,10 @@
+## Copyright (c) 2008 - 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 ## Copyright (c) 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
 ## Copyright (c) 2007 - 2008 Daniel Swanson <danij@dengine.net>
-## Copyright (c) 2008 - 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
-## the deng build scripts is free software; you can redistribute it and/or
+## The Doomsday build scripts is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation; either version 3 of the License, or
 ## (at your option) any later version.
@@ -21,43 +21,21 @@
 ##
 ################################################################################
 
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.4 FATAL_ERROR)
+
 ## Supported Build Types are:
 ##    * None (CMAKE_C_FLAGS) Cmake gcc default of $CFLAGS.
 ##    * Debug (CMAKE_C_FLAGS_DEBUG) Cmake gcc default of "-g"
 ##    * Release (CMAKE_C_FLAGS_RELEASE) Cmake gcc default of "-O3 -DNDEBUG"
 ##    * RelWithDebInfo (CMAKE_C_FLAGS_RELWITHDEBINFO) Cmake default of "-O2 -g"
 ##    * MinSizeRel (CMAKE_C_FLAGS_MINSIZEREL) Cmake default of "-Os -DNDEBUG"
+
 SET ( CMAKE_BUILD_TYPE Release CACHE STRING "Type of build." )
 
-PROJECT(deng C CXX)
-CMAKE_MINIMUM_REQUIRED (VERSION 2.4.5 FATAL_ERROR)
-SET (BUILDSCRIPTSDATE "$LastChangedDate$")
-SET(deng_VERSION_MAJOR 1)
-SET(deng_VERSION_MINOR 9)
-SET(deng_VERSION_PATCH 0)
-SET(deng_VERSION_REVISION beta5)
-SET(deng_VERSION "${deng_VERSION_MAJOR}.${deng_VERSION_MINOR}.${deng_VERSION_PATCH}.${deng_VERSION_REVISION}")
+PROJECT(doomsday C CXX)
+
 # where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
-
-IF (APPLE)
-    SET(CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
-ENDIF ()
-
-################################################################################
-######################## Additional Win32 Path Setup  ##########################
-IF (WIN32)
-    ## Cmake NEEDS UNIX style paths ie / not \
-    ## We should really read these varibles from the path
-    ## not hardcode them here
-    SET(ENV{SDLDIR} "c:/sdk/sdl")
-    SET(ENV{OPENALDIR} "c:/sdk/openal")
-    SET(ENV{ZLIBDIR} "c:/sdk/zlib")
-    SET(ENV{LIBPNGDIR} "c:/sdk/libpng")
-    SET(ENV{DIRECTXDIR} "c:/sdk/dx8mgw")
-    SET(ENV{LIBCURLDIR} "c:/sdk/libcurl")
-    SET(ENV{EAXDIR} "c:/sdk/eax")
-ENDIF (WIN32)
 
 ################################################################################
 ######################## Macros  ###############################################
@@ -101,22 +79,18 @@ IF (NOT APPLE AND FINK)
 ENDIF (NOT APPLE AND FINK)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-    MESSAGE( FATAL_ERROR
-    "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
-ENDIF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+    MESSAGE( FATAL_ERROR "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
+ENDIF ()
 
 ################################################################################
 ######################## Doomsday Paths  #######################################
-## Default Install Prefix on Win32 is C:/Program Files/deng
 ## Default Install Prefix on *NIX is /usr/local
-## Default Install Prefix on OSX is FIXME
-## This is set by Cmake automagically in CMAKE_INSTALL_PREFIX
+## This is set by CMake automagically in CMAKE_INSTALL_PREFIX
 
 ## Default *NIX paths
 ## /usr/local/bin           <- Doomsday binary
 ## /usr/local/lib           <- libdropengl, libjdoom etc
 ## /usr/local/share/${PROJECT_NAME} <- jPacks and other data
-
 
 IF (UNIX)
 	IF (NOT WIN32)
@@ -131,88 +105,29 @@ IF (UNIX)
         ## Do an approximation of the autotools install options. Should make an
         ## easy transition for package maintainers (like me when I'm not hacking here)
 
-        SET (bindir
-        ${CMAKE_INSTALL_PREFIX}/bin
-        CACHE
-        PATH
-        "install location for executables"
-        )
+        SET (bindir bin CACHE PATH "install location for executables" )
 
-        SET (libdir
-        ${CMAKE_INSTALL_PREFIX}/lib
-        CACHE
-        PATH
-        "install location for libraries"
-        )
+        SET (libdir lib CACHE PATH "install location for libraries" )
 
-        SET (datadir
-        ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
-        CACHE
-        PATH
-        "install location for data files"
-        )
+        SET (datadir share/${PROJECT_NAME} CACHE PATH "install location for data files" )
 
-        SET (mandir
-        ${CMAKE_INSTALL_PREFIX}/share/man
-        CACHE
-        PATH
-        "install location for man files"
-        )
+        SET (mandir share/man CACHE PATH "install location for man files" )
 
         ENDIF (APPLE)
     ENDIF (NOT WIN32)
 ENDIF (UNIX)
 
-IF (WIN32)
-        ## FIXME. Correct locations here for WIN32
-        SET (bindir
-        ${CMAKE_INSTALL_PREFIX}/bin
-        CACHE
-        PATH
-        "install location for executables"
-        )
-
-        SET (libdir
-        ${CMAKE_INSTALL_PREFIX}/lib
-        CACHE
-        PATH
-        "install location for libraries"
-        )
-
-        SET (datadir
-        ${CMAKE_INSTALL_PREFIX}
-        CACHE
-        PATH
-        "install location for data files"
-        )
-
-ENDIF (WIN32)
-
-
-## Where does it go on OSX ? FIXME
 ## Thess .pk3s is generated in the Generate.pk3 target.
 SET (DENG_ENGINE_DATA ${CMAKE_CURRENT_BINARY_DIR}/doomsday.pk3 )
-SET (DENG_ENGINE_DATA_DIR ${datadir}/data)
-
 SET (DENG_JDOOM_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom.pk3 )
-SET (DENG_JDOOM_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom)
-
 SET (DENG_JHERETIC_DATA ${CMAKE_CURRENT_BINARY_DIR}/jheretic.pk3 )
-SET (DENG_JHERETIC_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jheretic)
-
 SET (DENG_JHEXEN_DATA ${CMAKE_CURRENT_BINARY_DIR}/jhexen.pk3 )
-SET (DENG_JHEXEN_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jhexen)
-
 SET (DENG_JDOOM64_DATA ${CMAKE_CURRENT_BINARY_DIR}/jdoom64.pk3 )
-SET (DENG_JDOOM64_DATA_DIR ${DENG_ENGINE_DATA_DIR}/jdoom64)
-
 
 IF (UNIX)
     IF (NOT APPLE)
-        IF (NOT WIN32)
-            ADD_DEFINITIONS ('-DDENG_BASE_DIR="${datadir}/" ')
-            ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${libdir}/" ')
-        ENDIF (NOT WIN32)
+        ADD_DEFINITIONS ('-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${datadir}/" ')
+        ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${libdir}/" ')
     ENDIF (NOT APPLE)
 ENDIF (UNIX)
 IF (APPLE)
@@ -246,12 +161,6 @@ IF (UNIX)
     FIND_PACKAGE(Curses REQUIRED)
 ENDIF (UNIX)
 
-IF (WIN32)
-    FIND_PACKAGE(EAX REQUIRED)
-    FIND_PACKAGE(DIRECTX_DIRECTSOUND REQUIRED)
-    FIND_PACKAGE(DIRECTX_DIRECTINPUT REQUIRED)
-ENDIF (WIN32)
-
 IF (NOT BUILDDEDICATED)
     IF (UNIX)
         IF (NOT APPLE)
@@ -265,10 +174,8 @@ IF (NOT BUILDDEDICATED)
 ENDIF (NOT BUILDDEDICATED)
 
 IF (UNIX)
-    IF (NOT WIN32)
-        INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
-        INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
-    ENDIF (NOT WIN32)
+    INCLUDE (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
+    INCLUDE (${CMAKE_ROOT}/Modules/CheckLibraryExists.cmake)
 ENDIF (UNIX)
 
 FIND_PACKAGE(Doxygen)
@@ -276,58 +183,44 @@ FIND_PACKAGE(Doxygen)
 INCLUDE(TestBigEndian)
 
 ################################################################################
-######################## Cpack - Generate packages and source tarballs  ########
+######################## CPack - Generate packages and source tarballs  ########
 
+IF(UNIX AND NOT APPLE)
+    INCLUDE(${CMAKE_ROOT}/Modules/InstallRequiredSystemLibraries.cmake)
 
-SET(CMAKE_INSTALL_MFC_LIBRARIES 1)
-INCLUDE(${CMAKE_ROOT}/Modules/InstallRequiredSystemLibraries.cmake)
+    SET(CPACK_GENERATOR "DEB")
 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Doomsday Engine: for jDoom, jHeretic, jHexen")
-SET(CPACK_PACKAGE_VENDOR "DaniJ, Skyjake, Yagisan")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/build/README")
-SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/engine/doc/LICENSE")
-SET(CPACK_PACKAGE_VERSION_MAJOR "${deng_VERSION_MAJOR}")
-SET(CPACK_PACKAGE_VERSION_MINOR "${deng_VERSION_MINOR}")
-SET(CPACK_PACKAGE_VERSION_PATCH "${deng_VERSION_PATCH}.${deng_VERSION_REVISON}")
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_INSTALL_PREFIX}")
-SET(CPACK_SOURCE_PACKAGE_FILE_NAME "deng-${deng_VERSION}")
+    SET(CPACK_DEBIAN_PACKAGE_NAME "doomsday")
+    SET(CPACK_PACKAGE_VERSION "${DOOMSDAY_VERSION}")
+    SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom/Heretic/Hexen port with enhanced graphics")    
+    SET(CPACK_PACKAGE_DESCRIPTION "The Doomsday Engine is portable version of the classic first person shooters DOOM, Heretic,
+and Hexen. It lets you enjoy the original games using modern technology, including 
+high-resolution OpenGL graphics, 3D models, and dynamic lighting effects. Data files from the
+original games are not included; you must acquire a copy of the original games from id Software
+and/or Raven Software.")
+    SET(CPACK_PACKAGE_CONTACT "Jaakko Keränen <jaakko.keranen@iki.fi>")
+    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "python-wxgtk2.8, libsdl1.2debian, libsdl-net1.2, libsdl-mixer1.2, libcurl3")
+    SET(CPACK_DEBIAN_PACKAGE_SECTION "universe/games")
+    #SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/build/README")
+    SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/engine/doc/LICENSE")
+    SET(CPACK_SOURCE_PACKAGE_FILE_NAME "doomsday-src-${DOOMSDAY_VERSION}")
 
-IF(NOT DEFINED CPACK_SYSTEM_NAME)
-    SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-ENDIF(NOT DEFINED CPACK_SYSTEM_NAME)
+    #IF(NOT DEFINED CPACK_SYSTEM_NAME)
+    #    SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    #ENDIF(NOT DEFINED CPACK_SYSTEM_NAME)
 
-IF(${CPACK_SYSTEM_NAME} MATCHES Windows)
-    IF(CMAKE_CL_64)
-        SET(CPACK_SYSTEM_NAME win64-${CMAKE_SYSTEM_PROCESSOR})
-    ELSE(CMAKE_CL_64)
-        SET(CPACK_SYSTEM_NAME win32-${CMAKE_SYSTEM_PROCESSOR})
-    ENDIF(CMAKE_CL_64)
-ENDIF(${CPACK_SYSTEM_NAME} MATCHES Windows)
+    #IF(${CPACK_SYSTEM_NAME} MATCHES Windows)
+    #    IF(CMAKE_CL_64)
+    #        SET(CPACK_SYSTEM_NAME win64-${CMAKE_SYSTEM_PROCESSOR})
+    #    ELSE(CMAKE_CL_64)
+    #        SET(CPACK_SYSTEM_NAME win32-${CMAKE_SYSTEM_PROCESSOR})
+    #    ENDIF(CMAKE_CL_64)
+    #ENDIF(${CPACK_SYSTEM_NAME} MATCHES Windows)
 
-SET(CPACK_PACKAGE_FILE_NAME "${CPACK_SOURCE_PACKAGE_FILE_NAME}-${CPACK_SYSTEM_NAME}")
+    #SET(CPACK_PACKAGE_FILE_NAME "${CPACK_SOURCE_PACKAGE_FILE_NAME}-${CPACK_SYSTEM_NAME}")
 
-
-IF(WIN32 AND NOT UNIX)
-    # Win32 packaging setup (MSVC Built)
-    # There is a bug in NSI that does not handle full unix paths properly. Make
-    # sure there is at least one set of four (4) backlasshes.
-    SET(CPACK_PACKAGE_EXECUTABLES "doomsday.exe")
-    SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} - The Doomsday Engine: for jDoom, jHeretic, jHexen")
-    SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.doomsdayhq.com")
-    SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.doomsdayhq.com")
-    SET(CPACK_NSIS_CONTACT "deng-devel@lists.sourceforge.net")
-    SET(CPACK_NSIS_MODIFY_PATH ON)
-
-    ELSE(WIN32 AND NOT UNIX)
-        IF (APPLE)
-            # OSX packaging setup
-        ELSE (APPLE)
-            # *Nix packaging setup (Inc Cygwin/MinGw)
-            SET(CPACK_SOURCE_STRIP_FILES "")
-            SET(CPACK_PACKAGE_EXECUTABLES "doomsday")
-        ENDIF (APPLE)
-ENDIF(WIN32 AND NOT UNIX)
-INCLUDE(${CMAKE_ROOT}/Modules/CPack.cmake)
+    INCLUDE(CPack)
+ENDIF()
 
 ################################################################################
 ######################## Set Common Definitions  ###############################
@@ -389,24 +282,12 @@ IF(CMAKE_SYSTEM MATCHES "SunOS-*")
     ADD_DEFINITIONS ( -DSOLARIS)
 ENDIF(CMAKE_SYSTEM MATCHES "SunOS-*")
 
-IF (WIN32)
-    ADD_DEFINITIONS ( -DWIN32 -D_USRDLL -D_WINDLL -D_WINDOWS )
-    SET (BUILDSYSTEM WIN32)
-    IF (MSVC)
-        ADD_DEFINITIONS ( -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
-        SET (BUILDSYSTEM WIN32-MSVC)
-    ENDIF (MSVC)
-    IF (MINGW)
-        ADD_DEFINITIONS ( -DUNICODE)
-        SET (BUILDSYSTEM WIN32-MINGW)
-    ENDIF (MINGW)
-ENDIF (WIN32)
-
 SET (USE_STATIC_PNG "NO")
 
 IF (APPLE)
 	ADD_DEFINITIONS ( -DMACOSX )
 
+    SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
 	SET (CMAKE_OSX_ARCHITECTURES "ppc;i386")
 	SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
 	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
@@ -524,27 +405,6 @@ IF (UNIX)
     ENDIF (NOT APPLE)
 ENDIF (UNIX)
 
-## Confirm we have DirectX DirectInput
-IF (WIN32)
-    IF (NOT DIRECTX_DIRECTINPUT_FOUND)
-    MESSAGE (FATAL_ERROR "** DirectX Direct Input not found. On Windows install dx9sdk.exe.")
-    ENDIF (NOT DIRECTX_DIRECTINPUT_FOUND)
-    INCLUDE_DIRECTORIES (${DIRECTX_DIRECTINPUT_INCLUDE_DIRS})
-
-## Confirm we have DirectX DirectSound
-    IF (NOT DIRECTX_DIRECTSOUND_FOUND)
-    MESSAGE (FATAL_ERROR "** DirectX Direct Sound not found. On Windows install dx9sdk.exe.")
-    ENDIF (NOT DIRECTX_DIRECTSOUND_FOUND)
-    INCLUDE_DIRECTORIES (${DIRECTX_DIRECTSOUND_INCLUDE_DIRS})
-
-## Confirm we have EAX
-    IF (NOT EAX_FOUND)
-    MESSAGE (FATAL_ERROR "** Creative EAX not found. On Windows instal FIXME")
-    ENDIF (NOT EAX_FOUND)
-    INCLUDE_DIRECTORIES (${EAX_INCLUDE_DIRS})
-
-ENDIF (WIN32)
-
 IF (BUILDOPENAL)
     ## Confirm we have OpenAL
     IF (NOT OPENAL_FOUND STREQUAL "YES")
@@ -554,34 +414,22 @@ IF (BUILDOPENAL)
 ENDIF (BUILDOPENAL)
 
 IF (UNIX)
-    IF (NOT WIN32)
     ## Confirm we have dlopen
     CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DL)
-        IF(HAVE_DL)
-            CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
-            IF(NOT HAVE_LIB_DL)
-				MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev. On Mac OSX install FIXME. On Windows install FIXME.")
-            ENDIF(NOT HAVE_LIB_DL)
-        ELSE(HAVE_DL)
+    IF(HAVE_DL)
+        CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
+        IF(NOT HAVE_LIB_DL)
 			MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev. On Mac OSX install FIXME. On Windows install FIXME.")
-        ENDIF(HAVE_DL)
-    ENDIF (NOT WIN32)
+        ENDIF(NOT HAVE_LIB_DL)
+    ELSE(HAVE_DL)
+		MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+    ENDIF(HAVE_DL)
 ENDIF (UNIX)
 
 ## confirm we have Python
 IF (NOT PYTHONINTERP_FOUND)
-    MESSAGE (FATAL_ERROR "** Python not found. On Ubuntu install python. On Mac OSX install FIXME. On Windows install FIXME.")
+    MESSAGE (FATAL_ERROR "** Python not found. On Ubuntu install python.")
 ENDIF (NOT  PYTHONINTERP_FOUND)
-
-## confirm we have Doxygen.
-IF (NOT DOXYGEN)
-    MESSAGE (STATUS "** Doxygen not found. On Ubuntu install doxygen. On Mac OSX install FIXME. On Windows install FIXME.")
-ENDIF (NOT DOXYGEN)
-
-## confirm we have Graphviz.
-IF (NOT DOT)
-    MESSAGE (STATUS "** Graphviz not found. On Ubuntu install graphviz. On Mac OSX install FIXME. On Windows install FIXME.")
-ENDIF (NOT DOT)
 
 ################################################################################
 ######################## External LZSS Files ###################################
@@ -591,12 +439,9 @@ IF (UNIX)
     FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/unix/src/*.c )
 ENDIF (UNIX)
 
-IF (WIN32 AND NOT UNIX)
-    INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/external/lzss/win32/include )
-    FILE (GLOB LZSS_SOURCES ${CMAKE_SOURCE_DIR}/external/lzss/win32/src/*.c )
-ENDIF (WIN32 AND NOT UNIX)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
+
 ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
@@ -606,32 +451,10 @@ FILE (GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c )
 SET ( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
 
 IF (UNIX)
-    IF (NOT WIN32)
-        INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
+    INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
 	FILE (GLOB DENG_ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c )
-        SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${LZSS_SOURCES})
-        #IF (NOT APPLE)
-        #    SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES}
-        #        ${CMAKE_SOURCE_DIR}/engine/unix/src/sys_window.c)
-        #ENDIF (NOT APPLE)
-    ENDIF (NOT WIN32)
+    SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${LZSS_SOURCES})
 ENDIF (UNIX)
-
-IF (WIN32)
-    INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/win32/include )
-    SET (DENG_ARCH_SPECIFIC_SOURCES
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/dd_winit.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_cdaudio.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_console.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_findfile.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_input.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_mixer.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_musd_win.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_ds.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_sfxd_loader.c
-         ${CMAKE_SOURCE_DIR}/engine/win32/src/sys_window.c
-         ${LZSS_SOURCES})
-ENDIF (WIN32)
 
 ## .m is Obj-C
 IF (APPLE)
@@ -651,7 +474,7 @@ ADD_EXECUTABLE (doomsday ${DENG_PORTABLE_SOURCES} ${DENG_ARCH_SPECIFIC_SOURCES})
 IF (USE_STATIC_PNG STREQUAL "YES")
     SET (DENG_PNG_LIB "${PNG_LIBRARY_STATIC}")
 ELSE()
-    SET (DENG_PNG_LIB "${PNG_LIBRARY} ${PNG_LIBRARIES}")
+    SET (DENG_PNG_LIB "${PNG_LIBRARIES}")
 ENDIF()
 MESSAGE( STATUS "Using PNG library: ${DENG_PNG_LIB}" )
 
@@ -660,24 +483,11 @@ TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLNET_LIBR
     ${CURL_LIBRARIES} ${OPENGL_LIBRARIES})
 
 IF (UNIX)
-    IF (NOT WIN32)
-        TARGET_LINK_LIBRARIES (doomsday dl)
-            IF (NOT APPLE)
-                TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
-            ENDIF (NOT APPLE)
-    ENDIF (NOT WIN32)
+    TARGET_LINK_LIBRARIES (doomsday dl)
+    IF (NOT APPLE)
+        TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
+    ENDIF (NOT APPLE)
 ENDIF (UNIX)
-
-IF (WIN32)
-    TARGET_LINK_LIBRARIES (doomsday wsock32 winmm gdi32 ole32 user32 ${EAX_LIBRARIES} ${DIRECTX_DIRECTSOUND_LIBRARIES} ${DIRECTX_DIRECTINPUT_LIBRARIES} )
-ENDIF (WIN32)
-
-## Work around for Win32 wanting something for the plugins to link to
-#IF (WIN32)
-#   ADD_LIBRARY (deng STATIC ${DENG_SOURCES} engine/api/doomsday.def)
-#   TARGET_LINK_LIBRARIES (deng ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARIES} ${CURSES_LIBRARIES} ${PNG_LIBRARIES} wsock32 winmm gdi32 ole32 user32
-#   ${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss )
-#ENDIF (WIN32)
 
 ################################################################################
 ######################## Dehacked Reader Plugin  ###############################
@@ -771,17 +581,18 @@ MESSAGE( STATUS "CMAKE_INSTALL_PREFIX          " ${CMAKE_INSTALL_PREFIX} )
 MESSAGE( STATUS "DENG_BASE_DIR                 " ${datadir} )
 MESSAGE( STATUS "DENG_LIBRARY_DIR              " ${libdir} )
 MESSAGE( STATUS "DENG_BINARY_DIR               " ${bindir} )
-MESSAGE( STATUS "DENG_ENGINE_DATA_DIR          " ${DENG_ENGINE_DATA_DIR} )
-MESSAGE( STATUS "DENG_JDOOM_DATA_DIR           " ${DENG_JDOOM_DATA_DIR} )
-MESSAGE( STATUS "DENG_JHERETIC_DATA_DIR        " ${DENG_JHERETIC_DATA_DIR} )
-MESSAGE( STATUS "DENG_JHEXEN_DATA_DIR          " ${DENG_JHEXEN_DATA_DIR} )
-MESSAGE( STATUS "DENG_JDOOM64_DATA_DIR         " ${DENG_JDOOM64_DATA_DIR} )
+#MESSAGE( STATUS "DENG_ENGINE_DATA_DIR          " ${DENG_ENGINE_DATA_DIR} )
+#MESSAGE( STATUS "DENG_JDOOM_DATA_DIR           " ${DENG_JDOOM_DATA_DIR} )
+#MESSAGE( STATUS "DENG_JHERETIC_DATA_DIR        " ${DENG_JHERETIC_DATA_DIR} )
+#MESSAGE( STATUS "DENG_JHEXEN_DATA_DIR          " ${DENG_JHEXEN_DATA_DIR} )
+#MESSAGE( STATUS "DENG_JDOOM64_DATA_DIR         " ${DENG_JDOOM64_DATA_DIR} )
+
 ################################################################################
 ######################## Install Targets  ######################################
-INSTALL(TARGETS doomsday
-RUNTIME DESTINATION ${bindir} 
-LIBRARY DESTINATION ${libdir} )
-INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DENG_ENGINE_DATA_DIR} )
+INSTALL(TARGETS doomsday 
+    RUNTIME DESTINATION bin 
+    LIBRARY DESTINATION lib )
+INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION share/${PROJECT_NAME} )
 
 IF (APPLE)
     # Bundling.
@@ -811,17 +622,18 @@ IF (APPLE)
 ENDIF (APPLE)
 
 IF (BUILDJDOOM)
-    INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION ${DENG_JDOOM_DATA_DIR} )
+    INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION share/${PROJECT_NAME} )
 ENDIF (BUILDJDOOM)
 
 IF (BUILDJHERETIC)
-    INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION ${DENG_JHERETIC_DATA_DIR} )
+    INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION share/${PROJECT_NAME} )
 ENDIF (BUILDJHERETIC)
 
 IF (BUILDJHEXEN)
-    INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DENG_JHEXEN_DATA_DIR} )
+    INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION share/${PROJECT_NAME} )
 ENDIF (BUILDJHEXEN)
 
 IF (BUILDJDOOM64)
-    INSTALL(FILES ${DENG_JDOOM64_DATA} DESTINATION ${DENG_JDOOM64_DATA_DIR} )
+    INSTALL(FILES ${DENG_JDOOM64_DATA} DESTINATION share/${PROJECT_NAME} )
 ENDIF (BUILDJDOOM64)
+
