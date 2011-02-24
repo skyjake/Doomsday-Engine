@@ -191,19 +191,20 @@ IF(UNIX AND NOT APPLE)
     SET(CPACK_GENERATOR "DEB")
 
     SET(CPACK_DEBIAN_PACKAGE_NAME "doomsday")
-    SET(CPACK_PACKAGE_VERSION "${DOOMSDAY_VERSION}")
-    SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom/Heretic/Hexen port with enhanced graphics")    
-    SET(CPACK_PACKAGE_DESCRIPTION "The Doomsday Engine is portable version of the classic first person shooters DOOM, Heretic,
-and Hexen. It lets you enjoy the original games using modern technology, including 
-high-resolution OpenGL graphics, 3D models, and dynamic lighting effects. Data files from the
-original games are not included; you must acquire a copy of the original games from id Software
-and/or Raven Software.")
+    SET(CPACK_PACKAGE_VERSION "${DOOMSDAY_VERSION}-${DOOMSDAY_BUILD}")
+    SET(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Doom/Heretic/Hexen port with enhanced graphics
+ The Doomsday Engine is a portable version of the classic first person 
+ shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games
+ using modern technology, including high-resolution OpenGL graphics, 3D 
+ models, and dynamic lighting effects. Data files from the original games
+ are not included; you must acquire a copy of the original games from 
+ id Software and/or Raven Software.")
     SET(CPACK_PACKAGE_CONTACT "Jaakko Keränen <jaakko.keranen@iki.fi>")
     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "python-wxgtk2.8, libsdl1.2debian, libsdl-net1.2, libsdl-mixer1.2, libcurl3")
     SET(CPACK_DEBIAN_PACKAGE_SECTION "universe/games")
-    #SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/build/README")
     SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/engine/doc/LICENSE")
-    SET(CPACK_SOURCE_PACKAGE_FILE_NAME "doomsday-src-${DOOMSDAY_VERSION}")
+    SET(CPACK_SOURCE_PACKAGE_FILE_NAME "doomsday-src_${DOOMSDAY_VERSION}")
+    SET(CPACK_PACKAGE_FILE_NAME "${CPACK_DEBIAN_PACKAGE_NAME}_${DOOMSDAY_VERSION}-${DOOMSDAY_BUILD}_i386")
 
     #IF(NOT DEFINED CPACK_SYSTEM_NAME)
     #    SET(CPACK_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
@@ -589,10 +590,12 @@ MESSAGE( STATUS "DENG_BINARY_DIR               " ${bindir} )
 
 ################################################################################
 ######################## Install Targets  ######################################
+SET (DATA_DEST "share/${PROJECT_NAME}/data")
+
 INSTALL(TARGETS doomsday 
     RUNTIME DESTINATION bin 
     LIBRARY DESTINATION lib )
-INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION share/${PROJECT_NAME} )
+INSTALL(FILES ${DENG_ENGINE_DATA} DESTINATION ${DATA_DEST} )
 
 IF (APPLE)
     # Bundling.
@@ -621,19 +624,52 @@ IF (APPLE)
         )
 ENDIF (APPLE)
 
+IF (UNIX AND NOT APPLE)
+    # Bundle Snowberry.
+    SET (SB_ROOT "${CMAKE_SOURCE_DIR}/../snowberry")
+    SET (SB_DEST share/${PROJECT_NAME}/snowberry)
+    INSTALL(FILES 
+        ${SB_ROOT}/cfparser.py
+        ${SB_ROOT}/events.py
+        ${SB_ROOT}/host.py
+        ${SB_ROOT}/language.py
+        ${SB_ROOT}/logger.py
+        ${SB_ROOT}/paths.py
+        ${SB_ROOT}/plugins.py
+        ${SB_ROOT}/snowberry.py
+        ${SB_ROOT}/ui.py
+        ${SB_ROOT}/widgets.py
+        DESTINATION ${SB_DEST})
+        
+    INSTALL(DIRECTORY ${SB_ROOT}/conf ${SB_ROOT}/graphics ${SB_ROOT}/lang ${SB_ROOT}/plugins
+        ${SB_ROOT}/profiles ${SB_ROOT}/sb 
+        DESTINATION ${SB_DEST}
+        PATTERN "osx-*.conf" EXCLUDE
+        PATTERN "win-*.conf" EXCLUDE
+        PATTERN "doomsday.conf" EXCLUDE
+        PATTERN "appearance.conf" EXCLUDE
+        PATTERN "components.conf" EXCLUDE
+        PATTERN "*example*" EXCLUDE
+        PATTERN ".*ignore" EXCLUDE)     
+        
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/launch-doomsday
+        DESTINATION bin
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+ENDIF()
+
 IF (BUILDJDOOM)
-    INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION share/${PROJECT_NAME} )
+    INSTALL(FILES ${DENG_JDOOM_DATA} DESTINATION ${DATA_DEST}/jdoom )
 ENDIF (BUILDJDOOM)
 
 IF (BUILDJHERETIC)
-    INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION share/${PROJECT_NAME} )
+    INSTALL(FILES ${DENG_JHERETIC_DATA} DESTINATION ${DATA_DEST}/jheretic )
 ENDIF (BUILDJHERETIC)
 
 IF (BUILDJHEXEN)
-    INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION share/${PROJECT_NAME} )
+    INSTALL(FILES ${DENG_JHEXEN_DATA} DESTINATION ${DATA_DEST}/jhexen )
 ENDIF (BUILDJHEXEN)
 
 IF (BUILDJDOOM64)
-    INSTALL(FILES ${DENG_JDOOM64_DATA} DESTINATION share/${PROJECT_NAME} )
+    INSTALL(FILES ${DENG_JDOOM64_DATA} DESTINATION ${DATA_DEST}/jdoom64 )
 ENDIF (BUILDJDOOM64)
 

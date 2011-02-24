@@ -8,7 +8,11 @@ WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
 OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
 DOOMSDAY_VERSION = "0.0.0-Name"
 DOOMSDAY_VERSION_PLAIN = "0.0.0"
+now = time.localtime()
+DOOMSDAY_BUILD = 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
 TIMESTAMP = time.strftime('%y-%m-%d')
+
+print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
 
 
 def exit_with_error():
@@ -88,7 +92,7 @@ def mac_release():
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
-    target = OUTPUT_DIR + "/deng-" + DOOMSDAY_VERSION + "_" + TIMESTAMP + ".dmg"
+    target = OUTPUT_DIR + "/deng-" + DOOMSDAY_VERSION + "_" + DOOMSDAY_BUILD + ".dmg"
     try:
         os.remove(target)
         print 'Removed existing target file', target
@@ -176,6 +180,7 @@ def win_release():
     script = file('win32\setup.iss.template', 'rt').read()
     file('win32\setup.iss', 'wt').write(script
         .replace('${YEAR}', time.strftime('%Y'))
+        .replace('${BUILD}', DOOMSDAY_BUILD)
         .replace('${VERSION}', DOOMSDAY_VERSION)
         .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_PLAIN))
     
@@ -188,8 +193,24 @@ def win_release():
 """The Linux release procedure."""
 def linux_release():
     os.chdir(WORK_DIR)
-    if os.system('cmake -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && make package'):
+    
+    # Generate a launcher script.
+    f = file('launch-doomsday', 'wt')
+    print >> f, """#!/usr/bin/python
+import os, sys
+os.chdir('/usr/share/doomsday/snowberry')
+sys.path += '.'
+
+import snowberry"""
+    f.close()
+    
+    if os.system('cmake -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
+                 ' -D DOOMSDAY_BUILD=' + DOOMSDAY_BUILD +
+                 ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && fakeroot make package'):
         raise Exception("Failure to build from source.")
+        
+    # Place the result in the output directory.
+    shutil.copy(glob.glob('doomsday*deb')[0], OUTPUT_DIR) 
            
 
 def main():
