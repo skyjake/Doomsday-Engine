@@ -4,8 +4,6 @@ IF "%1" == "help" GOTO Help
 GOTO SetPaths
 :Help
 cls
-ECHO $Id$
-ECHO.
 ECHO This build script compiles the Doomsday Engine and the associated
 ECHO libraries.
 ECHO.
