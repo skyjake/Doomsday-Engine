@@ -369,12 +369,15 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < numSectors; ++i)
     {
         sector_t* sec = &sectors[i];
-        subsector_t** ssecPtr = sec->ssectors;
-        while(*ssecPtr)
+        if(sec->ssectors && *sec->ssectors)
         {
-            subsector_t* ssec = *ssecPtr;
-            numVertIllums += ssec->numVertices * sec->planeCount;
-            ssecPtr++;
+            subsector_t** ssecPtr = sec->ssectors;
+            do
+            {
+                subsector_t* ssec = *ssecPtr;
+                numVertIllums += ssec->numVertices * sec->planeCount;
+                ssecPtr++;
+            } while(*ssecPtr);
         }
     }
 
@@ -413,25 +416,26 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < numSectors; ++i)
     {
         sector_t* sec = &sectors[i];
-        subsector_t** ssecPtr = sec->ssectors;
-
-        while(*ssecPtr)
+        if(sec->ssectors && *sec->ssectors)
         {
-            subsector_t* ssec = *ssecPtr;
-            uint j;
-
-            for(j = 0; j < sec->planeCount; ++j)
+            subsector_t** ssecPtr = sec->ssectors;
+            do
             {
-                biassurface_t* bsuf = SB_CreateSurface();
+                subsector_t* ssec = *ssecPtr;
+                uint j;
 
-                bsuf->size = ssec->numVertices;
-                bsuf->illum = illums;
-                illums += ssec->numVertices;
+                for(j = 0; j < sec->planeCount; ++j)
+                {
+                    biassurface_t* bsuf = SB_CreateSurface();
 
-                ssec->bsuf[j] = bsuf;
-            }
+                    bsuf->size = ssec->numVertices;
+                    bsuf->illum = illums;
+                    illums += ssec->numVertices;
 
-            ssecPtr++;
+                    ssec->bsuf[j] = bsuf;
+                }
+                ssecPtr++;
+            } while(*ssecPtr);
         }
     }
 

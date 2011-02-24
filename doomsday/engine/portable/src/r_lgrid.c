@@ -453,20 +453,51 @@ void LG_InitForMap(void)
     // Find the blocks of all sectors.
     for(s = 0; s < numSectors; ++s)
     {
-        sector_t *sector = SECTOR_PTR(s);
+        sector_t* sector = SECTOR_PTR(s);
 
-        // Clear the bitfields.
-        memset(indexBitfield, 0, bitfieldSize);
-        memset(contributorBitfield, 0, bitfieldSize);
         count = changedCount = 0;
 
-        for(block = grid, y = 0; y < lgBlockHeight; ++y)
+        if(0 != sector->lineDefCount)
         {
-            for(x = 0; x < lgBlockWidth; ++x, ++block)
+            // Clear the bitfields.
+            memset(indexBitfield, 0, bitfieldSize);
+            memset(contributorBitfield, 0, bitfieldSize);
+
+            for(block = grid, y = 0; y < lgBlockHeight; ++y)
             {
-                if(block->sector == sector)
+                for(x = 0; x < lgBlockWidth; ++x, ++block)
                 {
-                    // \todo Determine min/max a/b before going into the loop.
+                    if(block->sector == sector)
+                    {
+                        // \todo Determine min/max a/b before going into the loop.
+                        for(b = -2; b <= 2; ++b)
+                        {
+                            if(y + b < 0 || y + b >= lgBlockHeight)
+                                continue;
+
+                            for(a = -2; a <= 2; ++a)
+                            {
+                                if(x + a < 0 || x + a >= lgBlockWidth)
+                                    continue;
+
+                                AddIndexBit(x + a, y + b, indexBitfield,
+                                            &changedCount);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Determine contributor blocks. Contributors are the blocks that are
+            // close enough to contribute light to affected blocks.
+            for(y = 0; y < lgBlockHeight; ++y)
+            {
+                for(x = 0; x < lgBlockWidth; ++x)
+                {
+                    if(!HasIndexBit(x, y, indexBitfield))
+                        continue;
+
+                    // Add the contributor blocks.
                     for(b = -2; b <= 2; ++b)
                     {
                         if(y + b < 0 || y + b >= lgBlockHeight)
@@ -477,38 +508,11 @@ void LG_InitForMap(void)
                             if(x + a < 0 || x + a >= lgBlockWidth)
                                 continue;
 
-                            AddIndexBit(x + a, y + b, indexBitfield,
-                                        &changedCount);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Determine contributor blocks. Contributors are the blocks that are
-        // close enough to contribute light to affected blocks.
-        for(y = 0; y < lgBlockHeight; ++y)
-        {
-            for(x = 0; x < lgBlockWidth; ++x)
-            {
-                if(!HasIndexBit(x, y, indexBitfield))
-                    continue;
-
-                // Add the contributor blocks.
-                for(b = -2; b <= 2; ++b)
-                {
-                    if(y + b < 0 || y + b >= lgBlockHeight)
-                        continue;
-
-                    for(a = -2; a <= 2; ++a)
-                    {
-                        if(x + a < 0 || x + a >= lgBlockWidth)
-                            continue;
-
-                        if(!HasIndexBit(x + a, y + b, indexBitfield))
-                        {
-                            AddIndexBit(x + a, y + b, contributorBitfield,
-                                        &count);
+                            if(!HasIndexBit(x + a, y + b, indexBitfield))
+                            {
+                                AddIndexBit(x + a, y + b, contributorBitfield,
+                                            &count);
+                            }
                         }
                     }
                 }
@@ -537,10 +541,6 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
 
             assert(a == changedCount);
             //assert(b == info->blockCount);
-        }
-        else
-        {
-            sector->blocks = NULL;
         }
     }
 
@@ -596,32 +596,36 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 /**
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(sector_t *sector)
+void LG_SectorChanged(sector_t* sector)
 {
-    uint                i, j;
-    unsigned short      n;
-
     if(!lgInited)
         return;
 
+    if(0 == sector->changedBlockCount && 0 == sector->blockCount)
+        return;
+
     // Mark changed blocks and contributors.
+    { uint i;
     for(i = 0; i < sector->changedBlockCount; ++i)
     {
-        n = sector->blocks[i];
+        ushort n = sector->blocks[i];
         // The color will be recalculated.
         if(!(grid[n].flags & GBF_CHANGED))
             memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
 
+        { int j;
         for(j = 0; j < 3; ++j)
             grid[n].rgb[j] = 0;
+        }
 
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
-    }
+    }}
 
+    { uint i;
     for(; i < sector->blockCount; ++i)
     {
         grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
-    }
+    }}
 
     needsUpdate = true;
 }

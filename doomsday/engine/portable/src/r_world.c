@@ -516,30 +516,23 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
  * Post: The sector's plane list will be replaced, the new plane will be
  *       linked to the end of the list.
  *
- * @param sec           Sector for which a new plane will be created.
+ * @param sec  Sector for which a new plane will be created.
  *
- * @return              Ptr to the newly created plane.
+ * @return  Ptr to the newly created plane.
  */
 plane_t* R_NewPlaneForSector(sector_t* sec)
 {
-    surface_t*          suf;
-    plane_t*            plane;
-    subsector_t**       ssecPtr;
+    surface_t* suf;
+    plane_t* plane;
 
     if(!sec)
         return NULL; // Do wha?
-
-    //if(sec->planeCount >= 2)
-    //    Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
-    //              "limit is %i per sector.\n", 2);
 
     // Allocate the new plane.
     plane = Z_Malloc(sizeof(plane_t), PU_MAP, 0);
 
     // Resize this sector's plane list.
-    sec->planes =
-        Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1),
-                  PU_MAP);
+    sec->planes = Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1), PU_MAP);
     // Add the new plane to the end of the list.
     sec->planes[sec->planeCount-1] = plane;
     sec->planes[sec->planeCount] = NULL; // Terminate.
@@ -548,7 +541,6 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
-    plane->surface.owner = (void*) plane;
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
@@ -566,6 +558,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     suf = &plane->surface;
     suf->header.type = DMU_SURFACE; // Setup header for DMU.
     suf->normal[VZ] = suf->oldNormal[VZ] = 1;
+    suf->owner = (void*) plane;
     // \todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
     Surface_SetMaterialOffsetXY(suf, 0, 0);
@@ -578,42 +571,45 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
      * as planes are created before the bias system is available.
      */
 
-    ssecPtr = sec->ssectors;
-    while(*ssecPtr)
+    if(sec->ssectors && *sec->ssectors)
     {
-        subsector_t*        ssec = *ssecPtr;
-        biassurface_t**     newList;
-        uint                n = 0;
-
-        newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*),
-                           PU_MAP, NULL);
-        // Copy the existing list?
-        if(ssec->bsuf)
+        subsector_t** ssecPtr = sec->ssectors;
+        do
         {
-            for(; n < sec->planeCount - 1; ++n)
+            subsector_t* ssec = *ssecPtr;
+            biassurface_t** newList;
+            uint n = 0;
+
+            newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*), PU_MAP, NULL);
+            // Copy the existing list?
+            if(ssec->bsuf)
             {
-                newList[n] = ssec->bsuf[n];
+                for(; n < sec->planeCount - 1; ++n)
+                {
+                    newList[n] = ssec->bsuf[n];
+                }
+                Z_Free(ssec->bsuf);
             }
-            Z_Free(ssec->bsuf);
-        }
 
-        if(!ddMapSetup)
-        {
-            uint                i;
-            biassurface_t*      bsuf = SB_CreateSurface();
+            if(!ddMapSetup)
+            {
+                biassurface_t* bsuf = SB_CreateSurface();
 
-            bsuf->size = ssec->numVertices;
-            bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+                bsuf->size = ssec->numVertices;
+                bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
 
-            for(i = 0; i < bsuf->size; ++i)
-                SB_InitVertexIllum(&bsuf->illum[i]);
+                { uint i;
+                for(i = 0; i < bsuf->size; ++i)
+                    SB_InitVertexIllum(&bsuf->illum[i]);
+                }
 
-            newList[n] = bsuf;
-        }
+                newList[n] = bsuf;
+            }
 
-        ssec->bsuf = newList;
+            ssec->bsuf = newList;
 
-        ssecPtr++;
+            ssecPtr++;
+        } while(*ssecPtr);
     }
 
     return plane;
@@ -735,10 +731,10 @@ void R_ClearSurfaceDecorations(surface_t *suf)
 
 void R_UpdateSkyFixForSec(const sector_t* sec)
 {
-    boolean             skyFloor, skyCeil;
+    boolean skyFloor, skyCeil;
 
-    if(!sec)
-        return; // Wha?
+    if(!sec || 0 == sec->lineDefCount)
+        return;
 
     skyFloor = R_IsSkySurface(&sec->SP_floorsurface);
     skyCeil = R_IsSkySurface(&sec->SP_ceilsurface);
@@ -748,7 +744,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
 
     if(skyCeil)
     {
-        mobj_t*             mo;
+        mobj_t* mo;
 
         // Adjust for the plane height.
         if(sec->SP_ceilvisheight > skyFix[PLN_CEILING].height)
@@ -759,7 +755,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
         // Check that all the mobjs in the sector fit in.
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            float               extent = mo->pos[VZ] + mo->height;
+            float extent = mo->pos[VZ] + mo->height;
 
             if(extent > skyFix[PLN_CEILING].height)
             {   // Must raise the skyfix ceiling.
@@ -779,27 +775,23 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
 
     // Update for middle textures on two sided linedefs which intersect the
     // floor and/or ceiling of their front and/or back sectors.
-    if(sec->lineDefs)
+    if(sec->lineDefs && *sec->lineDefs)
     {
-        linedef_t**         linePtr = sec->lineDefs;
-
-        while(*linePtr)
+        linedef_t** linePtr = sec->lineDefs;
+        do
         {
-            linedef_t*          li = *linePtr;
+            linedef_t* li = *linePtr;
 
             // Must be twosided.
             if(li->L_frontside && li->L_backside)
             {
-                sidedef_t*          si = li->L_frontsector == sec?
-                    li->L_frontside : li->L_backside;
+                sidedef_t* si = li->L_frontsector == sec? li->L_frontside : li->L_backside;
 
                 if(si->SW_middlematerial)
                 {
                     if(skyCeil)
                     {
-                        float               top =
-                            sec->SP_ceilvisheight +
-                                si->SW_middlevisoffset[VY];
+                        float top = sec->SP_ceilvisheight + si->SW_middlevisoffset[VY];
 
                         if(top > skyFix[PLN_CEILING].height)
                         {   // Must raise the skyfix ceiling.
@@ -809,10 +801,8 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
 
                     if(skyFloor)
                     {
-                        float               bottom =
-                            sec->SP_floorvisheight +
-                                si->SW_middlevisoffset[VY] -
-                                    si->SW_middlematerial->height;
+                        float bottom = sec->SP_floorvisheight +
+                                si->SW_middlevisoffset[VY] - si->SW_middlematerial->height;
 
                         if(bottom < skyFix[PLN_FLOOR].height)
                         {   // Must lower the skyfix floor.
@@ -822,7 +812,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
                 }
             }
             linePtr++;
-        }
+        } while(*linePtr);
     }
 }
 
@@ -833,16 +823,15 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
  */
 void R_InitSkyFix(void)
 {
-    uint                i;
-
     skyFix[PLN_FLOOR].height = DDMAXFLOAT;
     skyFix[PLN_CEILING].height = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
         R_UpdateSkyFixForSec(SECTOR_PTR(i));
-    }
+    }}
 }
 
 /**
@@ -1627,25 +1616,28 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
         pln->soundOrg.pos[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
-        ssecp = sec->ssectors;
-        while(*ssecp)
+        if(sec->ssectors && *sec->ssectors)
         {
-            subsector_t* ssec = *ssecp;
-            seg_t** segp = ssec->segs;
-            while(*segp)
+            ssecp = sec->ssectors;
+            do
             {
-                seg_t* seg = *segp;
-                if(seg->lineDef)
+                subsector_t* ssec = *ssecp;
+                seg_t** segp = ssec->segs;
+                while(*segp)
                 {
-                    uint i;
-                    for(i = 0; i < 3; ++i)
-                        SB_SurfaceMoved(seg->bsuf[i]);
+                    seg_t* seg = *segp;
+                    if(seg->lineDef)
+                    {
+                        uint i;
+                        for(i = 0; i < 3; ++i)
+                            SB_SurfaceMoved(seg->bsuf[i]);
+                    }
+                    segp++;
                 }
-                segp++;
-            }
 
-            SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
-            ssecp++;
+                SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
+                ssecp++;
+            } while(*ssecp);
         }
 
         // We need the decorations updated.

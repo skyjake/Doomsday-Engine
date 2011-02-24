@@ -2312,6 +2312,8 @@ void R_PrecacheMap(void)
     for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
+        if(0 == sec->lineDefCount)
+            continue;
         for(j = 0; j < sec->planeCount; ++j)
             Materials_Precache(sec->SP_planematerial(j), true);
     }
@@ -2387,7 +2389,9 @@ void R_PrecacheMap(void)
                 for(j = 0; j < numSectors; ++j)
                 {
                     sector_t* sec = &sectors[j];
-                    uint k;
+                    if(0 == sec->lineDefCount)
+                        continue;
+                    { uint k;
                     for(k = 0; k < sec->planeCount; ++k)
                     {
                         plane_t* pln = sec->planes[k];
@@ -2398,7 +2402,7 @@ void R_PrecacheMap(void)
                             if(hasDecorations)
                                 R_SurfaceListAdd(decoratedSurfaceList, &pln->surface);
                         }
-                    }
+                    }}
                 }
             }
         }

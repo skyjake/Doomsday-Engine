@@ -150,12 +150,17 @@ static void setSubSecSectorOwner(ownerlist_t* ownerList, subsector_t* ssec)
 
 static void findSSecsAffectingSector(gamemap_t* map, uint secIDX)
 {
-    uint                i;
-    subsector_t*        sub;
-    ownernode_t*        node, *p;
-    float               bbox[4];
-    ownerlist_t         subSecOwnerList;
-    sector_t*           sec = &map->sectors[secIDX];
+    assert(map && secIDX < map->numSectors);
+    {
+    sector_t* sec = &map->sectors[secIDX];
+    ownerlist_t subSecOwnerList;
+    ownernode_t* node, *p;
+    subsector_t* sub;
+    float bbox[4];
+    uint i;
+
+    if(0 == sec->lineDefCount)
+        return;
 
     memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
 
@@ -164,12 +169,12 @@ static void findSSecsAffectingSector(gamemap_t* map, uint secIDX)
     bbox[BOXRIGHT]  += 128;
     bbox[BOXTOP]    += 128;
     bbox[BOXBOTTOM] -= 128;
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]);
-#endif
-*/
+#endif*/
+
     for(i = 0; i < map->numSSectors; ++i)
     {
         sub = &map->ssectors[i];
@@ -214,6 +219,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             node = p;
         }
         *ptr = NULL; // terminate.
+    }
     }
 }
 
@@ -344,26 +350,29 @@ Con_Message("ssec %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
  *
  * PRE: Subsector attributors must have been determined first.
  *
- * @param sec           Ptr to the sector to calculate reverb properties of.
+ * @param sec  Ptr to the sector to calculate reverb properties of.
  */
 void S_CalcSectorReverb(sector_t* sec)
 {
-    uint                i;
-    subsector_t*        sub;
-    float               spaceScatter;
-    uint                sectorSpace;
+    subsector_t* sub;
+    float spaceScatter;
+    uint sectorSpace;
 
-    if(!sec)
-        return; // Wha?
+    if(!sec || 0 == sec->lineDefCount)
+        return;
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
         (sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]) *
         (sec->bBox[BOXTOP] - sec->bBox[BOXBOTTOM]);
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
-#endif
-*/
+#endif*/
+
+    sec->reverb[SRD_SPACE] = sec->reverb[SRD_VOLUME] =
+        sec->reverb[SRD_DECAY] = sec->reverb[SRD_DAMPING] = 0;
+
+    { uint i;
     for(i = 0; i < sec->numReverbSSecAttributors; ++i)
     {
         sub = sec->reverbSSecs[i];
@@ -379,7 +388,7 @@ Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
             sec->reverb[SRD_DAMPING] +=
                 sub->reverb[SRD_DAMPING] / 255.0f * sub->reverb[SRD_SPACE];
         }
-    }
+    }}
 
     if(sec->reverb[SRD_SPACE])
     {
@@ -429,4 +438,3 @@ Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
     if(sec->reverb[SRD_VOLUME] > 1)
         sec->reverb[SRD_VOLUME] = 1;
 }
-

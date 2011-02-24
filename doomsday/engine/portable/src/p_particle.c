@@ -1,10 +1,10 @@
-/**\file
+/**\file p_particle.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1433,6 +1433,9 @@ void P_CheckPtcPlanes(void)
     for(i = 0; i < numSectors; ++i)
     {
         sector = SECTOR_PTR(i);
+        if(0 == sector->lineDefCount)
+            continue;
+
         for(p = 0; p < 2; ++p)
         {
             uint plane = p;

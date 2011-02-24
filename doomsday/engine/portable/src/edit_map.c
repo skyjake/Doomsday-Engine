@@ -609,27 +609,30 @@ boolean MPE_Begin(const char *name)
     return true;
 }
 
-static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
+static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
 {
-    uint                i, n, count;
-    sector_t           *sec = &map->sectors[secIDX];
+    assert(map && secIDX < map->numSectors);
+    {
+    sector_t* sec = &map->sectors[secIDX];
+    uint i, n, count;
 
     count = 0;
     for(i = 0; i < map->numSSectors; ++i)
     {
         subsector_t *ssec = &map->ssectors[i];
         if(ssec->sector == sec)
-            count++;
+            ++count;
     }
 
-    sec->ssectors =
-        Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
+    if(0 == count)
+        return;
+
+    sec->ssectors = Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
 
     n = 0;
     for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t        *ssec = &map->ssectors[i];
-
+        subsector_t* ssec = &map->ssectors[i];
         if(ssec->sector == sec)
         {
             ssec->inSectorID = n;
@@ -638,6 +641,7 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
     }
     sec->ssectors[n] = NULL; // Terminate.
     sec->ssectorCount = count;
+    }
 }
 
 /**
@@ -925,25 +929,28 @@ static void finishLineDefs(gamemap_t* map)
     }
 }
 
-static void updateMapBounds(gamemap_t *map)
+static void updateMapBounds(gamemap_t* map)
 {
-    uint                i;
-
+    assert(map);
+    {
+    boolean isFirst = true;
     memset(map->bBox, 0, sizeof(map->bBox));
+    { uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
-        sector_t   *sec = &map->sectors[i];
-
-        if(i == 0)
-        {
-            // The first sector is used as is.
+        sector_t* sec = &map->sectors[i];
+        if(0 == sec->lineDefCount)
+            continue;
+        if(isFirst)
+        {   // The first sector is used as is.
             memcpy(map->bBox, sec->bBox, sizeof(map->bBox));
         }
         else
-        {
-            // Expand the bounding box.
+        {   // Expand the bounding box.
             M_JoinBoxes(map->bBox, sec->bBox);
         }
+        isFirst = false;
+    }}
     }
 }
 
