@@ -4608,7 +4608,14 @@ void Rend_RenderMap(void)
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
-        Rend_RenderNode(numNodes - 1);
+        if(numNodes != 0)
+        {
+            Rend_RenderNode(numNodes - 1);
+        }
+        else
+        {
+            Rend_RenderSubsector(0);
+        }
 
         Rend_RenderShadows();
     }
