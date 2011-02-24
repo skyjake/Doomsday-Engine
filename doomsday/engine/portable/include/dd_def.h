@@ -58,9 +58,9 @@
 #endif
 
 #ifdef RANGECHECK
-#   define DOOMSDAY_VERSIONTEXT "Version "DOOMSDAY_VERSION_TEXT" +R "__DATE__" ("DOOMSDAY_VER_ID")"
+#   define DOOMSDAY_VERSIONTEXT DOOMSDAY_VERSION_TEXT" +R "__DATE__" ("DOOMSDAY_VER_ID")"
 #else
-#   define DOOMSDAY_VERSIONTEXT "Version "DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
+#   define DOOMSDAY_VERSIONTEXT DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
 #endif
 
 #define SAFEDIV(x,y)    (!(y) || !((x)/(y))? 1 : (x)/(y))

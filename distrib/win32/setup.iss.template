@@ -2,7 +2,7 @@
 ; and any changes will get overwritten when the release script is run.
 
 [Setup]
-OutputBaseFilename=deng-${VERSION}-setup
+OutputBaseFilename=deng-${VERSION}
 VersionInfoVersion=${VERSION_PLAIN}
 AppName=Doomsday Engine
 AppVerName=Doomsday Engine ${VERSION}
@@ -17,7 +17,7 @@ AllowNoIcons=yes
 SetupIconFile=..\..\..\snowberry\graphics\snowberry.ico
 UninstallIconFile=..\..\..\snowberry\graphics\snowberry.ico
 SourceDir=..\..\doomsday\build\win32
-OutputDir=..\..\..\distrib\win32\packages
+OutputDir=..\..\..\distrib\releases
 LicenseFile=license.txt
 Compression=lzma/max
 ;Compression=zip/1

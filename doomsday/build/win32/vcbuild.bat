@@ -365,7 +365,7 @@ GOTO Done
 
 :Failure2
 ECHO There were build errors.
-GOTO TheRealEnd
+EXIT /b 1
 
 
 :TheEnd

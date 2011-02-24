@@ -49,7 +49,7 @@
 #define GAME_DETAILS        "jDoom64 is based on jDoom-1.15."
 
 #define GAME_VERSION_TEXT   "0.8.1"
-#define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JDOOM64_VER_ID ")"
+#define GAME_VERSION_TEXTLONG GAME_VERSION_TEXT " " __DATE__ " (" JDOOM64_VER_ID ")"
 #define GAME_VERSION_NUMBER 0,8,1,0 // For WIN32 version info.
 
 #endif

@@ -53,6 +53,7 @@ def find_version():
     
     f = file(os.path.join(DOOMSDAY_DIR, "engine", "portable", "include", "dd_version.h"), 'rt')
     for line in f.readlines():
+        line = line.strip()
         if line[:7] != "#define": continue
         baseAt = line.find("DOOMSDAY_VERSION_BASE")
         nameAt = line.find("DOOMSDAY_RELEASE_NAME")
@@ -84,7 +85,7 @@ def mac_release():
     mkdir('release_build')
     os.chdir('release_build')
     if os.system('cmake ' + DOOMSDAY_DIR + ' && make'):
-        raise "Failed to build from source."
+        raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
     target = OUTPUT_DIR + "/deng-" + DOOMSDAY_VERSION + "_" + TIMESTAMP + ".dmg"
@@ -177,6 +178,11 @@ def win_release():
         .replace('${YEAR}', time.strftime('%Y'))
         .replace('${VERSION}', DOOMSDAY_VERSION)
         .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_PLAIN))
+    
+    # Execute the win32 release script.
+    os.chdir('win32')
+    if os.system('dorel.bat'):
+        raise Exception("Failure in the Windows release script.")
     
 
 def main():
