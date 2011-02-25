@@ -302,7 +302,7 @@ int TGA_Save24_rgb888(const char* filename, int w, int h, const uint8_t* buf)
     writeColorMapSpec(0, 0, 0, file);
     writeImageSpec(0, 0, w, h, 24, file);
 
-    // The save format is BRG.
+    // The save format is BGR.
     outBuf = malloc(w * h * 3);
     for(i = 0; i < w * h; ++i)
     {
