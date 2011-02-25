@@ -40,15 +40,11 @@ def isWindows():
 
 
 def isWindowsVista():
-    """Check if the host is running Windows Vista."""
+    """Check if the host is running Windows Vista or newer."""
     if sys.platform != "win32":
         return False
-    import win32api
-    VER_NT_WORKSTATION = 1
-    version = win32api.GetVersionEx(1)
-    if not version or len(version) < 9:
-        return False
-    return ((version[0] == 6) and (version[8] == VER_NT_WORKSTATION))
+    winVersion = sys.getwindowsversion()
+    return (winVersion[0] >= 6)
 
 
 def isMac():
