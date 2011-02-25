@@ -1036,7 +1036,7 @@ void GL_SmartFilter(int method, byte* in, byte* out, int width, int height)
         GL_ScaleBufferNearest(in, width, height, out, width*2, height*2, 4);
         break;
     case 2: // hq2x
-        GL_SmartFilter2x(in, out, width, height, width * 8);
+        GL_SmartFilter2x(in, width, height, out);
         break;
     };
 }
