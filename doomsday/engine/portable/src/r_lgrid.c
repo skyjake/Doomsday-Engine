@@ -622,7 +622,7 @@ void LG_SectorChanged(sector_t* sector)
     }}
 
     { uint i;
-    for(; i < sector->blockCount; ++i)
+    for(i = 0; i < sector->blockCount; ++i)
     {
         grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
     }}
