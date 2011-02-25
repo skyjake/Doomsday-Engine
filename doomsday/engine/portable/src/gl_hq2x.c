@@ -237,7 +237,7 @@ void GL_SmartFilter2x(const uint8_t* src, int width, int height, uint8_t* dest)
 
             pattern = 0;
             flag = 1;
-            YUV1 = RGBAtoYUV(w[5]); 
+            YUV1 = RGBAtoYUV(w[5]);
 
             { int k;
             for(k = 1; k <= 9; ++k)
