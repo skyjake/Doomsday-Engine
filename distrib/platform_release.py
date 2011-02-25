@@ -204,7 +204,8 @@ sys.path += '.'
 import snowberry"""
     f.close()
     
-    if os.system('cmake -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
+    if os.system('cmake -D SYSTEMARCH=`dpkg --print-architecture`' + 
+                 ' -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
                  ' -D DOOMSDAY_BUILD=' + DOOMSDAY_BUILD +
                  ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && fakeroot make package'):
         raise Exception("Failure to build from source.")
