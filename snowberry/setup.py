@@ -51,6 +51,9 @@ manifest = """
 opts = {
     "py2exe": {
         "includes": "webbrowser",
+        'bundle_files': 1,
+        'compressed': 1,
+        'optimize': 2
     }
 }
 

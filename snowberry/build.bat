@@ -7,7 +7,8 @@ REM -- scripts into a self-extracting RAR archive.
 REM ---- Python Interpreter
 SET PYTHON_DIR=C:\Python25
 
-rd/s/q dist
+md dist
+del /f /q dist\*
 
 REM -- Make the executable.
 "%PYTHON_DIR%"\python setup.py py2exe
