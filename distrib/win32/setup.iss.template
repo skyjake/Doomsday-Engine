@@ -3,7 +3,6 @@
 
 [Setup]
 OutputBaseFilename=deng-${VERSION}_${BUILD}
-VersionInfoVersion=${VERSION_PLAIN}
 AppName=Doomsday Engine
 AppVerName=Doomsday Engine ${VERSION}
 AppPublisher=deng Team
@@ -11,6 +10,10 @@ AppPublisherURL=http://sourceforge.net/projects/deng/
 AppSupportURL=http://www.dengine.net/dew/
 AppUpdatesURL=http://sourceforge.net/projects/deng/
 AppCopyright=Copyright (c) 2003-${YEAR} deng Team
+VersionInfoProductTextVersion=${VERSION}
+VersionInfoProductVersion=${VERSION}
+VersionInfoTextVersion=${VERSION}
+VersionInfoVersion=${VERSION}
 DefaultDirName={pf}\Doomsday
 DefaultGroupName=Doomsday Engine
 AllowNoIcons=yes
