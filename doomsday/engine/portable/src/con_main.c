@@ -1527,9 +1527,10 @@ boolean Con_Responder(ddevent_t* ev)
 
         // Attempt to complete the word.
         completeWord(mode);
-
-        Rend_ConsoleCursorResetBlink();
         updateDedicatedConsoleCmdLine();
+        if(0 == mode)
+            bLineOff = 0;
+        Rend_ConsoleCursorResetBlink();
         }
         return true;
 
