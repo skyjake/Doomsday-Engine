@@ -74,7 +74,7 @@ def create_build_event():
         format = '<li><b>Date:</b> %ai ' + \
                  '<a href=\\"http://deng.git.sourceforge.net/git/gitweb.cgi?p=deng/deng;a=commit;h=%H\\">(show in repository)</a>' + \
                  '<br/><b>Author:</b> %an &lt;<a href=\\"mailto:%ae\\">%ae</a>&gt;<br/>' + \
-                 '<blockquote>%B</blockquote>'
+                 '<b>Summary:</b> %s<blockquote>%b</blockquote>'
         os.system("git log %s..%s --format=\"%s\" >> %s" % (prevBuild, todaysBuild, format, tmpName))
 
         logText = file(tmpName, 'rt').read()
