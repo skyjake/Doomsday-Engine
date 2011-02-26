@@ -71,10 +71,11 @@ def create_build_event():
         
         tmpName = os.path.join(buildDir, 'ctmp')
         
-        format = '<li><b>Date:</b> %ai ' + \
+        format = '<li><b>%s</b>' + \
+                 '<br/>by <a href=\\"mailto:%ae\\"><i>%an</i></a> on ' + \
+                 '%ai ' + \
                  '<a href=\\"http://deng.git.sourceforge.net/git/gitweb.cgi?p=deng/deng;a=commit;h=%H\\">(show in repository)</a>' + \
-                 '<br/><b>Author:</b> %an &lt;<a href=\\"mailto:%ae\\">%ae</a>&gt;<br/>' + \
-                 '<b>Summary:</b> %s<blockquote>%b</blockquote>'
+                 '<blockquote>%b</blockquote>'
         os.system("git log %s..%s --format=\"%s\" >> %s" % (prevBuild, todaysBuild, format, tmpName))
 
         logText = file(tmpName, 'rt').read()
