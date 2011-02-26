@@ -40,6 +40,7 @@
 #include "dd_types.h"
 #include "dd_share.h"
 #include "de_console.h"
+#include "image.h"
 
 // Extract a color component.
 #define COMP(n,c)       (((c) >> ((n) << 3)) & 0xFF)
@@ -161,7 +162,7 @@ static __inline void Interp10(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3
     LerpColor(pc, c1, c2, c3, 14, 1, 1);
 }
 
-void GL_InitSmartFilter(void)
+void GL_InitSmartFilterHQ2x(void)
 {
     /* Initalize RGB to YUV lookup table */
     uint32_t c, r, g, b, y, u, v;
@@ -177,19 +178,21 @@ void GL_InitSmartFilter(void)
     }
 }
 
-void GL_SmartFilter2x(const uint8_t* src, int width, int height, uint8_t* dest)
+uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags)
 {
 #define BPP             (4) // Bytes Per Pixel
 #define OFFSET(x, y)    (BPP*(y)*width + BPP*(x))
 
-    assert(src && dest);
+    assert(src);
     {
-    int pattern, flag, BpL;
+    boolean wrapH = (flags & ICF_UPSCALE_SAMPLE_WRAPH) != 0;
+    boolean wrapV = (flags & ICF_UPSCALE_SAMPLE_WRAPV) != 0;
+    int pattern, flag, BpL, xA, xB, yA, yB;
+    uint8_t* pOut, *dst;
     uint32_t w[10];
-    uint8_t* pOut;
 
     if(width <= 0 || height <= 0)
-        return;
+        return 0;
 
     // +----+----+----+
     // | w1 | w2 | w3 |
@@ -199,41 +202,68 @@ void GL_SmartFilter2x(const uint8_t* src, int width, int height, uint8_t* dest)
     // | w7 | w8 | w9 |
     // +----+----+----+
 
-    BpL = width * 2 * BPP;
-    pOut = dest;
+    BpL = BPP * 2 * width;
+    if(0 == (dst = malloc(BPP * 2 * width * height * 2)))
+        Con_Error("GL_SmartFilterHQ2x: Failed on allocation of %lu bytes for "
+                  "output buffer.", (unsigned long) (BPP * 2 * width * height * 2));
 
-    { int y, off;
+    pOut = dst;
+    { int y;
     for(y = 0; y < height; ++y)
     {
         { int x;
         for(x = 0; x < width; ++x)
         {
-            off = OFFSET(x                    , y);
-            w[5] = ULONG( *((uint32_t*)(src + off)) );
+            w[5] = ULONG( *( (uint32_t*)(src + OFFSET(x, y)) ) );
 
-            off = OFFSET(x                    , y == 0? height-1 : y-1);
-            w[2] = ULONG( *((uint32_t*)(src + off)) );
+            // Horizontal neighbors.
+            if(wrapH)
+            {
+                w[4] = ULONG( *( (uint32_t*)(src + OFFSET(x == 0? width-1 : x-1, y)) ) );
+                w[6] = ULONG( *( (uint32_t*)(src + OFFSET(x == width-1? 0 : x+1, y)) ) );
+            }
+            else
+            {
+                if(x != 0)
+                    w[4] = ULONG( *( (uint32_t*)(src + OFFSET(x-1, y)) ) );
+                else
+                    w[4] = w[5];
 
-            off = OFFSET(x                    , y == height-1? 0 : y+1);
-            w[8] = ULONG( *((uint32_t*)(src + off)) );
+                if(x != width-1)
+                    w[6] = ULONG( *( (uint32_t*)(src + OFFSET(x+1, y)) ) );
+                else
+                    w[6] = w[5];
+            }
 
-            off = OFFSET(x == 0? width-1 : x-1, y == 0? height-1 : y-1);
-            w[1] = ULONG( *((uint32_t*)(src + off)) );
+            // Vertical neighbors.
+            if(wrapV)
+            {
+                w[2] = ULONG( *( (uint32_t*)(src + OFFSET(x, y == 0? height-1 : y-1)) ) );
+                w[8] = ULONG( *( (uint32_t*)(src + OFFSET(x, y == height-1? 0 : y+1)) ) );
+            }
+            else
+            {
+                if(y != 0)
+                    w[2] = ULONG( *( (uint32_t*)(src + OFFSET(x, y-1)) ) );
+                else
+                    w[2] = w[5];
 
-            off = OFFSET(x == 0? width-1 : x-1, y);
-            w[4] = ULONG( *((uint32_t*)(src + off)) );
+                if(y != height-1)
+                    w[8] = ULONG( *( (uint32_t*)(src + OFFSET(x, y+1)) ) );
+                else
+                    w[8] = w[5];
+            }
 
-            off = OFFSET(x == 0? width-1 : x-1, y == height-1? 0 : y+1);
-            w[7] = ULONG( *((uint32_t*)(src + off)) );
+            // Corners.
+            xA =        x == 0? ( wrapH?  width-1 : 0) : x-1;
+            xB =  x == width-1? (!wrapH?  width-1 : 0) : x+1;
+            yA =        y == 0? ( wrapV? height-1 : 0) : y-1;
+            yB = y == height-1? (!wrapV? height-1 : 0) : y+1;
 
-            off = OFFSET(x == width-1? 0 : x+1, y == 0? height-1 : y-1);
-            w[3] = ULONG( *((uint32_t*)(src + off)) );
-
-            off = OFFSET(x == width-1? 0 : x+1, y);
-            w[6] = ULONG( *((uint32_t*)(src + off)) );
-
-            off = OFFSET(x == width-1? 0 : x+1, y == height-1? 0 : y+1);
-            w[9] = ULONG( *((uint32_t*)(src + off)) );
+            w[1] = ULONG( *( (uint32_t*)(src + OFFSET(xA, yA)) ) );
+            w[7] = ULONG( *( (uint32_t*)(src + OFFSET(xA, yB)) ) );
+            w[3] = ULONG( *( (uint32_t*)(src + OFFSET(xB, yA)) ) );
+            w[9] = ULONG( *( (uint32_t*)(src + OFFSET(xB, yB)) ) );
 
             pattern = 0;
             flag = 1;
@@ -1870,13 +1900,15 @@ void GL_SmartFilter2x(const uint8_t* src, int width, int height, uint8_t* dest)
                     break;
               }
             default:
-                Con_Error("GL_SmartFilter2x: Invalid value, pattern = %x.", pattern);
+                Con_Error("GL_SmartFilterHQ2x: Invalid pattern %i.", pattern);
                 break;
             }
             pOut += 2 * BPP;
         }}
         pOut += BpL;
     }}
+
+    return dst;
     }
 
 #undef OFFSET

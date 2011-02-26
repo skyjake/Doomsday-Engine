@@ -257,6 +257,7 @@
 		<Unit filename="..\..\engine\portable\include\gl_tex.h" />
 		<Unit filename="..\..\engine\portable\include\gl_texmanager.h" />
 		<Unit filename="..\..\engine\portable\include\gl_tga.h" />
+		<Unit filename="..\..\engine\portable\include\image.h" />
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />

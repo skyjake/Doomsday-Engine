@@ -29,23 +29,27 @@
 #ifndef LIBDENG_TEXTURES_H
 #define LIBDENG_TEXTURES_H
 
-#include "gl_texmanager.h"
+struct image_s;
 
-#define MINTEXWIDTH             8
-#define MINTEXHEIGHT            8
+boolean GL_OptimalSize(int width, int height, int* optWidth, int* optHeight,
+    boolean noStretch, boolean isMipMapped);
 
-boolean         GL_OptimalSize(int width, int height, int *optWidth,
-                               int *optHeight, boolean noStretch,
-                               boolean isMipMapped);
-void            GL_ConvertBuffer(int width, int height, int informat,
-                                 int outformat, byte *in, byte *out,
-                                 colorpaletteid_t pal, boolean gamma);
-void            GL_ScaleBuffer32(byte *in, int inWidth, int inHeight,
-                                 byte *out, int outWidth, int outHeight,
-                                 int comps);
+/**
+ * in/out format:
+ * 1 = palette indices
+ * 2 = palette indices followed by alpha values
+ * 3 = RGB
+ * 4 = RGBA
+ */
+void GL_ConvertBuffer(int width, int height, int informat, int outformat,
+    const uint8_t* src, uint8_t* dst, colorpaletteid_t pal, boolean gamma);
+
+uint8_t* GL_ScaleBuffer32(const uint8_t* src, int width, int height, int comps,
+    int outWidth, int outHeight);
+
 void            GL_DownMipmap32(byte* in, int width, int height, int comps);
-void            GL_ConvertToAlpha(image_t *image, boolean makeWhite);
-void            GL_ConvertToLuminance(image_t *image);
+void            GL_ConvertToAlpha(struct image_s *image, boolean makeWhite);
+void            GL_ConvertToLuminance(struct image_s *image);
 void            GL_CalcLuminance(byte* buffer, int width, int height,
                                  int pixelsize, colorpaletteid_t palid,
                                  float* brightX, float* brightY,
@@ -69,9 +73,27 @@ int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
 void            amplify(float* rgb);
 void            ColorOutlines(byte* buffer, int width, int height);
 
-boolean         ImageHasAlpha(image_t *image);
+boolean         ImageHasAlpha(struct image_s *image);
 
-int             GL_PickSmartScaleMethod(int width, int height);
-void            GL_SmartFilter(int method, byte* in, byte* out, int width, int height);
+/**
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param flags  @see imageConversionFlags.
+ */
+int GL_ChooseSmartFilter(int width, int height, int flags);
+
+/**
+ * @param method  Unique identifier of the smart filtering method to apply.
+ * @param src  Source image to be filtered.
+ * @param width  Logical width of the source image in pixels.
+ * @param height  Logical height of the source image in pixels.
+ * @param flags  @see imageConversionFlags.
+ * @param outWidth  Logical width of resultant image in pixels.
+ * @param outHeight  Logical height of resultant image in pixels.
+ *
+ * @return  Newly allocated version of the source image if filtered else @c == @a src.
+ */
+uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
+    int flags, int* outWidth, int* outHeight);
 
 #endif /* LIBDENG_TEXTURES_H */

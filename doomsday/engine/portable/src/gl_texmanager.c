@@ -48,6 +48,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "image.h"
 #include "def_main.h"
 #include "ui_main.h"
 #include "p_particle.h"
@@ -210,23 +211,18 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
 }
 
-/**
- * Called before real texture management is up and running, during engine
- * early init.
- */
 void GL_EarlyInitTextureManager(void)
 {
-    int                 i;
-
-    // Initialize the smart texture filtering routines.
-    GL_InitSmartFilter();
-
+    GL_InitSmartFilterHQ2x();
     calcGammaTable();
 
     numGLTextures = 0;
     glTextures = NULL;
+
+    { int i;
     for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
         memset(glTextureTypeData[i].hashTable, 0, sizeof(glTextureTypeData[i].hashTable));
+    }
 }
 
 /**
@@ -639,7 +635,7 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
  */
 DGLuint GL_UploadTexture2(texturecontent_t* content)
 {
-    byte* data = content->buffer;
+    uint8_t* data = (uint8_t*) content->buffer;
     int width = content->width;
     int height = content->height;
     boolean alphaChannel = ((content->flags & TXCF_UPLOAD_ARG_ALPHACHANNEL) != 0);
@@ -648,9 +644,8 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     boolean noStretch = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
     boolean noSmartFilter = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
     boolean applyTexGamma = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
-    int i, levelWidth, levelHeight; // width and height at the current level
-    int comps;
-    byte* buffer, *rgbaOriginal, *idxBuffer;
+    int i, comps, levelWidth, levelHeight; // width and height at the current level
+    uint8_t* buffer = NULL, *rgbaOriginal = NULL, *idxBuffer = NULL;
     boolean freeOriginal;
     boolean freeBuffer;
 
@@ -674,7 +669,10 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         // If there isn't an alpha channel yet, add one.
         freeOriginal = true;
         comps = 4;
-        rgbaOriginal = M_Malloc(width * height * comps);
+        if(0 == (rgbaOriginal = malloc(width * height * comps)))
+            Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for RGBA"
+                      "conversion buffer.", (unsigned long) (width * height * comps));
+
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data, rgbaOriginal, 0, !load8bit);
 
         if(!alphaChannel)
@@ -696,20 +694,24 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         }
     }
 
-    // If smart filtering is enabled, all textures are magnified 2x.
-    if(useSmartFilter && !noSmartFilter /* && comps == 3 */ )
+    if(useSmartFilter && !noSmartFilter)
     {
-        byte* filtered = M_Malloc(4 * width * height * 4);
+        uint8_t* filtered;
+        int smartFlags = ICF_UPSCALE_SAMPLE_WRAP;
 
         if(comps == 3)
         {
             // Must convert to RGBA.
-            byte* temp = M_Malloc(4 * width * height);
+            uint8_t* temp;
+
+            if(0 == (temp = malloc(4 * width * height)))
+                Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for"
+                          "RGBA conversion buffer.", (unsigned long) (4 * width * height));
 
             GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp, 0, !load8bit);
 
             if(freeOriginal)
-                M_Free(rgbaOriginal);
+                free(rgbaOriginal);
 
             rgbaOriginal = temp;
             freeOriginal = true;
@@ -717,16 +719,17 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
             alphaChannel = true;
         }
 
-        GL_SmartFilter(GL_PickSmartScaleMethod(width, height), rgbaOriginal, filtered, width, height);
-        width *= 2;
-        height *= 2;
+        filtered = GL_SmartFilter(GL_ChooseSmartFilter(width, height, 0), rgbaOriginal, width, height, smartFlags, &width, &height);
         noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight, noStretch, generateMipmaps);
 
-        // The filtered copy is now the 'original' image data.
-        if(freeOriginal)
-            M_Free(rgbaOriginal);
-        rgbaOriginal = filtered;
-        freeOriginal = true;
+        if(filtered != rgbaOriginal)
+        {
+            freeOriginal = true;
+            // The filtered copy will be the 'original' image data.
+            if(freeOriginal)
+                free(rgbaOriginal);
+            rgbaOriginal = filtered;
+        }
     }
 
     // Prepare the RGB(A) buffer for the texture: we want a buffer with
@@ -741,21 +744,26 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     }
     else
     {
-        freeBuffer = true;
-        buffer = M_Malloc(levelWidth * levelHeight * comps);
         if(noStretch)
         {
             // Copy the image into a buffer with power-of-two dimensions.
+            if(0 == (buffer = malloc(levelWidth * levelHeight * comps)))
+                Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for"
+                          "upscale buffer.", (unsigned long) (levelWidth * levelHeight * comps));
+
             memset(buffer, 0, levelWidth * levelHeight * comps);
             for(i = 0; i < height; ++i) // Copy line by line.
                 memcpy(buffer + levelWidth * comps * i, rgbaOriginal + width * comps * i, comps * width);
+            freeBuffer = true;
         }
         else
         {
             // Stretch to fit into power-of-two.
             if(width != levelWidth || height != levelHeight)
             {
-                GL_ScaleBuffer32(rgbaOriginal, width, height, buffer, levelWidth, levelHeight, comps);
+                buffer = GL_ScaleBuffer32(rgbaOriginal, width, height, comps, levelWidth, levelHeight);
+                if(buffer != rgbaOriginal)
+                    freeBuffer = true;
             }
         }
     }
@@ -763,7 +771,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     // The RGB(A) copy of the source image is no longer needed.
     if(freeOriginal)
     {
-        M_Free(rgbaOriginal);
+        free(rgbaOriginal);
         rgbaOriginal = NULL;
     }
 
@@ -774,10 +782,13 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     {
         // We are unable to generate mipmaps for paletted textures.
         DGLuint pal = R_GetColorPalette(content->palette);
+        size_t outSize = levelWidth * levelHeight * (alphaChannel ? 2 : 1);
         int canGenMips = 0;
 
         // Prepare the palette indices buffer, to be handed over to DGL.
-        idxBuffer = M_Malloc(levelWidth * levelHeight * (alphaChannel ? 2 : 1));
+        if(0 == (idxBuffer = malloc(outSize)))
+            Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for"
+                      "8bit-palettized down-mip buffer.", (unsigned long) outSize);
 
         // Since this is a paletted texture, we may need to manually
         // generate the mipmaps.
@@ -809,7 +820,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
             levelHeight >>= 1;
         }
 
-        M_Free(idxBuffer);
+        free(idxBuffer);
     }
     else
     {
@@ -821,7 +832,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     }
 
     if(freeBuffer)
-        M_Free(buffer);
+        free(buffer);
 
     return content->name;
 }
@@ -1205,13 +1216,14 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
         {
             int newWidth = MIN_OF(image->width, GL_state.maxTexSize);
             int newHeight = MIN_OF(image->height, GL_state.maxTexSize);
-            byte* tmp = M_Malloc(newWidth * newHeight * image->pixelSize);
-
-            GL_ScaleBuffer32(image->pixels, image->width, image->height, tmp, newWidth, newHeight, image->pixelSize);
-            M_Free(image->pixels);
-            image->pixels = tmp;
-            image->width = newWidth;
-            image->height = newHeight;
+            uint8_t* scaledPixels = GL_ScaleBuffer32(image->pixels, image->width, image->height, image->pixelSize, newWidth, newHeight);
+            if(scaledPixels != image->pixels)
+            {
+                free(image->pixels);
+                image->pixels = scaledPixels;
+                image->width = newWidth;
+                image->height = newHeight;
+            }
         }
 
         // Force it to grayscale?
@@ -2837,10 +2849,13 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
             if(scaleSharp)
             {
-                int scaleMethod = GL_PickSmartScaleMethod(image.width, image.height);
+                int scaleMethod = GL_ChooseSmartFilter(image.width, image.height, 0);
                 int numpels = image.width * image.height;
-                byte* rgbaPixels = M_Malloc(numpels * 4 * 2);
-                byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
+                uint8_t* rgbaPixels, *upscaledPixels;
+
+                if(0 == (rgbaPixels = malloc(numpels * 4)))
+                    Con_Error("GLTexture_Prepare: Failed on allocation of %lu bytes for "
+                              "RGBA conversion buffer.", (unsigned long) (numpels * 4));
 
                 GL_ConvertBuffer(image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1),
                     4, image.pixels, rgbaPixels, 0, false);
@@ -2848,34 +2863,32 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
                     Desaturate(rgbaPixels, image.width, image.height, 4);
 
-                GL_SmartFilter(scaleMethod, rgbaPixels, upscaledPixels, image.width, image.height);
-                image.width *= 2;
-                image.height *= 2;
+                upscaledPixels = GL_SmartFilter(scaleMethod, rgbaPixels, image.width, image.height, 0, &image.width, &image.height);
+                if(upscaledPixels != rgbaPixels)
+                {
+                    free(rgbaPixels);
+                    rgbaPixels = upscaledPixels;
+                }
 
-                EnhanceContrast(upscaledPixels, image.width,image.height);
-                //SharpenPixels(upscaledPixels, image.width, image.height);
-                //BlackOutlines(upscaledPixels, image.width, image.height);
+                EnhanceContrast(rgbaPixels, image.width, image.height);
+                //SharpenPixels(rgbaPixels, image.width, image.height);
+                //BlackOutlines(rgbaPixels, image.width, image.height);
 
                 // Back to indexed+alpha?
                 if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
                 {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                     // Replace the old buffer.
-                    M_Free(rgbaPixels);
-                    M_Free(image.pixels);
-                    image.pixels = upscaledPixels;
+                    free(image.pixels);
+                    image.pixels = rgbaPixels;
                     image.pixelSize = 4;
 
                     GL_ConvertToLuminance(&image);
                     Amplify(image.pixels, image.width, image.height, image.pixelSize == 2);
                 }
                 else
-                {   // Yes. Quantize down from RGA(+A) to Indexed(+A).
+                {   // Yes. Quantize down from RGA(+A) to Indexed(+A), replacing the old image.
                     GL_ConvertBuffer(image.width, image.height, 4, ((image.flags & IMGF_IS_MASKED)? 2 : 1),
-                        upscaledPixels, rgbaPixels, 0, false);
-                    // Replace the old buffer.
-                    M_Free(upscaledPixels);
-                    M_Free(image.pixels);
-                    image.pixels = rgbaPixels;
+                        rgbaPixels, image.pixels, 0, false);
                 }
 
                 // Lets not do this again.
@@ -2899,15 +2912,17 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         {
             if(image.pixelSize == 3 || image.pixelSize == 4)
             {
-                int newWidth = MIN_OF(image.width, GL_state.maxTexSize);
+                int newWidth  = MIN_OF(image.width, GL_state.maxTexSize);
                 int newHeight = MIN_OF(image.height, GL_state.maxTexSize);
-                byte* temp = M_Malloc(newWidth * newHeight * image.pixelSize);
-
-                GL_ScaleBuffer32(image.pixels, image.width, image.height, temp, newWidth, newHeight, image.pixelSize);
-                M_Free(image.pixels);
-                image.pixels = temp;
-                image.width = newWidth;
-                image.height = newHeight;
+                uint8_t* scaledPixels = GL_ScaleBuffer32(image.pixels, image.width, image.height, image.pixelSize,
+                    newWidth, newHeight);
+                if(scaledPixels != image.pixels)
+                {
+                    free(image.pixels);
+                    image.pixels = scaledPixels;
+                    image.width = newWidth;
+                    image.height = newHeight;
+                }
             }
             else
             {

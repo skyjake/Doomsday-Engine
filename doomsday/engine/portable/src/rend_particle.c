@@ -39,6 +39,8 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "image.h"
+
 // MACROS ------------------------------------------------------------------
 
 // Point + custom textures.

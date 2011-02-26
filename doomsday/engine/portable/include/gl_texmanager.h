@@ -35,6 +35,10 @@
 #include "gl_defer.h"
 
 #define TEXQ_BEST               8
+#define MINTEXWIDTH             8
+#define MINTEXHEIGHT            8
+
+struct image_s;
 
 /**
  * gltexture
@@ -100,26 +104,6 @@ typedef struct gltexture_inst_s {
     } data; // type-specific data.
 } gltexture_inst_t;
 
-/**
- * @defgroup imageFlags Image Flags
- */
-/*@{*/
-#define IMGF_IS_MASKED          0x1
-/*@}*/
-
-/**
- * This structure is used with GL_LoadImage. When it is no longer needed
- * it must be discarded with GL_DestroyImage.
- */
-typedef struct image_s {
-    int width;
-    int height;
-    int pixelSize;
-    int originalBits; /// Bits per pixel in the image file.
-    int flags; /// @see imageFlags
-    uint8_t* pixels;
-} image_t;
-
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
 extern int texMagMode, texAniso;
@@ -131,7 +115,12 @@ extern int glmode[6];
 
 void            GL_TexRegister(void);
 
-void            GL_EarlyInitTextureManager(void);
+/**
+ * Called before real texture management is up and running, during engine
+ * early init.
+ */
+void GL_EarlyInitTextureManager(void);
+
 void            GL_InitTextureManager(void);
 void            GL_ResetTextureManager(void);
 void            GL_ShutdownTextureManager(void);
@@ -162,13 +151,13 @@ boolean         GL_IsColorKeyed(const char* path);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-byte* GL_LoadImage(image_t* img, const char* filePath);
-byte* GL_LoadImageStr(image_t* img, const ddstring_t* filePath);
+byte* GL_LoadImage(struct image_s* img, const char* filePath);
+byte* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
 
 /**
  * Release all dynamically allocated memory attached to image.
  */
-void GL_DestroyImage(image_t* img);
+void GL_DestroyImage(struct image_s* img);
 
 DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  boolean flagAlphaChannel,
@@ -181,21 +170,21 @@ DGLuint         GL_UploadTexture(byte* data, int width, int height,
                                  int otherFlags);
 DGLuint         GL_UploadTexture2(texturecontent_t *content);
 
-byte            GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadSprite(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* context);
-byte            GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadFlat(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadDoomTexture(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadSprite(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadDDTexture(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadShinyTexture(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadMaskTexture(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadDetailTexture(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadModelSkin(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadModelShinySkin(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadLightMap(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadFlareTexture(struct image_s* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadDoomPatch(struct image_s* image, const gltexture_inst_t* inst, void* context);
 
-byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
-byte            GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode);
+byte            GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
+byte            GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 
 DGLuint         GL_PrepareExtTexture(const char* name, gfxmode_t mode,
                                      int useMipmap, int minFilter,

@@ -44,6 +44,8 @@
 #include "de_misc.h"
 #include "de_network.h"
 
+#include "image.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define SCREENSHOT_TEXTURE_SIZE 512

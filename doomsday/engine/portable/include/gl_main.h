@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,13 +116,13 @@ void            GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes);
 
 void            GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3],
                                       ushort idx);
-boolean         GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
-                                  boolean gammaCorrect, const byte* in,
-                                  int informat, int width, int height);
-boolean         GL_QuantizeImageToPalette(byte* out, int outformat,
-                                          DGLuint palid, const byte* in,
-                                          int informat, int width,
-                                          int height);
+
+boolean GL_PalettizeImage(uint8_t* out, int outformat, DGLuint palid,
+    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
+
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, DGLuint palid,
+    const uint8_t* in, int informat, int width, int height);
+
 void            GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid,
                                            int width, int height);
 

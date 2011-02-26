@@ -1,10 +1,10 @@
-/**\file
+/**\file dgl_texture.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dgl_texture.c: Textures and color palette handling.
+ * Textures and color palette handling.
  *
  * Get OpenGL header files from:
  * http://oss.sgi.com/projects/ogl-sample/
@@ -417,21 +417,23 @@ void GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3], ushort idx)
     }
 }
 
-boolean GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
-                          boolean gammaCorrect, const byte* in,
-                          int informat, int width, int height)
+boolean GL_PalettizeImage(uint8_t* out, int outformat, DGLuint palid,
+    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height)
 {
-    if(out && in && width > 0 && height > 0 && informat <= 2 &&
-       outformat >= 3 && palid && palid - 1 < numColorPalettes)
+    assert(in && out);
+    if(width <= 0 || height <= 0)
+        return false;
+
+    if(informat <= 2 && outformat >= 3 && palid && palid - 1 < numColorPalettes)
     {
-        int                 i, numPixels = width * height,
-                            inSize = (informat == 2 ? 1 : informat),
-                            outSize = (outformat == 2 ? 1 : outformat);
+        int i, numPixels = width * height;
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
         const gl_colorpalette_t* pal = &colorPalettes[palid-1];
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
-            ushort          idx = MINMAX_OF(0, (*in), pal->num) * 3;
+            ushort idx = MINMAX_OF(0, (*in), pal->num) * 3;
 
             if(gammaCorrect)
             {
@@ -455,24 +457,21 @@ boolean GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
                     out[CA] = 0;
             }
         }
-
         return true;
     }
-
     return false;
 }
 
-boolean GL_QuantizeImageToPalette(byte* out, int outformat,
-                                  DGLuint palid, const byte* in,
-                                  int informat, int width, int height)
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, DGLuint palid,
+    const uint8_t* in, int informat, int width, int height)
 {
     if(in && out && informat >= 3 && outformat <= 2 && width > 0 &&
        height > 0 && palid && palid - 1 < numColorPalettes)
     {
         gl_colorpalette_t*  pal = &colorPalettes[palid-1];
-        int                 i, numPixels = width * height,
-                            inSize = (informat == 2 ? 1 : informat),
-                            outSize = (outformat == 2 ? 1 : outformat);
+        int i, numPixels = width * height;
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
 
         // Ensure we've prepared the 18 to 8 table.
         prepareColorPalette18To8(pal);
@@ -491,10 +490,8 @@ boolean GL_QuantizeImageToPalette(byte* out, int outformat,
                     out[numPixels * outSize] = 0;
             }
         }
-
         return true;
     }
-
     return false;
 }
 

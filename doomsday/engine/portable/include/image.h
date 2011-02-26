@@ -1,10 +1,10 @@
-/**\file gl_hq2x.h
+/**\file image.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,28 +18,40 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * High-Quality 2x Graphics Resizing.
- */
-
-#ifndef LIBDENG_GRAPHICS_HQ2X_H
-#define LIBDENG_GRAPHICS_HQ2X_H
+#ifndef LIBDENG_IMAGE_H
+#define LIBDENG_IMAGE_H
 
 /**
- * Initialize the lookup tables used in the hq2x algorithm.
+ * @defgroup imageFlags Image Flags
  */
-void GL_InitSmartFilterHQ2x(void);
+/*@{*/
+#define IMGF_IS_MASKED          0x1
+/*@}*/
 
 /**
- * @param src  R8G8B8A8 source image to be scaled.
- * @param width  Logical width of the source image in pixels.
- * @param height  Logical height of the source image in pixels.
- * @param flags  @see imageConversionFlags
+ * This structure is used with GL_LoadImage. When it is no longer needed
+ * it must be discarded with GL_DestroyImage.
  */
-uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags);
+typedef struct image_s {
+    int width;
+    int height;
+    int pixelSize;
+    int originalBits; /// Bits per pixel in the image file.
+    int flags; /// @see imageFlags
+    uint8_t* pixels;
+} image_t;
 
-#endif /* LIBDENG_GRAPHICS_HQ2X_H */
+/**
+ * @defgroup imageConversionFlags Image Conversion Flags.
+ */
+/*@{*/
+#define ICF_UPSCALE_SAMPLE_WRAPH    (0x1)
+#define ICF_UPSCALE_SAMPLE_WRAPV    (0x2)
+#define ICF_UPSCALE_SAMPLE_WRAP     (ICF_UPSCALE_SAMPLE_WRAPH|ICF_UPSCALE_SAMPLE_WRAPV)
+/*@}*/
+
+#endif /* LIBDENG_IMAGE_H */

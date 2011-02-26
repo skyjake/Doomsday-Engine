@@ -40,6 +40,7 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include "image.h"
 #include "rend_console.h" // \todo Move Rend_ConsoleUpdateTitle somewhere more suitable.
 
 // MACROS ------------------------------------------------------------------

@@ -38,6 +38,8 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
+#include "image.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -104,16 +106,8 @@ void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
     }
 }
 
-/**
- * in/out format:
- * 1 = palette indices
- * 2 = palette indices followed by alpha values
- * 3 = RGB
- * 4 = RGBA
- */
 void GL_ConvertBuffer(int width, int height, int informat, int outformat,
-                      byte *in, byte *out, colorpaletteid_t palid,
-                      boolean gamma)
+    const uint8_t* in, uint8_t* out, colorpaletteid_t palid, boolean gamma)
 {
     if(informat == outformat)
     {
@@ -126,24 +120,28 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
     if(informat <= 2 && outformat >= 3)
     {
         GL_PalettizeImage(out, outformat, R_GetColorPalette(palid), gamma,
-                          in, informat, width, height);
+            in, informat, width, height);
+        return;
     }
+
     // Conversion from RGB(A) to pal8(a), using pal18To8.
-    else if(informat >= 3 && outformat <= 2)
+    if(informat >= 3 && outformat <= 2)
     {
         GL_QuantizeImageToPalette(out, outformat, R_GetColorPalette(palid),
-                                  in, informat, width, height);
+            in, informat, width, height);
+        return;
     }
-    else if(informat == 3 && outformat == 4)
+
+    if(informat == 3 && outformat == 4)
     {
-        int                 i, numPixels = width * height,
-                            inSize = (informat == 2 ? 1 : informat),
-                            outSize = (outformat == 2 ? 1 : outformat);
+        int i, numPixels = width * height;
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             memcpy(out, in, 3);
-            out[3] = 0xff;      // Opaque.
+            out[3] = 0xff; // Opaque.
         }
     }
 }
@@ -155,19 +153,19 @@ void GL_ConvertBuffer(int width, int height, int informat, int outformat,
  *
  * \fixme Probably could be optimized.
  */
-static void scaleLine(byte *in, int inStride, byte *out, int outStride,
-                      int outLen, int inLen, int comps)
+static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStride,
+    int outLen, int inLen, int comps)
 {
-    int         i, c;
-    float       inToOutScale = outLen / (float) inLen;
+    float inToOutScale = outLen / (float) inLen;
+    int i, c;
 
     if(inToOutScale > 1)
     {
         // Magnification is done using linear interpolation.
-        fixed_t     inPosDelta = (FRACUNIT * (inLen - 1)) / (outLen - 1);
-        fixed_t     inPos = inPosDelta;
-        byte       *col1, *col2;
-        int         weight, invWeight;
+        fixed_t inPosDelta = (FRACUNIT * (inLen - 1)) / (outLen - 1);
+        fixed_t inPos = inPosDelta;
+        const uint8_t* col1, *col2;
+        int weight, invWeight;
 
         // The first pixel.
         memcpy(out, in, comps);
@@ -195,8 +193,8 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
     {
         // Minification needs to calculate the average of each of
         // the pixels contained by the out pixel.
-        uint        cumul[4] = { 0, 0, 0, 0 }, count = 0;
-        int         outpos = 0;
+        uint cumul[4] = { 0, 0, 0, 0 }, count = 0;
+        int outpos = 0;
 
         for(i = 0; i < inLen; ++i, in += inStride)
         {
@@ -246,27 +244,30 @@ static void scaleLine(byte *in, int inStride, byte *out, int outStride,
     }
 }
 
-void GL_ScaleBuffer32(byte *in, int inWidth, int inHeight, byte *out,
-                      int outWidth, int outHeight, int comps)
+/// \todo Avoid use of a secondary buffer by scaling directly to output.
+uint8_t* GL_ScaleBuffer32(const uint8_t* in, int inWidth, int inHeight, int comps,
+    int outWidth, int outHeight)
 {
-    int         i;
-    int         stride;
-    uint        inOffsetSize, outOffsetSize;
-    byte       *inOff, *outOff;
-    byte       *buffer;
+    uint8_t* outOff, *buffer = GetScratchBuffer(comps * outWidth * inHeight);
+    uint inOffsetSize, outOffsetSize;
+    const uint8_t* inOff;
+    int stride;
+    uint8_t* out;
 
-    buffer = GetScratchBuffer(outWidth * inHeight * comps);
+    if(0 == (out = malloc(comps * outWidth * outHeight)))
+        Con_Error("GL_ScaleBuffer32: Failed on allocation of %lu bytes for "
+                  "output buffer.", (unsigned long) (comps * outWidth * outHeight));
 
     // First scale horizontally, to outWidth, into the temporary buffer.
     inOff = in;
     outOff = buffer;
     inOffsetSize = inWidth * comps;
     outOffsetSize = outWidth * comps;
-    for(i = 0; i < inHeight;
-        ++i, inOff += inOffsetSize, outOff += outOffsetSize)
+    { int i;
+    for(i = 0; i < inHeight; ++i, inOff += inOffsetSize, outOff += outOffsetSize)
     {
         scaleLine(inOff, comps, outOff, comps, outWidth, inWidth, comps);
-    }
+    }}
 
     // Then scale vertically, to outHeight, into the out buffer.
     inOff = buffer;
@@ -274,12 +275,12 @@ void GL_ScaleBuffer32(byte *in, int inWidth, int inHeight, byte *out,
     stride = outWidth * comps;
     inOffsetSize = comps;
     outOffsetSize = comps;
-    for(i = 0; i < outWidth;
-        ++i, inOff += inOffsetSize, outOff += outOffsetSize)
+    { int i;
+    for(i = 0; i < outWidth; ++i, inOff += inOffsetSize, outOff += outOffsetSize)
     {
-        scaleLine(inOff, stride, outOff, stride, outHeight, inHeight,
-                  comps);
-    }
+        scaleLine(inOff, stride, outOff, stride, outHeight, inHeight, comps);
+    }}
+    return out;
 }
 
 /**
@@ -997,46 +998,77 @@ byte *GL_ApplyColorKeying(byte *buf, uint pixelSize, uint width,
     return NULL;
 }
 
-void GL_ScaleBufferNearest(const byte* in, int width, int height,
-    byte* out, int outWidth, int outHeight, int comps)
+uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int comps,
+    int outWidth, int outHeight)
 {
-    int ratioX = (int)(width << 16 ) / outWidth + 1;
+    int ratioX = (int)(width  << 16) / outWidth  + 1;
     int ratioY = (int)(height << 16) / outHeight + 1;
-    int i, j;
-
     int shearY = 0;
+    uint8_t* out, *outP;
+
+    if(NULL == (out = malloc(comps * outWidth * outHeight)))
+        Con_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
+                  "output buffer.", (unsigned long) (comps * outWidth * outHeight));
+
+    outP = out;
+    { int i;
     for(i = 0; i < outHeight; ++i, shearY += ratioY)
     {
         int shearX = 0;
         int shearY2 = (shearY >> 16) * width;
-        for(j = 0; j < outWidth; ++j, out += comps, shearX += ratioX)
+        { int j;
+        for(j = 0; j < outWidth; ++j, outP += comps, shearX += ratioX)
         {
             int c, n = (shearY2 + (shearX >> 16)) * comps;
             for(c = 0; c < comps; ++c, n++)
-                out[c] = in[n];
-        }
-    }
+                outP[c] = in[n];
+        }}
+    }}
+    return out;
 }
 
-int GL_PickSmartScaleMethod(int width, int height)
+int GL_ChooseSmartFilter(int width, int height, int flags)
 {
     if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
         return 2; // hq2x
     return 1; // nearest neighbor.
 }
 
-void GL_SmartFilter(int method, byte* in, byte* out, int width, int height)
+uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
+    int flags, int* outWidth, int* outHeight)
 {
+    int newWidth, newHeight;
+    uint8_t* out = NULL;
+
     switch(method)
     {
     default: // linear interpolation.
-        GL_ScaleBuffer32(in, width, height, out, width*2, height*2, 4);
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_ScaleBuffer32(src, width, height, 4, newWidth, newHeight);
         break;
+
     case 1: // nearest neighbor.
-        GL_ScaleBufferNearest(in, width, height, out, width*2, height*2, 4);
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_ScaleBufferNearest(src, width, height, 4, newWidth, newHeight);
         break;
+
     case 2: // hq2x
-        GL_SmartFilter2x(in, width, height, out);
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_SmartFilterHQ2x(src, width, height, flags);
         break;
     };
+
+    if(NULL == out)
+    {   // Unchanged, return the source image.
+        if(outWidth)  *outWidth  = width;
+        if(outHeight) *outHeight = height;
+        return (uint8_t*)src;
+    }
+
+    if(outWidth)  *outWidth  = newWidth;
+    if(outHeight) *outHeight = newHeight;
+    return out;
 }

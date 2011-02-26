@@ -2814,6 +2814,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\image.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\m_args.h"
 				>
 			</File>
