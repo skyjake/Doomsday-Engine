@@ -519,36 +519,54 @@ int LineAverageRGB(byte *imgdata, int width, int height, int line,
     return 1; // Successful.
 }
 
-/**
- * Fills the empty pixels with reasonable color indices in order to get rid
- * of black outlines caused by texture filtering.
- *
- * \fixme Not a very efficient algorithm...
- */
-void ColorOutlines(byte *buffer, int width, int height)
+/// \fixme Not a very efficient algorithm...
+void ColorOutlines(uint8_t* buffer, int width, int height)
 {
-    int         i, k, a, b;
-    byte       *ptr;
-    const int   numpels = width * height;
+    assert(buffer);
+    {
+    const int numpels = width * height;
+    uint8_t* w[5];
+    int x, y;
 
-    for(k = 0; k < height; ++k)
-        for(i = 0; i < width; ++i)
-            // Solid pixels spread around...
-            if(buffer[numpels + i + k * width])
-            {
-                for(b = -1; b <= 1; ++b)
-                    for(a = -1; a <= 1; ++a)
-                    {
-                        // First check that the pixel is OK.
-                        if((!a && !b) || i + a < 0 || k + b < 0 ||
-                           i + a >= width || k + b >= height)
-                            continue;
+    if(width <= 0 || height <= 0)
+        return;
 
-                        ptr = buffer + i + a + (k + b) * width;
-                        if(!ptr[numpels])   // An alpha pixel?
-                            *ptr = buffer[i + k * width];
-                    }
-            }
+    //      +----+
+    //      | w0 |
+    // +----+----+----+
+    // | w1 | w2 | w3 |
+    // +----+----+----+
+    //      | w4 |
+    //      +----+
+
+    for(y = 0; y < height; ++y)
+        for(x = 0; x < width; ++x)
+        {
+            // Only solid pixels spread.
+            if(!buffer[numpels + x + y * width])
+                continue;
+
+            w[2] = buffer + x + y * width;
+
+            w[0] = buffer + x + (y +        (y == 0? 0 : -1)) * width;
+            w[4] = buffer + x + (y + (y == height-1? 0 :  1)) * width;
+
+            w[1] = buffer + x +       (x == 0? 0 : -1) + (y)  * width;
+            w[3] = buffer + x + (x == width-1? 0 :  1) + (y)  * width;
+
+            if(w[0] != w[2] && !(*(w[0]+numpels)))
+                *(w[0]) = *(w[2]);
+
+            if(w[4] != w[2] && !(*(w[4]+numpels)))
+                *(w[4]) = *(w[2]);
+
+            if(w[1] != w[2] && !(*(w[1]+numpels)))
+                *(w[1]) = *(w[2]);
+ 
+            if(w[3] != w[2] && !(*(w[3]+numpels)))
+                *(w[3]) = *(w[2]);
+        }
+    }
 }
 
 /**

@@ -71,7 +71,13 @@ int             lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h,
 int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
                                     int line);
 void            amplify(float* rgb);
-void            ColorOutlines(byte* buffer, int width, int height);
+
+/**
+ * Spread the color of none masked pixels outwards into the masked area.
+ * This addresses the "black outlines" produced by texture filtering due to
+ * sampling the default (black) color.
+ */
+void ColorOutlines(uint8_t* buffer, int width, int height);
 
 boolean         ImageHasAlpha(struct image_s *image);
 
