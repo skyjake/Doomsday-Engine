@@ -1,5 +1,10 @@
 ﻿#!/usr/bin/python
-import os, sys, shutil, time, glob
+import sys
+import os
+import platform
+import shutil
+import time
+import glob
 
 LAUNCH_DIR = os.getcwd()
 DOOMSDAY_DIR = os.path.join(os.getcwd(), '..', 'doomsday')
@@ -79,6 +84,10 @@ def find_version():
 def prepare_work_dir():
     remkdir(WORK_DIR)    
     print "Work directory prepared."
+
+
+def mac_os_version():
+    return platform.mac_ver()[0][:4]
     
 
 """The Mac OS X release procedure."""
@@ -88,7 +97,7 @@ def mac_release():
     os.chdir(WORK_DIR)
     mkdir('release_build')
     os.chdir('release_build')
-    if os.system('cmake ' + DOOMSDAY_DIR + ' && make'):
+    if os.system('cmake -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.

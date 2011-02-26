@@ -292,18 +292,30 @@ SET (USE_STATIC_PNG "NO")
 IF (APPLE)
 	ADD_DEFINITIONS ( -DMACOSX )
 
-    SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
-	SET (CMAKE_OSX_ARCHITECTURES "ppc;i386")
-	SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
-	SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
-	SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
-	ADD_DEFINITIONS ( -DMACOS_10_4 )
-	
-	# 10.4 doesn't appear to have libpng.dylib as a system library.
-	# So we'll use a statically linked one instead.
-	SET (USE_STATIC_PNG "YES")
-	SET (PNG_LIBRARY_STATIC "/opt/local/lib/libpng.a") # MacPorts (with both archs)
+    IF(NOT MACOS_VERSION)
+        SET(MACOS_VERSION "10.4")
+    ENDIF()
 
+    IF(MACOS_VERSION STREQUAL "10.4" OR MACOS_VERSION STREQUAL "10.5")
+	    ADD_DEFINITIONS ( -DMACOS_10_4 )
+        SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
+	    SET (CMAKE_OSX_ARCHITECTURES "ppc;i386")
+	    SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
+	    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
+	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
+    	# 10.4 doesn't appear to have libpng.dylib as a system library.
+    	# So we'll use a statically linked one instead.
+    	SET (USE_STATIC_PNG "YES")
+    	SET (PNG_LIBRARY_STATIC "/opt/local/lib/libpng.a") # MacPorts (with both archs)
+	ELSE()
+	    ADD_DEFINITIONS ( -DMACOS_10_6 )
+        SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
+	    SET (CMAKE_OSX_ARCHITECTURES "i386")
+	    SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk")
+	    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.6" )
+	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6" )
+    ENDIF()
+	
 	SET (BUILDSYSTEM MACOSX)
 
 	## Add needed Compiler and Linker flags for OSX
@@ -571,6 +583,7 @@ MESSAGE( STATUS "CMAKE_BINARY_DIR:             " ${CMAKE_BINARY_DIR} )
 IF (APPLE)
     MESSAGE( STATUS "CMAKE_OSX_ARCHITECTURES:      ${CMAKE_OSX_ARCHITECTURES}" )
 	MESSAGE( STATUS "CMAKE_OSX_SYSROOT:            ${CMAKE_OSX_SYSROOT}" )
+    MESSAGE( STATUS "CMAKE_OSX_DEPLOYMENT_TARGET:  ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 ENDIF()
 MESSAGE( STATUS "BUILDJDOOM:                   " ${BUILDJDOOM} )
 MESSAGE( STATUS "BUILDJHERETIC:                " ${BUILDJHERETIC} )
