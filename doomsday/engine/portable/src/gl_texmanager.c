@@ -2889,6 +2889,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 {   // Yes. Quantize down from RGA(+A) to Indexed(+A), replacing the old image.
                     GL_ConvertBuffer(image.width, image.height, 4, ((image.flags & IMGF_IS_MASKED)? 2 : 1),
                         rgbaPixels, image.pixels, 0, false);
+                    free(rgbaPixels);
                 }
 
                 // Lets not do this again.
