@@ -69,7 +69,6 @@ def builds_by_time():
             builds.append((int(s.st_ctime), fn))
     builds.sort()
     builds.reverse()
-    print builds
     return builds
     
     
@@ -254,7 +253,7 @@ def rebuild_apt_repository():
     distsDir = os.path.join(aptDir, 'dists/unstable/main/binary-i386')
     os.makedirs(distsDir)
     os.chdir(aptDir)
-    os.system("dpkg-scanpackages -ai386 binary > %s" % os.path.join(distsDir, 'Packages'))
+    os.system("dpkg-scanpackages -a i386 binary /dev/null > %s" % os.path.join(distsDir, 'Packages'))
     os.chdir(distsDir)
     os.system("gzip -9 Packages")
     
@@ -277,7 +276,7 @@ elif sys.argv[1] == 'feed':
     update_feed()
     
 elif sys.argv[1] == 'apt':
-    update_apt_repository()
+    rebuild_apt_repository()
     
 else:
     print 'Unknown command:', sys.argv[1]
