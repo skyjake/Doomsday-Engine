@@ -3,7 +3,7 @@
 
 # Script for managing build events.
 # - create: tag a new build and prepare the build directory
-# - platform_build: run today's platform build and copy the result to the build directory
+# - platform_release: run today's platform build and copy the result to the build directory
 
 import sys
 import os
@@ -110,7 +110,7 @@ def create_build_event():
         changes.close()
 
 
-def todays_platform_build():
+def todays_platform_release():
     print "Building today's build."
     git_pull()
     git_checkout(todays_build_tag())
@@ -137,8 +137,8 @@ def todays_platform_build():
 if sys.argv[1] == 'create':
     create_build_event()
 
-elif sys.argv[1] == 'platform_build':
-    todays_platform_build()
+elif sys.argv[1] == 'platform_release':
+    todays_platform_release()
     
 else:
     print 'Unknown command:', sys.argv[1]
