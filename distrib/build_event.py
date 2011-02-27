@@ -118,7 +118,7 @@ def todays_platform_build():
     os.chdir(DISTRIB_DIR)
     # We'll copy the new files to the build dir.
     existingFiles = os.listdir('releases')    
-    os.system("python platform_build.py > %s" % 'buildlog.txt')
+    os.system("python platform_release.py > %s" % 'buildlog.txt')
     
     currentFiles = os.listdir('releases')
     for n in existingFiles:
