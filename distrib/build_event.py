@@ -131,7 +131,7 @@ def todays_platform_build():
                                  
     # Also the build log.
     remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
-                                             'buildlog-%s.txt' % sys.platform()))
+                                             'buildlog-%s.txt' % sys.platform))
     
 
 if sys.argv[1] == 'create':
