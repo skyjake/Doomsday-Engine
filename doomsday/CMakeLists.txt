@@ -642,6 +642,10 @@ IF (APPLE)
 ENDIF (APPLE)
 
 IF (UNIX AND NOT APPLE)
+    # Apt repository for automatic updates.
+    INSTALL(FILES "${CMAKE_SOURCE_DIR}/../distrib/linux/doomsday-builds.list"
+        DESTINATION /etc/apt/sources.list.d)
+    
     # Bundle Snowberry.
     SET (SB_ROOT "${CMAKE_SOURCE_DIR}/../snowberry")
     SET (SB_DEST share/${PROJECT_NAME}/snowberry)
