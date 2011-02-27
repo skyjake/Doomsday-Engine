@@ -890,7 +890,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
     assert(NULL != sprTex);
 
-    params->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
+    params->width  =  ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
     params->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
 
     params->center[VX] = x;
@@ -900,8 +900,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f - -ms.units[MTU_PRIMARY].texInst->border;
-    params->viewOffY = ms.units[MTU_PRIMARY].texInst->border;
+    params->viewOffX = (float) sprTex->offX - params->width/2;
+    params->viewOffY = 0;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;

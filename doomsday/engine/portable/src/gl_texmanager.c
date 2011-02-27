@@ -3121,8 +3121,8 @@ if(!didDefer)
             else
             {
                 int pw = M_CeilPow2(image.width), ph = M_CeilPow2(image.height);
-                tc[0] = (image.width-1)  / (float) pw;
-                tc[1] = (image.height-1) / (float) ph;
+                tc[0] =  image.width / (float) pw;
+                tc[1] = image.height / (float) ph;
             }
         }
 
