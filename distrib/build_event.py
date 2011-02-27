@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # coding=utf-8
-# Manages the build events.
+
+# Script for managing build events.
+# - create: tag a new build and prepare the build directory
+# - platform_build: run today's platform build and copy the result to the build directory
 
 import sys
 import os
@@ -8,23 +11,23 @@ import shutil
 import time
 
 if len(sys.argv) != 4:
-    print 'The arguments must be: (command) (eventdir) (srcdir)'
+    print 'The arguments must be: (command) (eventdir) (distribdir)'
     sys.exit(1)
 
 EVENT_DIR = sys.argv[2] #/Users/jaakko/Builds
-SRC_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
+DISTRIB_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
 
 def git_pull():
     """Updates the source with a git pull."""
     print 'Updating source...'
-    os.chdir(SRC_DIR)
+    os.chdir(DISTRIB_DIR)
     os.system("git pull origin master")
 
 
 def git_tag(tag):
     """Tags the source with a new tag."""
     print 'Tagging with %s...' % tag
-    os.chdir(SRC_DIR)
+    os.chdir(DISTRIB_DIR)
     os.system("git tag %s" % tag)
     
     
@@ -39,15 +42,17 @@ def find_newest_build():
     return newest[1]
 
 
-def create_build_event():
-    """Creates a new build event."""
+def todays_build_tag():
+    now = time.localtime()
+    return 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
 
+
+def create_build_event():
     print 'Creating a new build event.'
     git_pull()
 
     # Identifier/tag for today's build.
-    now = time.localtime()
-    todaysBuild = 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
+    todaysBuild = todays_build_tag()
     
     # Tag the source with the build identifier.
     git_tag(todaysBuild)
@@ -57,9 +62,6 @@ def create_build_event():
     
     if prevBuild == todaysBuild:
         prevBuild = ''
-    
-    # testing
-    #prevBuild = "1.9.0-beta6.8"
     
     buildDir = os.path.join(EVENT_DIR, todaysBuild)
 
@@ -94,8 +96,20 @@ def create_build_event():
 
         print >> changes, '</ol>'
         changes.close()
+
+
+def todays_platform_build():
+    print "Building today's build."
+    git_pull()
+    
     
 
 if sys.argv[1] == 'create':
     create_build_event()
 
+elif sys.argv[1] == 'platform_build':
+    todays_platform_build()
+    
+else:
+    print 'Unknown command:', sys.argv[1]
+    sys.exit(1)
