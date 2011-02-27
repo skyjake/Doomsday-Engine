@@ -232,6 +232,39 @@ def update_feed():
     # Close.
     print >> out, '</channel>'
     print >> out, '</rss>'
+
+
+def rebuild_apt_repository():
+    aptDir = os.path.join(EVENT_DIR, 'apt')
+    print 'Rebuilding the apt repository in %s...' % aptDir
+    
+    # Empty the apt directory.
+    if os.path.exists(aptDir):
+        shutil.rmtree(aptDir, True)
+    os.mkdir(aptDir)
+    
+    # Copy the packages (preserving metadata).
+    binDir = os.path.join(aptDir, 'binary')
+    os.mkdir(binDir)
+    for timestamp, tag in builds_by_time():
+        for debName in glob.glob(os.path.join(EVENT_DIR, tag, '*.deb')):
+            shutil.copy2(debName, os.path.join(binDir, os.path.basename(debName)))
+            
+    # Generate the apt package index.
+    distsDir = os.path.join(aptDir, 'dists/unstable/main/binary-i386')
+    os.makedirs(distsDir)
+    os.chdir(aptDir)
+    os.system("dpkg-scanpackages -ai386 binary > %s" % os.path.join(distsDir, 'Packages'))
+    os.chdir(distsDir)
+    os.system("gzip -9 Packages")
+    
+    f = file('Release', 'wt')
+    print >> f, 'Archive: unstable'
+    print >> f, 'Component: main'
+    print >> f, 'Origin: skyjake@users.sourceforge.net'
+    print >> f, 'Label: Automated Doomsday Engine Builds'
+    print >> f, 'Architecture: i386'
+    f.close()
     
 
 if sys.argv[1] == 'create':
@@ -242,6 +275,9 @@ elif sys.argv[1] == 'platform_release':
     
 elif sys.argv[1] == 'feed':
     update_feed()
+    
+elif sys.argv[1] == 'apt':
+    update_apt_repository()
     
 else:
     print 'Unknown command:', sys.argv[1]
