@@ -42,96 +42,147 @@
 #include "de_console.h"
 #include "image.h"
 
-// Extract a color component.
-#define COMP(n,c)       (((c) >> ((n) << 3)) & 0xFF)
+/**
+ * RGB(a) color space.
+ */
+#define R8G8B8_PACK(r, g, b) ((uint32_t)(((r) << 16) + ((g) << 8) + (b)))
+#define R8G8B8_COMP(n, c)   (((c) >> ((n) << 3)) & 0xFF)
+#define R8G8B8_Rmask        ((int)0x00FF0000)
+#define R8G8B8_Gmask        ((int)0x0000FF00)
+#define R8G8B8_Bmask        ((int)0x000000FF)
 
-#define RGBAtoYUV(v)    (RGBtoYUV[(v) & ((int)0x00FFFFFF)])
+#define R8G8B8A8_PACK(r, g, b, a) ((uint32_t)(((a) << 24) + R8G8B8_PACK((r), (g), (b))))
+#define R8G8B8A8_COMP       R8G8B8_COMP
+#define R8G8B8A8_Rmask      R8G8B8_Rmask
+#define R8G8B8A8_Gmask      R8G8B8_Gmask
+#define R8G8B8A8_Bmask      R8G8B8_Bmask
+#define R8G8B8A8_Amask      ((int)0xFF000000)
+#define R8G8B8A8_RGBmask    ((int)0x00FFFFFF)
 
-#define Ymask           ((int)0x00FF0000)
-#define Umask           ((int)0x0000FF00)
-#define Vmask           ((int)0x000000FF)
-#define YUVmask         ((int)0x00FFFFFF)
+// Y'uv conversion using lookup table.
+#define R8G8B8toY8U8V8(v)   (lutR8G8B8toY8U8V8[v])
+#define R8G8B8A8toY8U8V8(v) (lutR8G8B8toY8U8V8[(v) & R8G8B8A8_RGBmask])
+#define R8G8B8A8toY8U8V8A8(v) (R8G8B8A8toY8U8V8(v) + (((v) & R8G8B8A8_Amask) << 24))
+
+/**
+ * Y'uv(a) color space.
+ */
+#define Y8U8V8_PACK(y, u, v) ((uint32_t)(((y) << 16) + ((u) << 8) + (v)))
+#define Y8U8V8_COMP(n, c)   (((c) >> ((n) << 3)) & 0xFF)
+#define Y8U8V8_Ymask        ((int)0x00FF0000)
+#define Y8U8V8_Umask        ((int)0x0000FF00)
+#define Y8U8V8_Vmask        ((int)0x000000FF)
+
+#define Y8U8V8A8_PACK(y, u, v, a) ((uint32_t)(((a) << 24) + Y8U8V8_PACK((y), (u), (v))))
+#define Y8U8V8A8_COMP       Y8U8V8_COMP
+#define Y8U8V8A8_Ymask      Y8U8V8_Ymask
+#define Y8U8V8A8_Umask      Y8U8V8_Umask
+#define Y8U8V8A8_Vmask      Y8U8V8_Vmask
+#define Y8U8V8A8_Amask      ((int)0xFF000000)
+#define Y8U8V8A8_YUVmask    ((int)0x00FFFFFF)
+
 #define trY             ((int)0x00300000)
 #define trU             ((int)0x00000700)
 #define trV             ((int)0x00000006)
 
-#define PIXEL00_0       *((uint32_t*)(pOut)) = ULONG( w[5] );
-#define PIXEL00_10      Interp1(pOut, w[5], w[1]);
-#define PIXEL00_11      Interp1(pOut, w[5], w[4]);
-#define PIXEL00_12      Interp1(pOut, w[5], w[2]);
-#define PIXEL00_20      Interp2(pOut, w[5], w[4], w[2]);
-#define PIXEL00_21      Interp2(pOut, w[5], w[1], w[2]);
-#define PIXEL00_22      Interp2(pOut, w[5], w[1], w[4]);
-#define PIXEL00_60      Interp6(pOut, w[5], w[2], w[4]);
-#define PIXEL00_61      Interp6(pOut, w[5], w[4], w[2]);
-#define PIXEL00_70      Interp7(pOut, w[5], w[4], w[2]);
-#define PIXEL00_90      Interp9(pOut, w[5], w[4], w[2]);
-#define PIXEL00_100     Interp10(pOut, w[5], w[4], w[2]);
-#define PIXEL01_0       *((uint32_t*)(pOut+4)) = ULONG( w[5] );
-#define PIXEL01_10      Interp1(pOut+4, w[5], w[3]);
-#define PIXEL01_11      Interp1(pOut+4, w[5], w[2]);
-#define PIXEL01_12      Interp1(pOut+4, w[5], w[6]);
-#define PIXEL01_20      Interp2(pOut+4, w[5], w[2], w[6]);
-#define PIXEL01_21      Interp2(pOut+4, w[5], w[3], w[6]);
-#define PIXEL01_22      Interp2(pOut+4, w[5], w[3], w[2]);
-#define PIXEL01_60      Interp6(pOut+4, w[5], w[6], w[2]);
-#define PIXEL01_61      Interp6(pOut+4, w[5], w[2], w[6]);
-#define PIXEL01_70      Interp7(pOut+4, w[5], w[2], w[6]);
-#define PIXEL01_90      Interp9(pOut+4, w[5], w[2], w[6]);
-#define PIXEL01_100     Interp10(pOut+4, w[5], w[2], w[6]);
-#define PIXEL10_0       *((uint32_t*)(pOut+BpL)) = ULONG( w[5] );
-#define PIXEL10_10      Interp1(pOut+BpL, w[5], w[7]);
-#define PIXEL10_11      Interp1(pOut+BpL, w[5], w[8]);
-#define PIXEL10_12      Interp1(pOut+BpL, w[5], w[4]);
-#define PIXEL10_20      Interp2(pOut+BpL, w[5], w[8], w[4]);
-#define PIXEL10_21      Interp2(pOut+BpL, w[5], w[7], w[4]);
-#define PIXEL10_22      Interp2(pOut+BpL, w[5], w[7], w[8]);
-#define PIXEL10_60      Interp6(pOut+BpL, w[5], w[4], w[8]);
-#define PIXEL10_61      Interp6(pOut+BpL, w[5], w[8], w[4]);
-#define PIXEL10_70      Interp7(pOut+BpL, w[5], w[8], w[4]);
-#define PIXEL10_90      Interp9(pOut+BpL, w[5], w[8], w[4]);
-#define PIXEL10_100     Interp10(pOut+BpL, w[5], w[8], w[4]);
-#define PIXEL11_0       *((uint32_t*)(pOut+BpL+4)) = ULONG( w[5] );
-#define PIXEL11_10      Interp1(pOut+BpL+4, w[5], w[9]);
-#define PIXEL11_11      Interp1(pOut+BpL+4, w[5], w[6]);
-#define PIXEL11_12      Interp1(pOut+BpL+4, w[5], w[8]);
-#define PIXEL11_20      Interp2(pOut+BpL+4, w[5], w[6], w[8]);
-#define PIXEL11_21      Interp2(pOut+BpL+4, w[5], w[9], w[8]);
-#define PIXEL11_22      Interp2(pOut+BpL+4, w[5], w[9], w[6]);
-#define PIXEL11_60      Interp6(pOut+BpL+4, w[5], w[8], w[6]);
-#define PIXEL11_61      Interp6(pOut+BpL+4, w[5], w[6], w[8]);
-#define PIXEL11_70      Interp7(pOut+BpL+4, w[5], w[6], w[8]);
-#define PIXEL11_90      Interp9(pOut+BpL+4, w[5], w[6], w[8]);
+#define PIXEL00_0         Transl(pOut,       w[5]);
+#define PIXEL00_10       Interp1(pOut,       w[5], w[1]);
+#define PIXEL00_11       Interp1(pOut,       w[5], w[4]);
+#define PIXEL00_12       Interp1(pOut,       w[5], w[2]);
+#define PIXEL00_20       Interp2(pOut,       w[5], w[4], w[2]);
+#define PIXEL00_21       Interp2(pOut,       w[5], w[1], w[2]);
+#define PIXEL00_22       Interp2(pOut,       w[5], w[1], w[4]);
+#define PIXEL00_60       Interp6(pOut,       w[5], w[2], w[4]);
+#define PIXEL00_61       Interp6(pOut,       w[5], w[4], w[2]);
+#define PIXEL00_70       Interp7(pOut,       w[5], w[4], w[2]);
+#define PIXEL00_90       Interp9(pOut,       w[5], w[4], w[2]);
+#define PIXEL00_100     Interp10(pOut,       w[5], w[4], w[2]);
+#define PIXEL01_0         Transl(pOut+4,     w[5]);
+#define PIXEL01_10       Interp1(pOut+4,     w[5], w[3]);
+#define PIXEL01_11       Interp1(pOut+4,     w[5], w[2]);
+#define PIXEL01_12       Interp1(pOut+4,     w[5], w[6]);
+#define PIXEL01_20       Interp2(pOut+4,     w[5], w[2], w[6]);
+#define PIXEL01_21       Interp2(pOut+4,     w[5], w[3], w[6]);
+#define PIXEL01_22       Interp2(pOut+4,     w[5], w[3], w[2]);
+#define PIXEL01_60       Interp6(pOut+4,     w[5], w[6], w[2]);
+#define PIXEL01_61       Interp6(pOut+4,     w[5], w[2], w[6]);
+#define PIXEL01_70       Interp7(pOut+4,     w[5], w[2], w[6]);
+#define PIXEL01_90       Interp9(pOut+4,     w[5], w[2], w[6]);
+#define PIXEL01_100     Interp10(pOut+4,     w[5], w[2], w[6]);
+#define PIXEL10_0         Transl(pOut+BpL,   w[5]);
+#define PIXEL10_10       Interp1(pOut+BpL,   w[5], w[7]);
+#define PIXEL10_11       Interp1(pOut+BpL,   w[5], w[8]);
+#define PIXEL10_12       Interp1(pOut+BpL,   w[5], w[4]);
+#define PIXEL10_20       Interp2(pOut+BpL,   w[5], w[8], w[4]);
+#define PIXEL10_21       Interp2(pOut+BpL,   w[5], w[7], w[4]);
+#define PIXEL10_22       Interp2(pOut+BpL,   w[5], w[7], w[8]);
+#define PIXEL10_60       Interp6(pOut+BpL,   w[5], w[4], w[8]);
+#define PIXEL10_61       Interp6(pOut+BpL,   w[5], w[8], w[4]);
+#define PIXEL10_70       Interp7(pOut+BpL,   w[5], w[8], w[4]);
+#define PIXEL10_90       Interp9(pOut+BpL,   w[5], w[8], w[4]);
+#define PIXEL10_100     Interp10(pOut+BpL,   w[5], w[8], w[4]);
+#define PIXEL11_0         Transl(pOut+BpL+4, w[5]);
+#define PIXEL11_10       Interp1(pOut+BpL+4, w[5], w[9]);
+#define PIXEL11_11       Interp1(pOut+BpL+4, w[5], w[6]);
+#define PIXEL11_12       Interp1(pOut+BpL+4, w[5], w[8]);
+#define PIXEL11_20       Interp2(pOut+BpL+4, w[5], w[6], w[8]);
+#define PIXEL11_21       Interp2(pOut+BpL+4, w[5], w[9], w[8]);
+#define PIXEL11_22       Interp2(pOut+BpL+4, w[5], w[9], w[6]);
+#define PIXEL11_60       Interp6(pOut+BpL+4, w[5], w[8], w[6]);
+#define PIXEL11_61       Interp6(pOut+BpL+4, w[5], w[6], w[8]);
+#define PIXEL11_70       Interp7(pOut+BpL+4, w[5], w[6], w[8]);
+#define PIXEL11_90       Interp9(pOut+BpL+4, w[5], w[6], w[8]);
 #define PIXEL11_100     Interp10(pOut+BpL+4, w[5], w[6], w[8]);
 
-static uint32_t RGBtoYUV[16777216];
+static uint32_t lutR8G8B8toY8U8V8[16777216];
 static uint32_t YUV1, YUV2;
 
-void LerpColor(uint8_t* out, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t f1,
-    uint32_t f2, uint32_t f3)
+void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, int f1,
+    int f2, int f3)
 {
     int total = f1 + f2 + f3;
-    out[0] = (COMP(0, c1) * f1 + COMP(0, c2) * f2 + (f3==0? 0 : f3 * COMP(0, c3))) / total;
-    out[1] = (COMP(1, c1) * f1 + COMP(1, c2) * f2 + (f3==0? 0 : f3 * COMP(1, c3))) / total;
-    out[2] = (COMP(2, c1) * f1 + COMP(2, c2) * f2 + (f3==0? 0 : f3 * COMP(2, c3))) / total;
-    out[3] = (COMP(3, c1) * f1 + COMP(3, c2) * f2 + (f3==0? 0 : f3 * COMP(3, c3))) / total;
+    uint8_t out[4];
+    out[0] = f1 * (c1 & R8G8B8A8_Rmask) + f2 * (c2 & R8G8B8A8_Rmask);
+    out[1] = f1 * (c1 & R8G8B8A8_Gmask) + f2 * (c2 & R8G8B8A8_Gmask);
+    out[2] = f1 * (c1 & R8G8B8A8_Bmask) + f2 * (c2 & R8G8B8A8_Bmask);
+    out[3] = f1 * (c1 & R8G8B8A8_Amask) + f2 * (c2 & R8G8B8A8_Amask);
+    if(0 != f3)
+    {
+        out[0] += f3 * (c3 & R8G8B8A8_Rmask);
+        out[1] += f3 * (c3 & R8G8B8A8_Gmask);
+        out[2] += f3 * (c3 & R8G8B8A8_Bmask);
+        out[3] += f3 * (c3 & R8G8B8A8_Amask);
+    }
+    out[0] /= total;
+    out[1] /= total;
+    out[2] /= total;
+    out[3] /= total;
+    *((uint32_t*)pc) = *((uint32_t*)out);
 }
 
-static __inline int Diff(uint32_t dw1, uint32_t dw2)
+static __inline int Diff(uint32_t c1, uint32_t c2)
 {
-    YUV1 = RGBtoYUV[dw1 & YUVmask];
-    YUV2 = RGBtoYUV[dw2 & YUVmask];
-    return ((COMP(3, dw1) != 0) != (COMP(3, dw2) != 0) ||
-            (abs((YUV1 & Ymask) - (YUV2 & Ymask)) > trY) ||
-            (abs((YUV1 & Umask) - (YUV2 & Umask)) > trU) ||
-            (abs((YUV1 & Vmask) - (YUV2 & Vmask)) > trV));
+    YUV1 = R8G8B8A8toY8U8V8(c1);
+    YUV2 = R8G8B8A8toY8U8V8(c2);
+    return ( (((c1 & R8G8B8A8_Amask) != 0) != ((c2 & R8G8B8A8_Amask) != 0)) ||
+             (abs((YUV1 & Y8U8V8_Ymask) - (YUV2 & Y8U8V8_Ymask)) > trY) ||
+             (abs((YUV1 & Y8U8V8_Umask) - (YUV2 & Y8U8V8_Umask)) > trU) ||
+             (abs((YUV1 & Y8U8V8_Vmask) - (YUV2 & Y8U8V8_Vmask)) > trV) );
+}
+
+static __inline void Transl(uint8_t* pc, uint32_t c)
+{
+    pc[0] = (c & R8G8B8A8_Rmask);
+    pc[1] = (c & R8G8B8A8_Gmask);
+    pc[2] = (c & R8G8B8A8_Bmask);
+    pc[3] = (c & R8G8B8A8_Amask);
 }
 
 static __inline void Interp1(uint8_t* pc, uint32_t c1, uint32_t c2)
 {
     if(c1 == c2)
     {
-        pc[0] = COMP(0, c1); pc[1] = COMP(1, c1); pc[2] = COMP(2, c1); pc[3] = COMP(3, c1);
+        Transl(pc, c1);
         return;
     }
     LerpColor(pc, c1, c2, 0, 3, 1, 0);
@@ -168,19 +219,19 @@ void GL_InitSmartFilterHQ2x(void)
     uint32_t c, r, g, b, y, u, v;
     for(c = 0; c < 16777215; ++c)
     {
-        r = COMP(0, c);
-        g = COMP(1, c);
-        b = COMP(2, c);
+        r = R8G8B8_COMP(0, c);
+        g = R8G8B8_COMP(1, c);
+        b = R8G8B8_COMP(2, c);
         y = (uint32_t)( 0.299*r + 0.587*g + 0.114*b);
         u = (uint32_t)(-0.169*r - 0.331*g + 0.5  *b) + 128;
         v = (uint32_t)( 0.5  *r - 0.419*g - 0.081*b) + 128;
-        RGBtoYUV[c] = (y << 16) + (u << 8) + v;
+        lutR8G8B8toY8U8V8[c] = Y8U8V8_PACK(y, u, v);
     }
 }
 
 uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags)
 {
-#define BPP             (4) // Bytes Per Pixel
+#define BPP             (4) // Bits Per Pixel.
 #define OFFSET(x, y)    (BPP*(y)*width + BPP*(x))
 
     assert(src);
@@ -202,12 +253,12 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
     // | w7 | w8 | w9 |
     // +----+----+----+
 
-    BpL = BPP * 2 * width;
     if(0 == (dst = malloc(BPP * 2 * width * height * 2)))
         Con_Error("GL_SmartFilterHQ2x: Failed on allocation of %lu bytes for "
                   "output buffer.", (unsigned long) (BPP * 2 * width * height * 2));
 
     pOut = dst;
+    BpL = BPP * 2 * width; // (Out) Bytes per Line.
     { int y;
     for(y = 0; y < height; ++y)
     {
@@ -267,7 +318,7 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
 
             pattern = 0;
             flag = 1;
-            YUV1 = RGBAtoYUV(w[5]);
+            YUV1 = R8G8B8A8toY8U8V8(w[5]);
 
             { int k;
             for(k = 1; k <= 9; ++k)
@@ -277,11 +328,11 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
 
                 if(w[k] != w[5])
                 {
-                    YUV2 = RGBAtoYUV(w[k]);
-                    if((COMP(3, w[5]) != 0) != (COMP(3, w[k]) != 0) ||
-                       (abs((YUV1 & Ymask) - (YUV2 & Ymask)) > trY) ||
-                       (abs((YUV1 & Umask) - (YUV2 & Umask)) > trU) ||
-                       (abs((YUV1 & Vmask) - (YUV2 & Vmask)) > trV))
+                    YUV2 = R8G8B8A8toY8U8V8(w[k]);
+                    if((((w[5] & R8G8B8A8_Amask) != 0) != ((w[k] & R8G8B8A8_Amask) != 0)) ||
+                       (abs((YUV1 & Y8U8V8_Ymask) - (YUV2 & Y8U8V8_Ymask)) > trY) ||
+                       (abs((YUV1 & Y8U8V8_Umask) - (YUV2 & Y8U8V8_Umask)) > trU) ||
+                       (abs((YUV1 & Y8U8V8_Vmask) - (YUV2 & Y8U8V8_Vmask)) > trV))
                         pattern |= flag;
                 }
                 flag <<= 1;
