@@ -45,13 +45,13 @@
 /**
  * RGB(a) color space.
  */
-#define R8G8B8_PACK(r, g, b) ((uint32_t)(((r) << 16) + ((g) << 8) + (b)))
-#define R8G8B8_COMP(n, c)   (((c) >> ((n) << 3)) & 0xFF)
-#define R8G8B8_Rmask        ((int)0x00FF0000)
+#define R8G8B8_PACK(r, g, b) ( ((uint32_t)(b) << 16) + ((uint32_t)(g) << 8) + (uint32_t)(r) )
+#define R8G8B8_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
+#define R8G8B8_Rmask        ((int)0x000000FF)
 #define R8G8B8_Gmask        ((int)0x0000FF00)
-#define R8G8B8_Bmask        ((int)0x000000FF)
+#define R8G8B8_Bmask        ((int)0x00FF0000)
 
-#define R8G8B8A8_PACK(r, g, b, a) ((uint32_t)(((a) << 24) + R8G8B8_PACK((r), (g), (b))))
+#define R8G8B8A8_PACK(r, g, b, a) ( ((uint32_t)(a) << 24) + R8G8B8_PACK((r), (g), (b)) )
 #define R8G8B8A8_COMP       R8G8B8_COMP
 #define R8G8B8A8_Rmask      R8G8B8_Rmask
 #define R8G8B8A8_Gmask      R8G8B8_Gmask
@@ -67,13 +67,13 @@
 /**
  * Y'uv(a) color space.
  */
-#define Y8U8V8_PACK(y, u, v) ((uint32_t)(((y) << 16) + ((u) << 8) + (v)))
-#define Y8U8V8_COMP(n, c)   (((c) >> ((n) << 3)) & 0xFF)
+#define Y8U8V8_PACK(y, u, v) ( ((uint32_t)(y) << 16) + ((uint32_t)(u) << 8) + (uint32_t)(v) )
+#define Y8U8V8_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
 #define Y8U8V8_Ymask        ((int)0x00FF0000)
 #define Y8U8V8_Umask        ((int)0x0000FF00)
 #define Y8U8V8_Vmask        ((int)0x000000FF)
 
-#define Y8U8V8A8_PACK(y, u, v, a) ((uint32_t)(((a) << 24) + Y8U8V8_PACK((y), (u), (v))))
+#define Y8U8V8A8_PACK(y, u, v, a) ( ((uint32_t)(a) << 24) + Y8U8V8_PACK((y), (u), (v)) )
 #define Y8U8V8A8_COMP       Y8U8V8_COMP
 #define Y8U8V8A8_Ymask      Y8U8V8_Ymask
 #define Y8U8V8A8_Umask      Y8U8V8_Umask
@@ -137,34 +137,34 @@
 static uint32_t lutR8G8B8toY8U8V8[16777216];
 static uint32_t YUV1, YUV2;
 
-void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, int f1,
-    int f2, int f3)
+void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t f1,
+    uint32_t f2, uint32_t f3)
 {
-    int total = f1 + f2 + f3;
-    uint8_t out[4];
-    out[0] = f1 * (c1 & R8G8B8A8_Rmask) + f2 * (c2 & R8G8B8A8_Rmask);
-    out[1] = f1 * (c1 & R8G8B8A8_Gmask) + f2 * (c2 & R8G8B8A8_Gmask);
-    out[2] = f1 * (c1 & R8G8B8A8_Bmask) + f2 * (c2 & R8G8B8A8_Bmask);
-    out[3] = f1 * (c1 & R8G8B8A8_Amask) + f2 * (c2 & R8G8B8A8_Amask);
+    uint32_t total = f1 + f2 + f3;
+    uint32_t out[4];
+    out[0] = f1 * R8G8B8A8_COMP(0, c1) + f2 * R8G8B8A8_COMP(0, c2);
+    out[1] = f1 * R8G8B8A8_COMP(1, c1) + f2 * R8G8B8A8_COMP(1, c2);
+    out[2] = f1 * R8G8B8A8_COMP(2, c1) + f2 * R8G8B8A8_COMP(2, c2);
+    out[3] = f1 * R8G8B8A8_COMP(3, c1) + f2 * R8G8B8A8_COMP(3, c2);
     if(0 != f3)
     {
-        out[0] += f3 * (c3 & R8G8B8A8_Rmask);
-        out[1] += f3 * (c3 & R8G8B8A8_Gmask);
-        out[2] += f3 * (c3 & R8G8B8A8_Bmask);
-        out[3] += f3 * (c3 & R8G8B8A8_Amask);
+        out[0] += f3 * R8G8B8A8_COMP(0, c3);
+        out[1] += f3 * R8G8B8A8_COMP(1, c3);
+        out[2] += f3 * R8G8B8A8_COMP(2, c3);
+        out[3] += f3 * R8G8B8A8_COMP(3, c3);
     }
     out[0] /= total;
     out[1] /= total;
     out[2] /= total;
     out[3] /= total;
-    *((uint32_t*)pc) = *((uint32_t*)out);
+    *((uint32_t*)pc) = R8G8B8A8_PACK(out[0], out[1], out[2], out[3]);
 }
 
 static __inline int Diff(uint32_t c1, uint32_t c2)
 {
     YUV1 = R8G8B8A8toY8U8V8(c1);
     YUV2 = R8G8B8A8toY8U8V8(c2);
-    return ( (((c1 & R8G8B8A8_Amask) != 0) != ((c2 & R8G8B8A8_Amask) != 0)) ||
+    return ( ((R8G8B8A8_COMP(3, c1) != 0) != ((R8G8B8A8_COMP(3, c2) != 0))) ||
              (abs((YUV1 & Y8U8V8_Ymask) - (YUV2 & Y8U8V8_Ymask)) > trY) ||
              (abs((YUV1 & Y8U8V8_Umask) - (YUV2 & Y8U8V8_Umask)) > trU) ||
              (abs((YUV1 & Y8U8V8_Vmask) - (YUV2 & Y8U8V8_Vmask)) > trV) );
@@ -172,10 +172,10 @@ static __inline int Diff(uint32_t c1, uint32_t c2)
 
 static __inline void Transl(uint8_t* pc, uint32_t c)
 {
-    pc[0] = (c & R8G8B8A8_Rmask);
-    pc[1] = (c & R8G8B8A8_Gmask);
-    pc[2] = (c & R8G8B8A8_Bmask);
-    pc[3] = (c & R8G8B8A8_Amask);
+    pc[0] = R8G8B8A8_COMP(0, c);
+    pc[1] = R8G8B8A8_COMP(1, c);
+    pc[2] = R8G8B8A8_COMP(2, c);
+    pc[3] = R8G8B8A8_COMP(3, c);
 }
 
 static __inline void Interp1(uint8_t* pc, uint32_t c1, uint32_t c2)
@@ -329,7 +329,7 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
                 if(w[k] != w[5])
                 {
                     YUV2 = R8G8B8A8toY8U8V8(w[k]);
-                    if((((w[5] & R8G8B8A8_Amask) != 0) != ((w[k] & R8G8B8A8_Amask) != 0)) ||
+                    if(((R8G8B8A8_COMP(3, w[5]) != 0) != (R8G8B8A8_COMP(3, w[k]) != 0)) ||
                        (abs((YUV1 & Y8U8V8_Ymask) - (YUV2 & Y8U8V8_Ymask)) > trY) ||
                        (abs((YUV1 & Y8U8V8_Umask) - (YUV2 & Y8U8V8_Umask)) > trU) ||
                        (abs((YUV1 & Y8U8V8_Vmask) - (YUV2 & Y8U8V8_Vmask)) > trV))
