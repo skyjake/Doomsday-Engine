@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# coding=utf-8
 # Manages the build events.
 
 import sys
@@ -6,8 +7,12 @@ import os
 import shutil
 import time
 
-EVENT_DIR = sys.argv[1] #/Users/jaakko/Builds
-SRC_DIR = sys.argv[2] #/Users/jaakko/Projects/deng
+if len(sys.argv) != 4:
+    print 'The arguments must be: (command) (eventdir) (srcdir)'
+    sys.exit(1)
+
+EVENT_DIR = sys.argv[2] #/Users/jaakko/Builds
+SRC_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
 
 def git_pull():
     """Updates the source with a git pull."""
@@ -37,6 +42,7 @@ def find_newest_build():
 def create_build_event():
     """Creates a new build event."""
 
+    print 'Creating a new build event.'
     git_pull()
 
     # Identifier/tag for today's build.
@@ -78,8 +84,11 @@ def create_build_event():
                  '<blockquote>%b</blockquote>'
         os.system("git log %s..%s --format=\"%s\" >> %s" % (prevBuild, todaysBuild, format, tmpName))
 
-        logText = file(tmpName, 'rt').read()
-        print >> changes, logText.replace('\n', '<br/>').replace('</blockquote><br/>', '</blockquote>')
+        logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
+        logText = logText.replace(u'ä', u'&auml;')
+        logText = logText.encode('utf-8')
+        logText = logText.replace('\n', '<br/>').replace('</blockquote><br/>', '</blockquote>')
+        print >> changes, logText
 
         os.remove(tmpName)
 
@@ -87,5 +96,6 @@ def create_build_event():
         changes.close()
     
 
-create_build_event()
+if sys.argv[1] == 'create':
+    create_build_event()
 
