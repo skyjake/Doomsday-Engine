@@ -231,7 +231,7 @@ void GL_InitSmartFilterHQ2x(void)
 
 uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags)
 {
-#define BPP             (4) // Bits Per Pixel.
+#define BPP             (4) // Bytes Per Pixel.
 #define OFFSET(x, y)    (BPP*(y)*width + BPP*(x))
 
     assert(src);
