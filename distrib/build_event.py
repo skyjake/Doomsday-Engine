@@ -17,10 +17,18 @@ if len(sys.argv) != 4:
 EVENT_DIR = sys.argv[2] #/Users/jaakko/Builds
 DISTRIB_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
 
+
+def git_checkout(ident):
+    print 'Checking out %s...' % ident
+    os.chdir(DISTRIB_DIR)
+    os.system("git checkout %s" % ident)
+
+
 def git_pull():
     """Updates the source with a git pull."""
     print 'Updating source...'
     os.chdir(DISTRIB_DIR)
+    os.system("git checkout master")
     os.system("git pull origin master")
 
 
@@ -29,6 +37,10 @@ def git_tag(tag):
     print 'Tagging with %s...' % tag
     os.chdir(DISTRIB_DIR)
     os.system("git tag %s" % tag)
+    
+    
+def remote_copy(src, dst):
+    os.system('scp %s %s' % (src, dst))  
     
     
 def find_newest_build():
@@ -101,7 +113,25 @@ def create_build_event():
 def todays_platform_build():
     print "Building today's build."
     git_pull()
+    git_checkout(todays_build_tag())
     
+    os.chdir(DISTRIB_DIR)
+    # We'll copy the new files to the build dir.
+    existingFiles = os.listdir('releases')    
+    os.system("python platform_build.py > %s" % 'buildlog.txt')
+    
+    currentFiles = os.listdir('releases')
+    for n in existingFiles:
+        currentFiles.remove(n)
+        
+    for n in currentFiles:
+        # Copy any new files.
+        remote_copy(os.path.join('releases', n),
+                    os.path.join(EVENT_DIR, todays_build_tag(), n))
+                                 
+    # Also the build log.
+    remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
+                                             'buildlog-%s.txt' % sys.platform()))
     
 
 if sys.argv[1] == 'create':
