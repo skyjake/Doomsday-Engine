@@ -118,7 +118,9 @@ def todays_platform_release():
     os.chdir(DISTRIB_DIR)
     # We'll copy the new files to the build dir.
     existingFiles = os.listdir('releases')    
-    os.system("python platform_release.py 2> %s" % 'buildlog.txt')
+    
+    print 'platform_release.py...'
+    os.system("python platform_release.py > %s 2> %s" % ('buildlog.txt', 'builderrors.txt'))
     
     currentFiles = os.listdir('releases')
     for n in existingFiles:
@@ -131,7 +133,11 @@ def todays_platform_release():
                                  
     # Also the build log.
     remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
-                                             'buildlog-%s.txt' % sys.platform))
+        'buildlog-%s.txt' % sys.platform))
+    remote_copy('builderrors.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
+        'builderrors-%s.txt' % sys.platform))
+                                             
+    git_checkout('master')
     
 
 if sys.argv[1] == 'create':
