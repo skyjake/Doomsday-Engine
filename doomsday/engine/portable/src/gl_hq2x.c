@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2010 Cameron Zemek <grom@zeminvaders.net>
  *\author Copyright © 2003 Maxim Stepin <maxst@hiend3d.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +29,7 @@
  * Based on the routine by Maxim Stepin <maxst@hiend3d.com>
  * For more information, see: http://hiend3d.com/hq2x.html
  *
- * Now uses 32-bit data and 0xAABBGGRR pixel byte order (little endian).
+ * Now uses 32-bit data and our native ABGR8888 pixel format.
  * Alpha is taken into account in the processing to preserve edges.
  * Not quite as efficient as the original version.
  */
@@ -43,47 +42,75 @@
 #include "image.h"
 
 /**
- * RGB(a) color space.
+ * RGB color space.
  */
-#define R8G8B8_PACK(r, g, b) ( ((uint32_t)(b) << 16) + ((uint32_t)(g) << 8) + (uint32_t)(r) )
-#define R8G8B8_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
-#define R8G8B8_Rmask        ((int)0x000000FF)
-#define R8G8B8_Gmask        ((int)0x0000FF00)
-#define R8G8B8_Bmask        ((int)0x00FF0000)
+#define BGR888_PACK(b, g, r) ( ((uint32_t)(b) << 16) | ((uint32_t)(g) << 8) | (uint32_t)(r) )
+#define BGR888_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
+#define BGR888_Bmask        ((int)0xFF0000)
+#define BGR888_Gmask        ((int)0x00FF00)
+#define BGR888_Rmask        ((int)0x0000FF)
 
-#define R8G8B8A8_PACK(r, g, b, a) ( ((uint32_t)(a) << 24) + R8G8B8_PACK((r), (g), (b)) )
-#define R8G8B8A8_COMP       R8G8B8_COMP
-#define R8G8B8A8_Rmask      R8G8B8_Rmask
-#define R8G8B8A8_Gmask      R8G8B8_Gmask
-#define R8G8B8A8_Bmask      R8G8B8_Bmask
-#define R8G8B8A8_Amask      ((int)0xFF000000)
-#define R8G8B8A8_RGBmask    ((int)0x00FFFFFF)
+#define BGR888toBGR565(c)   (((c & 0xF8) >> 3) | ((c & 0xFC00) >> 5) | ((c & 0xF80000) >> 8))
 
-// Y'uv conversion using lookup table.
-#define R8G8B8toY8U8V8(v)   (lutR8G8B8toY8U8V8[v])
-#define R8G8B8A8toY8U8V8(v) (lutR8G8B8toY8U8V8[(v) & R8G8B8A8_RGBmask])
-#define R8G8B8A8toY8U8V8A8(v) (R8G8B8A8toY8U8V8(v) + (((v) & R8G8B8A8_Amask) << 24))
+#define ABGR8888_PACK(a, b, g, r) ( ((uint32_t)(a) << 24) | BGR888_PACK((b), (g), (r)) )
+#define ABGR8888_COMP       BGR888_COMP
+#define ABGR8888_Amask      ((int)0xFF000000)
+#define ABGR8888_Bmask      BGR888_Bmask
+#define ABGR8888_Gmask      BGR888_Gmask
+#define ABGR8888_Rmask      BGR888_Rmask
+#define ABGR8888_RGBmask    ((int)0x00FFFFFF)
+
+/// Y'uv conversion.
+#define BGR888toYUV888(v)   (lutBGR888toYUV888[BGR888toBGR565(v)])
+#define ABGR8888toYUV888(v) (BGR888toYUV888(v & ABGR8888_RGBmask))
+#define ABGR8888toAYUV8888(v) (ABGR8888toYUV888(v) | (((v) & ABGR8888_Amask) << 24))
+
+#define RGB888_PACK(r, g, b) ( ((uint32_t)(r) << 16) | ((uint32_t)(g) << 8) | (uint32_t)(b) )
+#define RGB888_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
+#define RGB888_Rmask        ((int)0xFF0000)
+#define RGB888_Gmask        ((int)0x00FF00)
+#define RGB888_Bmask        ((int)0x0000FF)
+
+#define RGB888toRGB565(c)   (((c & 0xF80000) >> 8) | ((c & 0xFC00) >> 5) | ((c & 0xF8) >> 3))
+
+#define ARGB8888_PACK(a, r, g, b) ( ((uint32_t)(a) << 24) | RGB888_PACK((r), (g), (b)) )
+#define ARGB8888_COMP       RGB888_COMP
+#define ARGB8888_Amask      ((int)0xFF000000)
+#define ARGB8888_Rmask      RGB888_Rmask
+#define ARGB8888_Gmask      RGB888_Gmask
+#define ARGB8888_Bmask      RGB888_Bmask
+#define ARGB8888_RGBmask    ((int)0x00FFFFFF)
+
+/// Y'uv conversion.
+#define RGB888toYUV888(v)   (BGR888toYUV888(RGB888toBGR888(v)))
+#define ARGB8888toYUV888(v) (RGB888toYUV888((v) & ARGB8888_RGBmask])
+#define ARGB8888toAYUV8888(v) (ARGB8888toYUV888(v) | (((v) & ARGB8888_Amask) << 24))
+
+#define BGR565_PACK(b, g, r) ( ((uint16_t)(b) << 11) | ((uint16_t)(g) << 5) | (uint16_t)(r) )
+#define BGR565_Bmask        ((int)0xF800)
+#define BGR565_Gmask        ((int)0x7E0)
+#define BGR565_Rmask        ((int)0x1F)
 
 /**
- * Y'uv(a) color space.
+ * Y'uv color space.
  */
-#define Y8U8V8_PACK(y, u, v) ( ((uint32_t)(y) << 16) + ((uint32_t)(u) << 8) + (uint32_t)(v) )
-#define Y8U8V8_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
-#define Y8U8V8_Ymask        ((int)0x00FF0000)
-#define Y8U8V8_Umask        ((int)0x0000FF00)
-#define Y8U8V8_Vmask        ((int)0x000000FF)
+#define YUV888_PACK(y, u, v) ( ((uint32_t)(y) << 16) | ((uint32_t)(u) << 8) | (uint32_t)(v) )
+#define YUV888_COMP(n, c)   ( ((c) >> ((n) << 3)) & 0xFF )
+#define YUV888_Ymask        ((int)0xFF0000)
+#define YUV888_Umask        ((int)0x00FF00)
+#define YUV888_Vmask        ((int)0x0000FF)
 
-#define Y8U8V8A8_PACK(y, u, v, a) ( ((uint32_t)(a) << 24) + Y8U8V8_PACK((y), (u), (v)) )
-#define Y8U8V8A8_COMP       Y8U8V8_COMP
-#define Y8U8V8A8_Ymask      Y8U8V8_Ymask
-#define Y8U8V8A8_Umask      Y8U8V8_Umask
-#define Y8U8V8A8_Vmask      Y8U8V8_Vmask
-#define Y8U8V8A8_Amask      ((int)0xFF000000)
-#define Y8U8V8A8_YUVmask    ((int)0x00FFFFFF)
+#define AYUV8888_PACK(y, u, v, a) ( ((uint32_t)(a) << 24) | YUV888_PACK((y), (u), (v)) )
+#define AYUV8888_COMP       YUV888_COMP
+#define AYUV8888_Amask      ((int)0xFF000000)
+#define AYUV8888_Ymask      YUV888_Ymask
+#define AYUV8888_Umask      YUV888_Umask
+#define AYUV8888_Vmask      YUV888_Vmask
+#define AYUV8888_YUVmask    ((int)0x00FFFFFF)
 
-#define trY             ((int)0x00300000)
-#define trU             ((int)0x00000700)
-#define trV             ((int)0x00000006)
+#define trY                 (48)
+#define trU                 (7)
+#define trV                 (6)
 
 #define PIXEL00_0         Transl(pOut,       w[5]);
 #define PIXEL00_10       Interp1(pOut,       w[5], w[1]);
@@ -134,48 +161,58 @@
 #define PIXEL11_90       Interp9(pOut+BpL+4, w[5], w[6], w[8]);
 #define PIXEL11_100     Interp10(pOut+BpL+4, w[5], w[6], w[8]);
 
-static uint32_t lutR8G8B8toY8U8V8[16777216];
+static uint32_t lutBGR888toYUV888[32*64*32-1];
 static uint32_t YUV1, YUV2;
 
 void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t f1,
     uint32_t f2, uint32_t f3)
 {
-    uint32_t total = f1 + f2 + f3;
     uint32_t out[4];
-    out[0] = f1 * R8G8B8A8_COMP(0, c1) + f2 * R8G8B8A8_COMP(0, c2);
-    out[1] = f1 * R8G8B8A8_COMP(1, c1) + f2 * R8G8B8A8_COMP(1, c2);
-    out[2] = f1 * R8G8B8A8_COMP(2, c1) + f2 * R8G8B8A8_COMP(2, c2);
-    out[3] = f1 * R8G8B8A8_COMP(3, c1) + f2 * R8G8B8A8_COMP(3, c2);
+    out[0] = f1 * ABGR8888_COMP(0, c1);
+    out[1] = f1 * ABGR8888_COMP(1, c1);
+    out[2] = f1 * ABGR8888_COMP(2, c1);
+    out[3] = f1 * ABGR8888_COMP(3, c1);
+    if(0 != f2)
+    {
+        out[0] += f2 * ABGR8888_COMP(0, c2);
+        out[1] += f2 * ABGR8888_COMP(1, c2);
+        out[2] += f2 * ABGR8888_COMP(2, c2);
+        out[3] += f2 * ABGR8888_COMP(3, c2);
+    }
     if(0 != f3)
     {
-        out[0] += f3 * R8G8B8A8_COMP(0, c3);
-        out[1] += f3 * R8G8B8A8_COMP(1, c3);
-        out[2] += f3 * R8G8B8A8_COMP(2, c3);
-        out[3] += f3 * R8G8B8A8_COMP(3, c3);
+        out[0] += f3 * ABGR8888_COMP(0, c3);
+        out[1] += f3 * ABGR8888_COMP(1, c3);
+        out[2] += f3 * ABGR8888_COMP(2, c3);
+        out[3] += f3 * ABGR8888_COMP(3, c3);
     }
-    out[0] /= total;
-    out[1] /= total;
-    out[2] /= total;
-    out[3] /= total;
-    *((uint32_t*)pc) = R8G8B8A8_PACK(out[0], out[1], out[2], out[3]);
+    if(0 != f2 || 0 != f3)
+    {
+        uint32_t total = f1 + f2 + f3;
+        out[0] /= total;
+        out[1] /= total;
+        out[2] /= total;
+        out[3] /= total;
+    }
+    *((uint32_t*)pc) = ABGR8888_PACK(out[3], out[2], out[1], out[0]);
 }
 
 static __inline int Diff(uint32_t c1, uint32_t c2)
 {
-    YUV1 = R8G8B8A8toY8U8V8(c1);
-    YUV2 = R8G8B8A8toY8U8V8(c2);
-    return ( ((R8G8B8A8_COMP(3, c1) != 0) != ((R8G8B8A8_COMP(3, c2) != 0))) ||
-             (abs((YUV1 & Y8U8V8_Ymask) - (YUV2 & Y8U8V8_Ymask)) > trY) ||
-             (abs((YUV1 & Y8U8V8_Umask) - (YUV2 & Y8U8V8_Umask)) > trU) ||
-             (abs((YUV1 & Y8U8V8_Vmask) - (YUV2 & Y8U8V8_Vmask)) > trV) );
+    YUV1 = ABGR8888toYUV888(c1);
+    YUV2 = ABGR8888toYUV888(c2);
+    return ( ((ABGR8888_COMP(3, c1) != 0) != ((ABGR8888_COMP(3, c2) != 0))) ||
+             (abs((YUV1 & YUV888_Ymask) - (YUV2 & YUV888_Ymask)) > ((trY & (int)0xFF) << 16)) ||
+             (abs((YUV1 & YUV888_Umask) - (YUV2 & YUV888_Umask)) > ((trU & (int)0xFF) << 8)) ||
+             (abs((YUV1 & YUV888_Vmask) - (YUV2 & YUV888_Vmask)) > ((trV & (int)0xFF)) ));
 }
 
 static __inline void Transl(uint8_t* pc, uint32_t c)
 {
-    pc[0] = R8G8B8A8_COMP(0, c);
-    pc[1] = R8G8B8A8_COMP(1, c);
-    pc[2] = R8G8B8A8_COMP(2, c);
-    pc[3] = R8G8B8A8_COMP(3, c);
+    pc[0] = ABGR8888_COMP(0, c);
+    pc[1] = ABGR8888_COMP(1, c);
+    pc[2] = ABGR8888_COMP(2, c);
+    pc[3] = ABGR8888_COMP(3, c);
 }
 
 static __inline void Interp1(uint8_t* pc, uint32_t c1, uint32_t c2)
@@ -215,18 +252,21 @@ static __inline void Interp10(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3
 
 void GL_InitSmartFilterHQ2x(void)
 {
-    /* Initalize RGB to YUV lookup table */
-    uint32_t c, r, g, b, y, u, v;
-    for(c = 0; c < 16777215; ++c)
-    {
-        r = R8G8B8_COMP(0, c);
-        g = R8G8B8_COMP(1, c);
-        b = R8G8B8_COMP(2, c);
-        y = (uint32_t)( 0.299*r + 0.587*g + 0.114*b);
-        u = (uint32_t)(-0.169*r - 0.331*g + 0.5  *b) + 128;
-        v = (uint32_t)( 0.5  *r - 0.419*g - 0.081*b) + 128;
-        lutR8G8B8toY8U8V8[c] = Y8U8V8_PACK(y, u, v);
-    }
+    // Initalize RGB to YUV lookup table.
+    uint32_t r, g, b, y, u, v;
+    int i, j, k;
+    for(i = 0; i < 32; ++i)
+        for(j = 0; j < 64; ++j)
+            for(k = 0; k < 32; ++k)
+            {
+                r = i << 3;
+                g = j << 2;
+                b = k << 3;
+                y = (uint32_t)( 0.299*r + 0.587*g + 0.114*b);
+                u = (uint32_t)(-0.169*r - 0.331*g + 0.5  *b) + 128;
+                v = (uint32_t)( 0.5  *r - 0.419*g - 0.081*b) + 128;
+                lutBGR888toYUV888[BGR565_PACK(k, j, i)] = YUV888_PACK(y, u, v);
+            }
 }
 
 uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags)
@@ -318,7 +358,7 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
 
             pattern = 0;
             flag = 1;
-            YUV1 = R8G8B8A8toY8U8V8(w[5]);
+            YUV1 = ABGR8888toYUV888(w[5]);
 
             { int k;
             for(k = 1; k <= 9; ++k)
@@ -328,11 +368,11 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
 
                 if(w[k] != w[5])
                 {
-                    YUV2 = R8G8B8A8toY8U8V8(w[k]);
-                    if(((R8G8B8A8_COMP(3, w[5]) != 0) != (R8G8B8A8_COMP(3, w[k]) != 0)) ||
-                       (abs((YUV1 & Y8U8V8_Ymask) - (YUV2 & Y8U8V8_Ymask)) > trY) ||
-                       (abs((YUV1 & Y8U8V8_Umask) - (YUV2 & Y8U8V8_Umask)) > trU) ||
-                       (abs((YUV1 & Y8U8V8_Vmask) - (YUV2 & Y8U8V8_Vmask)) > trV))
+                    YUV2 = ABGR8888toYUV888(w[k]);
+                    if(((ABGR8888_COMP(3, w[5]) != 0) != (ABGR8888_COMP(3, w[k]) != 0)) ||
+                       (abs((YUV1 & YUV888_Ymask) - (YUV2 & YUV888_Ymask)) > ((trY & (int)0xFF) << 16)) ||
+                       (abs((YUV1 & YUV888_Umask) - (YUV2 & YUV888_Umask)) > ((trU & (int)0xFF) << 8)) ||
+                       (abs((YUV1 & YUV888_Vmask) - (YUV2 & YUV888_Vmask)) > ((trV & (int)0xFF) )) )
                         pattern |= flag;
                 }
                 flag <<= 1;
