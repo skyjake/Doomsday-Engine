@@ -13,7 +13,7 @@ import glob
 
 FILES_URI = "http://code.iki.fi/builds"
 
-RFC_TIME = "%a, %d %b %Y %H:%M:%S %Z"
+RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
 
 if len(sys.argv) != 4:
     print 'The arguments must be: (command) (eventdir) (distribdir)'
@@ -208,26 +208,28 @@ def update_feed():
     
     out = file(feedName, 'wt')
     print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
-    print >> out, '<rss version="2.0">'
+    print >> out, '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'
     print >> out, '<channel>'
     
     print >> out, '<title>Doomsday Engine Builds</title>'
     print >> out, '<link>http://dengine.net/</link>'
+    print >> out, '<atom:link href="http://code.iki.fi/builds/events.rss" rel="self" type="application/rss+xml" />'
     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
     print >> out, '<language>en-us</language>'
     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
     print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, 
-        time.localtime(find_newest_build()['time']))
-    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME)
+        time.gmtime(find_newest_build()['time']))
+    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME, time.gmtime())
     print >> out, '<generator>dengBot</generator>'
     print >> out, '<ttl>720</ttl>' # 12 hours
     
     for timestamp, tag in builds_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %s</title>' % tag[5:]
-        print >> out, '<author>skyjake@users.sourceforge.net</author>'
-        print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, time.localtime(timestamp))
+        print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
+        print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, time.gmtime(timestamp))
         print >> out, '<description>%s</description>' % encoded_build_description(tag)
+        print >> out, '<guid isPermaLink="false">%s</guid>' % tag
         print >> out, '</item>'
     
     # Close.
