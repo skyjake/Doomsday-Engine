@@ -99,7 +99,7 @@ def encoded_build_description(name):
         msg += '<p>No files available for this build.</p>'
     
     # Logs.
-    msg += '<h2>Build Logs</h2><ul>'
+    msg += '<p><b>Build Logs</b></p><ul>'
     for f in glob.glob(os.path.join(buildDir, 'build*txt')):
         os.system('gzip -9 %s' % f)
     for f in glob.glob(os.path.join(buildDir, 'build*txt.gz')):
@@ -110,7 +110,7 @@ def encoded_build_description(name):
     # Changes.
     chgFn = os.path.join(buildDir, 'changes.html')
     if os.path.exists(chgFn):
-        msg += '<h2>Revisions</h2>' + file(chgFn, 'rt').read()
+        msg += '<p><b>Revisions</b></p>' + file(chgFn, 'rt').read()
     
     return '<![CDATA[' + msg + ']]>'
     
