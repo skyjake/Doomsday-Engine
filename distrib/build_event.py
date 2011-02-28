@@ -57,7 +57,7 @@ def find_newest_build():
         if newest is None or newest[0] < s.st_ctime:
             newest = (s.st_ctime, fn)
     if newest is None:
-        return ""
+        return {'tag': None, 'time': time.time()}
     return {'tag': newest[1], 'time': newest[0]}
     
     
