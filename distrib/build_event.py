@@ -215,7 +215,7 @@ def update_feed():
     print >> out, '<link>http://dengine.net/</link>'
     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
     print >> out, '<language>en-us</language>'
-    print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Ker&auml;nen)</webMaster>'
+    print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
     print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, 
         time.localtime(find_newest_build()['time']))
     print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME)
