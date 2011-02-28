@@ -100,7 +100,7 @@ def encoded_build_description(name):
     # Logs.
     msg += '<h2>Build Logs</h2><ul>'
     for f in glob.glob(os.path.join(buildDir, 'build*txt')):
-        os.system('gzip -9c %s' % f)
+        os.system('gzip -9 %s' % f)
     for f in glob.glob(os.path.join(buildDir, 'build*txt.gz')):
         f = os.path.basename(f)
         msg += '<li><a href="%s/%s/%s">%s</a></li>' % (FILES_URI, name, f, f)
