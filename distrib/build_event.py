@@ -34,7 +34,7 @@ def git_pull():
     print 'Updating source...'
     os.chdir(DISTRIB_DIR)
     os.system("git checkout master")
-    os.system("git pull origin master")
+    os.system("git pull")
     
     
 def git_tag(tag):
