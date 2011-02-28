@@ -46,6 +46,7 @@ def git_tag(tag):
     
     
 def remote_copy(src, dst):
+    dst = dst.replace('\\', '/')
     os.system('scp %s %s' % (src, dst))  
     
     
