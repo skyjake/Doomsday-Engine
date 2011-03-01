@@ -34,6 +34,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef UNIX
+# include <errno.h>
+#endif
 
 #include "jdoom64.h"
 

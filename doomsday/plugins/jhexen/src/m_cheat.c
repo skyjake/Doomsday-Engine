@@ -33,6 +33,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#ifdef UNIX
+# include <errno.h>
+#endif
 
 #include "jhexen.h"
 
