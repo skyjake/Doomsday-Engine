@@ -11,7 +11,7 @@ import shutil
 import time
 import glob
 
-FILES_URI = "http://code.iki.fi/builds"
+BUILD_URI = "http://code.iki.fi/builds"
 
 RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
 
@@ -50,13 +50,25 @@ def remote_copy(src, dst):
     os.system('scp %s %s' % (src, dst))  
     
     
+def build_timestamp(tag):
+    path = os.path.join(EVENT_DIR, tag)
+    oldest = os.stat(path).st_ctime
+
+    for fn in os.listdir(path):
+        t = os.stat(os.path.join(path, fn))
+        if int(t.st_ctime) < oldest:
+            oldest = int(t.st_ctime)
+    
+    return oldest        
+    
+    
 def find_newest_build():
     newest = None
     for fn in os.listdir(EVENT_DIR):
         if fn[:5] != 'build': continue
-        s = os.stat(os.path.join(EVENT_DIR, fn))
-        if newest is None or newest[0] < s.st_ctime:
-            newest = (s.st_ctime, fn)
+        bt = build_timestamp(fn)
+        if newest is None or newest[0] < bt:
+            newest = (bt, fn)
     if newest is None:
         return {'tag': None, 'time': time.time()}
     return {'tag': newest[1], 'time': newest[0]}
@@ -66,14 +78,13 @@ def builds_by_time():
     builds = []
     for fn in os.listdir(EVENT_DIR):
         if fn[:5] == 'build':
-            s = os.stat(os.path.join(EVENT_DIR, fn))
-            builds.append((int(s.st_ctime), fn))
+            builds.append((build_timestamp(fn), fn))
     builds.sort()
     builds.reverse()
     return builds
     
     
-def encoded_build_description(name):
+def html_build_description(name, encoded=True):
     buildDir = os.path.join(EVENT_DIR, name)
     
     msg = ''
@@ -91,8 +102,16 @@ def encoded_build_description(name):
         else:
             s = ''
         msg += '<p>%i file%s available:</p><ul>' % (len(files), s)
-        for f in files:
-            msg += '<li><a href="%s/%s/%s">%s</a></li>' % (FILES_URI, name, f, f)
+        for f in files:            
+            if '.dmg' in f:
+                platName = "Mac OS X: "
+            elif '.exe' in f:
+                platName = "Windows: "
+            elif '.deb' in f:
+                platName = "Ubuntu: "
+            else:
+                platName = ''
+            msg += '<li>%s<a href="%s/%s/%s">%s</a></li>' % (platName, BUILD_URI, name, f, f)
         msg += '</ul>'
             
     else:
@@ -102,9 +121,15 @@ def encoded_build_description(name):
     msg += '<p><b>Build Logs</b></p><ul>'
     for f in glob.glob(os.path.join(buildDir, 'build*txt')):
         os.system('gzip -9 %s' % f)
-    for f in glob.glob(os.path.join(buildDir, 'build*txt.gz')):
-        f = os.path.basename(f)
-        msg += '<li><a href="%s/%s/%s">%s</a></li>' % (FILES_URI, name, f, f)
+    for p in ['darwin', 'win32', 'linux2']:
+        msg += '<li>%s:' % p
+        files = glob.glob(os.path.join(buildDir, 'build*%s*txt.gz' % p))
+        if len(files):
+            for f in files:
+                f = os.path.basename(f)
+                msg += ' <a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, f, f)
+        else:
+            msg += ' no logs available.'
     msg += '</ul>'
         
     # Changes.
@@ -112,7 +137,9 @@ def encoded_build_description(name):
     if os.path.exists(chgFn):
         msg += '<p><b>Revisions</b></p>' + file(chgFn, 'rt').read()
     
-    return '<![CDATA[' + msg + ']]>'
+    if encoded: return '<![CDATA[' + msg + ']]>'
+    
+    return msg
     
 
 def todays_build_tag():
@@ -202,6 +229,19 @@ def todays_platform_release():
     git_checkout('master')
 
 
+def write_index_html(tag):
+    f = file(os.path.join(EVENT_DIR, tag, 'index.html'), 'wt')
+    print >> f, "<html>"
+    print >> f, "<head><title>Build %s</title></head>" % tag[5:]
+    print >> f, "<body>"
+    print >> f, "<h1>Build %s</h1>" % tag[5:]
+    print >> f, "<p>The build event was started on %s.</p>" % (time.strftime(RFC_TIME, 
+        time.gmtime(build_timestamp(tag))))
+    print >> f, html_build_description(tag, False)
+    print >> f, "</body>"
+    print >> f, "</html>"
+
+
 def update_feed():
     feedName = os.path.join(EVENT_DIR, "events.rss")
     print "Updating feed in %s..." % feedName
@@ -213,7 +253,7 @@ def update_feed():
     
     print >> out, '<title>Doomsday Engine Builds</title>'
     print >> out, '<link>http://dengine.net/</link>'
-    print >> out, '<atom:link href="http://code.iki.fi/builds/events.rss" rel="self" type="application/rss+xml" />'
+    print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % BUILD_URI
     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
     print >> out, '<language>en-us</language>'
     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
@@ -225,11 +265,14 @@ def update_feed():
     for timestamp, tag in builds_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %s</title>' % tag[5:]
+        print >> out, '<link>%s/%s/</link>' % (BUILD_URI, tag)
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
         print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, time.gmtime(timestamp))
-        print >> out, '<description>%s</description>' % encoded_build_description(tag)
+        print >> out, '<description>%s</description>' % html_build_description(tag)
         print >> out, '<guid isPermaLink="false">%s</guid>' % tag
         print >> out, '</item>'
+        
+        write_index_html(tag)
     
     # Close.
     print >> out, '</channel>'
