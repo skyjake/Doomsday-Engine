@@ -217,9 +217,8 @@ def update_feed():
     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
     print >> out, '<language>en-us</language>'
     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
-    print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, 
+    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME, 
         time.gmtime(find_newest_build()['time']))
-    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME, time.gmtime())
     print >> out, '<generator>dengBot</generator>'
     print >> out, '<ttl>720</ttl>' # 12 hours
     
