@@ -167,11 +167,14 @@ static uint32_t YUV1, YUV2;
 void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t f1,
     uint32_t f2, uint32_t f3)
 {
-    uint32_t out[4];
-    out[0] = f1 * ABGR8888_COMP(0, c1);
-    out[1] = f1 * ABGR8888_COMP(1, c1);
-    out[2] = f1 * ABGR8888_COMP(2, c1);
-    out[3] = f1 * ABGR8888_COMP(3, c1);
+    uint32_t out[4] = { 0, 0, 0, 0 }, total = f1 + f2 + f3;
+    if(0 != f1)
+    {
+        out[0] += f1 * ABGR8888_COMP(0, c1);
+        out[1] += f1 * ABGR8888_COMP(1, c1);
+        out[2] += f1 * ABGR8888_COMP(2, c1);
+        out[3] += f1 * ABGR8888_COMP(3, c1);
+    }
     if(0 != f2)
     {
         out[0] += f2 * ABGR8888_COMP(0, c2);
@@ -186,9 +189,8 @@ void LerpColor(uint8_t* pc, uint32_t c1, uint32_t c2, uint32_t c3, uint32_t f1,
         out[2] += f3 * ABGR8888_COMP(2, c3);
         out[3] += f3 * ABGR8888_COMP(3, c3);
     }
-    if(0 != f2 || 0 != f3)
+    if(0 != total)
     {
-        uint32_t total = f1 + f2 + f3;
         out[0] /= total;
         out[1] /= total;
         out[2] /= total;
