@@ -358,56 +358,56 @@ ENDIF (APPLE)
 ######################## Find Our Build Deps  ##################################
 ## Confirm we have OpenGL
 IF (OPENGL_FOUND STREQUAL "NO")
-    MESSAGE (FATAL_ERROR "** libGL not found. On Ubuntu install libgl1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+    MESSAGE (FATAL_ERROR "** libGL not found. On Ubuntu install libgl1-mesa-dev.")
 ENDIF (OPENGL_FOUND STREQUAL "NO")
 
 ## Confirm we have GLU
 IF (OPENGL_GLU_FOUND STREQUAL "NO")
-    MESSAGE (FATAL_ERROR "** libGLU not found. On Ubuntu install libglu1-mesa-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+    MESSAGE (FATAL_ERROR "** libGLU not found. On Ubuntu install libglu1-mesa-dev.")
 ENDIF (OPENGL_GLU_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${OPENGL_INCLUDE_DIR})
 
 
 ## Confirm we have SDL
 IF (SDL_FOUND STREQUAL "NO")
-    MESSAGE (FATAL_ERROR "** SDL not found. On Ubuntu install libsdl1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL-devel-1.2.11-VC6.zip.")
+    MESSAGE (FATAL_ERROR "** SDL not found. On Ubuntu install libsdl1.2-dev.")
     ENDIF (SDL_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDL_INCLUDE_DIR})
 
 ## Confirm we have SDL_mixer
 IF (SDLMIXER_FOUND STREQUAL "NO")
-    MESSAGE (FATAL_ERROR "** SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL_mixer-devel-1.2.7-VC6.zip.")
+    MESSAGE (FATAL_ERROR "** SDL Mixer not found. On Ubuntu install libsdl-mixer1.2-dev.")
     ENDIF (SDLMIXER_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDLMIXER_INCLUDE_DIR})
 
 ## Confirm we have SDL_net
 IF (SDLNET_FOUND STREQUAL "NO")
-    MESSAGE (FATAL_ERROR "** SDL Net not found. On Ubuntu install libsdl-net1.2-dev. On Mac OSX install FIXME. On Windows/MSVC install SDL_net-devel-1.2.6-VC6.zip.")
+    MESSAGE (FATAL_ERROR "** SDL Net not found. On Ubuntu install libsdl-net1.2-dev.")
 ENDIF (SDLNET_FOUND STREQUAL "NO")
 INCLUDE_DIRECTORIES (${SDLNET_INCLUDE_DIR})
 
 ## Confirm we have zlib
 IF (NOT ZLIB_FOUND)
-    MESSAGE (FATAL_ERROR "** zlib not found. On Ubuntu install zlib1g-dev. On Mac OSX install FIXME. On Windows install zlib123-dll.zip.")
+    MESSAGE (FATAL_ERROR "** zlib not found. On Ubuntu install zlib1g-dev.")
 ENDIF (NOT ZLIB_FOUND)
 INCLUDE_DIRECTORIES (${ZLIB_INCLUDE_DIR})
 
 ## confirm we have libPNG.
 IF (NOT PNG_FOUND)
-    MESSAGE (FATAL_ERROR "** libpng not found. On Ubuntu install libpng-dev. On Mac OSX install FIXME. On Windows install libpng-1.2.8-lib.zip.")
+    MESSAGE (FATAL_ERROR "** libpng not found. On Ubuntu install libpng-dev.")
 ENDIF (NOT PNG_FOUND)
 INCLUDE_DIRECTORIES (${PNG_INCLUDE_DIR})
 
 ## confirm we have libcurl.
 IF (NOT CURL_FOUND)
-    MESSAGE (FATAL_ERROR "** libcurl not found. On Ubuntu install libcurl3-gnutls-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+    MESSAGE (FATAL_ERROR "** libcurl not found. On Ubuntu install libcurl3-gnutls-dev.")
 ENDIF (NOT CURL_FOUND)
 INCLUDE_DIRECTORIES (${CURL_INCLUDE_DIR})
 
 ## Confirm we have ncurses
 IF (UNIX)
     IF (NOT CURSES_LIBRARIES)
-        MESSAGE (FATAL_ERROR "** ncurses not found. On Ubuntu install libncurses5-dev. On Mac OSX install FIXME.")
+        MESSAGE (FATAL_ERROR "** ncurses not found. On Ubuntu install libncurses5-dev.")
     ENDIF (NOT CURSES_LIBRARIES)
     INCLUDE_DIRECTORIES (${CURSES_INCLUDE_DIR})
 ENDIF (UNIX)
@@ -425,7 +425,7 @@ ENDIF (UNIX)
 IF (BUILDOPENAL)
     ## Confirm we have OpenAL
     IF (NOT OPENAL_FOUND STREQUAL "YES")
-        MESSAGE (FATAL_ERROR "** Openal not found. On Ubuntu install libopenal-dev. On Mac OSX install FIXME. On Windows install OpenAL11CoreSDK.exe.")
+        MESSAGE (FATAL_ERROR "** Openal not found. On Ubuntu install libopenal-dev.")
     ENDIF (NOT OPENAL_FOUND STREQUAL "YES")
     INCLUDE_DIRECTORIES (${OPENAL_INCLUDE_DIR})
 ENDIF (BUILDOPENAL)
@@ -436,10 +436,10 @@ IF (UNIX)
     IF(HAVE_DL)
         CHECK_LIBRARY_EXISTS("dl" "dlopen" "" HAVE_LIB_DL)
         IF(NOT HAVE_LIB_DL)
-			MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+			MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev.")
         ENDIF(NOT HAVE_LIB_DL)
     ELSE(HAVE_DL)
-		MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev. On Mac OSX install FIXME. On Windows install FIXME.")
+		MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev.")
     ENDIF(HAVE_DL)
 ENDIF (UNIX)
 
