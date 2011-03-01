@@ -21,6 +21,7 @@ if len(sys.argv) != 4:
 
 EVENT_DIR = sys.argv[2] #/Users/jaakko/Builds
 DISTRIB_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
+LOCAL_APT_DIR = '/home/jaakko/builds-apt'
 
 
 def git_checkout(ident):
@@ -280,37 +281,16 @@ def update_feed():
 
 
 def rebuild_apt_repository():
-    aptDir = os.path.join(EVENT_DIR, 'apt')
+    aptDir = LOCAL_APT_DIR
     print 'Rebuilding the apt repository in %s...' % aptDir
     
-    # Empty the apt directory.
-    if os.path.exists(aptDir):
-        shutil.rmtree(aptDir, True)
-    os.mkdir(aptDir)
-    
-    # Copy the packages (preserving metadata).
-    binDir = os.path.join(aptDir, 'binary')
-    os.mkdir(binDir)
-    for timestamp, tag in builds_by_time():
-        for debName in glob.glob(os.path.join(EVENT_DIR, tag, '*.deb')):
-            shutil.copy2(debName, os.path.join(binDir, os.path.basename(debName)))
-            
-    # Generate the apt package index.
-    distsDir = os.path.join(aptDir, 'dists/unstable/main/binary-i386')
-    os.makedirs(distsDir)
-    os.chdir(aptDir)
-    os.system("dpkg-scanpackages -a i386 binary /dev/null > %s" % os.path.join(distsDir, 'Packages'))
-    os.chdir(distsDir)
-    os.system("gzip -9 Packages")
-    
-    f = file('Release', 'wt')
-    print >> f, 'Archive: unstable'
-    print >> f, 'Component: main'
-    print >> f, 'Origin: skyjake@users.sourceforge.net'
-    print >> f, 'Label: Automated Doomsday Engine Builds'
-    print >> f, 'Architecture: i386'
-    f.close()
-    
+    os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
+    os.system("apt-ftparchive -c ~/Dropbox/APT/ftparchive-release.conf release %s/dists/unstable > %s/dists/unstable/Release" % (LOCAL_APT_DIR, LOCAL_APT_DIR))
+    os.chdir("%s/dists/unstable" % LOCAL_APT_DIR)
+    os.remove("Release.gpg")
+    os.system("gpg --output Release.gpg -ba Release")
+    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (LOCAL_APT_DIR, os.path.join(EVENT_DIR, 'apt')))
+
 
 if sys.argv[1] == 'create':
     create_build_event()
