@@ -15,13 +15,16 @@ BUILD_URI = "http://code.iki.fi/builds"
 
 RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
 
-if len(sys.argv) != 4:
-    print 'The arguments must be: (command) (eventdir) (distribdir)'
+if len(sys.argv) < 4:
+    print 'The arguments must be: (command) (eventdir) (distribdir) [localaptdir]'
     sys.exit(1)
 
 EVENT_DIR = sys.argv[2] #/Users/jaakko/Builds
 DISTRIB_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
-LOCAL_APT_DIR = '/home/jaakko/builds-apt'
+if len(sys.argv) > 4:
+    APT_REPO_DIR = sys.argv[4]
+else:
+    APT_REPO_DIR = ''
 
 
 def git_checkout(ident):
@@ -220,6 +223,13 @@ def todays_platform_release():
         # Copy any new files.
         remote_copy(os.path.join('releases', n),
                     os.path.join(EVENT_DIR, todays_build_tag(), n))
+
+        if APT_REPO_DIR:
+            # Copy also to the appropriate apt directory.
+            arch = 'i386'
+            if '_amd64' in n: arch = 'amd64'
+            remote_copy(os.path.join('releases', n),
+                        os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
                                  
     # Also the build log.
     remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
@@ -281,15 +291,15 @@ def update_feed():
 
 
 def rebuild_apt_repository():
-    aptDir = LOCAL_APT_DIR
+    aptDir = APT_REPO_DIR
     print 'Rebuilding the apt repository in %s...' % aptDir
     
     os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
-    os.system("apt-ftparchive -c ~/Dropbox/APT/ftparchive-release.conf release %s/dists/unstable > %s/dists/unstable/Release" % (LOCAL_APT_DIR, LOCAL_APT_DIR))
-    os.chdir("%s/dists/unstable" % LOCAL_APT_DIR)
+    os.system("apt-ftparchive -c ~/Dropbox/APT/ftparchive-release.conf release %s/dists/unstable > %s/dists/unstable/Release" % (aptDir, aptDir))
+    os.chdir("%s/dists/unstable" % aptDir)
     os.remove("Release.gpg")
     os.system("gpg --output Release.gpg -ba Release")
-    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (LOCAL_APT_DIR, os.path.join(EVENT_DIR, 'apt')))
+    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(EVENT_DIR, 'apt')))
 
 
 if sys.argv[1] == 'create':
