@@ -67,11 +67,6 @@
 #  include <SDL.h>
 #endif
 
-#ifdef TextOut
-// Windows has its own TextOut.
-#  undef TextOut
-#endif
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------

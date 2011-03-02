@@ -29,8 +29,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
-//#include "de_graphics.h"
-//#include "de_misc.h"
 
 static uint8_t* scratchBuffer = NULL;
 static size_t scratchBufferSize = 0;
@@ -550,7 +548,10 @@ void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
         }
     }
 
-    memcpy(retRegion, region, sizeof(retRegion));
+    retRegion[0] = region[0];
+    retRegion[1] = region[1];
+    retRegion[2] = region[2];
+    retRegion[3] = region[3];
     }
 }
 
