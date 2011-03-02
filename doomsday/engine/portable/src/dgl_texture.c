@@ -576,10 +576,6 @@ static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int h
         }
     }
 
-    // We do not want automatical mipmaps.
-    if(GL_state_ext.genMip)
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
-
     // Upload the first level right away.
     glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, width, height, 0,
                  GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
