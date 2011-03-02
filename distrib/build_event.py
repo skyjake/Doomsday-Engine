@@ -10,6 +10,7 @@ import os
 import shutil
 import time
 import glob
+import platform
 
 BUILD_URI = "http://code.iki.fi/builds"
 
@@ -111,8 +112,10 @@ def html_build_description(name, encoded=True):
                 platName = "Mac OS X: "
             elif '.exe' in f:
                 platName = "Windows: "
-            elif '.deb' in f:
+            elif 'i386.deb' in f:
                 platName = "Ubuntu: "
+            elif 'amd64.deb' in f:
+                platName = "Ubuntu (64-bit): "
             else:
                 platName = ''
             msg += '<li>%s<a href="%s/%s/%s">%s</a></li>' % (platName, BUILD_URI, name, f, f)
@@ -233,9 +236,9 @@ def todays_platform_release():
                                  
     # Also the build log.
     remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
-        'buildlog-%s.txt' % sys.platform))
+        'buildlog-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
     remote_copy('builderrors.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
-        'builderrors-%s.txt' % sys.platform))
+        'builderrors-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
                                              
     git_checkout('master')
 
