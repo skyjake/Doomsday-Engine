@@ -44,6 +44,7 @@
  .\..\..\engine\portable\src\gl_font.c
  .\..\..\engine\portable\src\gl_draw.c
  .\..\..\engine\portable\src\gl_drawvectorgraphic.c
+ .\..\..\engine\portable\src\image.c
  .\..\..\engine\portable\src\pathdirectory.c
  .\..\..\engine\portable\src\rend_console.c
  .\..\..\engine\portable\src\rend_bias.c

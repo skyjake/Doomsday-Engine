@@ -23,83 +23,163 @@
  */
 
 /**
- * Texture Manipulation Algorithms.
+ * Image manipulation and evaluation algorithms.
  */
 
-#ifndef LIBDENG_TEXTURES_H
-#define LIBDENG_TEXTURES_H
-
-struct image_s;
-
-boolean GL_OptimalSize(int width, int height, int* optWidth, int* optHeight,
-    boolean noStretch, boolean isMipMapped);
+#ifndef LIBDENG_IMAGE_MANIPULATION_H
+#define LIBDENG_IMAGE_MANIPULATION_H
 
 /**
- * in/out format:
- * 1 = palette indices
- * 2 = palette indices followed by alpha values
- * 3 = RGB
- * 4 = RGBA
+ * @param pixels  Luminance image to be enhanced.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param hasAlpha  @c true == @a pixels is luminance plus alpha data.
  */
-void GL_ConvertBuffer(int width, int height, int informat, int outformat,
-    const uint8_t* src, uint8_t* dst, colorpaletteid_t pal, boolean gamma);
+void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha);
 
-uint8_t* GL_ScaleBuffer32(const uint8_t* src, int width, int height, int comps,
-    int outWidth, int outHeight);
+/**
+ * Take the input buffer and convert to color keyed. A new buffer may be
+ * needed if the input buffer has three color components.
+ *
+ * @return  If the in buffer wasn't large enough will return a ptr to the
+ *      newly allocated buffer which must be freed with free(), else @a buf.
+ */
+uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height,
+    int pixelSize);
 
-void            GL_DownMipmap32(byte* in, int width, int height, int comps);
-void            GL_ConvertToAlpha(struct image_s *image, boolean makeWhite);
-void            GL_ConvertToLuminance(struct image_s *image);
-void            GL_CalcLuminance(byte* buffer, int width, int height,
-                                 int pixelsize, colorpaletteid_t palid,
-                                 float* brightX, float* brightY,
-                                 rgbcol_t* color, float* lumSize);
-byte*           GL_ApplyColorKeying(byte* buf, unsigned int pixelSize,
-                                    unsigned int width, unsigned int height);
-int             GL_ValidTexHeight2(int width, int height);
-
-void            pixBlt(byte* src, int srcWidth, int srcHeight, byte* dest,
-                       int destWidth, int destHeight, int alpha, int srcRegX,
-                       int srcRegY, int destRegX, int destRegY, int regWidth,
-                       int regHeight);
-void            averageColorIdx(rgbcol_t col, byte* data, int w, int h,
-                                colorpaletteid_t palid, boolean hasAlpha);
-void            averageColorRGB(rgbcol_t col, byte* data, int w, int h);
-int             lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h,
-                                    int line, colorpaletteid_t palid,
-                                    boolean hasAlpha);
-int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
-                                    int line);
-void            amplify(float* rgb);
+/**
+ * @param pixels  RGBA data. Input read here, and output written here.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ */
+#if 0 // dj: Doesn't make sense, "darkness" applied to an alpha channel?
+void BlackOutlines(uint8_t* pixels, int width, int height);
+#endif
 
 /**
  * Spread the color of none masked pixels outwards into the masked area.
  * This addresses the "black outlines" produced by texture filtering due to
  * sampling the default (black) color.
  */
-void ColorOutlines(uint8_t* buffer, int width, int height);
-
-boolean         ImageHasAlpha(struct image_s *image);
+void ColorOutlinesIdx(uint8_t* pixels, int width, int height);
 
 /**
+ * @param pixels  RGB(a) image to be enhanced.
  * @param width  Logical width of the image in pixels.
  * @param height  Logical height of the image in pixels.
- * @param flags  @see imageConversionFlags.
+ * @param pixelsize  Size of each pixel. Handles 3 and 4.
  */
-int GL_ChooseSmartFilter(int width, int height, int flags);
+void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
 
 /**
- * @param method  Unique identifier of the smart filtering method to apply.
- * @param src  Source image to be filtered.
- * @param width  Logical width of the source image in pixels.
- * @param height  Logical height of the source image in pixels.
- * @param flags  @see imageConversionFlags.
- * @param outWidth  Logical width of resultant image in pixels.
- * @param outHeight  Logical height of resultant image in pixels.
+ * \important Does not conform to any standard technique and adjustments
+ * are applied symmetrically for all color components. 
  *
- * @return  Newly allocated version of the source image if filtered else @c == @a src.
+ * @param pixels  RGB(a) image to be enhanced.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param pixelsize  Size of each pixel. Handles 3 and 4.
  */
-uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
-    int flags, int* outWidth, int* outHeight);
+void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
 
-#endif /* LIBDENG_TEXTURES_H */
+/**
+ * Equalize the specified luminance map such that the minimum and maximum
+ * brightness covers the whole [0...255] range.
+ *
+ * \algorithm Calculates shift deltas for bright and dark-side pixels by
+ * averaging the luminosity of all pixels in the original image.
+ *
+ * @param pixels  Luminance image to equalize.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ */
+void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
+    float* rHiMul, float* rLoMul);
+
+/**
+ * @param pixels  RGB(a) image to evaluate.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param color  Determined average color written here.
+ */
+void FindAverageColor(const uint8_t* pixels, int width, int height,
+    int pixelSize, float color[3]);
+
+/**
+ * @param pixels  Index-color image to evaluate.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param palid  Unique identifier of the color palette to use.
+ * @param hasAlpha  @c true == @a pixels includes alpha data.
+ * @param color  Determined average color written here.
+ */
+void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
+    colorpaletteid_t palid, boolean hasAlpha, float color[3]);
+
+/**
+ * @param pixels  RGB(a) image to evaluate.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param color  Determined average color written here.
+ */
+void FindAverageLineColor(const uint8_t* pixels, int width, int height,
+    int pixelSize, int line, float color[3]);
+
+/**
+ * @param pixels  Index-color image to evaluate.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param palid  Unique identifier of the color palette to use.
+ * @param hasAlpha  @c true == @a pixels includes alpha data.
+ * @param color  Determined average color written here.
+ */
+void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
+    int line, colorpaletteid_t palid, boolean hasAlpha, float color[3]);
+
+/**
+ * Calculates a clip region for the image that excludes alpha pixels.
+ * \algorithm: Cross spread from bottom > top, right > left (inside out).
+ *
+ * @param pixels  Image data to be processed.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param pixelsize  Size of each pixel. Handles 1 (==2), 3 and 4.
+ * @param region  Determined region written here.
+ */
+void FindClipRegionNonAlpha(const uint8_t* pixels, int width, int height,
+    int pixelSize, int region[4]);
+
+/**
+ * @param pixels  RGB(a) image to be enhanced.
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param pixelsize  Size of each pixel. Handles 3 and 4.
+ */
+void SharpenPixels(uint8_t* pixels, int width, int height, int pixelSize);
+
+uint8_t* GL_ScaleBuffer(const uint8_t* pixels, int width, int height,
+    int pixelSize, int outWidth, int outHeight);
+
+uint8_t* GL_ScaleBufferNearest(const uint8_t* pixels, int width, int height,
+    int pixelSize, int outWidth, int outHeight);
+
+/**
+ * Works within the given data, reducing the size of the picture to half
+ * its original.
+ *
+ * @param width  Width of the final texture, must be power of two.
+ * @param height  Height of the final texture, must be power of two.
+ */
+void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
+
+/**
+ * Works within the given data, reducing the size of the picture to half
+ * its original.
+ *
+ * @param width  Width of the final texture, must be power of two.
+ * @param height  Height of the final texture, must be power of two.
+ */
+void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height,
+    float fade);
+
+#endif /* LIBDENG_IMAGE_MANIPULATION_H */

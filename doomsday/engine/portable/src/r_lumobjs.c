@@ -380,7 +380,7 @@ void LO_AddLuminous(mobj_t* mo)
         spriteframe_t* sprFrame;
         spritetex_t* sprTex;
         material_t* mat;
-        rgbcol_t autoLightColor;
+        float autoLightColor[3];
         material_snapshot_t ms;
         const gltexture_inst_t* texInst;
         

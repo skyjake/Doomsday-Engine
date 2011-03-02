@@ -114,10 +114,6 @@ typedef struct shadowlink_s {
     byte            side;
 } shadowlink_t;
 
-typedef float       colorcomp_t;
-typedef colorcomp_t rgbcol_t[3];
-typedef colorcomp_t rgbacol_t[4];
-
 typedef struct {
     lumpnum_t       lump;
     short           offX; // block origin (allways UL), which has allready

@@ -1141,6 +1141,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\image.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\m_args.c"
 				>
 			</File>

@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Image manipulation algorithms.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
@@ -35,37 +29,17 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
-#include "de_graphics.h"
-#include "de_misc.h"
+//#include "de_graphics.h"
+//#include "de_misc.h"
 
-#include "image.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static byte *scratchBuffer = NULL;
+static uint8_t* scratchBuffer = NULL;
 static size_t scratchBufferSize = 0;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Provides a persistent scratch buffer for use by texture manipulation
  * routines e.g. scaleLine().
  */
-static byte *GetScratchBuffer(size_t size)
+static uint8_t* GetScratchBuffer(size_t size)
 {
     // Need to enlarge?
     if(size > scratchBufferSize)
@@ -73,77 +47,7 @@ static byte *GetScratchBuffer(size_t size)
         scratchBuffer = Z_Realloc(scratchBuffer, size, PU_APPSTATIC);
         scratchBufferSize = size;
     }
-
     return scratchBuffer;
-}
-
-/**
- * Copies a rectangular region of the source buffer to the destination
- * buffer. Doesn't perform clipping, so be careful.
- * Yeah, 13 parameters...
- */
-void pixBlt(byte *src, int srcWidth, int srcHeight, byte *dest, int destWidth,
-            int destHeight, int alpha, int srcRegX, int srcRegY, int destRegX,
-            int destRegY, int regWidth, int regHeight)
-{
-    int         y;                  // Y in the copy region.
-    int         srcNumPels = srcWidth * srcHeight;
-    int         destNumPels = destWidth * destHeight;
-
-    for(y = 0; y < regHeight; ++y)  // Copy line by line.
-    {
-        // The color index data.
-        memcpy(dest + destRegX + (y + destRegY) * destWidth,
-               src + srcRegX + (y + srcRegY) * srcWidth, regWidth);
-
-        if(alpha)
-        {
-            // Alpha channel data.
-            memcpy(dest + destNumPels + destRegX + (y + destRegY) * destWidth,
-                   src + srcNumPels + srcRegX + (y + srcRegY) * srcWidth,
-                   regWidth);
-        }
-    }
-}
-
-void GL_ConvertBuffer(int width, int height, int informat, int outformat,
-    const uint8_t* in, uint8_t* out, colorpaletteid_t palid, boolean gamma)
-{
-    if(informat == outformat)
-    {
-        // No conversion necessary.
-        memcpy(out, in, width * height * informat);
-        return;
-    }
-
-    // Conversion from pal8(a) to RGB(A).
-    if(informat <= 2 && outformat >= 3)
-    {
-        GL_PalettizeImage(out, outformat, R_GetColorPalette(palid), gamma,
-            in, informat, width, height);
-        return;
-    }
-
-    // Conversion from RGB(A) to pal8(a), using pal18To8.
-    if(informat >= 3 && outformat <= 2)
-    {
-        GL_QuantizeImageToPalette(out, outformat, R_GetColorPalette(palid),
-            in, informat, width, height);
-        return;
-    }
-
-    if(informat == 3 && outformat == 4)
-    {
-        int i, numPixels = width * height;
-        int inSize = (informat == 2 ? 1 : informat);
-        int outSize = (outformat == 2 ? 1 : outformat);
-
-        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
-        {
-            memcpy(out, in, 3);
-            out[3] = 0xff; // Opaque.
-        }
-    }
 }
 
 /**
@@ -179,17 +83,19 @@ static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStri
             weight = inPos & 0xffff;
             invWeight = 0x10000 - weight;
 
-            out[0] = (byte)((col1[0] * invWeight + col2[0] * weight) >> 16);
-            out[1] = (byte)((col1[1] * invWeight + col2[1] * weight) >> 16);
-            out[2] = (byte)((col1[2] * invWeight + col2[2] * weight) >> 16);
+            out[0] = (uint8_t)((col1[0] * invWeight + col2[0] * weight) >> 16);
+            out[1] = (uint8_t)((col1[1] * invWeight + col2[1] * weight) >> 16);
+            out[2] = (uint8_t)((col1[2] * invWeight + col2[2] * weight) >> 16);
             if(comps == 4)
-                out[3] = (byte)((col1[3] * invWeight + col2[3] * weight) >> 16);
+                out[3] = (uint8_t)((col1[3] * invWeight + col2[3] * weight) >> 16);
         }
 
         // The last pixel.
         memcpy(out, in + (inLen - 1) * inStride, comps);
+        return;
     }
-    else if(inToOutScale < 1)
+
+    if(inToOutScale < 1)
     {
         // Minification needs to calculate the average of each of
         // the pixels contained by the out pixel.
@@ -204,7 +110,7 @@ static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStri
 
                 for(c = 0; c < comps; ++c)
                 {
-                    out[c] = (byte)(cumul[c] / count);
+                    out[c] = (uint8_t)(cumul[c] / count);
                     cumul[c] = 0;
                 }
                 count = 0;
@@ -217,56 +123,65 @@ static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStri
         // Fill in the last pixel, too.
         if(count)
             for(c = 0; c < comps; ++c)
-                out[c] = (byte)(cumul[c] / count);
+                out[c] = (uint8_t)(cumul[c] / count);
+        return;
     }
-    else
+
+    // No need for scaling.
+    if(comps == 3)
     {
-        // No need for scaling.
-        if(comps == 3)
+        for(i = outLen; i > 0; --i, out += outStride, in += inStride)
         {
-            for(i = outLen; i > 0; --i, out += outStride, in += inStride)
-            {
-                out[0] = in[0];
-                out[1] = in[1];
-                out[2] = in[2];
-            }
+            out[0] = in[0];
+            out[1] = in[1];
+            out[2] = in[2];
         }
-        else if(comps == 4)
+    }
+    else if(comps == 4)
+    {
+        for(i = outLen; i > 0; i--, out += outStride, in += inStride)
         {
-            for(i = outLen; i > 0; i--, out += outStride, in += inStride)
-            {
-                out[0] = in[0];
-                out[1] = in[1];
-                out[2] = in[2];
-                out[3] = in[3];
-            }
+            out[0] = in[0];
+            out[1] = in[1];
+            out[2] = in[2];
+            out[3] = in[3];
         }
     }
 }
 
 /// \todo Avoid use of a secondary buffer by scaling directly to output.
-uint8_t* GL_ScaleBuffer32(const uint8_t* in, int inWidth, int inHeight, int comps,
+uint8_t* GL_ScaleBuffer(const uint8_t* in, int width, int height, int comps,
     int outWidth, int outHeight)
 {
-    uint8_t* outOff, *buffer = GetScratchBuffer(comps * outWidth * inHeight);
+    assert(in);
+    {
     uint inOffsetSize, outOffsetSize;
+    uint8_t* outOff, *buffer;
     const uint8_t* inOff;
-    int stride;
     uint8_t* out;
+    int stride;
+
+    if(width <= 0 || height <= 0)
+        return (uint8_t*)in;
+
+    if(comps != 3 && comps != 4)
+        Con_Error("GL_ScaleBuffer: Attempted on non-rgb(a) image (comps=%i).", comps);
+
+    buffer = GetScratchBuffer(comps * outWidth * height);
 
     if(0 == (out = malloc(comps * outWidth * outHeight)))
-        Con_Error("GL_ScaleBuffer32: Failed on allocation of %lu bytes for "
+        Con_Error("GL_ScaleBuffer: Failed on allocation of %lu bytes for "
                   "output buffer.", (unsigned long) (comps * outWidth * outHeight));
 
     // First scale horizontally, to outWidth, into the temporary buffer.
     inOff = in;
     outOff = buffer;
-    inOffsetSize = inWidth * comps;
+    inOffsetSize = width * comps;
     outOffsetSize = outWidth * comps;
     { int i;
-    for(i = 0; i < inHeight; ++i, inOff += inOffsetSize, outOff += outOffsetSize)
+    for(i = 0; i < height; ++i, inOff += inOffsetSize, outOff += outOffsetSize)
     {
-        scaleLine(inOff, comps, outOff, comps, outWidth, inWidth, comps);
+        scaleLine(inOff, comps, outOff, comps, outWidth, width, comps);
     }}
 
     // Then scale vertically, to outHeight, into the out buffer.
@@ -278,249 +193,421 @@ uint8_t* GL_ScaleBuffer32(const uint8_t* in, int inWidth, int inHeight, int comp
     { int i;
     for(i = 0; i < outWidth; ++i, inOff += inOffsetSize, outOff += outOffsetSize)
     {
-        scaleLine(inOff, stride, outOff, stride, outHeight, inHeight, comps);
+        scaleLine(inOff, stride, outOff, stride, outHeight, height, comps);
     }}
     return out;
+    }
 }
 
-/**
- * Works within the given data, reducing the size of the picture to half
- * its original. Width and height must be powers of two.
- */
-void GL_DownMipmap32(byte *in, int width, int height, int comps)
+uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int comps,
+    int outWidth, int outHeight)
 {
-    byte       *out;
-    int         x, y, c, outW = width >> 1, outH = height >> 1;
+    assert(in);
+    {
+    int ratioX, ratioY, shearY;
+    uint8_t* out, *outP;
+
+    if(width <= 0 || height <= 0)
+        return (uint8_t*)in;
+
+    ratioX = (int)(width  << 16) / outWidth  + 1;
+    ratioY = (int)(height << 16) / outHeight + 1;
+
+    if(NULL == (out = malloc(comps * outWidth * outHeight)))
+        Con_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
+                  "output buffer.", (unsigned long) (comps * outWidth * outHeight));
+
+    outP = out;
+    shearY = 0;
+    { int i;
+    for(i = 0; i < outHeight; ++i, shearY += ratioY)
+    {
+        int shearX = 0;
+        int shearY2 = (shearY >> 16) * width;
+        { int j;
+        for(j = 0; j < outWidth; ++j, outP += comps, shearX += ratioX)
+        {
+            int c, n = (shearY2 + (shearX >> 16)) * comps;
+            for(c = 0; c < comps; ++c, n++)
+                outP[c] = in[n];
+        }}
+    }}
+    return out;
+    }
+}
+
+void GL_DownMipmap32(uint8_t* in, int width, int height, int comps)
+{
+    assert(in);
+    {
+    int x, y, c, outW = width >> 1, outH = height >> 1;
+    uint8_t* out;
+
+    if(width <= 0 || height <= 0 || comps <= 0)
+        return;
 
     if(width == 1 && height == 1)
     {
 #if _DEBUG
-        Con_Error("GL_DownMipmap32 can't be called for a 1x1 image.\n");
+        Con_Error("GL_DownMipmap32: Can't be called for a 1x1 image.\n");
 #endif
         return;
     }
 
-    if(!outW || !outH)          // Limited, 1x2|2x1 -> 1x1 reduction?
+    // Limited, 1x2|2x1 -> 1x1 reduction?
+    if(!outW || !outH)
     {
-        int     outDim = (width > 1 ? outW : outH);
+        int outDim = (width > 1 ? outW : outH);
 
         out = in;
         for(x = 0; x < outDim; ++x, in += comps * 2)
             for(c = 0; c < comps; ++c, out++)
-                *out = (byte)((in[c] + in[comps + c]) >> 1);
+                *out = (uint8_t)((in[c] + in[comps + c]) >> 1);
+        return;
     }
-    else                        // Unconstrained, 2x2 -> 1x1 reduction?
-    {
-        out = in;
-        for(y = 0; y < outH; ++y, in += width * comps)
-            for(x = 0; x < outW; ++x, in += comps * 2)
-                for(c = 0; c < comps; ++c, out++)
-                    *out =
-                        (byte)((in[c] + in[comps + c] + in[comps * width + c] +
-                               in[comps * (width + 1) + c]) >> 2);
+
+    // Unconstrained, 2x2 -> 1x1 reduction?
+    out = in;
+    for(y = 0; y < outH; ++y, in += width * comps)
+        for(x = 0; x < outW; ++x, in += comps * 2)
+            for(c = 0; c < comps; ++c, out++)
+                *out = (uint8_t)((in[c] + in[comps + c] + in[comps * width + c] +
+                              in[comps * (width + 1) + c]) >> 2);
     }
 }
 
-/**
- * Determine the optimal size for a texture. Usually the dimensions are
- * scaled upwards to the next power of two.
- *
- * @param noStretch         If @c true, the stretching can be skipped.
- * @param isMipMapped       If @c true, we will require mipmaps (this has
- *                          an affect on the optimal size).
- */
-boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
-                       boolean noStretch, boolean isMipMapped)
+void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float fade)
 {
-    if(GL_state.textureNonPow2 && !isMipMapped)
-    {
-        *optWidth = width;
-        *optHeight = height;
-    }
-    else if(noStretch)
-    {
-        *optWidth = M_CeilPow2(width);
-        *optHeight = M_CeilPow2(height);
+    int x, y, outW = width / 2, outH = height / 2;
+    float invFade;
+    byte* out = in;
 
-        // MaxTexSize may prevent using noStretch.
-        if(*optWidth  > GL_state.maxTexSize ||
-           *optHeight > GL_state.maxTexSize)
+    if(fade > 1)
+        fade = 1;
+    invFade = 1 - fade;
+
+    if(width == 1 && height == 1)
+    {
+#if _DEBUG
+        Con_Error("GL_DownMipmap8: Can't be called for a 1x1 image.\n");
+#endif
+        return;
+    }
+
+    if(!outW || !outH)
+    {   // Limited, 1x2|2x1 -> 1x1 reduction?
+        int outDim = (width > 1 ? outW : outH);
+
+        for(x = 0; x < outDim; x++, in += 2)
         {
-            noStretch = false;
+            *out = (in[0] + in[1]) / 2;
+            *fadedOut++ = (byte) (*out * invFade + 0x80 * fade);
+            out++;
         }
     }
     else
-    {
-        // Determine the most favorable size for the texture.
-        if(texQuality == TEXQ_BEST) // The best quality.
-        {
-            // At the best texture quality *opt, all textures are
-            // sized *upwards*, so no details are lost. This takes
-            // more memory, but naturally looks better.
-            *optWidth = M_CeilPow2(width);
-            *optHeight = M_CeilPow2(height);
-        }
-        else if(texQuality == 0)
-        {
-            // At the lowest quality, all textures are sized down
-            // to the nearest power of 2.
-            *optWidth = M_FloorPow2(width);
-            *optHeight = M_FloorPow2(height);
-        }
-        else
-        {
-            // At the other quality *opts, a weighted rounding
-            // is used.
-            *optWidth = M_WeightPow2(width, 1 - texQuality / (float) TEXQ_BEST);
-            *optHeight =
-               M_WeightPow2(height, 1 - texQuality / (float) TEXQ_BEST);
-        }
-    }
-
-    // Hardware limitations may force us to modify the preferred
-    // texture size.
-    if(*optWidth > GL_state.maxTexSize)
-        *optWidth = GL_state.maxTexSize;
-    if(*optHeight > GL_state.maxTexSize)
-        *optHeight = GL_state.maxTexSize;
-
-    // Some GL drivers seem to have problems with VERY small textures.
-    if(*optWidth < MINTEXWIDTH)
-        *optWidth = MINTEXWIDTH;
-    if(*optHeight < MINTEXHEIGHT)
-        *optHeight = MINTEXHEIGHT;
-
-    if(ratioLimit)
-    {
-        if(*optWidth > *optHeight) // Wide texture.
-        {
-            if(*optHeight < *optWidth / ratioLimit)
-                *optHeight = *optWidth / ratioLimit;
-        }
-        else // Tall texture.
-        {
-            if(*optWidth < *optHeight / ratioLimit)
-                *optWidth = *optHeight / ratioLimit;
-        }
-    }
-
-    return noStretch;
-}
-
-/**
- * Converts the image data to grayscale luminance in-place.
- */
-void GL_ConvertToLuminance(image_t* image)
-{
-    int p, total = image->width * image->height;
-    byte* alphaChannel = NULL;
-    byte* ptr = image->pixels;
-
-    if(image->pixelSize < 3)
-    {   // No need to convert anything.
-        return;
-    }
-
-    // Do we need to relocate the alpha data?
-    if(image->pixelSize == 4)
-    {   // Yes. Take a copy.
-        alphaChannel = malloc(total);
-        ptr = image->pixels;
-        for(p = 0; p < total; ++p, ptr += image->pixelSize)
-            alphaChannel[p] = ptr[3];
-    }
-
-    // Average the RGB colors.
-    ptr = image->pixels;
-    for(p = 0; p < total; ++p, ptr += image->pixelSize)
-    {
-        int min = MIN_OF(ptr[0], MIN_OF(ptr[1], ptr[2]));
-        int max = MAX_OF(ptr[0], MAX_OF(ptr[1], ptr[2]));
-        image->pixels[p] = (min + max) / 2;
-    }
-
-    // Do we need to relocate the alpha data?
-    if(alphaChannel)
-    {
-        memcpy(image->pixels + total, alphaChannel, total);
-        image->pixelSize = 2;
-        free(alphaChannel);
-        return;
-    }
-
-    image->pixelSize = 1;
-}
-
-void GL_ConvertToAlpha(image_t *image, boolean makeWhite)
-{
-    int         p, total = image->width * image->height;
-
-    GL_ConvertToLuminance(image);
-    for(p = 0; p < total; ++p)
-    {
-        // Move the average color to the alpha channel, make the
-        // actual color white.
-        image->pixels[total + p] = image->pixels[p];
-        if(makeWhite)
-            image->pixels[p] = 255;
-    }
-
-    image->pixelSize = 2;
-}
-
-boolean ImageHasAlpha(image_t *img)
-{
-    uint        i, size;
-    boolean     hasAlpha = false;
-    byte       *in;
-
-    if(img->pixelSize == 4)
-    {
-        size = img->width * img->height;
-        for(i = 0, in = img->pixels; i < size; ++i, in += 4)
-            if(in[3] < 255)
+    {   // Unconstrained, 2x2 -> 1x1 reduction?
+        for(y = 0; y < outH; y++, in += width)
+            for(x = 0; x < outW; x++, in += 2)
             {
-                hasAlpha = true;
-                break;
+                *out = (in[0] + in[1] + in[width] + in[width + 1]) / 4;
+                *fadedOut++ = (byte) (*out * invFade + 0x80 * fade);
+                out++;
             }
     }
-
-    return hasAlpha;
 }
 
-int LineAverageRGB(byte *imgdata, int width, int height, int line,
-                   byte *rgb, byte *palette, boolean hasAlpha)
+void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
+    colorpaletteid_t palid, boolean hasAlpha, float col[3])
 {
-    byte       *start = imgdata + width * line;
-    byte       *alphaStart = start + width * height;
-    int         i, c, count = 0;
-    int         integerRGB[3] = { 0, 0, 0 };
-    byte        col[3];
-
-    for(i = 0; i < width; ++i)
+    assert(data && col);
     {
-        // Not transparent?
-        if(alphaStart[i] > 0 || !hasAlpha)
-        {
-            count++;
-            // Ignore the gamma level.
-            memcpy(col, palette + 3 * start[i], 3);
-            for(c = 0; c < 3; ++c)
-                integerRGB[c] += col[c];
-        }
+    long count, numpels, avg[3] = { 0, 0, 0 };
+    const uint8_t* start, *alphaStart;
+    DGLubyte rgbUBV[3];
+    DGLuint pal;
+
+    if(w <= 0 || h <= 0)
+    {
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
     }
+
+    if(line >= h)
+    {
+#if _DEBUG
+        Con_Error("FindAverageLineColorIdx: Attempted to average outside valid area "
+                  "(height=%i line=%i).", h, line);
+#endif
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
+    }
+
+    numpels = w * h;
+    start = data + w * line;
+    alphaStart = data + numpels + w * line;
+    pal = R_GetColorPalette(palid);
+    count = 0;
+    { long i;
+    for(i = 0; i < w; ++i)
+    {
+        if(!hasAlpha || alphaStart[i])
+        {
+            GL_GetColorPaletteRGB(pal, rgbUBV, start[i]);
+            avg[CR] += rgbUBV[CR];
+            avg[CG] += rgbUBV[CG];
+            avg[CB] += rgbUBV[CB];
+            ++count;
+        }
+    }}
     // All transparent? Sorry...
     if(!count)
-        return 0;
+        return;
 
-    // We're going to make it!
-    for(c = 0; c < 3; ++c)
-        rgb[c] = (byte) (integerRGB[c] / count);
-    return 1; // Successful.
+    col[CR] = avg[CR] / count * reciprocal255;
+    col[CG] = avg[CG] / count * reciprocal255;
+    col[CB] = avg[CB] / count * reciprocal255;
+    }
 }
 
-/// \fixme Not a very efficient algorithm...
-void ColorOutlines(uint8_t* buffer, int width, int height)
+void FindAverageLineColor(const uint8_t* pixels, int width, int height,
+    int pixelSize, int line, float col[3])
+{
+    assert(pixels && col);
+    {
+    long avg[3] = { 0, 0, 0 };
+    const uint8_t* src;
+
+    if(width <= 0 || height <= 0)
+    {
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
+    }
+
+    if(line >= height)
+    {
+#if _DEBUG
+        Con_Error("FindAverageLineColor: Attempted to average outside valid area "
+                  "(height=%i line=%i).", height, line);
+#endif
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
+    }
+
+    src = pixels + pixelSize * width * line;
+    { int i;
+    for(i = 0; i < width; ++i, src += pixelSize)
+    {
+        avg[CR] += src[CR];
+        avg[CG] += src[CG];
+        avg[CB] += src[CB];
+    }}
+
+    col[CR] = avg[CR] / width * reciprocal255;
+    col[CG] = avg[CG] / width * reciprocal255;
+    col[CB] = avg[CB] / width * reciprocal255;
+    }
+}
+
+void FindAverageColor(const uint8_t* pixels, int width, int height,
+    int pixelSize, float col[3])
+{
+    assert(pixels && col);
+    {
+    long numpels, avg[3] = { 0, 0, 0 };
+    const uint8_t* src;
+
+    if(width <= 0 || height <= 0)
+    {
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
+    }
+
+    if(pixelSize != 3 && pixelSize != 4)
+    {
+#if _DEBUG
+        Con_Error("FindAverageColor: Attempted on non-rgb(a) image "
+                  "(pixelSize=%i).", pixelSize);
+#endif
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
+    }
+
+    numpels = width * height;
+    src = pixels;
+    { long i;
+    for(i = 0; i < numpels; ++i, src += pixelSize)
+    {
+        avg[CR] += src[CR];
+        avg[CG] += src[CG];
+        avg[CB] += src[CB];
+    }}
+
+    col[CR] = avg[CR] / numpels * reciprocal255;
+    col[CG] = avg[CG] / numpels * reciprocal255;
+    col[CB] = avg[CB] / numpels * reciprocal255;
+    }
+}
+
+void FindAverageColorIdx(const uint8_t* data, int w, int h,
+    colorpaletteid_t palid, boolean hasAlpha, float col[3])
+{
+    assert(data && col);
+    {
+    long numpels, count, avg[3] = { 0, 0, 0 };
+    const uint8_t* alphaStart;
+    DGLubyte rgbUBV[3];
+    DGLuint pal;
+
+    if(w <= 0 || h <= 0)
+    {
+        col[CR] = col[CG] = col[CB] = 0;
+        return;
+    }
+
+    numpels = w * h;
+    alphaStart = data + numpels;
+    pal = R_GetColorPalette(palid);
+    count = 0;
+    { long i;
+    for(i = 0; i < numpels; ++i)
+    {
+        if(!hasAlpha || alphaStart[i])
+        {
+            GL_GetColorPaletteRGB(pal, rgbUBV, data[i]);
+            avg[CR] += rgbUBV[CR];
+            avg[CG] += rgbUBV[CG];
+            avg[CB] += rgbUBV[CB];
+            ++count;
+        }
+    }}
+    // All transparent? Sorry...
+    if(0 == count)
+        return;
+
+    col[CR] = avg[CR] / count * reciprocal255;
+    col[CG] = avg[CG] / count * reciprocal255;
+    col[CB] = avg[CB] / count * reciprocal255;
+    }
+}
+
+void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
+    int pixelsize, int retRegion[4])
+{
+    assert(buffer && retRegion);
+    {
+    const uint8_t* src, *alphasrc;
+    int region[4];
+
+    if(width <= 0 || height <= 0)
+    {
+#if _DEBUG
+        Con_Error("FindClipRegionNonAlpha: Attempt to find region on zero-sized image.");
+#endif
+        retRegion[0] = retRegion[1] = retRegion[2] = retRegion[3] = 0;
+        return;
+    }
+
+    region[0] = width;
+    region[1] = 0;
+    region[2] = height;
+    region[3] = 0;
+
+    src = buffer;
+    // For paletted images the alpha channel follows the actual image.
+    if(pixelsize == 1)
+        alphasrc = buffer + width * height;
+    else
+        alphasrc = NULL;
+
+    // \todo This is not very efficent. Better to use an algorithm which works
+    // on full rows and full columns.
+    { int k, i;
+    for(k = 0; k < height; ++k)
+        for(i = 0; i < width; ++i, src += pixelsize, alphasrc++)
+        {
+            // Alpha pixels don't count.
+            if(pixelsize == 1)
+            {
+                if(*alphasrc < 255)
+                    continue;
+            }
+            else if(pixelsize == 4)
+            {
+                if(src[3] < 255)
+                    continue;
+            }
+
+            if(i < region[0])
+                region[0] = i;
+            if(i > region[1])
+                region[1] = i;
+
+            if(k < region[2])
+                region[2] = k;
+            if(k > region[3])
+                region[3] = k;
+        }
+    }
+
+    memcpy(retRegion, region, sizeof(retRegion));
+    }
+}
+
+#if 0
+void BlackOutlines(uint8_t* pixels, int width, int height)
+{
+    assert(pixels);
+    {
+    uint16_t* dark;
+    int x, y, a, b;
+    uint8_t* pix;
+    long numpels;
+
+    if(width <= 0 || height <= 0)
+        return;
+
+    numpels = width * height;
+    dark = calloc(1, 2 * numpels);
+
+    for(y = 1; y < height - 1; ++y)
+    {
+        for(x = 1; x < width - 1; ++x)
+        {
+            pix = pixels + (x + y * width) * 4;
+            if(pix[3] > 128) // Not transparent.
+            {
+                // Apply darkness to surrounding transparent pixels.
+                for(a = -1; a <= 1; ++a)
+                {
+                    for(b = -1; b <= 1; ++b)
+                    {
+                        uint8_t* other = pix + (a + b * width) * 4;
+                        if(other[3] < 128) // Transparent.
+                        {
+                            dark[(x + a) + (y + b) * width] += 40;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Apply the darkness.
+    { long i;
+    for(i = 0, pix = pixels; i < numpels; ++i, pix += 4)
+    {
+        pix[3] = MIN_OF(255, (int)(pix[3] + dark[a]));
+    }}
+
+    // Release temporary storage.
+    free(dark);
+    }
+}
+#endif
+
+/// \todo Not a very efficient algorithm...
+void ColorOutlinesIdx(uint8_t* buffer, int width, int height)
 {
     assert(buffer);
     {
@@ -569,393 +656,240 @@ void ColorOutlines(uint8_t* buffer, int width, int height)
     }
 }
 
-/**
- * The given RGB color is scaled uniformly so that the highest component
- * becomes one.
- */
-void amplify(float* rgb)
+void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
+    float* rHiMul, float* rLoMul)
 {
-    float max = 0;
-    int i;
+    assert(pixels);
+    {
+    float hiMul, loMul, baMul;
+    long wideAvg, numpels;
+    uint8_t min, max, avg;
+    uint8_t* pix;
 
-    for(i = 0; i < 3; ++i)
-        if(rgb[i] > max)
-            max = rgb[i];
-
-    if(!max || max == 1)
+    if(width <= 0 || height <= 0)
         return;
 
-    if(max)
+    numpels = width * height;
+    min = 255;
+    max = 0;
+    wideAvg = 0;
+
+    { long i;
+    for(i = 0, pix = pixels; i < numpels; ++i, pix += 1)
     {
-        for(i = 0; i < 3; ++i)
-            rgb[i] = rgb[i] / max;
+        if(*pix < min) min = *pix;
+        if(*pix > max) max = *pix;
+        wideAvg += *pix;
+    }}
+
+    if(max <= min || max == 0 || min == 255)
+    {
+        if(rBaMul) *rBaMul = -1;
+        if(rHiMul) *rHiMul = -1;
+        if(rLoMul) *rLoMul = -1;
+        return; // Nothing we can do.
     }
-}
 
-/**
- * Used by flares and dynamic lights.
- */
-void averageColorIdx(rgbcol_t col, byte* data, int w, int h,
-    colorpaletteid_t palid, boolean hasAlpha)
-{
-    const int numpels = w * h;
-    byte* alphaStart = data + numpels;
-    DGLubyte rgbUBV[3];
-    float r, g, b;
-    DGLuint pal = R_GetColorPalette(palid);
-    uint count;
-    int i;
+    avg = MIN_OF(255, wideAvg / numpels);
 
-    // First clear them.
-    for(i = 0; i < 3; ++i)
-        col[i] = 0;
-
-    r = g = b = count = 0;
-    for(i = 0; i < numpels; ++i)
+    // Allow a small margin of variance with the balance multiplier.
+    baMul = (!INRANGE_OF(avg, 127, 4)? (float)127/avg : 1);
+    if(baMul != 1)
     {
-        if(!hasAlpha || alphaStart[i])
+        if(max < 255)
+            max = (uint8_t) MINMAX_OF(1, (float)max - (255-max) * baMul, 255);
+        if(min > 0)
+            min = (uint8_t) MINMAX_OF(0, (float)min + min * baMul, 255);
+    }
+
+    hiMul = (max < 255?    (float)255/max  : 1);
+    loMul = (min > 0  ? 1-((float)min/255) : 1);
+
+    if(!(baMul == 1 && hiMul == 1 && loMul == 1))
+    {
+        long i;
+        for(i = 0, pix = pixels; i < numpels; ++i, pix += 1)
         {
-            count++;
+            // First balance.
+            *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * baMul, 255);
 
-            GL_GetColorPaletteRGB(pal, rgbUBV, data[i]);
-
-            // Ignore the gamma level.
-            r += rgbUBV[CR] / 255.f;
-            g += rgbUBV[CG] / 255.f;
-            b += rgbUBV[CB] / 255.f;
-        }
-    }
-    // All transparent? Sorry...
-    if(!count)
-        return;
-
-    col[0] = r / count;
-    col[1] = g / count;
-    col[2] = b / count;
-}
-
-int lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
-                        colorpaletteid_t palid, boolean hasAlpha)
-{
-    int                 i;
-    uint                count;
-    const int           numpels = w * h;
-    byte*               start = data + w * line;
-    byte*               alphaStart = data + numpels + w * line;
-    DGLubyte            rgbUBV[3];
-    float               r, g, b;
-    DGLuint             pal = R_GetColorPalette(palid);
-
-    // First clear them.
-    for(i = 0; i < 3; ++i)
-        col[i] = 0;
-
-    r = g = b = count = 0;
-    for(i = 0; i < w; ++i)
-    {
-        if(!hasAlpha || alphaStart[i])
-        {
-            count++;
-
-            GL_GetColorPaletteRGB(pal, rgbUBV, start[i]);
-
-            // Ignore the gamma level.
-            r += rgbUBV[CR] / 255.f;
-            g += rgbUBV[CG] / 255.f;
-            b += rgbUBV[CB] / 255.f;
-        }
-    }
-    // All transparent? Sorry...
-    if(!count)
-        return 0;
-
-    col[0] = r / count;
-    col[1] = g / count;
-    col[2] = b / count;
-
-    return 1; // Successful.
-}
-
-int lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h, int line)
-{
-    int             i;
-    float           culmul[3];
-
-    for(i = 0; i < 3; ++i)
-        culmul[i] = 0;
-
-    *data += 3 * w * line;
-    for(i = 0; i < w; ++i)
-    {
-        culmul[CR] += (*data++) / 255.f;
-        culmul[CG] += (*data++) / 255.f;
-        culmul[CB] += (*data++) / 255.f;
-    }
-
-    col[CR] = culmul[CR] / w;
-    col[CG] = culmul[CG] / w;
-    col[CB] = culmul[CB] / w;
-
-    return 1; // Successful.
-}
-
-void averageColorRGB(rgbcol_t col, byte *data, int w, int h)
-{
-    uint        i;
-    const uint  numpels = w * h;
-    float       cumul[3];
-
-    if(!numpels)
-        return;
-
-    for(i = 0; i < 3; ++i)
-        cumul[i] = 0;
-    for(i = 0; i < numpels; ++i)
-    {
-        cumul[0] += (*data++) / 255.f;
-        cumul[1] += (*data++) / 255.f;
-        cumul[2] += (*data++) / 255.f;
-    }
-
-    for(i = 0; i < 3; ++i)
-        col[i] = cumul[i] / numpels;
-}
-
-/**
- * Calculates a clip region for the buffer that excludes alpha pixels.
- * NOTE: Cross spread from bottom > top, right > left (inside out).
- *
- * @param   buffer      Image data to be processed.
- * @param   width       Width of the src buffer.
- * @param   height      Height of the src buffer.
- * @param   pixelsize   Pixelsize of the src buffer. Handles 1 (==2), 3 and 4.
- *
- * @returnval region    Ptr to int[4] to write the resultant region to.
- */
-void GL_GetNonAlphaRegion(byte *buffer, int width, int height, int pixelsize,
-                       int *region)
-{
-    int         k, i;
-    int         myregion[4];
-    byte       *src = buffer;
-    byte       *alphasrc = NULL;
-
-    myregion[0] = width;
-    myregion[1] = 0;
-    myregion[2] = height;
-    myregion[3] = 0;
-
-    if(pixelsize == 1)
-        // In paletted mode, the alpha channel follows the actual image.
-        alphasrc = buffer + width * height;
-
-    // \todo This is not very efficent. Better to use an algorithm which works on full rows and full columns.
-    for(k = 0; k < height; ++k)
-        for(i = 0; i < width; ++i, src += pixelsize, alphasrc++)
-        {
-            // Alpha pixels don't count.
-            if(pixelsize == 1)
-            {
-                if(*alphasrc < 255)
-                    continue;
-            }
-            else if(pixelsize == 4)
-            {
-                if(src[3] < 255)
-                    continue;
-            }
-
-            if(i < myregion[0])
-                myregion[0] = i;
-            if(i > myregion[1])
-                myregion[1] = i;
-
-            if(k < myregion[2])
-                myregion[2] = k;
-            if(k > myregion[3])
-                myregion[3] = k;
-        }
-
-    memcpy(region, myregion, sizeof(myregion));
-}
-
-/**
- * Calculates the properties of a dynamic light that the given sprite frame
- * casts. Crop a boundary around the image to remove excess alpha'd pixels
- * from adversely affecting the calculation.
- * Handles pixel sizes; 1 (==2), 3 and 4.
- */
-void GL_CalcLuminance(byte* buffer, int width, int height, int pixelSize,
-                      colorpaletteid_t palid, float* brightX,
-                      float* brightY, rgbcol_t* color, float* lumSize)
-{
-    DGLuint             pal =
-        (pixelSize == 1? R_GetColorPalette(palid) : 0);
-    int                 i, k, x, y, c, cnt = 0, posCnt = 0;
-    byte                rgb[3], *src, *alphaSrc = NULL;
-    int                 limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
-    int                 avgCnt = 0, lowCnt = 0;
-    float               average[3], lowAvg[3];
-    int                 region[4];
-
-    for(i = 0; i < 3; ++i)
-    {
-        average[i] = 0;
-        lowAvg[i] = 0;
-    }
-    src = buffer;
-
-    if(pixelSize == 1)
-    {
-        // In paletted mode, the alpha channel follows the actual image.
-        alphaSrc = buffer + width * height;
-    }
-
-    GL_GetNonAlphaRegion(buffer, width, height, pixelSize, &region[0]);
-    if(region[2] > 0)
-    {
-        src += pixelSize * width * region[2];
-        alphaSrc += width * region[2];
-    }
-    (*brightX) = (*brightY) = 0;
-
-    for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
-    {
-        if(region[0] > 0)
-        {
-            src += pixelSize * region[0];
-            alphaSrc += region[0];
-        }
-
-        for(i = region[0], x = 0; i < region[1] + 1;
-            ++i, ++x, src += pixelSize, alphaSrc++)
-        {
-            // Alpha pixels don't count.
-            if(pixelSize == 1)
-            {
-                if(*alphaSrc < 255)
-                    continue;
-            }
-            else if(pixelSize == 4)
-            {
-                if(src[3] < 255)
-                    continue;
-            }
-
-            // Bright enough?
-            if(pixelSize == 1)
-            {
-                GL_GetColorPaletteRGB(pal, (DGLubyte*) rgb, *src);
-            }
-            else if(pixelSize >= 3)
-            {
-                memcpy(rgb, src, 3);
-            }
-
-            if(rgb[0] > posLimit || rgb[1] > posLimit || rgb[2] > posLimit)
-            {
-                // This pixel will participate in calculating the average
-                // center point.
-                (*brightX) += x;
-                (*brightY) += y;
-                posCnt++;
-            }
-
-            // Bright enough to affect size?
-            if(rgb[0] > limit || rgb[1] > limit || rgb[2] > limit)
-                cnt++;
-
-            // How about the color of the light?
-            if(rgb[0] > colLimit || rgb[1] > colLimit || rgb[2] > colLimit)
-            {
-                avgCnt++;
-                for(c = 0; c < 3; ++c)
-                    average[c] += rgb[c] / 255.f;
-            }
+            // Now amplify.
+            if(*pix > 127)
+                *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
             else
-            {
-                lowCnt++;
-                for(c = 0; c < 3; ++c)
-                    lowAvg[c] += rgb[c] / 255.f;
-            }
-        }
-
-        if(region[1] < width - 1)
-        {
-            src += pixelSize * (width - 1 - region[1]);
-            alphaSrc += (width - 1 - region[1]);
+                *pix = (uint8_t) MINMAX_OF(0, ((float)*pix) * loMul, 255);
         }
     }
 
-    if(!posCnt)
+    if(rBaMul) *rBaMul = baMul;
+    if(rHiMul) *rHiMul = hiMul;
+    if(rLoMul) *rLoMul = loMul;
+    }
+}
+
+void Desaturate(uint8_t* pixels, int width, int height, int comps)
+{
+    assert(pixels);
     {
-        (*brightX) = region[0] + ((region[1] - region[0]) / 2.0f);
-        (*brightY) = region[2] + ((region[3] - region[2]) / 2.0f);
+    uint8_t* pix;
+    long i, numpels;
+
+    if(width <= 0 || height <= 0)
+        return;
+
+    numpels = width * height;
+    for(i = 0, pix = pixels; i < numpels; ++i, pix += comps)
+    {
+        int min = MIN_OF(pix[CR], MIN_OF(pix[CG], pix[CB]));
+        int max = MAX_OF(pix[CR], MAX_OF(pix[CG], pix[CB]));
+        pix[CR] = pix[CG] = pix[CB] = (min + max) / 2;
+    }
+    }
+}
+
+void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha)
+{
+    assert(pixels);
+    {
+    long numPels;
+    uint8_t max = 0;
+
+    if(width <= 0 || height <= 0)
+        return;
+
+    numPels = width * height;
+    if(hasAlpha)
+    {
+        uint8_t* pix = pixels;
+        uint8_t* apix = pixels + numPels;
+        long i;
+        for(i = 0; i < numPels; ++i, pix++, apix++)
+        {
+            // Only non-masked pixels count.
+            if(!(*apix > 0))
+                continue;
+
+            if(*pix > max)
+                max = *pix;
+        }
     }
     else
     {
-        // Get the average.
-        (*brightX) /= posCnt;
-        (*brightY) /= posCnt;
-        // Add the origin offset.
-        (*brightX) += region[0];
-        (*brightY) += region[2];
-    }
-
-    // Center on the middle of the brightest pixel.
-    (*brightX) += .5f;
-    (*brightY) += .5f;
-
-    // The color.
-    if(!avgCnt)
-    {
-        if(!lowCnt)
+        uint8_t* pix = pixels;
+        long i;
+        for(i = 0; i < numPels; ++i, pix++)
         {
-            // Doesn't the thing have any pixels??? Use white light.
-            for(c = 0; c < 3; ++c)
-                (*color)[c] = 1;
-        }
-        else
-        {
-            // Low-intensity color average.
-            for(c = 0; c < 3; ++c)
-                (*color)[c] = lowAvg[c] / lowCnt;
+            if(*pix > max)
+                max = *pix;
         }
     }
-    else
+
+    if(0 == max || 255 == max)
+        return;
+
+    { uint8_t* pix = pixels;
+    long i;
+    for(i = 0; i < numPels; ++i, pix++)
     {
-        // High-intensity color average.
+        *pix = (uint8_t) MINMAX_OF(0, (float)*pix / max * 255, 255);
+    }}
+    }
+}
+
+void EnhanceContrast(uint8_t* pixels, int width, int height, int comps)
+{
+    assert(pixels);
+    {
+    uint8_t* pix;
+    long i, numpels;
+
+    if(width <= 0 || height <= 0)
+        return;
+
+    if(comps != 3 && comps != 4)
+    {
+#if _DEBUG
+        Con_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
+#endif
+        return;
+    }
+
+    pix = pixels;
+    numpels = width * height;
+
+    for(i = 0; i < numpels; ++i, pix += comps)
+    {
+        int c;
         for(c = 0; c < 3; ++c)
-            (*color)[c] = average[c] / avgCnt;
+        {
+            uint8_t out;
+            if(pix[c] < 60) // Darken dark parts.
+                out = (uint8_t) MINMAX_OF(0, ((float)pix[c] - 70) * 1.0125f + 70, 255);
+            else if(pix[c] > 185) // Lighten light parts.
+                out = (uint8_t) MINMAX_OF(0, ((float)pix[c] - 185) * 1.0125f + 185, 255);
+            else
+                out = pix[c];
+            pix[c] = out;
+        }
+    }
+    }
+}
+
+void SharpenPixels(uint8_t* pixels, int width, int height, int comps)
+{
+    assert(pixels);
+    {
+    const float strength = .05f;
+    uint8_t* result;
+    float A, B, C;
+    int x, y;
+
+    if(width <= 0 || height <= 0)
+        return;
+
+    if(comps != 3 && comps != 4)
+    {
+#if _DEBUG
+        Con_Error("EnhanceContrast: Attempted on non-rgb(a) image (comps=%i).", comps);
+#endif
+        return;
     }
 
-/*#ifdef _DEBUG
-    Con_Message("GL_CalcLuminance: width %dpx, height %dpx, bits %d\n"
-                "  cell region X[%d, %d] Y[%d, %d]\n"
-                "  flare X= %g Y=%g %s\n"
-                "  flare RGB[%g, %g, %g] %s\n",
-                width, height, pixelSize,
-                region[0], region[1], region[2], region[3],
-                (*brightX), (*brightY),
-                (posCnt? "(average)" : "(center)"),
-                (*color)[0], (*color)[1], (*color)[2],
-                (avgCnt? "(hi-intensity avg)" :
-                 lowCnt? "(low-intensity avg)" : "(white light)"));
-#endif*/
+    result = calloc(1, comps * width * height);
 
-    // Amplify color.
-    amplify(*color);
+    A = strength;
+    B = .70710678 * strength; // 1/sqrt(2)
+    C = 1 + 4*A + 4*B;
 
-    // How about the size of the light source?
-    *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
+    for(y = 1; y < height - 1; ++y)
+        for(x = 1; x < width -1; ++x)
+        {
+            const uint8_t* pix = pixels + (x + y*width) * comps;
+            uint8_t* out = result + (x + y*width) * comps;
+            int c;
+            for(c = 0; c < 3; ++c)
+            {
+                int r = (C*pix[c] - A*pix[c - width] - A*pix[c + comps] - A*pix[c - comps] -
+                         A*pix[c + width] - B*pix[c + comps - width] - B*pix[c + comps + width] -
+                         B*pix[c - comps - width] - B*pix[c - comps + width]);
+                out[c] = MINMAX_OF(0, r, 255);
+            }
+
+            if(comps == 4)
+                out[3] = pix[3];
+        }
+
+    memcpy(pixels, result, comps * width * height);
+    free(result);
+    }
 }
 
 /**
- * @return              @c true, if the given color is either
- *                      (0,255,255) or (255,0,255).
+ * @return  @c true, if the given color is either (0,255,255) or (255,0,255).
  */
-static boolean ColorKey(byte *color)
+static __inline boolean ColorKey(uint8_t* color)
 {
+    assert(color);
     return color[CB] == 0xff && ((color[CR] == 0xff && color[CG] == 0) ||
                                  (color[CR] == 0 && color[CG] == 0xff));
 }
@@ -963,130 +897,52 @@ static boolean ColorKey(byte *color)
 /**
  * Buffer must be RGBA. Doesn't touch the non-keyed pixels.
  */
-static void DoColorKeying(byte *rgbaBuf, unsigned int width)
+static void DoColorKeying(uint8_t* rgbaBuf, int width)
 {
-    uint                i;
-
+    assert(rgbaBuf);
+    { int i;
     for(i = 0; i < width; ++i, rgbaBuf += 4)
-        if(ColorKey(rgbaBuf))
-            rgbaBuf[3] = rgbaBuf[2] = rgbaBuf[1] = rgbaBuf[0] = 0;
+    {
+        if(!ColorKey(rgbaBuf))
+            continue;
+        rgbaBuf[3] = rgbaBuf[2] = rgbaBuf[1] = rgbaBuf[0] = 0;
+    }}
 }
 
-/**
- * Take the input buffer and convert to color keyed. A new buffer may be
- * needed if the input buffer has three color components.
- *
- * @return              If the in buffer wasn't large enough will return a
- *                      ptr to the newly allocated buffer which must be
- *                      freed with M_Free().
- */
-byte *GL_ApplyColorKeying(byte *buf, uint pixelSize, uint width,
-                          uint height)
+uint8_t* ApplyColorKeying(uint8_t* buf, int width, int height, int pixelSize)
 {
-    uint                i;
-    byte               *ckdest, *in, *out;
-    const uint          numpels = width * height;
+    assert(buf);
 
-    // We must allocate a new buffer if the loaded image has three
-    // color components.
+    if(width <= 0 || height <= 0)
+        return buf;
+
+    // We must allocate a new buffer if the loaded image has less than the
+    // required number of color components.
     if(pixelSize < 4)
     {
-        ckdest = M_Malloc(4 * width * height);
-        for(in = buf, out = ckdest, i = 0; i < numpels;
-            ++i, in += pixelSize, out += 4)
+        const long numpels = width * height;
+        uint8_t* ckdest = malloc(4 * numpels);
+        uint8_t* in, *out;
+        long i;
+        for(in = buf, out = ckdest, i = 0; i < numpels; ++i, in += pixelSize, out += 4)
         {
             if(ColorKey(in))
-                memset(out, 0, 4);  // Totally black.
-            else
             {
-                memcpy(out, in, 3); // The color itself.
-                out[CA] = 255;  // Opaque.
+                memset(out, 0, 4); // Totally black.
+                continue;
             }
-        }
 
+            memcpy(out, in, 3); // The color itself.
+            out[CA] = 255; // Opaque.
+        }
         return ckdest;
     }
-    else                    // We can do the keying in-buffer.
-    {
-        // This preserves the alpha values of non-keyed pixels.
-        for(i = 0; i < height; ++i)
-            DoColorKeying(buf + 4 * i * width, height);
-    }
 
-    return NULL;
-}
-
-uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int comps,
-    int outWidth, int outHeight)
-{
-    int ratioX = (int)(width  << 16) / outWidth  + 1;
-    int ratioY = (int)(height << 16) / outHeight + 1;
-    int shearY = 0;
-    uint8_t* out, *outP;
-
-    if(NULL == (out = malloc(comps * outWidth * outHeight)))
-        Con_Error("GL_ScaleBufferNearest: Failed on allocation of %lu bytes for "
-                  "output buffer.", (unsigned long) (comps * outWidth * outHeight));
-
-    outP = out;
+    // We can do the keying in-buffer.
+    // This preserves the alpha values of non-keyed pixels.
     { int i;
-    for(i = 0; i < outHeight; ++i, shearY += ratioY)
-    {
-        int shearX = 0;
-        int shearY2 = (shearY >> 16) * width;
-        { int j;
-        for(j = 0; j < outWidth; ++j, outP += comps, shearX += ratioX)
-        {
-            int c, n = (shearY2 + (shearX >> 16)) * comps;
-            for(c = 0; c < comps; ++c, n++)
-                outP[c] = in[n];
-        }}
-    }}
-    return out;
-}
-
-int GL_ChooseSmartFilter(int width, int height, int flags)
-{
-    if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
-        return 2; // hq2x
-    return 1; // nearest neighbor.
-}
-
-uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
-    int flags, int* outWidth, int* outHeight)
-{
-    int newWidth, newHeight;
-    uint8_t* out = NULL;
-
-    switch(method)
-    {
-    default: // linear interpolation.
-        newWidth  = width  * 2;
-        newHeight = height * 2;
-        out = GL_ScaleBuffer32(src, width, height, 4, newWidth, newHeight);
-        break;
-
-    case 1: // nearest neighbor.
-        newWidth  = width  * 2;
-        newHeight = height * 2;
-        out = GL_ScaleBufferNearest(src, width, height, 4, newWidth, newHeight);
-        break;
-
-    case 2: // hq2x
-        newWidth  = width  * 2;
-        newHeight = height * 2;
-        out = GL_SmartFilterHQ2x(src, width, height, flags);
-        break;
-    };
-
-    if(NULL == out)
-    {   // Unchanged, return the source image.
-        if(outWidth)  *outWidth  = width;
-        if(outHeight) *outHeight = height;
-        return (uint8_t*)src;
+    for(i = 0; i < height; ++i)
+        DoColorKeying(buf + 4 * i * width, height);
     }
-
-    if(outWidth)  *outWidth  = newWidth;
-    if(outHeight) *outHeight = newHeight;
-    return out;
+    return buf;
 }

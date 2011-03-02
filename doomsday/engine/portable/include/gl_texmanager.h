@@ -94,7 +94,7 @@ typedef struct gltexture_inst_s {
         struct {
             boolean         pSprite; // @c true, iff this is for use as a psprite.
             float           flareX, flareY, lumSize;
-            rgbcol_t        autoLightColor;
+            float           autoLightColor[3];
             float           texCoord[2]; // Prepared texture coordinates.
             int             tmap, tclass; // Color translation.
         } sprite;
@@ -205,6 +205,16 @@ void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
 
 void            GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT);
 
+/**
+ * Determine the optimal size for a texture. Usually the dimensions are
+ * scaled upwards to the next power of two.
+ *
+ * @param noStretch  If @c true, the stretching can be skipped.
+ * @param isMipMapped  If @c true, we will require mipmaps (this has an
+ *      effect on the optimal size).
+ */
+boolean GL_OptimalSize(int width, int height, boolean noStretch,
+    boolean isMipMapped, int* optWidth, int* optHeight);
 
 // Management of and access to gltextures (via the texmanager):
 const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeId, gltexture_type_t type);

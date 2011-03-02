@@ -542,6 +542,7 @@
 		<Unit filename="..\..\engine\portable\src\gl_tga.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\image.c" />
 		<Unit filename="..\..\engine\portable\src\m_args.c">
 			<Option compilerVar="CC" />
 		</Unit>

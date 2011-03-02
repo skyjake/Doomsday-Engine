@@ -540,8 +540,8 @@ static byte* GL_LoadImageDFile(image_t* img, DFILE* file, const char* filePath)
     // How about some color-keying?
     if(GL_IsColorKeyed(filePath))
     {
-        byte* out = GL_ApplyColorKeying(img->pixels, img->pixelSize, img->width, img->height);
-        if(out)
+        uint8_t* out = ApplyColorKeying(img->pixels, img->width, img->height, img->pixelSize);
+        if(out != img->pixels)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
             free(img->pixels);
@@ -553,7 +553,7 @@ static byte* GL_LoadImageDFile(image_t* img, DFILE* file, const char* filePath)
     }
 
     // Any alpha pixels?
-    if(ImageHasAlpha(img))
+    if(GL_ImageHasAlpha(img))
         img->flags |= IMGF_IS_MASKED;
 
     return img->pixels;
@@ -654,7 +654,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
 
     // Calculate the real dimensions for the texture, as required by
     // the graphics hardware.
-    noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight, noStretch, generateMipmaps);
+    noStretch = GL_OptimalSize(width, height, noStretch, generateMipmaps, &levelWidth, &levelHeight);
 
     // Get the RGB(A) version of the original texture.
     if(RGBData)
@@ -666,14 +666,13 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     else
     {
         // Convert a paletted source image to truecolor so it can be scaled.
-        // If there isn't an alpha channel yet, add one.
-        freeOriginal = true;
+        // If there isn't an alpha channel one will be added.
         comps = 4;
-        if(0 == (rgbaOriginal = malloc(width * height * comps)))
-            Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for RGBA"
-                      "conversion buffer.", (unsigned long) (width * height * comps));
-
-        GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data, rgbaOriginal, 0, !load8bit);
+        rgbaOriginal = GL_ConvertBuffer(data, width, height, alphaChannel ? 2 : 1, 0, !load8bit, comps);
+        if(rgbaOriginal != data)
+        {
+            freeOriginal = true;
+        }
 
         if(!alphaChannel)
         {
@@ -702,17 +701,12 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         if(comps == 3)
         {
             // Must convert to RGBA.
-            uint8_t* temp;
-
-            if(0 == (temp = malloc(4 * width * height)))
-                Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for"
-                          "RGBA conversion buffer.", (unsigned long) (4 * width * height));
-
-            GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp, 0, !load8bit);
-
-            if(freeOriginal)
-                free(rgbaOriginal);
-
+            uint8_t* temp = GL_ConvertBuffer(rgbaOriginal, width, height, 3, 0, !load8bit, 4);
+            if(temp != rgbaOriginal)
+            {
+                if(freeOriginal)
+                    free(rgbaOriginal);
+            }
             rgbaOriginal = temp;
             freeOriginal = true;
             comps = 4;
@@ -720,7 +714,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         }
 
         filtered = GL_SmartFilter(GL_ChooseSmartFilter(width, height, 0), rgbaOriginal, width, height, smartFlags, &width, &height);
-        noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight, noStretch, generateMipmaps);
+        noStretch = GL_OptimalSize(width, height, noStretch, generateMipmaps, &levelWidth, &levelHeight);
 
         if(filtered != rgbaOriginal)
         {
@@ -761,7 +755,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
             // Stretch to fit into power-of-two.
             if(width != levelWidth || height != levelHeight)
             {
-                buffer = GL_ScaleBuffer32(rgbaOriginal, width, height, comps, levelWidth, levelHeight);
+                buffer = GL_ScaleBuffer(rgbaOriginal, width, height, comps, levelWidth, levelHeight);
                 if(buffer != rgbaOriginal)
                     freeBuffer = true;
             }
@@ -785,11 +779,6 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         size_t outSize = levelWidth * levelHeight * (alphaChannel ? 2 : 1);
         int canGenMips = 0;
 
-        // Prepare the palette indices buffer, to be handed over to DGL.
-        if(0 == (idxBuffer = malloc(outSize)))
-            Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for"
-                      "8bit-palettized down-mip buffer.", (unsigned long) outSize);
-
         // Since this is a paletted texture, we may need to manually
         // generate the mipmaps.
         for(i = 0; levelWidth || levelHeight; ++i)
@@ -800,12 +789,18 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
                 levelHeight = 1;
 
             // Convert to palette indices.
-            GL_ConvertBuffer(levelWidth, levelHeight, comps, alphaChannel ? 2 : 1, buffer, idxBuffer, content->palette, false);
+            idxBuffer = GL_ConvertBuffer(buffer, levelWidth, levelHeight, comps, content->palette, false, alphaChannel ? 2 : 1);
 
             // Upload it.
             if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8, pal, levelWidth, levelHeight, generateMipmaps && canGenMips ? true : generateMipmaps ? -i : false, idxBuffer))
             {
                 Con_Error("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n", levelWidth, levelHeight, alphaChannel);
+            }
+
+            if(idxBuffer != buffer)
+            {
+                free(idxBuffer);
+                idxBuffer = NULL;
             }
 
             // If no mipmaps need to generated, quit now.
@@ -819,8 +814,6 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
             levelWidth >>= 1;
             levelHeight >>= 1;
         }
-
-        free(idxBuffer);
     }
     else
     {
@@ -1216,7 +1209,7 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
         {
             int newWidth = MIN_OF(image->width, GL_state.maxTexSize);
             int newHeight = MIN_OF(image->height, GL_state.maxTexSize);
-            uint8_t* scaledPixels = GL_ScaleBuffer32(image->pixels, image->width, image->height, image->pixelSize, newWidth, newHeight);
+            uint8_t* scaledPixels = GL_ScaleBuffer(image->pixels, image->width, image->height, image->pixelSize, newWidth, newHeight);
             if(scaledPixels != image->pixels)
             {
                 free(image->pixels);
@@ -2055,209 +2048,6 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
 }
 
 /**
- * @param pixels  RGBA data. Input read here, and output written here.
- * @param width   Width of the buffer.
- * @param height  Height of the buffer.
- */
-static void BlackOutlines(byte* pixels, int width, int height)
-{
-    short*  dark = M_Calloc(width * height * 2);
-    int     x, y;
-    int     a, b;
-    byte*   pix;
-
-    for(y = 1; y < height - 1; ++y)
-    {
-        for(x = 1; x < width - 1; ++x)
-        {
-            pix = pixels + (x + y * width) * 4;
-            if(pix[3] > 128) // Not transparent.
-            {
-                // Apply darkness to surrounding transparent pixels.
-                for(a = -1; a <= 1; ++a)
-                {
-                    for(b = -1; b <= 1; ++b)
-                    {
-                        byte* other = pix + (a + b * width) * 4;
-                        if(other[3] < 128) // Transparent.
-                        {
-                            dark[(x + a) + (y + b) * width] += 40;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Apply the darkness.
-    for(a = 0, pix = pixels; a < width * height; ++a, pix += 4)
-    {
-        uint c = pix[3] + dark[a];
-        pix[3] = MIN_OF(255, c);
-    }
-
-    // Release temporary storage.
-    M_Free(dark);
-}
-
-static void Equalize(byte* pixels, int width, int height,
-    float* rBaMul, float* rHiMul, float* rLoMul)
-{
-    byte min = 255, max = 0;
-    int i, avg = 0;
-    float hiMul, loMul, baMul;
-    byte* pix;
-
-    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
-    {
-        if(*pix < min) min = *pix;
-        if(*pix > max) max = *pix;
-        avg += *pix;
-    }
-
-    if(max <= min || max == 0 || min == 255)
-    {
-        if(rBaMul) *rBaMul = -1;
-        if(rHiMul) *rHiMul = -1;
-        if(rLoMul) *rLoMul = -1;
-        return; // Nothing we can do.
-    }
-
-    avg /= width * height;
-
-    // Allow a small margin of variance with the balance multiplier.
-    baMul = (!INRANGE_OF(avg, 127, 4)? (float)127/avg : 1);
-    if(baMul != 1)
-    {
-        if(max < 255)
-            max = (byte) MINMAX_OF(1, (float)max - (255-max) * baMul, 255);
-        if(min > 0)
-            min = (byte) MINMAX_OF(0, (float)min + min * baMul, 255);
-    }
-
-    hiMul = (max < 255?    (float)255/max  : 1);
-    loMul = (min > 0  ? 1-((float)min/255) : 1);
-
-    if(!(baMul == 1 && hiMul == 1 && loMul == 1))
-        for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
-        {
-            // First balance.
-            *pix = (byte) MINMAX_OF(0, ((float)*pix) * baMul, 255);
-
-            // Now amplify.
-            if(*pix > 127)
-                *pix = (byte) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
-            else
-                *pix = (byte) MINMAX_OF(0, ((float)*pix) * loMul, 255);
-        }
-
-    if(rBaMul) *rBaMul = baMul;
-    if(rHiMul) *rHiMul = hiMul;
-    if(rLoMul) *rLoMul = loMul;
-}
-
-static void Desaturate(byte* pixels, int width, int height, int comps)
-{
-    byte* pix;
-    int i;
-
-    for(i = 0, pix = pixels; i < width * height; ++i, pix += comps)
-    {
-        int min = MIN_OF(pix[CR], MIN_OF(pix[CG], pix[CB]));
-        int max = MAX_OF(pix[CR], MAX_OF(pix[CG], pix[CB]));
-        pix[CR] = pix[CG] = pix[CB] = (min + max) / 2;
-    }
-}
-
-static void Amplify(byte* pixels, int width, int height, boolean hasAlpha)
-{
-    size_t i, numPels = width * height;
-    byte max = 0;
-    byte* pix;
-
-    if(hasAlpha)
-    {
-        byte* apix;
-        for(i = 0, pix = pixels, apix = pixels + numPels; i < numPels; ++i, pix++, apix++)
-        {
-            // Only non-masked pixels count.
-            if(!(*apix > 0))
-                continue;
-
-            if(*pix > max)
-                max = *pix;
-        }
-    }
-    else
-    {
-        for(i = 0, pix = pixels; i < numPels; ++i, pix++)
-        {
-            if(*pix > max)
-                max = *pix;
-        }
-    }
-
-    if(!max || max == 255)
-        return;
-
-    for(i = 0, pix = pixels; i < numPels; ++i, pix++)
-    {
-        *pix = (byte) MINMAX_OF(0, (float)*pix / max * 255, 255);
-    }
-}
-
-static void EnhanceContrast(byte *pixels, int width, int height)
-{
-    int i, c;
-    byte* pix;
-
-    for(i = 0, pix = pixels; i < width * height; ++i, pix += 4)
-    {
-        for(c = 0; c < 3; ++c)
-        {
-            float f = pix[c];
-            if(f < 60) // Darken dark parts.
-                f = (f - 70) * 1.0125f + 70;
-            else if(f > 185) // Lighten light parts.
-                f = (f - 185) * 1.0125f + 185;
-
-            pix[c] = MINMAX_OF(0, f, 255);
-        }
-    }
-}
-
-static void SharpenPixels(byte* pixels, int width, int height)
-{
-    int x, y, c;
-    byte* result = M_Calloc(4 * width * height);
-    const float strength = .05f;
-    float A, B, C;
-
-    A = strength;
-    B = .70710678 * strength; // 1/sqrt(2)
-    C = 1 + 4*A + 4*B;
-
-    for(y = 1; y < height - 1; ++y)
-    {
-        for(x = 1; x < width -1; ++x)
-        {
-            byte* pix = pixels + (x + y*width) * 4;
-            byte* out = result + (x + y*width) * 4;
-            for(c = 0; c < 3; ++c)
-            {
-                int r = (C*pix[c] - A*pix[c - width] - A*pix[c + 4] - A*pix[c - 4] -
-                         A*pix[c + width] - B*pix[c + 4 - width] - B*pix[c + 4 + width] -
-                         B*pix[c - 4 - width] - B*pix[c - 4 + width]);
-                out[c] = MINMAX_OF(0, r, 255);
-            }
-            out[3] = pix[3];
-        }
-    }
-    memcpy(pixels, result, 4 * width * height);
-    M_Free(result);
-}
-
-/**
  * Returns the OpenGL name of the texture.
  */
 DGLuint GL_PreparePatch(patchtex_t* patchTex)
@@ -2278,6 +2068,85 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             return texInst->id;
     }
     return 0;
+}
+
+boolean GL_OptimalSize(int width, int height, boolean noStretch, boolean isMipMapped,
+    int* optWidth, int* optHeight)
+{
+    assert(optWidth && optHeight);
+    if(GL_state.textureNonPow2 && !isMipMapped)
+    {
+        *optWidth = width;
+        *optHeight = height;
+    }
+    else if(noStretch)
+    {
+        *optWidth = M_CeilPow2(width);
+        *optHeight = M_CeilPow2(height);
+
+        // MaxTexSize may prevent using noStretch.
+        if(*optWidth  > GL_state.maxTexSize ||
+           *optHeight > GL_state.maxTexSize)
+        {
+            noStretch = false;
+        }
+    }
+    else
+    {
+        // Determine the most favorable size for the texture.
+        if(texQuality == TEXQ_BEST) // The best quality.
+        {
+            // At the best texture quality *opt, all textures are
+            // sized *upwards*, so no details are lost. This takes
+            // more memory, but naturally looks better.
+            *optWidth = M_CeilPow2(width);
+            *optHeight = M_CeilPow2(height);
+        }
+        else if(texQuality == 0)
+        {
+            // At the lowest quality, all textures are sized down
+            // to the nearest power of 2.
+            *optWidth = M_FloorPow2(width);
+            *optHeight = M_FloorPow2(height);
+        }
+        else
+        {
+            // At the other quality *opts, a weighted rounding
+            // is used.
+            *optWidth = M_WeightPow2(width, 1 - texQuality / (float) TEXQ_BEST);
+            *optHeight =
+               M_WeightPow2(height, 1 - texQuality / (float) TEXQ_BEST);
+        }
+    }
+
+    // Hardware limitations may force us to modify the preferred
+    // texture size.
+    if(*optWidth > GL_state.maxTexSize)
+        *optWidth = GL_state.maxTexSize;
+    if(*optHeight > GL_state.maxTexSize)
+        *optHeight = GL_state.maxTexSize;
+
+    // Some GL drivers seem to have problems with VERY small textures.
+    if(*optWidth < MINTEXWIDTH)
+        *optWidth = MINTEXWIDTH;
+    if(*optHeight < MINTEXHEIGHT)
+        *optHeight = MINTEXHEIGHT;
+
+    if(ratioLimit)
+    {
+        if(*optWidth > *optHeight) // Wide texture.
+        {
+            if(*optHeight < *optWidth / ratioLimit)
+                *optHeight = *optWidth / ratioLimit;
+        }
+        else // Tall texture.
+        {
+            if(*optWidth < *optHeight / ratioLimit)
+                *optWidth = *optHeight / ratioLimit;
+        }
+    }
+
+    return noStretch;
 }
 
 /**
@@ -2839,7 +2708,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             if(tex->type == GLT_DETAIL)
             {
                 float baMul, hiMul, loMul;
-                Equalize(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
+                EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
                 if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
                 {
                     Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
@@ -2851,45 +2720,48 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             {
                 int scaleMethod = GL_ChooseSmartFilter(image.width, image.height, 0);
                 int numpels = image.width * image.height;
-                uint8_t* rgbaPixels, *upscaledPixels;
+                uint8_t* newPixels;
 
-                if(0 == (rgbaPixels = malloc(numpels * 4)))
-                    Con_Error("GLTexture_Prepare: Failed on allocation of %lu bytes for "
-                              "RGBA conversion buffer.", (unsigned long) (numpels * 4));
-
-                GL_ConvertBuffer(image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1),
-                    4, image.pixels, rgbaPixels, 0, false);
-
-                if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
-                    Desaturate(rgbaPixels, image.width, image.height, 4);
-
-                upscaledPixels = GL_SmartFilter(scaleMethod, rgbaPixels, image.width, image.height, 0, &image.width, &image.height);
-                if(upscaledPixels != rgbaPixels)
+                newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, false, 4);
+                if(newPixels != image.pixels)
                 {
-                    free(rgbaPixels);
-                    rgbaPixels = upscaledPixels;
+                    free(image.pixels);
+                    image.pixels = newPixels;
+                    image.pixelSize = 4;
+                    image.originalBits = 32;
                 }
 
-                EnhanceContrast(rgbaPixels, image.width, image.height);
-                //SharpenPixels(rgbaPixels, image.width, image.height);
-                //BlackOutlines(rgbaPixels, image.width, image.height);
+                if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
+                    Desaturate(image.pixels, image.width, image.height, image.pixelSize);
+
+                newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.width, image.height, 0, &image.width, &image.height);
+                if(newPixels != image.pixels)
+                {
+                    free(image.pixels);
+                    image.pixels = newPixels;
+                }
+
+                EnhanceContrast(image.pixels, image.width, image.height, image.pixelSize);
+                //SharpenPixels(image.pixels, image.width, image.height, image.pixelSize);
+                //BlackOutlines(image.pixels, image.width, image.height, image.pixelSize);
 
                 // Back to indexed+alpha?
                 if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
                 {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                     // Replace the old buffer.
-                    free(image.pixels);
-                    image.pixels = rgbaPixels;
-                    image.pixelSize = 4;
-
                     GL_ConvertToLuminance(&image);
-                    Amplify(image.pixels, image.width, image.height, image.pixelSize == 2);
+                    AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
                 }
                 else
                 {   // Yes. Quantize down from RGA(+A) to Indexed(+A), replacing the old image.
-                    GL_ConvertBuffer(image.width, image.height, 4, ((image.flags & IMGF_IS_MASKED)? 2 : 1),
-                        rgbaPixels, image.pixels, 0, false);
-                    free(rgbaPixels);
+                    newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, false, 4);
+                    if(newPixels != image.pixels)
+                    {
+                        free(image.pixels);
+                        image.pixels = newPixels;
+                        image.pixelSize = ((image.flags & IMGF_IS_MASKED)? 2 : 1);
+                        image.originalBits = image.pixelSize * 8;
+                    }
                 }
 
                 // Lets not do this again.
@@ -2897,14 +2769,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             }
 
             if(fillOutlines /*&& !scaleSharp*/ && (image.flags & IMGF_IS_MASKED) && image.pixelSize == 1)
-                ColorOutlines(image.pixels, image.width, image.height);
+                ColorOutlinesIdx(image.pixels, image.width, image.height);
         }
         else
         {
             if(monochrome && tex->type == GLT_DOOMPATCH && image.pixelSize > 2)
             {
                 GL_ConvertToLuminance(&image);
-                Amplify(image.pixels, image.width, image.height, image.pixelSize == 2);
+                AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
             }
         }
 
@@ -2915,7 +2787,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             {
                 int newWidth  = MIN_OF(image.width, GL_state.maxTexSize);
                 int newHeight = MIN_OF(image.height, GL_state.maxTexSize);
-                uint8_t* scaledPixels = GL_ScaleBuffer32(image.pixels, image.width, image.height, image.pixelSize,
+                uint8_t* scaledPixels = GL_ScaleBuffer(image.pixels, image.width, image.height, image.pixelSize,
                     newWidth, newHeight);
                 if(scaledPixels != image.pixels)
                 {
@@ -3105,7 +2977,7 @@ if(!didDefer)
             {   // Calculate light source properties.
                 GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
                                  &texInst->data.sprite.flareX, &texInst->data.sprite.flareY,
-                                 &texInst->data.sprite.autoLightColor, &texInst->data.sprite.lumSize);
+                                 texInst->data.sprite.autoLightColor, &texInst->data.sprite.lumSize);
             }
 
             /**
@@ -3131,13 +3003,13 @@ if(!didDefer)
             // Average color for glow planes and top line color.
             if(image.pixelSize > 1)
             {
-                averageColorRGB(texInst->data.texture.color, image.pixels, image.width, image.height);
-                lineAverageColorRGB(texInst->data.texture.topColor, image.pixels, image.width, image.height, 0);
+                FindAverageColor(image.pixels, image.width, image.height, image.pixelSize, texInst->data.texture.color);
+                FindAverageLineColor(image.pixels, image.width, image.height, image.pixelSize, 0, texInst->data.texture.topColor);
             }
             else
             {
-                averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height, 0, false);
-                lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width, image.height, 0, 0, false);
+                FindAverageColorIdx(image.pixels, image.width, image.height, 0, false, texInst->data.texture.color);
+                FindAverageLineColorIdx(image.pixels, image.width, image.height, 0, 0, false, texInst->data.texture.topColor);
             }
 
             memcpy(texInst->data.texture.colorAmplified, texInst->data.texture.color, sizeof(texInst->data.texture.colorAmplified));

@@ -984,6 +984,305 @@ void GL_LowRes(void)
     GL_TexReset();
 }
 
+int GL_NumMipmapLevels(int width, int height)
+{
+    int numLevels = 0;
+    while(width > 1 || height > 1)
+    {
+        width  /= 2;
+        height /= 2;
+        ++numLevels;
+    }
+    return numLevels;
+}
+
+uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
+    int flags, int* outWidth, int* outHeight)
+{
+    int newWidth, newHeight;
+    uint8_t* out = NULL;
+
+    switch(method)
+    {
+    default: // linear interpolation.
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_ScaleBuffer(src, width, height, 4, newWidth, newHeight);
+        break;
+
+    case 1: // nearest neighbor.
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_ScaleBufferNearest(src, width, height, 4, newWidth, newHeight);
+        break;
+
+    case 2: // hq2x
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_SmartFilterHQ2x(src, width, height, flags);
+        break;
+    };
+
+    if(NULL == out)
+    {   // Unchanged, return the source image.
+        if(outWidth)  *outWidth  = width;
+        if(outHeight) *outHeight = height;
+        return (uint8_t*)src;
+    }
+
+    if(outWidth)  *outWidth  = newWidth;
+    if(outHeight) *outHeight = newHeight;
+    return out;
+}
+
+uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat,
+    colorpaletteid_t palid, boolean gamma, int outformat)
+{
+    assert(in);
+    {
+    uint8_t* out;
+
+    if(width <= 0 || height <= 0)
+    {
+        Con_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
+        return (uint8_t*)in;
+    }
+
+    if(informat == outformat)
+    {   // No conversion necessary.
+        return (uint8_t*)in;
+    }
+
+    if(0 == (out = malloc(width * height * outformat)))
+        Con_Error("GL_ConvertBuffer: Failed on allocation of %lu bytes for "
+                  "conversion buffer.", (unsigned long) (width * height * outformat));
+
+    // Conversion from pal8(a) to RGB(A).
+    if(informat <= 2 && outformat >= 3)
+    {
+        GL_PalettizeImage(out, outformat, R_GetColorPalette(palid), gamma,
+            in, informat, width, height);
+        return out;
+    }
+
+    // Conversion from RGB(A) to pal8(a), using pal18To8.
+    if(informat >= 3 && outformat <= 2)
+    {
+        GL_QuantizeImageToPalette(out, outformat, R_GetColorPalette(palid),
+            in, informat, width, height);
+        return out;
+    }
+
+    if(informat == 3 && outformat == 4)
+    {
+        int i, numPixels = width * height;
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
+
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
+        {
+            memcpy(out, in, 3);
+            out[3] = 0xff; // Opaque.
+        }
+    }
+    return out;
+    }
+}
+
+void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
+    colorpaletteid_t palid, float* brightX, float* brightY, float color[3],
+    float* lumSize)
+{
+    assert(buffer && brightX && brightY && color && lumSize);
+    {
+    DGLuint pal = (pixelSize == 1? R_GetColorPalette(palid) : 0);
+    const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
+    int i, k, x, y, c, cnt = 0, posCnt = 0;
+    const uint8_t* src, *alphaSrc = NULL;
+    int avgCnt = 0, lowCnt = 0;
+    float average[3], lowAvg[3];
+    uint8_t rgb[3];
+    int region[4];
+
+    for(i = 0; i < 3; ++i)
+    {
+        average[i] = 0;
+        lowAvg[i] = 0;
+    }
+    src = buffer;
+
+    if(pixelSize == 1)
+    {
+        // In paletted mode, the alpha channel follows the actual image.
+        alphaSrc = buffer + width * height;
+    }
+
+    FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
+    if(region[2] > 0)
+    {
+        src += pixelSize * width * region[2];
+        alphaSrc += width * region[2];
+    }
+    (*brightX) = (*brightY) = 0;
+
+    for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
+    {
+        if(region[0] > 0)
+        {
+            src += pixelSize * region[0];
+            alphaSrc += region[0];
+        }
+
+        for(i = region[0], x = 0; i < region[1] + 1;
+            ++i, ++x, src += pixelSize, alphaSrc++)
+        {
+            // Alpha pixels don't count.
+            if(pixelSize == 1)
+            {
+                if(*alphaSrc < 255)
+                    continue;
+            }
+            else if(pixelSize == 4)
+            {
+                if(src[3] < 255)
+                    continue;
+            }
+
+            // Bright enough?
+            if(pixelSize == 1)
+            {
+                GL_GetColorPaletteRGB(pal, (DGLubyte*) rgb, *src);
+            }
+            else if(pixelSize >= 3)
+            {
+                memcpy(rgb, src, 3);
+            }
+
+            if(rgb[0] > posLimit || rgb[1] > posLimit || rgb[2] > posLimit)
+            {
+                // This pixel will participate in calculating the average
+                // center point.
+                (*brightX) += x;
+                (*brightY) += y;
+                posCnt++;
+            }
+
+            // Bright enough to affect size?
+            if(rgb[0] > limit || rgb[1] > limit || rgb[2] > limit)
+                cnt++;
+
+            // How about the color of the light?
+            if(rgb[0] > colLimit || rgb[1] > colLimit || rgb[2] > colLimit)
+            {
+                avgCnt++;
+                for(c = 0; c < 3; ++c)
+                    average[c] += rgb[c] / 255.f;
+            }
+            else
+            {
+                lowCnt++;
+                for(c = 0; c < 3; ++c)
+                    lowAvg[c] += rgb[c] / 255.f;
+            }
+        }
+
+        if(region[1] < width - 1)
+        {
+            src += pixelSize * (width - 1 - region[1]);
+            alphaSrc += (width - 1 - region[1]);
+        }
+    }
+
+    if(!posCnt)
+    {
+        (*brightX) = region[0] + ((region[1] - region[0]) / 2.0f);
+        (*brightY) = region[2] + ((region[3] - region[2]) / 2.0f);
+    }
+    else
+    {
+        // Get the average.
+        (*brightX) /= posCnt;
+        (*brightY) /= posCnt;
+        // Add the origin offset.
+        (*brightX) += region[0];
+        (*brightY) += region[2];
+    }
+
+    // Center on the middle of the brightest pixel.
+    (*brightX) += .5f;
+    (*brightY) += .5f;
+
+    // The color.
+    if(!avgCnt)
+    {
+        if(!lowCnt)
+        {
+            // Doesn't the thing have any pixels??? Use white light.
+            for(c = 0; c < 3; ++c)
+                color[c] = 1;
+        }
+        else
+        {
+            // Low-intensity color average.
+            for(c = 0; c < 3; ++c)
+                color[c] = lowAvg[c] / lowCnt;
+        }
+    }
+    else
+    {
+        // High-intensity color average.
+        for(c = 0; c < 3; ++c)
+            color[c] = average[c] / avgCnt;
+    }
+
+/*#ifdef _DEBUG
+    Con_Message("GL_CalcLuminance: width %dpx, height %dpx, bits %d\n"
+                "  cell region X[%d, %d] Y[%d, %d]\n"
+                "  flare X= %g Y=%g %s\n"
+                "  flare RGB[%g, %g, %g] %s\n",
+                width, height, pixelSize,
+                region[0], region[1], region[2], region[3],
+                (*brightX), (*brightY),
+                (posCnt? "(average)" : "(center)"),
+                color[0], color[1], color[2],
+                (avgCnt? "(hi-intensity avg)" :
+                 lowCnt? "(low-intensity avg)" : "(white light)"));
+#endif*/
+
+    // AmplifyLuma color.
+    amplify(color);
+
+    // How about the size of the light source?
+    *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
+    }
+}
+
+int GL_ChooseSmartFilter(int width, int height, int flags)
+{
+    if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
+        return 2; // hq2x
+    return 1; // nearest neighbor.
+}
+
+void amplify(float rgb[3])
+{
+    float max = 0;
+    int i;
+
+    for(i = 0; i < 3; ++i)
+        if(rgb[i] > max)
+            max = rgb[i];
+
+    if(!max || max == 1)
+        return;
+
+    if(max)
+    {
+        for(i = 0; i < 3; ++i)
+            rgb[i] = rgb[i] / max;
+    }
+}
+
 /**
  * Change graphics mode resolution.
  */

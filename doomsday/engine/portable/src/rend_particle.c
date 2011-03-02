@@ -123,7 +123,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
 {
     assert(particleTex < MAX_PTC_TEXTURES);
     {
-        ddstring_t foundPath, searchPath, suffix = { "-ck" };
+    ddstring_t foundPath, searchPath, suffix = { "-ck" };
     image_t image;
     byte result = 0;
 

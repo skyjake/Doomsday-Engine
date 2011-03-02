@@ -22,15 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Textures and color palette handling.
- *
- * Get OpenGL header files from:
- * http://oss.sgi.com/projects/ogl-sample/
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -41,44 +32,30 @@
 
 #include "sys_opengl.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define RGB18(r, g, b)      ((r)+((g)<<6)+((b)<<12))
-
-// TYPES -------------------------------------------------------------------
 
 // Color Palette Flags (CPF):
 #define CPF_UPDATE_18TO8    0x1 // The 18To8 table needs updating.
 
 typedef struct {
-    ushort          num;
-    byte            flags; // CPF_* flags.
-    DGLubyte*       data; // R8G8B8 color triplets, [num * 3].
-    ushort*         pal18To8; // 262144 unique mappings.
+    ushort num;
+    uint8_t flags; /// CPF_* flags.
+    DGLubyte* data; /// RGB888 color triplets, [num * 3].
+    ushort* pal18To8; /// 262144 unique mappings.
 } gl_colorpalette_t;
-
-// FUNCTION PROTOTYPES -----------------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 gl_state_texture_t GL_state_texture;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static gl_colorpalette_t* colorPalettes = NULL;
 static DGLuint numColorPalettes = 0;
-
-// CODE --------------------------------------------------------------------
 
 static void loadPalette(const gl_colorpalette_t* pal)
 {
     if(GL_state_texture.usePalTex)
     {
-        int                 i;
-        byte                paldata[256 * 3];
-        byte*               buf;
+        uint8_t paldata[256 * 3];
+        uint8_t* buf;
+        int i;
 
         if(pal->num > 256)
             buf = malloc(pal->num * 3);
@@ -152,10 +129,10 @@ static void prepareColorPalette18To8(gl_colorpalette_t* pal)
 {
     if((pal->flags & CPF_UPDATE_18TO8) || !pal->pal18To8)
     {
-#define SIZEOF18TO8     (sizeof(ushort) * 262144) // \fixme Too big?
+#define SIZEOF18TO8     (sizeof(ushort) * 262144)
 
-        int                 r, g, b;
-        ushort              closestIndex = 0;
+        ushort closestIndex = 0;
+        int r, g, b;
 
         if(!pal->pal18To8)
         {
@@ -168,13 +145,13 @@ static void prepareColorPalette18To8(gl_colorpalette_t* pal)
             {
                 for(b = 0; b < 64; ++b)
                 {
-                    ushort              i;
-                    int                 smallestDiff = DDMAXINT;
+                    ushort i;
+                    int smallestDiff = DDMAXINT;
 
                     for(i = 0; i < pal->num; ++i)
                     {
-                        int                 diff;
-                        const DGLubyte*     rgb = &pal->data[i * 3];
+                        const DGLubyte* rgb = &pal->data[i * 3];
+                        int diff;
 
                         diff =
                             (rgb[CR] - (r << 2)) * (rgb[CR] - (r << 2)) +
@@ -197,11 +174,10 @@ static void prepareColorPalette18To8(gl_colorpalette_t* pal)
 
         /*if(ArgCheck("-dump_pal18to8"))
         {
-            filename_t          name;
-            FILE*               file;
+            filename_t name;
+            FILE* file;
 
-            dd_snprintf(name, FILENAME_T_MAXLEN, "%s_18To8.lmp",
-                     pal->name);
+            dd_snprintf(name, FILENAME_T_MAXLEN, "%s_18To8.lmp", pal->name);
             file = fopen(name, "wb");
 
             fwrite(pal->pal18To8, SIZEOF18TO8, 1, file);
@@ -212,52 +188,13 @@ static void prepareColorPalette18To8(gl_colorpalette_t* pal)
     }
 }
 
-static void readBits(byte* out, const byte** src, byte* cb, uint numBits)
+DGLuint GL_CreateColorPalette(const int compOrder[3], const uint8_t compSize[3],
+    const uint8_t* data, ushort num)
 {
-    int                 offset = 0, unread = numBits;
-
-    // Read full bytes.
-    if(unread >= 8)
+    assert(compOrder && compSize && data);
     {
-        do
-        {
-            out[offset++] = **src, (*src)++;
-        } while((unread -= 8) >= 8);
-    }
-
-    if(unread != 0)
-    {   // Read remaining bits.
-        byte                fb = 8 - unread;
-
-        if((*cb) == 0)
-            (*cb) = 8;
-
-        do
-        {
-            (*cb)--;
-            out[offset] <<= 1;
-            out[offset] |= ((**src >> (*cb)) & 0x01);
-        } while(--unread > 0);
-
-        out[offset] <<= fb;
-
-        if((*cb) == 0)
-            (*src)++;
-    }
-}
-
-/**
- * @param compOrder     Component order. Examples:
- *                         [0,1,2] == RGB
- *                         [2,1,0] == BGR
- * @param compSize      Number of bits per component [R,G,B].
- */
-DGLuint GL_CreateColorPalette(const int compOrder[3],
-                              const byte compSize[3], const byte* data,
-                              ushort num)
-{
-    gl_colorpalette_t*  pal;
-    byte                order[3], bits[3];
+    gl_colorpalette_t* pal;
+    uint8_t order[3], bits[3];
 
     // Ensure input is in range.
     order[0] = MINMAX_OF(0, compOrder[0], 2);
@@ -289,12 +226,11 @@ DGLuint GL_CreateColorPalette(const int compOrder[3],
         // Do we need to adjust the order?
         if(order[CR] != 0 || order[CG] != 1 || order[CB] != 2)
         {
-            uint                i;
-
+            uint i;
             for(i = 0; i < pal->num; ++i)
             {
-                byte*               dst = &pal->data[i * 3];
-                byte                tmp[3];
+                uint8_t* dst = &pal->data[i * 3];
+                uint8_t tmp[3];
 
                 tmp[0] = dst[0];
                 tmp[1] = dst[1];
@@ -308,20 +244,20 @@ DGLuint GL_CreateColorPalette(const int compOrder[3],
     }
     else
     {   // Another format entirely.
-        uint                i;
-        byte                cb = 0;
-        const byte*         src = data;
+        const uint8_t* src = data;
+        uint8_t cb = 0;
+        uint i;
 
         for(i = 0; i < pal->num; ++i)
         {
-            byte*               dst = &pal->data[i * 3];
-            int                 tmp[3];
+            uint8_t* dst = &pal->data[i * 3];
+            int tmp[3];
 
             tmp[CR] = tmp[CG] = tmp[CB] = 0;
 
-            readBits((byte*) &(tmp[order[CR]]), &src, &cb, bits[order[CR]]);
-            readBits((byte*) &(tmp[order[CG]]), &src, &cb, bits[order[CG]]);
-            readBits((byte*) &(tmp[order[CB]]), &src, &cb, bits[order[CB]]);
+            M_ReadBits(bits[order[CR]], &src, &cb, (uint8_t*) &(tmp[order[CR]]));
+            M_ReadBits(bits[order[CG]], &src, &cb, (uint8_t*) &(tmp[order[CG]]));
+            M_ReadBits(bits[order[CB]], &src, &cb, (uint8_t*) &(tmp[order[CB]]));
 
             // Need to do any scaling?
             if(bits[CR] != 8)
@@ -349,9 +285,9 @@ DGLuint GL_CreateColorPalette(const int compOrder[3],
             }
 
             // Store the final color.
-            dst[CR] = MINMAX_OF(0, tmp[CR], 255);
-            dst[CG] = MINMAX_OF(0, tmp[CG], 255);
-            dst[CB] = MINMAX_OF(0, tmp[CB], 255);
+            dst[CR] = (uint8_t) MINMAX_OF(0, tmp[CR], 255);
+            dst[CG] = (uint8_t) MINMAX_OF(0, tmp[CG], 255);
+            dst[CB] = (uint8_t) MINMAX_OF(0, tmp[CB], 255);
         }
     }
 
@@ -361,11 +297,12 @@ DGLuint GL_CreateColorPalette(const int compOrder[3],
     pal->pal18To8 = NULL;
 
     return numColorPalettes; // 1-based index.
+    }
 }
 
 void GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes)
 {
-    DGLsizei            i;
+    DGLsizei i;
 
     if(!(n > 0) || !palettes)
         return;
@@ -374,15 +311,14 @@ void GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes)
     {
         if(palettes[i] != 0 && palettes[i] - 1 < numColorPalettes)
         {
-            uint                idx = palettes[i]-1;
-            gl_colorpalette_t*  pal = &colorPalettes[idx];
+            uint idx = palettes[i]-1;
+            gl_colorpalette_t* pal = &colorPalettes[idx];
 
             Z_Free(pal->data);
             if(pal->pal18To8)
                 Z_Free(pal->pal18To8);
 
-            memmove(&colorPalettes[idx], &colorPalettes[idx+1],
-                    sizeof(*pal));
+            memmove(&colorPalettes[idx], &colorPalettes[idx+1], sizeof(*pal));
             numColorPalettes--;
         }
     }
@@ -495,12 +431,7 @@ boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, DGLuint palid,
     return false;
 }
 
-/**
- * Desaturates the texture in the dest buffer by averaging the colour then
- * looking up the nearest match in the palette. Increases the brightness
- * to maximum.
- */
-void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width, int height)
+void GL_DeSaturatePalettedImage(uint8_t* buffer, DGLuint palid, int width, int height)
 {
     const int numpels = width * height;
     const gl_colorpalette_t* pal;
@@ -556,13 +487,12 @@ void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width, int heig
  * Choose an internal texture format based on the number of color
  * components.
  *
- * @param comps         Number of color components.
- * @return              The internal texture format.
+ * @param comps  Number of color components.
+ * @return  The internal texture format.
  */
-GLenum ChooseFormat(int comps)
+static GLenum ChooseTextureFormat(int comps)
 {
-    boolean             compress =
-        (GL_state_texture.useCompr && GL_state.allowCompression);
+    boolean compress = (GL_state_texture.useCompr && GL_state.allowCompression);
 
     switch(comps)
     {
@@ -578,7 +508,7 @@ GLenum ChooseFormat(int comps)
             : GL_COMPRESSED_RGBA;
 
     default:
-        Con_Error("drOpenGL.ChooseFormat: Unsupported comps: %i.", comps);
+        Con_Error("ChooseTextureFormat: Unsupported comps: %i.", comps);
     }
 
     // The fallback.
@@ -587,7 +517,7 @@ GLenum ChooseFormat(int comps)
 
 int GL_GetTexAnisoMul(int level)
 {
-    int         mul = 1;
+    int mul = 1;
 
     // Should anisotropic filtering be used?
     if(GL_state.useAnisotropic)
@@ -621,95 +551,43 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-/**
- * Works within the given data, reducing the size of the picture to half
- * its original.
- *
- * @param width         Width of the final texture, must be power of two.
- * @param height        Height of the final texture, must be power of two.
- */
-void downMip8(byte *in, byte *fadedOut, int width, int height, float fade)
+static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int height)
 {
-    byte       *out = in;
-    int         x, y, outW = width / 2, outH = height / 2;
-    float       invFade;
-
-    if(fade > 1)
-        fade = 1;
-    invFade = 1 - fade;
-
-    if(width == 1 && height == 1)
-    {   // Nothing can be done.
-        return;
-    }
-
-    if(!outW || !outH)
-    {   // Limited, 1x2|2x1 -> 1x1 reduction?
-        int     outDim = (width > 1 ? outW : outH);
-
-        for(x = 0; x < outDim; x++, in += 2)
-        {
-            *out = (in[0] + in[1]) / 2;
-            *fadedOut++ = (byte) (*out * invFade + 0x80 * fade);
-            out++;
-        }
-    }
-    else
-    {   // Unconstrained, 2x2 -> 1x1 reduction?
-        for(y = 0; y < outH; y++, in += width)
-            for(x = 0; x < outW; x++, in += 2)
-            {
-                *out = (in[0] + in[1] + in[width] + in[width + 1]) / 4;
-                *fadedOut++ = (byte) (*out * invFade + 0x80 * fade);
-                out++;
-            }
-    }
-}
-
-boolean grayMipmap(dgltexformat_t format, int width, int height, void *data)
-{
-    byte       *image, *in, *out, *faded;
-    int         i, numLevels, w, h, size = width * height, res;
-    uint        comps = (format == DGL_LUMINANCE? 1 : 3);
-    float       invFactor = 1 - GL_state_texture.grayMipmapFactor;
+    assert(data);
+    {
+    int numLevels = GL_NumMipmapLevels(width, height);
+    uint8_t* image, *in, *out, *faded;
+    int i, w, h, size = width * height, res;
+    uint comps = (format == DGL_LUMINANCE? 1 : 3);
+    float invFactor = 1 - GL_state_texture.grayMipmapFactor;
+    GLenum glTexFormat = ChooseTextureFormat(1);
 
     // Buffer used for the faded texture.
-    faded = M_Malloc(size / 4);
-    image = M_Malloc(size);
+    faded = malloc(size / 4);
+    image = malloc(size);
 
     // Initial fading.
     if(format == DGL_LUMINANCE || format == DGL_RGB)
     {
         for(i = 0, in = data, out = image; i < size; ++i, in += comps)
         {
-            res = (int) (*in * GL_state_texture.grayMipmapFactor + 0x80 * invFactor);
-
-            // Clamp to [0, 255].
-            if(res < 0)
-                res = 0;
-            if(res > 255)
-                res = 255;
-
-            *out++ = res;
+            res = (int) (*in * GL_state_texture.grayMipmapFactor + 127 * invFactor);
+            *out++ = MINMAX_OF(0, res, 255);
         }
     }
-
-    // How many levels will there be?
-    for(numLevels = 0, w = width, h = height; w > 1 || h > 1;
-        w /= 2, h /= 2, numLevels++);
 
     // We do not want automatical mipmaps.
     if(GL_state_ext.genMip)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_FALSE);
 
     // Upload the first level right away.
-    glTexImage2D(GL_TEXTURE_2D, 0, ChooseFormat(1), width, height, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, width, height, 0,
                  GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
 
     // Generate all mipmaps levels.
     for(i = 0, w = width, h = height; i < numLevels; ++i)
     {
-        downMip8(image, faded, w, h, (i * 1.75f) / numLevels);
+        GL_DownMipmap8(image, faded, w, h, (i * 1.75f) / numLevels);
 
         // Go down one level.
         if(w > 1)
@@ -717,54 +595,36 @@ boolean grayMipmap(dgltexformat_t format, int width, int height, void *data)
         if(h > 1)
             h /= 2;
 
-        glTexImage2D(GL_TEXTURE_2D, i + 1, ChooseFormat(1), w, h, 0,
+        glTexImage2D(GL_TEXTURE_2D, i + 1, glTexFormat, w, h, 0,
                      GL_LUMINANCE, GL_UNSIGNED_BYTE, faded);
     }
 
     // Do we need to free the temp buffer?
-    M_Free(faded);
-    M_Free(image);
+    free(faded);
+    free(image);
 
     if(GL_state.useAnisotropic)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(-1 /*best*/));
+
     return true;
+    }
 }
 
-/**
- * @param format        DGL texture format symbolic, one of:
- *                          DGL_RGB
- *                          DGL_RGBA
- *                          DGL_COLOR_INDEX_8
- *                          DGL_COLOR_INDEX_8_PLUS_A8
- *                          DGL_LUMINANCE
- * @param palid         Id of the color palette to use with this texture.
- *                      Only has meaning if the input format is one of:
- *                          DGL_COLOR_INDEX_8
- *                          DGL_COLOR_INDEX_8_PLUS_A8
- * @param width         Width of the texture, must be power of two.
- * @param height        Height of the texture, must be power of two.
- * @param genMips       If negative, sets a specific mipmap level,
- *                      e.g. @c -1, means mipmap level 1.
- * @param data          Ptr to the texture data.
- *
- * @return              @c true iff successful.
- */
-boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
-                    int width, int height, int genMips, void *data)
+boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
+    int height, int genMips, void* data)
 {
-    int                 mipLevel = 0;
-    byte*               bdata = data;
+    uint8_t* bdata = data;
+    int mipLevel = 0;
 
-    // Negative genMips values mean that the specific mipmap level is
-    // being uploaded.
+    // Negative genMips values mean that the specific mipmap level is being uploaded.
     if(genMips < 0)
     {
         mipLevel = -genMips;
         genMips = 0;
     }
 
-    // Can't operate on the null texture.
+    // Can't operate on null texture.
     if(!data)
         return false;
 
@@ -785,7 +645,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
     // Special fade-to-gray luminance texture? (used for details)
     if(genMips == DDMAXINT)
     {
-        return grayMipmap(format, width, height, data);
+        return GrayMipmap(format, data, width, height);
     }
 
     // Automatic mipmap generation?
@@ -817,10 +677,10 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
                             (format == DGL_COLOR_INDEX_8_PLUS_A8) ||
                             (format == DGL_LUMINANCE_PLUS_A8));
         int loadFormat = GL_RGBA;
-        int glFormat = ChooseFormat(alphachannel ? 4 : 3);
+        int glFormat = ChooseTextureFormat(alphachannel ? 4 : 3);
         int numPixels = width * height;
-        byte* buffer;
-        byte* pixel, *in;
+        uint8_t* buffer;
+        uint8_t* pixel, *in;
         boolean needFree = false;
 
         // Convert to either RGB or RGBA, if necessary.
@@ -841,15 +701,14 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
             int i;
 
             needFree = true;
-            buffer = M_Malloc(numPixels * 4);
+            buffer = malloc(numPixels * 4);
             if(!buffer)
                 return false;
 
             switch(format)
             {
             case DGL_RGB:
-                for(i = 0, pixel = buffer, in = bdata; i < numPixels;
-                    i++, pixel += 4)
+                for(i = 0, pixel = buffer, in = bdata; i < numPixels; i++, pixel += 4)
                 {
                     pixel[CR] = *in++;
                     pixel[CG] = *in++;
@@ -865,8 +724,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
                 loadFormat = GL_RGB;
                 for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 3)
                 {
-                    const byte*         src =
-                        &pal->data[MIN_OF(bdata[i], pal->num) * 3];
+                    const uint8_t* src = &pal->data[MIN_OF(bdata[i], pal->num) * 3];
 
                     pixel[CR] = gammaTable[src[CR]];
                     pixel[CG] = gammaTable[src[CG]];
@@ -880,8 +738,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
 
                 for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 4)
                 {
-                    const byte*         src =
-                        &pal->data[MIN_OF(bdata[i], pal->num) * 3];
+                    const uint8_t* src = &pal->data[MIN_OF(bdata[i], pal->num) * 3];
 
                     pixel[CR] = gammaTable[src[CR]];
                     pixel[CG] = gammaTable[src[CG]];
@@ -906,7 +763,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
                 break;
 
             default:
-                M_Free(buffer);
+                free(buffer);
                 Con_Error("LoadTexture: Unknown format %x.\n", format);
                 break;
             }
@@ -924,7 +781,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
         }
 
         if(needFree)
-            M_Free(buffer);
+            free(buffer);
     }
 
 #ifdef _DEBUG

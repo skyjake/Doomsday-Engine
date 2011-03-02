@@ -54,4 +54,18 @@ typedef struct image_s {
 #define ICF_UPSCALE_SAMPLE_WRAP     (ICF_UPSCALE_SAMPLE_WRAPH|ICF_UPSCALE_SAMPLE_WRAPV)
 /*@}*/
 
+boolean GL_ImageHasAlpha(const image_t* image);
+
+/**
+ * Converts the image by converting it to a luminance map and then moving
+ * the resultant luminance data into the alpha channel. The color channel(s)
+ * are then filled all-white.
+ */
+void GL_ConvertToAlpha(image_t* image, boolean makeWhite);
+
+/**
+ * Converts the image data to grayscale luminance in-place.
+ */
+void GL_ConvertToLuminance(image_t* image);
+
 #endif /* LIBDENG_IMAGE_H */
