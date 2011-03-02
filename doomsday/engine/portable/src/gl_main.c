@@ -558,9 +558,6 @@ void GL_Init(void)
         Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
 
-    // Initialize paletted-texture-mode (if enabled).
-    GL_InitPalettedTexture();
-
     // Set the gamma in accordance with vid-gamma, vid-bright and vid-contrast.
     GL_SetGamma();
 
@@ -875,7 +872,6 @@ void GL_TotalRestore(void)
     GL_LoadSystemFonts();
 
     GL_Init2DState();
-    GL_InitPalettedTexture();
 
     {
     gamemap_t*          map = P_GetCurrentMap();
@@ -990,6 +986,43 @@ int GL_NumMipmapLevels(int width, int height)
     }
     return numLevels;
 }
+
+int GL_GetTexAnisoMul(int level)
+{
+    int mul = 1;
+
+    // Should anisotropic filtering be used?
+    if(GL_state.useAnisotropic)
+    {
+        if(level < 0)
+        {   // Go with the maximum!
+            mul = GL_state.maxAniso;
+        }
+        else
+        {   // Convert from a DGL aniso level to a multiplier.
+            // i.e 0 > 1, 1 > 2, 2 > 4, 3 > 8, 4 > 16
+            switch(level)
+            {
+            case 0: mul = 1; break; // x1 (normal)
+            case 1: mul = 2; break; // x2
+            case 2: mul = 4; break; // x4
+            case 3: mul = 8; break; // x8
+            case 4: mul = 16; break; // x16
+
+            default: // Wha?
+                mul = 1;
+                break;
+            }
+
+            // Clamp.
+            if(mul > GL_state.maxAniso)
+                mul = GL_state.maxAniso;
+        }
+    }
+
+    return mul;
+}
+
 
 uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
     int flags, int* outWidth, int* outHeight)

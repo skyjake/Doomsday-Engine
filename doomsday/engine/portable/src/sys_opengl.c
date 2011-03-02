@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_opengl.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,13 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- */
-
-/**
- * OpenGL interface, low-level.
- *
- * Get OpenGL header files from:
- * http://oss.sgi.com/projects/ogl-sample/
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -58,6 +51,7 @@
 
 gl_state_t GL_state;
 gl_state_ext_t GL_state_ext;
+gl_state_texture_t GL_state_texture;
 
 #ifdef WIN32
 # ifdef GL_EXT_framebuffer_object
@@ -74,7 +68,6 @@ PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
 PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
-PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -424,7 +417,6 @@ void Sys_InitGLState(void)
     GL_state.farClip = 8000;
     polyCounter = 0;
 
-    GL_state_texture.usePalTex = false;
     GL_state_texture.dumpTextures = false;
     GL_state_texture.useCompr = false;
 
@@ -618,7 +610,6 @@ void Sys_InitGLExtensions(void)
 #endif
     }
 
-    query("GL_EXT_paletted_texture", &GL_state.palExtAvailable);
     query("GL_EXT_texture_filter_anisotropic", &GL_state_ext.aniso);
     if(!ArgExists("-notexnonpow2"))
        query("GL_ARB_texture_non_power_of_two", &GL_state.textureNonPow2);
@@ -682,10 +673,6 @@ void Sys_InitGLExtensions(void)
     }
 
     query("GL_SGIS_generate_mipmap", &GL_state_ext.genMip);
-
-#if GL_EXT_texture_lod_bias
-    query("GL_EXT_texture_lod_bias", &GL_state_ext.texEnvLODBias);
-#endif
 }
 
 /**

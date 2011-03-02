@@ -114,7 +114,6 @@ int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
 byte loadExtAlways = false; // Always check for extres (cvar)
 byte paletted = false; // Use GL_EXT_paletted_texture (cvar)
-boolean load8bit = false; // Load textures as 8 bit? (w/paltex)
 int monochrome = 0; // desaturate a patch (average colours)
 int upscaleAndSharpenPatches = 0;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
@@ -328,31 +327,6 @@ static void calcGammaTable(void)
     invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
     for(i = 0; i < 256; ++i)
         gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
-}
-
-/**
- * Initializes the paletted texture extension.
- * Returns true if successful.
- */
-int GL_InitPalettedTexture(void)
-{
-    if(novideo)
-        return true;
-
-    // Should the extension be used?
-    if(!paletted && !ArgCheck("-paltex"))
-        return true;
-
-    // Check if the operation was a success.
-    if(!GL_EnablePalTexExt(true))
-    {
-        Con_Message("\nPaletted textures init failed!\n");
-        return false;
-    }
-
-    // Textures must be uploaded as 8-bit, now.
-    load8bit = true;
-    return true;
 }
 
 /**
@@ -668,7 +642,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         // Convert a paletted source image to truecolor so it can be scaled.
         // If there isn't an alpha channel one will be added.
         comps = 4;
-        rgbaOriginal = GL_ConvertBuffer(data, width, height, alphaChannel ? 2 : 1, 0, !load8bit, comps);
+        rgbaOriginal = GL_ConvertBuffer(data, width, height, alphaChannel ? 2 : 1, 0, true, comps);
         if(rgbaOriginal != data)
         {
             freeOriginal = true;
@@ -701,7 +675,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         if(comps == 3)
         {
             // Must convert to RGBA.
-            uint8_t* temp = GL_ConvertBuffer(rgbaOriginal, width, height, 3, 0, !load8bit, 4);
+            uint8_t* temp = GL_ConvertBuffer(rgbaOriginal, width, height, 3, 0, true, 4);
             if(temp != rgbaOriginal)
             {
                 if(freeOriginal)
@@ -772,56 +746,10 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     // Bind the texture so we can upload content.
     glBindTexture(GL_TEXTURE_2D, content->name);
 
-    if(load8bit)
+    // DGL knows how to generate mipmaps for RGB(A) textures.
+    if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, 0, levelWidth, levelHeight, generateMipmaps ? true : false, buffer))
     {
-        // We are unable to generate mipmaps for paletted textures.
-        DGLuint pal = R_GetColorPalette(content->palette);
-        size_t outSize = levelWidth * levelHeight * (alphaChannel ? 2 : 1);
-        int canGenMips = 0;
-
-        // Since this is a paletted texture, we may need to manually
-        // generate the mipmaps.
-        for(i = 0; levelWidth || levelHeight; ++i)
-        {
-            if(!levelWidth)
-                levelWidth = 1;
-            if(!levelHeight)
-                levelHeight = 1;
-
-            // Convert to palette indices.
-            idxBuffer = GL_ConvertBuffer(buffer, levelWidth, levelHeight, comps, content->palette, false, alphaChannel ? 2 : 1);
-
-            // Upload it.
-            if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8, pal, levelWidth, levelHeight, generateMipmaps && canGenMips ? true : generateMipmaps ? -i : false, idxBuffer))
-            {
-                Con_Error("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n", levelWidth, levelHeight, alphaChannel);
-            }
-
-            if(idxBuffer != buffer)
-            {
-                free(idxBuffer);
-                idxBuffer = NULL;
-            }
-
-            // If no mipmaps need to generated, quit now.
-            if(!generateMipmaps || canGenMips)
-                break;
-
-            if(levelWidth > 1 || levelHeight > 1)
-                GL_DownMipmap32(buffer, levelWidth, levelHeight, comps);
-
-            // Move on.
-            levelWidth >>= 1;
-            levelHeight >>= 1;
-        }
-    }
-    else
-    {
-        // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, 0, levelWidth, levelHeight, generateMipmaps ? true : false, buffer))
-        {
-            Con_Error("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n", levelWidth, levelHeight, alphaChannel);
-        }
+        Con_Error("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n", levelWidth, levelHeight, alphaChannel);
     }
 
     if(freeBuffer)
@@ -2254,7 +2182,6 @@ void GL_DoUpdateTexGamma(const cvar_t* cvar)
     if(texInited)
     {
         calcGammaTable();
-        GL_InitPalettedTexture();
         GL_TexReset();
     }
 

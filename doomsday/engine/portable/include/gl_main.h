@@ -86,7 +86,6 @@ void            GL_SetVSync(boolean on);
 void            GL_SetMultisample(boolean on);
 void            GL_BlendOp(int op);
 void            GL_SetGrayMipmap(int lev);
-boolean         GL_EnablePalTexExt(boolean enable);
 boolean         GL_NewList(DGLuint list, int mode);
 DGLuint         GL_EndList(void);
 void            GL_CallList(DGLuint list);

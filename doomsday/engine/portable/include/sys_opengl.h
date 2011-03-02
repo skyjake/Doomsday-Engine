@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_opengl.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,9 @@
 
 /**
  * OpenGL interface, low-level.
+ *
+ * Get OpenGL header files from:
+ * http://oss.sgi.com/projects/ogl-sample/
  */
 
 #ifndef LIBDENG_SYSTEM_OPENGL_H
@@ -78,7 +81,6 @@ typedef enum arraytype_e {
 
 typedef struct gl_state_s {
     int         maxTexSize;
-    int         palExtAvailable;
     boolean     allowCompression;
     boolean     noArrays;
     boolean     forceFinishBeforeSwap;
@@ -100,7 +102,7 @@ typedef struct rgba_s {
 } rgba_t;
 
 typedef struct gl_state_texture_s {
-    boolean  usePalTex, dumpTextures, useCompr, haveCubeMap;
+    boolean  dumpTextures, useCompr, haveCubeMap;
     float    grayMipmapFactor;
 } gl_state_texture_t;
 
@@ -115,7 +117,6 @@ typedef struct gl_state_ext_s {
     int         s3TC;
     int         lockArray;
     int         framebufferObject;
-    int         texEnvLODBias;
 #if WIN32
     int         wglSwapIntervalEXT;
     int         wglMultisampleARB;
@@ -143,8 +144,6 @@ extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
 extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
-extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
-extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 #endif
 
 #ifndef GL_ATI_texture_env_combine3

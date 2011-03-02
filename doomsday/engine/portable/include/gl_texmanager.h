@@ -133,7 +133,6 @@ void            GL_ClearTextureMemory(void);
 void            GL_ClearRuntimeTextures(void);
 void            GL_ClearSystemTextures(void);
 void            GL_DeleteRawImages(void);
-int             GL_InitPalettedTexture(void);
 
 void            GL_DoTexReset(const cvar_t* cvar);
 void            GL_DoUpdateTexGamma(const cvar_t* cvar);
