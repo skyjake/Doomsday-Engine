@@ -646,6 +646,10 @@ IF (UNIX AND NOT APPLE)
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/../distrib/linux/doomsday-builds.list"
         DESTINATION /etc/apt/sources.list.d)
     
+    # Desktop entry.
+    INSTALL(FILES "${CMAKE_SOURCE_DIR}/../distrib/linux/doomsday-engine.desktop"
+        DESTINATION /usr/share/applications)
+    
     # Bundle Snowberry.
     SET (SB_ROOT "${CMAKE_SOURCE_DIR}/../snowberry")
     SET (SB_DEST share/${PROJECT_NAME}/snowberry)
