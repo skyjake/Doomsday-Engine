@@ -420,27 +420,35 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, DGLuint palid, int width, int h
  */
 static GLenum ChooseTextureFormat(int comps)
 {
-    boolean compress = (GL_state_texture.useCompr && GL_state.allowCompression);
+    boolean compress = (GL_state.useTexCompression && GL_state.allowTexCompression);
 
-    switch(comps)
-    {
-    case 1: // Luminance
-        return compress ? GL_COMPRESSED_LUMINANCE : GL_LUMINANCE;
-
-    case 3: // RGB
-        return !compress ? 3 : GL_state_ext.s3TC ? GL_COMPRESSED_RGB_S3TC_DXT1_EXT :
-            GL_COMPRESSED_RGB;
-
-    case 4: // RGBA
-        return !compress ? 4 : GL_state_ext.s3TC ? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT // >1-bit alpha
-            : GL_COMPRESSED_RGBA;
-
-    default:
+    if(!(comps == 1 || comps == 3 || comps == 4))
         Con_Error("ChooseTextureFormat: Unsupported comps: %i.", comps);
+
+    if(comps == 1) 
+    {   // Luminance.
+        return !compress ? GL_LUMINANCE : GL_COMPRESSED_LUMINANCE;
     }
 
-    // The fallback.
-    return comps;
+#if USE_TEXTURE_COMPRESSION_S3
+    if(compress && GL_state.extensions.texCompressionS3)
+    {
+        if(comps == 3)
+        {   // RGB.
+            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        }
+        // RGBA.
+        return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+    }
+#endif
+
+    if(comps == 3)
+    {   // RGB.
+        return !compress ? GL_RGB : GL_COMPRESSED_RGB;
+    }
+
+    // RGBA.
+    return !compress ? GL_RGBA : GL_COMPRESSED_RGBA;
 }
 
 static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int height)
@@ -451,7 +459,7 @@ static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int h
     uint8_t* image, *in, *out, *faded;
     int i, w, h, size = width * height, res;
     uint comps = (format == DGL_LUMINANCE? 1 : 3);
-    float invFactor = 1 - GL_state_texture.grayMipmapFactor;
+    float invFactor = 1 - GL_state.currentGrayMipmapFactor;
     GLenum glTexFormat = ChooseTextureFormat(1);
 
     // Buffer used for the faded texture.
@@ -463,7 +471,7 @@ static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int h
     {
         for(i = 0, in = data, out = image; i < size; ++i, in += comps)
         {
-            res = (int) (*in * GL_state_texture.grayMipmapFactor + 127 * invFactor);
+            res = (int) (*in * GL_state.currentGrayMipmapFactor + 127 * invFactor);
             *out++ = MINMAX_OF(0, res, 255);
         }
     }
@@ -491,7 +499,7 @@ static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int h
     free(faded);
     free(image);
 
-    if(GL_state.useAnisotropic)
+    if(GL_state.useTexFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(-1 /*best*/));
 
@@ -517,7 +525,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
         return false;
 
     // Check that the texture dimensions are valid.
-    if(!GL_state.textureNonPow2 &&
+    if(!GL_state.extensions.texNonPow2 &&
        (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
         return false;
 
@@ -537,7 +545,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
     }
 
     // Automatic mipmap generation?
-    if(GL_state_ext.genMip && genMips)
+    if(GL_state.extensions.genMip && genMips)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 
     {   // Use true color textures.
@@ -637,7 +645,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
         }
     }
 
-    if(genMips && !GL_state_ext.genMip)
+    if(genMips && !GL_state.extensions.genMip)
     {   // Build all mipmap levels.
         gluBuild2DMipmaps(GL_TEXTURE_2D, glFormat, width, height,
                           loadFormat, GL_UNSIGNED_BYTE, buffer);
@@ -652,9 +660,6 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
         free(buffer);
     }
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
-
+    assert(!Sys_GLCheckError());
     return true;
 }

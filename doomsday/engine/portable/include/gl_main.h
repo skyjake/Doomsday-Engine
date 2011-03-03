@@ -31,6 +31,8 @@
 
 #include "r_main.h"
 
+#define MAX_TEX_UNITS       2 // More won't be used.
+
 // This should be tweaked a bit.
 #define DEFAULT_FOG_START       0
 #define DEFAULT_FOG_END         2100
@@ -78,7 +80,14 @@ void            GL_UseFog(int yes);
 const char*     GL_ChooseFixedFont(void);
 const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
 void            GL_LowRes(void);
-void            GL_ActiveTexture(const DGLenum texture);
+
+/**
+ * Set the currently active GL texture unit by ident.
+ *
+ * @param texture  GL texture unit ident to make active.
+ */
+void GL_ActiveTexture(const DGLenum texture);
+
 void            GL_ModulateTexture(int mode);
 void            GL_SelectTexUnits(int count);
 void            GL_SetTextureCompression(boolean on);

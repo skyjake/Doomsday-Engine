@@ -206,7 +206,6 @@ typedef struct listhash_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-
 extern byte devRendSkyAlways;
 extern int useDynLights, dlBlend, skySimple;
 extern boolean usingFog;
@@ -273,7 +272,7 @@ static void rlBind(DGLuint tex, int magMode)
 
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
-    if(GL_state.useAnisotropic)
+    if(GL_state.useTexFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(texAniso));
 #ifdef _DEBUG
@@ -910,6 +909,46 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
             rcolors, numVertices, rTU[TU_PRIMARY].blendMode, numLights, modTex, modColor, rTU);
 }
 
+#ifdef USE_MULTITEXTURE
+static __inline drawPrimitive(const primhdr_t* hdr, int conditions,
+    const uint coords[MAX_TEX_UNITS])
+{
+    ushort i;
+    int j;
+    glBegin(hdr->type);
+    for(i = 0; i < hdr->numIndices; ++i)
+    {
+        const uint index = hdr->indices[i];
+        for(j = 0; j < numTexUnits; ++j)
+        {
+            if(coords[j])
+                glMultiTexCoord2fvARB(GL_TEXTURE0 + j, texCoords[coords[j] - 1][index].st);
+        }
+        if(!(conditions & DCF_NO_COLOR))
+            glColor4ubv(colors[index].rgba);
+        glVertex3fv(vertices[index].xyz);
+    }
+    glEnd();
+}
+#else
+static __inline drawPrimitive(const primhdr_t* hdr, int conditions,
+    const uint coords[MAX_TEX_UNITS])
+{
+    ushort i;
+    glBegin(hdr->type);
+    for(i = 0; i < hdr->numIndices; ++i)
+    {
+        const uint index = hdr->indices[i];
+        if(coords[0])
+            glTexCoord2fv(texCoords[coords[0] - 1][index].st);
+        if(!(conditions & DCF_NO_COLOR))
+            glColor4ubv(colors[index].rgba);
+        glVertex3fv(vertices[index].xyz);
+    }
+    glEnd();
+}
+#endif
+
 /**
  * Draws the privitives that match the conditions. If no condition bits
  * are given, all primitives are considered eligible.
@@ -967,8 +1006,6 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
 
         if(!skip)
         {   // Render the primitive.
-            int                 i;
-
             if(conditions & DCF_SET_LIGHT_ENV)
             {   // Use the correct texture and color for the light.
                 GL_ActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
@@ -1030,26 +1067,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 GL_BlendMode(hdr->blendMode);
             }
 
-            glBegin(hdr->type);
-            for(i = 0; i < hdr->numIndices; ++i)
-            {
-                int                 j;
-                uint                index = hdr->indices[i];
-
-                for(j = 0; j < GL_state.maxTexUnits && j < MAX_TEX_UNITS; ++j)
-                {
-                    if(coords[j])
-                    {
-                        glMultiTexCoord2fvARB(GL_TEXTURE0 + j,
-                                              texCoords[coords[j] - 1][index].st);
-                    }
-                }
-
-                if(!(conditions & DCF_NO_COLOR))
-                    glColor4ubv(colors[index].rgba);
-                glVertex3fv(vertices[index].xyz);
-            }
-            glEnd();
+            drawPrimitive(hdr, conditions, coords);
 
             // Restore the texture matrix if changed.
             if(conditions & DCF_SET_MATRIX_TEXTURE)
@@ -1083,12 +1101,10 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 }
             }
 
-#ifdef _DEBUG
-Sys_CheckGLError();
-#endif
+            assert(!Sys_GLCheckError());
         }
 
-        hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
+        hdr = (primhdr_t*) ((byte*) hdr + hdr->size);
     }
 }
 
@@ -1753,9 +1769,7 @@ void RL_RenderAllLists(void)
     rendlist_t* lists[MAX_RLISTS];
     uint count;
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 
 BEGIN_PROF( PROF_RL_RENDER_ALL );
 
@@ -2036,7 +2050,5 @@ BEGIN_PROF( PROF_RL_RENDER_MASKED );
 END_PROF( PROF_RL_RENDER_MASKED );
 END_PROF( PROF_RL_RENDER_ALL );
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }

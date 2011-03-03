@@ -744,9 +744,6 @@ desc = Texture gamma correction factor.
 [rend-tex-mipmap]
 desc = The mipmapping mode for textures.
 
-[rend-tex-paletted]
-desc = 1=Use the GL_EXT_shared_texture_palette extension.
-
 [rend-tex-external-always]
 desc = 1=Always use external texture resources (overrides -pwadtex).
 

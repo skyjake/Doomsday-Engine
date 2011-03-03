@@ -785,9 +785,7 @@ static void renderParticles(int rtype, boolean withBlend)
 
 static void renderPass(boolean useBlending)
 {
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 
     // Set blending mode.
     if(useBlending)
@@ -812,9 +810,7 @@ static void renderPass(boolean useBlending)
     if(useBlending)
         GL_BlendMode(BM_NORMAL);
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }
 
 /**

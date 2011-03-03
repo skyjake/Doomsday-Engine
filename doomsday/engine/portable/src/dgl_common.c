@@ -1,10 +1,10 @@
-/**\file
+/**\file dgl_common.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,24 +50,13 @@
 
 void GL_SetGrayMipmap(int lev)
 {
-    GL_state_texture.grayMipmapFactor = lev / 255.0f;
+    GL_state.currentGrayMipmapFactor = lev / 255.0f;
 }
 
-/**
- * Set the currently active GL texture unit by ident.
- *
- * @param texture       GL texture unit ident to make active.
- */
 void GL_ActiveTexture(const DGLenum texture)
 {
-#ifdef WIN32
-    if(!glActiveTextureARB)
-        return;
+#ifdef USE_MULTITEXTURE
     glActiveTextureARB(texture);
-#else
-# ifdef USE_MULTITEXTURE
-    glActiveTextureARB(texture);
-# endif
 #endif
 }
 
@@ -81,11 +70,11 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
     if(activate)
     {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
-                  GL_state_ext.nvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
+                  GL_state.extensions.nvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 
         // Combine: texAlpha * constRGB + 1 * prevRGB.
-        if(GL_state_ext.nvTexEnvComb)
+        if(GL_state.extensions.nvTexEnvComb)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -97,7 +86,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_RGB_NV, GL_PREVIOUS);
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
         }
-        else if(GL_state_ext.atiTexEnvComb)
+        else if(GL_state.extensions.atiTexEnvComb)
         {   // MODULATE_ADD_ATI: Arg0 * Arg2 + Arg1.
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE_ADD_ATI);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -234,7 +223,7 @@ void GL_ModulateTexture(int mode)
         envAddColoredAlpha(true, mode == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
 
         // Alpha remains unchanged.
-        if(GL_state_ext.nvTexEnvComb)
+        if(GL_state.extensions.nvTexEnvComb)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
@@ -370,7 +359,7 @@ static __inline void disableTexUnit(byte id)
     glDisable(GL_TEXTURE_2D);
 
     // Implicit disabling of texcoord array.
-    if(GL_state.noArrays)
+    if(!GL_state.useArrays)
     {
         GL_DisableArrays(0, 0, 1 << id);
     }
@@ -396,13 +385,13 @@ void GL_SelectTexUnits(int count)
 
 void GL_SetTextureCompression(boolean on)
 {
-    GL_state.allowCompression = on;
+    GL_state.allowTexCompression = on;
 }
 
 void GL_SetVSync(boolean on)
 {
 #ifdef WIN32
-    if(GL_state_ext.wglSwapIntervalEXT)
+    if(GL_state.extensions.wglSwapIntervalEXT)
     {
         wglSwapIntervalEXT(on? 1 : 0);
         GL_state.useVSync = on;
@@ -433,7 +422,7 @@ boolean DGL_GetIntegerv(int name, int *v)
     switch(name)
     {
     case DGL_MODULATE_ADD_COMBINE:
-        *v = GL_state_ext.nvTexEnvComb || GL_state_ext.atiTexEnvComb;
+        *v = GL_state.extensions.nvTexEnvComb || GL_state.extensions.atiTexEnvComb;
         break;
 
     case DGL_SCISSOR_TEST:
@@ -788,9 +777,7 @@ void DGL_DeleteTextures(int num, const DGLuint *names)
 int DGL_Bind(DGLuint texture)
 {
     glBindTexture(GL_TEXTURE_2D, texture);
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
     return 0;
 }
 

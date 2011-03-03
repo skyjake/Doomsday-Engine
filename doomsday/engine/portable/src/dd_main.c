@@ -1833,7 +1833,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&gameDrawHUD, 0},
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
     {&symbolicEchoMode, &symbolicEchoMode},
-    {&GL_state.maxTexUnits, 0}
+    {&numTexUnits, 0}
 };
 /* *INDENT-ON* */
 

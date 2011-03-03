@@ -96,7 +96,7 @@ extern boolean fillOutlines;
 // The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 32;
 int     defFullscreen = true;
-int     numTexUnits;
+int numTexUnits = 1;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     test3dfx = 0;
 int     r_framecounter;         // Used only for statistics.
@@ -468,15 +468,14 @@ static void printConfiguration(void)
 
     Con_Message("Render configuration:\n");
 #ifdef WIN32
-    Con_Message("  Multisampling: %s", yesNo[GL_state_ext.wglMultisampleARB? 1:0]);
-    if(GL_state_ext.wglMultisampleARB)
+    Con_Message("  Multisampling: %s", yesNo[GL_state.extensions.wglMultisampleARB? 1:0]);
+    if(GL_state.extensions.wglMultisampleARB)
         Con_Message(" (sf:%i)\n", GL_state.multisampleFormat);
 #endif
     Con_Message("  Multitexturing: %s\n", numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
-    Con_Message("  Texture Anisotropy: %s\n", GL_state.useAnisotropic? "variable" : "fixed");
-    Con_Message("  Texture Compression: %s\n", yesNo[GL_state_texture.useCompr? 1:0]);
-    Con_Message("  Texture NPOT: %s\n", yesNo[GL_state.textureNonPow2? 1:0]);
-    Con_Message("  Utilized Texture Units: %i\n", GL_state.maxTexUnits);
+    Con_Message("  Texture Anisotropy: %s\n", GL_state.useTexFilterAniso? "variable" : "fixed");
+    Con_Message("  Texture Compression: %s\n", yesNo[GL_state.useTexCompression? 1:0]);
+    Con_Message("  Texture NPOT: %s\n", yesNo[GL_state.extensions.texNonPow2? 1:0]);
 }
 
 /**
@@ -500,10 +499,11 @@ boolean GL_EarlyInit(void)
     GL_GetGammaRamp(original_gamma_ramp);
 
     // Does the graphics library support multitexturing?
-    numTexUnits = GL_state.maxTexUnits;
+    numTexUnits = MIN_OF(DGL_MAX_TEXTURE_UNITS, MAX_TEX_UNITS);
     envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
 
     GL_InitDeferred();
+    GL_InitArrays();
 
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
@@ -610,7 +610,7 @@ void GL_Shutdown(void)
     GL_ShutdownRefresh();
 
     // Shutdown OpenGL.
-    Sys_ShutdownGL();
+    Sys_GLShutdown();
 
     // Restore original gamma.
     if(!ArgExists("-leaveramp"))
@@ -635,7 +635,7 @@ void GL_Init2DState(void)
 
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
-    if(GL_state_texture.haveCubeMap)
+    if(GL_state.haveCubeMap)
         glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
@@ -992,11 +992,11 @@ int GL_GetTexAnisoMul(int level)
     int mul = 1;
 
     // Should anisotropic filtering be used?
-    if(GL_state.useAnisotropic)
+    if(GL_state.useTexFilterAniso)
     {
         if(level < 0)
         {   // Go with the maximum!
-            mul = GL_state.maxAniso;
+            mul = GL_state.maxTexFilterAniso;
         }
         else
         {   // Convert from a DGL aniso level to a multiplier.
@@ -1015,8 +1015,8 @@ int GL_GetTexAnisoMul(int level)
             }
 
             // Clamp.
-            if(mul > GL_state.maxAniso)
-                mul = GL_state.maxAniso;
+            if(mul > GL_state.maxTexFilterAniso)
+                mul = GL_state.maxTexFilterAniso;
         }
     }
 

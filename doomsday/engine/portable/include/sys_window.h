@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_window.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * sys_window.h: Window management.
  */
 
-#ifndef __DOOMSDAY_SYS_WINDOW_H__
-#define __DOOMSDAY_SYS_WINDOW_H__
+#ifndef LIBDENG_SYS_WINDOW_H
+#define LIBDENG_SYS_WINDOW_H
 
 #include "de_base.h"
 
@@ -113,6 +113,10 @@ typedef struct {
  */
 extern const ddwindow_t* theWindow;
 
+// A helpful macro that changes the origin of the screen
+// coordinate system.
+#define FLIP(y) (theWindow->height - (y+1))
+
 boolean         Sys_InitWindowManager(void);
 boolean         Sys_ShutdownWindowManager(void);
 boolean         Sys_GetWindowManagerInfo(wminfo_t *info);
@@ -154,4 +158,4 @@ void            Sys_SetConWindowCmdLine(uint idx, const char *text,
 HWND            Sys_GetWindowHandle(uint idx);
 #endif
 
-#endif
+#endif /* LIBDENG_SYS_WINDOW_H */

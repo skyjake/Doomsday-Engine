@@ -196,7 +196,7 @@ static int initPluginSystem(void)
 
 static int initDGL(void)
 {
-    return (int) Sys_PreInitGL();
+    return (int) Sys_GLPreInit();
 }
 
 static void determineGlobalPaths(application_t* app)
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
         {
             DD_ErrorBox(true, "Error creating main window.");
         }
-        else if(!Sys_InitGL())
+        else if(!Sys_GLInitialize())
         {
             DD_ErrorBox(true, "Error initializing OpenGL.");
         }

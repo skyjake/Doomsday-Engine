@@ -1,10 +1,10 @@
-/**\file
+/**\file dgl_draw.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,8 +58,6 @@ typedef struct array_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int polyCounter; // Triangle counter, really.
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static array_t arrays[MAX_ARRAYS];
@@ -74,20 +72,7 @@ static boolean inPrim = false;
 
 void GL_InitArrays(void)
 {
-    double              version =
-        strtod((const char*) glGetString(GL_VERSION), NULL);
-
-    // If the driver's OpenGL version is older than 1.3, disable arrays
-    // by default.
-    GL_state.noArrays = (version < 1.3);
-
-    // Override the automatic selection?
-    if(ArgExists("-vtxar"))
-        GL_state.noArrays = false;
-    if(ArgExists("-novtxar"))
-        GL_state.noArrays = true;
-
-    if(!GL_state.noArrays)
+    if(!GL_state.useArrays)
         return;
     memset(arrays, 0, sizeof(arrays));
 }
@@ -97,8 +82,8 @@ boolean GL_NewList(DGLuint list, int mode)
     // We enter a New/End list section.
 #ifdef _DEBUG
 if(inList)
-    Con_Error("OpenGL: already inList");
-Sys_CheckGLError();
+    Con_Error("GL_NewList: Already in list");
+Sys_GLCheckError();
 #endif
 
     if(list)
@@ -106,7 +91,7 @@ Sys_CheckGLError();
         if(glIsList(list))
         {
 #if _DEBUG
-Con_Error("OpenGL: List %u already in use.", (unsigned int) list);
+Con_Error("GL_NewList: List %u already in use.", (unsigned int) list);
 #endif
             return false;
         }
@@ -123,12 +108,12 @@ Con_Error("OpenGL: List %u already in use.", (unsigned int) list);
 
 DGLuint GL_EndList(void)
 {
-    DGLuint             currentList = inList;
+    DGLuint currentList = inList;
 
     glEndList();
 #ifdef _DEBUG
     inList = 0;
-    Sys_CheckGLError();
+    Sys_GLCheckError();
 #endif
 
     return currentList;
@@ -136,9 +121,7 @@ DGLuint GL_EndList(void)
 
 void GL_CallList(DGLuint list)
 {
-    if(!list)
-        return; // We do not consider zero a valid list id.
-
+    if(!list) return; // We do not consider zero a valid list id.
     glCallList(list);
 }
 
@@ -149,11 +132,11 @@ void GL_DeleteLists(DGLuint list, int range)
 
 void GL_EnableArrays(int vertices, int colors, int coords)
 {
-    int                 i;
+    int i;
 
     if(vertices)
     {
-        if(GL_state.noArrays)
+        if(!GL_state.useArrays)
             arrays[AR_VERTEX].enabled = true;
         else
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -161,35 +144,31 @@ void GL_EnableArrays(int vertices, int colors, int coords)
 
     if(colors)
     {
-        if(GL_state.noArrays)
+        if(!GL_state.useArrays)
             arrays[AR_COLOR].enabled = true;
         else
             glEnableClientState(GL_COLOR_ARRAY);
     }
 
-    for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
+    for(i = 0; i < numTexUnits; ++i)
     {
         if(coords & (1 << i))
         {
-            if(GL_state.noArrays)
+            if(!GL_state.useArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = true;
             }
             else
             {
-#ifndef UNIX
-                if(glClientActiveTextureARB)
+#ifdef USE_MULTITEXTURE
+                glClientActiveTextureARB(GL_TEXTURE0 + i);
 #endif
-                    glClientActiveTextureARB(GL_TEXTURE0 + i);
-
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         }
     }
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }
 
 void GL_DisableArrays(int vertices, int colors, int coords)
@@ -198,7 +177,7 @@ void GL_DisableArrays(int vertices, int colors, int coords)
 
     if(vertices)
     {
-        if(GL_state.noArrays)
+        if(!GL_state.useArrays)
             arrays[AR_VERTEX].enabled = false;
         else
             glDisableClientState(GL_VERTEX_ARRAY);
@@ -206,36 +185,32 @@ void GL_DisableArrays(int vertices, int colors, int coords)
 
     if(colors)
     {
-        if(GL_state.noArrays)
+        if(!GL_state.useArrays)
             arrays[AR_COLOR].enabled = false;
         else
             glDisableClientState(GL_COLOR_ARRAY);
     }
 
-    for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
+    for(i = 0; i < numTexUnits; ++i)
     {
         if(coords & (1 << i))
         {
-            if(GL_state.noArrays)
+            if(!GL_state.useArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = false;
             }
             else
             {
-#ifndef UNIX
-                if(glClientActiveTextureARB)
+#ifdef USE_MULTITEXTURE
+                glClientActiveTextureARB(GL_TEXTURE0 + i);
 #endif
-                    glClientActiveTextureARB(GL_TEXTURE0 + i);
-
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexCoordPointer(2, GL_FLOAT, 0, NULL);
             }
         }
     }
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }
 
 /**
@@ -248,7 +223,7 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 
     if(vertices)
     {
-        if(GL_state.noArrays)
+        if(!GL_state.useArrays)
         {
             arrays[AR_VERTEX].enabled = true;
             arrays[AR_VERTEX].data = vertices;
@@ -262,7 +237,7 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 
     if(colors)
     {
-        if(GL_state.noArrays)
+        if(!GL_state.useArrays)
         {
             arrays[AR_COLOR].enabled = true;
             arrays[AR_COLOR].data = colors;
@@ -278,18 +253,16 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
     {
         if(coords[i])
         {
-            if(GL_state.noArrays)
+            if(!GL_state.useArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = true;
                 arrays[AR_TEXCOORD0 + i].data = coords[i];
             }
             else
             {
-#ifndef UNIX
-                if(glClientActiveTextureARB)
+#ifdef USE_MULTITEXTURE
+                glClientActiveTextureARB(GL_TEXTURE0 + i);
 #endif
-                    glClientActiveTextureARB(GL_TEXTURE0 + i);
-
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
             }
@@ -299,19 +272,17 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 #ifndef UNIX
     if(glLockArraysEXT)
 #endif
-        if(!GL_state.noArrays && lock > 0)
+        if(GL_state.useArrays && lock > 0)
         {   // 'lock' is the number of vertices to lock.
             glLockArraysEXT(0, lock);
         }
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }
 
 void GL_UnlockArrays(void)
 {
-    if(!GL_state.noArrays)
+    if(GL_state.useArrays)
     {
 #ifndef UNIX
         if(glUnlockArraysEXT)
@@ -319,37 +290,35 @@ void GL_UnlockArrays(void)
             glUnlockArraysEXT();
     }
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }
 
 void GL_ArrayElement(int index)
 {
-    if(!GL_state.noArrays)
+    if(GL_state.useArrays)
     {
         glArrayElement(index);
     }
     else
     {
-        int         i;
-
-        for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; ++i)
+#ifdef USE_MULTITEXTURE
+        int i;
+        for(i = 0; i < numTexUnits; ++i)
         {
-            if(arrays[AR_TEXCOORD0 + i].enabled)
-            {
-                glMultiTexCoord2fvARB(GL_TEXTURE0 + i,
-                                      ((dgl_texcoord_t *)
-                                       arrays[AR_TEXCOORD0 +
-                                              i].data)[index].st);
-            }
+            if(!arrays[AR_TEXCOORD0 + i].enabled)
+                continue;
+            glMultiTexCoord2fvARB(GL_TEXTURE0 + i,
+                ((dgl_texcoord_t*)arrays[AR_TEXCOORD0 + i].data)[index].st);
         }
+#else
+        glTexCoord2fv(((dgl_texcoord_t*)arrays[AR_TEXCOORD0].data)[index].st);
+#endif
 
         if(arrays[AR_COLOR].enabled)
-            glColor4ubv(((dgl_color_t *) arrays[AR_COLOR].data)[index].rgba);
+            glColor4ubv(((dgl_color_t*) arrays[AR_COLOR].data)[index].rgba);
 
         if(arrays[AR_VERTEX].enabled)
-            glVertex3fv(((dgl_vertex_t *) arrays[AR_VERTEX].data)[index].xyz);
+            glVertex3fv(((dgl_vertex_t*) arrays[AR_VERTEX].data)[index].xyz);
     }
 }
 
@@ -359,7 +328,7 @@ void GL_DrawElements(dglprimtype_t type, int count, const uint *indices)
         (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
          DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
-    if(!GL_state.noArrays)
+    if(GL_state.useArrays)
     {
         glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
     }
@@ -375,9 +344,7 @@ void GL_DrawElements(dglprimtype_t type, int count, const uint *indices)
         glEnd();
     }
 
-#ifdef _DEBUG
-    Sys_CheckGLError();
-#endif
+    assert(!Sys_GLCheckError());
 }
 
 void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
@@ -422,18 +389,20 @@ void DGL_Color4fv(const float* vec)
 
 void DGL_TexCoord2f(byte target, float s, float t)
 {
-    if(target == 0)
-        glTexCoord2f(s, t);
-    else
-        glMultiTexCoord2fARB(GL_TEXTURE0 + target, s, t);
+#ifdef USE_MULTITEXTURE
+    glMultiTexCoord2fARB(GL_TEXTURE0 + target, s, t);
+#else
+    glTexCoord2f(s, t);
+#endif
 }
 
 void DGL_TexCoord2fv(byte target, float* vec)
 {
-    if(target == 0)
-        glTexCoord2fv(vec);
-    else
-        glMultiTexCoord2fvARB(GL_TEXTURE0 + target, vec);
+#ifdef USE_MULTITEXTURE
+    glMultiTexCoord2fvARB(GL_TEXTURE0 + target, vec);
+#else
+    glTexCoord2fv(vec);
+#endif
 }
 
 void DGL_Vertex2f(float x, float y)
@@ -493,7 +462,7 @@ void DGL_Begin(dglprimtype_t mode)
     if(inPrim)
         Con_Error("OpenGL: already inPrim");
     inPrim = true;
-    Sys_CheckGLError();
+    Sys_GLCheckError();
 #endif
 
     glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
@@ -514,7 +483,7 @@ void DGL_End(void)
 
 #ifdef _DEBUG
     inPrim = false;
-    Sys_CheckGLError();
+    Sys_GLCheckError();
 #endif
 }
 

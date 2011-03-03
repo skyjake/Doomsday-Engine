@@ -739,7 +739,7 @@ void R_SetupFrame(player_t* player)
     viewdata_t*         vd;
 
     // Reset the GL triangle counter.
-    polyCounter = 0;
+    //polyCounter = 0;
 
     viewPlayer = player;
     vd = &viewData[viewPlayer - ddPlayers];
@@ -1014,9 +1014,9 @@ void R_RenderPlayerView(int num)
     if(rendInfoTris)
     {
         // This count includes all triangles drawn since R_SetupFrame.
-        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
-        modelTriCount = 0;
-        polyCounter = 0;
+        //Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
+        //modelTriCount = 0;
+        //polyCounter = 0;
     }
 
     if(rendInfoLums)

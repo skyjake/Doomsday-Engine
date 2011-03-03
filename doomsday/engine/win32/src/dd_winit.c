@@ -231,7 +231,7 @@ static BOOL initPluginSystem(void)
 
 static BOOL initDGL(void)
 {
-    return (BOOL) Sys_PreInitGL();
+    return (BOOL) Sys_GLPreInit();
 }
 
 static BOOL initApplication(application_t* app)
@@ -373,7 +373,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {
             DD_ErrorBox(true, "Error creating main window.");
         }
-        else if(!Sys_InitGL())
+        else if(!Sys_GLInitialize())
         {
             DD_ErrorBox(true, "Error initializing OpenGL.");
         }

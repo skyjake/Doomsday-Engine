@@ -485,7 +485,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
-    if(params->modTex)
+    if(params->modTex && numTexUnits > 1)
     {
         if(IS_MUL)
         {
@@ -561,7 +561,8 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     // lots of masked walls, but since 3D models and sprites must be
     // rendered interleaved with masked walls, there's not much that can be
     // done about this.
-    if(withDyn)
+#ifdef USE_MULTITEXTURE
+    if(withDyn && numTexUnits > 1)
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);
@@ -607,6 +608,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         GL_DisableArrays(true, true, 0x1);
     }
     else
+#endif
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);

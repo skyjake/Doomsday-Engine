@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_list.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * rend_list.h: Rendering Lists
+ * Rendering Lists.
  */
 
-#ifndef __DOOMSDAY_REND_LIST_H__
-#define __DOOMSDAY_REND_LIST_H__
+#ifndef LIBDENG_REND_LIST_H
+#define LIBDENG_REND_LIST_H
 
 #include "r_data.h"
 
@@ -85,4 +85,4 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
                 const rtexmapunit_t rTU[NUM_TEXMAP_UNITS]);
 void            RL_RenderAllLists(void);
 
-#endif
+#endif /* LIBDENG_REND_LIST_H */

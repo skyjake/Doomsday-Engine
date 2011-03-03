@@ -377,8 +377,7 @@ static boolean initOpenGL(void)
                             theWindow->normal.bpp))
         return false;
 
-    // Setup the GL state like we want it.
-    Sys_InitGLState();
+    Sys_GLConfigureDefaultState();
     return true;
 }
 
@@ -746,7 +745,7 @@ extern boolean usingFog;
                          data))
         {
             // We can get on with initializing the OGL state.
-            Sys_InitGLState();
+            Sys_GLConfigureDefaultState();
         }
 
         if(glIsInited)

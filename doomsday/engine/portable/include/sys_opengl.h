@@ -51,20 +51,65 @@
 #    include <SDL.h>
 #    include <SDL_opengl.h>
 #  endif
-
-#  define wglGetProcAddress SDL_GL_GetProcAddress
 #endif
 
 #include <string.h>
 
 #include "sys_window.h"
 
-#define USE_MULTITEXTURE    1
-#define MAX_TEX_UNITS       2      // More won't be used.
+/**
+ * Configure available features
+ * \todo Move out of this header.
+ */
+#define USE_MULTITEXTURE                1
+#define USE_TEXTURE_COMPRESSION_S3      1
 
-// A helpful macro that changes the origin of the screen
-// coordinate system.
-#define FLIP(y) (theWindow->height - (y+1))
+/**
+ * High-level GL state information.
+ */
+typedef struct gl_state_s {
+    int maxTexFilterAniso;
+    int maxTexSize;
+#ifdef USE_MULTITEXTURE
+    int maxTexUnits;
+#endif
+#if WIN32
+    int multisampleFormat;
+#endif
+    boolean allowTexCompression;
+    boolean forceFinishBeforeSwap;
+    boolean haveCubeMap;
+    boolean useArrays;
+    boolean useFog;
+    boolean useMultitexture;
+    boolean useTexCompression;
+    boolean useTexFilterAniso;
+    boolean useVSync;
+    float currentLineWidth, currentPointSize;
+    float currentGrayMipmapFactor;
+    // Extension availability bits:
+    struct {
+        uint atiTexEnvComb : 1;
+        uint blendSub : 1;
+        uint framebufferObject : 1;
+        uint genMip : 1;
+        uint lockArray : 1;
+#ifdef USE_MULTITEXTURE
+        uint multiTex : 1;
+#endif
+        uint nvTexEnvComb : 1;
+#ifdef USE_TEXTURE_COMPRESSION_S3
+        uint texCompressionS3 : 1;
+#endif
+        uint texEnvComb : 1;
+        uint texFilterAniso : 1;
+        uint texNonPow2 : 1;
+#if WIN32
+        uint wglMultisampleARB : 1;
+        uint wglSwapIntervalEXT : 1;
+#endif
+    } extensions;
+} gl_state_t;
 
 typedef enum arraytype_e {
     AR_VERTEX,
@@ -79,55 +124,19 @@ typedef enum arraytype_e {
     AR_TEXCOORD7
 } arraytype_t;
 
-typedef struct gl_state_s {
-    int         maxTexSize;
-    boolean     allowCompression;
-    boolean     noArrays;
-    boolean     forceFinishBeforeSwap;
-    int         useAnisotropic;
-    boolean     useVSync;
-    int         maxAniso;
-    int         maxTexUnits;
-    boolean     useFog;
-    float       nearClip, farClip;
-    float       currentLineWidth, currentPointSize;
-    int         textureNonPow2;
-#if WIN32
-    int         multisampleFormat;
+#ifdef USE_MULTITEXTURE
+#  define DGL_MAX_TEXTURE_UNITS  (GL_state.useMultitexture? GL_state.maxTexUnits : 1)
+#  ifdef WIN32
+extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
+extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
+extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
+extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
+#  endif
+#else
+#  define DGL_MAX_TEXTURE_UNITS  (1)
 #endif
-} gl_state_t;
-
-typedef struct rgba_s {
-    unsigned char color[4];
-} rgba_t;
-
-typedef struct gl_state_texture_s {
-    boolean  dumpTextures, useCompr, haveCubeMap;
-    float    grayMipmapFactor;
-} gl_state_texture_t;
-
-typedef struct gl_state_ext_s {
-    int         multiTex;
-    int         texEnvComb;
-    int         nvTexEnvComb;
-    int         atiTexEnvComb;
-    int         aniso;
-    int         genMip;
-    int         blendSub;
-    int         s3TC;
-    int         lockArray;
-    int         framebufferObject;
-#if WIN32
-    int         wglSwapIntervalEXT;
-    int         wglMultisampleARB;
-#endif
-} gl_state_ext_t;
-
-extern int polyCounter;
 
 extern gl_state_t GL_state;
-extern gl_state_texture_t GL_state_texture;
-extern gl_state_ext_t GL_state_ext;
 
 #ifdef WIN32
 # ifdef GL_EXT_framebuffer_object
@@ -137,10 +146,6 @@ extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
-extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
 extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
@@ -156,15 +161,30 @@ extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
 #define GL_ATI_texture_env_combine3     1
 #endif
 
-boolean         Sys_PreInitGL(void);
-boolean         Sys_InitGL(void);
-void            Sys_ShutdownGL(void);
-void            Sys_InitGLState(void);
-void            Sys_InitGLExtensions(void);
-#ifdef WIN32
-void            Sys_InitWGLExtensions(void);
-#endif
-void            Sys_PrintGLExtensions(void);
-boolean         Sys_QueryGLExtension(const char* name, const GLubyte* extensions);
-void            Sys_CheckGLError(void);
+boolean Sys_GLPreInit(void);
+
+/**
+ * Initializes our OpenGL interface. Called once during engine statup.
+ */
+boolean Sys_GLInitialize(void);
+
+/**
+ * Close our OpenGL interface for good. Called once during engine shutdown.
+ */
+void Sys_GLShutdown(void);
+
+void Sys_GLConfigureDefaultState(void);
+
+/**
+ * Echo the full list of available GL extensions to the console.
+ */
+void Sys_GLPrintExtensions(void);
+
+/**
+ * @return  Non-zero iff the extension is found.
+ */
+boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
+
+boolean Sys_GLCheckError(void);
+
 #endif /* LIBDENG_SYSTEM_OPENGL_H */

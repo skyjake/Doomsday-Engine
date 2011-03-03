@@ -113,7 +113,6 @@ extern boolean s3tcAvailable;
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
 byte loadExtAlways = false; // Always check for extres (cvar)
-byte paletted = false; // Use GL_EXT_paletted_texture (cvar)
 int monochrome = 0; // desaturate a patch (average colours)
 int upscaleAndSharpenPatches = 0;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
@@ -185,8 +184,6 @@ void GL_TexRegister(void)
                  GL_DoUpdateTexGamma);
     C_VAR_INT2("rend-tex-mipmap", &mipmapping, CVF_PROTECTED, 0, 5,
                GL_DoTexReset);
-    C_VAR_BYTE2("rend-tex-paletted", &paletted, CVF_PROTECTED, 0, 1,
-                GL_DoTexReset);
     C_VAR_BYTE2("rend-tex-external-always", &loadExtAlways, 0, 0, 1,
                 GL_DoTexReset);
     C_VAR_INT2("rend-tex-quality", &texQuality, 0, 0, 8,
@@ -430,7 +427,7 @@ void GL_BindTexture(DGLuint texname, int magMode)
 
     glBindTexture(GL_TEXTURE_2D, texname);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
-    if(GL_state.useAnisotropic)
+    if(GL_state.useTexFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
 }
 
@@ -1868,16 +1865,16 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
         else
         {
             boolean rgbdata = (image.pixelSize > 1? true:false);
-            int assumedWidth = GL_state.textureNonPow2? image.width : 256;
+            int assumedWidth = GL_state.extensions.texNonPow2? image.width : 256;
 
             // Generate a texture.
-            raw->tex = GL_UploadTexture(image.pixels, GL_state.textureNonPow2? image.width : 256, image.height,
+            raw->tex = GL_UploadTexture(image.pixels, GL_state.extensions.texNonPow2? image.width : 256, image.height,
                 false, false, rgbdata, false, false, GL_NEAREST,
                 (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                 (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
-            raw->width = GL_state.textureNonPow2? image.width : 256;
+            raw->width = GL_state.extensions.texNonPow2? image.width : 256;
             raw->height = image.height;
 
             GL_DestroyImage(&image);
@@ -2002,7 +1999,7 @@ boolean GL_OptimalSize(int width, int height, boolean noStretch, boolean isMipMa
     int* optWidth, int* optHeight)
 {
     assert(optWidth && optHeight);
-    if(GL_state.textureNonPow2 && !isMipMapped)
+    if(GL_state.extensions.texNonPow2 && !isMipMapped)
     {
         *optWidth = width;
         *optHeight = height;
@@ -2912,7 +2909,7 @@ if(!didDefer)
              * coordinates are calculated as width/CeilPow2(width), or 1 if larger
              * than the maximum texture size.
              */
-            if(GL_state.textureNonPow2 && (pSprite || !(flags & TXCF_UPLOAD_ARG_NOSTRETCH)) &&
+            if(GL_state.extensions.texNonPow2 && (pSprite || !(flags & TXCF_UPLOAD_ARG_NOSTRETCH)) &&
                !(image.width < MINTEXWIDTH || image.height < MINTEXHEIGHT))
             {
                 tc[0] = tc[1] = 1;

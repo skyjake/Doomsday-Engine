@@ -648,7 +648,7 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
         {
             // Choose a suitable pixel format.
             // If multisampling is available, make use of it.
-            if(GL_state_ext.wglMultisampleARB)
+            if(GL_state.extensions.wglMultisampleARB)
             {
                 pixForm = GL_state.multisampleFormat;
             }
@@ -1209,7 +1209,7 @@ extern boolean usingFog;
         if(createContext(window))
         {
             // We can get on with initializing the OGL state.
-            Sys_InitGLState();
+            Sys_GLConfigureDefaultState();
         }
 
         if(glIsInited)

@@ -50,24 +50,26 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 gl_state_t GL_state;
-gl_state_ext_t GL_state_ext;
-gl_state_texture_t GL_state_texture;
 
 #ifdef WIN32
-# ifdef GL_EXT_framebuffer_object
-PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
-# endif
+#  ifdef GL_EXT_framebuffer_object
+PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT = NULL;
+#  endif
 
-PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 
-PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTextureARB;
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
-PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
-PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
-PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
+#  ifdef USE_MULTITEXTURE
+PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTextureARB = NULL;
+PFNGLACTIVETEXTUREARBPROC glActiveTextureARB = NULL;
+
+PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
+PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB = NULL;
+#  endif
+
+PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT = NULL;
+PFNGLLOCKARRAYSEXTPROC glLockArraysEXT = NULL;
+PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT = NULL;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -81,61 +83,166 @@ static PROC wglGetExtString;
 
 // CODE --------------------------------------------------------------------
 
-static void checkExtensions(void)
+static int query(const char* ext)
 {
-    Sys_InitGLExtensions();
+    assert(ext);
+    {
+    int result = 0;
+#if WIN32
+    // Prefer the wgl-specific extensions.
+    if(wglGetExtString)
+    {
+        const GLubyte* extensions =
+            ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());
+        result = (Sys_GLQueryExtension(ext, extensions)? 1 : 0);
+    }
+#endif
+    if(!result)
+        result = (Sys_GLQueryExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
+    return result;
+    }
+}
+
+static void initialize(void)
+{
+    double version = strtod((const char*) glGetString(GL_VERSION), NULL);
+
 #ifdef WIN32
-    Sys_InitWGLExtensions();
+    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
 #endif
 
-    // Get the maximum texture size.
+    if(0 != (GL_state.extensions.lockArray = query("GL_EXT_compiled_vertex_array")))
+    {
+#ifdef WIN32
+        GETPROC(glLockArraysEXT);
+        GETPROC(glUnlockArraysEXT);
+#endif
+    }
+
+    if(0 != (GL_state.extensions.texFilterAniso = query("GL_EXT_texture_filter_anisotropic")))
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxTexFilterAniso);
+
+    if(!ArgExists("-notexnonpow2"))
+       GL_state.extensions.texNonPow2 = query("GL_ARB_texture_non_power_of_two");
+
+    if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
+    {
+#ifdef WIN32
+        GETPROC(glBlendEquationEXT);
+#endif
+    }
+
+    // ARB_texture_env_combine
+    if(0 == (GL_state.extensions.texEnvComb = query("GL_ARB_texture_env_combine")))
+    {
+        // Try the older EXT_texture_env_combine (identical to ARB).
+        GL_state.extensions.texEnvComb = query("GL_EXT_texture_env_combine");
+    }
+
+    GL_state.extensions.nvTexEnvComb = query("GL_NV_texture_env_combine4");
+    GL_state.extensions.atiTexEnvComb = query("GL_ATI_texture_env_combine3");
+
+#ifdef USE_TEXTURE_COMPRESSION_S3
+    // Enabled by default if available.
+    if(!ArgExists("-notexcomp"))
+    {
+        GLint iVal;
+        GL_state.extensions.texCompressionS3 = query("GL_EXT_texture_compression_s3tc");
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        if(iVal && glGetError() == GL_NO_ERROR)
+            GL_state.useTexCompression = true;
+    }
+#endif
+
+#ifdef USE_MULTITEXTURE
+    // Enabled by default if available.
+    if(0 != (GL_state.extensions.multiTex = query("GL_ARB_multitexture")))
+    {
+#  ifdef WIN32
+        GETPROC(glClientActiveTextureARB);
+        GETPROC(glActiveTextureARB);
+        GETPROC(glMultiTexCoord2fARB);
+        GETPROC(glMultiTexCoord2fvARB);
+#  endif
+
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
+        // But sir, we are simple people; two units is enough.
+        if(GL_state.maxTexUnits > 2)
+            GL_state.maxTexUnits = 2;
+        GL_state.useMultitexture = true;
+    }
+#endif
+
+    if(0 != (GL_state.forceFinishBeforeSwap = (boolean) ArgExists("-glfinish")))
+        Con_Message("  glFinish() forced before swapping buffers.\n");
+
+    // Automatic mipmap generation.
+    if(!ArgExists("-nosgm") &&
+       0 != (GL_state.extensions.genMip = query("GL_SGIS_generate_mipmap")))
+    {
+        // Use nice quality, please.
+        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+    }
+
+    if(0 != (GL_state.extensions.framebufferObject = query("GL_EXT_framebuffer_object")))
+    {
+#ifdef WIN32
+        GETPROC(glGenerateMipmapEXT);
+#endif
+    }
+
+    GL_state.extensions.genMip = query("GL_SGIS_generate_mipmap");
+
+#ifdef WIN32
+    if(0 != (GL_state.extensions.wglSwapIntervalEXT = query("WGL_EXT_swap_control")))
+    {
+        GETPROC(wglSwapIntervalEXT);
+    }
+
+    if(query("WGL_ARB_multisample"))
+    {
+        GETPROC(wglChoosePixelFormatARB);
+        if(wglChoosePixelFormatARB)
+        {
+            GL_state.extensions.wglMultisampleARB = true;
+        }
+    }
+#endif
+
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &GL_state.maxTexSize);
 
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
-#ifndef USE_MULTITEXTURE
-    GL_state.maxTexUnits = 1;
-#endif
-    // But sir, we are simple people; two units is enough.
-    if(GL_state.maxTexUnits > 2)
-        GL_state.maxTexUnits = 2;
+    if(version >= 1.3 && ArgExists("-vtxar") && !ArgExists("-novtxar"))
+        GL_state.useArrays = true;
 
-    if(GL_state_ext.aniso)
-        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxAniso);
-    else
-        GL_state.maxAniso = 1;
+    GL_state.useTexFilterAniso =
+        ((GL_state.extensions.texFilterAniso && !ArgExists("-noanifilter"))? true : false);
 
-    // Decide whether vertex arrays should be done manually or with real
-    // OpenGL calls.
-    GL_InitArrays();
-
-    GL_state.useAnisotropic =
-        ((GL_state_ext.aniso && !ArgExists("-noanifilter"))? true : false);
-
-    GL_state.allowCompression = true;
+    GL_state.allowTexCompression = true;
 }
 
 static void printGLUInfo(void)
 {
-    GLint iVal;
     GLfloat fVals[2];
+    GLint iVal;
 
-    // Print some OpenGL information (console must be initialized by now).
     Con_Message("OpenGL information:\n");
     Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
     Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
     Con_Message("  Version: %s\n", glGetString(GL_VERSION));
     Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
-    if(GL_state_ext.s3TC)
+#ifdef USE_TEXTURE_COMPRESSION_S3
+    if(GL_state.extensions.texCompressionS3)
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         Con_Message("  Available Compressed Texture Formats: %i\n", iVal);
     }
+#endif
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
     Con_Message("  Available Texture Units: %i\n", iVal);
 
-    if(GL_state_ext.aniso)
+    if(GL_state.extensions.texFilterAniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
         Con_Message("  Maximum Texture Anisotropy: %i\n", iVal);
@@ -160,7 +267,7 @@ static void printGLUInfo(void)
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
     Con_Message("  Line Width Range: %3.1f...%3.1f\n", fVals[0], fVals[1]);
 
-    Sys_PrintGLExtensions();
+    Sys_GLPrintExtensions();
 }
 
 #ifdef WIN32
@@ -192,7 +299,7 @@ static void testMultisampling(HDC hDC)
 
     if(valid && numFormats >= 1)
     {   // This will do nicely.
-        GL_state_ext.wglMultisampleARB = 1;
+        GL_state.extensions.wglMultisampleARB = 1;
         GL_state.multisampleFormat = pixelFormat;
     }
     else
@@ -202,7 +309,7 @@ static void testMultisampling(HDC hDC)
                                         &pixelFormat, &numFormats);
         if(valid && numFormats >= 1)
         {
-            GL_state_ext.wglMultisampleARB = 1;
+            GL_state.extensions.wglMultisampleARB = 1;
             GL_state.multisampleFormat = pixelFormat;
         }
     }
@@ -315,11 +422,13 @@ static void createDummyWindow(application_t* app)
 
         if(ok)
         {
-            PROC            getExtString = wglGetProcAddress("wglGetExtensionsStringARB");
-            const GLubyte* extensions =
-            ((const GLubyte*(__stdcall*)(HDC))getExtString)(hDC);
+            PROC wglGetExtensionsStringARB;
+            const GLubyte* extensions;
+            
+            GETPROC(wglGetExtensionsStringARB);
+            extensions = ((const GLubyte*(__stdcall*)(HDC))wglGetExtensionsStringARB)(hDC);
 
-            if(Sys_QueryGLExtension("WGL_ARB_multisample", extensions))
+            if(Sys_GLQueryExtension("WGL_ARB_multisample", extensions))
             {
                 GETPROC(wglChoosePixelFormatARB);
                 if(wglChoosePixelFormatARB)
@@ -345,7 +454,7 @@ static void createDummyWindow(application_t* app)
 }
 #endif
 
-boolean Sys_PreInitGL(void)
+boolean Sys_GLPreInit(void)
 {
     if(isDedicated)
         return true;
@@ -354,35 +463,22 @@ boolean Sys_PreInitGL(void)
         return true; // Already inited.
 
     memset(&GL_state, 0, sizeof(GL_state));
-    memset(&GL_state_ext, 0, sizeof(GL_state_ext));
-    memset(&GL_state_texture, 0, sizeof(GL_state_texture));
+    GL_state.maxTexFilterAniso = 1;
+#ifdef USE_MULTITEXTURE
+    GL_state.maxTexUnits = 1;
+#endif
 
 #ifdef WIN32
     // We want to be able to use multisampling if available so lets create a
-    // dummy window and see what pixel formats we have.
+    // dummy window and see what pixel formats are present.
     createDummyWindow(&app);
 #endif
-
-    GL_state_texture.dumpTextures =
-        (ArgCheck("-dumptextures")? true : false);
-
-    if(GL_state_texture.dumpTextures)
-        Con_Message("  Dumping textures (mipmap level zero).\n");
-
-    GL_state.forceFinishBeforeSwap =
-        (ArgExists("-glfinish")? true : false);
-
-    if(GL_state.forceFinishBeforeSwap)
-        Con_Message("  glFinish() forced before swapping buffers.\n");
 
     initedGL = true;
     return true;
 }
 
-/**
- * Initializes OpenGL.
- */
-boolean Sys_InitGL(void)
+boolean Sys_GLInitialize(void)
 {
     if(isDedicated)
         return true;
@@ -392,7 +488,7 @@ boolean Sys_InitGL(void)
 
     if(firstTimeInit)
     {
-        checkExtensions();
+        initialize();
         printGLUInfo();
 
         firstTimeInit = false;
@@ -401,7 +497,7 @@ boolean Sys_InitGL(void)
     return true;
 }
 
-void Sys_ShutdownGL(void)
+void Sys_GLShutdown(void)
 {
     if(!initedGL)
         return;
@@ -409,20 +505,13 @@ void Sys_ShutdownGL(void)
     initedGL = false;
 }
 
-void Sys_InitGLState(void)
+void Sys_GLConfigureDefaultState(void)
 {
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
-    GL_state.nearClip = 5;
-    GL_state.farClip = 8000;
-    polyCounter = 0;
-
-    GL_state_texture.dumpTextures = false;
-    GL_state_texture.useCompr = false;
-
     { double version = strtod((const char*) glGetString(GL_VERSION), 0);
     // If older than 1.4, disable use of cube maps.
-    GL_state_texture.haveCubeMap = !(version < 1.4); }
+    GL_state.haveCubeMap = !(version < 1.4); }
 
     // Here we configure the OpenGL state and set projection matrix.
     glFrontFace(GL_CW);
@@ -433,7 +522,7 @@ void Sys_InitGLState(void)
 
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
-    if(GL_state_texture.haveCubeMap)
+    if(GL_state.haveCubeMap)
         glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
@@ -508,15 +597,13 @@ void Sys_InitGLState(void)
 }
 
 /**
- * @return          Non-zero iff the extension string is found. This
- *                  function is based on the method used by David Blythe
- *                  and Tom McReynolds in the book "Advanced Graphics
- *                  Programming Using OpenGL" ISBN: 1-55860-659-9.
+ * This routine is based on the method used by David Blythe and Tom McReynolds
+ * in the book "Advanced Graphics Programming Using OpenGL" ISBN: 1-55860-659-9.
  */
-boolean Sys_QueryGLExtension(const char* name, const GLubyte* extensions)
+boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions)
 {
-    const GLubyte  *start;
-    GLubyte        *c, *terminator;
+    const GLubyte* start;
+    GLubyte* c, *terminator;
 
     // Extension names should not have spaces.
     c = (GLubyte *) strchr(name, ' ');
@@ -531,7 +618,7 @@ boolean Sys_QueryGLExtension(const char* name, const GLubyte* extensions)
     start = extensions;
     for(;;)
     {
-        c = (GLubyte *) strstr((const char *) start, name);
+        c = (GLubyte*) strstr((const char*) start, name);
         if(!c)
             break;
 
@@ -547,144 +634,20 @@ boolean Sys_QueryGLExtension(const char* name, const GLubyte* extensions)
     return false;
 }
 
-static int query(const char *ext, int *var)
-{
-    int         result = 0;
-
-    if(ext)
-    {
-#if WIN32
-        // Preference the wgl-specific extensions.
-        if(wglGetExtString)
-        {
-            const GLubyte* extensions =
-            ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());
-
-            result = (Sys_QueryGLExtension(ext, extensions)? 1 : 0);
-        }
-#endif
-        if(!result)
-            result = (Sys_QueryGLExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
-
-        if(var)
-            *var = result;
-    }
-
-    return result;
-}
-
-#ifdef WIN32
-void Sys_InitWGLExtensions(void)
-{
-    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
-
-    if(query("WGL_EXT_swap_control", &GL_state_ext.wglSwapIntervalEXT))
-    {
-        GETPROC(wglSwapIntervalEXT);
-    }
-
-    if(query("WGL_ARB_multisample", NULL))
-    {
-        GETPROC(wglChoosePixelFormatARB);
-        if(wglChoosePixelFormatARB)
-        {
-            GL_state_ext.wglMultisampleARB = 1;
-        }
-    }
-}
-#endif
-
-/**
- * Pre: A rendering context must be aquired and made current before this is
- * called.
- */
-void Sys_InitGLExtensions(void)
-{
-    GLint           iVal;
-
-    if(query("GL_EXT_compiled_vertex_array", &GL_state_ext.lockArray))
-    {
-#ifdef WIN32
-        GETPROC(glLockArraysEXT);
-        GETPROC(glUnlockArraysEXT);
-#endif
-    }
-
-    query("GL_EXT_texture_filter_anisotropic", &GL_state_ext.aniso);
-    if(!ArgExists("-notexnonpow2"))
-       query("GL_ARB_texture_non_power_of_two", &GL_state.textureNonPow2);
-
-    // EXT_blend_subtract
-    if(query("GL_EXT_blend_subtract", &GL_state_ext.blendSub))
-    {
-#ifdef WIN32
-        GETPROC(glBlendEquationEXT);
-#endif
-    }
-
-    // ARB_texture_env_combine
-    if(!query("GL_ARB_texture_env_combine", &GL_state_ext.texEnvComb))
-    {
-        // Try the older EXT_texture_env_combine (identical to ARB).
-        query("GL_EXT_texture_env_combine", &GL_state_ext.texEnvComb);
-    }
-
-    query("GL_NV_texture_env_combine4", &GL_state_ext.nvTexEnvComb);
-
-    query("GL_ATI_texture_env_combine3", &GL_state_ext.atiTexEnvComb);
-
-    query("GL_EXT_texture_compression_s3tc", &GL_state_ext.s3TC);
-
-    // On by default if we have it.
-    glGetError();
-    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-    if(iVal && glGetError() == GL_NO_ERROR)
-        GL_state_texture.useCompr = true;
-
-    if(ArgExists("-notexcomp"))
-        GL_state_texture.useCompr = false;
-
-#ifdef USE_MULTITEXTURE
-    // ARB_multitexture
-    if(query("GL_ARB_multitexture", &GL_state_ext.multiTex))
-    {
-#  ifdef WIN32
-        // Get the function pointers.
-        GETPROC(glClientActiveTextureARB);
-        GETPROC(glActiveTextureARB);
-        GETPROC(glMultiTexCoord2fARB);
-        GETPROC(glMultiTexCoord2fvARB);
-#  endif
-    }
-#endif
-
-    // Automatic mipmap generation.
-    if(!ArgExists("-nosgm") && query("GL_SGIS_generate_mipmap", &GL_state_ext.genMip))
-    {
-        // Use nice quality, please.
-        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-    }
-
-    if(query("GL_EXT_framebuffer_object", &GL_state_ext.framebufferObject))
-    {
-#ifdef WIN32
-        GETPROC(glGenerateMipmapEXT);
-#endif
-    }
-
-    query("GL_SGIS_generate_mipmap", &GL_state_ext.genMip);
-}
-
-/**
- * Show the list of GL extensions.
- */
 static void printExtensions(const GLubyte* extensions)
 {
-    char           *token, *extbuf;
+    char* token, *extbuf;
+    size_t len;
 
-    extbuf = M_Malloc(strlen((const char*) extensions) + 1);
-    strcpy(extbuf, (const char *) extensions);
+    if(!extensions || !extensions[0])
+        return;
+    len = strlen((const char*) extensions);
 
+    if(0 == (extbuf = malloc(len+1)))
+        Con_Error("printExtensions: Failed on allocation of %lu bytes for print buffer.",
+                  (unsigned long) (len+1));
+
+    strcpy(extbuf, (const char*) extensions);
     token = strtok(extbuf, " ");
     while(token)
     {
@@ -705,32 +668,29 @@ static void printExtensions(const GLubyte* extensions)
         }
         token = strtok(NULL, " ");
     }
-    M_Free(extbuf);
+    free(extbuf);
 }
 
-void Sys_PrintGLExtensions(void)
+void Sys_GLPrintExtensions(void)
 {
     Con_Message("  Extensions:\n");
     printExtensions(glGetString(GL_EXTENSIONS));
-
 #if WIN32
     // List the WGL extensions too.
     if(wglGetExtString)
     {
         Con_Message("  Extensions (WGL):\n");
-
-        printExtensions(
-        ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC()));
+        printExtensions(((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC()));
     }
 #endif
 }
 
-void Sys_CheckGLError(void)
+boolean Sys_GLCheckError(void)
 {
 #ifdef _DEBUG
-    GLenum  error;
-
-    if((error = glGetError()) != GL_NO_ERROR)
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR)
         Con_Error("OpenGL error: %i\n", error);
 #endif
+    return false;
 }
