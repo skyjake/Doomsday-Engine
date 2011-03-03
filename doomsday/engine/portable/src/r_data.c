@@ -2518,7 +2518,7 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
     lightmap_t* lmap;
     char name[9];
 
-    if(!path || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
+    if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
         return 0; // Not a lightmap
 
     // Have we already created one for this?
@@ -2591,7 +2591,7 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
     flaretex_t* fTex;
     char name[9];
 
-    if(!path || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
+    if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
         return 0; // Not a flare texture.
 
     // Perhaps a "built-in" flare texture id?
