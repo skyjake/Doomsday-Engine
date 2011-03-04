@@ -154,6 +154,46 @@ def todays_build_tag():
     return 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
 
 
+def update_changes(fromTag=None, toTag=None):
+    # Determine automatically?
+    if fromTag is None or toTag is None:
+        builds = builds_by_time()
+        if len(builds) < 2: return
+        fromTag = builds[1][1]
+        toTag = builds[0][1]
+
+    # Generate a changelog.
+    buildDir = os.path.join(EVENT_DIR, toTag)
+    fn = os.path.join(buildDir, 'changes.html')
+    changes = file(fn, 'wt')
+    print >> changes, '<ol>'
+    
+    tmpName = os.path.join(buildDir, 'ctmp')
+    
+    format = '{{{{li}}}}{{{{b}}}}%s{{{{/b}}}}' + \
+             '{{{{br/}}}}by {{{{i}}}}%an{{{{/i}}}} on ' + \
+             '%ai ' + \
+             '{{{{a href=\\"http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
+             'p=deng/deng;a=commit;h=%H\\"}}}}(show in repository){{{{/a}}}}' + \
+             '{{{{blockquote}}}}%b{{{{/blockquote}}}}'
+    os.system("git log %s..%s --format=\"%s\" >> %s" % (fromTag, toTag, format, tmpName))
+
+    logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
+    logText = logText.replace(u'ä', u'&auml;')
+    logText = logText.encode('utf-8')
+    logText = logText.replace('<', '&lt;')
+    logText = logText.replace('>', '&gt;')
+    logText = logText.replace('{{{{', '<')
+    logText = logText.replace('}}}}', '>')
+    logText = logText.replace('\n', '<br/>').replace('</blockquote><br/>', '</blockquote>')
+    print >> changes, logText
+
+    os.remove(tmpName)
+
+    print >> changes, '</ol>'
+    changes.close()
+
+
 def create_build_event():
     print 'Creating a new build event.'
     git_pull()
@@ -177,33 +217,9 @@ def create_build_event():
         # Kill it and recreate.
         shutil.rmtree(buildDir, True)
     os.mkdir(buildDir)
-    
+
     if prevBuild:
-        # Generate a changelog.
-        fn = os.path.join(buildDir, 'changes.html')
-        changes = file(fn, 'wt')
-        print >> changes, '<ol>'
-        
-        tmpName = os.path.join(buildDir, 'ctmp')
-        
-        format = '<li><b>%s</b>' + \
-                 '<br/>by <a href=\\"mailto:%ae\\"><i>%an</i></a> on ' + \
-                 '%ai ' + \
-                 '<a href=\\"http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
-                 'p=deng/deng;a=commit;h=%H\\">(show in repository)</a>' + \
-                 '<blockquote>%b</blockquote>'
-        os.system("git log %s..%s --format=\"%s\" >> %s" % (prevBuild, todaysBuild, format, tmpName))
-
-        logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
-        logText = logText.replace(u'ä', u'&auml;')
-        logText = logText.encode('utf-8')
-        logText = logText.replace('\n', '<br/>').replace('</blockquote><br/>', '</blockquote>')
-        print >> changes, logText
-
-        os.remove(tmpName)
-
-        print >> changes, '</ol>'
-        changes.close()
+        update_changes(prevBuild, todaysBuild)
 
 
 def todays_platform_release():
@@ -274,7 +290,7 @@ def update_feed():
     print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME, 
         time.gmtime(find_newest_build()['time']))
     print >> out, '<generator>dengBot</generator>'
-    print >> out, '<ttl>720</ttl>' # 12 hours
+    print >> out, '<ttl>180</ttl>' # 3 hours
     
     for timestamp, tag in builds_by_time():
         print >> out, '<item>'
@@ -316,6 +332,9 @@ elif sys.argv[1] == 'feed':
     
 elif sys.argv[1] == 'apt':
     rebuild_apt_repository()
+    
+elif sys.argv[1] == 'changes':
+    update_changes()
     
 else:
     print 'Unknown command:', sys.argv[1]
