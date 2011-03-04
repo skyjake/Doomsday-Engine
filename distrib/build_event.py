@@ -215,7 +215,7 @@ def update_changes(fromTag=None, toTag=None):
             bq = logText.find('<blockquote>', pos)
             logText = logText[:bq+12] + extra + logText[bq+12:]            
     
-    logText = logText.replace('\n', '<br/>').replace('</blockquote><br/>', '</blockquote>')
+    logText = logText.replace('\n\n', '<br/><br/>').replace('\n', ' ').replace('</blockquote><br/>', '</blockquote>')
     print >> changes, logText
 
     os.remove(tmpName)
