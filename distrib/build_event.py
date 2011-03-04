@@ -154,6 +154,13 @@ def todays_build_tag():
     return 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
 
 
+def collated(s):
+    s = s.strip()
+    while s[-1] == '.':
+        s = s[:-1]
+    return s
+
+
 def update_changes(fromTag=None, toTag=None):
     # Determine automatically?
     if fromTag is None or toTag is None:
@@ -170,7 +177,7 @@ def update_changes(fromTag=None, toTag=None):
     
     tmpName = os.path.join(buildDir, 'ctmp')
     
-    format = '{{{{li}}}}{{{{b}}}}%s{{{{/b}}}}' + \
+    format = '{{{{li}}}}{{{{b}}}}[[subjectline]]%s[[/subjectline]]{{{{/b}}}}' + \
              '{{{{br/}}}}by {{{{i}}}}%an{{{{/i}}}} on ' + \
              '%ai ' + \
              '{{{{a href=\\"http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
@@ -185,6 +192,29 @@ def update_changes(fromTag=None, toTag=None):
     logText = logText.replace('>', '&gt;')
     logText = logText.replace('{{{{', '<')
     logText = logText.replace('}}}}', '>')
+    
+    # Check that the subject lines are not too long.
+    MAX_SUBJECT = 100
+    pos = 0
+    while True:
+        pos = logText.find('[[subjectline]]', pos)
+        if pos < 0: break
+        end = logText.find('[[/subjectline]]', pos)
+        
+        subject = logText[pos+15:end]
+        extra = ''
+        if len(collated(subject)) > MAX_SUBJECT:
+            extra = '...' + subject[MAX_SUBJECT:] + ' '
+            subject = subject[:MAX_SUBJECT] + '...'
+        
+        # Do the replace.
+        logText = logText[:pos] + subject + logText[end+16:]
+        
+        if len(extra):
+            # Place the extra bit in the blockquote.
+            bq = logText.find('<blockquote>', pos)
+            logText = logText[:bq+12] + extra + logText[bq+12:]            
+    
     logText = logText.replace('\n', '<br/>').replace('</blockquote><br/>', '</blockquote>')
     print >> changes, logText
 
