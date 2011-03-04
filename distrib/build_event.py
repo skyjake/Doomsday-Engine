@@ -142,7 +142,7 @@ def html_build_description(name, encoded=True):
     # Changes.
     chgFn = os.path.join(buildDir, 'changes.html')
     if os.path.exists(chgFn):
-        msg += '<p><b>Revisions</b></p>' + file(chgFn, 'rt').read()
+        msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
     
     if encoded: return '<![CDATA[' + msg + ']]>'
     
