@@ -229,7 +229,6 @@ static void printGLUInfo(void)
     Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
     Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
     Con_Message("  Version: %s\n", glGetString(GL_VERSION));
-    Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     if(GL_state.extensions.texCompressionS3)

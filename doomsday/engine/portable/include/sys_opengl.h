@@ -39,7 +39,6 @@
 #  include <GL/gl.h>
 #  include <GL/wglext.h>
 #  include <GL/glext.h>
-#  include <GL/glu.h>
 #endif
 
 #ifdef UNIX
