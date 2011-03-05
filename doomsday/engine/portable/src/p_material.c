@@ -121,7 +121,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
     const gltexture_inst_t* detailInst = NULL, *shinyInst = NULL,
                        *shinyMaskInst = NULL;
 
-    if(!mat)
+    if(!mat || novideo)
         return 0;
 
     if(smoothed)

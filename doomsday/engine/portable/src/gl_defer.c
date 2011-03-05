@@ -173,7 +173,7 @@ DGLuint GL_GetReservedName(void)
     DGLuint             name;
 
     if(!deferredInited)
-        Con_Error("GL_GetReserved: Deferred GL task system not initialized.");
+        Con_Error("GL_GetReservedName: Deferred GL task system not initialized.");
 
     Sys_Lock(deferredMutex);
 

@@ -327,8 +327,8 @@ int main(int argc, char** argv)
     cmdLine = NULL;
 
     // First order of business: are we running in dedicated mode?
-    if(ArgCheck("-dedicated"))
-        isDedicated = true;
+    if(ArgCheck("-dedicated")) isDedicated = true;
+    novideo = ArgCheck("-novideo") || isDedicated;
 
     DD_ComposeMainWindowTitle(buf);
 

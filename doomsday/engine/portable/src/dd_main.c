@@ -494,8 +494,6 @@ static int DD_StartupWorker(void *parm)
 
     HandleArgs(0);              // Everything but WADs.
 
-    novideo = ArgCheck("-novideo") || isDedicated;
-
     DAM_Init();
 
     if(gx.PreInit)

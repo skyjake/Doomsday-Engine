@@ -430,7 +430,7 @@ IF (BUILDOPENAL)
     INCLUDE_DIRECTORIES (${OPENAL_INCLUDE_DIR})
 ENDIF (BUILDOPENAL)
 
-IF (UNIX)
+IF (UNIX AND NOT APPLE)
     ## Confirm we have dlopen
     CHECK_INCLUDE_FILE("dlfcn.h" HAVE_DL)
     IF(HAVE_DL)
@@ -441,7 +441,7 @@ IF (UNIX)
     ELSE(HAVE_DL)
 		MESSAGE (FATAL_ERROR "** dlopen not found. On Ubuntu install libc6-dev.")
     ENDIF(HAVE_DL)
-ENDIF (UNIX)
+ENDIF ()
 
 ## confirm we have Python
 IF (NOT PYTHONINTERP_FOUND)

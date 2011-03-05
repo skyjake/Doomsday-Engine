@@ -82,6 +82,9 @@ void R_PrecachePSprites(void)
     int                 i, k;
     int                 pclass = players[CONSOLEPLAYER].class;
 
+    if(IS_DEDICATED)
+        return;
+
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         for(k = 0; k < NUMWEAPLEVELS; ++k)
