@@ -132,7 +132,7 @@ def html_build_description(name, encoded=True):
     
     # Print out the matrix.
     msg += '<table cellspacing="4" border="0">'
-    msg += '<tr><th>OS<th>Binary<th><tt>stdout</tt><th><tt>stderr</tt></tr>'
+    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th><tt>stdout</tt><th>Err.<th>Warn.<th><tt>stdout</tt><th>Err.<th>Warn.</tr>'
     
     for osName, osExt, osIdent in oses:
         msg += '<tr><td>' + osName + '<td>'
@@ -158,18 +158,25 @@ def html_build_description(name, encoded=True):
             if len(logFiles) == 0:
                 msg += '<td>'
                 continue
+
+            # There should only be one.
+            f = logFiles[0]
+
+            msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (BUILD_URI, name, os.path.basename(f))
                                 
-            for f in logFiles:
-                errors, warnings = count_log_status(f)
-                if errors > 0:
-                    msg += '<td bgcolor="#ff4444">'
-                elif warnings > 0:
-                    msg += '<td bgcolor="#ffee00">'
-                else:
-                    msg += '<td>'
-                
-                msg += '%i errors, %i warnings' % (errors, warnings)            
-                msg += ' <a href="%s/%s/%s">(txt.gz)</a>' % (BUILD_URI, name, os.path.basename(f))
+            errors, warnings = count_log_status(f)
+            form = '<td bgcolor="%s" style="text-align:center;">'
+            if errors > 0:
+                msg += form % '#ff4444'
+            else:
+                msg += form % '#00ee00'
+            msg += str(errors)
+            
+            if warnings > 0:
+                msg += form % '#ffee00'
+            else:
+                msg += form % '#00ee00'
+            msg += str(warnings)                
 
         msg += '</tr>'
     
