@@ -11,6 +11,8 @@ import shutil
 import time
 import glob
 import platform
+import gzip
+import codecs
 
 BUILD_URI = "http://code.iki.fi/builds"
 
@@ -89,6 +91,24 @@ def builds_by_time():
     return builds
     
     
+def count_word(fn, word):
+    txt = unicode(gzip.open(fn).read(), 'latin1')
+    pos = 0
+    count = 0
+    while True:
+        pos = txt.find(unicode(word), pos)
+        if pos < 0: break 
+        if txt[pos-1] not in ['/', '\\'] and txt[pos+len(word)] != 's':
+            count += 1            
+        pos += len(word)
+    return count
+        
+    
+def count_log_status(fn):
+    """Returns tuple of (#warnings, #errors) in the fn."""
+    return (count_word(fn, 'error'), count_word(fn, 'warning'))    
+    
+    
 def html_build_description(name, encoded=True):
     buildDir = os.path.join(EVENT_DIR, name)
     
@@ -101,44 +121,60 @@ def html_build_description(name, encoded=True):
             
     files = [os.path.basename(f) for f in files]
     
-    if len(files):
-        if len(files) > 1:
-            s = 's'
-        else:
-            s = ''
-        msg += '<p>%i file%s available:</p><ul>' % (len(files), s)
-        for f in files:            
-            if '.dmg' in f:
-                platName = "Mac OS X: "
-            elif '.exe' in f:
-                platName = "Windows: "
-            elif 'i386.deb' in f:
-                platName = "Ubuntu: "
-            elif 'amd64.deb' in f:
-                platName = "Ubuntu (64-bit): "
-            else:
-                platName = ''
-            msg += '<li>%s<a href="%s/%s/%s">%s</a></li>' % (platName, BUILD_URI, name, f, f)
-        msg += '</ul>'
-            
-    else:
-        msg += '<p>No files available for this build.</p>'
-    
-    # Logs.
-    msg += '<p><b>Build Logs</b></p><ul>'
+    # Prepare compiler logs.
     for f in glob.glob(os.path.join(buildDir, 'build*txt')):
-        os.system('gzip -9 %s' % f)
-    for p in ['darwin', 'win32', 'linux2']:
-        msg += '<li>%s:' % p
-        files = glob.glob(os.path.join(buildDir, 'build*%s*txt.gz' % p))
-        if len(files):
-            for f in files:
-                f = os.path.basename(f)
-                msg += ' <a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, f, f)
-        else:
-            msg += ' no logs available.'
-    msg += '</ul>'
+        os.system('gzip -9 %s' % f)    
+    
+    oses = [('Windows', '.exe', ['win32', 'win32-32bit']),
+            ('Mac OS X', '.dmg', ['darwin', 'darwin-32bit']),
+            ('Ubuntu', 'i386.deb', ['linux2', 'linux2-32bit']),
+            ('Ubuntu (64-bit)', 'amd64.deb', ['linux2-64bit'])]
+    
+    # Print out the matrix.
+    msg += '<table cellspacing="4" border="0">'
+    msg += '<tr><th>OS<th>Binary<th><tt>stdout</tt><th><tt>stderr</tt></tr>'
+    
+    for osName, osExt, osIdent in oses:
+        msg += '<tr><td>' + osName + '<td>'
         
+        # Find the binary.
+        binary = None
+        for f in files:
+            if osExt in f:
+                binary = f
+                break
+        
+        if binary:
+            msg += '<a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, f, f)
+        else:
+            msg += 'n/a'
+            
+        # Status of the log.
+        for logType in ['log', 'errors']:
+            logFiles = []
+            for osi in osIdent:
+                for i in glob.glob(os.path.join(buildDir, 'build%s-%s.txt.gz' % (logType, osi))):
+                    logFiles.append(i)
+            if len(logFiles) == 0:
+                msg += '<td>'
+                continue
+                                
+            for f in logFiles:
+                errors, warnings = count_log_status(f)
+                if errors > 0:
+                    msg += '<td bgcolor="#ff4444">'
+                elif warnings > 0:
+                    msg += '<td bgcolor="#ffee00">'
+                else:
+                    msg += '<td>'
+                
+                msg += '%i errors, %i warnings' % (errors, warnings)            
+                msg += ' <a href="%s/%s/%s">(txt.gz)</a>' % (BUILD_URI, name, os.path.basename(f))
+
+        msg += '</tr>'
+    
+    msg += '</table>'
+    
     # Changes.
     chgFn = os.path.join(buildDir, 'changes.html')
     if os.path.exists(chgFn):
