@@ -107,6 +107,14 @@ static void initialize(void)
 {
     double version = strtod((const char*) glGetString(GL_VERSION), NULL);
 
+    if(version >= 1.3 && ArgExists("-vtxar") && !ArgExists("-novtxar"))
+        GL_state.useArrays = true;
+
+    if(0 != (GL_state.forceFinishBeforeSwap = ArgExists("-glfinish")))
+        Con_Message("  glFinish() forced before swapping buffers.\n");
+
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &GL_state.maxTexSize);
+
 #ifdef WIN32
     wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
 #endif
@@ -120,7 +128,11 @@ static void initialize(void)
     }
 
     if(0 != (GL_state.extensions.texFilterAniso = query("GL_EXT_texture_filter_anisotropic")))
+    {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxTexFilterAniso);
+        if(!ArgExists("-noanifilter"))
+            GL_state.useTexFilterAniso = true;
+    }
 
     if(!ArgExists("-notexnonpow2"))
        GL_state.extensions.texNonPow2 = query("GL_ARB_texture_non_power_of_two");
@@ -139,8 +151,8 @@ static void initialize(void)
         GL_state.extensions.texEnvComb = query("GL_EXT_texture_env_combine");
     }
 
-    GL_state.extensions.nvTexEnvComb = query("GL_NV_texture_env_combine4");
-    GL_state.extensions.atiTexEnvComb = query("GL_ATI_texture_env_combine3");
+    GL_state.extensions.texEnvCombNV = query("GL_NV_texture_env_combine4");
+    GL_state.extensions.texEnvCombATI = query("GL_ATI_texture_env_combine3");
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
@@ -169,16 +181,13 @@ static void initialize(void)
         // But sir, we are simple people; two units is enough.
         if(GL_state.maxTexUnits > 2)
             GL_state.maxTexUnits = 2;
-        GL_state.useMultitexture = true;
+        GL_state.useMultiTex = true;
     }
 #endif
 
-    if(0 != (GL_state.forceFinishBeforeSwap = (boolean) ArgExists("-glfinish")))
-        Con_Message("  glFinish() forced before swapping buffers.\n");
-
     // Automatic mipmap generation.
     if(!ArgExists("-nosgm") &&
-       0 != (GL_state.extensions.genMip = query("GL_SGIS_generate_mipmap")))
+       0 != (GL_state.extensions.genMipmapSGIS = query("GL_SGIS_generate_mipmap")))
     {
         // Use nice quality, please.
         glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
@@ -191,8 +200,6 @@ static void initialize(void)
 #endif
     }
 
-    GL_state.extensions.genMip = query("GL_SGIS_generate_mipmap");
-
 #ifdef WIN32
     if(0 != (GL_state.extensions.wglSwapIntervalEXT = query("WGL_EXT_swap_control")))
     {
@@ -203,21 +210,9 @@ static void initialize(void)
     {
         GETPROC(wglChoosePixelFormatARB);
         if(wglChoosePixelFormatARB)
-        {
             GL_state.extensions.wglMultisampleARB = true;
-        }
     }
 #endif
-
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &GL_state.maxTexSize);
-
-    if(version >= 1.3 && ArgExists("-vtxar") && !ArgExists("-novtxar"))
-        GL_state.useArrays = true;
-
-    GL_state.useTexFilterAniso =
-        ((GL_state.extensions.texFilterAniso && !ArgExists("-noanifilter"))? true : false);
-
-    GL_state.allowTexCompression = true;
 }
 
 static void printGLUInfo(void)
@@ -462,6 +457,7 @@ boolean Sys_GLPreInit(void)
         return true; // Already inited.
 
     memset(&GL_state, 0, sizeof(GL_state));
+    GL_state.allowTexCompression = true;
     GL_state.maxTexFilterAniso = 1;
 #ifdef USE_MULTITEXTURE
     GL_state.maxTexUnits = 1;

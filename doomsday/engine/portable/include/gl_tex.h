@@ -73,7 +73,7 @@ void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
 
 /**
  * \important Does not conform to any standard technique and adjustments
- * are applied symmetrically for all color components. 
+ * are applied symmetrically for all color components.
  *
  * @param pixels  RGB(a) image to be enhanced.
  * @param width  Logical width of the image in pixels.
@@ -159,6 +159,11 @@ void SharpenPixels(uint8_t* pixels, int width, int height, int pixelSize);
 
 uint8_t* GL_ScaleBuffer(const uint8_t* pixels, int width, int height,
     int pixelSize, int outWidth, int outHeight);
+
+void* GL_ScaleBufferEx(const void* datain, int width, int height, int pixelSize,
+    /*GLint typein,*/ int rowLength, int alignment, int skiprows, int skipPixels,
+    int outWidth, int outHeight, /*GLint typeout,*/ int outRowLength, int outAlignment,
+    int outSkipRows, int outSkipPixels);
 
 uint8_t* GL_ScaleBufferNearest(const uint8_t* pixels, int width, int height,
     int pixelSize, int outWidth, int outHeight);

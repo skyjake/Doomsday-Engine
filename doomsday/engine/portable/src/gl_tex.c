@@ -197,6 +197,461 @@ uint8_t* GL_ScaleBuffer(const uint8_t* in, int width, int height, int comps,
     }
 }
 
+static void* packImage(int components, const float* tempOut, GLint typeOut,
+    int widthOut, int heightOut, int sizeOut, int bpp, int packRowLength,
+    int packAlignment, int packSkipRows, int packSkipPixels)
+{
+    int rowStride, rowLen;
+    void* dataOut;
+
+    if(NULL == (dataOut = malloc(bpp * widthOut * heightOut)))
+        Con_Error("scaleImage: Failed on allocation of %lu bytes for output "
+                  "buffer.", (unsigned long) (bpp * widthOut * heightOut));
+
+    if(packRowLength > 0)
+    {
+        rowLen = packRowLength;
+    }
+    else
+    {
+        rowLen = widthOut;
+    }
+    if(sizeOut >= packAlignment)
+    {
+        rowStride = components * rowLen;
+    }
+    else
+    {
+        rowStride = packAlignment / sizeOut
+            * CEILING(components * rowLen * sizeOut, packAlignment);
+    }
+
+    switch(typeOut)
+    {
+    case GL_UNSIGNED_BYTE: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; ++i)
+        {
+            GLubyte* ubptr = (GLubyte*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for(j = 0; j < widthOut * components; ++j)
+            {
+                *ubptr++ = (GLubyte) tempOut[k++];
+            }
+        }
+        break;
+      }
+    case GL_BYTE: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; i++)
+        {
+            GLbyte* bptr = (GLbyte*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for(j = 0; j < widthOut * components; ++j)
+            {
+                *bptr++ = (GLbyte) tempOut[k++];
+            }
+        }
+        break;
+      }
+    case GL_UNSIGNED_SHORT: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; ++i)
+        {
+            GLushort* usptr = (GLushort*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for(j = 0; j < widthOut * components; ++j)
+            {
+                *usptr++ = (GLushort) tempOut[k++];
+            }
+        }
+        break;
+      }
+    case GL_SHORT: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; ++i)
+        {
+            GLshort* sptr = (GLshort*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for(j = 0; j < widthOut * components; ++j)
+            {
+                *sptr++ = (GLshort) tempOut[k++];
+            }
+        }
+        break;
+      }
+    case GL_UNSIGNED_INT: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; ++i)
+        {
+            GLuint* uiptr = (GLuint*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for(j = 0; j < widthOut * components; ++j)
+            {
+                *uiptr++ = (GLuint) tempOut[k++];
+            }
+        }
+        break;
+      }
+    case GL_INT: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; ++i)
+        {
+            GLint* iptr = (GLint*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for(j = 0; j < widthOut * components; ++j)
+            {
+                *iptr++ = (GLint) tempOut[k++];
+            }
+        }
+        break;
+      }
+    case GL_FLOAT: {
+        int i, j, k = 0;
+        for(i = 0; i < heightOut; ++i)
+        {
+            GLfloat* fptr = (GLfloat*) dataOut
+                + i * rowStride
+                + packSkipRows * rowStride + packSkipPixels * components;
+            for (j = 0; j < widthOut * components; ++j)
+            {
+                *fptr++ = tempOut[k++];
+            }
+        }
+        break;
+      }
+    default:
+        return 0;
+    }
+
+    return dataOut;
+}
+
+/**
+ * Originally from the Mesa 3-D graphics library version 3.4
+ * \license GNU Library General Public License (or later)
+ * Copyright (C) 1995-2000  Brian Paul.
+ */
+void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,
+    /*GLint typeIn,*/ int unpackRowLength, int unpackAlignment, int unpackSkipRows,
+    int unpackSkipPixels, int widthOut, int heightOut, /*GLint typeOut, */
+    int packRowLength, int packAlignment, int packSkipRows, int packSkipPixels)
+{
+    const GLint typeIn = GL_UNSIGNED_BYTE, typeOut = GL_UNSIGNED_BYTE;
+    int i, j, k, sizeIn, sizeOut, rowStride, rowLen;
+    float* tempIn, *tempOut;
+    float sx, sy;
+    void* dataOut;
+
+    // Determine bytes per input datum.
+    switch(typeIn)
+    {
+    case GL_UNSIGNED_BYTE:
+        sizeIn = sizeof(GLubyte);
+        break;
+    case GL_BYTE:
+        sizeIn = sizeof(GLbyte);
+        break;
+    case GL_UNSIGNED_SHORT:
+        sizeIn = sizeof(GLushort);
+        break;
+    case GL_SHORT:
+        sizeIn = sizeof(GLshort);
+        break;
+    case GL_UNSIGNED_INT:
+        sizeIn = sizeof(GLuint);
+        break;
+    case GL_INT:
+        sizeIn = sizeof(GLint);
+        break;
+    case GL_FLOAT:
+        sizeIn = sizeof(GLfloat);
+        break;
+    case GL_BITMAP:
+        // Not implemented yet.
+    default:
+        return NULL;
+    }
+
+    // Determine bytes per output datum.
+    switch(typeOut)
+    {
+    case GL_UNSIGNED_BYTE:
+        sizeOut = sizeof(GLubyte);
+        break;
+    case GL_BYTE:
+        sizeOut = sizeof(GLbyte);
+        break;
+    case GL_UNSIGNED_SHORT:
+        sizeOut = sizeof(GLushort);
+        break;
+    case GL_SHORT:
+        sizeOut = sizeof(GLshort);
+        break;
+    case GL_UNSIGNED_INT:
+        sizeOut = sizeof(GLuint);
+        break;
+    case GL_INT:
+        sizeOut = sizeof(GLint);
+        break;
+    case GL_FLOAT:
+        sizeOut = sizeof(GLfloat);
+        break;
+    case GL_BITMAP:
+        // Not implemented yet.
+    default:
+        return NULL;
+    }
+
+    // Allocate storage for intermediate images.
+    if(NULL == (tempIn = (float*) malloc(widthIn * heightIn * bpp * sizeof(float))))
+        Con_Error("scaleImage: Failed on allocation of %lu bytes for in buffer.",
+                  (unsigned long) (widthIn * heightIn * bpp * sizeof(float)));
+
+    if(NULL == (tempOut = (float*) malloc(widthOut * heightOut * bpp * sizeof(float))))
+    {
+        free(tempIn);
+        Con_Error("scaleImage: Failed on allocation of %lu bytes for out buffer.",
+                  (unsigned long) (widthOut * heightOut * bpp * sizeof(float)));
+    }
+
+    /**
+     * Unpack the pixel data and convert to floating point
+     */
+
+    if(unpackRowLength > 0)
+    {
+        rowLen = unpackRowLength;
+    }
+    else
+    {
+        rowLen = widthIn;
+    }
+
+    if(sizeIn >= unpackAlignment)
+    {
+        rowStride = bpp * rowLen;
+    }
+    else
+    {
+        rowStride = unpackAlignment / sizeIn
+            * CEILING(bpp * rowLen * sizeIn, unpackAlignment);
+    }
+
+    switch(typeIn)
+    {
+    case GL_UNSIGNED_BYTE:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLubyte* ubptr = (GLubyte*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = (float) *ubptr++;
+            }
+        }
+        break;
+    case GL_BYTE:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLbyte* bptr = (GLbyte*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = (float) *bptr++;
+            }
+        }
+        break;
+    case GL_UNSIGNED_SHORT:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLushort* usptr = (GLushort*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = (float) *usptr++;
+            }
+        }
+        break;
+    case GL_SHORT:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLshort* sptr = (GLshort*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = (float) *sptr++;
+            }
+        }
+        break;
+    case GL_UNSIGNED_INT:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLuint* uiptr = (GLuint*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = (float) *uiptr++;
+            }
+        }
+        break;
+    case GL_INT:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLint* iptr = (GLint*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = (float) *iptr++;
+            }
+        }
+        break;
+    case GL_FLOAT:
+        k = 0;
+        for(i = 0; i < heightIn; ++i)
+        {
+            GLfloat* fptr = (GLfloat*) dataIn
+                + i * rowStride
+                + unpackSkipRows * rowStride + unpackSkipPixels * bpp;
+            for(j = 0; j < widthIn * bpp; ++j)
+            {
+                tempIn[k++] = *fptr++;
+            }
+        }
+        break;
+    default:
+        return 0;
+    }
+
+    /**
+     * Scale the image!
+     */
+
+    if(widthOut > 1)
+        sx = (float) (widthIn - 1) / (float) (widthOut - 1);
+    else
+        sx = (float) (widthIn - 1);
+    if(heightOut > 1)
+        sy = (float) (heightIn - 1) / (float) (heightOut - 1);
+    else
+        sy = (float) (heightIn - 1);
+
+    if(sx < 1.0 && sy < 1.0)
+    {
+        // Magnify both width and height: use weighted sample of 4 pixels.
+        int i0, i1, j0, j1;
+        float alpha, beta;
+        float* src00, *src01, *src10, *src11;
+        float s1, s2;
+        float* dst;
+
+        for(i = 0; i < heightOut; ++i)
+        {
+            i0 = i * sy;
+            i1 = i0 + 1;
+            if(i1 >= heightIn)
+                i1 = heightIn - 1;
+            alpha = i * sy - i0;
+            for(j = 0; j < widthOut; ++j)
+            {
+                j0 = j * sx;
+                j1 = j0 + 1;
+                if(j1 >= widthIn)
+                    j1 = widthIn - 1;
+                beta = j * sx - j0;
+
+                // Compute weighted average of pixels in rect (i0,j0)-(i1,j1)
+                src00 = tempIn + (i0 * widthIn + j0) * bpp;
+                src01 = tempIn + (i0 * widthIn + j1) * bpp;
+                src10 = tempIn + (i1 * widthIn + j0) * bpp;
+                src11 = tempIn + (i1 * widthIn + j1) * bpp;
+
+                dst = tempOut + (i * widthOut + j) * bpp;
+
+                for (k = 0; k < bpp; ++k)
+                {
+                    s1 = *src00++ * (1.0 - beta) + *src01++ * beta;
+                    s2 = *src10++ * (1.0 - beta) + *src11++ * beta;
+                    *dst++ = s1 * (1.0 - alpha) + s2 * alpha;
+                }
+            }
+        }
+    }
+    else
+    {
+        // Shrink width and/or height:  use an unweighted box filter.
+        int i0, i1;
+        int j0, j1;
+        int ii, jj;
+        float sum, *dst;
+
+        for(i = 0; i < heightOut; ++i)
+        {
+            i0 = i * sy;
+            i1 = i0 + 1;
+            if(i1 >= heightIn)
+                i1 = heightIn - 1;
+
+            for(j = 0; j < widthOut; ++j)
+            {
+                j0 = j * sx;
+                j1 = j0 + 1;
+                if(j1 >= widthIn)
+                    j1 = widthIn - 1;
+
+                dst = tempOut + (i * widthOut + j) * bpp;
+
+                // Compute average of pixels in the rectangle (i0,j0)-(i1,j1)
+                for(k = 0; k < bpp; ++k)
+                {
+                    sum = 0.0;
+                    for(ii = i0; ii <= i1; ++ii)
+                    {
+                        for(jj = j0; jj <= j1; ++jj)
+                        {
+                            sum += *(tempIn + (ii * widthIn + jj) * bpp + k);
+                        }
+                    }
+                    sum /= (j1 - j0 + 1) * (i1 - i0 + 1);
+                    *dst++ = sum;
+                }
+            }
+        }
+    }
+
+    // Free temporary image storage.
+    free(tempIn);
+
+    /**
+     * Return output image.
+     */
+    dataOut = packImage(bpp, tempOut, typeOut, widthOut, heightOut, sizeOut, bpp,
+        packRowLength, packAlignment, packSkipRows, packSkipPixels);
+
+    // Free temporary image storage.
+    free(tempOut);
+
+    return dataOut;
+}
+
 uint8_t* GL_ScaleBufferNearest(const uint8_t* in, int width, int height, int comps,
     int outWidth, int outHeight)
 {
@@ -650,7 +1105,7 @@ void ColorOutlinesIdx(uint8_t* buffer, int width, int height)
 
             if(w[1] != w[2] && !(*(w[1]+numpels)))
                 *(w[1]) = *(w[2]);
- 
+
             if(w[3] != w[2] && !(*(w[3]+numpels)))
                 *(w[3]) = *(w[2]);
         }

@@ -142,6 +142,8 @@ float           FloatSwap(float);
 #define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)              ((x) >= 0 ? (x) : -(x))
+/// Ceiling of integer quotient of A divided by B
+#define CEILING(a, b)  ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
 
 // Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
 // Note that this should err on the side of being < 1/255 to prevent result

@@ -70,11 +70,11 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
     if(activate)
     {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
-                  GL_state.extensions.nvTexEnvComb ? GL_COMBINE4_NV : GL_COMBINE);
+                  GL_state.extensions.texEnvCombNV ? GL_COMBINE4_NV : GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 
         // Combine: texAlpha * constRGB + 1 * prevRGB.
-        if(GL_state.extensions.nvTexEnvComb)
+        if(GL_state.extensions.texEnvCombNV)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -86,7 +86,7 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_RGB_NV, GL_PREVIOUS);
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
         }
-        else if(GL_state.extensions.atiTexEnvComb)
+        else if(GL_state.extensions.texEnvCombATI)
         {   // MODULATE_ADD_ATI: Arg0 * Arg2 + Arg1.
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE_ADD_ATI);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -223,7 +223,7 @@ void GL_ModulateTexture(int mode)
         envAddColoredAlpha(true, mode == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
 
         // Alpha remains unchanged.
-        if(GL_state.extensions.nvTexEnvComb)
+        if(GL_state.extensions.texEnvCombNV)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
@@ -422,7 +422,7 @@ boolean DGL_GetIntegerv(int name, int *v)
     switch(name)
     {
     case DGL_MODULATE_ADD_COMBINE:
-        *v = GL_state.extensions.nvTexEnvComb || GL_state.extensions.atiTexEnvComb;
+        *v = GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI;
         break;
 
     case DGL_SCISSOR_TEST:

@@ -80,7 +80,7 @@ typedef struct gl_state_s {
     boolean haveCubeMap;
     boolean useArrays;
     boolean useFog;
-    boolean useMultitexture;
+    boolean useMultiTex;
     boolean useTexCompression;
     boolean useTexFilterAniso;
     boolean useVSync;
@@ -88,19 +88,19 @@ typedef struct gl_state_s {
     float currentGrayMipmapFactor;
     // Extension availability bits:
     struct {
-        uint atiTexEnvComb : 1;
         uint blendSub : 1;
         uint framebufferObject : 1;
-        uint genMip : 1;
+        uint genMipmapSGIS : 1;
         uint lockArray : 1;
 #ifdef USE_MULTITEXTURE
         uint multiTex : 1;
 #endif
-        uint nvTexEnvComb : 1;
 #ifdef USE_TEXTURE_COMPRESSION_S3
         uint texCompressionS3 : 1;
 #endif
         uint texEnvComb : 1;
+        uint texEnvCombNV : 1;
+        uint texEnvCombATI : 1;
         uint texFilterAniso : 1;
         uint texNonPow2 : 1;
 #if WIN32
@@ -124,7 +124,7 @@ typedef enum arraytype_e {
 } arraytype_t;
 
 #ifdef USE_MULTITEXTURE
-#  define DGL_MAX_TEXTURE_UNITS  (GL_state.useMultitexture? GL_state.maxTexUnits : 1)
+#  define DGL_MAX_TEXTURE_UNITS  (GL_state.useMultiTex? GL_state.maxTexUnits : 1)
 #  ifdef WIN32
 extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
