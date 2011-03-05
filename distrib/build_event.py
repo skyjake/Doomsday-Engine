@@ -132,7 +132,7 @@ def html_build_description(name, encoded=True):
     
     # Print out the matrix.
     msg += '<table cellspacing="4" border="0">'
-    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th><tt>stdout</tt><th>Err.<th>Warn.<th><tt>stdout</tt><th>Err.<th>Warn.</tr>'
+    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th><tt>stdout</tt><th>Err.<th>Warn.<th><tt>stderr</tt><th>Err.<th>Warn.</tr>'
     
     for osName, osExt, osIdent in oses:
         msg += '<tr><td>' + osName + '<td>'
