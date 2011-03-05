@@ -444,11 +444,11 @@ static GLint ChooseTextureFormat(int comps)
 
     if(comps == 3)
     {   // RGB.
-        return !compress ? GL_RGB : GL_COMPRESSED_RGB;
+        return !compress ? GL_RGB8 : GL_COMPRESSED_RGB;
     }
 
     // RGBA.
-    return !compress ? GL_RGBA : GL_COMPRESSED_RGBA;
+    return !compress ? GL_RGBA8 : GL_COMPRESSED_RGBA;
 }
 
 /**
@@ -474,10 +474,12 @@ static int BytesPerPixel(GLint format)
         n = 2;
         break;
     case GL_RGB:
+    case GL_RGB8:
     case GL_BGR:
         n = 3;
         break;
     case GL_RGBA:
+    case GL_RGBA8:
     case GL_BGRA:
         n = 4;
         break;
