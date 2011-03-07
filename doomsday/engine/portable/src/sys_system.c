@@ -160,7 +160,7 @@ void Sys_Shutdown(void)
     DD_DestroyGameInfo();
 }
 
-int Sys_CriticalMessage(char* msg)
+static int showCriticalMessage(const char* msg)
 {
 #ifdef WIN32
     char buf[256];
@@ -188,6 +188,39 @@ int Sys_CriticalMessage(char* msg)
     fprintf(stderr, "--- %s\n", msg);
     return 0;
 #endif
+}
+
+int Sys_CriticalMessage(const char* msg)
+{
+    return showCriticalMessage(msg);
+}
+
+int Sys_CriticalMessagef(const char* format, ...)
+{
+    static const char* unknownMsg = "Unknown critical issue occured.";
+    const size_t BUF_SIZE = 655365;
+    const char* msg;
+    char* buf = 0;
+    va_list args;
+    int result;
+
+    va_start(args, format);
+    if(args && format && format[0])
+    {
+        buf = (char*) calloc(1, BUF_SIZE);
+        dd_vsnprintf(buf, BUF_SIZE, format, args);
+        msg = buf;
+    }
+    else
+    {
+        msg = unknownMsg;
+    }
+    va_end(args);
+
+    result = showCriticalMessage(msg);
+
+    if(buf) free(buf);
+    return result;
 }
 
 void Sys_Sleep(int millisecs)

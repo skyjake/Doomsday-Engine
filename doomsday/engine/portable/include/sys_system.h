@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_system.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_system.h: OS Specific Services Subsystem
+ * OS Specific Services Subsystem.
  */
 
 #ifndef LIBDENG_FILESYS_SYSTEM_H
@@ -43,7 +43,9 @@ void Sys_Init(void);
 void Sys_Shutdown(void);
 void Sys_Quit(void);
 
-int Sys_CriticalMessage(char* msg);
+int Sys_CriticalMessage(const char* msg);
+int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
+
 void Sys_Sleep(int millisecs);
 void Sys_ShowCursor(boolean show);
 void Sys_HideMouse(void);

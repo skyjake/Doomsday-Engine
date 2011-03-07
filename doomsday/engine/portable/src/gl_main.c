@@ -464,18 +464,21 @@ void GL_LoadSystemFonts(void)
 
 static void printConfiguration(void)
 {
-    static const char* yesNo[] = { "disabled", "enabled" };
+    static const char* available[] = { "not available", "available" };
+    static const char* enabled[] = { "disabled", "enabled" };
 
-    Con_Message("Render configuration:\n");
-#ifdef WIN32
-    Con_Message("  Multisampling: %s", yesNo[GL_state.extensions.wglMultisampleARB? 1:0]);
-    if(GL_state.extensions.wglMultisampleARB)
-        Con_Message(" (sf:%i)\n", GL_state.multisampleFormat);
-#endif
-    Con_Message("  Multitexturing: %s\n", numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
-    Con_Message("  Texture Anisotropy: %s\n", GL_state.useTexFilterAniso? "variable" : "fixed");
-    Con_Message("  Texture Compression: %s\n", yesNo[GL_state.useTexCompression? 1:0]);
-    Con_Message("  Texture NPOT: %s\n", yesNo[GL_state.extensions.texNonPow2? 1:0]);
+    Con_Printf("Render configuration:\n");
+    Con_Printf("  Multisampling: %s", available[GL_state.features.multisample? 1:0]);
+    if(GL_state.features.multisample)
+        Con_Printf(" (sf:%i)\n", GL_state.multisampleFormat);
+    else
+        Con_Printf("\n");
+    Con_Printf("  Multitexturing: %s\n", numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    Con_Printf("  Texture Anisotropy: %s\n", GL_state.features.texFilterAniso? "variable" : "fixed");
+    Con_Printf("  Texture Compression: %s\n", enabled[GL_state.features.texCompression? 1:0]);
+    Con_Printf("  Texture NPOT: %s\n", enabled[GL_state.features.texNonPowTwo? 1:0]);
+    if(GL_state.forceFinishBeforeSwap)
+        Con_Message("  glFinish() forced before swapping buffers.\n");
 }
 
 /**
@@ -498,9 +501,9 @@ boolean GL_EarlyInit(void)
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
 
-    // Does the graphics library support multitexturing?
-    numTexUnits = MIN_OF(DGL_MAX_TEXTURE_UNITS, MAX_TEX_UNITS);
-    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
+    // We are simple people; two texture units is enough.
+    numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
+    envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
 
     GL_InitDeferred();
     GL_InitArrays();
@@ -635,8 +638,7 @@ void GL_Init2DState(void)
 
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
-    if(GL_state.haveCubeMap)
-        glDisable(GL_TEXTURE_CUBE_MAP);
+    glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -992,7 +994,7 @@ int GL_GetTexAnisoMul(int level)
     int mul = 1;
 
     // Should anisotropic filtering be used?
-    if(GL_state.useTexFilterAniso)
+    if(GL_state.features.texFilterAniso)
     {
         if(level < 0)
         {   // Go with the maximum!

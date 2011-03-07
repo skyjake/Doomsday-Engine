@@ -81,13 +81,6 @@ const char*     GL_ChooseFixedFont(void);
 const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
 void            GL_LowRes(void);
 
-/**
- * Set the currently active GL texture unit by ident.
- *
- * @param texture  GL texture unit ident to make active.
- */
-void GL_ActiveTexture(const DGLenum texture);
-
 void            GL_ModulateTexture(int mode);
 void            GL_SelectTexUnits(int count);
 void            GL_SetTextureCompression(boolean on);

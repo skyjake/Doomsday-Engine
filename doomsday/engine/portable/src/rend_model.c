@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_model.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,13 @@
  */
 
 /**
- * rend_model.c: 3D Model Renderer v2.0
+ * 3D Model Renderer v2.0
  *
- * Note: Light vectors and triangle normals are considered to be
- * in a totally independent, right-handed coordinate system.
+ * Note: Light vectors and triangle normals are in an entirely independent,
+ * right-handed coordinate system.
  *
- * There is some more confusion with Y and Z axes as the game uses
- * Z as the vertical axis and the rendering code and model definitions
- * use the Y axis.
+ * There is some more confusion with Y and Z axes as the game uses Z as the
+ * vertical axis and the rendering code and model definitions use the Y axis.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -862,10 +861,10 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_SelectTexUnits(2);
                 GL_ModulateTexture(11);
 
-                GL_ActiveTexture(GL_TEXTURE1);
+                glActiveTexture(GL_TEXTURE1);
                 GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
-                GL_ActiveTexture(GL_TEXTURE0);
+                glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
@@ -896,7 +895,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // Tex1*Color + Tex2RGB*ConstRGB
         GL_ModulateTexture(10);
 
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
         // Multiply by shininess.
@@ -904,7 +903,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             color[c] *= color[3];
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,

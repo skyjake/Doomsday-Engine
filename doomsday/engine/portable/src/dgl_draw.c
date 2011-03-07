@@ -72,7 +72,7 @@ static boolean inPrim = false;
 
 void GL_InitArrays(void)
 {
-    if(!GL_state.useArrays)
+    if(!GL_state.features.elementArrays)
         return;
     memset(arrays, 0, sizeof(arrays));
 }
@@ -136,7 +136,7 @@ void GL_EnableArrays(int vertices, int colors, int coords)
 
     if(vertices)
     {
-        if(!GL_state.useArrays)
+        if(!GL_state.features.elementArrays)
             arrays[AR_VERTEX].enabled = true;
         else
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -144,7 +144,7 @@ void GL_EnableArrays(int vertices, int colors, int coords)
 
     if(colors)
     {
-        if(!GL_state.useArrays)
+        if(!GL_state.features.elementArrays)
             arrays[AR_COLOR].enabled = true;
         else
             glEnableClientState(GL_COLOR_ARRAY);
@@ -154,15 +154,13 @@ void GL_EnableArrays(int vertices, int colors, int coords)
     {
         if(coords & (1 << i))
         {
-            if(!GL_state.useArrays)
+            if(!GL_state.features.elementArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = true;
             }
             else
             {
-#ifdef USE_MULTITEXTURE
-                glClientActiveTextureARB(GL_TEXTURE0 + i);
-#endif
+                glClientActiveTexture(GL_TEXTURE0 + i);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         }
@@ -177,7 +175,7 @@ void GL_DisableArrays(int vertices, int colors, int coords)
 
     if(vertices)
     {
-        if(!GL_state.useArrays)
+        if(!GL_state.features.elementArrays)
             arrays[AR_VERTEX].enabled = false;
         else
             glDisableClientState(GL_VERTEX_ARRAY);
@@ -185,7 +183,7 @@ void GL_DisableArrays(int vertices, int colors, int coords)
 
     if(colors)
     {
-        if(!GL_state.useArrays)
+        if(!GL_state.features.elementArrays)
             arrays[AR_COLOR].enabled = false;
         else
             glDisableClientState(GL_COLOR_ARRAY);
@@ -195,15 +193,13 @@ void GL_DisableArrays(int vertices, int colors, int coords)
     {
         if(coords & (1 << i))
         {
-            if(!GL_state.useArrays)
+            if(!GL_state.features.elementArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = false;
             }
             else
             {
-#ifdef USE_MULTITEXTURE
-                glClientActiveTextureARB(GL_TEXTURE0 + i);
-#endif
+                glClientActiveTexture(GL_TEXTURE0 + i);
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexCoordPointer(2, GL_FLOAT, 0, NULL);
             }
@@ -223,7 +219,7 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 
     if(vertices)
     {
-        if(!GL_state.useArrays)
+        if(!GL_state.features.elementArrays)
         {
             arrays[AR_VERTEX].enabled = true;
             arrays[AR_VERTEX].data = vertices;
@@ -237,7 +233,7 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
 
     if(colors)
     {
-        if(!GL_state.useArrays)
+        if(!GL_state.features.elementArrays)
         {
             arrays[AR_COLOR].enabled = true;
             arrays[AR_COLOR].data = colors;
@@ -253,66 +249,52 @@ void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
     {
         if(coords[i])
         {
-            if(!GL_state.useArrays)
+            if(!GL_state.features.elementArrays)
             {
                 arrays[AR_TEXCOORD0 + i].enabled = true;
                 arrays[AR_TEXCOORD0 + i].data = coords[i];
             }
             else
             {
-#ifdef USE_MULTITEXTURE
-                glClientActiveTextureARB(GL_TEXTURE0 + i);
-#endif
+                glClientActiveTexture(GL_TEXTURE0 + i);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                 glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
             }
         }
     }
 
-#ifndef UNIX
-    if(glLockArraysEXT)
-#endif
-        if(GL_state.useArrays && lock > 0)
-        {   // 'lock' is the number of vertices to lock.
-            glLockArraysEXT(0, lock);
-        }
+    if(GL_state.features.elementArrays && lock > 0)
+    {   // 'lock' is the number of vertices to lock.
+        glLockArraysEXT(0, lock);
+    }
 
     assert(!Sys_GLCheckError());
 }
 
 void GL_UnlockArrays(void)
 {
-    if(GL_state.useArrays)
-    {
-#ifndef UNIX
-        if(glUnlockArraysEXT)
-#endif
-            glUnlockArraysEXT();
-    }
-
+    if(!GL_state.features.elementArrays)
+        return;
+    glUnlockArraysEXT();
     assert(!Sys_GLCheckError());
 }
 
 void GL_ArrayElement(int index)
 {
-    if(GL_state.useArrays)
+    if(GL_state.features.elementArrays)
     {
         glArrayElement(index);
     }
     else
     {
-#ifdef USE_MULTITEXTURE
         int i;
         for(i = 0; i < numTexUnits; ++i)
         {
             if(!arrays[AR_TEXCOORD0 + i].enabled)
                 continue;
-            glMultiTexCoord2fvARB(GL_TEXTURE0 + i,
+            glMultiTexCoord2fv(GL_TEXTURE0 + i,
                 ((dgl_texcoord_t*)arrays[AR_TEXCOORD0 + i].data)[index].st);
         }
-#else
-        glTexCoord2fv(((dgl_texcoord_t*)arrays[AR_TEXCOORD0].data)[index].st);
-#endif
 
         if(arrays[AR_COLOR].enabled)
             glColor4ubv(((dgl_color_t*) arrays[AR_COLOR].data)[index].rgba);
@@ -328,7 +310,7 @@ void GL_DrawElements(dglprimtype_t type, int count, const uint *indices)
         (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
          DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
 
-    if(GL_state.useArrays)
+    if(GL_state.features.elementArrays)
     {
         glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
     }
@@ -389,20 +371,12 @@ void DGL_Color4fv(const float* vec)
 
 void DGL_TexCoord2f(byte target, float s, float t)
 {
-#ifdef USE_MULTITEXTURE
-    glMultiTexCoord2fARB(GL_TEXTURE0 + target, s, t);
-#else
-    glTexCoord2f(s, t);
-#endif
+    glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
 }
 
 void DGL_TexCoord2fv(byte target, float* vec)
 {
-#ifdef USE_MULTITEXTURE
-    glMultiTexCoord2fvARB(GL_TEXTURE0 + target, vec);
-#else
-    glTexCoord2fv(vec);
-#endif
+    glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
 }
 
 void DGL_Vertex2f(float x, float y)

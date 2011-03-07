@@ -60,41 +60,44 @@
  * Configure available features
  * \todo Move out of this header.
  */
-#define USE_MULTITEXTURE                1
 #define USE_TEXTURE_COMPRESSION_S3      1
 
 /**
  * High-level GL state information.
  */
 typedef struct gl_state_s {
-    int maxTexFilterAniso;
-    int maxTexSize;
-#ifdef USE_MULTITEXTURE
-    int maxTexUnits;
-#endif
-#if WIN32
-    int multisampleFormat;
-#endif
-    boolean allowTexCompression;
+    /// Global config:
     boolean forceFinishBeforeSwap;
-    boolean haveCubeMap;
-    boolean useArrays;
-    boolean useFog;
-    boolean useMultiTex;
-    boolean useTexCompression;
-    boolean useTexFilterAniso;
-    boolean useVSync;
-    float currentLineWidth, currentPointSize;
+    int maxTexFilterAniso;
+    int maxTexSize; // Logical pixels.
+    int maxTexUnits;
+    int multisampleFormat;
+
+    /// Current state:
+    boolean currentUseFog;
+    boolean currentUseTexCompression;
     float currentGrayMipmapFactor;
-    // Extension availability bits:
+    float currentLineWidth;
+    float currentPointSize;
+
+    /// Feature (abstract) availability bits:
+    /// Vendor and implementation agnostic.
+    struct {
+        uint blendSubtract : 1;
+        uint elementArrays : 1;
+        uint genMipmap : 1;
+        uint multisample : 1;
+        uint texCompression : 1;
+        uint texFilterAniso : 1;
+        uint texNonPowTwo : 1;
+        uint vsync : 1;
+    } features;
+
+    /// Extension availability bits:
     struct {
         uint blendSub : 1;
-        uint framebufferObject : 1;
         uint genMipmapSGIS : 1;
         uint lockArray : 1;
-#ifdef USE_MULTITEXTURE
-        uint multiTex : 1;
-#endif
 #ifdef USE_TEXTURE_COMPRESSION_S3
         uint texCompressionS3 : 1;
 #endif
@@ -102,7 +105,7 @@ typedef struct gl_state_s {
         uint texEnvCombNV : 1;
         uint texEnvCombATI : 1;
         uint texFilterAniso : 1;
-        uint texNonPow2 : 1;
+        uint texNonPowTwo : 1;
 #if WIN32
         uint wglMultisampleARB : 1;
         uint wglSwapIntervalEXT : 1;
@@ -123,31 +126,19 @@ typedef enum arraytype_e {
     AR_TEXCOORD7
 } arraytype_t;
 
-#ifdef USE_MULTITEXTURE
-#  define DGL_MAX_TEXTURE_UNITS  (GL_state.useMultiTex? GL_state.maxTexUnits : 1)
-#  ifdef WIN32
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
-extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
-#  endif
-#else
-#  define DGL_MAX_TEXTURE_UNITS  (1)
-#endif
-
 extern gl_state_t GL_state;
 
 #ifdef WIN32
-# ifdef GL_EXT_framebuffer_object
-extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
-# endif
-
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
 extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
+extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTexture;
+extern PFNGLACTIVETEXTUREARBPROC glActiveTexture;
+extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2f;
+extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fv;
 #endif
 
 #ifndef GL_ATI_texture_env_combine3

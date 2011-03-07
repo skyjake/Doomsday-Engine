@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_automap.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -136,8 +136,6 @@ static int their_colors[] = {
 };
 #endif
 
-static int numTexUnits;
-static boolean envModAdd; // TexEnv: modulate and add is available.
 static DGLuint amMaskTexture = 0; // Used to mask the map primitives.
 
 // CODE --------------------------------------------------------------------
@@ -156,10 +154,6 @@ static void deleteMapLists(rautomap_data_t* rmap)
 
 void Rend_AutomapInit(void)
 {
-    // Does the graphics library support multitexturing?
-    numTexUnits = DD_GetInteger(DD_MAX_TEXTURE_UNITS);
-    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
-
     memset(rautomaps, 0, sizeof(rautomaps));
 }
 
@@ -170,8 +164,7 @@ void Rend_AutomapInit(void)
 void Rend_AutomapLoadData(void)
 {
 #if !__JDOOM64__
-    int                 i;
-    char                namebuf[9];
+    char namebuf[9];
 #endif
 
     if(IS_DEDICATED)
@@ -179,17 +172,18 @@ void Rend_AutomapLoadData(void)
 
 #if !__JDOOM64__
     // Load the marker patches.
+    { int i;
     for(i = 0; i < 10; ++i)
     {
         MARKERPATCHES; // Check the macros eg: "sprintf(namebuf, "AMMNUM%d", i)" for jDoom
         R_PrecachePatch(namebuf, &markerPatches[i]);
-    }
+    }}
 #endif
 
     if(autopageLumpNum != -1)
         autopageLumpNum = W_CheckNumForName("AUTOPAGE");
 
-    if(numTexUnits > 1)
+    if(DD_GetInteger(DD_MAX_TEXTURE_UNITS) > 1)
     {   // Great, we can replicate the map fade out effect using multitexture,
         // load the mask texture.
         if(!amMaskTexture && !Get(DD_NOVIDEO))
@@ -954,7 +948,7 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg, int pl
     vectorgraphicid_t vgId = AM_GetVectorGraphic(mcfg, AMO_THINGPLAYER);
     float size = PLAYERRADIUS;
     int i;
- 
+
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* p = &players[i];
@@ -1137,7 +1131,7 @@ static void drawMarks(const automap_t* map)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_DrawRect(-w/2, h/2, w, -h, 1, 1, 1, alpha);
-        
+
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();

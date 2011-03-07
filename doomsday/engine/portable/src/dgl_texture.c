@@ -420,7 +420,7 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, DGLuint palid, int width, int h
  */
 static GLint ChooseTextureFormat(int comps)
 {
-    boolean compress = (GL_state.useTexCompression && GL_state.allowTexCompression);
+    boolean compress = (GL_state.features.texCompression && GL_state.currentUseTexCompression);
 
     if(!(comps == 1 || comps == 3 || comps == 4))
         Con_Error("ChooseTextureFormat: Unsupported comps: %i.", comps);
@@ -538,7 +538,7 @@ static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int h
     free(faded);
     free(image);
 
-    if(GL_state.useTexFilterAniso)
+    if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(-1 /*best*/));
 
@@ -557,7 +557,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
         return false;
 
     // Check that the texture dimensions are valid.
-    if(!GL_state.extensions.texNonPow2 &&
+    if(!GL_state.features.texNonPowTwo &&
        (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
         return false;
 

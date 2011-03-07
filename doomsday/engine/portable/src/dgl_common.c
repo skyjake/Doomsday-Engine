@@ -53,13 +53,6 @@ void GL_SetGrayMipmap(int lev)
     GL_state.currentGrayMipmapFactor = lev / 255.0f;
 }
 
-void GL_ActiveTexture(const DGLenum texture)
-{
-#ifdef USE_MULTITEXTURE
-    glActiveTextureARB(texture);
-#endif
-}
-
 /**
  * Requires a texture environment mode that can add and multiply.
  * Nvidia's and ATI's appropriate extensions are supported, other cards will
@@ -119,11 +112,11 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
 void envModMultiTex(int activate)
 {
     // Setup TU 2: The modulated texture.
-    GL_ActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE1);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     // Setup TU 1: The dynamic light.
-    GL_ActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     envAddColoredAlpha(activate, GL_SRC_ALPHA);
 
     // This is a single-pass mode. The alpha should remain unmodified
@@ -147,29 +140,29 @@ void GL_ModulateTexture(int mode)
     {
     case 0:
         // No modulation: just replace with texture.
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         break;
 
     case 1:
         // Normal texture modulation with primary color.
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         break;
 
     case 12:
         // Normal texture modulation on both stages. TU 1 modulates with
         // primary color, TU 2 with TU 1.
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         break;
 
     case 2:
     case 3:
         // Texture modulation and interpolation.
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
         if(mode == 2)
@@ -195,7 +188,7 @@ void GL_ModulateTexture(int mode)
 
         // TU 1: Interpolate between texture 1 and 2, using the constant
         // alpha as the factor.
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE1);
@@ -219,7 +212,7 @@ void GL_ModulateTexture(int mode)
     case 5:
     case 10:
         // Sector light * texture + dynamic light.
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         envAddColoredAlpha(true, mode == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
 
         // Alpha remains unchanged.
@@ -227,8 +220,7 @@ void GL_ModulateTexture(int mode)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
-            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA,
-                      GL_ONE_MINUS_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
             glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
@@ -243,19 +235,19 @@ void GL_ModulateTexture(int mode)
             glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
         }
 
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         break;
 
     case 6:
         // Simple dynlight addition (add to primary color).
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         envAddColoredAlpha(true, GL_SRC_ALPHA);
         break;
 
     case 7:
         // Dynlight addition without primary color.
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
@@ -268,7 +260,7 @@ void GL_ModulateTexture(int mode)
     case 8:
     case 9:
         // Texture and Detail.
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
@@ -281,7 +273,7 @@ void GL_ModulateTexture(int mode)
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         if(mode == 8)
         {
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -296,7 +288,7 @@ void GL_ModulateTexture(int mode)
         // Normal modulation, alpha of 2nd stage.
         // Tex0: texture
         // Tex1: shiny texture
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
@@ -306,7 +298,7 @@ void GL_ModulateTexture(int mode)
         glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
         glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
         glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
@@ -328,10 +320,8 @@ void GL_ModulateTexture(int mode)
 
 void GL_BlendOp(int op)
 {
-#ifndef UNIX
-    if(!glBlendEquationEXT)
+    if(!GL_state.features.blendSubtract)
         return;
-#endif
     glBlendEquationEXT(op);
 }
 
@@ -349,17 +339,17 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
 
 static __inline void enableTexUnit(byte id)
 {
-    GL_ActiveTexture(GL_TEXTURE0 + id);
+    glActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
 }
 
 static __inline void disableTexUnit(byte id)
 {
-    GL_ActiveTexture(GL_TEXTURE0 + id);
+    glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
 
     // Implicit disabling of texcoord array.
-    if(!GL_state.useArrays)
+    if(!GL_state.features.elementArrays)
     {
         GL_DisableArrays(0, 0, 1 << id);
     }
@@ -385,22 +375,22 @@ void GL_SelectTexUnits(int count)
 
 void GL_SetTextureCompression(boolean on)
 {
-    GL_state.allowTexCompression = on;
+    GL_state.currentUseTexCompression = on;
 }
 
 void GL_SetVSync(boolean on)
 {
+    if(!GL_state.features.vsync)
+        return;
 #ifdef WIN32
-    if(GL_state.extensions.wglSwapIntervalEXT)
-    {
-        wglSwapIntervalEXT(on? 1 : 0);
-        GL_state.useVSync = on;
-    }
+    wglSwapIntervalEXT(on? 1 : 0);
 #endif
 }
 
 void GL_SetMultisample(boolean on)
 {
+    if(!GL_state.features.multisample)
+        return;
 #if WIN32
     if(on)
         glEnable(GL_MULTISAMPLE_ARB);
@@ -435,7 +425,7 @@ boolean DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_FOG:
-        *v = GL_state.useFog;
+        *v = GL_state.currentUseFog;
         break;
 
     case DGL_CURRENT_COLOR_R:
@@ -484,7 +474,7 @@ boolean DGL_SetInteger(int name, int value)
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        GL_ActiveTexture(GL_TEXTURE0 + (byte) value);
+        glActiveTexture(GL_TEXTURE0 + (byte)value);
         break;
 
     case DGL_MODULATE_TEXTURE:
@@ -589,7 +579,7 @@ int DGL_Enable(int cap)
 
     case DGL_FOG:
         glEnable(GL_FOG);
-        GL_state.useFog = true;
+        GL_state.currentUseFog = true;
         break;
 
     case DGL_SCISSOR_TEST:
@@ -621,7 +611,7 @@ void DGL_Disable(int cap)
 
     case DGL_FOG:
         glDisable(GL_FOG);
-        GL_state.useFog = false;
+        GL_state.currentUseFog = false;
         break;
 
     case DGL_SCISSOR_TEST:

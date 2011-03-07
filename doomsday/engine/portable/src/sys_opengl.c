@@ -52,20 +52,14 @@
 gl_state_t GL_state;
 
 #ifdef WIN32
-#  ifdef GL_EXT_framebuffer_object
-PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT = NULL;
-#  endif
-
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 
-#  ifdef USE_MULTITEXTURE
-PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTextureARB = NULL;
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB = NULL;
+PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture = NULL;
+PFNGLACTIVETEXTUREARBPROC glActiveTexture = NULL;
 
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
-PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB = NULL;
-#  endif
+PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2f = NULL;
+PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fv = NULL;
 
 PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT = NULL;
 PFNGLLOCKARRAYSEXTPROC glLockArraysEXT = NULL;
@@ -105,14 +99,6 @@ static int query(const char* ext)
 
 static void initialize(void)
 {
-    double version = strtod((const char*) glGetString(GL_VERSION), NULL);
-
-    if(version >= 1.3 && ArgExists("-vtxar") && !ArgExists("-novtxar"))
-        GL_state.useArrays = true;
-
-    if(0 != (GL_state.forceFinishBeforeSwap = ArgExists("-glfinish")))
-        Con_Message("  glFinish() forced before swapping buffers.\n");
-
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &GL_state.maxTexSize);
 
 #ifdef WIN32
@@ -124,24 +110,35 @@ static void initialize(void)
 #ifdef WIN32
         GETPROC(glLockArraysEXT);
         GETPROC(glUnlockArraysEXT);
+        if(NULL == glLockArraysEXT || NULL == glUnlockArraysEXT)
+            GL_state.features.elementArrays = false;
 #endif
     }
+    if(ArgExists("-vtxar") && !ArgExists("-novtxar"))
+        GL_state.features.elementArrays = true;
 
     if(0 != (GL_state.extensions.texFilterAniso = query("GL_EXT_texture_filter_anisotropic")))
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxTexFilterAniso);
-        if(!ArgExists("-noanifilter"))
-            GL_state.useTexFilterAniso = true;
     }
+    if(ArgExists("-noanifilter"))
+        GL_state.features.texFilterAniso = false;
 
-    if(!ArgExists("-notexnonpow2"))
-       GL_state.extensions.texNonPow2 = query("GL_ARB_texture_non_power_of_two");
+    GL_state.extensions.texNonPowTwo = query("GL_ARB_texture_non_power_of_two");
+    if(ArgExists("-notexnonpow2") || ArgExists("-notexnonpowtwo"))
+        GL_state.features.texNonPowTwo = false;
 
     if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
     {
 #ifdef WIN32
         GETPROC(glBlendEquationEXT);
+        if(NULL == glBlendEquationEXT)
+            GL_state.features.blendSubtract = false;
 #endif
+    }
+    else
+    {
+        GL_state.features.blendSubtract = false;
     }
 
     // ARB_texture_env_combine
@@ -156,62 +153,49 @@ static void initialize(void)
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
-    if(!ArgExists("-notexcomp"))
+    if(0 != (GL_state.extensions.texCompressionS3 = query("GL_EXT_texture_compression_s3tc")))
     {
         GLint iVal;
-        GL_state.extensions.texCompressionS3 = query("GL_EXT_texture_compression_s3tc");
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        if(iVal && glGetError() == GL_NO_ERROR)
-            GL_state.useTexCompression = true;
+        if(iVal == 0 || glGetError() != GL_NO_ERROR)
+            GL_state.features.texCompression = false;
     }
+#else
+    GL_state.features.texCompression = false;
 #endif
+    if(ArgExists("-notexcomp"))
+        GL_state.features.texCompression = false;
 
-#ifdef USE_MULTITEXTURE
-    // Enabled by default if available.
-    if(0 != (GL_state.extensions.multiTex = query("GL_ARB_multitexture")))
-    {
-#  ifdef WIN32
-        GETPROC(glClientActiveTextureARB);
-        GETPROC(glActiveTextureARB);
-        GETPROC(glMultiTexCoord2fARB);
-        GETPROC(glMultiTexCoord2fvARB);
-#  endif
-
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
-        // But sir, we are simple people; two units is enough.
-        if(GL_state.maxTexUnits > 2)
-            GL_state.maxTexUnits = 2;
-        GL_state.useMultiTex = true;
-    }
+#ifdef WIN32
+    GETPROC(glActiveTexture);
+    GETPROC(glClientActiveTexture);
+    GETPROC(glMultiTexCoord2f);
+    GETPROC(glMultiTexCoord2fv);
 #endif
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
 
     // Automatic mipmap generation.
-    if(!ArgExists("-nosgm") &&
-       0 != (GL_state.extensions.genMipmapSGIS = query("GL_SGIS_generate_mipmap")))
-    {
-        // Use nice quality, please.
-        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-    }
-
-    if(0 != (GL_state.extensions.framebufferObject = query("GL_EXT_framebuffer_object")))
-    {
-#ifdef WIN32
-        GETPROC(glGenerateMipmapEXT);
-#endif
-    }
+    GL_state.extensions.genMipmapSGIS = query("GL_SGIS_generate_mipmap");
+    if(0 == GL_state.extensions.genMipmapSGIS || ArgExists("-nosgm"))
+        GL_state.features.genMipmap = false;
 
 #ifdef WIN32
     if(0 != (GL_state.extensions.wglSwapIntervalEXT = query("WGL_EXT_swap_control")))
     {
         GETPROC(wglSwapIntervalEXT);
     }
+    if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
+        GL_state.features.vsync = false;
 
-    if(query("WGL_ARB_multisample"))
+    if(0 != (GL_state.extensions.wglMultisampleARB = query("WGL_ARB_multisample")))
     {
         GETPROC(wglChoosePixelFormatARB);
-        if(wglChoosePixelFormatARB)
-            GL_state.extensions.wglMultisampleARB = true;
     }
+    if(0 == GL_state.extensions.wglMultisampleARB || NULL == wglChoosePixelFormatARB)
+        GL_state.features.multisample = false;
+#else
+    GL_state.features.multisample = false;
+    GL_state.features.vsync = false;
 #endif
 }
 
@@ -245,12 +229,6 @@ static void printGLUInfo(void)
     {
         Con_Message("  Variable Texture Anisotropy Unavailable.\n");
     }
-
-#if GL_EXT_texture_lod_bias
-    { float lodBiasMax = 0;
-    glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS, &lodBiasMax);
-    Con_Message("  Maximum Texture LOD Bias: %3.1f\n", lodBiasMax); }
-#endif
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
     Con_Message("  Maximum Texture Size: %i\n", iVal);
@@ -293,7 +271,6 @@ static void testMultisampling(HDC hDC)
 
     if(valid && numFormats >= 1)
     {   // This will do nicely.
-        GL_state.extensions.wglMultisampleARB = 1;
         GL_state.multisampleFormat = pixelFormat;
     }
     else
@@ -303,8 +280,11 @@ static void testMultisampling(HDC hDC)
                                         &pixelFormat, &numFormats);
         if(valid && numFormats >= 1)
         {
-            GL_state.extensions.wglMultisampleARB = 1;
             GL_state.multisampleFormat = pixelFormat;
+        }
+        else
+        {   // Give up.
+            GL_state.features.multisample = false;
         }
     }
 }
@@ -418,7 +398,7 @@ static void createDummyWindow(application_t* app)
         {
             PROC wglGetExtensionsStringARB;
             const GLubyte* extensions;
-            
+
             GETPROC(wglGetExtensionsStringARB);
             extensions = ((const GLubyte*(__stdcall*)(HDC))wglGetExtensionsStringARB)(hDC);
 
@@ -456,12 +436,28 @@ boolean Sys_GLPreInit(void)
     if(initedGL)
         return true; // Already inited.
 
-    memset(&GL_state, 0, sizeof(GL_state));
-    GL_state.allowTexCompression = true;
-    GL_state.maxTexFilterAniso = 1;
-#ifdef USE_MULTITEXTURE
+    memset(&GL_state.extensions, 0, sizeof(GL_state.extensions));
+    // Init assuming ideal configuration.
+    GL_state.forceFinishBeforeSwap = ArgExists("-glfinish");
+    GL_state.maxTexFilterAniso = 4;
+    GL_state.maxTexSize = 4096;
     GL_state.maxTexUnits = 1;
-#endif
+    GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
+
+    GL_state.features.blendSubtract = true;
+    GL_state.features.genMipmap = true;
+    GL_state.features.multisample = true;
+    GL_state.features.texCompression = true;
+    GL_state.features.texFilterAniso = true;
+    GL_state.features.texNonPowTwo = true;
+    GL_state.features.vsync = true;
+    GL_state.features.elementArrays = false;
+
+    GL_state.currentGrayMipmapFactor = 0;
+    GL_state.currentLineWidth = 1.5f;
+    GL_state.currentPointSize = 1.5f;
+    GL_state.currentUseFog = false;
+    GL_state.currentUseTexCompression = true;
 
 #ifdef WIN32
     // We want to be able to use multisampling if available so lets create a
@@ -483,6 +479,14 @@ boolean Sys_GLInitialize(void)
 
     if(firstTimeInit)
     {
+        double version = strtod((const char*) glGetString(GL_VERSION), NULL);
+        if(version < 1.4)
+        {
+            Sys_CriticalMessagef("OpenGL implementation reports version %.1f\n"
+                "The minimum supported version is 1.4", version);
+            return false;
+        }
+
         initialize();
         printGLUInfo();
 
@@ -504,11 +508,6 @@ void Sys_GLConfigureDefaultState(void)
 {
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
-    { double version = strtod((const char*) glGetString(GL_VERSION), 0);
-    // If older than 1.4, disable use of cube maps.
-    GL_state.haveCubeMap = !(version < 1.4); }
-
-    // Here we configure the OpenGL state and set projection matrix.
     glFrontFace(GL_CW);
     glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -517,8 +516,7 @@ void Sys_GLConfigureDefaultState(void)
 
     glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
-    if(GL_state.haveCubeMap)
-        glDisable(GL_TEXTURE_CUBE_MAP);
+    glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -543,16 +541,18 @@ void Sys_GLConfigureDefaultState(void)
     // Setup for antialiased lines/points.
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    GL_state.currentLineWidth = 1.5f;
     glLineWidth(GL_state.currentLineWidth);
 
     glEnable(GL_POINT_SMOOTH);
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    GL_state.currentPointSize = 1.5f;
     glPointSize(GL_state.currentPointSize);
 
     glShadeModel(GL_SMOOTH);
 #endif
+
+    // Use nice quality for mipmaps please.
+    if(GL_state.features.genMipmap && GL_state.extensions.genMipmapSGIS)
+        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 
     // Alpha blending is a go!
     glEnable(GL_BLEND);
@@ -561,21 +561,14 @@ void Sys_GLConfigureDefaultState(void)
     glAlphaFunc(GL_GREATER, 0);
 
     // Default state for the white fog is off.
-    GL_state.useFog = 0;
     glDisable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogi(GL_FOG_END, 2100);   // This should be tweaked a bit.
+    glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
     glFogfv(GL_FOG_COLOR, fogcol);
 
 #ifdef WIN32
-    // Default state for vsync is on.
-    GL_state.useVSync = true;
-    if(wglSwapIntervalEXT != NULL)
-    {
+    if(GL_state.features.vsync && wglSwapIntervalEXT != NULL)
         wglSwapIntervalEXT(1);
-    }
-#else
-    GL_state.useVSync = false;
 #endif
 
 #if DRMESA

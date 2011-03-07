@@ -648,7 +648,7 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
         {
             // Choose a suitable pixel format.
             // If multisampling is available, make use of it.
-            if(GL_state.extensions.wglMultisampleARB)
+            if(GL_state.features.multisample)
             {
                 pixForm = GL_state.multisampleFormat;
             }

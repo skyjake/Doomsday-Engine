@@ -272,7 +272,7 @@ static void rlBind(DGLuint tex, int magMode)
 
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
-    if(GL_state.useTexFilterAniso)
+    if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(texAniso));
 #ifdef _DEBUG
@@ -297,7 +297,7 @@ static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
     if(!tmu->tex)
         return;
 
-    GL_ActiveTexture(GL_TEXTURE0 + (byte) unit);
+    glActiveTexture(GL_TEXTURE0 + (byte)unit);
     rlBind(tmu->tex, tmu->magMode);
 }
 
@@ -909,55 +909,17 @@ void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
             rcolors, numVertices, rTU[TU_PRIMARY].blendMode, numLights, modTex, modColor, rTU);
 }
 
-#ifdef USE_MULTITEXTURE
-static __inline drawPrimitive(const primhdr_t* hdr, int conditions,
-    const uint coords[MAX_TEX_UNITS])
-{
-    ushort i;
-    int j;
-    glBegin(hdr->type);
-    for(i = 0; i < hdr->numIndices; ++i)
-    {
-        const uint index = hdr->indices[i];
-        for(j = 0; j < numTexUnits; ++j)
-        {
-            if(coords[j])
-                glMultiTexCoord2fvARB(GL_TEXTURE0 + j, texCoords[coords[j] - 1][index].st);
-        }
-        if(!(conditions & DCF_NO_COLOR))
-            glColor4ubv(colors[index].rgba);
-        glVertex3fv(vertices[index].xyz);
-    }
-    glEnd();
-}
-#else
-static __inline drawPrimitive(const primhdr_t* hdr, int conditions,
-    const uint coords[MAX_TEX_UNITS])
-{
-    ushort i;
-    glBegin(hdr->type);
-    for(i = 0; i < hdr->numIndices; ++i)
-    {
-        const uint index = hdr->indices[i];
-        if(coords[0])
-            glTexCoord2fv(texCoords[coords[0] - 1][index].st);
-        if(!(conditions & DCF_NO_COLOR))
-            glColor4ubv(colors[index].rgba);
-        glVertex3fv(vertices[index].xyz);
-    }
-    glEnd();
-}
-#endif
-
 /**
  * Draws the privitives that match the conditions. If no condition bits
  * are given, all primitives are considered eligible.
  */
 static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
-                           const rendlist_t* list)
+    const rendlist_t* list)
 {
-    primhdr_t*              hdr;
-    boolean                 skip, bypass = false;
+    primhdr_t* hdr;
+    boolean skip, bypass = false;
+    ushort i;
+    int j;
 
     // Should we just skip all this?
     if(conditions & DCF_SKIP)
@@ -1008,7 +970,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
         {   // Render the primitive.
             if(conditions & DCF_SET_LIGHT_ENV)
             {   // Use the correct texture and color for the light.
-                GL_ActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
+                glActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
                 rlBind(hdr->modTex, GL_LINEAR);
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
                 // Make sure the light is not repeated.
@@ -1022,7 +984,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {   // Primitive-specific texture translation & scale.
                 if(conditions & DCF_SET_MATRIX_DTEXTURE0)
                 {
-                    GL_ActiveTexture(GL_TEXTURE0);
+                    glActiveTexture(GL_TEXTURE0);
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
@@ -1031,7 +993,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 }
                 if(conditions & DCF_SET_MATRIX_DTEXTURE1)
                 {   // Primitive-specific texture translation & scale.
-                    GL_ActiveTexture(GL_TEXTURE1);
+                    glActiveTexture(GL_TEXTURE1);
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
@@ -1044,7 +1006,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {   // Primitive-specific texture translation & scale.
                 if(conditions & DCF_SET_MATRIX_TEXTURE0)
                 {
-                    GL_ActiveTexture(GL_TEXTURE0);
+                    glActiveTexture(GL_TEXTURE0);
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
@@ -1053,7 +1015,7 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 }
                 if(conditions & DCF_SET_MATRIX_TEXTURE1)
                 {
-                    GL_ActiveTexture(GL_TEXTURE1);
+                    glActiveTexture(GL_TEXTURE1);
                     glMatrixMode(GL_TEXTURE);
                     glPushMatrix();
                     glLoadIdentity();
@@ -1067,20 +1029,33 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 GL_BlendMode(hdr->blendMode);
             }
 
-            drawPrimitive(hdr, conditions, coords);
+            glBegin(hdr->type);
+            for(i = 0; i < hdr->numIndices; ++i)
+            {
+                const uint index = hdr->indices[i];
+                for(j = 0; j < numTexUnits; ++j)
+                {
+                    if(coords[j])
+                        glMultiTexCoord2fv(GL_TEXTURE0 + j, texCoords[coords[j] - 1][index].st);
+                }
+                if(!(conditions & DCF_NO_COLOR))
+                    glColor4ubv(colors[index].rgba);
+                glVertex3fv(vertices[index].xyz);
+            }
+            glEnd();
 
             // Restore the texture matrix if changed.
             if(conditions & DCF_SET_MATRIX_TEXTURE)
             {
                 if(conditions & DCF_SET_MATRIX_TEXTURE0)
                 {
-                    GL_ActiveTexture(GL_TEXTURE0);
+                    glActiveTexture(GL_TEXTURE0);
                     glMatrixMode(GL_TEXTURE);
                     glPopMatrix();
                 }
                 if(conditions & DCF_SET_MATRIX_TEXTURE1)
                 {
-                    GL_ActiveTexture(GL_TEXTURE1);
+                    glActiveTexture(GL_TEXTURE1);
                     glMatrixMode(GL_TEXTURE);
                     glPopMatrix();
                 }
@@ -1089,13 +1064,13 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
             {
                 if(conditions & DCF_SET_MATRIX_DTEXTURE0)
                 {
-                    GL_ActiveTexture(GL_TEXTURE0);
+                    glActiveTexture(GL_TEXTURE0);
                     glMatrixMode(GL_TEXTURE);
                     glPopMatrix();
                 }
                 if(conditions & DCF_SET_MATRIX_DTEXTURE1)
                 {
-                    GL_ActiveTexture(GL_TEXTURE1);
+                    glActiveTexture(GL_TEXTURE1);
                     glMatrixMode(GL_TEXTURE);
                     glPopMatrix();
                 }
