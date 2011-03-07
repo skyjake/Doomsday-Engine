@@ -48,6 +48,22 @@
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
+ * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
+ * Possible values are "Unstable", "Candidate" and "Stable".
+ */
+#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Stable"
+
+/**
+ * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
+ * will be marked accordingly, indicating that this is a special build,
+ * for example, an alpha/beta/release candidate/etc and the SpecialBuild
+ * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
+ */
+#define DOOMSDAY_RELEASE_FULL   1
+
+/**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
@@ -60,13 +76,5 @@
 #endif
 
 #define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
-
-/**
- * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
- * will be marked accordingly, indicating that this is a special build,
- * for example, an alpha/beta/release candidate/etc and the SpecialBuild
- * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
- */
-#define DOOMSDAY_RELEASE_FULL   1
 
 #endif

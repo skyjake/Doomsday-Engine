@@ -463,13 +463,13 @@ ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-FILE (GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c )
+FILE (GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c ${CMAKE_SOURCE_DIR}/engine/portable/include/*.h )
 
 SET ( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
 
 IF (UNIX)
     INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
-	FILE (GLOB DENG_ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c )
+    FILE (GLOB DENG_ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c ${CMAKE_SOURCE_DIR}/engine/unix/include/*.h )
     SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${LZSS_SOURCES})
 ENDIF (UNIX)
 
@@ -478,7 +478,8 @@ IF (APPLE)
 	INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/mac/include )
 	FILE (GLOB DENG_OSX_SOURCES 
         ${CMAKE_SOURCE_DIR}/engine/mac/src/*.m 
-        ${CMAKE_SOURCE_DIR}/engine/mac/src/*.c )
+        ${CMAKE_SOURCE_DIR}/engine/mac/src/*.c
+        ${CMAKE_SOURCE_DIR}/engine/mac/include/*.h )
 	SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${DENG_OSX_SOURCES})
 ENDIF (APPLE)
 

@@ -49,19 +49,21 @@
 #   define RANGECHECK
 #endif
 
-#ifndef DOOMSDAY_VER_ID
-#   ifdef _DEBUG
-#       define DOOMSDAY_VER_ID "+D DGL"
-#   else
-#       define DOOMSDAY_VER_ID "DGL"
-#   endif
+#ifdef RANGECHECK
+#   define DOOMSDAY_VER_ID_RANGECHECK " +R"
+#else
+#   define DOOMSDAY_VER_ID_RANGECHECK ""
 #endif
 
-#ifdef RANGECHECK
-#   define DOOMSDAY_VERSIONTEXT DOOMSDAY_VERSION_TEXT" +R "__DATE__" ("DOOMSDAY_VER_ID")"
+#ifdef _DEBUG
+#   define DOOMSDAY_VER_ID_DEBUG " +D"
 #else
-#   define DOOMSDAY_VERSIONTEXT DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
+#   define DOOMSDAY_VER_ID_DEBUG ""
 #endif
+
+#define DOOMSDAY_VER_ID DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK " OpenGL"
+
+#define DOOMSDAY_VERSIONTEXT DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
 
 #define SAFEDIV(x,y)    (!(y) || !((x)/(y))? 1 : (x)/(y))
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
