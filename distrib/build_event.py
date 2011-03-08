@@ -91,7 +91,7 @@ def builds_by_time():
     return builds
     
     
-def count_word(fn, word):
+def count_log_word(fn, word):
     txt = unicode(gzip.open(fn).read(), 'latin1')
     pos = 0
     count = 0
@@ -106,20 +106,55 @@ def count_word(fn, word):
     
 def count_log_status(fn):
     """Returns tuple of (#warnings, #errors) in the fn."""
-    return (count_word(fn, 'error'), count_word(fn, 'warning'))    
+    return (count_log_word(fn, 'error'), count_log_word(fn, 'warning'))    
     
     
-def html_build_description(name, encoded=True):
+def count_word(word, inText):
+    pos = 0
+    count = 0
+    while True:
+        pos = inText.find(word, pos)
+        if pos < 0: break
+        count += 1
+        pos += len(word)
+    return count
+    
+    
+def list_package_files(name):
     buildDir = os.path.join(EVENT_DIR, name)
-    
-    msg = ''
-    
-    # What do we have here?
+
     files = glob.glob(os.path.join(buildDir, '*.dmg')) + \
             glob.glob(os.path.join(buildDir, '*.exe')) + \
             glob.glob(os.path.join(buildDir, '*.deb'))
             
-    files = [os.path.basename(f) for f in files]
+    return [os.path.basename(f) for f in files]
+    
+
+def text_build_summary(name):
+    msg = "The build event was started on %s." % (time.strftime(RFC_TIME, 
+                                                  time.gmtime(build_timestamp(name))))
+    
+    msg += ' It'
+    
+    pkgCount = len(list_package_files(name))
+        
+    changesName = os.path.join(EVENT_DIR, name, 'changes.html')
+    if os.path.exists(changesName):
+        msg += " contains %i commits and" % count_word('<li>', file(changesName).read())
+        
+    msg += " produced %i installable binary package%s." % \
+        (pkgCount, 's' if (pkgCount != 1) else '')
+    
+    return msg
+    
+        
+def html_build_description(name, encoded=True):
+    buildDir = os.path.join(EVENT_DIR, name)
+    
+    msg = '<p>' + text_build_summary(name) + '</p>'
+    
+    # What do we have here?
+    files = list_package_files(name)
     
     # Prepare compiler logs.
     for f in glob.glob(os.path.join(buildDir, 'build*txt')):
@@ -131,7 +166,7 @@ def html_build_description(name, encoded=True):
             ('Ubuntu (64-bit)', 'amd64.deb', ['linux2-64bit'])]
     
     # Print out the matrix.
-    msg += '<table cellspacing="4" border="0">'
+    msg += '<p><table cellspacing="4" border="0">'
     msg += '<tr style="text-align:left;"><th>OS<th>Binary<th><tt>stdout</tt><th>Err.<th>Warn.<th><tt>stderr</tt><th>Err.<th>Warn.</tr>'
     
     for osName, osExt, osIdent in oses:
@@ -180,15 +215,15 @@ def html_build_description(name, encoded=True):
 
         msg += '</tr>'
     
-    msg += '</table>'
+    msg += '</table></p>'
     
     # Changes.
     chgFn = os.path.join(buildDir, 'changes.html')
     if os.path.exists(chgFn):
         msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
-    
-    if encoded: return '<![CDATA[' + msg + ']]>'
-    
+        
+    # Enclose it in a CDATA block if needed.
+    if encoded: return '<![CDATA[' + msg + ']]>'    
     return msg
     
 
@@ -338,8 +373,6 @@ def write_index_html(tag):
     print >> f, "<head><title>Build %s</title></head>" % tag[5:]
     print >> f, "<body>"
     print >> f, "<h1>Build %s</h1>" % tag[5:]
-    print >> f, "<p>The build event was started on %s.</p>" % (time.strftime(RFC_TIME, 
-        time.gmtime(build_timestamp(tag))))
     print >> f, html_build_description(tag, False)
     print >> f, "</body>"
     print >> f, "</html>"
@@ -371,6 +404,7 @@ def update_feed():
         print >> out, '<link>%s/%s/</link>' % (BUILD_URI, tag)
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
         print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, time.gmtime(timestamp))
+        print >> out, '<atom:summary>%s</atom:summary>' % text_build_summary(tag)
         print >> out, '<description>%s</description>' % html_build_description(tag)
         print >> out, '<guid isPermaLink="false">%s</guid>' % tag
         print >> out, '</item>'
