@@ -61,7 +61,13 @@
 #   define DOOMSDAY_VER_ID_DEBUG ""
 #endif
 
-#define DOOMSDAY_VER_ID DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK " OpenGL"
+#ifdef __64BIT__
+#   define DOOMSDAY_VER_ID_64BIT " 64-bit"
+#else
+#   define DOOMSDAY_VER_ID_64BIT " 32-bit"
+#endif
+
+#define DOOMSDAY_VER_ID DOOMSDAY_RELEASE_TYPE DOOMSDAY_VER_ID_64BIT DOOMSDAY_VER_ID_DEBUG DOOMSDAY_VER_ID_RANGECHECK " OpenGL"
 
 #define DOOMSDAY_VERSIONTEXT DOOMSDAY_VERSION_TEXT" "__DATE__" ("DOOMSDAY_VER_ID")"
 
@@ -69,7 +75,13 @@
 #define ORDER(x,y,a,b)  ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
 #define LAST_CHAR(str)  (str[strlen(str) - 1])
 
-#define ASSERT_NOT_64BIT() {if( sizeof(void*)!=sizeof(int) ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
+#ifdef _DEBUG
+#  define ASSERT_64BIT(p) {if( sizeof(p)==8 ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
+#  define ASSERT_NOT_64BIT(p) {if( sizeof(p)!=8 ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
+#else
+#  define ASSERT_64BIT(p)
+#  define ASSERT_NOT_64BIT(p)
+#endif
 
 #define MAXEVENTS       256
 #define SBARHEIGHT      39         // status bar height at bottom of screen

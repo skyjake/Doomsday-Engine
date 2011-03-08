@@ -30,6 +30,10 @@
 #ifndef __DOOMSDAY_TYPES_H__
 #define __DOOMSDAY_TYPES_H__
 
+#ifdef __x86_64__
+#  define __64BIT__
+#endif
+
 /** In Win32 TCHAR and related macros change size depending on if they are
  using wide characters (unicode utf-16le) or ansi for functions and strings.
  on Linux and OSX we use utf-8 by default - which conveniently maps to the

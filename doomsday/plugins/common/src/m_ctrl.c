@@ -712,14 +712,11 @@ int M_ControlsPrivilegedResponder(event_t* ev)
         const char*     symbol = 0;
         const char*     bindContext = "game";
 
-        if(sizeof(const char*) == sizeof(ev->data1)) // 32-bit
-        {
-            symbol = (const char*) ev->data1;
-        }
-        else // 64-bit
-        {
-            symbol = (const char*)(((int64_t)ev->data1) | (((int64_t)ev->data2)) << 32);
-        }
+#ifndef __64BIT__
+        symbol = (const char*) ev->data1;
+#else
+        symbol = (const char*)(((int64_t)ev->data1) | (((int64_t)ev->data2)) << 32);
+#endif
 
         if(strncmp(symbol, "echo-", 5))
         {
