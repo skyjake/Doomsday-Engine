@@ -307,8 +307,7 @@ void N_SendPacket(int flags)
         // Ordered and confirmed messages are send over a TCP connection.
         N_SendDataBufferReliably(data, size, dest);
 #if _DEBUG
-VERBOSE2(
-Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", size, dest));
+        VERBOSE2(Con_Message("N_SendPacket: Sending %li bytes reliably to %i.\n", size, dest));
 #endif
     }
     else
@@ -455,7 +454,7 @@ void N_PrintHuffmanStats(void)
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %ul bytes, sent: %ul "
+        Con_Printf("Huffman efficiency: %.3f%% (data: %li bytes, sent: %li "
                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
                    numOutBytes, numSentBytes);
     }

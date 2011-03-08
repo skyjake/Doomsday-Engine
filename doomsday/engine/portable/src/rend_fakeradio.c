@@ -1018,7 +1018,7 @@ static void setSideShadowParams(rendershadowseg_params_t* p,
 
 static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
                           float wallLength, float texWidth, float texHeight,
-                          const float texOrigin[2][3], const float texOffset[2],
+                          /*const*/ float texOrigin[2][3], const float texOffset[2],
                           boolean horizontal)
 {
     if(horizontal)

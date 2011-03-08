@@ -277,7 +277,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
 	if(!curl_easy_perform(session))
 	{
 #ifdef _DEBUG
-		printf(Str_Text(&response));
+		printf("%s", Str_Text(&response));
 #endif
 
 		// Let's parse the message.

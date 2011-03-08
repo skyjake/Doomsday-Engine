@@ -446,7 +446,7 @@ extern          "C" {
                                      int useMipmap, boolean clamped,
                                      int otherFlags);
     DGLuint         GL_NewTextureWithParams3(int format, int width,
-                                             int height, void* pixels,
+                                             int height, const void* pixels,
                                              int flags, int minFilter,
                                              int magFilter, int anisoFilter,
                                              int wrapS, int wrapT);

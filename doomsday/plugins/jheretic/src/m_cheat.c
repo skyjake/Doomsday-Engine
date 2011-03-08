@@ -382,7 +382,7 @@ static void printDebugInfo(int player)
     P_SetMessage(plr, textBuffer, false);
 
     // Also print some information to the console.
-    Con_Message(textBuffer);
+    Con_Message("%s", textBuffer);
     sub = plr->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
     Con_Message("  FloorZ:%g Material:%s\n",
