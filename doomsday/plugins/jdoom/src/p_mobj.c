@@ -823,9 +823,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
+    /*
     // Clients only spawn local objects.
     if(!(info->flags & MF_LOCAL) && IS_CLIENT)
         return NULL;
+    */
 
     // Not for deathmatch?
     if(deathmatch && (info->flags & MF_NOTDMATCH))

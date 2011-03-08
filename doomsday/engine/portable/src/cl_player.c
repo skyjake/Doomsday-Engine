@@ -100,7 +100,7 @@ void Cl_LocalCommand(void)
     player_t           *plr = &ddPlayers[consolePlayer];
     ddplayer_t         *ddpl = &plr->shared;
     clplayerstate_t    *s = &clPlayerStates[consolePlayer];
-    float               off, vel;
+    float               off, vel, offsetSensitivity = 100;
 
     if(ddMapTime < 0.333)
     {
@@ -115,18 +115,24 @@ void Cl_LocalCommand(void)
 
     //s->forwardMove = cl->lastCmd->forwardMove * 2048;
 
+    // Forward/backwards movement.
     P_GetControlState(consolePlayer, CTL_WALK, &vel, &off);
-    s->forwardMove = (off + vel) * 2048;
+    s->forwardMove = off * offsetSensitivity + vel;
 
-    s->sideMove = cl->lastCmd->sideMove * 2048;
-    s->angle = ddpl->mo->angle; //ddpl->clAngle; /* $unifiedangles */
+    // Sideways movement.
+    P_GetControlState(consolePlayer, CTL_SIDESTEP, &vel, &off);
+    s->sideMove = off * offsetSensitivity + vel;
+
+    s->angle = ddpl->mo->angle; /* $unifiedangles */
+
 #if _DEBUG
     if(s->forwardMove || s->sideMove)
     {
-        Con_Message("Cl_LocalCommand: fwd=%i sd=%i\n", s->forwardMove, s->sideMove);
+        Con_Message("Cl_LocalCommand: fwd=%f sd=%f\n", s->forwardMove, s->sideMove);
     }
     VERBOSE2(Con_Message("Cl_LocalCommand: angle=%x\n", s->angle));
 #endif
+
     s->turnDelta = 0;
 }
 

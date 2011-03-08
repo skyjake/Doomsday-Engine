@@ -475,6 +475,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     if(p->plr->flags & DDPF_CAMERA)
     {
+        VERBOSE(Con_Message("P_SpawnPlayer: Player %i is a camera.\n", plrNum));
+
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
         p->viewHeight = 0;
     }
@@ -576,6 +578,25 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 }
 
 /**
+ * Spawns the client's mobj on clientside.
+ */
+void P_SpawnClient(void)
+{
+#if __JHEXEN__
+    playerclass_t       pClass = cfg.playerClass[CONSOLEPLAYER];
+#else
+    playerclass_t       pClass = PCLASS_PLAYER;
+#endif
+
+#ifdef _DEBUG
+    Con_Message("P_SpawnClient: Spawning client player mobj (consoleplayer %i).\n", CONSOLEPLAYER);
+#endif
+
+    // The server will fix the player's position and angles soon after.
+    spawnPlayer(CONSOLEPLAYER, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false, false, false);
+}
+
+/**
  * Called by G_DoReborn if playing a net game.
  */
 void P_RebornPlayer(int plrNum)
@@ -636,11 +657,14 @@ void P_RebornPlayer(int plrNum)
     // Determine the spawn position.
     if(IS_CLIENT)
     {
+        P_SpawnClient();
+        return;
+
         // Anywhere will do for now.
-        pos[VX] = pos[VY] = pos[VZ] = 0;
-        angle = 0;
-        spawnFlags = MSF_Z_FLOOR;
-        makeCamera = true; // Clients spawn as spectators.
+        //pos[VX] = pos[VY] = pos[VZ] = 0;
+        //angle = 0;
+        //spawnFlags = MSF_Z_FLOOR;
+        //makeCamera = true; // Clients spawn as spectators.
     }
     else
     {
@@ -844,6 +868,13 @@ void P_AddBossSpot(float x, float y, angle_t angle)
 void P_SpawnPlayers(void)
 {
     int                 i;
+
+    if(IS_CLIENT)
+    {
+        // Spawn the client anywhere.
+        P_SpawnClient();
+        return;
+    }
 
     // If deathmatch, randomly spawn the active players.
     if(deathmatch)

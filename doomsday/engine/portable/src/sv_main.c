@@ -389,7 +389,7 @@ void Sv_HandlePacket(void)
             Msg_Read(buf, 16);
             if(strnicmp(buf, gx.GetVariable(DD_GAME_MODE), 16))
             {
-                Con_Printf("  Bad Game ID: %-.16s\n", buf);
+                Con_Printf("  Bad Game ID: %-.16s (expected %s)\n", buf, (char*)gx.GetVariable(DD_GAME_MODE));
                 N_TerminateClient(from);
                 break;
             }

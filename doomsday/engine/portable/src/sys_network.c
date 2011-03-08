@@ -484,8 +484,9 @@ boolean N_ReceiveReliably(nodeid_t from)
  */
 void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 {
-    int             result;
+    int             result = 0;
     netnode_t      *node = &netNodes[destination];
+    short           packetSize = 0;
 
     if(size == 0 || !node->sock || !node->hasJoined)
         return;
@@ -496,36 +497,30 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
                   "buffer.\n  Attempted size is %lu bytes.\n", (unsigned long) size);
     }
 
-    // Compose the entire message in the transmission buffer.
+    // Resize the buffer to fit the entire message + size short.
     if(transmissionBufferSize < size + 2)
     {
         transmissionBufferSize = size + 2;
         transmissionBuffer = M_Realloc(transmissionBuffer, size + 2);
     }
 
-    if(size > sizeof(short))
-        Con_Error("N_SendDataBufferReliably: Tried to send %lu bytes "
-                  "(max pkt size %lu).\n", (unsigned long) size,
-                  (unsigned long) sizeof(short));
-    {
-    short           packetSize = SHORT(size);
+    // Compose the message into the transmission buffer.
+    packetSize = SHORT(size);
     memcpy(transmissionBuffer, &packetSize, 2);
-    }
     memcpy(transmissionBuffer + 2, data, size);
 
+    // Send the data over the socket.
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
+
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %ul bytes, result=%ul\n",
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
                           (unsigned long) (size + 2), result) );
 #endif
-    if(result != size + 2)
-        perror("Socket error");
 
-/*    result = SDLNet_TCP_Send(node->sock, data, (int) size);
-#ifdef _DEBUG
-    Con_Message("N_SendDataBufferReliably: Sent data, result=%i\n", result);
-    if(result != size) perror("System error");
-#endif*/
+    if(result != size + 2)
+    {
+        perror("Socket error");
+    }
 }
 
 /**

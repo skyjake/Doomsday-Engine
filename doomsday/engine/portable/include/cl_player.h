@@ -34,8 +34,8 @@
 typedef struct clplayerstate_s {
     clmobj_t       *cmo;
     thid_t          mobjId;
-    int             forwardMove;
-    int             sideMove;
+    float           forwardMove;
+    float           sideMove;
     int             angle;
     angle_t         turnDelta;
     int             friction;
