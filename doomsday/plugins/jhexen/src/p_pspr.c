@@ -398,7 +398,7 @@ void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
     plr->readyWeapon = weapon;
     plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
     plr->update |= PSF_WEAPONS;
-    P_SetPsprite(plr, ps_weapon, weaponInfo[weapon][plr->class].mode[0].states[WSN_UP]);
+    P_SetPsprite(plr, ps_weapon, weaponInfo[weapon][plr->class_].mode[0].states[WSN_UP]);
 }
 
 /**
@@ -409,10 +409,10 @@ void P_BringUpWeapon(player_t *plr)
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
 
-    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class, 0);
+    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class_, 0);
 
     newState = wminfo->states[WSN_UP];
-    if(plr->class == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
+    if(plr->class_ == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
         newState = S_FAXEUP_G;
@@ -437,8 +437,8 @@ void P_FireWeapon(player_t *plr)
         return;
 
     // Psprite state.
-    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->attackState);
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class_)->attackState);
+    if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {   // Glowing axe.
         attackState = S_FAXEATK_G1;
@@ -447,10 +447,10 @@ void P_FireWeapon(player_t *plr)
     {
         if(plr->refire)
             attackState =
-                weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_ATTACK_HOLD];
+                weaponInfo[plr->readyWeapon][plr->class_].mode[0].states[WSN_ATTACK_HOLD];
         else
             attackState =
-                weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_ATTACK];
+                weaponInfo[plr->readyWeapon][plr->class_].mode[0].states[WSN_ATTACK];
     }
 
     P_SetPsprite(plr, ps_weapon, attackState);
@@ -468,7 +468,7 @@ void P_FireWeapon(player_t *plr)
 void P_DropWeapon(player_t *plr)
 {
     P_SetPsprite(plr, ps_weapon,
-                 weaponInfo[plr->readyWeapon][plr->class].mode[0].states[WSN_DOWN]);
+                 weaponInfo[plr->readyWeapon][plr->class_].mode[0].states[WSN_DOWN]);
 }
 
 /**
@@ -480,15 +480,15 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     ddpsprite_t *ddpsp;
 
     // Change plr from attack state
-    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->class)->attackState] &&
-       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->class)->attackEndState])
+    if(plr->plr->mo->state >= &STATES[PCLASS_INFO(plr->class_)->attackState] &&
+       plr->plr->mo->state <= &STATES[PCLASS_INFO(plr->class_)->attackEndState])
     {
-        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class)->normalState);
+        P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class_)->normalState);
     }
 
     if(plr->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class_, 0);
 
         // A weaponready sound?
         if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
@@ -505,7 +505,7 @@ void C_DECL A_WeaponReady(player_t *plr, pspdef_t *psp)
     // Check for autofire.
     if(plr->brain.attack)
     {
-        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class, 0);
+        wminfo = WEAPON_INFO(plr->readyWeapon, plr->class_, 0);
 
         if(!plr->attackDown || wminfo->autoFire)
         {
@@ -599,7 +599,7 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     }
 
     psp->pos[VY] = WEAPONTOP;
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        plr->ammo[AT_BLUEMANA].owned > 0)
     {
         P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
@@ -607,7 +607,7 @@ void C_DECL A_Raise(player_t *plr, pspdef_t *psp)
     else
     {
         P_SetPsprite(plr, ps_weapon,
-                     weaponInfo[plr->readyWeapon][plr->class].mode[0].
+                     weaponInfo[plr->readyWeapon][plr->class_].mode[0].
                      states[WSN_READY]);
     }
 }
@@ -720,7 +720,7 @@ void C_DECL A_FHammerAttack(player_t *plr, pspdef_t *psp)
 
   hammerdone:
     if(plr->ammo[AT_GREENMANA].owned <
-       weaponInfo[plr->readyWeapon][plr->class].mode[0].perShot[AT_GREENMANA])
+       weaponInfo[plr->readyWeapon][plr->class_].mode[0].perShot[AT_GREENMANA])
     {   // Don't spawn a hammer if the plr doesn't have enough mana.
         mo->special1 = false;
     }
@@ -2083,7 +2083,7 @@ void C_DECL A_PoisonBag(mobj_t* mo)
         return;
     player = mo->player;
 
-    if(player->class == PCLASS_FIGHTER || player->class == PCLASS_PIG)
+    if(player->class_ == PCLASS_FIGHTER || player->class_ == PCLASS_PIG)
     {
         type = MT_THROWINGBOMB;
         pos[VX] = mo->pos[VX];
@@ -2095,7 +2095,7 @@ void C_DECL A_PoisonBag(mobj_t* mo)
     {
         uint                an = mo->angle >> ANGLETOFINESHIFT;
 
-        if(player->class == PCLASS_CLERIC)
+        if(player->class_ == PCLASS_CLERIC)
             type = MT_POISONBAG;
         else
             type = MT_FIREBOMB;

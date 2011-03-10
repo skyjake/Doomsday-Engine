@@ -106,8 +106,8 @@ int CurrentPlrFrame = 0;
 
 menuitem_t MultiplayerItems[] = {
     {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
-    {ITT_EFUNC, 0, "join game", SCEnterJoinMenu, 0 },
-    {ITT_EFUNC, 0, "host game", SCEnterHostMenu, 0 },
+    {ITT_EFUNC, 0, "join game", SCEnterJoinMenu, 0 }
+    //{ITT_EFUNC, 0, "host game", SCEnterHostMenu, 0 },
 };
 
 menuitem_t MultiplayerServerItems[] = {
@@ -125,12 +125,12 @@ menu_t MultiplayerMenu = {
     0,
     116, 70,
     DrawMultiplayerMenu,
-    3, MultiplayerItems,
+    2, MultiplayerItems,
     0, MENU_NEWGAME,
     GF_FONTA,cfg.menuColor2,
     NULL, false,
     LINEHEIGHT_A,
-    0, 3
+    0, 2
 };
 
 #if __JHEXEN__ || __JSTRIFE__
@@ -557,7 +557,7 @@ void SCEnterMultiplayerMenu(int option, void* data)
     else
     {
         MultiplayerMenu.items = MultiplayerItems;
-        count = 3;
+        count = 2;
     }
     MultiplayerMenu.itemCount = MultiplayerMenu.numVisItems = count;
 

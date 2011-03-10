@@ -159,6 +159,7 @@ void NetSv_UpdateGameConfig(void)
         strcat(gameConfigString, " jump");
 }
 
+#if 0
 /**
  * \kludge Unravel a DDPT_COMMANDS (32) packet. Returns a pointer to a static
  * buffer that contains the ticcmds (kludge to work around the parameter
@@ -251,6 +252,7 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 
     return data;
 }
+#endif
 
 void NetSv_Ticker(void)
 {
@@ -343,16 +345,16 @@ void NetSv_Ticker(void)
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     // Keep track of player class changes (fighter, cleric, mage, pig).
     // Notify clients accordingly. This is mostly just FYI (it'll update
-    // pl->class on the clientside).
+    // pl->class_ on the clientside).
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
 
-        if(oldClasses[i] != players[i].class)
+        if(oldClasses[i] != players[i].class_)
         {
-            oldClasses[i] = players[i].class;
-            NetSv_SendPlayerClass(i, players[i].class);
+            oldClasses[i] = players[i].class_;
+            NetSv_SendPlayerClass(i, players[i].class_);
         }
     }
 #endif

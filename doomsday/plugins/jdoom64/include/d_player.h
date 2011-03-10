@@ -68,7 +68,7 @@ typedef enum {
 typedef struct player_s {
     ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class; // player class type
+    playerclass_t   class_; // player class type
     playerbrain_t   brain;
 
     // This is only used between maps, mo->health is used during maps.

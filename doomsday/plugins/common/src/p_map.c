@@ -1989,9 +1989,9 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->class == PCLASS_FIGHTER ||
-       t1->player->class == PCLASS_CLERIC ||
-       t1->player->class == PCLASS_MAGE))
+      (t1->player->class_ == PCLASS_FIGHTER ||
+       t1->player->class_ == PCLASS_CLERIC ||
+       t1->player->class_ == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
@@ -2051,9 +2051,9 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->class == PCLASS_FIGHTER ||
-       t1->player->class == PCLASS_CLERIC ||
-       t1->player->class == PCLASS_MAGE))
+      (t1->player->class_ == PCLASS_FIGHTER ||
+       t1->player->class_ == PCLASS_CLERIC ||
+       t1->player->class_ == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
@@ -2217,7 +2217,7 @@ boolean PTR_UseTraverse(intercept_t* in)
         if(OPENRANGE <= 0)
         {
             if(useThing->player)
-                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
                              useThing);
 
             return false; // Can't use through a wall.
@@ -2229,7 +2229,7 @@ boolean PTR_UseTraverse(intercept_t* in)
             float       pheight = useThing->pos[VZ] + useThing->height/2;
 
             if((OPENTOP < pheight) || (OPENBOTTOM > pheight))
-                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
                              useThing);
         }
 #endif
@@ -3087,7 +3087,7 @@ boolean PTR_PuzzleItemTraverse(intercept_t* in)
 
                 if(puzzleItemUser->player)
                 {
-                    switch(puzzleItemUser->player->class)
+                    switch(puzzleItemUser->player->class_)
                     {
                     case PCLASS_FIGHTER:
                         sound = SFX_PUZZLE_FAIL_FIGHTER;

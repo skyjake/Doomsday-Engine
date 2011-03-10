@@ -778,8 +778,18 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     if(ddEvent->type == E_SYMBOLIC)
     {
         ev->type = EV_SYMBOLIC;
-        ev->data1 = ((int64_t) ddEvent->symbolic.name) & 0xffffffff; // low dword
-        ev->data2 = ((int64_t) ddEvent->symbolic.name) >> 32; // high dword
+#ifdef __64BIT__
+        ASSERT_64BIT(int64_t);
+        ASSERT_64BIT(ddEvent->symbolic.name);
+
+        ev->data1 = (int)(((int64_t) ddEvent->symbolic.name) & 0xffffffff); // low dword
+        ev->data2 = (int)(((int64_t) ddEvent->symbolic.name) >> 32); // high dword
+#else
+        ASSERT_NOT_64BIT(ddEvent->symbolic.name);
+
+        ev->data1 = (int) ddEvent->symbolic.name;
+        ev->data2 = 0;
+#endif
     }
     else
     {

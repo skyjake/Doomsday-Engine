@@ -174,7 +174,7 @@ static const materialref_t* getMaterial(const char* regName,
 
 const materialref_t* GetMaterial(const char* name, boolean isFlat)
 {
-    return getMaterial(name, isFlat? &map->flats : &map->textures,
+    return getMaterial(name, (materialref_t* const**)(isFlat? &map->flats : &map->textures),
                        isFlat? map->numFlats : map->numTextures);
 }
 

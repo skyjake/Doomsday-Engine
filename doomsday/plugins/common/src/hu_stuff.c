@@ -1009,7 +1009,7 @@ static const int plrColors[] = {
         if(plr->morphTics > 0)
             info->pClass = PCLASS_PIG;
         else
-            info->pClass = plr->class;
+            info->pClass = plr->class_;
 #else
         info->pClass = PCLASS_PLAYER;
 #endif

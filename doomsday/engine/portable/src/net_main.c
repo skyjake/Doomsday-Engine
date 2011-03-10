@@ -346,6 +346,7 @@ boolean Net_IsLocalPlayer(int plrNum)
  */
 void Net_SendCommands(void)
 {
+#if 0
     uint                i;
     byte               *msg;
     ticcmd_t           *cmd;
@@ -391,6 +392,7 @@ void Net_SendCommands(void)
         // has been sent.
         memset(cmd, 0, TICCMD_SIZE);
     }
+#endif
 }
 
 static void Net_DoUpdate(void)
@@ -513,6 +515,7 @@ void Net_Update(void)
  */
 void Net_BuildLocalCommands(timespan_t time)
 {
+#if 0
     uint        i;
     ticcmd_t   *cmd;
 
@@ -540,6 +543,7 @@ void Net_BuildLocalCommands(timespan_t time)
         // will be sent periodically to the server.
         P_MergeCommand(clients[i].aggregateCmd, cmd);
     }
+#endif
 }
 
 /**
@@ -561,10 +565,10 @@ void Net_AllocArrays(void)
         memset(clients + i, 0, sizeof(clients[i]));
         // The server stores ticcmds sent by the clients to these
         // buffers.
-        clients[i].ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
+        //clients[i].ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
         // The last cmd that was executed is stored here.
-        clients[i].lastCmd = M_Calloc(TICCMD_SIZE);
-        clients[i].aggregateCmd = M_Calloc(TICCMD_SIZE);
+        //clients[i].lastCmd = M_Calloc(TICCMD_SIZE);
+        //clients[i].aggregateCmd = M_Calloc(TICCMD_SIZE);
         clients[i].runTime = -1;
     }
 }
@@ -580,12 +584,12 @@ void Net_DestroyArrays(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        M_Free(clients[i].ticCmds);
-        M_Free(clients[i].lastCmd);
-        M_Free(clients[i].aggregateCmd);
-        clients[i].ticCmds = NULL;
-        clients[i].lastCmd = NULL;
-        clients[i].aggregateCmd = NULL;
+        //M_Free(clients[i].ticCmds);
+        //M_Free(clients[i].lastCmd);
+        //M_Free(clients[i].aggregateCmd);
+        //clients[i].ticCmds = NULL;
+        //clients[i].lastCmd = NULL;
+        //clients[i].aggregateCmd = NULL;
     }
 }
 
@@ -714,6 +718,10 @@ int Net_TimeDelta(byte now, byte then)
  */
 int Net_GetTicCmd(void *pCmd, int player)
 {
+    return false;
+
+#if 0
+
     client_t *client = &clients[player];
     ticcmd_t *cmd = pCmd;
 
@@ -736,105 +744,6 @@ int Net_GetTicCmd(void *pCmd, int player)
 
     // Make sure the firsttic index is in range.
     client->firstTic %= BACKUPTICS;
-    return true;
-
-#if 0
-/*
-#if _DEBUG
-Con_Printf("GetTicCmd: Cl=%i, GT=%i (%i)...\n", player, gametic, (byte)gametic);
-
-// Check the lag stress.
-if(cl->lagStress > net_stressmargin)
-{
-   // Command lag should be increased, we're running out of cmds.
-   cl->lagStress -= net_stressmargin;
-   memcpy(cmd, cl->lastcmd, TICCMD_SIZE);   // Repeat lastcmd.
-   Con_Printf("  Increasing lag\n");
-   return true;
-}
-else if(cl->lagStress < -net_stressmargin)
-{
-   // Command lag should be decreased.
-   cl->lagStress += net_stressmargin;
-   cl->runTime++;
-   Con_Printf("  Decreasing lag\n");
-}
-#endif
-*/
-    for(;;)
-    {
-        if(Net_TimeDelta(gametic, cl->runTime) <= 0)
-        {
-/*
-#if _DEBUG
-Con_Printf("  Running in the future! Rt=%i\n", cl->runTime);
-#endif
-*/
-            future = true;
-            //cl->lagStress++;
-        }
-        else
-        {
-            future = false;
-        }
-        // Are there any commands left for this player?
-        if(!cl->numtics)
-        {
-            cl->lagStress++;
-            // Reuse the last command.
-            memcpy(cmd, cl->lastcmd, TICCMD_SIZE);
-            // Runtime advances.
-            if(!future)
-                cl->runTime++;
-/*
-#if _DEBUG
-Con_Printf("  Out of Cmds! Rt set to %i\n", cl->runTime);
-#endif
-*/
-            return false;
-        }
-
-        // There's at least one command in the buffer.
-        // There will be one less tic in the buffer after this.
-        cl->numtics--;
-        memcpy(cmd, &cl->ticcmds[TICCMD_IDX(cl->firsttic++)], TICCMD_SIZE);
-
-        // Make sure the firsttic iterator is in range.
-        if(cl->firsttic >= BACKUPTICS)
-            cl->firsttic = 0;
-        // Do we need to do any merging?
-        if(doMerge && gx.DiscardTicCmd)
-            gx.DiscardTicCmd(cl->lastcmd, cmd);
-
-        // This is the new last command.
-        memcpy(cl->lastcmd, cmd, TICCMD_SIZE);
-        // Check that the command is valid (not if its tick has already passed).
-        if(Net_TimeDelta(cl->runTime, cmd->time) >= 0)
-        {
-/*
-#if _DEBUG
-Con_Printf("  Obsolete Cmd! Rt=%i Ct=%i\n", cl->runTime, cmd->time);
-#endif
-*/
-            // Cmd is too old. Go to next command and merge this one with it.
-            doMerge = true;
-            continue;
-        }
-
-        cl->runTime = cmd->time;
-        // Note command lag.
-        cl->lag = Sv_Latency(cmd->time);
-        // The local player doesn't need lag stress, because we know it's
-        // always running exactly synced with the server, i.e. itself.
-        if(player && cl->numtics > 1)
-            cl->lagStress--;
-/*
-#if _DEBUG
-Con_Printf("  CmdLag=%i\n", cl->lag);
-#endif
-*/
-        break;
-    }
     return true;
 #endif
 }

@@ -738,7 +738,7 @@ void NetCl_UpdatePlayerInfo(byte *data)
     cfg.playerColor[num] = NetCl_ReadByte();
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = NetCl_ReadByte();
-    players[num].class = cfg.playerClass[num];
+    players[num].class_ = cfg.playerClass[num];
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
@@ -804,6 +804,7 @@ void NetCl_Paused(boolean setPause)
     DD_SetInteger(DD_CLIENT_PAUSED, paused);
 }
 
+#if 0
 /**
  * \kludge Write a DDPT_COMMANDS (32) packet. Returns a pointer to a static
  * buffer that contains the data (kludge to work around the parameter
@@ -907,6 +908,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 
     return msg;
 }
+#endif
 
 /**
  * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing

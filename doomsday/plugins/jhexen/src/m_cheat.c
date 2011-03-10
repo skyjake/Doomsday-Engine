@@ -270,7 +270,7 @@ static void giveArmor(player_t* plr)
 
     plr->update |= PSF_ARMOR_POINTS;
     for(i = 0; i < NUMARMOR; ++i)
-        plr->armorPoints[i] = PCLASS_INFO(plr->class)->armorIncrement[i];
+        plr->armorPoints[i] = PCLASS_INFO(plr->class_)->armorIncrement[i];
 }
 
 static void giveWeapons(player_t* plr)
@@ -454,7 +454,7 @@ static void printDebugInfo(int player)
     P_SetMessage(plr, textBuffer, false);
 
     // Also print some information to the console.
-    Con_Message(textBuffer);
+    Con_Message("%s", textBuffer);
     sub = plr->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
     Con_Message("  FloorZ:%g Material:%s\n",

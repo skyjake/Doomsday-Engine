@@ -359,9 +359,9 @@ DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
         // Let's do this right away. No need to take a copy.
         GL_UploadTextureContent(content);
 #ifdef _DEBUG
-Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
+        VERBOSE2(Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
             "Should be precached in busy mode?\n", content->name,
-            content->width, content->height);
+            content->width, content->height));
 #endif
         deferred = false; // We haven't deferred.
     }
@@ -389,7 +389,7 @@ Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
 }
 
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width,
-                                int height, void* pixels, int flags)
+                                int height, const void* pixels, int flags)
 {
     texturecontent_t c;
 
@@ -397,13 +397,13 @@ DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width,
     c.format = format;
     c.width = width;
     c.height = height;
-    c.buffer = pixels;
+    c.buffer = (void*)pixels;
     c.flags = flags;
     return GL_NewTexture(&c, NULL);
 }
 
 DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width,
-                                 int height, void* pixels, int flags,
+                                 int height, const void* pixels, int flags,
                                  int minFilter, int magFilter,
                                  int anisoFilter, int wrapS, int wrapT)
 {
@@ -413,7 +413,7 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width,
     c.format = format;
     c.width = width;
     c.height = height;
-    c.buffer = pixels;
+    c.buffer = (void*)pixels;
     c.flags = flags;
     c.magFilter = magFilter;
     c.minFilter = minFilter;
@@ -428,7 +428,7 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width,
  * of the paramaters use the DGL counterparts.
  */
 DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width,
-                                 int height, void* pixels, int flags,
+                                 int height, const void* pixels, int flags,
                                  int minFilter, int magFilter,
                                  int anisoFilter, int wrapS, int wrapT)
 {

@@ -55,7 +55,7 @@ SET(BUILD_SHARED_LIBS ON)
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
 OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
-OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
+OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" ON)
 OPTION (BUILDWADMAPCONVERT "Optionally build the WAD Map Converter plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
@@ -66,7 +66,7 @@ OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default O
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 
-MARK_AS_ADVANCED (BUILDJDOOM64)
+#MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
@@ -234,11 +234,14 @@ IF (ENDINESS STREQUAL "big endian")
     ADD_DEFINITIONS (-D__BIG_ENDIAN__)
 ENDIF (ENDINESS STREQUAL "big endian")
 
-IF (FINK)
-    ADD_DEFINITIONS (-DFINK)
-# #fink has advised that this may be needed to fix linking errors on OSX
-#   ADD_DEFINITIONS (-D__DARWIN_UNIX03)
-ENDIF (FINK)
+IF (NOT APPLE)
+    IF (CMAKE_SIZEOF_VOID_P MATCHES "8")
+        ADD_DEFINITIONS (-D__x86_64__)
+        MESSAGE( STATUS "Detected a 64-bit compiler, using __x86_64__." )
+    ELSE ()
+        MESSAGE( STATUS "Detected a 32-bit compiler." )
+    ENDIF ()
+ENDIF ()
 
 IF (NOT ENABLERANGECHECKING)
     ADD_DEFINITIONS (-DNORANGECHECKING)
@@ -296,11 +299,13 @@ IF (APPLE)
         SET(MACOS_VERSION "10.4")
     ENDIF()
 
+    MESSAGE( STATUS "Making a 32-bit build only." )
+
     IF(MACOS_VERSION STREQUAL "10.4" OR MACOS_VERSION STREQUAL "10.5")
 	    ADD_DEFINITIONS ( -DMACOS_10_4 )
         SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
-	    SET (CMAKE_OSX_ARCHITECTURES "ppc;i386")
-	    SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
+        SET (CMAKE_OSX_ARCHITECTURES "ppc;i386") # 32-bit
+        SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
 	    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
 	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
     	# 10.4 doesn't appear to have libpng.dylib as a system library.
@@ -310,7 +315,7 @@ IF (APPLE)
 	ELSE()
 	    ADD_DEFINITIONS ( -DMACOS_10_6 )
         SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
-	    SET (CMAKE_OSX_ARCHITECTURES "i386")
+        SET (CMAKE_OSX_ARCHITECTURES "i386")
 	    SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk")
 	    SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.6" )
 	    SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6" )
@@ -463,7 +468,10 @@ ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-FILE (GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c ${CMAKE_SOURCE_DIR}/engine/portable/include/*.h )
+FILE (GLOB DENG_PORTABLE_SOURCES
+    ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c
+    ${CMAKE_SOURCE_DIR}/engine/portable/include/*.h
+    ${CMAKE_SOURCE_DIR}/engine/api/*.h )
 
 SET ( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
 
@@ -620,6 +628,7 @@ IF (APPLE)
     SET (BUNDLE_BASE Doomsday)
     SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.app)
     ADD_CUSTOM_COMMAND( TARGET doomsday POST_BUILD
+        COMMAND echo "Updating the ${BUNDLE_BASE}.app bundle."
         COMMAND rm -rf ${BUNDLE}
         COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
         COMMAND cp doomsday ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}

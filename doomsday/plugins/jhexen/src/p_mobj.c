@@ -685,10 +685,10 @@ explode:
         if(player)
         {
             if((unsigned)
-               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) <
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class_)->runState) <
                4)
             {
-                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
             }
         }
         mo->mom[MX] = 0;
@@ -847,7 +847,7 @@ void P_MobjMoveZ(mobj_t *mo)
                         // Fix DOOM bug - dead players grunting when hitting the ground
                         // (e.g., after an archvile attack)
                         if(mo->player->health > 0)
-                            switch(mo->player->class)
+                            switch(mo->player->class_)
                             {
                             case PCLASS_FIGHTER:
                                 S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -986,7 +986,7 @@ static void landedOnThing(mobj_t* mo)
     else if(mo->mom[MZ] < -P_GetGravity() * 12 && !mo->player->morphTics)
     {
         S_StartSound(SFX_PLAYER_LAND, mo);
-        switch(mo->player->class)
+        switch(mo->player->class_)
         {
         case PCLASS_FIGHTER:
             S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -1900,7 +1900,7 @@ boolean P_HealRadius(player_t* player)
     params.origin[VY] = pmo->pos[VY];
     params.maxDistance = HEAL_RADIUS_DIST;
 
-    switch(player->class)
+    switch(player->class_)
     {
     case PCLASS_FIGHTER:
         DD_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);

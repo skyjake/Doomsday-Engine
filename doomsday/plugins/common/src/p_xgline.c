@@ -424,7 +424,7 @@ void XG_Dev(const char* format, ...)
     va_start(args, format);
     dd_vsnprintf(buffer, sizeof(buffer), format, args);
     strcat(buffer, "\n");
-    Con_Message(buffer);
+    Con_Message("%s", buffer);
     va_end(args);
 }
 

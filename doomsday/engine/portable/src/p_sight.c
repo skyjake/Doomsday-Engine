@@ -227,7 +227,7 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
 
     {
     // Check lines.
-    const seg_t**       segPtr = ssec->segs;
+    const seg_t** segPtr = (const seg_t**) ssec->segs;
 
     while(*segPtr)
     {

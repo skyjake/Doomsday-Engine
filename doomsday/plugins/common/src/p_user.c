@@ -340,7 +340,7 @@ void P_CheckPlayerJump(player_t *player)
 #endif
             player->plr->mo->mom[MZ] = power;
 
-        player->jumpTics = PCLASS_INFO(player->class)->jumpTics;
+        player->jumpTics = PCLASS_INFO(player->class_)->jumpTics;
 
 #if __JHEXEN__
         player->plr->mo->onMobj = NULL;
@@ -354,7 +354,7 @@ void P_MovePlayer(player_t *player)
     mobj_t     *plrmo = player->plr->mo;
     //ticcmd_t   *cmd = &player->plr->cmd;
     playerbrain_t *brain = &player->brain;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
+    classinfo_t *pClassInfo = PCLASS_INFO(player->class_);
     int         speed;
     float       forwardMove, sideMove;
 
@@ -637,7 +637,7 @@ void P_PlayerReborn(player_t* player)
     newTorch[player - players] = 0;
     newTorchDelta[player - players] = 0;
 # if __JHEXEN__
-    player->plr->mo->special1 = player->class;
+    player->plr->mo->special1 = player->class_;
     if(player->plr->mo->special1 > 2)
     {
         player->plr->mo->special1 = 0;
@@ -768,7 +768,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     }
 
 # if __JHEXEN__
-    if(player->class == PCLASS_FIGHTER)
+    if(player->class_ == PCLASS_FIGHTER)
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
@@ -801,9 +801,9 @@ boolean P_UndoPlayerMorph(player_t *player)
     player->health = mo->health = maxHealth;
     player->plr->mo = mo;
 # if __JHERETIC__
-    player->class = PCLASS_PLAYER;
+    player->class_ = PCLASS_PLAYER;
 # else
-    player->class = cfg.playerClass[playerNum];
+    player->class_ = cfg.playerClass[playerNum];
 # endif
     an = angle >> ANGLETOFINESHIFT;
 // REWRITE ME - I MATCH HEXEN UNTIL HERE
@@ -1114,7 +1114,7 @@ void P_PlayerThinkMove(player_t *player)
             {
                 playerNum = P_GetPlayerNum(player);
 
-                if(player->class == PCLASS_FIGHTER)
+                if(player->class_ == PCLASS_FIGHTER)
                 {
                     // The first type should be blue, and the
                     // third should be the Fighter's original gold color.
@@ -1133,7 +1133,7 @@ void P_PlayerThinkMove(player_t *player)
                 }
 
                 speedMo->target = plrmo;
-                speedMo->special1 = player->class;
+                speedMo->special1 = player->class_;
                 if(speedMo->special1 > 2)
                 {
                     speedMo->special1 = 0;
@@ -1249,7 +1249,7 @@ void P_PlayerThinkSounds(player_t* player)
 #if __JHEXEN__
     mobj_t*             plrmo = player->plr->mo;
 
-    switch(player->class)
+    switch(player->class_)
     {
         case PCLASS_FIGHTER:
             if(plrmo->mom[MZ] <= -35 &&
@@ -1370,7 +1370,7 @@ void P_PlayerThinkWeapons(player_t* player)
 
     if(newweapon != WT_NOCHANGE && newweapon != player->readyWeapon)
     {
-        if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
+        if(weaponInfo[newweapon][player->class_].mode[0].gameModeBits
            & gameModeBits)
         {
             player->pendingWeapon = newweapon;
@@ -1590,7 +1590,7 @@ void P_PlayerThinkPowers(player_t* player)
 #if __JHEXEN__
     if(player->powers[PT_INVULNERABILITY])
     {
-        if(player->class == PCLASS_CLERIC)
+        if(player->class_ == PCLASS_CLERIC)
         {
             if(!(mapTime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
                !(player->plr->mo->flags2 & MF2_DONTDRAW))
@@ -1625,7 +1625,7 @@ void P_PlayerThinkPowers(player_t* player)
         if(!(--player->powers[PT_INVULNERABILITY]))
         {
             player->plr->mo->flags2 &= ~(MF2_INVULNERABLE | MF2_REFLECTIVE);
-            if(player->class == PCLASS_CLERIC)
+            if(player->class_ == PCLASS_CLERIC)
             {
                 player->plr->mo->flags2 &= ~(MF2_DONTDRAW | MF2_NONSHOOTABLE);
                 player->plr->mo->flags &= ~(MF_SHADOW | MF_ALTSHADOW);
@@ -1671,7 +1671,7 @@ void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
     ddplayer_t* plr = player->plr;
     float vel, off, turnSpeed;
     float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
-    classinfo_t* pClassInfo = PCLASS_INFO(player->class);
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
@@ -1737,6 +1737,12 @@ void P_PlayerThinkUpdateControls(player_t* player)
     boolean             strafe = false;
     playerbrain_t      *brain = &player->brain;
     boolean             oldAttack = brain->attack;
+
+    if(IS_DEDICATED)
+    {
+        // There are no players on the server that need control.
+        return;
+    }
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
@@ -1909,10 +1915,10 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 #endif
 
     P_PlayerThinkUpdateControls(player);
+    P_PlayerThinkCamera(player); // $democam
 
     if(!IS_CLIENT) // Locally only.
     {
-        P_PlayerThinkCamera(player); // $democam
         P_PlayerThinkCheat(player);
     }
 
@@ -1924,10 +1930,10 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkMorph(player);
-        P_PlayerThinkAttackLunge(player);
-        P_PlayerThinkMove(player);
     }
 
+    P_PlayerThinkAttackLunge(player);
+    P_PlayerThinkMove(player);
     P_PlayerThinkFly(player);
     P_PlayerThinkJump(player);
     P_PlayerThinkView(player);

@@ -316,7 +316,7 @@ void DD_Ticker(timespan_t time)
     if(!Con_TransitionInProgress())
     {
         // Demo ticker. Does stuff like smoothing of view angles.
-        Net_BuildLocalCommands(time);
+        //Net_BuildLocalCommands(time);
         Demo_Ticker(time);
         P_Ticker(time);
 

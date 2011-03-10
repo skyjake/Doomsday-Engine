@@ -172,11 +172,8 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.NetPlayerEvent = D_NetPlayerEvent;
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
-    gx.NetWriteCommands = D_NetWriteCommands;
-    gx.NetReadCommands = D_NetReadCommands;
 
     // Data structure sizes.
-    gx.ticcmdSize = sizeof(ticcmd_t);
     gx.mobjSize = sizeof(mobj_t);
     gx.polyobjSize = sizeof(polyobj_t);
 

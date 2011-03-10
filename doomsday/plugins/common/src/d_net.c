@@ -231,6 +231,7 @@ int D_NetDisconnect(int before)
     return true;
 }
 
+/*
 void* D_NetWriteCommands(int numCommands, void* data)
 {
     // It's time to send ticcmds to the server.
@@ -243,6 +244,7 @@ void* D_NetReadCommands(size_t pktLength, void* data)
     // 'plrNumber' is the length of the packet.
     return NetSv_ReadCommands(data, pktLength);
 }
+*/
 
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
@@ -513,7 +515,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
-        players[CONSOLEPLAYER].class = bData[0];
+        players[CONSOLEPLAYER].class_ = bData[0];
         break;
 #endif
 

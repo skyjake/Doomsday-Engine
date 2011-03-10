@@ -1199,7 +1199,7 @@ typedef struct ticcmd_s {
 #define DDPT_HELLO              0
 #define DDPT_OK                 1
 #define DDPT_CANCEL             2
-#define DDPT_COMMANDS           32
+#define DDPT_COMMANDS_OBSOLETE  32
 #define DDPT_FIRST_GAME_EVENT   64
 #define DDPT_MESSAGE            67
 

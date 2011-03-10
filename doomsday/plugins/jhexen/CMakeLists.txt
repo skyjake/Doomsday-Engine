@@ -20,7 +20,7 @@
 ################################################################################
 
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
+FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c ${CMAKE_SOURCE_DIR}/plugins/common/include/*.h )
 
 ################################################################################
 ######################## External LZSS Files ###################################
@@ -75,7 +75,7 @@ IF (ENABLEMAO)
 	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/p_setup.c
 	${CMAKE_SOURCE_DIR}/plugins/jhexen/src/sn_sonix.c )
 ELSE (ENABLEMAO)
-	FILE(GLOB JHEXEN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jhexen/src/*.c)
+	FILE(GLOB JHEXEN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jhexen/src/*.c ${CMAKE_SOURCE_DIR}/plugins/jhexen/include/*.h )
 ENDIF (ENABLEMAO)
 
 IF (ENABLEMAO)

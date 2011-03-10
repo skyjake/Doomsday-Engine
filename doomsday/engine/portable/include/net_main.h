@@ -100,7 +100,7 @@ enum {
     PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
     PKT_COMMAND2 = 29,
 
-    PCL_COMMANDS = DDPT_COMMANDS,   // 32; ticcmds (handled by game)
+    PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT // 64
@@ -147,20 +147,22 @@ typedef struct {
     ident_t         id;
 
     // Ticcmd buffer. The server uses this when clients send it ticcmds.
-    byte           *ticCmds;
+    //byte           *ticCmds;
 
     // Number of tics in the buffer.
-    int             numTics;
+    //int             numTics;
 
     // Index of the first tic in the buffer.
-    int             firstTic;
+    //int             firstTic;
 
+    /*
     // Last command executed, reused if a new one isn't found.
     ticcmd_t       *lastCmd;
 
     // Clients merge several ticcmds into this one, which is them sent
     // periodically to the server.
     ticcmd_t       *aggregateCmd;
+    */
 
     int             lastTransmit;
 

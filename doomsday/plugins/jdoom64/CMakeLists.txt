@@ -1,5 +1,6 @@
 ## deng build scripts. 
-## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+## Copyright (c) 2011 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+## Copyright (c) 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
 ## the deng build scripts is free software; you can redistribute it and/or
@@ -20,7 +21,8 @@
 ################################################################################
 
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
+FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c
+	${CMAKE_SOURCE_DIR}/plugins/common/include/*.h )
 
 ################################################################################
 ######################## Doom64TC Game Plugin ##################################
@@ -30,7 +32,7 @@ ADD_DEFINITIONS (-D__JDOOM64__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB DOOM64TC_SOURCES src/*.c)
+FILE(GLOB DOOM64TC_SOURCES src/*.c include/*.h )
 
 ADD_LIBRARY (jdoom64 SHARED ${DOOM64TC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 

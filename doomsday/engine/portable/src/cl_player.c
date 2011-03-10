@@ -82,15 +82,17 @@ void Cl_InitPlayers(void)
     memset(fixPos, 0, sizeof(fixPos));
     memset(cpMom, 0, sizeof(cpMom));
 
+    /*
     // Clear psprites. The server will send them.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        client_t           *cl = &clients[i];
-
+        client_t *cl = &clients[i];
         memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
     }
+    */
 }
 
+#if 0
 /**
  * Updates the state of the local player by looking at lastCmd.
  */
@@ -100,12 +102,12 @@ void Cl_LocalCommand(void)
     player_t           *plr = &ddPlayers[consolePlayer];
     ddplayer_t         *ddpl = &plr->shared;
     clplayerstate_t    *s = &clPlayerStates[consolePlayer];
-    float               off, vel;
+    float               off, vel, offsetSensitivity = 100;
 
     if(ddMapTime < 0.333)
     {
         // In the very beginning of a map, moving is not allowed.
-        memset(cl->lastCmd, 0, TICCMD_SIZE);
+        //memset(cl->lastCmd, 0, TICCMD_SIZE);
         if(s->cmo)
         {
             s->cmo->mo.mom[MX] = 0;
@@ -115,20 +117,27 @@ void Cl_LocalCommand(void)
 
     //s->forwardMove = cl->lastCmd->forwardMove * 2048;
 
+    // Forward/backwards movement.
     P_GetControlState(consolePlayer, CTL_WALK, &vel, &off);
-    s->forwardMove = (off + vel) * 2048;
+    s->forwardMove = off * offsetSensitivity + vel;
 
-    s->sideMove = cl->lastCmd->sideMove * 2048;
-    s->angle = ddpl->mo->angle; //ddpl->clAngle; /* $unifiedangles */
+    // Sideways movement.
+    P_GetControlState(consolePlayer, CTL_SIDESTEP, &vel, &off);
+    s->sideMove = off * offsetSensitivity + vel;
+
+    s->angle = ddpl->mo->angle; /* $unifiedangles */
+
 #if _DEBUG
     if(s->forwardMove || s->sideMove)
     {
-        Con_Message("Cl_LocalCommand: fwd=%i sd=%i\n", s->forwardMove, s->sideMove);
+        Con_Message("Cl_LocalCommand: fwd=%f sd=%f\n", s->forwardMove, s->sideMove);
     }
     VERBOSE2(Con_Message("Cl_LocalCommand: angle=%x\n", s->angle));
 #endif
+
     s->turnDelta = 0;
 }
+#endif
 
 /**
  * Reads a single player delta from the message buffer and applies it to the

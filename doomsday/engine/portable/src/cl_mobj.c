@@ -737,12 +737,8 @@ void Cl_PredictMovement(void)
                 continue;
             }
 
-            // The local player gets a bit more complex prediction.
-            if(cmo->mo.dPlayer)
-            {
-                Cl_MovePlayer(P_GetDDPlayerIdx(cmo->mo.dPlayer));
-            }
-            else
+            // The local player is moved by the common game logic.
+            if(!cmo->mo.dPlayer)
             {
                 // Linear movement prediction with collisions, then.
                 Cl_MobjMove(cmo);
@@ -829,11 +825,10 @@ boolean Cl_RevealMobj(clmobj_t *cmo)
         // Don't reveal just yet. We lack a vital piece of information.
         return false;
     }
-/*
 #ifdef _DEBUG
-Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
+    Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted.\n", cmo->mo.thinker.id);
 #endif
-*/
+
     cmo->flags &= ~CLMF_HIDDEN;
 
     // Start a sound that has been queued for playing at the time
@@ -846,9 +841,9 @@ Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
     }
 
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                     cmo->mo.thinker.id, cmo->mo.state,
-                     cmo->mo.state - states) );
+    VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
+                         cmo->mo.thinker.id, cmo->mo.state,
+                         (int)(cmo->mo.state - states)) );
 #endif
 
     return true;
@@ -890,6 +885,10 @@ void Cl_ReadMobjDelta2(boolean skip)
         cmo = Cl_FindMobj(id);
         if(!cmo)
         {
+#ifdef _DEBUG
+            Con_Message("Cl_ReadMobjDelta: Creating new clmobj %i (hidden).\n", id);
+#endif
+
             // This is a new ID, allocate a new mobj.
             cmo = Cl_CreateMobj(id);
             cmo->mo.ddFlags |= DDMF_NOGRAVITY; // safer this way

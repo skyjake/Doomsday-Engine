@@ -445,8 +445,8 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
     client_t*           c = &clients[number];
 
     reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
-    reg->forwardMove = c->lastCmd->forwardMove;
-    reg->sideMove = c->lastCmd->sideMove;
+    reg->forwardMove = 0; //c->lastCmd->forwardMove;
+    reg->sideMove = 0; //c->lastCmd->sideMove;
     reg->angle = (ddpl->mo ? ddpl->mo->angle : 0);
     reg->turnDelta = (ddpl->mo ? ddpl->mo->angle - ddpl->lastAngle : 0);
     reg->friction = ddpl->mo &&

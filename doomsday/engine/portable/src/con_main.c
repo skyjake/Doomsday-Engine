@@ -1970,8 +1970,8 @@ D_CMD(Clear)
 
 D_CMD(Version)
 {
-    Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
-    Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_VERSION_LONG));
+    Con_Printf("Doomsday Engine %s\n", DOOMSDAY_VERSION_FULLTEXT);
+    Con_Printf("Game: %s\n", (char *) gx.GetVariable(DD_VERSION_LONG));
     Con_Printf("%s\n", DOOMSDAY_PROJECTURL);
     return true;
 }

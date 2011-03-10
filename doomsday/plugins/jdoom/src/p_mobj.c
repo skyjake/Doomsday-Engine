@@ -167,7 +167,7 @@ float P_MobjGetFriction(mobj_t *mo)
 static boolean isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES -
-                PCLASS_INFO(pl->class)->runState < 4;
+                PCLASS_INFO(pl->class_)->runState < 4;
 }
 
 static float getFriction(mobj_t* mo)
@@ -345,7 +345,7 @@ void P_MobjMoveXY(mobj_t *mo)
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
 
         // $voodoodolls: Do not zero mom!
         if(!(player && player->plr->mo != mo))
@@ -823,9 +823,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
+    /*
     // Clients only spawn local objects.
     if(!(info->flags & MF_LOCAL) && IS_CLIENT)
         return NULL;
+    */
 
     // Not for deathmatch?
     if(deathmatch && (info->flags & MF_NOTDMATCH))

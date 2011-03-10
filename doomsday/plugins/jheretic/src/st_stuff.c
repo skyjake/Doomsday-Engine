@@ -472,7 +472,7 @@ void ST_updateWidgets(int player)
     found = false;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon.
@@ -930,7 +930,7 @@ void ST_doFullscreenStuff(int player)
             // For each type of ammo this weapon takes.
             for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
             {
-                if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+                if(!weaponInfo[plr->readyWeapon][plr->class_].mode[lvl].ammoType[ammoType])
                     continue;
 
                 Draw_BeginZoom(cfg.hudScale, 2, 2);
@@ -1281,7 +1281,7 @@ void ST_createWidgets(int player)
     found = false;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
         STlib_InitNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,

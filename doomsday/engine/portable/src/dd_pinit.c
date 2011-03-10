@@ -223,7 +223,7 @@ boolean DD_EarlyInit(void)
         }
         else
         {
-            Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
+            Con_Message("Executable: " DOOMSDAY_VERSION_FULLTEXT ".\n");
 
             // Print the used command line.
             if(verbose)
