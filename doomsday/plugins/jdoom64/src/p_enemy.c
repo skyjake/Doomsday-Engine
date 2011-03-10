@@ -1710,7 +1710,7 @@ void C_DECL A_FatAttack1(mobj_t *actor)
  */
 void C_DECL A_FatAttack2(mobj_t *actor)
 {
-    fatFire(actor, MT_FATSHOT, -(FATSPREAD * 1.5), -FAT_DELTAANGLE,
+    fatFire(actor, MT_FATSHOT, (angle_t)(-(FATSPREAD * 1.5f)), -FAT_DELTAANGLE,
             FAT_ARM_EXTENSION_LONG, FAT_ARM_HEIGHT);
     fatFire(actor, MT_FATSHOT, FATSPREAD / 4, FAT_DELTAANGLE,
             FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);
