@@ -26,6 +26,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
