@@ -460,10 +460,10 @@ Draw_EndZoom();
         //// for each type of ammo this weapon takes.
         for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
-            if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammotype])
+            if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammotype])
                 continue;
 
-            sprintf(buf, "%i", plr->ammo[ammotype]);
+            //sprintf(buf, "%i", plr->ammo[ammotype]);
             pos = (h_width/2) - (M_StringWidth(buf, GF_FONTB)/2);
             M_WriteText2(pos, h_height - HUDBORDERY, buf, GF_FONTB,
                          cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);

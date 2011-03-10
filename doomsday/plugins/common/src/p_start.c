@@ -411,7 +411,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         G_PlayerReborn(plrNum);
 
     // \fixme Should this not occur before the reborn?
-    p->class = pClass;
+    p->class_ = pClass;
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
     if(IS_CLIENT)
@@ -423,7 +423,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     // Set color translations for player sprites.
 #if __JHEXEN__
-    if(p->class == PCLASS_FIGHTER &&
+    if(p->class_ == PCLASS_FIGHTER &&
        (p->colorMap == 0 || p->colorMap == 2))
     {
         // The first type should be blue, and the third should be the

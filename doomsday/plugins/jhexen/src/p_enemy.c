@@ -1384,7 +1384,7 @@ void C_DECL A_Scream(mobj_t* actor)
             else if(actor->health > -50)
             {   // Normal death sound.
                 //// \todo pull these from the class def.
-                switch(actor->player->class)
+                switch(actor->player->class_)
                 {
                 case PCLASS_FIGHTER:
                     sound = SFX_PLAYER_FIGHTER_NORMAL_DEATH;
@@ -1406,7 +1406,7 @@ void C_DECL A_Scream(mobj_t* actor)
             else if(actor->health > -100)
             {   // Crazy death sound.
                 //// \todo pull these from the class def.
-                switch(actor->player->class)
+                switch(actor->player->class_)
                 {
                 case PCLASS_FIGHTER:
                     sound = SFX_PLAYER_FIGHTER_CRAZY_DEATH;
@@ -1428,7 +1428,7 @@ void C_DECL A_Scream(mobj_t* actor)
             else
             {   // Extreme death sound.
                 //// \todo pull these from the class def.
-                switch(actor->player->class)
+                switch(actor->player->class_)
                 {
                 case PCLASS_FIGHTER:
                     sound = SFX_PLAYER_FIGHTER_EXTREME1_DEATH;
@@ -1617,7 +1617,7 @@ void C_DECL A_SkullPop(mobj_t *actor)
         plr = actor->player;
         actor->player = NULL;
         actor->dPlayer = NULL;
-        actor->special1 = plr->class;
+        actor->special1 = plr->class_;
         mo->player = plr;
         mo->dPlayer = plr->plr;
         mo->health = actor->health;

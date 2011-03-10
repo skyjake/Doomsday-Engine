@@ -530,7 +530,7 @@ void R_SetTranslation(mobj_t* mo)
         {
             tclass = 1;
 
-            if(mo->player->class == PCLASS_FIGHTER)
+            if(mo->player->class_ == PCLASS_FIGHTER)
             {   // Fighter's colors are a bit different.
                 if(tmap == 0)
                     tmap = 2;
@@ -1038,7 +1038,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoArmorSave +
+    gsvArmor = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
                         pl->armorPoints[ARMOR_ARMOR] +
                         pl->armorPoints[ARMOR_SHIELD] +
                         pl->armorPoints[ARMOR_HELMET] +
@@ -1569,7 +1569,7 @@ void G_PlayerReborn(int player)
     p->colorMap = cfg.playerColor[player];
 #endif
 #if __JHEXEN__
-    p->class = cfg.playerClass[player];
+    p->class_ = cfg.playerClass[player];
 #endif
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;

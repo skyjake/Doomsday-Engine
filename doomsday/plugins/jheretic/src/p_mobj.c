@@ -341,7 +341,7 @@ float P_MobjGetFriction(mobj_t *mo)
 static boolean isInWalkState(player_t* pl)
 {
     return pl->plr->mo->state - STATES -
-                PCLASS_INFO(pl->class)->runState < 4;
+                PCLASS_INFO(pl->class_)->runState < 4;
 }
 
 static float getFriction(mobj_t* mo)
@@ -538,7 +538,7 @@ void P_MobjMoveXY(mobj_t* mo)
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
 
         // $voodoodolls: Do not zero mom!
         if(!(player && player->plr->mo != mo))

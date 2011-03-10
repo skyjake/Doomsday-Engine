@@ -139,7 +139,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
+            if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
                 continue; // Weapon does not take this type of ammo.
 
             if(deathmatch)
@@ -165,7 +165,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[0].ammoType[i])
+            if(!weaponInfo[weapon][player->class_].mode[0].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             // Give one clip with a dropped weapon, two clips with a found

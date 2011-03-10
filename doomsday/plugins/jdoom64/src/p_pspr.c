@@ -140,7 +140,7 @@ void P_BringUpWeapon(player_t *player)
 {
     weaponmodeinfo_t   *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class, 0);
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
 
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
@@ -164,8 +164,8 @@ void P_FireWeapon(player_t *player)
     // Psprite state.
     player->plr->pSprites[0].state = DDPSP_FIRE;
 
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackState);
-    newstate = weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_ATTACK];
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
+    newstate = weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_ATTACK];
     P_SetPsprite(player, ps_weapon, newstate);
     NetSv_PSpriteChange(player - players, newstate);
     P_NoiseAlert(player->plr->mo, player->plr->mo);
@@ -176,7 +176,7 @@ void P_FireWeapon(player_t *player)
  */
 void P_DropWeapon(player_t *player)
 {
-    P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_DOWN]);
+    P_SetPsprite(player, ps_weapon, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_DOWN]);
 }
 
 /**
@@ -191,15 +191,15 @@ void C_DECL A_WeaponReady(player_t* player, pspdef_t* psp)
     DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
 
     // Get out of attack state.
-    if(player->plr->mo->state == &STATES[PCLASS_INFO(player->class)->attackState] ||
-       player->plr->mo->state == &STATES[PCLASS_INFO(player->class)->attackEndState])
+    if(player->plr->mo->state == &STATES[PCLASS_INFO(player->class_)->attackState] ||
+       player->plr->mo->state == &STATES[PCLASS_INFO(player->class_)->attackEndState])
     {
-        P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+        P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
     }
 
     if(player->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(player->readyWeapon, player->class, 0);
+        wminfo = WEAPON_INFO(player->readyWeapon, player->class_, 0);
 
         // A weaponready sound?
         if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
@@ -216,7 +216,7 @@ void C_DECL A_WeaponReady(player_t* player, pspdef_t* psp)
     // Check for autofire.
     if(player->brain.attack)
     {
-        wminfo = WEAPON_INFO(player->readyWeapon, player->class, 0);
+        wminfo = WEAPON_INFO(player->readyWeapon, player->class_, 0);
 
         if(!player->attackDown || wminfo->autoFire)
         {
@@ -272,7 +272,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
 
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
-       weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
+       weaponInfo[player->readyWeapon][player->class_].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -306,7 +306,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
     player->update |= PSF_READY_WEAPON;
 
     // Should we suddenly lower the weapon?
-    if(cfg.bobWeaponLower && !weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
+    if(cfg.bobWeaponLower && !weaponInfo[player->readyWeapon][player->class_].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
     }
@@ -322,7 +322,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     player->plr->pSprites[0].state = DDPSP_UP;
 
     // Should we disable the lowering?
-    if(!cfg.bobWeaponLower || weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch)
+    if(!cfg.bobWeaponLower || weaponInfo[player->readyWeapon][player->class_].mode[0].staticSwitch)
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -339,7 +339,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     psp->pos[VY] = WEAPONTOP;
 
     // The weapon has been raised all the way, so change to the ready state.
-    newstate = weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_READY];
+    newstate = weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_READY];
 
     P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -352,8 +352,8 @@ void C_DECL A_PlasmaShock(player_t* pl, pspdef_t* psp)
 
 void C_DECL A_GunFlash(player_t *player, pspdef_t *psp)
 {
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
-    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH]);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 }
 
 void C_DECL A_Punch(player_t *player, pspdef_t *psp)
@@ -475,7 +475,7 @@ void C_DECL A_FirePlasma(player_t* player, pspdef_t* psp)
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH] +
+                 weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH] +
                  (P_Random() & 1));
 
     //P_SetPsprite(player, ps_flash, S_NULL); // jd64 wha?
@@ -498,7 +498,7 @@ void C_DECL A_FireSingleLaser(player_t *player, pspdef_t *psp)
 
     P_ShotAmmo(player);
     P_SetPsprite(player, ps_flash,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH]);
+                 weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
         return;
@@ -633,11 +633,11 @@ void C_DECL A_FirePistol(player_t *player, pspdef_t *psp)
 {
     S_StartSound(SFX_PISTOL, player->plr->mo);
 
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH]);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -652,11 +652,11 @@ void C_DECL A_FireShotgun(player_t *player, pspdef_t *psp)
     int                 i;
 
     S_StartSound(SFX_SHOTGN, player->plr->mo);
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH]);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -675,11 +675,11 @@ void C_DECL A_FireShotgun2(player_t *player, pspdef_t *psp)
     int                 damage;
 
     S_StartSound(SFX_DSHTGN, player->plr->mo);
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
 
     P_ShotAmmo(player);
 
-    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH]);
+    P_SetPsprite(player, ps_flash, weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH]);
 
     player->update |= PSF_AMMO;
     if(IS_CLIENT)
@@ -726,12 +726,12 @@ void C_DECL A_FireCGun(player_t *player, pspdef_t *psp)
 {
     S_StartSound(SFX_PISTOL, player->plr->mo);
 
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackEndState);
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackEndState);
 
     P_ShotAmmo(player);
 
     P_SetPsprite(player, ps_flash,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_FLASH] + psp->state -
+                 weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_FLASH] + psp->state -
                  &STATES[S_CHAIN1]);
 
     player->update |= PSF_AMMO;

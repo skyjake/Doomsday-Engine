@@ -513,7 +513,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
-        players[CONSOLEPLAYER].class = bData[0];
+        players[CONSOLEPLAYER].class_ = bData[0];
         break;
 #endif
 

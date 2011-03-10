@@ -61,7 +61,7 @@
 #define VIEWHEIGHT          48
 
 #define FLOATBOBRES         64
-#define FLOATBOBOFFSET(n)   (FloatBobOffset[(n) < 0? 0 : (n) > FLOATBOBRES - 1? FLOATBOBRES - 1 : (n)])
+#define FLOATBOBOFFSET(n)   (FloatBobOffset[MIN_OF(((uint8_t)(n)), FLOATBOBRES - 1)])
 
 // Player radius for movement checking.
 #define PLAYERRADIUS        16

@@ -1002,7 +1002,7 @@ void C_DECL A_BatMove(mobj_t* actor)
         S_StartSound(SFX_BAT_SCREAM, actor);
 
     // Handle Z movement
-    actor->pos[VZ] = actor->target->pos[VZ] + 2 * FLOATBOBOFFSET( ((int)actor->args[0]) );
+    actor->pos[VZ] = actor->target->pos[VZ] + 2 * FLOATBOBOFFSET(actor->args[0]);
     actor->args[0] = (actor->args[0] + 3) & 63;
 }
 
