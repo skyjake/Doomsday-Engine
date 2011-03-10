@@ -388,14 +388,26 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
 void Cl_Ticker(void)
 {
     //static trigger_t fixed = { 1.0 / 35 };
-    static int  ticSendTimer = 0;
+    static int ticSendTimer = 0;
+    int i;
 
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
 
     //if(!M_RunTrigger(&fixed, time)) return;
 
-    Cl_LocalCommand();
+    // On clientside, players are represented by two mobjs: the real mobj,
+    // created by the Game, is the one that is visible and modified by game
+    // logic. We'll need to sync the hidden client mobj (that receives all
+    // the changes from the server) to match the changes. The game ticker
+    // has already been run when Cl_Ticker() is called, so let's update the
+    // player's clmobj to its updated state.
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        Cl_UpdatePlayerPos(i); //P_GetDDPlayerIdx(mo->dPlayer));
+    }
+
+    //Cl_LocalCommand();
     Cl_PredictMovement();
     //Cl_MovePsprites();
 

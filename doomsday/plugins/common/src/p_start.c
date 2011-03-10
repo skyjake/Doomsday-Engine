@@ -413,8 +413,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // \fixme Should this not occur before the reborn?
     p->class_ = pClass;
 
-    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
-    if(IS_CLIENT)
+    // On clients, mark the remote players.
+    if(IS_CLIENT && plrNum != CONSOLEPLAYER)
     {
         mo->flags &= ~MF_SOLID;
         mo->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;

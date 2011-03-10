@@ -1738,6 +1738,12 @@ void P_PlayerThinkUpdateControls(player_t* player)
     playerbrain_t      *brain = &player->brain;
     boolean             oldAttack = brain->attack;
 
+    if(IS_DEDICATED)
+    {
+        // There are no players on the server that need control.
+        return;
+    }
+
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
     brain->speed = (vel != 0);
@@ -1909,10 +1915,10 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 #endif
 
     P_PlayerThinkUpdateControls(player);
+    P_PlayerThinkCamera(player); // $democam
 
     if(!IS_CLIENT) // Locally only.
     {
-        P_PlayerThinkCamera(player); // $democam
         P_PlayerThinkCheat(player);
     }
 
@@ -1924,10 +1930,10 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkMorph(player);
-        P_PlayerThinkAttackLunge(player);
-        P_PlayerThinkMove(player);
     }
 
+    P_PlayerThinkAttackLunge(player);
+    P_PlayerThinkMove(player);
     P_PlayerThinkFly(player);
     P_PlayerThinkJump(player);
     P_PlayerThinkView(player);

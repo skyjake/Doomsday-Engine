@@ -737,12 +737,8 @@ void Cl_PredictMovement(void)
                 continue;
             }
 
-            // The local player gets a bit more complex prediction.
-            if(cmo->mo.dPlayer)
-            {
-                Cl_MovePlayer(P_GetDDPlayerIdx(cmo->mo.dPlayer));
-            }
-            else
+            // The local player is moved by the common game logic.
+            if(!cmo->mo.dPlayer)
             {
                 // Linear movement prediction with collisions, then.
                 Cl_MobjMove(cmo);

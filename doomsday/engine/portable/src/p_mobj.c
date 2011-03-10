@@ -570,6 +570,7 @@ static boolean heightClip(mobj_t *mo)
             mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 
+    /*
     // On clientside, players are represented by two mobjs: the real mobj,
     // created by the Game, is the one that is visible and modified in this
     // function. We'll need to sync the hidden client mobj (that receives
@@ -578,6 +579,7 @@ static boolean heightClip(mobj_t *mo)
     {
         Cl_UpdatePlayerPos(P_GetDDPlayerIdx(mo->dPlayer));
     }
+    */
 
     if(mo->ceilingZ - mo->floorZ < mo->height)
         return false;
