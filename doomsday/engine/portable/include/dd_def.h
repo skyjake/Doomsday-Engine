@@ -76,8 +76,8 @@
 #define LAST_CHAR(str)  (str[strlen(str) - 1])
 
 #ifdef _DEBUG
-#  define ASSERT_64BIT(p) {if( sizeof(p)!=8 ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
-#  define ASSERT_NOT_64BIT(p) {if( sizeof(p)==8 ) Con_Error("Pointer size assumption in "__FILE__" at line %i.\n", __LINE__);}
+#  define ASSERT_64BIT(p) {if(sizeof(p) != 8) Con_Error(#p" is not 64-bit in "__FILE__" at line %i.\n", __LINE__);}
+#  define ASSERT_NOT_64BIT(p) {if(sizeof(p) == 8) Con_Error(#p" is 64-bit in "__FILE__" at line %i.\n", __LINE__);}
 #else
 #  define ASSERT_64BIT(p)
 #  define ASSERT_NOT_64BIT(p)
