@@ -279,11 +279,15 @@ def update_changes(fromTag=None, toTag=None):
         if pos < 0: break
         end = logText.find('[[/subjectline]]', pos)
         
-        subject = logText[pos+15:end]
+        subject = logText[pos+15:end]    
         extra = ''
         if len(collated(subject)) > MAX_SUBJECT:
             extra = '...' + subject[MAX_SUBJECT:] + ' '
             subject = subject[:MAX_SUBJECT] + '...'
+        else:
+            # If there is a single dot at the end of the subject, remove it.
+            if subject[-1] == '.' and subject[-2] != '.':
+                subject = subject[:-1]
         
         # Do the replace.
         logText = logText[:pos] + subject + logText[end+16:]
