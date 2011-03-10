@@ -62,7 +62,7 @@ typedef struct unscaledmenustate_s {
     int             y;
 } unscaledmenustate_t;
 
-typedef struct {
+typedef struct menu_s {
     int             flags;
     int             x;
     int             y;
