@@ -179,8 +179,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
         ddPlayers[i].shared.inGame = (shake.playerMask & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = shake.yourConsole;
-    clients[consolePlayer].numTics = 0;
-    clients[consolePlayer].firstTic = 0;
+    //clients[consolePlayer].numTics = 0;
+    //clients[consolePlayer].firstTic = 0;
 
     isClient = true;
     isServer = false;

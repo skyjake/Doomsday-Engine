@@ -590,6 +590,7 @@ void Sv_GetPackets(void)
     {
         switch(netBuffer.msg.type)
         {
+#if 0
         case PCL_COMMANDS:
             // Determine who sent this packet.
             netconsole = netBuffer.player;
@@ -636,6 +637,7 @@ void Sv_GetPackets(void)
                 unpacked += TICCMD_SIZE;
             }
             break;
+#endif
 
         case PCL_ACK_SETS:
             // The client is acknowledging that it has received a number of
@@ -931,8 +933,8 @@ void Sv_StartNetGame(void)
         client->connected = false;
         client->ready = false;
         client->nodeID = 0;
-        client->numTics = 0;
-        client->firstTic = 0;
+        //client->numTics = 0;
+        //client->firstTic = 0;
         client->enterTime = 0;
         client->runTime = -1;
         client->lastTransmit = -1;

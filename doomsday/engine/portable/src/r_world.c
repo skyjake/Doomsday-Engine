@@ -1528,7 +1528,7 @@ void R_SetupMap(int mode, int flags)
             player_t           *plr = &ddPlayers[i];
             ddplayer_t         *ddpl = &plr->shared;
 
-            clients[i].numTics = 0;
+            //clients[i].numTics = 0;
 
             // Determine if the player is in the void.
             ddpl->inVoid = true;
