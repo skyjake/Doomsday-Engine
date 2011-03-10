@@ -23,7 +23,7 @@
 ######################## WAD Map Converter Plugin ##############################
 
 INCLUDE_DIRECTORIES ( include )
-FILE(GLOB WADMAPCONVERTER_SOURCES src/*.c)
+FILE(GLOB WADMAPCONVERTER_SOURCES src/*.c include/*.h )
 ADD_LIBRARY (dpwadmapconverter SHARED ${WADMAPCONVERTER_SOURCES})
 
 #IF (APPLE)

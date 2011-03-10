@@ -55,7 +55,7 @@ SET(BUILD_SHARED_LIBS ON)
 OPTION (BUILDJDOOM "Optionally build the jDoom plugin. Default ON" ON)
 OPTION (BUILDJHERETIC "Optionally build the jHeretic plugin. Default ON" ON)
 OPTION (BUILDJHEXEN "Optionally build the jHexen plugin. Default ON" ON)
-OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" OFF)
+OPTION (BUILDJDOOM64 "Optionally build the jDoom64 plugin. Default OFF" ON)
 OPTION (BUILDWADMAPCONVERT "Optionally build the WAD Map Converter plugin. Default ON" ON)
 OPTION (BUILDOPENAL "Optionally build the OpenAL plugin. Default OFF" OFF)
 OPTION (BUILDDEDICATED "Build as a dedicated server. Default OFF" OFF)
@@ -66,7 +66,7 @@ OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default O
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 
-MARK_AS_ADVANCED (BUILDJDOOM64)
+#MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
@@ -468,7 +468,10 @@ ADD_DEFINITIONS (-D__DOOMSDAY__ )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-FILE (GLOB DENG_PORTABLE_SOURCES ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c ${CMAKE_SOURCE_DIR}/engine/portable/include/*.h )
+FILE (GLOB DENG_PORTABLE_SOURCES
+    ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c
+    ${CMAKE_SOURCE_DIR}/engine/portable/include/*.h
+    ${CMAKE_SOURCE_DIR}/engine/api/*.h )
 
 SET ( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
 
@@ -625,6 +628,7 @@ IF (APPLE)
     SET (BUNDLE_BASE Doomsday)
     SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.app)
     ADD_CUSTOM_COMMAND( TARGET doomsday POST_BUILD
+        COMMAND echo "Updating the ${BUNDLE_BASE}.app bundle."
         COMMAND rm -rf ${BUNDLE}
         COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
         COMMAND cp doomsday ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}
