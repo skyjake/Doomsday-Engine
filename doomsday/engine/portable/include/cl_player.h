@@ -46,7 +46,7 @@ extern float cplrThrustMul;
 extern clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
 void            Cl_InitPlayers(void);
-void            Cl_LocalCommand(void);
+//void            Cl_LocalCommand(void);
 void            Cl_MovePlayer(int plrnum);
 void            Cl_MoveLocalPlayer(float dx, float dy, float dz, boolean onground);
 void            Cl_UpdatePlayerPos(int plrnum);

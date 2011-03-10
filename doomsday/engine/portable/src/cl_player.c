@@ -92,6 +92,7 @@ void Cl_InitPlayers(void)
     */
 }
 
+#if 0
 /**
  * Updates the state of the local player by looking at lastCmd.
  */
@@ -136,6 +137,7 @@ void Cl_LocalCommand(void)
 
     s->turnDelta = 0;
 }
+#endif
 
 /**
  * Reads a single player delta from the message buffer and applies it to the
