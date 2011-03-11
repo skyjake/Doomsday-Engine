@@ -36,12 +36,9 @@ FILE(GLOB DOOM64TC_SOURCES src/*.c include/*.h )
 
 ADD_LIBRARY (jdoom64 SHARED ${DOOM64TC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
 
-IF (APPLE)
-	SET_TARGET_PROPERTIES (jdoom64 PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
-
 ################################################################################
 ######################## Install Targets  ######################################
-INSTALL(TARGETS jdoom64
-RUNTIME DESTINATION ${bindir}
-LIBRARY DESTINATION ${libdir} )
+# jDoom64 not distributed at the moment.
+#INSTALL(TARGETS jdoom64
+#    RUNTIME DESTINATION ${bindir}
+#    LIBRARY DESTINATION ${libdir} )
