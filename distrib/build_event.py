@@ -92,7 +92,7 @@ def builds_by_time():
     
     
 def count_log_word(fn, word):
-    txt = unicode(gzip.open(fn).read(), 'latin1')
+    txt = unicode(gzip.open(fn).read(), 'latin1').lower()
     pos = 0
     count = 0
     while True:
