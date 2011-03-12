@@ -397,6 +397,28 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     return true;
 }
 
+boolean P_IsPlayerStartMobjType(mobjtype_t type)
+{
+    switch(type)
+    {
+    case 11: // Deathmatch
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+#if __JHEXEN__
+    case 9100: // Player starts 5 through 8.
+    case 9101:
+    case 9102:
+    case 9103:
+#endif
+        return true;
+
+    default:
+        return false;
+    }
+}
+
 static void P_LoadMapObjs(void)
 {
     uint                i;
@@ -521,9 +543,27 @@ static void P_LoadMapObjs(void)
             if(!checkMapSpotSpawnFlags(spot))
                 continue;
 
+            // What kind of a thing is this?
+            type = P_DoomEdNumToMobjType(spot->doomEdNum);
+            if(type == MT_NONE)
+            {
+                Con_Message("spawnMapThing: Warning, unknown thing num %i "
+                            "at [%g, %g, %g].\n", spot->doomEdNum,
+                            spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
+                continue;
+            }
+
+            // Check for things that clients don't spawn on their own.
+            if(IS_CLIENT)
+            {
+                if(!P_IsPlayerStartMobjType(type))
+                    continue;
+            }
+
             // Find which type to spawn.
-            if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) != MT_NONE)
-            {   // A known type; spawn it!
+            if(type != MT_NONE)
+            {
+                // A known type; spawn it!
                 mobj_t*             mo;
 /*#if _DEBUG
 Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
@@ -531,8 +571,7 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
             spot->doomedNum, spot->flags);
 #endif*/
 
-                if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle,
-                                        spot->flags)))
+                if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle, spot->flags)))
                 {
                     if(mo->tics > 0)
                         mo->tics = 1 + (P_Random() % mo->tics);
@@ -559,12 +598,6 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
                         totalItems++;
 #endif
                 }
-            }
-            else
-            {
-                Con_Message("spawnMapThing: Warning, unknown thing num %i "
-                            "at [%g, %g, %g].\n", spot->doomEdNum,
-                            spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
             }
             break;
             }
