@@ -266,7 +266,7 @@ void Demo_WritePacket(int playerNum)
     }
 
     // This counts as an update. (We know the client is alive.)
-    clients[playerNum].updateCount = UPDATECOUNT;
+    //clients[playerNum].updateCount = UPDATECOUNT;
 
     file = clients[playerNum].demo;
 

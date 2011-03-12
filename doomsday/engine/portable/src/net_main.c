@@ -1214,7 +1214,7 @@ D_CMD(MakeCamera)
 
     clients[cp].connected = true;
     clients[cp].ready = true;
-    clients[cp].updateCount = UPDATECOUNT;
+    //clients[cp].updateCount = UPDATECOUNT;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
     Sv_InitPoolForClient(cp);
 

@@ -151,19 +151,25 @@ void Sv_TransmitFrame(void)
         }
         clients[i].lastTransmit = cTime;
 
-        /*#if _DEBUG
-           ST_Message("gt:%i (%i) -> cl%i\n", gametic, ctime, i);
-           #endif */
-
-        if(clients[i].ready && clients[i].updateCount > 0)
+        if(clients[i].ready) // && clients[i].updateCount > 0)
         {
+/*#ifdef _DEBUG
+            Con_Message("Sv_TransmitFrame: Sending at tic %i to plr %i\n", lastTransmitTic, i);
+#endif*/
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
             // decrease back to zero.
-            clients[i].updateCount--;
+            //clients[i].updateCount--;
 
             Sv_SendFrame(i);
         }
+#ifdef _DEBUG
+        else
+        {
+            Con_Message("Sv_TransmitFrame: NOT sending at tic %i to plr %i (ready:%i)\n", lastTransmitTic, i,
+                        clients[i].ready);
+        }
+#endif
     }
 }
 

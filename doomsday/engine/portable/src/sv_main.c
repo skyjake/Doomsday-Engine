@@ -777,7 +777,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
             // shake hands. It'll request this by sending a Hello packet.
             // We'll be waiting...
             cl->handshake = false;
-            cl->updateCount = UPDATECOUNT;
+            //cl->updateCount = UPDATECOUNT;
             return true;
         }
     }
@@ -821,7 +821,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     plr->shared.inGame = false;
     cl->connected = false;
     cl->ready = false;
-    cl->updateCount = 0;
+    //cl->updateCount = 0;
     cl->handshake = false;
     cl->nodeID = 0;
     cl->bandwidthRating = BWR_DEFAULT;
@@ -938,7 +938,7 @@ void Sv_StartNetGame(void)
         client->enterTime = 0;
         client->runTime = -1;
         client->lastTransmit = -1;
-        client->updateCount = UPDATECOUNT;
+        //client->updateCount = UPDATECOUNT;
         client->fov = 90;
         client->viewConsole = i;
         memset(client->name, 0, sizeof(client->name));

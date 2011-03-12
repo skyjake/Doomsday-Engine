@@ -112,7 +112,7 @@ enum {
 
 #define RESENDCOUNT         10
 #define HANDSHAKECOUNT      17
-#define UPDATECOUNT         20
+//#define UPDATECOUNT         20
 
 // These dd-flags are packed (i.e. included in mobj deltas).
 #define DDMF_PACK_MASK      0x3cfff1ff
@@ -168,7 +168,7 @@ typedef struct {
 
     // If >0, the server will send the next world frame to the client.
     // This is set when input is received from the client.
-    int             updateCount;
+    //int             updateCount;
 
     // Gametic when the client entered the game.
     int             enterTime;
