@@ -195,17 +195,28 @@ void Cl_MoverThinker(mover_t *mover)
         remove = true;
     }
 
+#ifdef _DEBUG
+    Con_Message("Cl_MoverThinker: plane height %f in sector %i\n", *current, mover->sectornum);
+#endif
+
     P_SectorPlanesChanged(mover->sector);
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != Cl_IsFreeToMove(consolePlayer))
     {
+#ifdef _DEBUG
+        Con_Message("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectornum);
+#endif
+
         // Something was blocking the way!
         *current = original;
         P_SectorPlanesChanged(mover->sector);
     }
     else if(remove)             // Can we remove this thinker?
     {
+#ifdef _DEBUG
+        Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum);
+#endif
         Cl_RemoveActiveMover(mover);
     }
 }
@@ -216,9 +227,11 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     int                 i;
     mover_t            *mov;
 
-    VERBOSE( Con_Printf("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
-                        sectornum, type==MVT_FLOOR? "floor" : "ceiling",
-                        dest, speed) );
+#ifdef _DEBUG
+    Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
+                sectornum, type==MVT_FLOOR? "floor" : "ceiling",
+                dest, speed);
+#endif
 
     if(speed == 0)
         return;
@@ -258,16 +271,16 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             mov->sector = SECTOR_PTR(sectornum);
             mov->destination = dest;
             mov->speed = speed;
-            mov->current =
-                (type ==
-                 MVT_FLOOR ? &mov->sector->planes[PLN_FLOOR]->height : &mov->sector->
-                 planes[PLN_CEILING]->height);
+            mov->current = (type == MVT_FLOOR ? &mov->sector->planes[PLN_FLOOR]->height :
+                                                &mov->sector->planes[PLN_CEILING]->height);
             // Set the right sign for speed.
             if(mov->destination < *mov->current)
                 mov->speed = -mov->speed;
 
-            // \fixme Do these need to be public?
-            P_ThinkerAdd(&mov->thinker, true);
+#ifdef _DEBUG
+            Con_Message("Cl_AddMover: Adding thinker %p\n", &mov->thinker);
+#endif
+            P_ThinkerAdd(&mov->thinker, false /* not public */);
             break;
         }
 }
@@ -459,11 +472,11 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(!skip)
     {
 #ifdef _DEBUG
-if(num >= numSectors)
-{
-    // This is worrisome.
-    Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
-}
+        if(num >= numSectors)
+        {
+            // This is worrisome.
+            Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
+        }
 #endif
         sec = SECTOR_PTR(num);
     }
@@ -510,6 +523,7 @@ if(num >= numSectors)
     if(df & SDF_CEILING_HEIGHT)
     {
         fixed_t height = Msg_ReadShort() << 16;
+
         if(!skip)
         {
             sec->planes[PLN_CEILING]->height = FIX2FLT(height);
@@ -550,6 +564,10 @@ if(num >= numSectors)
     if(df & SDF_CEILING_TARGET)
     {
         fixed_t target = Msg_ReadShort() << 16;
+#ifdef _DEBUG
+        Con_Message("Cl_ReadSectorDelta2: Ceiling target %f for sector %i\n", FIX2FLT(target), num);
+#endif
+
         if(!skip)
         {
             sec->planes[PLN_CEILING]->target = FIX2FLT(target);

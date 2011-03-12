@@ -766,8 +766,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
     else
     {
-        if(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height)
-           > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
@@ -779,8 +778,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
     else
     {
-        if(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height)
-           > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
@@ -805,6 +803,13 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
+
+#ifdef _DEBUG
+    if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
+    {
+        Con_Message("Sector %i: ceiling state change noted (target = %f)\n", number, s->planes[PLN_CEILING]->target);
+    }
+#endif
 
     // Only do a delta when something changes.
     if(df)
