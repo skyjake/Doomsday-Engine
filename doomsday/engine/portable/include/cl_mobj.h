@@ -64,7 +64,7 @@ boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *),
 void            Cl_PredictMovement(void);
 void            Cl_UnsetMobjPosition(clmobj_t *cmo);
 void            Cl_SetMobjPosition(clmobj_t *cmo);
-int             Cl_ReadMobjDelta(void);
+int             Cl_ReadMobjDelta(void); // obsolete
 void            Cl_ReadMobjDelta2(boolean skip);
 void            Cl_ReadNullMobjDelta2(boolean skip);
 clmobj_t       *Cl_FindMobj(thid_t id);

@@ -35,12 +35,13 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "dd_world.h"
 
 #include "r_util.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_MOVERS          128 // Definitely enough!
+#define MAX_MOVERS          1024 // Definitely enough!
 #define MAX_TRANSLATIONS    16384
 
 #define MVF_CEILING         0x1 // Move ceiling.
@@ -50,10 +51,12 @@
 
 typedef struct {
     thinker_t   thinker;
-    sector_t   *sector;
+    //sector_t   *sector;
     uint        sectornum;
     clmovertype_t type;
-    float      *current;
+    int         property; // floor or ceiling
+    int         dmuPlane;
+    //float      *current;
     float       destination;
     float       speed;
 } mover_t;
@@ -80,7 +83,7 @@ typedef struct {
 
 static mover_t *activemovers[MAX_MOVERS];
 static polymover_t *activepolys[MAX_MOVERS];
-short *xlat_lump;
+short *xlat_lump; // obsolete
 
 // CODE --------------------------------------------------------------------
 
@@ -92,6 +95,8 @@ short *xlat_lump;
  *
  * \fixme A bit questionable? Why not allow the clients to download
  * data from the server in ambiguous cases?
+ *
+ * \note Only used by the obsolete cl_oldworld functions.
  */
 void Cl_InitTranslations(void)
 {
@@ -106,7 +111,7 @@ void Cl_InitTranslations(void)
 void Cl_SetLumpTranslation(lumpnum_t lump, char *name)
 {
     if(lump < 0 || lump >= MAX_TRANSLATIONS)
-        return; // Can't do it, sir! We just don't the power!!
+        return; // Can't do it, sir! We just don't have the power!!
 
     xlat_lump[lump] = W_CheckNumForName(name);
     if(xlat_lump[lump] < 0)
@@ -165,11 +170,12 @@ void Cl_RemoveActivePoly(polymover_t *mover)
 }
 
 /**
- * Plane mover.
+ * Plane mover. Makes changes in planes using DMU.
  */
 void Cl_MoverThinker(mover_t *mover)
 {
-    float              *current = mover->current, original = *current;
+    //float              *current = mover->current, original = *current;
+    float               original;
     boolean             remove = false;
     boolean             freeMove;
     float               fspeed;
@@ -180,26 +186,30 @@ void Cl_MoverThinker(mover_t *mover)
     // The move is cancelled if the consolePlayer becomes obstructed.
     freeMove = Cl_IsFreeToMove(consolePlayer);
     fspeed = mover->speed;
+
     // How's the gap?
-    if(fabs(mover->destination - *current) > fabs(fspeed))
+    original = P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property);
+    if(fabs(mover->destination - original) > fabs(fspeed))
     {
         // Do the move.
-        *current += fspeed;
+        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original + fspeed);
     }
     else
     {
         // We have reached the destination.
-        *current = mover->destination;
+        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, mover->destination);
 
         // This thinker can now be removed.
         remove = true;
     }
 
 #ifdef _DEBUG
-    Con_Message("Cl_MoverThinker: plane height %f in sector %i\n", *current, mover->sectornum);
+    Con_Message("Cl_MoverThinker: plane height %f in sector %i\n",
+                P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property),
+                mover->sectornum);
 #endif
 
-    P_SectorPlanesChanged(mover->sector);
+    P_SectorPlanesChanged(mover->sectornum);
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != Cl_IsFreeToMove(consolePlayer))
@@ -208,22 +218,25 @@ void Cl_MoverThinker(mover_t *mover)
         Con_Message("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectornum);
 #endif
 
-        // Something was blocking the way!
-        *current = original;
-        P_SectorPlanesChanged(mover->sector);
+        // Something was blocking the way! Go back to original height.
+        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original);
+
+        P_SectorPlanesChanged(mover->sectornum);
     }
     else if(remove)             // Can we remove this thinker?
     {
 #ifdef _DEBUG
         Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum);
 #endif
+        // It stops.
+        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
+
         Cl_RemoveActiveMover(mover);
     }
 }
 
 void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 {
-    sector_t           *sector;
     int                 i;
     mover_t            *mov;
 
@@ -233,30 +246,22 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
                 dest, speed);
 #endif
 
-    if(speed == 0)
+    if(speed == 0 || sectornum >= numSectors)
         return;
-
-    if(sectornum >= numSectors)
-        return;
-    sector = SECTOR_PTR(sectornum);
 
     // Remove any existing movers for the same plane.
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] && activemovers[i]->sector == sector &&
-           activemovers[i]->type == type)
+    {
+        if(activemovers[i]
+                && activemovers[i]->sectornum == sectornum
+                && activemovers[i]->type == type)
         {
             Cl_RemoveActiveMover(activemovers[i]);
         }
+    }
 
-    /*if(!speed) // Lightspeed?
-       {
-       // Change immediately.
-       if(type == MVT_CEILING)
-       sector->planes[PLN_CEILING].height = dest;
-       else
-       sector->planes[PLN_FLOOR].height = dest;
-       return;
-       } */
+    int dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
+                                      : DMU_CEILING_OF_SECTOR);
 
     // Add a new mover.
     for(i = 0; i < MAX_MOVERS; ++i)
@@ -268,19 +273,23 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             mov->thinker.function = Cl_MoverThinker;
             mov->type = type;
             mov->sectornum = sectornum;
-            mov->sector = SECTOR_PTR(sectornum);
             mov->destination = dest;
             mov->speed = speed;
-            mov->current = (type == MVT_FLOOR ? &mov->sector->planes[PLN_FLOOR]->height :
-                                                &mov->sector->planes[PLN_CEILING]->height);
+            mov->property = dmuPlane | DMU_HEIGHT;
+            mov->dmuPlane = dmuPlane;
+
             // Set the right sign for speed.
-            if(mov->destination < *mov->current)
+            if(mov->destination < P_GetFloat(DMU_SECTOR, sectornum, mov->property))
                 mov->speed = -mov->speed;
+
+            // Update speed and target height.
+            P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_TARGET_HEIGHT, dest);
+            P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_SPEED, speed);
 
 #ifdef _DEBUG
             Con_Message("Cl_AddMover: Adding thinker %p\n", &mov->thinker);
 #endif
-            P_ThinkerAdd(&mov->thinker, false /* not public */);
+            P_ThinkerAdd(&mov->thinker, false /*not public*/);
             break;
         }
 }
@@ -357,8 +366,7 @@ polymover_t* Cl_NewPolyMover(uint number)
     mover->thinker.function = Cl_PolyMoverThinker;
     mover->poly = poly;
     mover->number = number;
-    // \fixme Do these need to be public?
-    P_ThinkerAdd(&mover->thinker, true);
+    P_ThinkerAdd(&mover->thinker, false /*not public*/);
     return mover;
 }
 
@@ -641,7 +649,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // the sector.
     if(wasChanged)
     {
-        P_SectorPlanesChanged(sec);
+        P_SectorPlanesChanged(GET_SECTOR_IDX(sec));
     }
 
     // Do we need to start any moving planes?

@@ -45,7 +45,7 @@
 // MACROS ------------------------------------------------------------------
 
 // Clients send commands on every tic.
-#define CLIENT_TICCMD_INTERVAL  0
+//#define CLIENT_TICCMD_INTERVAL  0
 
 // TYPES -------------------------------------------------------------------
 
@@ -388,7 +388,7 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
 void Cl_Ticker(void)
 {
     //static trigger_t fixed = { 1.0 / 35 };
-    static int ticSendTimer = 0;
+    //static int ticSendTimer = 0;
     int i;
 
     if(!isClient || !Cl_GameReady() || clientPaused)
@@ -408,15 +408,19 @@ void Cl_Ticker(void)
     }
 
     //Cl_LocalCommand();
+
     Cl_PredictMovement();
+
     //Cl_MovePsprites();
 
+    /*
     // Clients don't send commands on every tic (over the network).
     if(++ticSendTimer > CLIENT_TICCMD_INTERVAL)
     {
         ticSendTimer = 0;
         Net_SendCommands();
     }
+    */
 }
 
 /**

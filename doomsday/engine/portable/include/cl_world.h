@@ -42,13 +42,13 @@ void            Cl_SetPolyMover(uint number, int move, int rotate);
 void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
                             float speed);
 
-int             Cl_ReadSectorDelta(void);
 int             Cl_ReadLumpDelta(void);
-int             Cl_ReadSideDelta(void);
-int             Cl_ReadPolyDelta(void);
-
 void            Cl_ReadSectorDelta2(int deltaType, boolean skip);
 void            Cl_ReadSideDelta2(int deltaType, boolean skip);
 void            Cl_ReadPolyDelta2(boolean skip);
+
+int             Cl_ReadSectorDelta(void); // obsolete
+int             Cl_ReadSideDelta(void); // obsolete
+int             Cl_ReadPolyDelta(void); // obsolete
 
 #endif

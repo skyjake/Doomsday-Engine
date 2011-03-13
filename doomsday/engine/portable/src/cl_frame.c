@@ -222,7 +222,7 @@ void Cl_Frame2Received(int packetType)
     {
         gotFirstFrame = true;
 #ifdef _DEBUG
-VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
+        VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
 #endif
     }
     else if(!gotFirstFrame)
@@ -230,13 +230,13 @@ VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
         // Just ignore. If this was a legitimate frame, the server will
         // send it again when it notices no ack is coming.
 #ifdef _DEBUG
-VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
+        VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
 #endif
         return;
     }
 
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
+    VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
 #endif
 
     if(packetType != PSV_FIRST_FRAME2)
@@ -266,26 +266,26 @@ VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
         VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
 
 #ifdef _NETDEBUG
-deltaCount = Msg_ReadLong();
-VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
+        deltaCount = Msg_ReadLong();
+        VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
 #endif
 
         // Read and process the message.
         while(!Msg_End())
         {
 #ifdef _NETDEBUG
-/*Con_Message("Starting to read delta %i of %i...\n", ++readCount,
-              deltaCount);*/
+            /*Con_Message("Starting to read delta %i of %i...\n", ++readCount,
+                          deltaCount);*/
 
-// Check length field.
-startOffset = Msg_Offset();
-deltaLength = Msg_ReadLong();
-//Con_Message("Incoming delta length %i bytes.\n", deltaLength);
+            // Check length field.
+            startOffset = Msg_Offset();
+            deltaLength = Msg_ReadLong();
+            //Con_Message("Incoming delta length %i bytes.\n", deltaLength);
 #endif
 
             deltaType = Msg_ReadByte();
 #ifdef _NETDEBUG
-//Con_Message("  Delta type is %i.\n", deltaType & ~DT_RESENT);
+            //Con_Message("  Delta type is %i.\n", deltaType & ~DT_RESENT);
 #endif
             skip = false;
 
@@ -377,13 +377,13 @@ deltaLength = Msg_ReadLong();
             }
 
 #ifdef _NETDEBUG
-// Check that we didn't misread.
-if(Msg_Offset() - startOffset != deltaLength)
-{
-    Con_Error("Cl_Frame2Received: Misinterpreted delta! Real length was "
-              "%i bytes, but we read %i bytes.\n",
-              deltaLength, Msg_Offset() - startOffset);
-}
+            // Check that we didn't misread.
+            if(Msg_Offset() - startOffset != deltaLength)
+            {
+                Con_Error("Cl_Frame2Received: Misinterpreted delta! Real length was "
+                          "%i bytes, but we read %i bytes.\n",
+                          deltaLength, Msg_Offset() - startOffset);
+            }
 #endif
         }
 
@@ -401,8 +401,7 @@ if(Msg_Offset() - startOffset != deltaLength)
         Msg_WriteByte(set);
 
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
-                     "Nothing was resent.\n", set) );
+        VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. Nothing was resent.\n", set) );
 #endif
     }
     else
@@ -411,20 +410,19 @@ VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
         Msg_Begin(PCL_ACKS);
         Msg_WriteByte(set);
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. "
-                     "Contained %i resent deltas: \n",
-                     set, numResendAcks) );
+        VERBOSE2( Con_Printf("Cl_Frame2Received: Ack set %i. Contained %i resent deltas: \n",
+                             set, numResendAcks) );
 #endif
         for(i = 0; i < numResendAcks; ++i)
         {
             Msg_WriteByte(resendAcks[i]);
 
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("%i ", resendAcks[i]) );
+            VERBOSE2( Con_Printf("%i ", resendAcks[i]) );
 #endif
         }
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("\n") );
+        VERBOSE2( Con_Printf("\n") );
 #endif
     }
     Net_SendBuffer(0, 0);

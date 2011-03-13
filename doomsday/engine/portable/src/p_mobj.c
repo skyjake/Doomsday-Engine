@@ -796,14 +796,16 @@ boolean PIT_SectorPlanesChanged(mobj_t *mo, void *data)
 /**
  * Called whenever a sector's planes are moved. This will update the mobjs
  * inside the sector and do crushing.
+ *
+ * @param sector  Sector number.
  */
-boolean P_SectorPlanesChanged(sector_t *sector)
+boolean P_SectorPlanesChanged(uint sector)
 {
     noFit = false;
 
     // We'll use validCount to make sure mobjs are only checked once.
     validCount++;
-    P_SectorTouchingMobjsIterator(sector, PIT_SectorPlanesChanged, 0);
+    P_SectorTouchingMobjsIterator(SECTOR_PTR(sector), PIT_SectorPlanesChanged, 0);
 
     return noFit;
 }

@@ -35,6 +35,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_defs.h"
 #include "de_console.h"
 #include "de_network.h"
 #include "de_play.h"
@@ -352,6 +353,161 @@ int Cl_ReadPolyDelta(void)
     Cl_SetPolyMover(num, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
                     df & (PODF_DEST_ANGLE | PODF_ANGSPEED |
                           PODF_PERPETUAL_ROTATE));
+
+    // Continue reading.
+    return true;
+}
+
+/**
+ * Reads a single mobj delta from the message buffer and applies
+ * it to the client mobj in question.
+ * For client mobjs that belong to players, updates the real player mobj.
+ * Returns false only if the list of deltas ends.
+ *
+ * THIS FUNCTION IS NOW OBSOLETE (only used with old PSV_FRAME packets)
+ */
+int Cl_ReadMobjDelta(void)
+{
+    thid_t      id = Msg_ReadShort();   // Read the ID.
+    clmobj_t   *cmo;
+    boolean     linked = true;
+    int         df = 0;
+    mobj_t     *d;
+    boolean     justCreated = false;
+
+    // Stop if end marker found.
+    if(!id)
+        return false;
+
+    // Get a mobj for this.
+    cmo = Cl_FindMobj(id);
+    if(!cmo)
+    {
+        justCreated = true;
+
+        // This is a new ID, allocate a new mobj.
+        cmo = Z_Malloc(sizeof(*cmo), PU_MAP, 0);
+        memset(cmo, 0, sizeof(*cmo));
+        cmo->mo.ddFlags |= DDMF_REMOTE;
+        Cl_LinkMobj(cmo, id);
+        P_SetMobjID(id, true);  // Mark this ID as used.
+        linked = false;
+    }
+
+    // This client mobj is alive.
+    cmo->time = Sys_GetRealTime();
+
+    // Flags.
+    df = Msg_ReadShort();
+    if(!df)
+    {
+#ifdef _DEBUG
+if(justCreated)         //Con_Error("justCreated!\n");
+    Con_Printf("CL_RMD: deleted justCreated id=%i\n", id);
+#endif
+
+        // A Null Delta. We should delete this mobj.
+        if(cmo->mo.dPlayer)
+        {
+            clPlayerStates[P_GetDDPlayerIdx(cmo->mo.dPlayer)].cmo = NULL;
+        }
+
+        Cl_DestroyMobj(cmo);
+        return true; // Continue.
+    }
+
+#ifdef _DEBUG
+if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
+{
+    Con_Error("Cl_ReadMobjDelta: Mobj is being created without X,Y.\n");
+}
+#endif
+
+    d = &cmo->mo;
+
+    // Need to unlink? (Flags because DDMF_SOLID determines block-linking.)
+    if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z | MDF_FLAGS) && linked &&
+       !d->dPlayer)
+    {
+        linked = false;
+        Cl_UnsetMobjPosition(cmo);
+    }
+
+    // Coordinates with three bytes.
+    if(df & MDF_POS_X)
+        d->pos[VX] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+    if(df & MDF_POS_Y)
+        d->pos[VY] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+    if(df & MDF_POS_Z)
+        d->pos[VZ] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+
+#ifdef _DEBUG
+    if(d->pos[VX] == 0 && d->pos[VY] == 0)
+    {
+        Con_Printf("CL_RMD: x,y zeroed t%i(%s)\n", d->type,
+                   defs.mobjs[d->type].id);
+    }
+#endif
+
+    // Momentum using 8.8 fixed point.
+    if(df & MDF_MOM_X)
+        d->mom[MX] = FIX2FLT(Msg_ReadShort() << 16) / 256;    //>> 8;
+    if(df & MDF_MOM_Y)
+        d->mom[MY] = FIX2FLT(Msg_ReadShort() << 16) / 256;    //>> 8;
+    if(df & MDF_MOM_Z)
+        d->mom[MZ] = FIX2FLT(Msg_ReadShort() << 16) / 256;    //>> 8;
+
+    // Angles with 16-bit accuracy.
+    if(df & MDF_ANGLE)
+        d->angle = Msg_ReadShort() << 16;
+
+    // MDF_SELSPEC is never used without MDF_SELECTOR.
+    if(df & MDF_SELECTOR)
+        d->selector = Msg_ReadPackedShort();
+    if(df & MDF_SELSPEC)
+        d->selector |= Msg_ReadByte() << 24;
+
+    if(df & MDF_STATE)
+        Cl_SetMobjState(d, (unsigned short) Msg_ReadPackedShort());
+
+    // Pack flags into a word (3 bytes?).
+    // \fixme Do the packing!
+    if(df & MDF_FLAGS)
+    {
+        // Only the flags in the pack mask are affected.
+        d->ddFlags &= ~DDMF_PACK_MASK;
+        d->ddFlags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
+    }
+
+    // Radius, height and floorclip are all bytes.
+    if(df & MDF_RADIUS)
+        d->radius = (float) Msg_ReadByte();
+    if(df & MDF_HEIGHT)
+        d->height = (float) Msg_ReadByte();
+    if(df & MDF_FLOORCLIP)
+    {
+        if(df & MDF_LONG_FLOORCLIP)
+            d->floorClip = FIX2FLT(Msg_ReadPackedShort() << 14);
+        else
+            d->floorClip = FIX2FLT(Msg_ReadByte() << 14);
+    }
+
+    // Link again.
+    if(!linked && !d->dPlayer)
+        Cl_SetMobjPosition(cmo);
+
+    if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
+    {
+        // This'll update floorz and ceilingz.
+        Cl_CheckMobj(cmo, justCreated);
+    }
+
+    // Update players.
+    if(d->dPlayer)
+    {
+        // Players have real mobjs. The client mobj is hidden (unlinked).
+        Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
+    }
 
     // Continue reading.
     return true;
