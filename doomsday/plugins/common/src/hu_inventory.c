@@ -746,7 +746,7 @@ void Hu_InventoryTicker(void)
     }
 }
 
-void ST_ResizeInventory(const cvar_t* cvar)
+void ST_ResizeInventory(const cvar_t* unused)
 {
     int i;
     uint maxVisSlots;

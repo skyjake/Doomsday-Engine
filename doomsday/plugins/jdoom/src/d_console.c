@@ -68,7 +68,7 @@ D_CMD(PrintPlayerCoords);
 
 D_CMD(ScreenShot);
 
-void G_UpdateEyeHeight(const cvar_t* cvar);
+void G_UpdateEyeHeight(const cvar_t* /*cvar*/);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -239,7 +239,7 @@ void G_ConsoleRegistration(void)
 /**
  * Called when the player-eyeheight cvar is changed.
  */
-void G_UpdateEyeHeight(const cvar_t* cvar)
+void G_UpdateEyeHeight(const cvar_t* unused)
 {
     player_t* plr = &players[CONSOLEPLAYER];
 
@@ -247,9 +247,6 @@ void G_UpdateEyeHeight(const cvar_t* cvar)
         plr->viewHeight = (float) cfg.plrViewHeight;
 }
 
-/**
- * Console command to take a screenshot (duh).
- */
 D_CMD(ScreenShot)
 {
     G_ScreenShot();

@@ -155,10 +155,10 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+void updateViewWindow(const cvar_t* /*cvar*/);
+void unhideHUD(const cvar_t* /*cvar*/);
 
-static void updateViewWindow(const cvar_t* cvar);
-static void unhideHUD(const cvar_t* cvar);
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -2060,7 +2060,7 @@ void ST_Shutdown(void)
 /**
  * Called when the statusbar scale cvar changes.
  */
-static void updateViewWindow(const cvar_t* cvar)
+void updateViewWindow(const cvar_t* unused)
 {
     int i;
     R_UpdateViewWindow(true);
@@ -2071,7 +2071,7 @@ static void updateViewWindow(const cvar_t* cvar)
 /**
  * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
  */
-static void unhideHUD(const cvar_t* cvar)
+void unhideHUD(const cvar_t* unused)
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
