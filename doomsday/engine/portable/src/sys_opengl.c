@@ -453,7 +453,6 @@ boolean Sys_GLPreInit(void)
     GL_state.features.vsync = true;
     GL_state.features.elementArrays = false;
 
-    GL_state.currentGrayMipmapFactor = 0;
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;
     GL_state.currentUseFog = false;

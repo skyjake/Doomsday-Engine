@@ -45,6 +45,7 @@
 #include "de_network.h"
 
 #include "image.h"
+#include "texturecontent.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -195,7 +196,7 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // Make sure that any remaining deferred content gets uploaded.
     if(!(isDedicated || (busyMode & BUSYF_NO_UPLOADS)))
     {
-        GL_UploadDeferredContent(0);
+        GL_RunDeferredTasks(0);
     }
 
     return result;
@@ -253,14 +254,14 @@ static void Con_BusyLoadTextures(void)
         {
             texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImage(&image);
+            GL_DestroyImagePixels(&image);
         }
 
         if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
         {
             texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
                                                     image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImage(&image);
+            GL_DestroyImagePixels(&image);
         }
     }
 
@@ -309,10 +310,10 @@ static void Con_BusyDeleteTextures(void)
  */
 void Con_AcquireScreenshotTexture(void)
 {
-    int                 oldMaxTexSize = GL_state.maxTexSize;
-    byte*               frame;
+    int oldMaxTexSize = GL_state.maxTexSize;
+    uint8_t* frame;
 #ifdef _DEBUG
-    timespan_t          startTime;
+    timespan_t startTime;
 #endif
 
     if(texScreenshot)
@@ -324,7 +325,7 @@ void Con_AcquireScreenshotTexture(void)
     startTime = Sys_GetRealSeconds();
 #endif
 
-    frame = M_Malloc(theWindow->width * theWindow->height * 3);
+    frame = malloc(theWindow->width * theWindow->height * 3);
     GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, theWindow->width, theWindow->height,
@@ -333,7 +334,7 @@ void Con_AcquireScreenshotTexture(void)
                                      GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                      TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
     GL_state.maxTexSize = oldMaxTexSize;
-    M_Free(frame);
+    free(frame);
 
 #ifdef _DEBUG
     printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
@@ -352,10 +353,9 @@ void Con_ReleaseScreenshotTexture(void)
  */
 static void Con_BusyLoop(void)
 {
-    boolean             canDraw = !isDedicated;
-    boolean             canUpload =
-        !(isDedicated || (busyMode & BUSYF_NO_UPLOADS));
-    timespan_t          startTime = Sys_GetRealSeconds();
+    boolean canDraw = !isDedicated;
+    boolean canUpload = !(isDedicated || (busyMode & BUSYF_NO_UPLOADS));
+    timespan_t startTime = Sys_GetRealSeconds();
 
     if(canDraw)
     {
@@ -369,7 +369,7 @@ static void Con_BusyLoop(void)
     busyDoneCopy = busyDone;
     Sys_Unlock(busy_Mutex);
 
-    while(!busyDoneCopy || (canUpload && GL_GetDeferredCount() > 0))
+    while(!busyDoneCopy || (canUpload && GL_GetDeferredTaskCount() > 0))
     {
         Sys_Lock(busy_Mutex);
         busyDoneCopy = busyDone;
@@ -379,7 +379,7 @@ static void Con_BusyLoop(void)
 
         if(canUpload)
         {   // Make sure that any deferred content gets uploaded.
-            GL_UploadDeferredContent(15);
+            GL_RunDeferredTasks(15);
         }
 
         // Update the time.

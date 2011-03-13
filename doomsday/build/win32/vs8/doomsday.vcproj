@@ -1141,6 +1141,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\gltexture.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\image.c"
 				>
 			</File>
@@ -2818,6 +2822,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\gltexture.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\gltexturevariant.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\image.h"
 				>
 			</File>
@@ -3243,6 +3255,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\template.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\texturecontent.h"
 				>
 			</File>
 			<File

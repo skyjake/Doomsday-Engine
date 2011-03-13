@@ -46,6 +46,7 @@
 #include "de_misc.h"
 
 #include "net_main.h"           // for gametic
+#include "gltexturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -694,17 +695,24 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                          -params->yaw, -params->pitch);
     }
 
-    // Calculate shiny coordinates.
-    shininess = mf->def->sub[number].shiny * modelShinyFactor;
-    if(shininess < 0)
-        shininess = 0;
-    if(shininess > 1)
-        shininess = 1;
-
+    shininess = MINMAX_OF(0, mf->def->sub[number].shiny * modelShinyFactor, 1);
+    // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        const skinname_t*       sn;
+        const skinname_t* sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin);
+        const gltexturevariant_t* tex;
+        if(NULL != sn && NULL != (tex = GL_PrepareGLTexture(sn->id, NULL, NULL)))
+        {
+            shinyTexture = tex->glName;
+        }
+        else
+        {
+            shininess = 0;
+        }
+    }
 
+    if(shininess > 0)
+    {   // Calculate shiny coordinates.
         shinyColor = mf->def->sub[number].shinyColor;
 
         // With psprites, add the view angle/pitch.
@@ -763,16 +771,6 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 color[c] = shinyColor[c];
         }
         color[3] = shininess;
-
-        // Ensure we've prepared the shiny skin.
-        shinyTexture = 0;
-        if((sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin)))
-        {
-            const gltexture_inst_t* texInst;
-
-            if((texInst = GL_PrepareGLTexture(sn->id, NULL, NULL)))
-                shinyTexture = texInst->id;
-        }
     }
 
     if(renderTextures == 2)
@@ -784,7 +782,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             material_snapshot_t ms;
 
             Materials_Prepare(&ms, mat, true, NULL);
-            skinTexture = ms.units[MTU_PRIMARY].texInst->id;
+            skinTexture = ms.units[MTU_PRIMARY].tex->glName;
         }
         else
         {
@@ -803,14 +801,14 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
         if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
         {
-            const gltexture_inst_t* texInst;
+            const gltexturevariant_t* tex;
             material_load_params_t params;
 
             memset(&params, 0, sizeof(params));
             params.tex.flags = (!mdl->allowTexComp? GLTF_NO_COMPRESSION : 0);
 
-            if((texInst = GL_PrepareGLTexture(sn->id, &params, NULL)))
-                skinTexture = texInst->id;
+            if((tex = GL_PrepareGLTexture(sn->id, &params, NULL)))
+                skinTexture = tex->glName;
         }
     }
 

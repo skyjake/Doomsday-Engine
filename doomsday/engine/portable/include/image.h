@@ -26,16 +26,21 @@
 #define LIBDENG_IMAGE_H
 
 /**
+ * @defgroup imageConversionFlags Image Conversion Flags.
+ */
+/*@{*/
+#define ICF_UPSCALE_SAMPLE_WRAPH    (0x1)
+#define ICF_UPSCALE_SAMPLE_WRAPV    (0x2)
+#define ICF_UPSCALE_SAMPLE_WRAP     (ICF_UPSCALE_SAMPLE_WRAPH|ICF_UPSCALE_SAMPLE_WRAPV)
+/*@}*/
+
+/**
  * @defgroup imageFlags Image Flags
  */
 /*@{*/
 #define IMGF_IS_MASKED          0x1
 /*@}*/
 
-/**
- * This structure is used with GL_LoadImage. When it is no longer needed
- * it must be discarded with GL_DestroyImage.
- */
 typedef struct image_s {
     int width;
     int height;
@@ -45,15 +50,21 @@ typedef struct image_s {
     uint8_t* pixels;
 } image_t;
 
-/**
- * @defgroup imageConversionFlags Image Conversion Flags.
- */
-/*@{*/
-#define ICF_UPSCALE_SAMPLE_WRAPH    (0x1)
-#define ICF_UPSCALE_SAMPLE_WRAPV    (0x2)
-#define ICF_UPSCALE_SAMPLE_WRAP     (ICF_UPSCALE_SAMPLE_WRAPH|ICF_UPSCALE_SAMPLE_WRAPV)
-/*@}*/
+void GL_InitImage(image_t* img);
 
+/**
+ * Loads PCX, TGA and PNG images. The returned buffer must be freed
+ * with M_Free. Color keying is done if "-ck." is found in the filename.
+ * The allocated memory buffer always has enough space for 4-component
+ * colors.
+ */
+uint8_t* GL_LoadImage(image_t* img, const char* filePath);
+uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath);
+
+/// Release image pixel data.
+void GL_DestroyImagePixels(image_t* img);
+
+/// @return  @c true if the image pixel data contains alpha information.
 boolean GL_ImageHasAlpha(const image_t* image);
 
 /**

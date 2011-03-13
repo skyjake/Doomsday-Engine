@@ -412,52 +412,11 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, DGLuint palid, int width, int h
 }
 
 /**
- * Choose an internal texture format based on the number of color
- * components.
- *
- * @param comps  Number of color components.
- * @return  The internal texture format.
- */
-static GLint ChooseTextureFormat(int comps)
-{
-    boolean compress = (GL_state.features.texCompression && GL_state.currentUseTexCompression);
-
-    if(!(comps == 1 || comps == 3 || comps == 4))
-        Con_Error("ChooseTextureFormat: Unsupported comps: %i.", comps);
-
-    if(comps == 1)
-    {   // Luminance.
-        return !compress ? GL_LUMINANCE : GL_COMPRESSED_LUMINANCE;
-    }
-
-#if USE_TEXTURE_COMPRESSION_S3
-    if(compress && GL_state.extensions.texCompressionS3)
-    {
-        if(comps == 3)
-        {   // RGB.
-            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        }
-        // RGBA.
-        return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-    }
-#endif
-
-    if(comps == 3)
-    {   // RGB.
-        return !compress ? GL_RGB8 : GL_COMPRESSED_RGB;
-    }
-
-    // RGBA.
-    return !compress ? GL_RGBA8 : GL_COMPRESSED_RGBA;
-}
-
-/**
  * Given a pixel format return the number of bytes to store one pixel.
  * \assume Input data is of GL_UNSIGNED_BYTE type.
  */
 static int BytesPerPixel(GLint format)
 {
-    int n;
     switch(format)
     {
     case GL_COLOR_INDEX:
@@ -467,93 +426,82 @@ static int BytesPerPixel(GLint format)
     case GL_GREEN:
     case GL_BLUE:
     case GL_ALPHA:
-    case GL_LUMINANCE:
-        n = 1;
-        break;
-    case GL_LUMINANCE_ALPHA:
-        n = 2;
-        break;
+    case GL_LUMINANCE:              return 1;
+
+    case GL_LUMINANCE_ALPHA:        return 2;
+
     case GL_RGB:
     case GL_RGB8:
-    case GL_BGR:
-        n = 3;
-        break;
+    case GL_BGR:                    return 3;
+
     case GL_RGBA:
     case GL_RGBA8:
-    case GL_BGRA:
-        n = 4;
-        break;
+    case GL_BGRA:                   return 4;
+
     default:
         Con_Error("BytesPerPixel: Unknown format %i.", (int) format);
         return 0; // Unreachable.
     }
-    return n;
 }
 
-static boolean GrayMipmap(dgltexformat_t format, uint8_t* data, int width, int height)
+/**
+ * Choose an internal texture format.
+ *
+ * @param format  DGL texture format identifier.
+ * @param allowCompression  @c true == use compression if available.
+ * @return  The chosen texture format.
+ */
+static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression)
 {
-    assert(data);
+    boolean compress = (allowCompression && GL_state.features.texCompression);
+
+    switch(format)
     {
-    int numLevels = GL_NumMipmapLevels(width, height);
-    uint8_t* image, *in, *out, *faded;
-    int i, w, h, size = width * height, res;
-    uint comps = (format == DGL_LUMINANCE? 1 : 3);
-    float invFactor = 1 - GL_state.currentGrayMipmapFactor;
-    GLint glTexFormat = ChooseTextureFormat(1);
+    case DGL_RGB:
+    case DGL_COLOR_INDEX_8:
+        if(!compress)
+            return GL_RGBA;
+#if USE_TEXTURE_COMPRESSION_S3
+        if(GL_state.extensions.texCompressionS3)
+            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+#endif
+        return GL_COMPRESSED_RGB;
 
-    // Buffer used for the faded texture.
-    faded = malloc(size / 4);
-    image = malloc(size);
+    case DGL_RGBA:
+    case DGL_COLOR_INDEX_8_PLUS_A8:
+        if(!compress)
+            return GL_RGBA8;
+#if USE_TEXTURE_COMPRESSION_S3
+        if(GL_state.extensions.texCompressionS3)
+            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#endif
+        return GL_COMPRESSED_RGBA;
 
-    // Initial fading.
-    if(format == DGL_LUMINANCE || format == DGL_RGB)
-    {
-        for(i = 0, in = data, out = image; i < size; ++i, in += comps)
-        {
-            res = (int) (*in * GL_state.currentGrayMipmapFactor + 127 * invFactor);
-            *out++ = MINMAX_OF(0, res, 255);
-        }
-    }
+    case DGL_LUMINANCE:
+        return !compress ? GL_LUMINANCE : GL_COMPRESSED_LUMINANCE;
 
-    // Upload the first level right away.
-    glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, width, height, 0,
-                 GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
+    case DGL_LUMINANCE_PLUS_A8:
+        return !compress ? GL_LUMINANCE_ALPHA : GL_COMPRESSED_LUMINANCE_ALPHA;
 
-    // Generate all mipmaps levels.
-    for(i = 0, w = width, h = height; i < numLevels; ++i)
-    {
-        GL_DownMipmap8(image, faded, w, h, (i * 1.75f) / numLevels);
-
-        // Go down one level.
-        if(w > 1)
-            w /= 2;
-        if(h > 1)
-            h /= 2;
-
-        glTexImage2D(GL_TEXTURE_2D, i + 1, glTexFormat, w, h, 0,
-                     GL_LUMINANCE, GL_UNSIGNED_BYTE, faded);
-    }
-
-    // Do we need to free the temp buffer?
-    free(faded);
-    free(image);
-
-    if(GL_state.features.texFilterAniso)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                        GL_GetTexAnisoMul(-1 /*best*/));
-
-    return true;
+    default:
+        Con_Error("ChooseTextureFormat: Invalid source format %i.", (int) format);
+        return 0; // Unreachable.
     }
 }
 
-boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
-    int height, int genMipmaps, void* data)
+boolean GL_TexImageGrayMipmap(const uint8_t* pixels, int width, int height,
+    int pixelSize, float grayFactor)
 {
-    uint8_t* bdata = data;
-    int mipLevel = 0;
+    assert(pixels);
+    {
+    int w, h, numpels = width * height, numLevels;
+    uint8_t* image, *faded, *out;
+    GLint glTexFormat;
+    const uint8_t* in;
+    float invFactor;
 
     // Can't operate on null texture.
-    if(!data || width < 1 || height < 1)
+    if(width < 1 || height < 1)
         return false;
 
     // Check that the texture dimensions are valid.
@@ -564,124 +512,167 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
     if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
         return false;
 
-    // If this is a paletted texture, we must know which palette to use.
-    if((format == DGL_COLOR_INDEX_8 ||
-        format == DGL_COLOR_INDEX_8_PLUS_A8) &&
-       (!palid || palid - 1 >= numColorPalettes))
+    glTexFormat = ChooseTextureFormat(1, GL_state.currentUseTexCompression);
+    numLevels = GL_NumMipmapLevels(width, height);
+    grayFactor = MINMAX_OF(0, grayFactor, 1);
+    invFactor = 1 - grayFactor;
+
+    // Buffer used for the faded texture.
+    faded = malloc(numpels / 4);
+    image = malloc(numpels);
+
+    // Initial fading.
+    in = pixels;
+    out = image;
+    { int i;
+    for(i = 0; i < numpels; ++i)
+    {
+        *out++ = (uint8_t) MINMAX_OF(0, (*in * grayFactor + 127 * invFactor), 255);
+        in += pixelSize;
+    }}
+
+    // Upload the first level right away.
+    glTexImage2D(GL_TEXTURE_2D, 0, glTexFormat, width, height, 0, GL_LUMINANCE,
+        GL_UNSIGNED_BYTE, image);
+
+    // Generate all mipmaps levels.
+    w = width;
+    h = height;
+    { int i;
+    for(i = 0; i < numLevels; ++i)
+    {
+        GL_DownMipmap8(image, faded, w, h, (i * 1.75f) / numLevels);
+
+        // Go down one level.
+        if(w > 1)
+            w /= 2;
+        if(h > 1)
+            h /= 2;
+
+        glTexImage2D(GL_TEXTURE_2D, i + 1, glTexFormat, w, h, 0, GL_LUMINANCE,
+            GL_UNSIGNED_BYTE, faded);
+    }}
+
+    // Do we need to free the temp buffer?
+    free(faded);
+    free(image);
+
+    if(GL_state.features.texFilterAniso)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            GL_GetTexAnisoMul(-1 /*best*/));
+    return true;
+    }
+}
+
+boolean GL_TexImage(dgltexformat_t format, const uint8_t* pixels, int width, 
+    int height, DGLuint palid, int genMipmaps)
+{
+    assert(pixels);
+    {
+    int mipLevel = 0, numPixels = width * height;
+    GLint glFormat, loadFormat;
+    boolean needFree = false;
+
+    // Can't operate on null texture.
+    if(width < 1 || height < 1)
         return false;
 
-    // Negative genMipmaps values mean that the specific mipmap level is being uploaded.
+    // Check that the texture dimensions are valid.
+    if(!GL_state.features.texNonPowTwo &&
+       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
+        return false;
+
+    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+        return false;
+
+    // Negative indices signify a specific mipmap level is being uploaded.
     if(genMipmaps < 0)
     {
         mipLevel = -genMipmaps;
         genMipmaps = 0;
     }
 
-    // Special fade-to-gray luminance texture? (used for details)
-    if(genMipmaps == DDMAXINT)
-    {
-        return GrayMipmap(format, data, width, height);
-    }
-
     // Automatic mipmap generation?
     if(GL_state.extensions.genMipmapSGIS && genMipmaps)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 
-    {// Use true color textures.
-    int alphachannel = ((format == DGL_RGBA) ||
-                        (format == DGL_COLOR_INDEX_8_PLUS_A8) ||
-                        (format == DGL_LUMINANCE_PLUS_A8));
-    GLint loadFormat = GL_RGBA;
-    GLint glFormat = ChooseTextureFormat(alphachannel ? 4 : 3);
-    int numPixels = width * height;
-    uint8_t* buffer, *pixel, *in;
-    boolean needFree = false;
-
-    // Convert to either RGB or RGBA, if necessary.
-    if(format == DGL_RGBA)
+    switch(format)
     {
-        buffer = data;
-    }
-    // A bug in Nvidia's drivers? Very small RGBA textures don't load
-    // properly.
-    else if(format == DGL_RGB && width > 2 && height > 2)
-    {
-        buffer = data;
-        loadFormat = GL_RGB;
-    }
-    else
-    {   // Needs converting.
-        // \fixme This adds some overhead.
-        int i;
+    case DGL_COLOR_INDEX_8:
+    case DGL_COLOR_INDEX_8_PLUS_A8: {
+        /// \fixme Needs converting. This adds some overhead.
+        const gl_colorpalette_t* pal;
+        uint8_t* pixel, *buffer;
+        int pixelSize;
 
-        needFree = true;
-        buffer = malloc(numPixels * 4);
-        if(!buffer)
+        // We must know which palette to use.
+        if(!palid || palid - 1 >= numColorPalettes)
             return false;
+        pal = &colorPalettes[palid];
 
-        switch(format)
+        if(format == DGL_COLOR_INDEX_8)
         {
-        case DGL_RGB:
-            for(i = 0, pixel = buffer, in = bdata; i < numPixels; i++, pixel += 4)
-            {
-                pixel[CR] = *in++;
-                pixel[CG] = *in++;
-                pixel[CB] = *in++;
-                pixel[CA] = 255;
-            }
-            break;
-
-        case DGL_COLOR_INDEX_8:
-            {
-            const gl_colorpalette_t* pal = &colorPalettes[palid];
-
             loadFormat = GL_RGB;
-            for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 3)
-            {
-                const uint8_t* src = &pal->data[MIN_OF(bdata[i], pal->num) * 3];
-
-                pixel[CR] = gammaTable[src[CR]];
-                pixel[CG] = gammaTable[src[CG]];
-                pixel[CB] = gammaTable[src[CB]];
-            }
-            break;
-            }
-        case DGL_COLOR_INDEX_8_PLUS_A8:
-            {
-            const gl_colorpalette_t* pal = &colorPalettes[palid];
-
-            for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 4)
-            {
-                const uint8_t* src = &pal->data[MIN_OF(bdata[i], pal->num) * 3];
-
-                pixel[CR] = gammaTable[src[CR]];
-                pixel[CG] = gammaTable[src[CG]];
-                pixel[CB] = gammaTable[src[CB]];
-                pixel[CA] = bdata[numPixels + i];
-            }
-            break;
-            }
-
-        case DGL_LUMINANCE:
-            loadFormat = GL_RGB;
-            for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 3)
-                pixel[CR] = pixel[CG] = pixel[CB] = bdata[i];
-            break;
-
-        case DGL_LUMINANCE_PLUS_A8:
-            for(i = 0, pixel = buffer; i < numPixels; i++, pixel += 4)
-            {
-                pixel[CR] = pixel[CG] = pixel[CB] = bdata[i];
-                pixel[CA] = bdata[numPixels + i];
-            }
-            break;
-
-        default:
-            free(buffer);
-            Con_Error("LoadTexture: Unknown format %i.\n", (int) format);
-            break;
+            pixelSize = 3;
         }
+        else
+        {
+            loadFormat = GL_RGBA;
+            pixelSize = 4;
+        }
+
+        if(NULL == (buffer = malloc(numPixels * pixelSize)))
+            Con_Error("GL_TexImage: Failed on allocation of %lu bytes for conversion buffer.",
+                      (unsigned long) (numPixels * pixelSize));
+        
+        pixel = buffer;
+        { int i;
+        for(i = 0; i < numPixels; ++i)
+        {
+            const uint8_t* src = &pal->data[MIN_OF(pixels[i], pal->num) * 3];
+
+            pixel[CR] = gammaTable[src[CR]];
+            pixel[CG] = gammaTable[src[CG]];
+            pixel[CB] = gammaTable[src[CB]];
+            if(pixelSize == 4)
+                pixel[CA] = pixels[numPixels + i];
+            pixel += pixelSize;
+        }}
+
+        pixels = buffer;
+        needFree = true;
+        break;
+      }
+    case DGL_LUMINANCE_PLUS_A8: {
+        /// \fixme Needs converting. This adds some overhead.
+        uint8_t* pixel, *buffer;
+
+        if(NULL == (buffer = malloc(2 * numPixels)))
+            Con_Error("GL_TexImage: Failed on allocation of %lu bytes for conversion buffer.",
+                      (unsigned long) (2 * numPixels));
+        
+        pixel = buffer;
+        { int i;
+        for(i = 0; i < numPixels; ++i)
+        {
+            pixel[0] = pixels[i];
+            pixel[1] = pixels[numPixels + i];
+            pixel += 2;
+        }}
+
+        loadFormat = GL_LUMINANCE_ALPHA;
+        pixels = buffer;
+        needFree = true;
+        break;
+      }
+    case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
+    case DGL_RGB:               loadFormat = GL_RGB; break;
+    case DGL_RGBA:              loadFormat = GL_RGBA; break;
+    default:
+        Con_Error("GL_TexImage: Unknown format %i.", (int) format);
     }
+
+    glFormat = ChooseTextureFormat(format, GL_state.currentUseTexCompression);
 
     if(genMipmaps && !GL_state.extensions.genMipmapSGIS)
     {   // Build all mipmap levels.
@@ -694,12 +685,12 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
         if(bpp == 0)
             Con_Error("LoadTexture: Unknown GL format %i.\n", (int) loadFormat);
 
-        GL_OptimalSize(width, height, false, true, &w, &h);
+        GL_OptimalTextureSize(width, height, false, true, &w, &h);
 
         if(w != width || h != height)
         {
             // Must rescale image to get "top" mipmap texture image.
-            image = GL_ScaleBufferEx(buffer, width, height, bpp, /*GL_UNSIGNED_BYTE,*/
+            image = GL_ScaleBufferEx(pixels, width, height, bpp, /*GL_UNSIGNED_BYTE,*/
                 unpackRowLength, unpackAlignment, unpackSkipRows, unpackSkipPixels,
                 w, h, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment, packSkipRows,
                 packSkipPixels);
@@ -708,7 +699,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
         }
         else
         {
-            image = (void*) buffer;
+            image = (void*) pixels;
         }
 
         glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
@@ -739,7 +730,7 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
             if(NULL == newimage)
                 Con_Error("LoadTexture: Unknown error resizing mipmap level #%i.", mipLevel);
 
-            if(image != buffer)
+            if(image != pixels)
                 free(image);
             image = newimage;
 
@@ -749,19 +740,19 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width,
 
         glPopClientAttrib();
 
-        if(image != buffer)
+        if(image != pixels)
             free(image);
     }
     else
-    {   // The texture will not use mipmapping, just the one level.
+    {   // Not using mipmapping or we are uploading just the one level.
         glTexImage2D(GL_TEXTURE_2D, mipLevel, glFormat, width, height, 0,
-            loadFormat, GL_UNSIGNED_BYTE, buffer);
+            loadFormat, GL_UNSIGNED_BYTE, pixels);
     }
 
     if(needFree)
-        free(buffer);
-    }
+        free((uint8_t*)pixels);
 
     assert(!Sys_GLCheckError());
     return true;
+    }
 }

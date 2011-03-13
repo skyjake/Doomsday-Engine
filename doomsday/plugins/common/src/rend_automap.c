@@ -189,7 +189,7 @@ void Rend_AutomapLoadData(void)
         if(!amMaskTexture && !Get(DD_NOVIDEO))
         {
             amMaskTexture =
-                GL_NewTextureWithParams3(DGL_LUMINANCE, 256, 256,
+                DGL_NewTextureWithParams(DGL_LUMINANCE, 256, 256,
                                          W_CacheLumpName("mapmask", PU_CACHE),
                                          0x8, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,

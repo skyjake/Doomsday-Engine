@@ -266,7 +266,7 @@ static void prepareFont(bitmapfont_t* font)
                 VERBOSE2( Con_Printf("Uploading GL texture for font '%s' ...\n", Str_Text(&font->_name)) );
 
                 font->_tex = GL_NewTextureWithParams2(DGL_RGBA, font->_texWidth,
-                    font->_texHeight, image, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
+                    font->_texHeight, image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
                 if(!Con_IsBusy()) // Cannot do this while in busy mode.
@@ -317,7 +317,7 @@ static void prepareFont(bitmapfont_t* font)
         font->_chars[i].h = info.height + 2;
 
         if(!(novideo || isDedicated) && font->_chars[i].tex == 0)
-            font->_chars[i].tex = GL_PreparePatch(R_FindPatchTex(patch));
+            font->_chars[i].tex = GL_PreparePatch(R_PatchTextureForIndex(patch));
     }}
 
     if(!(novideo || isDedicated || Con_IsBusy())) // Cannot do this while in busy mode.

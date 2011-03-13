@@ -59,6 +59,8 @@ typedef struct rtexmapuint_s {
     blendmode_t     blendMode;
 } rtexmapunit_t;
 
+#define RTU(tu, u) ((tu)[u])
+
 extern int renderTextures;
 extern int renderWireframe;
 extern int useMultiTexLights;

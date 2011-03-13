@@ -40,6 +40,9 @@
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
+#include "gltexture.h"
+#include "gltexturevariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MATERIALS_BLOCK_ALLOC (32) // Num materials to allocate per block.
@@ -1038,13 +1041,13 @@ void Materials_Ticker(timespan_t time)
  */
 static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
                                 blendmode_t blendMode, int magMode,
-                                const gltexture_inst_t* texInst,
+                                const gltexturevariant_t* tex,
                                 float sScale, float tScale,
                                 float sOffset, float tOffset, float alpha)
 {
     material_textureunit_t* mtp = &ss->units[unit];
 
-    mtp->texInst = texInst;
+    mtp->tex = tex;
     mtp->magMode = magMode;
     mtp->blendMode = blendMode;
     mtp->alpha = MINMAX_OF(0, alpha, 1);
@@ -1054,14 +1057,15 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
     mtp->offset[1] = tOffset;
 }
 
-byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed, material_load_params_t* params)
+byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed,
+    material_load_params_t* params)
 {
     materialnum_t num;
     if((num = Materials_ToMaterialNum(mat)))
     {
         materialbind_t* mb;
-        const gltexture_inst_t* texInst[DDMAX_MATERIAL_LAYERS];
-        const gltexture_inst_t* detailInst = NULL, *shinyInst = NULL, *shinyMaskInst = NULL;
+        const gltexturevariant_t* layerTextures[DDMAX_MATERIAL_LAYERS];
+        const gltexturevariant_t* detailTex = NULL, *shinyTex = NULL, *shinyMaskTex = NULL;
         const ded_detailtexture_t* detail = NULL;
         const ded_reflection_t* reflection = NULL;
         const ded_decor_t* decor = NULL;
@@ -1079,7 +1083,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             byte result;
 
             // Pick the instance matching the specified context.
-            texInst[i] = GL_PrepareGLTexture(ml->tex, params, &result);
+            layerTextures[i] = GL_PrepareGLTexture(ml->tex, params, &result);
 
             if(result)
                 tmpResult = result;
@@ -1112,7 +1116,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                         float contrast = detail->strength * detailFactor;
 
                         // Pick an instance matching the specified context.
-                        detailInst = GL_PrepareGLTexture(dTex->id, &contrast, 0);
+                        detailTex = GL_PrepareGLTexture(dTex->id, &contrast, 0);
                     }
                 }
 
@@ -1131,14 +1135,14 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                     if((sTex = R_GetShinyTexture(reflection->shinyMap)))
                     {
                         // Pick an instance matching the specified context.
-                        shinyInst = GL_PrepareGLTexture(sTex->id, 0, 0);
+                        shinyTex = GL_PrepareGLTexture(sTex->id, 0, 0);
                     }
 
-                    if(shinyInst && // Don't bother searching unless the above succeeds.
+                    if(shinyTex && // Don't bother searching unless the above succeeds.
                        (mTex = R_GetMaskTexture(reflection->maskMap)))
                     {
                         // Pick an instance matching the specified context.
-                        shinyMaskInst = GL_PrepareGLTexture(mTex->id, 0, 0);
+                        shinyMaskTex = GL_PrepareGLTexture(mTex->id, 0, 0);
                     }
                 }
             }
@@ -1165,32 +1169,46 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
         if(mat->layers[0].tex)
         {
             const gltexture_t*  tex = GL_GetGLTexture(mat->layers[0].tex);
-            int c, magMode = glmode[texMagMode];
+            int magMode = glmode[texMagMode];
             vec2_t scale;
 
             if(tex->type == GLT_SPRITE)
                 magMode = filterSprites? GL_LINEAR : GL_NEAREST;
             V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
 
-            setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst[0], scale[0], scale[1], mat->layers[0].texOrigin[0], mat->layers[0].texOrigin[1], 1);
+            setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, layerTextures[0], scale[0], scale[1], mat->layers[0].texOrigin[0], mat->layers[0].texOrigin[1], 1);
 
-            snapshot->isOpaque = !texInst[0]->isMasked;
+            snapshot->isOpaque = !layerTextures[0]->isMasked;
+
+            if(params && (params->flags & MLF_LOAD_AS_SKY))
+            {
+                const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*) layerTextures[0]->analyses[GLTA_SKY_TOPCOLOR];
+                assert(avgTopColor);
+                snapshot->topColor[CR] = avgTopColor->color[CR];
+                snapshot->topColor[CG] = avgTopColor->color[CG];
+                snapshot->topColor[CB] = avgTopColor->color[CB];
+            }
+            else
+            {
+                snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
+            }
 
             /// \fixme what about the other texture types?
             if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_FLAT)
             {
-                for(c = 0; c < 3; ++c)
-                {
-                    snapshot->color[c] = texInst[0]->data.texture.color[c];
-                    snapshot->colorAmplified[c] = texInst[0]->data.texture.colorAmplified[c];
-                    snapshot->topColor[c] = texInst[0]->data.texture.topColor[c];
-                }
+                const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*) layerTextures[0]->analyses[GLTA_WORLD_AMBIENTLIGHT];
+                assert(ambientLight);
+                snapshot->color[CR] = ambientLight->color[CR];
+                snapshot->color[CG] = ambientLight->color[CG];
+                snapshot->color[CB] = ambientLight->color[CB];
+                snapshot->colorAmplified[CR] = ambientLight->colorAmplified[CR];
+                snapshot->colorAmplified[CG] = ambientLight->colorAmplified[CG];
+                snapshot->colorAmplified[CB] = ambientLight->colorAmplified[CB];
             }
             else
             {
                 snapshot->color[CR] = snapshot->color[CG] = snapshot->color[CB] = 1;
                 snapshot->colorAmplified[CR] = snapshot->colorAmplified[CG] = snapshot->colorAmplified[CB] = 1;
-                snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
             }
         }
 
@@ -1202,33 +1220,33 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
         if(!(mat->flags & MATF_SKYMASK))
         {
             // Setup the detail texturing pass?
-            if(detailInst && detail && snapshot->isOpaque)
+            if(detailTex && detail && snapshot->isOpaque)
             {
                 float width, height, scale;
 
-                width  = GLTexture_GetWidth(detailInst->tex);
-                height = GLTexture_GetHeight(detailInst->tex);
+                width  = GLTexture_GetWidth(detailTex->generalCase);
+                height = GLTexture_GetHeight(detailTex->generalCase);
                 scale  = MAX_OF(1, detail->scale);
                 // Apply the global scaling factor.
                 if(detailScale > .001f)
                     scale *= detailScale;
 
-                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, GL_LINEAR, detailInst, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, GL_LINEAR, detailTex, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
             }
 
             // Setup the reflection (aka shiny) texturing pass(es)?
-            if(shinyInst && reflection)
+            if(shinyTex && reflection)
             {
                 snapshot->shiny.minColor[CR] = reflection->minColor[CR];
                 snapshot->shiny.minColor[CG] = reflection->minColor[CG];
                 snapshot->shiny.minColor[CB] = reflection->minColor[CB];
 
-                setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode, GL_LINEAR, shinyInst, 1, 1, 0, 0, reflection->shininess);
+                setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode, GL_LINEAR, shinyTex, 1, 1, 0, 0, reflection->shininess);
 
-                if(shinyMaskInst)
-                    setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskInst,
-                               1.f / (snapshot->width * maskTextures[shinyMaskInst->tex->ofTypeID]->width),
-                               1.f / (snapshot->height * maskTextures[shinyMaskInst->tex->ofTypeID]->height),
+                if(shinyMaskTex)
+                    setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskTex,
+                               1.f / (snapshot->width * maskTextures[shinyMaskTex->generalCase->ofTypeID]->width),
+                               1.f / (snapshot->height * maskTextures[shinyMaskTex->generalCase->ofTypeID]->height),
                                snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
             }
         }

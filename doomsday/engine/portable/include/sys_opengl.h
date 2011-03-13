@@ -76,7 +76,6 @@ typedef struct gl_state_s {
     /// Current state:
     boolean currentUseFog;
     boolean currentUseTexCompression;
-    float currentGrayMipmapFactor;
     float currentLineWidth;
     float currentPointSize;
 

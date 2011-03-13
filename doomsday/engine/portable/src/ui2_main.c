@@ -32,6 +32,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "gltexturevariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -523,8 +525,7 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     {
         material_snapshot_t ms;
         Materials_Prepare(&ms, p->_bg.material, true, NULL);
-        tex = ms.units[MTU_PRIMARY].texInst->id;
-
+        tex = ms.units[MTU_PRIMARY].tex->glName;
     }
     else
         tex = p->_bg.tex;
@@ -997,19 +998,19 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 params.tex.border = 1;
                 Materials_Prepare(&ms, mat, true, &params);
 
-                if(ms.units[MTU_PRIMARY].texInst)
+                if(ms.units[MTU_PRIMARY].tex)
                 {
                     /// \todo Utilize *all* properties of the Material.
-                    tex = ms.units[MTU_PRIMARY].texInst->id;
+                    tex = ms.units[MTU_PRIMARY].tex->glName;
                     V3_Set(offset, -ms.units[MTU_PRIMARY].offset[0], -ms.units[MTU_PRIMARY].offset[1], 0);
-                    V3_Set(dimensions, ms.width + ms.units[MTU_PRIMARY].texInst->border*2, ms.height + ms.units[MTU_PRIMARY].texInst->border*2, 0);
-                    V2_Set(texScale, ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0], ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1]);
+                    V3_Set(dimensions, ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2, ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2, 0);
+                    V2_Set(texScale, ms.units[MTU_PRIMARY].tex->coords[0], ms.units[MTU_PRIMARY].tex->coords[1]);
                 }
             }
             break;
             }
         case PFT_PATCH:
-            if((patch = R_FindPatchTex(f->texRef.patch)))
+            if((patch = R_PatchTextureForIndex(f->texRef.patch)))
             {
                 tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
                 V3_Set(offset, patch->offX, patch->offY, 0);

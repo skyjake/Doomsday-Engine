@@ -26,6 +26,8 @@
 
 #include "p_dmu.h"
 
+struct gltexturevariant_s;
+
 // Material load flags:
 #define MLF_LOAD_AS_SKY             0x0001
 
@@ -49,7 +51,7 @@ enum {
 };
 
 typedef struct material_textureunit_s {
-    const struct gltexture_inst_s* texInst;
+    const struct gltexturevariant_s* tex;
     int             magMode;
     blendmode_t     blendMode; // Currently used only with reflection.
     float           alpha;
@@ -74,6 +76,8 @@ typedef struct material_snapshot_s {
         float           minColor[3];
     } shiny;
 } material_snapshot_t;
+
+#define MSU(ms, u) ((ms)->units[u])
 
 boolean         Material_GetProperty(const material_t* mat, setargs_t* args);
 boolean         Material_SetProperty(material_t* mat, const setargs_t* args);

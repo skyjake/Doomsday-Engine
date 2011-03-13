@@ -1956,7 +1956,7 @@ END_PROF( PROF_RL_RENDER_LIGHT );
      * If we have two texture units, the shiny masks will be
      * enabled.  Otherwise the masks are ignored.  The shine is
      * basically specular environmental additive light, multiplied
-     * by the mask so that black texels in the mask produce areas
+     * by the mask so that black texels from the mask produce areas
      * without shine.
      *
      * Walls with holes (so called 'masked textures') cannot be

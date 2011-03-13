@@ -53,6 +53,8 @@
 #include "def_main.h"
 
 #include "m_stack.h"
+#include "gltexture.h"
+#include "gltexturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -631,7 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     params.tex.border = 1;
     Materials_Prepare(&ms, mat, false, &params);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
     assert(NULL != sprTex);
 
     info->numFrames = sprDef->numFrames;
@@ -639,10 +641,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
-    info->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
-    info->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
-    info->texCoord[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
-    info->texCoord[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
+    info->width = ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
+    info->height = ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2;
+    info->texCoord[0] = ms.units[MTU_PRIMARY].tex->coords[0];
+    info->texCoord[1] = ms.units[MTU_PRIMARY].tex->coords[1];
 
     return true;
 }
@@ -887,11 +889,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
     assert(NULL != sprTex);
 
-    params->width  =  ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
-    params->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
+    params->width  =  ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
+    params->height = ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -909,8 +911,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = transMap;
     params->tClass = transClass;
-    params->matOffset[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
-    params->matOffset[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
+    params->matOffset[0] = ms.units[MTU_PRIMARY].tex->coords[0];
+    params->matOffset[1] = ms.units[MTU_PRIMARY].tex->coords[1];
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = blendMode;
@@ -1136,7 +1138,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
     assert(NULL != sprTex);
 
     // Align to the view plane?
@@ -1434,7 +1436,7 @@ void R_ProjectSprite(mobj_t* mo)
         spriteframe_t* sprFrame;
         material_t* mat;
         material_snapshot_t ms;
-        const gltexture_inst_t* texInst;
+        const gltexturevariant_t* tex;
 
         // Determine the sprite frame lump of the source.
         sprDef = &sprites[mo->sprite];
@@ -1456,9 +1458,9 @@ if(!mat)
 
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
-        if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
+        if(ms.units[MTU_PRIMARY].tex->generalCase->type != GLT_SPRITE)
             return; // *Very* strange...
-        texInst = ms.units[MTU_PRIMARY].texInst;
+        tex = ms.units[MTU_PRIMARY].tex;
 
         lum = LO_GetLuminous(mo->lumIdx);
         def = (mo->state? stateLights[mo->state - states] : 0);
@@ -1471,9 +1473,13 @@ if(!mat)
         V3_Sum(vis->center, mo->pos, visOff);
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
 
-        flareSize = texInst->data.sprite.lumSize;
+        {
+        const pointlight_analysis_t* pl = (const pointlight_analysis_t*)tex->analyses[GLTA_SPRITE_AUTOLIGHT];
+        assert(pl);
+        flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = (texInst->data.sprite.flareX - (float) ms.width / 2) - (sprTex->offX - (float) ms.width / 2);
+        xOffset = (pl->originX - (float) ms.width / 2) - (sprTex->offX - (float) ms.width / 2);
+        }
 
         // Does the mobj have an active light definition?
         if(def)

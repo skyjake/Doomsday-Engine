@@ -29,14 +29,17 @@
 #ifndef LIBDENG_REFRESH_LIGHT_GRID_H
 #define LIBDENG_REFRESH_LIGHT_GRID_H
 
-void            LG_Register(void);
-void            LG_InitForMap(void);
+void LG_Register(void);
+void LG_InitForMap(void);
+void LG_Update(void);
 
-void            LG_Update(void);
-void            LG_MarkAllForUpdate(const cvar_t* cvar);
-void            LG_SectorChanged(sector_t* sector);
+/**
+ * Called when a setting is changed which affects the lightgrid.
+ */
+void LG_MarkAllForUpdate(const cvar_t* /*cvar*/);
 
-void            LG_Evaluate(const float* point, float* destColor);
-void            LG_Debug(void);
+void LG_SectorChanged(sector_t* sector);
+void LG_Evaluate(const float* point, float* destColor);
+void LG_Debug(void);
 
 #endif/* LIBDENG_REFRESH_LIGHT_GRID_H */

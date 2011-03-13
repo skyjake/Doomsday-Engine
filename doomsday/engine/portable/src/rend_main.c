@@ -45,6 +45,7 @@
 #include "de_ui.h"
 #include "de_system.h"
 #include "net_main.h"
+#include "gltexturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1182,83 +1183,81 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
     return interPos;
 }
 
-static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                     rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
-                     const material_snapshot_t* msA, float inter,
-                     const material_snapshot_t* msB)
+static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflection[NUM_TEXMAP_UNITS],
+    const material_snapshot_t* msA, float inter, const material_snapshot_t* msB)
 {
-    rTU[TU_PRIMARY].tex = msA->units[MTU_PRIMARY].texInst->id;
-    rTU[TU_PRIMARY].magMode = msA->units[MTU_PRIMARY].magMode;
-    rTU[TU_PRIMARY].scale[0] = msA->units[MTU_PRIMARY].scale[0];
-    rTU[TU_PRIMARY].scale[1] = msA->units[MTU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].offset[0] = msA->units[MTU_PRIMARY].offset[0] * rTU[TU_PRIMARY].scale[0];
-    rTU[TU_PRIMARY].offset[1] = msA->units[MTU_PRIMARY].offset[1] * rTU[TU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].blendMode = msA->units[MTU_PRIMARY].blendMode;
-    rTU[TU_PRIMARY].blend = msA->units[MTU_PRIMARY].alpha;
+    RTU(main, TU_PRIMARY).tex       = MSU(msA, MTU_PRIMARY).tex->glName;
+    RTU(main, TU_PRIMARY).magMode   = MSU(msA, MTU_PRIMARY).magMode;
+    RTU(main, TU_PRIMARY).scale[0]  = MSU(msA, MTU_PRIMARY).scale[0];
+    RTU(main, TU_PRIMARY).scale[1]  = MSU(msA, MTU_PRIMARY).scale[1];
+    RTU(main, TU_PRIMARY).offset[0] = MSU(msA, MTU_PRIMARY).offset[0] * RTU(main, TU_PRIMARY).scale[0];
+    RTU(main, TU_PRIMARY).offset[1] = MSU(msA, MTU_PRIMARY).offset[1] * RTU(main, TU_PRIMARY).scale[1];
+    RTU(main, TU_PRIMARY).blendMode = MSU(msA, MTU_PRIMARY).blendMode;
+    RTU(main, TU_PRIMARY).blend     = MSU(msA, MTU_PRIMARY).alpha;
 
-    if(msA->units[MTU_DETAIL].texInst)
+    if(MSU(msA, MTU_DETAIL).tex)
     {
-        rTU[TU_PRIMARY_DETAIL].tex = msA->units[MTU_DETAIL].texInst->id;
-        rTU[TU_PRIMARY_DETAIL].magMode = msA->units[MTU_DETAIL].magMode;
-        rTU[TU_PRIMARY_DETAIL].scale[0] = msA->units[MTU_DETAIL].scale[0];
-        rTU[TU_PRIMARY_DETAIL].scale[1] = msA->units[MTU_DETAIL].scale[1];
-        rTU[TU_PRIMARY_DETAIL].offset[0] = msA->units[MTU_DETAIL].offset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
-        rTU[TU_PRIMARY_DETAIL].offset[1] = msA->units[MTU_DETAIL].offset[1] * rTU[TU_PRIMARY_DETAIL].scale[1];
-        rTU[TU_PRIMARY_DETAIL].blendMode = msA->units[MTU_DETAIL].blendMode;
-        rTU[TU_PRIMARY_DETAIL].blend = msA->units[MTU_DETAIL].alpha;
+        RTU(main, TU_PRIMARY_DETAIL).tex       = MSU(msA, MTU_DETAIL).tex->glName;
+        RTU(main, TU_PRIMARY_DETAIL).magMode   = MSU(msA, MTU_DETAIL).magMode;
+        RTU(main, TU_PRIMARY_DETAIL).scale[0]  = MSU(msA, MTU_DETAIL).scale[0];
+        RTU(main, TU_PRIMARY_DETAIL).scale[1]  = MSU(msA, MTU_DETAIL).scale[1];
+        RTU(main, TU_PRIMARY_DETAIL).offset[0] = MSU(msA, MTU_DETAIL).offset[0] * RTU(main, TU_PRIMARY_DETAIL).scale[0];
+        RTU(main, TU_PRIMARY_DETAIL).offset[1] = MSU(msA, MTU_DETAIL).offset[1] * RTU(main, TU_PRIMARY_DETAIL).scale[1];
+        RTU(main, TU_PRIMARY_DETAIL).blendMode = MSU(msA, MTU_DETAIL).blendMode;
+        RTU(main, TU_PRIMARY_DETAIL).blend     = MSU(msA, MTU_DETAIL).alpha;
     }
 
-    if(msB && msB->units[MTU_PRIMARY].texInst)
+    if(msB && MSU(msB, MTU_PRIMARY).tex)
     {
-        rTU[TU_INTER].tex = msB->units[MTU_PRIMARY].texInst->id;
-        rTU[TU_INTER].magMode = msB->units[MTU_PRIMARY].magMode;
-        rTU[TU_INTER].scale[0] = msB->units[MTU_PRIMARY].scale[0];
-        rTU[TU_INTER].scale[1] = msB->units[MTU_PRIMARY].scale[1];
-        rTU[TU_INTER].offset[0] = msB->units[MTU_PRIMARY].offset[0] * rTU[TU_INTER].scale[0];
-        rTU[TU_INTER].offset[1] = msB->units[MTU_PRIMARY].offset[1] * rTU[TU_INTER].scale[1];
-        rTU[TU_INTER].blendMode = msB->units[MTU_PRIMARY].blendMode;
-        rTU[TU_INTER].blend = msB->units[MTU_PRIMARY].alpha;
+        RTU(main, TU_INTER).tex       = MSU(msB, MTU_PRIMARY).tex->glName;
+        RTU(main, TU_INTER).magMode   = MSU(msB, MTU_PRIMARY).magMode;
+        RTU(main, TU_INTER).scale[0]  = MSU(msB, MTU_PRIMARY).scale[0];
+        RTU(main, TU_INTER).scale[1]  = MSU(msB, MTU_PRIMARY).scale[1];
+        RTU(main, TU_INTER).offset[0] = MSU(msB, MTU_PRIMARY).offset[0] * RTU(main, TU_INTER).scale[0];
+        RTU(main, TU_INTER).offset[1] = MSU(msB, MTU_PRIMARY).offset[1] * RTU(main, TU_INTER).scale[1];
+        RTU(main, TU_INTER).blendMode = MSU(msB, MTU_PRIMARY).blendMode;
+        RTU(main, TU_INTER).blend     = MSU(msB, MTU_PRIMARY).alpha;
 
         // Blend between the primary and inter textures.
-        rTU[TU_INTER].blend = inter;
+        RTU(main, TU_INTER).blend = inter;
     }
 
-    if(msB && msB->units[MTU_DETAIL].texInst)
+    if(msB && MSU(msB, MTU_DETAIL).tex)
     {
-        rTU[TU_INTER_DETAIL].tex = msB->units[MTU_DETAIL].texInst->id;
-        rTU[TU_INTER_DETAIL].magMode = msB->units[MTU_DETAIL].magMode;
-        rTU[TU_INTER_DETAIL].scale[0] = msB->units[MTU_DETAIL].scale[0];
-        rTU[TU_INTER_DETAIL].scale[1] = msB->units[MTU_DETAIL].scale[1];
-        rTU[TU_INTER_DETAIL].offset[0] = msB->units[MTU_DETAIL].offset[0] * rTU[TU_INTER_DETAIL].scale[0];
-        rTU[TU_INTER_DETAIL].offset[1] = msB->units[MTU_DETAIL].offset[1] * rTU[TU_INTER_DETAIL].scale[1];
-        rTU[TU_INTER_DETAIL].blendMode = msB->units[MTU_DETAIL].blendMode;
-        rTU[TU_INTER_DETAIL].blend = msB->units[MTU_DETAIL].alpha;
+        RTU(main, TU_INTER_DETAIL).tex       = MSU(msB, MTU_DETAIL).tex->glName;
+        RTU(main, TU_INTER_DETAIL).magMode   = MSU(msB, MTU_DETAIL).magMode;
+        RTU(main, TU_INTER_DETAIL).scale[0]  = MSU(msB, MTU_DETAIL).scale[0];
+        RTU(main, TU_INTER_DETAIL).scale[1]  = MSU(msB, MTU_DETAIL).scale[1];
+        RTU(main, TU_INTER_DETAIL).offset[0] = MSU(msB, MTU_DETAIL).offset[0] * RTU(main, TU_INTER_DETAIL).scale[0];
+        RTU(main, TU_INTER_DETAIL).offset[1] = MSU(msB, MTU_DETAIL).offset[1] * RTU(main, TU_INTER_DETAIL).scale[1];
+        RTU(main, TU_INTER_DETAIL).blendMode = MSU(msB, MTU_DETAIL).blendMode;
+        RTU(main, TU_INTER_DETAIL).blend     = MSU(msB, MTU_DETAIL).alpha;
 
         // Blend between the primary and inter detail textures.
-        rTU[TU_INTER_DETAIL].blend = inter;
+        RTU(main, TU_INTER_DETAIL).blend     = inter;
     }
 
-    if(msA->units[MTU_REFLECTION].texInst)
+    if(MSU(msA, MTU_REFLECTION).tex)
     {
-        rTUs[TU_PRIMARY].tex = msA->units[MTU_REFLECTION].texInst->id;
-        rTUs[TU_PRIMARY].magMode = msA->units[MTU_REFLECTION].magMode;
-        rTUs[TU_PRIMARY].scale[0] = msA->units[MTU_REFLECTION].scale[0];
-        rTUs[TU_PRIMARY].scale[1] = msA->units[MTU_REFLECTION].scale[1];
-        rTUs[TU_PRIMARY].offset[0] = msA->units[MTU_REFLECTION].offset[0] * rTUs[TU_PRIMARY].scale[0];
-        rTUs[TU_PRIMARY].offset[1] = msA->units[MTU_REFLECTION].offset[1] * rTUs[TU_PRIMARY].scale[1];
-        rTUs[TU_PRIMARY].blendMode = msA->units[MTU_REFLECTION].blendMode;
-        rTUs[TU_PRIMARY].blend = msA->units[MTU_REFLECTION].alpha;
+        RTU(reflection, TU_PRIMARY).tex       = MSU(msA, MTU_REFLECTION).tex->glName;
+        RTU(reflection, TU_PRIMARY).magMode   = MSU(msA, MTU_REFLECTION).magMode;
+        RTU(reflection, TU_PRIMARY).scale[0]  = MSU(msA, MTU_REFLECTION).scale[0];
+        RTU(reflection, TU_PRIMARY).scale[1]  = MSU(msA, MTU_REFLECTION).scale[1];
+        RTU(reflection, TU_PRIMARY).offset[0] = MSU(msA, MTU_REFLECTION).offset[0] * RTU(reflection, TU_PRIMARY).scale[0];
+        RTU(reflection, TU_PRIMARY).offset[1] = MSU(msA, MTU_REFLECTION).offset[1] * RTU(reflection, TU_PRIMARY).scale[1];
+        RTU(reflection, TU_PRIMARY).blendMode = MSU(msA, MTU_REFLECTION).blendMode;
+        RTU(reflection, TU_PRIMARY).blend     = MSU(msA, MTU_REFLECTION).alpha;
 
-        if(msA->units[MTU_REFLECTION_MASK].texInst)
+        if(MSU(msA, MTU_REFLECTION_MASK).tex)
         {
-            rTUs[TU_INTER].tex = msA->units[MTU_REFLECTION_MASK].texInst->id;
-            rTUs[TU_INTER].magMode = msA->units[MTU_REFLECTION_MASK].magMode;
-            rTUs[TU_INTER].scale[0] = msA->units[MTU_REFLECTION_MASK].scale[0];
-            rTUs[TU_INTER].scale[1] = msA->units[MTU_REFLECTION_MASK].scale[1];
-            rTUs[TU_INTER].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0] * rTUs[TU_INTER].scale[0];
-            rTUs[TU_INTER].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1] * rTUs[TU_INTER].scale[1];
-            rTUs[TU_INTER].blendMode = msA->units[MTU_REFLECTION_MASK].blendMode;
-            rTUs[TU_INTER].blend = msA->units[MTU_REFLECTION_MASK].alpha;
+            RTU(reflection, TU_INTER).tex       = MSU(msA, MTU_REFLECTION_MASK).tex->glName;
+            RTU(reflection, TU_INTER).magMode   = MSU(msA, MTU_REFLECTION_MASK).magMode;
+            RTU(reflection, TU_INTER).scale[0]  = MSU(msA, MTU_REFLECTION_MASK).scale[0];
+            RTU(reflection, TU_INTER).scale[1]  = MSU(msA, MTU_REFLECTION_MASK).scale[1];
+            RTU(reflection, TU_INTER).offset[0] = MSU(msA, MTU_REFLECTION_MASK).offset[0] * RTU(reflection, TU_INTER).scale[0];
+            RTU(reflection, TU_INTER).offset[1] = MSU(msA, MTU_REFLECTION_MASK).offset[1] * RTU(reflection, TU_INTER).scale[1];
+            RTU(reflection, TU_INTER).blendMode = MSU(msA, MTU_REFLECTION_MASK).blendMode;
+            RTU(reflection, TU_INTER).blend     = MSU(msA, MTU_REFLECTION_MASK).alpha;
         }
     }
 }
@@ -1285,7 +1284,7 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
             (isWall? texOffset[1] : -texOffset[1]) / msA->height;
     }
 
-    if(msA->units[MTU_DETAIL].texInst && texOffset)
+    if(msA->units[MTU_DETAIL].tex && texOffset)
     {
         rTU[TU_PRIMARY_DETAIL].offset[0] +=
             texOffset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
@@ -1294,7 +1293,7 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                 rTU[TU_PRIMARY_DETAIL].scale[1];
     }
 
-    if(msB && msB->units[MTU_PRIMARY].texInst)
+    if(msB && msB->units[MTU_PRIMARY].tex)
     {
         if(texScale)
         {
@@ -1309,7 +1308,7 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
         }
     }
 
-    if(msB && msB->units[MTU_DETAIL].texInst && texOffset)
+    if(msB && msB->units[MTU_DETAIL].tex && texOffset)
     {
         rTU[TU_INTER_DETAIL].offset[0] +=
             texOffset[0] * rTU[TU_INTER_DETAIL].scale[0];
@@ -1318,7 +1317,7 @@ static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                 rTU[TU_INTER_DETAIL].scale[1];
     }
 
-    if(msA->units[MTU_REFLECTION].texInst)
+    if(msA->units[MTU_REFLECTION].tex)
     {
         if(texScale)
         {
@@ -2957,7 +2956,7 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
 
     Materials_Prepare(&ms, mat, true, NULL);
 
-    rTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].texInst->id;
+    rTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].tex->glName;
     rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
     rTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
     rTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
@@ -4998,7 +4997,7 @@ static void Rend_RenderBoundingBoxes(void)
     mat = Materials_ToMaterial(Materials_NumForName(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":bbox"));
     Materials_Prepare(&ms, mat, true, NULL);
 
-    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

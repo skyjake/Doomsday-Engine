@@ -359,11 +359,17 @@ boolean Uri_Equality(const dduri_t* uri, const dduri_t* other)
     { ddstring_t* thisPath, *otherPath;
     int result;
 
+    if(uri == other)
+        return true;
+
     // First, lets check if the scheme differs.
     if(Str_Length(&uri->_scheme) != Str_Length(Uri_Scheme(other)))
         return false;
     if(Str_CompareIgnoreCase(&uri->_scheme, Str_Text(Uri_Scheme(other))))
         return false;
+
+    if(!Str_CompareIgnoreCase(&uri->_path, Str_Text(Uri_Path(other))))
+        return true; // No resolve necessary.
 
     // For comparison purposes we must be able to resolve both paths.
     if((thisPath = Uri_Resolved(uri)) == 0)

@@ -429,6 +429,7 @@ EXPORTS
     DGL_DrawRect                @128 NONAME
     DGL_DrawRectTiled           @129 NONAME
     DGL_DrawCutRectTiled        @130 NONAME
+    DGL_NewTextureWithParams    @329 NONAME
 
 ; Depreciated:
     DGL_DrawRawScreen           @126 NONAME
@@ -460,7 +461,6 @@ EXPORTS
 
 ; Graphics.
     GL_GrabScreen               @109 NONAME
-    GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
     GL_TextureNumForName        @437 NONAME

@@ -12,8 +12,8 @@ Material {
   Width = 64;
   Height = 64;
   Layer {
-    Stage { System = "DDT_UNKN"; Tics = 16; Glow = 0; }
-    Stage { System = "DDT_UNKN"; Tics = 24; Glow = 1; }
+    Stage { System = "unknown"; Tics = 16; Glow = 0; }
+    Stage { System = "unknown"; Tics = 24; Glow = 1; }
   }
 }
 
@@ -26,8 +26,8 @@ Material {
   Width = 64;
   Height = 64;
   Layer {
-    Stage { System = "DDT_MISS"; Tics = 16; Glow = 0; }
-    Stage { System = "DDT_MISS"; Tics = 24; Glow = 1; }
+    Stage { System = "missing"; Tics = 16; Glow = 0; }
+    Stage { System = "missing"; Tics = 24; Glow = 1; }
   }
 }
 
@@ -39,7 +39,7 @@ Material {
   Width = 64;
   Height = 64;
   Layer {
-    Stage { System = "DDT_BBOX"; Glow = 1; }
+    Stage { System = "bbox"; Glow = 1; }
   }
 }
 
@@ -51,6 +51,6 @@ Material {
   Width = 64;
   Height = 64;
   Layer {
-    Stage { System = "DDT_GRAY"; }
+    Stage { System = "gray"; }
   }
 }

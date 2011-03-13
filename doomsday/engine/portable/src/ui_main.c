@@ -41,6 +41,7 @@
 #include "de_misc.h"
 
 #include "image.h"
+#include "texturecontent.h"
 #include "rend_console.h" // \todo Move Rend_ConsoleUpdateTitle somewhere more suitable.
 
 // MACROS ------------------------------------------------------------------
@@ -275,10 +276,10 @@ void UI_LoadTextures(void)
                   image.pixelSize == 3 ? DGL_RGB :
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
                 image.width, image.height, image.pixels,
-                TXCF_NO_COMPRESSION, GL_LINEAR, GL_LINEAR,
+                TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR,
                 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-            GL_DestroyImage(&image);
+            GL_DestroyImagePixels(&image);
         }
         else
             uiTextures[i] = 0;

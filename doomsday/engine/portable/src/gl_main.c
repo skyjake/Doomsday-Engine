@@ -47,6 +47,8 @@
 #include "de_defs.h"
 
 #include "r_draw.h"
+#include "texturecontent.h"
+#include "gltexturevariant.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
@@ -505,7 +507,7 @@ boolean GL_EarlyInit(void)
     numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
     envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
 
-    GL_InitDeferred();
+    GL_InitDeferredTask();
     GL_InitArrays();
 
     // Check the maximum texture size.
@@ -601,7 +603,7 @@ void GL_Shutdown(void)
     if(!initGLOk)
         return; // Not yet initialized fully.
 
-    GL_ShutdownDeferred();
+    GL_ShutdownDeferredTask();
     FR_Shutdown();   
     glFontFixed =
         glFontVariable[GLFS_NORMAL] =
@@ -1025,6 +1027,84 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
+void GL_SetMaterial(material_t* mat)
+{
+    material_snapshot_t ms;
+
+    if(!mat)
+        return; // \fixme we need a "NULL material".
+
+    Con_Error("GL_SetMaterial: No usage context specified.");
+    Materials_Prepare(&ms, mat, true, NULL);
+    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+}
+
+void GL_SetPSprite(material_t* mat)
+{
+    material_load_params_t params;
+    material_snapshot_t ms;
+
+    memset(&params, 0, sizeof(params));
+    params.pSprite = true;
+    params.tex.border = 1;
+
+    Materials_Prepare(&ms, mat, true, &params);
+
+    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
+{
+    material_snapshot_t ms;
+    material_load_params_t params;
+
+    memset(&params, 0, sizeof(params));
+    params.tmap = tmap;
+    params.tclass = tclass;
+    params.tex.border = 1;
+
+    Materials_Prepare(&ms, mat, true, &params);
+    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+}
+
+void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)
+{
+    rawtex_t* rawTex;
+
+    if((rawTex = R_GetRawTex(lump)))
+    {
+        DGLuint tex = GL_PrepareRawTex(rawTex);
+
+        GL_BindTexture(tex, (filterUI ? GL_LINEAR : GL_NEAREST));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+    }
+}
+
+void GL_BindTexture(DGLuint texname, int magMode)
+{
+    if(Con_IsBusy())
+        return;
+
+    glBindTexture(GL_TEXTURE_2D, texname);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
+    if(GL_state.features.texFilterAniso)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+}
+
+void GL_SetNoTexture(void)
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+int GL_ChooseSmartFilter(int width, int height, int flags)
+{
+    if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
+        return 2; // hq2x
+    return 1; // nearest neighbor.
+}
 
 uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
     int flags, int* outWidth, int* outHeight)
@@ -1285,13 +1365,6 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
     // How about the size of the light source?
     *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
     }
-}
-
-int GL_ChooseSmartFilter(int width, int height, int flags)
-{
-    if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
-        return 2; // hq2x
-    return 1; // nearest neighbor.
 }
 
 void amplify(float rgb[3])

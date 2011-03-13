@@ -50,32 +50,42 @@
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
+typedef struct systex_s {
+    gltextureid_t id;
+    dduri_t* external;
+} systex_t;
+
 typedef struct detailtex_s {
-    gltextureid_t   id;
-    boolean         isExternal;
-    const dduri_t*  filePath;
+    gltextureid_t id;
+    boolean isExternal;
+    const dduri_t* filePath;
 } detailtex_t;
 
 typedef struct lightmap_s {
-    gltextureid_t   id;
-    const dduri_t*  external;
+    gltextureid_t id;
+    const dduri_t* external;
 } lightmap_t;
 
 typedef struct flaretex_s {
-    gltextureid_t   id;
-    const dduri_t*  external;
+    gltextureid_t id;
+    const dduri_t* external;
 } flaretex_t;
 
 typedef struct shinytex_s {
-    gltextureid_t   id;
-    const dduri_t*  external;
+    gltextureid_t id;
+    const dduri_t* external;
 } shinytex_t;
 
 typedef struct masktex_s {
-    gltextureid_t   id;
-    const dduri_t*  external;
-    short           width, height;
+    gltextureid_t id;
+    const dduri_t* external;
+    short width, height;
 } masktex_t;
+
+typedef struct skinname_s {
+    gltextureid_t id;
+    dduri_t* path;
+} skinname_t;
 
 typedef enum {
     TU_PRIMARY = 0,
@@ -144,12 +154,6 @@ typedef struct {
     short width, height, offX, offY;
 } spritetex_t;
 
-// Model skin.
-typedef struct {
-    filename_t      path;
-    gltextureid_t   id;
-} skinname_t;
-
 // Patch flags.
 #define PF_MONOCHROME         0x1
 #define PF_UPSCALE_AND_SHARPEN 0x2
@@ -213,18 +217,6 @@ typedef enum flaretexid_e {
     NUM_SYSFLARE_TEXTURES
 } flaretexid_t;
 
-/**
- * Textures used in world rendering.
- * eg a surface with a missing tex/flat is drawn using the "missing" graphic
- */
-typedef enum ddtextureid_e {
-    DDT_UNKNOWN, // Drawn if a texture/flat is unknown
-    DDT_MISSING, // Drawn in place of HOMs in dev mode.
-    DDT_BBOX, // Drawn when rendering bounding boxes
-    DDT_GRAY, // For lighting debug.
-    NUM_DD_TEXTURES
-} ddtextureid_t;
-
 typedef struct {
     DGLuint         tex;
 } ddtexture_t;
@@ -240,6 +232,9 @@ extern float glowingTextures;
 extern byte precacheSprites, precacheSkins;
 
 extern byte* translationTables;
+
+extern systex_t** sysTextures;
+extern int numSysTextures;
 
 extern detailtex_t** detailTextures;
 extern int numDetailTextures;
@@ -282,9 +277,14 @@ void            R_UpdateTexturesAndFlats(void);
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
 
-void            R_InitSystemTextures(void);
-void            R_InitTextures(void);
-void            R_InitFlats(void);
+/**
+ * Registers the "system" textures that are part of the Doomsday data resource package.
+ */
+void R_InitSystemTextures(void);
+void R_DestroySystemTextures(void);
+
+void R_InitTextures(void);
+void R_InitFlats(void);
 
 /// @return  Flat associated to index# @a idx
 flat_t* R_GetFlatForIdx(int idx);
@@ -331,7 +331,7 @@ void            R_PrecacheMobjNum(int mobjtypeNum);
 
 doomtexturedef_t* R_GetDoomTextureDef(int num);
 
-uint            R_GetSkinNumForName(const char* path);
+uint            R_GetSkinNumForName(const dduri_t* path);
 const skinname_t* R_GetSkinNameByIndex(uint id);
 uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
 void            R_DestroySkins(void); // Called at shutdown.
@@ -363,7 +363,7 @@ void            R_DestroyMaskTextures(void); // Called at shutdown.
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
 patchid_t       R_RegisterAsPatch(const char* name);
 
-patchtex_t*     R_FindPatchTex(patchid_t id);
+patchtex_t*     R_PatchTextureForIndex(patchid_t id);
 void            R_ClearPatchTexs(void);
 boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 

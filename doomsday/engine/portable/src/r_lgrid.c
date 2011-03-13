@@ -630,10 +630,7 @@ void LG_SectorChanged(sector_t* sector)
     needsUpdate = true;
 }
 
-/**
- * Called when a setting is changed which affects the lightgrid.
- */
-void LG_MarkAllForUpdate(const cvar_t* cvar)
+void LG_MarkAllForUpdate(const cvar_t* unused)
 {
     if(!lgInited)
         return;

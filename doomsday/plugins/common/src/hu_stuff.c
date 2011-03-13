@@ -236,7 +236,7 @@ void Hu_LoadData(void)
     if(!fogEffectData.texture && !Get(DD_NOVIDEO))
     {
         fogEffectData.texture =
-            GL_NewTextureWithParams3(DGL_LUMINANCE, 64, 64,
+            DGL_NewTextureWithParams(DGL_LUMINANCE, 64, 64,
                                      W_CacheLumpName("menufog", PU_CACHE),
                                      0, DGL_NEAREST, DGL_LINEAR,
                                      -1 /*best anisotropy*/,

@@ -35,6 +35,8 @@
 #include "cl_def.h"
 #include "m_vector.h"
 #include "rend_sky.h"
+#include "gltexture.h"
+#include "gltexturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -172,9 +174,9 @@ static void prepareSkySphere(void)
 
         Materials_Prepare(&ms, material, false, &params);
 
-        slayer->tex = ms.units[MTU_PRIMARY].texInst->id;
-        slayer->texWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
-        slayer->texHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
+        slayer->tex = ms.units[MTU_PRIMARY].tex->glName;
+        slayer->texWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].tex->generalCase);
+        slayer->texHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].tex->generalCase);
         slayer->texMagMode = ms.units[MTU_PRIMARY].magMode;
 
         slayer->fadeout.rgb[CR] = ms.topColor[CR];

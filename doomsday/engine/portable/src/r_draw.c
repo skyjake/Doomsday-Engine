@@ -33,6 +33,7 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 
+#include "gltexturevariant.h"
 #include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
@@ -236,7 +237,7 @@ void R_DrawViewBorder(void)
     {
         material_snapshot_t ms;
         Materials_Prepare(&ms, mat, true, NULL);
-        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, (filterUI ? GL_LINEAR : GL_NEAREST));
         GL_DrawCutRectTiled(0, 0, port->width, port->height, ms.width, ms.height, 0, 0,
                             viewwindowx - border, viewwindowy - border,
                             viewwidth + 2 * border, viewheight + 2 * border);
@@ -244,10 +245,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -255,10 +256,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border, false);
-        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border, false);
-        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border, false);
-        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border, false);
+        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border, false);
+        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border, false);
+        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border, false);
+        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

@@ -948,6 +948,8 @@ typedef enum {
     NUM_GLTEXTURE_TYPES
 } gltexture_type_t;
 
+#define VALID_GLTEXTURE_TYPE(t)     ((t) >= GLT_FIRST && (t) < NUM_GLTEXTURE_TYPES)
+
 /**
  * Processing modes for GL_LoadGraphics.
  */

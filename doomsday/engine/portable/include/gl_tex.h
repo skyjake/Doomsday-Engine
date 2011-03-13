@@ -40,6 +40,7 @@ void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha);
 /**
  * Take the input buffer and convert to color keyed. A new buffer may be
  * needed if the input buffer has three color components.
+ * Color keying is done for both (0,255,255) and (255,0,255).
  *
  * @return  If the in buffer wasn't large enough will return a ptr to the
  *      newly allocated buffer which must be freed with free(), else @a buf.

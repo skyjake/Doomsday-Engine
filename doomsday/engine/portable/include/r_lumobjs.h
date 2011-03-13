@@ -1,10 +1,10 @@
-/**\file
+/**\file r_lumobjs.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * r_lumobjs.h: Lumobj (luminous object) management.
+ * Lumobj (luminous object) management.
  */
 
-#ifndef __DOOMSDAY_REFRESH_LUMINOUS_H__
-#define __DOOMSDAY_REFRESH_LUMINOUS_H__
+#ifndef LIBDENG_REFRESH_LUMINOUS_H
+#define LIBDENG_REFRESH_LUMINOUS_H
 
 // Lumobject types.
 typedef enum {
@@ -85,7 +85,7 @@ void            LO_InitForNewFrame(void);
 void            LO_AddLuminousMobjs(void);
 void            LO_BeginFrame(void);
 
-void            LO_UnlinkMobjLumobjs(const cvar_t* var);
+void LO_UnlinkMobjLumobjs(const cvar_t* /*cvar*/);
 
 uint            LO_NewLuminous(lumtype_t type, subsector_t* ssec);
 lumobj_t*       LO_GetLuminous(uint idx);
@@ -104,4 +104,4 @@ void            LO_ClipInSubsector(uint ssecidx);
 void            LO_ClipInSubsectorBySight(uint ssecidx);
 
 void            LO_DrawLumobjs(void);
-#endif
+#endif /* LIBDENG_REFRESH_LUMINOUS_H */

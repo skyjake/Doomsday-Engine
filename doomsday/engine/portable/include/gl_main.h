@@ -31,7 +31,9 @@
 
 #include "r_main.h"
 
-#define MAX_TEX_UNITS       2 // More won't be used.
+struct material_s;
+
+#define MAX_TEX_UNITS           2 // More won't be used.
 
 // This should be tweaked a bit.
 #define DEFAULT_FOG_START       0
@@ -87,7 +89,6 @@ void            GL_SetTextureCompression(boolean on);
 void            GL_SetVSync(boolean on);
 void            GL_SetMultisample(boolean on);
 void            GL_BlendOp(int op);
-void            GL_SetGrayMipmap(int lev);
 boolean         GL_NewList(DGLuint list, int mode);
 DGLuint         GL_EndList(void);
 void            GL_CallList(DGLuint list);
@@ -104,27 +105,45 @@ void            GL_DrawElements(dglprimtype_t type, int count,
 boolean         GL_Grab(int x, int y, int width, int height,
                         dgltexformat_t format, void* buffer);
 
+void GL_SetMaterial(struct material_s* mat);
+void GL_SetPSprite(struct material_s* mat);
+void GL_SetTranslatedSprite(struct material_s* mat, int tclass, int tmap);
+void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT);
+void GL_BindTexture(DGLuint texname, int magMode);
+
 /**
- * @param format  DGL texture format symbolic, one of:
- *      DGL_RGB
- *      DGL_RGBA
- *      DGL_COLOR_INDEX_8
- *      DGL_COLOR_INDEX_8_PLUS_A8
- *      DGL_LUMINANCE
+ * You should use glDisable(GL_TEXTURE_2D) instead of this.
+ */
+void GL_SetNoTexture(void);
+
+/**
+ * @param format  DGL texture format identifier.
+ * @param pixels  Texture pixel data to be uploaded.
+ * @param width  Logical width of the texture in pixels.
+ * @param height  Logical height of the texture in pixels.
  * @param palid  Id of the color palette to use with this texture. Only has
- *      meaning if the input format is one of:
- *      DGL_COLOR_INDEX_8
- *      DGL_COLOR_INDEX_8_PLUS_A8
- * @param width  Width of the texture, must be power of two.
- * @param height  Height of the texture, must be power of two.
- * @param genMips  If negative sets a specific mipmap level, e.g.:
+ *      meaning if the @a format is one of:
+ *        DGL_COLOR_INDEX_8
+ *        DGL_COLOR_INDEX_8_PLUS_A8
+ * @param genMipmaps  If negative sets a specific mipmap level, e.g.:
  *      @c -1, means mipmap level 1.
- * @param data Ptr to the texture data.
  *
  * @return  @c true iff successful.
  */
-boolean GL_TexImage(dgltexformat_t format, DGLuint palid, int width, int height,
-    int genMips, void* data);
+boolean GL_TexImage(dgltexformat_t format, const uint8_t* pixels, int width,
+    int height, DGLuint palid, int genMipmaps);
+
+/**
+ * @param pixels  Texture pixel data to be uploaded.
+ * @param width  Logical width of the texture in pixels.
+ * @param height  Logical height of the texture in pixels.
+ * @param pixelSize  Size of each pixel. Handles 1 and 3.
+ * @param grayFactor  Strength of the blend where @c 0:none @c 1:full.
+ *
+ * @return  @c true iff successful.
+ */
+boolean GL_TexImageGrayMipmap(const uint8_t* pixels, int width, int height,
+    int pixelSize, float grayFactor);
 
 /**
  * Given a logical anisotropic filtering level return an appropriate multiplier
@@ -154,22 +173,16 @@ void GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes);
 
 void GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3], ushort idx);
 
-boolean GL_PalettizeImage(uint8_t* out, int outformat, DGLuint palid,
-    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
-
-boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, DGLuint palid,
-    const uint8_t* in, int informat, int width, int height);
-
-/**
- * Desaturates the texture in the dest buffer by averaging the colour then
- * looking up the nearest match in the palette. Increases the brightness
- * to maximum.
- */
-void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width, int height);
-
 // Returns a pointer to a copy of the screen. The pointer must be
 // deallocated by the caller.
 unsigned char*  GL_GrabScreen(void);
+
+/**
+ * @param width  Logical width of the image in pixels.
+ * @param height  Logical height of the image in pixels.
+ * @param flags  @see imageConversionFlags.
+ */
+int GL_ChooseSmartFilter(int width, int height, int flags);
 
 /**
  * in/out format:
@@ -195,6 +208,19 @@ uint8_t* GL_ConvertBuffer(const uint8_t* src, int width, int height,
 uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
     int flags, int* outWidth, int* outHeight);
 
+boolean GL_PalettizeImage(uint8_t* out, int outformat, DGLuint palid,
+    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
+
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, DGLuint palid,
+    const uint8_t* in, int informat, int width, int height);
+
+/**
+ * Desaturates the texture in the dest buffer by averaging the colour then
+ * looking up the nearest match in the palette. Increases the brightness
+ * to maximum.
+ */
+void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width, int height);
+
 /**
  * Calculates the properties of a dynamic light that the given sprite frame
  * casts. Crop a boundary around the image to remove excess alpha'd pixels
@@ -204,13 +230,6 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
     colorpaletteid_t palid, float* brightX, float* brightY, float color[3],
     float* lumSize);
-
-/**
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
- * @param flags  @see imageConversionFlags.
- */
-int GL_ChooseSmartFilter(int width, int height, int flags);
 
 /**
  * The given RGB color is scaled uniformly so that the highest component

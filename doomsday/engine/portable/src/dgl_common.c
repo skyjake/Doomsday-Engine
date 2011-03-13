@@ -48,11 +48,6 @@
 
 // CODE --------------------------------------------------------------------
 
-void GL_SetGrayMipmap(int lev)
-{
-    GL_state.currentGrayMipmapFactor = lev / 255.0f;
-}
-
 /**
  * Requires a texture environment mode that can add and multiply.
  * Nvidia's and ATI's appropriate extensions are supported, other cards will
@@ -695,7 +690,7 @@ void DGL_SetNoMaterial(void)
 
 void DGL_SetPatch(patchid_t id, int wrapS, int wrapT)
 {
-    GL_BindTexture(GL_PreparePatch(R_FindPatchTex(id)), (filterUI ? GL_LINEAR : GL_NEAREST));
+    GL_BindTexture(GL_PreparePatch(R_PatchTextureForIndex(id)), (filterUI ? GL_LINEAR : GL_NEAREST));
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrapS == DGL_CLAMP? GL_CLAMP : wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
@@ -843,4 +838,23 @@ void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
     }}
 
     glDisable(GL_TEXTURE_2D);
+}
+
+DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
+    const uint8_t* pixels, int flags, int minFilter, int magFilter,
+    int anisoFilter, int wrapS, int wrapT)
+{
+    return GL_NewTextureWithParams2(format, width, height, (uint8_t*)pixels,
+        flags, 0,
+        (minFilter == DGL_LINEAR? GL_LINEAR :
+         minFilter == DGL_NEAREST? GL_NEAREST :
+         minFilter == DGL_NEAREST_MIPMAP_NEAREST? GL_NEAREST_MIPMAP_NEAREST :
+         minFilter == DGL_LINEAR_MIPMAP_NEAREST? GL_LINEAR_MIPMAP_NEAREST :
+         minFilter == DGL_NEAREST_MIPMAP_LINEAR? GL_NEAREST_MIPMAP_LINEAR :
+         GL_LINEAR_MIPMAP_LINEAR),
+        (magFilter == DGL_LINEAR? GL_LINEAR : GL_NEAREST), anisoFilter,
+        (wrapS == DGL_CLAMP? GL_CLAMP :
+         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
+        (wrapT == DGL_CLAMP? GL_CLAMP :
+         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }

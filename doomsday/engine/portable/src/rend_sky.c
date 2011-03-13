@@ -41,6 +41,9 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "gltexture.h"
+#include "gltexturevariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define SKYVTX_IDX(c, r)    ( (r)*skyColumns + (c)%skyColumns )
@@ -277,10 +280,10 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             p.tex.flags = GLTF_NO_COMPRESSION | GLTF_ZEROMASK;
 
             Materials_Prepare(&ms, material, true, &p);
-            tex = ms.units[MTU_PRIMARY].texInst->id;
+            tex = ms.units[MTU_PRIMARY].tex->glName;
             magMode = ms.units[MTU_PRIMARY].magMode;
-            skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
-            skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
+            skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].tex->generalCase);
+            skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].tex->generalCase);
         }
 
         GL_BindTexture(tex, magMode);

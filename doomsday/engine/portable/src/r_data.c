@@ -41,6 +41,7 @@
 #include "de_audio.h" // For texture, environmental audio properties.
 
 #include "m_stack.h"
+#include "gltexture.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -99,6 +100,9 @@ byte* translationTables = NULL;
 
 uint numDoomPatchDefs = 0;
 patchtex_t** doomPatchDefs = NULL;
+
+int numSysTextures = 0;
+systex_t** sysTextures = NULL;
 
 int numDetailTextures = 0;
 detailtex_t** detailTextures = NULL;
@@ -916,26 +920,47 @@ void R_ShutdownData(void)
     Materials_Shutdown();
 }
 
-/**
- * Registers the "system" textures that are part of the Doomsday data resource package.
- * @fixme A nuisance really. Why not simply read the contents of e.g., "}doomsday/data/graphics/"
- */
 void R_InitSystemTextures(void)
 {
-    struct ddtexdef_s {
-        char name[9];
-        uint id;
-    } static const ddtexdefs[NUM_DD_TEXTURES] = {
-        { "DDT_UNKN", DDT_UNKNOWN },
-        { "DDT_MISS", DDT_MISSING },
-        { "DDT_BBOX", DDT_BBOX },
-        { "DDT_GRAY", DDT_GRAY }
+    struct texdef_s {
+        const char* name;
+        const char* path;
+    } static const defs[] = {
+        { "unknown", GRAPHICS_RESOURCE_NAMESPACE_NAME":unknown" },
+        { "missing", GRAPHICS_RESOURCE_NAMESPACE_NAME":missing" },
+        { "bbox",    GRAPHICS_RESOURCE_NAMESPACE_NAME":bbox" },
+        { "gray",    GRAPHICS_RESOURCE_NAMESPACE_NAME":gray" },
+        { NULL, NULL }
     };
     { uint i;
-    for(i = 0; i < NUM_DD_TEXTURES; ++i)
+    for(i = 0; defs[i].name; ++i)
     {
-        GL_CreateGLTexture(ddtexdefs[i].name, ddtexdefs[i].id, GLT_SYSTEM);
+        const gltexture_t* glTex = GL_CreateGLTexture(defs[i].name, i, GLT_SYSTEM);
+        systex_t* sysTex;
+    
+        sysTex = malloc(sizeof(*sysTex));
+        sysTex->id = glTex->id;
+        sysTex->external = Uri_Construct(defs[i].path);
+
+        // Add it to the list.
+        sysTextures = realloc(sysTextures, sizeof(systex_t*) * ++numSysTextures);
+        sysTextures[numSysTextures-1] = sysTex;
     }}
+}
+
+void R_DestroySystemTextures(void)
+{
+    { int i;
+    for(i = 0; i < numSysTextures; ++i)
+    {
+        Uri_Destruct(sysTextures[i]->external);
+        free(sysTextures[i]);
+    }}
+
+    if(sysTextures)
+        free(sysTextures);
+    sysTextures = NULL;
+    numSysTextures = 0;
 }
 
 static patchtex_t* getPatchTex(patchid_t id)
@@ -956,11 +981,11 @@ static patchid_t patchForName(const char* name)
 /**
  * Returns a patchtex_t* for the given lump, if one already exists.
  */
-patchtex_t* R_FindPatchTex(patchid_t id)
+patchtex_t* R_PatchTextureForIndex(patchid_t id)
 {
     patchtex_t* patchTex = getPatchTex(id);
     if(!patchTex)
-        Con_Error("R_FindPatchTex: Unknown patch %i.", id);
+        Con_Error("R_PatchTextureForIndex: Unknown patch %i.", id);
     return patchTex;
 }
 
@@ -1988,14 +2013,16 @@ void R_SpriteTexturesClear(void)
     numSpriteTextures = 0;
 }
 
-uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
+uint R_CreateSkinTex(const dduri_t* skin, boolean isShinySkin)
 {
+    assert(skin);
+    {
     char name[9];
     const gltexture_t* glTex;
     skinname_t* st;
     int id;
 
-    if(!skin[0])
+    if(Str_IsEmpty(Uri_Path(skin)))
         return 0;
 
     // Have we already created one for this?
@@ -2022,14 +2049,17 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
 
-    strncpy(st->path, skin, FILENAME_T_MAXLEN);
+    st->path = Uri_ConstructCopy(skin);
     st->id = glTex->id;
 
     if(verbose)
     {
-        Con_Message("SkinTex: \"%s\" -> %li\n", M_PrettyPath(skin), (long) (1 + (st - skinNames)));
+        ddstring_t* searchPath = Uri_ComposePath(skin);
+        Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(searchPath), (long) (1 + (st - skinNames)));
+        Str_Delete(searchPath);
     }
     return 1 + (st - skinNames); // 1-based index.
+    }
 }
 
 static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const char* modelfn)
@@ -2074,7 +2104,11 @@ uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn
         if(!foundPath)
             Str_Init(&buf);
         if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
-            result = R_CreateSkinTex(foundPath ? Str_Text(foundPath) : Str_Text(&buf), isShinySkin);
+        {
+            dduri_t* uri = Uri_Construct2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
+            result = R_CreateSkinTex(uri, isShinySkin);
+            Uri_Destruct(uri);
+        }
         if(!foundPath)
             Str_Free(&buf);
         return result;
@@ -2090,19 +2124,24 @@ const skinname_t* R_GetSkinNameByIndex(uint id)
     return &skinNames[id-1];
 }
 
-uint R_GetSkinNumForName(const char* path)
+uint R_GetSkinNumForName(const dduri_t* path)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < numSkinNames; ++i)
-        if(!stricmp(skinNames[i].path, path))
+        if(Uri_Equality(skinNames[i].path, path))
             return i + 1; // 1-based index.
-
     return 0;
 }
 
 void R_DestroySkins(void)
 {
+    if(0 == numSkinNames)
+        return;
+
+    { uint i;
+    for(i = 0; i < numSkinNames; ++i)
+        Uri_Destruct(skinNames[i].path);
+    }
     M_Free(skinNames);
     skinNames = NULL;
     numSkinNames = 0;
@@ -2278,6 +2317,16 @@ void R_PrecacheMobjNum(int num)
     }
 }
 
+static void addToSurfaceLists(surface_t* suf, material_t* mat)
+{
+    material_snapshot_t ms;
+    Materials_Prepare(&ms, mat, true, 0);
+    if(ms.glowing > 0)
+        R_SurfaceListAdd(glowingSurfaceList, suf);
+    if(ms.decorated)
+        R_SurfaceListAdd(decoratedSurfaceList, suf);
+}
+
 /**
  * Prepare all relevant skins, textures, flats and sprites.
  * Doesn't unload anything, though (so that if there's enough
@@ -2305,9 +2354,14 @@ void R_PrecacheMap(void)
     for(i = 0; i < numSideDefs; ++i)
     {
         side = SIDE_PTR(i);
-        Materials_Precache(side->SW_topmaterial, true);
         Materials_Precache(side->SW_middlematerial, true);
+        addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
+
+        Materials_Precache(side->SW_topmaterial, true);
+        addToSurfaceLists(&side->SW_topsurface, side->SW_topmaterial);
+
         Materials_Precache(side->SW_bottommaterial, true);
+        addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
     }
     for(i = 0; i < numSectors; ++i)
     {
@@ -2315,7 +2369,10 @@ void R_PrecacheMap(void)
         if(0 == sec->lineDefCount)
             continue;
         for(j = 0; j < sec->planeCount; ++j)
+        {
             Materials_Precache(sec->SP_planematerial(j), true);
+            addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
+        }
     }
 
     // Precache sprites?
@@ -2351,60 +2408,7 @@ void R_PrecacheMap(void)
         material_t* mat = Materials_ToMaterial(i+1);
         if(mat->inFlags & MATIF_PRECACHE)
         {
-            material_snapshot_t ms;
-            boolean hasDecorations;
-            uint j;
-
-            // Just this one material.
-            Materials_Prepare(&ms, mat, true, 0);
-            hasDecorations = ms.decorated;
-
-            if(ms.glowing > 0 || hasDecorations)
-            {
-                for(j = 0; j < numSideDefs; ++j)
-                {
-                    sidedef_t* side = &sideDefs[j];
-                    if(side->SW_middlematerial == mat)
-                    {
-                        if(ms.glowing > 0)
-                            R_SurfaceListAdd(glowingSurfaceList, &side->SW_middlesurface);
-                        if(hasDecorations)
-                            R_SurfaceListAdd(decoratedSurfaceList, &side->SW_middlesurface);
-                    }
-                    if(side->SW_bottommaterial == mat)
-                    {
-                        if(ms.glowing > 0)
-                            R_SurfaceListAdd(glowingSurfaceList, &side->SW_bottomsurface);
-                        if(hasDecorations)
-                            R_SurfaceListAdd(decoratedSurfaceList, &side->SW_bottomsurface);
-                    }
-                    if(side->SW_topmaterial == mat)
-                    {
-                        if(ms.glowing > 0)
-                            R_SurfaceListAdd(glowingSurfaceList, &side->SW_topsurface);
-                        if(hasDecorations)
-                            R_SurfaceListAdd(decoratedSurfaceList, &side->SW_topsurface);
-                    }
-                }
-                for(j = 0; j < numSectors; ++j)
-                {
-                    sector_t* sec = &sectors[j];
-                    if(0 == sec->lineDefCount)
-                        continue;
-                    { uint k;
-                    for(k = 0; k < sec->planeCount; ++k)
-                    {
-                        plane_t* pln = sec->planes[k];
-                        if(pln->PS_material == mat)
-                        {
-                            if(ms.glowing > 0)
-                                R_SurfaceListAdd(glowingSurfaceList, &pln->surface);
-                            if(hasDecorations)
-                                R_SurfaceListAdd(decoratedSurfaceList, &pln->surface);
-                        }
-                    }}
-                }
-            }
+            Materials_Prepare(NULL, mat, true, 0);
         }
     }
 
@@ -2496,15 +2500,13 @@ detailtex_t* R_GetDetailTexture(const dduri_t* filePath, boolean isExternal)
     return 0;
 }
 
-/**
- * This is called at final shutdown.
- */
 void R_DestroyDetailTextures(void)
 {
     { int i;
     for(i = 0; i < numDetailTextures; ++i)
+    {
         M_Free(detailTextures[i]);
-    }
+    }}
 
     if(detailTextures)
         M_Free(detailTextures);
@@ -2576,8 +2578,9 @@ void R_DestroyLightMaps(void)
 {
     { int i;
     for(i = 0; i < numLightMaps; ++i)
+    {
         M_Free(lightMaps[i]);
-    }
+    }}
 
     if(lightMaps)
         M_Free(lightMaps);
@@ -2653,8 +2656,9 @@ void R_DestroyFlareTextures(void)
 {
     { int i;
     for(i = 0; i < numFlareTextures; ++i)
+    {
         M_Free(flareTextures[i]);
-    }
+    }}
 
     if(flareTextures)
         M_Free(flareTextures);
@@ -2723,8 +2727,9 @@ void R_DestroyShinyTextures(void)
 {
     { int i;
     for(i = 0; i < numShinyTextures; ++i)
+    {
         M_Free(shinyTextures[i]);
-    }
+    }}
 
     if(shinyTextures)
         M_Free(shinyTextures);
@@ -2795,8 +2800,9 @@ void R_DestroyMaskTextures(void)
 {
     { int i;
     for(i = 0; i < numMaskTextures; ++i)
+    {
         M_Free(maskTextures[i]);
-    }
+    }}
 
     if(maskTextures)
         M_Free(maskTextures);

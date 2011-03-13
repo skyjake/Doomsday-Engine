@@ -32,6 +32,7 @@
 #include "de_defs.h"
 
 #include "s_environ.h"
+#include "gltexture.h"
 
 void Material_Ticker(material_t* mat, timespan_t time)
 {

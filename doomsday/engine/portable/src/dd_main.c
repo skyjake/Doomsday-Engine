@@ -54,8 +54,9 @@
 
 #include "filedirectory.h"
 #include "resourcerecord.h"
-#include "m_misc.h" // \todo remove dependency
+#include "m_misc.h"
 #include "m_args.h"
+#include "gltexture.h"
 
 // MACROS ------------------------------------------------------------------
 

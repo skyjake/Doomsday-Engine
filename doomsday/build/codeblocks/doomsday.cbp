@@ -257,6 +257,8 @@
 		<Unit filename="..\..\engine\portable\include\gl_tex.h" />
 		<Unit filename="..\..\engine\portable\include\gl_texmanager.h" />
 		<Unit filename="..\..\engine\portable\include\gl_tga.h" />
+		<Unit filename="..\..\engine\portable\include\gltexture.h" />
+		<Unit filename="..\..\engine\portable\include\gltexturevariant.h" />
 		<Unit filename="..\..\engine\portable\include\image.h" />
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
@@ -363,6 +365,7 @@
 		<Unit filename="..\..\engine\portable\include\sys_timer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_window.h" />
 		<Unit filename="..\..\engine\portable\include\tab_anorms.h" />
+		<Unit filename="..\..\engine\portable\include\texturecontent.h" />
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
@@ -542,6 +545,7 @@
 		<Unit filename="..\..\engine\portable\src\gl_tga.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\gltexture.c" />
 		<Unit filename="..\..\engine\portable\src\image.c" />
 		<Unit filename="..\..\engine\portable\src\m_args.c">
 			<Option compilerVar="CC" />

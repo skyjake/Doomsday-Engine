@@ -46,6 +46,8 @@
 #include "de_misc.h"
 
 #include "def_main.h"
+#include "gltexture.h"
+#include "gltexturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -806,7 +808,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 
     Materials_Prepare(&ms, spr->spriteFrames[frame].mats[0], true, NULL);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].texInst->tex->ofTypeID);
+    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
     assert(NULL != sprTex);
 
     off = sprTex->offY - ms.height;
@@ -1026,12 +1028,7 @@ static void setupModel(ded_model_t *def)
 
         sub->alpha = (byte) (subdef->alpha * 255);
 
-        { ddstring_t foundPath; Str_Init(&foundPath);
-        sub->shinySkin = R_RegisterSkin(&foundPath, subdef->shinySkin, NULL, true);
-        if(sub->shinySkin != 0)
-            Uri_SetUri(subdef->filename, &foundPath);
-        Str_Free(&foundPath);
-        }
+        sub->shinySkin = R_RegisterSkin(NULL, subdef->shinySkin, modellist[sub->model]->fileName, true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
@@ -1290,10 +1287,10 @@ void R_PrecacheModelSkins(modeldef_t* modef)
         }
 
         // Load the shiny skin.
-        if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
+        /*if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
         {
             GL_PrepareGLTexture(sn->id, NULL, NULL);
-        }
+        }*/
     }
 }
 

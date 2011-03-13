@@ -40,6 +40,8 @@
 #include "de_defs.h"
 
 #include "sys_opengl.h"
+#include "gltexture.h"
+#include "gltexturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -382,7 +384,8 @@ void LO_AddLuminous(mobj_t* mo)
         material_t* mat;
         float autoLightColor[3];
         material_snapshot_t ms;
-        const gltexture_inst_t* texInst;
+        const gltexturevariant_t* tex;
+        const pointlight_analysis_t* pl;
         
         // Are the automatically calculated light values for fullbright
         // sprite frames in use?
@@ -406,13 +409,15 @@ if(!mat)
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
 
-        if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
+        if(ms.units[MTU_PRIMARY].tex->generalCase->type != GLT_SPRITE)
             return; // *Very* strange...
 
-        texInst = ms.units[MTU_PRIMARY].texInst;
+        tex = ms.units[MTU_PRIMARY].tex;
 
-        size = texInst->data.sprite.lumSize;
-        yOffset = texInst->data.sprite.flareY;
+        pl = (const pointlight_analysis_t*)tex->analyses[GLTA_SPRITE_AUTOLIGHT];
+        assert(pl);
+        size = pl->brightMul;
+        yOffset = pl->originY;
         // Does the mobj have an active light definition?
         if(def)
         {
@@ -422,11 +427,11 @@ if(!mat)
                 yOffset = def->offset[VY];
         }
 
-        autoLightColor[CR] = texInst->data.sprite.autoLightColor[CR];
-        autoLightColor[CG] = texInst->data.sprite.autoLightColor[CG];
-        autoLightColor[CB] = texInst->data.sprite.autoLightColor[CB];
+        autoLightColor[CR] = pl->color[CR];
+        autoLightColor[CG] = pl->color[CG];
+        autoLightColor[CB] = pl->color[CB];
 
-        sprTex = R_SpriteTextureForIndex(texInst->tex->ofTypeID);
+        sprTex = R_SpriteTextureForIndex(tex->generalCase->ofTypeID);
         assert(NULL != sprTex);
 
         center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
@@ -871,7 +876,7 @@ boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-void LO_UnlinkMobjLumobjs(const cvar_t* var)
+void LO_UnlinkMobjLumobjs(const cvar_t* unused)
 {
     if(!useDynLights)
     {

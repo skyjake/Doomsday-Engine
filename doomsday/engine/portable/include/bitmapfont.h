@@ -69,7 +69,7 @@ typedef struct bitmapfont_s {
     int _ascent;
     int _descent;
 
-    /// dj: Do fonts have margins? Is this a texel border in the composited
+    /// dj: Do fonts have margins? Is this a pixel border in the composited
     /// character map texture (perhaps per-glyph)?
     int _marginWidth, _marginHeight;
 
@@ -79,7 +79,7 @@ typedef struct bitmapfont_s {
     /// GL-texture name.
     DGLuint _tex;
 
-    /// Width and height of the texture in texels.
+    /// Width and height of the texture in pixels.
     int _texWidth, _texHeight;
 } bitmapfont_t;
 

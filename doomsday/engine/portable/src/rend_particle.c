@@ -40,6 +40,7 @@
 #include "de_ui.h"
 
 #include "image.h"
+#include "texturecontent.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -155,7 +156,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
             TXCF_NO_COMPRESSION);
 
         // Free the buffer.
-        GL_DestroyImage(&image);
+        GL_DestroyImagePixels(&image);
     }
     else if(!silent)
     {
@@ -339,7 +340,10 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
         }
         else if(stagetype >= PTC_TEXTURE && stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
         {
-            hasPointTexs[stagetype - PTC_TEXTURE] = true;
+            if(ptctexname[stagetype - PTC_TEXTURE])
+                hasPointTexs[stagetype - PTC_TEXTURE] = true;
+            else
+                hasPoints = true;
         }
         else if(stagetype >= PTC_MODEL && stagetype < PTC_MODEL + MAX_PTC_MODELS)
         {
@@ -511,7 +515,7 @@ static void renderParticles(int rtype, boolean withBlend)
     {
         if(renderTextures)
         {
-            if(rtype == PTC_POINT || !ptctexname[rtype - PTC_TEXTURE])
+            if(rtype == PTC_POINT || 0 == ptctexname[rtype - PTC_TEXTURE])
                 tex = pointTex;
             else
                 tex = ptctexname[rtype - PTC_TEXTURE];
@@ -553,6 +557,7 @@ static void renderParticles(int rtype, boolean withBlend)
         float size, color[4], center[3], mark, invMark;
         float dist, maxdist, projected[2];
         boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
+        short stageType;
 
         gen = P_IndexToPtcGen(slot->ptcGenID);
         pt = &gen->ptcs[slot->ptID];
@@ -560,12 +565,21 @@ static void renderParticles(int rtype, boolean withBlend)
         st = &gen->stages[pt->stage];
         dst = &gen->def->stages[pt->stage];
 
+        stageType = st->type;
+        if(stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
+           0 == ptctexname[stageType - PTC_TEXTURE])
+            stageType = PTC_POINT;
+
         // Only render one type of particles.
         if((rtype == PTC_MODEL && dst->model < 0) ||
-           (rtype != PTC_MODEL && st->type != rtype))
+           (rtype != PTC_MODEL && stageType != rtype))
         {
             continue;
         }
+
+        if(rtype >= PTC_TEXTURE && rtype < PTC_TEXTURE + MAX_PTC_TEXTURES &&
+           0 == ptctexname[rtype - PTC_TEXTURE])
+            continue;
 
         if(!(gen->flags & PGF_ADD_BLEND) == withBlend)
             continue;
