@@ -1096,17 +1096,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                             for(;;)
                             {
                                 READLABEL;
-                                if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                                   ISLABEL("Sprite") || ISLABEL("System"))
-                                {
-                                    st->texNamespace = (
-                                        ISLABEL("Texture")? TN_TEXTURES :
-                                        ISLABEL("Flat")? TN_FLATS :
-                                        ISLABEL("Sprite")? TN_SPRITES :
-                                        TN_SYSTEM);
-                                    READSTR(st->texName);
-                                }
-                                else
+                                RV_URI("Texture", &st->texture, 0) // Default to "any" namespace.
                                 RV_INT("Tics", st->tics)
                                 RV_FLT("Rnd", st->variance)
                                 RV_VEC("Offset", st->texOrigin, 2)

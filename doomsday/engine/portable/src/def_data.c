@@ -273,17 +273,21 @@ void DED_Clear(ded_t* ded)
 
     if(ded->materials)
     {
-        { int i;
+        int i, j, k;
         for(i = 0; i < ded->count.materials.num; ++i)
         {
             ded_material_t* mat = &ded->materials[i];
-            int j;
             if(mat->id)
                 Uri_Destruct(mat->id);
             for(j = 0; j < DED_MAX_MATERIAL_LAYERS; ++j)
-                M_Free(mat->layers[j].stages);
-        }}
-        M_Free(ded->materials);
+            {
+                for(k = 0; k < mat->layers[j].stageCount.num; ++k)
+                    if(mat->layers[j].stages[k].texture)
+                        Uri_Destruct(mat->layers[j].stages[k].texture);
+                free(mat->layers[j].stages);
+            }
+        }
+        free(ded->materials);
         ded->materials = 0;
     }
 
@@ -602,8 +606,6 @@ int DED_AddMaterialLayerStage(ded_material_layer_t* ml)
 {
     ded_material_layer_stage_t* stage =
         DED_NewEntry((void **) &ml->stages, &ml->stageCount, sizeof(*stage));
-
-    stage->texNamespace = (texturenamespaceid_t)-1; // Unused.
     return stage - ml->stages;
 }
 

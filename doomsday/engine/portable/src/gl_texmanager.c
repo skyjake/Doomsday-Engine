@@ -1934,6 +1934,47 @@ const gltexture_t* GL_GetGLTextureByName(const char* rawName, texturenamespaceid
     return getGLTextureByName(name, hash, texNamespace);
 }
 
+static texturenamespaceid_t parseTextureNamespace(const ddstring_t* str)
+{
+    if(!str || Str_IsEmpty(str))
+        return TN_ANY;
+    if(!Str_CompareIgnoreCase(str, TEXTURES_TEXTURES_RESOURCE_NAMESPACE_NAME))
+        return TN_TEXTURES;
+    if(!Str_CompareIgnoreCase(str, TEXTURES_FLATS_RESOURCE_NAMESPACE_NAME))
+        return TN_FLATS;
+    if(!Str_CompareIgnoreCase(str, TEXTURES_SPRITES_RESOURCE_NAMESPACE_NAME))
+        return TN_SPRITES;
+    if(!Str_CompareIgnoreCase(str, TEXTURES_PATCHES_RESOURCE_NAMESPACE_NAME))
+        return TN_PATCHES;
+    if(!Str_CompareIgnoreCase(str, TEXTURES_SYSTEM_RESOURCE_NAMESPACE_NAME))
+        return TN_SYSTEM;
+    return TEXTURENAMESPACE_COUNT; // Unknown.
+}
+
+const gltexture_t* GL_GetGLTextureByUri(const dduri_t* uri)
+{
+    ddstring_t* path;
+    if(uri && NULL != (path = Uri_Resolved(uri)))
+    {
+        texturenamespaceid_t texNamespace = parseTextureNamespace(Uri_Scheme(uri));
+        const gltexture_t* tex;
+
+        if(texNamespace == TEXTURENAMESPACE_COUNT)
+        {
+            ddstring_t* path = Uri_ComposePath(uri);
+            Con_Message("Warning, unknown texture namespace '%s' encountered parsing "
+                        "uri: %s", Str_Text(Uri_Scheme(uri)), Str_Text(path));
+            Str_Delete(path);
+            return NULL;
+        }
+
+        tex = GL_GetGLTextureByName(Str_Text(Uri_Path(uri)), texNamespace);
+        Str_Delete(path);
+        return tex;
+    }
+    return NULL;
+}
+
 const gltexture_t* GL_GetGLTextureByIndex(int index, texturenamespaceid_t texNamespace)
 {
     gltexture_type_t type = GLTextureTypeForTextureNamespaceId(texNamespace);

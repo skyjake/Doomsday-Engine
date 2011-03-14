@@ -469,8 +469,7 @@ typedef struct ded_group_s {
 } ded_group_t;
 
 typedef struct ded_material_layer_stage_s {
-    ded_string_t    texName; /// Texture name.
-    int             texNamespace; /// Texture namespace id.
+    dduri_t*        texture;
     int             tics;
     float           variance; // Stage variance (time).
     float           glow;

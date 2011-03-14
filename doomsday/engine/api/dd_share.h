@@ -930,6 +930,13 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
+// Texture Namespaces
+#define TEXTURES_SYSTEM_RESOURCE_NAMESPACE_NAME             "System"
+#define TEXTURES_FLATS_RESOURCE_NAMESPACE_NAME              "Flats"
+#define TEXTURES_SPRITES_RESOURCE_NAMESPACE_NAME            "Sprites"
+#define TEXTURES_PATCHES_RESOURCE_NAMESPACE_NAME            "Patches"
+#define TEXTURES_TEXTURES_RESOURCE_NAMESPACE_NAME           "Textures"
+
 typedef enum {
     TN_ANY = -1,
     TEXTURENAMESPACE_FIRST = 0,
@@ -956,10 +963,10 @@ typedef enum gfxmode_e {
 #define DDMAX_MATERIAL_LAYERS   1
 
 // Material Namespaces
-#define MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME  "Textures"
+#define MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME    "System"
 #define MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME     "Flats"
 #define MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME   "Sprites"
-#define MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME    "System"
+#define MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME  "Textures"
 
 // Material flags:
 #define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).

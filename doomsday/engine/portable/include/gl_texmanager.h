@@ -260,6 +260,7 @@ uint GL_TextureIndexForName(const char* name, texturenamespaceid_t texNamespace)
 const struct gltexture_s* GL_CreateGLTexture(const char* name, uint index, gltexture_type_t type);
 
 const struct gltexture_s* GL_GetGLTextureByName(const char* name, texturenamespaceid_t texNamespace);
+const struct gltexture_s* GL_GetGLTextureByUri(const dduri_t* uri);
 
 const struct gltexture_s* GL_GetGLTextureByIndex(int index, texturenamespaceid_t texNamespace);
 

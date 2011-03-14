@@ -696,14 +696,16 @@ material_t* Materials_NewFromDef(ded_material_t* def)
     if(def->layers[0].stageCount.num > 0)
     {
         const ded_material_layer_t* l = &def->layers[0];
-        if(l->stages[0].texNamespace != -1) // Not unused.
+        if(l->stages[0].texture) // Not unused.
         {
-            if(!(tex = GL_GetGLTextureByName(l->stages[0].texName, l->stages[0].texNamespace)))
+            if(!(tex = GL_GetGLTextureByUri(l->stages[0].texture)))
             {
-                ddstring_t* path = Uri_ComposePath(def->id);
+                ddstring_t* materialPath = Uri_ComposePath(def->id);
+                ddstring_t* texturePath = Uri_ComposePath(l->stages[0].texture);
                 VERBOSE( Con_Message("Warning: Unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
-                         l->stages[0].texName, Str_Text(path), 0, 0) );
-                Str_Delete(path);
+                         Str_Text(texturePath), Str_Text(materialPath), 0, 0) );
+                Str_Delete(materialPath);
+                Str_Delete(texturePath);
             }
         }
     }
@@ -1636,8 +1638,7 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
 
         if(mat->def && mat->def->layers[0].stageCount.num > 1)
         {
-            if(GL_GetGLTextureByName(mat->def->layers[0].stages[0].texName,
-                                     mat->def->layers[0].stages[0].texNamespace))
+            if(GL_GetGLTextureByUri(mat->def->layers[0].stages[0].texture))
                 continue; // Animated elsewhere.
         }
 
