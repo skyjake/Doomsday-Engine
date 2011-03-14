@@ -317,7 +317,7 @@ static void prepareFont(bitmapfont_t* font)
         font->_chars[i].h = info.height + 2;
 
         if(!(novideo || isDedicated) && font->_chars[i].tex == 0)
-            font->_chars[i].tex = GL_PreparePatch(R_PatchTextureForIndex(patch));
+            font->_chars[i].tex = GL_PreparePatch(R_PatchTextureByIndex(patch));
     }}
 
     if(!(novideo || isDedicated || Con_IsBusy())) // Cannot do this while in busy mode.

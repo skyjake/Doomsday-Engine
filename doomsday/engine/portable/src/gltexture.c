@@ -95,16 +95,16 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     switch(tex->type)
     {
     case GLT_FLAT:
-        return !R_GetFlatForIdx(tex->ofTypeID)->isCustom;
+        return !R_FlatTextureByIndex(tex->index)->isCustom;
 
-    case GLT_DOOMTEXTURE:
-        return (R_GetDoomTextureDef(tex->ofTypeID)->flags & TXDF_IWAD) != 0;
+    case GLT_PATCHCOMPOSITE:
+        return (R_PatchCompositeTextureByIndex(tex->index)->flags & TXDF_IWAD) != 0;
 
     case GLT_SPRITE:
-        return !R_SpriteTextureForIndex(tex->ofTypeID)->isCustom;
+        return !R_SpriteTextureByIndex(tex->index)->isCustom;
 
-    case GLT_DOOMPATCH:
-        return !R_PatchTextureForIndex(tex->ofTypeID)->isCustom;
+    case GLT_PATCH:
+        return !R_PatchTextureByIndex(tex->index)->isCustom;
 
     case GLT_DETAIL:
     case GLT_SHINY:
@@ -117,7 +117,7 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
         return false; // Its definitely not.
 
     default:
-        Con_Error("updateGLTexture: Internal Error, invalid type %i.",
+        Con_Error("GLTexture::IsFromIWAD: Internal Error, invalid type %i.",
                   (int) tex->type);
     }
 
@@ -134,14 +134,14 @@ float GLTexture_GetWidth(const gltexture_t* tex)
     case GLT_FLAT:
         return 64; /// \fixme not all flats are 64x64
 
-    case GLT_DOOMTEXTURE:
-        return R_GetDoomTextureDef(tex->ofTypeID)->width;
+    case GLT_PATCHCOMPOSITE:
+        return R_PatchCompositeTextureByIndex(tex->index)->width;
 
     case GLT_SPRITE:
-        return R_SpriteTextureForIndex(tex->ofTypeID)->width;
+        return R_SpriteTextureByIndex(tex->index)->width;
 
-    case GLT_DOOMPATCH:
-        return R_PatchTextureForIndex(tex->ofTypeID)->width;
+    case GLT_PATCH:
+        return R_PatchTextureByIndex(tex->index)->width;
 
     case GLT_DETAIL:
         return 128;
@@ -150,7 +150,7 @@ float GLTexture_GetWidth(const gltexture_t* tex)
         return 128; // Could be used for something useful.
 
     case GLT_MASK:
-        return maskTextures[tex->ofTypeID]->width;
+        return maskTextures[tex->index]->width;
 
     case GLT_SYSTEM: /// \fixme Do not assume!
     case GLT_MODELSKIN:
@@ -160,7 +160,7 @@ float GLTexture_GetWidth(const gltexture_t* tex)
         return 64;
 
     default:
-        Con_Error("GLTexture_GetWidth: Internal error, "
+        Con_Error("GLTexture::GetWidth: Internal error, "
                   "invalid material type %i.", (int) tex->type);
     }
 
@@ -177,14 +177,14 @@ float GLTexture_GetHeight(const gltexture_t* tex)
     case GLT_FLAT:
         return 64; /// \fixme not all flats are 64x64
 
-    case GLT_DOOMTEXTURE:
-        return R_GetDoomTextureDef(tex->ofTypeID)->height;
+    case GLT_PATCHCOMPOSITE:
+        return R_PatchCompositeTextureByIndex(tex->index)->height;
 
     case GLT_SPRITE:
-        return R_SpriteTextureForIndex(tex->ofTypeID)->height;
+        return R_SpriteTextureByIndex(tex->index)->height;
 
-    case GLT_DOOMPATCH:
-        return R_PatchTextureForIndex(tex->ofTypeID)->height;
+    case GLT_PATCH:
+        return R_PatchTextureByIndex(tex->index)->height;
 
     case GLT_DETAIL:
         return 128;
@@ -193,7 +193,7 @@ float GLTexture_GetHeight(const gltexture_t* tex)
         return 128; // Could be used for something useful.
 
     case GLT_MASK:
-        return maskTextures[tex->ofTypeID]->height;
+        return maskTextures[tex->index]->height;
 
     case GLT_SYSTEM: /// \fixme Do not assume!
     case GLT_MODELSKIN:
@@ -203,7 +203,7 @@ float GLTexture_GetHeight(const gltexture_t* tex)
         return 64;
 
     default:
-        Con_Error("GLTexture_GetHeight: Internal error, "
+        Con_Error("GLTexture::GetHeight: Internal error, "
                   "invalid material type %i.", (int) tex->type);
     }
 
@@ -400,16 +400,16 @@ const dduri_t* GLTexture_SearchPath(const gltexture_t* tex)
     switch(tex->type)
     {
     case GLT_SYSTEM: {
-        systex_t* sysTex = sysTextures[tex->ofTypeID];
+        systex_t* sysTex = sysTextures[tex->index];
         return sysTex->external;
       }
     /*case GLT_FLAT:
         tmpResult = GL_LoadFlat(&image, texInst->tex, context);
         break;
-    case GLT_DOOMTEXTURE:
+    case GLT_PATCHCOMPOSITE:
         tmpResult = GL_LoadDoomTexture(&image, texInst->tex, context);
         break;
-    case GLT_DOOMPATCH:
+    case GLT_PATCH:
         tmpResult = GL_LoadDoomPatch(&image, texInst->tex, context);
         break;
     case GLT_SPRITE:
@@ -419,24 +419,24 @@ const dduri_t* GLTexture_SearchPath(const gltexture_t* tex)
         tmpResult = GL_LoadDetailTexture(&image, texInst->tex, context);
         break;*/
     case GLT_SHINY: {
-        shinytex_t* sTex = shinyTextures[tex->ofTypeID];
+        shinytex_t* sTex = shinyTextures[tex->index];
         return sTex->external;
       }
     case GLT_MASK: {
-        masktex_t* mTex = maskTextures[tex->ofTypeID];
+        masktex_t* mTex = maskTextures[tex->index];
         return mTex->external;
       }
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN: {
-        skinname_t* sn = &skinNames[tex->ofTypeID];
+        skinname_t* sn = &skinNames[tex->index];
         return sn->path;
       }
     case GLT_LIGHTMAP: {
-        lightmap_t* lmap = lightMaps[tex->ofTypeID];
+        lightmap_t* lmap = lightmapTextures[tex->index];
         return lmap->external;
       }
     case GLT_FLARE: {
-        flaretex_t* fTex = flareTextures[tex->ofTypeID];
+        flaretex_t* fTex = flareTextures[tex->index];
         return fTex->external;
       }
     default:
@@ -470,7 +470,7 @@ static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* c
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(generalCase)))
         {
-            flat_t* flat = R_GetFlatForIdx(generalCase->ofTypeID);
+            flat_t* flat = R_FlatTextureByIndex(generalCase->index);
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             assert(NULL != flat);
@@ -482,12 +482,12 @@ static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* c
         if(0 == loadResult)
             loadResult = GL_LoadFlatLump(img, generalCase, context);
         break;
-    case GLT_DOOMPATCH:
+    case GLT_PATCH:
         // Attempt to load an external replacement for this patch?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(generalCase)))
         {
             material_load_params_t* params = (material_load_params_t*) context;
-            const patchtex_t* p = R_PatchTextureForIndex(generalCase->ofTypeID);
+            const patchtex_t* p = R_PatchTextureByIndex(generalCase->index);
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             assert(NULL != p);
@@ -504,7 +504,7 @@ static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* c
         if(!noHighResPatches)
         {
             material_load_params_t* params = (material_load_params_t*) context;
-            const spritetex_t* sprTex = R_SpriteTextureForIndex(generalCase->ofTypeID);
+            const spritetex_t* sprTex = R_SpriteTextureByIndex(generalCase->index);
             ddstring_t searchPath, suffix = { "-ck" };
             int tclass = 0, tmap = 0;
             boolean pSprite = false;
@@ -538,8 +538,8 @@ static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* c
         break;
     case GLT_DETAIL: {
         const detailtex_t* dTex;
-        assert(generalCase->ofTypeID >= 0 && generalCase->ofTypeID < numDetailTextures);
-        dTex = detailTextures[generalCase->ofTypeID];
+        assert(generalCase->index >= 0 && generalCase->index < detailTexturesCount);
+        dTex = detailTextures[generalCase->index];
         if(dTex->isExternal)
         {
             ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
@@ -585,7 +585,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
     image_t image;
 
     // Load in the raw source image.
-    if(generalCase->type == GLT_DOOMTEXTURE)
+    if(generalCase->type == GLT_PATCHCOMPOSITE)
     {
         loadResult = GL_LoadDoomTexture(&image, generalCase, context);
     }
@@ -601,7 +601,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
 
     if(image.pixelSize == 1)
     {
-        if(monochrome && !scaleSharp && (generalCase->type == GLT_DOOMPATCH || generalCase->type == GLT_SPRITE))
+        if(monochrome && !scaleSharp && (generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE))
             GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
 
         if(generalCase->type == GLT_DETAIL)
@@ -610,7 +610,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
             EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
             if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
             {
-                Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
+                Con_Message("GLTexture::Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
                             generalCase->name, baMul, hiMul, loMul);
             }
         }
@@ -630,7 +630,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
                 image.originalBits = 32;
             }
 
-            if(monochrome && (generalCase->type == GLT_DOOMPATCH || generalCase->type == GLT_SPRITE))
+            if(monochrome && (generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE))
                 Desaturate(image.pixels, image.width, image.height, image.pixelSize);
 
             newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.width, image.height, 0, &image.width, &image.height);
@@ -645,7 +645,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
             //BlackOutlines(image.pixels, image.width, image.height, image.pixelSize);
 
             // Back to indexed+alpha?
-            if(monochrome && (generalCase->type == GLT_DOOMPATCH || generalCase->type == GLT_SPRITE))
+            if(monochrome && (generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE))
             {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
                 GL_ConvertToLuminance(&image);
@@ -672,7 +672,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
     }
     else
     {
-        if(monochrome && generalCase->type == GLT_DOOMPATCH && image.pixelSize > 2)
+        if(monochrome && generalCase->type == GLT_PATCH && image.pixelSize > 2)
         {
             GL_ConvertToLuminance(&image);
             AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
@@ -698,7 +698,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
         }
         else
         {
-            Con_Message("GLTexture_Prepare: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
+            Con_Message("GLTexture::Prepare: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
                         image.width, image.height, image.pixelSize);
         }
     }
@@ -724,7 +724,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
        (image.pixelSize > 2 || generalCase->type == GLT_MODELSKIN))
         flags |= TXCF_APPLY_GAMMACORRECTION;
 
-    if(generalCase->type == GLT_SPRITE /*|| generalCase->type == GLT_DOOMPATCH*/)
+    if(generalCase->type == GLT_SPRITE /*|| generalCase->type == GLT_PATCH*/)
         flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
     if(!monochrome && !(generalCase->type == GLT_DETAIL || generalCase->type == GLT_SYSTEM || generalCase->type == GLT_SHINY || generalCase->type == GLT_MASK))
@@ -751,12 +751,12 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
         grayMipmap = MINMAX_OF(0, *((float*)context) * 255, 255);
         flags |= TXCF_GRAY_MIPMAP;
     }
-    else if(!(generalCase->type == GLT_SHINY || generalCase->type == GLT_DOOMPATCH ||
+    else if(!(generalCase->type == GLT_SHINY || generalCase->type == GLT_PATCH ||
               generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE ||
              (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
         flags |= TXCF_MIPMAP;
 
-    if(generalCase->type == GLT_DOOMTEXTURE || generalCase->type == GLT_DOOMPATCH ||
+    if(generalCase->type == GLT_PATCHCOMPOSITE || generalCase->type == GLT_PATCH ||
        generalCase->type == GLT_SPRITE || generalCase->type == GLT_FLAT)
         alphaChannel = ((/*loadResult == 2 &&*/ image.pixelSize == 4) ||
                         (/*loadResult == 1 &&*/ image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)));
@@ -773,7 +773,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
     {
         dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
     }
-    else if(generalCase->type == GLT_FLAT || generalCase->type == GLT_DOOMTEXTURE || generalCase->type == GLT_DOOMPATCH || generalCase->type == GLT_SPRITE)
+    else if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE || generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE)
     {
         dglFormat = ( image.pixelSize > 1?
                         ( alphaChannel? DGL_RGBA : DGL_RGB) :
@@ -790,7 +790,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
                       image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
     }
 
-    if(generalCase->type == GLT_FLAT || generalCase->type == GLT_DOOMTEXTURE || generalCase->type == GLT_MASK)
+    if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE || generalCase->type == GLT_MASK)
         magFilter = glmode[texMagMode];
     else if(generalCase->type == GLT_SPRITE)
         magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
@@ -799,19 +799,19 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
 
     if(generalCase->type == GLT_DETAIL)
         minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    else if(generalCase->type == GLT_DOOMPATCH || (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
+    else if(generalCase->type == GLT_PATCH || (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
         minFilter = GL_NEAREST;
     else if(generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE || generalCase->type == GLT_SHINY)
         minFilter = GL_LINEAR;
     else
         minFilter = glmode[mipmapping];
 
-    if(generalCase->type == GLT_DOOMPATCH || generalCase->type == GLT_FLARE || (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
+    if(generalCase->type == GLT_PATCH || generalCase->type == GLT_FLARE || (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
         anisoFilter = 0 /*no anisotropic filtering*/;
     else
         anisoFilter = texAniso; /// \fixme is "best" truely a suitable default for ALL texture types?
 
-    if(generalCase->type == GLT_DOOMPATCH || generalCase->type == GLT_SPRITE || generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE)
+    if(generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE || generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE)
         wrapS = wrapT = GL_CLAMP_TO_EDGE;
     else
         wrapS = wrapT = GL_REPEAT;
@@ -822,7 +822,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
 
 #ifdef _DEBUG
     if(!didDefer)
-        Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
+        Con_Message("GLTexture::Prepare: Uploaded \"%s\" (%i) while not busy! "
                     "Should be precached in busy mode?\n", generalCase->name, tex->glName);
 #endif
 
@@ -879,7 +879,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
         }
     }
 
-    if(generalCase->type == GLT_FLAT || generalCase->type == GLT_DOOMTEXTURE)
+    if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE)
     {
         ambientlight_analysis_t* al = Z_Malloc(sizeof(*al), PU_APPSTATIC, 0);
         tex->analyses[GLTA_WORLD_AMBIENTLIGHT] = al;

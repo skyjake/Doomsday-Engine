@@ -79,7 +79,7 @@ void* DD_GetVariable(int ddvalue);
 
 ddplayer_t* DD_GetPlayer(int number);
 
-materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
+materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
 const char* value_Str(int val);
 

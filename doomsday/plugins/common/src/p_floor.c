@@ -1,10 +1,10 @@
-/**\file
+/**\file p_floors.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -28,7 +28,7 @@
  */
 
 /**
- * p_floors.c: Moving floors.
+ * Moving floors.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -459,7 +459,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
          * present, the height is taken from the very first texture.
          */
         if(!mat)
-            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1, GLT_DOOMTEXTURE));
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1, TN_TEXTURES));
 
         if(mat)
         {
@@ -475,7 +475,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         side = P_GetPtrp(li, DMU_SIDEDEF1);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
-            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1, GLT_DOOMTEXTURE));
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1, TN_TEXTURES));
 
         if(mat)
         {

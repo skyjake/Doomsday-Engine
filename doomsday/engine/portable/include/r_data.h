@@ -141,7 +141,7 @@ typedef struct {
     short           flags;
     short           patchCount;
     texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
-} doomtexturedef_t;
+} patchcompositetex_t;
 
 typedef struct flat_s {
     lumpname_t name;
@@ -228,28 +228,28 @@ extern nodepile_t* mobjNodes, *lineNodes;
 
 extern int viewwidth, viewheight;
 extern int levelFullBright;
-extern float glowingTextures;
+extern byte rendInfoRPolys;
 extern byte precacheSprites, precacheSkins;
 
 extern byte* translationTables;
 
 extern systex_t** sysTextures;
-extern int numSysTextures;
+extern int sysTexturesCount;
 
 extern detailtex_t** detailTextures;
-extern int numDetailTextures;
+extern int detailTexturesCount;
 
-extern lightmap_t** lightMaps;
-extern int numLightMaps;
+extern lightmap_t** lightmapTextures;
+extern int lightmapTexturesCount;
 
 extern flaretex_t** flareTextures;
-extern int numFlareTextures;
+extern int flareTexturesCount;
 
 extern shinytex_t** shinyTextures;
-extern int numShinyTextures;
+extern int shinyTexturesCount;
 
 extern masktex_t** maskTextures;
-extern int numMaskTextures;
+extern int maskTexturesCount;
 
 extern uint numSkinNames;
 extern skinname_t* skinNames;
@@ -287,7 +287,7 @@ void R_InitTextures(void);
 void R_InitFlats(void);
 
 /// @return  Flat associated to index# @a idx
-flat_t* R_GetFlatForIdx(int idx);
+flat_t* R_FlatTextureByIndex(int idx);
 
 /**
  * Initialize the SpriteTexture database from the currently loaded lumps.
@@ -304,7 +304,7 @@ void R_SpriteTexturesClear(void);
 int R_SpriteTexturesCount(void);
 
 /// @return  SpriteTexture associated to index# @a idx
-spritetex_t* R_SpriteTextureForIndex(int idx);
+spritetex_t* R_SpriteTextureByIndex(int idx);
 
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
@@ -329,7 +329,7 @@ boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 void            R_PrecacheMap(void);
 void            R_PrecacheMobjNum(int mobjtypeNum);
 
-doomtexturedef_t* R_GetDoomTextureDef(int num);
+patchcompositetex_t* R_PatchCompositeTextureByIndex(int num);
 
 uint            R_GetSkinNumForName(const dduri_t* path);
 const skinname_t* R_GetSkinNameByIndex(uint id);
@@ -363,7 +363,7 @@ void            R_DestroyMaskTextures(void); // Called at shutdown.
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
 patchid_t       R_RegisterAsPatch(const char* name);
 
-patchtex_t*     R_PatchTextureForIndex(patchid_t id);
+patchtex_t*     R_PatchTextureByIndex(patchid_t id);
 void            R_ClearPatchTexs(void);
 boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 

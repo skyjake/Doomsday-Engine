@@ -931,24 +931,17 @@ typedef struct {
 //------------------------------------------------------------------------
 
 typedef enum {
-    GLT_ANY = -1,
-    GLT_FIRST = 0,
-    GLT_SYSTEM = GLT_FIRST, // system texture e.g., the "missing" texture.
-    GLT_FLAT,
-    GLT_DOOMTEXTURE,
-    GLT_DOOMPATCH,
-    GLT_SPRITE,
-    GLT_DETAIL,
-    GLT_SHINY,
-    GLT_MASK,
-    GLT_MODELSKIN,
-    GLT_MODELSHINYSKIN,
-    GLT_LIGHTMAP,
-    GLT_FLARE,
-    NUM_GLTEXTURE_TYPES
-} gltexture_type_t;
+    TN_ANY = -1,
+    TEXTURENAMESPACE_FIRST = 0,
+    TN_SYSTEM = TEXTURENAMESPACE_FIRST,
+    TN_FLATS,
+    TN_TEXTURES,
+    TN_PATCHES,
+    TN_SPRITES,
+    TEXTURENAMESPACE_COUNT
+} texturenamespaceid_t;
 
-#define VALID_GLTEXTURE_TYPE(t)     ((t) >= GLT_FIRST && (t) < NUM_GLTEXTURE_TYPES)
+#define VALID_TEXTURENAMESPACEID(id)((id) >= TEXTURENAMESPACE_FIRST && (id) < TEXTURENAMESPACE_COUNT)
 
 /**
  * Processing modes for GL_LoadGraphics.

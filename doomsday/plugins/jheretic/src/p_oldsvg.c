@@ -1,10 +1,10 @@
-/**\file
+/**\file p_oldsvg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,8 @@
  */
 
 /**
+ * Original Heretic saved game loader.
+ *
  * \bug Not 64bit clean: In function 'P_v13_UnArchivePlayers': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'P_v13_UnArchiveThinkers': cast from pointer to integer of different size
  */
@@ -405,8 +407,8 @@ void P_v13_UnArchiveWorld(void)
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_FLAT)));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_FLAT)));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_FLATS)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_FLATS)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
         /*xsec->tag = **/get++; // needed?
@@ -444,9 +446,9 @@ void P_v13_UnArchiveWorld(void)
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_TEXTURES)));
         }
     }
     save_p = (byte*) get;

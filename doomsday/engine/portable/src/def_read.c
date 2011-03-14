@@ -1099,12 +1099,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                                 if(ISLABEL("Texture") || ISLABEL("Flat") ||
                                    ISLABEL("Sprite") || ISLABEL("System"))
                                 {
-                                    st->type = (
-                                        ISLABEL("Texture")? GLT_DOOMTEXTURE :
-                                        ISLABEL("Flat")? GLT_FLAT :
-                                        ISLABEL("Sprite")? GLT_SPRITE :
-                                        GLT_SYSTEM);
-                                    READSTR(st->name);
+                                    st->texNamespace = (
+                                        ISLABEL("Texture")? TN_TEXTURES :
+                                        ISLABEL("Flat")? TN_FLATS :
+                                        ISLABEL("Sprite")? TN_SPRITES :
+                                        TN_SYSTEM);
+                                    READSTR(st->texName);
                                 }
                                 else
                                 RV_INT("Tics", st->tics)

@@ -1010,7 +1010,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
             }
         case PFT_PATCH:
-            if((patch = R_PatchTextureForIndex(f->texRef.patch)))
+            if((patch = R_PatchTextureByIndex(f->texRef.patch)))
             {
                 tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
                 V3_Set(offset, patch->offX, patch->offY, 0);

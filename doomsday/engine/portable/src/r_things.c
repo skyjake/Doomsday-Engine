@@ -348,7 +348,7 @@ void R_PreInitSprites(void)
     { int i, numSpriteTextures = R_SpriteTexturesCount();
     for(i = 0; i < numSpriteTextures; ++i)
     {
-        spritetex_t* sprTex = R_SpriteTextureForIndex(i);
+        spritetex_t* sprTex = R_SpriteTextureByIndex(i);
         spriterecord_t* rec;
         const char* name = sprTex->name;
 
@@ -633,7 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     params.tex.border = 1;
     Materials_Prepare(&ms, mat, false, &params);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
+    sprTex = R_SpriteTextureByIndex(ms.units[MTU_PRIMARY].tex->generalCase->index);
     assert(NULL != sprTex);
 
     info->numFrames = sprDef->numFrames;
@@ -889,7 +889,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
+    sprTex = R_SpriteTextureByIndex(ms.units[MTU_PRIMARY].tex->generalCase->index);
     assert(NULL != sprTex);
 
     params->width  =  ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
@@ -1138,7 +1138,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureForIndex(ms.units[MTU_PRIMARY].tex->generalCase->ofTypeID);
+    sprTex = R_SpriteTextureByIndex(ms.units[MTU_PRIMARY].tex->generalCase->index);
     assert(NULL != sprTex);
 
     // Align to the view plane?

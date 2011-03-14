@@ -39,7 +39,7 @@ void            Materials_Ticker(timespan_t elapsed);
 void            Materials_DeleteTextures(const char* namespaceName);
 void            Materials_LinkAssociatedDefinitions(void);
 
-const ddstring_t* Materials_NamespaceNameForTextureType(gltexture_type_t t);
+const ddstring_t* Materials_NamespaceNameForTextureNamespaceId(texturenamespaceid_t texNamespace);
 
 material_t*     Materials_New(const dduri_t* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
 material_t*     Materials_NewFromDef(ded_material_t* def);

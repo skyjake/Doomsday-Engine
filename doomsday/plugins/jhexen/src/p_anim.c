@@ -1,10 +1,10 @@
-/**\file
+/**\file p_anim.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,50 +23,27 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_anim.c: Flat and Texture animations, parsed from ANIMDEFS.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "jhexen.h"
 
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-static void parseAnimGroup(gltexture_type_t type)
+static void parseAnimGroup(texturenamespaceid_t texNamespace)
 {
     boolean ignore = true, done;
     int groupNumber = 0;
     uint texNumBase = 0;
 
-    if(!(type == GLT_FLAT || type == GLT_DOOMTEXTURE))
-        Con_Error("parseAnimGroup: Internal Error, invalid type %i.", (int) type);
+    if(!(texNamespace == TN_FLATS || texNamespace == TN_TEXTURES))
+        Con_Error("parseAnimGroup: Internal Error, invalid namespace %i.",
+                  (int) texNamespace);
 
     if(!SC_GetString()) // Name.
     {
         SC_ScriptError("Missing string.");
     }
 
-    if((texNumBase = GL_CheckTextureNumForName(sc_String, type)) != 0)
+    if((texNumBase = GL_TextureIndexForName(sc_String, texNamespace)) != 0)
         ignore = false;
 
     if(!ignore)
@@ -104,7 +81,7 @@ static void parseAnimGroup(gltexture_type_t type)
 
                 if(!ignore)
                 {
-                    materialnum_t frame = DD_MaterialForTexture(texNumBase + picNum - 1, type);
+                    materialnum_t frame = DD_MaterialForTextureIndex(texNumBase + picNum - 1, texNamespace);
                     if(frame != 0)
                         Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
                 }
@@ -122,9 +99,6 @@ static void parseAnimGroup(gltexture_type_t type)
     } while(!done);
 }
 
-/**
- * Parse an ANIMDEFS definition for flat/texture animations.
- */
 void P_InitPicAnims(void)
 {
     lumpnum_t lump = W_CheckNumForName("ANIMDEFS");
@@ -137,11 +111,11 @@ void P_InitPicAnims(void)
         {
             if(SC_Compare("flat"))
             {
-                parseAnimGroup(GLT_FLAT);
+                parseAnimGroup(TN_FLATS);
             }
             else if(SC_Compare("texture"))
             {
-                parseAnimGroup(GLT_DOOMTEXTURE);
+                parseAnimGroup(TN_TEXTURES);
             }
             else
             {

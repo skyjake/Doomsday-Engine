@@ -431,7 +431,7 @@ if(!mat)
         autoLightColor[CG] = pl->color[CG];
         autoLightColor[CB] = pl->color[CB];
 
-        sprTex = R_SpriteTextureForIndex(tex->generalCase->ofTypeID);
+        sprTex = R_SpriteTextureByIndex(tex->generalCase->index);
         assert(NULL != sprTex);
 
         center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;

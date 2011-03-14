@@ -64,7 +64,6 @@ D_CMD(ViewGrid);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern byte rendInfoRPolys;
 extern byte freezeRLs;
 extern boolean firstFrameAfterLoad;
 

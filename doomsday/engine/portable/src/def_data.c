@@ -603,7 +603,7 @@ int DED_AddMaterialLayerStage(ded_material_layer_t* ml)
     ded_material_layer_stage_t* stage =
         DED_NewEntry((void **) &ml->stages, &ml->stageCount, sizeof(*stage));
 
-    stage->type = GLT_ANY; // Unused.
+    stage->texNamespace = (texturenamespaceid_t)-1; // Unused.
     return stage - ml->stages;
 }
 

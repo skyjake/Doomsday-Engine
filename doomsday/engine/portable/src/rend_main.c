@@ -78,6 +78,8 @@ float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
 int useShinySurfaces = true;
+// Glowing textures are always rendered fullbright.
+float glowingTextures = 1.0f;
 
 float vx, vy, vz, vang, vpitch;
 float viewsidex, viewsidey;

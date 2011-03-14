@@ -245,10 +245,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        R_DrawPatchTiled(R_PatchTextureForIndex(borderPatches[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(R_PatchTextureByIndex(borderPatches[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(R_PatchTextureByIndex(borderPatches[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(R_PatchTextureByIndex(borderPatches[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(R_PatchTextureByIndex(borderPatches[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -256,10 +256,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border, false);
-        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border, false);
-        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border, false);
-        R_DrawPatch3(R_PatchTextureForIndex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border, false);
+        R_DrawPatch3(R_PatchTextureByIndex(borderPatches[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border, false);
+        R_DrawPatch3(R_PatchTextureByIndex(borderPatches[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border, false);
+        R_DrawPatch3(R_PatchTextureByIndex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border, false);
+        R_DrawPatch3(R_PatchTextureByIndex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

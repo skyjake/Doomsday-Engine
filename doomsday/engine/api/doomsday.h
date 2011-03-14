@@ -133,7 +133,7 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
 
-    materialnum_t   DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
+    materialnum_t   DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -480,8 +480,7 @@ void Con_SetString(const char* name, char* text);
     byte*           GL_GrabScreen(void);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
-    uint            GL_TextureNumForName(const char* name, gltexture_type_t type);
-    uint            GL_CheckTextureNumForName(const char* name, gltexture_type_t type);
+    uint            GL_TextureIndexForName(const char* name, texturenamespaceid_t texNamespace);
 
 //------------------------------------------------------------------------
 //

@@ -43,6 +43,26 @@ struct texturecontent_s;
 struct gltexture_s;
 struct gltexturevariant_s;
 
+typedef enum {
+    GLT_ANY = -1,
+    GLT_FIRST = 0,
+    GLT_SYSTEM = GLT_FIRST, // system texture e.g., the "missing" texture.
+    GLT_FLAT,
+    GLT_PATCHCOMPOSITE,
+    GLT_PATCH,
+    GLT_SPRITE,
+    GLT_DETAIL,
+    GLT_SHINY,
+    GLT_MASK,
+    GLT_MODELSKIN,
+    GLT_MODELSHINYSKIN,
+    GLT_LIGHTMAP,
+    GLT_FLARE,
+    NUM_GLTEXTURE_TYPES
+} gltexture_type_t;
+
+#define VALID_GLTEXTURE_TYPE(t)     ((t) >= GLT_FIRST && (t) < NUM_GLTEXTURE_TYPES)
+
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
 extern int texMagMode, texAniso;
@@ -232,19 +252,16 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
 
 void GL_ReleaseGLTexture(gltextureid_t id);
 
-const struct gltexture_s* GL_CreateGLTexture(const char* name, int ofTypeId, gltexture_type_t type);
-
 const struct gltexture_s* GL_GetGLTexture(gltextureid_t id);
-
-const struct gltexture_s* GL_GetGLTextureByName(const char* name, gltexture_type_t type);
-
-const struct gltexture_s* GL_GetGLTextureByTypeId(int ofTypeId, gltexture_type_t type);
-
 const struct gltexturevariant_s* GL_PrepareGLTexture(gltextureid_t id, void* context, byte* result);
 
-uint GL_CheckTextureNumForName(const char* name, gltexture_type_t type);
+uint GL_TextureIndexForName(const char* name, texturenamespaceid_t texNamespace);
 
-uint GL_TextureNumForName(const char* name, gltexture_type_t type);
+const struct gltexture_s* GL_CreateGLTexture(const char* name, uint index, gltexture_type_t type);
+
+const struct gltexture_s* GL_GetGLTextureByName(const char* name, texturenamespaceid_t texNamespace);
+
+const struct gltexture_s* GL_GetGLTextureByIndex(int index, texturenamespaceid_t texNamespace);
 
 /**
  * Updates the minification mode of ALL gltextures.

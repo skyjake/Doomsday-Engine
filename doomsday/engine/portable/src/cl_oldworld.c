@@ -1,10 +1,10 @@
-/**\file
+/**\file cl_oldworld.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -212,7 +212,7 @@ int Cl_ReadSideDelta(void)
          * The delta is actually a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        Surface_SetMaterial(&sid->SW_topsurface, Materials_ToMaterial(DD_MaterialForTexture(Msg_ReadPackedShort()+1, GLT_DOOMTEXTURE)));
+        Surface_SetMaterial(&sid->SW_topsurface, Materials_ToMaterial(DD_MaterialForTextureIndex(Msg_ReadPackedShort()+1, TN_TEXTURES)));
     }
     if(df & SIDF_MID_MATERIAL)
     {
@@ -220,7 +220,7 @@ int Cl_ReadSideDelta(void)
          * The delta is actually a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        Surface_SetMaterial(&sid->SW_middlesurface, Materials_ToMaterial(DD_MaterialForTexture(Msg_ReadPackedShort()+1, GLT_DOOMTEXTURE)));
+        Surface_SetMaterial(&sid->SW_middlesurface, Materials_ToMaterial(DD_MaterialForTextureIndex(Msg_ReadPackedShort()+1, TN_TEXTURES)));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
@@ -228,7 +228,7 @@ int Cl_ReadSideDelta(void)
          * The delta is actually a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        Surface_SetMaterial(&sid->SW_bottomsurface, Materials_ToMaterial(DD_MaterialForTexture(Msg_ReadPackedShort()+1, GLT_DOOMTEXTURE)));
+        Surface_SetMaterial(&sid->SW_bottomsurface, Materials_ToMaterial(DD_MaterialForTextureIndex(Msg_ReadPackedShort()+1, TN_TEXTURES)));
     }
 
     if(df & SIDF_LINE_FLAGS)

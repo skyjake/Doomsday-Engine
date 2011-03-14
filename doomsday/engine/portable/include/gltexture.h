@@ -34,24 +34,12 @@ struct gltexture_variantlist_node_s;
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
  */
-
-#define GLTEXTURE_TYPE_STRING(t)     ((t) == GLT_FLAT? "flat" : \
-    (t) == GLT_DOOMTEXTURE? "doomtexture" : \
-    (t) == GLT_DOOMPATCH? "doompatch" : \
-    (t) == GLT_SPRITE? "sprite" : \
-    (t) == GLT_DETAIL? "detailtex" : \
-    (t) == GLT_SHINY? "shinytex" : \
-    (t) == GLT_MASK? "masktex" : \
-    (t) == GLT_MODELSKIN? "modelskin" : \
-    (t) == GLT_MODELSHINYSKIN? "modelshinyskin" : \
-    (t) == GLT_LIGHTMAP? "lightmap" : \
-    (t) == GLT_FLARE? "flaretex" : "systemtex")
-
 typedef struct gltexture_s {
     gltextureid_t id;
     char name[9];
     gltexture_type_t type;
-    int ofTypeID;
+    /// Per-type index (e.g., if type=GLT_FLAT this is a flat index).
+    int index;
     struct gltexture_variantlist_node_s* variants;
     uint hashNext; // 1-based index
 } gltexture_t;

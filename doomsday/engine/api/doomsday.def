@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 499 <--
-; Other free ordinals: 30
+; Other free ordinals: 30, 437
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -20,7 +20,7 @@ EXPORTS
     DD_SetVariable              @10 NONAME
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
-    DD_MaterialForTexture       @234 NONAME
+    DD_MaterialForTextureIndex  @234 NONAME
 
 ; Base: Types.
     ; Animator.
@@ -463,8 +463,7 @@ EXPORTS
     GL_GrabScreen               @109 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
-    GL_TextureNumForName        @437 NONAME
-    GL_CheckTextureNumForName   @438 NONAME
+    GL_TextureIndexForName      @438 NONAME
 
 ; Graphics: Text
     FR_FontIdForName			@106 NONAME

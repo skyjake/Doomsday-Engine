@@ -1,10 +1,10 @@
-/**\file
+/**\file p_oldsvg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@
  */
 
 /**
- * p_oldsvg.c:
+ * Original DOOM saved game loader.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -396,8 +396,8 @@ void P_v19_UnArchiveWorld(void)
 
         P_SetFloatp(sec, DMU_FLOOR_HEIGHT, (float) (*get++));
         P_SetFloatp(sec, DMU_CEILING_HEIGHT, (float) (*get++));
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_FLAT)));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_FLAT)));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_FLATS)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_FLATS)));
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
@@ -429,9 +429,9 @@ void P_v19_UnArchiveWorld(void)
             P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
             P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
 
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(1+*get++, TN_TEXTURES)));
         }
     }
 

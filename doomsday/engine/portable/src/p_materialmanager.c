@@ -366,20 +366,13 @@ void Materials_DeleteTextures(const char* namespaceName)
         for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
             if(hashTable[mnamespace][i])
             {
-                materialbind_t*     mb = &materialBinds[
-                    hashTable[mnamespace][i] - 1];
+                materialbind_t* mb = &materialBinds[hashTable[mnamespace][i] - 1];
 
                 for(;;)
                 {
-                    material_t*         mat = mb->mat;
-                    uint                j;
-
-                    for(j = 0; j < mat->numLayers; ++j)
-                        GL_ReleaseGLTexture(mat->layers[j].tex);
-
+                    Material_DeleteTextures(mb->mat);
                     if(!mb->hashNext)
                         break;
-
                     mb = &materialBinds[mb->hashNext - 1];
                 }
             }
@@ -484,23 +477,20 @@ static const ddstring_t* nameForNamespaceId(materialnamespaceid_t id)
     return &emptyString;
 }
 
-const ddstring_t* Materials_NamespaceNameForTextureType(gltexture_type_t t)
+const ddstring_t* Materials_NamespaceNameForTextureNamespaceId(texturenamespaceid_t texNamespace)
 {
     static const ddstring_t emptyString = { "" };
-    if(t < GLT_ANY || t >= NUM_GLTEXTURE_TYPES)
-        Con_Error("materialNamespaceNameForTextureType: Internal error, invalid type %i.", (int) t);
-    switch(t)
+    if(!VALID_TEXTURENAMESPACEID(texNamespace))
+        Con_Error("Materials::NamespaceNameForTextureNamespaceId: Internal error, "
+                  "invalid texture namespace id %i.", (int) texNamespace);
+    switch(texNamespace)
     {
-    case GLT_ANY:           return &emptyString;
-    case GLT_DOOMTEXTURE:   return nameForNamespaceId(MN_TEXTURES);
-    case GLT_FLAT:          return nameForNamespaceId(MN_FLATS);
-    case GLT_SPRITE:        return nameForNamespaceId(MN_SPRITES);
-    case GLT_SYSTEM:        return nameForNamespaceId(MN_SYSTEM);
+    case TN_TEXTURES:   return nameForNamespaceId(MN_TEXTURES);
+    case TN_FLATS:      return nameForNamespaceId(MN_FLATS);
+    case TN_SPRITES:    return nameForNamespaceId(MN_SPRITES);
+    case TN_SYSTEM:     return nameForNamespaceId(MN_SYSTEM);
     default:
-#if _DEBUG
-        Con_Message("materialNamespaceNameForTextureType: No namespace for type %i:%s.", (int)t, GLTEXTURE_TYPE_STRING(t));
-#endif
-        return 0;
+        return NULL; // Unreachable.
     }
 }
 
@@ -706,13 +696,13 @@ material_t* Materials_NewFromDef(ded_material_t* def)
     if(def->layers[0].stageCount.num > 0)
     {
         const ded_material_layer_t* l = &def->layers[0];
-        if(l->stages[0].type != -1) // Not unused.
+        if(l->stages[0].texNamespace != -1) // Not unused.
         {
-            if(!(tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type)))
+            if(!(tex = GL_GetGLTextureByName(l->stages[0].texName, l->stages[0].texNamespace)))
             {
                 ddstring_t* path = Uri_ComposePath(def->id);
-                VERBOSE( Con_Message("Warning: Unknown %s '%s' in Material '%s' (layer %i stage %i).\n",
-                         GLTEXTURE_TYPE_STRING(l->stages[0].type), l->stages[0].name, Str_Text(path), 0, 0) );
+                VERBOSE( Con_Message("Warning: Unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
+                         l->stages[0].texName, Str_Text(path), 0, 0) );
                 Str_Delete(path);
             }
         }
@@ -1194,7 +1184,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             }
 
             /// \fixme what about the other texture types?
-            if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_FLAT)
+            if(tex->type == GLT_PATCHCOMPOSITE || tex->type == GLT_FLAT)
             {
                 const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*) layerTextures[0]->analyses[GLTA_WORLD_AMBIENTLIGHT];
                 assert(ambientLight);
@@ -1245,8 +1235,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
 
                 if(shinyMaskTex)
                     setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskTex,
-                               1.f / (snapshot->width * maskTextures[shinyMaskTex->generalCase->ofTypeID]->width),
-                               1.f / (snapshot->height * maskTextures[shinyMaskTex->generalCase->ofTypeID]->height),
+                               1.f / (snapshot->width * maskTextures[shinyMaskTex->generalCase->index]->width),
+                               1.f / (snapshot->height * maskTextures[shinyMaskTex->generalCase->index]->height),
                                snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
             }
         }
@@ -1646,7 +1636,8 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
 
         if(mat->def && mat->def->layers[0].stageCount.num > 1)
         {
-            if(GL_GetGLTextureByName(mat->def->layers[0].stages[0].name, mat->def->layers[0].stages[0].type))
+            if(GL_GetGLTextureByName(mat->def->layers[0].stages[0].texName,
+                                     mat->def->layers[0].stages[0].texNamespace))
                 continue; // Animated elsewhere.
         }
 

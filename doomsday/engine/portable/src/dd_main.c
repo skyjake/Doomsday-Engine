@@ -2146,14 +2146,16 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
-materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type)
+materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
 {
     const gltexture_t* tex;
-    if(ofTypeId != 0 && (tex = GL_GetGLTextureByTypeId(ofTypeId-1, type)))
+    if(!VALID_TEXTURENAMESPACEID(texNamespace))
+        Con_Error("DD_MaterialForTextureIndex: Invalid namespace id %i.", texNamespace);
+    if(index != 0 && (tex = GL_GetGLTextureByIndex(index-1, texNamespace)))
     {
         materialnum_t result;
         ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, "%s%s", Str_Text(Materials_NamespaceNameForTextureType(type)), GLTexture_Name(tex));
+        Str_Appendf(&path, "%s%s", Str_Text(Materials_NamespaceNameForTextureNamespaceId(texNamespace)), GLTexture_Name(tex));
         result = Materials_CheckNumForName(Str_Text(&path));
         Str_Free(&path);
         return result;
