@@ -239,7 +239,8 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 {
     int                 i;
     mover_t            *mov;
-
+    int                 dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
+                                                      : DMU_CEILING_OF_SECTOR);
 #ifdef _DEBUG
     Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
                 sectornum, type==MVT_FLOOR? "floor" : "ceiling",
@@ -259,9 +260,6 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             Cl_RemoveActiveMover(activemovers[i]);
         }
     }
-
-    int dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
-                                      : DMU_CEILING_OF_SECTOR);
 
     // Add a new mover.
     for(i = 0; i < MAX_MOVERS; ++i)
