@@ -1141,10 +1141,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\gltexture.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\image.c"
 				>
 			</File>
@@ -1642,6 +1638,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\tab_tables.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\texture.c"
 				>
 			</File>
 			<File
@@ -2822,14 +2822,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\gltexture.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\gltexturevariant.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\image.h"
 				>
 			</File>
@@ -3258,7 +3250,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\texture.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\texturecontent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\texturevariant.h"
 				>
 			</File>
 			<File
