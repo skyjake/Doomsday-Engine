@@ -126,7 +126,7 @@ static const ddstring_t* nameForMaterialNamespaceId(materialnamespaceid_t id)
         /* MN_SPRITES */    { MN_SPRITES_NAME }
     };
     if(VALID_MATERIALNAMESPACE(id))
-        return &namespaces[id];
+        return &namespaces[id-MATERIALNAMESPACE_FIRST];
     return &emptyString;
 }
 
@@ -140,7 +140,7 @@ static materialnamespaceid_t materialNamespaceIdForTextureNamespaceId(texturenam
         /* TN_PATCHES */   { MN_ANY } // No materials for these yet.
     };
     if(VALID_TEXTURENAMESPACE(id))
-        return namespaceIds[id];
+        return namespaceIds[id-TEXTURENAMESPACE_FIRST];
     return MATERIALNAMESPACE_COUNT; // Unknown.
 }
 
@@ -193,30 +193,23 @@ static uint hashForName(const char* name)
  * @return              Unique number of the found material, else zero.
  */
 static materialnum_t getMaterialNumForName(const char* name, uint hash,
-                                           materialnamespaceid_t mnamespace)
+    materialnamespaceid_t mnamespace)
 {
     // Go through the candidates.
-    if(hashTable[mnamespace][hash])
+    if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash])
     {
-        materialbind_t*     mb = &materialBinds[
-            hashTable[mnamespace][hash] - 1];
-
+        materialbind_t* mb = &materialBinds[hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] - 1];
         for(;;)
         {
-            material_t*        mat;
-
-            mat = mb->mat;
-
+            material_t* mat = mb->mat;
             if(!strncmp(mb->name, name, 8))
                 return ((mb) - materialBinds) + 1;
-
             if(!mb->hashNext)
                 break;
 
             mb = &materialBinds[mb->hashNext - 1];
         }
     }
-
     return 0; // Not found.
 }
 
@@ -242,8 +235,8 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     mb->prepared = 0;
 
     // We also hash the name for faster searching.
-    mb->hashNext = hashTable[mnamespace][hash];
-    hashTable[mnamespace][hash] = (mb - materialBinds) + 1;
+    mb->hashNext = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash];
+    hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] = (mb - materialBinds) + 1;
 }
 
 static material_t* allocMaterial(void)
@@ -432,9 +425,9 @@ void Materials_DeleteTextures(const char* namespaceName)
     {
         uint i;
         for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
-            if(hashTable[matNamespace][i])
+            if(hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i])
             {
-                materialbind_t* mb = &materialBinds[hashTable[matNamespace][i] - 1];
+                materialbind_t* mb = &materialBinds[hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i] - 1];
 
                 for(;;)
                 {
@@ -1236,11 +1229,10 @@ static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
     int numDigits = M_NumDigits(numMaterialBinds);
 
-    Con_Printf(" %*u: \"\n");
+    Con_Printf(" %*u: \"", numDigits, (unsigned int) mb->mat->_bindId);
     if(printNamespace)
         Con_Printf("%s:", Str_Text(nameForMaterialNamespaceId(mb->mnamespace)));
-    Con_Printf("%s\" [%i, %i]", numDigits, (unsigned int) mb->mat->_bindId,
-               mb->name, mb->mat->width, mb->mat->height);
+    Con_Printf("%s\" [%i, %i]", mb->name, mb->mat->width, mb->mat->height);
 
     /*{ uint i;
     for(i = 0; i < mb->mat->numLayers; ++i)
@@ -1261,9 +1253,9 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
         {
             uint i;
             for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
-                if(hashTable[mnamespace][i])
+                if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i])
                 {
-                    materialnum_t num = hashTable[mnamespace][i] - 1;
+                    materialnum_t num = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i] - 1;
                     materialbind_t* mb = &materialBinds[num];
 
                     for(;;)
