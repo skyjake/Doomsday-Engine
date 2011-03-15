@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 499 <--
-; Other free ordinals: 30, 437
+; Highest ordinal is currently: --> 503 <--
+; Other free ordinals: 30, 336
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -21,6 +21,8 @@ EXPORTS
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
     DD_MaterialForTextureIndex  @234 NONAME
+    DD_ParseTextureNamespace    @502 NONAME
+    DD_ParseMaterialNamespace   @503 NONAME
 
 ; Base: Types.
     ; Animator.
@@ -88,6 +90,8 @@ EXPORTS
     Uri_ComposePath             @488 NONAME
     Uri_ToString                @489 NONAME
     Uri_Equality                @493 NONAME
+    Uri_SetPath                 @437 NONAME
+    Uri_SetScheme               @500 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME
@@ -334,11 +338,10 @@ EXPORTS
     P_SetPolyobjCallback        @83 NONAME
 
 ; Play: Materials.
-    Materials_GetName           @337 NONAME
-    Materials_GetPath           @494 NONAME
-    Materials_CheckNumForName   @495 NONAME
-    Materials_NumForName2       @336 NONAME
-    Materials_NumForName        @496 NONAME
+    Materials_GetSymbolicName           @337 NONAME
+    Materials_GetUri            @494 NONAME
+    Materials_IndexForName      @495 NONAME
+    Materials_IndexForUri       @496 NONAME
     Materials_Precache          @436 NONAME
     Materials_CreateAnimGroup   @241 NONAME
     Materials_AddAnimGroupFrame @242 NONAME
@@ -463,7 +466,8 @@ EXPORTS
     GL_GrabScreen               @109 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
-    GL_TextureIndexForName      @438 NONAME
+    GL_GLTextureIndexForUri     @438 NONAME
+    GL_GLTextureIndexForUri2    @501 NONAME
 
 ; Graphics: Text
     FR_FontIdForName			@106 NONAME

@@ -361,7 +361,7 @@ masktex_t*      R_GetMaskTexture(const dduri_t* uri);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
-patchid_t       R_RegisterAsPatch(const char* name);
+patchid_t       R_RegisterPatch(const char* name);
 
 patchtex_t*     R_PatchTextureByIndex(patchid_t id);
 void            R_ClearPatchTexs(void);

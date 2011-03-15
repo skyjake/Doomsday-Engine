@@ -172,19 +172,92 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
 }
 
-static gltexture_type_t GLTextureTypeForTextureNamespaceId(texturenamespaceid_t texNamespace)
+static gltexture_type_t GLTextureTypeForTextureNamespace(texturenamespaceid_t texNamespace)
 {
     switch(texNamespace)
     {
     case TN_SYSTEM:     return GLT_SYSTEM;
     case TN_FLATS:      return GLT_FLAT;
     case TN_TEXTURES:   return GLT_PATCHCOMPOSITE;
-    case TN_PATCHES:    return GLT_PATCH;
     case TN_SPRITES:    return GLT_SPRITE;
+    case TN_PATCHES:    return GLT_PATCH;
     default:
-        Con_Error("GLTextureTypeForTextureNamespaceId: Invalid namespace id %i.", texNamespace);
+        Con_Error("GLTextureTypeForTextureNamespace: Invalid namespaceid #%i.", texNamespace);
         return 0; // Unreachable.
     }
+}
+
+/**
+ * This is a hash function. Given a gltexture name it generates a
+ * somewhat-random number between 0 and GLTEXTURE_NAME_HASH_SIZE.
+ *
+ * @return              The generated hash index.
+ */
+static uint hashForGLTextureName(const char* name)
+{
+    ushort              key = 0;
+    int                 i;
+
+    // Stop when the name ends.
+    for(i = 0; *name; ++i, name++)
+    {
+        if(i == 0)
+            key ^= (int) (*name);
+        else if(i == 1)
+            key *= (int) (*name);
+        else if(i == 2)
+        {
+            key -= (int) (*name);
+            i = -1;
+        }
+    }
+
+    return key % GLTEXTURE_NAME_HASH_SIZE;
+}
+
+/**
+ * Given a name and gltexture type, search the gltextures db for a match.
+ * \assume Caller knows what it's doing; params arn't validity checked.
+ *
+ * @param name  Name of the gltexture to search for. Must have been
+ *      transformed to all lower case.
+ * @param type  Specific gltexture type.
+ * @return  Ptr to the found gltexture_t else, @c NULL.
+ */
+static gltexture_t* getGLTextureByName(const char* name, uint hash,
+    gltexture_type_t type)
+{
+    if(glTextureTypeData[type].hashTable[hash])
+    {
+        gltexture_t* tex = glTextures[glTextureTypeData[type].hashTable[hash] - 1];
+        for(;;)
+        {
+            if(tex->type == type && !strncmp(tex->name, name, 8))
+                return tex;
+            if(!tex->hashNext)
+                break;
+            tex = glTextures[tex->hashNext - 1];
+        }
+    }
+    return 0; // Not found.
+}
+
+static const gltexture_t* findGLTextureByName(const char* rawName,
+    texturenamespaceid_t texNamespace)
+{
+    char name[9];
+    uint hash;
+    int n;
+
+    if(!rawName || !rawName[0])
+        return NULL;
+
+    // Prepare 'name'.
+    for(n = 0; *rawName && n < 8; ++n, rawName++)
+        name[n] = tolower(*rawName);
+    name[n] = '\0';
+    hash = hashForGLTextureName(name);
+    return getGLTextureByName(name, hash, GLTextureTypeForTextureNamespace(texNamespace));
 }
 
 void GL_EarlyInitTextureManager(void)
@@ -324,7 +397,7 @@ void GL_ClearSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    Materials_DeleteTextures(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME);
+    Materials_DeleteTextures(MN_SYSTEM_NAME);
     UI_ClearTextures();
 
     Rend_ParticleClearSystemTextures();
@@ -1738,67 +1811,10 @@ void GL_DeleteRawImages(void)
     Z_Free(rawTexs);
 }
 
-/**
- * This is a hash function. Given a gltexture name it generates a
- * somewhat-random number between 0 and GLTEXTURE_NAME_HASH_SIZE.
- *
- * @return              The generated hash index.
- */
-static uint hashForGLTextureName(const char* name)
-{
-    ushort              key = 0;
-    int                 i;
-
-    // Stop when the name ends.
-    for(i = 0; *name; ++i, name++)
-    {
-        if(i == 0)
-            key ^= (int) (*name);
-        else if(i == 1)
-            key *= (int) (*name);
-        else if(i == 2)
-        {
-            key -= (int) (*name);
-            i = -1;
-        }
-    }
-
-    return key % GLTEXTURE_NAME_HASH_SIZE;
-}
-
-/**
- * Given a name and gltexture type, search the gltextures db for a match.
- * \assume Caller knows what it's doing; params arn't validity checked.
- *
- * @param name  Name of the gltexture to search for. Must have been
- *      transformed to all lower case.
- * @param texNamespace  Specific TN_* texture namespace id.
- * @return  Ptr to the found gltexture_t else, @c NULL.
- */
-static gltexture_t* getGLTextureByName(const char* name, uint hash,
-    texturenamespaceid_t texNamespace)
-{
-    gltexture_type_t type = GLTextureTypeForTextureNamespaceId(texNamespace);
-    if(glTextureTypeData[type].hashTable[hash])
-    {
-        gltexture_t* tex = glTextures[glTextureTypeData[type].hashTable[hash] - 1];
-        for(;;)
-        {
-            if(tex->type == type && !strncmp(tex->name, name, 8))
-                return tex;
-            if(!tex->hashNext)
-                break;
-            tex = glTextures[tex->hashNext - 1];
-        }
-    }
-    return 0; // Not found.
-}
-
 static __inline gltexture_t* getGLTexture(gltextureid_t id)
 {
     if(id != 0 && id <= numGLTextures)
         return glTextures[id - 1];
-
     return NULL;
 }
 
@@ -1869,20 +1885,27 @@ const gltexture_t* GL_CreateGLTexture(const char* rawName, uint index,
     }
 }
 
-uint GL_TextureIndexForName(const char* name, texturenamespaceid_t texNamespace)
+uint GL_GLTextureIndexForUri2(const dduri_t* uri, boolean silent)
 {
     const gltexture_t* glTex;
-    if(!VALID_TEXTURENAMESPACEID(texNamespace))
-        Con_Error("GL_TextureIndexForName: Invalid namespace id %i.", texNamespace);
-    if((glTex = GL_GetGLTextureByName(name, texNamespace)))
+    if((glTex = GL_GLTextureByUri2(uri, silent)))
         return glTex->index + 1;
-    Con_Message("GL_TextureIndexForName: Warning, unknown texture '%s' with namespace id %i.\n",
-                name, texNamespace);
+    if(!silent)
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning, unknown texture: %s\n", Str_Text(path));
+        Str_Delete(path);
+    }
     return 0;
 }
 
+uint GL_GLTextureIndexForUri(const dduri_t* uri)
+{
+    return GL_GLTextureIndexForUri2(uri, false);
+}
+
 const gltexturevariant_t* GL_PrepareGLTexture(gltextureid_t id, void* context,
-                                            byte* result)
+    byte* result)
 {
     return GLTexture_Prepare(getGLTexture(id), context, result);
 }
@@ -1911,73 +1934,46 @@ void GL_DeleteAllTexturesForGLTextures(gltexture_type_t type)
     }
 }
 
-const gltexture_t* GL_GetGLTexture(gltextureid_t id)
+const gltexture_t* GL_ToGLTexture(gltextureid_t id)
 {
     return getGLTexture(id);
 }
 
-const gltexture_t* GL_GetGLTextureByName(const char* rawName, texturenamespaceid_t texNamespace)
-{
-    char name[9];
-    uint hash;
-    int n;
-
-    if(!rawName || !rawName[0])
-        return NULL;
-
-    // Prepare 'name'.
-    for(n = 0; *rawName && n < 8; ++n, rawName++)
-        name[n] = tolower(*rawName);
-    name[n] = '\0';
-    hash = hashForGLTextureName(name);
-
-    return getGLTextureByName(name, hash, texNamespace);
-}
-
-static texturenamespaceid_t parseTextureNamespace(const ddstring_t* str)
-{
-    if(!str || Str_IsEmpty(str))
-        return TN_ANY;
-    if(!Str_CompareIgnoreCase(str, TEXTURES_TEXTURES_RESOURCE_NAMESPACE_NAME))
-        return TN_TEXTURES;
-    if(!Str_CompareIgnoreCase(str, TEXTURES_FLATS_RESOURCE_NAMESPACE_NAME))
-        return TN_FLATS;
-    if(!Str_CompareIgnoreCase(str, TEXTURES_SPRITES_RESOURCE_NAMESPACE_NAME))
-        return TN_SPRITES;
-    if(!Str_CompareIgnoreCase(str, TEXTURES_PATCHES_RESOURCE_NAMESPACE_NAME))
-        return TN_PATCHES;
-    if(!Str_CompareIgnoreCase(str, TEXTURES_SYSTEM_RESOURCE_NAMESPACE_NAME))
-        return TN_SYSTEM;
-    return TEXTURENAMESPACE_COUNT; // Unknown.
-}
-
-const gltexture_t* GL_GetGLTextureByUri(const dduri_t* uri)
+const gltexture_t* GL_GLTextureByUri2(const dduri_t* uri, boolean silent)
 {
     ddstring_t* path;
     if(uri && NULL != (path = Uri_Resolved(uri)))
     {
-        texturenamespaceid_t texNamespace = parseTextureNamespace(Uri_Scheme(uri));
+        texturenamespaceid_t texNamespace = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
         const gltexture_t* tex;
 
         if(texNamespace == TEXTURENAMESPACE_COUNT)
         {
-            ddstring_t* path = Uri_ComposePath(uri);
-            Con_Message("Warning, unknown texture namespace '%s' encountered parsing "
-                        "uri: %s", Str_Text(Uri_Scheme(uri)), Str_Text(path));
-            Str_Delete(path);
+            if(!silent)
+            {
+                ddstring_t* path = Uri_ToString(uri);
+                Con_Message("Warning, unknown texture namespace '%s' encountered parsing "
+                            "uri: %s", Str_Text(Uri_Scheme(uri)), Str_Text(path));
+                Str_Delete(path);
+            }
             return NULL;
         }
 
-        tex = GL_GetGLTextureByName(Str_Text(Uri_Path(uri)), texNamespace);
+        tex = findGLTextureByName(Str_Text(Uri_Path(uri)), texNamespace);
         Str_Delete(path);
         return tex;
     }
     return NULL;
 }
 
-const gltexture_t* GL_GetGLTextureByIndex(int index, texturenamespaceid_t texNamespace)
+const gltexture_t* GL_GLTextureByUri(const dduri_t* uri)
 {
-    gltexture_type_t type = GLTextureTypeForTextureNamespaceId(texNamespace);
+    return GL_GLTextureByUri2(uri, false);
+}
+
+const gltexture_t* GL_GLTextureByIndex(int index, texturenamespaceid_t texNamespace)
+{
+    gltexture_type_t type = GLTextureTypeForTextureNamespace(texNamespace);
     uint i;
     for(i = 0; i < numGLTextures; ++i)
     {

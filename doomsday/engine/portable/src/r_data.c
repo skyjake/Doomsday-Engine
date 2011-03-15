@@ -966,12 +966,19 @@ static patchtex_t* getPatchTex(patchid_t id)
     return NULL;
 }
 
-static patchid_t patchForName(const char* name)
+static patchid_t findPatchTextureByName(const char* name)
 {
+    assert(name && name[0]);
+    {
     const gltexture_t* glTex;
-    if((glTex = GL_GetGLTextureByName(name, TN_PATCHES)))
-        return glTex->index;
-    return 0;
+    dduri_t* uri = Uri_Construct2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_PATCHES_NAME);
+    glTex = GL_GLTextureByUri(uri);
+    Uri_Destruct(uri);
+    if(glTex == NULL)
+        return 0;
+    return glTex->index;
+    }
 }
 
 /**
@@ -996,7 +1003,7 @@ void R_ClearPatchTexs(void)
  * Get a patchtex_t data structure for a patch specified with a WAD lump
  * number. Allocates a new patchtex_t if it hasn't been loaded yet.
  */
-patchid_t R_RegisterAsPatch(const char* name)
+patchid_t R_RegisterPatch(const char* name)
 {
     assert(name);
     {
@@ -1009,7 +1016,7 @@ patchid_t R_RegisterAsPatch(const char* name)
         return 0;
 
     // Already defined as a patch?
-    if((id = patchForName(name)) != 0)
+    if((id = findPatchTextureByName(name)) != 0)
         return id;
 
     if((lump = W_CheckNumForName(name)) == -1)
@@ -1089,7 +1096,7 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
         return 0;
 
     {patchid_t patch;
-    if((patch = R_RegisterAsPatch(name)) != 0)
+    if((patch = R_RegisterPatch(name)) != 0)
     {
         GL_PreparePatch(getPatchTex(patch));
         if(info)
@@ -1731,7 +1738,7 @@ void R_InitTextures(void)
 
             // Create a material for this texture.
             Str_Clear(&path);
-            Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", texDef->name);
+            Str_Appendf(&path, MN_TEXTURES_NAME":%s", texDef->name);
 
             uri = Uri_Construct2(Str_Text(&path), RC_NULL);
             Materials_New(uri, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), tex->id, 0, 0);
@@ -1860,7 +1867,7 @@ void R_InitFlats(void)
         // Create a material for this flat.
         // \note that width = 64, height = 64 regardless of the flat dimensions.
         Str_Clear(&path);
-        Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", flat->name);
+        Str_Appendf(&path, MN_FLATS_NAME":%s", flat->name);
 
         uri = Uri_Construct2(Str_Text(&path), RC_NULL);
         Materials_New(uri, 64, 64, 0, tex->id, 0, 0);
@@ -1989,7 +1996,7 @@ void R_SpriteTexturesInit(void)
         // Create a new Material for this.
         { dduri_t* uri;
         ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s", name);
+        Str_Appendf(&path, MN_SPRITES_NAME":%s", name);
         uri = Uri_Construct2(Str_Text(&path), RC_NULL);
         Materials_New(uri, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
         Uri_Destruct(uri);
@@ -2050,7 +2057,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
 
     if(verbose)
     {
-        ddstring_t* searchPath = Uri_ComposePath(skin);
+        ddstring_t* searchPath = Uri_ToString(skin);
         Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(searchPath), (long) (1 + (st - skinNames)));
         Str_Delete(searchPath);
     }
@@ -2432,7 +2439,7 @@ void R_InitAnimGroup(ded_group_t* def)
         if(!gm->material)
             continue;
 
-        if((num = Materials_CheckNumForName2(gm->material)) != 0)
+        if((num = Materials_IndexForUri(gm->material)) != 0)
         {
             // Only create a group when the first texture is found.
             if(groupNumber == -1)

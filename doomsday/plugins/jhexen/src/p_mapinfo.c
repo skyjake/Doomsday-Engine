@@ -169,7 +169,7 @@ void P_InitMapInfo(void)
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material = Materials_NumForName(gameMode == hexen_demo ? MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY2" : MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY1");
+    defMapInfo.sky1Material = Materials_IndexForName(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;
@@ -256,8 +256,8 @@ void P_InitMapInfo(void)
             case MCMD_SKY1:
                 SC_MustGetString();
                 { ddstring_t path; Str_Init(&path);
-                Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", sc_String);
-                info->sky1Material = Materials_NumForName(Str_Text(&path));
+                Str_Appendf(&path, MN_TEXTURES_NAME":%s", sc_String);
+                info->sky1Material = Materials_IndexForName(Str_Text(&path));
                 Str_Free(&path);
                 }
                 SC_MustGetNumber();
@@ -267,8 +267,8 @@ void P_InitMapInfo(void)
             case MCMD_SKY2:
                 SC_MustGetString();
                 { ddstring_t path; Str_Init(&path);
-                Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", sc_String);
-                info->sky2Material = Materials_NumForName(Str_Text(&path));
+                Str_Appendf(&path, MN_TEXTURES_NAME":%s", sc_String);
+                info->sky2Material = Materials_IndexForName(Str_Text(&path));
                 Str_Free(&path);
                 }
                 SC_MustGetNumber();

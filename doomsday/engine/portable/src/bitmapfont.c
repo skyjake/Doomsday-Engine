@@ -487,7 +487,7 @@ void BitmapFont_CharSetPatch(bitmapfont_t* font, unsigned char ch, const char* p
         font->_chars[ch].dlist = 0;
     }
 
-    font->_chars[ch].patch = R_RegisterAsPatch(patchName);
+    font->_chars[ch].patch = R_RegisterPatch(patchName);
     { patchinfo_t info;
     R_GetPatchInfo(font->_chars[ch].patch, &info);
     font->_chars[ch].x = info.offset    + info.extraOffset[0] + font->_marginWidth;

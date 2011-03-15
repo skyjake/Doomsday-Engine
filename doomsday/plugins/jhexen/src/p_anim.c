@@ -28,22 +28,22 @@
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 
-static void parseAnimGroup(texturenamespaceid_t texNamespace)
+static void parseAnimGroup(boolean isTexture, boolean isCustom)
 {
     boolean ignore = true, done;
     int groupNumber = 0;
     uint texNumBase = 0;
-
-    if(!(texNamespace == TN_FLATS || texNamespace == TN_TEXTURES))
-        Con_Error("parseAnimGroup: Internal Error, invalid namespace %i.",
-                  (int) texNamespace);
+    dduri_t* path;
 
     if(!SC_GetString()) // Name.
     {
         SC_ScriptError("Missing string.");
     }
 
-    if((texNumBase = GL_TextureIndexForName(sc_String, texNamespace)) != 0)
+    path = Uri_ConstructDefault();
+    Uri_SetScheme(path, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+    Uri_SetPath(path, sc_String);
+    if((texNumBase = GL_GLTextureIndexForUri2(path, !isCustom)) != 0)
         ignore = false;
 
     if(!ignore)
@@ -76,12 +76,13 @@ static void parseAnimGroup(texturenamespaceid_t texNamespace)
                 }
                 else
                 {
+                    Uri_Destruct(path);
                     SC_ScriptError(0);
                 }
 
                 if(!ignore)
                 {
-                    materialnum_t frame = DD_MaterialForTextureIndex(texNumBase + picNum - 1, texNamespace);
+                    materialnum_t frame = DD_MaterialForTextureIndex(texNumBase + picNum - 1, isTexture? TN_TEXTURES : TN_FLATS);
                     if(frame != 0)
                         Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
                 }
@@ -97,32 +98,36 @@ static void parseAnimGroup(texturenamespaceid_t texNamespace)
             done = true;
         }
     } while(!done);
+
+    Uri_Destruct(path);
 }
 
 void P_InitPicAnims(void)
 {
-    lumpnum_t lump = W_CheckNumForName("ANIMDEFS");
+    lumpnum_t lumpNum = W_CheckNumForName("ANIMDEFS");
+    boolean isCustom, isTexture;
 
-    if(lump != -1)
+    if(lumpNum == -1)
+        return;
+    isCustom = !W_LumpFromIWAD(lumpNum);
+
+    SC_OpenLump(lumpNum);
+    while(SC_GetString())
     {
-        SC_OpenLump(lump);
-
-        while(SC_GetString())
+        if(SC_Compare("texture"))
         {
-            if(SC_Compare("flat"))
-            {
-                parseAnimGroup(TN_FLATS);
-            }
-            else if(SC_Compare("texture"))
-            {
-                parseAnimGroup(TN_TEXTURES);
-            }
-            else
-            {
-                SC_ScriptError(0);
-            }
+            isTexture = true;
+        }
+        else if(SC_Compare("flat"))
+        {
+            isTexture = false;
+        }
+        else
+        {
+            SC_ScriptError(0);
         }
 
-        SC_Close();
+        parseAnimGroup(isTexture, isCustom);
     }
+    SC_Close();
 }

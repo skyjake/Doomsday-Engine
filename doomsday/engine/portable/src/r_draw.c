@@ -232,7 +232,7 @@ void R_DrawViewBorder(void)
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    mat = Materials_ToMaterial(Materials_NumForName2(borderGraphicsNames[BG_BACKGROUND]));
+    mat = Materials_ToMaterial(Materials_IndexForUri(borderGraphicsNames[BG_BACKGROUND]));
     if(mat)
     {
         material_snapshot_t ms;

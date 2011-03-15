@@ -133,7 +133,10 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
 
-    materialnum_t   DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
+texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
+materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+
+materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -414,13 +417,11 @@ void Con_SetString(const char* name, char* text);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Materials.
-    materialnum_t   Materials_CheckNumForName2(const dduri_t* path);
-    materialnum_t   Materials_CheckNumForName(const char* path);
-    materialnum_t   Materials_NumForName2(const dduri_t* path);
-    materialnum_t   Materials_NumForName(const char* path);
-    dduri_t*        Materials_GetPath(material_t* mat);
+    materialnum_t   Materials_IndexForUri(const dduri_t* uri);
+    materialnum_t   Materials_IndexForName(const char* path);
+    dduri_t*        Materials_GetUri(material_t* mat);
 
-    const char*     Materials_GetName(material_t* mat);
+    const char*     Materials_GetSymbolicName(material_t* mat);
     void            Materials_Precache(material_t* mat, boolean yes);
     int             Materials_CreateAnimGroup(int flags);
     void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
@@ -480,7 +481,9 @@ void Con_SetString(const char* name, char* text);
     byte*           GL_GrabScreen(void);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
-    uint            GL_TextureIndexForName(const char* name, texturenamespaceid_t texNamespace);
+
+uint GL_GLTextureIndexForUri(const dduri_t* uri);
+uint GL_GLTextureIndexForUri2(const dduri_t* uri, boolean silent);
 
 //------------------------------------------------------------------------
 //

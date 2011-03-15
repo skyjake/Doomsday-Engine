@@ -1326,7 +1326,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                     {
                         READLABEL;
                         RV_URI("Material", &sl->material, 0)
-                        RV_URI("Texture", &sl->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME )
+                        RV_URI("Texture", &sl->material, MN_TEXTURES_NAME )
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
@@ -1427,7 +1427,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                     {
                         READLABEL;
                         RV_URI("Material", &sl->material, 0)
-                        RV_URI("Texture", &sl->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                        RV_URI("Texture", &sl->material, MN_TEXTURES_NAME)
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
@@ -1525,7 +1525,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                     if(ISLABEL("Material") || ISLABEL("Texture") || ISLABEL("Flat"))
                     {   // A new material path.
                         ddstring_t mnamespace; Str_Init(&mnamespace);
-                        Str_Set(&mnamespace, ISLABEL("Material")? "" : ISLABEL("Texture")? MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME : MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME);
+                        Str_Set(&mnamespace, ISLABEL("Material")? "" : ISLABEL("Texture")? MN_TEXTURES_NAME : MN_FLATS_NAME);
                         mn = DED_NewEntry((void**)&tenv->materials, &tenv->count, sizeof(*mn));
                         FINDBEGIN;
                         for(;;)
@@ -1722,15 +1722,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 RV_FLAGS("Flags", dtl->flags, "dtf_")
                 if(ISLABEL("Texture"))
                 {
-                    READURI(&dtl->material1, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&dtl->material1, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Wall")) // Alias
                 {
-                    READURI(&dtl->material1, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&dtl->material1, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&dtl->material2, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME)
+                    READURI(&dtl->material2, MN_FLATS_NAME)
                 }
                 else if(ISLABEL("Lump"))
                 {
@@ -1789,11 +1789,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READURI(&ref->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&ref->material, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&ref->material, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME)
+                    READURI(&ref->material, MN_FLATS_NAME)
                 }
                 else RV_END
                 CHECKSC;
@@ -1837,11 +1837,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&gen->material, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME)
+                    READURI(&gen->material, MN_FLATS_NAME)
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READURI(&gen->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&gen->material, MN_TEXTURES_NAME)
                 }
                 else
                 RV_STR("Mobj", gen->type)
@@ -2003,11 +2003,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Texture"))
                 {
-                    READURI(&decor->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&decor->material, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Flat"))
                 {
-                    READURI(&decor->material, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME)
+                    READURI(&decor->material, MN_FLATS_NAME)
                 }
                 else if(ISLABEL("Model"))
                 {
@@ -2124,7 +2124,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 {
                     ded_group_member_t* memb;
                     ddstring_t mnamespace; Str_Init(&mnamespace);
-                    Str_Set(&mnamespace, ISLABEL("Texture")? MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME : MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME);
+                    Str_Set(&mnamespace, ISLABEL("Texture")? MN_TEXTURES_NAME : MN_FLATS_NAME);
                     
                     // Need to allocate new stage?
                     if(sub >= grp->count.num)
@@ -2261,7 +2261,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Act texture")) // Alias
                 {
-                    READURI(&l->actMaterial, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&l->actMaterial, MN_TEXTURES_NAME)
                 }
                 else if(ISLABEL("Deact material"))
                 {
@@ -2269,7 +2269,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 }
                 else if(ISLABEL("Deact texture")) // Alias
                 {
-                    READURI(&l->deactMaterial, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
+                    READURI(&l->deactMaterial, MN_TEXTURES_NAME)
                 }
                 else
                 RV_INT("Act type", l->actLineType)

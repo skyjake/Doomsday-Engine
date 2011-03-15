@@ -130,115 +130,91 @@ static animdef_t animsShared[] = {
  */
 static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
+    dduri_t* startPath = Uri_ConstructDefault();
+    dduri_t* endPath = Uri_ConstructDefault();
+    boolean lastIsTexture;
     int i;
 
     // Read structures until -1 is found
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
+        boolean isTexture = animDefs[i].istexture != 0;
         int groupNum, ticsPerFrame, numFrames;
+        uint startFrame, endFrame;
 
-        if(!animDefs[i].istexture)
+        if(i == 0 || isTexture != lastIsTexture)
         {
-            uint startFrame, endFrame, n;
+            Uri_SetScheme(startPath, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            Uri_SetScheme(endPath, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            lastIsTexture = isTexture;
+        }
+        Uri_SetPath(startPath, animDefs[i].startname);
+        Uri_SetPath(endPath, animDefs[i].endname);
+        
+        if(0 == (startFrame = GL_GLTextureIndexForUri2(startPath, !isCustom)) ||
+           0 == (endFrame   = GL_GLTextureIndexForUri2(endPath, !isCustom)))
+            continue;
 
-            if((startFrame = GL_TextureIndexForName(animDefs[i].startname, TN_FLATS)) == 0 ||
-               (endFrame   = GL_TextureIndexForName(animDefs[i].endname, TN_FLATS)) == 0)
-                continue;
+        numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
+        ticsPerFrame = LONG(animDefs[i].speed);
 
-            numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
-            ticsPerFrame = LONG(animDefs[i].speed);
+        if(numFrames < 2)
+        {
+            Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
+            continue;
+        }
 
-            if(numFrames < 2)
+        if(0 == startFrame && 0 == endFrame)
+            continue;
+
+        /**
+         * A valid animation.
+         *
+         * Doomsday's group animation needs to know the texture/flat
+         * numbers of ALL frames in the animation group so we'll
+         * have to step through the directory adding frames as we
+         * go. (DOOM only required the start/end texture/flat
+         * numbers and would animate all textures/flats inbetween).
+         */
+
+        if(verbose > (isCustom? 1 : 2))
+        {
+            ddstring_t* from = Uri_ToString(startPath);
+            ddstring_t* to = Uri_ToString(endPath);
+            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n",
+                        i, Str_Text(from), Str_Text(to), ticsPerFrame);
+            Str_Delete(from);
+            Str_Delete(to);
+        }
+
+        // Find an animation group for this.
+        groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
+
+        // Add all frames from start to end to the group.
+        if(endFrame > startFrame)
+        {
+            uint n;
+            for(n = startFrame; n <= endFrame; ++n)
             {
-                Con_Message("  Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
-                continue;
-            }
-
-            if(startFrame && endFrame)
-            {   // We have a valid animation.
-                if(verbose > (isCustom? 1 : 2))
-                {
-                    Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, animDefs[i].startname, animDefs[i].endname, ticsPerFrame);
-                }
-
-                /**
-                 * Doomsday's group animation needs to know the texture/flat
-                 * numbers of ALL frames in the animation group so we'll
-                 * have to step through the directory adding frames as we
-                 * go. (DOOM only required the start/end texture/flat
-                 * numbers and would animate all textures/flats inbetween).
-                 */
-
-                // Create a new animation group for it.
-                groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
-
-                // Add all frames from start to end to the group.
-                if(endFrame > startFrame)
-                {
-                    for(n = startFrame; n <= endFrame; n++)
-                    {
-                        materialnum_t frame = DD_MaterialForTextureIndex(n, TN_FLATS);
-                        if(frame != 0)
-                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
-                    }
-                }
-                else
-                {
-                    for(n = endFrame; n >= startFrame; n--)
-                    {
-                        materialnum_t frame = DD_MaterialForTextureIndex(n, TN_FLATS);
-                        if(frame != 0)
-                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
-                    }
-                }
+                materialnum_t frame = DD_MaterialForTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
+                if(frame != 0)
+                    Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }
         }
         else
-        {   // Same as above but for texture groups.
-            uint startFrame, endFrame, n;
-
-            if((startFrame = GL_TextureIndexForName(animDefs[i].startname, TN_TEXTURES)) == 0 ||
-               (endFrame   = GL_TextureIndexForName(animDefs[i].endname, TN_TEXTURES)) == 0)
-                continue;
-
-            numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
-            ticsPerFrame = LONG(animDefs[i].speed);
-
-            if(numFrames < 2)
+        {
+            uint n;
+            for(n = endFrame; n >= startFrame; n--)
             {
-                Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
-                continue;
-            }
-
-            if(startFrame && endFrame)
-            {
-                if(verbose > (isCustom? 1 : 2))
-                {
-                    Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, animDefs[i].startname, animDefs[i].endname, ticsPerFrame);
-                }
-
-                groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
-                if(endFrame > startFrame)
-                {
-                    for(n = startFrame; n <= endFrame; n++)
-                    {
-                        materialnum_t frame = DD_MaterialForTextureIndex(n, TN_TEXTURES);
-                        if(frame != 0)
-                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
-                    }
-                }
-                else
-                {
-                    for(n = endFrame; n >= startFrame; n--)
-                    {
-                        materialnum_t frame = DD_MaterialForTextureIndex(n, TN_TEXTURES);
-                        if(frame != 0)
-                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
-                    }
-                }
+                materialnum_t frame = DD_MaterialForTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
+                if(frame != 0)
+                    Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }
         }
     }
+
+    Uri_Destruct(startPath);
+    Uri_Destruct(endPath);
 }
 
 void P_InitPicAnims(void)

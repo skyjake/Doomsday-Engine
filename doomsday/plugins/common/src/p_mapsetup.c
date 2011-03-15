@@ -929,7 +929,7 @@ static void P_FinalizeMap(void)
     if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
         uint i, k;
-        material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":NUKE24"));
+        material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(MN_TEXTURES_NAME":NUKE24"));
         material_t* bottomMat, *midMat;
         float yoff;
         sidedef_t* sidedef;

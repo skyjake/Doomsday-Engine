@@ -407,9 +407,9 @@ void R_PreInitSprites(void)
         }
 
         { ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s", name);
+        Str_Appendf(&path, MN_SPRITES_NAME":%s", name);
 
-        sprFrame->mat = Materials_ToMaterial(Materials_NumForName(Str_Text(&path)));
+        sprFrame->mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
 
         Str_Free(&path);
         }

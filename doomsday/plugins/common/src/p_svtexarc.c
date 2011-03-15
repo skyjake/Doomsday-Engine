@@ -99,7 +99,7 @@ static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* m
     assert(mat);
     {
     dduri_t* path;
-    if((path = Materials_GetPath(mat)))
+    if((path = Materials_GetUri(mat)))
     {
         // Insert a new element in the index.
         insertSerialId(mArc, mArc->count+1, path, mat);
@@ -117,7 +117,7 @@ static materialarchive_serialid_t getSerialIdForMaterial(materialarchive_t* mArc
     {
     materialarchive_serialid_t id = 0;
     dduri_t* path;
-    if((path = Materials_GetPath(mat)))
+    if((path = Materials_GetUri(mat)))
     {
         uint i;
         for(i = 0; i < mArc->count; ++i)
@@ -157,7 +157,7 @@ static material_t* materialForSerialId(const materialarchive_t* mArc,
     if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
     {
         if(rec->material == 0)
-            rec->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName2(rec->path));
+            rec->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(rec->path));
         return rec->material;
     }
     return 0;
@@ -206,24 +206,23 @@ static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
     else
     {
         char name[9];
-        ddstring_t path;
         byte oldMNI;
 
         SV_Read(name, 8);
         name[8] = 0;
-        oldMNI = SV_ReadByte();
+
         if(!rec->path)
             rec->path = Uri_ConstructDefault();
-        Str_Init(&path);
+
+        oldMNI = SV_ReadByte();
         switch(oldMNI % 4)
         {
-        case 0: Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", name); break;
-        case 1: Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s",    name); break;
-        case 2: Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s",  name); break;
-        case 3: Str_Appendf(&path, MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":%s",   name); break;
+        case 0: Uri_SetScheme(rec->path, MN_TEXTURES_NAME); break;
+        case 1: Uri_SetScheme(rec->path, MN_FLATS_NAME);    break;
+        case 2: Uri_SetScheme(rec->path, MN_SPRITES_NAME);  break;
+        case 3: Uri_SetScheme(rec->path, MN_SYSTEM_NAME);   break;
         }
-        Uri_SetUri(rec->path, &path);
-        Str_Free(&path);
+        Uri_SetPath(rec->path, name);
     }
     return true; // Continue iteration.
 }
@@ -357,12 +356,12 @@ void MaterialArchive_Read(materialarchive_t* materialArchive, int version)
     }
 
     materialArchive->count = 0;
-    readMaterialGroup(materialArchive, (version >= 1? "" : MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":"));
+    readMaterialGroup(materialArchive, (version >= 1? "" : MN_FLATS_NAME":"));
 
     if(materialArchive->version == 0)
     {   // The old format saved flats and textures in seperate groups.
         materialArchive->numFlats = materialArchive->count;
-        readMaterialGroup(materialArchive, (version >= 1? "" : MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":"));
+        readMaterialGroup(materialArchive, (version >= 1? "" : MN_TEXTURES_NAME":"));
     }
 }
 

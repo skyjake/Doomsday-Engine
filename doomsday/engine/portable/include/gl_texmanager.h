@@ -252,17 +252,18 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
 
 void GL_ReleaseGLTexture(gltextureid_t id);
 
-const struct gltexture_s* GL_GetGLTexture(gltextureid_t id);
+const struct gltexture_s* GL_ToGLTexture(gltextureid_t id);
 const struct gltexturevariant_s* GL_PrepareGLTexture(gltextureid_t id, void* context, byte* result);
-
-uint GL_TextureIndexForName(const char* name, texturenamespaceid_t texNamespace);
 
 const struct gltexture_s* GL_CreateGLTexture(const char* name, uint index, gltexture_type_t type);
 
-const struct gltexture_s* GL_GetGLTextureByName(const char* name, texturenamespaceid_t texNamespace);
-const struct gltexture_s* GL_GetGLTextureByUri(const dduri_t* uri);
+const struct gltexture_s* GL_GLTextureByUri2(const dduri_t* uri, boolean silent);
+const struct gltexture_s* GL_GLTextureByUri(const dduri_t* uri);
 
-const struct gltexture_s* GL_GetGLTextureByIndex(int index, texturenamespaceid_t texNamespace);
+const struct gltexture_s* GL_GLTextureByIndex(int index, texturenamespaceid_t texNamespace);
+
+uint GL_GLTextureIndexForUri2(const dduri_t* uri, boolean silent);
+uint GL_GLTextureIndexForUri(const dduri_t* uri);
 
 /**
  * Updates the minification mode of ALL gltextures.

@@ -96,14 +96,20 @@ static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rn)
     // Join the extra pathlist from the resource namespace to the final pathlist?
     { uint i;
     for(i = 0; i < rn->_extraSearchPathsCount; ++i)
-        Str_Appendf(pathList, "%s;", Str_Text(Uri_ComposePath(rn->_extraSearchPaths[i])));
-    }
+    {
+        ddstring_t* path = Uri_ComposePath(rn->_extraSearchPaths[i]);
+        Str_Appendf(pathList, "%s;", Str_Text(path));
+        Str_Delete(path);
+    }}
 
     // Join the pathlist from the resource namespace to the final pathlist.
     { uint i;
     for(i = 0; i < rn->_searchPathsCount; ++i)
-        Str_Appendf(pathList, "%s;", Str_Text(Uri_ComposePath(rn->_searchPaths[i])));
-    }
+    {
+        ddstring_t* path = Uri_ComposePath(rn->_searchPaths[i]);
+        Str_Appendf(pathList, "%s;", Str_Text(path));
+        Str_Delete(path);
+    }}
 
     // A command line default path?
     if(rn->_overrideName && ArgCheckWith(Str_Text(rn->_overrideName), 1))

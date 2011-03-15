@@ -269,11 +269,11 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             material_t* material;
             
             if(renderTextures == 2)
-                material = Materials_ToMaterial(Materials_NumForName(
-                    MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":gray" ));
+                material = Materials_ToMaterial(Materials_IndexForName(
+                    MN_SYSTEM_NAME":gray" ));
             else
-                material = Materials_ToMaterial(Materials_NumForName(
-                    MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":missing" ));
+                material = Materials_ToMaterial(Materials_IndexForName(
+                    MN_SYSTEM_NAME":missing" ));
 
             memset(&p, 0, sizeof(p));
             p.flags = MLF_LOAD_AS_SKY;

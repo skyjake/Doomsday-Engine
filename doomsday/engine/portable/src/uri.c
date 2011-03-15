@@ -299,6 +299,16 @@ void Uri_SetScheme(dduri_t* uri, const char* scheme)
     Str_Set(&uri->_scheme, scheme);
 }
 
+void Uri_SetPath(dduri_t* uri, const char* path)
+{
+    if(!uri)
+    {
+        Con_Error("Attempted Uri::SetPath with invalid reference (this==0).");
+        return; // Unreachable.
+    }
+    Str_Set(&uri->_path, path);
+}
+
 void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResourceClass)
 {
     if(!uri)

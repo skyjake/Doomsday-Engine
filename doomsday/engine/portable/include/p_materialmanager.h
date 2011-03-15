@@ -29,56 +29,79 @@
 #include "def_data.h"
 #include "p_material.h"
 
-void            P_MaterialsRegister(void);
+void P_MaterialsRegister(void);
 
-void            Materials_Initialize(void);
-void            Materials_Shutdown(void);
+/**
+ * One time initialization of the materials list.
+ */
+void Materials_Initialize(void);
 
-void            Materials_Ticker(timespan_t elapsed);
+/**
+ * Release all memory acquired for the materials list.
+ */
+void Materials_Shutdown(void);
 
-void            Materials_DeleteTextures(const char* namespaceName);
-void            Materials_LinkAssociatedDefinitions(void);
+/**
+ * Find name-associated definitions for the known material bindings.
+ */
+void Materials_LinkAssociatedDefinitions(void);
 
-const ddstring_t* Materials_NamespaceNameForTextureNamespaceId(texturenamespaceid_t texNamespace);
+/**
+ * Deletes all GL texture instances, linked to materials.
+ *
+ * @param mnamespace @c MN_ANY = delete everything, ELSE
+ *      Only delete those currently in use by materials in the specified namespace.
+ */
+void Materials_DeleteTextures(const char* namespaceName);
 
-material_t*     Materials_New(const dduri_t* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
-material_t*     Materials_NewFromDef(ded_material_t* def);
+void Materials_Ticker(timespan_t elapsed);
 
-material_t*     Materials_ToMaterial(materialnum_t num);
+const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace);
 
-materialnum_t   Materials_ToMaterialNum(const material_t* mat);
+material_t* Materials_New(const dduri_t* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
+material_t* Materials_NewFromDef(ded_material_t* def);
 
-materialnum_t   Materials_CheckNumForName2(const dduri_t* path);
-materialnum_t   Materials_CheckNumForName(const char* path);
-materialnum_t   Materials_NumForName2(const dduri_t* path);
-materialnum_t   Materials_NumForName(const char* path);
+material_t* Materials_ToMaterial(materialnum_t num);
 
-const char* Materials_GetName(material_t* mat);
-dduri_t* Materials_GetPath(material_t* mat);
+materialnum_t Materials_ToMaterialNum(const material_t* mat);
 
-void            Materials_Precache(material_t* mat, boolean yes);
+/**
+ * Search the Materials db for a match.
+ * \note Part of the Doomsday public API.
+ *
+ * @param path  Path of the material to search for.
+ *
+ * @return  Unique identifier of the found material, else zero.
+ */
+materialnum_t Materials_IndexForUri(const dduri_t* uri);
+materialnum_t Materials_IndexForName(const char* path);
 
-uint            Materials_Count(void);
+const char* Materials_GetSymbolicName(material_t* mat);
+dduri_t* Materials_GetUri(material_t* mat);
+
+void Materials_Precache(material_t* mat, boolean yes);
+
+uint Materials_Count(void);
 
 const ded_detailtexture_t* Materials_Detail(materialnum_t num);
 const ded_reflection_t* Materials_Reflection(materialnum_t num);
 const ded_decor_t*  Materials_Decoration(materialnum_t num);
 const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
 
-byte            Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
+byte Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
 
-int             Materials_AnimGroupCount(void);
-void            Materials_ResetAnimGroups(void);
-void            Materials_DestroyAnimGroups(void);
+int Materials_AnimGroupCount(void);
+void Materials_ResetAnimGroups(void);
+void Materials_DestroyAnimGroups(void);
 
-int             Materials_CreateAnimGroup(int flags);
-void            Materials_AddAnimGroupFrame(int animGroupNum, materialnum_t num, int tics, int randomTics);
-boolean         Materials_MaterialLinkedToAnimGroup(int animGroupNum, material_t* mat);
+int Materials_CreateAnimGroup(int flags);
+void Materials_AddAnimGroupFrame(int animGroupNum, materialnum_t num, int tics, int randomTics);
+boolean Materials_MaterialLinkedToAnimGroup(int animGroupNum, material_t* mat);
 
 // @todo Refactor interface, doesn't fit the current design.
-boolean         Materials_IsPrecacheAnimGroup(int groupNum);
+boolean Materials_IsPrecacheAnimGroup(int groupNum);
 
 // @todo Refactor away.
-void            Materials_PrecacheAnimGroup(material_t* mat, boolean yes);
+void Materials_PrecacheAnimGroup(material_t* mat, boolean yes);
 #endif /* LIBDENG2_MATERIALS_H */
 

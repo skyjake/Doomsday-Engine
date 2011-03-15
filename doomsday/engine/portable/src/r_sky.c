@@ -103,7 +103,7 @@ static void configureDefaultSky(void)
         skylayer_t* slayer = &skyLayers[i];
 
         slayer->flags = (i == 0? SLF_ENABLED : 0);
-        slayer->material = Materials_NumForName(MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY1");
+        slayer->material = Materials_IndexForName(MN_TEXTURES_NAME":SKY1");
         slayer->offset = 0;
         // Default the fadeout to black.
         slayer->fadeout.use = (i == 0);
@@ -274,7 +274,7 @@ void R_SetupSky(ded_sky_t* sky)
             R_SkyLayerEnable(i, true);
             R_SkyLayerMasked(i, (def->flags & SLF_MASKED) != 0);
             { materialnum_t material;
-            if(def->material && (material = Materials_NumForName2(def->material)) == 0)
+            if(def->material && (material = Materials_IndexForUri(def->material)) == 0)
             {
                 ddstring_t* path = Uri_ToString(def->material);
                 Con_Message("Warning, unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);

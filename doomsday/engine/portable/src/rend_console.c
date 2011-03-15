@@ -267,7 +267,7 @@ void Rend_ConsoleUpdateBackground(const cvar_t* unused)
 {
     assert(inited);
     consoleBackgroundMaterial = Materials_ToMaterial(
-        Materials_CheckNumForName(consoleBackgroundMaterialName));
+        Materials_IndexForName(consoleBackgroundMaterialName));
 }
 
 void Rend_ConsoleToggleFullscreen(void)

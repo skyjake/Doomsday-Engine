@@ -50,18 +50,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum {
-    MN_ANY = -1,
-    MATERIALNAMESPACEID_FIRST,
-    MN_TEXTURES = MATERIALNAMESPACEID_FIRST,
-    MN_FLATS,
-    MN_SPRITES,
-    MN_SYSTEM,
-    MATERIALNAMESPACEID_COUNT
-} materialnamespaceid_t;
-
-#define VALID_MATERIALNAMESPACEID(id)   ((id) >= MATERIALNAMESPACEID_FIRST && (id) < MATERIALNAMESPACEID_COUNT)
-
 typedef struct materialbind_s {
     char            name[9];
     material_t*     mat;
@@ -119,20 +107,41 @@ static material_t* materialsHead; // Head of the linked list of materials.
 
 static materialbind_t* materialBinds;
 static materialnum_t maxMaterialBinds;
-static uint hashTable[MATERIALNAMESPACEID_COUNT][MATERIAL_NAME_HASH_SIZE];
-
-static const ddstring_t mnamespaceIdentifiers[MATERIALNAMESPACEID_COUNT] = {
-    { MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":" },
-    { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":"    },
-    { MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":"  },
-    { MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":"   }
-};
+static uint hashTable[MATERIALNAMESPACE_COUNT][MATERIAL_NAME_HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
 
 void P_MaterialsRegister(void)
 {
     C_CMD("listmaterials",  NULL,     ListMaterials);
+}
+
+static const ddstring_t* nameForMaterialNamespaceId(materialnamespaceid_t id)
+{
+    static const ddstring_t emptyString = { "" };
+    static const ddstring_t namespaces[MATERIALNAMESPACE_COUNT] = {
+        /* MN_SYSTEM */     { MN_SYSTEM_NAME },
+        /* MN_FLATS */      { MN_FLATS_NAME },
+        /* MN_TEXTURES */   { MN_TEXTURES_NAME },
+        /* MN_SPRITES */    { MN_SPRITES_NAME }
+    };
+    if(VALID_MATERIALNAMESPACE(id))
+        return &namespaces[id];
+    return &emptyString;
+}
+
+static materialnamespaceid_t materialNamespaceIdForTextureNamespaceId(texturenamespaceid_t id)
+{
+    static const materialnamespaceid_t namespaceIds[TEXTURENAMESPACE_COUNT] = {
+        /* TN_SYSTEM */    { MN_SYSTEM },
+        /* TN_FLATS */     { MN_FLATS },
+        /* TN_TEXTURES */  { MN_TEXTURES },
+        /* TN_SPRITES */   { MN_SPRITES },
+        /* TN_PATCHES */   { MN_ANY } // No materials for these yet.
+    };
+    if(VALID_TEXTURENAMESPACE(id))
+        return namespaceIds[id];
+    return MATERIALNAMESPACE_COUNT; // Unknown.
 }
 
 static __inline materialbind_t* bindForMaterial(const material_t* mat)
@@ -144,21 +153,6 @@ static __inline materialbind_t* bindForMaterial(const material_t* mat)
 static int compareMaterialBindByName(const void* e1, const void* e2)
 {
     return stricmp((*(const materialbind_t**)e1)->name, (*(const materialbind_t**)e2)->name);
-}
-
-static materialnamespaceid_t parseMaterialNamespaceIdent(const char* name)
-{
-    const char* p = name;
-    materialnamespaceid_t mni = MN_ANY;
-    if(!stricmp(name, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME))
-        mni = MN_TEXTURES;
-    else if(!stricmp(name, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME))
-        mni = MN_FLATS;
-    else if(!stricmp(name, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME))
-        mni = MN_SPRITES;
-    else if(!stricmp(name, MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME))
-        mni = MN_SYSTEM;
-    return mni;
 }
 
 /**
@@ -252,133 +246,6 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     hashTable[mnamespace][hash] = (mb - materialBinds) + 1;
 }
 
-/**
- * Find name-associated definitions for the known material bindings.
- */
-void Materials_LinkAssociatedDefinitions(void)
-{
-    uint i;
-    for(i = 0; i < numMaterialBinds; ++i)
-    {
-        materialbind_t* mb = &materialBinds[i];
-        if(mb->mnamespace == MN_SYSTEM)
-            continue;
-
-        // Surface decorations (lights and models).
-        mb->decoration[0] = Def_GetDecoration(mb->mat, 0);
-        mb->decoration[1] = Def_GetDecoration(mb->mat, 1);
-
-        // Reflection (aka shiny surface).
-        mb->reflection[0] = Def_GetReflection(mb->mat, 0);
-        mb->reflection[1] = Def_GetReflection(mb->mat, 1);
-
-        // Generator (particles).
-        mb->ptcGen[0] = Def_GetGenerator(mb->mat, 0);
-        mb->ptcGen[1] = Def_GetGenerator(mb->mat, 1);
-
-        // Detail texture.
-        mb->detail[0] = Def_GetDetailTex(mb->mat, 0);
-        mb->detail[1] = Def_GetDetailTex(mb->mat, 1);
-    }
-}
-
-/**
- * One time initialization of the materials list. Called during init.
- */
-void Materials_Initialize(void)
-{
-    if(initedOk)
-        return; // Already been here.
-
-    materialsBlockSet = ZBlockSet_Construct(sizeof(material_t),
-                                      MATERIALS_BLOCK_ALLOC, PU_APPSTATIC);
-    materialsHead = NULL;
-
-    materialBinds = NULL;
-    numMaterialBinds = maxMaterialBinds = 0;
-
-    // Clear the name bind hash tables.
-    memset(hashTable, 0, sizeof(hashTable));
-
-    initedOk = true;
-}
-
-/**
- * Release all memory acquired for the materials list.
- * Called during shutdown.
- */
-void Materials_Shutdown(void)
-{
-    if(!initedOk)
-        return;
-
-    ZBlockSet_Destruct(materialsBlockSet);
-    materialsBlockSet = NULL;
-    materialsHead = NULL;
-
-    // Destroy the bindings.
-    if(materialBinds)
-    {
-        Z_Free(materialBinds);
-        materialBinds = NULL;
-    }
-    numMaterialBinds = maxMaterialBinds = 0;
-
-    initedOk = false;
-}
-
-/**
- * Deletes all GL texture instances, linked to materials.
- *
- * @param mnamespace    @c MN_ANY = delete everything, ELSE
- *                      Only delete those currently in use by materials
- *                      in the specified namespace.
- */
-void Materials_DeleteTextures(const char* namespaceName)
-{
-    materialnamespaceid_t mnamespace = MN_ANY;
-
-    if(namespaceName && namespaceName[0])
-    {
-        if((mnamespace = parseMaterialNamespaceIdent(namespaceName)) == MN_ANY)
-        {
-#if _DEBUG
-            Con_Message("Warning:Materials_DeleteTextures: Attempt to delete in unknown namespace (%s), ignoring.\n",
-                        namespaceName);
-#endif
-            return;
-        }
-    }
-
-    if(mnamespace == MN_ANY)
-    {   // Delete the lot.
-        GL_DeleteAllTexturesForGLTextures(GLT_ANY);
-        return;
-    }
-
-    if(!VALID_MATERIALNAMESPACEID(mnamespace))
-        Con_Error("Materials_DeleteTextures: Internal error, "
-                  "invalid materialgroup '%i'.", (int) mnamespace);
-
-    if(materialBinds)
-    {
-        uint i;
-        for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
-            if(hashTable[mnamespace][i])
-            {
-                materialbind_t* mb = &materialBinds[hashTable[mnamespace][i] - 1];
-
-                for(;;)
-                {
-                    Material_DeleteTextures(mb->mat);
-                    if(!mb->hashNext)
-                        break;
-                    mb = &materialBinds[mb->hashNext - 1];
-                }
-            }
-    }
-}
-
 static material_t* allocMaterial(void)
 {
     material_t* mat = ZBlockSet_Allocate(materialsBlockSet);
@@ -406,7 +273,7 @@ static void materialUpdateCustomStatus(material_t* mat)
     mat->flags &= ~MATF_CUSTOM;
     for(i = 0; i < mat->numLayers; ++i)
     {
-        if(GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
+        if(GLTexture_IsFromIWAD(GL_ToGLTexture(mat->layers[i].tex)))
             continue;
         mat->flags |= MATF_CUSTOM;
         break;
@@ -469,29 +336,120 @@ static material_t* getMaterialByNum(materialnum_t num)
     return 0;
 }
 
-static const ddstring_t* nameForNamespaceId(materialnamespaceid_t id)
+void Materials_Initialize(void)
 {
-    static ddstring_t emptyString = { "" };
-    if(VALID_MATERIALNAMESPACEID(id))
-        return &mnamespaceIdentifiers[id];
-    return &emptyString;
+    if(initedOk)
+        return; // Already been here.
+
+    materialsBlockSet = ZBlockSet_Construct(sizeof(material_t),
+                                      MATERIALS_BLOCK_ALLOC, PU_APPSTATIC);
+    materialsHead = NULL;
+
+    materialBinds = NULL;
+    numMaterialBinds = maxMaterialBinds = 0;
+
+    // Clear the name bind hash tables.
+    memset(hashTable, 0, sizeof(hashTable));
+
+    initedOk = true;
 }
 
-const ddstring_t* Materials_NamespaceNameForTextureNamespaceId(texturenamespaceid_t texNamespace)
+void Materials_Shutdown(void)
 {
-    static const ddstring_t emptyString = { "" };
-    if(!VALID_TEXTURENAMESPACEID(texNamespace))
-        Con_Error("Materials::NamespaceNameForTextureNamespaceId: Internal error, "
-                  "invalid texture namespace id %i.", (int) texNamespace);
-    switch(texNamespace)
+    if(!initedOk)
+        return;
+
+    ZBlockSet_Destruct(materialsBlockSet);
+    materialsBlockSet = NULL;
+    materialsHead = NULL;
+
+    // Destroy the bindings.
+    if(materialBinds)
     {
-    case TN_TEXTURES:   return nameForNamespaceId(MN_TEXTURES);
-    case TN_FLATS:      return nameForNamespaceId(MN_FLATS);
-    case TN_SPRITES:    return nameForNamespaceId(MN_SPRITES);
-    case TN_SYSTEM:     return nameForNamespaceId(MN_SYSTEM);
-    default:
-        return NULL; // Unreachable.
+        Z_Free(materialBinds);
+        materialBinds = NULL;
     }
+    numMaterialBinds = maxMaterialBinds = 0;
+
+    initedOk = false;
+}
+
+void Materials_LinkAssociatedDefinitions(void)
+{
+    uint i;
+    for(i = 0; i < numMaterialBinds; ++i)
+    {
+        materialbind_t* mb = &materialBinds[i];
+        if(mb->mnamespace == MN_SYSTEM)
+            continue;
+
+        // Surface decorations (lights and models).
+        mb->decoration[0] = Def_GetDecoration(mb->mat, 0);
+        mb->decoration[1] = Def_GetDecoration(mb->mat, 1);
+
+        // Reflection (aka shiny surface).
+        mb->reflection[0] = Def_GetReflection(mb->mat, 0);
+        mb->reflection[1] = Def_GetReflection(mb->mat, 1);
+
+        // Generator (particles).
+        mb->ptcGen[0] = Def_GetGenerator(mb->mat, 0);
+        mb->ptcGen[1] = Def_GetGenerator(mb->mat, 1);
+
+        // Detail texture.
+        mb->detail[0] = Def_GetDetailTex(mb->mat, 0);
+        mb->detail[1] = Def_GetDetailTex(mb->mat, 1);
+    }
+}
+
+void Materials_DeleteTextures(const char* namespaceName)
+{
+    materialnamespaceid_t matNamespace = MN_ANY;
+
+    if(namespaceName && namespaceName[0])
+    {
+        matNamespace = DD_ParseMaterialNamespace(namespaceName);
+        if(!VALID_MATERIALNAMESPACE(matNamespace))
+        {
+#if _DEBUG
+            Con_Message("Warning:Materials_DeleteTextures: Attempt to delete in unknown namespace (%s), ignoring.\n",
+                        namespaceName);
+#endif
+            return;
+        }
+    }
+
+    if(matNamespace == MN_ANY)
+    {   // Delete the lot.
+        GL_DeleteAllTexturesForGLTextures(GLT_ANY);
+        return;
+    }
+
+    if(!VALID_MATERIALNAMESPACE(matNamespace))
+        Con_Error("Materials_DeleteTextures: Internal error, "
+                  "invalid materialgroup '%i'.", (int) matNamespace);
+
+    if(materialBinds)
+    {
+        uint i;
+        for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
+            if(hashTable[matNamespace][i])
+            {
+                materialbind_t* mb = &materialBinds[hashTable[matNamespace][i] - 1];
+
+                for(;;)
+                {
+                    Material_DeleteTextures(mb->mat);
+                    if(!mb->hashNext)
+                        break;
+                    mb = &materialBinds[mb->hashNext - 1];
+                }
+            }
+    }
+}
+
+const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
+{
+    return nameForMaterialNamespaceId(materialNamespaceIdForTextureNamespaceId(texNamespace));
 }
 
 /**
@@ -581,7 +539,7 @@ Con_Message("Materials_New: Warning, attempted to create material with "
     name[n] = '\0';
     hash = hashForName(name);
 
-    mnamespace = parseMaterialNamespaceIdent(Str_Text(Uri_Scheme(rawName)));
+    mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
     if(mnamespace == MN_ANY)
     {   // Caller doesn't care which namespace. This is only valid if we
@@ -594,7 +552,7 @@ Con_Message("Materials_New: Warning, attempted to create material with "
     }
     else
     {
-        if(!VALID_MATERIALNAMESPACEID(mnamespace))
+        if(!VALID_MATERIALNAMESPACE(mnamespace))
         {
 #if _DEBUG
 Con_Message("Materials_New: Warning, attempted to create material in "
@@ -698,10 +656,10 @@ material_t* Materials_NewFromDef(ded_material_t* def)
         const ded_material_layer_t* l = &def->layers[0];
         if(l->stages[0].texture) // Not unused.
         {
-            if(!(tex = GL_GetGLTextureByUri(l->stages[0].texture)))
+            if(!(tex = GL_GLTextureByUri(l->stages[0].texture)))
             {
-                ddstring_t* materialPath = Uri_ComposePath(def->id);
-                ddstring_t* texturePath = Uri_ComposePath(l->stages[0].texture);
+                ddstring_t* materialPath = Uri_ToString(def->id);
+                ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
                 VERBOSE( Con_Message("Warning: Unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
                          Str_Text(texturePath), Str_Text(materialPath), 0, 0) );
                 Str_Delete(materialPath);
@@ -732,7 +690,7 @@ Str_Delete(path);
     }
     hash = hashForName(name);
 
-    mnamespace = parseMaterialNamespaceIdent(Str_Text(Uri_Scheme(rawName)));
+    mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
     if(mnamespace == MN_ANY)
     {   // Caller doesn't care which namespace. This is only valid if we
@@ -745,7 +703,7 @@ Str_Delete(path);
     }
     else
     {
-        if(!VALID_MATERIALNAMESPACEID(mnamespace))
+        if(!VALID_MATERIALNAMESPACE(mnamespace))
         {
 #if _DEBUG
 Con_Message("Warning: Attempted to create/update Material in unknown Namespace '%i', ignoring.\n",
@@ -825,8 +783,8 @@ static materialnum_t Materials_CheckNumForPath2(const dduri_t* uri)
     if(Str_IsEmpty(Uri_Path(uri)) || !Str_CompareIgnoreCase(Uri_Path(uri), "-"))
         return 0;
 
-    mnamespace = parseMaterialNamespaceIdent(Str_Text(Uri_Scheme(uri)));
-    if(mnamespace != MN_ANY && !VALID_MATERIALNAMESPACEID(mnamespace))
+    mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+    if(mnamespace != MN_ANY && !VALID_MATERIALNAMESPACE(mnamespace))
     {
 #if _DEBUG
 Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
@@ -879,39 +837,7 @@ static materialnum_t Materials_NumForPath2(const dduri_t* path)
     return result;
 }
 
-/**
- * Given a name and namespace, search the materials db for a match.
- * \note Part of the Doomsday public API.
- * \note2 Same as Materials_CheckNumForName except will log an error
- *        message if the material being searched for is not found.
- *
- * @param name          Name of the material to search for.
- * @param mnamespace    MG_* namespace.
- *
- * @return              Unique identifier of the found material, else zero.
- */
-materialnum_t Materials_NumForName2(const dduri_t* path)
-{
-    if(path)
-    {
-        return Materials_NumForPath2(path);
-    }
-    return 0;
-}
-
-materialnum_t Materials_NumForName(const char* path)
-{
-    if(path && path[0])
-    {
-        dduri_t* uri = Uri_Construct2(path, RC_NULL);
-        materialnum_t result = Materials_NumForName2(uri);
-        Uri_Destruct(uri);
-        return result;
-    }
-    return 0;
-}
-
-materialnum_t Materials_CheckNumForName2(const dduri_t* path)
+materialnum_t Materials_IndexForUri(const dduri_t* path)
 {
     if(path)
     {
@@ -920,12 +846,12 @@ materialnum_t Materials_CheckNumForName2(const dduri_t* path)
     return 0;
 }
 
-materialnum_t Materials_CheckNumForName(const char* path)
+materialnum_t Materials_IndexForName(const char* path)
 {
     if(path && path[0])
     {
         dduri_t* uri = Uri_Construct2(path, RC_NULL);
-        materialnum_t result = Materials_CheckNumForName2(uri);
+        materialnum_t result = Materials_IndexForUri(uri);
         Uri_Destruct(uri);
         return result;
     }
@@ -940,7 +866,7 @@ materialnum_t Materials_CheckNumForName(const char* path)
  *
  * @return              The associated name.
  */
-const char* Materials_GetName(material_t* mat)
+const char* Materials_GetSymbolicName(material_t* mat)
 {
     materialnum_t num;
 
@@ -953,7 +879,7 @@ const char* Materials_GetName(material_t* mat)
     return "NOMAT"; // Should never happen.
 }
 
-dduri_t* Materials_GetPath(material_t* mat)
+dduri_t* Materials_GetUri(material_t* mat)
 {
     materialbind_t* mb;
     dduri_t* uri;
@@ -962,14 +888,17 @@ dduri_t* Materials_GetPath(material_t* mat)
     if(!mat)
     {
 #if _DEBUG
-        Con_Message("Warning:Materials_GetPath: Attempted with invalid reference (mat==0), returning 0.\n");
+        Con_Message("Warning:Materials_GetUri: Attempted with invalid reference (mat==0), returning 0.\n");
 #endif
         return 0;
     }
 
-    mb = bindForMaterial(mat);
     Str_Init(&path);
-    Str_Appendf(&path, "%s%s", mb? Str_Text(nameForNamespaceId(mb->mnamespace)) : "", Materials_GetName(mat));
+    mb = bindForMaterial(mat);
+    if(NULL != mb)
+    {
+        Str_Appendf(&path, "%s:%s", Str_Text(nameForMaterialNamespaceId(mb->mnamespace)), Materials_GetSymbolicName(mat));
+    }
     uri = Uri_Construct2(Str_Text(&path), RC_NULL);
     Str_Free(&path);
     return uri;
@@ -1160,7 +1089,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
         // Setup the primary texturing pass.
         if(mat->layers[0].tex)
         {
-            const gltexture_t*  tex = GL_GetGLTexture(mat->layers[0].tex);
+            const gltexture_t*  tex = GL_ToGLTexture(mat->layers[0].tex);
             int magMode = glmode[texMagMode];
             vec2_t scale;
 
@@ -1307,14 +1236,16 @@ static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
     int numDigits = M_NumDigits(numMaterialBinds);
 
-    Con_Printf(" %*u: \"%s%s\" [%i, %i]", numDigits, (unsigned int) mb->mat->_bindId,
-               printNamespace? Str_Text(nameForNamespaceId(mb->mnamespace)) : "", mb->name,
-               mb->mat->width, mb->mat->height);
+    Con_Printf(" %*u: \"\n");
+    if(printNamespace)
+        Con_Printf("%s:", Str_Text(nameForMaterialNamespaceId(mb->mnamespace)));
+    Con_Printf("%s\" [%i, %i]", numDigits, (unsigned int) mb->mat->_bindId,
+               mb->name, mb->mat->width, mb->mat->height);
 
     /*{ uint i;
     for(i = 0; i < mb->mat->numLayers; ++i)
     {
-        Con_Printf(" %i:%s", i, GL_GetGLTexture(mb->mat->layers[i].tex)->name);
+        Con_Printf(" %i:%s", i, GL_ToGLTexture(mb->mat->layers[i].tex)->name);
     }}*/
     Con_Printf("\n");
 }
@@ -1324,7 +1255,7 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
 {
     size_t n = 0;
 
-    if(VALID_MATERIALNAMESPACEID(mnamespace))
+    if(VALID_MATERIALNAMESPACE(mnamespace))
     {
         if(materialBinds)
         {
@@ -1391,8 +1322,8 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
     size_t count = 0;
     materialbind_t** foundMaterials = collectMaterials(mnamespace, like, &count, 0);
 
-    if(VALID_MATERIALNAMESPACEID(mnamespace))
-        Con_FPrintf(CBLF_YELLOW, "Known Materials in \"%s\":\n", Str_Text(nameForNamespaceId(mnamespace)));
+    if(VALID_MATERIALNAMESPACE(mnamespace))
+        Con_FPrintf(CBLF_YELLOW, "Known Materials in \"%s\":\n", Str_Text(nameForMaterialNamespaceId(mnamespace)));
     else // Any namespace.
         Con_FPrintf(CBLF_YELLOW, "Known Materials:\n");
 
@@ -1403,7 +1334,7 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
     }
 
     // Print the result index key.
-    if(VALID_MATERIALNAMESPACEID(mnamespace))
+    if(VALID_MATERIALNAMESPACE(mnamespace))
     {
         Con_Printf(" uid: \"name\" [width, height]\n");
         Con_FPrintf(CBLF_RULER, "");
@@ -1431,7 +1362,7 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
 static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
 {
     // Only one namespace to print?
-    if(VALID_MATERIALNAMESPACEID(mnamespace))
+    if(VALID_MATERIALNAMESPACE(mnamespace))
     {
         printMaterials2(mnamespace, like);
         return;
@@ -1439,7 +1370,7 @@ static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
 
     // Collect and sort in each namespace separately.
     { int i;
-    for(i = MATERIALNAMESPACEID_FIRST; i < MATERIALNAMESPACEID_COUNT; ++i)
+    for(i = MATERIALNAMESPACE_FIRST; i < MATERIALNAMESPACE_COUNT; ++i)
     {
         if(printMaterials2((materialnamespaceid_t)i, like) != 0)
             Con_FPrintf(CBLF_RULER, "");
@@ -1638,7 +1569,7 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
 
         if(mat->def && mat->def->layers[0].stageCount.num > 1)
         {
-            if(GL_GetGLTextureByUri(mat->def->layers[0].stages[0].texture))
+            if(GL_GLTextureByUri(mat->def->layers[0].stages[0].texture))
                 continue; // Animated elsewhere.
         }
 
@@ -1726,8 +1657,8 @@ void Materials_PrecacheAnimGroup(material_t* mat, boolean yes)
 
 D_CMD(ListMaterials)
 {
-    materialnamespaceid_t mnamespace = (argc > 1? parseMaterialNamespaceIdent(argv[1]) : MN_ANY);
-    if(argc > 2 && mnamespace == MN_ANY)
+    materialnamespaceid_t mnamespace = (argc > 1? DD_ParseMaterialNamespace(argv[1]) : MN_ANY);
+    if(argc > 2 && !VALID_MATERIALNAMESPACE(mnamespace))
     {
         Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
         return false;

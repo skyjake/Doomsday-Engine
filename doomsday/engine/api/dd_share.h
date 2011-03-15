@@ -930,25 +930,109 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
-// Texture Namespaces
-#define TEXTURES_SYSTEM_RESOURCE_NAMESPACE_NAME             "System"
-#define TEXTURES_FLATS_RESOURCE_NAMESPACE_NAME              "Flats"
-#define TEXTURES_SPRITES_RESOURCE_NAMESPACE_NAME            "Sprites"
-#define TEXTURES_PATCHES_RESOURCE_NAMESPACE_NAME            "Patches"
-#define TEXTURES_TEXTURES_RESOURCE_NAMESPACE_NAME           "Textures"
+/**
+ * @defgroup materialFlags  Material Flags
+ * @{
+ */
+#define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
+#define MATF_NO_DRAW            0x0002 // Material should never be drawn.
+#define MATF_SKYMASK            0x0004 // Sky-mask surfaces using this material.
+/**@{*/
+
+#define DDMAX_MATERIAL_LAYERS   1
+
+/**
+ * @defgroup animationGroupFlags  Animation Group Flags
+ * @{
+ */
+#define AGF_SMOOTH              0x1
+#define AGF_FIRST_ONLY          0x2
+#define AGF_PRECACHE            0x4000 // Group is just for precaching.
+/**@}*/
+
+/**
+ * Material Namespaces
+ */
+
+/**
+ * @defgroup materialNamespaceNames  Material Namespace Names
+ * @{
+ */
+#define MN_SYSTEM_NAME          "System"
+#define MN_FLATS_NAME           "Flats"
+#define MN_TEXTURES_NAME        "Textures"
+#define MN_SPRITES_NAME         "Sprites"
+/**@}*/
+
+typedef enum {
+    MN_ANY = -1,
+    MATERIALNAMESPACE_FIRST = 1000,
+    MN_SYSTEM = MATERIALNAMESPACE_FIRST,
+    MN_FLATS,
+    MN_TEXTURES,
+    MN_SPRITES,
+    MATERIALNAMESPACE_LAST = MN_SPRITES
+} materialnamespaceid_t;
+
+#define MATERIALNAMESPACE_COUNT (\
+    MATERIALNAMESPACE_LAST + 1 - MATERIALNAMESPACE_FIRST )
+
+#define VALID_MATERIALNAMESPACE(id) (\
+    (id) >= MATERIALNAMESPACE_FIRST && (id) <= MATERIALNAMESPACE_LAST)
+
+/**
+ * Texture Namespaces
+ */
+
+/**
+ * @defgroup textureNamespaceNames  Texture Namespace Names
+ * @{
+ */
+#define TN_SYSTEM_NAME          "System"
+#define TN_FLATS_NAME           "Flats"
+#define TN_TEXTURES_NAME        "Textures"
+#define TN_SPRITES_NAME         "Sprites"
+#define TN_PATCHES_NAME         "Patches"
+/**@{*/
 
 typedef enum {
     TN_ANY = -1,
-    TEXTURENAMESPACE_FIRST = 0,
+    TEXTURENAMESPACE_FIRST = 2000,
     TN_SYSTEM = TEXTURENAMESPACE_FIRST,
     TN_FLATS,
     TN_TEXTURES,
-    TN_PATCHES,
     TN_SPRITES,
-    TEXTURENAMESPACE_COUNT
+    TN_PATCHES,
+    TEXTURENAMESPACE_LAST = TN_PATCHES
 } texturenamespaceid_t;
 
-#define VALID_TEXTURENAMESPACEID(id)((id) >= TEXTURENAMESPACE_FIRST && (id) < TEXTURENAMESPACE_COUNT)
+#define TEXTURENAMESPACE_COUNT (\
+    TEXTURENAMESPACE_LAST + 1 - TEXTURENAMESPACE_FIRST )
+
+#define VALID_TEXTURENAMESPACE(id) (\
+    (id) >= TEXTURENAMESPACE_FIRST && (id) <= TEXTURENAMESPACE_LAST)
+
+typedef struct {
+    patchid_t id;
+    boolean isCustom; // @c true if the patch does not originate from an IWAD.
+    short offset;
+    short topOffset;
+    short width;
+    short height;
+    // Temporary until the big DGL drawing rewrite.
+    short extraOffset[2]; // Only used with upscaled and sharpened patches.
+} patchinfo_t;
+
+typedef struct {
+    struct material_s* material;
+    int flip;
+    int offset;
+    int topOffset;
+    int width;
+    int height;
+    float texCoord[2]; // Prepared texture coordinates.
+    int numFrames; // Number of frames the sprite has.
+} spriteinfo_t;
 
 /**
  * Processing modes for GL_LoadGraphics.
@@ -959,46 +1043,6 @@ typedef enum gfxmode_e {
     LGM_GRAYSCALE_ALPHA = 2,
     LGM_WHITE_ALPHA = 3
 } gfxmode_t;
-
-#define DDMAX_MATERIAL_LAYERS   1
-
-// Material Namespaces
-#define MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME    "System"
-#define MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME     "Flats"
-#define MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME   "Sprites"
-#define MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME  "Textures"
-
-// Material flags:
-#define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
-#define MATF_NO_DRAW            0x0002 // Material should never be drawn.
-#define MATF_SKYMASK            0x0004 // Sky-mask surfaces using this material.
-
-// Animation group flags.
-#define AGF_SMOOTH          0x1
-#define AGF_FIRST_ONLY      0x2
-#define AGF_PRECACHE        0x4000 // Group is just for precaching.
-
-typedef struct {
-    patchid_t       id;
-    boolean         isCustom; // @c true if the patch does not originate from an IWAD.
-    short           offset;
-    short           topOffset;
-    short           width;
-    short           height;
-    // temporary until the big DGL drawing rewrite.
-    short           extraOffset[2]; // Only used with upscaled and sharpened patches.
-} patchinfo_t;
-
-typedef struct {
-    struct material_s* material;
-    int             flip;
-    int             offset;
-    int             topOffset;
-    int             width;
-    int             height;
-    float           texCoord[2]; // Prepared texture coordinates.
-    int             numFrames; // Number of frames the sprite has.
-} spriteinfo_t;
 
 typedef unsigned int colorpaletteid_t;
 

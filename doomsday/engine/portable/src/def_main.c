@@ -394,7 +394,7 @@ ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
         if(!def->material)
             continue;
 
-        defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material));
+        defMat = Materials_ToMaterial(Materials_IndexForUri(def->material));
         // Is this suitable?
         if(mat == defMat && R_IsAllowedDecoration(def, mat, hasExt))
             return def;
@@ -413,7 +413,7 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
         if(!def->material)
             continue;
 
-        defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material));
+        defMat = Materials_ToMaterial(Materials_IndexForUri(def->material));
         // Is this suitable?
         if(mat == defMat && R_IsAllowedReflection(def, mat, hasExt))
             return def;
@@ -429,7 +429,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
     {
         if(def->material1)
         {
-            material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material1));
+            material_t* defMat = Materials_ToMaterial(Materials_IndexForUri(def->material1));
             // Is this suitable?
             if(mat == defMat && R_IsAllowedDetailTex(def, mat, hasExt))
                 return def;
@@ -437,7 +437,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 
         if(def->material2)
         {
-            material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material2));
+            material_t* defMat = Materials_ToMaterial(Materials_IndexForUri(def->material2));
             // Is this suitable?
             if(mat == defMat && R_IsAllowedDetailTex(def, mat, hasExt))
                 return def;
@@ -457,7 +457,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
         if(!def->material)
             continue;
 
-        if(!(defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material))))
+        if(!(defMat = Materials_ToMaterial(Materials_IndexForUri(def->material))))
             continue;
 
         // Is this suitable?
@@ -1289,12 +1289,12 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->wallSection = def->wallSection;
 
     if(def->actMaterial)
-        l->actMaterial = Materials_CheckNumForName2(def->actMaterial);
+        l->actMaterial = Materials_IndexForUri(def->actMaterial);
     else
         l->actMaterial = 0;
 
     if(def->deactMaterial)
-        l->deactMaterial = Materials_CheckNumForName2(def->deactMaterial);
+        l->deactMaterial = Materials_IndexForUri(def->deactMaterial);
     else
         l->deactMaterial = 0;
 
@@ -1326,7 +1326,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials_CheckNumForName(def->iparmStr[k]);
+                    l->iparm[k] = Materials_IndexForName(def->iparmStr[k]);
             }
         }
         else if(a & MAP_MUS)

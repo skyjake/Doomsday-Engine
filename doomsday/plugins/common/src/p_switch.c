@@ -178,12 +178,12 @@ void P_InitSwitchList(void)
             break;
 
         Str_Clear(&path);
-        Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", switchInfo[i].name1);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(Str_Text(&path)));
+        Str_Appendf(&path, MN_TEXTURES_NAME":%s", switchInfo[i].name1);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
 
         Str_Clear(&path);
-        Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", switchInfo[i].name2);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(Str_Text(&path)));
+        Str_Appendf(&path, MN_TEXTURES_NAME":%s", switchInfo[i].name2);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
     }
     Str_Free(&path);
 
@@ -259,11 +259,11 @@ void P_InitSwitchList(void)
             if(!SHORT(sList[i].episode))
                 break;
             Str_Clear(&path);
-            Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", sList[i].name1);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+            Str_Appendf(&path, MN_TEXTURES_NAME":%s", sList[i].name1);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
             Str_Clear(&path);
-            Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", sList[i].name2);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+            Str_Appendf(&path, MN_TEXTURES_NAME":%s", sList[i].name2);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
             if(verbose > (lumpNum > 0? 1 : 2))
             {
                 Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);

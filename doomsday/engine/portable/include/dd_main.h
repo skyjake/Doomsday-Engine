@@ -79,6 +79,9 @@ void* DD_GetVariable(int ddvalue);
 
 ddplayer_t* DD_GetPlayer(int number);
 
+texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
+materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+
 materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
 const char* value_Str(int val);

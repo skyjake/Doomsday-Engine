@@ -2146,18 +2146,44 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
+materialnamespaceid_t DD_ParseMaterialNamespace(const char* str)
+{
+    if(!str || 0 == strlen(str))
+        return MN_ANY;
+
+    if(!stricmp(str, MN_TEXTURES_NAME)) return MN_TEXTURES;
+    if(!stricmp(str, MN_FLATS_NAME))    return MN_FLATS;
+    if(!stricmp(str, MN_SPRITES_NAME))  return MN_SPRITES;
+    if(!stricmp(str, MN_SYSTEM_NAME))   return MN_SYSTEM;
+
+    return MATERIALNAMESPACE_COUNT; // Unknown.
+}
+
+texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
+{
+    if(!str || 0 == strlen(str))
+        return TN_ANY;
+
+    if(!stricmp(str, TN_TEXTURES_NAME)) return TN_TEXTURES;
+    if(!stricmp(str, TN_FLATS_NAME))    return TN_FLATS;
+    if(!stricmp(str, TN_SPRITES_NAME))  return TN_SPRITES;
+    if(!stricmp(str, TN_PATCHES_NAME))  return TN_PATCHES;
+    if(!stricmp(str, TN_SYSTEM_NAME))   return TN_SYSTEM;
+
+    return TEXTURENAMESPACE_COUNT; // Unknown.
+}
+
 materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
 {
     const gltexture_t* tex;
-    if(!VALID_TEXTURENAMESPACEID(texNamespace))
-        Con_Error("DD_MaterialForTextureIndex: Invalid namespace id %i.", texNamespace);
-    if(index != 0 && (tex = GL_GetGLTextureByIndex(index-1, texNamespace)))
+    if(index != 0 && (tex = GL_GLTextureByIndex(index-1, texNamespace)))
     {
         materialnum_t result;
-        ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, "%s%s", Str_Text(Materials_NamespaceNameForTextureNamespaceId(texNamespace)), GLTexture_Name(tex));
-        result = Materials_CheckNumForName(Str_Text(&path));
-        Str_Free(&path);
+        dduri_t* path = Uri_ConstructDefault();
+        Uri_SetPath(path, GLTexture_Name(tex));
+        Uri_SetScheme(path, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
+        result = Materials_IndexForUri(path);
+        Uri_Destruct(path);
         return result;
     }
     return 0;

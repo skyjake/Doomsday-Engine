@@ -90,8 +90,8 @@ int Cl_ReadSectorDelta(void)
         {
             material_t* mat;
             ddstring_t path; Str_Init(&path);
-            Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(lumpNum));
-            mat = Materials_ToMaterial(Materials_NumForName(Str_Text(&path)));
+            Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(lumpNum));
+            mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
             Str_Free(&path);
 #if _DEBUG
 if(!mat)
@@ -110,8 +110,8 @@ if(!mat)
         {
             material_t* mat;
             ddstring_t path; Str_Init(&path);
-            Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(lumpNum));
-            mat = Materials_ToMaterial(Materials_NumForName(Str_Text(&path)));
+            Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(lumpNum));
+            mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
             Str_Free(&path);
 #if _DEBUG
 if(!mat)

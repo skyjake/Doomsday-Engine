@@ -231,10 +231,10 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
             // First try the prefered namespace, then any.
-            Str_Appendf(&path, "%s%s", isFlat? MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":" : MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":", m->name);
-            m->num = Materials_CheckNumForName(Str_Text(&path));
+            Str_Appendf(&path, "%s%s", isFlat? MN_FLATS_NAME":" : MN_TEXTURES_NAME":", m->name);
+            m->num = Materials_IndexForName(Str_Text(&path));
             if(m->num == 0)
-                m->num = Materials_CheckNumForName(name);
+                m->num = Materials_IndexForName(name);
             Str_Free(&path);
         }
 

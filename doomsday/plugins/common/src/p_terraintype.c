@@ -171,24 +171,24 @@ void P_InitTerrainTypes(void)
     } matTTypeDefs[] =
     {
 #if __JDOOM__ || __JDOOM64__
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FWATER1",  "Water" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":LAVA1",    "Lava" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":BLOOD1",   "Blood" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":NUKAGE1",  "Nukage" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":SLIME01",  "Slime" },
+        { MN_FLATS_NAME":FWATER1",  "Water" },
+        { MN_FLATS_NAME":LAVA1",    "Lava" },
+        { MN_FLATS_NAME":BLOOD1",   "Blood" },
+        { MN_FLATS_NAME":NUKAGE1",  "Nukage" },
+        { MN_FLATS_NAME":SLIME01",  "Slime" },
 #endif
 #if __JHERETIC__
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTWAWA1", "Water" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTFLWW1", "Water" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTLAVA1", "Lava" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLATHUH1", "Lava" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTSLUD1", "Sludge" },
+        { MN_FLATS_NAME":FLTWAWA1", "Water" },
+        { MN_FLATS_NAME":FLTFLWW1", "Water" },
+        { MN_FLATS_NAME":FLTLAVA1", "Lava" },
+        { MN_FLATS_NAME":FLATHUH1", "Lava" },
+        { MN_FLATS_NAME":FLTSLUD1", "Sludge" },
 #endif
 #if __JHEXEN__
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":X_005",    "Water" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":X_001",    "Lava" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":X_009",    "Sludge" },
-        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":F_033",    "Ice" },
+        { MN_FLATS_NAME":X_005",    "Water" },
+        { MN_FLATS_NAME":X_001",    "Lava" },
+        { MN_FLATS_NAME":X_009",    "Sludge" },
+        { MN_FLATS_NAME":F_033",    "Ice" },
 #endif
         { 0, 0 }
     };
@@ -204,7 +204,7 @@ void P_InitTerrainTypes(void)
         uint idx = findTerrainTypeNumForName(matTTypeDefs[i].ttName);
         if(idx)
         {
-            material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(matTTypeDefs[i].matPath));
+            material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(matTTypeDefs[i].matPath));
             if(mat)
             {
                 Con_Message("P_InitTerrainTypes: Material '%s' linked to terrain type '%s'.\n",
