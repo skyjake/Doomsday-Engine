@@ -51,39 +51,39 @@
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct systex_s {
-    gltextureid_t id;
+    textureid_t id;
     dduri_t* external;
 } systex_t;
 
 typedef struct detailtex_s {
-    gltextureid_t id;
+    textureid_t id;
     boolean isExternal;
     const dduri_t* filePath;
 } detailtex_t;
 
 typedef struct lightmap_s {
-    gltextureid_t id;
+    textureid_t id;
     const dduri_t* external;
 } lightmap_t;
 
 typedef struct flaretex_s {
-    gltextureid_t id;
+    textureid_t id;
     const dduri_t* external;
 } flaretex_t;
 
 typedef struct shinytex_s {
-    gltextureid_t id;
+    textureid_t id;
     const dduri_t* external;
 } shinytex_t;
 
 typedef struct masktex_s {
-    gltextureid_t id;
+    textureid_t id;
     const dduri_t* external;
     short width, height;
 } masktex_t;
 
 typedef struct skinname_s {
-    gltextureid_t id;
+    textureid_t id;
     dduri_t* path;
 } skinname_t;
 
@@ -161,7 +161,7 @@ typedef struct {
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
     lumpnum_t       lump;
-    gltextureid_t   texId; // Name of the associated GL texture.
+    textureid_t   texId; // Name of the associated GL texture.
     boolean         isCustom;
     short           flags;
     short           width, height;
@@ -296,7 +296,7 @@ void R_SpriteTexturesInit(void);
 
 /**
  * Free all memory acquired for SpriteTextures.
- * \note  Does nothing about any GLTextures or Materials created from these!
+ * \note  Does nothing about any Textures or Materials created from these!
  */
 void R_SpriteTexturesClear(void);
 

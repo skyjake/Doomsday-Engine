@@ -40,8 +40,8 @@
 
 struct image_s;
 struct texturecontent_s;
-struct gltexture_s;
-struct gltexturevariant_s;
+struct texture_s;
+struct texturevariant_s;
 
 typedef enum {
     GLT_ANY = -1,
@@ -61,7 +61,7 @@ typedef enum {
     NUM_GLTEXTURE_TYPES
 } gltexture_type_t;
 
-#define VALID_GLTEXTURE_TYPE(t)     ((t) >= GLT_FIRST && (t) < NUM_GLTEXTURE_TYPES)
+#define VALID_GLTEXTURETYPE(t)     ((t) >= GLT_FIRST && (t) < NUM_GLTEXTURE_TYPES)
 
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
@@ -194,12 +194,12 @@ byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
     const char* optionalSuffix, boolean silent);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, const struct gltexture_s* tex, void* context);
-byte GL_LoadFlatLump(struct image_s* image, const struct gltexture_s* tex, void* context);
-byte GL_LoadSpriteLump(struct image_s* image, const struct gltexture_s* tex, void* context);
-byte GL_LoadDoomPatchLump(struct image_s* image, const struct gltexture_s* tex, void* context);
+byte GL_LoadDetailTextureLump(struct image_s* image, const struct texture_s* tex, void* context);
+byte GL_LoadFlatLump(struct image_s* image, const struct texture_s* tex, void* context);
+byte GL_LoadSpriteLump(struct image_s* image, const struct texture_s* tex, void* context);
+byte GL_LoadDoomPatchLump(struct image_s* image, const struct texture_s* tex, void* context);
 
-byte GL_LoadDoomTexture(struct image_s* image, const struct gltexture_s* tex, void* context);
+byte GL_LoadDoomTexture(struct image_s* image, const struct texture_s* tex, void* context);
 
 /**
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
@@ -250,31 +250,31 @@ DGLuint GL_GetFlareTexture(const dduri_t* path, int oldIdx);
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
     boolean isMipMapped, int* optWidth, int* optHeight);
 
-void GL_ReleaseGLTexture(gltextureid_t id);
+void GL_ReleaseTexture(textureid_t id);
 
-const struct gltexture_s* GL_ToGLTexture(gltextureid_t id);
-const struct gltexturevariant_s* GL_PrepareGLTexture(gltextureid_t id, void* context, byte* result);
+const struct texture_s* GL_ToTexture(textureid_t id);
+const struct texturevariant_s* GL_PrepareTexture(textureid_t id, void* context, byte* result);
 
-const struct gltexture_s* GL_CreateGLTexture(const char* name, uint index, gltexture_type_t type);
+const struct texture_s* GL_CreateTexture(const char* name, uint index, gltexture_type_t type);
 
-const struct gltexture_s* GL_GLTextureByUri2(const dduri_t* uri, boolean silent);
-const struct gltexture_s* GL_GLTextureByUri(const dduri_t* uri);
+const struct texture_s* GL_TextureByUri2(const dduri_t* uri, boolean silent);
+const struct texture_s* GL_TextureByUri(const dduri_t* uri);
 
-const struct gltexture_s* GL_GLTextureByIndex(int index, texturenamespaceid_t texNamespace);
+const struct texture_s* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace);
 
-uint GL_GLTextureIndexForUri2(const dduri_t* uri, boolean silent);
-uint GL_GLTextureIndexForUri(const dduri_t* uri);
+uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
+uint GL_TextureIndexForUri(const dduri_t* uri);
 
 /**
  * Updates the minification mode of ALL gltextures.
  *
  * @param minMode The DGL minification mode to set.
  */
-void GL_SetAllGLTexturesMinMode(int minMode);
+void GL_SetAllTexturesMinMode(int minMode);
 
 /**
  * Deletes all OpenGL texture instances for ALL gltextures.
  */
-void GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
+void GL_DeleteAllTexturesForTextures(gltexture_type_t);
 
 #endif /* LIBDENG_TEXTURE_MANAGER_H */

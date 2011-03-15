@@ -108,9 +108,10 @@ patchid_t BitmapFont_CharPatch(bitmapfont_t* font, unsigned char ch);
 void BitmapFont_CharSetPatch(bitmapfont_t* font, unsigned char ch, const char* patchName);
 
 /// @return  GL-texture name.
-DGLuint BitmapFont_GLTexture(bitmapfont_t* font);
-int BitmapFont_GLTextureHeight(bitmapfont_t* font);
-int BitmapFont_GLTextureWidth(bitmapfont_t* font);
+DGLuint BitmapFont_GLTextureName(bitmapfont_t* font);
+
+int BitmapFont_TextureHeight(bitmapfont_t* font);
+int BitmapFont_TextureWidth(bitmapfont_t* font);
 
 /**
  * Accessor methods.

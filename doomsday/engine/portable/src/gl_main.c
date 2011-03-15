@@ -48,7 +48,7 @@
 
 #include "r_draw.h"
 #include "texturecontent.h"
-#include "gltexturevariant.h"
+#include "texturevariant.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>

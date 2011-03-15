@@ -45,7 +45,7 @@ static void drawCharacter(unsigned char ch, bitmapfont_t* font)
     w = s[1] - s[0];
     h = t[1] - t[0];
 
-    if(!BitmapFont_GLTexture(font))
+    if(!BitmapFont_GLTextureName(font))
     {
         x = font->_chars[ch].x;
         y = font->_chars[ch].y;
@@ -452,13 +452,13 @@ void BitmapFont_CharCoords(bitmapfont_t* font, int* s0, int* s1,
         return;
     prepareFont(font);
     if(s0)
-        *s0 = !BitmapFont_GLTexture(font)? 0 : font->_chars[ch].x;
+        *s0 = !BitmapFont_GLTextureName(font)? 0 : font->_chars[ch].x;
     if(s0)
-        *s1 = !BitmapFont_GLTexture(font)? 1 : font->_chars[ch].x + font->_chars[ch].w;
+        *s1 = !BitmapFont_GLTextureName(font)? 1 : font->_chars[ch].x + font->_chars[ch].w;
     if(t0)
-        *t0 = !BitmapFont_GLTexture(font)? 0 : font->_chars[ch].y;
+        *t0 = !BitmapFont_GLTextureName(font)? 0 : font->_chars[ch].y;
     if(t1)
-        *t1 = !BitmapFont_GLTexture(font)? 1 : font->_chars[ch].y + font->_chars[ch].h;
+        *t1 = !BitmapFont_GLTextureName(font)? 1 : font->_chars[ch].y + font->_chars[ch].h;
 }
 
 patchid_t BitmapFont_CharPatch(bitmapfont_t* font, unsigned char ch)
@@ -541,19 +541,19 @@ int BitmapFont_Leading(bitmapfont_t* font)
     return font->_leading;
 }
 
-DGLuint BitmapFont_GLTexture(bitmapfont_t* font)
+DGLuint BitmapFont_GLTextureName(bitmapfont_t* font)
 {
     assert(font);
     return font->_tex;
 }
 
-int BitmapFont_GLTextureWidth(bitmapfont_t* font)
+int BitmapFont_TextureWidth(bitmapfont_t* font)
 {
     assert(font);
     return font->_texWidth;
 }
 
-int BitmapFont_GLTextureHeight(bitmapfont_t* font)
+int BitmapFont_TextureHeight(bitmapfont_t* font)
 {
     assert(font);
     return font->_texHeight;

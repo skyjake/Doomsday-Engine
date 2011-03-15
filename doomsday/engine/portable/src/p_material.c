@@ -32,7 +32,7 @@
 #include "de_defs.h"
 
 #include "s_environ.h"
-#include "gltexture.h"
+#include "texture.h"
 
 void Material_Ticker(material_t* mat, timespan_t time)
 {
@@ -78,8 +78,8 @@ void Material_Ticker(material_t* mat, timespan_t time)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        {const gltexture_t* glTex;
-        if((glTex = GL_GLTextureByUri(lsDef->texture)))
+        {const texture_t* glTex;
+        if((glTex = GL_TextureByUri(lsDef->texture)))
         {
             layer->tex = glTex->id;
             mat->inter = inter;
@@ -145,7 +145,7 @@ void Material_DeleteTextures(material_t* mat)
     assert(mat);
     {uint i;
     for(i = 0; i < mat->numLayers; ++i)
-        GL_ReleaseGLTexture(mat->layers[i].tex);
+        GL_ReleaseTexture(mat->layers[i].tex);
     }
 }
 

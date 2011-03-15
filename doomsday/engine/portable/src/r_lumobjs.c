@@ -40,8 +40,8 @@
 #include "de_defs.h"
 
 #include "sys_opengl.h"
-#include "gltexture.h"
-#include "gltexturevariant.h"
+#include "texture.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -384,7 +384,7 @@ void LO_AddLuminous(mobj_t* mo)
         material_t* mat;
         float autoLightColor[3];
         material_snapshot_t ms;
-        const gltexturevariant_t* tex;
+        const texturevariant_t* tex;
         const pointlight_analysis_t* pl;
         
         // Are the automatically calculated light values for fullbright
@@ -414,7 +414,7 @@ if(!mat)
 
         tex = ms.units[MTU_PRIMARY].tex;
 
-        pl = (const pointlight_analysis_t*)tex->analyses[GLTA_SPRITE_AUTOLIGHT];
+        pl = (const pointlight_analysis_t*)tex->analyses[TA_SPRITE_AUTOLIGHT];
         assert(pl);
         size = pl->brightMul;
         yOffset = pl->originY;

@@ -38,8 +38,8 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "gltexture.h"
-#include "gltexturevariant.h"
+#include "texture.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 

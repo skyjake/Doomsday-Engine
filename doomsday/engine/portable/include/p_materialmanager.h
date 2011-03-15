@@ -58,7 +58,7 @@ void Materials_Ticker(timespan_t elapsed);
 
 const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace);
 
-material_t* Materials_New(const dduri_t* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
+material_t* Materials_New(const dduri_t* name, short width, short height, byte flags, textureid_t tex, short texOriginX, short texOriginY);
 material_t* Materials_NewFromDef(ded_material_t* def);
 
 material_t* Materials_ToMaterial(materialnum_t num);

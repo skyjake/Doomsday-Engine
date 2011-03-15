@@ -46,8 +46,8 @@
 #include "de_misc.h"
 
 #include "def_main.h"
-#include "gltexture.h"
-#include "gltexturevariant.h"
+#include "texture.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1280,16 +1280,16 @@ void R_PrecacheModelSkins(modeldef_t* modef)
                 material_load_params_t params;
 
                 memset(&params, 0, sizeof(params));
-                params.tex.flags = (!mdl->allowTexComp? GLTF_NO_COMPRESSION : 0);
+                params.tex.flags = (!mdl->allowTexComp? TF_NO_COMPRESSION : 0);
 
-                GL_PrepareGLTexture(sn->id, &params, NULL);
+                GL_PrepareTexture(sn->id, &params, NULL);
             }
         }
 
         // Load the shiny skin.
         /*if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
         {
-            GL_PrepareGLTexture(sn->id, NULL, NULL);
+            GL_PrepareTexture(sn->id, NULL, NULL);
         }*/
     }
 }

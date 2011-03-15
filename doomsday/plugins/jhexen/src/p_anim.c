@@ -43,7 +43,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
     path = Uri_ConstructDefault();
     Uri_SetScheme(path, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
     Uri_SetPath(path, sc_String);
-    if((texNumBase = GL_GLTextureIndexForUri2(path, !isCustom)) != 0)
+    if((texNumBase = GL_TextureIndexForUri2(path, !isCustom)) != 0)
         ignore = false;
 
     if(!ignore)

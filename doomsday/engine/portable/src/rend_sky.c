@@ -41,8 +41,8 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-#include "gltexture.h"
-#include "gltexturevariant.h"
+#include "texture.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -277,13 +277,13 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
 
             memset(&p, 0, sizeof(p));
             p.flags = MLF_LOAD_AS_SKY;
-            p.tex.flags = GLTF_NO_COMPRESSION | GLTF_ZEROMASK;
+            p.tex.flags = TF_NO_COMPRESSION | TF_ZEROMASK;
 
             Materials_Prepare(&ms, material, true, &p);
             tex = ms.units[MTU_PRIMARY].tex->glName;
             magMode = ms.units[MTU_PRIMARY].magMode;
-            skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].tex->generalCase);
-            skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].tex->generalCase);
+            skyTexWidth = Texture_GetWidth(ms.units[MTU_PRIMARY].tex->generalCase);
+            skyTexHeight = Texture_GetHeight(ms.units[MTU_PRIMARY].tex->generalCase);
         }
 
         GL_BindTexture(tex, magMode);

@@ -117,7 +117,7 @@ typedef struct materiallayer_s {
     int             stage; // -1 => layer not in use.
     short           tics;
     float           glow;
-    gltextureid_t   tex;
+    textureid_t     tex;
     float           texOrigin[2]; /// Origin of the texture in material-space.
 } material_layer_t;
 

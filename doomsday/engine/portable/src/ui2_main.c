@@ -32,7 +32,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include "gltexturevariant.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 

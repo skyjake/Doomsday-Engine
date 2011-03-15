@@ -482,8 +482,8 @@ void Con_SetString(const char* name, char* text);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
 
-uint GL_GLTextureIndexForUri(const dduri_t* uri);
-uint GL_GLTextureIndexForUri2(const dduri_t* uri, boolean silent);
+uint GL_TextureIndexForUri(const dduri_t* uri);
+uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
 
 //------------------------------------------------------------------------
 //

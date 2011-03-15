@@ -33,7 +33,7 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 
-#include "gltexturevariant.h"
+#include "texturevariant.h"
 #include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------

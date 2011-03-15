@@ -41,7 +41,7 @@
 #include "de_audio.h" // For texture, environmental audio properties.
 
 #include "m_stack.h"
-#include "gltexture.h"
+#include "texture.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -931,7 +931,7 @@ void R_InitSystemTextures(void)
     { uint i;
     for(i = 0; defs[i].name; ++i)
     {
-        const gltexture_t* glTex = GL_CreateGLTexture(defs[i].name, i, GLT_SYSTEM);
+        const texture_t* glTex = GL_CreateTexture(defs[i].name, i, GLT_SYSTEM);
         systex_t* sysTex;
     
         sysTex = malloc(sizeof(*sysTex));
@@ -970,10 +970,10 @@ static patchid_t findPatchTextureByName(const char* name)
 {
     assert(name && name[0]);
     {
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     dduri_t* uri = Uri_Construct2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
-    glTex = GL_GLTextureByUri(uri);
+    glTex = GL_TextureByUri(uri);
     Uri_Destruct(uri);
     if(glTex == NULL)
         return 0;
@@ -1045,9 +1045,9 @@ patchid_t R_RegisterPatch(const char* name)
     if(upscaleAndSharpenPatches)
         p->flags |= PF_UPSCALE_AND_SHARPEN;
 
-    // Register a gltexture for this.
+    // Register a texture for this.
     {
-    const gltexture_t* glTex = GL_CreateGLTexture(name, ++patchTexturesCount, GLT_PATCH);
+    const texture_t* glTex = GL_CreateTexture(name, ++patchTexturesCount, GLT_PATCH);
     p->texId = glTex->id;
     }
 
@@ -1733,7 +1733,7 @@ void R_InitTextures(void)
         for(i = 0; i < patchCompositeTexturesCount; ++i)
         {
             patchcompositetex_t* texDef = patchCompositeTextures[i];
-            const gltexture_t* tex = GL_CreateGLTexture(texDef->name, i, GLT_PATCHCOMPOSITE);
+            const texture_t* tex = GL_CreateTexture(texDef->name, i, GLT_PATCHCOMPOSITE);
             dduri_t* uri;
 
             // Create a material for this texture.
@@ -1861,7 +1861,7 @@ void R_InitFlats(void)
     for(i = 0; i < flatTexturesCount; ++i)
     {
         flat_t* flat = flatTextures[i];
-        const gltexture_t* tex = GL_CreateGLTexture(flat->name, i, GLT_FLAT);
+        const texture_t* tex = GL_CreateTexture(flat->name, i, GLT_FLAT);
         dduri_t* uri;
 
         // Create a material for this flat.
@@ -1965,7 +1965,7 @@ void R_SpriteTexturesInit(void)
     Stack_Delete(stack);
 
     /**
-     * Step 2: GLTexture and Material creation.
+     * Step 2: Texture and Material creation.
      */
     { int i;
     for(i = 0; i < spriteTexturesCount; ++i)
@@ -1973,7 +1973,7 @@ void R_SpriteTexturesInit(void)
         spritetex_t* sprTex = spriteTextures[i];
         lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
         const char* name = sprTex->name;
-        const gltexture_t* glTex;
+        const texture_t* glTex;
 
         /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
         if(W_LumpLength(lumpNum) < sizeof(doompatch_header_t))
@@ -1990,8 +1990,8 @@ void R_SpriteTexturesInit(void)
         sprTex->offY = SHORT(patch->topOffset);
         }
 
-        // Create a new GLTexture for this.
-        glTex = GL_CreateGLTexture(name, i, GLT_SPRITE);
+        // Create a new Texture for this.
+        glTex = GL_CreateTexture(name, i, GLT_SPRITE);
 
         // Create a new Material for this.
         { dduri_t* uri;
@@ -2021,7 +2021,7 @@ uint R_CreateSkinTex(const dduri_t* skin, boolean isShinySkin)
     assert(skin);
     {
     char name[9];
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     skinname_t* st;
     int id;
 
@@ -2044,10 +2044,10 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
      * A new skin name.
      */
 
-    // Create a gltexture for it.
+    // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, numSkinNames + 1);
 
-    glTex = GL_CreateGLTexture(name, numSkinNames, (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
+    glTex = GL_CreateTexture(name, numSkinNames, (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
 
     skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
@@ -2454,7 +2454,7 @@ void R_InitAnimGroup(ded_group_t* def)
 
 detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
 {
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     detailtex_t* dTex;
     char name[9];
 
@@ -2472,10 +2472,10 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
      * A new detail texture.
      */
 
-    // Create a gltexture for it.
+    // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, detailTexturesCount + 1);
 
-    glTex = GL_CreateGLTexture(name, detailTexturesCount, GLT_DETAIL);
+    glTex = GL_CreateTexture(name, detailTexturesCount, GLT_DETAIL);
 
     dTex = M_Malloc(sizeof(*dTex));
     dTex->id = glTex->id;
@@ -2519,7 +2519,7 @@ void R_DestroyDetailTextures(void)
 
 lightmap_t* R_CreateLightMap(const dduri_t* path)
 {
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     lightmap_t* lmap;
     char name[9];
 
@@ -2540,10 +2540,10 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
      * A new lightmap.
      */
 
-    // Create a gltexture for it.
+    // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, lightmapTexturesCount + 1);
 
-    glTex = GL_CreateGLTexture(name, lightmapTexturesCount, GLT_LIGHTMAP);
+    glTex = GL_CreateTexture(name, lightmapTexturesCount, GLT_LIGHTMAP);
 
     lmap = M_Malloc(sizeof(*lmap));
     lmap->id = glTex->id;
@@ -2593,7 +2593,7 @@ void R_DestroyLightMaps(void)
 
 flaretex_t* R_CreateFlareTexture(const dduri_t* path)
 {
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     flaretex_t* fTex;
     char name[9];
 
@@ -2618,10 +2618,10 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
     /**
      * A new flare texture.
      */
-    // Create a gltexture for it.
+    // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, flareTexturesCount + 1);
 
-    glTex = GL_CreateGLTexture(name, flareTexturesCount, GLT_FLARE);
+    glTex = GL_CreateTexture(name, flareTexturesCount, GLT_FLARE);
 
     fTex = M_Malloc(sizeof(*fTex));
     fTex->external = path;
@@ -2671,7 +2671,7 @@ void R_DestroyFlareTextures(void)
 
 shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
 {
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     shinytex_t* sTex;
     char name[9];
 
@@ -2689,10 +2689,10 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
      * A new shiny texture.
      */
 
-    // Create a gltexture for it.
+    // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, shinyTexturesCount + 1);
 
-    glTex = GL_CreateGLTexture(name, shinyTexturesCount, GLT_SHINY);
+    glTex = GL_CreateTexture(name, shinyTexturesCount, GLT_SHINY);
 
     sTex = M_Malloc(sizeof(*sTex));
     sTex->id = glTex->id;
@@ -2742,7 +2742,7 @@ void R_DestroyShinyTextures(void)
 
 masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
 {
-    const gltexture_t* glTex;
+    const texture_t* glTex;
     masktex_t* mTex;
     char name[9];
 
@@ -2760,10 +2760,10 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
      * A new shiny texture.
      */
 
-    // Create a gltexture for it.
+    // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, maskTexturesCount + 1);
 
-    glTex = GL_CreateGLTexture(name, maskTexturesCount, GLT_MASK);
+    glTex = GL_CreateTexture(name, maskTexturesCount, GLT_MASK);
 
     mTex = M_Malloc(sizeof(*mTex));
     mTex->id = glTex->id;

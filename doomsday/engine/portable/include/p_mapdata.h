@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mapdata.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,14 @@
  */
 
 /**
- * p_mapdata.h: Playsim Data Structures, Macros and Constants
+ * Playsim Data Structures, Macros and Constants.
  *
  * These are internal to Doomsday. The games have no direct access to
  * this data.
  */
 
-#ifndef __DOOMSDAY_PLAY_DATA_H__
-#define __DOOMSDAY_PLAY_DATA_H__
+#ifndef LIBDENG_PLAY_DATA_H
+#define LIBDENG_PLAY_DATA_H
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
 #  error "Attempted to include internal Doomsday p_mapdata.h from a game"
@@ -72,7 +72,7 @@ typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
-typedef unsigned int gltextureid_t; /// \todo Does not belong here.
+typedef unsigned int textureid_t; /// \todo Does not belong here.
 
 typedef struct fvertex_s {
     float           pos[2];
@@ -304,4 +304,4 @@ int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
 fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
 angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
 float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
-#endif
+#endif /* LIBDENG_PLAY_DATA_H */

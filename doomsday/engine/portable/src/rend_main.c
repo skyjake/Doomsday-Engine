@@ -45,7 +45,7 @@
 #include "de_ui.h"
 #include "de_system.h"
 #include "net_main.h"
-#include "gltexturevariant.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 

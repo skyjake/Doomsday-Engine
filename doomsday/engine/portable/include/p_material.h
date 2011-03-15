@@ -1,9 +1,9 @@
-/**\file
+/**\file p_material.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG2_MATERIAL_H
-#define LIBDENG2_MATERIAL_H
+#ifndef LIBDENG_MATERIAL_H
+#define LIBDENG_MATERIAL_H
 
 #include "p_dmu.h"
 
-struct gltexturevariant_s;
+struct texturevariant_s;
 
 // Material load flags:
 #define MLF_LOAD_AS_SKY             0x0001
@@ -36,7 +36,7 @@ typedef struct material_load_params_s {
     int             tmap, tclass;
     boolean         pSprite;
     struct {
-        byte            flags; // @see GLTextureFlags
+        byte            flags; // @see TextureFlags
         byte            border;
     } tex;
 } material_load_params_t;
@@ -51,7 +51,7 @@ enum {
 };
 
 typedef struct material_textureunit_s {
-    const struct gltexturevariant_s* tex;
+    const struct texturevariant_s* tex;
     int             magMode;
     blendmode_t     blendMode; // Currently used only with reflection.
     float           alpha;
@@ -90,4 +90,4 @@ void            Material_SetTranslation(material_t* mat, material_t* current, ma
 void            Material_Ticker(material_t* mat, timespan_t time);
 void            Material_DeleteTextures(material_t* mat);
 
-#endif /* LIBDENG2_MATERIAL_H */
+#endif /* LIBDENG_MATERIAL_H */

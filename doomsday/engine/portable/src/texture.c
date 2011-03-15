@@ -1,4 +1,4 @@
-/**\file gltexture.c
+/**\file texture.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -32,24 +32,24 @@
 
 #include "image.h"
 #include "texturecontent.h"
-#include "gltexturevariant.h"
-#include "gltexture.h"
+#include "texturevariant.h"
+#include "texture.h"
 
-typedef struct gltexture_variantlist_node_s {
-    struct gltexture_variantlist_node_s* next;
-    gltexturevariant_t* variant;
-} gltexture_variantlist_node_t;
+typedef struct texture_variantlist_node_s {
+    struct texture_variantlist_node_s* next;
+    texturevariant_t* variant;
+} texture_variantlist_node_t;
 
-void GLTexture_Destruct(gltexture_t* tex)
+void Texture_Destruct(texture_t* tex)
 {
     assert(tex);
     {
-    gltexture_variantlist_node_t* node = tex->variants;
+    texture_variantlist_node_t* node = tex->variants;
     int i;
     while(node)
     {
-        gltexture_variantlist_node_t* next = node->next;
-        for(i = 0; i < GLTEXTURE_ANALYSISID_COUNT; ++i)
+        texture_variantlist_node_t* next = node->next;
+        for(i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
             if(node->variant->analyses[i])
                 Z_Free(node->variant->analyses[i]);
         Z_Free(node->variant);
@@ -60,22 +60,22 @@ void GLTexture_Destruct(gltexture_t* tex)
     }
 }
 
-void GLTexture_AddVariant(gltexture_t* tex, gltexturevariant_t* variant)
+void Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
 {
     assert(tex);
     {
-    gltexture_variantlist_node_t* node;
+    texture_variantlist_node_t* node;
 
     if(NULL == variant)
     {
 #if _DEBUG
-        Con_Error("GLTexture::AddInstance: Warning, argument variant==NULL, ignoring.");
+        Con_Error("Texture::AddInstance: Warning, argument variant==NULL, ignoring.");
 #endif
         return;
     }
 
     if(NULL == (node = Z_Malloc(sizeof(*node), PU_APPSTATIC, 0)))
-        Con_Error("GLTexture::AddInstance: failed on allocation of %lu bytes for new node.",
+        Con_Error("Texture::AddInstance: failed on allocation of %lu bytes for new node.",
                   (unsigned long) sizeof(*node));
 
     node->variant = variant;
@@ -84,13 +84,13 @@ void GLTexture_AddVariant(gltexture_t* tex, gltexturevariant_t* variant)
     }
 }
 
-const char* GLTexture_Name(const gltexture_t* tex)
+const char* Texture_Name(const texture_t* tex)
 {
     assert(tex);
     return tex->name;
 }
 
-boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
+boolean Texture_IsFromIWAD(const texture_t* tex)
 {
     switch(tex->type)
     {
@@ -117,14 +117,14 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
         return false; // Its definitely not.
 
     default:
-        Con_Error("GLTexture::IsFromIWAD: Internal Error, invalid type %i.",
+        Con_Error("Texture::IsFromIWAD: Internal Error, invalid type %i.",
                   (int) tex->type);
     }
 
     return false; // Unreachable.
 }
 
-float GLTexture_GetWidth(const gltexture_t* tex)
+float Texture_GetWidth(const texture_t* tex)
 {
     if(!tex)
         return 0;
@@ -160,14 +160,14 @@ float GLTexture_GetWidth(const gltexture_t* tex)
         return 64;
 
     default:
-        Con_Error("GLTexture::GetWidth: Internal error, "
+        Con_Error("Texture::GetWidth: Internal error, "
                   "invalid material type %i.", (int) tex->type);
     }
 
     return 0; // Unreachable.
 }
 
-float GLTexture_GetHeight(const gltexture_t* tex)
+float Texture_GetHeight(const texture_t* tex)
 {
     if(!tex)
         return 0;
@@ -203,21 +203,21 @@ float GLTexture_GetHeight(const gltexture_t* tex)
         return 64;
 
     default:
-        Con_Error("GLTexture::GetHeight: Internal error, "
+        Con_Error("Texture::GetHeight: Internal error, "
                   "invalid material type %i.", (int) tex->type);
     }
 
     return 0; // Unreachable.
 }
 
-void GLTexture_ReleaseTextures(gltexture_t* tex)
+void Texture_ReleaseTextures(texture_t* tex)
 {
     assert(tex);
     {
-    gltexture_variantlist_node_t* node = tex->variants;
+    texture_variantlist_node_t* node = tex->variants;
     while(node)
     {
-        gltexturevariant_t* variant = node->variant;
+        texturevariant_t* variant = node->variant;
         // Have we uploaded it?
         if(variant->glName)
         {
@@ -230,14 +230,14 @@ void GLTexture_ReleaseTextures(gltexture_t* tex)
     }
 }
 
-void GLTexture_SetMinMode(gltexture_t* tex, int minMode)
+void Texture_SetMinMode(texture_t* tex, int minMode)
 {
     assert(tex);
     {
-    gltexture_variantlist_node_t* node = tex->variants;
+    texture_variantlist_node_t* node = tex->variants;
     while(node)
     {
-        gltexturevariant_t* variant = node->variant;
+        texturevariant_t* variant = node->variant;
         // Have we uploaded it?
         if(variant->glName)
         {
@@ -249,15 +249,15 @@ void GLTexture_SetMinMode(gltexture_t* tex, int minMode)
     }
 }
 
-int GLTexture_IterateInstances(gltexture_t* tex,
-    int (*callback)(gltexturevariant_t* instance, void* paramaters), void* paramaters)
+int Texture_IterateInstances(texture_t* tex,
+    int (*callback)(texturevariant_t* instance, void* paramaters), void* paramaters)
 {
     assert(tex);
     {
     int result = 0;
     if(callback)
     {
-        gltexture_variantlist_node_t* node = tex->variants;
+        texture_variantlist_node_t* node = tex->variants;
         while(node)
         {
             if(0 != (result = callback(node->variant, paramaters)))
@@ -270,11 +270,11 @@ int GLTexture_IterateInstances(gltexture_t* tex,
 }
 
 typedef struct {
-    gltexturevariantspecification_t spec;
-    gltexturevariant_t* chosen;
+    texturevariantspecification_t spec;
+    texturevariant_t* chosen;
 } choosegltexturevariantworker_paramaters_t;
 
-static int chooseGLTextureVariantWorker(gltexturevariant_t* variant, void* context)
+static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
 {
     choosegltexturevariantworker_paramaters_t* p = (choosegltexturevariantworker_paramaters_t*)context;
     if(variant->spec.loadFlags == p->spec.loadFlags &&
@@ -287,7 +287,7 @@ static int chooseGLTextureVariantWorker(gltexturevariant_t* variant, void* conte
     return 0; // Continue iteration.
 }
 
-static gltexturevariant_t* chooseGLTextureVariant(gltexture_t* tex, void* context)
+static texturevariant_t* chooseTextureVariant(texture_t* tex, void* context)
 {
     material_load_params_t* mlParams = (material_load_params_t*) context;
     choosegltexturevariantworker_paramaters_t params;
@@ -299,10 +299,10 @@ static gltexturevariant_t* chooseGLTextureVariant(gltexture_t* tex, void* contex
         params.spec.border    = mlParams->tex.border;
     }
     params.chosen = NULL;
-    { gltexture_variantlist_node_t* node = tex->variants;
+    { texture_variantlist_node_t* node = tex->variants;
     while(node)
     {
-        if(0 != chooseGLTextureVariantWorker(node->variant, &params))
+        if(0 != chooseTextureVariantWorker(node->variant, &params))
             break;
         node = node->next;
     }}
@@ -310,11 +310,11 @@ static gltexturevariant_t* chooseGLTextureVariant(gltexture_t* tex, void* contex
 }
 
 typedef struct {
-    gltexturevariantspecification_t spec;
-    gltexturevariant_t* chosen;
+    texturevariantspecification_t spec;
+    texturevariant_t* chosen;
 } choosedetailgltexturevariantworker_paramaters_t;
 
-static int chooseDetailGLTextureVariantWorker(gltexturevariant_t* variant, void* context)
+static int chooseDetailTextureVariantWorker(texturevariant_t* variant, void* context)
 {
     assert(variant && context);
     {
@@ -328,19 +328,19 @@ static int chooseDetailGLTextureVariantWorker(gltexturevariant_t* variant, void*
     }
 }
 
-static gltexturevariant_t* chooseDetailGLTextureVariant(gltexture_t* tex, void* context)
+static texturevariant_t* chooseDetailTextureVariant(texture_t* tex, void* context)
 {
     assert(tex && context);
     {
     choosedetailgltexturevariantworker_paramaters_t params;
     memset(&params.spec, 0, sizeof(params.spec));
     params.spec.type.detail.contrast = *((float*) context);
-    //params.spec.flags = GLTF_MONOCHROME;
+    //params.spec.flags = TF_MONOCHROME;
     params.chosen = NULL;
-    { gltexture_variantlist_node_t* node = tex->variants;
+    { texture_variantlist_node_t* node = tex->variants;
     while(node)
     {
-        if(0 != chooseDetailGLTextureVariantWorker(node->variant, &params))
+        if(0 != chooseDetailTextureVariantWorker(node->variant, &params))
             break;
         node = node->next;
     }}
@@ -349,11 +349,11 @@ static gltexturevariant_t* chooseDetailGLTextureVariant(gltexture_t* tex, void* 
 }
 
 typedef struct {
-    gltexturevariantspecification_t spec;
-    gltexturevariant_t* chosen;
+    texturevariantspecification_t spec;
+    texturevariant_t* chosen;
 } choosespritegltexturevariantworker_paramaters_t;
 
-static int chooseSpriteGLTextureVariantWorker(gltexturevariant_t* variant, void* context)
+static int chooseSpriteTextureVariantWorker(texturevariant_t* variant, void* context)
 {
     choosespritegltexturevariantworker_paramaters_t* p = (choosespritegltexturevariantworker_paramaters_t*) context;
     if(variant->spec.flags               == p->spec.flags &&
@@ -369,7 +369,7 @@ static int chooseSpriteGLTextureVariantWorker(gltexturevariant_t* variant, void*
     return 0; // Continue iteration.
 }
 
-static gltexturevariant_t* chooseSpriteGLTextureVariant(gltexture_t* tex, void* context)
+static texturevariant_t* chooseSpriteTextureVariant(texture_t* tex, void* context)
 {
     material_load_params_t* mlParams = (material_load_params_t*) context;
     choosespritegltexturevariantworker_paramaters_t params;
@@ -384,17 +384,17 @@ static gltexturevariant_t* chooseSpriteGLTextureVariant(gltexture_t* tex, void* 
         params.spec.loadFlags = mlParams->flags;
     }
     params.chosen = NULL;
-    { gltexture_variantlist_node_t* node = tex->variants;
+    { texture_variantlist_node_t* node = tex->variants;
     while(node)
     {
-        if(0 != chooseSpriteGLTextureVariantWorker(node->variant, &params))
+        if(0 != chooseSpriteTextureVariantWorker(node->variant, &params))
             break;
         node = node->next;
     }}
     return params.chosen;
 }
 
-const dduri_t* GLTexture_SearchPath(const gltexture_t* tex)
+const dduri_t* Texture_SearchPath(const texture_t* tex)
 {
     assert(tex);
     switch(tex->type)
@@ -440,35 +440,35 @@ const dduri_t* GLTexture_SearchPath(const gltexture_t* tex)
         return fTex->external;
       }
     default:
-        Con_Error("GLTexture::SearchPath: Unknown texture type %i.", (int) tex->type);
+        Con_Error("Texture::SearchPath: Unknown texture type %i.", (int) tex->type);
         return NULL; // Unreachable.
     }
 }
 
-static gltexturevariant_t* findSuitableVariant(gltexture_t* tex, void* context)
+static texturevariant_t* findSuitableVariant(texture_t* tex, void* context)
 {
     switch(tex->type)
     {
     case GLT_DETAIL:
-        return chooseDetailGLTextureVariant(tex, context);
+        return chooseDetailTextureVariant(tex, context);
     case GLT_SPRITE:
-        return chooseSpriteGLTextureVariant(tex, context);
+        return chooseSpriteTextureVariant(tex, context);
     default:
-        return chooseGLTextureVariant(tex, context);
+        return chooseTextureVariant(tex, context);
     }
 }
 
-static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* context)
+static byte loadSourceImage(image_t* img, const texturevariant_t* tex, void* context)
 {
     assert(img && tex);
     {
-    const gltexture_t* generalCase = tex->generalCase;
+    const texture_t* generalCase = tex->generalCase;
     byte loadResult = 0;
     switch(generalCase->type)
     {
     case GLT_FLAT:
         // Attempt to load an external replacement for this flat?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(generalCase)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
             flat_t* flat = R_FlatTextureByIndex(generalCase->index);
             const ddstring_t suffix = { "-ck" };
@@ -484,7 +484,7 @@ static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* c
         break;
     case GLT_PATCH:
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(generalCase)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
             material_load_params_t* params = (material_load_params_t*) context;
             const patchtex_t* p = R_PatchTextureByIndex(generalCase->index);
@@ -559,27 +559,27 @@ static byte loadSourceImage(image_t* img, const gltexturevariant_t* tex, void* c
     case GLT_FLARE:
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN: {
-        ddstring_t* searchPath = Uri_ComposePath(GLTexture_SearchPath(generalCase));
+        ddstring_t* searchPath = Uri_ComposePath(Texture_SearchPath(generalCase));
         loadResult = GL_LoadExtTextureEX(img, Str_Text(searchPath), NULL, false);
         Str_Delete(searchPath);
         break;
       }
     default:
-        Con_Error("GLTexture::Prepare: Unknown texture type %i.", (int) generalCase->type);
+        Con_Error("Texture::Prepare: Unknown texture type %i.", (int) generalCase->type);
         return 0; // Unreachable.
     }
     return loadResult;
     }
 }
 
-static byte prepareVariant(gltexturevariant_t* tex, void* context)
+static byte prepareVariant(texturevariant_t* tex, void* context)
 {
     assert(tex);
     {
-    const gltexture_t* generalCase = tex->generalCase;
-    boolean monochrome    = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & GLTF_MONOCHROME) != 0 : false);
-    boolean noCompression = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & GLTF_NO_COMPRESSION) != 0 : false);
-    boolean scaleSharp    = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & GLTF_UPSCALE_AND_SHARPEN) != 0 : false);
+    const texture_t* generalCase = tex->generalCase;
+    boolean monochrome    = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_MONOCHROME) != 0 : false);
+    boolean noCompression = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_NO_COMPRESSION) != 0 : false);
+    boolean scaleSharp    = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_UPSCALE_AND_SHARPEN) != 0 : false);
     boolean noSmartFilter = false, didDefer = false;
     byte loadResult = 0;
     image_t image;
@@ -610,7 +610,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
             EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
             if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
             {
-                Con_Message("GLTexture::Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
+                Con_Message("Texture::Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
                             generalCase->name, baMul, hiMul, loMul);
             }
         }
@@ -698,7 +698,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
         }
         else
         {
-            Con_Message("GLTexture::Prepare: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
+            Con_Message("Texture::Prepare: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
                         image.width, image.height, image.pixelSize);
         }
     }
@@ -822,7 +822,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
 
 #ifdef _DEBUG
     if(!didDefer)
-        Con_Message("GLTexture::Prepare: Uploaded \"%s\" (%i) while not busy! "
+        Con_Message("Texture::Prepare: Uploaded \"%s\" (%i) while not busy! "
                     "Should be precached in busy mode?\n", generalCase->name, tex->glName);
 #endif
 
@@ -852,7 +852,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
        context && (((material_load_params_t*)context)->flags & MLF_LOAD_AS_SKY))
     {
         averagecolor_analysis_t* avgTopColor = Z_Malloc(sizeof(*avgTopColor), PU_APPSTATIC, 0);
-        tex->analyses[GLTA_SKY_TOPCOLOR] = avgTopColor;
+        tex->analyses[TA_SKY_TOPCOLOR] = avgTopColor;
         // Average color for glow planes and top line color.
         if(image.pixelSize > 1)
         {
@@ -867,7 +867,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
     if(generalCase->type == GLT_SPRITE)
     {
         pointlight_analysis_t* pl = Z_Malloc(sizeof(*pl), PU_APPSTATIC, 0);
-        tex->analyses[GLTA_SPRITE_AUTOLIGHT] = pl;
+        tex->analyses[TA_SPRITE_AUTOLIGHT] = pl;
         if(!(context && ((material_load_params_t*)context)->pSprite))
         {   // Calculate light source properties.
             GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
@@ -882,7 +882,7 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
     if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE)
     {
         ambientlight_analysis_t* al = Z_Malloc(sizeof(*al), PU_APPSTATIC, 0);
-        tex->analyses[GLTA_WORLD_AMBIENTLIGHT] = al;
+        tex->analyses[TA_WORLD_AMBIENTLIGHT] = al;
         // Average color for glow planes and top line color.
         if(image.pixelSize > 1)
         {
@@ -903,10 +903,10 @@ static byte prepareVariant(gltexturevariant_t* tex, void* context)
     }
 }
 
-static void applyVariantSpecification(gltexturevariantspecification_t* spec,
+static void applyVariantSpecification(texturevariantspecification_t* spec,
     gltexture_type_t type, const void* context)
 {
-    assert(spec && VALID_GLTEXTURE_TYPE(type));
+    assert(spec && VALID_GLTEXTURETYPE(type));
     if(type == GLT_DETAIL)
     {
         assert(context);
@@ -931,20 +931,20 @@ static void applyVariantSpecification(gltexturevariantspecification_t* spec,
     }
 }
 
-static initializeVariant(gltexturevariant_t* variant, gltexture_t* generalCase,
+static initializeVariant(texturevariant_t* variant, texture_t* generalCase,
     const void* context)
 {
     assert(variant && generalCase);
-    memset(variant, 0, sizeof(gltexturevariant_t));
+    memset(variant, 0, sizeof(texturevariant_t));
     variant->generalCase = generalCase;
     applyVariantSpecification(&variant->spec, generalCase->type, context);
 }
 
-gltexturevariant_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* result)
+texturevariant_t* Texture_Prepare(texture_t* tex, void* context, byte* result)
 {
-    assert(tex && VALID_GLTEXTURE_TYPE(tex->type));
+    assert(tex && VALID_GLTEXTURETYPE(tex->type));
     {
-    gltexturevariant_t* variant = NULL;
+    texturevariant_t* variant = NULL;
     boolean variantIsNew = false;
     float contrast = 1;
     byte loadResult;
@@ -977,7 +977,7 @@ gltexturevariant_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* res
     if(variantIsNew)
     {
         if(0 != loadResult)
-            GLTexture_AddVariant(tex, variant);
+            Texture_AddVariant(tex, variant);
         else
             Z_Free(variant);
     }

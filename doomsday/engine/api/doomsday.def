@@ -338,7 +338,7 @@ EXPORTS
     P_SetPolyobjCallback        @83 NONAME
 
 ; Play: Materials.
-    Materials_GetSymbolicName           @337 NONAME
+    Materials_GetSymbolicName   @337 NONAME
     Materials_GetUri            @494 NONAME
     Materials_IndexForName      @495 NONAME
     Materials_IndexForUri       @496 NONAME
@@ -466,8 +466,8 @@ EXPORTS
     GL_GrabScreen               @109 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
-    GL_GLTextureIndexForUri     @438 NONAME
-    GL_GLTextureIndexForUri2    @501 NONAME
+    GL_TextureIndexForUri       @438 NONAME
+    GL_TextureIndexForUri2      @501 NONAME
 
 ; Graphics: Text
     FR_FontIdForName			@106 NONAME

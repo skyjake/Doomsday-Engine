@@ -36,7 +36,7 @@
 
 #include "math.h"
 #include "rend_console.h"
-#include "gltexturevariant.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 

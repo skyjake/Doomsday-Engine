@@ -1,4 +1,4 @@
-/**\file gltexture.h
+/**\file texture.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -25,16 +25,16 @@
 #ifndef LIBDENG_GL_TEXTUREVARIANT_H
 #define LIBDENG_GL_TEXTUREVARIANT_H
 
-#include "gltexture.h"
+#include "texture.h"
 
 /**
- * @defGroup GLTextureFlags GLTexture Flags
+ * @defGroup textureFlags  Texture Flags
  */
 /*@{*/
-#define GLTF_ZEROMASK               0x1 // Zero the alpha of loaded textures.
-#define GLTF_NO_COMPRESSION         0x2 // Do not compress the loaded textures.
-#define GLTF_UPSCALE_AND_SHARPEN    0x4
-#define GLTF_MONOCHROME             0x8
+#define TF_ZEROMASK                 0x1 // Zero the alpha of loaded textures.
+#define TF_NO_COMPRESSION           0x2 // Do not compress the loaded textures.
+#define TF_UPSCALE_AND_SHARPEN      0x4
+#define TF_MONOCHROME               0x8
 /*@}*/
 
 typedef struct pointlight_analysis_s {
@@ -51,7 +51,7 @@ typedef struct averagecolor_analysis_s {
     float color[3];
 } averagecolor_analysis_t;
 
-typedef struct gltexturevariantspecification_s {
+typedef struct texturevariantspecification_s {
     byte flags; // GLTF_* flags.
     byte border; // In pixels, added to all four edges of the texture.
     short loadFlags; // MLF_* flags.
@@ -64,23 +64,23 @@ typedef struct gltexturevariantspecification_s {
             float contrast;
         } detail;
     } type; // type-specific data.
-} gltexturevariantspecification_t;
+} texturevariantspecification_t;
 
 typedef enum {
-    GLTEXTUREANALYSIS_FIRST = 0,
-    GLTA_SPRITE_AUTOLIGHT = GLTEXTUREANALYSIS_FIRST,
-    GLTA_WORLD_AMBIENTLIGHT,
-    GLTA_SKY_TOPCOLOR,
-    GLTEXTURE_ANALYSISID_COUNT
-} gltextureanalysisid_t;
+    TEXTUREANALYSIS_FIRST = 0,
+    TA_SPRITE_AUTOLIGHT = TEXTUREANALYSIS_FIRST,
+    TA_WORLD_AMBIENTLIGHT,
+    TA_SKY_TOPCOLOR,
+    TEXTURE_ANALYSIS_COUNT
+} textureanalysisid_t;
 
-typedef struct gltexturevariant_s {
-    void* analyses[GLTEXTURE_ANALYSISID_COUNT];
-    const gltexture_t* generalCase;
+typedef struct texturevariant_s {
+    void* analyses[TEXTURE_ANALYSIS_COUNT];
+    const texture_t* generalCase;
     boolean isMasked;
     DGLuint glName; // Name of the associated DGL texture.
     float coords[2]; // Prepared texture coordinates.
-    gltexturevariantspecification_t spec;
-} gltexturevariant_t;
+    texturevariantspecification_t spec;
+} texturevariant_t;
 
 #endif /* LIBDENG_GL_TEXTUREVARIANT_H */

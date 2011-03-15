@@ -53,8 +53,8 @@
 #include "def_main.h"
 
 #include "m_stack.h"
-#include "gltexture.h"
-#include "gltexturevariant.h"
+#include "texture.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1436,7 +1436,7 @@ void R_ProjectSprite(mobj_t* mo)
         spriteframe_t* sprFrame;
         material_t* mat;
         material_snapshot_t ms;
-        const gltexturevariant_t* tex;
+        const texturevariant_t* tex;
 
         // Determine the sprite frame lump of the source.
         sprDef = &sprites[mo->sprite];
@@ -1474,7 +1474,7 @@ if(!mat)
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
 
         {
-        const pointlight_analysis_t* pl = (const pointlight_analysis_t*)tex->analyses[GLTA_SPRITE_AUTOLIGHT];
+        const pointlight_analysis_t* pl = (const pointlight_analysis_t*)tex->analyses[TA_SPRITE_AUTOLIGHT];
         assert(pl);
         flareSize = pl->brightMul;
         // X offset to the flare position.

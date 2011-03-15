@@ -46,7 +46,7 @@
 #include "de_misc.h"
 
 #include "net_main.h"           // for gametic
-#include "gltexturevariant.h"
+#include "texturevariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -700,8 +700,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     if(shininess > 0)
     {
         const skinname_t* sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin);
-        const gltexturevariant_t* tex;
-        if(NULL != sn && NULL != (tex = GL_PrepareGLTexture(sn->id, NULL, NULL)))
+        const texturevariant_t* tex;
+        if(NULL != sn && NULL != (tex = GL_PrepareTexture(sn->id, NULL, NULL)))
         {
             shinyTexture = tex->glName;
         }
@@ -801,13 +801,13 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
         if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
         {
-            const gltexturevariant_t* tex;
+            const texturevariant_t* tex;
             material_load_params_t params;
 
             memset(&params, 0, sizeof(params));
-            params.tex.flags = (!mdl->allowTexComp? GLTF_NO_COMPRESSION : 0);
+            params.tex.flags = (!mdl->allowTexComp? TF_NO_COMPRESSION : 0);
 
-            if((tex = GL_PrepareGLTexture(sn->id, &params, NULL)))
+            if((tex = GL_PrepareTexture(sn->id, &params, NULL)))
                 skinTexture = tex->glName;
         }
     }

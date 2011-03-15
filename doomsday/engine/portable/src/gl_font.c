@@ -562,14 +562,14 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
         flashColor[CB] = (1 + 2 * origColor[2]) / 3;
     }
 
-    if(0 != BitmapFont_GLTexture(cf))
+    if(0 != BitmapFont_GLTextureName(cf))
     {
-        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTexture(cf));
+        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(cf));
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glLoadIdentity();
-        glScalef(1.f / BitmapFont_GLTextureWidth(cf),
-                 1.f / BitmapFont_GLTextureHeight(cf), 1.f);
+        glScalef(1.f / BitmapFont_TextureWidth(cf),
+                 1.f / BitmapFont_TextureHeight(cf), 1.f);
     }
 
     { int pass;
@@ -655,7 +655,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
             h = FR_CharHeight(c);
 
             if(' ' != c &&
-               (0 != BitmapFont_GLTexture(cf) || 0 != BitmapFont_CharPatch(cf, c)))
+               (0 != BitmapFont_GLTextureName(cf) || 0 != BitmapFont_CharPatch(cf, c)))
             {
                 // A non-white-space character we have a glyph for.
                 if(pass)
@@ -681,7 +681,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     }}
 
     // Restore previous GL-state.
-    if(0 != BitmapFont_GLTexture(cf))
+    if(0 != BitmapFont_GLTextureName(cf))
     {
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
@@ -757,17 +757,17 @@ void FR_DrawChar2(unsigned char ch, int x, int y, short flags)
     if(currentFontIdx == -1)
         return;
     cf = fonts[currentFontIdx];
-    if(0 != BitmapFont_GLTexture(cf))
+    if(0 != BitmapFont_GLTextureName(cf))
     {
-        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTexture(cf));
+        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(cf));
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glLoadIdentity();
-        glScalef(1.f / BitmapFont_GLTextureWidth(cf),
-                 1.f / BitmapFont_GLTextureHeight(cf), 1.f);
+        glScalef(1.f / BitmapFont_TextureWidth(cf),
+                 1.f / BitmapFont_TextureHeight(cf), 1.f);
     }
     drawChar(ch, x, y, cf, flags);
-    if(0 != BitmapFont_GLTexture(cf))
+    if(0 != BitmapFont_GLTextureName(cf))
     {
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
@@ -799,7 +799,7 @@ static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, s
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
-    else if(0 != (tex = BitmapFont_GLTexture(font)))
+    else if(0 != (tex = BitmapFont_GLTextureName(font)))
     {
         GL_BindTexture(tex, GL_NEAREST);
     }
@@ -828,7 +828,7 @@ static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, s
         w = s[1] - s[0];
         h = t[1] - t[0];
 
-        if(!BitmapFont_GLTexture(font))
+        if(!BitmapFont_GLTextureName(font))
         {           
             x = font->_chars[ch].x;
             y = font->_chars[ch].y;
