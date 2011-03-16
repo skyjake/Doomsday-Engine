@@ -935,7 +935,7 @@ void R_InitSystemTextures(void)
         systex_t* sysTex;
     
         sysTex = malloc(sizeof(*sysTex));
-        sysTex->id = glTex->id;
+        sysTex->id = Texture_Id(glTex);
         sysTex->external = Uri_Construct(defs[i].path);
 
         // Add it to the list.
@@ -977,7 +977,7 @@ static patchid_t findPatchTextureByName(const char* name)
     Uri_Destruct(uri);
     if(glTex == NULL)
         return 0;
-    return glTex->index;
+    return (patchid_t) Texture_TypeIndex(glTex);
     }
 }
 
@@ -1048,7 +1048,7 @@ patchid_t R_RegisterPatch(const char* name)
     // Register a texture for this.
     {
     const texture_t* glTex = GL_CreateTexture(name, ++patchTexturesCount, GLT_PATCH);
-    p->texId = glTex->id;
+    p->texId = Texture_Id(glTex);
     }
 
     // Add it to the pointer array.
@@ -1741,7 +1741,7 @@ void R_InitTextures(void)
             Str_Appendf(&path, MN_TEXTURES_NAME":%s", texDef->name);
 
             uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-            Materials_New(uri, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), tex->id, 0, 0);
+            Materials_New(uri, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), Texture_Id(tex), 0, 0);
 
             Uri_Destruct(uri);
         }}
@@ -1870,7 +1870,7 @@ void R_InitFlats(void)
         Str_Appendf(&path, MN_FLATS_NAME":%s", flat->name);
 
         uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-        Materials_New(uri, 64, 64, 0, tex->id, 0, 0);
+        Materials_New(uri, 64, 64, 0, Texture_Id(tex), 0, 0);
 
         Uri_Destruct(uri);
     }}
@@ -1998,7 +1998,7 @@ void R_SpriteTexturesInit(void)
         ddstring_t path; Str_Init(&path);
         Str_Appendf(&path, MN_SPRITES_NAME":%s", name);
         uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-        Materials_New(uri, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
+        Materials_New(uri, sprTex->width, sprTex->height, 0, Texture_Id(glTex), sprTex->offX, sprTex->offY);
         Uri_Destruct(uri);
         Str_Free(&path);
         }
@@ -2053,7 +2053,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     st = skinNames + (numSkinNames - 1);
 
     st->path = Uri_ConstructCopy(skin);
-    st->id = glTex->id;
+    st->id = Texture_Id(glTex);
 
     if(verbose)
     {
@@ -2478,7 +2478,7 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
     glTex = GL_CreateTexture(name, detailTexturesCount, GLT_DETAIL);
 
     dTex = M_Malloc(sizeof(*dTex));
-    dTex->id = glTex->id;
+    dTex->id = Texture_Id(glTex);
     dTex->isExternal = def->isExternal;
     dTex->filePath = def->detailTex;
 
@@ -2546,7 +2546,7 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
     glTex = GL_CreateTexture(name, lightmapTexturesCount, GLT_LIGHTMAP);
 
     lmap = M_Malloc(sizeof(*lmap));
-    lmap->id = glTex->id;
+    lmap->id = Texture_Id(glTex);
     lmap->external = path;
 
     // Add it to the list.
@@ -2625,7 +2625,7 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
 
     fTex = M_Malloc(sizeof(*fTex));
     fTex->external = path;
-    fTex->id = glTex->id;
+    fTex->id = Texture_Id(glTex);
 
     // Add it to the list.
     flareTextures = M_Realloc(flareTextures, sizeof(flaretex_t*) * ++flareTexturesCount);
@@ -2695,7 +2695,7 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
     glTex = GL_CreateTexture(name, shinyTexturesCount, GLT_SHINY);
 
     sTex = M_Malloc(sizeof(*sTex));
-    sTex->id = glTex->id;
+    sTex->id = Texture_Id(glTex);
     sTex->external = uri;
 
     // Add it to the list.
@@ -2766,7 +2766,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
     glTex = GL_CreateTexture(name, maskTexturesCount, GLT_MASK);
 
     mTex = M_Malloc(sizeof(*mTex));
-    mTex->id = glTex->id;
+    mTex->id = Texture_Id(glTex);
     mTex->external = uri;
     mTex->width = width;
     mTex->height = height;

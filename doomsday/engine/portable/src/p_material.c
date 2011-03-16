@@ -81,7 +81,7 @@ void Material_Ticker(material_t* mat, timespan_t time)
         {const texture_t* glTex;
         if((glTex = GL_TextureByUri(lsDef->texture)))
         {
-            layer->tex = glTex->id;
+            layer->tex = Texture_Id(glTex);
             mat->inter = inter;
         }
         else

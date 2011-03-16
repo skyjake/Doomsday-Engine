@@ -175,8 +175,8 @@ static void prepareSkySphere(void)
         Materials_Prepare(&ms, material, false, &params);
 
         slayer->tex = ms.units[MTU_PRIMARY].tex->glName;
-        slayer->texWidth = Texture_GetWidth(ms.units[MTU_PRIMARY].tex->generalCase);
-        slayer->texHeight = Texture_GetHeight(ms.units[MTU_PRIMARY].tex->generalCase);
+        slayer->texWidth = Texture_Width(ms.units[MTU_PRIMARY].tex->generalCase);
+        slayer->texHeight = Texture_Height(ms.units[MTU_PRIMARY].tex->generalCase);
         slayer->texMagMode = ms.units[MTU_PRIMARY].magMode;
 
         slayer->fadeout.rgb[CR] = ms.topColor[CR];

@@ -282,8 +282,8 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             Materials_Prepare(&ms, material, true, &p);
             tex = ms.units[MTU_PRIMARY].tex->glName;
             magMode = ms.units[MTU_PRIMARY].magMode;
-            skyTexWidth = Texture_GetWidth(ms.units[MTU_PRIMARY].tex->generalCase);
-            skyTexHeight = Texture_GetHeight(ms.units[MTU_PRIMARY].tex->generalCase);
+            skyTexWidth = Texture_Width(ms.units[MTU_PRIMARY].tex->generalCase);
+            skyTexHeight = Texture_Height(ms.units[MTU_PRIMARY].tex->generalCase);
         }
 
         GL_BindTexture(tex, magMode);

@@ -22,6 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
@@ -40,11 +42,37 @@ typedef struct texture_variantlist_node_s {
     texturevariant_t* variant;
 } texture_variantlist_node_t;
 
+texture_t* Texture_Construct(textureid_t id, const char rawName[9],
+    gltexture_type_t glType, int index)
+{
+    assert(rawName && rawName[0] && VALID_GLTEXTURETYPE(glType));
+    {
+    texture_t* tex;
+
+    if(NULL == (tex = Z_Malloc(sizeof(*tex), PU_APPSTATIC, 0)))
+        Con_Error("Texture::Construct: Failed on allocation of %lu bytes for "
+                  "new Texture.", (unsigned long) sizeof(*tex));
+
+    tex->_id = id;
+    tex->_variants = NULL;
+    tex->_index = index;
+    tex->_glType = glType;
+
+    // Prepare name for hashing.
+    memset(tex->_name, 0, sizeof(tex->_name));
+    { int i;
+    for(i = 0; *rawName && i < 8; ++i, rawName++)
+        tex->_name[i] = tolower(*rawName);
+    }
+    return tex;
+    }
+}
+
 void Texture_Destruct(texture_t* tex)
 {
     assert(tex);
     {
-    texture_variantlist_node_t* node = tex->variants;
+    texture_variantlist_node_t* node = tex->_variants;
     int i;
     while(node)
     {
@@ -79,32 +107,39 @@ void Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
                   (unsigned long) sizeof(*node));
 
     node->variant = variant;
-    node->next = tex->variants;
-    tex->variants = node;
+    node->next = tex->_variants;
+    tex->_variants = node;
     }
+}
+
+textureid_t Texture_Id(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_id;
 }
 
 const char* Texture_Name(const texture_t* tex)
 {
     assert(tex);
-    return tex->name;
+    return tex->_name;
 }
 
 boolean Texture_IsFromIWAD(const texture_t* tex)
 {
-    switch(tex->type)
+    assert(tex);
+    switch(tex->_glType)
     {
     case GLT_FLAT:
-        return !R_FlatTextureByIndex(tex->index)->isCustom;
+        return !R_FlatTextureByIndex(tex->_index)->isCustom;
 
     case GLT_PATCHCOMPOSITE:
-        return (R_PatchCompositeTextureByIndex(tex->index)->flags & TXDF_IWAD) != 0;
+        return (R_PatchCompositeTextureByIndex(tex->_index)->flags & TXDF_IWAD) != 0;
 
     case GLT_SPRITE:
-        return !R_SpriteTextureByIndex(tex->index)->isCustom;
+        return !R_SpriteTextureByIndex(tex->_index)->isCustom;
 
     case GLT_PATCH:
-        return !R_PatchTextureByIndex(tex->index)->isCustom;
+        return !R_PatchTextureByIndex(tex->_index)->isCustom;
 
     case GLT_DETAIL:
     case GLT_SHINY:
@@ -118,30 +153,28 @@ boolean Texture_IsFromIWAD(const texture_t* tex)
 
     default:
         Con_Error("Texture::IsFromIWAD: Internal Error, invalid type %i.",
-                  (int) tex->type);
+                  (int) tex->_glType);
     }
 
     return false; // Unreachable.
 }
 
-float Texture_GetWidth(const texture_t* tex)
+int Texture_Width(const texture_t* tex)
 {
-    if(!tex)
-        return 0;
-
-    switch(tex->type)
+    assert(tex);
+    switch(tex->_glType)
     {
     case GLT_FLAT:
         return 64; /// \fixme not all flats are 64x64
 
     case GLT_PATCHCOMPOSITE:
-        return R_PatchCompositeTextureByIndex(tex->index)->width;
+        return R_PatchCompositeTextureByIndex(tex->_index)->width;
 
     case GLT_SPRITE:
-        return R_SpriteTextureByIndex(tex->index)->width;
+        return R_SpriteTextureByIndex(tex->_index)->width;
 
     case GLT_PATCH:
-        return R_PatchTextureByIndex(tex->index)->width;
+        return R_PatchTextureByIndex(tex->_index)->width;
 
     case GLT_DETAIL:
         return 128;
@@ -150,7 +183,7 @@ float Texture_GetWidth(const texture_t* tex)
         return 128; // Could be used for something useful.
 
     case GLT_MASK:
-        return maskTextures[tex->index]->width;
+        return maskTextures[tex->_index]->width;
 
     case GLT_SYSTEM: /// \fixme Do not assume!
     case GLT_MODELSKIN:
@@ -160,31 +193,27 @@ float Texture_GetWidth(const texture_t* tex)
         return 64;
 
     default:
-        Con_Error("Texture::GetWidth: Internal error, "
-                  "invalid material type %i.", (int) tex->type);
+        Con_Error("Texture::Width: Internal error, invalid type %i.", (int) tex->_glType);
+        return 0; // Unreachable.
     }
-
-    return 0; // Unreachable.
 }
 
-float Texture_GetHeight(const texture_t* tex)
+int Texture_Height(const texture_t* tex)
 {
-    if(!tex)
-        return 0;
-
-    switch(tex->type)
+    assert(tex);
+    switch(tex->_glType)
     {
     case GLT_FLAT:
         return 64; /// \fixme not all flats are 64x64
 
     case GLT_PATCHCOMPOSITE:
-        return R_PatchCompositeTextureByIndex(tex->index)->height;
+        return R_PatchCompositeTextureByIndex(tex->_index)->height;
 
     case GLT_SPRITE:
-        return R_SpriteTextureByIndex(tex->index)->height;
+        return R_SpriteTextureByIndex(tex->_index)->height;
 
     case GLT_PATCH:
-        return R_PatchTextureByIndex(tex->index)->height;
+        return R_PatchTextureByIndex(tex->_index)->height;
 
     case GLT_DETAIL:
         return 128;
@@ -193,7 +222,7 @@ float Texture_GetHeight(const texture_t* tex)
         return 128; // Could be used for something useful.
 
     case GLT_MASK:
-        return maskTextures[tex->index]->height;
+        return maskTextures[tex->_index]->height;
 
     case GLT_SYSTEM: /// \fixme Do not assume!
     case GLT_MODELSKIN:
@@ -203,18 +232,28 @@ float Texture_GetHeight(const texture_t* tex)
         return 64;
 
     default:
-        Con_Error("Texture::GetHeight: Internal error, "
-                  "invalid material type %i.", (int) tex->type);
+        Con_Error("Texture::Height: Internal error, invalid type %i.", (int) tex->_glType);
+        return 0; // Unreachable.
     }
-
-    return 0; // Unreachable.
 }
 
-void Texture_ReleaseTextures(texture_t* tex)
+int Texture_TypeIndex(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_index;
+}
+
+gltexture_type_t Texture_GLType(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_glType;
+}
+
+void Texture_ReleaseGLTextures(texture_t* tex)
 {
     assert(tex);
     {
-    texture_variantlist_node_t* node = tex->variants;
+    texture_variantlist_node_t* node = tex->_variants;
     while(node)
     {
         texturevariant_t* variant = node->variant;
@@ -230,11 +269,11 @@ void Texture_ReleaseTextures(texture_t* tex)
     }
 }
 
-void Texture_SetMinMode(texture_t* tex, int minMode)
+void Texture_SetGLMinMode(texture_t* tex, int minMode)
 {
     assert(tex);
     {
-    texture_variantlist_node_t* node = tex->variants;
+    texture_variantlist_node_t* node = tex->_variants;
     while(node)
     {
         texturevariant_t* variant = node->variant;
@@ -249,7 +288,7 @@ void Texture_SetMinMode(texture_t* tex, int minMode)
     }
 }
 
-int Texture_IterateInstances(texture_t* tex,
+int Texture_IterateVariants(texture_t* tex,
     int (*callback)(texturevariant_t* instance, void* paramaters), void* paramaters)
 {
     assert(tex);
@@ -257,7 +296,7 @@ int Texture_IterateInstances(texture_t* tex,
     int result = 0;
     if(callback)
     {
-        texture_variantlist_node_t* node = tex->variants;
+        texture_variantlist_node_t* node = tex->_variants;
         while(node)
         {
             if(0 != (result = callback(node->variant, paramaters)))
@@ -276,6 +315,8 @@ typedef struct {
 
 static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
 {
+    assert(variant);
+    {
     choosegltexturevariantworker_paramaters_t* p = (choosegltexturevariantworker_paramaters_t*)context;
     if(variant->spec.loadFlags == p->spec.loadFlags &&
        variant->spec.flags     == p->spec.flags &&
@@ -285,10 +326,13 @@ static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
         return 1; // Stop iteration.
     }
     return 0; // Continue iteration.
+    }
 }
 
 static texturevariant_t* chooseTextureVariant(texture_t* tex, void* context)
 {
+    assert(tex);
+    {
     material_load_params_t* mlParams = (material_load_params_t*) context;
     choosegltexturevariantworker_paramaters_t params;
     memset(&params.spec, 0, sizeof(params.spec));
@@ -299,7 +343,7 @@ static texturevariant_t* chooseTextureVariant(texture_t* tex, void* context)
         params.spec.border    = mlParams->tex.border;
     }
     params.chosen = NULL;
-    { texture_variantlist_node_t* node = tex->variants;
+    { texture_variantlist_node_t* node = tex->_variants;
     while(node)
     {
         if(0 != chooseTextureVariantWorker(node->variant, &params))
@@ -307,6 +351,7 @@ static texturevariant_t* chooseTextureVariant(texture_t* tex, void* context)
         node = node->next;
     }}
     return params.chosen;
+    }
 }
 
 typedef struct {
@@ -337,7 +382,7 @@ static texturevariant_t* chooseDetailTextureVariant(texture_t* tex, void* contex
     params.spec.type.detail.contrast = *((float*) context);
     //params.spec.flags = TF_MONOCHROME;
     params.chosen = NULL;
-    { texture_variantlist_node_t* node = tex->variants;
+    { texture_variantlist_node_t* node = tex->_variants;
     while(node)
     {
         if(0 != chooseDetailTextureVariantWorker(node->variant, &params))
@@ -355,6 +400,8 @@ typedef struct {
 
 static int chooseSpriteTextureVariantWorker(texturevariant_t* variant, void* context)
 {
+    assert(variant);
+    {
     choosespritegltexturevariantworker_paramaters_t* p = (choosespritegltexturevariantworker_paramaters_t*) context;
     if(variant->spec.flags               == p->spec.flags &&
        variant->spec.loadFlags           == p->spec.loadFlags &&
@@ -367,10 +414,13 @@ static int chooseSpriteTextureVariantWorker(texturevariant_t* variant, void* con
         return 1; // Stop iteration.
     }
     return 0; // Continue iteration.
+    }
 }
 
 static texturevariant_t* chooseSpriteTextureVariant(texture_t* tex, void* context)
 {
+    assert(tex);
+    {
     material_load_params_t* mlParams = (material_load_params_t*) context;
     choosespritegltexturevariantworker_paramaters_t params;
     memset(&params.spec, 0, sizeof(params.spec));
@@ -384,7 +434,7 @@ static texturevariant_t* chooseSpriteTextureVariant(texture_t* tex, void* contex
         params.spec.loadFlags = mlParams->flags;
     }
     params.chosen = NULL;
-    { texture_variantlist_node_t* node = tex->variants;
+    { texture_variantlist_node_t* node = tex->_variants;
     while(node)
     {
         if(0 != chooseSpriteTextureVariantWorker(node->variant, &params))
@@ -392,15 +442,16 @@ static texturevariant_t* chooseSpriteTextureVariant(texture_t* tex, void* contex
         node = node->next;
     }}
     return params.chosen;
+    }
 }
 
 const dduri_t* Texture_SearchPath(const texture_t* tex)
 {
     assert(tex);
-    switch(tex->type)
+    switch(tex->_glType)
     {
     case GLT_SYSTEM: {
-        systex_t* sysTex = sysTextures[tex->index];
+        systex_t* sysTex = sysTextures[tex->_index];
         return sysTex->external;
       }
     /*case GLT_FLAT:
@@ -419,35 +470,36 @@ const dduri_t* Texture_SearchPath(const texture_t* tex)
         tmpResult = GL_LoadDetailTexture(&image, texInst->tex, context);
         break;*/
     case GLT_SHINY: {
-        shinytex_t* sTex = shinyTextures[tex->index];
+        shinytex_t* sTex = shinyTextures[tex->_index];
         return sTex->external;
       }
     case GLT_MASK: {
-        masktex_t* mTex = maskTextures[tex->index];
+        masktex_t* mTex = maskTextures[tex->_index];
         return mTex->external;
       }
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN: {
-        skinname_t* sn = &skinNames[tex->index];
+        skinname_t* sn = &skinNames[tex->_index];
         return sn->path;
       }
     case GLT_LIGHTMAP: {
-        lightmap_t* lmap = lightmapTextures[tex->index];
+        lightmap_t* lmap = lightmapTextures[tex->_index];
         return lmap->external;
       }
     case GLT_FLARE: {
-        flaretex_t* fTex = flareTextures[tex->index];
+        flaretex_t* fTex = flareTextures[tex->_index];
         return fTex->external;
       }
     default:
-        Con_Error("Texture::SearchPath: Unknown texture type %i.", (int) tex->type);
+        Con_Error("Texture::SearchPath: Unknown type %i.", (int) tex->_glType);
         return NULL; // Unreachable.
     }
 }
 
 static texturevariant_t* findSuitableVariant(texture_t* tex, void* context)
 {
-    switch(tex->type)
+    assert(tex);
+    switch(tex->_glType)
     {
     case GLT_DETAIL:
         return chooseDetailTextureVariant(tex, context);
@@ -464,13 +516,13 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex, void* con
     {
     const texture_t* generalCase = tex->generalCase;
     byte loadResult = 0;
-    switch(generalCase->type)
+    switch(Texture_GLType(generalCase))
     {
     case GLT_FLAT:
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
-            flat_t* flat = R_FlatTextureByIndex(generalCase->index);
+            flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(generalCase));
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             assert(NULL != flat);
@@ -487,7 +539,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex, void* con
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
             material_load_params_t* params = (material_load_params_t*) context;
-            const patchtex_t* p = R_PatchTextureByIndex(generalCase->index);
+            const patchtex_t* p = R_PatchTextureByIndex(Texture_TypeIndex(generalCase));
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             assert(NULL != p);
@@ -504,7 +556,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex, void* con
         if(!noHighResPatches)
         {
             material_load_params_t* params = (material_load_params_t*) context;
-            const spritetex_t* sprTex = R_SpriteTextureByIndex(generalCase->index);
+            const spritetex_t* sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(generalCase));
             ddstring_t searchPath, suffix = { "-ck" };
             int tclass = 0, tmap = 0;
             boolean pSprite = false;
@@ -538,8 +590,8 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex, void* con
         break;
     case GLT_DETAIL: {
         const detailtex_t* dTex;
-        assert(generalCase->index >= 0 && generalCase->index < detailTexturesCount);
-        dTex = detailTextures[generalCase->index];
+        assert(Texture_TypeIndex(generalCase) >= 0 && Texture_TypeIndex(generalCase) < detailTexturesCount);
+        dTex = detailTextures[Texture_TypeIndex(generalCase)];
         if(dTex->isExternal)
         {
             ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
@@ -565,7 +617,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex, void* con
         break;
       }
     default:
-        Con_Error("Texture::Prepare: Unknown texture type %i.", (int) generalCase->type);
+        Con_Error("Texture::Prepare: Unknown texture type %i.", (int) Texture_GLType(generalCase));
         return 0; // Unreachable.
     }
     return loadResult;
@@ -577,15 +629,15 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
     assert(tex);
     {
     const texture_t* generalCase = tex->generalCase;
-    boolean monochrome    = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_MONOCHROME) != 0 : false);
-    boolean noCompression = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_NO_COMPRESSION) != 0 : false);
-    boolean scaleSharp    = ((generalCase->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_UPSCALE_AND_SHARPEN) != 0 : false);
+    boolean monochrome    = ((Texture_GLType(generalCase) != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_MONOCHROME) != 0 : false);
+    boolean noCompression = ((Texture_GLType(generalCase) != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_NO_COMPRESSION) != 0 : false);
+    boolean scaleSharp    = ((Texture_GLType(generalCase) != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & TF_UPSCALE_AND_SHARPEN) != 0 : false);
     boolean noSmartFilter = false, didDefer = false;
     byte loadResult = 0;
     image_t image;
 
     // Load in the raw source image.
-    if(generalCase->type == GLT_PATCHCOMPOSITE)
+    if(Texture_GLType(generalCase) == GLT_PATCHCOMPOSITE)
     {
         loadResult = GL_LoadDoomTexture(&image, generalCase, context);
     }
@@ -601,17 +653,17 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
 
     if(image.pixelSize == 1)
     {
-        if(monochrome && !scaleSharp && (generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE))
+        if(monochrome && !scaleSharp && (Texture_GLType(generalCase) == GLT_PATCH || Texture_GLType(generalCase) == GLT_SPRITE))
             GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
 
-        if(generalCase->type == GLT_DETAIL)
+        if(Texture_GLType(generalCase) == GLT_DETAIL)
         {
             float baMul, hiMul, loMul;
             EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
             if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
             {
                 Con_Message("Texture::Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
-                            generalCase->name, baMul, hiMul, loMul);
+                            Texture_Name(generalCase), baMul, hiMul, loMul);
             }
         }
 
@@ -630,7 +682,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
                 image.originalBits = 32;
             }
 
-            if(monochrome && (generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE))
+            if(monochrome && (Texture_GLType(generalCase) == GLT_PATCH || Texture_GLType(generalCase) == GLT_SPRITE))
                 Desaturate(image.pixels, image.width, image.height, image.pixelSize);
 
             newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.width, image.height, 0, &image.width, &image.height);
@@ -645,7 +697,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
             //BlackOutlines(image.pixels, image.width, image.height, image.pixelSize);
 
             // Back to indexed+alpha?
-            if(monochrome && (generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE))
+            if(monochrome && (Texture_GLType(generalCase) == GLT_PATCH || Texture_GLType(generalCase) == GLT_SPRITE))
             {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
                 GL_ConvertToLuminance(&image);
@@ -672,7 +724,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
     }
     else
     {
-        if(monochrome && generalCase->type == GLT_PATCH && image.pixelSize > 2)
+        if(monochrome && Texture_GLType(generalCase) == GLT_PATCH && image.pixelSize > 2)
         {
             GL_ConvertToLuminance(&image);
             AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
@@ -704,7 +756,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
     }
 
     // Lightmaps and flare textures should always be monochrome images.
-    if((generalCase->type == GLT_LIGHTMAP || (generalCase->type == GLT_FLARE && image.pixelSize != 4)) &&
+    if((Texture_GLType(generalCase) == GLT_LIGHTMAP || (Texture_GLType(generalCase) == GLT_FLARE && image.pixelSize != 4)) &&
        !(image.flags & IMGF_IS_MASKED))
     {
         // An alpha channel is required. If one is not in the image data, we'll generate it.
@@ -717,31 +769,31 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
     boolean alphaChannel;
 
     // Disable compression?
-    if(noCompression || (image.width < 128 && image.height < 128) || generalCase->type == GLT_FLARE || generalCase->type == GLT_SHINY)
+    if(noCompression || (image.width < 128 && image.height < 128) || Texture_GLType(generalCase) == GLT_FLARE || Texture_GLType(generalCase) == GLT_SHINY)
         flags |= TXCF_NO_COMPRESSION;
 
-    if(!(generalCase->type == GLT_MASK || generalCase->type == GLT_SHINY || generalCase->type == GLT_LIGHTMAP) &&
-       (image.pixelSize > 2 || generalCase->type == GLT_MODELSKIN))
+    if(!(Texture_GLType(generalCase) == GLT_MASK || Texture_GLType(generalCase) == GLT_SHINY || Texture_GLType(generalCase) == GLT_LIGHTMAP) &&
+       (image.pixelSize > 2 || Texture_GLType(generalCase) == GLT_MODELSKIN))
         flags |= TXCF_APPLY_GAMMACORRECTION;
 
-    if(generalCase->type == GLT_SPRITE /*|| generalCase->type == GLT_PATCH*/)
+    if(Texture_GLType(generalCase) == GLT_SPRITE /*|| Texture_GLType(generalCase) == GLT_PATCH*/)
         flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
-    if(!monochrome && !(generalCase->type == GLT_DETAIL || generalCase->type == GLT_SYSTEM || generalCase->type == GLT_SHINY || generalCase->type == GLT_MASK))
+    if(!monochrome && !(Texture_GLType(generalCase) == GLT_DETAIL || Texture_GLType(generalCase) == GLT_SYSTEM || Texture_GLType(generalCase) == GLT_SHINY || Texture_GLType(generalCase) == GLT_MASK))
         flags |= TXCF_EASY_UPLOAD;
 
     if(!monochrome)
     {
-        if(generalCase->type == GLT_SPRITE || generalCase->type == GLT_MODELSKIN || generalCase->type == GLT_MODELSHINYSKIN)
+        if(Texture_GLType(generalCase) == GLT_SPRITE || Texture_GLType(generalCase) == GLT_MODELSKIN || Texture_GLType(generalCase) == GLT_MODELSHINYSKIN)
         {
             if(image.pixelSize > 1)
                 flags |= TXCF_UPLOAD_ARG_RGBDATA;
         }
-        else if(image.pixelSize > 2 && !(generalCase->type == GLT_SHINY || generalCase->type == GLT_MASK || generalCase->type == GLT_LIGHTMAP))
+        else if(image.pixelSize > 2 && !(Texture_GLType(generalCase) == GLT_SHINY || Texture_GLType(generalCase) == GLT_MASK || Texture_GLType(generalCase) == GLT_LIGHTMAP))
             flags |= TXCF_UPLOAD_ARG_RGBDATA;
     }
 
-    if(generalCase->type == GLT_DETAIL)
+    if(Texture_GLType(generalCase) == GLT_DETAIL)
     {
         /**
          * Detail textures are faded to gray depending on the contrast
@@ -751,17 +803,17 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
         grayMipmap = MINMAX_OF(0, *((float*)context) * 255, 255);
         flags |= TXCF_GRAY_MIPMAP;
     }
-    else if(!(generalCase->type == GLT_SHINY || generalCase->type == GLT_PATCH ||
-              generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE ||
-             (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
+    else if(!(Texture_GLType(generalCase) == GLT_SHINY || Texture_GLType(generalCase) == GLT_PATCH ||
+              Texture_GLType(generalCase) == GLT_LIGHTMAP || Texture_GLType(generalCase) == GLT_FLARE ||
+             (Texture_GLType(generalCase) == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
         flags |= TXCF_MIPMAP;
 
-    if(generalCase->type == GLT_PATCHCOMPOSITE || generalCase->type == GLT_PATCH ||
-       generalCase->type == GLT_SPRITE || generalCase->type == GLT_FLAT)
+    if(Texture_GLType(generalCase) == GLT_PATCHCOMPOSITE || Texture_GLType(generalCase) == GLT_PATCH ||
+       Texture_GLType(generalCase) == GLT_SPRITE || Texture_GLType(generalCase) == GLT_FLAT)
         alphaChannel = ((/*loadResult == 2 &&*/ image.pixelSize == 4) ||
                         (/*loadResult == 1 &&*/ image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)));
     else
-        alphaChannel = image.pixelSize != 3 && !(generalCase->type == GLT_MASK || generalCase->type == GLT_SHINY);
+        alphaChannel = image.pixelSize != 3 && !(Texture_GLType(generalCase) == GLT_MASK || Texture_GLType(generalCase) == GLT_SHINY);
 
     if(alphaChannel)
         flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
@@ -773,13 +825,13 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
     {
         dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
     }
-    else if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE || generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE)
+    else if(Texture_GLType(generalCase) == GLT_FLAT || Texture_GLType(generalCase) == GLT_PATCHCOMPOSITE || Texture_GLType(generalCase) == GLT_PATCH || Texture_GLType(generalCase) == GLT_SPRITE)
     {
         dglFormat = ( image.pixelSize > 1?
                         ( alphaChannel? DGL_RGBA : DGL_RGB) :
                         ( alphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8 ) );
     }
-    else if(generalCase->type == GLT_MODELSKIN || generalCase->type == GLT_MODELSHINYSKIN)
+    else if(Texture_GLType(generalCase) == GLT_MODELSKIN || Texture_GLType(generalCase) == GLT_MODELSHINYSKIN)
     {
         dglFormat = ( alphaChannel? DGL_RGBA : DGL_RGB );
     }
@@ -790,28 +842,28 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
                       image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
     }
 
-    if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE || generalCase->type == GLT_MASK)
+    if(Texture_GLType(generalCase) == GLT_FLAT || Texture_GLType(generalCase) == GLT_PATCHCOMPOSITE || Texture_GLType(generalCase) == GLT_MASK)
         magFilter = glmode[texMagMode];
-    else if(generalCase->type == GLT_SPRITE)
+    else if(Texture_GLType(generalCase) == GLT_SPRITE)
         magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
     else
         magFilter = GL_LINEAR;
 
-    if(generalCase->type == GLT_DETAIL)
+    if(Texture_GLType(generalCase) == GLT_DETAIL)
         minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    else if(generalCase->type == GLT_PATCH || (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
+    else if(Texture_GLType(generalCase) == GLT_PATCH || (Texture_GLType(generalCase) == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
         minFilter = GL_NEAREST;
-    else if(generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE || generalCase->type == GLT_SHINY)
+    else if(Texture_GLType(generalCase) == GLT_LIGHTMAP || Texture_GLType(generalCase) == GLT_FLARE || Texture_GLType(generalCase) == GLT_SHINY)
         minFilter = GL_LINEAR;
     else
         minFilter = glmode[mipmapping];
 
-    if(generalCase->type == GLT_PATCH || generalCase->type == GLT_FLARE || (generalCase->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
+    if(Texture_GLType(generalCase) == GLT_PATCH || Texture_GLType(generalCase) == GLT_FLARE || (Texture_GLType(generalCase) == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
         anisoFilter = 0 /*no anisotropic filtering*/;
     else
         anisoFilter = texAniso; /// \fixme is "best" truely a suitable default for ALL texture types?
 
-    if(generalCase->type == GLT_PATCH || generalCase->type == GLT_SPRITE || generalCase->type == GLT_LIGHTMAP || generalCase->type == GLT_FLARE)
+    if(Texture_GLType(generalCase) == GLT_PATCH || Texture_GLType(generalCase) == GLT_SPRITE || Texture_GLType(generalCase) == GLT_LIGHTMAP || Texture_GLType(generalCase) == GLT_FLARE)
         wrapS = wrapT = GL_CLAMP_TO_EDGE;
     else
         wrapS = wrapT = GL_REPEAT;
@@ -823,7 +875,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
 #ifdef _DEBUG
     if(!didDefer)
         Con_Message("Texture::Prepare: Uploaded \"%s\" (%i) while not busy! "
-                    "Should be precached in busy mode?\n", generalCase->name, tex->glName);
+                    "Should be precached in busy mode?\n", Texture_Name(generalCase), tex->glName);
 #endif
 
     /**
@@ -832,7 +884,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
      * than the maximum texture size.
      */
     { float* tc = tex->coords;
-    if((generalCase->type == GLT_SPRITE) && GL_state.features.texNonPowTwo &&
+    if((Texture_GLType(generalCase) == GLT_SPRITE) && GL_state.features.texNonPowTwo &&
        ((context && ((material_load_params_t*)context)->pSprite) ||
         !(flags & TXCF_UPLOAD_ARG_NOSTRETCH)) &&
        !(image.width < MINTEXWIDTH || image.height < MINTEXHEIGHT))
@@ -848,7 +900,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
 
     tex->isMasked = (image.flags & IMGF_IS_MASKED) != 0;
 
-    if(!(generalCase->type == GLT_DETAIL || generalCase->type == GLT_SPRITE) &&
+    if(!(Texture_GLType(generalCase) == GLT_DETAIL || Texture_GLType(generalCase) == GLT_SPRITE) &&
        context && (((material_load_params_t*)context)->flags & MLF_LOAD_AS_SKY))
     {
         averagecolor_analysis_t* avgTopColor = Z_Malloc(sizeof(*avgTopColor), PU_APPSTATIC, 0);
@@ -864,7 +916,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
         }
     }
 
-    if(generalCase->type == GLT_SPRITE)
+    if(Texture_GLType(generalCase) == GLT_SPRITE)
     {
         pointlight_analysis_t* pl = Z_Malloc(sizeof(*pl), PU_APPSTATIC, 0);
         tex->analyses[TA_SPRITE_AUTOLIGHT] = pl;
@@ -879,7 +931,7 @@ static byte prepareVariant(texturevariant_t* tex, void* context)
         }
     }
 
-    if(generalCase->type == GLT_FLAT || generalCase->type == GLT_PATCHCOMPOSITE)
+    if(Texture_GLType(generalCase) == GLT_FLAT || Texture_GLType(generalCase) == GLT_PATCHCOMPOSITE)
     {
         ambientlight_analysis_t* al = Z_Malloc(sizeof(*al), PU_APPSTATIC, 0);
         tex->analyses[TA_WORLD_AMBIENTLIGHT] = al;
@@ -937,12 +989,12 @@ static initializeVariant(texturevariant_t* variant, texture_t* generalCase,
     assert(variant && generalCase);
     memset(variant, 0, sizeof(texturevariant_t));
     variant->generalCase = generalCase;
-    applyVariantSpecification(&variant->spec, generalCase->type, context);
+    applyVariantSpecification(&variant->spec, Texture_GLType(generalCase), context);
 }
 
 texturevariant_t* Texture_Prepare(texture_t* tex, void* context, byte* result)
 {
-    assert(tex && VALID_GLTEXTURETYPE(tex->type));
+    assert(tex);
     {
     texturevariant_t* variant = NULL;
     boolean variantIsNew = false;
@@ -950,7 +1002,7 @@ texturevariant_t* Texture_Prepare(texture_t* tex, void* context, byte* result)
     byte loadResult;
 
     // Rationalize usage context paramaters.
-    if(tex->type == GLT_DETAIL)
+    if(tex->_glType == GLT_DETAIL)
     {   // Round off the contrast to nearest 1/10
         if(context)
             contrast = (int) ((*((float*) context) + .05f) * 10) / 10.f;

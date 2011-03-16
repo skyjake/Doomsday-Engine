@@ -311,7 +311,7 @@ static material_t* createMaterialFromDef(short width, short height, byte flags,
     { uint i;
     for(i = 0; i < mat->numLayers; ++i)
     {
-        mat->layers[i].tex = tex->id;
+        mat->layers[i].tex = Texture_Id(tex);
         mat->layers[i].glow = def->layers[i].stages[0].glow;
         mat->layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
         mat->layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
@@ -719,7 +719,7 @@ Con_Message("Warning: Attempted to create/update Material in unknown Namespace '
         // Update the (possibly new) meta data.
         mat->flags = flags;
         if(tex)
-            mat->layers[0].tex = tex->id;
+            mat->layers[0].tex = Texture_Id(tex);
         if(width > 0)
             mat->width = width;
         if(height > 0)
@@ -1086,7 +1086,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             int magMode = glmode[texMagMode];
             vec2_t scale;
 
-            if(tex->type == GLT_SPRITE)
+            if(GLT_SPRITE == Texture_GLType(tex))
                 magMode = filterSprites? GL_LINEAR : GL_NEAREST;
             V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
 
@@ -1108,7 +1108,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             }
 
             /// \fixme what about the other texture types?
-            if(tex->type == GLT_PATCHCOMPOSITE || tex->type == GLT_FLAT)
+            if(GLT_PATCHCOMPOSITE == Texture_GLType(tex) || GLT_FLAT == Texture_GLType(tex))
             {
                 const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*) layerTextures[0]->analyses[TA_WORLD_AMBIENTLIGHT];
                 assert(ambientLight);
@@ -1138,8 +1138,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             {
                 float width, height, scale;
 
-                width  = Texture_GetWidth(detailTex->generalCase);
-                height = Texture_GetHeight(detailTex->generalCase);
+                width  = Texture_Width(detailTex->generalCase);
+                height = Texture_Height(detailTex->generalCase);
                 scale  = MAX_OF(1, detail->scale);
                 // Apply the global scaling factor.
                 if(detailScale > .001f)
@@ -1159,8 +1159,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
 
                 if(shinyMaskTex)
                     setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskTex,
-                               1.f / (snapshot->width * maskTextures[shinyMaskTex->generalCase->index]->width),
-                               1.f / (snapshot->height * maskTextures[shinyMaskTex->generalCase->index]->height),
+                               1.f / (snapshot->width * maskTextures[Texture_TypeIndex(shinyMaskTex->generalCase)]->width),
+                               1.f / (snapshot->height * maskTextures[Texture_TypeIndex(shinyMaskTex->generalCase)]->height),
                                snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
             }
         }

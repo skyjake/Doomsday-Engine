@@ -633,7 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     params.tex.border = 1;
     Materials_Prepare(&ms, mat, false, &params);
 
-    sprTex = R_SpriteTextureByIndex(ms.units[MTU_PRIMARY].tex->generalCase->index);
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
     assert(NULL != sprTex);
 
     info->numFrames = sprDef->numFrames;
@@ -889,7 +889,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureByIndex(ms.units[MTU_PRIMARY].tex->generalCase->index);
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
     assert(NULL != sprTex);
 
     params->width  =  ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
@@ -1138,7 +1138,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureByIndex(ms.units[MTU_PRIMARY].tex->generalCase->index);
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
     assert(NULL != sprTex);
 
     // Align to the view plane?
@@ -1458,7 +1458,7 @@ if(!mat)
 
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
-        if(ms.units[MTU_PRIMARY].tex->generalCase->type != GLT_SPRITE)
+        if(GLT_SPRITE != Texture_GLType(ms.units[MTU_PRIMARY].tex->generalCase))
             return; // *Very* strange...
         tex = ms.units[MTU_PRIMARY].tex;
 

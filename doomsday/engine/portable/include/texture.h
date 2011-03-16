@@ -35,14 +35,24 @@ struct texture_variantlist_node_s;
  * they may be managed transparently.
  */
 typedef struct texture_s {
-    textureid_t id;
-    char name[9];
-    gltexture_type_t type;
-    /// Per-type index (e.g., if type=GLT_FLAT this is a flat index).
-    int index;
-    struct texture_variantlist_node_s* variants;
-    uint hashNext; // 1-based index
+    /// Unique identifier.
+    textureid_t _id;
+
+    /// List of variants (e.g., color translations).
+    struct texture_variantlist_node_s* _variants;
+
+    /// Type specific index (e.g., if gltype=GLT_FLAT this is a flat index).
+    int _index;
+
+    /// Symbolic name.
+    char _name[9];
+
+    /// \deprecated Old GLType identifier.
+    gltexture_type_t _glType;
 } texture_t;
+
+texture_t* Texture_Construct(textureid_t id, const char name[9],
+    gltexture_type_t glType, int index);
 
 void Texture_Destruct(texture_t* tex);
 
@@ -54,32 +64,66 @@ void Texture_Destruct(texture_t* tex);
  */
 void Texture_AddVariant(texture_t* tex, struct texturevariant_s* variant);
 
-const char* Texture_Name(const texture_t* tex);
-
-float Texture_GetWidth(const texture_t* tex);
-
-float Texture_GetHeight(const texture_t* tex);
-
-boolean Texture_IsFromIWAD(const texture_t* tex);
-
 /**
- * Sets the minification mode of the specified texture.
+ * Iterate over all the derived TextureVariants, making a callback for each.
+ * Iteration ends when all variants have been visited or a callback returns
+ * non-zero.
  *
- * @param tex  The texture to be updated.
- * @param minMode  The GL minification mode to set.
+ * @param callback  Callback to make for each processed variant.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
  */
-void Texture_SetMinMode(texture_t* tex, int minMode);
-
-/**
- * Deletes all GL texture instances for the specified texture.
- */
-void Texture_ReleaseTextures(texture_t* tex);
-
-int Texture_IterateInstances(texture_t* tex,
+int Texture_IterateVariants(texture_t* tex,
     int (*callback)(struct texturevariant_s* instance, void* paramaters),
     void* paramaters);
 
+/**
+ * Attempt to prepare (upload to GL) an instance of Texture which fulfills
+ * the variant specification defined by the usage context.
+ *
+ * @param context  Usage-specific context data (if any).
+ * @param result  Result of this process:
+ *      @c 0== Failed: No suitable variant could be found/prepared.
+ *      @c 1== Success: Suitable variant prepared from an original resource.
+ *      @c 2== Success: Suitable variant prepared from a replacement resource.
+ * @return  Prepared variant if successful else @c NULL.
+ */
 struct texturevariant_s* Texture_Prepare(texture_t* tex, void* context,
     byte* result);
+
+/// @return  Unique identifier.
+textureid_t Texture_Id(const texture_t* tex);
+
+/// @return  Symbolic name.
+const char* Texture_Name(const texture_t* tex);
+
+/// @return  @c true iff Texture represents an image loaded from an IWAD.
+boolean Texture_IsFromIWAD(const texture_t* tex);
+
+/// @return  Logical width (not necessarily the same as pixel width).
+int Texture_Width(const texture_t* tex);
+
+/// @return  Logical height (not necessarily the same as pixel height).
+int Texture_Height(const texture_t* tex);
+
+/// @return  Type-specific index of the wrapped image object.
+int Texture_TypeIndex(const texture_t* tex);
+
+/// \deprecated
+/// @return  Old gltype identifier.
+gltexture_type_t Texture_GLType(const texture_t* tex);
+
+/**
+ * Delete all prepared GL texture objects.
+ */
+void Texture_ReleaseGLTextures(texture_t* tex);
+
+/**
+ * Set the GL minification mode for all prepared texture objects.
+ *
+ * @param minMode  The GL minification mode to set.
+ */
+void Texture_SetGLMinMode(texture_t* tex, int minMode);
 
 #endif /* LIBDENG_GL_TEXTURE_H */

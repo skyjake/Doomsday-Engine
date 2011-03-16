@@ -57,12 +57,6 @@
 #include "texture.h"
 #include "texturevariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define TEXTURE_NAME_HASH_SIZE (512)
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct {
     const char* name; // Format/handler name.
     const char* ext; // Expected file extension.
@@ -70,13 +64,16 @@ typedef struct {
     const char* (*getLastErrorFunc) (void);
 } imagehandler_t;
 
-typedef struct texturetype_data_s {
-    uint hashTable[TEXTURE_NAME_HASH_SIZE];
-} texturetype_data_t;
+typedef struct texturenamespace_hashnode_s {
+    struct texturenamespace_hashnode_s* next;
+    uint textureIndex; // 1-based index
+} texturenamespace_hashnode_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+#define TEXTURENAMESPACE_HASH_SIZE (512)
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+typedef struct texturenamespace_s {
+    texturenamespace_hashnode_t* hashTable[TEXTURENAMESPACE_HASH_SIZE];
+} texturenamespace_t;
 
 D_CMD(LowRes);
 D_CMD(ResetTextures);
@@ -84,17 +81,11 @@ D_CMD(MipMap);
 
 void GL_DoResetDetailTextures(const cvar_t* /*cvar*/);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void calcGammaTable(void);
 
 static boolean tryLoadPCX(image_t* img, DFILE* file);
 static boolean tryLoadPNG(image_t* img, DFILE* file);
 static boolean tryLoadTGA(image_t* img, DFILE* file);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -131,8 +122,6 @@ ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
 // Names of the flare textures (halos).
 ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean texInited = false; // Init done.
 
 // Image file handlers.
@@ -143,12 +132,9 @@ static const imagehandler_t handlers[] = {
     { 0 } // Terminate.
 };
 
-// gltextures.
-static uint numTextures;
-static texture_t** glTextures;
-static texturetype_data_t glTextureTypeData[NUM_GLTEXTURE_TYPES];
-
-// CODE --------------------------------------------------------------------
+static uint texturesCount;
+static texture_t** textures;
+static texturenamespace_t textureNamespaces[NUM_GLTEXTURE_TYPES];
 
 void GL_TexRegister(void)
 {
@@ -189,7 +175,7 @@ static gltexture_type_t TextureTypeForTextureNamespace(texturenamespaceid_t texN
 
 /**
  * This is a hash function. Given a texture name it generates a
- * somewhat-random number between 0 and TEXTURE_NAME_HASH_SIZE.
+ * somewhat-random number between 0 and TEXTURENAMESPACE_HASH_SIZE.
  *
  * @return              The generated hash index.
  */
@@ -212,7 +198,7 @@ static uint hashForTextureName(const char* name)
         }
     }
 
-    return key % TEXTURE_NAME_HASH_SIZE;
+    return key % TEXTURENAMESPACE_HASH_SIZE;
 }
 
 /**
@@ -225,18 +211,17 @@ static uint hashForTextureName(const char* name)
  * @return  Ptr to the found texture_t else, @c NULL.
  */
 static texture_t* getTextureByName(const char* name, uint hash,
-    gltexture_type_t type)
+    gltexture_type_t glType)
 {
-    if(glTextureTypeData[type].hashTable[hash])
+    assert(VALID_GLTEXTURETYPE(glType));
+    if(name && name[0])
     {
-        texture_t* tex = glTextures[glTextureTypeData[type].hashTable[hash] - 1];
-        for(;;)
+        const texturenamespace_hashnode_t* node;
+        for(node = textureNamespaces[glType].hashTable[hash]; node; node = node->next)
         {
-            if(tex->type == type && !strncmp(tex->name, name, 8))
+            texture_t* tex = textures[node->textureIndex - 1];
+            if(Texture_GLType(tex) == glType && !strncmp(Texture_Name(tex), name, 8))
                 return tex;
-            if(!tex->hashNext)
-                break;
-            tex = glTextures[tex->hashNext - 1];
         }
     }
     return 0; // Not found.
@@ -265,12 +250,12 @@ void GL_EarlyInitTextureManager(void)
     GL_InitSmartFilterHQ2x();
     calcGammaTable();
 
-    numTextures = 0;
-    glTextures = NULL;
+    textures = NULL;
+    texturesCount = 0;
 
     { int i;
     for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
-        memset(glTextureTypeData[i].hashTable, 0, sizeof(glTextureTypeData[i].hashTable));
+        memset(textureNamespaces[i].hashTable, 0, sizeof(textureNamespaces[i].hashTable));
     }
 }
 
@@ -314,22 +299,35 @@ void GL_DestroyTextures(void)
 {
     if(!texInited) return;
 
-    if(numTextures)
+    if(texturesCount)
     {
         GL_ClearTextures();
         { uint i;
-        for(i = 0; i < numTextures; ++i)
-            Texture_Destruct(glTextures[i]);
+        for(i = 0; i < texturesCount; ++i)
+            Texture_Destruct(textures[i]);
         }
-        Z_Free(glTextures);
+        Z_Free(textures);
     }
-    glTextures = 0;
-    numTextures = 0;
+    textures = 0;
+    texturesCount = 0;
 
     { uint i;
     for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
-        memset(glTextureTypeData[i].hashTable, 0, sizeof(glTextureTypeData[i].hashTable));
-    }
+    {
+        texturenamespace_t* texNamespace = &textureNamespaces[i];
+        uint j;
+        for(j = 0; j < TEXTURENAMESPACE_HASH_SIZE; ++j)
+        {
+            texturenamespace_hashnode_t* node = texNamespace->hashTable[j];
+            while(node)
+            {
+                texturenamespace_hashnode_t* next = node->next;
+                free(node);
+                node = next;
+            }
+        }
+        memset(texNamespace->hashTable, 0, sizeof(textureNamespaces[i].hashTable));
+    }}
 }
 
 void GL_ClearTextures(void)
@@ -1015,7 +1013,7 @@ byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex, void* contex
 {
     assert(image && tex);
     {
-    detailtex_t* dTex = detailTextures[tex->index];
+    detailtex_t* dTex = detailTextures[Texture_TypeIndex(tex)];
     const char* lumpName;
     byte result = 0;
     DFILE* file;
@@ -1082,7 +1080,7 @@ byte GL_LoadFlatLump(image_t* image, const texture_t* tex, void* context)
 {
     assert(image && tex);
     {
-    flat_t* flat = R_FlatTextureByIndex(tex->index);
+    flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(tex));
     byte result = 0;
     DFILE* file;
     assert(NULL != flat);
@@ -1134,7 +1132,7 @@ byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, void* context)
     byte border = 0;
     lumpnum_t lumpNum;
 
-    sprTex = R_SpriteTextureByIndex(tex->index);
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex));
     assert(NULL != sprTex);
 
     if(params)
@@ -1173,7 +1171,7 @@ byte GL_LoadDoomPatchLump(image_t* image, const texture_t* tex, void* context)
     lumpnum_t lumpNum;
     patchtex_t* p;
 
-    p = R_PatchTextureByIndex(tex->index);
+    p = R_PatchTextureByIndex(Texture_TypeIndex(tex));
     assert(NULL != p);
     lumpNum = p->lump;
 
@@ -1343,7 +1341,7 @@ byte GL_LoadDoomTexture(image_t* image, const texture_t* tex, void* context)
         zeroMask = (params->tex.flags & TF_ZEROMASK)? true : false;
     }
 
-    texDef = R_PatchCompositeTextureByIndex(tex->index);
+    texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
 
     // Try to load a high resolution version of this texture?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
@@ -1813,23 +1811,24 @@ void GL_DeleteRawImages(void)
 
 static __inline texture_t* getTexture(textureid_t id)
 {
-    if(id != 0 && id <= numTextures)
-        return glTextures[id - 1];
+    if(id != 0 && id <= texturesCount)
+        return textures[id - 1];
     return NULL;
 }
 
 void GL_SetAllTexturesMinMode(int minMode)
 {
     uint i;
-    for(i = 0; i < numTextures; ++i)
-        Texture_SetMinMode(glTextures[i], minMode);
+    for(i = 0; i < texturesCount; ++i)
+        Texture_SetGLMinMode(textures[i], minMode);
 }
 
 const texture_t* GL_CreateTexture(const char* rawName, uint index,
-    gltexture_type_t type)
+    gltexture_type_t glType)
 {
-    assert(VALID_GLTEXTURETYPE(type));
+    assert(VALID_GLTEXTURETYPE(glType));
     {
+    texturenamespace_hashnode_t* node;
     texture_t* tex;
     uint hash;
 
@@ -1838,13 +1837,13 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
 
     // Check if we've already created a texture for this.
     { uint i;
-    for(i = 0; i < numTextures; ++i)
+    for(i = 0; i < texturesCount; ++i)
     {
-        tex = glTextures[i];
+        tex = textures[i];
 
-        if(tex->type == type && tex->index == index)
+        if(Texture_GLType(tex) == glType && Texture_TypeIndex(tex) == index)
         {
-            Texture_ReleaseTextures(tex);
+            Texture_ReleaseGLTextures(tex);
             return tex; // Yep, return it.
         }
     }}
@@ -1853,33 +1852,20 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
      * A new texture.
      */
 
-    tex = Z_Malloc(sizeof(*tex), PU_APPSTATIC, 0);
-    tex->type = type;
-    tex->index = index;
-    tex->variants = NULL;
-    tex->id = numTextures + 1; // 1-based index.
-    // Prepare 'name'.
-    memset(tex->name, 0, sizeof(tex->name));
-    { int i;
-    for(i = 0; *rawName && i < 8; ++i, rawName++)
-        tex->name[i] = tolower(*rawName);
-    }
+    tex = Texture_Construct(texturesCount+1/*1-based index*/, rawName, glType, index);
 
     // We also hash the name for faster searching.
-    hash = hashForTextureName(tex->name);
-    tex->hashNext = glTextureTypeData[type].hashTable[hash];
-    glTextureTypeData[type].hashTable[hash] = numTextures + 1; // 1-based index.
+    hash = hashForTextureName(Texture_Name(tex));
+    if(NULL == (node = (texturenamespace_hashnode_t*) malloc(sizeof(*node))))
+        Con_Error("GL_CreateTexture: Failed on allocation of %lu bytes for "
+                  "namespace hashnode.", (unsigned long) sizeof(*node));
+    node->textureIndex = texturesCount + 1; // 1-based index.
+    node->next = textureNamespaces[glType].hashTable[hash];
+    textureNamespaces[glType].hashTable[hash] = node;
 
-    /**
-     * Link the new texture into the global list of gltextures.
-     */
-
-    // Resize the existing list.
-    glTextures =
-        Z_Realloc(glTextures, sizeof(texture_t*) * ++numTextures,
-                  PU_APPSTATIC);
-    // Add the new texture;
-    glTextures[numTextures - 1] = tex;
+    // Link the new texture into the global list of gltextures.
+    textures = Z_Realloc(textures, sizeof(texture_t*) * ++texturesCount, PU_APPSTATIC);
+    textures[texturesCount - 1] = tex;
 
     return tex;
     }
@@ -1889,7 +1875,7 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent)
 {
     const texture_t* glTex;
     if((glTex = GL_TextureByUri2(uri, silent)))
-        return glTex->index + 1;
+        return Texture_TypeIndex(glTex) + 1; // 1-based index.
     if(!silent)
     {
         ddstring_t* path = Uri_ToString(uri);
@@ -1912,26 +1898,23 @@ const texturevariant_t* GL_PrepareTexture(textureid_t id, void* context,
 
 void GL_ReleaseTexture(textureid_t id)
 {
-    Texture_ReleaseTextures(getTexture(id));
+    Texture_ReleaseGLTextures(getTexture(id));
 }
 
-void GL_DeleteAllTexturesForTextures(gltexture_type_t type)
+void GL_DeleteAllTexturesForTextures(gltexture_type_t glType)
 {
-    uint                i;
-
-    if(type != GLT_ANY && (type < 0 || type > NUM_GLTEXTURE_TYPES))
+    if(glType != GLT_ANY && (glType < 0 || glType > NUM_GLTEXTURE_TYPES))
         Con_Error("GL_DeleteAllTexturesForTextures: Internal error, "
-                  "invalid type %i.", (int) type);
+                  "invalid type %i.", (int) glType);
 
-    for(i = 0; i < numTextures; ++i)
+    { uint i;
+    for(i = 0; i < texturesCount; ++i)
     {
-        texture_t*        tex = glTextures[i];
-
-        if(type != GLT_ANY && tex->type != type)
+        texture_t* tex = textures[i];
+        if(glType != GLT_ANY && Texture_GLType(tex) != glType)
             continue;
-
-        Texture_ReleaseTextures(tex);
-    }
+        Texture_ReleaseGLTextures(tex);
+    }}
 }
 
 const texture_t* GL_ToTexture(textureid_t id)
@@ -1973,12 +1956,12 @@ const texture_t* GL_TextureByUri(const dduri_t* uri)
 
 const texture_t* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace)
 {
-    gltexture_type_t type = TextureTypeForTextureNamespace(texNamespace);
+    gltexture_type_t glType = TextureTypeForTextureNamespace(texNamespace);
     uint i;
-    for(i = 0; i < numTextures; ++i)
+    for(i = 0; i < texturesCount; ++i)
     {
-        texture_t* tex = glTextures[i];
-        if(tex->type == type && tex->index == index)
+        texture_t* tex = textures[i];
+        if(Texture_GLType(tex) == glType && Texture_TypeIndex(tex) == index)
             return tex;
     }
     return 0; // Not found.
