@@ -1645,6 +1645,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\texturevariant.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\ui2_main.c"
 				>
 			</File>

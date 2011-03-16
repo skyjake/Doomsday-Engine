@@ -28,16 +28,13 @@
 
 struct texturevariant_s;
 
-// Material load flags:
-#define MLF_LOAD_AS_SKY             0x0001
-
 typedef struct material_load_params_s {
-    short           flags; // MLF_* material load flags
-    int             tmap, tclass;
-    boolean         pSprite;
+    boolean prepareForSkySphere;
+    int tmap, tclass;
+    boolean pSprite;
     struct {
-        byte            flags; // @see TextureFlags
-        byte            border;
+        byte flags; /// @see textureFlags
+        byte border;
     } tex;
 } material_load_params_t;
 

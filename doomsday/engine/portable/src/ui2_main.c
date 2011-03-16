@@ -525,7 +525,7 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     {
         material_snapshot_t ms;
         Materials_Prepare(&ms, p->_bg.material, true, NULL);
-        tex = ms.units[MTU_PRIMARY].tex->glName;
+        tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     }
     else
         tex = p->_bg.tex;
@@ -1001,10 +1001,10 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 if(ms.units[MTU_PRIMARY].tex)
                 {
                     /// \todo Utilize *all* properties of the Material.
-                    tex = ms.units[MTU_PRIMARY].tex->glName;
+                    tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
                     V3_Set(offset, -ms.units[MTU_PRIMARY].offset[0], -ms.units[MTU_PRIMARY].offset[1], 0);
-                    V3_Set(dimensions, ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2, ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2, 0);
-                    V2_Set(texScale, ms.units[MTU_PRIMARY].tex->coords[0], ms.units[MTU_PRIMARY].tex->coords[1]);
+                    V3_Set(dimensions, ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2, ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2, 0);
+                    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &texScale[0], &texScale[1]);
                 }
             }
             break;

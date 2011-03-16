@@ -703,7 +703,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         const texturevariant_t* tex;
         if(NULL != sn && NULL != (tex = GL_PrepareTexture(sn->id, NULL, NULL)))
         {
-            shinyTexture = tex->glName;
+            shinyTexture = TextureVariant_GLName(tex);
         }
         else
         {
@@ -782,7 +782,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             material_snapshot_t ms;
 
             Materials_Prepare(&ms, mat, true, NULL);
-            skinTexture = ms.units[MTU_PRIMARY].tex->glName;
+            skinTexture = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
         }
         else
         {
@@ -808,7 +808,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             params.tex.flags = (!mdl->allowTexComp? TF_NO_COMPRESSION : 0);
 
             if((tex = GL_PrepareTexture(sn->id, &params, NULL)))
-                skinTexture = tex->glName;
+                skinTexture = TextureVariant_GLName(tex);
         }
     }
 

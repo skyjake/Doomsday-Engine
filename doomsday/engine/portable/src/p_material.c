@@ -145,7 +145,7 @@ void Material_DeleteTextures(material_t* mat)
     assert(mat);
     {uint i;
     for(i = 0; i < mat->numLayers; ++i)
-        GL_ReleaseTexture(mat->layers[i].tex);
+        GL_ReleaseTextureVariants(GL_ToTexture(mat->layers[i].tex));
     }
 }
 

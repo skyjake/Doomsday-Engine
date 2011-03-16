@@ -1188,7 +1188,7 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
 static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflection[NUM_TEXMAP_UNITS],
     const material_snapshot_t* msA, float inter, const material_snapshot_t* msB)
 {
-    RTU(main, TU_PRIMARY).tex       = MSU(msA, MTU_PRIMARY).tex->glName;
+    RTU(main, TU_PRIMARY).tex       = TextureVariant_GLName(MSU(msA, MTU_PRIMARY).tex);
     RTU(main, TU_PRIMARY).magMode   = MSU(msA, MTU_PRIMARY).magMode;
     RTU(main, TU_PRIMARY).scale[0]  = MSU(msA, MTU_PRIMARY).scale[0];
     RTU(main, TU_PRIMARY).scale[1]  = MSU(msA, MTU_PRIMARY).scale[1];
@@ -1199,7 +1199,7 @@ static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflect
 
     if(MSU(msA, MTU_DETAIL).tex)
     {
-        RTU(main, TU_PRIMARY_DETAIL).tex       = MSU(msA, MTU_DETAIL).tex->glName;
+        RTU(main, TU_PRIMARY_DETAIL).tex       = TextureVariant_GLName(MSU(msA, MTU_DETAIL).tex);
         RTU(main, TU_PRIMARY_DETAIL).magMode   = MSU(msA, MTU_DETAIL).magMode;
         RTU(main, TU_PRIMARY_DETAIL).scale[0]  = MSU(msA, MTU_DETAIL).scale[0];
         RTU(main, TU_PRIMARY_DETAIL).scale[1]  = MSU(msA, MTU_DETAIL).scale[1];
@@ -1211,7 +1211,7 @@ static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflect
 
     if(msB && MSU(msB, MTU_PRIMARY).tex)
     {
-        RTU(main, TU_INTER).tex       = MSU(msB, MTU_PRIMARY).tex->glName;
+        RTU(main, TU_INTER).tex       = TextureVariant_GLName(MSU(msB, MTU_PRIMARY).tex);
         RTU(main, TU_INTER).magMode   = MSU(msB, MTU_PRIMARY).magMode;
         RTU(main, TU_INTER).scale[0]  = MSU(msB, MTU_PRIMARY).scale[0];
         RTU(main, TU_INTER).scale[1]  = MSU(msB, MTU_PRIMARY).scale[1];
@@ -1226,7 +1226,7 @@ static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflect
 
     if(msB && MSU(msB, MTU_DETAIL).tex)
     {
-        RTU(main, TU_INTER_DETAIL).tex       = MSU(msB, MTU_DETAIL).tex->glName;
+        RTU(main, TU_INTER_DETAIL).tex       = TextureVariant_GLName(MSU(msB, MTU_DETAIL).tex);
         RTU(main, TU_INTER_DETAIL).magMode   = MSU(msB, MTU_DETAIL).magMode;
         RTU(main, TU_INTER_DETAIL).scale[0]  = MSU(msB, MTU_DETAIL).scale[0];
         RTU(main, TU_INTER_DETAIL).scale[1]  = MSU(msB, MTU_DETAIL).scale[1];
@@ -1241,7 +1241,7 @@ static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflect
 
     if(MSU(msA, MTU_REFLECTION).tex)
     {
-        RTU(reflection, TU_PRIMARY).tex       = MSU(msA, MTU_REFLECTION).tex->glName;
+        RTU(reflection, TU_PRIMARY).tex       = TextureVariant_GLName(MSU(msA, MTU_REFLECTION).tex);
         RTU(reflection, TU_PRIMARY).magMode   = MSU(msA, MTU_REFLECTION).magMode;
         RTU(reflection, TU_PRIMARY).scale[0]  = MSU(msA, MTU_REFLECTION).scale[0];
         RTU(reflection, TU_PRIMARY).scale[1]  = MSU(msA, MTU_REFLECTION).scale[1];
@@ -1252,7 +1252,7 @@ static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflect
 
         if(MSU(msA, MTU_REFLECTION_MASK).tex)
         {
-            RTU(reflection, TU_INTER).tex       = MSU(msA, MTU_REFLECTION_MASK).tex->glName;
+            RTU(reflection, TU_INTER).tex       = TextureVariant_GLName(MSU(msA, MTU_REFLECTION_MASK).tex);
             RTU(reflection, TU_INTER).magMode   = MSU(msA, MTU_REFLECTION_MASK).magMode;
             RTU(reflection, TU_INTER).scale[0]  = MSU(msA, MTU_REFLECTION_MASK).scale[0];
             RTU(reflection, TU_INTER).scale[1]  = MSU(msA, MTU_REFLECTION_MASK).scale[1];
@@ -2958,7 +2958,7 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
 
     Materials_Prepare(&ms, mat, true, NULL);
 
-    rTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].tex->glName;
+    rTU[TU_PRIMARY].tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
     rTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
     rTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
@@ -4999,7 +4999,7 @@ static void Rend_RenderBoundingBoxes(void)
     mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":bbox"));
     Materials_Prepare(&ms, mat, true, NULL);
 
-    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

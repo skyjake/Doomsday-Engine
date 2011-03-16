@@ -167,16 +167,16 @@ static void prepareSkySphere(void)
 
         material = Materials_ToMaterial(slayer->material);
         memset(&params, 0, sizeof(params));
-        params.flags = MLF_LOAD_AS_SKY;
+        params.prepareForSkySphere = true;
         params.tex.flags = TF_NO_COMPRESSION;
         if(slayer->flags & SLF_MASKED)
             params.tex.flags |= TF_ZEROMASK;
 
         Materials_Prepare(&ms, material, false, &params);
 
-        slayer->tex = ms.units[MTU_PRIMARY].tex->glName;
-        slayer->texWidth = Texture_Width(ms.units[MTU_PRIMARY].tex->generalCase);
-        slayer->texHeight = Texture_Height(ms.units[MTU_PRIMARY].tex->generalCase);
+        slayer->tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
+        Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),
+            &slayer->texWidth, &slayer->texHeight);
         slayer->texMagMode = ms.units[MTU_PRIMARY].magMode;
 
         slayer->fadeout.rgb[CR] = ms.topColor[CR];

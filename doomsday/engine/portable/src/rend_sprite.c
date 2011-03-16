@@ -273,17 +273,17 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
 
     Materials_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
 
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -ms.units[MTU_PRIMARY].tex->spec.border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -ms.units[MTU_PRIMARY].tex->spec.border;
-    params->width = ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
-    params->height = ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2;
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border;
+    params->width = ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    params->height = ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
 
     // Calculate texture coordinates.
-    params->texOffset[0] = ms.units[MTU_PRIMARY].tex->coords[VX];
-    params->texOffset[1] = ms.units[MTU_PRIMARY].tex->coords[VY];
+    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &params->texOffset[0], &params->texOffset[1]);
+
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
@@ -357,7 +357,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_snapshot_t ms;
 
         Materials_Prepare(&ms, mat, true, NULL);
-        GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -872,7 +872,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         mparams.tex.border = 1;
 
         Materials_Prepare(&ms, mat, true, &mparams);
-        GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }
     else

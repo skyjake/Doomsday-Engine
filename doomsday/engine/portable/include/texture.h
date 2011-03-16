@@ -26,7 +26,6 @@
 #define LIBDENG_GL_TEXTURE_H
 
 struct texturevariant_s;
-struct texture_variantlist_node_s;
 
 /**
  * Texture
@@ -101,6 +100,9 @@ const char* Texture_Name(const texture_t* tex);
 /// @return  @c true iff Texture represents an image loaded from an IWAD.
 boolean Texture_IsFromIWAD(const texture_t* tex);
 
+/// Retrieve logical dimensions (not necessarily the same as pixel dimensions)
+void Texture_Dimensions(const texture_t* tex, int* width, int* height);
+
 /// @return  Logical width (not necessarily the same as pixel width).
 int Texture_Width(const texture_t* tex);
 
@@ -113,17 +115,5 @@ int Texture_TypeIndex(const texture_t* tex);
 /// \deprecated
 /// @return  Old gltype identifier.
 gltexture_type_t Texture_GLType(const texture_t* tex);
-
-/**
- * Delete all prepared GL texture objects.
- */
-void Texture_ReleaseGLTextures(texture_t* tex);
-
-/**
- * Set the GL minification mode for all prepared texture objects.
- *
- * @param minMode  The GL minification mode to set.
- */
-void Texture_SetGLMinMode(texture_t* tex, int minMode);
 
 #endif /* LIBDENG_GL_TEXTURE_H */

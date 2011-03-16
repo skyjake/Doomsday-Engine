@@ -194,12 +194,18 @@ byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
     const char* optionalSuffix, boolean silent);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, const struct texture_s* tex, void* context);
-byte GL_LoadFlatLump(struct image_s* image, const struct texture_s* tex, void* context);
-byte GL_LoadSpriteLump(struct image_s* image, const struct texture_s* tex, void* context);
-byte GL_LoadDoomPatchLump(struct image_s* image, const struct texture_s* tex, void* context);
+byte GL_LoadDetailTextureLump(struct image_s* image, const struct texture_s* tex);
 
-byte GL_LoadDoomTexture(struct image_s* image, const struct texture_s* tex, void* context);
+byte GL_LoadFlatLump(struct image_s* image, const struct texture_s* tex);
+
+byte GL_LoadSpriteLump(struct image_s* image, const struct texture_s* tex,
+    boolean prepareForPSprite, int tclass, int tmap, int border);
+
+byte GL_LoadDoomPatchLump(struct image_s* image, const struct texture_s* tex,
+    boolean scaleSharp);
+
+byte GL_LoadDoomTexture(struct image_s* image, const struct texture_s* tex,
+    boolean prepareForSkySphere, boolean zeroMask);
 
 /**
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
@@ -250,9 +256,9 @@ DGLuint GL_GetFlareTexture(const dduri_t* path, int oldIdx);
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
     boolean isMipMapped, int* optWidth, int* optHeight);
 
-void GL_ReleaseTexture(textureid_t id);
+void GL_ReleaseTextureVariants(struct texture_s* tex);
 
-const struct texture_s* GL_ToTexture(textureid_t id);
+struct texture_s* GL_ToTexture(textureid_t id);
 const struct texturevariant_s* GL_PrepareTexture(textureid_t id, void* context, byte* result);
 
 const struct texture_s* GL_CreateTexture(const char* name, uint index, gltexture_type_t type);
@@ -266,14 +272,12 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
 uint GL_TextureIndexForUri(const dduri_t* uri);
 
 /**
- * Updates the minification mode of ALL gltextures.
- *
- * @param minMode The DGL minification mode to set.
+ * Change the GL minification filter for all prepared TextureVariants.
  */
-void GL_SetAllTexturesMinMode(int minMode);
+void GL_SetAllTexturesMinFilter(int minFilter);
 
 /**
- * Deletes all OpenGL texture instances for ALL gltextures.
+ * Releases all GL texture objects for all prepared TextureVariants.
  */
 void GL_DeleteAllTexturesForTextures(gltexture_type_t);
 

@@ -496,7 +496,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
         material_snapshot_t ms;
 
         Materials_Prepare(&ms, consoleBackgroundMaterial, Con_IsActive(), 0);
-        GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         /**
          * Make sure the current texture will be tiled.
          * Do NOT do this here. Instead simply assume that it has been suitably

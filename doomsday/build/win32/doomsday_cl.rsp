@@ -45,6 +45,7 @@
  .\..\..\engine\portable\src\gl_draw.c
  .\..\..\engine\portable\src\gl_drawvectorgraphic.c
  .\..\..\engine\portable\src\texture.c
+ .\..\..\engine\portable\src\texturevariant.c
  .\..\..\engine\portable\src\image.c
  .\..\..\engine\portable\src\pathdirectory.c
  .\..\..\engine\portable\src\rend_console.c

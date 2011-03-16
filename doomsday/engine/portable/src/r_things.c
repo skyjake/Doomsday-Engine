@@ -633,7 +633,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     params.tex.border = 1;
     Materials_Prepare(&ms, mat, false, &params);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
 
     info->numFrames = sprDef->numFrames;
@@ -641,10 +641,9 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
-    info->width = ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
-    info->height = ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2;
-    info->texCoord[0] = ms.units[MTU_PRIMARY].tex->coords[0];
-    info->texCoord[1] = ms.units[MTU_PRIMARY].tex->coords[1];
+    info->width = ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    info->height = ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &info->texCoord[0], &info->texCoord[1]);
 
     return true;
 }
@@ -875,9 +874,9 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean brightShadow, boolean shadow, boolean altShadow,
                                           boolean fullBright)
 {
-    spritetex_t*        sprTex = NULL;
-    material_snapshot_t ms;
     material_load_params_t mparams;
+    material_snapshot_t ms;
+    spritetex_t* sprTex = NULL;
 
     if(!params)
         return; // Wha?
@@ -889,11 +888,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
 
-    params->width  =  ms.width + ms.units[MTU_PRIMARY].tex->spec.border*2;
-    params->height = ms.height + ms.units[MTU_PRIMARY].tex->spec.border*2;
+    params->width  =  ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    params->height = ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -911,8 +910,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = transMap;
     params->tClass = transClass;
-    params->matOffset[0] = ms.units[MTU_PRIMARY].tex->coords[0];
-    params->matOffset[1] = ms.units[MTU_PRIMARY].tex->coords[1];
+    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &params->matOffset[0], &params->matOffset[1]);
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = blendMode;
@@ -1138,7 +1136,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     Materials_Prepare(&ms, mat, true, &mparams);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(ms.units[MTU_PRIMARY].tex->generalCase));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
 
     // Align to the view plane?
@@ -1458,7 +1456,7 @@ if(!mat)
 
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
-        if(GLT_SPRITE != Texture_GLType(ms.units[MTU_PRIMARY].tex->generalCase))
+        if(GLT_SPRITE != Texture_GLType(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)))
             return; // *Very* strange...
         tex = ms.units[MTU_PRIMARY].tex;
 
@@ -1474,7 +1472,8 @@ if(!mat)
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
 
         {
-        const pointlight_analysis_t* pl = (const pointlight_analysis_t*)tex->analyses[TA_SPRITE_AUTOLIGHT];
+        const pointlight_analysis_t* pl = (const pointlight_analysis_t*)
+            TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         assert(pl);
         flareSize = pl->brightMul;
         // X offset to the flare position.

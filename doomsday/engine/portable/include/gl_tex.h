@@ -29,6 +29,20 @@
 #ifndef LIBDENG_IMAGE_MANIPULATION_H
 #define LIBDENG_IMAGE_MANIPULATION_H
 
+typedef struct pointlight_analysis_s {
+    float originX, originY, brightMul;
+    float color[3];
+} pointlight_analysis_t;
+
+typedef struct ambientlight_analysis_s {
+    float color[3]; // Average color.
+    float colorAmplified[3]; // Average color amplified.
+} ambientlight_analysis_t;
+
+typedef struct averagecolor_analysis_s {
+    float color[3];
+} averagecolor_analysis_t;
+
 /**
  * @param pixels  Luminance image to be enhanced.
  * @param width  Logical width of the image in pixels.

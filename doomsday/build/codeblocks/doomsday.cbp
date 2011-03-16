@@ -831,6 +831,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\texture.c" />
+		<Unit filename="..\..\engine\portable\src\texturevariant.c" />
 		<Unit filename="..\..\engine\portable\src\ui_main.c">
 			<Option compilerVar="CC" />
 		</Unit>

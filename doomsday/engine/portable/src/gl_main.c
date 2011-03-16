@@ -1036,7 +1036,7 @@ void GL_SetMaterial(material_t* mat)
 
     Con_Error("GL_SetMaterial: No usage context specified.");
     Materials_Prepare(&ms, mat, true, NULL);
-    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
 void GL_SetPSprite(material_t* mat)
@@ -1050,7 +1050,7 @@ void GL_SetPSprite(material_t* mat)
 
     Materials_Prepare(&ms, mat, true, &params);
 
-    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
@@ -1066,7 +1066,7 @@ void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
     params.tex.border = 1;
 
     Materials_Prepare(&ms, mat, true, &params);
-    GL_BindTexture(ms.units[MTU_PRIMARY].tex->glName, ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
 void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)

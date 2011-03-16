@@ -276,14 +276,14 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
                     MN_SYSTEM_NAME":missing" ));
 
             memset(&p, 0, sizeof(p));
-            p.flags = MLF_LOAD_AS_SKY;
+            p.prepareForSkySphere = true;
             p.tex.flags = TF_NO_COMPRESSION | TF_ZEROMASK;
 
             Materials_Prepare(&ms, material, true, &p);
-            tex = ms.units[MTU_PRIMARY].tex->glName;
+            tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
             magMode = ms.units[MTU_PRIMARY].magMode;
-            skyTexWidth = Texture_Width(ms.units[MTU_PRIMARY].tex->generalCase);
-            skyTexHeight = Texture_Height(ms.units[MTU_PRIMARY].tex->generalCase);
+            Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),
+                &skyTexWidth, &skyTexHeight);
         }
 
         GL_BindTexture(tex, magMode);

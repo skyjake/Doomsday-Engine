@@ -173,6 +173,13 @@ static gltexture_type_t TextureTypeForTextureNamespace(texturenamespaceid_t texN
     }
 }
 
+static __inline texture_t* getTexture(textureid_t id)
+{
+    if(id != 0 && id <= texturesCount)
+        return textures[id - 1];
+    return NULL;
+}
+
 /**
  * This is a hash function. Given a texture name it generates a
  * somewhat-random number between 0 and TEXTURENAMESPACE_HASH_SIZE.
@@ -1009,7 +1016,7 @@ static int loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     }
 }
 
-byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex, void* context)
+byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex)
 {
     assert(image && tex);
     {
@@ -1076,7 +1083,7 @@ byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex, void* contex
 /**
  * @return  @c 1 = found and prepared a lump resource.
  */
-byte GL_LoadFlatLump(image_t* image, const texture_t* tex, void* context)
+byte GL_LoadFlatLump(image_t* image, const texture_t* tex)
 {
     assert(image && tex);
     {
@@ -1120,28 +1127,17 @@ byte GL_LoadFlatLump(image_t* image, const texture_t* tex, void* context)
     }
 }
 
-byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, void* context)
+byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, boolean pSprite,
+    int tclass, int tmap, int border)
 {
     assert(image && tex);
     {
-    material_load_params_t* params = (material_load_params_t*) context;
-    const spritetex_t* sprTex;
     const doompatch_header_t* patch;
-    int tclass = 0, tmap = 0;
-    boolean pSprite = false;
-    byte border = 0;
+    const spritetex_t* sprTex;
     lumpnum_t lumpNum;
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex));
     assert(NULL != sprTex);
-
-    if(params)
-    {
-        tmap = params->tmap;
-        tclass = params->tclass;
-        pSprite = params->pSprite;
-        border = params->tex.border;
-    }
 
     lumpNum = W_GetNumForName(sprTex->name);
     patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
@@ -1160,29 +1156,18 @@ byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, void* context)
     }
 }
 
-byte GL_LoadDoomPatchLump(image_t* image, const texture_t* tex, void* context)
+byte GL_LoadDoomPatchLump(image_t* image, const texture_t* tex, boolean scaleSharp)
 {
     assert(image && tex);
     {
-    material_load_params_t* params = (material_load_params_t*) context;
-    int tclass = 0, tmap = 0, border = 0;
+    int tclass = 0, tmap = 0, border = (scaleSharp? 1 : 0);
     const doompatch_header_t* patch;
-    boolean scaleSharp = false;
     lumpnum_t lumpNum;
     patchtex_t* p;
 
     p = R_PatchTextureByIndex(Texture_TypeIndex(tex));
     assert(NULL != p);
     lumpNum = p->lump;
-
-    if(params)
-    {
-        scaleSharp = (params->tex.flags & TF_UPSCALE_AND_SHARPEN) != 0;
-    }
-    if(scaleSharp)
-    {
-        border = 1;
-    }
 
     patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
     GL_InitImage(image);
@@ -1323,27 +1308,14 @@ static void bufferSkyTexture(const patchcompositetex_t* texDef, byte** outbuffer
  *                      1 = loaded data from a lump resource.
  *                      2 = loaded data from an external resource.
  */
-byte GL_LoadDoomTexture(image_t* image, const texture_t* tex, void* context)
+byte GL_LoadDoomTexture(image_t* image, const texture_t* tex,
+    boolean prepareForSkySphere, boolean zeroMask)
 {
     assert(image && tex);
     {
-    int i, flags = 0;
-    patchcompositetex_t* texDef;
-    boolean loadAsSky = false, zeroMask = false;
-    material_load_params_t* params = (material_load_params_t*) context;
-
-    if(!image)
-        return 0; // Wha?
-
-    if(params)
-    {
-        loadAsSky = (params->flags & MLF_LOAD_AS_SKY)? true : false;
-        zeroMask = (params->tex.flags & TF_ZEROMASK)? true : false;
-    }
-
-    texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
-
-    // Try to load a high resolution version of this texture?
+    patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
+    assert(NULL != texDef);
+    // Try to load a replacement version of this texture?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
     {
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
@@ -1371,7 +1343,7 @@ byte GL_LoadDoomTexture(image_t* image, const texture_t* tex, void* context)
     image->height = texDef->height;
     image->pixelSize = 1;
 
-    if(loadAsSky)
+    if(prepareForSkySphere)
     {
         bufferSkyTexture(texDef, &image->pixels, image->width, image->height, zeroMask);
         if(zeroMask)
@@ -1379,6 +1351,7 @@ byte GL_LoadDoomTexture(image_t* image, const texture_t* tex, void* context)
     }
     else
     {
+        int hasBigPatch;
         boolean isMasked;
 
         /**
@@ -1386,14 +1359,14 @@ byte GL_LoadDoomTexture(image_t* image, const texture_t* tex, void* context)
          * we are needlessly duplicating work.
          */
         image->pixels = M_Malloc(2 * image->width * image->height);
-        isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, &i);
+        isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, &hasBigPatch);
 
         // The -bigmtex option allows the engine to resize masked
         // textures whose patches are too big to fit the texture.
-        if(allowMaskedTexEnlarge && isMasked && i)
+        if(allowMaskedTexEnlarge && isMasked && hasBigPatch)
         {
             // Adjust the defined height to fit the largest patch.
-            texDef->height = image->height = i;
+            texDef->height = image->height = hasBigPatch;
             // Get a new buffer.
             M_Free(image->pixels);
             image->pixels = M_Malloc(2 * image->width * image->height);
@@ -1548,21 +1521,19 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
 
 DGLuint GL_GetLightMapTexture(const dduri_t* uri)
 {
-    lightmap_t* lmap;
-
     if(uri)
     {
+        lightmap_t* lmap;
         if(!Str_CompareIgnoreCase(Uri_Path(uri), "-"))
             return 0;
 
-        if((lmap = R_GetLightMap(uri)) != 0)
+        if(0 != (lmap = R_GetLightMap(uri)))
         {
             const texturevariant_t* tex;
             if((tex = GL_PrepareTexture(lmap->id, 0, 0)))
-                return tex->glName;
+                return TextureVariant_GLName(tex);
         }
     }
-
     // Return the default texture name.
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
@@ -1584,7 +1555,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
         {
             const texturevariant_t* tex;
             if((tex = GL_PrepareTexture(fTex->id, 0, 0)))
-                return tex->glName;
+                return TextureVariant_GLName(tex);
         }
     }
     else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
@@ -1609,7 +1580,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             params.tex.border = 1;
         }
         if((tex = GL_PrepareTexture(patchTex->texId, &params, NULL)))
-            return tex->glName;
+            return TextureVariant_GLName(tex);
     }
     return 0;
 }
@@ -1715,7 +1686,7 @@ void GL_SetTextureParams(int minMode, int gameTex, int uiTex)
 {
     if(gameTex)
     {
-        GL_SetAllTexturesMinMode(minMode);
+        GL_SetAllTexturesMinFilter(minMode);
     }
 
     if(uiTex)
@@ -1809,18 +1780,24 @@ void GL_DeleteRawImages(void)
     Z_Free(rawTexs);
 }
 
-static __inline texture_t* getTexture(textureid_t id)
+int setGLMinFilter(texturevariant_t* tex, void* paramaters)
 {
-    if(id != 0 && id <= texturesCount)
-        return textures[id - 1];
-    return NULL;
+    DGLuint glName;
+    if(0 != (glName = TextureVariant_GLName(tex)))
+    {
+        int minFilter = *((int*)paramaters);
+        glBindTexture(GL_TEXTURE_2D, glName);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+    }
+    return 1; // Continue iteration.
 }
 
-void GL_SetAllTexturesMinMode(int minMode)
+void GL_SetAllTexturesMinFilter(int minFilter)
 {
+    int localMinFilter = minFilter;
     uint i;
     for(i = 0; i < texturesCount; ++i)
-        Texture_SetGLMinMode(textures[i], minMode);
+        Texture_IterateVariants(textures[i], setGLMinFilter, (void*)&localMinFilter);
 }
 
 const texture_t* GL_CreateTexture(const char* rawName, uint index,
@@ -1843,7 +1820,7 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
 
         if(Texture_GLType(tex) == glType && Texture_TypeIndex(tex) == index)
         {
-            Texture_ReleaseGLTextures(tex);
+            GL_ReleaseTextureVariants(tex);
             return tex; // Yep, return it.
         }
     }}
@@ -1896,9 +1873,22 @@ const texturevariant_t* GL_PrepareTexture(textureid_t id, void* context,
     return Texture_Prepare(getTexture(id), context, result);
 }
 
-void GL_ReleaseTexture(textureid_t id)
+int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
 {
-    Texture_ReleaseGLTextures(getTexture(id));
+    DGLuint glName = TextureVariant_GLName(variant);
+    // Have we uploaded yet?
+    if(0 != glName)
+    {
+        // Delete and mark it not-loaded.
+        glDeleteTextures(1, (const GLuint*) &glName);
+        TextureVariant_SetGLName(variant, 0);
+    }
+    return 1; // Continue iteration.
+}
+
+void GL_ReleaseTextureVariants(texture_t* tex)
+{
+    Texture_IterateVariants(tex, releaseVariantGLTexture, 0);
 }
 
 void GL_DeleteAllTexturesForTextures(gltexture_type_t glType)
@@ -1913,11 +1903,11 @@ void GL_DeleteAllTexturesForTextures(gltexture_type_t glType)
         texture_t* tex = textures[i];
         if(glType != GLT_ANY && Texture_GLType(tex) != glType)
             continue;
-        Texture_ReleaseGLTextures(tex);
+        GL_ReleaseTextureVariants(tex);
     }}
 }
 
-const texture_t* GL_ToTexture(textureid_t id)
+texture_t* GL_ToTexture(textureid_t id)
 {
     return getTexture(id);
 }

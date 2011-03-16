@@ -409,12 +409,12 @@ if(!mat)
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
 
-        if(GLT_SPRITE != Texture_GLType(ms.units[MTU_PRIMARY].tex->generalCase))
+        if(GLT_SPRITE != Texture_GLType(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)))
             return; // *Very* strange...
 
         tex = ms.units[MTU_PRIMARY].tex;
 
-        pl = (const pointlight_analysis_t*)tex->analyses[TA_SPRITE_AUTOLIGHT];
+        pl = (const pointlight_analysis_t*)TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         assert(pl);
         size = pl->brightMul;
         yOffset = pl->originY;
@@ -431,7 +431,7 @@ if(!mat)
         autoLightColor[CG] = pl->color[CG];
         autoLightColor[CB] = pl->color[CB];
 
-        sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex->generalCase));
+        sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(tex)));
         assert(NULL != sprTex);
 
         center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
