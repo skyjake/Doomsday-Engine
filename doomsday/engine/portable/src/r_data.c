@@ -931,7 +931,7 @@ void R_InitSystemTextures(void)
     { uint i;
     for(i = 0; defs[i].name; ++i)
     {
-        const texture_t* glTex = GL_CreateTexture(defs[i].name, i, GLT_SYSTEM);
+        const texture_t* glTex = GL_CreateTexture(defs[i].name, i, TN_SYSTEM);
         systex_t* sysTex;
     
         sysTex = malloc(sizeof(*sysTex));
@@ -1047,7 +1047,7 @@ patchid_t R_RegisterPatch(const char* name)
 
     // Register a texture for this.
     {
-    const texture_t* glTex = GL_CreateTexture(name, ++patchTexturesCount, GLT_PATCH);
+    const texture_t* glTex = GL_CreateTexture(name, ++patchTexturesCount, TN_PATCHES);
     p->texId = Texture_Id(glTex);
     }
 
@@ -1733,7 +1733,7 @@ void R_InitTextures(void)
         for(i = 0; i < patchCompositeTexturesCount; ++i)
         {
             patchcompositetex_t* texDef = patchCompositeTextures[i];
-            const texture_t* tex = GL_CreateTexture(texDef->name, i, GLT_PATCHCOMPOSITE);
+            const texture_t* tex = GL_CreateTexture(texDef->name, i, TN_TEXTURES);
             dduri_t* uri;
 
             // Create a material for this texture.
@@ -1861,7 +1861,7 @@ void R_InitFlats(void)
     for(i = 0; i < flatTexturesCount; ++i)
     {
         flat_t* flat = flatTextures[i];
-        const texture_t* tex = GL_CreateTexture(flat->name, i, GLT_FLAT);
+        const texture_t* tex = GL_CreateTexture(flat->name, i, TN_FLATS);
         dduri_t* uri;
 
         // Create a material for this flat.
@@ -1991,7 +1991,7 @@ void R_SpriteTexturesInit(void)
         }
 
         // Create a new Texture for this.
-        glTex = GL_CreateTexture(name, i, GLT_SPRITE);
+        glTex = GL_CreateTexture(name, i, TN_SPRITES);
 
         // Create a new Material for this.
         { dduri_t* uri;
@@ -2047,7 +2047,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, numSkinNames + 1);
 
-    glTex = GL_CreateTexture(name, numSkinNames, (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
+    glTex = GL_CreateTexture(name, numSkinNames, (isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS));
 
     skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
@@ -2475,7 +2475,7 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, detailTexturesCount + 1);
 
-    glTex = GL_CreateTexture(name, detailTexturesCount, GLT_DETAIL);
+    glTex = GL_CreateTexture(name, detailTexturesCount, TN_DETAILS);
 
     dTex = M_Malloc(sizeof(*dTex));
     dTex->id = Texture_Id(glTex);
@@ -2543,7 +2543,7 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, lightmapTexturesCount + 1);
 
-    glTex = GL_CreateTexture(name, lightmapTexturesCount, GLT_LIGHTMAP);
+    glTex = GL_CreateTexture(name, lightmapTexturesCount, TN_LIGHTMAPS);
 
     lmap = M_Malloc(sizeof(*lmap));
     lmap->id = Texture_Id(glTex);
@@ -2621,7 +2621,7 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, flareTexturesCount + 1);
 
-    glTex = GL_CreateTexture(name, flareTexturesCount, GLT_FLARE);
+    glTex = GL_CreateTexture(name, flareTexturesCount, TN_FLAREMAPS);
 
     fTex = M_Malloc(sizeof(*fTex));
     fTex->external = path;
@@ -2692,7 +2692,7 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, shinyTexturesCount + 1);
 
-    glTex = GL_CreateTexture(name, shinyTexturesCount, GLT_SHINY);
+    glTex = GL_CreateTexture(name, shinyTexturesCount, TN_REFLECTIONS);
 
     sTex = M_Malloc(sizeof(*sTex));
     sTex->id = Texture_Id(glTex);
@@ -2763,7 +2763,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, maskTexturesCount + 1);
 
-    glTex = GL_CreateTexture(name, maskTexturesCount, GLT_MASK);
+    glTex = GL_CreateTexture(name, maskTexturesCount, TN_MASKS);
 
     mTex = M_Malloc(sizeof(*mTex));
     mTex->id = Texture_Id(glTex);

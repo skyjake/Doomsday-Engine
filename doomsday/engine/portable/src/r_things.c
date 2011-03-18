@@ -1435,6 +1435,7 @@ void R_ProjectSprite(mobj_t* mo)
         material_t* mat;
         material_snapshot_t ms;
         const texturevariant_t* tex;
+        const pointlight_analysis_t* pl;
 
         // Determine the sprite frame lump of the source.
         sprDef = &sprites[mo->sprite];
@@ -1456,9 +1457,10 @@ if(!mat)
 
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
-        if(GLT_SPRITE != Texture_GLType(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)))
-            return; // *Very* strange...
         tex = ms.units[MTU_PRIMARY].tex;
+        pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
+        if(NULL == pl)
+            return; // Not good...
 
         lum = LO_GetLuminous(mo->lumIdx);
         def = (mo->state? stateLights[mo->state - states] : 0);
@@ -1470,15 +1472,10 @@ if(!mat)
         // Determine the exact center of the flare.
         V3_Sum(vis->center, mo->pos, visOff);
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
-
-        {
-        const pointlight_analysis_t* pl = (const pointlight_analysis_t*)
-            TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
-        assert(pl);
+        
         flareSize = pl->brightMul;
         // X offset to the flare position.
         xOffset = (pl->originX - (float) ms.width / 2) - (sprTex->offX - (float) ms.width / 2);
-        }
 
         // Does the mobj have an active light definition?
         if(def)

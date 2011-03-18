@@ -39,9 +39,9 @@ typedef struct texture_variantlist_node_s {
 } texture_variantlist_node_t;
 
 texture_t* Texture_Construct(textureid_t id, const char rawName[9],
-    gltexture_type_t glType, int index)
+    texturenamespaceid_t texNamespace, int index)
 {
-    assert(rawName && rawName[0] && VALID_GLTEXTURETYPE(glType));
+    assert(rawName && rawName[0] && VALID_TEXTURENAMESPACE(texNamespace));
     {
     texture_t* tex;
 
@@ -52,7 +52,7 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
     tex->_id = id;
     tex->_variants = NULL;
     tex->_index = index;
-    tex->_glType = glType;
+    tex->_texNamespace = texNamespace;
 
     // Prepare name for hashing.
     memset(tex->_name, 0, sizeof(tex->_name));
@@ -129,33 +129,33 @@ const char* Texture_Name(const texture_t* tex)
 boolean Texture_IsFromIWAD(const texture_t* tex)
 {
     assert(tex);
-    switch(tex->_glType)
+    switch(tex->_texNamespace)
     {
-    case GLT_FLAT:
+    case TN_FLATS:
         return !R_FlatTextureByIndex(tex->_index)->isCustom;
 
-    case GLT_PATCHCOMPOSITE:
+    case TN_TEXTURES:
         return (R_PatchCompositeTextureByIndex(tex->_index)->flags & TXDF_IWAD) != 0;
 
-    case GLT_SPRITE:
+    case TN_SPRITES:
         return !R_SpriteTextureByIndex(tex->_index)->isCustom;
 
-    case GLT_PATCH:
+    case TN_PATCHES:
         return !R_PatchTextureByIndex(tex->_index)->isCustom;
 
-    case GLT_DETAIL:
-    case GLT_SHINY:
-    case GLT_MASK:
-    case GLT_SYSTEM:
-    case GLT_MODELSKIN:
-    case GLT_MODELSHINYSKIN:
-    case GLT_LIGHTMAP:
-    case GLT_FLARE:
+    case TN_DETAILS:
+    case TN_REFLECTIONS:
+    case TN_MASKS:
+    case TN_SYSTEM:
+    case TN_MODELSKINS:
+    case TN_MODELREFLECTIONSKINS:
+    case TN_LIGHTMAPS:
+    case TN_FLAREMAPS:
         return false; // Its definitely not.
 
     default:
         Con_Error("Texture::IsFromIWAD: Internal Error, invalid type %i.",
-                  (int) tex->_glType);
+                  (int) tex->_texNamespace);
     }
 
     return false; // Unreachable.
@@ -164,38 +164,38 @@ boolean Texture_IsFromIWAD(const texture_t* tex)
 int Texture_Width(const texture_t* tex)
 {
     assert(tex);
-    switch(tex->_glType)
+    switch(tex->_texNamespace)
     {
-    case GLT_FLAT:
+    case TN_FLATS:
         return 64; /// \fixme not all flats are 64x64
 
-    case GLT_PATCHCOMPOSITE:
+    case TN_TEXTURES:
         return R_PatchCompositeTextureByIndex(tex->_index)->width;
 
-    case GLT_SPRITE:
+    case TN_SPRITES:
         return R_SpriteTextureByIndex(tex->_index)->width;
 
-    case GLT_PATCH:
+    case TN_PATCHES:
         return R_PatchTextureByIndex(tex->_index)->width;
 
-    case GLT_DETAIL:
+    case TN_DETAILS:
         return 128;
 
-    case GLT_SHINY:
+    case TN_REFLECTIONS:
         return 128; // Could be used for something useful.
 
-    case GLT_MASK:
+    case TN_MASKS:
         return maskTextures[tex->_index]->width;
 
-    case GLT_SYSTEM: /// \fixme Do not assume!
-    case GLT_MODELSKIN:
-    case GLT_MODELSHINYSKIN:
-    case GLT_LIGHTMAP:
-    case GLT_FLARE:
+    case TN_SYSTEM: /// \fixme Do not assume!
+    case TN_MODELSKINS:
+    case TN_MODELREFLECTIONSKINS:
+    case TN_LIGHTMAPS:
+    case TN_FLAREMAPS:
         return 64;
 
     default:
-        Con_Error("Texture::Width: Internal error, invalid type %i.", (int) tex->_glType);
+        Con_Error("Texture::Width: Internal error, invalid type %i.", (int) tex->_texNamespace);
         return 0; // Unreachable.
     }
 }
@@ -203,38 +203,38 @@ int Texture_Width(const texture_t* tex)
 int Texture_Height(const texture_t* tex)
 {
     assert(tex);
-    switch(tex->_glType)
+    switch(tex->_texNamespace)
     {
-    case GLT_FLAT:
+    case TN_FLATS:
         return 64; /// \fixme not all flats are 64x64
 
-    case GLT_PATCHCOMPOSITE:
+    case TN_TEXTURES:
         return R_PatchCompositeTextureByIndex(tex->_index)->height;
 
-    case GLT_SPRITE:
+    case TN_SPRITES:
         return R_SpriteTextureByIndex(tex->_index)->height;
 
-    case GLT_PATCH:
+    case TN_PATCHES:
         return R_PatchTextureByIndex(tex->_index)->height;
 
-    case GLT_DETAIL:
+    case TN_DETAILS:
         return 128;
 
-    case GLT_SHINY:
+    case TN_REFLECTIONS:
         return 128; // Could be used for something useful.
 
-    case GLT_MASK:
+    case TN_MASKS:
         return maskTextures[tex->_index]->height;
 
-    case GLT_SYSTEM: /// \fixme Do not assume!
-    case GLT_MODELSKIN:
-    case GLT_MODELSHINYSKIN:
-    case GLT_LIGHTMAP:
-    case GLT_FLARE:
+    case TN_SYSTEM: /// \fixme Do not assume!
+    case TN_MODELSKINS:
+    case TN_MODELREFLECTIONSKINS:
+    case TN_LIGHTMAPS:
+    case TN_FLAREMAPS:
         return 64;
 
     default:
-        Con_Error("Texture::Height: Internal error, invalid type %i.", (int) tex->_glType);
+        Con_Error("Texture::Height: Internal error, invalid type %i.", (int) tex->_texNamespace);
         return 0; // Unreachable.
     }
 }
@@ -251,10 +251,10 @@ int Texture_TypeIndex(const texture_t* tex)
     return tex->_index;
 }
 
-gltexture_type_t Texture_GLType(const texture_t* tex)
+texturenamespaceid_t Texture_Namespace(const texture_t* tex)
 {
     assert(tex);
-    return tex->_glType;
+    return tex->_texNamespace;
 }
 
 int Texture_IterateVariants(texture_t* tex,

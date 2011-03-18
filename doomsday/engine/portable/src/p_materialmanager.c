@@ -413,7 +413,7 @@ void Materials_DeleteTextures(const char* namespaceName)
 
     if(matNamespace == MN_ANY)
     {   // Delete the lot.
-        GL_ReleaseGLTexturesByGLType(GLT_ANY);
+        GL_ReleaseGLTexturesByNamespace(TN_ANY);
         return;
     }
 
@@ -1086,7 +1086,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             int magMode = glmode[texMagMode];
             vec2_t scale;
 
-            if(GLT_SPRITE == Texture_GLType(tex))
+            if(TN_SPRITES == Texture_Namespace(tex))
                 magMode = filterSprites? GL_LINEAR : GL_NEAREST;
             V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
 
@@ -1109,7 +1109,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             }
 
             /// \fixme what about the other texture types?
-            if(GLT_PATCHCOMPOSITE == Texture_GLType(tex) || GLT_FLAT == Texture_GLType(tex))
+            if(TN_TEXTURES == Texture_Namespace(tex) || TN_FLATS == Texture_Namespace(tex))
             {
                 const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
                     TextureVariant_Analysis(layerTextures[0], TA_WORLD_AMBIENTLIGHT);

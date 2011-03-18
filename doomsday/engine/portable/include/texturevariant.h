@@ -37,8 +37,31 @@ struct texture_s;
 #define TF_MONOCHROME               0x8
 /*@}*/
 
+typedef enum {
+    TEXTURESPECIFICATIONTYPE_FIRST = 0,
+    TS_SYSTEM = TEXTURESPECIFICATIONTYPE_FIRST,
+    TS_FLAT,
+    TS_PATCHCOMPOSITE,
+    TS_PATCHSPRITE,
+    TS_PATCH,
+    TS_DETAIL,
+    TS_REFLECTION,
+    TS_MASK,
+    TS_MODELSKIN,
+    TS_MODELREFLECTIONSKIN,
+    TS_LIGHTMAP,
+    TS_FLAREMAP,
+    TEXTURESPECIFICATIONTYPE_LAST = TS_FLAREMAP
+} texturespecificationtype_t;
+
+#define TEXTURESPECIFICATIONTYPE_COUNT (\
+    TEXTURESPECIFICATIONTYPE_LAST + 1 - TEXTURESPECIFICATIONTYPE_FIRST )
+
+#define VALID_TEXTURESPECIFICATIONTYPE(t) (\
+    (t) >= TEXTURESPECIFICATIONTYPE_FIRST && (t) <= TEXTURESPECIFICATIONTYPE_LAST)
+
 typedef struct texturevariantspecification_s {
-    gltexture_type_t glType;
+    texturespecificationtype_t type;
     byte flags; /// @see textureFlags
     byte border; /// In pixels, added to all four edges of the texture.
     boolean prepareForSkySphere;
@@ -50,7 +73,7 @@ typedef struct texturevariantspecification_s {
         struct {
             float contrast;
         } detail;
-    } type; // type-specific data.
+    } data; // type-specific data.
 } texturevariantspecification_t;
 
 typedef enum {

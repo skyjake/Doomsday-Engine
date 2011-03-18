@@ -408,14 +408,11 @@ if(!mat)
 
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true, NULL);
-
-        if(GLT_SPRITE != Texture_GLType(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)))
-            return; // *Very* strange...
-
         tex = ms.units[MTU_PRIMARY].tex;
+        pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
+        if(NULL == pl)
+            return; // Not good...
 
-        pl = (const pointlight_analysis_t*)TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
-        assert(pl);
         size = pl->brightMul;
         yOffset = pl->originY;
         // Does the mobj have an active light definition?

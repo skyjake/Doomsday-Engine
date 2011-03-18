@@ -2164,11 +2164,18 @@ texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
     if(!str || 0 == strlen(str))
         return TN_ANY;
 
-    if(!stricmp(str, TN_TEXTURES_NAME)) return TN_TEXTURES;
-    if(!stricmp(str, TN_FLATS_NAME))    return TN_FLATS;
-    if(!stricmp(str, TN_SPRITES_NAME))  return TN_SPRITES;
-    if(!stricmp(str, TN_PATCHES_NAME))  return TN_PATCHES;
-    if(!stricmp(str, TN_SYSTEM_NAME))   return TN_SYSTEM;
+    if(!stricmp(str, TN_TEXTURES_NAME))             return TN_TEXTURES;
+    if(!stricmp(str, TN_FLATS_NAME))                return TN_FLATS;
+    if(!stricmp(str, TN_SPRITES_NAME))              return TN_SPRITES;
+    if(!stricmp(str, TN_PATCHES_NAME))              return TN_PATCHES;
+    if(!stricmp(str, TN_SYSTEM_NAME))               return TN_SYSTEM;
+    if(!stricmp(str, TN_DETAILS_NAME))              return TN_DETAILS;
+    if(!stricmp(str, TN_REFLECTIONS_NAME))          return TN_REFLECTIONS;
+    if(!stricmp(str, TN_MASKS_NAME))                return TN_MASKS;
+    if(!stricmp(str, TN_MODELSKINS_NAME))           return TN_MASKS;
+    if(!stricmp(str, TN_MODELREFLECTIONSKINS_NAME)) return TN_MODELREFLECTIONSKINS;
+    if(!stricmp(str, TN_LIGHTMAPS_NAME))            return TN_LIGHTMAPS;
+    if(!stricmp(str, TN_FLAREMAPS_NAME))            return TN_FLAREMAPS;
 
     return TEXTURENAMESPACE_COUNT; // Unknown.
 }

@@ -993,6 +993,13 @@ typedef enum {
 #define TN_TEXTURES_NAME        "Textures"
 #define TN_SPRITES_NAME         "Sprites"
 #define TN_PATCHES_NAME         "Patches"
+#define TN_DETAILS_NAME         "Details"
+#define TN_REFLECTIONS_NAME     "Reflections"
+#define TN_MASKS_NAME           "Masks"
+#define TN_MODELSKINS_NAME      "ModelSkins"
+#define TN_MODELREFLECTIONSKINS_NAME "ModelReflectionSkins"
+#define TN_LIGHTMAPS_NAME       "Lightmaps"
+#define TN_FLAREMAPS_NAME       "Flaremaps"
 /**@{*/
 
 typedef enum {
@@ -1003,7 +1010,14 @@ typedef enum {
     TN_TEXTURES,
     TN_SPRITES,
     TN_PATCHES,
-    TEXTURENAMESPACE_LAST = TN_PATCHES
+    TN_DETAILS,
+    TN_REFLECTIONS,
+    TN_MASKS,
+    TN_MODELSKINS,
+    TN_MODELREFLECTIONSKINS,
+    TN_LIGHTMAPS,
+    TN_FLAREMAPS,
+    TEXTURENAMESPACE_LAST = TN_FLAREMAPS
 } texturenamespaceid_t;
 
 #define TEXTURENAMESPACE_COUNT (\

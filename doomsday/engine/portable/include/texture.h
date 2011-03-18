@@ -40,18 +40,19 @@ typedef struct texture_s {
     /// List of variants (e.g., color translations).
     struct texture_variantlist_node_s* _variants;
 
-    /// Type specific index (e.g., if gltype=GLT_FLAT this is a flat index).
+    /// Type specific index (e.g., if _texNamespace=TN_FLATS this is a flat index).
     int _index;
 
     /// Symbolic name.
     char _name[9];
 
-    /// \deprecated Old GLType identifier.
-    gltexture_type_t _glType;
+    /// Unique Texture Namespace Identifier.
+    /// \todo make external.
+    texturenamespaceid_t _texNamespace;
 } texture_t;
 
 texture_t* Texture_Construct(textureid_t id, const char name[9],
-    gltexture_type_t glType, int index);
+    texturenamespaceid_t texNamespace, int index);
 
 void Texture_Destruct(texture_t* tex);
 
@@ -98,8 +99,7 @@ int Texture_Height(const texture_t* tex);
 /// @return  Type-specific index of the wrapped image object.
 int Texture_TypeIndex(const texture_t* tex);
 
-/// \deprecated
-/// @return  Old gltype identifier.
-gltexture_type_t Texture_GLType(const texture_t* tex);
+/// @return  Texture namespace identifier.
+texturenamespaceid_t Texture_Namespace(const texture_t* tex);
 
 #endif /* LIBDENG_GL_TEXTURE_H */

@@ -272,6 +272,8 @@ static void rlBind(DGLuint tex, int magMode)
 
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
+    glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, devTexLODBias);
+
     if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                         GL_GetTexAnisoMul(texAniso));

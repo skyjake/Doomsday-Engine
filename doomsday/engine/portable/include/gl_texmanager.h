@@ -44,26 +44,6 @@ struct texture_s;
 struct texturevariant_s;
 struct texturevariantspecification_s;
 
-typedef enum {
-    GLT_ANY = -1,
-    GLT_FIRST = 0,
-    GLT_SYSTEM = GLT_FIRST, // system texture e.g., the "missing" texture.
-    GLT_FLAT,
-    GLT_PATCHCOMPOSITE,
-    GLT_PATCH,
-    GLT_SPRITE,
-    GLT_DETAIL,
-    GLT_SHINY,
-    GLT_MASK,
-    GLT_MODELSKIN,
-    GLT_MODELSHINYSKIN,
-    GLT_LIGHTMAP,
-    GLT_FLARE,
-    NUM_GLTEXTURE_TYPES
-} gltexture_type_t;
-
-#define VALID_GLTEXTURETYPE(t)     ((t) >= GLT_FIRST && (t) < NUM_GLTEXTURE_TYPES)
-
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
 extern int texMagMode, texAniso;
@@ -273,7 +253,7 @@ void GL_PrintTextureVariantSpecification(const struct texturevariantspecificatio
  *      or @c NULL if out of memory.
  */
 struct texturevariantspecification_s* GL_TextureVariantSpecificationForContext(
-    gltexture_type_t glType, void* context);
+    const struct texture_s* tex, void* context);
 
 struct texturevariant_s* GL_FindSuitableTextureVariant(struct texture_s* tex,
     const struct texturevariantspecification_s* spec);
@@ -296,11 +276,10 @@ struct texture_s* GL_ToTexture(textureid_t id);
 const struct texturevariant_s* GL_PrepareTexture(textureid_t id, void* context,
     byte* result);
 
-const struct texture_s* GL_CreateTexture(const char* name, uint index, gltexture_type_t type);
+const struct texture_s* GL_CreateTexture(const char* name, uint index, texturenamespaceid_t texNamespace);
 
 const struct texture_s* GL_TextureByUri2(const dduri_t* uri, boolean silent);
 const struct texture_s* GL_TextureByUri(const dduri_t* uri);
-
 const struct texture_s* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace);
 
 uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
@@ -314,6 +293,6 @@ void GL_SetAllTexturesMinFilter(int minFilter);
 /**
  * Releases all GL texture objects for all prepared TextureVariants.
  */
-void GL_ReleaseGLTexturesByGLType(gltexture_type_t);
+void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace);
 
 #endif /* LIBDENG_TEXTURE_MANAGER_H */
