@@ -66,12 +66,12 @@ void F_Close(DFILE* file);
 /**
  * Try to locate the specified lump for reading.
  *
- * @param name  Name of the lump to open.
+ * @param lump  Index of the lump to open.
  * @param dontBuffer  Just test for access (don't buffer anything).
  *
  * @return  Non-zero if a lump was found and opened successfully.
  */
-DFILE* F_OpenLump(const char* name, boolean dontBuffer);
+DFILE* F_OpenLump(lumpnum_t lump, boolean dontBuffer);
 
 /**
  * \note Stream position is not affected.

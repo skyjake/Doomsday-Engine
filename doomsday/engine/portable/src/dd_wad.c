@@ -936,7 +936,7 @@ lumpnum_t W_CheckNumForName2(const char* name, boolean silent)
         return idx;
 
     if(!silent)
-        VERBOSE2( Con_Message("Warning: Lump \"%s\" not found.\n", name8) );
+        VERBOSE2( Con_Message("Warning:W_CheckNumForName: Lump \"%s\" not found.\n", name8) );
     return -1;
 }
 

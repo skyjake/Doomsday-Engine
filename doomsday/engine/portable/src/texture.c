@@ -50,7 +50,7 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
     {
     texture_t* tex;
 
-    if(NULL == (tex = Z_Malloc(sizeof(*tex), PU_APPSTATIC, 0)))
+    if(NULL == (tex = (texture_t*) malloc(sizeof(*tex))))
         Con_Error("Texture::Construct: Failed on allocation of %lu bytes for "
                   "new Texture.", (unsigned long) sizeof(*tex));
 
@@ -82,10 +82,10 @@ void Texture_Destruct(texture_t* tex)
         if(0 != (glName = TextureVariant_GLName(node->variant)))
             glDeleteTextures(1, (const GLuint*) &glName);
         TextureVariant_Destruct(node->variant);
-        Z_Free(node);
+        free(node);
         node = next;
     }
-    Z_Free(tex);
+    free(tex);
     }
 }
 
@@ -103,7 +103,7 @@ void Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
         return;
     }
 
-    if(NULL == (node = Z_Malloc(sizeof(*node), PU_APPSTATIC, 0)))
+    if(NULL == (node = (texture_variantlist_node_t*) malloc(sizeof(*node))))
         Con_Error("Texture::AddInstance: failed on allocation of %lu bytes for new node.",
                   (unsigned long) sizeof(*node));
 
@@ -276,160 +276,6 @@ int Texture_IterateVariants(texture_t* tex,
     }
 }
 
-typedef struct {
-    texturevariantspecification_t spec;
-    texturevariant_t* chosen;
-} choosegltexturevariantworker_paramaters_t;
-
-static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
-{
-    assert(variant);
-    {
-    choosegltexturevariantworker_paramaters_t* p = (choosegltexturevariantworker_paramaters_t*)context;
-    const texturevariantspecification_t* spec = TextureVariant_Spec(variant);
-    if(spec->prepareForSkySphere == p->spec.prepareForSkySphere &&
-       spec->flags               == p->spec.flags &&
-       spec->border              == p->spec.border)
-    {   // This will do fine.
-        p->chosen = variant;
-        return 1; // Stop iteration.
-    }
-    return 0; // Continue iteration.
-    }
-}
-
-static texturevariant_t* chooseTextureVariant(texture_t* tex, void* context)
-{
-    assert(tex);
-    {
-    material_load_params_t* mlParams = (material_load_params_t*) context;
-    choosegltexturevariantworker_paramaters_t params;
-    memset(&params.spec, 0, sizeof(params.spec));
-    if(NULL != mlParams)
-    {
-        params.spec.prepareForSkySphere = mlParams->prepareForSkySphere;
-        params.spec.flags     = mlParams->tex.flags;
-        params.spec.border    = mlParams->tex.border;
-    }
-    params.chosen = NULL;
-    { texture_variantlist_node_t* node = tex->_variants;
-    while(node)
-    {
-        if(0 != chooseTextureVariantWorker(node->variant, &params))
-            break;
-        node = node->next;
-    }}
-    return params.chosen;
-    }
-}
-
-typedef struct {
-    texturevariantspecification_t spec;
-    texturevariant_t* chosen;
-} choosedetailgltexturevariantworker_paramaters_t;
-
-static int chooseDetailTextureVariantWorker(texturevariant_t* variant, void* context)
-{
-    assert(variant && context);
-    {
-    choosedetailgltexturevariantworker_paramaters_t* p = (choosedetailgltexturevariantworker_paramaters_t*) context;
-    const texturevariantspecification_t* spec = TextureVariant_Spec(variant);
-    if(spec->type.detail.contrast == p->spec.type.detail.contrast)
-    {   // This will do fine.
-        p->chosen = variant;
-        return 1; // Stop iteration.
-    }
-    return 0; // Continue iteration.
-    }
-}
-
-static texturevariant_t* chooseDetailTextureVariant(texture_t* tex, void* context)
-{
-    assert(tex && context);
-    {
-    choosedetailgltexturevariantworker_paramaters_t params;
-    memset(&params.spec, 0, sizeof(params.spec));
-    params.spec.type.detail.contrast = *((float*) context);
-    //params.spec.flags = TF_MONOCHROME;
-    params.chosen = NULL;
-    { texture_variantlist_node_t* node = tex->_variants;
-    while(node)
-    {
-        if(0 != chooseDetailTextureVariantWorker(node->variant, &params))
-            break;
-        node = node->next;
-    }}
-    return params.chosen;
-    }
-}
-
-typedef struct {
-    texturevariantspecification_t spec;
-    texturevariant_t* chosen;
-} choosespritegltexturevariantworker_paramaters_t;
-
-static int chooseSpriteTextureVariantWorker(texturevariant_t* variant, void* context)
-{
-    assert(variant);
-    {
-    choosespritegltexturevariantworker_paramaters_t* p = (choosespritegltexturevariantworker_paramaters_t*) context;
-    const texturevariantspecification_t* spec = TextureVariant_Spec(variant);
-    if(spec->flags               == p->spec.flags &&
-       spec->prepareForSkySphere == p->spec.prepareForSkySphere &&
-       spec->border              == p->spec.border &&
-       spec->type.sprite.pSprite == p->spec.type.sprite.pSprite &&
-       spec->type.sprite.tmap    == p->spec.type.sprite.tmap &&
-       spec->type.sprite.tclass  == p->spec.type.sprite.tclass)
-    {   // This will do fine.
-        p->chosen = variant;
-        return 1; // Stop iteration.
-    }
-    return 0; // Continue iteration.
-    }
-}
-
-static texturevariant_t* chooseSpriteTextureVariant(texture_t* tex, void* context)
-{
-    assert(tex);
-    {
-    material_load_params_t* mlParams = (material_load_params_t*) context;
-    choosespritegltexturevariantworker_paramaters_t params;
-    memset(&params.spec, 0, sizeof(params.spec));
-    if(NULL != mlParams)
-    {
-        params.spec.type.sprite.tmap = mlParams->tmap;
-        params.spec.type.sprite.tclass = mlParams->tclass;
-        params.spec.type.sprite.pSprite = mlParams->pSprite;
-        params.spec.flags = mlParams->tex.flags;
-        params.spec.border = mlParams->tex.border;
-        params.spec.prepareForSkySphere = mlParams->prepareForSkySphere;
-    }
-    params.chosen = NULL;
-    { texture_variantlist_node_t* node = tex->_variants;
-    while(node)
-    {
-        if(0 != chooseSpriteTextureVariantWorker(node->variant, &params))
-            break;
-        node = node->next;
-    }}
-    return params.chosen;
-    }
-}
-
-static texturevariant_t* findSuitableVariant(texture_t* tex, void* context)
-{
-    assert(tex);
-    switch(tex->_glType)
-    {
-    case GLT_DETAIL:
-        return chooseDetailTextureVariant(tex, context);
-    case GLT_SPRITE:
-        return chooseSpriteTextureVariant(tex, context);
-    default:
-        return chooseTextureVariant(tex, context);
-    }
-}
-
 static const dduri_t* searchPath(gltexture_type_t glType, int typeIndex)
 {
     switch(glType)
@@ -485,8 +331,9 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
     assert(img && tex);
     {
     const texture_t* generalCase = TextureVariant_GeneralCase(tex);
+    const texturevariantspecification_t* spec = TextureVariant_Spec(tex);
     byte loadResult = 0;
-    switch(Texture_GLType(generalCase))
+    switch(spec->glType)
     {
     case GLT_FLAT:
         // Attempt to load an external replacement for this flat?
@@ -518,7 +365,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadDoomPatchLump(img, generalCase, (tex->_spec.flags & TF_UPSCALE_AND_SHARPEN) != 0);
+            loadResult = GL_LoadDoomPatchLump(img, generalCase, (spec->flags & TF_UPSCALE_AND_SHARPEN) != 0);
         break;
     case GLT_SPRITE:
         // Attempt to load an external replacement for this sprite?
@@ -531,14 +378,14 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
 
             // Prefer psprite or translated versions if available.
             Str_Init(&searchPath);
-            if(tex->_spec.type.sprite.pSprite)
+            if(spec->type.sprite.pSprite)
             {
                 Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", sprTex->name);
             }
-            else if(tex->_spec.type.sprite.tclass || tex->_spec.type.sprite.tmap)
+            else if(spec->type.sprite.tclass || spec->type.sprite.tmap)
             {   // Translated.
                 Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
-                    sprTex->name, tex->_spec.type.sprite.tclass, tex->_spec.type.sprite.tmap);
+                    sprTex->name, spec->type.sprite.tclass, spec->type.sprite.tmap);
             }
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", sprTex->name);
 
@@ -547,13 +394,14 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadSpriteLump(img, generalCase, tex->_spec.type.sprite.pSprite,
-                tex->_spec.type.sprite.tclass, tex->_spec.type.sprite.tmap, tex->_spec.border);
+            loadResult = GL_LoadSpriteLump(img, generalCase, spec->type.sprite.pSprite,
+                spec->type.sprite.tclass, spec->type.sprite.tmap, spec->border);
         break;
     case GLT_DETAIL: {
+        int idx = Texture_TypeIndex(generalCase);
         const detailtex_t* dTex;
-        assert(Texture_TypeIndex(generalCase) >= 0 && Texture_TypeIndex(generalCase) < detailTexturesCount);
-        dTex = detailTextures[Texture_TypeIndex(generalCase)];
+        assert(idx >= 0 && idx < detailTexturesCount);
+        dTex = detailTextures[idx];
         if(dTex->isExternal)
         {
             ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
@@ -573,14 +421,13 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
     case GLT_FLARE:
     case GLT_MODELSKIN:
     case GLT_MODELSHINYSKIN: {
-        ddstring_t* path = Uri_ComposePath(
-            searchPath(Texture_GLType(generalCase), Texture_TypeIndex(generalCase)));
+        ddstring_t* path = Uri_ComposePath(searchPath(spec->glType, Texture_TypeIndex(generalCase)));
         loadResult = GL_LoadExtTextureEX(img, Str_Text(path), NULL, false);
         Str_Delete(path);
         break;
       }
     default:
-        Con_Error("Texture::Prepare: Unknown texture type %i.", (int) Texture_GLType(generalCase));
+        Con_Error("Textures::loadSourceImage: Unknown texture type %i.", (int) spec->glType);
         return 0; // Unreachable.
     }
     return loadResult;
@@ -591,8 +438,8 @@ static byte prepareTextureVariant(texturevariant_t* tex)
 {
     assert(tex);
     {
-    gltexture_type_t glType = Texture_GLType(TextureVariant_GeneralCase(tex));
     const texturevariantspecification_t* spec = TextureVariant_Spec(tex);
+    gltexture_type_t glType = spec->glType;
     boolean monochrome    = (glType != GLT_DETAIL? (spec->flags & TF_MONOCHROME) != 0 : false);
     boolean noCompression = (glType != GLT_DETAIL? (spec->flags & TF_NO_COMPRESSION) != 0 : false);
     boolean scaleSharp    = (glType != GLT_DETAIL? (spec->flags & TF_UPSCALE_AND_SHARPEN) != 0 : false);
@@ -618,6 +465,8 @@ static byte prepareTextureVariant(texturevariant_t* tex)
 
     if(0 == loadResult)
     {   // Not found/failed load.
+        //Con_Message("Warning:Texture::Prepare: No image found for \"%s\"\n",
+        //            Texture_Name(TextureVariant_GeneralCase(tex)));
         return loadResult;
     }
 
@@ -632,8 +481,8 @@ static byte prepareTextureVariant(texturevariant_t* tex)
             EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
             if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
             {
-                Con_Message("Texture::Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
-                            Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul);
+                VERBOSE2( Con_Message("Texture::Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
+                            Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul) );
             }
         }
 
@@ -870,7 +719,16 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     if(!(glType == GLT_DETAIL || glType == GLT_SPRITE) &&
        spec->prepareForSkySphere)
     {
-        averagecolor_analysis_t* avgTopColor = Z_Malloc(sizeof(*avgTopColor), PU_APPSTATIC, 0);
+        averagecolor_analysis_t* avgTopColor;
+        
+        if(NULL == (avgTopColor = (averagecolor_analysis_t*)TextureVariant_Analysis(tex, TA_SKY_TOPCOLOR)))
+        {
+            if(NULL == (avgTopColor = (averagecolor_analysis_t*) malloc(sizeof(*avgTopColor))))
+                Con_Error("Texture::Prepare: Failed on allocation of %lu bytes for "
+                          "new AverageColorAnalysis.", (unsigned int) sizeof(*avgTopColor));
+            TextureVariant_AddAnalysis(tex, TA_SKY_TOPCOLOR, avgTopColor);
+        }
+
         // Average color for glow planes and top line color.
         if(image.pixelSize > 1)
         {
@@ -880,21 +738,36 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         {
             FindAverageLineColorIdx(image.pixels, image.width, image.height, 0, 0, false, avgTopColor->color);
         }
-        TextureVariant_AddAnalysis(tex, TA_SKY_TOPCOLOR, avgTopColor);
     }
 
     if(glType == GLT_SPRITE && !spec->type.sprite.pSprite)
     {
-        pointlight_analysis_t* pl = Z_Malloc(sizeof(*pl), PU_APPSTATIC, 0);
+        pointlight_analysis_t* pl;
+        
+        if(NULL == (pl = (pointlight_analysis_t*)TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT)))
+        {
+            if(NULL == (pl = (pointlight_analysis_t*) malloc(sizeof(*pl))))
+                Con_Error("Texture::Prepare: Failed on allocation of %lu bytes for "
+                          "new PointLightAnalysis.", (unsigned int) sizeof(*pl));
+            TextureVariant_AddAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
+        }
         // Calculate light source properties.
         GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
                          &pl->originX, &pl->originY, pl->color, &pl->brightMul);
-        TextureVariant_AddAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
     }
 
     if(glType == GLT_FLAT || glType == GLT_PATCHCOMPOSITE)
     {
-        ambientlight_analysis_t* al = Z_Malloc(sizeof(*al), PU_APPSTATIC, 0);
+        ambientlight_analysis_t* al;
+        
+        if(NULL == (al = (ambientlight_analysis_t*)TextureVariant_Analysis(tex, TA_WORLD_AMBIENTLIGHT)))
+        {
+            if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
+                Con_Error("Texture::Prepare: Failed on allocation of %lu bytes for "
+                          "new AmbientLightAnalysis.", (unsigned int) sizeof(*al));
+            TextureVariant_AddAnalysis(tex, TA_WORLD_AMBIENTLIGHT, al);
+        }
+
         // Average color for glow planes and top line color.
         if(image.pixelSize > 1)
         {
@@ -906,7 +779,6 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         }
         memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
         amplify(al->colorAmplified);
-        TextureVariant_AddAnalysis(tex, TA_WORLD_AMBIENTLIGHT, al);
     }
 
     GL_DestroyImagePixels(&image);
@@ -918,21 +790,15 @@ texturevariant_t* Texture_Prepare(texture_t* tex, void* context, byte* result)
 {
     assert(tex);
     {
+    texturevariantspecification_t* spec = GL_TextureVariantSpecificationForContext(Texture_GLType(tex), context);
     texturevariant_t* variant = NULL;
     boolean variantIsNew = false;
-    float contrast = 1;
     byte loadResult;
 
-    // Rationalize usage context paramaters.
-    if(tex->_glType == GLT_DETAIL)
-    {   // Round off the contrast to nearest 1/10
-        if(context)
-            contrast = (int) ((*((float*) context) + .05f) * 10) / 10.f;
-        context = (void*) &contrast;
-    }
+    assert(spec);
 
     // Have we already registered and prepared a suitable variant?
-    variant = findSuitableVariant(tex, context);
+    variant = GL_FindSuitableTextureVariant(tex, spec);
     if(NULL != variant && 0 != TextureVariant_GLName(variant))
     {   // Already prepared.
         if(result) *result = 0;
@@ -942,7 +808,7 @@ texturevariant_t* Texture_Prepare(texture_t* tex, void* context, byte* result)
     // Do we need to allocate a variant?
     if(NULL == variant)
     {
-        variant = TextureVariant_Construct(tex, context);
+        variant = TextureVariant_Construct(tex, spec);
         variantIsNew = true;
     }
 
@@ -951,9 +817,14 @@ texturevariant_t* Texture_Prepare(texture_t* tex, void* context, byte* result)
     if(variantIsNew)
     {
         if(0 != loadResult)
+        {
             Texture_AddVariant(tex, variant);
+        }
         else
-            Z_Free(variant);
+        {
+            free(variant);
+            variant = NULL;
+        }
     }
 
     if(result)

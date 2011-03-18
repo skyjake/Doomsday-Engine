@@ -1015,7 +1015,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             if(mb->prepared)
             {   // A texture was loaded.
                 // Do we need to prepare a detail texture?
-                if(detail)
+                if(detail && r_detail)
                 {
                     detailtex_t* dTex;
 

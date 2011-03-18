@@ -42,6 +42,7 @@ struct image_s;
 struct texturecontent_s;
 struct texture_s;
 struct texturevariant_s;
+struct texturevariantspecification_s;
 
 typedef enum {
     GLT_ANY = -1,
@@ -93,7 +94,6 @@ void GL_InitTextureManager(void);
 void GL_ResetTextureManager(void);
 
 void GL_ShutdownTextureManager(void);
-void GL_ClearTextures(void);
 void GL_DestroyTextures(void);
 
 void GL_TexReset(void);
@@ -255,6 +255,20 @@ DGLuint GL_GetFlareTexture(const dduri_t* path, int oldIdx);
  */
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
     boolean isMipMapped, int* optWidth, int* optHeight);
+
+/**
+ * Prepare a TextureVariantSpecification according to usage context.
+ * If incomplete context information is supplied, suitable defaults are
+ * chosen in their place.
+ *
+ * @return  Ptr to a rationalized and valid TextureVariantSpecification
+ *      or @c NULL if out of memory.
+ */
+struct texturevariantspecification_s* GL_TextureVariantSpecificationForContext(
+    gltexture_type_t glType, void* context);
+
+struct texturevariant_s* GL_FindSuitableTextureVariant(struct texture_s* tex,
+    const struct texturevariantspecification_s* spec);
 
 void GL_ReleaseTextureVariants(struct texture_s* tex);
 

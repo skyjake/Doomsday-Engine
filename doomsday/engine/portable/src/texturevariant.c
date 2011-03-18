@@ -29,43 +29,14 @@
 #include "texture.h"
 #include "texturevariant.h"
 
-static void applyVariantSpecification(texturevariantspecification_t* spec,
-    gltexture_type_t type, const void* context)
+texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
+    texturevariantspecification_t* spec)
 {
-    assert(spec && VALID_GLTEXTURETYPE(type));
-
-    memset(spec, 0, sizeof(texturevariantspecification_t));
-    if(type == GLT_DETAIL)
-    {
-        assert(context);
-        spec->type.detail.contrast = *((const float*)context);
-        return;
-    }
-
-    if(!context)
-        return;
-
-    {
-    const material_load_params_t* params = (const material_load_params_t*) context;
-    spec->flags = params->tex.flags;
-    spec->prepareForSkySphere = params->prepareForSkySphere;
-    spec->border = params->tex.border;
-    if(type == GLT_SPRITE)
-    {
-        spec->type.sprite.tmap = params->tmap;
-        spec->type.sprite.tclass = params->tclass;
-        spec->type.sprite.pSprite = params->pSprite;
-    }
-    }
-}
-
-texturevariant_t* TextureVariant_Construct(texture_t* generalCase, void* context)
-{
-    assert(generalCase);
+    assert(generalCase && spec);
     {
     texturevariant_t* tex;
     
-    if(NULL == (tex = Z_Malloc(sizeof(*tex), PU_APPSTATIC, 0)))
+    if(NULL == (tex = (texturevariant_t*) malloc(sizeof(*tex))))
         Con_Error("TextureVariant::Construct: Failed on allocation of %lu bytes for "
                   "new TextureVariant.", sizeof(*tex));
 
@@ -74,7 +45,7 @@ texturevariant_t* TextureVariant_Construct(texture_t* generalCase, void* context
     tex->_glName = 0;
     tex->_s = tex->_t = 0;
     memset(tex->_analyses, 0, sizeof(tex->_analyses));
-    applyVariantSpecification(&tex->_spec, Texture_GLType(generalCase), context);
+    tex->_spec = spec;
     return tex;
     }
 }
@@ -85,9 +56,9 @@ void TextureVariant_Destruct(texturevariant_t* tex)
     { int i;
     for(i = 0; i < TEXTUREVARIANT_ANALYSIS_COUNT; ++i)
         if(tex->_analyses[i])
-            Z_Free(tex->_analyses[i]);
+            free(tex->_analyses[i]);
     }
-    Z_Free(tex);
+    free(tex);
 }
 
 struct texture_s* TextureVariant_GeneralCase(const texturevariant_t* tex)
@@ -125,10 +96,10 @@ void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t)
 const texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex)
 {
     assert(tex);
-    return &tex->_spec;
+    return tex->_spec;
 }
 
-const void* TextureVariant_Analysis(const texturevariant_t* tex,
+void* TextureVariant_Analysis(const texturevariant_t* tex,
     texturevariant_analysisid_t analysis)
 {
     assert(tex && VALID_TEXTUREVARIANT_ANALYSISID(analysis));

@@ -64,6 +64,13 @@ typedef struct {
     const char* (*getLastErrorFunc) (void);
 } imagehandler_t;
 
+typedef struct texturevariantspecificationlist_node_s {
+    struct texturevariantspecificationlist_node_s* next;
+    texturevariantspecification_t* spec;
+} texturevariantspecificationlist_node_t;
+
+typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
+
 typedef struct texturenamespace_hashnode_s {
     struct texturenamespace_hashnode_s* next;
     uint textureIndex; // 1-based index
@@ -132,7 +139,9 @@ static const imagehandler_t handlers[] = {
     { 0 } // Terminate.
 };
 
-static uint texturesCount;
+static variantspecificationlist_t* variantSpecs;
+
+static int texturesCount;
 static texture_t** textures;
 static texturenamespace_t textureNamespaces[NUM_GLTEXTURE_TYPES];
 
@@ -173,9 +182,176 @@ static gltexture_type_t TextureTypeForTextureNamespace(texturenamespaceid_t texN
     }
 }
 
+static texturevariantspecification_t* copyVariantSpecification(
+    const texturevariantspecification_t* tpl)
+{
+    texturevariantspecification_t* spec;
+    if(NULL == (spec = (texturevariantspecification_t*) malloc(sizeof(*spec))))
+        Con_Error("Textures::findVariantSpecification: Failed on allocation of "
+                  "%lu bytes for new TextureVariantSpecification.",
+                  (unsigned int) sizeof(*spec));
+    memcpy(spec, tpl, sizeof(texturevariantspecification_t));
+    return spec;
+}
+
+static int compareVariantSpecifications(const texturevariantspecification_t* a,
+    const texturevariantspecification_t* b)
+{
+    if(a->glType != b->glType)
+        return 1;
+
+    if(a->glType != GLT_DETAIL)
+    {
+        if(a->prepareForSkySphere != b->prepareForSkySphere)
+            return 1;
+        if(a->flags != b->flags)
+            return 1;
+        if(a->border != b->border)
+            return 1;
+    }
+
+    switch(a->glType)
+    {
+    case GLT_SPRITE:
+        if(a->type.sprite.pSprite != b->type.sprite.pSprite)
+            return 1;
+        if(a->type.sprite.tclass != b->type.sprite.tclass)
+            return 1;
+        if(a->type.sprite.tmap != b->type.sprite.tmap)
+            return 1;
+        break;
+    case GLT_DETAIL:
+        if(!INRANGE_OF(a->type.detail.contrast, b->type.detail.contrast, .05f))
+            return 1;
+        break;
+    default: break;
+    }
+    return 0; // Equal.
+}
+
+static texturevariantspecification_t* applyVariantSpecification(
+    texturevariantspecification_t* spec, gltexture_type_t glType, const void* context)
+{
+    assert(spec && VALID_GLTEXTURETYPE(glType));
+    memset(spec, 0, sizeof(texturevariantspecification_t));
+    spec->glType = glType;
+    if(spec->glType == GLT_DETAIL)
+    {
+        float contrast = context? *((float*) context) : 1;
+        // Round off contrast to nearest 1/10
+        spec->type.detail.contrast = MINMAX_OF(0, (int) ((contrast + .05f) * 10) / 10.f, 1);
+        return spec;
+    }
+
+    if(context)
+    {
+        const material_load_params_t* params = (const material_load_params_t*) context;
+        spec->flags = params->tex.flags;
+        spec->prepareForSkySphere = params->prepareForSkySphere;
+        spec->border = params->tex.border;
+        if(spec->glType == GLT_SPRITE)
+        {
+            spec->type.sprite.tmap = params->tmap;
+            spec->type.sprite.tclass = params->tclass;
+            spec->type.sprite.pSprite = params->pSprite;
+        }
+    }
+    return spec;
+}
+
+static void initTextureVariantSpecificationForContext(texturevariantspecification_t* spec,
+    gltexture_type_t glType, void* context)
+{
+    applyVariantSpecification(spec, glType, context);
+}
+
+static texturevariantspecification_t* linkVariantSpecification(
+    texturevariantspecification_t* spec)
+{
+    assert(texInited && spec);
+    {
+    texturevariantspecificationlist_node_t* node;
+    if(NULL == (node = (texturevariantspecificationlist_node_t*) malloc(sizeof(*node))))
+        Con_Error("Textures::linkVariantSpecification: Failed on allocation of "
+                  "%lu bytes for new TextureVariantSpecificationListNode.",
+                  (unsigned int) sizeof(*node));
+    node->spec = spec;
+    node->next = variantSpecs;
+    variantSpecs = (variantspecificationlist_t*)node;
+    return spec;
+    }
+}
+
+static texturevariantspecification_t* findVariantSpecification(gltexture_type_t glType,
+    const texturevariantspecification_t* tpl, boolean canCreate)
+{
+    assert(texInited && tpl);
+    {
+    texturevariantspecificationlist_node_t* node;
+    for(node = variantSpecs; node; node = node->next)
+    {
+        if(!compareVariantSpecifications(node->spec, tpl))
+            return node->spec;
+    }
+    if(!canCreate)
+        return NULL;
+    return linkVariantSpecification(copyVariantSpecification(tpl));
+    }
+}
+
+static void destroyVariantSpecifications(void)
+{
+    assert(texInited);
+    {
+    texturevariantspecificationlist_node_t* node = variantSpecs;
+    while(node)
+    {
+        texturevariantspecificationlist_node_t* next = node->next;
+        free(node->spec);
+        free(node);
+        node = next;
+    }
+    variantSpecs = NULL;
+    }
+}
+
+static void destroyTextures(void)
+{
+    assert(texInited);
+    if(texturesCount)
+    {
+        GL_DeleteAllTexturesForTextures(GLT_ANY);
+        { int i;
+        for(i = 0; i < texturesCount; ++i)
+            Texture_Destruct(textures[i]);
+        }
+        free(textures);
+    }
+    textures = 0;
+    texturesCount = 0;
+
+    { uint i;
+    for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
+    {
+        texturenamespace_t* texNamespace = &textureNamespaces[i];
+        uint j;
+        for(j = 0; j < TEXTURENAMESPACE_HASH_SIZE; ++j)
+        {
+            texturenamespace_hashnode_t* node = texNamespace->hashTable[j];
+            while(node)
+            {
+                texturenamespace_hashnode_t* next = node->next;
+                free(node);
+                node = next;
+            }
+        }
+        memset(texNamespace->hashTable, 0, sizeof(textureNamespaces[i].hashTable));
+    }}
+}
+
 static __inline texture_t* getTexture(textureid_t id)
 {
-    if(id != 0 && id <= texturesCount)
+    if(id > 0 && id <= texturesCount)
         return textures[id - 1];
     return NULL;
 }
@@ -257,6 +433,7 @@ void GL_EarlyInitTextureManager(void)
     GL_InitSmartFilterHQ2x();
     calcGammaTable();
 
+    variantSpecs = NULL;
     textures = NULL;
     texturesCount = 0;
 
@@ -297,52 +474,23 @@ void GL_ResetTextureManager(void)
 {
     if(!texInited)
         return;
-
     GL_ClearTextureMemory();
-    texInited = false;
+}
+
+texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
+    gltexture_type_t glType, void* context)
+{
+    static texturevariantspecification_t tpl;
+    if(!texInited)
+        Con_Error("GL_TextureVariantSpecificationForContext: Textures collection not yet initialized.");
+    initTextureVariantSpecificationForContext(&tpl, glType, context);
+    return findVariantSpecification(glType, &tpl, true);
 }
 
 void GL_DestroyTextures(void)
 {
     if(!texInited) return;
-
-    if(texturesCount)
-    {
-        GL_ClearTextures();
-        { uint i;
-        for(i = 0; i < texturesCount; ++i)
-            Texture_Destruct(textures[i]);
-        }
-        Z_Free(textures);
-    }
-    textures = 0;
-    texturesCount = 0;
-
-    { uint i;
-    for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
-    {
-        texturenamespace_t* texNamespace = &textureNamespaces[i];
-        uint j;
-        for(j = 0; j < TEXTURENAMESPACE_HASH_SIZE; ++j)
-        {
-            texturenamespace_hashnode_t* node = texNamespace->hashTable[j];
-            while(node)
-            {
-                texturenamespace_hashnode_t* next = node->next;
-                free(node);
-                node = next;
-            }
-        }
-        memset(texNamespace->hashTable, 0, sizeof(textureNamespaces[i].hashTable));
-    }}
-}
-
-void GL_ClearTextures(void)
-{
-    if(!texInited) return;
-
-    // texture-wrapped GL textures; textures, flats, sprites, system...
-    GL_DeleteAllTexturesForTextures(GLT_ANY);
+    destroyTextures();
 }
 
 void GL_ShutdownTextureManager(void)
@@ -350,7 +498,8 @@ void GL_ShutdownTextureManager(void)
     if(!texInited)
         return; // Already been here?
 
-    GL_DestroyTextures();
+    destroyVariantSpecifications();
+    destroyTextures();
     texInited = false;
 }
 
@@ -1022,6 +1171,7 @@ byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex)
     {
     detailtex_t* dTex = detailTextures[Texture_TypeIndex(tex)];
     const char* lumpName;
+    lumpnum_t lumpIndex;
     byte result = 0;
     DFILE* file;
 
@@ -1031,7 +1181,8 @@ byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex)
         return 0;
 
     lumpName = Str_Text(Uri_Path(dTex->filePath));
-    if(NULL != (file = F_OpenLump(lumpName, false)))
+    lumpIndex = W_CheckNumForName2(lumpName, true);
+    if(NULL != (file = F_OpenLump(lumpIndex, false)))
     {
         if(0 != GL_LoadImageDFile(image, file, lumpName))
         {
@@ -1088,10 +1239,11 @@ byte GL_LoadFlatLump(image_t* image, const texture_t* tex)
     assert(image && tex);
     {
     flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(tex));
+    lumpnum_t lumpIndex = W_CheckNumForName2(flat->name, true);
     byte result = 0;
     DFILE* file;
     assert(NULL != flat);
-    if(NULL != (file = F_OpenLump(flat->name, false)))
+    if(NULL != (file = F_OpenLump(lumpIndex, false)))
     {
         if(0 != GL_LoadImageDFile(image, file, flat->name))
         {
@@ -1401,7 +1553,8 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     else
     {
         DFILE* file;
-        if(NULL != (file = F_OpenLump(lumpName, false)))
+        lumpnum_t lumpIndex = W_CheckNumForName(lumpName);
+        if(NULL != (file = F_OpenLump(lumpIndex, false)))
         {
             if(0 != GL_LoadImageDFile(image, file, lumpName))
             {
@@ -1795,7 +1948,7 @@ int setGLMinFilter(texturevariant_t* tex, void* paramaters)
 void GL_SetAllTexturesMinFilter(int minFilter)
 {
     int localMinFilter = minFilter;
-    uint i;
+    int i;
     for(i = 0; i < texturesCount; ++i)
         Texture_IterateVariants(textures[i], setGLMinFilter, (void*)&localMinFilter);
 }
@@ -1813,7 +1966,7 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
         return NULL;
 
     // Check if we've already created a texture for this.
-    { uint i;
+    { int i;
     for(i = 0; i < texturesCount; ++i)
     {
         tex = textures[i];
@@ -1841,7 +1994,7 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
     textureNamespaces[glType].hashTable[hash] = node;
 
     // Link the new texture into the global list of gltextures.
-    textures = Z_Realloc(textures, sizeof(texture_t*) * ++texturesCount, PU_APPSTATIC);
+    textures = (texture_t**) realloc(textures, sizeof(texture_t*) * ++texturesCount);
     textures[texturesCount - 1] = tex;
 
     return tex;
@@ -1870,7 +2023,9 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
 const texturevariant_t* GL_PrepareTexture(textureid_t id, void* context,
     byte* result)
 {
-    return Texture_Prepare(getTexture(id), context, result);
+    texture_t* tex = getTexture(id);
+    assert(NULL != tex);
+    return Texture_Prepare(tex, context, result);
 }
 
 int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
@@ -1886,6 +2041,45 @@ int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
     return 1; // Continue iteration.
 }
 
+typedef struct {
+    const texturevariantspecification_t* spec;
+    texturevariant_t* chosen;
+} choosetexturevariantworker_paramaters_t;
+
+static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
+{
+    assert(variant && context);
+    {
+    choosetexturevariantworker_paramaters_t* p = (choosetexturevariantworker_paramaters_t*) context;
+    if(!compareVariantSpecifications(TextureVariant_Spec(variant), p->spec))
+    {   // This will do fine.
+        p->chosen = variant;
+        return 1; // Stop iteration.
+    }
+    return 0; // Continue iteration.
+    }
+}
+
+static texturevariant_t* chooseTextureVariant(texture_t* tex,
+    const texturevariantspecification_t* spec)
+{
+    assert(tex && spec);
+    {
+    choosetexturevariantworker_paramaters_t params;
+    params.spec = spec;
+    params.chosen = NULL;
+    Texture_IterateVariants(tex, chooseTextureVariantWorker, &params);
+    return params.chosen;
+    }
+}
+
+texturevariant_t* GL_FindSuitableTextureVariant(texture_t* tex,
+    const texturevariantspecification_t* spec)
+{
+    assert(texInited);
+    return chooseTextureVariant(tex, spec);
+}
+
 void GL_ReleaseTextureVariants(texture_t* tex)
 {
     Texture_IterateVariants(tex, releaseVariantGLTexture, 0);
@@ -1897,7 +2091,7 @@ void GL_DeleteAllTexturesForTextures(gltexture_type_t glType)
         Con_Error("GL_DeleteAllTexturesForTextures: Internal error, "
                   "invalid type %i.", (int) glType);
 
-    { uint i;
+    { int i;
     for(i = 0; i < texturesCount; ++i)
     {
         texture_t* tex = textures[i];
@@ -1947,7 +2141,7 @@ const texture_t* GL_TextureByUri(const dduri_t* uri)
 const texture_t* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace)
 {
     gltexture_type_t glType = TextureTypeForTextureNamespace(texNamespace);
-    uint i;
+    int i;
     for(i = 0; i < texturesCount; ++i)
     {
         texture_t* tex = textures[i];

@@ -624,12 +624,11 @@ void F_Release(DFILE* file)
     free(file);
 }
 
-DFILE* F_OpenLump(const char* name, boolean dontBuffer)
+DFILE* F_OpenLump(lumpnum_t lump, boolean dontBuffer)
 {
-    int num = W_CheckNumForName((char *) name);
     DFILE* file;
 
-    if(num < 0)
+    if(lump < 0 || lump >= W_NumLumps())
         return NULL;
 
     file = F_GetFreeFile();
@@ -642,9 +641,9 @@ DFILE* F_OpenLump(const char* name, boolean dontBuffer)
     file->lastModified = time(NULL); // So I'm lazy...
     if(!dontBuffer)
     {
-        file->size = W_LumpLength(num);
+        file->size = W_LumpLength(lump);
         file->pos = file->data = malloc(file->size);
-        memcpy(file->data, W_CacheLumpNum(num, PU_CACHE), file->size);
+        memcpy(file->data, W_CacheLumpNum(lump, PU_CACHE), file->size);
     }
 
     return file;
@@ -797,7 +796,10 @@ DFILE* F_Open(const char* path, const char* mode)
         {
             lumpdirectory_record_t* rec = &lumpDirectory[i];
             if(!Str_CompareIgnoreCase(&rec->path, full))
-                return F_OpenLump(rec->lumpName, dontBuffer);
+            {
+                lumpnum_t lumpIndex = W_CheckNumForName(rec->lumpName);
+                return F_OpenLump(lumpIndex, dontBuffer);
+            }
         }}
     }
 

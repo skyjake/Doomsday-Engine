@@ -38,6 +38,7 @@ struct texture_s;
 /*@}*/
 
 typedef struct texturevariantspecification_s {
+    gltexture_type_t glType;
     byte flags; /// @see textureFlags
     byte border; /// In pixels, added to all four edges of the texture.
     boolean prepareForSkySphere;
@@ -81,10 +82,15 @@ typedef struct texturevariant_s {
     float _s, _t;
 
     /// Specification used to derive this variant.
-    texturevariantspecification_t _spec;
+    texturevariantspecification_t* _spec;
 } texturevariant_t;
 
-texturevariant_t* TextureVariant_Construct(struct texture_s* generalCase, void* context);
+/**
+ * @param spec  Specification used to derive this variant. Ownership of
+ *      specifcation is NOT given to the resultant TextureVariant
+ */
+texturevariant_t* TextureVariant_Construct(struct texture_s* generalCase,
+    texturevariantspecification_t* spec);
 
 void TextureVariant_Destruct(texturevariant_t* tex);
 
@@ -98,7 +104,7 @@ void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t);
 
 const texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex);
 
-const void* TextureVariant_Analysis(const texturevariant_t* tex,
+void* TextureVariant_Analysis(const texturevariant_t* tex,
     texturevariant_analysisid_t analysis);
 
 void TextureVariant_AddAnalysis(texturevariant_t* tex, texturevariant_analysisid_t analysis,
