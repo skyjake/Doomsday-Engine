@@ -413,7 +413,7 @@ void Materials_DeleteTextures(const char* namespaceName)
 
     if(matNamespace == MN_ANY)
     {   // Delete the lot.
-        GL_DeleteAllTexturesForTextures(GLT_ANY);
+        GL_ReleaseGLTexturesByGLType(GLT_ANY);
         return;
     }
 

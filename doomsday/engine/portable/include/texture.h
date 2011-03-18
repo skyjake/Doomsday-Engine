@@ -77,20 +77,6 @@ int Texture_IterateVariants(texture_t* tex,
     int (*callback)(struct texturevariant_s* instance, void* paramaters),
     void* paramaters);
 
-/**
- * Attempt to prepare (upload to GL) an instance of Texture which fulfills
- * the variant specification defined by the usage context.
- *
- * @param context  Usage-specific context data (if any).
- * @param result  Result of this process:
- *      @c 0== Failed: No suitable variant could be found/prepared.
- *      @c 1== Success: Suitable variant prepared from an original resource.
- *      @c 2== Success: Suitable variant prepared from a replacement resource.
- * @return  Prepared variant if successful else @c NULL.
- */
-struct texturevariant_s* Texture_Prepare(texture_t* tex, void* context,
-    byte* result);
-
 /// @return  Unique identifier.
 textureid_t Texture_Id(const texture_t* tex);
 

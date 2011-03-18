@@ -257,6 +257,14 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
     boolean isMipMapped, int* optWidth, int* optHeight);
 
 /**
+ * Output a human readable representation of TextureVariantSpecification
+ * to console output.
+ *
+ * @param spec  Specification to echo.
+ */
+void GL_PrintTextureVariantSpecification(const struct texturevariantspecification_s* spec);
+
+/**
  * Prepare a TextureVariantSpecification according to usage context.
  * If incomplete context information is supplied, suitable defaults are
  * chosen in their place.
@@ -270,10 +278,23 @@ struct texturevariantspecification_s* GL_TextureVariantSpecificationForContext(
 struct texturevariant_s* GL_FindSuitableTextureVariant(struct texture_s* tex,
     const struct texturevariantspecification_s* spec);
 
-void GL_ReleaseTextureVariants(struct texture_s* tex);
+void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);
 
 struct texture_s* GL_ToTexture(textureid_t id);
-const struct texturevariant_s* GL_PrepareTexture(textureid_t id, void* context, byte* result);
+
+/**
+ * Attempt to prepare (upload to GL) an instance of Texture which fulfills
+ * the variant specification defined by the usage context.
+ *
+ * @param context  Usage-specific context data (if any).
+ * @param result  Result of this process:
+ *      @c 0== Failed: No suitable variant could be found/prepared.
+ *      @c 1== Success: Suitable variant prepared from an original resource.
+ *      @c 2== Success: Suitable variant prepared from a replacement resource.
+ * @return  Prepared variant if successful else @c NULL.
+ */
+const struct texturevariant_s* GL_PrepareTexture(textureid_t id, void* context,
+    byte* result);
 
 const struct texture_s* GL_CreateTexture(const char* name, uint index, gltexture_type_t type);
 
@@ -293,6 +314,6 @@ void GL_SetAllTexturesMinFilter(int minFilter);
 /**
  * Releases all GL texture objects for all prepared TextureVariants.
  */
-void GL_DeleteAllTexturesForTextures(gltexture_type_t);
+void GL_ReleaseGLTexturesByGLType(gltexture_type_t);
 
 #endif /* LIBDENG_TEXTURE_MANAGER_H */
