@@ -7,24 +7,23 @@
 
 @begin
 
-CONTENTS: @contents{1}
+@toc
 
 @chapter{ Introduction }
 
-The Doomsday Engine is an enhanced Doom source port for the Windows, 
-Mac OS X, and Linux platforms. It is based on the source code of id Software's
-Doom and Raven Software's Heretic and Hexen. The Doomsday Engine and
-the associated ports of Doom, Heretic and Hexen have been under
-development since 1999. The first versions were released in late 1999
-and early 2000. Most of the development work has been done by Jaakko
-Ker‰nen (skyjake). Several other people have also been involved in the
-project (see @ref{acks}{Acknowledgements}).
- 
-The purpose of the project is to create versions of Doom, Heretic and
-Hexen that feel the same as the original games but are implemented
-using modern techniques such as 3D graphics and client/server
-networking. A lot of emphasis is placed on good-looking graphics.
- 
+The Doomsday Engine is an enhanced Doom source port for the Windows, Mac OS X,
+and Linux platforms. It is based on the source code of id Software's Doom and
+Raven Software's Heretic and Hexen. The Doomsday Engine and the associated
+ports of Doom, Heretic and Hexen have been under development since 1999. The
+first versions were released in late 1999 and early 2000. Most of the
+development work has been done by Jaakko Ker√§nen (skyjake). Several other
+people have also been involved in the project (see
+@ref{acks}{Acknowledgements}).
+
+The purpose of the project is to create versions of Doom, Heretic and Hexen
+that feel the same as the original games but are implemented using modern
+techniques such as 3D graphics and client/server networking. A lot of emphasis
+is placed on good-looking graphics.
 
 @section{ Features }
 
@@ -141,9 +140,9 @@ downloaded from:
 
 
 
-@chapter{ Running from the Command Line }
+@chapter{ Running from the command line }
 
-@section{ File Paths on the Command Line }
+@section{ File paths on the command line }
 
 There are a few things you should know about the handling of relative
 paths. First of all, these are the directories that the engine is working
@@ -203,9 +202,9 @@ data related to it would lead to fatal errors.
 
 
 
-@chapter{ Data and Definitions Files }
+@chapter{ Data and definitions files }
 
-@section{ PK3 Files }
+@section{ PK3 files }
 
 Doomsday supports the PK3 (i.e. ZIP) format. Compression is allowed,
 but encryption is not. If you try to load an encrypted or password
@@ -249,7 +248,7 @@ PK3. If the directory begins with @file{#}, it is mapped into
 
 
 
-@section{ Definitions and Files in WADs }
+@section{ Definitions and files in WADs }
 
 After all DED files have been processed, the engine will check through all the loaded WAD files for lumps named @file{DD_DEFNS}. All the lumps with that name are processed just as if they were DED files, i.e. they should contain a DED file in plain text format. The @file{DD_DEFNS} lumps are applied in the order in which they have been loaded.
 
@@ -272,7 +271,7 @@ directory. When writing the @file{DD_DIREC} table, the prefix
 
 
 
-@section{ Automatical Loading of Data and Definitions }
+@section{ Automatical loading of data and definitions }
 
 All WAD, PK3, ZIP and LMP files placed in the @file{ Data\<Game>\Auto\
 } directory will be automatically loaded at startup.  The data files
@@ -289,7 +288,7 @@ will also be loaded.
 
 
 
-@section{ Virtual Directory Mapping }
+@section{ Virtual directory mapping }
 
 Version 1.8.7 introduces virtual directory mappings, which allows you
 to make the contents of one directory appear inside another directory
@@ -315,7 +314,7 @@ all real files and virtual files override @opt{-vdmap}.
 
 
 
-@section{ Lump Assemblies instead of WADs }
+@section{ Lump assemblies instead of WADs }
 
 The automatic loading of data files can be utilised to load
 directories that contain individual data lumps.  This kind of a
@@ -364,7 +363,7 @@ Data\<Game>\Auto\assembly\ }.
 
 @chapter{ Graphics }
 
-@section{ 3D Models as Particles }
+@section{ 3D models as particles }
 
 3D models can be used as particles in a particle generator. There are two things that need to be done. In the particle generator definition, set the particle stage's type to one of the @opt{pt_model} flags. The following would make the stage use particle model number 13:
 
@@ -380,7 +379,7 @@ For further details see the DED Reference.
 
 
 
-@section{ Detail Textures }
+@section{ Detail textures }
 
 Detail textures are grayscale images that are rendered on top of
 normal textures when walls and planes are viewed from close by. A
@@ -424,7 +423,7 @@ The console variables @var{rend-tex-detail},
 
 
 $ External resource files.
-@chapter{ Resource Files }
+@chapter{ Resource files }
 
 Normally all resources such as wall textures, menu graphics and fonts, background music and sound effects are loaded from the WAD files. Doomsday has a mechanism that allows replacing these resources with external resource files placed in specific directories. The files are called
 'external' because they are regular files and not part of a WAD file.
@@ -448,7 +447,7 @@ For example, sound effects for jDoom would be placed in the directory @file{ Dat
 
 
 
-@section{ Game Modes }
+@section{ Game modes }
 
 One Game DLL, such as jDoom, is able to run in many different modes. Each mode emulates a specific version of the original game and typically has its own IWAD file. In some cases two modes can have a resource with the same name. This is a problem if the same resource file can't be used by both modes.
 
@@ -479,7 +478,7 @@ For example, textures meant only for Final Doom: Plutonia Experiment would be pl
 
 
 
-@section{ Textures and Flats }
+@section{ Textures and flats }
 
 Normal wall textures and flats can be replaced with TGA (Truevision Targa),
 PNG (Portable Network Graphics) or PCX (Zsoft Paintbrush) images. The
@@ -571,7 +570,7 @@ Currently external patch resources are not precached, which may cause slight del
 
 
 
-@section{ Sprite Frames }
+@section{ Sprite frames }
 
 Sprite frames are patches. They can be replaced with external resources just like all other patches. The same restrictions apply, though: the dimensions of the external resource do not affect the actual size of the sprite frame. This means the external resources must really be @em{high-resolution} versions of the original images. Otherwise the size and/or aspect ratio will not be right for the resource.
 
@@ -585,13 +584,13 @@ Color-mapped versions of sprite frames can have external resources, too. To indi
 
 
 
-@section { Raw Screens }
+@section { Raw screens }
 
 Some background pictures are in the raw screen format, which is used to store 320 x 200 pixel paletted images. A lump containing a raw screen image (for example Heretic's TITLEPIC) is exactly 320 x 200 = 64000 bytes long. Raw screens can be replaced with external resources in the @file{Patches} directory.
 
 
 
-@section{ Light Maps }
+@section{ Light maps }
 
 Light maps are monochrome images that can be used with dynamic lights. The dimensions of a light map must be powers of two, for example 256 x 256. If the map contains an alpha channel, the actual color values are ignored; only the alpha values are significant. If the map doesn't have an alpha channel, one is generated by averaging the color values of the image.
 
@@ -647,7 +646,7 @@ key:
 @code{CD track = 3;}
 
 
-@section{ Sound Effects }
+@section{ Sound effects }
 
 Sound samples can be replaced with WAV files. The supported formats are 8-bit and 16-bit mono PCM with no compression. The @file{Sfx} resource class directory is searched using the lump names of the original samples. For example, to replace jDoom's rocket launcher sound, the file @file{dsrlaunc.wav} would be placed in the @file{Sfx} directory.
 
@@ -659,7 +658,7 @@ Doomsday will automatically detect the format of a sample if it's loaded from a 
 
 @chapter{ Plugins }
 
-@section{ glBSP Map Loader }
+@section{ glBSP map loader }
 
 It is no longer necessary to run glBSP manually on WAD files because 
 Doomsday now includes glBSP as a plugin that is run automatically when 
@@ -689,7 +688,7 @@ There are subdirectories for each game mode and WAD. You are free to
 delete the cache directory at any time.
 
 
-@section{ Dehacked Patches }
+@section{ Dehacked patches }
 
 Most features of Dehacked are supported by Doomsday's Dehacked reader.
 The loader will print a message during startup if an unsupported
@@ -721,7 +720,7 @@ there is either one server or one client on a computer) are visible in
 the network setup screens. The corresponding console variables are
 @var{net-port-control} (TCP) and @var{net-port-data} (UDP).
 
-@section{Server Settings}
+@section{Server settings}
  
 The server uses one TCP port for listening to incoming connections. By
 default this is 13209 (setting the port to zero will mean 13209 will
@@ -732,7 +731,7 @@ messages from the clients. By default this is port 13209 (the same
 number as with TCP). This port must be open for incoming and outgoing
 UDP traffic.
  
-@section{Client Settings}
+@section{Client settings}
  
 The client uses one UDP port for data messages. By default this is
 13209 (just like the server). This port must be open for incoming and
@@ -740,7 +739,7 @@ outgoing UDP traffic.
 
 
 
-@chapter{ Known Issues }
+@chapter{ Known issues }
 
 @list{
 @item The list of reported bugs is on the deng Project page on SourceForge:
@@ -761,7 +760,7 @@ outgoing UDP traffic.
 
 
 
-@chapter{ Acknowledgements and Thanks }
+@chapter{ Acknowledgements and thanks }
 
 @a{acks}
 @strong{id Software}, for creating DOOM and then releasing its source code.
@@ -809,5 +808,3 @@ think of something you'd very much like to see.
 
 All DOOM / Heretic / Hexen fans, for keeping these excellent games alive.
 Keep on playing!
-
-Me, Jaakko Ker‰nen, for writing this stuff! You rule! ;-D
