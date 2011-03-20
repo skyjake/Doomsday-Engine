@@ -76,7 +76,7 @@ typedef enum {
     (t) >= TEXTUREVARIANTSPECIFICATIONTYPE_FIRST && (t) <= TEXTUREVARIANTSPECIFICATIONTYPE_LAST)
 
 typedef struct {
-    int tClass, tMap; // Color translation.
+    int tClass, tMap;
 } colorpalettetranslationspecification_t;
 
 typedef struct {

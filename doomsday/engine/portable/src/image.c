@@ -27,7 +27,7 @@
 
 #include "image.h"
 
-void GL_ConvertToLuminance(image_t* image)
+void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 {
     assert(image);
     {
@@ -41,9 +41,11 @@ void GL_ConvertToLuminance(image_t* image)
     }
 
     // Do we need to relocate the alpha data?
-    if(image->pixelSize == 4)
+    if(retainAlpha && image->pixelSize == 4)
     {   // Yes. Take a copy.
-        alphaChannel = malloc(total);
+        if(NULL == (alphaChannel = malloc(total)))
+            Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for "
+                "pixel alpha relocation buffer.", (unsigned int) total);
         ptr = image->pixels;
         for(p = 0; p < total; ++p, ptr += image->pixelSize)
             alphaChannel[p] = ptr[3];
@@ -74,7 +76,7 @@ void GL_ConvertToLuminance(image_t* image)
 void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
 {
     assert(image);
-    GL_ConvertToLuminance(image);
+    GL_ConvertToLuminance(image, true);
     { int p, total = image->width * image->height;
     for(p = 0; p < total; ++p)
     {

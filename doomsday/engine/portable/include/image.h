@@ -77,6 +77,6 @@ void GL_ConvertToAlpha(image_t* image, boolean makeWhite);
 /**
  * Converts the image data to grayscale luminance in-place.
  */
-void GL_ConvertToLuminance(image_t* image);
+void GL_ConvertToLuminance(image_t* image, boolean retainAlpha);
 
 #endif /* LIBDENG_IMAGE_H */

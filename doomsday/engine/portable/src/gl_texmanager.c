@@ -197,9 +197,9 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     /// \todo We can be a bit cleverer here...
     if(a->context != b->context)
         return 1;
-    if(a->border != b->border)
-        return 1;
     if(a->flags  != b->flags)
+        return 1;
+    if(a->border != b->border)
         return 1;
     if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
@@ -704,7 +704,7 @@ static byte prepareVariant(texturevariant_t* tex)
             if(monochrome)
             {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
-                GL_ConvertToLuminance(&image);
+                GL_ConvertToLuminance(&image, true);
                 AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
             }
             else
@@ -730,7 +730,7 @@ static byte prepareVariant(texturevariant_t* tex)
     {
         if(monochrome)
         {
-            GL_ConvertToLuminance(&image);
+            GL_ConvertToLuminance(&image, true);
             AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
         }
     }
@@ -1065,7 +1065,7 @@ static byte prepareDetailVariant(texturevariant_t* tex)
 
     if(image.pixelSize > 2)
     {
-        GL_ConvertToLuminance(&image);
+        GL_ConvertToLuminance(&image, false);
     }
 
     {
@@ -1864,7 +1864,7 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
         }
         else if(mode == LGM_GRAYSCALE)
         {
-            GL_ConvertToLuminance(image);
+            GL_ConvertToLuminance(image, true);
         }
         result = 2; // External.
     }
