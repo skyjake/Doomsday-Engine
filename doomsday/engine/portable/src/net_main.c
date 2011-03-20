@@ -114,7 +114,7 @@ byte    netDev = false;
 byte    netDontSleep = false;
 byte    netTicSync = true;
 float   netConnectTime;
-int     netCoordTime = 17;
+//int     netCoordTime = 17;
 float   netConnectTimeout = 10;
 
 // Local packets are stored into this buffer.
@@ -139,7 +139,7 @@ void Net_Register(void)
     C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
 
     // Cvars (client)
-    C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
+    //C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX,
                 0, 0);
 
@@ -470,13 +470,17 @@ static void Net_DoUpdate(void)
      * any prediction errors can be fixed. Client movement is almost
      * entirely local.
      */
+#ifdef _DEBUG
+    VERBOSE2( Con_Message("Net_DoUpdate: coordTimer=%i cl:%i af:%i shmo:%p\n", coordTimer,
+                          isClient, allowFrames, ddPlayers[consolePlayer].shared.mo) );
+#endif
     coordTimer -= newTics;
-    if(isClient && allowFrames && coordTimer < 0 &&
+    if(isClient /*&& allowFrames*/ && coordTimer <= 0 &&
        ddPlayers[consolePlayer].shared.mo)
     {
-        mobj_t             *mo = ddPlayers[consolePlayer].shared.mo;
+        mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
 
-        coordTimer = netCoordTime; // 35/2
+        coordTimer = 1; //netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
         Msg_WriteShort((short) mo->pos[VX]);
         Msg_WriteShort((short) mo->pos[VY]);
