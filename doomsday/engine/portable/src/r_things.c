@@ -610,6 +610,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     material_t* mat;
     material_load_params_t params;
     material_snapshot_t ms;
+    const variantspecification_t* spec;
 
     if((unsigned) sprite >= (unsigned) numSprites)
     {
@@ -631,18 +632,20 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     memset(&params, 0, sizeof(params));
     params.border = 1;
-    Materials_Prepare(&ms, mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &params));
+    Materials_Prepare(&ms, mat, false, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &params));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
+    spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    assert(NULL != spec);
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
-    info->width = ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
-    info->height = ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    info->width = ms.width + spec->border*2;
+    info->height = ms.height + spec->border*2;
     TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &info->texCoord[0], &info->texCoord[1]);
 
     return true;
@@ -669,7 +672,7 @@ float R_VisualRadius(mobj_t* mo)
 
     // Use the sprite frame's width.
     // @fixme What about rotation?
-    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
     return ms.width / 2;
 }
 
@@ -877,6 +880,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     material_load_params_t mparams;
     material_snapshot_t ms;
     spritetex_t* sprTex = NULL;
+    const variantspecification_t* spec;
 
     if(!params)
         return; // Wha?
@@ -886,13 +890,15 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     mparams.translated.tclass = tClass;
     mparams.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
+    spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    assert(NULL != spec);
 
-    params->width  =  ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
-    params->height = ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    params->width  =  ms.width + spec->border*2;
+    params->height = ms.height + spec->border*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -1134,7 +1140,7 @@ void R_ProjectSprite(mobj_t* mo)
     mparams.translated.tclass = tclass;
     mparams.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1456,7 +1462,7 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
         tex = ms.units[MTU_PRIMARY].tex;
         pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)

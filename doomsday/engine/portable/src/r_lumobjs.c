@@ -360,149 +360,149 @@ float LO_DistanceToViewer(uint idx, int i)
 
 /**
  * Registers the given mobj as a luminous, light-emitting object.
- * NOTE: This is called each frame for each luminous object!
+ * \note: This is called each frame for each luminous object!
  *
- * @param mo            Ptr to the mobj to register.
+ * @param mo  Ptr to the mobj to register.
  */
-void LO_AddLuminous(mobj_t* mo)
+static void addLuminous(mobj_t* mo)
 {
-    mo->lumIdx = 0;
+    uint i;
+    float mul, center;
+    int radius;
+    float rgb[3], yOffset, size;
+    lumobj_t* l;
+    ded_light_t* def;
+    spritedef_t* sprDef;
+    spriteframe_t* sprFrame;
+    spritetex_t* sprTex;
+    material_t* mat;
+    float autoLightColor[3];
+    material_snapshot_t ms;
+    const texturevariant_t* tex;
+    const pointlight_analysis_t* pl;
 
-    if(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
+    if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
          !(mo->ddFlags & DDMF_DONTDRAW)) ||
-       (mo->ddFlags & DDMF_ALWAYSLIT))
-    {
-        uint i;
-        float mul, center;
-        int radius;
-        float rgb[3], yOffset, size;
-        lumobj_t* l;
-        ded_light_t* def = (mo->state? def = stateLights[mo->state - states] : 0);
-        spritedef_t* sprDef;
-        spriteframe_t* sprFrame;
-        spritetex_t* sprTex;
-        material_t* mat;
-        float autoLightColor[3];
-        material_snapshot_t ms;
-        const texturevariant_t* tex;
-        const pointlight_analysis_t* pl;
-        
-        // Are the automatically calculated light values for fullbright
-        // sprite frames in use?
-        if(mo->state &&
-           (!useMobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
-           !stateLights[mo->state - states])
-           return;
+       (mo->ddFlags & DDMF_ALWAYSLIT)))
+        return;
 
-        // Determine the sprite frame lump of the source.
-        sprDef = &sprites[mo->sprite];
-        sprFrame = &sprDef->spriteFrames[mo->frame];
-        // Always use rotation zero.
-        mat = sprFrame->mats[0];
+    // Are the automatically calculated light values for fullbright
+    // sprite frames in use?
+    if(mo->state &&
+       (!useMobjAutoLights || (mo->state->flags & STF_NOAUTOLIGHT)) &&
+       !stateLights[mo->state - states])
+       return;
+
+    def = (mo->state? stateLights[mo->state - states] : NULL);
+
+    // Determine the sprite frame lump of the source.
+    sprDef = &sprites[mo->sprite];
+    sprFrame = &sprDef->spriteFrames[mo->frame];
+    // Always use rotation zero.
+    mat = sprFrame->mats[0];
 
 #if _DEBUG
 if(!mat)
-    Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
-              (int) mo->sprite, mo->frame);
+Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
+          (int) mo->sprite, mo->frame);
 #endif
 
-        // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
-        tex = ms.units[MTU_PRIMARY].tex;
-        pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
-        if(NULL == pl)
-            return; // Not good...
+    // Ensure we have up-to-date information about the material.
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
+    tex = ms.units[MTU_PRIMARY].tex;
+    pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
+    if(NULL == pl)
+        return; // Not good...
 
-        size = pl->brightMul;
-        yOffset = pl->originY;
-        // Does the mobj have an active light definition?
-        if(def)
-        {
-            if(def->size)
-                size = def->size;
-            if(def->offset[VY])
-                yOffset = def->offset[VY];
-        }
+    size = pl->brightMul;
+    yOffset = pl->originY;
+    // Does the mobj have an active light definition?
+    if(def)
+    {
+        if(def->size)
+            size = def->size;
+        if(def->offset[VY])
+            yOffset = def->offset[VY];
+    }
 
-        autoLightColor[CR] = pl->color[CR];
-        autoLightColor[CG] = pl->color[CG];
-        autoLightColor[CB] = pl->color[CB];
+    autoLightColor[CR] = pl->color[CR];
+    autoLightColor[CG] = pl->color[CG];
+    autoLightColor[CB] = pl->color[CB];
 
-        sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(tex)));
-        assert(NULL != sprTex);
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(tex)));
+    assert(NULL != sprTex);
 
-        center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
+    center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
-        // Will the sprite be allowed to go inside the floor?
-        mul = mo->pos[VZ] + sprTex->offY - (float) ms.height - mo->subsector->sector->SP_floorheight;
-        if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
-        {
-            // Must adjust.
-            center -= mul;
-        }
+    // Will the sprite be allowed to go inside the floor?
+    mul = mo->pos[VZ] + sprTex->offY - (float) ms.height - mo->subsector->sector->SP_floorheight;
+    if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
+    {
+        // Must adjust.
+        center -= mul;
+    }
 
-        radius = size * 40 * loRadiusFactor;
+    radius = size * 40 * loRadiusFactor;
 
-        // Don't make a too small light.
-        if(radius < 32)
-            radius = 32;
+    // Don't make a too small light.
+    if(radius < 32)
+        radius = 32;
 
-        // Does the mobj use a light scale?
-        if(mo->ddFlags & DDMF_LIGHTSCALE)
-        {
-            // Also reduce the size of the light according to
-            // the scale flags. *Won't affect the flare.*
-            mul =
-                1.0f -
-                ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) /
-                4.0f;
-            radius *= mul;
-        }
+    // Does the mobj use a light scale?
+    if(mo->ddFlags & DDMF_LIGHTSCALE)
+    {
+        // Also reduce the size of the light according to
+        // the scale flags. *Won't affect the flare.*
+        mul =
+            1.0f -
+            ((mo->ddFlags & DDMF_LIGHTSCALE) >> DDMF_LIGHTSCALESHIFT) /
+            4.0f;
+        radius *= mul;
+    }
 
-        // If any of the color components are != 0, use the def's color.
-        if(def && (def->color[0] || def->color[1] || def->color[2]))
-        {
-            for(i = 0; i < 3; ++i)
-                rgb[i] = def->color[i];
-        }
-        else
-        {   // Use the auto-calculated color.
-            for(i = 0; i < 3; ++i)
-                rgb[i] = autoLightColor[i];
-        }
-
-        // This'll allow a halo to be rendered. If the light is hidden from
-        // view by world geometry, the light pointer will be set to NULL.
-        mo->lumIdx = LO_NewLuminous(LT_OMNI, mo->subsector);
-
-        l = LO_GetLuminous(mo->lumIdx);
-        l->pos[VX] = mo->pos[VX];
-        l->pos[VY] = mo->pos[VY];
-        l->pos[VZ] = mo->pos[VZ];
-        l->maxDistance = 0;
-        l->decorSource = NULL;
-
-        // Don't make too large a light.
-        if(radius > loMaxRadius)
-            radius = loMaxRadius;
-
-        LUM_OMNI(l)->radius = radius;
+    // If any of the color components are != 0, use the def's color.
+    if(def && (def->color[0] || def->color[1] || def->color[2]))
+    {
         for(i = 0; i < 3; ++i)
-            LUM_OMNI(l)->color[i] = rgb[i];
-        LUM_OMNI(l)->zOff = center;
+            rgb[i] = def->color[i];
+    }
+    else
+    {   // Use the auto-calculated color.
+        for(i = 0; i < 3; ++i)
+            rgb[i] = autoLightColor[i];
+    }
 
-        if(def)
-        {
-            LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides);
-            LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up);
-            LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down);
-        }
-        else
-        {
-            // Use the same default light texture for all directions.
-            LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
-                LUM_OMNI(l)->floorTex = GL_PrepareLSTexture(LST_DYNAMIC);
-        }
+    // This'll allow a halo to be rendered. If the light is hidden from
+    // view by world geometry, the light pointer will be set to NULL.
+    mo->lumIdx = LO_NewLuminous(LT_OMNI, mo->subsector);
+
+    l = LO_GetLuminous(mo->lumIdx);
+    l->pos[VX] = mo->pos[VX];
+    l->pos[VY] = mo->pos[VY];
+    l->pos[VZ] = mo->pos[VZ];
+    l->maxDistance = 0;
+    l->decorSource = NULL;
+
+    // Don't make too large a light.
+    if(radius > loMaxRadius)
+        radius = loMaxRadius;
+
+    LUM_OMNI(l)->radius = radius;
+    for(i = 0; i < 3; ++i)
+        LUM_OMNI(l)->color[i] = rgb[i];
+    LUM_OMNI(l)->zOff = center;
+
+    if(def)
+    {
+        LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides);
+        LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up);
+        LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down);
+    }
+    else
+    {
+        // Use the same default light texture for all directions.
+        LUM_OMNI(l)->tex = LUM_OMNI(l)->ceilTex =
+            LUM_OMNI(l)->floorTex = GL_PrepareLSTexture(LST_DYNAMIC);
     }
 }
 
@@ -589,7 +589,7 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
     assert(l && surface);
     {
     material_snapshot_t ms;
-    Materials_Prepare(&ms, surface->material, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, surface->material, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
     V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
     V3_Copy(LUM_PLANE(l)->color, ms.colorAmplified);
     LUM_PLANE(l)->intensity = ms.glowing;
@@ -658,14 +658,15 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
     if(useDynLights)
     {
-        uint i;
         sector_t* seciter;
+        uint i;
         for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
         {
             mobj_t* iter;
             for(iter = seciter->mobjList; iter; iter = iter->sNext)
             {
-                LO_AddLuminous(iter);
+                iter->lumIdx = 0;
+                addLuminous(iter);
             }
         }
     }
@@ -747,7 +748,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     luminousClipped[lumIdx] = 0;
 
     // \fixme Determine the exact centerpoint of the light in
-    // LO_AddLuminous!
+    // addLuminous!
     V3_Set(pos, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
 
     /**

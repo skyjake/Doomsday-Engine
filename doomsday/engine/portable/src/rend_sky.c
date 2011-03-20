@@ -278,7 +278,7 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             memset(&p, 0, sizeof(p));
             p.flags = TSF_NO_COMPRESSION | TSF_ZEROMASK;
 
-            Materials_Prepare(&ms, material, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SKYSPHERE_DIFFUSE, &p));
+            Materials_Prepare(&ms, material, true, GL_TextureVariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE, &p));
             tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
             magMode = ms.units[MTU_PRIMARY].magMode;
             Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),

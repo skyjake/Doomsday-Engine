@@ -27,8 +27,8 @@
 
 typedef enum {
     TC_UNKNOWN = -1,
-    TEXTUREUSAGECONTEXT_FIRST = 0,
-    TC_UI = TEXTUREUSAGECONTEXT_FIRST,
+    TEXTUREVARIANTUSAGECONTEXT_FIRST = 0,
+    TC_UI = TEXTUREVARIANTUSAGECONTEXT_FIRST,
     TC_MAPSURFACE_DIFFUSE,
     TC_MAPSURFACE_REFLECTION,
     TC_MAPSURFACE_REFLECTIONMASK,
@@ -40,14 +40,14 @@ typedef enum {
     TC_HALO_LUMINANCE,
     TC_PSPRITE_DIFFUSE,
     TC_SKYSPHERE_DIFFUSE,
-    TEXTUREUSAGECONTEXT_LAST = TC_SKYSPHERE_DIFFUSE
-} textureusagecontext_t;
+    TEXTUREVARIANTUSAGECONTEXT_LAST = TC_SKYSPHERE_DIFFUSE
+} texturevariantusagecontext_t;
 
-#define TEXTUREUSAGECONTEXT_COUNT (\
-    TEXTUREUSAGECONTEXT_LAST + 1 - TEXTUREUSAGECONTEXT_FIRST )
+#define TEXTUREVARIANTUSAGECONTEXT_COUNT (\
+    TEXTUREVARIANTUSAGECONTEXT_LAST + 1 - TEXTUREVARIANTUSAGECONTEXT_FIRST )
 
-#define VALID_TEXTUREUSAGECONTEXT(tc) (\
-    (tc) >= TEXTUREUSAGECONTEXT_FIRST && (tc) <= TEXTUREUSAGECONTEXT_LAST)
+#define VALID_TEXTUREVARIANTUSAGECONTEXT(tc) (\
+    (tc) >= TEXTUREVARIANTUSAGECONTEXT_FIRST && (tc) <= TEXTUREVARIANTUSAGECONTEXT_LAST)
 
 /**
  * @defGroup textureVariantSpecificationFlags  Texture Variant Specification Flags
@@ -63,32 +63,41 @@ typedef enum {
 /*@}*/
 
 typedef enum {
-    TEXTURESPECIFICATIONTYPE_FIRST = 0,
-    TS_DEFAULT = TEXTURESPECIFICATIONTYPE_FIRST,
+    TEXTUREVARIANTSPECIFICATIONTYPE_FIRST = 0,
+    TS_NORMAL = TEXTUREVARIANTSPECIFICATIONTYPE_FIRST,
     TS_DETAIL,
-    TEXTURESPECIFICATIONTYPE_LAST = TS_DETAIL
-} texturespecificationtype_t;
+    TEXTUREVARIANTSPECIFICATIONTYPE_LAST = TS_DETAIL
+} texturevariantspecificationtype_t;
 
-#define TEXTURESPECIFICATIONTYPE_COUNT (\
-    TEXTURESPECIFICATIONTYPE_LAST + 1 - TEXTURESPECIFICATIONTYPE_FIRST )
+#define TEXTUREVARIANTSPECIFICATIONTYPE_COUNT (\
+    TEXTUREVARIANTSPECIFICATIONTYPE_LAST + 1 - TEXTUREVARIANTSPECIFICATIONTYPE_FIRST )
 
-#define VALID_TEXTURESPECIFICATIONTYPE(t) (\
-    (t) >= TEXTURESPECIFICATIONTYPE_FIRST && (t) <= TEXTURESPECIFICATIONTYPE_LAST)
+#define VALID_TEXTUREVARIANTSPECIFICATIONTYPE(t) (\
+    (t) >= TEXTUREVARIANTSPECIFICATIONTYPE_FIRST && (t) <= TEXTUREVARIANTSPECIFICATIONTYPE_LAST)
 
 typedef struct {
     int tClass, tMap; // Color translation.
 } colorpalettetranslationspecification_t;
 
-typedef struct texturevariantspecification_s {
-    textureusagecontext_t context;
-    texturespecificationtype_t type;
+typedef struct {
+    texturevariantusagecontext_t context;
     int flags; /// @see textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
+    colorpalettetranslationspecification_t* translated;
+} variantspecification_t;
+
+typedef struct {
+    float contrast;
+} detailvariantspecification_t;
+
+#define TS_NORMAL(ts)       (&(ts)->data.variant)
+#define TS_DETAIL(ts)       (&(ts)->data.detailvariant)
+
+typedef struct texturevariantspecification_s {
+    texturevariantspecificationtype_t type;
     union {
-        colorpalettetranslationspecification_t* translated;
-        struct {
-            float contrast;
-        } detail;
+        variantspecification_t variant;
+        detailvariantspecification_t detailvariant;
     } data; // type-specific data.
 } texturevariantspecification_t;
 

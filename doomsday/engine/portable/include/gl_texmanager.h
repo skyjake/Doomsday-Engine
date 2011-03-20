@@ -254,7 +254,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
  *      or @c NULL if out of memory.
  */
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturespecificationtype_t type, textureusagecontext_t tc, void* context);
+    texturevariantusagecontext_t tc, void* context);
 
 struct texturevariant_s* GL_FindSuitableTextureVariant(struct texture_s* tex,
     const texturevariantspecification_t* spec);

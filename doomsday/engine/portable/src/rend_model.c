@@ -702,7 +702,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     {
         const skinname_t* sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin);
         const texturevariant_t* tex;
-        if(NULL != sn && NULL != (tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MODELSKIN_DIFFUSE, NULL), NULL)))
+        if(NULL != sn && NULL != (tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, NULL), NULL)))
         {
             shinyTexture = TextureVariant_GLName(tex);
         }
@@ -782,7 +782,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             material_snapshot_t ms;
 
-            Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MODELSKIN_DIFFUSE, NULL));
+            Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, NULL));
             skinTexture = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
         }
         else
@@ -808,7 +808,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             memset(&params, 0, sizeof(params));
             params.flags = (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0);
 
-            if((tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MODELSKIN_DIFFUSE, &params), NULL)))
+            if((tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, &params), NULL)))
                 skinTexture = TextureVariant_GLName(tex);
         }
     }

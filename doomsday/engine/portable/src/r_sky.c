@@ -171,7 +171,7 @@ static void prepareSkySphere(void)
         if(slayer->flags & SLF_MASKED)
             params.flags |= TSF_ZEROMASK;
 
-        Materials_Prepare(&ms, material, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SKYSPHERE_DIFFUSE, &params));
+        Materials_Prepare(&ms, material, false, GL_TextureVariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE, &params));
 
         slayer->tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
         Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),

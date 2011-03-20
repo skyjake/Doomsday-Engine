@@ -2323,7 +2323,7 @@ void R_PrecacheMobjNum(int num)
 static void addToSurfaceLists(surface_t* suf, material_t* mat)
 {
     material_snapshot_t ms;
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
     if(ms.glowing > 0)
         R_SurfaceListAdd(glowingSurfaceList, suf);
     if(ms.decorated)
@@ -2411,7 +2411,7 @@ void R_PrecacheMap(void)
         material_t* mat = Materials_ToMaterial(i+1);
         if(mat->inFlags & MATIF_PRECACHE)
         {
-            Materials_Prepare(NULL, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mat, true, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
         }
     }
 

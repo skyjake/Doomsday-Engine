@@ -243,16 +243,17 @@ void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
 
 static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
 {
-    float offScaleY = weaponOffsetScaleY / 1000.0f;
     ddpsprite_t* psp = spr->psp;
     int sprite = psp->statePtr->sprite;
     int frame = psp->statePtr->frame;
+    float offScaleY = weaponOffsetScaleY / 1000.0f;
     material_load_params_t mparams;
     const spritedef_t* sprDef;
     const spritetex_t* sprTex;
     const spriteframe_t* sprFrame;
     material_snapshot_t ms;
     boolean flip;
+    const variantspecification_t* spec;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -270,15 +271,17 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     memset(&mparams, 0, sizeof(mparams));
     mparams.border = 1;
 
-    Materials_Prepare(&ms, sprFrame->mats[0], true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_PSPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, sprFrame->mats[0], true, GL_TextureVariantSpecificationForContext(TC_PSPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
+    spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    assert(NULL != spec);
 
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border;
-    params->width = ms.width + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
-    params->height = ms.height + TextureVariant_Spec(ms.units[MTU_PRIMARY].tex)->border*2;
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -spec->border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -spec->border;
+    params->width = ms.width + spec->border*2;
+    params->height = ms.height + spec->border*2;
 
     // Calculate texture coordinates.
     TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &params->texOffset[0], &params->texOffset[1]);
@@ -355,7 +358,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t* mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray"));
         material_snapshot_t ms;
 
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }
@@ -869,7 +872,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         mparams.translated.tclass = (renderTextures == 1? params->tClass : 0);
         mparams.border = 1;
 
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &mparams));
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &mparams));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }

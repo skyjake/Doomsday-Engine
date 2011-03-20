@@ -1035,7 +1035,7 @@ void GL_SetMaterial(material_t* mat)
         return; // \fixme we need a "NULL material".
 
     Con_Error("GL_SetMaterial: No usage context specified.");
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
@@ -1047,7 +1047,7 @@ void GL_SetPSprite(material_t* mat)
     memset(&params, 0, sizeof(params));
     params.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_PSPRITE_DIFFUSE, &params));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_PSPRITE_DIFFUSE, &params));
 
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1064,7 +1064,7 @@ void GL_SetTranslatedSprite(material_t* mat, int tClass, int tMap)
     params.translated.tclass = tClass;
     params.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &params));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &params));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 

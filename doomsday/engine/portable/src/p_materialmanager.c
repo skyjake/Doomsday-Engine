@@ -1030,7 +1030,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                         float contrast = detail->strength * detailFactor;
 
                         // Pick an instance matching the specified context.
-                        detailTex = GL_PrepareTexture(dTex->id, GL_TextureVariantSpecificationForContext(TS_DETAIL, TC_MAPSURFACE_DETAIL, &contrast), 0);
+                        detailTex = GL_PrepareTexture(dTex->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DETAIL, &contrast), 0);
                     }
                 }
 
@@ -1049,14 +1049,14 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                     if((sTex = R_GetShinyTexture(reflection->shinyMap)))
                     {
                         // Pick an instance matching the specified context.
-                        shinyTex = GL_PrepareTexture(sTex->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_REFLECTION, NULL), 0);
+                        shinyTex = GL_PrepareTexture(sTex->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION, NULL), 0);
                     }
 
                     if(shinyTex && // Don't bother searching unless the above succeeds.
                        (mTex = R_GetMaskTexture(reflection->maskMap)))
                     {
                         // Pick an instance matching the specified context.
-                        shinyMaskTex = GL_PrepareTexture(mTex->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_REFLECTIONMASK, NULL), 0);
+                        shinyMaskTex = GL_PrepareTexture(mTex->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTIONMASK, NULL), 0);
                     }
                 }
             }
@@ -1094,7 +1094,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
 
             snapshot->isOpaque = !TextureVariant_IsMasked(layerTextures[0]);
 
-            if(TC_SKYSPHERE_DIFFUSE == texSpec->context)
+            if(TC_SKYSPHERE_DIFFUSE == TS_NORMAL(texSpec)->context)
             {
                 const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
                     TextureVariant_Analysis(layerTextures[0], TA_SKY_SPHEREFADECOLOR);
@@ -1109,7 +1109,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             }
 
             /// \fixme what about the other texture types?
-            if(TC_MAPSURFACE_DIFFUSE == texSpec->context)
+            if(TC_MAPSURFACE_DIFFUSE == TS_NORMAL(texSpec)->context)
             {
                 const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
                     TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
@@ -1178,7 +1178,7 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
         return mb->reflection[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1190,7 +1190,7 @@ const ded_detailtexture_t* Materials_Detail(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
         return mb->detail[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1202,7 +1202,7 @@ const ded_decor_t* Materials_Decoration(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
         return mb->decoration[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1214,7 +1214,7 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
         return mb->ptcGen[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1364,7 +1364,7 @@ static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
 
     // Collect and sort in each namespace separately.
     { int i;
-    for(i = MATERIALNAMESPACE_FIRST; i < MATERIALNAMESPACE_COUNT; ++i)
+    for(i = MATERIALNAMESPACE_FIRST; i < MATERIALNAMESPACE_LAST; ++i)
     {
         if(printMaterials2((materialnamespaceid_t)i, like) != 0)
             Con_FPrintf(CBLF_RULER, "");
