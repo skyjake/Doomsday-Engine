@@ -191,20 +191,18 @@ static int compareVariantSpecifications(const texturevariantspecification_t* a,
         return 1;
     if(a->border != b->border)
         return 1;
-
-    switch(a->type)
+    if(a->type == TS_DETAIL)
     {
-    case TS_TRANSLATED:
-        if(a->data.translated.tclass != b->data.translated.tclass)
-            return 1;
-        if(a->data.translated.tmap != b->data.translated.tmap)
-            return 1;
-        break;
-    case TS_DETAIL:
         if(!INRANGE_OF(a->data.detail.contrast, b->data.detail.contrast, .05f))
             return 1;
-        break;
-    default: break;
+    }
+    else if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
+    {
+        assert(a->data.translated && b->data.translated);
+        if(a->data.translated->tClass != b->data.translated->tClass)
+            return 1;
+        if(a->data.translated->tMap != b->data.translated->tMap)
+            return 1;
     }
     return 0; // Equal.
 }
@@ -229,14 +227,30 @@ static texturevariantspecification_t* applyVariantSpecification(
     if(context)
     {
         const material_load_params_t* params = (const material_load_params_t*) context;
-        spec->flags = params->tex.flags;
-        spec->border = params->tex.border;
-        if(spec->type == TS_TRANSLATED)
-        {
-            spec->data.translated.tmap = params->tmap;
-            spec->data.translated.tclass = params->tclass;
-        }
+        spec->flags = params->flags;
+        spec->border = params->border;
     }
+
+    { int tMap = 0, tClass = 0;
+    if(context)
+    {
+        const material_load_params_t* params = (const material_load_params_t*) context;
+        tMap   = params->translated.tmap;
+        tClass = params->translated.tclass;
+    }
+    if(0 != tMap || 0 != tClass)
+    {
+        colorpalettetranslationspecification_t* cpt;
+        spec->flags |= TSF_HAS_COLORPALETTE_XLAT;
+        if(NULL == (cpt = (colorpalettetranslationspecification_t*) malloc(sizeof(*cpt))))
+            Con_Error("applyVariantSpecification: Failed on allocation of %lu bytes for "
+                      "new ColorPaletteTranslationSpecification.", (unsigned int) sizeof(*cpt));
+        cpt->tMap   = tMap;
+        cpt->tClass = tClass;
+        spec->data.translated = cpt;
+    }
+    }
+
     return spec;
 }
 
@@ -288,6 +302,8 @@ static void destroyVariantSpecifications(void)
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
+        if(node->spec->flags & TSF_HAS_COLORPALETTE_XLAT)
+            free(node->spec->data.translated);
         free(node->spec);
         free(node);
         node = next;
@@ -466,14 +482,15 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadDoomPatchLump(img, generalCase, (spec->flags & TF_UPSCALE_AND_SHARPEN) != 0);
+            loadResult = GL_LoadDoomPatchLump(img, generalCase, (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0);
         break;
     case TN_SPRITES: {
         int tclass = 0, tmap = 0;
-        if(TS_TRANSLATED == spec->type)
+        if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            tclass = spec->data.translated.tclass;
-            tmap = spec->data.translated.tmap;
+            assert(spec->data.translated);
+            tclass = spec->data.translated->tClass;
+            tmap   = spec->data.translated->tMap;
         }
 
         // Attempt to load an external replacement for this sprite?
@@ -550,9 +567,9 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     {
     const texturevariantspecification_t* spec = TextureVariant_Spec(tex);
     texturenamespaceid_t specType = spec->type;
-    boolean monochrome    = (specType != TS_DETAIL? (spec->flags & TF_MONOCHROME) != 0 : false);
-    boolean noCompression = (specType != TS_DETAIL? (spec->flags & TF_NO_COMPRESSION) != 0 : false);
-    boolean scaleSharp    = (specType != TS_DETAIL? (spec->flags & TF_UPSCALE_AND_SHARPEN) != 0 : false);
+    boolean monochrome    = (specType != TS_DETAIL? (spec->flags & TSF_MONOCHROME) != 0 : false);
+    boolean noCompression = (specType != TS_DETAIL? (spec->flags & TSF_NO_COMPRESSION) != 0 : false);
+    boolean scaleSharp    = (specType != TS_DETAIL? (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0 : false);
     int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
     boolean noSmartFilter = false, didDefer = false, loadedPaletted = false;
     dgltexformat_t dglFormat;
@@ -566,7 +583,7 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     if(TN_TEXTURES == Texture_Namespace(TextureVariant_GeneralCase(tex)))
     {
         loadResult = GL_LoadDoomTexture(&image, TextureVariant_GeneralCase(tex),
-            spec->context == TC_SKYSPHERE_DIFFUSE, (spec->flags & TF_ZEROMASK) != 0);
+            spec->context == TC_SKYSPHERE_DIFFUSE, (spec->flags & TSF_ZEROMASK) != 0);
     }
     else
     {
@@ -901,11 +918,9 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     TextureVariant_SetCoords(tex, s, t);
     TextureVariant_SetMasked(tex, (image.flags & IMGF_IS_MASKED) != 0);
 
-    switch(spec->context)
+    if(TC_SKYSPHERE_DIFFUSE == spec->context)
     {
-    case TC_SKYSPHERE_DIFFUSE: {
         averagecolor_analysis_t* avgTopColor;
-        
         if(NULL == (avgTopColor = (averagecolor_analysis_t*)TextureVariant_Analysis(tex, TA_SKY_SPHEREFADECOLOR)))
         {
             if(NULL == (avgTopColor = (averagecolor_analysis_t*) malloc(sizeof(*avgTopColor))))
@@ -923,11 +938,11 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         {
             FindAverageLineColorIdx(image.pixels, image.width, image.height, 0, 0, false, avgTopColor->color);
         }
-        break;
-      }
-    case TC_SPRITE_DIFFUSE: {
+   }
+   
+    if(TC_SPRITE_DIFFUSE == spec->context)
+    {
         pointlight_analysis_t* pl;
-        
         if(NULL == (pl = (pointlight_analysis_t*)TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT)))
         {
             if(NULL == (pl = (pointlight_analysis_t*) malloc(sizeof(*pl))))
@@ -938,11 +953,11 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         // Calculate light source properties.
         GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
                          &pl->originX, &pl->originY, pl->color, &pl->brightMul);
-        break;
-      }
-    case TC_MAPSURFACE_DIFFUSE: {
+    }
+
+    if(TC_MAPSURFACE_DIFFUSE == spec->context || TC_SKYSPHERE_DIFFUSE == spec->context)
+    {
         ambientlight_analysis_t* al;
-        
         if(NULL == (al = (ambientlight_analysis_t*)TextureVariant_Analysis(tex, TA_MAP_AMBIENTLIGHT)))
         {
             if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
@@ -961,9 +976,6 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         }
         memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
         amplify(al->colorAmplified);
-        break;
-      }
-    default: break;
     }
 
     GL_DestroyImagePixels(&image);
@@ -1122,17 +1134,15 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
     Con_Printf("type:%i context:%s flags:%i border:%i\n", (int) spec->type,
         textureUsageContextNames[spec->context-TEXTUREUSAGECONTEXT_FIRST], spec->flags,
         spec->border);
-    switch(spec->type)
+    if(TS_DETAIL == spec->type)
     {
-    case TS_DETAIL:
         Con_Printf("ts_detail(contrast:%g)\n", spec->data.detail.contrast);
-        break;
-    case TS_TRANSLATED:
-        Con_Printf("ts_translated(tclass:%i tmap:%i)\n", spec->data.translated.tclass,
-            spec->data.translated.tmap);
-        break;
-    default:
-        break;
+    }
+    else if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
+    {
+        assert(spec->data.translated);
+        Con_Printf("translated(tclass:%i tmap:%i)\n", spec->data.translated->tClass,
+            spec->data.translated->tMap);
     }
 }
 
@@ -2390,11 +2400,11 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
         const texturevariant_t* tex;
         memset(&params, 0, sizeof(params));
         if(patchTex->flags & PF_MONOCHROME)
-            params.tex.flags |= TF_MONOCHROME;
+            params.flags |= TSF_MONOCHROME;
         if(patchTex->flags & PF_UPSCALE_AND_SHARPEN)
         {
-            params.tex.flags |= TF_UPSCALE_AND_SHARPEN;
-            params.tex.border = 1;
+            params.flags |= TSF_UPSCALE_AND_SHARPEN;
+            params.border = 1;
         }
         if((tex = GL_PrepareTexture(patchTex->texId, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UI, &params), NULL)))
             return TextureVariant_GLName(tex);

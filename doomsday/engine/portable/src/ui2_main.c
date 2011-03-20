@@ -994,7 +994,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
                 memset(&ms, 0, sizeof(ms));
                 memset(&params, 0, sizeof(params));
-                params.tex.border = 1;
+                params.border = 1;
                 
                 Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UI, &params));
 

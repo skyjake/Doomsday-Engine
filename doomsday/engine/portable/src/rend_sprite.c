@@ -268,7 +268,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     flip = sprFrame->flip[0];
 
     memset(&mparams, 0, sizeof(mparams));
-    mparams.tex.border = 1;
+    mparams.border = 1;
 
     Materials_Prepare(&ms, sprFrame->mats[0], true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_PSPRITE_DIFFUSE, &mparams));
 
@@ -865,11 +865,11 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         material_load_params_t mparams;
 
         memset(&mparams, 0, sizeof(mparams));
-        mparams.tmap = (renderTextures == 1? params->tMap : 0);
-        mparams.tclass = (renderTextures == 1? params->tClass : 0);
-        mparams.tex.border = 1;
+        mparams.translated.tmap   = (renderTextures == 1? params->tMap : 0);
+        mparams.translated.tclass = (renderTextures == 1? params->tClass : 0);
+        mparams.border = 1;
 
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &mparams));
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &mparams));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }

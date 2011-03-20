@@ -1045,7 +1045,7 @@ void GL_SetPSprite(material_t* mat)
     material_snapshot_t ms;
 
     memset(&params, 0, sizeof(params));
-    params.tex.border = 1;
+    params.border = 1;
 
     Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_PSPRITE_DIFFUSE, &params));
 
@@ -1054,17 +1054,17 @@ void GL_SetPSprite(material_t* mat)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
+void GL_SetTranslatedSprite(material_t* mat, int tClass, int tMap)
 {
     material_snapshot_t ms;
     material_load_params_t params;
 
     memset(&params, 0, sizeof(params));
-    params.tmap = tmap;
-    params.tclass = tclass;
-    params.tex.border = 1;
+    params.translated.tmap = tMap;
+    params.translated.tclass = tClass;
+    params.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &params));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &params));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 

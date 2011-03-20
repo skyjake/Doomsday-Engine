@@ -25,14 +25,6 @@
 #ifndef LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H
 #define LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H
 
-typedef struct material_load_params_s {
-    int tmap, tclass;
-    struct {
-        byte flags; /// @see textureFlags
-        byte border;
-    } tex;
-} material_load_params_t;
-
 typedef enum {
     TC_UNKNOWN = -1,
     TEXTUREUSAGECONTEXT_FIRST = 0,
@@ -58,19 +50,21 @@ typedef enum {
     (tc) >= TEXTUREUSAGECONTEXT_FIRST && (tc) <= TEXTUREUSAGECONTEXT_LAST)
 
 /**
- * @defGroup textureFlags  Texture Flags
+ * @defGroup textureVariantSpecificationFlags  Texture Variant Specification Flags
  */
 /*@{*/
-#define TF_ZEROMASK                 0x1 // Zero the alpha of loaded textures.
-#define TF_NO_COMPRESSION           0x2 // Do not compress the loaded textures.
-#define TF_UPSCALE_AND_SHARPEN      0x4
-#define TF_MONOCHROME               0x8
+#define TSF_ZEROMASK                0x1 // Set pixel alpha to fully opaque.
+#define TSF_NO_COMPRESSION          0x2
+#define TSF_UPSCALE_AND_SHARPEN     0x4
+#define TSF_MONOCHROME              0x8
+
+#define TSF_INTERNAL_MASK           0xff000000
+#define TSF_HAS_COLORPALETTE_XLAT   0x80000000
 /*@}*/
 
 typedef enum {
     TEXTURESPECIFICATIONTYPE_FIRST = 0,
     TS_DEFAULT = TEXTURESPECIFICATIONTYPE_FIRST,
-    TS_TRANSLATED,
     TS_DETAIL,
     TEXTURESPECIFICATIONTYPE_LAST = TS_DETAIL
 } texturespecificationtype_t;
@@ -81,19 +75,29 @@ typedef enum {
 #define VALID_TEXTURESPECIFICATIONTYPE(t) (\
     (t) >= TEXTURESPECIFICATIONTYPE_FIRST && (t) <= TEXTURESPECIFICATIONTYPE_LAST)
 
+typedef struct {
+    int tClass, tMap; // Color translation.
+} colorpalettetranslationspecification_t;
+
 typedef struct texturevariantspecification_s {
     textureusagecontext_t context;
     texturespecificationtype_t type;
-    byte flags; /// @see textureFlags
+    int flags; /// @see textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
     union {
-        struct {
-            int tclass, tmap; // Color translation.
-        } translated;
+        colorpalettetranslationspecification_t* translated;
         struct {
             float contrast;
         } detail;
     } data; // type-specific data.
 } texturevariantspecification_t;
+
+typedef struct material_load_params_s {
+    int flags; /// @see textureVariantSpecificationFlags
+    byte border;
+    struct {
+        int tclass, tmap;
+    } translated;
+} material_load_params_t;
 
 #endif /* LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H */

@@ -630,7 +630,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     mat = sprFrame->mats[0];
 
     memset(&params, 0, sizeof(params));
-    params.tex.border = 1;
+    params.border = 1;
     Materials_Prepare(&ms, mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &params));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
@@ -868,7 +868,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           material_t* mat, boolean matFlipS, boolean matFlipT, blendmode_t blendMode,
                                           float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                           uint vLightListIdx,
-                                          int transMap, int transClass, subsector_t* ssec,
+                                          int tMap, int tClass, subsector_t* ssec,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
                                           boolean viewAligned,
                                           boolean brightShadow, boolean shadow, boolean altShadow,
@@ -882,11 +882,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
         return; // Wha?
 
     memset(&mparams, 0, sizeof(mparams));
-    mparams.tmap = transMap;
-    mparams.tclass = transClass;
-    mparams.tex.border = 1;
+    mparams.translated.tmap = tMap;
+    mparams.translated.tclass = tClass;
+    mparams.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -908,8 +908,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->noZWrite = noSpriteZWrite;
 
     params->mat = mat;
-    params->tMap = transMap;
-    params->tClass = transClass;
+    params->tMap = tMap;
+    params->tClass = tClass;
     TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &params->matOffset[0], &params->matOffset[1]);
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
@@ -1130,11 +1130,11 @@ void R_ProjectSprite(mobj_t* mo)
     tclass = mo->tclass;
 
     memset(&mparams, 0, sizeof(mparams));
-    mparams.tmap = tmap;
-    mparams.tclass = tclass;
-    mparams.tex.border = 1;
+    mparams.translated.tmap = tmap;
+    mparams.translated.tclass = tclass;
+    mparams.border = 1;
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);

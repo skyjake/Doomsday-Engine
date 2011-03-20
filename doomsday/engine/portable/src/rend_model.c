@@ -806,7 +806,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             material_load_params_t params;
 
             memset(&params, 0, sizeof(params));
-            params.tex.flags = (!mdl->allowTexComp? TF_NO_COMPRESSION : 0);
+            params.flags = (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0);
 
             if((tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MODELSKIN_DIFFUSE, &params), NULL)))
                 skinTexture = TextureVariant_GLName(tex);
