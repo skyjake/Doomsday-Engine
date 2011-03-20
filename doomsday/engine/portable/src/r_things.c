@@ -631,7 +631,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     memset(&params, 0, sizeof(params));
     params.tex.border = 1;
-    Materials_Prepare(&ms, mat, false, &params);
+    Materials_Prepare(&ms, mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, &params));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -669,7 +669,7 @@ float R_VisualRadius(mobj_t* mo)
 
     // Use the sprite frame's width.
     // @fixme What about rotation?
-    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, NULL);
+    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
     return ms.width / 2;
 }
 
@@ -886,7 +886,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     mparams.tclass = transClass;
     mparams.tex.border = 1;
 
-    Materials_Prepare(&ms, mat, true, &mparams);
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1134,7 +1134,7 @@ void R_ProjectSprite(mobj_t* mo)
     mparams.tclass = tclass;
     mparams.tex.border = 1;
 
-    Materials_Prepare(&ms, mat, true, &mparams);
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1456,7 +1456,7 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
         tex = ms.units[MTU_PRIMARY].tex;
         pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)

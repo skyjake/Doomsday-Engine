@@ -112,7 +112,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
                 {
                     material_snapshot_t ms;
                     const ded_decor_t* decor;
-                    Materials_Prepare(&ms, mat, true, NULL);
+                    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_DIFFUSE, NULL));
                     if(ms.glowing > 0)
                         R_SurfaceListAdd(glowingSurfaceList, suf);
                     decor = Materials_Decoration(Materials_ToMaterialNum(mat));

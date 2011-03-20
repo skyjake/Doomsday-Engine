@@ -604,8 +604,8 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node,
     while((pos = strrchr(dir, delimiter)) != 0)
     {
         // Does this match?
-        if(Str_Length(&node->path) < Str_Length(searchPath) ||
-           strnicmp(Str_Text(&node->path), Str_Text(searchPath),
+        if(Str_Length(&node->path) < (strlen(pos)-1) ||
+           strnicmp(Str_Text(&node->path), pos + 1,
                     Str_Length(&node->path) - (node->type == FDT_DIRECTORY? 1:0)))
             return false;
 
@@ -620,8 +620,8 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node,
     }}
 
     // Anything remaining is the root directory or file; but does it match?
-    if(Str_Length(&node->path) < Str_Length(searchPath) ||
-       strnicmp(Str_Text(&node->path), Str_Text(searchPath),
+    if(Str_Length(&node->path) < strlen(dir) ||
+       strnicmp(Str_Text(&node->path), dir,
                 Str_Length(&node->path) - (node->type == FDT_DIRECTORY? 1:0)))
         return false;
 

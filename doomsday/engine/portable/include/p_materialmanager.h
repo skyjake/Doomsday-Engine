@@ -28,6 +28,7 @@
 #include "gl_texmanager.h"
 #include "def_data.h"
 #include "p_material.h"
+#include "texturevariantspecification.h"
 
 void P_MaterialsRegister(void);
 
@@ -88,7 +89,8 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num);
 const ded_decor_t*  Materials_Decoration(materialnum_t num);
 const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
 
-byte Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
+byte Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat,
+    boolean smoothed, texturevariantspecification_t* texSpec);
 
 int Materials_AnimGroupCount(void);
 void Materials_ResetAnimGroups(void);

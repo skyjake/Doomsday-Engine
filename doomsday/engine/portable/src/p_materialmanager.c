@@ -972,7 +972,7 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
 }
 
 byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed,
-    material_load_params_t* params)
+    texturevariantspecification_t* texSpec)
 {
     materialnum_t num;
     if((num = Materials_ToMaterialNum(mat)))
@@ -997,7 +997,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             byte result;
 
             // Pick the instance matching the specified context.
-            layerTextures[i] = GL_PrepareTexture(ml->tex, params, &result);
+            layerTextures[i] = GL_PrepareTexture(ml->tex, texSpec, &result);
 
             if(result)
                 tmpResult = result;
@@ -1030,12 +1030,12 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                         float contrast = detail->strength * detailFactor;
 
                         // Pick an instance matching the specified context.
-                        detailTex = GL_PrepareTexture(dTex->id, &contrast, 0);
+                        detailTex = GL_PrepareTexture(dTex->id, GL_TextureVariantSpecificationForContext(TS_DETAIL, TC_MAPSURFACE_DETAIL, &contrast), 0);
                     }
                 }
 
                 // Do we need to prepare a shiny texture (and possibly a mask)?
-                if(reflection)
+                if(reflection && useShinySurfaces)
                 {
                     shinytex_t* sTex;
                     masktex_t* mTex;
@@ -1049,14 +1049,14 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                     if((sTex = R_GetShinyTexture(reflection->shinyMap)))
                     {
                         // Pick an instance matching the specified context.
-                        shinyTex = GL_PrepareTexture(sTex->id, 0, 0);
+                        shinyTex = GL_PrepareTexture(sTex->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_REFLECTION, NULL), 0);
                     }
 
                     if(shinyTex && // Don't bother searching unless the above succeeds.
                        (mTex = R_GetMaskTexture(reflection->maskMap)))
                     {
                         // Pick an instance matching the specified context.
-                        shinyMaskTex = GL_PrepareTexture(mTex->id, 0, 0);
+                        shinyMaskTex = GL_PrepareTexture(mTex->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_REFLECTIONMASK, NULL), 0);
                     }
                 }
             }
@@ -1094,10 +1094,10 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
 
             snapshot->isOpaque = !TextureVariant_IsMasked(layerTextures[0]);
 
-            if(params && (params->prepareForSkySphere))
+            if(TC_SKYSPHERE_DIFFUSE == texSpec->context)
             {
                 const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
-                    TextureVariant_Analysis(layerTextures[0], TA_SKY_TOPCOLOR);
+                    TextureVariant_Analysis(layerTextures[0], TA_SKY_SPHEREFADECOLOR);
                 assert(avgTopColor);
                 snapshot->topColor[CR] = avgTopColor->color[CR];
                 snapshot->topColor[CG] = avgTopColor->color[CG];
@@ -1109,10 +1109,10 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             }
 
             /// \fixme what about the other texture types?
-            if(TN_TEXTURES == Texture_Namespace(tex) || TN_FLATS == Texture_Namespace(tex))
+            if(TC_MAPSURFACE_DIFFUSE == texSpec->context)
             {
                 const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
-                    TextureVariant_Analysis(layerTextures[0], TA_WORLD_AMBIENTLIGHT);
+                    TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
                 assert(ambientLight);
                 snapshot->color[CR] = ambientLight->color[CR];
                 snapshot->color[CG] = ambientLight->color[CG];
@@ -1147,7 +1147,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                 if(detailScale > .001f)
                     scale *= detailScale;
 
-                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, GL_LINEAR, detailTex, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, texMagMode?GL_LINEAR:GL_NEAREST, detailTex, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
             }
 
             // Setup the reflection (aka shiny) texturing pass(es)?
@@ -1178,7 +1178,7 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, 0);
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
         return mb->reflection[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1190,7 +1190,7 @@ const ded_detailtexture_t* Materials_Detail(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, 0);
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
         return mb->detail[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1202,7 +1202,7 @@ const ded_decor_t* Materials_Decoration(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, 0);
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
         return mb->decoration[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1214,7 +1214,7 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, 0);
+            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
         return mb->ptcGen[mb->prepared? mb->prepared-1:0];
     }
     return 0;

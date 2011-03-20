@@ -236,8 +236,10 @@ void R_DrawViewBorder(void)
     if(mat)
     {
         material_snapshot_t ms;
-        Materials_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UI, NULL));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), (filterUI ? GL_LINEAR : GL_NEAREST));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         GL_DrawCutRectTiled(0, 0, port->width, port->height, ms.width, ms.height, 0, 0,
                             viewwindowx - border, viewwindowy - border,
                             viewwidth + 2 * border, viewheight + 2 * border);

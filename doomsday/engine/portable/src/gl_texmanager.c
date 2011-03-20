@@ -184,25 +184,20 @@ static int compareVariantSpecifications(const texturevariantspecification_t* a,
 {
     if(a->type != b->type)
         return 1;
-
-    if(a->type != TS_DETAIL)
-    {
-        if(a->prepareForSkySphere != b->prepareForSkySphere)
-            return 1;
-        if(a->flags != b->flags)
-            return 1;
-        if(a->border != b->border)
-            return 1;
-    }
+    /// \todo We can be a bit cleverer here...
+    if(a->context != b->context)
+        return 1;
+    if(a->flags != b->flags)
+        return 1;
+    if(a->border != b->border)
+        return 1;
 
     switch(a->type)
     {
-    case TS_PATCHSPRITE:
-        if(a->data.sprite.pSprite != b->data.sprite.pSprite)
+    case TS_TRANSLATED:
+        if(a->data.translated.tclass != b->data.translated.tclass)
             return 1;
-        if(a->data.sprite.tclass != b->data.sprite.tclass)
-            return 1;
-        if(a->data.sprite.tmap != b->data.sprite.tmap)
+        if(a->data.translated.tmap != b->data.translated.tmap)
             return 1;
         break;
     case TS_DETAIL:
@@ -216,11 +211,13 @@ static int compareVariantSpecifications(const texturevariantspecification_t* a,
 
 static texturevariantspecification_t* applyVariantSpecification(
     texturevariantspecification_t* spec, texturespecificationtype_t type,
-    const void* context)
+    textureusagecontext_t tc, const void* context)
 {
-    assert(spec && VALID_TEXTURESPECIFICATIONTYPE(type));
+    assert(spec && (tc == TC_UNKNOWN || VALID_TEXTUREUSAGECONTEXT(tc)) &&
+           VALID_TEXTURESPECIFICATIONTYPE(type));
     memset(spec, 0, sizeof(texturevariantspecification_t));
     spec->type = type;
+    spec->context = tc;
     if(spec->type == TS_DETAIL)
     {
         float contrast = context? *((float*) context) : 1;
@@ -233,45 +230,20 @@ static texturevariantspecification_t* applyVariantSpecification(
     {
         const material_load_params_t* params = (const material_load_params_t*) context;
         spec->flags = params->tex.flags;
-        spec->prepareForSkySphere = params->prepareForSkySphere;
         spec->border = params->tex.border;
-        if(spec->type == TS_PATCHSPRITE)
+        if(spec->type == TS_TRANSLATED)
         {
-            spec->data.sprite.tmap = params->tmap;
-            spec->data.sprite.tclass = params->tclass;
-            spec->data.sprite.pSprite = params->pSprite;
+            spec->data.translated.tmap = params->tmap;
+            spec->data.translated.tclass = params->tclass;
         }
     }
     return spec;
 }
 
 static void initVariantSpecificationForContext(texturevariantspecification_t* spec,
-    texturenamespaceid_t texNamespace, void* context)
+    texturespecificationtype_t type, textureusagecontext_t tc, void* context)
 {
-    assert(spec && VALID_TEXTURENAMESPACE(texNamespace));
-    {
-    texturespecificationtype_t type;
-    switch(texNamespace)
-    {
-    case TN_SYSTEM:                 type = TS_SYSTEM;
-    case TN_FLATS:                  type = TS_FLAT; break;
-    case TN_TEXTURES:               type = TS_PATCHCOMPOSITE; break;
-    case TN_SPRITES:                type = TS_PATCHSPRITE; break;
-    case TN_PATCHES:                type = TS_PATCH; break;
-    case TN_DETAILS:                type = TS_DETAIL; break;
-    case TN_REFLECTIONS:            type = TS_REFLECTION; break;
-    case TN_MASKS:                  type = TS_MASK; break;
-    case TN_MODELSKINS:             type = TS_MODELSKIN; break;
-    case TN_MODELREFLECTIONSKINS:   type = TS_MODELREFLECTIONSKIN; break;
-    case TN_LIGHTMAPS:              type = TS_LIGHTMAP; break;
-    case TN_FLAREMAPS:              type = TS_FLAREMAP; break;
-    default:
-        Con_Error("Textures::initVariantSpecificationForContext: Unknown namespace: %i",
-                  (int) texNamespace);
-        return; // Unreachable.
-    }
-    applyVariantSpecification(spec, type, context);
-    }
+    applyVariantSpecification(spec, type, tc, context);
 }
 
 static texturevariantspecification_t* linkVariantSpecification(
@@ -291,7 +263,7 @@ static texturevariantspecification_t* linkVariantSpecification(
     }
 }
 
-static texturevariantspecification_t* findVariantSpecification(texturenamespaceid_t texNamespace,
+static texturevariantspecification_t* findVariantSpecification(
     const texturevariantspecification_t* tpl, boolean canCreate)
 {
     assert(texInited && tpl);
@@ -462,9 +434,9 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
     const texture_t* generalCase = TextureVariant_GeneralCase(tex);
     const texturevariantspecification_t* spec = TextureVariant_Spec(tex);
     byte loadResult = 0;
-    switch(spec->type)
+    switch(Texture_Namespace(generalCase))
     {
-    case TS_FLAT:
+    case TN_FLATS:
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
@@ -480,7 +452,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
         if(0 == loadResult)
             loadResult = GL_LoadFlatLump(img, generalCase);
         break;
-    case TS_PATCH:
+    case TN_PATCHES:
         // Attempt to load an external replacement for this patch?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
@@ -496,7 +468,14 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
         if(0 == loadResult)
             loadResult = GL_LoadDoomPatchLump(img, generalCase, (spec->flags & TF_UPSCALE_AND_SHARPEN) != 0);
         break;
-    case TS_PATCHSPRITE:
+    case TN_SPRITES: {
+        int tclass = 0, tmap = 0;
+        if(TS_TRANSLATED == spec->type)
+        {
+            tclass = spec->data.translated.tclass;
+            tmap = spec->data.translated.tmap;
+        }
+
         // Attempt to load an external replacement for this sprite?
         if(!noHighResPatches)
         {
@@ -507,14 +486,14 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
 
             // Prefer psprite or translated versions if available.
             Str_Init(&searchPath);
-            if(spec->data.sprite.pSprite)
+            if(TC_PSPRITE_DIFFUSE == spec->context)
             {
                 Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", sprTex->name);
             }
-            else if(spec->data.sprite.tclass || spec->data.sprite.tmap)
-            {   // Translated.
+            else if(tclass || tmap)
+            {
                 Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
-                    sprTex->name, spec->data.sprite.tclass, spec->data.sprite.tmap);
+                    sprTex->name, tclass, tmap);
             }
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", sprTex->name);
 
@@ -523,10 +502,11 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadSpriteLump(img, generalCase, spec->data.sprite.pSprite,
-                spec->data.sprite.tclass, spec->data.sprite.tmap, spec->border);
+            loadResult = GL_LoadSpriteLump(img, generalCase, TC_PSPRITE_DIFFUSE == spec->context,
+                tclass, tmap, spec->border);
         break;
-    case TS_DETAIL: {
+      }
+    case TN_DETAILS: {
         int idx = Texture_TypeIndex(generalCase);
         const detailtex_t* dTex;
         assert(idx >= 0 && idx < detailTexturesCount);
@@ -543,21 +523,21 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
         }
         break;
       }
-    case TS_SYSTEM:
-    case TS_REFLECTION:
-    case TS_MASK:
-    case TS_LIGHTMAP:
-    case TS_FLAREMAP:
-    case TS_MODELSKIN:
-    case TS_MODELREFLECTIONSKIN: {
+    case TN_SYSTEM:
+    case TN_REFLECTIONS:
+    case TN_MASKS:
+    case TN_LIGHTMAPS:
+    case TN_FLAREMAPS:
+    case TN_MODELSKINS:
+    case TN_MODELREFLECTIONSKINS: {
         ddstring_t* path = Uri_ComposePath(searchPath(Texture_Namespace(generalCase), Texture_TypeIndex(generalCase)));
         loadResult = GL_LoadExtTextureEX(img, Str_Text(path), NULL, false);
         Str_Delete(path);
         break;
       }
     default:
-        Con_Error("Textures::loadSourceImage: Unknown texture specification type %i.",
-                  (int) spec->type);
+        Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.",
+                  (int) Texture_Namespace(generalCase));
         return 0; // Unreachable.
     }
     return loadResult;
@@ -574,7 +554,7 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     boolean noCompression = (specType != TS_DETAIL? (spec->flags & TF_NO_COMPRESSION) != 0 : false);
     boolean scaleSharp    = (specType != TS_DETAIL? (spec->flags & TF_UPSCALE_AND_SHARPEN) != 0 : false);
     int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
-    boolean noSmartFilter = false, didDefer = false;
+    boolean noSmartFilter = false, didDefer = false, loadedPaletted = false;
     dgltexformat_t dglFormat;
     boolean alphaChannel;
     byte loadResult = 0;
@@ -583,10 +563,10 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     float s, t;
 
     // Load in the raw source image.
-    if(specType == TS_PATCHCOMPOSITE)
+    if(TN_TEXTURES == Texture_Namespace(TextureVariant_GeneralCase(tex)))
     {
         loadResult = GL_LoadDoomTexture(&image, TextureVariant_GeneralCase(tex),
-            spec->prepareForSkySphere, (spec->flags & TF_ZEROMASK) != 0);
+            spec->context == TC_SKYSPHERE_DIFFUSE, (spec->flags & TF_ZEROMASK) != 0);
     }
     else
     {
@@ -600,9 +580,15 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         return loadResult;
     }
 
+    { texturenamespaceid_t texNamespace = Texture_Namespace(TextureVariant_GeneralCase(tex));
+    if(TN_FLATS   == texNamespace || TN_TEXTURES == texNamespace ||
+       TN_PATCHES == texNamespace || TN_SPRITES  == texNamespace)
+        loadedPaletted = true;
+    }
+
     if(image.pixelSize == 1)
     {
-        if(monochrome && !scaleSharp && (specType == TS_PATCH || specType == TS_PATCHSPRITE))
+        if(monochrome && !scaleSharp)
             GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
 
         if(specType == TS_DETAIL)
@@ -631,7 +617,7 @@ static byte prepareTextureVariant(texturevariant_t* tex)
                 image.originalBits = 32;
             }
 
-            if(monochrome && (specType == TS_PATCH || specType == TS_PATCHSPRITE))
+            if(monochrome)
                 Desaturate(image.pixels, image.width, image.height, image.pixelSize);
 
             newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.width, image.height, 0, &image.width, &image.height);
@@ -646,7 +632,7 @@ static byte prepareTextureVariant(texturevariant_t* tex)
             //BlackOutlines(image.pixels, image.width, image.height, image.pixelSize);
 
             // Back to indexed+alpha?
-            if(monochrome && (specType == TS_PATCH || specType == TS_PATCHSPRITE))
+            if(monochrome)
             {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
                 GL_ConvertToLuminance(&image);
@@ -671,9 +657,9 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         if(fillOutlines /*&& !scaleSharp*/ && (image.flags & IMGF_IS_MASKED) && image.pixelSize == 1)
             ColorOutlinesIdx(image.pixels, image.width, image.height);
     }
-    else
+    else if(image.pixelSize > 2)
     {
-        if(monochrome && specType == TS_PATCH && image.pixelSize > 2)
+        if(monochrome)
         {
             GL_ConvertToLuminance(&image);
             AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
@@ -705,7 +691,7 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     }
 
     // Lightmaps and flare textures should always be monochrome images.
-    if((specType == TS_LIGHTMAP || (specType == TS_FLAREMAP && image.pixelSize != 4)) &&
+    if((spec->context == TC_MAPSURFACE_LIGHTMAP || (spec->context == TC_HALO_LUMINANCE && image.pixelSize != 4)) &&
        !(image.flags & IMGF_IS_MASKED))
     {
         // An alpha channel is required. If one is not in the image data, we'll generate it.
@@ -713,29 +699,22 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     }
 
     // Disable compression?
-    if(noCompression || (image.width < 128 && image.height < 128) || specType == TS_FLAREMAP || specType == TS_REFLECTION)
+    if(noCompression || (image.width < 128 || image.height < 128) ||
+       spec->context == TC_HALO_LUMINANCE || spec->context == TC_MAPSURFACE_REFLECTION)
         flags |= TXCF_NO_COMPRESSION;
 
-    if(!(specType == TS_MASK || specType == TS_REFLECTION || specType == TS_LIGHTMAP) &&
-       (image.pixelSize > 2 || specType == TS_MODELSKIN))
+    if(spec->context == TC_MODELSKIN_DIFFUSE)
         flags |= TXCF_APPLY_GAMMACORRECTION;
 
-    if(specType == TS_PATCHSPRITE /*|| specType == TS_PATCH*/)
-        flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-
-    if(!monochrome && !(specType == TS_DETAIL || specType == TS_SYSTEM || specType == TS_REFLECTION || specType == TS_MASK))
-        flags |= TXCF_EASY_UPLOAD;
-
-    if(!monochrome)
+    if(image.pixelSize > 2)
     {
-        if(specType == TS_PATCHSPRITE || specType == TS_MODELSKIN || specType == TS_MODELREFLECTIONSKIN)
-        {
-            if(image.pixelSize > 1)
-                flags |= TXCF_UPLOAD_ARG_RGBDATA;
-        }
-        else if(image.pixelSize > 2 && !(specType == TS_REFLECTION || specType == TS_MASK || specType == TS_LIGHTMAP))
-            flags |= TXCF_UPLOAD_ARG_RGBDATA;
+        if(spec->context == TC_MAPSURFACE_DIFFUSE || spec->context == TC_SPRITE_DIFFUSE ||
+           spec->context == TC_PSPRITE_DIFFUSE    || spec->context == TC_SKYSPHERE_DIFFUSE)
+            flags |= TXCF_APPLY_GAMMACORRECTION;
     }
+
+    if(spec->context == TC_SPRITE_DIFFUSE)
+        flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
     if(specType == TS_DETAIL)
     {
@@ -747,17 +726,56 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         grayMipmap = MINMAX_OF(0, spec->data.detail.contrast * 255, 255);
         flags |= TXCF_GRAY_MIPMAP;
     }
-    else if(!(specType == TS_REFLECTION || specType == TS_PATCH ||
-              specType == TS_LIGHTMAP || specType == TS_FLAREMAP ||
-             (specType == TS_PATCHSPRITE && spec->data.sprite.pSprite)))
-        flags |= TXCF_MIPMAP;
 
-    if(specType == TS_PATCHCOMPOSITE || specType == TS_PATCH ||
-       specType == TS_PATCHSPRITE || specType == TS_FLAT)
-        alphaChannel = ((/*loadResult == 2 &&*/ image.pixelSize == 4) ||
-                        (/*loadResult == 1 &&*/ image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)));
-    else
-        alphaChannel = image.pixelSize != 3 && !(specType == TS_MASK || specType == TS_REFLECTION);
+    switch(spec->context)
+    {
+    case TC_MAPSURFACE_DIFFUSE:
+    //case TC_MAPSURFACE_REFLECTION:
+    case TC_MAPSURFACE_REFLECTIONMASK:
+    //case TC_MAPSURFACE_LIGHTMAP:
+    case TC_SPRITE_DIFFUSE:
+    case TC_MODELSKIN_DIFFUSE:
+    //case TC_MODELSKIN_REFLECTION:
+        flags |= TXCF_MIPMAP;
+        break;
+    default: break;
+    }
+
+    alphaChannel = false;
+    if(TS_DETAIL != specType)
+    {
+        if(!monochrome)
+        {
+            texturenamespaceid_t texNamespace = Texture_Namespace(TextureVariant_GeneralCase(tex));
+            if(!(TN_SYSTEM  == texNamespace || TN_REFLECTIONS == texNamespace || TN_MASKS  == texNamespace))
+            //if(!(specType == TS_SYSTEM || specType == TS_REFLECTION || specType == TS_MASK))
+                flags |= TXCF_EASY_UPLOAD;
+        }
+
+        if(loadedPaletted)
+        {
+            if(!monochrome && image.pixelSize > 1)
+                flags |= TXCF_UPLOAD_ARG_RGBDATA;
+
+            if((image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)) ||
+               image.pixelSize == 4)
+                alphaChannel = true;
+        }
+        else
+        {
+            if(!monochrome && image.pixelSize > 2 &&
+                !(TC_MAPSURFACE_REFLECTIONMASK == spec->context ||
+                  TC_MAPSURFACE_LIGHTMAP       == spec->context))
+                flags |= TXCF_UPLOAD_ARG_RGBDATA;
+
+            if(!(TC_MAPSURFACE_REFLECTIONMASK == spec->context ||
+                 TC_MAPSURFACE_REFLECTION     == spec->context))
+            {
+                if(image.pixelSize == 2 || image.pixelSize == 4)
+                    alphaChannel = true;
+            }
+        }
+    }
 
     if(alphaChannel)
         flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
@@ -769,48 +787,84 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     {
         dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
     }
-    else if(specType == TS_FLAT || specType == TS_PATCHCOMPOSITE || specType == TS_PATCH || specType == TS_PATCHSPRITE)
-    {
-        dglFormat = ( image.pixelSize > 1?
-                        ( alphaChannel? DGL_RGBA : DGL_RGB) :
-                        ( alphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8 ) );
-    }
-    else if(specType == TS_MODELSKIN || specType == TS_MODELREFLECTIONSKIN)
-    {
-        dglFormat = ( alphaChannel? DGL_RGBA : DGL_RGB );
-    }
     else
     {
-        dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                      image.pixelSize == 3 ? DGL_RGB :
-                      image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
+        if(loadedPaletted)
+        {
+            if(image.pixelSize == 1)
+                dglFormat = alphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
+            else
+                dglFormat = alphaChannel? DGL_RGBA : DGL_RGB;
+        }
+        else
+        {
+            dglFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                          image.pixelSize == 3 ? DGL_RGB :
+                          image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
+        }
     }
 
-    if(specType == TS_FLAT || specType == TS_PATCHCOMPOSITE || specType == TS_MASK)
+    switch(spec->context)
+    {
+    case TC_MAPSURFACE_DIFFUSE:
+    case TC_MAPSURFACE_REFLECTIONMASK:
+    case TC_MAPSURFACE_LIGHTMAP:
+    case TC_MAPSURFACE_DETAIL:
         magFilter = glmode[texMagMode];
-    else if(specType == TS_PATCHSPRITE)
+        break;
+    case TC_SPRITE_DIFFUSE:
+    case TC_MODELSKIN_DIFFUSE:
         magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
-    else
+        break;
+    default:
         magFilter = GL_LINEAR;
+        break;
+    }
 
-    if(specType == TS_DETAIL)
-        minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    else if(specType == TS_PATCH || (specType == TS_PATCHSPRITE && spec->data.sprite.pSprite))
-        minFilter = GL_NEAREST;
-    else if(specType == TS_LIGHTMAP || specType == TS_FLAREMAP || specType == TS_REFLECTION)
-        minFilter = GL_LINEAR;
-    else
+    switch(spec->context)
+    {
+    case TC_MAPSURFACE_DIFFUSE:
+    //case TC_MAPSURFACE_REFLECTION:
+    case TC_MAPSURFACE_REFLECTIONMASK:
+    //case TC_MAPSURFACE_LIGHTMAP:
         minFilter = glmode[mipmapping];
+        break;
+    case TC_MAPSURFACE_DETAIL:
+        minFilter = GL_LINEAR_MIPMAP_LINEAR;
+        break;
+    case TC_UI:
+        minFilter = GL_NEAREST;
+        break;
+    default:
+        minFilter = GL_LINEAR;
+        break;
+    }
 
-    if(specType == TS_PATCH || specType == TS_FLAREMAP || (specType == TS_PATCHSPRITE && spec->data.sprite.pSprite))
+    switch(spec->context)
+    {
+    case TC_UI:
+    case TC_PSPRITE_DIFFUSE:
+    case TC_HALO_LUMINANCE:
         anisoFilter = 0 /*no anisotropic filtering*/;
-    else
-        anisoFilter = texAniso; /// \fixme is "best" truely a suitable default for ALL texture types?
+        break;
+    default:
+        anisoFilter = texAniso; /// \fixme is "best" truely a suitable default?
+        break;
+    }
 
-    if(specType == TS_PATCH || specType == TS_PATCHSPRITE || specType == TS_LIGHTMAP || specType == TS_FLAREMAP)
+    switch(spec->context)
+    {
+    case TC_UI:
+    case TC_SPRITE_DIFFUSE:
+    case TC_PSPRITE_DIFFUSE:
+    case TC_HALO_LUMINANCE:
+    case TC_MAPSURFACE_LIGHTMAP:
         wrapS = wrapT = GL_CLAMP_TO_EDGE;
-    else
+        break;
+    default:
         wrapS = wrapT = GL_REPEAT;
+        break;
+    }
 
     glName = GL_NewTextureWithParams3(dglFormat, image.width, image.height,
         image.pixels, flags, grayMipmap, minFilter, magFilter, anisoFilter, wrapS,
@@ -831,8 +885,8 @@ static byte prepareTextureVariant(texturevariant_t* tex)
      * coordinates are calculated as width/CeilPow2(width), or 1 if larger
      * than the maximum texture size.
      */
-    if(specType == TS_PATCHSPRITE && GL_state.features.texNonPowTwo &&
-       (spec->data.sprite.pSprite || !(flags & TXCF_UPLOAD_ARG_NOSTRETCH)) &&
+    if((spec->context == TC_SPRITE_DIFFUSE || spec->context == TC_PSPRITE_DIFFUSE) &&
+       GL_state.features.texNonPowTwo && !(flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        !(image.width < MINTEXWIDTH || image.height < MINTEXHEIGHT))
     {
         s = t = 1;
@@ -847,17 +901,17 @@ static byte prepareTextureVariant(texturevariant_t* tex)
     TextureVariant_SetCoords(tex, s, t);
     TextureVariant_SetMasked(tex, (image.flags & IMGF_IS_MASKED) != 0);
 
-    if(!(specType == TS_DETAIL || specType == TS_PATCHSPRITE) &&
-       spec->prepareForSkySphere)
+    switch(spec->context)
     {
+    case TC_SKYSPHERE_DIFFUSE: {
         averagecolor_analysis_t* avgTopColor;
         
-        if(NULL == (avgTopColor = (averagecolor_analysis_t*)TextureVariant_Analysis(tex, TA_SKY_TOPCOLOR)))
+        if(NULL == (avgTopColor = (averagecolor_analysis_t*)TextureVariant_Analysis(tex, TA_SKY_SPHEREFADECOLOR)))
         {
             if(NULL == (avgTopColor = (averagecolor_analysis_t*) malloc(sizeof(*avgTopColor))))
                 Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
                           "new AverageColorAnalysis.", (unsigned int) sizeof(*avgTopColor));
-            TextureVariant_AddAnalysis(tex, TA_SKY_TOPCOLOR, avgTopColor);
+            TextureVariant_AddAnalysis(tex, TA_SKY_SPHEREFADECOLOR, avgTopColor);
         }
 
         // Average color for glow planes and top line color.
@@ -869,10 +923,9 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         {
             FindAverageLineColorIdx(image.pixels, image.width, image.height, 0, 0, false, avgTopColor->color);
         }
-    }
-
-    if(specType == TS_PATCHSPRITE && !spec->data.sprite.pSprite)
-    {
+        break;
+      }
+    case TC_SPRITE_DIFFUSE: {
         pointlight_analysis_t* pl;
         
         if(NULL == (pl = (pointlight_analysis_t*)TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT)))
@@ -885,18 +938,17 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         // Calculate light source properties.
         GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
                          &pl->originX, &pl->originY, pl->color, &pl->brightMul);
-    }
-
-    if(specType == TS_FLAT || specType == TS_PATCHCOMPOSITE)
-    {
+        break;
+      }
+    case TC_MAPSURFACE_DIFFUSE: {
         ambientlight_analysis_t* al;
         
-        if(NULL == (al = (ambientlight_analysis_t*)TextureVariant_Analysis(tex, TA_WORLD_AMBIENTLIGHT)))
+        if(NULL == (al = (ambientlight_analysis_t*)TextureVariant_Analysis(tex, TA_MAP_AMBIENTLIGHT)))
         {
             if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
                 Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
                           "new AmbientLightAnalysis.", (unsigned int) sizeof(*al));
-            TextureVariant_AddAnalysis(tex, TA_WORLD_AMBIENTLIGHT, al);
+            TextureVariant_AddAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
         }
 
         if(image.pixelSize > 1)
@@ -909,6 +961,9 @@ static byte prepareTextureVariant(texturevariant_t* tex)
         }
         memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
         amplify(al->colorAmplified);
+        break;
+      }
+    default: break;
     }
 
     GL_DestroyImagePixels(&image);
@@ -1044,20 +1099,37 @@ void GL_ResetTextureManager(void)
     GL_ClearTextureMemory();
 }
 
-void GL_PrintTextureVariantSpecification(const struct texturevariantspecification_s* spec)
+void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec)
 {
+    static const char* textureUsageContextNames[TEXTUREUSAGECONTEXT_COUNT] = {
+        /* TC_UI */                         { "ui" },
+        /* TC_MAPSURFACE_DIFFUSE */         { "mapsurface_diffuse" },
+        /* TC_MAPSURFACE_REFLECTION */      { "mapsurface_reflection" },
+        /* TC_MAPSURFACE_REFLECTIONMASK */  { "mapsurface_reflectionmask" },
+        /* TC_MAPSURFACE_LIGHTMAP */        { "mapsurface_lightmap" },
+        /* TC_MAPSURFACE_DETAIL */          { "mapsurface_detail" },
+        /* TC_SPRITE_DIFFUSE */             { "sprite_diffuse" },
+        /* TC_MODELSKIN_DIFFUSE */          { "modelskin_diffuse" },
+        /* TC_MODELSKIN_REFLECTION */       { "modelskin_reflection" },
+        /* TC_HALO_LUMINANCE */             { "halo_luminance" },
+        /* TC_PSPRITE_DIFFUSE */            { "psprite_diffuse" },
+        /* TC_SKYSPHERE_DIFFUSE */          { "skysphere_diffuse" }
+    };
+
     if(NULL == spec) return;
+
+    assert(VALID_TEXTUREUSAGECONTEXT(spec->context));
     Con_Printf("type:%i context:%s flags:%i border:%i\n", (int) spec->type,
-        spec->prepareForSkySphere? "skysphere" : "unknown", spec->flags,
+        textureUsageContextNames[spec->context-TEXTUREUSAGECONTEXT_FIRST], spec->flags,
         spec->border);
     switch(spec->type)
     {
     case TS_DETAIL:
-        Con_Printf("glt_detail(contrast:%g)\n", spec->data.detail.contrast);
+        Con_Printf("ts_detail(contrast:%g)\n", spec->data.detail.contrast);
         break;
-    case TS_PATCHSPRITE:
-        Con_Printf("glt_sprite(tclass:%i tmap:%i isPSprite:%s)\n", spec->data.sprite.tclass,
-            spec->data.sprite.tmap, spec->data.sprite.pSprite? "true":"false");
+    case TS_TRANSLATED:
+        Con_Printf("ts_translated(tclass:%i tmap:%i)\n", spec->data.translated.tclass,
+            spec->data.translated.tmap);
         break;
     default:
         break;
@@ -1065,14 +1137,13 @@ void GL_PrintTextureVariantSpecification(const struct texturevariantspecificatio
 }
 
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    const texture_t* tex, void* context)
+    texturespecificationtype_t type, textureusagecontext_t tc, void* context)
 {
     static texturevariantspecification_t tpl;
-    texturenamespaceid_t texNamespace = Texture_Namespace(tex);
     if(!texInited)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection not yet initialized.");
-    initVariantSpecificationForContext(&tpl, texNamespace, context);
-    return findVariantSpecification(texNamespace, &tpl, true);
+    initVariantSpecificationForContext(&tpl, type, tc, context);
+    return findVariantSpecification(&tpl, true);
 }
 
 void GL_DestroyTextures(void)
@@ -1372,6 +1443,9 @@ DGLuint GL_UploadTexture2(const texturecontent_t* content)
     uint8_t* buffer = NULL, *rgbaOriginal = NULL, *idxBuffer = NULL;
     boolean freeOriginal;
     boolean freeBuffer;
+    boolean oldCompression = GL_state.currentUseTexCompression;
+
+    GL_SetTextureCompression((content->flags & TXCF_NO_COMPRESSION) == 0);
 
     // Number of color components in the destination image.
     comps = (alphaChannel ? 4 : 3);
@@ -1505,6 +1579,8 @@ DGLuint GL_UploadTexture2(const texturecontent_t* content)
 
     if(freeBuffer)
         free(buffer);
+
+    GL_SetTextureCompression(oldCompression);
 
     return content->name;
 }
@@ -2271,7 +2347,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
         if(0 != (lmap = R_GetLightMap(uri)))
         {
             const texturevariant_t* tex;
-            if((tex = GL_PrepareTexture(lmap->id, 0, 0)))
+            if((tex = GL_PrepareTexture(lmap->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_LIGHTMAP, NULL), 0)))
                 return TextureVariant_GLName(tex);
         }
     }
@@ -2295,7 +2371,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
         if((fTex = R_GetFlareTexture(uri)))
         {
             const texturevariant_t* tex;
-            if((tex = GL_PrepareTexture(fTex->id, 0, 0)))
+            if((tex = GL_PrepareTexture(fTex->id, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_HALO_LUMINANCE, NULL), 0)))
                 return TextureVariant_GLName(tex);
         }
     }
@@ -2320,7 +2396,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             params.tex.flags |= TF_UPSCALE_AND_SHARPEN;
             params.tex.border = 1;
         }
-        if((tex = GL_PrepareTexture(patchTex->texId, &params, NULL)))
+        if((tex = GL_PrepareTexture(patchTex->texId, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UI, &params), NULL)))
             return TextureVariant_GLName(tex);
     }
     return 0;
@@ -2601,11 +2677,10 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
     return GL_TextureIndexForUri2(uri, false);
 }
 
-const texturevariant_t* GL_PrepareTexture(textureid_t id, void* context,
-    byte* result)
+const texturevariant_t* GL_PrepareTexture(textureid_t id,
+    texturevariantspecification_t* spec, byte* result)
 {
     texture_t* tex = getTexture(id);
-    texturevariantspecification_t* spec = GL_TextureVariantSpecificationForContext(tex, context);
     texturevariant_t* variant = NULL;
     boolean variantIsNew = false;
     byte loadResult;

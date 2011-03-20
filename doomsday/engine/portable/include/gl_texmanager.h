@@ -33,6 +33,7 @@
 #include "r_model.h"
 #include "gl_model.h"
 #include "gl_defer.h"
+#include "texturevariantspecification.h"
 
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
@@ -42,7 +43,7 @@ struct image_s;
 struct texturecontent_s;
 struct texture_s;
 struct texturevariant_s;
-struct texturevariantspecification_s;
+texturevariantspecification_t;
 
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
@@ -242,7 +243,7 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
  *
  * @param spec  Specification to echo.
  */
-void GL_PrintTextureVariantSpecification(const struct texturevariantspecification_s* spec);
+void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context.
@@ -252,29 +253,29 @@ void GL_PrintTextureVariantSpecification(const struct texturevariantspecificatio
  * @return  Ptr to a rationalized and valid TextureVariantSpecification
  *      or @c NULL if out of memory.
  */
-struct texturevariantspecification_s* GL_TextureVariantSpecificationForContext(
-    const struct texture_s* tex, void* context);
+texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
+    texturespecificationtype_t type, textureusagecontext_t tc, void* context);
 
 struct texturevariant_s* GL_FindSuitableTextureVariant(struct texture_s* tex,
-    const struct texturevariantspecification_s* spec);
+    const texturevariantspecification_t* spec);
 
 void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);
 
 struct texture_s* GL_ToTexture(textureid_t id);
 
 /**
- * Attempt to prepare (upload to GL) an instance of Texture which fulfills
- * the variant specification defined by the usage context.
+ * Attempt to prepare a variant of Texture which fulfills the specification
+ * defined by the usage context.
  *
- * @param context  Usage-specific context data (if any).
+ * @param spec  Variant specification for the proposed usage context.
  * @param result  Result of this process:
  *      @c 0== Failed: No suitable variant could be found/prepared.
  *      @c 1== Success: Suitable variant prepared from an original resource.
  *      @c 2== Success: Suitable variant prepared from a replacement resource.
  * @return  Prepared variant if successful else @c NULL.
  */
-const struct texturevariant_s* GL_PrepareTexture(textureid_t id, void* context,
-    byte* result);
+const struct texturevariant_s* GL_PrepareTexture(textureid_t id,
+    texturevariantspecification_t* spec, byte* result);
 
 const struct texture_s* GL_CreateTexture(const char* name, uint index, texturenamespaceid_t texNamespace);
 

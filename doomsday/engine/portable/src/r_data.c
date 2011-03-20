@@ -2029,7 +2029,7 @@ uint R_CreateSkinTex(const dduri_t* skin, boolean isShinySkin)
         return 0;
 
     // Have we already created one for this?
-    if((id = R_GetSkinNumForName(skin)))
+    if(0 != (id = R_GetSkinNumForName(skin)))
         return id;
 
     if(M_NumDigits(numSkinNames + 1) > 8)
@@ -2323,7 +2323,7 @@ void R_PrecacheMobjNum(int num)
 static void addToSurfaceLists(surface_t* suf, material_t* mat)
 {
     material_snapshot_t ms;
-    Materials_Prepare(&ms, mat, true, 0);
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_DIFFUSE, NULL));
     if(ms.glowing > 0)
         R_SurfaceListAdd(glowingSurfaceList, suf);
     if(ms.decorated)
@@ -2411,7 +2411,7 @@ void R_PrecacheMap(void)
         material_t* mat = Materials_ToMaterial(i+1);
         if(mat->inFlags & MATIF_PRECACHE)
         {
-            Materials_Prepare(NULL, mat, true, 0);
+            Materials_Prepare(NULL, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_UNKNOWN, NULL));
         }
     }
 
@@ -2459,8 +2459,8 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
     char name[9];
 
     // Have we already created one for this?
-    if((dTex = R_GetDetailTexture(def->detailTex, def->isExternal)))
-        return NULL;
+    if(NULL != (dTex = R_GetDetailTexture(def->detailTex, def->isExternal)))
+        return dTex;
 
     if(M_NumDigits(detailTexturesCount + 1) > 8)
     {
@@ -2527,8 +2527,8 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
         return 0; // Not a lightmap
 
     // Have we already created one for this?
-    if((lmap = R_GetLightMap(path)))
-        return 0;
+    if(NULL != (lmap = R_GetLightMap(path)))
+        return lmap;
 
     if(M_NumDigits(lightmapTexturesCount + 1) > 8)
     {
@@ -2606,8 +2606,8 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
         return 0; // Don't create a flaretex for this
 
     // Have we already created one for this?
-    if((fTex = R_GetFlareTexture(path)))
-        return 0;
+    if(NULL != (fTex = R_GetFlareTexture(path)))
+        return fTex;
 
     if(M_NumDigits(flareTexturesCount + 1) > 8)
     {
@@ -2676,8 +2676,8 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
     char name[9];
 
     // Have we already created one for this?
-    if((sTex = R_GetShinyTexture(uri)) == 0)
-        return 0;
+    if(NULL != (sTex = R_GetShinyTexture(uri)))
+        return sTex;
 
     if(M_NumDigits(shinyTexturesCount + 1) > 8)
     {
@@ -2747,8 +2747,8 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
     char name[9];
 
     // Have we already created one for this?
-    if((mTex = R_GetMaskTexture(uri)) == 0)
-        return 0;
+    if(NULL != (mTex = R_GetMaskTexture(uri)))
+        return mTex;
 
     if(M_NumDigits(maskTexturesCount + 1) > 8)
     {

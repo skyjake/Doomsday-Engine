@@ -1454,7 +1454,7 @@ boolean R_IsGlowingPlane(const plane_t* pln)
 {
     material_t* mat = pln->surface.material;
     material_snapshot_t ms;
-    Materials_Prepare(&ms, mat, true, 0);
+    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_DIFFUSE, NULL));
     return ((mat && (mat->flags & MATF_NO_DRAW)) || ms.glowing > 0 ||
             R_IsSkySurface(&pln->surface));
 }

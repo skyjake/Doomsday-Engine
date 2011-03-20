@@ -44,6 +44,7 @@ extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
 extern int devRendSkyMode;
 extern float glowingTextures;
+extern int useShinySurfaces;
 
 void            Rend_Register(void);
 void            Rend_Init(void);

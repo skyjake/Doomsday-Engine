@@ -3266,6 +3266,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\texturevariantspecification.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\ui2_main.h"
 				>
 			</File>

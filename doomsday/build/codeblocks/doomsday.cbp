@@ -366,6 +366,7 @@
 		<Unit filename="..\..\engine\portable\include\texture.h" />
 		<Unit filename="..\..\engine\portable\include\texturecontent.h" />
 		<Unit filename="..\..\engine\portable\include\texturevariant.h" />
+		<Unit filename="..\..\engine\portable\include\texturespecification.h" />
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />

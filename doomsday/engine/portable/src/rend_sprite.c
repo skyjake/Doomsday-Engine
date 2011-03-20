@@ -268,10 +268,9 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     flip = sprFrame->flip[0];
 
     memset(&mparams, 0, sizeof(mparams));
-    mparams.pSprite = true;
     mparams.tex.border = 1;
 
-    Materials_Prepare(&ms, sprFrame->mats[0], true, &mparams);
+    Materials_Prepare(&ms, sprFrame->mats[0], true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_PSPRITE_DIFFUSE, &mparams));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -356,7 +355,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t* mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray"));
         material_snapshot_t ms;
 
-        Materials_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }
@@ -868,10 +867,9 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         memset(&mparams, 0, sizeof(mparams));
         mparams.tmap = (renderTextures == 1? params->tMap : 0);
         mparams.tclass = (renderTextures == 1? params->tClass : 0);
-        mparams.pSprite = false;
         mparams.tex.border = 1;
 
-        Materials_Prepare(&ms, mat, true, &mparams);
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_TRANSLATED, TC_SPRITE_DIFFUSE, &mparams));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }

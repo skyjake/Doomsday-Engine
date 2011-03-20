@@ -28,16 +28,6 @@
 
 struct texturevariant_s;
 
-typedef struct material_load_params_s {
-    boolean prepareForSkySphere;
-    int tmap, tclass;
-    boolean pSprite;
-    struct {
-        byte flags; /// @see textureFlags
-        byte border;
-    } tex;
-} material_load_params_t;
-
 // Material texture unit idents:
 enum {
     MTU_PRIMARY,

@@ -25,62 +25,15 @@
 #ifndef LIBDENG_GL_TEXTUREVARIANT_H
 #define LIBDENG_GL_TEXTUREVARIANT_H
 
+#include "texturevariantspecification.h"
+
 struct texture_s;
-
-/**
- * @defGroup textureFlags  Texture Flags
- */
-/*@{*/
-#define TF_ZEROMASK                 0x1 // Zero the alpha of loaded textures.
-#define TF_NO_COMPRESSION           0x2 // Do not compress the loaded textures.
-#define TF_UPSCALE_AND_SHARPEN      0x4
-#define TF_MONOCHROME               0x8
-/*@}*/
-
-typedef enum {
-    TEXTURESPECIFICATIONTYPE_FIRST = 0,
-    TS_SYSTEM = TEXTURESPECIFICATIONTYPE_FIRST,
-    TS_FLAT,
-    TS_PATCHCOMPOSITE,
-    TS_PATCHSPRITE,
-    TS_PATCH,
-    TS_DETAIL,
-    TS_REFLECTION,
-    TS_MASK,
-    TS_MODELSKIN,
-    TS_MODELREFLECTIONSKIN,
-    TS_LIGHTMAP,
-    TS_FLAREMAP,
-    TEXTURESPECIFICATIONTYPE_LAST = TS_FLAREMAP
-} texturespecificationtype_t;
-
-#define TEXTURESPECIFICATIONTYPE_COUNT (\
-    TEXTURESPECIFICATIONTYPE_LAST + 1 - TEXTURESPECIFICATIONTYPE_FIRST )
-
-#define VALID_TEXTURESPECIFICATIONTYPE(t) (\
-    (t) >= TEXTURESPECIFICATIONTYPE_FIRST && (t) <= TEXTURESPECIFICATIONTYPE_LAST)
-
-typedef struct texturevariantspecification_s {
-    texturespecificationtype_t type;
-    byte flags; /// @see textureFlags
-    byte border; /// In pixels, added to all four edges of the texture.
-    boolean prepareForSkySphere;
-    union {
-        struct {
-            boolean pSprite; // @c true, iff this is for use as a psprite.
-            int tclass, tmap; // Color translation.
-        } sprite;
-        struct {
-            float contrast;
-        } detail;
-    } data; // type-specific data.
-} texturevariantspecification_t;
 
 typedef enum {
     TEXTUREVARIANT_ANALYSIS_FIRST = 0,
     TA_SPRITE_AUTOLIGHT = TEXTUREVARIANT_ANALYSIS_FIRST,
-    TA_WORLD_AMBIENTLIGHT,
-    TA_SKY_TOPCOLOR,
+    TA_MAP_AMBIENTLIGHT,
+    TA_SKY_SPHEREFADECOLOR,
     TEXTUREVARIANT_ANALYSIS_COUNT
 } texturevariant_analysisid_t;
 

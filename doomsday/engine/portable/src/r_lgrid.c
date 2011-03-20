@@ -109,7 +109,7 @@ void LG_Register(void)
 {
     C_VAR_INT("rend-bias-grid", &lgEnabled, 0, 0, 1);
 
-    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, 0, 0, 1);
+    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, CVF_NO_ARCHIVE, 0, 1);
 
     C_VAR_FLOAT("rend-bias-grid-debug-size", &lgDebugSize, 0, .1f, 100);
 

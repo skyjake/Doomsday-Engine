@@ -407,7 +407,7 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_SPRITE_DIFFUSE, NULL));
         tex = ms.units[MTU_PRIMARY].tex;
         pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)
@@ -589,7 +589,7 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
     assert(l && surface);
     {
     material_snapshot_t ms;
-    Materials_Prepare(&ms, surface->material, true, 0);
+    Materials_Prepare(&ms, surface->material, true, GL_TextureVariantSpecificationForContext(TS_DEFAULT, TC_MAPSURFACE_DIFFUSE, NULL));
     V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
     V3_Copy(LUM_PLANE(l)->color, ms.colorAmplified);
     LUM_PLANE(l)->intensity = ms.glowing;
