@@ -549,12 +549,14 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         if(flags & PSF_PENDING_WEAPON)
         {
             pl->pendingWeapon = b & 0xf;
+#if _DEBUG
+            Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i\n", pl->pendingWeapon);
+#endif
         }
 
         if(flags & PSF_READY_WEAPON)
         {
             pl->readyWeapon = b >> 4;
-
 #if _DEBUG
             Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyWeapon);
 #endif
@@ -946,7 +948,7 @@ void NetCl_UpdateJumpPower(void *data)
  * the clients position and angle may not be up to date when a ticcmd
  * arrives.
  */
-void NetCl_PlayerActionRequest(player_t *player, int actionType)
+void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam)
 {
 #define MSG_SIZE        (28)
 
@@ -974,7 +976,14 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType)
     *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
 
     // Currently active weapon.
-    *ptr++ = LONG(player->readyWeapon);
+    if(actionType == GPA_CHANGE_WEAPON)
+    {
+        *ptr++ = LONG(actionParam);
+    }
+    else
+    {
+        *ptr++ = LONG(player->readyWeapon);
+    }
 
     Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
 

@@ -45,6 +45,6 @@ void            NetCl_SendPlayerInfo(void);
 void            NetCl_SaveGame(void* data);
 void            NetCl_LoadGame(void* data);
 void            NetCl_Paused(boolean setPause);
-void            NetCl_PlayerActionRequest(player_t* player, int actionType);
+void            NetCl_PlayerActionRequest(player_t* player, int actionType, int actionParam);
 
 #endif

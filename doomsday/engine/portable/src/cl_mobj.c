@@ -723,6 +723,10 @@ void Cl_ReadMobjDelta2(boolean skip)
             fastMom = true;
     }
 
+#ifdef _DEBUG
+    VERBOSE2( Con_Message("Cl_ReadMobjDelta: Reading mobj delta for %i (df:0x%x edf:0x%x skip:%i)\n", id, df, moreFlags, skip) );
+#endif
+
     if(!skip)
     {
         // Get a mobj for this.

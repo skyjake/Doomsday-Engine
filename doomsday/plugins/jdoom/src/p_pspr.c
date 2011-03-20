@@ -157,7 +157,7 @@ void P_FireWeapon(player_t *player)
     if(!P_CheckAmmo(player))
         return;
 
-    NetCl_PlayerActionRequest(player, GPA_FIRE);
+    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
 
     // Psprite state.
     player->plr->pSprites[0].state = DDPSP_FIRE;

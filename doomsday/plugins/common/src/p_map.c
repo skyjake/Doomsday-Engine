@@ -2275,7 +2275,7 @@ void P_UseLines(player_t* player)
         Con_Message("P_UseLines: Sending a use request for player %i.\n",
                     player - players);
 #endif
-        NetCl_PlayerActionRequest(player, GPA_USE);
+        NetCl_PlayerActionRequest(player, GPA_USE, 0);
         return;
     }
 

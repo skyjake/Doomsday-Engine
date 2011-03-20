@@ -588,8 +588,7 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
 
     // Mobj state sent periodically, if it keeps changing.
     if((!(s->ddFlags & DDMF_MISSILE) && regMo &&
-        Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) &&
-        r->state != s->state) ||
+        Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) && r->state != s->state) ||
        !Def_SameStateSequence(r->state, s->state))
     {
         df |= MDF_STATE;

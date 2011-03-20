@@ -1411,9 +1411,9 @@ void NetSv_DoAction(int player, const char *data)
 
 #ifdef _DEBUG
     Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
-                "angle=%x lookDir=%g\n",
+                "angle=%x lookDir=%g weapon=%i\n",
                 player, type, pos[VX], pos[VY], pos[VZ],
-                angle, lookDir);
+                angle, lookDir, readyWeapon);
 #endif
 
     if(pl->playerState == PST_DEAD)
@@ -1447,6 +1447,10 @@ void NetSv_DoAction(int player, const char *data)
             else
                 P_FireWeapon(pl);
         }
+        break;
+
+    case GPA_CHANGE_WEAPON:
+        pl->brain.changeWeapon = readyWeapon;
         break;
     }
 }

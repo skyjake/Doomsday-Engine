@@ -615,7 +615,7 @@ void P_DeathThink(player_t* player)
     {
         if(IS_CLIENT)
         {
-            NetCl_PlayerActionRequest(player, GPA_USE);
+            NetCl_PlayerActionRequest(player, GPA_USE, 0);
         }
         else
         {
@@ -1339,7 +1339,8 @@ void P_PlayerThinkWeapons(player_t* player)
 #else
     if(brain->changeWeapon != WT_NOCHANGE)
 #endif
-    {   // Direct slot selection.
+    {
+        // Direct slot selection.
         weapontype_t        cand, first;
 
         // Is this a same-slot weapon cycle?
@@ -1364,16 +1365,24 @@ void P_PlayerThinkWeapons(player_t* player)
                 first);
     }
     else if(brain->cycleWeapon)
-    {   // Linear cycle.
+    {
+        // Linear cycle.
         newweapon = P_PlayerFindWeapon(player, brain->cycleWeapon < 0);
     }
 
     if(newweapon != WT_NOCHANGE && newweapon != player->readyWeapon)
     {
-        if(weaponInfo[newweapon][player->class_].mode[0].gameModeBits
-           & gameModeBits)
+        if(weaponInfo[newweapon][player->class_].mode[0].gameModeBits & gameModeBits)
         {
-            player->pendingWeapon = newweapon;
+            if(IS_CLIENT)
+            {
+                // Just send a request.
+                NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, newweapon);
+            }
+            else
+            {
+                player->pendingWeapon = newweapon;
+            }
         }
     }
 

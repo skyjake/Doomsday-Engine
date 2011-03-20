@@ -103,7 +103,8 @@ typedef struct {
 // Player action requests.
 enum {
     GPA_FIRE = 1,
-    GPA_USE = 2
+    GPA_USE = 2,
+    GPA_CHANGE_WEAPON = 3
 };
 
 // Game state flags.
