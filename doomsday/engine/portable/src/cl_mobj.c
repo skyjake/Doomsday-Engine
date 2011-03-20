@@ -597,8 +597,7 @@ void Cl_PredictMovement(void)
             if(cmo->mo.state == states)
             {
 #ifdef _DEBUG
-if(!cmo->mo.thinker.id)
-    Con_Error("No clmobj id!!!!\n");
+                if(!cmo->mo.thinker.id) Con_Error("No clmobj id!!!!\n");
 #endif
                 Cl_DestroyMobj(cmo);
                 continue;
@@ -609,16 +608,16 @@ if(!cmo->mo.thinker.id)
         }
     }
 #ifdef _DEBUG
-if(verbose >= 2)
-{
-    static int timer = 0;
-
-    if(++timer > 5 * 35)
+    if(verbose >= 2)
     {
-        timer = 0;
-        Con_Printf("moCount=%i\n", moCount);
+        static int timer = 0;
+
+        if(++timer > 5 * 35)
+        {
+            timer = 0;
+            Con_Printf("moCount=%i\n", moCount);
+        }
     }
-}
 #endif
 }
 
@@ -844,7 +843,7 @@ void Cl_ReadMobjDelta2(boolean skip)
 
     if(df & MDF_STATE)
     {
-        ushort stateIdx = Msg_ReadPackedShort();
+        int stateIdx = Msg_ReadPackedShort();
         if(!skip)
         {
             Cl_SetMobjState(d, stateIdx);

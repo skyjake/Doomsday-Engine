@@ -248,15 +248,14 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
 
 #ifdef _DEBUG
-if(df & MDFC_NULL)
-{
-    Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n");
-}
-if((df & 0xffff) == 0)
-{
-    Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n",
-               delta->delta.id, df);
-}
+    if(df & MDFC_NULL)
+    {
+        Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n");
+    }
+    if((df & 0xffff) == 0)
+    {
+        Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n", delta->delta.id, df);
+    }
 #endif
 
     // First the mobj ID number and flags.
@@ -272,14 +271,14 @@ if((df & 0xffff) == 0)
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
     {
-        fixed_t             vx = FLT2FIX(d->pos[VX]);
+        fixed_t vx = FLT2FIX(d->pos[VX]);
 
         Msg_WriteShort(vx >> FRACBITS);
         Msg_WriteByte(vx >> 8);
     }
     if(df & MDF_POS_Y)
     {
-        fixed_t             vy = FLT2FIX(d->pos[VY]);
+        fixed_t vy = FLT2FIX(d->pos[VY]);
 
         Msg_WriteShort(vy >> FRACBITS);
         Msg_WriteByte(vy >> 8);
@@ -287,7 +286,7 @@ if((df & 0xffff) == 0)
 
     if(df & MDF_POS_Z)
     {
-        fixed_t             vz = FLT2FIX(d->pos[VZ]);
+        fixed_t vz = FLT2FIX(d->pos[VZ]);
         Msg_WriteShort(vz >> FRACBITS);
         Msg_WriteByte(vz >> 8);
     }
@@ -295,23 +294,20 @@ if((df & 0xffff) == 0)
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        fixed_t             mx = FLT2FIX(d->mom[MX]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) :
-                       FIXED8_8(mx));
+        fixed_t mx = FLT2FIX(d->mom[MX]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) : FIXED8_8(mx));
     }
 
     if(df & MDF_MOM_Y)
     {
-        fixed_t             my = FLT2FIX(d->mom[MY]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) :
-                       FIXED8_8(my));
+        fixed_t my = FLT2FIX(d->mom[MY]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) : FIXED8_8(my));
     }
 
     if(df & MDF_MOM_Z)
     {
-        fixed_t             mz = FLT2FIX(d->mom[MZ]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) :
-                       FIXED8_8(mz));
+        fixed_t mz = FLT2FIX(d->mom[MZ]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) : FIXED8_8(mz));
     }
 
     // Angles with 16-bit accuracy.
@@ -323,13 +319,15 @@ if((df & 0xffff) == 0)
     if(df & MDF_SELSPEC)
         Msg_WriteByte(d->selector >> 24);
 
-    if(df & MDF_STATE)
+    if((df & MDF_STATE) && d->state)
+    {
         Msg_WritePackedShort(d->state - states);
+    }
 
-    // Pack flags into a word (3 bytes?).
-    // \fixme Do the packing!
     if(df & MDF_FLAGS)
+    {
         Msg_WriteLong(d->ddFlags & DDMF_PACK_MASK);
+    }
 
     // Radius, height and floorclip are all bytes.
     if(df & MDF_RADIUS)

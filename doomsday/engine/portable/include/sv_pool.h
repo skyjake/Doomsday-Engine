@@ -87,7 +87,6 @@ typedef enum {
 #define MDFC_TRANSLUCENCY       0x40000 // Mobj has translucency.
 #define MDFC_FADETARGET         0x80000 // Mobj is fading to/from visible/invisible
 
-
 // Extra flags for the Extra Flags byte.
 #define MDFE_FAST_MOM           0x01 // Momentum has 10.6 bits (+/- 512)
 #define MDFE_TRANSLUCENCY       0x02

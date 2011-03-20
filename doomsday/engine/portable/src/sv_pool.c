@@ -594,6 +594,15 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
     {
         df |= MDF_STATE;
 
+        if(s->state == NULL)
+        {
+#ifdef _DEBUG
+            Con_Message("Sv_RegisterCompareMobj: Mobj state is NULL, ignoring.\n");
+#endif
+            // No valid comparison can be generated because the mobj is gone.
+            return false;
+        }
+
 #ifdef _DEBUG
 VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
     Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
