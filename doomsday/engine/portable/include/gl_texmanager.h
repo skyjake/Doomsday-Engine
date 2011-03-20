@@ -180,7 +180,7 @@ byte GL_LoadDetailTextureLump(struct image_s* image, const struct texture_s* tex
 byte GL_LoadFlatLump(struct image_s* image, const struct texture_s* tex);
 
 byte GL_LoadSpriteLump(struct image_s* image, const struct texture_s* tex,
-    boolean prepareForPSprite, int tclass, int tmap, int border);
+    int tclass, int tmap, int border);
 
 byte GL_LoadDoomPatchLump(struct image_s* image, const struct texture_s* tex,
     boolean scaleSharp);

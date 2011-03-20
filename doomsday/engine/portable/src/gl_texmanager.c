@@ -519,8 +519,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadSpriteLump(img, generalCase, TC_PSPRITE_DIFFUSE == spec->context,
-                tclass, tmap, spec->border);
+            loadResult = GL_LoadSpriteLump(img, generalCase, tclass, tmap, spec->border);
         break;
       }
     case TN_DETAILS: {
@@ -1953,8 +1952,8 @@ byte GL_LoadFlatLump(image_t* image, const texture_t* tex)
     }
 }
 
-byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, boolean pSprite,
-    int tclass, int tmap, int border)
+byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, int tclass,
+    int tmap, int border)
 {
     assert(image && tex);
     {
