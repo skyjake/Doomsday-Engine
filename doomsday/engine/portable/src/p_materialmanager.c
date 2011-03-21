@@ -26,8 +26,6 @@
  * Materials collection, namespaces, bindings and other management.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <ctype.h> // For tolower()
 
 #include "de_base.h"
@@ -40,15 +38,35 @@
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
+#include "blockset.h"
 #include "texture.h"
 #include "texturevariant.h"
-
-// MACROS ------------------------------------------------------------------
+#include "materialvariant.h"
 
 #define MATERIALS_BLOCK_ALLOC (32) // Num materials to allocate per block.
-#define MATERIAL_NAME_HASH_SIZE (512)
+#define MATERIALNAMESPACE_HASH_SIZE (512)
 
-// TYPES -------------------------------------------------------------------
+typedef struct materialvariantspecificationlist_node_s {
+    struct materialvariantspecificationlist_node_s* next;
+    materialvariantspecification_t* spec;
+} materialvariantspecificationlist_node_t;
+
+typedef materialvariantspecificationlist_node_t variantspecificationlist_t;
+
+typedef struct materiallist_node_s {
+    struct materiallist_node_s* next;
+    material_t* mat;
+} materiallist_node_t;
+
+typedef materiallist_node_t materiallist_t;
+
+typedef struct variantcachequeue_node_s {
+    struct variantcachequeue_node_s* next;
+    materialvariantspecification_t* spec;
+    material_t* mat;
+} variantcachequeue_node_t;
+
+typedef variantcachequeue_node_t variantcachequeue_t;
 
 typedef struct materialbind_s {
     char            name[9];
@@ -63,34 +81,44 @@ typedef struct materialbind_s {
     uint            hashNext; // 1-based index
 } materialbind_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+typedef struct animframe_s {
+    material_t*     mat;
+    ushort          tics;
+    ushort          random;
+} animframe_t;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+typedef struct animgroup_s {
+    int             id;
+    int             flags;
+    int             index;
+    int             maxTimer;
+    int             timer;
+    int             count;
+    animframe_t*    frames;
+} animgroup_t;
+
+static int numgroups;
+static animgroup_t* groups;
 
 D_CMD(ListMaterials);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void animateAnimGroups(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean ddMapSetup;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 materialnum_t numMaterialBinds = 0;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean initedOk = false;
+static variantspecificationlist_t* variantSpecs;
+
+static variantcachequeue_t* variantCacheQueue;
 
 /**
  * The following data structures and variables are intrinsically linked and
  * are inter-dependant. The scheme used is somewhat complicated due to the
  * required traits of the materials themselves and in of the system itself:
  *
- * 1) Pointers to material_t are eternal, they are always valid and continue
+ * 1) Pointers to Material are eternal, they are always valid and continue
  *    to reference the same logical material data even after engine reset.
  * 2) Public material identifiers (materialnum_t) are similarly eternal.
  *    Note that they are used to index the material name bindings array.
@@ -102,14 +130,12 @@ static boolean initedOk = false;
  * 5) Super-fast look up by public material identifier.
  * 6) Fast look up by material name (a hashing scheme is used).
  */
-static zblockset_t* materialsBlockSet;
-static material_t* materialsHead; // Head of the linked list of materials.
+static blockset_t* materialsBlockSet;
+static materiallist_t* materials;
 
 static materialbind_t* materialBinds;
 static materialnum_t maxMaterialBinds;
-static uint hashTable[MATERIALNAMESPACE_COUNT][MATERIAL_NAME_HASH_SIZE];
-
-// CODE --------------------------------------------------------------------
+static uint hashTable[MATERIALNAMESPACE_COUNT][MATERIALNAMESPACE_HASH_SIZE];
 
 void P_MaterialsRegister(void)
 {
@@ -144,9 +170,150 @@ static materialnamespaceid_t materialNamespaceIdForTextureNamespaceId(texturenam
     return MATERIALNAMESPACE_COUNT; // Unknown.
 }
 
+static animgroup_t* getAnimGroup(int number)
+{
+    if(--number < 0 || number >= numgroups)
+        return NULL;
+
+    return &groups[number];
+}
+
+static boolean isInAnimGroup(animgroup_t* group, const material_t* mat)
+{
+    if(mat && group)
+    {
+        int i;
+        for(i = 0; i < group->count; ++i)
+            if(group->frames[i].mat == mat)
+                return true;
+    }
+    return false;
+}
+
+static materialvariantspecification_t* copyVariantSpecification(
+    const materialvariantspecification_t* tpl)
+{
+    materialvariantspecification_t* spec;
+    if(NULL == (spec = (materialvariantspecification_t*) malloc(sizeof(*spec))))
+        Con_Error("Materials::copyVariantSpecification: Failed on allocation of "
+                  "%lu bytes for new MaterialVariantSpecification.",
+                  (unsigned int) sizeof(*spec));
+    memcpy(spec, tpl, sizeof(materialvariantspecification_t));
+    return spec;
+}
+
+static int compareVariantSpecifications(const materialvariantspecification_t* a,
+    const materialvariantspecification_t* b)
+{
+    if(a->primarySpec != b->primarySpec)
+        return 1;
+    return 0; // Equal.
+}
+
+static materialvariantspecification_t* applyVariantSpecification(
+    materialvariantspecification_t* spec, texturevariantspecification_t* primarySpec)
+{
+    assert(spec && primarySpec);
+    spec->primarySpec = primarySpec;
+    return spec;
+}
+
+static materialvariantspecification_t* linkVariantSpecification(
+    materialvariantspecification_t* spec)
+{
+    assert(initedOk && spec);
+    {
+    materialvariantspecificationlist_node_t* node;
+    if(NULL == (node = (materialvariantspecificationlist_node_t*) malloc(sizeof(*node))))
+        Con_Error("Materials::linkVariantSpecification: Failed on allocation of "
+                  "%lu bytes for new MaterialVariantSpecificationListNode.",
+                  (unsigned int) sizeof(*node));
+    node->spec = spec;
+    node->next = variantSpecs;
+    variantSpecs = (variantspecificationlist_t*)node;
+    return spec;
+    }
+}
+
+static materialvariantspecification_t* findVariantSpecification(
+    const materialvariantspecification_t* tpl, boolean canCreate)
+{
+    assert(initedOk && tpl);
+    {
+    materialvariantspecificationlist_node_t* node;
+    for(node = variantSpecs; node; node = node->next)
+    {
+        if(!compareVariantSpecifications(node->spec, tpl))
+            return node->spec;
+    }
+    if(!canCreate)
+        return NULL;
+    return linkVariantSpecification(copyVariantSpecification(tpl));
+    }
+}
+
+static materialvariantspecification_t* getVariantSpecificationForContext(
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+{
+    static materialvariantspecification_t tpl;
+    assert(initedOk);
+    {
+    texturevariantspecification_t* texSpec =
+        GL_TextureVariantSpecificationForContext(tc, flags, border, tClass, tMap);
+    applyVariantSpecification(&tpl, texSpec);
+    return findVariantSpecification(&tpl, true);
+    }
+}
+
+static void destroyVariantSpecifications(void)
+{
+    assert(initedOk);
+    while(variantSpecs)
+    {
+        materialvariantspecificationlist_node_t* next = variantSpecs->next;
+        free(variantSpecs->spec);
+        free(variantSpecs);
+        variantSpecs = next;
+    }
+}
+
+typedef struct {
+    const materialvariantspecification_t* spec;
+    materialvariant_t* chosen;
+} choosevariantworker_paramaters_t;
+
+static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
+{
+    assert(initedOk && variant && paramaters);
+    {
+    choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) paramaters;
+    const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
+    if(!compareVariantSpecifications(cand, p->spec))
+    {   // This will do fine.
+        p->chosen = variant;
+        return 1; // Stop iteration.
+    }
+    return 0; // Continue iteration.
+    }
+}
+
+static materialvariant_t* chooseVariant(material_t* mat,
+    const materialvariantspecification_t* spec)
+{
+    assert(initedOk && mat && spec);
+    {
+    choosevariantworker_paramaters_t params;
+    params.spec = spec;
+    params.chosen = NULL;
+    Material_IterateVariants(mat, chooseVariantWorker, &params);
+    return params.chosen;
+    }
+}
+
 static __inline materialbind_t* bindForMaterial(const material_t* mat)
 {
-    if(mat->_bindId) return &materialBinds[mat->_bindId-1];
+    uint bindId = Material_BindId(mat);
+    if(0 != bindId) return &materialBinds[bindId-1];
     return 0;
 }
 
@@ -157,7 +324,7 @@ static int compareMaterialBindByName(const void* e1, const void* e2)
 
 /**
  * This is a hash function. Given a material name it generates a
- * somewhat-random number between 0 and MATERIAL_NAME_HASH_SIZE.
+ * somewhat-random number between 0 and MATERIALNAMESPACE_HASH_SIZE.
  *
  * @return              The generated hash index.
  */
@@ -180,7 +347,7 @@ static uint hashForName(const char* name)
         }
     }
 
-    return key % MATERIAL_NAME_HASH_SIZE;
+    return key % MATERIALNAMESPACE_HASH_SIZE;
 }
 
 /**
@@ -221,7 +388,7 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     if(++numMaterialBinds > maxMaterialBinds)
     {   // Allocate more memory.
         maxMaterialBinds += MATERIALS_BLOCK_ALLOC;
-        materialBinds = Z_Realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds, PU_APPSTATIC);
+        materialBinds = (materialbind_t*) realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds);
     }
 
     // Add the new material to the end.
@@ -231,21 +398,18 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     mb->name[8] = '\0';
     mb->mat = mat;
     mb->mnamespace = mnamespace;
-    mat->_bindId = (mb - materialBinds) + 1;
     mb->prepared = 0;
-
     // We also hash the name for faster searching.
     mb->hashNext = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash];
     hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] = (mb - materialBinds) + 1;
+
+    Material_SetBindId(mat, (mb - materialBinds) + 1);
 }
 
 static material_t* allocMaterial(void)
 {
-    material_t* mat = ZBlockSet_Allocate(materialsBlockSet);
-    memset(mat, 0, sizeof(*mat));
-    mat->header.type = DMU_MATERIAL;
-    mat->current = mat->next = mat;
-    mat->envClass = MEC_UNKNOWN;
+    material_t* mat = BlockSet_Allocate(materialsBlockSet);
+    Material_Initialize(mat);
     return mat;
 }
 
@@ -255,69 +419,47 @@ static material_t* allocMaterial(void)
  */
 static material_t* linkMaterialToGlobalList(material_t* mat)
 {
-    mat->globalNext = materialsHead;
-    materialsHead = mat;
+    materiallist_node_t* node;
+    if(NULL == (node = malloc(sizeof(*node))))
+        Con_Error("linkMaterialToGlobalList: Failed on allocation of %lu bytes for "
+                  "new MaterialList::Node.", (unsigned int) sizeof(*node));
+    node->mat = mat;
+    node->next = materials;
+    materials = node;
     return mat;
 }
 
-static void materialUpdateCustomStatus(material_t* mat)
-{
-    uint i;
-    mat->flags &= ~MATF_CUSTOM;
-    for(i = 0; i < mat->numLayers; ++i)
-    {
-        if(Texture_IsFromIWAD(GL_ToTexture(mat->layers[i].tex)))
-            continue;
-        mat->flags |= MATF_CUSTOM;
-        break;
-    }
-}
-
-static material_t* createMaterial(short width, short height, byte flags,
+static material_t* createMaterial(int width, int height, short flags,
     material_env_class_t envClass, textureid_t tex, short texOriginX,
     short texOriginY)
 {
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
-    
-    mat->width = width;
-    mat->height = height;
-    mat->flags = flags;
-    mat->envClass = envClass;
 
+    mat->_isCustom = !Texture_IsFromIWAD(GL_ToTexture(tex));
+    mat->_width = width;
+    mat->_height = height;
+    mat->_envClass = envClass;
     mat->numLayers = 1;
     mat->layers[0].tex = tex;
     mat->layers[0].texOrigin[0] = texOriginX;
     mat->layers[0].texOrigin[1] = texOriginY;
-
-    // Is this a custom material?
-    materialUpdateCustomStatus(mat);
     return mat;
 }
 
-static material_t* createMaterialFromDef(short width, short height, byte flags,
+static material_t* createMaterialFromDef(int width, int height, short flags,
     material_env_class_t envClass, const texture_t* tex, ded_material_t* def)
 {
     assert(def);
     {
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
 
-    mat->width = width;
-    mat->height = height;
-    mat->flags = flags;
-    mat->envClass = envClass;
-    mat->def = def;
-
+    mat->_isCustom = !Texture_IsFromIWAD(tex);
+    mat->_width = width;
+    mat->_height = height;
+    mat->_envClass = envClass;
+    mat->_def = def;
     mat->numLayers = 1;
-    { uint i;
-    for(i = 0; i < mat->numLayers; ++i)
-    {
-        mat->layers[i].tex = Texture_Id(tex);
-        mat->layers[i].glow = def->layers[i].stages[0].glow;
-        mat->layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
-        mat->layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
-    }}
-
-    materialUpdateCustomStatus(mat);
+    mat->layers[0].tex = Texture_Id(tex);
     return mat;
     }
 }
@@ -334,9 +476,11 @@ void Materials_Initialize(void)
     if(initedOk)
         return; // Already been here.
 
-    materialsBlockSet = ZBlockSet_Construct(sizeof(material_t),
-                                      MATERIALS_BLOCK_ALLOC, PU_APPSTATIC);
-    materialsHead = NULL;
+    variantSpecs = NULL;
+    variantCacheQueue = NULL;
+
+    materialsBlockSet = BlockSet_Construct(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
+    materials = NULL;
 
     materialBinds = NULL;
     numMaterialBinds = maxMaterialBinds = 0;
@@ -347,19 +491,36 @@ void Materials_Initialize(void)
     initedOk = true;
 }
 
+static int destroyVariant(materialvariant_t* variant, void* paramaters)
+{
+    MaterialVariant_Destruct(variant);
+    return 1; // Continue iteration.
+}
+
 void Materials_Shutdown(void)
 {
     if(!initedOk)
         return;
 
-    ZBlockSet_Destruct(materialsBlockSet);
+    Materials_PurgeCacheQueue();
+
+    while(materials)
+    {
+        materiallist_node_t* next = materials->next;
+        Material_DestroyVariants(materials->mat);
+        free(materials);
+        materials = next;
+    }
+
+    BlockSet_Destruct(materialsBlockSet);
     materialsBlockSet = NULL;
-    materialsHead = NULL;
+
+    destroyVariantSpecifications();
 
     // Destroy the bindings.
     if(materialBinds)
     {
-        Z_Free(materialBinds);
+        free(materialBinds);
         materialBinds = NULL;
     }
     numMaterialBinds = maxMaterialBinds = 0;
@@ -394,7 +555,41 @@ void Materials_LinkAssociatedDefinitions(void)
     }
 }
 
-void Materials_DeleteTextures(const char* namespaceName)
+void Materials_PurgeCacheQueue(void)
+{
+    if(!initedOk)
+        Con_Error("Materials::PurgeCacheQueue: Materials collection not yet initialized.");
+    while(variantCacheQueue)
+    {
+        variantcachequeue_node_t* next = variantCacheQueue->next;
+        free(variantCacheQueue);
+        variantCacheQueue = next;
+    }
+}
+
+void Materials_ProcessCacheQueue(void)
+{
+    if(!initedOk)
+        Con_Error("Materials::PurgeCacheQueue: Materials collection not yet initialized.");
+    while(variantCacheQueue)
+    {
+        variantcachequeue_node_t* next = variantCacheQueue->next;
+        Materials_Prepare(NULL, variantCacheQueue->mat, true, variantCacheQueue->spec);
+        free(variantCacheQueue);
+        variantCacheQueue = next;
+    }
+}
+
+static void releaseGLTexturesForMaterial(material_t* mat)
+{
+    assert(mat);
+    { uint i;
+    for(i = 0; i < mat->numLayers; ++i)
+        GL_ReleaseGLTexturesForTexture(GL_ToTexture(mat->layers[i].tex));
+    }
+}
+
+void Materials_DeleteGLTextures(const char* namespaceName)
 {
     materialnamespaceid_t matNamespace = MN_ANY;
 
@@ -404,7 +599,7 @@ void Materials_DeleteTextures(const char* namespaceName)
         if(!VALID_MATERIALNAMESPACE(matNamespace))
         {
 #if _DEBUG
-            Con_Message("Warning:Materials_DeleteTextures: Attempt to delete in unknown namespace (%s), ignoring.\n",
+            Con_Message("Warning:Materials_DeleteGLTextures: Attempt to delete in unknown namespace (%s), ignoring.\n",
                         namespaceName);
 #endif
             return;
@@ -418,20 +613,21 @@ void Materials_DeleteTextures(const char* namespaceName)
     }
 
     if(!VALID_MATERIALNAMESPACE(matNamespace))
-        Con_Error("Materials_DeleteTextures: Internal error, "
+        Con_Error("Materials_DeleteGLTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) matNamespace);
 
     if(materialBinds)
     {
         uint i;
-        for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
+        for(i = 0; i < MATERIALNAMESPACE_HASH_SIZE; ++i)
             if(hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i])
             {
                 materialbind_t* mb = &materialBinds[hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i] - 1];
 
                 for(;;)
                 {
-                    Material_DeleteTextures(mb->mat);
+                    releaseGLTexturesForMaterial(mb->mat);
+
                     if(!mb->hashNext)
                         break;
                     mb = &materialBinds[mb->hashNext - 1];
@@ -456,10 +652,8 @@ material_t* Materials_ToMaterial(materialnum_t num)
 {
     if(!initedOk)
         return NULL;
-
     if(num != 0)
         return getMaterialByNum(num - 1); // 1-based index.
-
     return NULL;
 }
 
@@ -470,7 +664,7 @@ material_t* Materials_ToMaterial(materialnum_t num)
  *
  * @return              The associated unique number.
  */
-materialnum_t Materials_ToMaterialNum(const material_t* mat)
+materialnum_t Materials_ToMaterialNum(material_t* mat)
 {
     if(mat)
     {
@@ -481,25 +675,8 @@ materialnum_t Materials_ToMaterialNum(const material_t* mat)
     return 0;
 }
 
-/**
- * Create a new material. If there exists one by the same name and in the
- * same namespace, it is returned else a new material is created.
- *
- * \note: May fail if the name is invalid.
- *
- * @param mnamespace    MG_* material namespace.
- * @param name          Name of the new material.
- * @param width         Width of the material (not of the texture).
- * @param height        Height of the material (not of the texture).
- * @param flags         MATF_* material flags
- * @param tex           Texture to use with this material.
- *                      MN_ANY is only valid when updating an existing material.
- *
- * @return              The created material, ELSE @c NULL.
- */
-material_t* Materials_New(const dduri_t* rawName,
-    short width, short height, byte flags, textureid_t tex, short texOriginX,
-    short texOriginY)
+material_t* Materials_New(const dduri_t* rawName, int width, int height,
+    short flags, textureid_t tex, int texOriginX, int texOriginY)
 {
     materialnamespaceid_t mnamespace;
     material_env_class_t envClass;
@@ -562,32 +739,38 @@ Con_Message("Materials_New: Warning, attempted to create material in "
     if(oldMat)
     {   // We are updating an existing material.
         materialbind_t* mb = &materialBinds[oldMat - 1];
-
-        mat = mb->mat;
+        material_t* mat = mb->mat;
 
         // Update the (possibly new) meta data.
-        mat->flags = flags;
+        mat->_flags = flags;
         if(tex)
             mat->layers[0].tex = tex;
         if(width > 0)
-            mat->width = width;
+            mat->_width = width;
         if(height > 0)
-            mat->height = height;
-        mat->inAnimGroup = false;
-        mat->current = mat->next = mat;
+            mat->_height = height;
         //mat->def = 0;
-        mat->inter = 0;
-        mat->envClass = envClass;
+        mat->_envClass = envClass;
+        mat->_inAnimGroup = false;
 
-        materialUpdateCustomStatus(mat);
+        mat->_isCustom = false;
+        { uint i;
+        for(i = 0; i < mat->numLayers; ++i)
+        {
+            if(Texture_IsFromIWAD(GL_ToTexture(mat->layers[i].tex)))
+                continue;
+            mat->_isCustom = true;
+            break;
+        }}
+
+        Materials_ClearTranslation(mb->mat);
         return mat;
     }
 
     if(mnamespace == MN_ANY)
     {
 #if _DEBUG
-Con_Message("Materials_New: Warning, attempted to create material "
-            "without specifying a namespace.\n");
+        Con_Message("Warning: Attempted to create Material in unknown namespace, ignoring.\n");
 #endif
         return NULL;
     }
@@ -602,10 +785,7 @@ Con_Message("Materials_New: Warning, attempted to create material "
         return NULL;
 
     mat = createMaterial(width, height, flags, envClass, tex, texOriginX, texOriginY);
-
-    // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
-
     return mat;
 }
 
@@ -626,8 +806,8 @@ material_t* Materials_NewFromDef(ded_material_t* def)
     const texture_t* tex = NULL; // No change.
     float width = -1, height = -1; // No change.
     material_env_class_t envClass;
-    materialnum_t oldMat;
     const dduri_t* rawName;
+    materialnum_t oldMat;
     material_t* mat;
     char name[9];
     byte flags;
@@ -713,34 +893,40 @@ Con_Message("Warning: Attempted to create/update Material in unknown Namespace '
     if(oldMat)
     {   // We are updating an existing material.
         materialbind_t* mb = &materialBinds[oldMat - 1];
-
-        mat = mb->mat;
+        material_t* mat = mb->mat;
 
         // Update the (possibly new) meta data.
-        mat->flags = flags;
+        mat->_flags = flags;
         if(tex)
             mat->layers[0].tex = Texture_Id(tex);
         if(width > 0)
-            mat->width = width;
+            mat->_width = width;
         if(height > 0)
-            mat->height = height;
-        mat->inAnimGroup = false;
-        mat->current = mat->next = mat;
-        mat->def = def;
-        mat->inter = 0;
-        mat->envClass = envClass;
+            mat->_height = height;
+        mat->_def = def;
+        mat->_envClass = envClass;
+        mat->_inAnimGroup = false;
 
-        materialUpdateCustomStatus(mat);
+        mat->_isCustom = false;
+        { uint i;
+        for(i = 0; i < mat->numLayers; ++i)
+        {
+            if(Texture_IsFromIWAD(GL_ToTexture(mat->layers[0].tex)))
+                continue;
+            mat->_isCustom = true;
+            break;
+        }}
+
+        Materials_ClearTranslation(mb->mat);
         return mat;
     }
 
     if(mnamespace == MN_ANY)
     {
 #if _DEBUG
-Con_Message("Warning: Attempted to create Material in unknown Namespace '%i', ignoring.\n",
-            (int) mnamespace);
+        Con_Message("Warning: Attempted to create Material in unknown namespace, ignoring.\n");
 #endif
-        return 0;
+        return NULL;
     }
 
     /**
@@ -750,13 +936,10 @@ Con_Message("Warning: Attempted to create Material in unknown Namespace '%i', ig
     // Only create complete materials.
     // \todo Doing this here isn't ideal.
     if(tex == 0 || !(width > 0) || !(height > 0))
-        return 0;
+        return NULL;
 
     mat = createMaterialFromDef(width, height, flags, envClass, tex, def);
-
-    // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
-
     return mat;
     }
 }
@@ -862,13 +1045,10 @@ materialnum_t Materials_IndexForName(const char* path)
 const char* Materials_GetSymbolicName(material_t* mat)
 {
     materialnum_t num;
-
     if(!initedOk)
         return NULL;
-
     if(mat && (num = Materials_ToMaterialNum(mat)))
         return materialBinds[num-1].name;
-
     return "NOMAT"; // Should never happen.
 }
 
@@ -877,7 +1057,7 @@ dduri_t* Materials_GetUri(material_t* mat)
     materialbind_t* mb;
     dduri_t* uri;
     ddstring_t path;
-    
+
     if(!mat)
     {
 #if _DEBUG
@@ -897,52 +1077,74 @@ dduri_t* Materials_GetUri(material_t* mat)
     return uri;
 }
 
-/**
- * Precache the specified material.
- * \note Part of the Doomsday public API.
- *
- * @param mat           The material to be precached.
- */
-void P_MaterialPrecache2(material_t* mat, boolean yes, boolean inGroup)
+static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_t* spec)
 {
-    if(!initedOk)
-        return;
-    if(!mat)
-        return;
-    if(yes)
-        mat->inFlags |= MATIF_PRECACHE;
-    else
-        mat->inFlags &= ~MATIF_PRECACHE;
-
-    if(inGroup && mat->inAnimGroup)
-    {   // The material belongs in one or more animgroups, precache the group.
-        Materials_PrecacheAnimGroup(mat, yes);
+    assert(initedOk && mat && spec);
+    {
+    variantcachequeue_node_t* node = (variantcachequeue_node_t*) malloc(sizeof(*node));
+    if(NULL == node)
+        Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of "
+                  "%lu bytes for new VariantCacheQueueNode.",
+                  (unsigned int) sizeof(*node));
+    node->mat = mat;
+    node->spec = spec;
+    node->next = variantCacheQueue;
+    variantCacheQueue = node;
     }
 }
 
-void Materials_Precache(material_t* mat, boolean yes)
+void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
+    boolean cacheGroup)
 {
-    P_MaterialPrecache2(mat, yes, true);
+    assert(initedOk && mat && spec);
+
+    // Don't precache when playing demo.
+    if(isDedicated || playback)
+        return;
+
+    // Already in the queue?
+    { variantcachequeue_node_t* node;
+    for(node = variantCacheQueue; node; node = node->next)
+        if(mat == node->mat && spec == node->spec)
+            return;
+    }
+
+    pushVariantCacheQueue(mat, spec);
+
+    if(cacheGroup && Material_IsGroupAnimated(mat))
+    {   // Material belongs in one or more animgroups; precache the group.
+        int i;
+        for(i = 0; i < numgroups; ++i)
+        {
+            if(!isInAnimGroup(&groups[i], mat)) continue;
+
+            { int k;
+            for(k = 0; k < groups[i].count; ++k)
+                Materials_Precache2(groups[i].frames[k].mat, spec, false);
+            }
+        }
+    }
 }
 
-/**
- * Called every tic by P_Ticker.
- */
+void Materials_Precache(material_t* mat, materialvariantspecification_t* spec)
+{
+    Materials_Precache2(mat, spec, true);
+}
+
 void Materials_Ticker(timespan_t time)
 {
     static trigger_t fixed = { 1.0 / 35, 0 };
-    material_t* mat;
 
     // The animation will only progress when the game is not paused.
     if(clientPaused)
         return;
 
-    mat = materialsHead;
-    while(mat)
+    { materiallist_node_t* node = materials;
+    while(node)
     {
-        Material_Ticker(mat, time);
-        mat = mat->globalNext;
-    }
+        Material_Ticker(node->mat, time);
+        node = node->next;
+    }}
 
     if(!M_RunTrigger(&fixed, time))
         return;
@@ -971,205 +1173,222 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
     mtp->offset[1] = tOffset;
 }
 
-byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed,
-    texturevariantspecification_t* texSpec)
+byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
+    boolean smoothed, materialvariantspecification_t* spec)
 {
-    materialnum_t num;
-    if((num = Materials_ToMaterialNum(mat)))
+    assert(mat && spec);
     {
-        materialbind_t* mb;
-        const texturevariant_t* layerTextures[DDMAX_MATERIAL_LAYERS];
-        const texturevariant_t* detailTex = NULL, *shinyTex = NULL, *shinyMaskTex = NULL;
-        const ded_detailtexture_t* detail = NULL;
-        const ded_reflection_t* reflection = NULL;
-        const ded_decor_t* decor = NULL;
-        byte tmpResult = 0;
-        uint i;
+    const texturevariant_t* layerTextures[MATERIALVARIANT_MAXLAYERS];
+    const texturevariant_t* detailTex = NULL, *shinyTex = NULL, *shinyMaskTex = NULL;
+    const ded_detailtexture_t* detail = NULL;
+    const ded_reflection_t* reflection = NULL;
+    const ded_decor_t* decor = NULL;
+    materialvariant_t* variant;
+    materialbind_t* mb;
+    byte tmpResult = 0;
+    uint i;
 
-        if(smoothed)
-            mat = mat->current;
-        assert(mat->numLayers > 0);
-
-        // Ensure all resources needed to visualize this material are loaded.
-        for(i = 0; i < mat->numLayers; ++i)
-        {
-            material_layer_t* ml = &mat->layers[i];
-            byte result;
-
-            // Pick the instance matching the specified context.
-            layerTextures[i] = GL_PrepareTexture(ml->tex, texSpec, &result);
-
-            if(result)
-                tmpResult = result;
-        }
-
-        if((mb = bindForMaterial(mat)))
-        {
-            if(tmpResult)
-                mb->prepared = tmpResult;
-
-            decor = mb->decoration[mb->prepared-1];
-            detail = mb->detail[mb->prepared-1];
-            reflection = mb->reflection[mb->prepared-1];
-
-            if(mb->prepared)
-            {   // A texture was loaded.
-                // Do we need to prepare a detail texture?
-                if(detail && r_detail)
-                {
-                    detailtex_t* dTex;
-
-                    /**
-                     * \todo No need to look up the detail texture record every time!
-                     * This will change anyway once the texture for the detailtex is
-                     * linked to (and prepared) via the layers (above).
-                     */
-
-                    if((dTex = R_GetDetailTexture(detail->detailTex, detail->isExternal)))
-                    {
-                        float contrast = detail->strength * detailFactor;
-
-                        // Pick an instance matching the specified context.
-                        detailTex = GL_PrepareTexture(dTex->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DETAIL, &contrast), 0);
-                    }
-                }
-
-                // Do we need to prepare a shiny texture (and possibly a mask)?
-                if(reflection && useShinySurfaces)
-                {
-                    shinytex_t* sTex;
-                    masktex_t* mTex;
-
-                    /**
-                     * \todo No need to look up the shiny texture record every time!
-                     * This will change anyway once the texture for the shinytex is
-                     * linked to (and prepared) via the layers (above).
-                     */
-
-                    if((sTex = R_GetShinyTexture(reflection->shinyMap)))
-                    {
-                        // Pick an instance matching the specified context.
-                        shinyTex = GL_PrepareTexture(sTex->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION, NULL), 0);
-                    }
-
-                    if(shinyTex && // Don't bother searching unless the above succeeds.
-                       (mTex = R_GetMaskTexture(reflection->maskMap)))
-                    {
-                        // Pick an instance matching the specified context.
-                        shinyMaskTex = GL_PrepareTexture(mTex->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTIONMASK, NULL), 0);
-                    }
-                }
-            }
-        }
-
-        // If we arn't taking a snapshot, get out of here.
-        if(!snapshot)
-            return tmpResult;
-
-        /**
-         * Take a snapshot:
-         */
-
-        // Reset to the default state.
-        for(i = 0; i < DDMAX_MATERIAL_LAYERS; ++i)
-            setTexUnit(snapshot, i, BM_NORMAL, GL_LINEAR, 0, 1, 1, 0, 0, 0);
-
-        snapshot->width = mat->width;
-        snapshot->height = mat->height;
-        snapshot->glowing = mat->layers[0].glow * glowingTextures;
-        snapshot->decorated = (decor? true : false);
-
-        // Setup the primary texturing pass.
-        if(mat->layers[0].tex)
-        {
-            const texture_t*  tex = GL_ToTexture(mat->layers[0].tex);
-            int magMode = glmode[texMagMode];
-            vec2_t scale;
-
-            if(TN_SPRITES == Texture_Namespace(tex))
-                magMode = filterSprites? GL_LINEAR : GL_NEAREST;
-            V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
-
-            setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, layerTextures[0], scale[0], scale[1], mat->layers[0].texOrigin[0], mat->layers[0].texOrigin[1], 1);
-
-            snapshot->isOpaque = !TextureVariant_IsMasked(layerTextures[0]);
-
-            if(TC_SKYSPHERE_DIFFUSE == TS_NORMAL(texSpec)->context)
-            {
-                const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
-                    TextureVariant_Analysis(layerTextures[0], TA_SKY_SPHEREFADECOLOR);
-                assert(avgTopColor);
-                snapshot->topColor[CR] = avgTopColor->color[CR];
-                snapshot->topColor[CG] = avgTopColor->color[CG];
-                snapshot->topColor[CB] = avgTopColor->color[CB];
-            }
-            else
-            {
-                snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
-            }
-
-            /// \fixme what about the other texture types?
-            if(TC_MAPSURFACE_DIFFUSE == TS_NORMAL(texSpec)->context)
-            {
-                const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
-                    TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
-                assert(ambientLight);
-                snapshot->color[CR] = ambientLight->color[CR];
-                snapshot->color[CG] = ambientLight->color[CG];
-                snapshot->color[CB] = ambientLight->color[CB];
-                snapshot->colorAmplified[CR] = ambientLight->colorAmplified[CR];
-                snapshot->colorAmplified[CG] = ambientLight->colorAmplified[CG];
-                snapshot->colorAmplified[CB] = ambientLight->colorAmplified[CB];
-            }
-            else
-            {
-                snapshot->color[CR] = snapshot->color[CG] = snapshot->color[CB] = 1;
-                snapshot->colorAmplified[CR] = snapshot->colorAmplified[CG] = snapshot->colorAmplified[CB] = 1;
-            }
-        }
-
-        /**
-         * If skymasked, we need only need to update the primary tex unit
-         * (this is due to it being visible when skymask debug drawing is
-         * enabled).
-         */
-        if(!(mat->flags & MATF_SKYMASK))
-        {
-            // Setup the detail texturing pass?
-            if(detailTex && detail && snapshot->isOpaque)
-            {
-                float width, height, scale;
-
-                width  = Texture_Width(TextureVariant_GeneralCase(detailTex));
-                height = Texture_Height(TextureVariant_GeneralCase(detailTex));
-                scale  = MAX_OF(1, detail->scale);
-                // Apply the global scaling factor.
-                if(detailScale > .001f)
-                    scale *= detailScale;
-
-                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, texMagMode?GL_LINEAR:GL_NEAREST, detailTex, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
-            }
-
-            // Setup the reflection (aka shiny) texturing pass(es)?
-            if(shinyTex && reflection)
-            {
-                snapshot->shiny.minColor[CR] = reflection->minColor[CR];
-                snapshot->shiny.minColor[CG] = reflection->minColor[CG];
-                snapshot->shiny.minColor[CB] = reflection->minColor[CB];
-
-                setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode, GL_LINEAR, shinyTex, 1, 1, 0, 0, reflection->shininess);
-
-                if(shinyMaskTex)
-                    setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskTex,
-                               1.f / (snapshot->width * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->width),
-                               1.f / (snapshot->height * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->height),
-                               snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
-            }
-        }
-
-        return tmpResult;
+    // Have we already registered a suitable variant?
+    variant = Materials_ChooseVariant(mat, spec);
+    if(NULL == variant)
+    {   // We need to allocate a variant.
+        variant = Material_AddVariant(mat, MaterialVariant_Construct(mat, spec));
     }
-    return 0;
+
+    if(smoothed)
+    {
+        variant = variant->current;
+        mat = variant->generalCase;
+    }
+    assert(mat->numLayers > 0);
+
+    // Ensure all resources needed to visualize this material are loaded.
+    for(i = 0; i < mat->numLayers; ++i)
+    {
+        materialvariant_layer_t* ml = &variant->layers[i];
+        byte result;
+
+        // Pick the instance matching the specified context.
+        layerTextures[i] = GL_PrepareTexture(ml->tex, spec->primarySpec, &result);
+
+        if(result)
+            tmpResult = result;
+    }
+
+    if((mb = bindForMaterial(mat)))
+    {
+        if(tmpResult)
+            mb->prepared = tmpResult;
+
+        decor = mb->decoration[mb->prepared-1];
+        detail = mb->detail[mb->prepared-1];
+        reflection = mb->reflection[mb->prepared-1];
+
+        if(mb->prepared)
+        {   // A texture was loaded.
+            // Do we need to prepare a detail texture?
+            if(detail && r_detail)
+            {
+                detailtex_t* dTex;
+
+                /**
+                 * \todo No need to look up the detail texture record every time!
+                 * This will change anyway once the texture for the detailtex is
+                 * linked to (and prepared) via the layers (above).
+                 */
+
+                if((dTex = R_GetDetailTexture(detail->detailTex, detail->isExternal)))
+                {
+                    float contrast = detail->strength * detailFactor;
+
+                    // Pick an instance matching the specified context.
+                    detailTex = GL_PrepareTexture(dTex->id, GL_DetailTextureVariantSpecificationForContext(contrast), 0);
+                }
+            }
+
+            // Do we need to prepare a shiny texture (and possibly a mask)?
+            if(reflection && useShinySurfaces)
+            {
+                shinytex_t* sTex;
+                masktex_t* mTex;
+
+                /**
+                 * \todo No need to look up the shiny texture record every time!
+                 * This will change anyway once the texture for the shinytex is
+                 * linked to (and prepared) via the layers (above).
+                 */
+
+                if((sTex = R_GetShinyTexture(reflection->shinyMap)))
+                {
+                    // Pick an instance matching the specified context.
+                    shinyTex = GL_PrepareTexture(sTex->id,
+                        GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
+                            0, 0, 0, 0), 0);
+                }
+
+                if(shinyTex && // Don't bother searching unless the above succeeds.
+                   (mTex = R_GetMaskTexture(reflection->maskMap)))
+                {
+                    // Pick an instance matching the specified context.
+                    shinyMaskTex = GL_PrepareTexture(mTex->id,
+                        GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTIONMASK,
+                            0, 0, 0, 0), 0);
+                }
+            }
+        }
+    }
+
+    // If we arn't taking a snapshot, get out of here.
+    if(!snapshot)
+        return tmpResult;
+
+    /**
+     * Take a snapshot:
+     */
+
+    // Reset to the default state.
+    for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
+        setTexUnit(snapshot, i, BM_NORMAL, GL_LINEAR, 0, 1, 1, 0, 0, 0);
+
+    snapshot->width = Material_Width(mat);
+    snapshot->height = Material_Height(mat);
+    snapshot->glowing = variant->layers[0].glow * glowingTextures;
+    snapshot->isDecorated = (decor? true : false);
+
+    // Setup the primary texturing pass.
+    if(0 != variant->layers[0].tex)
+    {
+        const texture_t* tex = GL_ToTexture(variant->layers[0].tex);
+        int magMode = glmode[texMagMode];
+        vec2_t scale;
+
+        if(TN_SPRITES == Texture_Namespace(tex))
+            magMode = filterSprites? GL_LINEAR : GL_NEAREST;
+        V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
+
+        setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, layerTextures[0],
+            scale[0], scale[1], variant->layers[0].texOrigin[0],
+            variant->layers[0].texOrigin[1], 1);
+
+        snapshot->isOpaque = !TextureVariant_IsMasked(layerTextures[0]);
+
+        if(TC_SKYSPHERE_DIFFUSE == TS_NORMAL(spec->primarySpec)->context)
+        {
+            const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
+                TextureVariant_Analysis(layerTextures[0], TA_SKY_SPHEREFADECOLOR);
+            assert(avgTopColor);
+            snapshot->topColor[CR] = avgTopColor->color[CR];
+            snapshot->topColor[CG] = avgTopColor->color[CG];
+            snapshot->topColor[CB] = avgTopColor->color[CB];
+        }
+        else
+        {
+            snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
+        }
+
+        /// \fixme what about the other texture types?
+        if(TC_MAPSURFACE_DIFFUSE == TS_NORMAL(spec->primarySpec)->context)
+        {
+            const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
+                TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
+            assert(ambientLight);
+            snapshot->color[CR] = ambientLight->color[CR];
+            snapshot->color[CG] = ambientLight->color[CG];
+            snapshot->color[CB] = ambientLight->color[CB];
+            snapshot->colorAmplified[CR] = ambientLight->colorAmplified[CR];
+            snapshot->colorAmplified[CG] = ambientLight->colorAmplified[CG];
+            snapshot->colorAmplified[CB] = ambientLight->colorAmplified[CB];
+        }
+        else
+        {
+            snapshot->color[CR] = snapshot->color[CG] = snapshot->color[CB] = 1;
+            snapshot->colorAmplified[CR] = snapshot->colorAmplified[CG] = snapshot->colorAmplified[CB] = 1;
+        }
+    }
+
+    /**
+     * If skymasked, we need only need to update the primary tex unit
+     * (this is due to it being visible when skymask debug drawing is
+     * enabled).
+     */
+    if(!Material_IsSkyMasked(mat))
+    {
+        // Setup the detail texturing pass?
+        if(detailTex && detail && snapshot->isOpaque)
+        {
+            float width, height, scale;
+
+            width  = Texture_Width(TextureVariant_GeneralCase(detailTex));
+            height = Texture_Height(TextureVariant_GeneralCase(detailTex));
+            scale  = MAX_OF(1, detail->scale);
+            // Apply the global scaling factor.
+            if(detailScale > .001f)
+                scale *= detailScale;
+
+            setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, texMagMode?GL_LINEAR:GL_NEAREST,
+                detailTex, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+        }
+
+        // Setup the reflection (aka shiny) texturing pass(es)?
+        if(shinyTex && reflection)
+        {
+            snapshot->shiny.minColor[CR] = reflection->minColor[CR];
+            snapshot->shiny.minColor[CG] = reflection->minColor[CG];
+            snapshot->shiny.minColor[CB] = reflection->minColor[CB];
+
+            setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode, GL_LINEAR,
+                shinyTex, 1, 1, 0, 0, reflection->shininess);
+
+            if(shinyMaskTex)
+                setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskTex,
+                           1.f / (snapshot->width * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->width),
+                           1.f / (snapshot->height * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->height),
+                           snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
+        }
+    }
+
+    return tmpResult;
+    }
 }
 
 const ded_reflection_t* Materials_Reflection(materialnum_t num)
@@ -1178,7 +1397,8 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false,
+                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
         return mb->reflection[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1190,7 +1410,8 @@ const ded_detailtexture_t* Materials_Detail(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false,
+                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
         return mb->detail[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1202,7 +1423,8 @@ const ded_decor_t* Materials_Decoration(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false,
+                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
         return mb->decoration[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1214,7 +1436,8 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
     {
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
+            Materials_Prepare(NULL, mb->mat, false,
+                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
         return mb->ptcGen[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1227,20 +1450,32 @@ uint Materials_Count(void)
     return 0;
 }
 
+struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+{
+    if(!initedOk)
+        Con_Error("Materials::VariantSpecificationForContext: Materials collection "
+            "not yet initialized.");
+    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap);
+}
+
+materialvariant_t* Materials_ChooseVariant(material_t* mat,
+    const materialvariantspecification_t* spec)
+{
+    if(!initedOk)
+        Con_Error("Materials::ChooseVariant: Materials collection not yet initialized.");
+    return chooseVariant(mat, spec);
+}
+
 static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
     int numDigits = M_NumDigits(numMaterialBinds);
+    const material_t* mat = mb->mat;
 
-    Con_Printf(" %*u: \"", numDigits, (unsigned int) mb->mat->_bindId);
+    Con_Printf(" %*u: \"", numDigits, (unsigned int) Material_BindId(mat));
     if(printNamespace)
         Con_Printf("%s:", Str_Text(nameForMaterialNamespaceId(mb->mnamespace)));
-    Con_Printf("%s\" [%i, %i]", mb->name, mb->mat->width, mb->mat->height);
-
-    /*{ uint i;
-    for(i = 0; i < mb->mat->numLayers; ++i)
-    {
-        Con_Printf(" %i:%s", i, GL_ToTexture(mb->mat->layers[i].tex)->name);
-    }}*/
+    Con_Printf("%s\" [%i, %i]", mb->name, Material_Width(mat), Material_Height(mat));
     Con_Printf("\n");
 }
 
@@ -1254,7 +1489,7 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
         if(materialBinds)
         {
             uint i;
-            for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
+            for(i = 0; i < MATERIALNAMESPACE_HASH_SIZE; ++i)
                 if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i])
                 {
                     materialnum_t num = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i] - 1;
@@ -1371,52 +1606,6 @@ static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
     }}
 }
 
-typedef struct animframe_s {
-    material_t*     mat;
-    ushort          tics;
-    ushort          random;
-} animframe_t;
-
-typedef struct animgroup_s {
-    int             id;
-    int             flags;
-    int             index;
-    int             maxTimer;
-    int             timer;
-    int             count;
-    animframe_t*    frames;
-} animgroup_t;
-
-static int numgroups;
-static animgroup_t* groups;
-
-static animgroup_t* getAnimGroup(int number)
-{
-    if(--number < 0 || number >= numgroups)
-        return NULL;
-
-    return &groups[number];
-}
-
-static boolean isInAnimGroup(animgroup_t* group, const material_t* mat)
-{
-    int                 i;
-
-    if(!mat || !group)
-        return false;
-
-    // Is it in there?
-    for(i = 0; i < group->count; ++i)
-    {
-        animframe_t*        frame = &group->frames[i];
-
-        if(frame->mat == mat)
-            return true;
-    }
-
-    return false;
-}
-
 boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)
 {
     return isInAnimGroup(getAnimGroup(groupNum), mat);
@@ -1478,7 +1667,7 @@ void Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics,
 {
     animgroup_t*        group;
     animframe_t*        frame;
-    material_t*        mat;
+    material_t*  mat;
 
     group = getAnimGroup(groupNum);
     if(!group)
@@ -1491,7 +1680,7 @@ void Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics,
     }
 
     // Mark the material as being in an animgroup.
-    mat->inAnimGroup = true;
+    Material_SetGroupAnimated(mat, true);
 
     // Allocate a new animframe.
     group->frames =
@@ -1517,6 +1706,50 @@ boolean Materials_IsPrecacheAnimGroup(int groupNum)
     return false;
 }
 
+static int clearVariantTranslationWorker(materialvariant_t* variant, void* paramaters)
+{
+    assert(variant);
+    variant->inter = 0;
+    variant->current = variant->next = variant;
+    return 0; // Continue iteration.
+}
+
+void Materials_ClearTranslation(material_t* mat)
+{
+    if(!initedOk)
+        Con_Error("Materials::ClearTranslation: Materials collection not yet initialized.");
+    Material_IterateVariants(mat, clearVariantTranslationWorker, NULL);
+}
+
+typedef struct {
+    material_t* current, *next;
+} setmaterialtranslationworker_paramaters_t;
+
+static int setVariantTranslationWorker(materialvariant_t* variant, void* paramaters)
+{
+    assert(variant && paramaters);
+    {
+    setmaterialtranslationworker_paramaters_t* params =
+        (setmaterialtranslationworker_paramaters_t*) paramaters;
+    const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
+    materialvariant_t* current = Materials_ChooseVariant(params->current, spec);
+    materialvariant_t* next    = Materials_ChooseVariant(params->next,    spec);
+
+    MaterialVariant_SetTranslation(variant, current, next);
+    return 0; // Continue iteration.
+    }
+}
+
+static int setVariantTranslationPointWorker(materialvariant_t* variant, void* paramaters)
+{
+    assert(variant && paramaters);
+    {
+    float inter = *((float*)paramaters);
+    MaterialVariant_SetTranslationPoint(variant, inter);
+    return 0; // Continue iteration.
+    }
+}
+
 void Materials_AnimateAnimGroup(animgroup_t* group)
 {
     // The Precache groups are not intended for animation.
@@ -1540,13 +1773,11 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
         // Update translations.
         for(i = 0; i < group->count; ++i)
         {
-            material_t* real, *current, *next;
-
-            real    = group->frames[i].mat;
-            current = group->frames[(group->index + i    ) % group->count].mat;
-            next    = group->frames[(group->index + i + 1) % group->count].mat;
-
-            Material_SetTranslation(real, current, next, 0);
+            material_t* real = group->frames[i].mat;
+            setmaterialtranslationworker_paramaters_t params;
+            params.current = group->frames[(group->index + i    ) % group->count].mat;
+            params.next    = group->frames[(group->index + i + 1) % group->count].mat;
+            Material_IterateVariants(real, setVariantTranslationWorker, &params);
 
             // Just animate the first in the sequence?
             if(group->flags & AGF_FIRST_ONLY)
@@ -1560,21 +1791,25 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
     for(i = 0; i < group->count; ++i)
     {
         material_t* mat = group->frames[i].mat;
+        ded_material_t* def = Material_Definition(mat);
+        float interp;
 
-        if(mat->def && mat->def->layers[0].stageCount.num > 1)
+        if(def && def->layers[0].stageCount.num > 1)
         {
-            if(GL_TextureByUri(mat->def->layers[0].stages[0].texture))
+            if(GL_TextureByUri(def->layers[0].stages[0].texture))
                 continue; // Animated elsewhere.
         }
 
         if(group->flags & AGF_SMOOTH)
         {
-            mat->inter = 1 - group->timer / (float) group->maxTimer;
+            interp = 1 - group->timer / (float) group->maxTimer;
         }
         else
         {
-            mat->inter = 0;
+            interp = 0;
         }
+
+        Material_IterateVariants(mat, setVariantTranslationPointWorker, &interp);
 
         // Just animate the first in the sequence?
         if(group->flags & AGF_FIRST_ONLY)
@@ -1591,30 +1826,27 @@ static void animateAnimGroups(void)
     }
 }
 
+static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* paramaters)
+{
+    MaterialVariant_ResetGroupAnim(mat);
+    return 0; // Continue iteration.
+}
+
 /**
- * All animation groups are reseted back to their original state.
+ * All animation groups are reset back to their original state.
  * Called when setting up a map.
  */
 void Materials_ResetAnimGroups(void)
 {
-    animgroup_t* group;
-
-    {uint i;
-    for(i = 0; i < Materials_Count(); ++i)
+    { materiallist_node_t* node;
+    for(node = materials; node; node = node->next)
     {
-        material_t* mat = Materials_ToMaterial((materialnum_t)(i+1));
-        uint j;
-        for(j = 0; j < mat->numLayers; ++j)
-        {
-            material_layer_t* ml = &mat->layers[j];
-            if(ml->stage == -1)
-                break;
-            ml->stage = 0;
-        }
+        Material_IterateVariants(node->mat, resetVariantGroupAnimWorker, NULL);
     }}
 
     {int i;
-    for(i = 0, group = groups; i < numgroups; ++i, group++)
+    animgroup_t* group = groups;
+    for(i = 0; i < numgroups; ++i, group++)
     {
         // The Precache groups are not intended for animation.
         if((group->flags & AGF_PRECACHE) || !group->count)
@@ -1630,23 +1862,6 @@ void Materials_ResetAnimGroups(void)
 
     // This'll get every group started on the first step.
     animateAnimGroups();
-}
-
-void Materials_PrecacheAnimGroup(material_t* mat, boolean yes)
-{
-    int i;
-    for(i = 0; i < numgroups; ++i)
-    {
-        if(isInAnimGroup(&groups[i], mat))
-        {
-            int k;
-            // Precache this group.
-            for(k = 0; k < groups[i].count; ++k)
-            {
-                P_MaterialPrecache2(groups[i].frames[k].mat, yes, false);
-            }
-        }
-    }
 }
 
 D_CMD(ListMaterials)

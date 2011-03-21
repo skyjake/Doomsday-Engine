@@ -57,7 +57,7 @@ Flag { # Allow using detailtex with external resources.
 }
 
 # Materials
-Flag { ID = "matf_custom"; Value = 0x1; }
+# Flag { ID = "matf_unused1"; Value = 0x1; }
 Flag { ID = "matf_dontdraw"; Value = 0x2; } # Material should never be drawn.
 Flag { ID = "matf_skymask"; Value = 0x4; } # Sky-mask surfaces using this material.
 

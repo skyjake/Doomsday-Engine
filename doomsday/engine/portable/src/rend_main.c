@@ -46,6 +46,7 @@
 #include "de_system.h"
 #include "net_main.h"
 #include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -420,7 +421,8 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside, boolean ignore
             material_snapshot_t ms;
 
             // Ensure we have up to date info.
-            Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
+            Materials_Prepare(&ms, mat, true,
+                Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
 
             if(ignoreAlpha || (ms.isOpaque && !side->SW_middleblendmode && side->SW_middlergba[3] >= 1))
             {
@@ -491,18 +493,18 @@ static void markSegSectionsPVisible(seg_t* seg)
     bfloor = seg->lineDef->L_sector(seg->side^1)->SP_plane(PLN_FLOOR);
 
     // Middle.
-    if(!side->SW_middlematerial || (side->SW_middlematerial->flags & MATF_NO_DRAW) || side->SW_middlergba[3] <= 0)
+    if(!side->SW_middlematerial || !Material_IsDrawable(side->SW_middlematerial) || side->SW_middlergba[3] <= 0)
         side->SW_middlesurface.inFlags &= ~SUIF_PVIS;
 
     // Top.
     if((R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface)) ||
-       (R_IsSkySurface(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_MATERIAL_FIX)) ||
+       (R_IsSkySurface(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
        (fceil->visHeight <= bceil->visHeight))
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
 
     // Bottom.
     if((R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface)) ||
-       (R_IsSkySurface(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_MATERIAL_FIX)) ||
+       (R_IsSkySurface(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
        (ffloor->visHeight >= bfloor->visHeight))
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
@@ -1161,25 +1163,28 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
 }
 
 static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
-                          material_t* mat)
+    material_t* mat)
 {
-    texturevariantspecification_t* texSpec = GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL);
+    materialvariantspecification_t* spec =
+        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0);
     float interPos = 0;
 
-    Materials_Prepare(msA, mat, true, texSpec);
+    Materials_Prepare(msA, mat, true, spec);
 
     // Smooth Texture Animation?
     if(msB)
     {
+        materialvariant_t* variant = Materials_ChooseVariant(mat, spec);
+        assert(variant);
         // If fog is active, inter=0 is accepted as well. Otherwise
         // flickering may occur if the rendering passes don't match for
         // blended and unblended surfaces.
-        if(numTexUnits > 1 && mat->current != mat->next &&
-           !(!usingFog && mat->inter < 0))
+        if(numTexUnits > 1 && variant->current != variant->next &&
+           !(!usingFog && variant->inter < 0))
         {
             // Prepare the inter texture.
-            Materials_Prepare(msB, mat->next, false, texSpec);
-            interPos = mat->inter;
+            Materials_Prepare(msB, variant->next->generalCase, false, spec);
+            interPos = variant->inter;
         }
     }
 
@@ -1551,7 +1556,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             {
                 float llL = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDL + glowing, 1);
                 float llR = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDR + glowing, 1);
-                
+
                 // Calculate the color for each vertex, blended with plane color?
                 if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 || p->surfaceColor[2] < 1)
                 {
@@ -2044,7 +2049,8 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         {
             material_snapshot_t ms;
             surface_t* suf = &ssec->sector->planes[elmIdx]->surface;
-            Materials_Prepare(&ms, suf->material, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
+            Materials_Prepare(&ms, suf->material, true,
+                Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
             params.glowing = ms.glowing;
         }
 
@@ -2074,7 +2080,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
     vec3_t vec, normal;
 
     // Must have a visible surface.
-    if(!inMat || (inMat->flags & MATF_NO_DRAW))
+    if(!inMat || !Material_IsDrawable(inMat))
         return;
 
     V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY], vy - height);
@@ -2106,7 +2112,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
 static boolean isVisible(surface_t* surface, sector_t* frontsec,
                          boolean canMask, boolean* skyMask)
 {
-    if(!(surface->material && (surface->material->flags & MATF_NO_DRAW)))
+    if(!(surface->material && !Material_IsDrawable(surface->material)))
     {
         *skyMask = false;
         return true;
@@ -2242,7 +2248,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             if(renderTextures == 2)
                 texMode = 2;
             else if(!surface->material ||
-                    ((surface->inFlags & SUIF_MATERIAL_FIX) && devNoTexFix))
+                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
                 texMode = 1;
             else
                 texMode = 0;
@@ -2264,7 +2270,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             surfaceInFlags = surface->inFlags;
             if(texMode == 2)
             {
-                surfaceInFlags &= ~(SUIF_MATERIAL_FIX);
+                surfaceInFlags &= ~(SUIF_FIX_MISSING_MATERIAL);
             }
 
             if(section != SEG_MIDDLE || (section == SEG_MIDDLE && !isTwoSided))
@@ -2298,7 +2304,8 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             else
             {
                 material_snapshot_t ms;
-                Materials_Prepare(&ms, surface->material, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
+                Materials_Prepare(&ms, surface->material, true,
+                    Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
                 glowing = ms.glowing;
             }
 
@@ -2479,8 +2486,7 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         }
     case SEG_MIDDLE:
         {
-        float               ftop, fbottom, vR_ZBottom, vR_ZTop;
-        material_t*         mat = suf->material->current;
+        float ftop, fbottom, vR_ZBottom, vR_ZTop;
 
         if(isSelfRef)
         {
@@ -2512,7 +2518,7 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         else
         {
             boolean clipBottom = true, clipTop = true;
-            
+
             if(!P_IsInVoid(viewPlayer))
             {
                 if(R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface))
@@ -2521,7 +2527,9 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
                     clipTop = false;
             }
 
-            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop, &texOffset[VY], suf->visOffset[VY], mat->height, unpegBottom, clipTop, clipBottom))
+            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop, &texOffset[VY],
+               suf->visOffset[VY], Material_Height(suf->material),
+                    unpegBottom, clipTop, clipBottom))
             {
                 texOffset[VX] = suf->visOffset[VX] + segOffset;
                 //texOffset[VY] = 0;
@@ -2957,7 +2965,8 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
     // In devRendSkyMode mode we render all polys destined for the skymask as
     // regular world polys (with a few obvious properties).
 
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
 
     rTU[TU_PRIMARY].tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
@@ -3337,7 +3346,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
     }
 }
-        
+
 /*static*/ void getSkymaskBottomTop4(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil,
     seg_t* seg, sector_t* frontsec, sector_t* backsec,
@@ -3629,7 +3638,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
             translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
- 
+
             memset(rTU, 0, sizeof(rTU));
             setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
             prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray")), false);
@@ -3746,7 +3755,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         getSurfaceNormal(surfaceNormal, lineDef, flipSurfaceNormals);
 
         addSolidViewSeg = false;
-        getSkymaskClosedOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_topsurface.inFlags & SUIF_MATERIAL_FIX) != 0, offsets, &bottom, &top, &addSolidViewSeg);
+        getSkymaskClosedOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL) != 0, offsets, &bottom, &top, &addSolidViewSeg);
 
         if(top > bottom)
         {
@@ -4027,7 +4036,7 @@ static void Rend_RenderSubsector(uint ssecidx)
         if(renderTextures == 2)
             texMode = 2;
         else if(!suf->material ||
-                (devNoTexFix && (suf->inFlags & SUIF_MATERIAL_FIX)))
+                (devNoTexFix && (suf->inFlags & SUIF_FIX_MISSING_MATERIAL)))
             texMode = 1;
         else
             texMode = 0;
@@ -4980,7 +4989,7 @@ static void Rend_RenderBoundingBoxes(void)
 
     uint                i;
     float               eye[3];
-    material_t*         mat;
+    material_t* mat;
     material_snapshot_t ms;
 
     if((!devMobjBBox && !devPolyobjBBox) || netGame)
@@ -4998,7 +5007,8 @@ static void Rend_RenderBoundingBoxes(void)
     glDisable(GL_CULL_FACE);
 
     mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":bbox"));
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 0, 0, 0));
 
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
@@ -5015,7 +5025,7 @@ static void Rend_RenderBoundingBoxes(void)
         float length = (po->box[1][1] - po->box[0][1])/2;
         float height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
         float pos[3], alpha;
-        
+
         pos[VX] = po->box[0][0]+width;
         pos[VY] = po->box[0][1]+length;
         pos[VZ] = sec->SP_floorheight;

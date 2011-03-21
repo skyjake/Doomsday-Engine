@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBCOMMON_MATERIAL_ARCHIVE_H
-#define LIBCOMMON_MATERIAL_ARCHIVE_H
+#ifndef LIBCOMMON_MATERIALARCHIVE_H
+#define LIBCOMMON_MATERIALARCHIVE_H
 
 typedef struct {
     int version;
@@ -52,4 +52,4 @@ void MaterialArchive_Read(materialarchive_t* mArc, int version);
 void MaterialArchive_Print(const materialarchive_t* mArc);
 #endif
 
-#endif /* LIBCOMMON_MATERIAL_ARCHIVE_H */
+#endif /* LIBCOMMON_MATERIALARCHIVE_H */

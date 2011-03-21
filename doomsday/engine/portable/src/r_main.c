@@ -46,6 +46,8 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "materialvariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 BEGIN_PROF_TIMERS()
@@ -266,15 +268,9 @@ void R_EndBorderedProjection(borderedprojectionstate_t* s)
     glPopMatrix();
 }
 
-/**
- * Will the specified surface be added to the sky mask?
- *
- * @param suf           Ptr to the surface to test.
- * @return boolean      @c true, iff the surface will be masked.
- */
 boolean R_IsSkySurface(const surface_t* suf)
 {
-    return (suf && suf->material && (suf->material->flags & MATF_SKYMASK) != 0);
+    return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }
 
 /**
@@ -468,7 +464,6 @@ void R_Shutdown(void)
 {
     R_ShutdownModels();
     R_ShutdownVectorGraphics();
-    R_ShutdownData();
     R_ShutdownViewBorder();
 }
 

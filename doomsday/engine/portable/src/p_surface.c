@@ -33,6 +33,8 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+#include "materialvariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -86,8 +88,8 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
     if(Surface_IsAttachedToMap(suf))
     {
         // No longer a missing texture fix?
-        if(mat && (suf->oldFlags & SUIF_MATERIAL_FIX))
-            suf->inFlags &= ~SUIF_MATERIAL_FIX;
+        if(mat && (suf->oldFlags & SUIF_FIX_MISSING_MATERIAL))
+            suf->inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
 
         if(mat != suf->material)
         {
@@ -99,26 +101,18 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
                 R_SurfaceListRemove(glowingSurfaceList, suf);
             }
 
-            if(mat)
+            if(!ddMapSetup && NULL != mat)
             {
-                if(ddMapSetup)
-                {
-                    /// @todo Implement Material reference counting?
-                    //if(suf->material)
-                    //    Materials_Precache(suf->material, false);
-                    Materials_Precache(mat, true);
-                }
-                else
-                {
-                    material_snapshot_t ms;
-                    const ded_decor_t* decor;
-                    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
-                    if(ms.glowing > 0)
-                        R_SurfaceListAdd(glowingSurfaceList, suf);
-                    decor = Materials_Decoration(Materials_ToMaterialNum(mat));
-                    if(decor)
-                        R_SurfaceListAdd(decoratedSurfaceList, suf);
-                }
+                material_snapshot_t ms;
+                const ded_decor_t* decor;
+                Materials_Prepare(&ms, mat, true,
+                    Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE,
+                        0, 0, 0, 0));
+                if(ms.glowing > 0)
+                    R_SurfaceListAdd(glowingSurfaceList, suf);
+                decor = Materials_Decoration(Materials_ToMaterialNum(mat));
+                if(decor)
+                    R_SurfaceListAdd(decoratedSurfaceList, suf);
             }
         }
     }
@@ -408,14 +402,12 @@ boolean Surface_SetProperty(surface_t* suf, const setargs_t* args)
         Surface_SetColorA(suf, a);
         }
         break;
-    case DMU_MATERIAL:
-        {
-        material_t*     mat;
+    case DMU_MATERIAL: {
+        material_t* mat;
         DMU_SetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
-
         Surface_SetMaterial(suf, mat);
-        }
         break;
+      }
     case DMU_OFFSET_X:
         {
         float           offX;
@@ -449,19 +441,17 @@ boolean Surface_SetProperty(surface_t* suf, const setargs_t* args)
 /**
  * Get the value of a surface property, selected by DMU_* name.
  */
-boolean Surface_GetProperty(const surface_t *suf, setargs_t *args)
+boolean Surface_GetProperty(const surface_t* suf, setargs_t* args)
 {
     switch(args->prop)
     {
-    case DMU_MATERIAL:
-        {
-        material_t*     mat = suf->material;
-
-        if(suf->inFlags & SUIF_MATERIAL_FIX)
+    case DMU_MATERIAL: {
+        material_t* mat = suf->material;
+        if(suf->inFlags & SUIF_FIX_MISSING_MATERIAL)
             mat = NULL;
         DMU_GetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
         break;
-        }
+      }
     case DMU_OFFSET_X:
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VX], args, 0);
         break;

@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_fakeradio.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * rend_fakeradio.c: Faked Radiosity Lighting
+ * Faked Radiosity Lighting.
  *
  * Perhaps the most distinctive characteristic of radiosity lighting
  * is that the corners of a room are slightly dimmer than the rest of
@@ -52,6 +52,7 @@
 
 #include "m_vector.h"
 #include "sys_opengl.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1264,7 +1265,7 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
     surface_t* surface = &line->L_side(backside)->sections[isCeiling? SEG_TOP:SEG_BOTTOM];
 
     if(fz < bz && !surface->material &&
-       !(surface->inFlags & SUIF_MATERIAL_FIX))
+       !(surface->inFlags & SUIF_FIX_MISSING_MATERIAL))
         return 3; // Consider it fully open.
 
     // Is the back sector closed?
@@ -1484,7 +1485,8 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
     { material_snapshot_t ms;
     rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
 
-    Materials_Prepare(&ms, pln->PS_material, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, pln->PS_material, true,
+        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
     if(ms.glowing > 0)
         return;
 

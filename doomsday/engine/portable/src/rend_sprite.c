@@ -40,6 +40,7 @@
 
 #include "texture.h"
 #include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -247,7 +248,6 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     int sprite = psp->statePtr->sprite;
     int frame = psp->statePtr->frame;
     float offScaleY = weaponOffsetScaleY / 1000.0f;
-    material_load_params_t mparams;
     const spritedef_t* sprDef;
     const spritetex_t* sprTex;
     const spriteframe_t* sprFrame;
@@ -268,10 +268,8 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    memset(&mparams, 0, sizeof(mparams));
-    mparams.border = 1;
-
-    Materials_Prepare(&ms, sprFrame->mats[0], true, GL_TextureVariantSpecificationForContext(TC_PSPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, sprFrame->mats[0], true,
+        Materials_VariantSpecificationForContext(TC_PSPRITE_DIFFUSE, 0, 1, 0, 0));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -358,7 +356,8 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t* mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray"));
         material_snapshot_t ms;
 
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
+        Materials_Prepare(&ms, mat, true,
+            Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 0, 0, 0));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }
@@ -865,14 +864,11 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     if(mat)
     {
         // Might we need a colour translation?
-        material_load_params_t mparams;
-
-        memset(&mparams, 0, sizeof(mparams));
-        mparams.translated.tmap   = (renderTextures == 1? params->tMap : 0);
-        mparams.translated.tclass = (renderTextures == 1? params->tClass : 0);
-        mparams.border = 1;
-
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &mparams));
+        Materials_Prepare(&ms, mat, true,
+            Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0,
+                (renderTextures == 1? 1 : 0),
+                (renderTextures == 1? params->tClass : 0),
+                (renderTextures == 1? params->tMap : 0)) );
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }

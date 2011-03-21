@@ -24,9 +24,9 @@
 #define DMT_SUBSECTOR_POLYOBJ DDVT_PTR // NULL, if there is no polyobj.
 #define DMT_SUBSECTOR_SECTOR DDVT_PTR
 
-#define DMT_MATERIAL_FLAGS DDVT_SHORT  // MATF_* flags
-#define DMT_MATERIAL_WIDTH DDVT_SHORT  // Defined width & height of the material (not texture!).
-#define DMT_MATERIAL_HEIGHT DDVT_SHORT
+#define DMT_MATERIAL_FLAGS DDVT_SHORT
+#define DMT_MATERIAL_WIDTH DDVT_INT
+#define DMT_MATERIAL_HEIGHT DDVT_INT
 
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_MATERIAL DDVT_PTR

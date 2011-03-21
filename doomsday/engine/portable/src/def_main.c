@@ -44,6 +44,7 @@
 #include "pathdirectory.h"
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
+#include "materialvariant.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -448,6 +449,8 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 
 ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
 {
+    assert(mat);
+    {
     ded_ptcgen_t* def;
     int i;
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
@@ -467,13 +470,14 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
              * A search is necessary only if we know both the used material and
              * the specified material in this definition are in *a* group.
              */
-            if(defMat->inAnimGroup && mat->inAnimGroup)
+            if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
             {
                 int g, numGroups = Materials_AnimGroupCount();
 
                 for(g = 0; g < numGroups; ++g)
                 {
-                    if(Materials_MaterialLinkedToAnimGroup(g, defMat) && Materials_MaterialLinkedToAnimGroup(g, mat))
+                    if(Materials_MaterialLinkedToAnimGroup(g, defMat) &&
+                       Materials_MaterialLinkedToAnimGroup(g, mat))
                     {
                         if(Materials_IsPrecacheAnimGroup(g))
                             continue; // Precache groups don't apply.
@@ -489,6 +493,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
             return def;
     }
     return 0; // Not found.
+    }
 }
 
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)

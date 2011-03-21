@@ -250,13 +250,30 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
  * If incomplete context information is supplied, suitable defaults are
  * chosen in their place.
  *
+ * @param tc  Usage context.
+ * @param flags  @see textureVariantSpecificationFlags
+ * @param border  Border size in pixels (all edges).
+ * @param tClass  Color palette translation class.
+ * @param tMap  Color palette translation map.
+ *
  * @return  Ptr to a rationalized and valid TextureVariantSpecification
  *      or @c NULL if out of memory.
  */
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, void* context);
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap);
 
-struct texturevariant_s* GL_FindSuitableTextureVariant(struct texture_s* tex,
+/**
+ * Prepare a TextureVariantSpecification according to usage context.
+ * If incomplete context information is supplied, suitable defaults are
+ * chosen in their place.
+ *
+ * @return  Ptr to a rationalized and valid TextureVariantSpecification
+ *      or @c NULL if out of memory.
+ */
+texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
+    float contrast);
+
+struct texturevariant_s* GL_ChooseTextureVariant(struct texture_s* tex,
     const texturevariantspecification_t* spec);
 
 void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);

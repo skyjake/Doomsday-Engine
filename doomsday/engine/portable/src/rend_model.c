@@ -48,6 +48,7 @@
 #include "net_main.h"           // for gametic
 #include "texturevariant.h"
 #include "texture.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -700,11 +701,20 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        const skinname_t* sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin);
-        const texturevariant_t* tex;
-        if(NULL != sn && NULL != (tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, NULL), NULL)))
+        const skinname_t* sn;
+        if(NULL != (sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin)))
         {
-            shinyTexture = TextureVariant_GLName(tex);
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, 0, 0, 0, 0);
+            const texturevariant_t* tex;
+            if(NULL != (tex = GL_PrepareTexture(sn->id, texSpec, NULL)))
+            {
+                shinyTexture = TextureVariant_GLName(tex);
+            }
+            else
+            {
+                shininess = 0;
+            }
         }
         else
         {
@@ -777,12 +787,11 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     if(renderTextures == 2)
     {   // For lighting debug, render all surfaces using the gray texture.
         material_t* mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray"));
-
         if(mat)
         {
             material_snapshot_t ms;
-
-            Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, NULL));
+            Materials_Prepare(&ms, mat, true,
+                Materials_VariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, 0, 0, 0, 0));
             skinTexture = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
         }
         else
@@ -792,8 +801,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        const skinname_t*       sn;
-
+        const skinname_t* sn;
 
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
             useSkin = 0;
@@ -802,13 +810,11 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
         if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
         {
-            const texturevariant_t* tex;
-            material_load_params_t params;
-
-            memset(&params, 0, sizeof(params));
-            params.flags = (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0);
-
-            if((tex = GL_PrepareTexture(sn->id, GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE, &params), NULL)))
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
+                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0);
+            const texturevariant_t* tex = GL_PrepareTexture(sn->id, texSpec, NULL);
+            if(NULL != tex)
                 skinTexture = TextureVariant_GLName(tex);
         }
     }

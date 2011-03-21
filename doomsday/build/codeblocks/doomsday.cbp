@@ -273,6 +273,7 @@
 		<Unit filename="..\..\engine\portable\include\m_stack.h" />
 		<Unit filename="..\..\engine\portable\include\m_vector.h" />
 		<Unit filename="..\..\engine\portable\include\mapdata.hs" />
+		<Unit filename="..\..\engine\portable\include\materialvariant" />
 		<Unit filename="..\..\engine\portable\include\net_buf.h" />
 		<Unit filename="..\..\engine\portable\include\net_demo.h" />
 		<Unit filename="..\..\engine\portable\include\net_event.h" />
@@ -589,6 +590,7 @@
 		<Unit filename="..\..\engine\portable\src\m_vector.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\materialvariant.c" />
 		<Unit filename="..\..\engine\portable\src\net_buf.c">
 			<Option compilerVar="CC" />
 		</Unit>

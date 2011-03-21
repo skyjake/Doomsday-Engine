@@ -42,6 +42,7 @@
 
 #include "m_stack.h"
 #include "texture.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -909,11 +910,6 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
     }
 
 #undef COPYVCOLOR
-}
-
-void R_ShutdownData(void)
-{
-    Materials_Shutdown();
 }
 
 void R_InitSystemTextures(void)
@@ -2199,7 +2195,7 @@ boolean R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
         return (def->flags & DCRF_EXTERNAL) != 0;
     }
 
-    if(!(mat->flags & MATF_CUSTOM))
+    if(!Material_IsCustom(mat))
         return !(def->flags & DCRF_NO_IWAD);
 
     return (def->flags & DCRF_PWAD) != 0;
@@ -2217,7 +2213,7 @@ boolean R_IsAllowedReflection(ded_reflection_t* def, material_t* mat,
         return (def->flags & REFF_EXTERNAL) != 0;
     }
 
-    if(!(mat->flags & MATF_CUSTOM))
+    if(!Material_IsCustom(mat))
         return !(def->flags & REFF_NO_IWAD);
 
     return (def->flags & REFF_PWAD) != 0;
@@ -2235,7 +2231,7 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
         return (def->flags & DTLF_EXTERNAL) != 0;
     }
 
-    if(!(mat->flags & MATF_CUSTOM))
+    if(!Material_IsCustom(mat))
         return !(def->flags & DTLF_NO_IWAD);
 
     return (def->flags & DTLF_PWAD) != 0;
@@ -2277,14 +2273,10 @@ boolean findSpriteOwner(thinker_t* th, void* context)
     return true; // Keep looking...
 }
 
-/**
- * Prepare all the relevant resources for the specified mobjtype.
- *
- * \note Part of the Doomsday public API.
- */
+/// \note Part of the Doomsday public API.
 void R_PrecacheMobjNum(int num)
 {
-    int                 i;
+    materialvariantspecification_t* spec;
 
     if(!((useModels && precacheSkins) || precacheSprites))
         return;
@@ -2292,10 +2284,13 @@ void R_PrecacheMobjNum(int num)
     if(num < 0 || num >= defs.count.mobjs.num)
         return;
 
-    //// \optimize Traverses the entire state list!
+    spec = Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0);
+    assert(spec);
+    /// \optimize Traverses the entire state list!
+    { int i;
     for(i = 0; i < defs.count.states.num; ++i)
     {
-        state_t*            state;
+        state_t* state;
 
         if(stateOwners[i] != &mobjInfo[num])
             continue;
@@ -2305,43 +2300,39 @@ void R_PrecacheMobjNum(int num)
 
         if(precacheSprites)
         {
-            int                 j;
-            spritedef_t*        sprDef = &sprites[state->sprite];
-
+            spritedef_t* sprDef = &sprites[state->sprite];
+            int j;
             for(j = 0; j < sprDef->numFrames; ++j)
             {
-                int                 k;
-                spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
-
+                spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
+                int k;
                 for(k = 0; k < 8; ++k)
-                    Materials_Precache(sprFrame->mats[k], true);
+                    Materials_Precache(sprFrame->mats[k], spec);
             }
         }
-    }
+    }}
 }
 
 static void addToSurfaceLists(surface_t* suf, material_t* mat)
 {
+    assert(suf);
+    {
     material_snapshot_t ms;
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
+    if(NULL == mat)
+        return;
+    /// \fixme We should not need to prepare in order to build the lists.
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
     if(ms.glowing > 0)
         R_SurfaceListAdd(glowingSurfaceList, suf);
-    if(ms.decorated)
+    if(ms.isDecorated)
         R_SurfaceListAdd(decoratedSurfaceList, suf);
+    }
 }
 
-/**
- * Prepare all relevant skins, textures, flatTextures and sprites.
- * Doesn't unload anything, though (so that if there's enough
- * texture memory it will be used more efficiently). That much trust
- * is placed in the GL/D3D drivers. The prepared textures are also bound
- * here once so they should be ready for use ASAP.
- */
 void R_PrecacheMap(void)
 {
-    uint i, j;
-    sector_t* sec;
-    sidedef_t* side;
+    materialvariantspecification_t* spec;
     float startTime;
 
     // Don't precache when playing demo.
@@ -2352,37 +2343,51 @@ void R_PrecacheMap(void)
     Con_SetProgress(100);
 
     startTime = Sys_GetSeconds();
+    spec = Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0);
 
-    // Always precache all materials used on world surfaces.
+    { uint i;
     for(i = 0; i < numSideDefs; ++i)
     {
-        side = SIDE_PTR(i);
-        Materials_Precache(side->SW_middlematerial, true);
-        addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
+        sidedef_t* side = SIDE_PTR(i);
 
-        Materials_Precache(side->SW_topmaterial, true);
-        addToSurfaceLists(&side->SW_topsurface, side->SW_topmaterial);
+        if(NULL != side->SW_middlematerial)
+        {
+            Materials_Precache(side->SW_middlematerial, spec);
+            addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
+        }
 
-        Materials_Precache(side->SW_bottommaterial, true);
-        addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
-    }
+        if(NULL != side->SW_topmaterial)
+        {
+            Materials_Precache(side->SW_topmaterial, spec);
+            addToSurfaceLists(&side->SW_topsurface, side->SW_topmaterial);
+        }
+
+        if(NULL != side->SW_bottommaterial)
+        {
+            Materials_Precache(side->SW_bottommaterial, spec);
+            addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
+        }
+    }}
+
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
-        sec = SECTOR_PTR(i);
+        sector_t* sec = SECTOR_PTR(i);
+        uint j;
         if(0 == sec->lineDefCount)
             continue;
         for(j = 0; j < sec->planeCount; ++j)
         {
-            Materials_Precache(sec->SP_planematerial(j), true);
+            Materials_Precache(sec->SP_planematerial(j), spec);
             addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
         }
-    }
+    }}
 
     // Precache sprites?
     if(precacheSprites)
     {
         int i;
-
+        spec = Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0);
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];
@@ -2397,7 +2402,7 @@ void R_PrecacheMap(void)
                     spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
                     int k;
                     for(k = 0; k < 8; ++k)
-                        Materials_Precache(sprFrame->mats[k], true);
+                        Materials_Precache(sprFrame->mats[k], spec);
                 }
             }
         }
@@ -2405,15 +2410,6 @@ void R_PrecacheMap(void)
 
      // Sky models usually have big skins.
     R_SkyPrecache();
-
-    for(i = 0; i < Materials_Count(); ++i)
-    {
-        material_t* mat = Materials_ToMaterial(i+1);
-        if(mat->inFlags & MATIF_PRECACHE)
-        {
-            Materials_Prepare(NULL, mat, true, GL_TextureVariantSpecificationForContext(TC_UNKNOWN, NULL));
-        }
-    }
 
     // Precache model skins?
     if(useModels && precacheSkins)

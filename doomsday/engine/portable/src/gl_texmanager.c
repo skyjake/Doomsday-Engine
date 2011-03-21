@@ -223,24 +223,14 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
 }
 
 static variantspecification_t* applyVariantSpecification(
-    variantspecification_t* spec, texturevariantusagecontext_t tc,
-    const material_load_params_t* params)
+    variantspecification_t* spec, texturevariantusagecontext_t tc, int flags,
+    byte border, int tClass, int tMap)
 {
     assert(spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
-    {
-    int tMap = 0, tClass = 0;
 
     spec->context = tc;
-    spec->flags = 0;
-    spec->border = 0;
-
-    if(params)
-    {
-        spec->flags |= params->flags & ~TSF_INTERNAL_MASK;
-        spec->border = params->border;
-        tMap   = params->translated.tmap;
-        tClass = params->translated.tclass;
-    }
+    spec->flags = flags & ~TSF_INTERNAL_MASK;
+    spec->border = border;
 
     if(0 != tMap || 0 != tClass)
     {
@@ -253,9 +243,7 @@ static variantspecification_t* applyVariantSpecification(
         cpt->tClass = tClass;
         spec->translated = cpt;
     }
-
     return spec;
-    }
 }
 
 static detailvariantspecification_t* applyDetailVariantSpecification(
@@ -321,17 +309,17 @@ static texturevariantspecification_t* findVariantSpecification(
 }
 
 static texturevariantspecification_t* getVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, const material_load_params_t* paramaters)
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
 {
     static texturevariantspecification_t tpl;
     assert(texInited);
     tpl.type = TS_NORMAL;
-    applyVariantSpecification(TS_NORMAL(&tpl), tc, paramaters);
+    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap);
     return findVariantSpecification(tpl.type, &tpl, true);
 }
 
 static texturevariantspecification_t* getDetailVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, float contrast)
+    float contrast)
 {
     static texturevariantspecification_t tpl;
     assert(texInited);
@@ -362,38 +350,38 @@ static void destroyVariantSpecifications(void)
 }
 
 typedef struct {
+    texturevariantspecificationtype_t type;
     const texturevariantspecification_t* spec;
     texturevariant_t* chosen;
-} choosevariantworker_paramaters_t;
+} choosetexturevariantworker_paramaters_t;
 
-static int chooseVariantWorker(texturevariant_t* variant, void* context)
+static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
 {
     assert(variant && context);
     {
-    choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) context;
-    if(!compareVariantSpecifications(TS_NORMAL(TextureVariant_Spec(variant)), TS_NORMAL(p->spec)))
-    {   // This will do fine.
-        p->chosen = variant;
-        return 1; // Stop iteration.
-    }
-    return 0; // Continue iteration.
-    }
-}
-
-typedef struct {
-    const texturevariantspecification_t* spec;
-    texturevariant_t* chosen;
-} choosedetailvariantworker_paramaters_t;
-
-static int chooseDetailVariantWorker(texturevariant_t* variant, void* context)
-{
-    assert(variant && context);
+    choosetexturevariantworker_paramaters_t* p =
+        (choosetexturevariantworker_paramaters_t*) context;
+    const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
+    if(cand->type == p->type)
+    switch(p->type)
     {
-    choosedetailvariantworker_paramaters_t* p = (choosedetailvariantworker_paramaters_t*) context;
-    if(!compareDetailVariantSpecifications(TS_DETAIL(TextureVariant_Spec(variant)), TS_DETAIL(p->spec)))
-    {   // This will do fine.
-        p->chosen = variant;
-        return 1; // Stop iteration.
+    case TS_NORMAL:
+        if(!compareVariantSpecifications(TS_NORMAL(cand), TS_NORMAL(p->spec)))
+        {   // This will do fine.
+            p->chosen = variant;
+            return 1; // Stop iteration.
+        }
+        break;
+    case TS_DETAIL:
+        if(!compareDetailVariantSpecifications(TS_DETAIL(cand), TS_DETAIL(p->spec)))
+        {   // This will do fine.
+            p->chosen = variant;
+            return 1; // Stop iteration.
+        }
+        break;
+    default:
+        Con_Error("chooseTextureVariantWorker: Invalid specification type %i.", (int) p->type);
+        return 1; // Unreachable.
     }
     return 0; // Continue iteration.
     }
@@ -402,27 +390,15 @@ static int chooseDetailVariantWorker(texturevariant_t* variant, void* context)
 static texturevariant_t* chooseTextureVariant(texture_t* tex,
     const texturevariantspecification_t* spec)
 {
-    assert(tex && spec);
-    switch(spec->type)
+    assert(texInited && tex && spec);
     {
-    case TS_NORMAL: {
-        choosevariantworker_paramaters_t params;
-        params.spec = spec;
-        params.chosen = NULL;
-        Texture_IterateVariants(tex, chooseVariantWorker, &params);
-        return params.chosen;
-      }
-    case TS_DETAIL: {
-        choosedetailvariantworker_paramaters_t params;
-        params.spec = spec;
-        params.chosen = NULL;
-        Texture_IterateVariants(tex, chooseDetailVariantWorker, &params);
-        return params.chosen;
-      }
+    choosetexturevariantworker_paramaters_t params;
+    params.type = spec->type;
+    params.spec = spec;
+    params.chosen = NULL;
+    Texture_IterateVariants(tex, chooseTextureVariantWorker, &params);
+    return params.chosen;
     }
-    // Unreachable (hopefully).
-    assert(1);
-    return NULL;
 }
 
 int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
@@ -1268,7 +1244,6 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
         /* TC_MAPSURFACE_REFLECTION */      { "mapsurface_reflection" },
         /* TC_MAPSURFACE_REFLECTIONMASK */  { "mapsurface_reflectionmask" },
         /* TC_MAPSURFACE_LIGHTMAP */        { "mapsurface_lightmap" },
-        /* TC_MAPSURFACE_DETAIL */          { "mapsurface_detail" },
         /* TC_SPRITE_DIFFUSE */             { "sprite_diffuse" },
         /* TC_MODELSKIN_DIFFUSE */          { "modelskin_diffuse" },
         /* TC_MODELSKIN_REFLECTION */       { "modelskin_reflection" },
@@ -1276,29 +1251,23 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
         /* TC_PSPRITE_DIFFUSE */            { "psprite_diffuse" },
         /* TC_SKYSPHERE_DIFFUSE */          { "skysphere_diffuse" }
     };
-    texturevariantusagecontext_t tc;
 
     if(NULL == spec) return;
 
-    if(TS_DETAIL != spec->type)
-    {
-        tc = TS_NORMAL(spec)->context;
-        assert(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
-    }
-    else
-    {
-        tc = TC_MAPSURFACE_DETAIL;
-    }
+    Con_Printf("type:%s", TS_DETAIL == spec->type? "detail" : "normal");
 
-    Con_Printf("type:%s context:%s\n", TS_DETAIL == spec->type? "detail" : "normal",
-        textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]);
     switch(spec->type)
     {
     case TS_DETAIL:
-        Con_Printf("contrast:%g\n", TS_DETAIL(spec)->contrast);
+        Con_Printf(" contrast:%g\n", TS_DETAIL(spec)->contrast);
         break;
     case TS_NORMAL: {
-        Con_Printf("flags:%i border:%i", TS_NORMAL(spec)->flags, TS_NORMAL(spec)->border);
+        texturevariantusagecontext_t tc = TS_NORMAL(spec)->context;
+        assert(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
+
+        Con_Printf(" context:%s flags:%i border:%i",
+            textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
+            TS_NORMAL(spec)->flags, TS_NORMAL(spec)->border);
         if(TS_NORMAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             const colorpalettetranslationspecification_t* cpt = TS_NORMAL(spec)->translated;
@@ -1312,17 +1281,21 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 }
 
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, void* paramaters)
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
 {
     if(!texInited)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
-    if(TC_MAPSURFACE_DETAIL == tc)
-    {
-        float contrast = *((float*)paramaters);
-        return getDetailVariantSpecificationForContext(tc, contrast);
-    }
-    return getVariantSpecificationForContext(tc, paramaters);
+    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap);
+}
+
+texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
+    float contrast)
+{
+    if(!texInited)
+        Con_Error("GL_DetailTextureVariantSpecificationForContext: Textures collection "
+            "not yet initialized.");
+    return getDetailVariantSpecificationForContext(contrast);
 }
 
 void GL_DestroyTextures(void)
@@ -1389,7 +1362,7 @@ void GL_ClearSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    Materials_DeleteTextures(MN_SYSTEM_NAME);
+    Materials_DeleteGLTextures(MN_SYSTEM_NAME);
     UI_ClearTextures();
 
     Rend_ParticleClearSystemTextures();
@@ -2525,8 +2498,10 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
 
         if(0 != (lmap = R_GetLightMap(uri)))
         {
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0);
             const texturevariant_t* tex;
-            if((tex = GL_PrepareTexture(lmap->id, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP, NULL), 0)))
+            if(NULL != (tex = GL_PrepareTexture(lmap->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
         }
     }
@@ -2549,8 +2524,10 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
 
         if((fTex = R_GetFlareTexture(uri)))
         {
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE, 0, 0, 0, 0);
             const texturevariant_t* tex;
-            if((tex = GL_PrepareTexture(fTex->id, GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE, NULL), 0)))
+            if(NULL != (tex = GL_PrepareTexture(fTex->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
         }
     }
@@ -2565,17 +2542,13 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
     if(patchTex)
     {
-        material_load_params_t params;
+        texturevariantspecification_t* texSpec =
+            GL_TextureVariantSpecificationForContext(TC_UI,
+                0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
+                  | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
+                1, 0, 0);
         const texturevariant_t* tex;
-        memset(&params, 0, sizeof(params));
-        if(patchTex->flags & PF_MONOCHROME)
-            params.flags |= TSF_MONOCHROME;
-        if(patchTex->flags & PF_UPSCALE_AND_SHARPEN)
-        {
-            params.flags |= TSF_UPSCALE_AND_SHARPEN;
-            params.border = 1;
-        }
-        if((tex = GL_PrepareTexture(patchTex->texId, GL_TextureVariantSpecificationForContext(TC_UI, &params), NULL)))
+        if(NULL != (tex = GL_PrepareTexture(patchTex->texId, texSpec, NULL)))
             return TextureVariant_GLName(tex);
     }
     return 0;
@@ -2865,7 +2838,7 @@ const texturevariant_t* GL_PrepareTexture(textureid_t id,
     byte loadResult;
 
     // Have we already registered and prepared a suitable variant?
-    variant = GL_FindSuitableTextureVariant(tex, spec);
+    variant = GL_ChooseTextureVariant(tex, spec);
     if(NULL != variant && 0 != TextureVariant_GLName(variant))
     {   // Already prepared.
         if(result) *result = 0;
@@ -2904,10 +2877,11 @@ const texturevariant_t* GL_PrepareTexture(textureid_t id,
     return variant;
 }
 
-texturevariant_t* GL_FindSuitableTextureVariant(texture_t* tex,
+texturevariant_t* GL_ChooseTextureVariant(texture_t* tex,
     const texturevariantspecification_t* spec)
 {
-    assert(texInited);
+    if(!texInited)
+        Con_Error("GL_ChooseTextureVariant: Textures collection not yet initialized.");
     return chooseTextureVariant(tex, spec);
 }
 

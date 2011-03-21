@@ -33,8 +33,9 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 
-#include "texturevariant.h"
 #include "sys_opengl.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -236,7 +237,8 @@ void R_DrawViewBorder(void)
     if(mat)
     {
         material_snapshot_t ms;
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_UI, NULL));
+        Materials_Prepare(&ms, mat, true,
+            Materials_VariantSpecificationForContext(TC_UI, 0, 0, 0, 0));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

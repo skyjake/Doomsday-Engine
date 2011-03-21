@@ -22,6 +22,7 @@
  .\..\..\engine\portable\src\m_linkedlist.c
  .\..\..\engine\portable\src\m_binarytree.c
  .\..\..\engine\portable\src\m_stack.c
+ .\..\..\engine\portable\src\materialvariant.c
  .\..\..\engine\portable\src\s_wav.c
  .\..\..\engine\portable\src\s_sfx.c
  .\..\..\engine\portable\src\s_mus.c

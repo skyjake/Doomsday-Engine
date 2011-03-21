@@ -419,10 +419,9 @@ void Con_SetString(const char* name, char* text);
     // Play: Materials.
     materialnum_t   Materials_IndexForUri(const dduri_t* uri);
     materialnum_t   Materials_IndexForName(const char* path);
-    dduri_t*        Materials_GetUri(material_t* mat);
+    dduri_t*        Materials_GetUri(struct material_s* mat);
 
-    const char*     Materials_GetSymbolicName(material_t* mat);
-    void            Materials_Precache(material_t* mat, boolean yes);
+    const char*     Materials_GetSymbolicName(struct material_s* mat);
     int             Materials_CreateAnimGroup(int flags);
     void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
 
@@ -443,7 +442,6 @@ void Con_SetString(const char* name, char* text);
 
     int             DD_GetFrameRate(void);
     void            R_SetupMap(int mode, int flags);
-    void            R_PrecacheMap(void);
     void            R_PrecacheMobjNum(int mobjtypeNum);
     patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
     void            R_PrecacheSkinsForState(int stateIndex);

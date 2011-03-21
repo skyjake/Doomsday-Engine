@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,18 +33,16 @@ texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
 {
     assert(generalCase && spec);
     {
-    texturevariant_t* tex;
-    
-    if(NULL == (tex = (texturevariant_t*) malloc(sizeof(*tex))))
+    texturevariant_t* tex = tex = (texturevariant_t*) malloc(sizeof(*tex));
+    if(NULL == tex)
         Con_Error("TextureVariant::Construct: Failed on allocation of %lu bytes for "
                   "new TextureVariant.", sizeof(*tex));
-
     tex->_generalCase = generalCase;
+    tex->_spec = spec;
     tex->_isMasked = false;
     tex->_glName = 0;
     tex->_s = tex->_t = 0;
     memset(tex->_analyses, 0, sizeof(tex->_analyses));
-    tex->_spec = spec;
     return tex;
     }
 }
@@ -93,7 +90,7 @@ void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t)
     tex->_t = t;
 }
 
-const texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex)
+texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex)
 {
     assert(tex);
     return tex->_spec;

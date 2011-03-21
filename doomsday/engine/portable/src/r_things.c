@@ -55,6 +55,7 @@
 #include "m_stack.h"
 #include "texture.h"
 #include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -608,7 +609,6 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     spriteframe_t* sprFrame;
     spritetex_t* sprTex;
     material_t* mat;
-    material_load_params_t params;
     material_snapshot_t ms;
     const variantspecification_t* spec;
 
@@ -630,9 +630,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     sprFrame = &sprDef->spriteFrames[frame];
     mat = sprFrame->mats[0];
 
-    memset(&params, 0, sizeof(params));
-    params.border = 1;
-    Materials_Prepare(&ms, mat, false, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &params));
+    Materials_Prepare(&ms, mat, false,
+        Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -672,7 +671,8 @@ float R_VisualRadius(mobj_t* mo)
 
     // Use the sprite frame's width.
     // @fixme What about rotation?
-    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
+    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true,
+        Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0));
     return ms.width / 2;
 }
 
@@ -877,7 +877,6 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean brightShadow, boolean shadow, boolean altShadow,
                                           boolean fullBright)
 {
-    material_load_params_t mparams;
     material_snapshot_t ms;
     spritetex_t* sprTex = NULL;
     const variantspecification_t* spec;
@@ -885,12 +884,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     if(!params)
         return; // Wha?
 
-    memset(&mparams, 0, sizeof(mparams));
-    mparams.translated.tmap = tMap;
-    mparams.translated.tclass = tClass;
-    mparams.border = 1;
-
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, tClass, tMap));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1065,7 +1060,6 @@ void R_ProjectSprite(mobj_t* mo)
     uint vLightListIdx = 0;
     material_t* mat;
     material_snapshot_t ms;
-    material_load_params_t mparams;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
@@ -1132,15 +1126,8 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    tmap = mo->tmap;
-    tclass = mo->tclass;
-
-    memset(&mparams, 0, sizeof(mparams));
-    mparams.translated.tmap = tmap;
-    mparams.translated.tclass = tclass;
-    mparams.border = 1;
-
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, &mparams));
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, mo->tclass, mo->tmap));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1462,7 +1449,8 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_SPRITE_DIFFUSE, NULL));
+        Materials_Prepare(&ms, mat, true,
+            Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0));
         tex = ms.units[MTU_PRIMARY].tex;
         pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)
@@ -1533,7 +1521,7 @@ boolean RIT_AddSprite(void* ptr, void* data)
 
     if(mo->addFrameCount != frameCount)
     {
-        material_t*         mat;
+        material_t* mat;
 
         R_ProjectSprite(mo);
 
@@ -1550,7 +1538,7 @@ boolean RIT_AddSprite(void* ptr, void* data)
             {
                 float               visibleTop;
 
-                visibleTop = mo->pos[VZ] + mat->height;
+                visibleTop = mo->pos[VZ] + Material_Height(mat);
 
                 if(visibleTop > skyFix[PLN_CEILING].height)
                 {

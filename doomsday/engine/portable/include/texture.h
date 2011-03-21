@@ -62,12 +62,12 @@ void Texture_Destruct(texture_t* tex);
  *
  * @param variant  Variant instance to add to the resource list.
  */
-void Texture_AddVariant(texture_t* tex, struct texturevariant_s* variant);
+struct texturevariant_s* Texture_AddVariant(texture_t* tex, struct texturevariant_s* variant);
 
 /**
- * Iterate over all the derived TextureVariants, making a callback for each.
- * Iteration ends when all variants have been visited or a callback returns
- * non-zero.
+ * Iterate over all derived TextureVariants, making a callback for each.
+ * Iteration ends once all variants have been visited, or immediately upon
+ * a callback returning non-zero.
  *
  * @param callback  Callback to make for each processed variant.
  * @param paramaters  Passed to the callback.
@@ -87,7 +87,7 @@ const char* Texture_Name(const texture_t* tex);
 /// @return  @c true iff Texture represents an image loaded from an IWAD.
 boolean Texture_IsFromIWAD(const texture_t* tex);
 
-/// Retrieve logical dimensions (not necessarily the same as pixel dimensions)
+/// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
 void Texture_Dimensions(const texture_t* tex, int* width, int* height);
 
 /// @return  Logical width (not necessarily the same as pixel width).

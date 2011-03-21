@@ -121,14 +121,6 @@ struct subsector
 end
 
 internal
-typedef struct materiallayer_s {
-    int             stage; // -1 => layer not in use.
-    short           tics;
-    float			glowing;
-    textureid_t     tex;
-    float           texOrigin[2]; /// Origin of the texture in material-space.
-} material_layer_t;
-
 typedef enum {
     MEC_UNKNOWN = -1,
     MEC_METAL = 0,
@@ -138,34 +130,38 @@ typedef enum {
     NUM_MATERIAL_ENV_CLASSES
 } material_env_class_t;
 
-#define MATIF_PRECACHE		0x1
+typedef struct {
+    textureid_t tex;
+    float texOrigin[2]; // Origin of the texture in material-space.
+} material_layer_t;
+
+struct material_variantlist_node_s;
+end
+
+public
+#define DMT_MATERIAL_FLAGS      DDVT_SHORT
+#define DMT_MATERIAL_WIDTH      DDVT_INT
+#define DMT_MATERIAL_HEIGHT     DDVT_INT
 end
 
 struct material
-    -       ded_material_s* def // Can be NULL (was generated automatically).
-    SHORT   short           flags // MATF_* flags
-    -       byte            inFlags // MATIF_* flags
-    SHORT	short           width // Defined width & height of the material (not texture!).
-    SHORT   short           height
-    -       material_layer_t layers[DDMAX_MATERIAL_LAYERS]
-    -       uint            numLayers
-    -       material_env_class_t envClass // Used for environmental sound properties.
-    -       ded_detailtexture_s* detail
-    -       ded_decor_s*    decoration
-    -       ded_ptcgen_s*   ptcGen
-    -       ded_reflection_s* reflection
-    -       boolean         inAnimGroup // True if belongs to some animgroup.
-    -       material_s*		current
-    -       material_s*		next
-    -       float           inter
-    -       material_s*		globalNext // Linear list linking all materials.
-    -       uint            _bindId   // Name-binding if any.
+    -       ded_material_s* _def // Can be @c NULL (was generated automatically).   
+    -       material_variantlist_node_s* _variants
+    -       material_env_class_t _envClass // Environmental sound class.
+    -       uint        _bindId // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
+    -       int         _width // Logical dimensions in world-space units.
+    -       int         _height
+    -       short       _flags // @see materialFlags
+    -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
+    -       boolean     _isCustom
+    -       uint        numLayers // \deprecated (old init stuff).
+    -       material_layer_t[DDMAX_MATERIAL_LAYERS] layers // \deprecated (old init stuff).
 end
 
 internal
 // Internal surface flags:
 #define SUIF_PVIS             0x0001
-#define SUIF_MATERIAL_FIX     0x0002 // Current texture is a fix replacement
+#define SUIF_FIX_MISSING_MATERIAL 0x0002 // Current Material is a fix replacement
                                      // (not sent to clients, returned via DMU etc).
 #define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
 #define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.

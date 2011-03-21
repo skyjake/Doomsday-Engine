@@ -307,7 +307,6 @@ int R_SpriteTexturesCount(void);
 spritetex_t* R_SpriteTextureByIndex(int idx);
 
 void            R_UpdateData(void);
-void            R_ShutdownData(void);
 
 colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
                                       const byte* data, ushort num);
@@ -326,8 +325,17 @@ boolean         R_UpdateSidedef(struct sidedef_s* side, boolean forceUpdate);
 boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
 boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
-void            R_PrecacheMap(void);
-void            R_PrecacheMobjNum(int mobjtypeNum);
+/**
+ * Prepare all texture resources for the current Map.
+ */
+void R_PrecacheMap(void);
+
+/**
+ * Prepare all texture resources for the specified mobjtype.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_PrecacheMobjNum(int mobjtypeNum);
 
 patchcompositetex_t* R_PatchCompositeTextureByIndex(int num);
 
@@ -373,11 +381,11 @@ rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
 rawtex_t**      R_CollectRawTexs(int* count);
 
-boolean         R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
+boolean         R_IsAllowedDecoration(ded_decor_t* def, struct material_s* mat,
                                       boolean hasExternal);
-boolean         R_IsAllowedReflection(ded_reflection_t* def, material_t* mat,
+boolean         R_IsAllowedReflection(ded_reflection_t* def, struct material_s* mat,
                                       boolean hasExternal);
-boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
+boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, struct material_s* mat,
                                      boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 

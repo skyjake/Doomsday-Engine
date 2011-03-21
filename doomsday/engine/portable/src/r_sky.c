@@ -37,6 +37,7 @@
 #include "rend_sky.h"
 #include "texture.h"
 #include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -158,7 +159,6 @@ static void prepareSkySphere(void)
     skylayer_t* slayer;
     for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
     {
-        material_load_params_t params;
         material_snapshot_t ms;
         material_t* material;
 
@@ -166,12 +166,11 @@ static void prepareSkySphere(void)
             continue;
 
         material = Materials_ToMaterial(slayer->material);
-        memset(&params, 0, sizeof(params));
-        params.flags = TSF_NO_COMPRESSION;
-        if(slayer->flags & SLF_MASKED)
-            params.flags |= TSF_ZEROMASK;
 
-        Materials_Prepare(&ms, material, false, GL_TextureVariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE, &params));
+        Materials_Prepare(&ms, material, false,
+            Materials_VariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE,
+                TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
+                0, 0, 0));
 
         slayer->tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
         Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),

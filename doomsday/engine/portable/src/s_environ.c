@@ -41,6 +41,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "materialvariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -291,7 +293,7 @@ static boolean calcSSecReverb(subsector_t* ssec)
             material_t* mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
             // The material determines its type.
-            mclass = Material_GetEnvClass(mat);
+            mclass = Material_EnvClass(mat);
             total += seg->length;
             if(!(mclass >= 0 && mclass < NUM_MATERIAL_ENV_CLASSES))
                 mclass = MEC_WOOD; // Assume it's wood if unknown.

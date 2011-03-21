@@ -132,6 +132,7 @@ typedef struct biassurface_s {
 
 typedef void* blockmap_t;
 
+#include "materialvariant.h"
 #include "p_polyob.h"
 #include "p_maptypes.h"
 

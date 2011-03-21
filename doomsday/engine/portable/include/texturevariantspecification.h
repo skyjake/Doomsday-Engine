@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +32,6 @@ typedef enum {
     TC_MAPSURFACE_REFLECTION,
     TC_MAPSURFACE_REFLECTIONMASK,
     TC_MAPSURFACE_LIGHTMAP,
-    TC_MAPSURFACE_DETAIL,
     TC_SPRITE_DIFFUSE,
     TC_MODELSKIN_DIFFUSE,
     TC_MODELSKIN_REFLECTION,
@@ -100,13 +98,5 @@ typedef struct texturevariantspecification_s {
         detailvariantspecification_t detailvariant;
     } data; // type-specific data.
 } texturevariantspecification_t;
-
-typedef struct material_load_params_s {
-    int flags; /// @see textureVariantSpecificationFlags
-    byte border;
-    struct {
-        int tclass, tmap;
-    } translated;
-} material_load_params_t;
 
 #endif /* LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H */

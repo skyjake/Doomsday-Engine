@@ -681,6 +681,12 @@ int P_Callbackp(int type, void* ptr, void* context,
     return true;
 }
 
+boolean DMU_SetMaterialProperty(material_t* mat, const setargs_t* args)
+{
+    Con_Error("DMU::SetMaterialProperty: Property %s is not writable.\n", DMU_Str(args->prop));
+    return true; // Unreachable.
+}
+
 /**
  * Sets a value. Does some basic type checking so that incompatible types are
  * not assigned. Simple conversions are also done, e.g., float to fixed.
@@ -1068,7 +1074,7 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_MATERIAL:
-        Material_SetProperty(obj, args);
+        DMU_SetMaterialProperty(obj, args);
         break;
 
     case DMU_NODE:
@@ -1136,6 +1142,31 @@ static int setProperty(void* obj, void* context)
         R_UpdateSubSector(updateSubSector, false);
     } */
 
+    return true; // Continue iteration.
+}
+
+boolean DMU_GetMaterialProperty(material_t* mat, setargs_t* args)
+{
+    switch(args->prop)
+    {
+    case DMU_FLAGS: {
+        short flags = Material_Flags(mat);
+        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
+        break;
+      }
+    case DMU_WIDTH: {
+        int width = Material_Width(mat);
+        DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
+        break;
+      }
+    case DMU_HEIGHT: {
+        int height = Material_Height(mat);
+        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
+        break;
+      }
+    default:
+        Con_Error("DMU::GetMaterialProperty: No property %s.\n", DMU_Str(args->prop));
+    }
     return true; // Continue iteration.
 }
 
@@ -1488,7 +1519,7 @@ static int getProperty(void* obj, void* context)
         break;
 
     case DMU_MATERIAL:
-        Material_GetProperty(obj, args);
+        DMU_GetMaterialProperty(obj, args);
         break;
 
     default:

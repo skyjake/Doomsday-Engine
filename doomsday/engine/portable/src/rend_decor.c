@@ -39,6 +39,8 @@
 #include "de_render.h"
 #include "de_misc.h"
 
+#include "materialvariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 // Quite a bit of decorations, there!
@@ -539,8 +541,8 @@ static uint generateDecorLights(const ded_decorlight_t* def,
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
 
-    patternW = mat->width * skip[0];
-    patternH = mat->height * skip[1];
+    patternW = Material_Width(mat) * skip[0];
+    patternH = Material_Height(mat) * skip[1];
 
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
@@ -549,13 +551,13 @@ static uint generateDecorLights(const ded_decorlight_t* def,
 
     // Let's see where the top left light is.
     s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
-                         mat->width * def->patternOffset[0] +
+                         Material_Width(mat) * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
         t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
-                             mat->height * def->patternOffset[1] +
+                             Material_Height(mat) * def->patternOffset[1] +
                              offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -618,8 +620,8 @@ static uint generateDecorModels(const ded_decormodel_t* def,
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
 
-    patternW = mat->width * skip[0];
-    patternH = mat->height * skip[1];
+    patternW = Material_Width(mat) * skip[0];
+    patternH = Material_Height(mat) * skip[1];
 
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
@@ -628,13 +630,13 @@ static uint generateDecorModels(const ded_decormodel_t* def,
 
     // Let's see where the top left light is.
     s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
-                         mat->width * def->patternOffset[0] +
+                         Material_Width(mat) * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
         t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
-                             mat->height * def->patternOffset[1] +
+                             Material_Height(mat) * def->patternOffset[1] +
                              offsetT, patternH);
 
         for(; t < height; t += patternH)
@@ -687,14 +689,12 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS,
         delta[VY] * delta[VZ] != 0))
     {
         const ded_decor_t* def = Materials_Decoration(Materials_ToMaterialNum(suf->material));
-        int axis = V3_MajorAxis(suf->normal);
-        float matW, matH, width, height;
-        uint i;
-
         if(def)
         {
-            matW = suf->material->width;
-            matH = suf->material->height;
+            int axis = V3_MajorAxis(suf->normal);
+            float width, height;
+            uint i;
+
             if(axis == VX || axis == VY)
             {
                 width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);

@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,7 +77,7 @@ void TextureVariant_SetMasked(texturevariant_t* tex, boolean yes);
 void TextureVariant_Coords(const texturevariant_t* tex, float* s, float* t);
 void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t);
 
-const texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex);
+texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex);
 
 void* TextureVariant_Analysis(const texturevariant_t* tex,
     texturevariant_analysisid_t analysis);

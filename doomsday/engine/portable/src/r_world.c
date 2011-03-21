@@ -43,6 +43,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "materialvariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 // $smoothplane: Maximum speed for a smoothed plane.
@@ -802,7 +804,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
                     if(skyFloor)
                     {
                         float bottom = sec->SP_floorvisheight +
-                                si->SW_middlevisoffset[VY] - si->SW_middlematerial->height;
+                                si->SW_middlevisoffset[VY] - Material_Height(si->SW_middlematerial);
 
                         if(bottom < skyFix[PLN_FLOOR].height)
                         {   // Must lower the skyfix floor.
@@ -1252,12 +1254,40 @@ static __inline void initSurfaceMaterialOffset(surface_t *suf)
 }
 
 /**
- * Called by the game at various points in the map setup process.
+ * Set intial values of various tracked and interpolated properties
+ * (lighting, smoothed planes etc).
  */
+void R_InitMapSurfaces(boolean forceUpdate)
+{
+    { uint i;
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t* sec = SECTOR_PTR(i);
+        uint j;
+
+        R_UpdateSector(sec, forceUpdate);
+        for(j = 0; j < sec->planeCount; ++j)
+        {
+            plane_t* pln = sec->SP_plane(j);
+
+            pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
+            initSurfaceMaterialOffset(&pln->surface);
+        }
+    }}
+
+    { uint i;
+    for(i = 0; i < numSideDefs; ++i)
+    {
+        sidedef_t* si = SIDE_PTR(i);
+
+        initSurfaceMaterialOffset(&si->SW_topsurface);
+        initSurfaceMaterialOffset(&si->SW_middlesurface);
+        initSurfaceMaterialOffset(&si->SW_bottomsurface);
+    }}
+}
+
 void R_SetupMap(int mode, int flags)
 {
-    uint i;
-
     switch(mode)
     {
     case DDSMM_INITIALIZE:
@@ -1268,52 +1298,19 @@ void R_SetupMap(int mode, int flags)
         // A new map is about to be setup.
         ddMapSetup = true;
 
-        // Reset Material precache status.
-        for(i = 0; i < Materials_Count(); ++i)
-            Materials_Precache(Materials_ToMaterial(i+1), false);
+        Materials_PurgeCacheQueue();
         return;
 
-    case DDSMM_AFTER_LOADING:
-    {
+    case DDSMM_AFTER_LOADING: {
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
-
         R_InitSkyFix();
-
-        // Set intial values of various tracked and interpolated properties
-        // (lighting, smoothed planes etc).
-        for(i = 0; i < numSectors; ++i)
-        {
-            uint                j;
-            sector_t           *sec = SECTOR_PTR(i);
-
-            R_UpdateSector(sec, false);
-            for(j = 0; j < sec->planeCount; ++j)
-            {
-                plane_t            *pln = sec->SP_plane(j);
-
-                pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] =
-                    pln->height;
-
-                initSurfaceMaterialOffset(&pln->surface);
-            }
-        }
-
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            sidedef_t          *si = SIDE_PTR(i);
-
-            initSurfaceMaterialOffset(&si->SW_topsurface);
-            initSurfaceMaterialOffset(&si->SW_middlesurface);
-            initSurfaceMaterialOffset(&si->SW_bottomsurface);
-        }
-
+        R_InitMapSurfaces(false);
         P_MapInitPolyobjs();
         return;
-    }
-    case DDSMM_FINALIZE:
-    {
-        gamemap_t          *map = P_GetCurrentMap();
+      }
+    case DDSMM_FINALIZE: {
+        gamemap_t* map = P_GetCurrentMap();
 
         // We are now finished with the game data, map object db.
         P_DestroyGameMapObjDB(&map->gameObjData);
@@ -1324,35 +1321,11 @@ void R_SetupMap(int mode, int flags)
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange(NULL);
 
-        // Update all sectors. Set intial values of various tracked
-        // and interpolated properties (lighting, smoothed planes etc).
-        for(i = 0; i < numSectors; ++i)
-        {
-            uint                l;
-            sector_t           *sec = SECTOR_PTR(i);
-
-            R_UpdateSector(sec, true);
-            for(l = 0; l < sec->planeCount; ++l)
-            {
-                plane_t            *pln = sec->SP_plane(l);
-
-                pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] =
-                    pln->height;
-
-                initSurfaceMaterialOffset(&pln->surface);
-            }
-        }
-
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            sidedef_t*          si = SIDE_PTR(i);
-
-            initSurfaceMaterialOffset(&si->SW_topsurface);
-            initSurfaceMaterialOffset(&si->SW_middlesurface);
-            initSurfaceMaterialOffset(&si->SW_bottomsurface);
-        }
-
+        R_InitMapSurfaces(true);
         P_MapInitPolyobjs();
+        R_PrecacheMap();
+
+        Materials_ProcessCacheQueue();
 
         // Map setup has been completed.
 
@@ -1380,6 +1353,7 @@ void R_SetupMap(int mode, int flags)
         DD_ResetTimer();
 
         // Kill all local commands and determine the invoid status of players.
+        { int i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
@@ -1397,7 +1371,7 @@ void R_SetupMap(int mode, int flags)
                 if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
-        }
+        }}
 
         // Reset the map tick timer.
         ddMapTime = 0;
@@ -1412,20 +1386,18 @@ void R_SetupMap(int mode, int flags)
         // for free blocks in the entire zone and purge purgable blocks.
         Z_EnableFastMalloc(false);
         return;
-    }
-    case DDSMM_AFTER_BUSY:
-    {
-        gamemap_t  *map = P_GetCurrentMap();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
+      }
+    case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
+        gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();
         else
-            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
-                       mapInfo->fogDensity, mapInfo->fogColor);
+            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
         break;
-    }
+      }
     default:
         Con_Error("R_SetupMap: Unknown setup mode %i", mode);
     }
@@ -1454,8 +1426,9 @@ boolean R_IsGlowingPlane(const plane_t* pln)
 {
     material_t* mat = pln->surface.material;
     material_snapshot_t ms;
-    Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, NULL));
-    return ((mat && (mat->flags & MATF_NO_DRAW)) || ms.glowing > 0 ||
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
+    return ((mat && !Material_IsDrawable(mat)) || ms.glowing > 0 ||
             R_IsSkySurface(&pln->surface));
 }
 
@@ -1512,9 +1485,9 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
             choice2 = suf->material;
     }
 
-    if(choice1 && !choice1->inAnimGroup)
+    if(choice1 && !Material_IsGroupAnimated(choice1))
         return choice1;
-    if(choice2 && !choice2->inAnimGroup)
+    if(choice2 && !Material_IsGroupAnimated(choice2))
         return choice2;
     if(choice1)
         return choice1;
@@ -1537,7 +1510,7 @@ static void updateSidedefSection(sidedef_t* s, segsection_t section)
                 surface)*/)
     {
         Surface_SetMaterial(suf, chooseFixMaterial(s, section));
-        suf->inFlags |= SUIF_MATERIAL_FIX;
+        suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
     }
 }
 

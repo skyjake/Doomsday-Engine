@@ -24,57 +24,101 @@
 #ifndef LIBDENG_MATERIAL_H
 #define LIBDENG_MATERIAL_H
 
+#include "p_maptypes.h"
 #include "p_dmu.h"
 
-struct texturevariant_s;
+struct materialvariant_s;
 
-// Material texture unit idents:
-enum {
-    MTU_PRIMARY,
-    MTU_DETAIL,
-    MTU_REFLECTION,
-    MTU_REFLECTION_MASK,
-    NUM_MATERIAL_TEXTURE_UNITS
-};
-
-typedef struct material_textureunit_s {
-    const struct texturevariant_s* tex;
-    int             magMode;
-    blendmode_t     blendMode; // Currently used only with reflection.
-    float           alpha;
-    float           scale[2]; // For use with the texture matrix.
-    float           offset[2]; /// Texture origin offset in material-space.
-} material_textureunit_t;
-
-typedef struct material_snapshot_s {
-    short           width, height; // In world units.
-    boolean         isOpaque;
-    float           glowing;
-    boolean         decorated;
-    float           color[3]; // Average color (for lighting).
-    float           colorAmplified[3]; // Average color amplified (for lighting).
-    float           topColor[3]; // Averaged top line color, used for sky fadeouts.
-    material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
+void Material_Initialize(material_t* mat);
 
 /**
- * \todo: the following should be removed once incorporated into the layers (above).
+ * Process a system tick event.
  */
-    struct shinydata_s {
-        float           minColor[3];
-    } shiny;
-} material_snapshot_t;
+void Material_Ticker(material_t* mat, timespan_t time);
 
-#define MSU(ms, u) ((ms)->units[u])
+/**
+ * Add a new variant to the list of resources for this Material.
+ * Material takes ownership of the variant.
+ *
+ * @param variant  Variant instance to add to the resource list.
+ */
+struct materialvariant_s* Material_AddVariant(material_t* mat,
+    struct materialvariant_s* variant);
 
-boolean         Material_GetProperty(const material_t* mat, setargs_t* args);
-boolean         Material_SetProperty(material_t* mat, const setargs_t* args);
+/**
+ * Destroys all derived MaterialVariants linked with this Material.
+ */
+void Material_DestroyVariants(material_t* mat);
 
-material_env_class_t Material_GetEnvClass(const material_t* mat);
-void            Material_SetEnvClass(material_t* mat, material_env_class_t envClass);
+/**
+ * Iterate over all derived MaterialVariants, making a callback for each.
+ * Iteration ends once all variants have been visited, or immediately upon
+ * a callback returning non-zero.
+ *
+ * @param callback  Callback to make for each processed variant.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int Material_IterateVariants(material_t* mat,
+    int (*callback)(struct materialvariant_s* variant, void* paramaters),
+    void* paramaters);
 
-void            Material_SetTranslation(material_t* mat, material_t* current, material_t* next, float inter);
+/// @return  Definition from which this Material was derived,
+///          else @c NULL if generated automatically.
+struct ded_material_s* Material_Definition(const material_t* mat);
 
-void            Material_Ticker(material_t* mat, timespan_t time);
-void            Material_DeleteTextures(material_t* mat);
+/// Retrieve logical dimensions.
+void Material_Dimensions(const material_t* mat, int* width, int* height);
+
+/// @return  Logical width.
+int Material_Width(const material_t* mat);
+
+/// @return  Logical height.
+int Material_Height(const material_t* mat);
+
+/// @return  @see materialFlags
+short Material_Flags(const material_t* mat);
+
+/// @return  @c true if Material is not derived from an original game resource.
+boolean Material_IsCustom(const material_t* mat);
+
+/// @return  @c true if Material belongs to one or more anim groups.
+boolean Material_IsGroupAnimated(const material_t* mat);
+
+/// @return  @c true if Material should be replaced with Sky.
+boolean Material_IsSkyMasked(const material_t* mat);
+
+/// @return  @c true if Material should be rendered.
+boolean Material_IsDrawable(const material_t* mat);
+
+/// @return  Number of layers defined by this Material.
+int Material_LayerCount(const material_t* mat);
+
+/**
+ * Changed the group animation status of this Material.
+ */
+void Material_SetGroupAnimated(material_t* mat, boolean yes);
+
+/// @return  Unique MaterialBind identifier.
+uint Material_BindId(const material_t* mat);
+
+/**
+ * Set the MaterialBind identifier for this Material.
+ *
+ * @param bindId  New identifier.
+ */
+void Material_SetBindId(material_t* mat, uint bindId);
+
+/// @return  Environmental sound class.
+material_env_class_t Material_EnvClass(const material_t* mat);
+
+/**
+ * Change the environmental sound class for this Material.
+ * \todo If attached to a Map Surface update accordingly!
+ *
+ * @param envClass  New environmental sound class.
+ */
+void Material_SetEnvClass(material_t* mat, material_env_class_t envClass);
 
 #endif /* LIBDENG_MATERIAL_H */

@@ -43,6 +43,7 @@
 
 #include "texture.h"
 #include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -264,7 +265,6 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
         }
         else
         {
-            material_load_params_t p;
             material_snapshot_t ms;
             material_t* material;
             
@@ -275,10 +275,9 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
                 material = Materials_ToMaterial(Materials_IndexForName(
                     MN_SYSTEM_NAME":missing" ));
 
-            memset(&p, 0, sizeof(p));
-            p.flags = TSF_NO_COMPRESSION | TSF_ZEROMASK;
-
-            Materials_Prepare(&ms, material, true, GL_TextureVariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE, &p));
+            Materials_Prepare(&ms, material, true,
+                Materials_VariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE,
+                    TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0));
             tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
             magMode = ms.units[MTU_PRIMARY].magMode;
             Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),

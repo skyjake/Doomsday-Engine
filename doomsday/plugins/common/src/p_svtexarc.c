@@ -43,10 +43,10 @@
 #include "p_svtexarc.h"
 
 // For identifying the archived format version. Written to disk.
-#define MATERIAL_ARCHIVE_VERSION (2)
+#define MATERIALARCHIVE_VERSION (2)
 
 // Used to denote unknown Material references in records. Written to disk.
-#define UNKNOWN_MATERIAL_NAME   "DD_BADTX"  
+#define UNKNOWN_MATERIALNAME    "DD_BADTX"  
 
 typedef struct materialarchive_record_s {
     dduri_t* path;
@@ -72,7 +72,7 @@ static void destroy(materialarchive_t* mArc)
 
 static void init(materialarchive_t* mArc)
 {
-    mArc->version = MATERIAL_ARCHIVE_VERSION;
+    mArc->version = MATERIALARCHIVE_VERSION;
     mArc->numFlats = 0;
     mArc->count = 0;
     mArc->table = 0;
@@ -143,7 +143,7 @@ static materialarchive_record_t* getRecord(const materialarchive_t* mArc,
     if(mArc->version < 1 && group == 1) // Group 1 = Flats:
         serialId += mArc->numFlats;
     rec = &mArc->table[serialId];
-    if(!Str_CompareIgnoreCase(Uri_Path(rec->path), UNKNOWN_MATERIAL_NAME))
+    if(!Str_CompareIgnoreCase(Uri_Path(rec->path), UNKNOWN_MATERIALNAME))
         return 0;
     return rec;
 }
@@ -169,7 +169,7 @@ static material_t* materialForSerialId(const materialarchive_t* mArc,
  */
 static void populate(materialarchive_t* mArc)
 {
-    dduri_t* unknownMaterial = Uri_Construct2(UNKNOWN_MATERIAL_NAME, RC_NULL);
+    dduri_t* unknownMaterial = Uri_Construct2(UNKNOWN_MATERIALNAME, RC_NULL);
     insertSerialId(mArc, 1, unknownMaterial, 0);
     Uri_Destruct(unknownMaterial);
 

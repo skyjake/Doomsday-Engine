@@ -705,8 +705,6 @@ enum // Sector reverb data indices.
     NUM_REVERB_DATA
 };
 
-#define DD_MAX_MATERIAL_LAYERS     1 //// \temp
-
 typedef struct {
     fixed_t         pos[2], dX, dY;
 } divline_t;
@@ -934,9 +932,9 @@ typedef struct {
  * @defgroup materialFlags  Material Flags
  * @{
  */
-#define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
-#define MATF_NO_DRAW            0x0002 // Material should never be drawn.
-#define MATF_SKYMASK            0x0004 // Sky-mask surfaces using this material.
+//#define MATF_UNUSED1            0x1
+#define MATF_NO_DRAW            0x2 // Material should never be drawn.
+#define MATF_SKYMASK            0x4 // Sky-mask surfaces using this material.
 /**@{*/
 
 #define DDMAX_MATERIAL_LAYERS   1

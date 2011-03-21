@@ -33,6 +33,7 @@
 #include "de_misc.h"
 
 #include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -524,7 +525,8 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     if(p->_bg.material)
     {
         material_snapshot_t ms;
-        Materials_Prepare(&ms, p->_bg.material, true, GL_TextureVariantSpecificationForContext(TC_UI, NULL));
+        Materials_Prepare(&ms, p->_bg.material, true,
+            Materials_VariantSpecificationForContext(TC_UI, 0, 0, 0, 0));
         tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     }
     else
@@ -984,19 +986,15 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             V3_Set(offset, 0, 0, 0);
             V3_Set(dimensions, 1, 1, 0);
             break;
-        case PFT_MATERIAL:
-            {
+        case PFT_MATERIAL: {
             material_t* mat;
             if((mat = f->texRef.material))
             {
-                material_load_params_t params;
                 material_snapshot_t ms;
 
-                memset(&ms, 0, sizeof(ms));
-                memset(&params, 0, sizeof(params));
-                params.border = 1;
-                
-                Materials_Prepare(&ms, mat, true, GL_TextureVariantSpecificationForContext(TC_UI, &params));
+                memset(&ms, 0, sizeof(ms));               
+                Materials_Prepare(&ms, mat, true,
+                    Materials_VariantSpecificationForContext(TC_UI, 0, 1, 0, 0));
 
                 if(ms.units[MTU_PRIMARY].tex)
                 {
@@ -1009,7 +1007,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 }
             }
             break;
-            }
+          }
         case PFT_PATCH:
             if((patch = R_PatchTextureByIndex(f->texRef.patch)))
             {

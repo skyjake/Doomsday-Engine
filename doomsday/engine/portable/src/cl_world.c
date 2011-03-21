@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -475,7 +475,7 @@ if(num >= numSectors)
 
     if(df & SDF_FLOOR_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
@@ -485,7 +485,7 @@ if(num >= numSectors)
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
@@ -702,7 +702,7 @@ if(num >= numSideDefs)
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
@@ -712,7 +712,7 @@ if(num >= numSideDefs)
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
@@ -722,7 +722,7 @@ if(num >= numSideDefs)
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?

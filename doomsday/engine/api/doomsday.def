@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 503 <--
-; Other free ordinals: 30, 336
+; Other free ordinals: 30, 90, 336, 436
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -342,7 +342,6 @@ EXPORTS
     Materials_GetUri            @494 NONAME
     Materials_IndexForName      @495 NONAME
     Materials_IndexForUri       @496 NONAME
-    Materials_Precache          @436 NONAME
     Materials_CreateAnimGroup   @241 NONAME
     Materials_AddAnimGroupFrame @242 NONAME
 
@@ -358,7 +357,6 @@ EXPORTS
 ; Refresh.
     DD_GetFrameRate             @88 NONAME
     R_SetupMap                  @89 NONAME
-    R_PrecacheMap               @90 NONAME
     R_PrecacheMobjNum           @427 NONAME
     R_PrecacheSkinsForState     @240 NONAME
     R_PrecachePatch             @335 NONAME

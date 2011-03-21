@@ -64,33 +64,37 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
     }
 }
 
-void Texture_Destruct(texture_t* tex)
+static void destroyVariants(texture_t* tex)
 {
     assert(tex);
+    while(tex->_variants)
     {
-    texture_variantlist_node_t* node = tex->_variants;
-    while(node)
-    {
-        texture_variantlist_node_t* next = node->next;
+        texturevariant_t* variant = tex->_variants->variant;
+        texture_variantlist_node_t* next = tex->_variants->next;
 #if _DEBUG
         DGLuint glName;
-        if(0 != (glName = TextureVariant_GLName(node->variant)))
+        if(0 != (glName = TextureVariant_GLName(variant)))
         {
             Con_Printf("Warning:Texture::Destruct: GLName (%i) still set for "
                 "a variant of \"%s\" (id:%i). Perhaps it wasn't released?\n",
                 (unsigned int) glName, Texture_Name(tex), (int) Texture_Id(tex));
-            GL_PrintTextureVariantSpecification(TextureVariant_Spec(node->variant));
+            GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
         }
 #endif
-        TextureVariant_Destruct(node->variant);
-        free(node);
-        node = next;
-    }
-    free(tex);
+        TextureVariant_Destruct(variant);
+        free(tex->_variants);
+        tex->_variants = next;
     }
 }
 
-void Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
+void Texture_Destruct(texture_t* tex)
+{
+    assert(tex);
+    destroyVariants(tex);
+    free(tex);
+}
+
+texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
 {
     assert(tex);
     {
@@ -99,18 +103,19 @@ void Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
     if(NULL == variant)
     {
 #if _DEBUG
-        Con_Error("Texture::AddInstance: Warning, argument variant==NULL, ignoring.");
+        Con_Message("Warning:Texture::AddVariant: Argument variant==NULL, ignoring.");
 #endif
-        return;
+        return variant;
     }
 
     if(NULL == (node = (texture_variantlist_node_t*) malloc(sizeof(*node))))
-        Con_Error("Texture::AddInstance: failed on allocation of %lu bytes for new node.",
+        Con_Error("Texture::AddVariant: Failed on allocation of %lu bytes for new node.",
                   (unsigned long) sizeof(*node));
 
     node->variant = variant;
     node->next = tex->_variants;
     tex->_variants = node;
+    return variant;
     }
 }
 
@@ -258,7 +263,7 @@ texturenamespaceid_t Texture_Namespace(const texture_t* tex)
 }
 
 int Texture_IterateVariants(texture_t* tex,
-    int (*callback)(texturevariant_t* instance, void* paramaters), void* paramaters)
+    int (*callback)(texturevariant_t* variant, void* paramaters), void* paramaters)
 {
     assert(tex);
     {

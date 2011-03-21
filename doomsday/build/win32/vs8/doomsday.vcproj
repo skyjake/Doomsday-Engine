@@ -1205,6 +1205,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\materialvariant.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\net_buf.c"
 				>
 			</File>
@@ -2887,6 +2891,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\mapdata.hs"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\materialvariant.h"
 				>
 			</File>
 			<File

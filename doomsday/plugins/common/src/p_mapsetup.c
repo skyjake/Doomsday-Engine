@@ -793,8 +793,6 @@ int P_SetupMapWorker(void* ptr)
         if(IS_NETGAME)
             R_PrecacheMobjNum(MT_IFOG);
 #endif
-
-        R_PrecacheMap();
     }
 
     if(IS_SERVER)

@@ -57,7 +57,11 @@ extern skyfix_t skyFix[2]; // [floor, ceiling]
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
 
-void            R_SetupMap(int mode, int flags);
+/**
+ * Called by the game at various points in the map setup process.
+ */
+void R_SetupMap(int mode, int flags);
+
 void            R_InitLinks(gamemap_t* map);
 void            R_PolygonizeMap(gamemap_t* map);
 void            R_SetupFog(float start, float end, float density, float* rgb);
@@ -67,7 +71,14 @@ const float*    R_GetSectorLightColor(const sector_t* sector);
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 float           R_ExtraLightDelta(void);
 float           R_CheckSectorLight(float lightlevel, float min, float max);
-boolean         R_IsSkySurface(const surface_t* suf);
+
+/**
+ * Will the specified surface be added to the sky mask?
+ *
+ * @param suf  Ptr to the surface to test.
+ * @return boolean  @c true, iff the surface will be masked.
+ */
+boolean R_IsSkySurface(const surface_t* suf);
 
 boolean         R_SectorContainsSkySurfaces(const sector_t* sec);
 
