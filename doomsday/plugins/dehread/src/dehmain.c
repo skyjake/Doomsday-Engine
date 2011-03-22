@@ -40,16 +40,18 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+
+#ifdef WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#endif
 
 // This plugin accesses the internal definition arrays. This dependency
 // should be removed entirely, either by making the plugin modify the
