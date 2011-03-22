@@ -321,6 +321,8 @@ void P_ShotAmmo(player_t *player)
     weaponinfo_t*       wInfo =
         &weaponInfo[player->readyWeapon][player->class_];
 
+    if(IS_CLIENT) return; // Server keeps track of this.
+
 #if __JHERETIC__
     if(deathmatch)
         fireMode = 0; // In deathmatch always use mode zero.

@@ -1249,7 +1249,7 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(/*!((plr->plr->flags & DDPF_LOCAL) &&*/ !plr->plr->inGame)
         return;
 
     hud = &hudStates[player];

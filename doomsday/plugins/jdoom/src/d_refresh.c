@@ -297,8 +297,7 @@ static void rendHUD(int player)
         if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-            int                 viewmode =
-                ((WINDOWHEIGHT == 200)? cfg.setBlocks - 10 : 0);
+            int viewmode = ((WINDOWHEIGHT == 200)? cfg.setBlocks - 10 : 0);
 
             ST_Drawer(player, viewmode, redrawsbar);
         }
