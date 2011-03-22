@@ -124,13 +124,13 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                         Con_Message("PNG_Load: \"%s\": Bit depth must be 8.\n", fileName);
                         canLoad = false;
                     }
-                    else if(!png_info->width || !png_info->height)
+                    else if(!png_get_image_width(png_ptr, png_info) || !png_get_image_height(png_ptr, png_info))
                     {
                         Con_Message("PNG_Load: \"%s\": Bad file? Size is zero.\n", fileName);
                         canLoad = false;
                     }
-                    else if(png_info->channels <= 2 && 
-                            png_info->color_type == PNG_COLOR_TYPE_PALETTE &&
+                    else if(png_get_channels(png_ptr, png_info) <= 2 &&
+                            png_get_color_type(png_ptr, png_info) == PNG_COLOR_TYPE_PALETTE &&
                             !png_get_valid(png_ptr, png_info, PNG_INFO_PLTE))
                     {
                         Con_Message("PNG_Load: \"%s\": Palette is invalid.\n", fileName);
@@ -140,9 +140,9 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                     if(canLoad)
                     {
                         // Information about the image.
-                        *width = png_info->width;
-                        *height = png_info->height;
-                        *pixelSize = png_info->channels;
+                        *width = png_get_image_width(png_ptr, png_info);
+                        *height = png_get_image_height(png_ptr, png_info);
+                        *pixelSize = png_get_channels(png_ptr, png_info);
 
                         // Paletted images have three color components
                         // per pixel.
@@ -153,27 +153,35 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
 
                         // OK, let's copy it into Doomsday's buffer.
                         // \fixme Why not load directly into it?
-                        retbuf =
-                            M_Malloc(4 * png_info->width * png_info->height);
+                        retbuf = M_Malloc(4 * png_get_image_width(png_ptr, png_info) *
+                                          png_get_image_height(png_ptr, png_info));
                         rows = png_get_rows(png_ptr, png_info);
                         for(i = 0; i < *height; ++i)
                         {
-                            if(png_info->channels >= 3)
+                            if(png_get_channels(png_ptr, png_info) >= 3)
                             {
-                                memcpy(retbuf + i * (*pixelSize) * png_info->width,
-                                       rows[i], (*pixelSize) * png_info->width);
+                                memcpy(retbuf + i * (*pixelSize) * (*width),
+                                       rows[i], (*pixelSize) * (*width));
                             }
                             else // Paletted image.
                             {
+                                // Get the palette.
+                                png_colorp palette = 0;
+                                int numPalette = 0;
+                                png_get_PLTE(png_ptr, png_info, &palette, &numPalette);
+
                                 for(k = 0; k < *width; ++k)
                                 {
-                                    pixel = retbuf + ((*pixelSize) * (i * png_info->width + k));
-                                    off = k * png_info->channels;
-                                    if(png_info->color_type == PNG_COLOR_TYPE_PALETTE)
+                                    pixel = retbuf + ((*pixelSize) * (i * (*width) + k));
+                                    off = k * png_get_channels(png_ptr, png_info);
+                                    if(png_get_color_type(png_ptr, png_info) == PNG_COLOR_TYPE_PALETTE)
                                     {
-                                        pixel[0] = png_info->palette[rows[i][off]].red;
-                                        pixel[1] = png_info->palette[rows[i][off]].green;
-                                        pixel[2] = png_info->palette[rows[i][off]].blue;
+#ifdef RANGECHECK
+                                        assert(rows[i][off] < numPalette);
+#endif
+                                        pixel[0] = palette[rows[i][off]].red;
+                                        pixel[1] = palette[rows[i][off]].green;
+                                        pixel[2] = palette[rows[i][off]].blue;
                                     }
                                     else
                                     {
