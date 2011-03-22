@@ -875,7 +875,7 @@ boolean SV_v13_LoadGame(const char* savename)
     // Skip the description field
     memset(vcheck, 0, sizeof(vcheck));
     sprintf(vcheck, "version %i", SAVE_VERSION);
-    if(strcmp(save_p, (const byte*)vcheck))
+    if(strcmp((const char*)save_p, vcheck))
     {
         // Bad version!
         Con_Message("Savegame ID '%s': incompatible?\n", save_p);

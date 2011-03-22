@@ -188,7 +188,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                                         // Grayscale.
                                         pixel[0] = pixel[1] = pixel[2] = rows[i][off];
                                     }
-                                    if(png_info->channels == 2) // Alpha data.
+                                    if(png_get_channels(png_ptr, png_info) == 2) // Alpha data.
                                     {
                                         pixel[3] = rows[i][off + 1];
                                     }
