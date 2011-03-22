@@ -119,7 +119,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
 
                     // Check if it can be used.
                     canLoad = true;
-                    if(png_info->bit_depth != 8)
+                    if(png_get_bit_depth(png_ptr, png_info) != 8)
                     {
                         Con_Message("PNG_Load: \"%s\": Bit depth must be 8.\n", fileName);
                         canLoad = false;

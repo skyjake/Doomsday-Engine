@@ -105,7 +105,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
     chunk_hdr_t*    riff_chunk;
     wav_format_t*   wave_format = NULL;
 
-    if(!WAV_CheckFormat(data))
+    if(!WAV_CheckFormat((const char*)data))
     {
         Con_Message("WAV_MemoryLoad: Not a WAV file.\n");
         return NULL;
