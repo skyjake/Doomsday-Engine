@@ -548,10 +548,10 @@ directory from which the textures are searched.
 
 Links to high-resolution texture sites:
 
-@ind{
-	@link{http://switch.to/doom2textures} @br
-	@link{http://switch.to/heretictextures} @br
-	@link{http://switch.to/hexentextures}
+@list{
+@item @link{http://switch.to/doom2textures}
+@item @link{http://switch.to/heretictextures}
+@item @link{http://switch.to/hexentextures}
 }
 
 More texture-related resources are available at DoomsdayHQ:
