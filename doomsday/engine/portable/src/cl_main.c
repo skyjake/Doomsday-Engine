@@ -284,6 +284,7 @@ void Cl_GetPackets(void)
                 Cl_Sound();
                 break;
 
+                /*
             case PSV_FILTER:
                 {
                 player_t*           plr = &ddPlayers[consolePlayer];
@@ -299,7 +300,8 @@ void Cl_GetPackets(void)
                 plr->shared.filterColor[CB] = (filter >> 16) & 0xff;
                 plr->shared.filterColor[CA] = (filter >> 24) & 0xff;
                 break;
-                }
+                }*/
+
             default:
                 handled = false;
             }

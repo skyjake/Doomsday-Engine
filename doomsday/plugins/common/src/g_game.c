@@ -792,11 +792,9 @@ void G_ChangeGameState(gamestate_t state)
     if(gameState != state)
     {
 #if _DEBUG
-// Log gamestate changes in debug builds, with verbose.
-VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
-                    getGameStateStr(state)));
+        // Log gamestate changes in debug builds, with verbose.
+        Con_Message("G_ChangeGameState: New state %s.\n", getGameStateStr(state));
 #endif
-
         gameState = state;
     }
 
@@ -1254,7 +1252,7 @@ void G_Ticker(timespan_t ticLength)
 
                 // Let's get rid of the mobj.
 #ifdef _DEBUG
-Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
+                Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
                 P_MobjRemove(plr->plr->mo, true);
                 plr->plr->mo = NULL;
@@ -1643,8 +1641,14 @@ void G_DoReborn(int plrNum)
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
 
-    // Clear the currently playing script, if any.
-    FI_Reset();
+    if(plrNum == CONSOLEPLAYER)
+    {
+#ifdef _DEBUG
+        Con_Message("G_DoReborn: Console player reborn, reseting InFine.\n");
+#endif
+        // Clear the currently playing script, if any.
+        FI_Reset();
+    }
 
     if(!IS_NETGAME)
     {

@@ -237,7 +237,7 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
     }
     if(df & PDF_FILTER)
     {
-        int             filter = Msg_ReadLong();
+        int filter = Msg_ReadLong();
 
         if(filter)
             ddpl->flags |= DDPF_VIEW_FILTER;
@@ -248,6 +248,14 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
         ddpl->filterColor[CG] = (filter >> 8) & 0xff;
         ddpl->filterColor[CB] = (filter >> 16) & 0xff;
         ddpl->filterColor[CA] = (filter >> 24) & 0xff;
+
+#ifdef _DEBUG
+        Con_Message("PDF_FILTER: Filter color set to (%f,%f,%f,%f)\n",
+                    ddpl->filterColor[CR],
+                    ddpl->filterColor[CG],
+                    ddpl->filterColor[CB],
+                    ddpl->filterColor[CA]);
+#endif
     }
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
         //pl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */

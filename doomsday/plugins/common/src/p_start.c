@@ -406,6 +406,11 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
 
+#ifdef _DEBUG
+    Con_Message("P_SpawnPlayer: player %i spawned at (%f,%f,%f) floorz=%f\n",
+                plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
+#endif
+
     p = &players[plrNum];
     if(p->playerState == PST_REBORN)
         G_PlayerReborn(plrNum);
@@ -611,17 +616,17 @@ void P_RebornPlayer(int plrNum)
 #else
     playerclass_t       pClass = PCLASS_PLAYER;
 #endif
-    float               pos[3];
-    angle_t             angle;
-    int                 spawnFlags;
-    boolean             makeCamera;
+    float               pos[3] = { 0, 0, 0 };
+    angle_t             angle = 0;
+    int                 spawnFlags = 0;
+    boolean             makeCamera = false;
 
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
 
     p = &players[plrNum];
 
-    Con_Printf("P_RebornPlayer: %i.\n", plrNum);
+    Con_Message("P_RebornPlayer: %i.\n", plrNum);
 
     if(p->plr->mo)
     {
@@ -631,7 +636,12 @@ void P_RebornPlayer(int plrNum)
     }
 
     if(G_GetGameState() != GS_MAP)
+    {
+#ifdef _DEBUG
+        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GetGameState());
+#endif
         return; // Nothing else to do.
+    }
 
     // Spawn at random spot if in death match.
     if(deathmatch)
@@ -673,13 +683,13 @@ void P_RebornPlayer(int plrNum)
 #else
         uint entryPoint = 0;
 #endif
-        boolean             foundSpot = false;
-        const playerstart_t* assigned =
-            P_GetPlayerStart(entryPoint, plrNum, false);
+        boolean foundSpot = false;
+        const playerstart_t* assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
         if(assigned && P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
-        {   // Appropriate player start spot is open.
-            Con_Printf("- spawning at assigned spot\n");
+        {
+            // Appropriate player start spot is open.
+            Con_Message("- spawning at assigned spot\n");
 
             pos[VX] = assigned->pos[VX];
             pos[VY] = assigned->pos[VY];
@@ -692,7 +702,7 @@ void P_RebornPlayer(int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         else
         {
-            Con_Printf("- force spawning at %i.\n", p->startSpot);
+            Con_Message("- force spawning at %i.\n", p->startSpot);
 
             if(assigned)
             {
@@ -720,6 +730,10 @@ void P_RebornPlayer(int plrNum)
         {
             int                 i;
 
+#ifdef _DEBUG
+            Con_Message("P_RebornPlayer: Trying other spots for %i.\n", plrNum);
+#endif
+
             // Try to spawn at one of the other player start spots.
             for(i = 0; i < MAXPLAYERS; ++i)
             {
@@ -737,14 +751,22 @@ void P_RebornPlayer(int plrNum)
                         spawnFlags = start->spawnFlags;
 
                         foundSpot = true;
+
+#ifdef _DEBUG
+                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", start->pos[VX], start->pos[VY]);
+#endif
                         break;
                     }
+#ifdef _DEBUG
+                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", start->pos[VX], start->pos[VY]);
+#endif
                 }
             }
         }
 
         if(!foundSpot)
-        {   // Player's going to be inside something.
+        {
+            // Player's going to be inside something.
             const playerstart_t* start;
 
             if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
@@ -765,6 +787,10 @@ void P_RebornPlayer(int plrNum)
         }
 #endif
     }
+
+#ifdef _DEBUG
+    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f).\n", pos[VX], pos[VY], pos[VZ]);
+#endif
 
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
                 spawnFlags, makeCamera, true, true);

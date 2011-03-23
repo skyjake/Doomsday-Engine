@@ -83,7 +83,7 @@ enum {
     PSV_CONSOLE_TEXT = 11,
     PCL_ACK_SHAKE = 12,
     PSV_SYNC = 13,
-    PSV_FILTER = 14,                // unused?
+    //PSV_FILTER = 14,                // unused?
     PKT_COMMAND = 15,               // obsolete
     PKT_LOGIN = 16,
     PCL_ACK_SETS = 17,
