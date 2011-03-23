@@ -1,9 +1,7 @@
 @include{jake.ah}
 @macro{TITLE}{ The Doomsday Engine }
-@macro{VERSION}{ Version 1.9.0 }
-
+@macro{VERSION}{ Version 1.9.7 }
 @require{amestd}
-@include{darktable}
 
 @begin
 
@@ -54,7 +52,7 @@ Sound:
 @item Win32: supports DirectSound, DirectSound3D, EAX 2.0 and A3D 3.0
 @item Mac: QuickTime
 @item Linux: SDL_mixer, OpenAL
-@item Uses FMOD (@link{http://www.fmod.org/}) to play music files such as MP3
+@item Uses @link{FMOD}{http://www.fmod.org/} to play music files such as MP3
 @item 3D sound effects
 @item Environmental (reverb) effects
 @item Runtime sound effect resamping to 22/44 KHz with 8/16 bits
@@ -131,12 +129,12 @@ Additional documentation is available in the @file{ Doc\ } folder:
 An up-to-date version history of the Doomsday engine should
 be available at:
 
-@ind{@link{http://www.doomsdayhq.com/changes.php}}
+@ind{@url{http://www.doomsdayhq.com/changes.php}}
 
 The Extended General Line And Sector Type Reference (XGRef) can be
 downloaded from:
 
-@ind{@link{http://iki.fi/code/files/XGRef.pdf}}
+@ind{@url{http://iki.fi/code/files/XGRef.pdf}}
 
 
 
@@ -357,8 +355,7 @@ example the contents of the PK3 might be:
    xyz.lmp
 }}
 
-@file{#assembly} would be mapped to @file{
-Data\<Game>\Auto\assembly\ }.
+@file{#assembly} would be mapped to @file{Data\<Game>\Auto\assembly\}.
 
 
 @chapter{ Graphics }
@@ -548,15 +545,15 @@ directory from which the textures are searched.
 
 Links to high-resolution texture sites:
 
-@list{
-@item @link{http://switch.to/doom2textures}
-@item @link{http://switch.to/heretictextures}
-@item @link{http://switch.to/hexentextures}
+@list/thin{
+@item @url{http://switch.to/doom2textures}
+@item @url{http://switch.to/heretictextures}
+@item @url{http://switch.to/hexentextures}
 }
 
 More texture-related resources are available at DoomsdayHQ:
 
-@ind{@link{http://www.doomsdayhq.com/files.php?class=4&type=3}}
+@ind{@url{http://www.doomsdayhq.com/files.php?class=4&type=3}}
 
 
 
@@ -600,8 +597,7 @@ Example: If you assign the light map "Round" to a light source, images with that
 
 @section{ Music }
 
-Doomsday can play various external music files using the FMOD library
-(@link{http://www.fmod.org/}). FMOD supports many music file formats including MP3, OGG, MOD and S3M (mods are a good choice due
+Doomsday can play various external music files using the @link{FMOD library}{http://www.fmod.org/}. FMOD supports many music file formats including MP3, OGG, MOD and S3M (mods are a good choice due
 to their good quality/size ratio). External music files can be played at
 any time using the @cmd{playext} console command.
 
@@ -742,8 +738,8 @@ outgoing UDP traffic.
 @chapter{ Known issues }
 
 @list{
-@item The list of reported bugs is on the deng Project page on SourceForge:
-	@link{http://sourceforge.net/projects/deng/}
+@item The list of reported bugs is on the 
+	@link{deng Project page on SourceForge}{http://sourceforge.net/projects/deng/}.
 
 @item Display color adjustments (gamma, contrast, brightness) are
 	currently not functional in Linux.
@@ -787,7 +783,7 @@ under @file{ Md2\ } for more detailed info).
 @strong{David Jarvis}, for doing network testing with jDoom and jHeretic and
 generously contributing essential computer hardware components! :-)
 
-@strong{Andrew Apted}, for glBSP (@link{http://glbsp.sourceforge.net/}).
+@strong{Andrew Apted}, for @link{glBSP}{http://glbsp.sourceforge.net/}.
 
 @strong{William Mull}, for hosting the j-sites and bearing with me.
 
