@@ -2,7 +2,7 @@
 ; and any changes will get overwritten when the release script is run.
 
 [Setup]
-OutputBaseFilename=deng-${VERSION}_${BUILD}
+OutputBaseFilename=doomsday_${VERSION}_${BUILD}
 AppName=Doomsday Engine
 AppVerName=Doomsday Engine ${VERSION}
 AppPublisher=deng Team
