@@ -2,3 +2,4 @@
 .DS_Store
 
 /doomsday/build/win32/license.txt
+*.user.*

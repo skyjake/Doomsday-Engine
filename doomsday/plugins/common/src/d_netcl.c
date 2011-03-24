@@ -295,8 +295,9 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 #endif
 
 #ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: New state = %i\n",
-                    pl->playerState);
+        Con_Message("NetCl_UpdatePlayerState2: New state = %s\n",
+                    pl->playerState == PST_LIVE?  "PST_LIVE" :
+                    pl->playerState == PST_DEAD? "PST_DEAD" : "PST_REBORN");
 #endif
 
         // Set or clear the DEAD flag for this player.

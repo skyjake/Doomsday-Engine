@@ -405,6 +405,9 @@ void Cl_UpdatePlayerPos(int plrNum)
     clmo = &s->cmo->mo;
     mo = plr->shared.mo;
 
+    // The client mobj is never solid.
+    clmo->ddFlags &= ~DDMF_SOLID;
+
     clmo->angle = mo->angle;
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
@@ -773,13 +776,12 @@ void Cl_ReadPlayerDelta2(boolean skip)
             }
 
 #if _DEBUG
-Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%ul\n", num, s->mobjId,
-            (unsigned int) old);
-Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", s->cmo->mo.pos[VX],
-            s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
-            s->cmo->mo.floorZ, s->cmo->mo.ceilingZ);
-Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
-            (skip? -1 : num), s->mobjId);
+        Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=0x%p\n", num, s->mobjId, old);
+        Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", s->cmo->mo.pos[VX],
+                    s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
+                    s->cmo->mo.floorZ, s->cmo->mo.ceilingZ);
+        Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
+                    (skip? -1 : num), s->mobjId);
 #endif
         }
     }

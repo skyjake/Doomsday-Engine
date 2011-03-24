@@ -355,7 +355,11 @@ VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle)
     mo->tics = clmo->tics;
     mo->state = clmo->state;
     //mo->nexttime = clmo->nexttime;
-    mo->ddFlags = clmo->ddFlags;
+#define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
+    mo->ddFlags = (mo->ddFlags & DDMF_KEEP_MASK) | (clmo->ddFlags & ~DDMF_KEEP_MASK);
+#ifdef _DEBUG
+    Con_Message("Cl_UpdateRealPlayerMobj: Setting mo flags to 0x%x\n", mo->ddFlags);
+#endif
     mo->radius = clmo->radius;
     mo->height = clmo->height;
     mo->floorClip = clmo->floorClip;

@@ -385,6 +385,45 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
 }
 
 /**
+ * Check the state of the client on engineside. This is a debugging utility
+ * and only gets called when _DEBUG is defined.
+ */
+void Cl_Assertions(int plrNum)
+{
+    player_t           *plr;
+    mobj_t             *clmo, *mo;
+    clplayerstate_t    *s;
+
+    if(!isClient || !Cl_GameReady() || clientPaused) return;
+    if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
+
+    plr = &ddPlayers[plrNum];
+    s = &clPlayerStates[plrNum];
+
+    // Must have a mobj!
+    if(!s->cmo || !plr->shared.mo)
+        return;
+
+    clmo = &s->cmo->mo;
+    mo = plr->shared.mo;
+
+    /*
+    Con_Message("Assert: client %i, clmo %i (flags 0x%x)\n",
+                plrNum, clmo->thinker.id, clmo->ddFlags);
+                */
+
+    // Make sure the flags are correctly set for a client.
+    if(mo->ddFlags & DDMF_REMOTE)
+    {
+        Con_Message("Cl_Assertions: client %i, mobj should not be remote!\n", plrNum);
+    }
+    if(clmo->ddFlags & DDMF_SOLID)
+    {
+        Con_Message("Cl_Assertions: client %i, clmobj should not be solid (when player is alive)!\n", plrNum);
+    }
+}
+
+/**
  * Client-side game ticker.
  */
 void Cl_Ticker(void)
@@ -407,6 +446,10 @@ void Cl_Ticker(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         Cl_UpdatePlayerPos(i); //P_GetDDPlayerIdx(mo->dPlayer));
+
+#ifdef _DEBUG
+        Cl_Assertions(i);
+#endif
     }
 
     //Cl_LocalCommand();

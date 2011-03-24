@@ -1886,6 +1886,36 @@ void P_PlayerThinkUpdateControls(player_t* player)
 }
 
 /**
+ * Verify that the player state is valid. This is a debugging utility and
+ * only gets called when _DEBUG is defined.
+ */
+void P_PlayerThinkAssertions(player_t* player)
+{
+    int plrNum = player - players;
+    mobj_t* mo = player->plr->mo;
+    if(!mo) return;
+
+    if(IS_CLIENT)
+    {
+        // Let's do some checks about the state of a client player.
+        if(player->playerState == PST_LIVE)
+        {
+            if(!(mo->ddFlags & DDMF_SOLID))
+            {
+                Con_Message("P_PlayerThinkAssertions: player %i, mobj should be solid when alive!\n", plrNum);
+            }
+        }
+        else if(player->playerState == PST_DEAD)
+        {
+            if(mo->ddFlags & DDMF_SOLID)
+            {
+                Con_Message("P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!\n", plrNum);
+            }
+        }
+    }
+}
+
+/**
  * Main thinker function for players. Handles both single player and
  * multiplayer games, as well as all the different types of players
  * (normal/camera).
@@ -1910,6 +1940,10 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
         P_PlayerThinkUpdateControls(player);
         return;
     }
+
+#ifdef _DEBUG
+    P_PlayerThinkAssertions(player);
+#endif
 
     P_PlayerThinkState(player);
 
