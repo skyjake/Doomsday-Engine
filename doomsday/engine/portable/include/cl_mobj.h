@@ -59,11 +59,13 @@ void            Cl_Reset(void);
 void            Cl_DestroyClientMobjs(void);
 clmobj_t       *Cl_CreateMobj(thid_t id);
 void            Cl_DestroyMobj(clmobj_t *cmo);
-boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *),
-                                void *parm);
+void            Cl_LinkMobj(clmobj_t *cmo, thid_t id);
+void            Cl_UnlinkMobj(clmobj_t *cmo);
+boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm);
 void            Cl_PredictMovement(void);
 void            Cl_UnsetMobjPosition(clmobj_t *cmo);
 void            Cl_SetMobjPosition(clmobj_t *cmo);
+void            Cl_SetMobjState(mobj_t *mo, int stnum);
 int             Cl_ReadMobjDelta(void); // obsolete
 void            Cl_ReadMobjDelta2(boolean skip);
 void            Cl_ReadNullMobjDelta2(boolean skip);

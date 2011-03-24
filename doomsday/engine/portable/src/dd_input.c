@@ -307,7 +307,7 @@ void I_DeviceReset(uint ident)
     inputdev_t*         dev = &inputDevices[ident];
     int                 k;
 
-    for(k = 0; k < dev->numAxes; ++k)
+    for(k = 0; k < (int)dev->numAxes; ++k)
     {
         if(dev->axes[k].type == IDAT_POINTER)
         {
@@ -422,7 +422,7 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
 {
     int         i;
 
-    for(i = 0; i < device->numKeys; ++i)
+    for(i = 0; i < (int)device->numKeys; ++i)
     {
         if(device->keys[i].name && !stricmp(device->keys[i].name, name))
             return i;

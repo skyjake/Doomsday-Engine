@@ -37,6 +37,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef WIN32
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 // Size of the map data structures in bytes in the arrived WAD format.

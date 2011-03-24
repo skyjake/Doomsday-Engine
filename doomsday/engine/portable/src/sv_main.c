@@ -582,9 +582,9 @@ void Sv_ExecuteCommand(void)
 void Sv_GetPackets(void)
 {
     int         netconsole;
-    int         start, num, i;
     client_t   *sender;
-    byte       *unpacked;
+    //int         start, num, i;
+    //byte       *unpacked;
 
     while(Net_GetPacket())
     {

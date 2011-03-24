@@ -1184,7 +1184,7 @@ char* M_FindFileExtension(char* path)
                    *(p - 1) == DIR_WRONG_SEP_CHAR)
                     break;
                 if(*p == '.')
-                    return p - path < len - 1? p + 1 : NULL;
+                    return (size_t)(p - path) < len - 1? p + 1 : NULL;
             } while(--p > path);
         }
     }

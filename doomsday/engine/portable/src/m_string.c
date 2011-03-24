@@ -406,7 +406,7 @@ const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
  */
 char Str_At(ddstring_t* str, int index)
 {
-    if(index < 0 || index >= str->length)
+    if(index < 0 || (uint)index >= str->length)
     {
         return 0;
     }
@@ -423,7 +423,7 @@ char Str_At(ddstring_t* str, int index)
  */
 char Str_RAt(ddstring_t* str, int reverseIndex)
 {
-    if(reverseIndex < 0 || reverseIndex >= str->length)
+    if(reverseIndex < 0 || (uint)reverseIndex >= str->length)
     {
         return 0;
     }

@@ -1035,7 +1035,7 @@ static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", mat->id.name)
-                RV_FLAGS("Namespace", mat->id.mnamespace, "mn_")
+                RV_FLAGS("Namespace", (*(int*)&mat->id.mnamespace), "mn_")
                 RV_FLAGS("Flags", mat->flags, "matf_")
                 RV_FLT("Width", mat->width)
                 RV_FLT("Height", mat->height)

@@ -649,7 +649,7 @@ static void drawStatusBarBackground(int player)
         y = 135;
         w = ST_WIDTH;
         h = 27;
-        ch = 0.41538461538461538461538461538462;
+        ch = 0.41538461538461538461538461538462f;
 
         DGL_TexCoord2f(0, 0, 0);
         DGL_Vertex2f(x, y);
@@ -666,7 +666,7 @@ static void drawStatusBarBackground(int player)
         w = 38;
         h = 38;
         cw = (float) 38 / ST_WIDTH;
-        ch = 0.41538461538461538461538461538462;
+        ch = 0.41538461538461538461538461538462f;
 
         DGL_TexCoord2f(0, 0, ch);
         DGL_Vertex2f(x, y);
@@ -727,8 +727,8 @@ static void drawStatusBarBackground(int player)
                 w = deathmatch ? 122 : 152;
                 h = 30;
                 cw = deathmatch ? (float) 15 / 122 : 0;
-                cw2 = 0.62295081967213114754098360655738;
-                ch = 0.96774193548387096774193548387097;
+                cw2 = 0.62295081967213114754098360655738f;
+                ch = 0.96774193548387096774193548387097f;
 
                 DGL_TexCoord2f(0, cw, 0);
                 DGL_Vertex2f(x, y);
@@ -744,8 +744,8 @@ static void drawStatusBarBackground(int player)
                 y = 162;
                 w = 35;
                 h = 30;
-                cw = 0.85655737704918032786885245901639;
-                ch = 0.96774193548387096774193548387097;
+                cw = 0.85655737704918032786885245901639f;
+                ch = 0.96774193548387096774193548387097f;
 
                 DGL_TexCoord2f(0, cw, 0);
                 DGL_Vertex2f(x, y);
@@ -775,7 +775,7 @@ static void drawStatusBarBackground(int player)
             y = 162;
             w = 244;
             h = 30;
-            ch = 0.96774193548387096774193548387097;
+            ch = 0.96774193548387096774193548387097f;
 
             DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(x, y);
