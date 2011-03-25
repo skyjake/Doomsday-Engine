@@ -24,6 +24,8 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
+#include "m_misc.h"
+#include "texture.h"
 
 #include "materialvariant.h"
 
@@ -40,29 +42,29 @@ materialvariant_t* MaterialVariant_Construct(material_t* generalCase,
         Con_Error("MaterialVariant::Construct: Failed on allocation of %lu bytes for "
                   "new MaterialVariant.", (unsigned int) sizeof(*mat));
 
-    mat->generalCase = generalCase;
+    mat->_generalCase = generalCase;
     mat->_spec = spec;
-    mat->current = mat->next = mat;
-    mat->inter = 0;
-    memset(&mat->layers, 0, sizeof(mat->layers));
+    mat->_current = mat->_next = mat;
+    mat->_inter = 0;
+    memset(&mat->_layers, 0, sizeof(mat->_layers));
 
     // Initialize layers according to the Material definition.
     { int i;
     for(i = 0; i < layerCount; ++i)
     {
-        mat->layers[i].tex = generalCase->layers[i].tex;
+        mat->_layers[i].tex = generalCase->layers[i].tex;
 
         if(def && def->layers[i].stageCount.num > 0)
         {
-            mat->layers[i].glow = def->layers[i].stages[0].glow;
-            mat->layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
-            mat->layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
+            mat->_layers[i].glow = def->layers[i].stages[0].glow;
+            mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
+            mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
             continue;
         }
 
-        mat->layers[i].glow = 0;
-        mat->layers[i].texOrigin[0] = generalCase->layers[i].texOrigin[0];
-        mat->layers[i].texOrigin[1] = generalCase->layers[i].texOrigin[1];
+        mat->_layers[i].glow = 0;
+        mat->_layers[i].texOrigin[0] = generalCase->layers[i].texOrigin[0];
+        mat->_layers[i].texOrigin[1] = generalCase->layers[i].texOrigin[1];
     }}
     return mat;
     }
@@ -74,10 +76,101 @@ void MaterialVariant_Destruct(materialvariant_t* mat)
     free(mat);
 }
 
+void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
+{
+    assert(mat);
+    {
+    const ded_material_t* def = Material_Definition(mat->_generalCase);
+    int i, layerCount;
+
+    if(!def) // Its a system generated material.
+        return;
+
+    // Update layers.
+    layerCount = Material_LayerCount(mat->_generalCase);
+    for(i = 0; i < layerCount; ++i)
+    {
+        const ded_material_layer_t* lDef = &def->layers[i];
+        const ded_material_layer_stage_t* lsDef, *lsDefNext;
+        materialvariant_layer_t* layer = &mat->_layers[i];
+        float inter;
+
+        if(!(lDef->stageCount.num > 1))
+            continue;
+
+        if(layer->tics-- <= 0)
+        {
+            // Advance to next stage.
+            if(++layer->stage == lDef->stageCount.num)
+            {
+                // Loop back to the beginning.
+                layer->stage = 0;
+            }
+
+            lsDef = &lDef->stages[layer->stage];
+            if(lsDef->variance != 0)
+                layer->tics = lsDef->tics * (1 - lsDef->variance * RNG_RandFloat());
+            else
+                layer->tics = lsDef->tics;
+
+            inter = 0;
+        }
+        else
+        {
+            lsDef = &lDef->stages[layer->stage];
+            inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
+        }
+
+        {const texture_t* glTex;
+        if((glTex = GL_TextureByUri(lsDef->texture)))
+        {
+            layer->tex = Texture_Id(glTex);
+            MaterialVariant_SetTranslationPoint(mat, inter);
+        }
+        else
+        {
+            /// @fixme Should reset this to the non-stage animated texture here.
+            //layer->tex = 0;
+            //generalCase->inter = 0;
+        }}
+
+        if(inter == 0)
+        {
+            layer->glow = lsDef->glow;
+            layer->texOrigin[0] = lsDef->texOrigin[0];
+            layer->texOrigin[1] = lsDef->texOrigin[1];
+            continue;
+        }
+        lsDefNext = &lDef->stages[(layer->stage+1) % lDef->stageCount.num];
+
+        layer->glow = lsDefNext->glow * inter + lsDef->glow * (1 - inter);
+
+        /// @todo Implement a more useful method of interpolation (but what? what do we want/need here?).
+        layer->texOrigin[0] = lsDefNext->texOrigin[0] * inter + lsDef->texOrigin[0] * (1 - inter);
+        layer->texOrigin[1] = lsDefNext->texOrigin[1] * inter + lsDef->texOrigin[1] * (1 - inter);
+    }
+    }
+}
+
+void MaterialVariant_ResetAnim(materialvariant_t* mat)
+{
+    assert(mat);
+    {
+    int i, layerCount = Material_LayerCount(mat->_generalCase);
+    for(i = 0; i < layerCount; ++i)
+    {
+        materialvariant_layer_t* ml = &mat->_layers[i];
+        if(ml->stage == -1)
+            break;
+        ml->stage = 0;
+    }
+    }
+}
+
 material_t* MaterialVariant_GeneralCase(materialvariant_t* mat)
 {
     assert(mat);
-    return mat->generalCase;
+    return mat->_generalCase;
 }
 
 materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat)
@@ -86,29 +179,41 @@ materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* ma
     return mat->_spec;
 }
 
-void MaterialVariant_ResetGroupAnim(materialvariant_t* mat)
+const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int layer)
 {
     assert(mat);
-    {
-    uint i, numLayers = Material_LayerCount(mat->generalCase);
-    for(i = 0; i < numLayers; ++i)
-    {
-        materialvariant_layer_t* ml = &mat->layers[i];
-        if(ml->stage == -1)
-            break;
-        ml->stage = 0;
-    }
-    }
+    if(layer >= 0 && layer < Material_LayerCount(mat->_generalCase))
+        return &mat->_layers[layer];
+    return NULL;
 }
+
+materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat)
+{
+    assert(mat);
+    return mat->_next;
+}
+
+materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat)
+{
+    assert(mat);
+    return mat->_current;
+}
+
+float MaterialVariant_TranslationPoint(materialvariant_t* mat)
+{
+    assert(mat);
+    return mat->_inter;
+}
+
 void MaterialVariant_SetTranslation(materialvariant_t* mat,
     materialvariant_t* current, materialvariant_t* next)
 {
     assert(mat && current);
     if(next)
     {
-        mat->current = current;
-        mat->next = next;
-        mat->inter = 0;
+        mat->_current = current;
+        mat->_next = next;
+        mat->_inter = 0;
         return;
     }
 #if _DEBUG
@@ -119,5 +224,5 @@ void MaterialVariant_SetTranslation(materialvariant_t* mat,
 void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter)
 {
     assert(mat);
-    mat->inter = inter;
+    mat->_inter = inter;
 }

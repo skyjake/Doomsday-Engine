@@ -1197,15 +1197,15 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     if(smoothed)
     {
-        variant = variant->current;
-        mat = variant->generalCase;
+        variant = MaterialVariant_TranslationCurrent(variant);
+        mat = MaterialVariant_GeneralCase(variant);
     }
     assert(mat->numLayers > 0);
 
     // Ensure all resources needed to visualize this material are loaded.
     for(i = 0; i < mat->numLayers; ++i)
     {
-        materialvariant_layer_t* ml = &variant->layers[i];
+        const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
         byte result;
 
         // Pick the instance matching the specified context.
@@ -1292,13 +1292,13 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
-    snapshot->glowing = variant->layers[0].glow * glowingTextures;
+    snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowingTextures;
     snapshot->isDecorated = (decor? true : false);
 
     // Setup the primary texturing pass.
-    if(0 != variant->layers[0].tex)
+    if(0 != MaterialVariant_Layer(variant, 0)->tex)
     {
-        const texture_t* tex = GL_ToTexture(variant->layers[0].tex);
+        const texture_t* tex = GL_ToTexture(MaterialVariant_Layer(variant, 0)->tex);
         int magMode = glmode[texMagMode];
         vec2_t scale;
 
@@ -1307,8 +1307,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
 
         setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, layerTextures[0],
-            scale[0], scale[1], variant->layers[0].texOrigin[0],
-            variant->layers[0].texOrigin[1], 1);
+            scale[0], scale[1], MaterialVariant_Layer(variant, 0)->texOrigin[0],
+            MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
 
         snapshot->isOpaque = !TextureVariant_IsMasked(layerTextures[0]);
 
@@ -1708,9 +1708,7 @@ boolean Materials_IsPrecacheAnimGroup(int groupNum)
 
 static int clearVariantTranslationWorker(materialvariant_t* variant, void* paramaters)
 {
-    assert(variant);
-    variant->inter = 0;
-    variant->current = variant->next = variant;
+    MaterialVariant_SetTranslation(variant, variant, variant);
     return 0; // Continue iteration.
 }
 
@@ -1828,7 +1826,7 @@ static void animateAnimGroups(void)
 
 static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* paramaters)
 {
-    MaterialVariant_ResetGroupAnim(mat);
+    MaterialVariant_ResetAnim(mat);
     return 0; // Continue iteration.
 }
 

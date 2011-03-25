@@ -78,15 +78,15 @@ typedef struct materialvariant_layer_s {
 } materialvariant_layer_t;
 
 typedef struct materialvariant_s {
-    materialvariant_layer_t layers[MATERIALVARIANT_MAXLAYERS];
+    materialvariant_layer_t _layers[MATERIALVARIANT_MAXLAYERS];
 
     /// Superior Material of which this is a derivative.
-    struct material_s* generalCase;
+    struct material_s* _generalCase;
 
     /// For "smoothed" Material animation:
-    struct materialvariant_s* current;
-    struct materialvariant_s* next;
-    float inter;
+    struct materialvariant_s* _current;
+    struct materialvariant_s* _next;
+    float _inter;
 
     /// Specification used to derive this variant.
     materialvariantspecification_t* _spec;
@@ -97,11 +97,21 @@ materialvariant_t* MaterialVariant_Construct(struct material_s* generalCase,
 
 void MaterialVariant_Destruct(materialvariant_t* mat);
 
+void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time);
+
+void MaterialVariant_ResetAnim(materialvariant_t* mat);
+
 struct material_s* MaterialVariant_GeneralCase(materialvariant_t* mat);
 
 materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat);
 
-void MaterialVariant_ResetGroupAnim(materialvariant_t* mat);
+const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int layer);
+
+materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);
+
+materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat);
+
+float MaterialVariant_TranslationPoint(materialvariant_t* mat);
 
 void MaterialVariant_SetTranslation(materialvariant_t* mat,
     materialvariant_t* current, materialvariant_t* next);

@@ -1179,12 +1179,13 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
         // If fog is active, inter=0 is accepted as well. Otherwise
         // flickering may occur if the rendering passes don't match for
         // blended and unblended surfaces.
-        if(numTexUnits > 1 && variant->current != variant->next &&
-           !(!usingFog && variant->inter < 0))
+        if(MaterialVariant_TranslationCurrent(variant) != MaterialVariant_TranslationNext(variant) &&
+           !(!usingFog && MaterialVariant_TranslationPoint(variant) < 0))
         {
             // Prepare the inter texture.
-            Materials_Prepare(msB, variant->next->generalCase, false, spec);
-            interPos = variant->inter;
+            Materials_Prepare(msB, MaterialVariant_GeneralCase(MaterialVariant_TranslationNext(variant)),
+                false, spec);
+            interPos = MaterialVariant_TranslationPoint(variant);
         }
     }
 
