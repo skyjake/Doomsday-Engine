@@ -1204,8 +1204,27 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     // Have we already registered a suitable variant?
     variant = Materials_ChooseVariant(mat, spec);
     if(NULL == variant)
-    {   // We need to allocate a variant.
+    {   // We need to create at least one variant.
         variant = Material_AddVariant(mat, MaterialVariant_Construct(mat, spec));
+        if(Material_IsGroupAnimated(mat))
+        {   // Create all other required variants for any Materials in any linked
+            // animation groups.
+            int i;
+            for(i = 0; i < numgroups; ++i)
+            {
+                if(!isInAnimGroup(&groups[i], mat)) continue;
+
+                { int k;
+                for(k = 0; k < groups[i].count; ++k)
+                {
+                    material_t* other = groups[i].frames[k].mat;
+                    if(mat != other && NULL == Materials_ChooseVariant(other, spec))
+                    {
+                        Material_AddVariant(other, MaterialVariant_Construct(other, spec));
+                    }
+                }}
+            }
+        }
     }
 
     if(smoothed)
