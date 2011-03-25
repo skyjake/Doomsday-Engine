@@ -109,7 +109,7 @@ def mac_release():
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
-    target = OUTPUT_DIR + "/deng-" + DOOMSDAY_VERSION + "_" + DOOMSDAY_BUILD + ".dmg"
+    target = OUTPUT_DIR + "/doomsday_" + DOOMSDAY_VERSION + "_" + DOOMSDAY_BUILD + ".dmg"
     try:
         os.remove(target)
         print 'Removed existing target file', target
