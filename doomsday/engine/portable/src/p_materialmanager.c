@@ -1326,8 +1326,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
             snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
         }
 
-        /// \fixme what about the other texture types?
-        if(TC_MAPSURFACE_DIFFUSE == TS_NORMAL(spec->primarySpec)->context)
+        if(TC_MAPSURFACE_DIFFUSE == TS_NORMAL(spec->primarySpec)->context ||
+           TC_SKYSPHERE_DIFFUSE  == TS_NORMAL(spec->primarySpec)->context)
         {
             const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
                 TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
