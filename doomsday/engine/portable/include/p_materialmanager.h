@@ -27,7 +27,7 @@
 
 #include "gl_texmanager.h"
 #include "def_data.h"
-#include "p_material.h"
+#include "material.h"
 
 struct texturevariantspecification_s;
 struct materialvariant_s;

@@ -1,10 +1,9 @@
-/**\file p_material.c
+/**\file material.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +29,7 @@
 
 #include "texture.h"
 #include "materialvariant.h"
-#include "p_material.h"
+#include "material.h"
 
 typedef struct material_variantlist_node_s {
     struct material_variantlist_node_s* next;
