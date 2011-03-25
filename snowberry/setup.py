@@ -77,7 +77,7 @@ setup(
             "other_resources": [(24, 1, manifest)]
         }
     ],
-    data_files=["graphics/snowberry.ico"]
-    #           "myprogram.ico",
-    #            "ChangeLog.txt"],
+    data_files= [ 
+        ( '.', ['graphics/snowberry.ico'] ) 
+    ]
 )

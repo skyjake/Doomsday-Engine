@@ -68,7 +68,7 @@
 #define OFF_FIXED   0x10000000
 #define OFF_MASK    0x00ffffff
 
-#define myoffsetof(type,identifier,fl) (((size_t)&((type*)0)->identifier)|fl)
+#define myoffsetof(type,identifier,fl) (((ptrdiff_t)&((type*)0)->identifier)|fl)
 
 #define LPrintf     Con_Message
 
@@ -1514,9 +1514,9 @@ int PatchState(int stateNum)
     ded_state_t *info, dummy;
 
     // C doesn't allow non-constant initializers.
-    keys[4].offset = myoffsetof(ded_state_t, misc[0], 0);
-    keys[5].offset = myoffsetof(ded_state_t, misc[1], 0);
-
+    keys[2].offset = myoffsetof(ded_state_t, misc[0], 0);
+    keys[3].offset = myoffsetof(ded_state_t, misc[1], 0);   
+     
     if(stateNum >= 0 && stateNum < ded->count.states.num)
     {
         info = ded->states + stateNum;
