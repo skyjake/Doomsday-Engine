@@ -110,7 +110,7 @@ materialnum_t Materials_ToMaterialNum(struct material_s* mat);
  * If incomplete context information is supplied, suitable defaults are
  * chosen in their place.
  *
- * @param tc  Usage context.
+ * @param mc  Usage context.
  * @param flags  @see textureVariantSpecificationFlags
  * @param border  Border size in pixels (all edges).
  * @param tClass  Color palette translation class.
@@ -120,7 +120,7 @@ materialnum_t Materials_ToMaterialNum(struct material_s* mat);
  *      or @c NULL if out of memory.
  */
 struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap);
+    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap);
 
 struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
     const struct materialvariantspecification_s* spec);

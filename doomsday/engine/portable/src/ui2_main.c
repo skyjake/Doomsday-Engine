@@ -526,7 +526,7 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     {
         material_snapshot_t ms;
         Materials_Prepare(&ms, p->_bg.material, true,
-            Materials_VariantSpecificationForContext(TC_UI, 0, 0, 0, 0));
+            Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0));
         tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     }
     else
@@ -994,7 +994,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
                 memset(&ms, 0, sizeof(ms));               
                 Materials_Prepare(&ms, mat, true,
-                    Materials_VariantSpecificationForContext(TC_UI, 0, 1, 0, 0));
+                    Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0));
 
                 if(ms.units[MTU_PRIMARY].tex)
                 {

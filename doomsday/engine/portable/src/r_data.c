@@ -2284,7 +2284,7 @@ void R_PrecacheMobjNum(int num)
     if(num < 0 || num >= defs.count.mobjs.num)
         return;
 
-    spec = Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0);
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0);
     assert(spec);
     /// \optimize Traverses the entire state list!
     { int i;
@@ -2322,7 +2322,7 @@ static void addToSurfaceLists(surface_t* suf, material_t* mat)
         return;
     /// \fixme We should not need to prepare in order to build the lists.
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
+        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0));
     if(ms.glowing > 0)
         R_SurfaceListAdd(glowingSurfaceList, suf);
     if(ms.isDecorated)
@@ -2343,7 +2343,7 @@ void R_PrecacheMap(void)
     Con_SetProgress(100);
 
     startTime = Sys_GetSeconds();
-    spec = Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0);
+    spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0);
 
     { uint i;
     for(i = 0; i < numSideDefs; ++i)
@@ -2387,7 +2387,7 @@ void R_PrecacheMap(void)
     if(precacheSprites)
     {
         int i;
-        spec = Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0);
+        spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0);
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];

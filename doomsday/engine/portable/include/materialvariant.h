@@ -27,7 +27,26 @@
 struct texturevariantspecification_s;
 struct texturevariant_s;
 
+typedef enum {
+    MC_UNKNOWN = -1,
+    MATERIALVARIANTUSAGECONTEXT_FIRST = 0,
+    MC_UI = MATERIALVARIANTUSAGECONTEXT_FIRST,
+    MC_MAPSURFACE,
+    MC_SPRITE,
+    MC_MODELSKIN,
+    MC_PSPRITE,
+    MC_SKYSPHERE,
+    MATERIALVARIANTUSAGECONTEXT_LAST = MC_SKYSPHERE
+} materialvariantusagecontext_t;
+
+#define MATERIALVARIANTUSAGECONTEXT_COUNT (\
+    MATERIALVARIANTUSAGECONTEXT_LAST + 1 - MATERIALVARIANTUSAGECONTEXT_FIRST )
+
+#define VALID_MATERIALVARIANTUSAGECONTEXT(mc) (\
+    (mc) >= MATERIALVARIANTUSAGECONTEXT_FIRST && (mc) <= MATERIALVARIANTUSAGECONTEXT_LAST)
+
 typedef struct materialvariantspecification_s {
+    materialvariantusagecontext_t context;
     struct texturevariantspecification_s* primarySpec;
 } materialvariantspecification_t;
 

@@ -168,7 +168,7 @@ static void prepareSkySphere(void)
         material = Materials_ToMaterial(slayer->material);
 
         Materials_Prepare(&ms, material, false,
-            Materials_VariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE,
+            Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                 TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
                 0, 0, 0));
 

@@ -205,15 +205,17 @@ static materialvariantspecification_t* copyVariantSpecification(
 static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
-    if(a->primarySpec != b->primarySpec)
+    if(a->context != b->context)
         return 1;
-    return 0; // Equal.
+    return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
 }
 
 static materialvariantspecification_t* applyVariantSpecification(
-    materialvariantspecification_t* spec, texturevariantspecification_t* primarySpec)
+    materialvariantspecification_t* spec, materialvariantusagecontext_t mc,
+    texturevariantspecification_t* primarySpec)
 {
-    assert(spec && primarySpec);
+    assert(spec && (mc == MC_UNKNOWN || VALID_MATERIALVARIANTUSAGECONTEXT(mc)) && primarySpec);
+    spec->context = mc;
     spec->primarySpec = primarySpec;
     return spec;
 }
@@ -253,14 +255,25 @@ static materialvariantspecification_t* findVariantSpecification(
 }
 
 static materialvariantspecification_t* getVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap)
 {
     static materialvariantspecification_t tpl;
-    assert(initedOk);
+    assert(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALVARIANTUSAGECONTEXT(mc)));
     {
-    texturevariantspecification_t* texSpec =
-        GL_TextureVariantSpecificationForContext(tc, flags, border, tClass, tMap);
-    applyVariantSpecification(&tpl, texSpec);
+    texturevariantspecification_t* primarySpec;
+    texturevariantusagecontext_t primaryContext;
+    switch(mc)
+    {
+    case MC_UI:             primaryContext = TC_UI;                 break;
+    case MC_MAPSURFACE:     primaryContext = TC_MAPSURFACE_DIFFUSE; break;
+    case MC_SPRITE:         primaryContext = TC_SPRITE_DIFFUSE;     break;
+    case MC_MODELSKIN:      primaryContext = TC_MODELSKIN_DIFFUSE;  break;
+    case MC_PSPRITE:        primaryContext = TC_PSPRITE_DIFFUSE;    break;
+    case MC_SKYSPHERE:      primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
+    default:                primaryContext = TC_UNKNOWN;            break;
+    }
+    primarySpec = GL_TextureVariantSpecificationForContext(primaryContext, flags, border, tClass, tMap);
+    applyVariantSpecification(&tpl, mc, primarySpec);
     return findVariantSpecification(&tpl, true);
     }
 }
@@ -1398,7 +1411,7 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
         return mb->reflection[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1411,7 +1424,7 @@ const ded_detailtexture_t* Materials_Detail(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
         return mb->detail[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1424,7 +1437,7 @@ const ded_decor_t* Materials_Decoration(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
         return mb->decoration[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1437,7 +1450,7 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(TC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
         return mb->ptcGen[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1451,12 +1464,12 @@ uint Materials_Count(void)
 }
 
 struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap)
 {
     if(!initedOk)
         Con_Error("Materials::VariantSpecificationForContext: Materials collection "
             "not yet initialized.");
-    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap);
+    return getVariantSpecificationForContext(mc, flags, border, tClass, tMap);
 }
 
 materialvariant_t* Materials_ChooseVariant(material_t* mat,

@@ -276,7 +276,7 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
                     MN_SYSTEM_NAME":missing" ));
 
             Materials_Prepare(&ms, material, true,
-                Materials_VariantSpecificationForContext(TC_SKYSPHERE_DIFFUSE,
+                Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                     TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0));
             tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
             magMode = ms.units[MTU_PRIMARY].magMode;

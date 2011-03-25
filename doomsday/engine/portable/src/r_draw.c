@@ -238,7 +238,7 @@ void R_DrawViewBorder(void)
     {
         material_snapshot_t ms;
         Materials_Prepare(&ms, mat, true,
-            Materials_VariantSpecificationForContext(TC_UI, 0, 0, 0, 0));
+            Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

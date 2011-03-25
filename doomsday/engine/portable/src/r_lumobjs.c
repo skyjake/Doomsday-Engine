@@ -410,7 +410,7 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
 
     // Ensure we have up-to-date information about the material.
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(TC_SPRITE_DIFFUSE, 0, 1, 0, 0));
+        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0));
     tex = ms.units[MTU_PRIMARY].tex;
     pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
     if(NULL == pl)
@@ -592,7 +592,7 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
     {
     material_snapshot_t ms;
     Materials_Prepare(&ms, surface->material, true,
-        Materials_VariantSpecificationForContext(TC_MAPSURFACE_DIFFUSE, 0, 0, 0, 0));
+        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0));
     V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
     V3_Copy(LUM_PLANE(l)->color, ms.colorAmplified);
     LUM_PLANE(l)->intensity = ms.glowing;

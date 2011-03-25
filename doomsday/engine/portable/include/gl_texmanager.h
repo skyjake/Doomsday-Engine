@@ -238,12 +238,12 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
     boolean isMipMapped, int* optWidth, int* optHeight);
 
 /**
- * Output a human readable representation of TextureVariantSpecification
- * to console output.
- *
- * @param spec  Specification to echo.
+ * Compare the given TextureVariantSpecifications and determine whether
+ * they can be considered equal (dependent on current engine state and
+ * the available features of the GL implementation).
  */
-void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
+int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
+    const texturevariantspecification_t* b);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context.
@@ -272,6 +272,14 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
  */
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     float contrast);
+
+/**
+ * Output a human readable representation of TextureVariantSpecification
+ * to console output.
+ *
+ * @param spec  Specification to echo.
+ */
+void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
 
 struct texturevariant_s* GL_ChooseTextureVariant(struct texture_s* tex,
     const texturevariantspecification_t* spec);

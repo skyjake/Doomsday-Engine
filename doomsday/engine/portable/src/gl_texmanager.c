@@ -281,17 +281,8 @@ static texturevariantspecification_t* findVariantSpecification(
     texturevariantspecificationlist_node_t* node;
     for(node = variantSpecs[type]; node; node = node->next)
     {
-        switch(type)
-        {
-        case TS_NORMAL:
-            if(!compareVariantSpecifications(TS_NORMAL(node->spec), TS_NORMAL(tpl)))
-                return node->spec;
-            break;
-        case TS_DETAIL:
-            if(!compareDetailVariantSpecifications(TS_DETAIL(node->spec), TS_DETAIL(tpl)))
-                return node->spec;
-            break;
-        }
+        if(!GL_CompareTextureVariantSpecifications(node->spec, tpl))
+            return node->spec;
     }
     if(!canCreate)
         return NULL;
@@ -362,26 +353,10 @@ static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
     choosetexturevariantworker_paramaters_t* p =
         (choosetexturevariantworker_paramaters_t*) context;
     const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
-    if(cand->type == p->type)
-    switch(p->type)
-    {
-    case TS_NORMAL:
-        if(!compareVariantSpecifications(TS_NORMAL(cand), TS_NORMAL(p->spec)))
-        {   // This will do fine.
-            p->chosen = variant;
-            return 1; // Stop iteration.
-        }
-        break;
-    case TS_DETAIL:
-        if(!compareDetailVariantSpecifications(TS_DETAIL(cand), TS_DETAIL(p->spec)))
-        {   // This will do fine.
-            p->chosen = variant;
-            return 1; // Stop iteration.
-        }
-        break;
-    default:
-        Con_Error("chooseTextureVariantWorker: Invalid specification type %i.", (int) p->type);
-        return 1; // Unreachable.
+    if(!GL_CompareTextureVariantSpecifications(cand, p->spec))
+    {   // This will do fine.
+        p->chosen = variant;
+        return 1; // Stop iteration.
     }
     return 0; // Continue iteration.
     }
@@ -1233,6 +1208,21 @@ void GL_ResetTextureManager(void)
     if(!texInited)
         return;
     GL_ClearTextureMemory();
+}
+
+int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
+    const texturevariantspecification_t* b)
+{
+    assert(a && b);
+    if(a->type != b->type)
+        return 1;
+    switch(a->type)
+    {
+    case TS_NORMAL: return compareVariantSpecifications(TS_NORMAL(a), TS_NORMAL(b));
+    case TS_DETAIL: return compareDetailVariantSpecifications(TS_DETAIL(a), TS_DETAIL(b));
+    }
+    Con_Error("GL_CompareTextureVariantSpecifications: Invalid type %i.", (int) a->type);
+    return 1; // Unreachable.
 }
 
 void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec)

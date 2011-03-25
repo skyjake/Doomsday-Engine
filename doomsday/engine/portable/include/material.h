@@ -29,6 +29,11 @@
 
 struct materialvariant_s;
 
+/**
+ * Initialize. Note that Material expects that initialization is done
+ * but once during construction and that the owner will not attempt to
+ * re-initialize later on.
+ */
 void Material_Initialize(material_t* mat);
 
 /**
