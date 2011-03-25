@@ -1265,7 +1265,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\p_material.c"
+				RelativePath="..\..\..\engine\portable\src\material.c"
 				>
 			</File>
 			<File
@@ -2954,7 +2954,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\p_material.h"
+				RelativePath="..\..\..\engine\portable\include\material.h"
 				>
 			</File>
 			<File

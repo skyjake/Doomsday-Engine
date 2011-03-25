@@ -288,7 +288,7 @@
 		<Unit filename="..\..\engine\portable\include\p_mapdata.h" />
 		<Unit filename="..\..\engine\portable\include\p_maptypes.h" />
 		<Unit filename="..\..\engine\portable\include\p_maputil.h" />
-		<Unit filename="..\..\engine\portable\include\p_material.h" />
+		<Unit filename="..\..\engine\portable\include\material.h" />
 		<Unit filename="..\..\engine\portable\include\p_materialmanager.h" />
 		<Unit filename="..\..\engine\portable\include\p_object.h" />
 		<Unit filename="..\..\engine\portable\include\p_objlink.h" />
@@ -633,7 +633,7 @@
 		<Unit filename="..\..\engine\portable\src\p_maputil.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\p_material.c">
+		<Unit filename="..\..\engine\portable\src\material.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_materialmanager.c">

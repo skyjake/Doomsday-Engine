@@ -86,7 +86,7 @@
  .\..\..\engine\portable\src\p_players.c
  .\..\..\engine\portable\src\p_mobj.c
  .\..\..\engine\portable\src\p_maputil.c
- .\..\..\engine\portable\src\p_material.c
+ .\..\..\engine\portable\src\material.c
  .\..\..\engine\portable\src\p_materialmanager.c
  .\..\..\engine\portable\src\p_intercept.c
  .\..\..\engine\portable\src\p_data.c
