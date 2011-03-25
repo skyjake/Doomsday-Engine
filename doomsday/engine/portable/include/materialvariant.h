@@ -97,25 +97,52 @@ materialvariant_t* MaterialVariant_Construct(struct material_s* generalCase,
 
 void MaterialVariant_Destruct(materialvariant_t* mat);
 
+/**
+ * Process a system tick event.
+ * @param ticLength  Length of the tick in seconds.
+ */
 void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time);
 
+/**
+ * Reset the staged animation point for this Material.
+ */
 void MaterialVariant_ResetAnim(materialvariant_t* mat);
 
+/// @return  Material from which this variant is derived.
 struct material_s* MaterialVariant_GeneralCase(materialvariant_t* mat);
 
+/// @return  MaterialVariantSpecification from which this variant is derived.
 materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat);
 
+/**
+ * Retrieve a handle for a staged animation layer form this variant.
+ * @param layer  Index of the layer to retrieve.
+ * @return  MaterialVariantLayer for the specified layer index.
+ */
 const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int layer);
 
+/// @return  Translated 'next' (or target) MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);
 
+/// @return  Translated 'current' MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat);
 
+/// @return  Translation position [0...1]
 float MaterialVariant_TranslationPoint(materialvariant_t* mat);
 
+/**
+ * Change the translation target for this variant.
+ *
+ * @param current  Translated 'current' MaterialVariant.
+ * @param next  Translated 'next' (or target) MaterialVariant.
+ */
 void MaterialVariant_SetTranslation(materialvariant_t* mat,
     materialvariant_t* current, materialvariant_t* next);
 
+/**
+ * Change the translation point for this variant.
+ * @param inter  Translation point.
+ */
 void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter);
 
 #endif /* LIBDENG_MATERIALVARIANT_H */
