@@ -443,36 +443,18 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
 }
 
 static material_t* createMaterial(int width, int height, short flags,
-    material_env_class_t envClass, textureid_t tex, short texOriginX,
-    short texOriginY)
-{
-    material_t* mat = linkMaterialToGlobalList(allocMaterial());
-
-    mat->_isCustom = !Texture_IsFromIWAD(GL_ToTexture(tex));
-    mat->_width = width;
-    mat->_height = height;
-    mat->_envClass = envClass;
-    mat->numLayers = 1;
-    mat->layers[0].tex = tex;
-    mat->layers[0].texOrigin[0] = texOriginX;
-    mat->layers[0].texOrigin[1] = texOriginY;
-    return mat;
-}
-
-static material_t* createMaterialFromDef(int width, int height, short flags,
     material_env_class_t envClass, const texture_t* tex, ded_material_t* def)
 {
     assert(def);
     {
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
 
+    mat->_flags = flags;
     mat->_isCustom = !Texture_IsFromIWAD(tex);
     mat->_width = width;
     mat->_height = height;
     mat->_envClass = envClass;
     mat->_def = def;
-    mat->numLayers = 1;
-    mat->layers[0].tex = Texture_Id(tex);
     return mat;
     }
 }
@@ -593,13 +575,24 @@ void Materials_ProcessCacheQueue(void)
     }
 }
 
+static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant,
+    void* paramaters)
+{
+    assert(variant);
+    {
+    int i, layerCount = Material_LayerCount(MaterialVariant_GeneralCase(variant));
+    for(i = 0; i < layerCount; ++i)
+    {
+        const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
+        GL_ReleaseGLTexturesForTexture(GL_ToTexture(ml->tex));
+    }
+    return 0; // Continue iteration.
+    }
+}
+
 static void releaseGLTexturesForMaterial(material_t* mat)
 {
-    assert(mat);
-    { uint i;
-    for(i = 0; i < mat->numLayers; ++i)
-        GL_ReleaseGLTexturesForTexture(GL_ToTexture(mat->layers[i].tex));
-    }
+    Material_IterateVariants(mat, releaseGLTexturesForMaterialWorker, NULL);
 }
 
 void Materials_DeleteGLTextures(const char* namespaceName)
@@ -612,8 +605,8 @@ void Materials_DeleteGLTextures(const char* namespaceName)
         if(!VALID_MATERIALNAMESPACE(matNamespace))
         {
 #if _DEBUG
-            Con_Message("Warning:Materials_DeleteGLTextures: Attempt to delete in unknown namespace (%s), ignoring.\n",
-                        namespaceName);
+            Con_Message("Warning:Materials_DeleteGLTextures: Attempt to delete in "
+                "unknown namespace (%s), ignoring.\n", namespaceName);
 #endif
             return;
         }
@@ -797,20 +790,11 @@ Con_Message("Materials_New: Warning, attempted to create material in "
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, envClass, tex, texOriginX, texOriginY);
+    mat = createMaterial(width, height, flags, envClass, GL_ToTexture(tex), NULL);
     newMaterialNameBinding(mat, name, mnamespace, hash);
     return mat;
 }
 
-/**
- * Create a new material. If there exists one by the same name and in the
- * same namespace, it is returned else a new material is created.
- *
- * \note: May fail on invalid definitions.
- *
- * @param def           Material definition to construct from.
- * @return              The created material, ELSE @c 0.
- */
 material_t* Materials_NewFromDef(ded_material_t* def)
 {
     assert(def);
@@ -951,7 +935,7 @@ Con_Message("Warning: Attempted to create/update Material in unknown Namespace '
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterialFromDef(width, height, flags, envClass, tex, def);
+    mat = createMaterial(width, height, flags, envClass, tex, def);
     newMaterialNameBinding(mat, name, mnamespace, hash);
     return mat;
     }
@@ -1232,10 +1216,10 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         variant = MaterialVariant_TranslationCurrent(variant);
         mat = MaterialVariant_GeneralCase(variant);
     }
-    assert(mat->numLayers > 0);
 
     // Ensure all resources needed to visualize this material are loaded.
-    for(i = 0; i < mat->numLayers; ++i)
+    { int i, layerCount = Material_LayerCount(mat);
+    for(i = 0; i < layerCount; ++i)
     {
         const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
         byte result;
@@ -1245,7 +1229,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
         if(result)
             tmpResult = result;
-    }
+    }}
 
     if((mb = bindForMaterial(mat)))
     {

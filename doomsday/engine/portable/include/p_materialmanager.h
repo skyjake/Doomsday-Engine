@@ -99,6 +99,15 @@ const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_
 struct material_s* Materials_New(const dduri_t* name, int width,
     int height, short flags, textureid_t tex, int texOriginX, int texOriginY);
 
+/**
+ * Create a new material. If there exists one by the same name and in the
+ * same namespace, it is returned else a new material is created.
+ *
+ * \note: May fail on invalid definitions.
+ *
+ * @param def           Material definition to construct from.
+ * @return              The created material, ELSE @c 0.
+ */
 struct material_s* Materials_NewFromDef(ded_material_t* def);
 
 struct material_s* Materials_ToMaterial(materialnum_t num);
