@@ -1,10 +1,10 @@
-/**\file
+/**\file r_things.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * r_things.h: Object Management and Refresh
+ * Object Management and Refresh
  */
 
-#ifndef __DOOMSDAY_REFRESH_THINGS_H__
-#define __DOOMSDAY_REFRESH_THINGS_H__
+#ifndef LIBDENG_REFRESH_THINGS_H
+#define LIBDENG_REFRESH_THINGS_H
 
 #include "p_mapdata.h"
 #include "r_data.h"
@@ -225,7 +225,6 @@ void            R_AddSprites(subsector_t* ssec);
 void            R_AddPSprites(void);
 void            R_DrawSprites(void);
 
-void            R_PreInitSprites(void);
 void            R_InitSprites(void);
 
 void            R_ClearSprites(void);
@@ -233,8 +232,27 @@ void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
 
 uint            R_CollectAffectingLights(const collectaffectinglights_params_t* params);
 
-void            VL_InitForMap(void);
-void            VL_InitForNewFrame(void);
-boolean         VL_ListIterator(uint listIdx, void* data,
-                                boolean (*func) (const vlight_t*, void*));
-#endif
+/**
+ * Initialize the vlight system in preparation for rendering view(s) of the
+ * game world. Called by R_InitLevel().
+ */
+void VL_InitForMap(void);
+
+/**
+ * Moves all used vlight nodes to the list of unused nodes, so they can be
+ * reused.
+ */
+void VL_InitForNewFrame(void);
+
+/**
+ * Calls func for all vlights in the given list.
+ *
+ * @param listIdx  Identifier of the list to process.
+ * @param data  Ptr to pass to the callback.
+ * @param func  Callback to make for each object.
+ *
+ * @return  @c true, iff every callback returns @c true.
+ */
+boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_t*, void*));
+
+#endif /* LIBDENG_REFRESH_THINGS_H */

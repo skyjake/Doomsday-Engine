@@ -272,7 +272,7 @@ void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
                                const walldiv_t* divs, float bL, float tL,
                                float bR, float tR);
 
-void            R_UpdateTexturesAndFlats(void);
+void            R_UpdatePatchCompositesAndFlats(void);
 
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
@@ -283,25 +283,26 @@ void R_UpdateTranslationTables(void);
 void R_InitSystemTextures(void);
 void R_DestroySystemTextures(void);
 
-void R_InitTextures(void);
-void R_InitFlats(void);
+void R_InitPatchComposites(void);
+
+/// @return  Number of PatchCompositeTextures.
+int R_PatchCompositeCount(void);
+
+/// @return  PatchCompositeTex associated to index# @a idx
+patchcompositetex_t* R_PatchCompositeTextureByIndex(int idx);
+
+void R_InitFlatTextures(void);
+
+/// @return  Number of Flats.
+int R_FlatTextureCount(void);
 
 /// @return  Flat associated to index# @a idx
 flat_t* R_FlatTextureByIndex(int idx);
 
-/**
- * Initialize the SpriteTexture database from the currently loaded lumps.
- */
-void R_SpriteTexturesInit(void);
-
-/**
- * Free all memory acquired for SpriteTextures.
- * \note  Does nothing about any Textures or Materials created from these!
- */
-void R_SpriteTexturesClear(void);
+void R_InitSpriteTextures(void);
 
 /// @return  Number of SpriteTextures.
-int R_SpriteTexturesCount(void);
+int R_SpriteTextureCount(void);
 
 /// @return  SpriteTexture associated to index# @a idx
 spritetex_t* R_SpriteTextureByIndex(int idx);
@@ -336,8 +337,6 @@ void R_PrecacheMap(void);
  * \note Part of the Doomsday public API.
  */
 void R_PrecacheMobjNum(int mobjtypeNum);
-
-patchcompositetex_t* R_PatchCompositeTextureByIndex(int num);
 
 uint            R_GetSkinNumForName(const dduri_t* path);
 const skinname_t* R_GetSkinNameByIndex(uint id);

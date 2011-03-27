@@ -382,10 +382,10 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    R_UpdateTexturesAndFlats();
-    R_InitTextures();
-    R_InitFlats();
-    R_PreInitSprites();
+    R_UpdatePatchCompositesAndFlats();
+    R_InitPatchComposites();
+    R_InitFlatTextures();
+    R_InitSpriteTextures();
 
     // Reset file IDs so previously seen files can be processed again.
     F_ResetFileIDs();

@@ -52,6 +52,7 @@
 
 #include "def_main.h"
 
+#include "blockset.h"
 #include "m_stack.h"
 #include "texture.h"
 #include "texturevariant.h"
@@ -145,24 +146,16 @@ static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
 // Tempory storage, used when reading sprite definitions.
 static int numSpriteRecords;
 static spriterecord_t* spriteRecords;
-static zblockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
+static blockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Initialize the vlight system in preparation for rendering view(s) of the
- * game world. Called by R_InitLevel().
- */
 void VL_InitForMap(void)
 {
     vLightLinkLists = NULL;
     numVLightLinkLists = 0, vLightLinkListCursor = 0;
 }
 
-/**
- * Moves all used vlight nodes to the list of unused nodes, so they can be
- * reused.
- */
 void VL_InitForNewFrame(void)
 {
     // Start reusing nodes from the first one in the list.
@@ -275,12 +268,8 @@ static void linkVLightNodeToList(vlightnode_t* node, uint listIndex)
     list->head = node;
 }
 
-/**
- * Local function for R_InitSprites.
- */
 static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
-                              material_t* mat, uint frame, uint rotation,
-                              boolean flipped)
+    material_t* mat, uint frame, uint rotation, boolean flipped)
 {
     if(frame >= 30 || rotation > 8)
     {
@@ -292,23 +281,20 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
 
     if(rotation == 0)
     {
-        int                 r;
-
-        // The lump should be used for all rotations.
+        // This frame should be used for all rotations.
         sprTemp[frame].rotate = false;
+        { int r;
         for(r = 0; r < 8; ++r)
         {
             sprTemp[frame].mats[r] = mat;
             sprTemp[frame].flip[r] = (byte) flipped;
-        }
-
+        }}
         return;
     }
 
-    sprTemp[frame].rotate = true;
-
     rotation--; // Make 0 based.
 
+    sprTemp[frame].rotate = true;
     sprTemp[frame].mats[rotation] = mat;
     sprTemp[frame].flip[rotation] = (byte) flipped;
 }
@@ -331,27 +317,23 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
  * but that the sprite patch should be flipped horizontally (right to
  * left) during the loading phase.
  */
-void R_PreInitSprites(void)
+static void buildSpriteRotations(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    R_SpriteTexturesClear();
-    R_SpriteTexturesInit();
-
-    /**
-     * Build database of textures which *may* describe sprites.
-     */
     numSpriteRecords = 0;
     spriteRecords = 0;
-    spriteRecordBlockSet = ZBlockSet_Construct(sizeof(spriterecord_t), 64, PU_SPRITE),
-    spriteRecordFrameBlockSet = ZBlockSet_Construct(sizeof(spriterecord_frame_t), 256, PU_SPRITE);
+    spriteRecordBlockSet = BlockSet_Construct(sizeof(spriterecord_t), 64),
+    spriteRecordFrameBlockSet = BlockSet_Construct(sizeof(spriterecord_frame_t), 256);
 
-    { int i, numSpriteTextures = R_SpriteTexturesCount();
+    { int i, numSpriteTextures = R_SpriteTextureCount();
     for(i = 0; i < numSpriteTextures; ++i)
     {
-        spritetex_t* sprTex = R_SpriteTextureByIndex(i);
-        spriterecord_t* rec;
+        const spritetex_t* sprTex = R_SpriteTextureByIndex(i);
         const char* name = sprTex->name;
+        spriterecord_frame_t* frame;
+        spriterecord_t* rec;
+        boolean link;
 
         if(0 == sprTex->width && 0 == sprTex->height)
             continue; // Not a valid sprite texture.
@@ -369,16 +351,14 @@ void R_PreInitSprites(void)
 
         // Its a valid, name. Have we already come across it?
         rec = spriteRecords;
-        while(rec)
+        if(spriteRecords)
         {
-            if(!strnicmp(rec->name, name, 4))
-                break;
-            rec = rec->next;
+            while(strnicmp(rec->name, name, 4) && (rec = rec->next)) {}
         }
 
         if(!rec)
         {   // An entirely new sprite.
-            rec = ZBlockSet_Allocate(spriteRecordBlockSet);
+            rec = BlockSet_Allocate(spriteRecordBlockSet);
             strncpy(rec->name, name, 4);
             rec->name[4] = '\0';
             rec->numFrames = 0;
@@ -390,52 +370,47 @@ void R_PreInitSprites(void)
         }
 
         // Add the frame(s).
-        { spriterecord_frame_t* sprFrame = rec->frames;
-        boolean link = false;
-
-        while(sprFrame)
+        link = false;
+        frame = rec->frames;
+        if(rec->frames)
         {
-            if(sprFrame->frame[0]    == name[4] - 'A' + 1 &&
-               sprFrame->rotation[0] == name[5] - '0')
-                break;
-            sprFrame = sprFrame->next;
+            while(!(frame->frame[0]    == name[4] - 'A' + 1 &&
+                    frame->rotation[0] == name[5] - '0') &&
+                  (frame = frame->next)) {}
         }
 
-        if(!sprFrame)
+        if(!frame)
         {   // A new frame.
-            sprFrame = ZBlockSet_Allocate(spriteRecordFrameBlockSet);
+            frame = BlockSet_Allocate(spriteRecordFrameBlockSet);
             link = true;
         }
 
         { ddstring_t path; Str_Init(&path);
         Str_Appendf(&path, MN_SPRITES_NAME":%s", name);
-
-        sprFrame->mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
-
+        frame->mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
         Str_Free(&path);
         }
 
-        sprFrame->frame[0]    = name[4] - 'A' + 1;
-        sprFrame->rotation[0] = name[5] - '0';
+        frame->frame[0]    = name[4] - 'A' + 1;
+        frame->rotation[0] = name[5] - '0';
         if(name[6])
         {
-            sprFrame->frame[1]    = name[6] - 'A' + 1;
-            sprFrame->rotation[1] = name[7] - '0';
+            frame->frame[1]    = name[6] - 'A' + 1;
+            frame->rotation[1] = name[7] - '0';
         }
         else
         {
-            sprFrame->frame[1] = 0;
+            frame->frame[1] = 0;
         }
 
         if(link)
         {
-            sprFrame->next = rec->frames;
-            rec->frames = sprFrame;
-        }
+            frame->next = rec->frames;
+            rec->frames = frame;
         }
     }}
 
-    VERBOSE2( Con_Message("R_PreInitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**
@@ -546,11 +521,13 @@ void R_InitSprites(void)
 
     VERBOSE( Con_Message("Initializing Sprites ...\n") );
 
+    buildSpriteRotations();
+
     /**
      * \kludge
-     * As the games still rely upon the sprite definition indices to match
+     * As the games still rely upon the sprite definition indices matching
      * those of the sprite name table, use the later to re-index the sprite
-     * records database before using them to derive the sprite definitions.
+     * record database.
      * New sprites added in mods that we do not have sprite name defs for
      * are pushed to the end of the list (this is fine as the game will not
      * attempt to reference them by either name or indice as they are not
@@ -580,9 +557,9 @@ void R_InitSprites(void)
     /// \kludge end
 
     // We are now done with the sprite records.
-    ZBlockSet_Destruct(spriteRecordBlockSet);
+    BlockSet_Destruct(spriteRecordBlockSet);
     spriteRecordBlockSet = NULL;
-    ZBlockSet_Destruct(spriteRecordFrameBlockSet);
+    BlockSet_Destruct(spriteRecordFrameBlockSet);
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
@@ -1827,17 +1804,7 @@ uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
     return vLightListIdx + 1;
 }
 
-/**
- * Calls func for all vlights in the given list.
- *
- * @param listIdx       Identifier of the list to process.
- * @param data          Ptr to pass to the callback.
- * @param func          Callback to make for each object.
- *
- * @return              @c true, iff every callback returns @c true.
- */
-boolean VL_ListIterator(uint listIdx, void* data,
-                        boolean (*func) (const vlight_t*, void*))
+boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_t*, void*))
 {
     vlightnode_t*       node;
     boolean             retVal, isDone;

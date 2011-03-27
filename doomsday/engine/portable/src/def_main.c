@@ -40,11 +40,11 @@
 #include "de_audio.h"
 #include "de_misc.h"
 #include "de_graphics.h"
+#include "r_data.h"
 
-#include "pathdirectory.h"
+#include "texture.h"
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
-#include "materialvariant.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -817,6 +817,87 @@ static void readAllDefinitions(void)
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
+void Def_CreateAutoMaterials(void)
+{
+    dduri_t* uri = Uri_ConstructDefault();
+
+    // Textures.
+    { int i, patchCompositeCount = R_PatchCompositeCount();
+    for(i = 0; i < patchCompositeCount; ++i)
+    {
+        const patchcompositetex_t* patTex = R_PatchCompositeTextureByIndex(i);
+        material_layer_t layer;
+        const texture_t* tex;
+
+        Uri_SetPath(uri, patTex->name);
+
+        Uri_SetScheme(uri, TN_TEXTURES_NAME);
+        tex = GL_TextureByUri(uri);
+        assert(tex);
+
+        // Create a Material for this texture.
+        Uri_SetScheme(uri, MN_TEXTURES_NAME);
+
+        layer.tex = Texture_Id(tex);
+        layer.texOrigin[0] = layer.texOrigin[1] = 0;
+
+        Materials_New(uri, patTex->width, patTex->height, ((patTex->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), &layer, 1);
+    }}
+
+    // Flats.
+    { int i, flatTextureCount = R_FlatTextureCount();
+    for(i = 0; i < flatTextureCount; ++i)
+    {
+        const flat_t* flatTex = R_FlatTextureByIndex(i);
+        material_layer_t layer;
+        const texture_t* tex;
+
+        Uri_SetPath(uri, flatTex->name);
+
+        Uri_SetScheme(uri, TN_FLATS_NAME);
+        tex = GL_TextureByUri(uri);
+        assert(tex);
+
+        // Create a Material for this flat.
+        // \note that width = 64, height = 64 regardless of the flat dimensions.
+        Uri_SetScheme(uri, MN_FLATS_NAME);
+
+        layer.tex = Texture_Id(tex);
+        layer.texOrigin[0] = layer.texOrigin[1] = 0;
+
+        Materials_New(uri, 64, 64, 0, &layer, 1);
+    }}
+
+    // Sprites.
+    { int i, spriteTextureCount = R_SpriteTextureCount();
+    for(i = 0; i < spriteTextureCount; ++i)
+    {
+        const spritetex_t* sprTex = R_SpriteTextureByIndex(i);
+        material_layer_t layer;
+        const texture_t* tex;
+
+        if(sprTex->width <= 0 || sprTex->height <= 0)
+            continue;
+
+        Uri_SetPath(uri, sprTex->name);
+
+        Uri_SetScheme(uri, TN_SPRITES_NAME);
+        tex = GL_TextureByUri(uri);
+        assert(tex);
+
+        // Create a new Material for this sprite.
+        Uri_SetScheme(uri, MN_SPRITES_NAME);
+
+        layer.tex = Texture_Id(tex);
+        layer.texOrigin[0] = sprTex->offX;
+        layer.texOrigin[1] = sprTex->offY;
+
+        Materials_New(uri, sprTex->width, sprTex->height, 0, &layer, 1);
+    }}
+
+    Uri_Destruct(uri);
+}
+
 void Def_Read(void)
 {
     int i, k;
@@ -835,7 +916,10 @@ void Def_Read(void)
     DED_Clear(&defs);
     DED_Init(&defs);
 
-    // Read all definitions, files and lumps.
+    // Generate definitions.
+    Def_CreateAutoMaterials();
+
+    // Read all definitions files and lumps.
     Con_Message("Parsing definition files:\n");
     readAllDefinitions();
 

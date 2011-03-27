@@ -931,14 +931,13 @@ static int DD_ChangeGameWorker(void* paramaters)
     // Read bindings for this game and merge with the working set.
     Con_ParseCommands(Str_Text(GameInfo_BindingConfig(p->info)), false);
 
-    R_InitTextures();
-    R_InitFlats();
-    R_PreInitSprites();
+    R_InitPatchComposites();
+    R_InitFlatTextures();
+    R_InitSpriteTextures();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(120);
 
-    // Now that we've generated the auto-materials we can initialize definitions.
     Def_Read();
 
     if(p->initiatedBusyMode)
@@ -1536,9 +1535,9 @@ int DD_Main(void)
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIDs();
 
-        R_InitTextures();
-        R_InitFlats();
-        R_PreInitSprites();
+        R_InitPatchComposites();
+        R_InitFlatTextures();
+        R_InitSpriteTextures();
 
         Def_Read();
 

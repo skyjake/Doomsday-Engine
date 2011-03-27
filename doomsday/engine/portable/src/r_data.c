@@ -1546,7 +1546,7 @@ typedef struct {
     return texDefs;
 }
 
-static void loadDoomTextureDefs(void)
+static void loadPatchCompositeDefs(void)
 {
     lumpnum_t i, pnamesLump, *patchLumpList;
     patchcompositetex_t** list = 0, **listCustom = 0, ***eList = 0;
@@ -1560,7 +1560,7 @@ static void loadDoomTextureDefs(void)
     // Load the patch names from the PNAMES lump.
     patchLumpList = loadPatchList(pnamesLump, &numPatches);
     if(!patchLumpList)
-        Con_Error("loadDoomTextureDefs: Error loading PNAMES.");
+        Con_Error("loadPatchCompositeDefs: Error loading PNAMES.");
 
     /**
      * Many PWADs include new TEXTURE1/2 lumps including the IWAD doomtexture
@@ -1706,45 +1706,38 @@ static void loadDoomTextureDefs(void)
     M_Free(patchLumpList);
 }
 
+static void createTexturesForPatchCompositeDefs(void)
+{
+    int i;
+    for(i = 0; i < patchCompositeTexturesCount; ++i)
+    {
+        patchcompositetex_t* texDef = patchCompositeTextures[i];       
+        GL_CreateTexture(texDef->name, i, TN_TEXTURES);
+    }
+}
+
+int R_PatchCompositeCount(void)
+{
+    return patchCompositeTexturesCount;
+}
+
 /**
  * Reads in the texture defs and creates materials for them.
  */
-void R_InitTextures(void)
+void R_InitPatchComposites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    VERBOSE2( Con_Message("Initializing Textures ...\n") );
+    VERBOSE2( Con_Message("Initializing PatchComposites ...\n") );
 
     patchCompositeTexturesCount = 0;
     patchCompositeTextures = NULL;
 
     // Load texture definitions from TEXTURE1/2 lumps.
-    loadDoomTextureDefs();
+    loadPatchCompositeDefs();
+    createTexturesForPatchCompositeDefs();
 
-    if(patchCompositeTexturesCount > 0)
-    {   // Create materials for the defined textures.
-        ddstring_t path;
-        Str_Init(&path);
-        { int i;
-        for(i = 0; i < patchCompositeTexturesCount; ++i)
-        {
-            patchcompositetex_t* texDef = patchCompositeTextures[i];
-            const texture_t* tex = GL_CreateTexture(texDef->name, i, TN_TEXTURES);
-            dduri_t* uri;
-
-            // Create a material for this texture.
-            Str_Clear(&path);
-            Str_Appendf(&path, MN_TEXTURES_NAME":%s", texDef->name);
-
-            uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-            Materials_New(uri, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), Texture_Id(tex), 0, 0);
-
-            Uri_Destruct(uri);
-        }}
-        Str_Free(&path);
-    }
-
-    VERBOSE2( Con_Message("R_InitTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 patchcompositetex_t* R_PatchCompositeTextureByIndex(int num)
@@ -1758,6 +1751,11 @@ patchcompositetex_t* R_PatchCompositeTextureByIndex(int num)
     }
 
     return patchCompositeTextures[num];
+}
+
+int R_FlatTextureCount(void)
+{
+    return flatTexturesCount;
 }
 
 flat_t* R_FlatTextureByIndex(int idx)
@@ -1810,11 +1808,10 @@ static int R_NewFlat(const lumpname_t name, boolean isCustom)
     return flatTexturesCount - 1;
 }
 
-void R_InitFlats(void)
+void R_InitFlatTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack = Stack_New();
-    ddstring_t path;
 
     assert(flatTexturesCount == 0);
 
@@ -1852,30 +1849,31 @@ void R_InitFlats(void)
         Stack_Pop(stack);
     Stack_Delete(stack);
 
-    Str_Init(&path);
+    // Create Textures for all known flats.
     { int i;
     for(i = 0; i < flatTexturesCount; ++i)
     {
         flat_t* flat = flatTextures[i];
-        const texture_t* tex = GL_CreateTexture(flat->name, i, TN_FLATS);
-        dduri_t* uri;
-
-        // Create a material for this flat.
-        // \note that width = 64, height = 64 regardless of the flat dimensions.
-        Str_Clear(&path);
-        Str_Appendf(&path, MN_FLATS_NAME":%s", flat->name);
-
-        uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-        Materials_New(uri, 64, 64, 0, Texture_Id(tex), 0, 0);
-
-        Uri_Destruct(uri);
+        GL_CreateTexture(flat->name, i, TN_FLATS);
     }}
-    Str_Free(&path);
 
-    VERBOSE2( Con_Message("R_InitFlats: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-int R_SpriteTexturesCount(void)
+/**
+ * Free all memory acquired for SpriteTextures.
+ * \note  Does nothing about any Textures or Materials created from these!
+ */
+static void clearSpriteTextures(void)
+{
+    if(0 == spriteTexturesCount)
+        return;
+    Z_FreeTags(PU_SPRITE, PU_SPRITE);
+    spriteTextures = NULL;
+    spriteTexturesCount = 0;
+}
+
+int R_SpriteTextureCount(void)
 {
     return spriteTexturesCount;
 }
@@ -1886,14 +1884,15 @@ spritetex_t* R_SpriteTextureByIndex(int idx)
     return spriteTextures[idx];
 }
 
-void R_SpriteTexturesInit(void)
+void R_InitSpriteTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack;
 
-    assert(spriteTexturesCount == 0);
+    VERBOSE( Con_Message("Initializing Sprites ...\n") );
 
-    VERBOSE( Con_Message("Initializing Sprite Textures ...\n") );
+    clearSpriteTextures();
+    assert(spriteTexturesCount == 0);
 
     /**
      * Step 1: Collection.
@@ -1961,55 +1960,37 @@ void R_SpriteTexturesInit(void)
     Stack_Delete(stack);
 
     /**
-     * Step 2: Texture and Material creation.
+     * Step 2: Create Textures for all known sprite textures.
      */
     { int i;
     for(i = 0; i < spriteTexturesCount; ++i)
     {
         spritetex_t* sprTex = spriteTextures[i];
         lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
-        const char* name = sprTex->name;
-        const texture_t* glTex;
+        const doompatch_header_t* patch;
 
         /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
         if(W_LumpLength(lumpNum) < sizeof(doompatch_header_t))
         {
-            Con_Message("Warning: Lump %s (#%i) does not appear to be a valid Patch.\n", name, lumpNum);
+            Con_Message("Warning: Lump %s (#%i) does not appear to be a valid Patch.\n",
+                sprTex->name, lumpNum);
             sprTex->width = sprTex->height = 0;
             sprTex->offX = sprTex->offY = 0;
             continue;
         }
-        { const doompatch_header_t* patch = (const doompatch_header_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
+
+        patch = (const doompatch_header_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
         sprTex->width = SHORT(patch->width);
         sprTex->height = SHORT(patch->height);
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
-        }
 
-        // Create a new Texture for this.
-        glTex = GL_CreateTexture(name, i, TN_SPRITES);
-
-        // Create a new Material for this.
-        { dduri_t* uri;
-        ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, MN_SPRITES_NAME":%s", name);
-        uri = Uri_Construct2(Str_Text(&path), RC_NULL);
-        Materials_New(uri, sprTex->width, sprTex->height, 0, Texture_Id(glTex), sprTex->offX, sprTex->offY);
-        Uri_Destruct(uri);
-        Str_Free(&path);
-        }
+        GL_CreateTexture(sprTex->name, i, TN_SPRITES);
     }}
 
-    VERBOSE2( Con_Message("R_SpriteTexturesInit: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
-}
-
-void R_SpriteTexturesClear(void)
-{
-    if(0 == spriteTexturesCount)
-        return;
-    Z_FreeTags(PU_SPRITE, PU_SPRITE);
-    spriteTextures = NULL;
-    spriteTexturesCount = 0;
+    VERBOSE2(
+        Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n",
+            (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 uint R_CreateSkinTex(const dduri_t* skin, boolean isShinySkin)
@@ -2146,7 +2127,7 @@ void R_DestroySkins(void)
     numSkinNames = 0;
 }
 
-void R_UpdateTexturesAndFlats(void)
+void R_UpdatePatchCompositesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
     flatTextures = NULL;

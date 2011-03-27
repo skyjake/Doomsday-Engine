@@ -696,7 +696,7 @@ materialnum_t Materials_ToMaterialNum(material_t* mat)
 }
 
 material_t* Materials_New(const dduri_t* rawName, int width, int height,
-    short flags, textureid_t tex, int texOriginX, int texOriginY)
+    short flags, const material_layer_t* layers, int layerCount)
 {
     materialnamespaceid_t mnamespace;
     material_env_class_t envClass;
@@ -763,8 +763,8 @@ Con_Message("Materials_New: Warning, attempted to create material in "
 
         // Update the (possibly new) meta data.
         mat->_flags = flags;
-        if(tex)
-            mat->layers[0].tex = tex;
+        if(layers[0].tex)
+            mat->layers[0].tex = layers[0].tex;
         if(width > 0)
             mat->_width = width;
         if(height > 0)
@@ -801,10 +801,11 @@ Con_Message("Materials_New: Warning, attempted to create material in "
 
     // Only create complete materials.
     // \todo Doing this here isn't ideal.
-    if(tex == 0 || !(width > 0) || !(height > 0))
+    if(layers[0].tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, envClass, GL_ToTexture(tex), texOriginX, texOriginY);
+    mat = createMaterial(width, height, flags, envClass, GL_ToTexture(layers[0].tex),
+        layers[0].texOrigin[0], layers[0].texOrigin[1]);
     newMaterialNameBinding(mat, name, mnamespace, hash);
     return mat;
 }

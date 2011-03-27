@@ -88,16 +88,13 @@ const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_
  * @param width  Logical width in world units.
  * @param height  Logical height in world units.
  * @param flags  @see materialFlags
- *
- * \deprecated: Old init stuff.
- * @param tex  Texture to use on layer one.
- * @param texOriginX
- * @param texOriginY
+ * @param layers  MaterialLayer config for each layer of the resultant Material.
+ * @param layerCount  Number of layers.
  *
  * @return  Newly created MaterialVariant else @c NULL.
  */
 struct material_s* Materials_New(const dduri_t* name, int width,
-    int height, short flags, textureid_t tex, int texOriginX, int texOriginY);
+    int height, short flags, const material_layer_t* layers, int layerCount);
 
 /**
  * Create a new material. If there exists one by the same name and in the
