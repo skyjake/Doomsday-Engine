@@ -443,20 +443,34 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
 }
 
 static material_t* createMaterial(int width, int height, short flags,
-    material_env_class_t envClass, const texture_t* tex, ded_material_t* def)
+    material_env_class_t envClass, const texture_t* tex, int texOriginX, int texOriginY)
 {
-    assert(def);
-    {
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
 
-    mat->_flags = flags;
+    mat->_isCustom = !Texture_IsFromIWAD(tex);
+    mat->_width = width;
+    mat->_height = height;
+    mat->_envClass = envClass;
+    mat->numLayers = 1;
+    mat->layers[0].tex = Texture_Id(tex);
+    mat->layers[0].texOrigin[0] = texOriginX;
+    mat->layers[0].texOrigin[1] = texOriginY;
+    return mat;
+}
+
+static material_t* createMaterialFromDef(int width, int height, short flags,
+    material_env_class_t envClass, const texture_t* tex, ded_material_t* def)
+{
+    material_t* mat = linkMaterialToGlobalList(allocMaterial());
+
     mat->_isCustom = !Texture_IsFromIWAD(tex);
     mat->_width = width;
     mat->_height = height;
     mat->_envClass = envClass;
     mat->_def = def;
+    mat->numLayers = 1;
+    mat->layers[0].tex = Texture_Id(tex);
     return mat;
-    }
 }
 
 static material_t* getMaterialByNum(materialnum_t num)
@@ -790,7 +804,7 @@ Con_Message("Materials_New: Warning, attempted to create material in "
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, envClass, GL_ToTexture(tex), NULL);
+    mat = createMaterial(width, height, flags, envClass, GL_ToTexture(tex), texOriginX, texOriginY);
     newMaterialNameBinding(mat, name, mnamespace, hash);
     return mat;
 }
@@ -935,7 +949,7 @@ Con_Message("Warning: Attempted to create/update Material in unknown Namespace '
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, envClass, tex, def);
+    mat = createMaterialFromDef(width, height, flags, envClass, tex, def);
     newMaterialNameBinding(mat, name, mnamespace, hash);
     return mat;
     }
