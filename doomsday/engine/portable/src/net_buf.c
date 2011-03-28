@@ -454,9 +454,9 @@ void N_PrintHuffmanStats(void)
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %li bytes, sent: %li "
+        Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
-                   numOutBytes, numSentBytes);
+                   (int)numOutBytes, (int)numSentBytes);
     }
 }
 

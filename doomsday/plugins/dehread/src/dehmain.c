@@ -929,8 +929,9 @@ char   *COM_Parse(char *data)
 boolean IsNum(char *str)
 {
     char   *end;
+    int     value;
 
-    strtol(str, &end, 0);
+    value = strtol(str, &end, 0); // ignoring returned value
     if(*end && !isspace(*end))
         return false;
     return true;
@@ -2292,6 +2293,7 @@ int DoInclude(int dummy)
     int     len;
     FILE   *file;
     char   *patch;
+    size_t  result;
 
     if(including)
     {
@@ -2331,7 +2333,7 @@ int DoInclude(int dummy)
     len = ftell(file);
     patch = calloc(len + 1, 1);
     rewind(file);
-    fread(patch, len, 1, file);
+    result = fread(patch, len, 1, file); // return value ignored
     patch[len] = 0;
     fclose(file);
     ApplyDEH(patch, len);
@@ -2443,6 +2445,7 @@ void ReadDehacked(char *filename)
     FILE   *file;
     char   *deh;
     int     len;
+    size_t  result;
 
     Con_Message("Applying Dehacked: %s...\n", filename);
 
@@ -2455,7 +2458,7 @@ void ReadDehacked(char *filename)
     // Allocate enough memory and read it.
     deh = calloc(len + 1, 1);
     rewind(file);
-    fread(deh, len, 1, file);
+    result = fread(deh, len, 1, file); // return value ignored
     fclose(file);
     // Process it!
     ApplyDEH(deh, len);

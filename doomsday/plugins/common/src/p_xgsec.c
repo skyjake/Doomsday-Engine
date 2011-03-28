@@ -2361,6 +2361,7 @@ int XF_FindNextPos(function_t *fn, int pos, boolean poke, sector_t *sec)
     int         startpos = pos;
     int         c;
     char       *ptr;
+    double      dvalue;
 
     if(fn->repeat > 0)
     {
@@ -2372,7 +2373,7 @@ int XF_FindNextPos(function_t *fn, int pos, boolean poke, sector_t *sec)
     // Skip current.
     if(fn->func[pos] == '/' || fn->func[pos] == '%')
     {
-        strtod(fn->func + pos + 1, &ptr);
+        dvalue = strtod(fn->func + pos + 1, &ptr); // returned value ignored
         pos = ptr - fn->func; // Go to the end.
     }
     else

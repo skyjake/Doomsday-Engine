@@ -83,7 +83,10 @@ void Dir_GetDir(directory_t *dir)
     memset(dir, 0, sizeof(*dir));
 
     dir->drive = _getdrive();
-    _getcwd(dir->path, 255);
+    if(!_getcwd(dir->path, 255))
+    {
+        fprintf(stderr, "Dir_GetDir: Failed to determine current directory.\n");
+    }
 
     if(LAST_CHAR(dir->path) != DIR_SEP_CHAR)
         strcat(dir->path, DIR_SEP_STR);
