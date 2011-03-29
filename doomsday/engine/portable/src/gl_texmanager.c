@@ -104,7 +104,6 @@ int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
 
-boolean allowMaskedTexEnlarge = false;
 boolean noHighResTex = false;
 boolean noHighResPatches = false;
 boolean highResWithPWAD = false;
@@ -197,9 +196,11 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     /// \todo We can be a bit cleverer here...
     if(a->context != b->context)
         return 1;
-    if(a->flags  != b->flags)
+    if(a->wrapS   != b->wrapS || a->wrapT != b->wrapT)
         return 1;
-    if(a->border != b->border)
+    if(a->flags   != b->flags)
+        return 1;
+    if(a->border  != b->border)
         return 1;
     if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
@@ -224,13 +225,15 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
 
 static variantspecification_t* applyVariantSpecification(
     variantspecification_t* spec, texturevariantusagecontext_t tc, int flags,
-    byte border, int tClass, int tMap)
+    byte border, int tClass, int tMap, int wrapS, int wrapT)
 {
     assert(spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
     spec->context = tc;
     spec->flags = flags & ~TSF_INTERNAL_MASK;
     spec->border = border;
+    spec->wrapS = wrapS;
+    spec->wrapT = wrapT;
 
     if(0 != tMap || 0 != tClass)
     {
@@ -300,12 +303,13 @@ static texturevariantspecification_t* findVariantSpecification(
 }
 
 static texturevariantspecification_t* getVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass,
+    int tMap, int wrapS, int wrapT)
 {
     static texturevariantspecification_t tpl;
     assert(texInited);
     tpl.type = TS_NORMAL;
-    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap);
+    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap, wrapS, wrapT);
     return findVariantSpecification(tpl.type, &tpl, true);
 }
 
@@ -514,7 +518,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadDoomPatchLump(img, generalCase, (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0);
+            loadResult = GL_LoadPatchLump(img, generalCase, (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0);
         break;
     case TN_SPRITES: {
         int tclass = 0, tmap = 0;
@@ -583,7 +587,8 @@ static byte prepareVariant(texturevariant_t* tex)
     boolean monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
     boolean noCompression = (spec->flags & TSF_NO_COMPRESSION) != 0;
     boolean scaleSharp    = (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0;
-    int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
+    int wrapS = spec->wrapS, wrapT = spec->wrapT;
+    int magFilter, minFilter, anisoFilter, grayMipmap = 0, flags = 0;
     boolean noSmartFilter = false, didDefer = false, loadedPaletted = false;
     dgltexformat_t dglFormat;
     boolean alphaChannel;
@@ -595,9 +600,24 @@ static byte prepareVariant(texturevariant_t* tex)
     // Load in the raw source image.
     if(TN_TEXTURES == Texture_Namespace(TextureVariant_GeneralCase(tex)))
     {
-        loadResult = GL_LoadDoomTexture(&image, TextureVariant_GeneralCase(tex),
-            spec->context == TC_SKYSPHERE_DIFFUSE,
-            (spec->flags & TSF_ZEROMASK) != 0);
+        // Try to load a replacement version of this texture?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(TextureVariant_GeneralCase(tex))))
+        {
+            patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(tex)));
+            const ddstring_t suffix = { "-ck" };
+            ddstring_t searchPath;
+            assert(NULL != texDef);
+            Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
+            loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
+            Str_Free(&searchPath);
+        }
+
+        if(0 == loadResult)
+        {
+            loadResult = GL_LoadPatchCompositeLump(&image, TextureVariant_GeneralCase(tex),
+                spec->context == TC_SKYSPHERE_DIFFUSE,
+                (spec->flags & TSF_ZEROMASK) != 0);
+        }
     }
     else
     {
@@ -720,9 +740,7 @@ static byte prepareVariant(texturevariant_t* tex)
     }
 
     // Disable compression?
-    if(noCompression || (image.width < 128 || image.height < 128) ||
-       TC_HALO_LUMINANCE        == spec->context ||
-       TC_MAPSURFACE_REFLECTION == spec->context)
+    if(noCompression || (image.width < 128 || image.height < 128))
         flags |= TXCF_NO_COMPRESSION;
 
     if(spec->context == TC_MODELSKIN_DIFFUSE)
@@ -856,20 +874,6 @@ static byte prepareVariant(texturevariant_t* tex)
         break;
     default:
         anisoFilter = texAniso; /// \fixme is "best" truely a suitable default?
-        break;
-    }
-
-    switch(spec->context)
-    {
-    case TC_UI:
-    case TC_SPRITE_DIFFUSE:
-    case TC_PSPRITE_DIFFUSE:
-    case TC_HALO_LUMINANCE:
-    case TC_MAPSURFACE_LIGHTMAP:
-        wrapS = wrapT = GL_CLAMP_TO_EDGE;
-        break;
-    default:
-        wrapS = wrapT = GL_REPEAT;
         break;
     }
 
@@ -1184,10 +1188,6 @@ void GL_InitTextureManager(void)
     if(texInited)
         return; // Don't init again.
 
-    // The -bigmtex option allows the engine to enlarge masked textures
-    // that have taller patches than they are themselves.
-    allowMaskedTexEnlarge = ArgExists("-bigmtex");
-
     // Disable the use of 'high resolution' textures and/or patches?
     noHighResTex = ArgExists("-nohightex");
     noHighResPatches = ArgExists("-nohighpat");
@@ -1271,12 +1271,13 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 }
 
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+    int wrapS, int wrapT)
 {
     if(!texInited)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
-    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap);
+    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT);
 }
 
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
@@ -2114,7 +2115,7 @@ byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, int tclass,
     }
 }
 
-byte GL_LoadDoomPatchLump(image_t* image, const texture_t* tex, boolean scaleSharp)
+byte GL_LoadPatchLump(image_t* image, const texture_t* tex, boolean scaleSharp)
 {
     assert(image && tex);
     {
@@ -2169,131 +2170,15 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-/**
- * Renders the given texture into the buffer.
- */
-static boolean bufferTexture(const patchcompositetex_t* texDef, uint8_t* buffer,
- int width, int height, int* hasBigPatch)
-{
-    boolean hasAlpha = false;
-
-    // Clear the buffer.
-    memset(buffer, 0, 2 * width * height); // Pal8 plus 8-bit alpha.
-
-    // By default zero is put in the big patch height.
-    if(hasBigPatch)
-        *hasBigPatch = 0;
-
-    // Draw all the patches. Check for alpha pixels after last patch has
-    // been drawn.
-    { int i;
-    for(i = 0; i < texDef->patchCount; ++i)
-    {
-        const texpatch_t* patchDef = &texDef->patches[i];
-        const doompatch_header_t* patch =
-            (doompatch_header_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
-
-        // Check for big patches?
-        if(hasBigPatch && SHORT(patch->height) > texDef->height &&
-           *hasBigPatch < SHORT(patch->height))
-        {
-            *hasBigPatch = SHORT(patch->height);
-        }
-
-        // Draw the patch in the buffer.
-        hasAlpha = loadDoomPatch(buffer, /*palette,*/ width, height, patch,
-            patchDef->offX, patchDef->offY, 0, 0, false, i == texDef->patchCount - 1);
-    }}
-
-    return hasAlpha;
-}
-
-/**
- * Draws the given sky texture in a buffer. The returned buffer must be
- * freed by the caller. Idx must be a valid texture number.
- */
-static void bufferSkyTexture(const patchcompositetex_t* texDef, byte** outbuffer,
-                             int width, int height, boolean zeroMask)
-{
-    int                 i, numpels;
-    byte*               imgdata;
-
-    if(texDef->patchCount > 1)
-    {
-        numpels = width * height;
-        imgdata = M_Calloc(2 * numpels);
-
-        for(i = 0; i < texDef->patchCount; ++i)
-        {
-            const texpatch_t*   patchDef = &texDef->patches[i];
-
-            loadDoomPatch(imgdata, /*palette,*/ width, height,
-                          W_CacheLumpNum(patchDef->lump, PU_CACHE),
-                          patchDef->offX, patchDef->offY, 0, 0,
-                          zeroMask, false);
-        }
-    }
-    else
-    {
-        doompatch_header_t *patch =
-            (doompatch_header_t*) W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
-        int     bufHeight =
-            SHORT(patch->height) > height ? SHORT(patch->height) : height;
-
-        if(bufHeight > height)
-        {
-            // Heretic sky textures are reported to be 128 tall, even if the
-            // data is 200. We'll adjust the real height of the texture up to
-            // 200 pixels (remember Caldera?).
-            height = bufHeight;
-            if(height > 200)
-                height = 200;
-        }
-
-        // Allocate a large enough buffer.
-        numpels = width * bufHeight;
-        imgdata = M_Calloc(2 * numpels);
-        loadDoomPatch(imgdata, /*palette,*/ width, bufHeight, patch, 0, 0, 0, 0,
-                      zeroMask, false);
-    }
-
-    *outbuffer = imgdata;
-}
-
-/**
- * @return              The outcome:
- *                      0 = not loaded.
- *                      1 = loaded data from a lump resource.
- *                      2 = loaded data from an external resource.
- */
-byte GL_LoadDoomTexture(image_t* image, const texture_t* tex,
+byte GL_LoadPatchCompositeLump(image_t* image, const texture_t* tex,
     boolean prepareForSkySphere, boolean zeroMask)
 {
     assert(image && tex);
     {
     patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
+    boolean isMasked;
+
     assert(NULL != texDef);
-    // Try to load a replacement version of this texture?
-    if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
-    {
-        ddstring_t searchPath, foundPath, suffix = { "-ck" };
-        byte result = 0;
-
-        Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
-        Str_Init(&foundPath);
-
-        if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
-           GL_LoadImage(image, Str_Text(&foundPath)))
-        {
-            result = 2; // High resolution texture loaded.
-        }
-
-        Str_Free(&searchPath);
-        Str_Free(&foundPath);
-
-        if(result != 0)
-            return result;
-    }
 
     // None found. Load the original version.
     GL_InitImage(image);
@@ -2303,37 +2188,83 @@ byte GL_LoadDoomTexture(image_t* image, const texture_t* tex,
 
     if(prepareForSkySphere)
     {
-        bufferSkyTexture(texDef, &image->pixels, image->width, image->height, zeroMask);
-        if(zeroMask)
-            image->flags |= IMGF_IS_MASKED;
+        const doompatch_header_t* patch = (const doompatch_header_t*)
+            W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
+        int width = image->width, height = image->height, bufHeight, numPels;
+        uint8_t* pixels;
+
+        /**
+         * Heretic sky textures are reported to be 128 tall, even if the
+         * data is 200. We'll adjust the real height of the texture up to
+         * 200 pixels (remember Caldera?).
+         */
+        if(texDef->patchCount == 1)
+        {
+            bufHeight = SHORT(patch->height) > height ? SHORT(patch->height) : height;
+            if(bufHeight > height)
+            {
+                height = bufHeight;
+                if(height > 200)
+                    height = 200;
+            }
+        }
+        else
+        {
+            bufHeight = height;
+        }
+
+        // Allocate a large enough buffer.
+        numPels = width * bufHeight;
+        pixels = calloc(1, 2 * numPels);
+
+        { int i;
+        for(i = 0; i < texDef->patchCount; ++i)
+        {
+            const texpatch_t* patchDef = &texDef->patches[i];
+
+            if(i != 0)
+                patch = (const doompatch_header_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
+
+            loadDoomPatch(pixels, /*palette,*/ width, bufHeight, patch,
+                          patchDef->offX, patchDef->offY, 0, 0,
+                          zeroMask, false);
+        }}
+
+        image->pixels = pixels;
+        isMasked = zeroMask;
     }
     else
     {
-        int hasBigPatch;
-        boolean isMasked;
+        boolean hasAlpha = false;
+        int width = image->width, height = image->height, numPels;
+        uint8_t* pixels;
 
-        /**
-         * \todo if we are resizing masked textures re match patches then
-         * we are needlessly duplicating work.
-         */
-        image->pixels = M_Malloc(2 * image->width * image->height);
-        isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, &hasBigPatch);
+        numPels = image->width * image->height;
 
-        // The -bigmtex option allows the engine to resize masked
-        // textures whose patches are too big to fit the texture.
-        if(allowMaskedTexEnlarge && isMasked && hasBigPatch)
+        if(NULL == (pixels = (uint8_t*) calloc(1, 2 * numPels)))
+            Con_Error("GL_LoadPatchCompositeLump: Failed on allocation of %lu bytes for ",
+                "new image pixel data.", (unsigned int) (2 * numPels));
+
+        // Draw all the patches. Check for alpha pixels after last patch has
+        // been drawn.
+        { int i;
+        for(i = 0; i < texDef->patchCount; ++i)
         {
-            // Adjust the defined height to fit the largest patch.
-            texDef->height = image->height = hasBigPatch;
-            // Get a new buffer.
-            M_Free(image->pixels);
-            image->pixels = M_Malloc(2 * image->width * image->height);
-            isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, 0);
-        }
+            const texpatch_t* patchDef = &texDef->patches[i];
+            const doompatch_header_t* patch = (doompatch_header_t*)
+                W_CacheLumpNum(patchDef->lump, PU_CACHE);
 
-        if(isMasked)
-            image->flags |= IMGF_IS_MASKED;
+            // Draw the patch in the buffer.
+            hasAlpha = loadDoomPatch(pixels, /*palette,*/ width, height, patch,
+                patchDef->offX, patchDef->offY, 0, 0, false, i == texDef->patchCount - 1);
+        }}
+
+        image->pixels = pixels;
+        isMasked = hasAlpha;
     }
+
+    if(isMasked)
+        image->flags |= IMGF_IS_MASKED;
 
     return 1;
     }
@@ -2489,7 +2420,8 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
         if(0 != (lmap = R_GetLightMap(uri)))
         {
             texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0);
+                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(lmap->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
@@ -2515,7 +2447,8 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
         if((fTex = R_GetFlareTexture(uri)))
         {
             texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE, 0, 0, 0, 0);
+                GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(fTex->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
@@ -2536,7 +2469,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             GL_TextureVariantSpecificationForContext(TC_UI,
                 0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
                   | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-                1, 0, 0);
+                1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         const texturevariant_t* tex;
         if(NULL != (tex = GL_PrepareTexture(patchTex->texId, texSpec, NULL)))
             return TextureVariant_GLName(tex);

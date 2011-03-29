@@ -526,7 +526,7 @@ void R_InitSprites(void)
     /**
      * \kludge
      * As the games still rely upon the sprite definition indices matching
-     * those of the sprite name table, use the later to re-index the sprite
+     * those of the sprite name table, use the latter to re-index the sprite
      * record database.
      * New sprites added in mods that we do not have sprite name defs for
      * are pushed to the end of the list (this is fine as the game will not
@@ -608,7 +608,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     mat = sprFrame->mats[0];
 
     Materials_Prepare(&ms, mat, false,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0));
+        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -649,7 +650,8 @@ float R_VisualRadius(mobj_t* mo)
     // Use the sprite frame's width.
     // @fixme What about rotation?
     Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0));
+        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
     return ms.width / 2;
 }
 
@@ -862,7 +864,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
         return; // Wha?
 
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap));
+        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1104,7 +1107,8 @@ void R_ProjectSprite(mobj_t* mo)
     matFlipT = false;
 
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass, mo->tmap));
+        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
+            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1427,7 +1431,8 @@ if(!mat)
 
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true,
-            Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0));
+            Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
         tex = ms.units[MTU_PRIMARY].tex;
         pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)

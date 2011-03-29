@@ -526,16 +526,18 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     {
         material_snapshot_t ms;
         Materials_Prepare(&ms, p->_bg.material, true,
-            Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0));
+            Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT));
         tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     }
     else
+    {
         tex = p->_bg.tex;
-    if(tex)
-    {   // Make sure the current texture will be tiled.
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        if(tex)
+        {   // Make sure the current texture will be tiled.
+            glBindTexture(GL_TEXTURE_2D, tex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        }
     }
     V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
     V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
@@ -994,7 +996,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
                 memset(&ms, 0, sizeof(ms));               
                 Materials_Prepare(&ms, mat, true,
-                    Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0));
+                    Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
 
                 if(ms.units[MTU_PRIMARY].tex)
                 {

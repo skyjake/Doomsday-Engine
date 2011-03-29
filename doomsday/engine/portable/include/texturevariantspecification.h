@@ -81,6 +81,7 @@ typedef struct {
     texturevariantusagecontext_t context;
     int flags; /// @see textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
+    int wrapS, wrapT;
     colorpalettetranslationspecification_t* translated;
 } variantspecification_t;
 

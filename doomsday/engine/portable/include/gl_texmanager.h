@@ -53,7 +53,6 @@ extern int texMagMode;
 extern int monochrome, upscaleAndSharpenPatches;
 extern int glmode[6];
 extern boolean fillOutlines;
-extern boolean allowMaskedTexEnlarge;
 extern boolean noHighResTex;
 extern boolean noHighResPatches;
 extern boolean highResWithPWAD;
@@ -182,10 +181,10 @@ byte GL_LoadFlatLump(struct image_s* image, const struct texture_s* tex);
 byte GL_LoadSpriteLump(struct image_s* image, const struct texture_s* tex,
     int tclass, int tmap, int border);
 
-byte GL_LoadDoomPatchLump(struct image_s* image, const struct texture_s* tex,
+byte GL_LoadPatchLump(struct image_s* image, const struct texture_s* tex,
     boolean scaleSharp);
 
-byte GL_LoadDoomTexture(struct image_s* image, const struct texture_s* tex,
+byte GL_LoadPatchCompositeLump(struct image_s* image, const struct texture_s* tex,
     boolean prepareForSkySphere, boolean zeroMask);
 
 /**
@@ -260,7 +259,8 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
  *      or @c NULL if out of memory.
  */
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap);
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass,
+    int tMap, int wrapS, int wrapT);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context.

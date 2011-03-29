@@ -808,7 +808,8 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
         return;
 
     Materials_Prepare(&ms, spr->spriteFrames[frame].mats[0], true,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0));
+        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -1281,7 +1282,8 @@ void R_PrecacheModelSkins(modeldef_t* modef)
             {
                 GL_PrepareTexture(sn->id,
                     GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                        (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0), NULL);
+                        (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0,
+                        GL_REPEAT, GL_REPEAT), NULL);
             }
         }
 
