@@ -270,7 +270,7 @@ void DD_DrawAndBlit(void)
 void DD_StartFrame(void)
 {
     if(!isDedicated)
-        GL_RunDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     frameStartTime = Sys_GetTimef();
 

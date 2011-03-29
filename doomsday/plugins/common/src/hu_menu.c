@@ -2408,7 +2408,7 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
     s = sprInfo.texCoord[0];
     t = sprInfo.texCoord[1],
 
-    DGL_SetTranslatedSprite(sprInfo.material, 1, tmap);
+    DGL_SetPSprite2(sprInfo.material, 1, tmap);
     
     DGL_Color4f(1, 1, 1, mnAlpha);
     DGL_Begin(DGL_QUADS);

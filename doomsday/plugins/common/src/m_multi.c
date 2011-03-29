@@ -406,7 +406,7 @@ void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
     x -= sprInfo.width / 2 * scale;
     y -= sprInfo.height * scale;
 
-    DGL_SetTranslatedSprite(sprInfo.material, tclass, useColor);
+    DGL_SetPSprite2(sprInfo.material, tclass, useColor);
 
     DGL_Color4f(1, 1, 1, mnAlpha);
     DGL_Begin(DGL_QUADS);

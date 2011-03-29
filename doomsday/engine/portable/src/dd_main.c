@@ -1030,6 +1030,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     if(netGame)
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
 
+    GL_PurgeDeferredTasks();
     GL_SetFilter(false);
     S_Reset();
     Demo_StopPlayback();
@@ -1077,6 +1078,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         R_ShutdownVectorGraphics();
         R_ClearPatchTexs();
+        R_DestroyColorPalettes();
 
         /// \fixme dj: We do not want to destroy *everything*!
         GL_DestroyTextures();

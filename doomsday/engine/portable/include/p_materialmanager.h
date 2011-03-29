@@ -126,7 +126,9 @@ materialnum_t Materials_ToMaterialNum(struct material_s* mat);
  *      or @c NULL if out of memory.
  */
 struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
-    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap);
+    materialvariantusagecontext_t mc, int flags, byte border, int tClass,
+    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped,
+    boolean gammaCorrection);
 
 struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
     const struct materialvariantspecification_s* spec);

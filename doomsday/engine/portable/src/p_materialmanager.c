@@ -255,7 +255,9 @@ static materialvariantspecification_t* findVariantSpecification(
 }
 
 static materialvariantspecification_t* getVariantSpecificationForContext(
-    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap)
+    materialvariantusagecontext_t mc, int flags, byte border, int tClass,
+    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped,
+    boolean gammaCorrection)
 {
     static materialvariantspecification_t tpl;
     assert(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALVARIANTUSAGECONTEXT(mc)));
@@ -272,7 +274,8 @@ static materialvariantspecification_t* getVariantSpecificationForContext(
     case MC_SKYSPHERE:      primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
     default:                primaryContext = TC_UNKNOWN;            break;
     }
-    primarySpec = GL_TextureVariantSpecificationForContext(primaryContext, flags, border, tClass, tMap);
+    primarySpec = GL_TextureVariantSpecificationForContext(primaryContext, flags,
+        border, tClass, tMap, wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection);
     applyVariantSpecification(&tpl, mc, primarySpec);
     return findVariantSpecification(&tpl, true);
     }
@@ -1294,7 +1297,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                     // Pick an instance matching the specified context.
                     shinyTex = GL_PrepareTexture(sTex->id,
                         GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                            0, 0, 0, 0), 0);
+                            TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false), 0);
                 }
 
                 if(shinyTex && // Don't bother searching unless the above succeeds.
@@ -1303,7 +1306,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                     // Pick an instance matching the specified context.
                     shinyMaskTex = GL_PrepareTexture(mTex->id,
                         GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTIONMASK,
-                            0, 0, 0, 0), 0);
+                            0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, false), 0);
                 }
             }
         }
@@ -1429,7 +1432,8 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
         return mb->reflection[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1442,7 +1446,8 @@ const ded_detailtexture_t* Materials_Detail(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
         return mb->detail[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1455,7 +1460,8 @@ const ded_decor_t* Materials_Decoration(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
         return mb->decoration[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1468,7 +1474,8 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
         const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
+                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
         return mb->ptcGen[mb->prepared? mb->prepared-1:0];
     }
     return 0;
@@ -1482,12 +1489,13 @@ uint Materials_Count(void)
 }
 
 struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
-    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap)
+    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap,
+    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
 {
     if(!initedOk)
         Con_Error("Materials::VariantSpecificationForContext: Materials collection "
             "not yet initialized.");
-    return getVariantSpecificationForContext(mc, flags, border, tClass, tMap);
+    return getVariantSpecificationForContext(mc, flags, border, tClass, tMap, wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection);
 }
 
 materialvariant_t* Materials_ChooseVariant(material_t* mat,

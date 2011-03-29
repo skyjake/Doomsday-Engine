@@ -485,7 +485,7 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 
         // Pick team color:
 #if __JHEXEN__
-        R_GetColorPaletteRGBf(0, info->color, plrColors[info->team], false);
+        R_GetColorPaletteRGBf(0, plrColors[info->team], info->color, false);
 #else
         switch(info->team)
         {

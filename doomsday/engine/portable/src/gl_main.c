@@ -45,8 +45,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 #include "de_defs.h"
-
 #include "r_draw.h"
+
+#include "colorpalette.h"
 #include "texturecontent.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
@@ -578,6 +579,7 @@ void GL_Init(void)
  */
 void GL_InitRefresh(void)
 {
+    R_InitColorPalettes();
     GL_InitTextureManager();
     GL_LoadSystemTextures();
 }
@@ -594,6 +596,7 @@ void GL_ShutdownRefresh(void)
     R_DestroyFlareTextures();
     R_DestroyShinyTextures();
     R_DestroyMaskTextures();
+    R_DestroyColorPalettes();
 }
 
 /**
@@ -1037,27 +1040,17 @@ void GL_SetMaterial(material_t* mat)
 
     Con_Error("GL_SetMaterial: No usage context specified.");
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0));
+        Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0,
+            GL_REPEAT, GL_REPEAT, 0, false, false));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
-void GL_SetPSprite(material_t* mat)
-{
-    material_snapshot_t ms;
-
-    Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0));
-
-    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-void GL_SetTranslatedSprite(material_t* mat, int tClass, int tMap)
+void GL_SetPSprite(material_t* mat, int tClass, int tMap)
 {
     material_snapshot_t ms;
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap));
+        Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
+            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
@@ -1138,7 +1131,7 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
 }
 
 uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat,
-    colorpaletteid_t palid, boolean gamma, int outformat)
+    colorpaletteid_t palid, int outformat)
 {
     assert(in);
     {
@@ -1155,14 +1148,14 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
         return (uint8_t*)in;
     }
 
-    if(0 == (out = malloc(width * height * outformat)))
+    if(NULL == (out = (uint8_t*) malloc(outformat * width * height)))
         Con_Error("GL_ConvertBuffer: Failed on allocation of %lu bytes for "
-                  "conversion buffer.", (unsigned long) (width * height * outformat));
+                  "conversion buffer.", (unsigned long) (outformat * width * height));
 
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
-        GL_PalettizeImage(out, outformat, R_GetColorPalette(palid), gamma,
+        GL_PalettizeImage(out, outformat, R_FindColorPaletteIndexForId(palid), false,
             in, informat, width, height);
         return out;
     }
@@ -1170,21 +1163,25 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     // Conversion from RGB(A) to pal8(a), using pal18To8.
     if(informat >= 3 && outformat <= 2)
     {
-        GL_QuantizeImageToPalette(out, outformat, R_GetColorPalette(palid),
+        GL_QuantizeImageToPalette(out, outformat, R_FindColorPaletteIndexForId(palid),
             in, informat, width, height);
         return out;
     }
 
     if(informat == 3 && outformat == 4)
     {
-        int i, numPixels = width * height;
-        int inSize = (informat == 2 ? 1 : informat);
-        int outSize = (outformat == 2 ? 1 : outformat);
-
-        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
+        long i, numPels = width * height;
+        const uint8_t* src = in;
+        uint8_t* dst = out;
+        for(i = 0; i < numPels; ++i)
         {
-            memcpy(out, in, 3);
-            out[3] = 0xff; // Opaque.
+            dst[CR] = src[CR];
+            dst[CG] = src[CG];
+            dst[CB] = src[CB];
+            dst[CA] = 255; // Opaque.
+
+            src += informat;
+            dst += outformat;
         }
     }
     return out;
@@ -1197,14 +1194,22 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
 {
     assert(buffer && brightX && brightY && color && lumSize);
     {
-    DGLuint pal = (pixelSize == 1? R_GetColorPalette(palid) : 0);
     const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
     int i, k, x, y, c, cnt = 0, posCnt = 0;
     const uint8_t* src, *alphaSrc = NULL;
+    colorpalette_t* pal = NULL;
     int avgCnt = 0, lowCnt = 0;
     float average[3], lowAvg[3];
     uint8_t rgb[3];
     int region[4];
+
+    if(pixelSize == 1)
+    {
+        pal = R_ToColorPalette(R_FindColorPaletteIndexForId(palid));
+        if(NULL == pal)
+            Con_Error("GL_CalcLuminance: Failed to locate ColorPalette for id %u.",
+                (uint) palid);
+    }
 
     for(i = 0; i < 3; ++i)
     {
@@ -1253,7 +1258,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
             // Bright enough?
             if(pixelSize == 1)
             {
-                GL_GetColorPaletteRGB(pal, (DGLubyte*) rgb, *src);
+                ColorPalette_Color(pal, *src, rgb);
             }
             else if(pixelSize >= 3)
             {

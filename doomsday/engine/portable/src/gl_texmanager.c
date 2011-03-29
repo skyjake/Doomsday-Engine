@@ -52,6 +52,7 @@
 #include "ui_main.h"
 #include "p_particle.h"
 
+#include "colorpalette.h"
 #include "image.h"
 #include "texturecontent.h"
 #include "texture.h"
@@ -104,7 +105,6 @@ int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
 
-boolean allowMaskedTexEnlarge = false;
 boolean noHighResTex = false;
 boolean noHighResPatches = false;
 boolean highResWithPWAD = false;
@@ -176,6 +176,16 @@ static texturevariantspecification_t* copyVariantSpecification(
                   "%lu bytes for new TextureVariantSpecification.",
                   (unsigned int) sizeof(*spec));
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
+    if(TS_NORMAL(tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
+    {
+        colorpalettetranslationspecification_t* cpt;
+        if(NULL == (cpt = (colorpalettetranslationspecification_t*) malloc(sizeof(*cpt))))
+            Con_Error("Textures::copyVariantSpecification: Failed on allocation of "
+                  "%lu bytes for new ColorPaletteTranslationSpecification.",
+                  (unsigned int) sizeof(*cpt));
+        memcpy(cpt, TS_NORMAL(tpl)->translated, sizeof(colorpalettetranslationspecification_t));
+        TS_NORMAL(spec)->translated = cpt;
+    }
     return spec;
 }
 
@@ -197,9 +207,17 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     /// \todo We can be a bit cleverer here...
     if(a->context != b->context)
         return 1;
-    if(a->flags  != b->flags)
+    if(a->flags   != b->flags)
         return 1;
-    if(a->border != b->border)
+    if(a->wrapS   != b->wrapS || a->wrapT != b->wrapT)
+        return 1;
+    if(a->mipmapped != b->mipmapped)
+        return 1;
+    if(a->anisoFilter != b->anisoFilter)
+        return 1;
+    if(a->gammaCorrection != b->gammaCorrection)
+        return 1;
+    if(a->border  != b->border)
         return 1;
     if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
@@ -224,13 +242,20 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
 
 static variantspecification_t* applyVariantSpecification(
     variantspecification_t* spec, texturevariantusagecontext_t tc, int flags,
-    byte border, int tClass, int tMap)
+    byte border, int tClass, int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
 {
     assert(spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
+    flags &= ~TSF_INTERNAL_MASK;
+
     spec->context = tc;
-    spec->flags = flags & ~TSF_INTERNAL_MASK;
-    spec->border = border;
+    spec->flags = flags;
+    spec->border = (flags & TSF_UPSCALE_AND_SHARPEN)? 1 : border;
+    spec->mipmapped = mipmapped;
+    spec->wrapS = wrapS;
+    spec->wrapT = wrapT;
+    spec->anisoFilter = anisoFilter < 0? -1 : MINMAX_OF(0, anisoFilter, 4);
+    spec->gammaCorrection = gammaCorrection;
 
     if(0 != tMap || 0 != tClass)
     {
@@ -300,13 +325,22 @@ static texturevariantspecification_t* findVariantSpecification(
 }
 
 static texturevariantspecification_t* getVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass,
+    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
 {
-    static texturevariantspecification_t tpl;
     assert(texInited);
+    {
+    static texturevariantspecification_t tpl;
+    texturevariantspecification_t* finalSpec;
     tpl.type = TS_NORMAL;
-    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap);
-    return findVariantSpecification(tpl.type, &tpl, true);
+    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap, wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection);
+    finalSpec = findVariantSpecification(tpl.type, &tpl, true);
+    /// We're finished with the template.
+    /// \fixme Do not dynamically allocate during this process!
+    if(TS_NORMAL(&tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
+        free(TS_NORMAL(&tpl)->translated);
+    return finalSpec;
+    }
 }
 
 static texturevariantspecification_t* getDetailVariantSpecificationForContext(
@@ -484,40 +518,64 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
     byte loadResult = 0;
     switch(Texture_Namespace(generalCase))
     {
-    case TN_FLATS:
+    case TN_FLATS: {
+        const flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(generalCase));
+        assert(NULL != flat);
+
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
-            flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(generalCase));
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
-            assert(NULL != flat);
             // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace.
             Str_Init(&searchPath); Str_Appendf(&searchPath, FLATS_RESOURCE_NAMESPACE_NAME":%s;" TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", flat->name, flat->name);
+
             loadResult = GL_LoadExtTextureEX(img, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadFlatLump(img, generalCase);
+        {
+            lumpnum_t lumpNum = W_CheckNumForName2(flat->name, true);
+            loadResult = GL_LoadFlatLump(img, lumpNum);
+        }
         break;
-    case TN_PATCHES:
+      }
+    case TN_PATCHES: {
+        const patchtex_t* pTex = R_PatchTextureByIndex(Texture_TypeIndex(generalCase));
+        int tclass = 0, tmap = 0;
+
+        assert(NULL != pTex);
+
+        if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
+        {
+            assert(spec->translated);
+            tclass = spec->translated->tClass;
+            tmap   = spec->translated->tMap;
+        }
+
         // Attempt to load an external replacement for this patch?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(generalCase)))
         {
-            const patchtex_t* p = R_PatchTextureByIndex(Texture_TypeIndex(generalCase));
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
-            assert(NULL != p);
             Str_Init(&searchPath);
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(p->lump));
+            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(pTex->lump));
+
             loadResult = GL_LoadExtTextureEX(img, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadDoomPatchLump(img, generalCase, (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0);
+        {
+            loadResult = GL_LoadPatchLump(img, pTex->lump, tclass, tmap, spec->border);
+        }
         break;
+      }
     case TN_SPRITES: {
+        const spritetex_t* sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(generalCase));
         int tclass = 0, tmap = 0;
+
+        assert(NULL != sprTex);
+
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             assert(spec->translated);
@@ -528,10 +586,7 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
         // Attempt to load an external replacement for this sprite?
         if(!noHighResPatches)
         {
-            const spritetex_t* sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(generalCase));
             ddstring_t searchPath, suffix = { "-ck" };
-
-            assert(NULL != sprTex);
 
             // Prefer psprite or translated versions if available.
             Str_Init(&searchPath);
@@ -546,12 +601,14 @@ static byte loadSourceImage(image_t* img, const texturevariant_t* tex)
             }
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", sprTex->name);
 
-            /// \fixme What about the border?
             loadResult = GL_LoadExtTextureEX(img, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
-            loadResult = GL_LoadSpriteLump(img, generalCase, tclass, tmap, spec->border);
+        {
+            lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
+            loadResult = GL_LoadPatchLump(img, lumpNum, tclass, tmap, spec->border);
+        }
         break;
       }
     case TN_SYSTEM:
@@ -583,7 +640,8 @@ static byte prepareVariant(texturevariant_t* tex)
     boolean monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
     boolean noCompression = (spec->flags & TSF_NO_COMPRESSION) != 0;
     boolean scaleSharp    = (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0;
-    int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
+    int wrapS = spec->wrapS, wrapT = spec->wrapT;
+    int magFilter, minFilter, anisoFilter, grayMipmap = 0, flags = 0;
     boolean noSmartFilter = false, didDefer = false, loadedPaletted = false;
     dgltexformat_t dglFormat;
     boolean alphaChannel;
@@ -595,9 +653,31 @@ static byte prepareVariant(texturevariant_t* tex)
     // Load in the raw source image.
     if(TN_TEXTURES == Texture_Namespace(TextureVariant_GeneralCase(tex)))
     {
-        loadResult = GL_LoadDoomTexture(&image, TextureVariant_GeneralCase(tex),
-            spec->context == TC_SKYSPHERE_DIFFUSE,
-            (spec->flags & TSF_ZEROMASK) != 0);
+        // Try to load a replacement version of this texture?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(TextureVariant_GeneralCase(tex))))
+        {
+            patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(tex)));
+            const ddstring_t suffix = { "-ck" };
+            ddstring_t searchPath;
+            assert(NULL != texDef);
+            Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
+            loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
+            Str_Free(&searchPath);
+        }
+
+        if(0 == loadResult)
+        {
+            if(TC_SKYSPHERE_DIFFUSE != spec->context)
+            {
+                loadResult = GL_LoadPatchComposite(&image, TextureVariant_GeneralCase(tex));
+            }
+            else
+            {
+                loadResult = GL_LoadPatchCompositeAsSky(&image, TextureVariant_GeneralCase(tex),
+                    (spec->flags & TSF_ZEROMASK) != 0);
+
+            }
+        }
     }
     else
     {
@@ -620,7 +700,7 @@ static byte prepareVariant(texturevariant_t* tex)
     if(image.pixelSize == 1)
     {
         if(monochrome && !scaleSharp)
-            GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
+            GL_DeSaturatePalettedImage(image.pixels, R_FindColorPaletteIndexForId(0), image.width, image.height);
 
         if(scaleSharp)
         {
@@ -628,7 +708,7 @@ static byte prepareVariant(texturevariant_t* tex)
             int numpels = image.width * image.height;
             uint8_t* newPixels;
 
-            newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, false, 4);
+            newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, 4);
             if(newPixels != image.pixels)
             {
                 free(image.pixels);
@@ -660,7 +740,7 @@ static byte prepareVariant(texturevariant_t* tex)
             }
             else
             {   // Yes. Quantize down from RGA(+A) to Indexed(+A), replacing the old image.
-                newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, false, 4);
+                newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, 4);
                 if(newPixels != image.pixels)
                 {
                     free(image.pixels);
@@ -686,30 +766,6 @@ static byte prepareVariant(texturevariant_t* tex)
         }
     }
 
-    // Too big for us?
-    if(image.width  > GL_state.maxTexSize || image.height > GL_state.maxTexSize)
-    {
-        if(image.pixelSize == 3 || image.pixelSize == 4)
-        {
-            int newWidth  = MIN_OF(image.width, GL_state.maxTexSize);
-            int newHeight = MIN_OF(image.height, GL_state.maxTexSize);
-            uint8_t* scaledPixels = GL_ScaleBuffer(image.pixels, image.width, image.height, image.pixelSize,
-                newWidth, newHeight);
-            if(scaledPixels != image.pixels)
-            {
-                free(image.pixels);
-                image.pixels = scaledPixels;
-                image.width = newWidth;
-                image.height = newHeight;
-            }
-        }
-        else
-        {
-            Con_Message("Textures::prepareTextureVariant: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
-                        image.width, image.height, image.pixelSize);
-        }
-    }
-
     // Lightmaps and flare textures should always be monochrome images.
     if(((TC_MAPSURFACE_LIGHTMAP == spec->context) ||
         (TC_HALO_LUMINANCE      == spec->context && image.pixelSize != 4)) &&
@@ -720,76 +776,30 @@ static byte prepareVariant(texturevariant_t* tex)
     }
 
     // Disable compression?
-    if(noCompression || (image.width < 128 || image.height < 128) ||
-       TC_HALO_LUMINANCE        == spec->context ||
-       TC_MAPSURFACE_REFLECTION == spec->context)
+    if(noCompression || (image.width < 128 || image.height < 128))
         flags |= TXCF_NO_COMPRESSION;
 
-    if(spec->context == TC_MODELSKIN_DIFFUSE)
+    if(spec->gammaCorrection)
         flags |= TXCF_APPLY_GAMMACORRECTION;
 
-    if(image.pixelSize > 2)
-    {
-        if(TC_MAPSURFACE_DIFFUSE == spec->context ||
-           TC_SPRITE_DIFFUSE     == spec->context ||
-           TC_PSPRITE_DIFFUSE    == spec->context ||
-           TC_SKYSPHERE_DIFFUSE  == spec->context)
-            flags |= TXCF_APPLY_GAMMACORRECTION;
-    }
-
-    if(TC_SPRITE_DIFFUSE == spec->context)
+    if(TC_SPRITE_DIFFUSE == spec->context || TC_PSPRITE_DIFFUSE == spec->context)
         flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
-    switch(spec->context)
-    {
-    case TC_MAPSURFACE_DIFFUSE:
-    //case TC_MAPSURFACE_REFLECTION:
-    case TC_MAPSURFACE_REFLECTIONMASK:
-    //case TC_MAPSURFACE_LIGHTMAP:
-    case TC_SPRITE_DIFFUSE:
-    case TC_MODELSKIN_DIFFUSE:
-    //case TC_MODELSKIN_REFLECTION:
+    if(spec->mipmapped)
         flags |= TXCF_MIPMAP;
-        break;
-    default: break;
-    }
 
     alphaChannel = false;
-    if(!monochrome)
-    {
-        texturenamespaceid_t texNamespace = Texture_Namespace(TextureVariant_GeneralCase(tex));
-        if(!(TN_SYSTEM      == texNamespace ||
-             TN_REFLECTIONS == texNamespace ||
-             TN_MASKS       == texNamespace))
-            flags |= TXCF_EASY_UPLOAD;
-    }
-
     if(loadedPaletted)
     {
-        if(!monochrome && image.pixelSize > 1)
-            flags |= TXCF_UPLOAD_ARG_RGBDATA;
-
         if((image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)) ||
            image.pixelSize == 4)
             alphaChannel = true;
     }
     else
     {
-        if(!monochrome && image.pixelSize > 2 &&
-            !(TC_MAPSURFACE_REFLECTIONMASK == spec->context ||
-              TC_MAPSURFACE_LIGHTMAP       == spec->context))
-            flags |= TXCF_UPLOAD_ARG_RGBDATA;
-
-        if(!(TC_MAPSURFACE_REFLECTIONMASK == spec->context ||
-             TC_MAPSURFACE_REFLECTION     == spec->context))
-        {
-            if(image.pixelSize == 2 || image.pixelSize == 4)
-                alphaChannel = true;
-        }
+        if(image.pixelSize == 2 || image.pixelSize == 4)
+            alphaChannel = true;
     }
-
-    if(alphaChannel)
-        flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
 
     if(noSmartFilter)
         flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
@@ -847,31 +857,7 @@ static byte prepareVariant(texturevariant_t* tex)
         break;
     }
 
-    switch(spec->context)
-    {
-    case TC_UI:
-    case TC_PSPRITE_DIFFUSE:
-    case TC_HALO_LUMINANCE:
-        anisoFilter = 0 /*no anisotropic filtering*/;
-        break;
-    default:
-        anisoFilter = texAniso; /// \fixme is "best" truely a suitable default?
-        break;
-    }
-
-    switch(spec->context)
-    {
-    case TC_UI:
-    case TC_SPRITE_DIFFUSE:
-    case TC_PSPRITE_DIFFUSE:
-    case TC_HALO_LUMINANCE:
-    case TC_MAPSURFACE_LIGHTMAP:
-        wrapS = wrapT = GL_CLAMP_TO_EDGE;
-        break;
-    default:
-        wrapS = wrapT = GL_REPEAT;
-        break;
-    }
+    anisoFilter = spec->anisoFilter < 0? texAniso : spec->anisoFilter;
 
     glName = GL_NewTextureWithParams3(dglFormat, image.width, image.height,
         image.pixels, flags, grayMipmap, minFilter, magFilter, anisoFilter, wrapS,
@@ -891,19 +877,19 @@ static byte prepareVariant(texturevariant_t* tex)
      * Calculate texture coordinates based on the image dimensions. The
      * coordinates are calculated as width/CeilPow2(width), or 1 if larger
      * than the maximum texture size.
+     *
+     * \fixme Image dimensions may not be the same as the uploaded texture!
      */
-    if((TC_SPRITE_DIFFUSE  == spec->context ||
-        TC_PSPRITE_DIFFUSE == spec->context) &&
-       GL_state.features.texNonPowTwo && !(flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
-       !(image.width < MINTEXWIDTH || image.height < MINTEXHEIGHT))
-    {
-        s = t = 1;
-    }
-    else
+    if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
+       (!GL_state.features.texNonPowTwo || spec->mipmapped))
     {
         int pw = M_CeilPow2(image.width), ph = M_CeilPow2(image.height);
         s =  image.width / (float) pw;
         t = image.height / (float) ph;
+    }
+    else
+    {
+        s = t = 1;
     }
 
     TextureVariant_SetCoords(tex, s, t);
@@ -983,18 +969,18 @@ static byte prepareDetailVariant(texturevariant_t* tex)
     int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
     boolean didDefer = false;
     dgltexformat_t dglFormat;
+    const detailtex_t* dTex;
     byte loadResult = 0;
     DGLuint glName;
     image_t image;
     float s, t;
+    int idx;
 
-    // Load in the raw source image.
-    {
-    texture_t* generalCase = TextureVariant_GeneralCase(tex);
-    int idx = Texture_TypeIndex(generalCase);
-    const detailtex_t* dTex;
+    idx = Texture_TypeIndex(TextureVariant_GeneralCase(tex));
     assert(idx >= 0 && idx < detailTexturesCount);
     dTex = detailTextures[idx];
+
+    // Load in the raw source image.
     if(dTex->isExternal)
     {
         ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
@@ -1003,8 +989,8 @@ static byte prepareDetailVariant(texturevariant_t* tex)
     }
     else
     {
-        loadResult = GL_LoadDetailTextureLump(&image, generalCase);
-    }
+        lumpnum_t lumpNum = W_CheckNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
+        loadResult = GL_LoadDetailTextureLump(&image, lumpNum);
     }
 
     if(0 == loadResult)
@@ -1024,8 +1010,8 @@ static byte prepareDetailVariant(texturevariant_t* tex)
     EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
     if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
     {
-        VERBOSE2( Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
-                    Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul) );
+        Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
+                    Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul);
     }
     }
 
@@ -1039,17 +1025,12 @@ static byte prepareDetailVariant(texturevariant_t* tex)
      * when each mipmap level is loaded.
      */
     grayMipmap = MINMAX_OF(0, spec->contrast * 255, 255);
-    flags |= TXCF_GRAY_MIPMAP;
+    flags |= TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
     dglFormat = DGL_LUMINANCE;
     magFilter = glmode[texMagMode];
     minFilter = GL_LINEAR_MIPMAP_LINEAR;
     anisoFilter = texAniso;
     wrapS = wrapT = GL_REPEAT;
-
-    // Too big for us?
-    if(image.width  > GL_state.maxTexSize || image.height > GL_state.maxTexSize)
-        Con_Message("Warning:Textures::prepareDetailVariant: Texture larger than max size (%ix%i bpp%i).\n",
-                    image.width, image.height, image.pixelSize);
 
     glName = GL_NewTextureWithParams3(dglFormat, image.width, image.height,
         image.pixels, flags, grayMipmap, minFilter, magFilter, anisoFilter, wrapS,
@@ -1184,10 +1165,6 @@ void GL_InitTextureManager(void)
     if(texInited)
         return; // Don't init again.
 
-    // The -bigmtex option allows the engine to enlarge masked textures
-    // that have taller patches than they are themselves.
-    allowMaskedTexEnlarge = ArgExists("-bigmtex");
-
     // Disable the use of 'high resolution' textures and/or patches?
     noHighResTex = ArgExists("-nohightex");
     noHighResPatches = ArgExists("-nohighpat");
@@ -1257,7 +1234,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 
         Con_Printf(" context:%s flags:%i border:%i",
             textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
-            TS_NORMAL(spec)->flags, TS_NORMAL(spec)->border);
+            (TS_NORMAL(spec)->flags & ~TSF_INTERNAL_MASK), TS_NORMAL(spec)->border);
         if(TS_NORMAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             const colorpalettetranslationspecification_t* cpt = TS_NORMAL(spec)->translated;
@@ -1271,12 +1248,13 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 }
 
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap)
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
+    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
 {
     if(!texInited)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
-    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap);
+    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection);
 }
 
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
@@ -1537,27 +1515,442 @@ uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath)
 void GL_DestroyImagePixels(image_t* img)
 {
     assert(img);
-    if(img->pixels)
-        free(img->pixels);
+    if(NULL == img->pixels) return;
+    free(img->pixels); img->pixels = NULL;
 }
 
-DGLuint GL_UploadTexture(const uint8_t* pixels, int width, int height,
-    boolean flagAlphaChannel, boolean flagGenerateMipmaps, boolean flagRgbData,
-    boolean flagNoStretch, boolean flagNoSmartFilter, int minFilter,
-    int magFilter, int anisoFilter, int wrapS, int wrapT, int otherFlags)
+boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
+    boolean applyTexGamma, const uint8_t* in, int informat, int width, int height)
+{
+    assert(in && out);
+
+    if(0 >= width || 0 >= height)
+        return false;
+
+    if(informat <= 2 && outformat >= 3)
+    {
+        long numPels = width * height;
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
+        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
+
+        if(NULL == pal)
+            Con_Error("GL_PalettizeImage: Failed to locate ColorPalette for name %i.",
+                paletteIdx);
+
+        { long i;
+        for(i = 0; i < numPels; ++i)
+        {
+            ColorPalette_Color(pal, *in, out);
+            if(applyTexGamma)
+            {
+                out[CR] = gammaTable[out[CR]];
+                out[CG] = gammaTable[out[CG]];
+                out[CB] = gammaTable[out[CB]];
+            }
+
+            if(outformat == 4)
+            {
+                if(informat == 2)
+                    out[CA] = in[numPels * inSize];
+                else
+                    out[CA] = 0;
+            }
+
+            in  += inSize;
+            out += outSize;
+        }}
+        return true;
+    }
+    return false;
+}
+
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
+    const uint8_t* in, int informat, int width, int height)
+{
+    assert(out && in);
+    if(informat >= 3 && outformat <= 2 && width > 0 && height > 0)
+    {
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
+        int i, numPixels = width * height;
+        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
+
+        if(NULL == pal)
+            Con_Error("GL_QuantizeImageToPalette: Failed to locate ColorPalette for name %i.",
+                paletteIdx);
+
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
+        {
+            // Convert the color value.
+            *out = ColorPalette_NearestIndexv(pal, in);
+
+            // Alpha channel?
+            if(outformat == 2)
+            {
+                if(informat == 4)
+                    out[numPixels * outSize] = in[3];
+                else
+                    out[numPixels * outSize] = 0;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height)
+{
+    assert(buffer);
+    {
+    const long numPels = width * height;
+    colorpalette_t* pal;
+    uint8_t rgb[3];
+    int max, temp;
+
+    if(width == 0 || height == 0)
+        return; // Nothing to do.
+
+    pal = R_ToColorPalette(paletteIdx);
+    if(NULL == pal)
+        Con_Error("GL_DeSaturatePalettedImage: Failed to locate ColorPalette for name %i.",
+            paletteIdx);
+
+    // What is the maximum color value?
+    max = 0;
+    { long i;
+    for(i = 0; i < numPels; ++i)
+    {
+        ColorPalette_Color(pal, buffer[i], rgb);
+        if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
+        {
+            if(rgb[CR] > max)
+                max = rgb[CR];
+            continue;
+        }
+
+        temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
+        if(temp > max)
+            max = temp;
+    }}
+
+    { long i;
+    for(i = 0; i < numPels; ++i)
+    {
+        ColorPalette_Color(pal, buffer[i], rgb);
+        if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
+            continue;
+
+        // Calculate a weighted average.
+        temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
+        if(max)
+            temp *= 255.f / max;
+        buffer[i] = ColorPalette_NearestIndex(pal, temp, temp, temp);
+    }}
+    }
+}
+
+static int BytesPerPixelFmt(dgltexformat_t format)
+{
+    switch(format)
+    {
+    case DGL_LUMINANCE:
+    case DGL_COLOR_INDEX_8:         return 1;
+
+    case DGL_LUMINANCE_PLUS_A8:
+    case DGL_COLOR_INDEX_8_PLUS_A8: return 2;
+
+    case DGL_RGB:                   return 3;
+
+    case DGL_RGBA:                  return 4;
+    default:
+        Con_Error("BytesPerPixelFmt: Unknown format %i, don't know pixel size.\n", format);
+        return 0; // Unreachable.
+    }
+}
+
+/**
+ * Given a pixel format return the number of bytes to store one pixel.
+ * \assume Input data is of GL_UNSIGNED_BYTE type.
+ */
+static int BytesPerPixel(GLint format)
+{
+    switch(format)
+    {
+    case GL_COLOR_INDEX:
+    case GL_STENCIL_INDEX:
+    case GL_DEPTH_COMPONENT:
+    case GL_RED:
+    case GL_GREEN:
+    case GL_BLUE:
+    case GL_ALPHA:
+    case GL_LUMINANCE:              return 1;
+
+    case GL_LUMINANCE_ALPHA:        return 2;
+
+    case GL_RGB:
+    case GL_RGB8:
+    case GL_BGR:                    return 3;
+
+    case GL_RGBA:
+    case GL_RGBA8:
+    case GL_BGRA:                   return 4;
+
+    default:
+        Con_Error("BytesPerPixel: Unknown format %i.", (int) format);
+        return 0; // Unreachable.
+    }
+}
+
+/**
+ * Choose an internal texture format.
+ *
+ * @param format  DGL texture format identifier.
+ * @param allowCompression  @c true == use compression if available.
+ * @return  The chosen texture format.
+ */
+static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression)
+{
+    boolean compress = (allowCompression && GL_state.features.texCompression);
+
+    switch(format)
+    {
+    case DGL_RGB:
+    case DGL_COLOR_INDEX_8:
+        if(!compress)
+            return GL_RGB8;
+#if USE_TEXTURE_COMPRESSION_S3
+        if(GL_state.extensions.texCompressionS3)
+            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+#endif
+        return GL_COMPRESSED_RGB;
+
+    case DGL_RGBA:
+    case DGL_COLOR_INDEX_8_PLUS_A8:
+        if(!compress)
+            return GL_RGBA8;
+#if USE_TEXTURE_COMPRESSION_S3
+        if(GL_state.extensions.texCompressionS3)
+            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#endif
+        return GL_COMPRESSED_RGBA;
+
+    case DGL_LUMINANCE:
+        return !compress ? GL_LUMINANCE : GL_COMPRESSED_LUMINANCE;
+
+    case DGL_LUMINANCE_PLUS_A8:
+        return !compress ? GL_LUMINANCE_ALPHA : GL_COMPRESSED_LUMINANCE_ALPHA;
+
+    default:
+        Con_Error("ChooseTextureFormat: Invalid source format %i.", (int) format);
+        return 0; // Unreachable.
+    }
+}
+
+boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+    int width, int height, float grayFactor)
+{
+    assert(pixels);
+    {
+    int w, h, numpels = width * height, numLevels, pixelSize;
+    uint8_t* image, *faded, *out;
+    const uint8_t* in;
+    float invFactor;
+
+    if(!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
+        Con_Error("GL_TexImageGrayMipmap: Unsupported load format %i.", (int) loadFormat);
+
+    pixelSize = (loadFormat == GL_LUMINANCE? 1 : 3);
+
+    // Can't operate on null texture.
+    if(width < 1 || height < 1)
+        return false;
+
+    // Check that the texture dimensions are valid.
+    if(!GL_state.features.texNonPowTwo &&
+       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
+        return false;
+
+    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+        return false;
+
+    numLevels = GL_NumMipmapLevels(width, height);
+    grayFactor = MINMAX_OF(0, grayFactor, 1);
+    invFactor = 1 - grayFactor;
+
+    // Buffer used for the faded texture.
+    faded = malloc(numpels / 4);
+    image = malloc(numpels);
+
+    // Initial fading.
+    in = pixels;
+    out = image;
+    { int i;
+    for(i = 0; i < numpels; ++i)
+    {
+        *out++ = (uint8_t) MINMAX_OF(0, (*in * grayFactor + 127 * invFactor), 255);
+        in += pixelSize;
+    }}
+
+    // Upload the first level right away.
+    glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, (GLint)loadFormat,
+        GL_UNSIGNED_BYTE, image);
+
+    // Generate all mipmaps levels.
+    w = width;
+    h = height;
+    { int i;
+    for(i = 0; i < numLevels; ++i)
+    {
+        GL_DownMipmap8(image, faded, w, h, (i * 1.75f) / numLevels);
+
+        // Go down one level.
+        if(w > 1)
+            w /= 2;
+        if(h > 1)
+            h /= 2;
+
+        glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLint)loadFormat,
+            GL_UNSIGNED_BYTE, faded);
+    }}
+
+    // Do we need to free the temp buffer?
+    free(faded);
+    free(image);
+
+    assert(!Sys_GLCheckError());
+    return true;
+    }
+}
+
+boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
+    int width,  int height, int genMipmaps)
+{
+    assert(pixels);
+    {
+    const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
+    const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
+    int mipLevel = 0;
+
+    if(!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
+         GL_RGB == loadFormat || GL_RGBA == loadFormat))
+         Con_Error("GL_TexImage: Unsupported load format %i.", (int) loadFormat);
+
+    // Can't operate on null texture.
+    if(width < 1 || height < 1)
+        return false;
+
+    // Check that the texture dimensions are valid.
+    if(width > GL_state.maxTexSize || height > GL_state.maxTexSize)
+        return false;
+
+    if(!GL_state.features.texNonPowTwo &&
+       (width != M_CeilPow2(width) || height != M_CeilPow2(height)))
+        return false;
+
+    // Negative indices signify a specific mipmap level is being uploaded.
+    if(genMipmaps < 0)
+    {
+        mipLevel = -genMipmaps;
+        genMipmaps = 0;
+    }
+
+    // Automatic mipmap generation?
+    if(GL_state.extensions.genMipmapSGIS && genMipmaps)
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+
+    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+    glPixelStorei(GL_PACK_ROW_LENGTH, (GLint)packRowLength);
+    glPixelStorei(GL_PACK_ALIGNMENT, (GLint)packAlignment);
+    glPixelStorei(GL_PACK_SKIP_ROWS, (GLint)packSkipRows);
+    glPixelStorei(GL_PACK_SKIP_PIXELS, (GLint)packSkipPixels);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, (GLint)unpackRowLength);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, (GLint)unpackAlignment);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, (GLint)unpackSkipRows);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, (GLint)unpackSkipPixels);
+
+    if(genMipmaps && !GL_state.extensions.genMipmapSGIS)
+    {   // Build all mipmap levels.
+        int neww, newh, bpp, w, h;
+        void* image, *newimage;
+
+        bpp = BytesPerPixel(loadFormat);
+        if(bpp == 0)
+            Con_Error("GL_TexImage: Unknown GL format %i.\n", (int) loadFormat);
+
+        GL_OptimalTextureSize(width, height, false, true, &w, &h);
+
+        if(w != width || h != height)
+        {
+            // Must rescale image to get "top" mipmap texture image.
+            image = GL_ScaleBufferEx(pixels, width, height, bpp, /*GL_UNSIGNED_BYTE,*/
+                unpackRowLength, unpackAlignment, unpackSkipRows, unpackSkipPixels,
+                w, h, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment, packSkipRows,
+                packSkipPixels);
+            if(NULL == image)
+                Con_Error("GL_TexImage: Unknown error resizing mipmap level #0.");
+        }
+        else
+        {
+            image = (void*) pixels;
+        }
+
+        for(;;)
+        {
+            glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, w, h, 0, (GLint)loadFormat,
+                GL_UNSIGNED_BYTE, image);
+
+            if(w == 1 && h == 1)
+                break;
+
+            ++mipLevel;
+            neww = (w < 2) ? 1 : w / 2;
+            newh = (h < 2) ? 1 : h / 2;
+            newimage = GL_ScaleBufferEx(image, w, h, bpp, /*GL_UNSIGNED_BYTE,*/
+                unpackRowLength, unpackAlignment, unpackSkipRows, unpackSkipPixels,
+                neww, newh, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment,
+                packSkipRows, packSkipPixels);
+            if(NULL == newimage)
+                Con_Error("GL_TexImage: Unknown error resizing mipmap level #%i.", mipLevel);
+
+            if(image != pixels)
+                free(image);
+            image = newimage;
+
+            w = neww;
+            h = newh;
+        }
+
+        if(image != pixels)
+            free(image);
+    }
+    else
+    {
+        glTexImage2D(GL_TEXTURE_2D, mipLevel, (GLint)glFormat, (GLsizei)width,
+            (GLsizei)height, 0, (GLint)loadFormat, GL_UNSIGNED_BYTE, pixels);
+    }
+
+    glPopClientAttrib();
+    assert(!Sys_GLCheckError());
+
+    return true;
+    }
+}
+
+DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
+    dgltexformat_t format, boolean flagGenerateMipmaps, boolean flagNoStretch,
+    boolean flagNoSmartFilter, int minFilter, int magFilter, int anisoFilter,
+    int wrapS, int wrapT, int otherFlags)
 {
     texturecontent_t content;
 
     GL_InitTextureContent(&content);
     content.pixels = pixels;
-    content.format = (flagRgbData? (flagAlphaChannel? DGL_RGBA : DGL_RGB) :
-                      (flagAlphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8));
+    content.format = format;
     content.width = width;
     content.height = height;
-    content.flags = TXCF_EASY_UPLOAD | otherFlags;
-    if(flagAlphaChannel) content.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
+    content.flags = otherFlags;
     if(flagGenerateMipmaps) content.flags |= TXCF_MIPMAP;
-    if(flagRgbData) content.flags |= TXCF_UPLOAD_ARG_RGBDATA;
     if(flagNoStretch) content.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
     if(flagNoSmartFilter) content.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
     content.minFilter = minFilter;
@@ -1570,161 +1963,245 @@ DGLuint GL_UploadTexture(const uint8_t* pixels, int width, int height,
     return content.name;
 }
 
-DGLuint GL_UploadTexture2(const texturecontent_t* content)
+DGLuint GL_UploadTexture(const texturecontent_t* content)
 {
-    const uint8_t* pixels = (const uint8_t*) content->pixels;
-    int width = content->width;
-    int height = content->height;
-    boolean alphaChannel = ((content->flags & TXCF_UPLOAD_ARG_ALPHACHANNEL) != 0);
-    boolean generateMipmaps = ((content->flags & TXCF_MIPMAP) != 0);
-    boolean RGBData = ((content->flags & TXCF_UPLOAD_ARG_RGBDATA) != 0);
-    boolean noStretch = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
-    boolean noSmartFilter = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
-    boolean applyTexGamma = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
-    int i, comps, levelWidth, levelHeight; // width and height at the current level
-    uint8_t* buffer = NULL, *rgbaOriginal = NULL, *idxBuffer = NULL;
-    boolean freeOriginal;
-    boolean freeBuffer;
-    boolean oldCompression = GL_state.currentUseTexCompression;
-
-    GL_SetTextureCompression((content->flags & TXCF_NO_COMPRESSION) == 0);
-
-    // Number of color components in the destination image.
-    comps = (alphaChannel ? 4 : 3);
-
-    // Calculate the real dimensions for the texture, as required by
-    // the graphics hardware.
-    noStretch = GL_OptimalTextureSize(width, height, noStretch, generateMipmaps, &levelWidth, &levelHeight);
-
-    // Get the RGB(A) version of the original texture.
-    if(RGBData)
+    assert(content);
     {
-        // The source image can be used as-is.
-        freeOriginal = false;
-        rgbaOriginal = (uint8_t*)pixels;
-    }
-    else
-    {
-        // Convert a paletted source image to truecolor so it can be scaled.
-        // If there isn't an alpha channel one will be added.
-        comps = 4;
-        rgbaOriginal = GL_ConvertBuffer(pixels, width, height, alphaChannel ? 2 : 1, 0, true, comps);
-        if(rgbaOriginal != pixels)
-        {
-            freeOriginal = true;
-        }
+    boolean generateMipmaps  = ((content->flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP)) != 0);
+    boolean allowCompression = ((content->flags & TXCF_NO_COMPRESSION) == 0);
+    boolean applyTexGamma    = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
+    boolean noSmartFilter    = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
+    boolean noStretch        = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
+    int loadWidth = content->width, loadHeight = content->height;
+    const uint8_t* loadPixels = content->pixels;
+    dgltexformat_t dglFormat = content->format;
 
-        if(!alphaChannel)
-        {
-            int n;
-            for(n = 0; n < width * height; ++n)
-                rgbaOriginal[n * 4 + 3] = 255;
-            alphaChannel = true;
-        }
+    if(DGL_COLOR_INDEX_8 == dglFormat || DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat)
+    {
+        // Convert a paletted source image to truecolor.
+        uint8_t* newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight,
+            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1, content->palette,
+            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
+        if(loadPixels != content->pixels)
+            free((uint8_t*)loadPixels);
+        loadPixels = newPixels;
+        dglFormat = DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? DGL_RGBA : DGL_RGB;
     }
 
-    if(applyTexGamma)
+    if(DGL_RGBA == dglFormat || DGL_RGB == dglFormat)
     {
-        for(i = 0; i < width * height * comps; i += comps)
-        {
-            rgbaOriginal[i]   = gammaTable[pixels[i]];
-            rgbaOriginal[i+1] = gammaTable[pixels[i+1]];
-            rgbaOriginal[i+2] = gammaTable[pixels[i+2]];
-        }
-    }
+        int comps = (DGL_RGBA == dglFormat ? 4 : 3);
 
-    if(useSmartFilter && !noSmartFilter)
-    {
-        uint8_t* filtered;
-        int smartFlags = ICF_UPSCALE_SAMPLE_WRAP;
-
-        if(comps == 3)
+        if(applyTexGamma && texGamma > .0001f)
         {
-            // Must convert to RGBA.
-            uint8_t* temp = GL_ConvertBuffer(rgbaOriginal, width, height, 3, 0, true, 4);
-            if(temp != rgbaOriginal)
+            uint8_t* dst, *localBuffer = NULL;
+            long numPels = loadWidth * loadHeight;
+            const uint8_t* src;
+
+            src = loadPixels;
+            if(loadPixels == content->pixels)
             {
-                if(freeOriginal)
-                    free(rgbaOriginal);
+                if(0 == (localBuffer = (uint8_t*) malloc(comps * numPels)))
+                    Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for"
+                              "tex-gamma translation buffer.", (unsigned long) (comps * numPels));
+                dst = localBuffer;
             }
-            rgbaOriginal = temp;
-            freeOriginal = true;
-            comps = 4;
-            alphaChannel = true;
+            else
+            {
+                dst = (uint8_t*)loadPixels;
+            }
+
+            { long i;
+            for(i = 0; i < numPels; ++i)
+            {
+                dst[CR] = gammaTable[src[CR]];
+                dst[CG] = gammaTable[src[CG]];
+                dst[CB] = gammaTable[src[CB]];
+                src += comps;
+                dst += comps;
+            }}
+
+            if(NULL != localBuffer)
+            {
+                if(loadPixels != content->pixels)
+                    free((uint8_t*)loadPixels);
+                loadPixels = localBuffer;
+            }
         }
 
-        filtered = GL_SmartFilter(GL_ChooseSmartFilter(width, height, 0), rgbaOriginal, width, height, smartFlags, &width, &height);
-        noStretch = GL_OptimalTextureSize(width, height, noStretch, generateMipmaps, &levelWidth, &levelHeight);
-
-        if(filtered != rgbaOriginal)
+        if(useSmartFilter && !noSmartFilter)
         {
-            freeOriginal = true;
-            // The filtered copy will be the 'original' image data.
-            if(freeOriginal)
-                free(rgbaOriginal);
-            rgbaOriginal = filtered;
+            int smartFlags = ICF_UPSCALE_SAMPLE_WRAP;
+            uint8_t* filtered;
+
+            if(comps == 3)
+            {   // Need to add an alpha channel.
+                uint8_t* newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight, 3, 0, 4);
+                if(loadPixels != content->pixels)
+                    free((uint8_t*)loadPixels);
+                loadPixels = newPixels;
+                dglFormat = DGL_RGBA;
+            }
+
+            filtered = GL_SmartFilter(GL_ChooseSmartFilter(loadWidth, loadHeight, 0), loadPixels,
+                loadWidth, loadHeight, smartFlags, &loadWidth, &loadHeight);
+            if(filtered != loadPixels)
+            {
+                if(loadPixels != content->pixels)
+                    free((uint8_t*)loadPixels);
+                loadPixels = filtered;
+            }
         }
     }
 
-    // Prepare the RGB(A) buffer for the texture: we want a buffer with
-    // power-of-two dimensions. It will be the mipmap level zero.
-    // The buffer will be modified in the mipmap generation (if done here).
-    if(width == levelWidth && height == levelHeight)
-    {
-        // No resizing necessary.
-        buffer = rgbaOriginal;
-        freeBuffer = freeOriginal;
-        freeOriginal = false;
+    if(DGL_LUMINANCE_PLUS_A8 == dglFormat)
+    {   // Needs converting. This adds some overhead.
+        long numPixels = content->width * content->height;
+        uint8_t* pixel, *localBuffer;
+
+        if(NULL == (localBuffer = (uint8_t*) malloc(2 * numPixels)))
+            Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for "
+                "luminance conversion buffer.", (unsigned long) (2 * numPixels));
+        
+        pixel = localBuffer;
+        { long i;
+        for(i = 0; i < numPixels; ++i)
+        {
+            pixel[0] = loadPixels[i];
+            pixel[1] = loadPixels[numPixels + i];
+            pixel += 2;
+        }}
+
+        if(loadPixels != content->pixels)
+            free((uint8_t*)loadPixels);
+        loadPixels = localBuffer;
     }
-    else
+
+    if(DGL_LUMINANCE == dglFormat && (content->flags & TXCF_CONVERT_8BIT_TO_ALPHA))
+    {   // Needs converting. This adds some overhead.
+        long numPixels = content->width * content->height;
+        uint8_t* pixel, *localBuffer;
+
+        if(NULL == (localBuffer = (uint8_t*) malloc(2 * numPixels)))
+            Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for "
+                "luminance conversion buffer.", (unsigned long) (2 * numPixels));
+
+        // Move the average color to the alpha channel, make the actual color white.
+        pixel = localBuffer;
+        { long i;
+        for(i = 0; i < numPixels; ++i)
+        {
+            pixel[0] = 255;
+            pixel[1] = loadPixels[i];
+            pixel += 2;
+        }}
+
+        if(loadPixels != content->pixels)
+            free((uint8_t*)loadPixels);
+        loadPixels = localBuffer;
+        dglFormat = DGL_LUMINANCE_PLUS_A8;
+    }
+
+    // Calculate the final dimensions for the texture, as required by
+    // the graphics hardware and/or engine configuration.
     {
+    int width = loadWidth, height = loadHeight;
+    noStretch = GL_OptimalTextureSize(width, height, noStretch, generateMipmaps,
+        &loadWidth, &loadHeight);
+
+    // Do we need to resize?
+    if(width != loadWidth || height != loadHeight)
+    {
+        int comps = BytesPerPixelFmt(dglFormat);
+
         if(noStretch)
-        {
-            // Copy the image into a buffer with power-of-two dimensions.
-            if(0 == (buffer = malloc(levelWidth * levelHeight * comps)))
-                Con_Error("GL_UploadTexture2: Failed on allocation of %lu bytes for"
-                          "upscale buffer.", (unsigned long) (levelWidth * levelHeight * comps));
+        {   // Copy the texture into a power-of-two canvas.
+            uint8_t* localBuffer;
+            if(NULL == (localBuffer = (uint8_t*) calloc(1, comps * loadWidth * loadHeight)))
+                Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for"
+                          "upscale buffer.", (unsigned long) (comps * loadWidth * loadHeight));
 
-            memset(buffer, 0, levelWidth * levelHeight * comps);
-            for(i = 0; i < height; ++i) // Copy line by line.
-                memcpy(buffer + levelWidth * comps * i, rgbaOriginal + width * comps * i, comps * width);
-            freeBuffer = true;
+            // Copy line by line.
+            { int i;
+            for(i = 0; i < height; ++i)
+            {
+                memcpy(localBuffer + loadWidth * comps * i,
+                       loadPixels  + width     * comps * i, comps * width);
+            }}
+            if(loadPixels != content->pixels)
+                free((uint8_t*)loadPixels);
+            loadPixels = localBuffer;
         }
         else
+        {   // Stretch into a new power-of-two texture.
+            uint8_t* newPixels = GL_ScaleBuffer(loadPixels, width, height,
+                comps, loadWidth, loadHeight);
+            if(loadPixels != content->pixels)
+                free((uint8_t*)loadPixels);
+            loadPixels = newPixels;
+        }
+    }
+    }
+
+    glBindTexture(GL_TEXTURE_2D, content->name);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content->minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content->magFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content->wrap[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content->wrap[1]);
+    if(GL_state.features.texFilterAniso)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                        GL_GetTexAnisoMul(content->anisoFilter));
+
+    if(!(content->flags & TXCF_GRAY_MIPMAP))
+    {
+        GLint glFormat, loadFormat;
+
+        switch(dglFormat)
         {
-            // Stretch to fit into power-of-two.
-            if(width != levelWidth || height != levelHeight)
-            {
-                buffer = GL_ScaleBuffer(rgbaOriginal, width, height, comps, levelWidth, levelHeight);
-                if(buffer != rgbaOriginal)
-                    freeBuffer = true;
-            }
+        case DGL_LUMINANCE_PLUS_A8: loadFormat = GL_LUMINANCE_ALPHA; break;
+        case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
+        case DGL_RGB:               loadFormat = GL_RGB; break;
+        case DGL_RGBA:              loadFormat = GL_RGBA; break;
+        default:
+            Con_Error("GL_UploadTexture: Unknown format %i.", (int) dglFormat);
+        }
+
+        glFormat = ChooseTextureFormat(dglFormat, allowCompression);
+
+        if(!GL_TexImage(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
+                generateMipmaps ? true : false))
+        {
+            Con_Error("GL_UploadTexture: TexImage failed (%u:%ix%i fmt%i).",
+                content->name, loadWidth, loadHeight, (int) dglFormat);
+        }
+    }
+    else
+    {   // Special fade-to-gray luminance texture (used for details).
+        GLint glFormat, loadFormat;
+
+        switch(dglFormat)
+        {
+        case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
+        case DGL_RGB:               loadFormat = GL_RGB; break;
+        default:
+            Con_Error("GL_UploadTexture: Unknown format %i.", (int) dglFormat);
+        }
+
+        glFormat = ChooseTextureFormat(DGL_LUMINANCE, allowCompression);
+
+        if(!GL_TexImageGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
+                content->grayMipmap * reciprocal255))
+        {
+            Con_Error("GL_UploadTexture: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
+                content->name, loadWidth, loadHeight, (int) dglFormat);
         }
     }
 
-    // The RGB(A) copy of the source image is no longer needed.
-    if(freeOriginal)
-    {
-        free(rgbaOriginal);
-        rgbaOriginal = NULL;
-    }
-
-    // Bind the texture so we can upload content.
-    glBindTexture(GL_TEXTURE_2D, content->name);
-
-    if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, buffer, levelWidth, levelHeight,
-                    0, generateMipmaps ? true : false))
-    {
-        Con_Error("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n", levelWidth,
-            levelHeight, alphaChannel);
-    }
-
-    if(freeBuffer)
-        free(buffer);
-
-    GL_SetTextureCompression(oldCompression);
+    if(loadPixels != content->pixels)
+        free((uint8_t*)loadPixels);
 
     return content->name;
+    }
 }
 
 byte GL_LoadExtTextureEX(image_t* image, const char* searchPath, const char* optionalSuffix,
@@ -1805,21 +2282,6 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
     if(F_FindResource2(RC_GRAPHIC, name, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        // Too big for us? \todo Should not be done here.
-        if(image->width  > GL_state.maxTexSize || image->height > GL_state.maxTexSize)
-        {
-            int newWidth = MIN_OF(image->width, GL_state.maxTexSize);
-            int newHeight = MIN_OF(image->height, GL_state.maxTexSize);
-            uint8_t* scaledPixels = GL_ScaleBuffer(image->pixels, image->width, image->height, image->pixelSize, newWidth, newHeight);
-            if(scaledPixels != image->pixels)
-            {
-                free(image->pixels);
-                image->pixels = scaledPixels;
-                image->width = newWidth;
-                image->height = newHeight;
-            }
-        }
-
         // Force it to grayscale?
         if(mode == LGM_GRAYSCALE_ALPHA || mode == LGM_WHITE_ALPHA)
         {
@@ -1857,15 +2319,10 @@ typedef post_t column_t;
  * @param tclass  Translation class to use.
  * @param tmap  Translation map to use.
  * @param maskZero  Used with sky textures.
- * @param checkForAlpha If @c true, the composited image will be checked
- *     for alpha pixels and will return accordingly if present.
- *
- * @return  If @a checkForAlpha @c = false will return @c false. Else,
- *          @c true iff the buffer really has alpha information.
  */
-static int loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
+static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     const doompatch_header_t* patch, int origx, int origy, int tclass,
-    int tmap, boolean maskZero, boolean checkForAlpha)
+    int tmap, boolean maskZero)
 {
     assert(buffer && texwidth > 0 && texheight > 0 && patch);
     {
@@ -1944,89 +2401,67 @@ static int loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
             column = (const column_t*) ((const uint8_t*) column + column->length + 4);
         }
     }
-
-    if(checkForAlpha)
-    {
-        boolean allowSingleAlpha = (texwidth < 128 || texheight < 128);
-        int i;
-
-        // Scan through the RGBA buffer and check for sub-0xff alpha.
-        source = buffer + texwidth * texheight;
-        for(i = 0, count = 0; i < texwidth * texheight; ++i)
-        {
-            if(source[i] < 0xff)
-            {
-                /// \kludge 'Small' textures tolerate no alpha.
-                if(allowSingleAlpha)
-                    return true;
-
-                // Big ones can have a single alpha pixel (ZZZFACE3!).
-                if(count++ > 1)
-                    return true; // Has alpha data.
-            }
-        }
-    }
-
-    return false; // Doesn't have alpha data.
     }
 }
 
-byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex)
+static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
 {
-    assert(image && tex);
+    assert(pixels);
+    // Jump to the start of the alpha data.
+    pixels += width * height;
+    { int i;
+    for(i = 0; i < width * height; ++i)
+        if(255 != pixels[i])
+            return true;
+    }
+    return false;
+}
+
+byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
+{
+    assert(image);
     {
-    detailtex_t* dTex = detailTextures[Texture_TypeIndex(tex)];
-    const char* lumpName;
-    lumpnum_t lumpIndex;
     byte result = 0;
     DFILE* file;
-
-    assert(dTex);
-
-    if(dTex->isExternal)
-        return 0;
-
-    lumpName = Str_Text(Uri_Path(dTex->filePath));
-    lumpIndex = W_CheckNumForName2(lumpName, true);
-    if(NULL != (file = F_OpenLump(lumpIndex, false)))
+    if(NULL != (file = F_OpenLump(lumpNum, false)))
     {
-        if(0 != GL_LoadImageDFile(image, file, lumpName))
+        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
         {
             result = 1;
         }
         else
         {   // It must be an old-fashioned "raw" image.
-            size_t fileLength = F_Length(file);
+            size_t bufSize, fileLength = F_Length(file);
 
             GL_InitImage(image);
 
             /**
-             * @fixme we should not error out here if the lump is not
-             * of the required format! Perform this check much earlier,
-             * when the definitions are read and mark which are valid.
+             * \fixme Do not fatal error here if the not a known format!
+             * Perform this check much earlier, when the definitions are
+             * read and mark which are valid.
              */
 
             // How big is it?
-            if(fileLength != 256 * 256)
+            switch(fileLength)
             {
-                if(fileLength != 128 * 128)
-                {
-                    if(fileLength != 64 * 64)
-                        Con_Error("GL_LoadDetailTexture: Must be 256x256, 128x128 or 64x64.\n");
-                    image->width = image->height = 64;
-                }
-                else
-                {
-                    image->width = image->height = 128;
-                }
+            case 256 * 256: image->width = image->height = 256; break;
+            case 128 * 128: image->width = image->height = 128; break;
+            case  64 *  64: image->width = image->height =  64; break;
+            default:
+                Con_Error("GL_LoadDetailTextureLump: Must be 256x256, 128x128 or 64x64.\n");
+                return 0; // Unreachable.
             }
-            else
-                image->width = image->height = 256;
 
+            image->originalBits = 8;
             image->pixelSize = 1;
-            image->pixels = malloc(image->width * image->height);
-            if(fileLength < (unsigned) (image->width * image->height))
-                memset(image->pixels, 0, image->width * image->height);
+            bufSize = (size_t)image->width * image->height;
+            image->pixels = (uint8_t*) malloc(bufSize);
+            if(NULL == image->pixels)
+                Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for "
+                    "image pixel buffer.", (unsigned int) bufSize);
+            if(fileLength < bufSize)
+                memset(image->pixels, 0, bufSize);
+
             // Load the raw image data.
             F_Read(image->pixels, fileLength, file);
             result = 1;
@@ -2037,43 +2472,43 @@ byte GL_LoadDetailTextureLump(image_t* image, const texture_t* tex)
     }
 }
 
-/**
- * @return  @c 1 = found and prepared a lump resource.
- */
-byte GL_LoadFlatLump(image_t* image, const texture_t* tex)
+byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
 {
-    assert(image && tex);
+    assert(image);
     {
-    flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(tex));
-    lumpnum_t lumpIndex = W_CheckNumForName2(flat->name, true);
     byte result = 0;
     DFILE* file;
-    assert(NULL != flat);
-    if(NULL != (file = F_OpenLump(lumpIndex, false)))
+    if(NULL != (file = F_OpenLump(lumpNum, false)))
     {
-        if(0 != GL_LoadImageDFile(image, file, flat->name))
+        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
         {
             result = 1;
         }
         else
-        {   // It must be an old-fashioned DOOM flat.
+        {   // A DOOM flat.
 #define FLAT_WIDTH          64
 #define FLAT_HEIGHT         64
 
-            size_t fileLength = F_Length(file);
-            size_t bufSize = MAX_OF(fileLength, 4096);
+            size_t bufSize, fileLength = F_Length(file);
 
             GL_InitImage(image);
-            image->pixels = malloc(bufSize);
+
+            /// \fixme not all flats are 64x64!
+            image->width  = FLAT_WIDTH;
+            image->height = FLAT_HEIGHT;
+            image->originalBits = 8;
+            image->pixelSize = 1;
+
+            bufSize = MAX_OF(fileLength, (size_t)image->width * image->height);
+            image->pixels = (uint8_t*) malloc(bufSize);
+            if(NULL == image->pixels)
+                Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for "
+                    "image pixel buffer.", (unsigned int) bufSize);
             if(fileLength < bufSize)
                 memset(image->pixels, 0, bufSize);
 
             // Load the raw image data.
             F_Read(image->pixels, fileLength, file);
-            /// \fixme not all flats are 64x64!
-            image->width = FLAT_WIDTH;
-            image->height = FLAT_HEIGHT;
-            image->pixelSize = 1;
             result = 1;
 
 #undef FLAT_HEIGHT
@@ -2085,61 +2520,52 @@ byte GL_LoadFlatLump(image_t* image, const texture_t* tex)
     }
 }
 
-byte GL_LoadSpriteLump(image_t* image, const texture_t* tex, int tclass,
-    int tmap, int border)
+byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, int border)
 {
-    assert(image && tex);
+    assert(image);
     {
-    const doompatch_header_t* patch;
-    const spritetex_t* sprTex;
-    lumpnum_t lumpNum;
+    byte result = 0;
+    DFILE* file;
+    if(NULL != (file = F_OpenLump(lumpNum, false)))
+    {
+        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
+        {
+            result = 1;
+        }
+        else
+        {   // A DOOM patch.
+            const doompatch_header_t* patch;
+            size_t fileLength = F_Length(file);
+            uint8_t* buf = (uint8_t*) malloc(fileLength);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex));
-    assert(NULL != sprTex);
+            if(NULL == buf)
+                Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
+                    "temporary lump buffer.", (unsigned int) (fileLength));
+            F_Read(buf, fileLength, file);
+            patch = (const doompatch_header_t*)buf;
 
-    lumpNum = W_GetNumForName(sprTex->name);
-    patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
-    GL_InitImage(image);
-    image->pixelSize = 1;
-    image->width  = sprTex->width  + border*2;
-    image->height = sprTex->height + border*2;
-    image->pixels = calloc(1, 2 * image->width * image->height);
+            GL_InitImage(image);
 
-    if(loadDoomPatch(image->pixels, image->width, image->height, patch,
-        border, border, tclass, tmap, false, true))
-        image->flags |= IMGF_IS_MASKED;
+            image->width  = SHORT(patch->width)  + border*2;
+            image->height = SHORT(patch->height) + border*2;
+            image->originalBits = 8;
+            image->pixelSize = 1;
+            image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+            if(NULL == image->pixels)
+                Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
+                    "image pixel buffer.", (unsigned int) (2 * image->width * image->height));
 
-    W_ChangeCacheTag(lumpNum, PU_CACHE);
-    return 1;
+            loadDoomPatch(image->pixels, image->width, image->height, patch,
+                border, border, tclass, tmap, false);
+            if(palettedIsMasked(image->pixels, image->width, image->height))
+                image->flags |= IMGF_IS_MASKED;
+
+            free(buf);
+            result = 1;
+        }
+        F_Close(file);
     }
-}
-
-byte GL_LoadDoomPatchLump(image_t* image, const texture_t* tex, boolean scaleSharp)
-{
-    assert(image && tex);
-    {
-    int tclass = 0, tmap = 0, border = (scaleSharp? 1 : 0);
-    const doompatch_header_t* patch;
-    lumpnum_t lumpNum;
-    patchtex_t* p;
-
-    p = R_PatchTextureByIndex(Texture_TypeIndex(tex));
-    assert(NULL != p);
-    lumpNum = p->lump;
-
-    patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
-    GL_InitImage(image);
-    image->pixelSize = 1;
-    image->width  = SHORT(p->width)  + border*2;
-    image->height = SHORT(p->height) + border*2;
-    image->pixels = calloc(1, 2 * image->width * image->height);
-
-    if(loadDoomPatch(image->pixels, image->width, image->height, patch,
-        border, border, tclass, tmap, false, true))
-        image->flags |= IMGF_IS_MASKED;
-
-    W_ChangeCacheTag(lumpNum, PU_CACHE);
-    return 1;
+    return result;
     }
 }
 
@@ -2169,171 +2595,103 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-/**
- * Renders the given texture into the buffer.
- */
-static boolean bufferTexture(const patchcompositetex_t* texDef, uint8_t* buffer,
- int width, int height, int* hasBigPatch)
-{
-    boolean hasAlpha = false;
-
-    // Clear the buffer.
-    memset(buffer, 0, 2 * width * height); // Pal8 plus 8-bit alpha.
-
-    // By default zero is put in the big patch height.
-    if(hasBigPatch)
-        *hasBigPatch = 0;
-
-    // Draw all the patches. Check for alpha pixels after last patch has
-    // been drawn.
-    { int i;
-    for(i = 0; i < texDef->patchCount; ++i)
-    {
-        const texpatch_t* patchDef = &texDef->patches[i];
-        const doompatch_header_t* patch =
-            (doompatch_header_t*) W_CacheLumpNum(patchDef->lump, PU_CACHE);
-
-        // Check for big patches?
-        if(hasBigPatch && SHORT(patch->height) > texDef->height &&
-           *hasBigPatch < SHORT(patch->height))
-        {
-            *hasBigPatch = SHORT(patch->height);
-        }
-
-        // Draw the patch in the buffer.
-        hasAlpha = loadDoomPatch(buffer, /*palette,*/ width, height, patch,
-            patchDef->offX, patchDef->offY, 0, 0, false, i == texDef->patchCount - 1);
-    }}
-
-    return hasAlpha;
-}
-
-/**
- * Draws the given sky texture in a buffer. The returned buffer must be
- * freed by the caller. Idx must be a valid texture number.
- */
-static void bufferSkyTexture(const patchcompositetex_t* texDef, byte** outbuffer,
-                             int width, int height, boolean zeroMask)
-{
-    int                 i, numpels;
-    byte*               imgdata;
-
-    if(texDef->patchCount > 1)
-    {
-        numpels = width * height;
-        imgdata = M_Calloc(2 * numpels);
-
-        for(i = 0; i < texDef->patchCount; ++i)
-        {
-            const texpatch_t*   patchDef = &texDef->patches[i];
-
-            loadDoomPatch(imgdata, /*palette,*/ width, height,
-                          W_CacheLumpNum(patchDef->lump, PU_CACHE),
-                          patchDef->offX, patchDef->offY, 0, 0,
-                          zeroMask, false);
-        }
-    }
-    else
-    {
-        doompatch_header_t *patch =
-            (doompatch_header_t*) W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
-        int     bufHeight =
-            SHORT(patch->height) > height ? SHORT(patch->height) : height;
-
-        if(bufHeight > height)
-        {
-            // Heretic sky textures are reported to be 128 tall, even if the
-            // data is 200. We'll adjust the real height of the texture up to
-            // 200 pixels (remember Caldera?).
-            height = bufHeight;
-            if(height > 200)
-                height = 200;
-        }
-
-        // Allocate a large enough buffer.
-        numpels = width * bufHeight;
-        imgdata = M_Calloc(2 * numpels);
-        loadDoomPatch(imgdata, /*palette,*/ width, bufHeight, patch, 0, 0, 0, 0,
-                      zeroMask, false);
-    }
-
-    *outbuffer = imgdata;
-}
-
-/**
- * @return              The outcome:
- *                      0 = not loaded.
- *                      1 = loaded data from a lump resource.
- *                      2 = loaded data from an external resource.
- */
-byte GL_LoadDoomTexture(image_t* image, const texture_t* tex,
-    boolean prepareForSkySphere, boolean zeroMask)
+byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
 {
     assert(image && tex);
     {
     patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
     assert(NULL != texDef);
-    // Try to load a replacement version of this texture?
-    if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
-    {
-        ddstring_t searchPath, foundPath, suffix = { "-ck" };
-        byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
-        Str_Init(&foundPath);
-
-        if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
-           GL_LoadImage(image, Str_Text(&foundPath)))
-        {
-            result = 2; // High resolution texture loaded.
-        }
-
-        Str_Free(&searchPath);
-        Str_Free(&foundPath);
-
-        if(result != 0)
-            return result;
-    }
-
-    // None found. Load the original version.
     GL_InitImage(image);
+    image->pixelSize = 1;
+    image->originalBits = 8;
     image->width = texDef->width;
     image->height = texDef->height;
-    image->pixelSize = 1;
+    if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
+        Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for ",
+            "new image pixel data.", (unsigned int) (2 * image->width * image->height));
 
-    if(prepareForSkySphere)
+    { int i;
+    for(i = 0; i < texDef->patchCount; ++i)
     {
-        bufferSkyTexture(texDef, &image->pixels, image->width, image->height, zeroMask);
-        if(zeroMask)
-            image->flags |= IMGF_IS_MASKED;
+        const texpatch_t* patchDef = &texDef->patches[i];
+        const doompatch_header_t* patch = (doompatch_header_t*)
+            W_CacheLumpNum(patchDef->lump, PU_CACHE);
+
+        // Draw the patch in the buffer.
+        loadDoomPatch(image->pixels, image->width, image->height,
+            patch, patchDef->offX, patchDef->offY, 0, 0, false);
+    }}
+
+    if(palettedIsMasked(image->pixels, image->width, image->height))
+        image->flags |= IMGF_IS_MASKED;
+
+    return 1;
     }
-    else
+}
+
+byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
+    boolean zeroMask)
+{
+    assert(image && tex);
     {
-        int hasBigPatch;
-        boolean isMasked;
+    patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
+    int width, height, offX, offY;
 
-        /**
-         * \todo if we are resizing masked textures re match patches then
-         * we are needlessly duplicating work.
-         */
-        image->pixels = M_Malloc(2 * image->width * image->height);
-        isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, &hasBigPatch);
+    assert(NULL != texDef);
 
-        // The -bigmtex option allows the engine to resize masked
-        // textures whose patches are too big to fit the texture.
-        if(allowMaskedTexEnlarge && isMasked && hasBigPatch)
+    /**
+     * Heretic sky textures are reported to be 128 tall, despite the patch
+     * data is 200. We'll adjust the real height of the texture up to
+     * 200 pixels (remember Caldera?).
+     */
+    width = texDef->width;
+    height = texDef->height;
+    if(texDef->patchCount == 1)
+    {
+        const doompatch_header_t* patch = (const doompatch_header_t*)
+            W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
+        int bufHeight = SHORT(patch->height) > height ? SHORT(patch->height) : height;
+        if(bufHeight > height)
         {
-            // Adjust the defined height to fit the largest patch.
-            texDef->height = image->height = hasBigPatch;
-            // Get a new buffer.
-            M_Free(image->pixels);
-            image->pixels = M_Malloc(2 * image->width * image->height);
-            isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, 0);
+            height = bufHeight;
+            if(height > 200)
+                height = 200;
+        }
+    }
+
+    GL_InitImage(image);
+    image->pixelSize = 1;
+    image->originalBits = 8;
+    image->width = width;
+    image->height = height;
+    if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
+        Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for ",
+            "new image pixel data.", (unsigned int) (2 * image->width * image->height));
+
+    { int i;
+    for(i = 0; i < texDef->patchCount; ++i)
+    {
+        const texpatch_t* patchDef = &texDef->patches[i];
+        const doompatch_header_t* patch = (const doompatch_header_t*)
+            W_CacheLumpNum(patchDef->lump, PU_CACHE);
+
+        if(texDef->patchCount != 1)
+        {
+            offX = patchDef->offX;
+            offY = patchDef->offY;
+        }
+        else
+        {
+            offX = offY = 0;
         }
 
-        if(isMasked)
-            image->flags |= IMGF_IS_MASKED;
-    }
+        loadDoomPatch(image->pixels, image->width, image->height, patch,
+            offX, offY, 0, 0, zeroMask);
+    }}
+
+    if(zeroMask)
+        image->flags |= IMGF_IS_MASKED;
 
     return 1;
     }
@@ -2400,12 +2758,6 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     }
 }
 
-/**
- * Raw images are always 320x200.
- *
- * 2003-05-30 (skyjake): External resources can be larger than 320x200,
- * but they're never split into two parts.
- */
 DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 {
     if(!raw)
@@ -2425,39 +2777,29 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
         // Clear any old values.
         memset(&image, 0, sizeof(image));
 
-        if((result = GL_LoadRawTex(&image, raw)) == 2)
+        if(2 == (result = GL_LoadRawTex(&image, raw)))
         {   // Loaded an external raw texture.
-            // We have the image in the buffer. We'll upload it as one big texture.
-            raw->tex =
-                GL_UploadTexture(image.pixels, image.width, image.height,
-                                 image.pixelSize == 4, false, true, false, false,
-                                 GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST),
-                                 0 /*no anisotropy*/,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 (image.pixelSize == 4? TXCF_APPLY_GAMMACORRECTION : 0));
-
-            raw->width = 320;
-            raw->height = 200;
-
-            GL_DestroyImagePixels(&image);
+            raw->tex = GL_UploadTextureWithParams(image.pixels, image.width, image.height,
+                image.pixelSize == 4? DGL_RGBA : DGL_RGB, false, false, false,
+                GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST),
+                0 /*no anisotropy*/,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
         }
         else
         {
-            boolean rgbdata = (image.pixelSize > 1? true:false);
-            int assumedWidth = GL_state.features.texNonPowTwo? image.width : 256;
-
-            // Generate a texture.
-            raw->tex = GL_UploadTexture(image.pixels, GL_state.features.texNonPowTwo? image.width : 256, image.height,
-                false, false, rgbdata, false, false, GL_NEAREST,
+            raw->tex = GL_UploadTextureWithParams(image.pixels, image.width, image.height,
+                (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 :
+                          image.pixelSize == 4? DGL_RGBA :
+                          image.pixelSize == 3? DGL_RGB : DGL_COLOR_INDEX_8,
+                false, false, false, GL_NEAREST,
                 (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
-            raw->width = GL_state.features.texNonPowTwo? image.width : 256;
-            raw->height = image.height;
-
-            GL_DestroyImagePixels(&image);
         }
+
+        raw->width  = image.width;
+        raw->height = image.height;
+        GL_DestroyImagePixels(&image);
     }
 
     return raw->tex;
@@ -2471,10 +2813,8 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
         {   // The rawtex isn't yet bound with OpenGL.
             rawTex->tex = GL_PrepareRawTex2(rawTex);
         }
-
         return rawTex->tex;
     }
-
     return 0;
 }
 
@@ -2489,7 +2829,8 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
         if(0 != (lmap = R_GetLightMap(uri)))
         {
             texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0);
+                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(lmap->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
@@ -2515,7 +2856,8 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
         if((fTex = R_GetFlareTexture(uri)))
         {
             texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE, 0, 0, 0, 0);
+                GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(fTex->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
@@ -2536,7 +2878,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             GL_TextureVariantSpecificationForContext(TC_UI,
                 0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
                   | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-                1, 0, 0);
+                0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false);
         const texturevariant_t* tex;
         if(NULL != (tex = GL_PrepareTexture(patchTex->texId, texSpec, NULL)))
             return TextureVariant_GLName(tex);
@@ -2550,20 +2892,13 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
     assert(optWidth && optHeight);
     if(GL_state.features.texNonPowTwo && !isMipMapped)
     {
-        *optWidth = width;
+        *optWidth  = width;
         *optHeight = height;
     }
     else if(noStretch)
     {
-        *optWidth = M_CeilPow2(width);
+        *optWidth  = M_CeilPow2(width);
         *optHeight = M_CeilPow2(height);
-
-        // MaxTexSize may prevent using noStretch.
-        if(*optWidth  > GL_state.maxTexSize ||
-           *optHeight > GL_state.maxTexSize)
-        {
-            noStretch = false;
-        }
     }
     else
     {
@@ -2573,14 +2908,14 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
             // At the best texture quality *opt, all textures are
             // sized *upwards*, so no details are lost. This takes
             // more memory, but naturally looks better.
-            *optWidth = M_CeilPow2(width);
+            *optWidth  = M_CeilPow2(width);
             *optHeight = M_CeilPow2(height);
         }
         else if(texQuality == 0)
         {
             // At the lowest quality, all textures are sized down to the
             // nearest power of 2.
-            *optWidth = M_FloorPow2(width);
+            *optWidth  = M_FloorPow2(width);
             *optHeight = M_FloorPow2(height);
         }
         else
@@ -2591,12 +2926,17 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
         }
     }
 
-    // Hardware limitations may force us to modify the preferred
-    // texture size.
+    // Hardware limitations may force us to modify the preferred size.
     if(*optWidth > GL_state.maxTexSize)
+    {
         *optWidth = GL_state.maxTexSize;
+        noStretch = false;
+    }
     if(*optHeight > GL_state.maxTexSize)
+    {
         *optHeight = GL_state.maxTexSize;
+        noStretch = false;
+    }
 
     // Some GL drivers seem to have problems with VERY small textures.
     if(*optWidth < MINTEXWIDTH)
@@ -2946,25 +3286,6 @@ const texture_t* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace)
     return 0; // Not found.
 }
 
-int BytesPerPixelFmt(dgltexformat_t format)
-{
-    switch(format)
-    {
-    case DGL_LUMINANCE:
-    case DGL_COLOR_INDEX_8:         return 1;
-
-    case DGL_LUMINANCE_PLUS_A8:
-    case DGL_COLOR_INDEX_8_PLUS_A8: return 2;
-
-    case DGL_RGB:                   return 3;
-
-    case DGL_RGBA:                  return 4;
-    default:
-        Con_Error("BytesPerPixelFmt: Unknown format %i, don't know pixel size.\n", format);
-        return 0; // Unreachable.
-    }
-}
-
 void GL_InitTextureContent(texturecontent_t* content)
 {
     assert(content);
@@ -3017,92 +3338,7 @@ void GL_DestroyTextureContent(texturecontent_t* content)
 
 void GL_UploadTextureContent(const texturecontent_t* content)
 {
-    boolean result = false;
-
-    if(content->flags & TXCF_EASY_UPLOAD)
-    {
-        GL_UploadTexture2(content);
-    }
-    else
-    {
-        dgltexformat_t loadFormat = content->format;
-        const uint8_t* loadPixels = content->pixels;
-
-        // The texture name must already be created.
-        glBindTexture(GL_TEXTURE_2D, content->name);
-
-        if(content->flags & TXCF_NO_COMPRESSION)
-        {
-            GL_SetTextureCompression(false);
-        }
-
-        if((content->flags & TXCF_CONVERT_8BIT_TO_ALPHA) &&
-           (loadFormat == DGL_LUMINANCE || loadFormat == DGL_COLOR_INDEX_8))
-        {
-            long numPixels = content->width * content->height;
-            uint8_t* localBuffer;
-
-            if(NULL == (localBuffer = malloc(2 * numPixels)))
-                Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for "
-                          "luminance conversion buffer.", (unsigned long) (2 * numPixels));
-
-            // Move the average color to the alpha channel, make the
-            // actual color white.
-            memcpy(localBuffer + numPixels, loadPixels, numPixels);
-            memset(localBuffer, 255, numPixels);
-
-            loadFormat = DGL_LUMINANCE_PLUS_A8;
-            loadPixels = localBuffer;
-        }
-
-        if(!(content->flags & TXCF_GRAY_MIPMAP))
-        {
-            DGLuint palid;
-
-            // Do we need to locate a color palette?
-            if(loadFormat == DGL_COLOR_INDEX_8 || loadFormat == DGL_COLOR_INDEX_8_PLUS_A8)
-                palid = R_GetColorPalette(content->palette);
-            else
-                palid = 0;
-
-            if(!GL_TexImage(loadFormat, loadPixels, content->width, content->height,
-                    palid, (content->flags & TXCF_MIPMAP) != 0))
-                Con_Error("GL_UploadTextureContent: TexImage failed "
-                          "(%u:%ix%i fmt%i).", content->name, content->width,
-                          content->height, (int) loadFormat);
-        }
-        else
-        {   // Special fade-to-gray luminance texture (used for details).
-            if(!(loadFormat == DGL_LUMINANCE || loadFormat == DGL_RGB))
-                Con_Error("GL_UploadTextureContent: Cannot upload format %i with gray mipmap.",
-                    (int) loadFormat);
-
-            if(!GL_TexImageGrayMipmap(loadPixels, content->width, content->height,
-                    (loadFormat == DGL_LUMINANCE? 1 : 3), content->grayMipmap * reciprocal255))
-                Con_Error("GL_UploadTextureContent: TexImageGrayMipmap failed "
-                          "(%u:%ix%i fmt%i).", content->name, content->width,
-                          content->height, (int) loadFormat);
-        }
-
-        if(content->flags & TXCF_NO_COMPRESSION)
-        {
-            GL_SetTextureCompression(true);
-        }
-
-        if(loadPixels != content->pixels)
-            free((uint8_t*)loadPixels);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, content->name);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content->minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, content->magFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content->wrap[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content->wrap[1]);
-    if(GL_state.features.texFilterAniso)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                        GL_GetTexAnisoMul(content->anisoFilter));
-
-    assert(!Sys_GLCheckError());
+    GL_UploadTexture(content);
 }
 
 boolean GL_NewTexture(const texturecontent_t* content)

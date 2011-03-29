@@ -963,8 +963,7 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg, int pl
             continue;
 #endif
 
-        R_GetColorPaletteRGBf(0, rgb, (!IS_NETGAME? WHITE :
-            their_colors[cfg.playerColor[i]]), false);
+        R_GetColorPaletteRGBf(0, (!IS_NETGAME? WHITE : their_colors[cfg.playerColor[i]]), rgb, false);
         alpha = cfg.automapLineAlpha;
 #if !__JHEXEN__
         if(p->powers[PT_INVISIBILITY])
@@ -1034,9 +1033,9 @@ static boolean renderThing(mobj_t* mo, void* context)
             // Is this a key?
             if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
             {   // This mobj is indeed a key.
-                float rgb[4];
+                float rgb[3];
 
-                R_GetColorPaletteRGBf(0, rgb, keyColor, false);
+                R_GetColorPaletteRGBf(0, keyColor, rgb, false);
 
                 /* $unifiedangles */
                 drawVectorGraphic(VG_KEYSQUARE, mo->pos[VX], mo->pos[VY], 0, PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);

@@ -160,8 +160,8 @@ uint8_t* PCX_Load(DFILE* file, int* width, int* height, int* pixelSize)
             free(dstBuf);
             dstBuf = 0;
         }
-        F_Seek(file, initPos, SEEK_SET);
     }
+    F_Seek(file, initPos, SEEK_SET);
     return dstBuf;
     }
 }

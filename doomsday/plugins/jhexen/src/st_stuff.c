@@ -553,7 +553,7 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
     DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
-    R_GetColorPaletteRGBf(0, rgb, theirColors[pColor], false);
+    R_GetColorPaletteRGBf(0, theirColors[pColor], rgb, false);
     DGL_DrawRect(x + gemXOffset + 23, y - 6, 41, 24, rgb[0], rgb[1], rgb[2], gemglow - (1 - iconAlpha));
 
     DGL_BlendMode(BM_NORMAL);

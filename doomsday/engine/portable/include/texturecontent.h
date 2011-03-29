@@ -34,12 +34,9 @@
 #define TXCF_GRAY_MIPMAP                0x4
 #define TXCF_CONVERT_8BIT_TO_ALPHA      0x8
 #define TXCF_APPLY_GAMMACORRECTION      0x10
-#define TXCF_EASY_UPLOAD                0x20
-#define TXCF_UPLOAD_ARG_ALPHACHANNEL    0x40
-#define TXCF_UPLOAD_ARG_RGBDATA         0x80
-#define TXCF_UPLOAD_ARG_NOSTRETCH       0x100
-#define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x200
-#define TXCF_NEVER_DEFER                0x400
+#define TXCF_UPLOAD_ARG_NOSTRETCH       0x20
+#define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x40
+#define TXCF_NEVER_DEFER                0x80
 /*@}*/
 
 /**

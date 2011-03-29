@@ -156,7 +156,6 @@ void DD_InitCommandLine(const char* cmdLine)
 
     // Register some abbreviations for command line options.
     ArgAbbreviate("-game", "-g");
-    ArgAbbreviate("-gl", "-r"); // As in (R)enderer...
     ArgAbbreviate("-defs", "-d");
     ArgAbbreviate("-width", "-w");
     ArgAbbreviate("-height", "-h");
@@ -164,9 +163,7 @@ void DD_InitCommandLine(const char* cmdLine)
     ArgAbbreviate("-bpp", "-b");
     ArgAbbreviate("-window", "-wnd");
     ArgAbbreviate("-nocenter", "-noc");
-    ArgAbbreviate("-paltex", "-ptx");
     ArgAbbreviate("-file", "-f");
-    ArgAbbreviate("-maxZone", "-mem");
     ArgAbbreviate("-config", "-cfg");
     ArgAbbreviate("-parse", "-p");
     ArgAbbreviate("-cparse", "-cp");

@@ -545,7 +545,7 @@ void R_LoadColorPalettes(void)
 #define PALID               (0)
 
     lumpnum_t lump = W_GetNumForName(PALLUMPNAME);
-    byte data[PALENTRIES*3];
+    uint8_t data[PALENTRIES*3];
 
     // Record whether we are using a custom palette.
     customPal = !W_LumpFromIWAD(lump);
@@ -780,8 +780,11 @@ void R_LoadVectorGraphics(void)
 
 void R_InitRefresh(void)
 {
-    VERBOSE(Con_Message("R_InitRefresh: Loading data for referesh.\n"))
+    VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
 
+    R_LoadColorPalettes();
+    R_LoadVectorGraphics();
+ 
     // Setup the view border.
     { dduri_t* paths[9];
     uint i;
@@ -792,9 +795,6 @@ void R_InitRefresh(void)
         if(paths[i])
             Uri_Destruct(paths[i]);
     }
-
-    R_LoadColorPalettes();
-    R_LoadVectorGraphics();
 
     // Locate our fonts.
     fonts[GF_FONTA]   = FR_FontIdForName("a");
@@ -822,9 +822,9 @@ void R_InitRefresh(void)
  */
 void G_CommonPostInit(void)
 {
-    GUI_Init();
     R_InitRefresh();
     FI_StackInit();
+    GUI_Init();
 
     // Init the save system and create the game save directory
     SV_Init();

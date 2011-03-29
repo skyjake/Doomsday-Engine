@@ -456,7 +456,6 @@ boolean Sys_GLPreInit(void)
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;
     GL_state.currentUseFog = false;
-    GL_state.currentUseTexCompression = true;
 
 #ifdef WIN32
     // We want to be able to use multisampling if available so lets create a

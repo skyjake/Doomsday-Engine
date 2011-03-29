@@ -1427,7 +1427,8 @@ boolean R_IsGlowingPlane(const plane_t* pln)
     material_t* mat = pln->surface.material;
     material_snapshot_t ms;
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0));
+        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+            GL_REPEAT, GL_REPEAT, -1, true, true));
     return ((mat && !Material_IsDrawable(mat)) || ms.glowing > 0 ||
             R_IsSkySurface(&pln->surface));
 }

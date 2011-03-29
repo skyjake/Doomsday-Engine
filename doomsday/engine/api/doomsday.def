@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 503 <--
-; Other free ordinals: 30, 90, 336, 436
+; Other free ordinals: 30, 90, 336
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -373,13 +373,14 @@ EXPORTS
     R_GetColorPaletteNumForName @446 NONAME
     R_GetColorPaletteNameForNum @445 NONAME
     R_GetColorPaletteRGBf       @423 NONAME
+    R_GetColorPaletteRGBubv     @436 NONAME
 
 ; DGL.
     DGL_SetMaterial             @117 NONAME
     DGL_SetNoMaterial           @115 NONAME
     DGL_SetPSprite              @114 NONAME
+    DGL_SetPSprite2             @334 NONAME
     DGL_SetPatch                @196 NONAME
-    DGL_SetTranslatedSprite     @334 NONAME
     DGL_SetRawImage             @119 NONAME
     DGL_Enable                  @387 NONAME
     DGL_Disable                 @388 NONAME

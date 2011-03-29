@@ -40,6 +40,7 @@
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
 
+#include "colorpalette.h"
 #include "m_stack.h"
 #include "texture.h"
 #include "materialvariant.h"
@@ -71,13 +72,12 @@ typedef struct {
 } rendpolydata_t;
 
 /**
- * DGL color palette name bindings.
- * These are mainly intended as a public API convenience.
- * Internally, we are only interested in the associated DGL name(s).
+ * Color palette name binding. Mainly intended as a public API convenience.
+ * Internally we are only interested in the associated palette indices.
  */
 typedef struct {
-    char            name[COLORPALETTENAME_MAXLEN+1];
-    DGLuint         id;
+    char name[COLORPALETTENAME_MAXLEN+1];
+    uint idx;
 } colorpalettebind_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -146,118 +146,184 @@ static unsigned int numrendpolys = 0;
 static unsigned int maxrendpolys = 0;
 static rendpolydata_t** rendPolys;
 
-static colorpalettebind_t* colorPalettes = NULL;
-static uint numColorPalettes = 0;
-static colorpaletteid_t defaultColorPalette = 0;
+static boolean initedColorPalettes = false;
+
+static int numColorPalettes;
+static colorpalette_t** colorPalettes;
+static int numColorPaletteBinds;
+static colorpalettebind_t* colorPaletteBinds;
+
+static colorpaletteid_t defaultColorPalette;
 
 // CODE --------------------------------------------------------------------
 
 static colorpaletteid_t colorPaletteNumForName(const char* name)
 {
-    uint                i;
-
+    assert(initedColorPalettes);
     // Linear search (sufficiently fast enough given the probably small set
     // and infrequency of searches).
-    for(i = 0; i < numColorPalettes; ++i)
+    { int i;
+    for(i = 0; i < numColorPaletteBinds; ++i)
     {
-        colorpalettebind_t* pal = &colorPalettes[i];
-
+        colorpalettebind_t* pal = &colorPaletteBinds[i];
         if(!strnicmp(pal->name, name, COLORPALETTENAME_MAXLEN))
             return i + 1; // Already registered. 1-based index.
-    }
-
+    }}
     return 0; // Not found.
 }
 
-/**
- * Given a colorpalette id return the associated DGL color palette num.
- * If the specified id cannot be found, the default color palette will be
- * returned instead.
- *
- * @param id            Id of the color palette to be prepared.
- *
- * @return              The DGL palette number iff found else @c NULL.
- */
-DGLuint R_GetColorPalette(colorpaletteid_t id)
+static int createColorPalette(const int compOrder[3], const uint8_t compSize[3],
+    const uint8_t* data, ushort num)
 {
-    if(!id || id - 1 >= numColorPalettes)
+    assert(initedColorPalettes && compOrder && compSize && data);
     {
-        if(numColorPalettes)
-            return colorPalettes[defaultColorPalette-1].id;
+    colorpalette_t* pal = ColorPalette_Construct(compOrder, compSize, data, num);
 
-        return 0;
+    colorPalettes = (colorpalette_t**) realloc(colorPalettes, (numColorPalettes + 1) * sizeof(*colorPalettes));
+    if(NULL == colorPalettes)
+        Con_Error("createColorPalette: Failed on (re)allocation of %lu bytes for "
+            "color palette list.", (unsigned int) ((numColorPalettes + 1) * sizeof(*colorPalettes)));
+    colorPalettes[numColorPalettes] = pal;
+
+    return ++numColorPalettes; // 1-based index.
     }
-
-    return colorPalettes[id-1].id;
 }
 
-/**
- * Change the default color palette.
- *
- * @param id            Id of the color palette to make default.
- *
- * @return              @c true iff successful, else @c NULL.
- */
+static void deleteColorPalettes(size_t n, const int* palettes)
+{
+    assert(initedColorPalettes);
+
+    if(!(n > 0) || !palettes)
+        return;
+
+    { size_t i;
+    for(i = 0; i < n; ++i)
+    {
+        if(palettes[i] > 0 && palettes[i] - 1 < numColorPalettes)
+        {
+            int idx = palettes[i]-1;
+            ColorPalette_Destruct(colorPalettes[idx]);
+            memmove(&colorPalettes[idx], &colorPalettes[idx+1], sizeof(colorpalette_t*));
+            numColorPalettes -= 1;
+        }
+    }}
+
+    if(numColorPalettes)
+    {
+        colorPalettes = (colorpalette_t**) realloc(colorPalettes, numColorPalettes * sizeof(colorpalette_t*));
+        if(NULL == colorPalettes)
+            Con_Error("deleteColorPalettes: Failed on (re)allocation of %lu bytes for "
+                "color palette list.", (unsigned int) (numColorPalettes * sizeof(*colorPalettes)));
+    }
+    else
+    {
+        free(colorPalettes); colorPalettes = NULL;
+    }
+}
+
+void R_InitColorPalettes(void)
+{
+    if(initedColorPalettes)
+    {   // Re-init.
+        R_DestroyColorPalettes();
+        return;
+    }
+
+    colorPalettes = NULL;
+    numColorPalettes = 0;
+
+    colorPaletteBinds = NULL;
+    numColorPaletteBinds = 0;
+    defaultColorPalette = 0;
+
+    initedColorPalettes = true;
+}
+
+void R_DestroyColorPalettes(void)
+{
+    if(!initedColorPalettes) return;
+
+    if(0 != numColorPalettes)
+    {
+        int i;
+        for(i = 0; i < numColorPalettes; ++i)
+            ColorPalette_Destruct(colorPalettes[i]);
+        free(colorPalettes); colorPalettes = NULL;
+        numColorPalettes = 0;
+    }
+
+    if(colorPaletteBinds)
+    {
+        free(colorPaletteBinds); colorPaletteBinds = NULL;
+        numColorPaletteBinds = 0;
+    }
+
+    defaultColorPalette = 0;
+}
+
+int R_ColorPaletteCount(void)
+{
+    assert(initedColorPalettes);
+    return numColorPalettes;
+}
+
+colorpalette_t* R_ToColorPalette(int palIdx)
+{
+    assert(initedColorPalettes);
+    if(palIdx > 0 && numColorPalettes >= palIdx)
+        return colorPalettes[palIdx-1];
+    return NULL;
+}
+
+int R_FindColorPaletteIndexForId(colorpaletteid_t id)
+{
+    assert(initedColorPalettes);
+    if(id == 0 || id - 1 >= (unsigned)numColorPaletteBinds)
+        id = defaultColorPalette;
+    if(numColorPaletteBinds > 0)
+        return colorPaletteBinds[id-1].idx;
+    return 0;
+}
+
 boolean R_SetDefaultColorPalette(colorpaletteid_t id)
 {
-    if(id && id - 1 < numColorPalettes)
+    assert(initedColorPalettes);
+    if(id != 0 && id - 1 < (unsigned)numColorPaletteBinds)
     {
         defaultColorPalette = id;
         return true;
     }
-
-    VERBOSE(Con_Message("R_SetDefaultColorPalette: Invalid id %u.\n", id))
+    VERBOSE( Con_Message("R_SetDefaultColorPalette: Invalid id %u.\n", id) );
     return false;
 }
 
-/**
- * Add a new (named) color palette.
- * \note Part of the Doomsday public API.
- *
- * \design The idea with the two-teered implementation is to allow maximum
- * flexibility. Within the engine we can create new palettes and manipulate
- * them directly via the DGL interface. The underlying implementation is
- * wrapped in a similar way to the materials so that publically, there is a
- * set of (eternal) names and unique identifiers that survive game and GL
- * resets.
- *
- * @param fmt           Format string describes the format of @p data.
- *                      Expected form: "C#C#C"
- *                          C = color component, one of R, G, B.
- *                          # = bits per component.
- * @param name          Unique name by which the palette will be known.
- * @param data          Buffer containing the src color data.
- * @param num           Number of sets of components).
- *
- * @return              Color palette id.
- */
 colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
-                                      const byte* data, ushort num)
+    const uint8_t* colorData, int colorCount)
 {
-#define MAX_BPC         (16) // Max bits per component.
+    static const char* compNames[] = { "red", "green", "blue" };
+    colorpaletteid_t id;
+    colorpalettebind_t* bind;
+    const char* c, *end;
+    int i, pos, compOrder[3];
+    uint8_t compSize[3];
 
-    static const char*  compNames[] = { "red", "green", "blue" };
-    colorpaletteid_t    id;
-    colorpalettebind_t* pal;
-    const char*         c, *end;
-    int                 i, pos, compOrder[3];
-    byte                compSize[3];
+    if(!initedColorPalettes)
+        Con_Error("R_CreateColorPalette: Color palettes not yet initialized.");
 
     if(!name || !name[0])
-        Con_Error("R_CreateColorPalette: Color palettes require a name.\n");
+        Con_Error("R_CreateColorPalette: Color palettes require a name.");
 
     if(strlen(name) > COLORPALETTENAME_MAXLEN)
-        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
-                  "color palette name can be at most %i characters long.\n",
-                  name, COLORPALETTENAME_MAXLEN);
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", color palette "
+            "name can be at most %i characters long.", name, COLORPALETTENAME_MAXLEN);
 
     if(!fmt || !fmt[0])
-        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
-                  "missing format string.\n", name);
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", missing "
+            "format string.", name);
 
-    if(!data || !num)
-        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
-                  "cannot create a zero-sized palette.\n", name);
+    if(NULL == colorData || colorCount <= 0)
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", cannot create "
+            "a zero-sized palette.", name);
 
     // All arguments supplied. Parse the format string.
     memset(compOrder, -1, sizeof(compOrder));
@@ -266,7 +332,7 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
     c = fmt;
     do
     {
-        int               comp = -1;
+        int comp = -1;
 
         if(*c == 'R' || *c == 'r')
             comp = CR;
@@ -277,11 +343,11 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
 
         if(comp != -1)
         {
-            // Have encountered this component yet?
+            // Have we encountered this component yet?
             if(compOrder[comp] == -1)
             {   // No.
-                const char*         start;
-                size_t              numDigits;
+                const char* start;
+                size_t numDigits;
 
                 compOrder[comp] = pos++;
 
@@ -292,7 +358,7 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
                 numDigits = c - start;
                 if(numDigits != 0 && numDigits <= 2)
                 {
-                    char                buf[3];
+                    char buf[3];
 
                     memset(buf, 0, sizeof(buf));
                     memcpy(buf, start, numDigits);
@@ -309,130 +375,136 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
             }
         }
 
-        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
-                  "invalid character '%c' in format string at "
-                  "position %u.\n", name, *c, (unsigned int) (c - fmt));
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", invalid character '%c' "
+            "in format string at position %u.\n", name, *c, (unsigned int) (c - fmt));
     } while(++c <= end);
 
     if(pos != 3)
-        Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
-                  "incomplete format specification.\n", name);
+        Con_Error("R_CreateColorPalette: Failed creating \"%s\", incomplete "
+            "format specification.\n", name);
 
     // Check validity of bits per component.
     for(i = 0; i < 3; ++i)
-        if(compSize[i] == 0 || compSize[i] > MAX_BPC)
+        if(compSize[i] == 0 || compSize[i] > COLORPALETTE_MAX_COMPONENT_BITS)
         {
-            Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
-                      "unsupported bit size %i for %s component.\n",
-                      name, compSize[i], compNames[compOrder[i]]);
+            Con_Error("R_CreateColorPalette: Failed creating \"%s\", unsupported bit "
+                "depth %i for %s component.\n", name, compSize[i], compNames[compOrder[i]]);
         }
 
-    if((id = colorPaletteNumForName(name)))
-    {   // We are replacing an existing palette.
-        pal = &colorPalettes[id-1];
+    if(0 != (id = colorPaletteNumForName(name)))
+    {   // Replacing an existing palette.
+        bind = &colorPaletteBinds[id-1];
 
-        // Destroy the existing DGL color palette.
-        GL_DeleteColorPalettes(1, &pal->id);
-        pal->id = 0;
+        // Destroy the existing color palette.
+        deleteColorPalettes(1, &bind->idx);
+        bind->idx = 0;
     }
     else
-    {   // We are creating a new palette.
-        if(!numColorPalettes)
-        {
-            colorPalettes = Z_Malloc(
-                ++numColorPalettes * sizeof(colorpalettebind_t), PU_APPSTATIC, 0);
+    {   // A new palette.
+        colorPaletteBinds = (colorpalettebind_t*) realloc(colorPaletteBinds,
+                (numColorPaletteBinds + 1) * sizeof(colorpalettebind_t));
+        if(NULL == colorPaletteBinds)
+            Con_Error("R_CreateColorPalette: Failed on (re)allocation of %lu bytes for "
+                "color palette bind list.", (unsigned int) ((numColorPaletteBinds + 1) * sizeof(colorpalettebind_t)));
 
-            defaultColorPalette = numColorPalettes;
-        }
-        else
-            colorPalettes = Z_Realloc(&colorPalettes,
-                ++numColorPalettes * sizeof(colorpalettebind_t), PU_APPSTATIC);
+        bind = &colorPaletteBinds[numColorPaletteBinds];
+        memset(bind, 0, sizeof(*bind));
 
-        pal = &colorPalettes[numColorPalettes-1];
-        memset(pal, 0, sizeof(*pal));
+        strncpy(bind->name, name, COLORPALETTENAME_MAXLEN);
 
-        strncpy(pal->name, name, COLORPALETTENAME_MAXLEN);
-
-        id = numColorPalettes; // 1-based index.
+        id = (colorpaletteid_t) ++numColorPaletteBinds; // 1-based index.
+        if(1 == numColorPaletteBinds)
+            defaultColorPalette = (colorpaletteid_t) numColorPaletteBinds;
     }
 
-    // Generate the actual DGL color palette.
-    pal->id = GL_CreateColorPalette(compOrder, compSize, data, num);
+    // Generate the color palette.
+    bind->idx = createColorPalette(compOrder, compSize, colorData, colorCount);
 
     return id; // 1-based index.
-
-#undef MAX_BPC
 }
 
-/**
- * Given a color palette name, look up the associated identifier.
- * \note Part of the Doomsday public API.
- *
- * @param name          Unique name of the palette to locate.
- * @return              Iff found, identifier of the palette associated
- *                      with this name, ELSE @c 0.
- */
 colorpaletteid_t R_GetColorPaletteNumForName(const char* name)
 {
+    if(!initedColorPalettes)
+        Con_Error("R_GetColorPaletteNumForName: Color palettes not yet initialized.");
+
     if(name && name[0] && strlen(name) <= COLORPALETTENAME_MAXLEN)
         return colorPaletteNumForName(name);
-
     return 0;
 }
 
-/**
- * Given a color palette id, look up the specified unique name.
- * \note Part of the Doomsday public API.
- *
- * @param id            Id of the color palette to locate.
- * @return              Iff found, pointer to the unique name associated
- *                      with the specified id, ELSE @c NULL.
- */
 const char* R_GetColorPaletteNameForNum(colorpaletteid_t id)
 {
-    if(id && id - 1 < numColorPalettes)
-        return colorPalettes[id-1].name;
+    if(!initedColorPalettes)
+        Con_Error("R_GetColorPaletteNameForNum: Color palettes not yet initialized.");
 
+    if(id != 0 && id - 1 < (unsigned)numColorPaletteBinds)
+        return colorPaletteBinds[id-1].name;
     return NULL;
 }
 
-/**
- * Given a color palette index, calculate the equivilent RGB color.
- * \note Part of the Doomsday public API.
- *
- * @param id            Id of the color palette to use.
- * @param rgb           Final color will be written back here.
- * @param idx           Color Palette, color index.
- * @param correctGamma  @c TRUE if the current gamma ramp should be applied.
- */
-void R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3], int idx,
-                           boolean correctGamma)
+void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
+    boolean applyTexGamma)
 {
-    if(rgb)
+    if(!initedColorPalettes)
+        Con_Error("R_GetColorPaletteRGBubv: Color palettes not yet initialized.");
+    if(NULL == rgb)
+        Con_Error("R_GetColorPaletteRGBubv: Invalid arguments (rgb==NULL).");
+
+    if(colorIdx < 0)
     {
-        if(idx >= 0)
-        {
-            DGLuint             pal = R_GetColorPalette(id);
-            DGLubyte            rgbUBV[3];
-
-            GL_GetColorPaletteRGB(pal, rgbUBV, idx);
-
-            if(correctGamma)
-            {
-                rgbUBV[CR] = gammaTable[rgbUBV[CR]];
-                rgbUBV[CG] = gammaTable[rgbUBV[CG]];
-                rgbUBV[CB] = gammaTable[rgbUBV[CB]];
-            }
-
-            rgb[CR] = rgbUBV[CR] * reciprocal255;
-            rgb[CG] = rgbUBV[CG] * reciprocal255;
-            rgb[CB] = rgbUBV[CB] * reciprocal255;
-
-            return;
-        }
-
         rgb[CR] = rgb[CG] = rgb[CB] = 0;
+        return;
     }
+
+    { colorpalette_t* pal;
+    if(NULL != (pal = R_ToColorPalette(R_FindColorPaletteIndexForId(id))))
+    {
+        ColorPalette_Color(pal, colorIdx, rgb);
+        if(applyTexGamma)
+        {
+            rgb[CR] = gammaTable[rgb[CR]];
+            rgb[CG] = gammaTable[rgb[CG]];
+            rgb[CB] = gammaTable[rgb[CB]];
+        }
+        return;
+    }}
+
+    Con_Error("R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %u.", (uint) id);
+}
+
+void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
+    boolean applyTexGamma)
+{
+    if(!initedColorPalettes)
+        Con_Error("R_GetColorPaletteRGBf: Color palettes not yet initialized.");
+    if(NULL == rgb)
+        Con_Error("R_GetColorPaletteRGBf: Invalid arguments (rgb==NULL).");
+
+    if(colorIdx < 0)
+    {
+        rgb[CR] = rgb[CG] = rgb[CB] = 0;
+        return;
+    }
+
+    { colorpalette_t* pal;
+    if(NULL != (pal = R_ToColorPalette(R_FindColorPaletteIndexForId(id))))
+    {
+        uint8_t ubv[3];
+        ColorPalette_Color(pal, colorIdx, ubv);
+        if(applyTexGamma)
+        {
+            ubv[CR] = gammaTable[ubv[CR]];
+            ubv[CG] = gammaTable[ubv[CG]];
+            ubv[CB] = gammaTable[ubv[CB]];
+        }
+        rgb[CR] = ubv[CR] * reciprocal255;
+        rgb[CG] = ubv[CG] * reciprocal255;
+        rgb[CB] = ubv[CB] * reciprocal255;
+        return;
+    }}
+
+    Con_Error("R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %u.", (uint) id);
 }
 
 void R_InfoRendVerticesPool(void)
@@ -2265,8 +2337,10 @@ void R_PrecacheMobjNum(int num)
     if(num < 0 || num >= defs.count.mobjs.num)
         return;
 
-    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0);
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true);
     assert(spec);
+
     /// \optimize Traverses the entire state list!
     { int i;
     for(i = 0; i < defs.count.states.num; ++i)
@@ -2303,7 +2377,8 @@ static void addToSurfaceLists(surface_t* suf, material_t* mat)
         return;
     /// \fixme We should not need to prepare in order to build the lists.
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0));
+        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+            GL_REPEAT, GL_REPEAT, -1, true, true));
     if(ms.glowing > 0)
         R_SurfaceListAdd(glowingSurfaceList, suf);
     if(ms.isDecorated)
@@ -2324,7 +2399,8 @@ void R_PrecacheMap(void)
     Con_SetProgress(100);
 
     startTime = Sys_GetSeconds();
-    spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0);
+    spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+        GL_REPEAT, GL_REPEAT, -1, true, true);
 
     { uint i;
     for(i = 0; i < numSideDefs; ++i)
@@ -2368,7 +2444,8 @@ void R_PrecacheMap(void)
     if(precacheSprites)
     {
         int i;
-        spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0);
+        spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true);
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];

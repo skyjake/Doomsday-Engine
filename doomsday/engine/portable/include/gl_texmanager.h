@@ -53,7 +53,6 @@ extern int texMagMode;
 extern int monochrome, upscaleAndSharpenPatches;
 extern int glmode[6];
 extern boolean fillOutlines;
-extern boolean allowMaskedTexEnlarge;
 extern boolean noHighResTex;
 extern boolean noHighResPatches;
 extern boolean highResWithPWAD;
@@ -131,10 +130,32 @@ void GL_UpdateTexParams(int mipmode);
  */
 void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
 
-DGLuint GL_UploadTexture(const uint8_t* data, int width, int height,
-    boolean flagAlphaChannel, boolean flagGenerateMipmaps, boolean flagRgbData,
-    boolean flagNoStretch, boolean flagNoSmartFilter, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT, int otherFlags);
+/**
+ * @param glFormat  Identifier of the desired GL texture format.
+ * @param loadFormat  Identifier of the GL texture format used during upload.
+ * @param pixels  Texture pixel data to be uploaded.
+ * @param width  Logical width of the texture in pixels.
+ * @param height  Logical height of the texture in pixels.
+ * @param genMipmaps  If negative sets a specific mipmap level, e.g.:
+ *      @c -1, means mipmap level 1.
+ *
+ * @return  @c true iff successful.
+ */
+boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
+    int width, int height, int genMipmaps);
+
+/**
+ * @param glFormat  Identifier of the desired GL texture format.
+ * @param loadFormat  Identifier of the GL texture format used during upload.
+ * @param pixels  Texture pixel data to be uploaded.
+ * @param width  Logical width of the texture in pixels.
+ * @param height  Logical height of the texture in pixels.
+ * @param grayFactor  Strength of the blend where @c 0:none @c 1:full.
+ *
+ * @return  @c true iff successful.
+ */
+boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+    int width, int height, float grayFactor);
 
 /**
  * Can be rather time-consuming due to scaling operations and mipmap
@@ -142,7 +163,12 @@ DGLuint GL_UploadTexture(const uint8_t* data, int width, int height,
  *
  * @return  The name of the texture.
  */
-DGLuint GL_UploadTexture2(const struct texturecontent_s* content);
+DGLuint GL_UploadTexture(const struct texturecontent_s* content);
+
+DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
+    dgltexformat_t texFormat, boolean flagGenerateMipmaps,
+    boolean flagNoStretch, boolean flagNoSmartFilter, int minFilter,
+    int magFilter, int anisoFilter, int wrapS, int wrapT, int otherFlags);
 
 /**
  * @return  @c true iff this operation was deferred.
@@ -175,18 +201,16 @@ byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
     const char* optionalSuffix, boolean silent);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, const struct texture_s* tex);
+byte GL_LoadFlatLump(struct image_s* image, lumpnum_t lumpNum);
 
-byte GL_LoadFlatLump(struct image_s* image, const struct texture_s* tex);
+byte GL_LoadPatchLump(struct image_s* image, lumpnum_t lumpNum, int tclass,
+    int tmap, int border);
 
-byte GL_LoadSpriteLump(struct image_s* image, const struct texture_s* tex,
-    int tclass, int tmap, int border);
+byte GL_LoadDetailTextureLump(struct image_s* image, lumpnum_t lumpNum);
 
-byte GL_LoadDoomPatchLump(struct image_s* image, const struct texture_s* tex,
-    boolean scaleSharp);
-
-byte GL_LoadDoomTexture(struct image_s* image, const struct texture_s* tex,
-    boolean prepareForSkySphere, boolean zeroMask);
+byte GL_LoadPatchComposite(struct image_s* image, const struct texture_s* tex);
+byte GL_LoadPatchCompositeAsSky(struct image_s* image, const struct texture_s* tex,
+    boolean zeroMask);
 
 /**
  * Set mode to 2 to include an alpha channel. Set to 3 to make the
@@ -260,7 +284,9 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
  *      or @c NULL if out of memory.
  */
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
-    texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap);
+    texturevariantusagecontext_t tc, int flags, byte border, int tClass,
+    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped,
+    boolean gammaCorrection);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context.

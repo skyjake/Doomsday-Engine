@@ -1442,24 +1442,8 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_PopMatrix();
 }
 
-void ST_HUDSpriteSize(int sprite, int *w, int *h)
-{
-    spriteinfo_t        sprInfo;
-
-    R_GetSpriteInfo(sprite, 0, &sprInfo);
-    *w = sprInfo.width;
-    *h = sprInfo.height;
-
-    if(sprite == SPR_ROCK)
-    {
-        // Must scale it a bit.
-        *w /= 1.5;
-        *h /= 1.5;
-    }
-}
-
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-                      float scale, float alpha, boolean flip)
+    float scale, float alpha, boolean flip, int* drawnWidth, int* drawnHeight)
 {
     spriteinfo_t info;
 
@@ -1504,6 +1488,9 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     DGL_End();
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    if(drawnWidth)  *drawnWidth  = info.width  * scale;
+    if(drawnHeight) *drawnHeight = info.height * scale;
 }
 
 void drawFragsWidget(int player, float textAlpha, float iconAlpha,
@@ -1548,8 +1535,7 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false);
-    ST_HUDSpriteSize(SPR_STIM, &w, &h);
+    ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false, &w, &h);
     sprintf(buf, "%i%%", plr->health);
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1601,8 +1587,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         spr = ammoSprite[ammoType];
         scale = (spr == SPR_ROCK? .72f : 1);
 
-        ST_drawHUDSprite(spr, 0, 0, HOT_BLEFT, scale, iconAlpha, false);
-        ST_HUDSpriteSize(spr, &w, &h);
+        ST_drawHUDSprite(spr, 0, 0, HOT_BLEFT, scale, iconAlpha, false, &w, &h);
         sprintf(buf, "%i", plr->ammo[ammoType].owned);
 
         DGL_Enable(DGL_TEXTURE_2D);
@@ -1679,8 +1664,7 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Disable(DGL_TEXTURE_2D);
 
     spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
-    ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false);
-    ST_HUDSpriteSize(spr, &w, &h);
+    ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false, &w, &h);
 
     FR_SetFont(FID(GF_FONTB));
     *drawnWidth = armorOffset + w + 2;
@@ -1739,8 +1723,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
         if(shown)
         {
             int w, h, spr = keyIcons[i];
-            ST_drawHUDSprite(spr, x, 0, HOT_BRIGHT, 1, iconAlpha, false);
-            ST_HUDSpriteSize(spr, &w, &h);
+            ST_drawHUDSprite(spr, x, 0, HOT_BRIGHT, 1, iconAlpha, false, &w, &h);
             *drawnWidth += w;
             if(h > *drawnHeight)
                 *drawnHeight = h;

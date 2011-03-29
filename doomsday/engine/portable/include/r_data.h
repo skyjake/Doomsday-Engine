@@ -161,7 +161,7 @@ typedef struct {
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
     lumpnum_t       lump;
-    textureid_t   texId; // Name of the associated GL texture.
+    textureid_t     texId; // Name of the associated GL texture.
     boolean         isCustom;
     short           flags;
     short           width, height;
@@ -254,6 +254,7 @@ extern int maskTexturesCount;
 extern uint numSkinNames;
 extern skinname_t* skinNames;
 
+void            R_UpdateData(void);
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
 rcolor_t*       R_AllocRendColors(uint num);
@@ -307,17 +308,96 @@ int R_SpriteTextureCount(void);
 /// @return  SpriteTexture associated to index# @a idx
 spritetex_t* R_SpriteTextureByIndex(int idx);
 
-void            R_UpdateData(void);
+/// Prepare for color palette creation.
+void R_InitColorPalettes(void);
 
+/// To be called when any existing color palettes are no longer required.
+void R_DestroyColorPalettes(void);
+
+/// @return  Number of available color palettes.
+int R_ColorPaletteCount(void);
+
+/**
+ * Given a color palette index return the associated ColorPalette.
+ * @return  ColorPalette if found else @c NULL
+ */
+struct colorpalette_s* R_ToColorPalette(int palIdx);
+
+/**
+ * Add a new (named) color palette.
+ * \note Part of the Doomsday public API.
+ *
+ * \design The idea with the two-teered implementation is to allow maximum
+ * flexibility. Within the engine we can create new palettes and manipulate
+ * them directly via the DGL interface. The underlying implementation is
+ * wrapped in a similar way to the materials so that publically, there is a
+ * set of (eternal) names and unique identifiers that survive game and GL
+ * resets.
+ *
+ * @param fmt  Format string describes the format of @p data.
+ *      Expected form: "C#C#C"
+ *      C = color component, one of R, G, B.
+ *      # = bits per component.
+ * @param name  Unique name by which the palette will be known.
+ * @param colorData  Color component triplets (at least @a colorCount * 3 values).
+ * @param colorCount  Number of colors.
+ *
+ * @return  Color palette id.
+ */
 colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
-                                      const byte* data, ushort num);
-const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
+    const uint8_t* colorData, int colorCount);
+
+/**
+ * Given a color palette id, look up the specified unique name.
+ * \note Part of the Doomsday public API.
+ *
+ * @param id  Id of the color palette to locate.
+ * @return  Pointer to the unique name associated with the specified id else @c NULL
+ */
+const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
+
+/**
+ * Given a color palette name, look up the associated identifier.
+ * \note Part of the Doomsday public API.
+ *
+ * @param name Unique name of the palette to locate.
+ * @return  Identifier of the palette associated with this name, else @c 0
+ */
 colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
 
-DGLuint         R_GetColorPalette(colorpaletteid_t id);
-void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
-                                      int idx, boolean correctGamma);
-boolean         R_SetDefaultColorPalette(colorpaletteid_t id);
+/**
+ * Given a colorpalette id return the associated color palette index.
+ * If the specified id cannot be found, the default color palette will be
+ * returned instead (if defined).
+ *
+ * @param id  Id of the color palette to be prepared.
+ *
+ * @return  Index of the palette iff found else @c 0
+ */
+int R_FindColorPaletteIndexForId(colorpaletteid_t id);
+
+/**
+ * Given a color palette index, calculate the equivalent RGB color.
+ * \note Part of the Doomsday public API.
+ *
+ * @param id  Id of the ColorPalette to use.
+ * @param colorIdx  ColorPalette color index.
+ * @param rgb  Final color will be written back here.
+ * @param correctGamma  @c true if the texture gamma ramp should be applied.
+ */
+void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
+    boolean applyTexGamma);
+void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
+    boolean applyTexGamma);
+
+/**
+ * Change the default color palette.
+ *
+ * @param id  Id of the color palette to make default.
+ *
+ * @return  @c true iff successful, else @c NULL.
+ */
+boolean R_SetDefaultColorPalette(colorpaletteid_t id);
 
 //boolean         R_UpdateSubSector(struct subsector_t* ssec, boolean forceUpdate);
 boolean         R_UpdateSector(struct sector_s* sec, boolean forceUpdate);
@@ -341,7 +421,7 @@ void R_PrecacheMobjNum(int mobjtypeNum);
 uint            R_GetSkinNumForName(const dduri_t* path);
 const skinname_t* R_GetSkinNameByIndex(uint id);
 uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
-void            R_DestroySkins(void); // Called at shutdown.
+void            R_DestroySkins(void);
 
 boolean         R_DrawVLightVector(const vlight_t* light, void* context);
 
@@ -349,23 +429,23 @@ void            R_InitAnimGroup(ded_group_t* def);
 
 detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
 detailtex_t*    R_GetDetailTexture(const dduri_t* filePath, boolean isExternal);
-void            R_DestroyDetailTextures(void); // Called at shutdown.
+void            R_DestroyDetailTextures(void);
 
 lightmap_t*     R_CreateLightMap(const dduri_t* uri);
 lightmap_t*     R_GetLightMap(const dduri_t* uri);
-void            R_DestroyLightMaps(void); // Called at shutdown.
+void            R_DestroyLightMaps(void);
 
 flaretex_t*     R_CreateFlareTexture(const dduri_t* uri);
 flaretex_t*     R_GetFlareTexture(const dduri_t* uri);
-void            R_DestroyFlareTextures(void); // Called at shutdown.
+void            R_DestroyFlareTextures(void);
 
 shinytex_t*     R_CreateShinyTexture(const dduri_t* uri);
 shinytex_t*     R_GetShinyTexture(const dduri_t* uri);
-void            R_DestroyShinyTextures(void); // Called at shutdown.
+void            R_DestroyShinyTextures(void);
 
 masktex_t*      R_CreateMaskTexture(const dduri_t* uri, short width, short height);
 masktex_t*      R_GetMaskTexture(const dduri_t* uri);
-void            R_DestroyMaskTextures(void); // Called at shutdown.
+void            R_DestroyMaskTextures(void);
 
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
 patchid_t       R_RegisterPatch(const char* name);

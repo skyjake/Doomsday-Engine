@@ -432,6 +432,9 @@
 		<Unit filename="..\..\engine\portable\src\cl_world.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\colorpalette.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\con_bar.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -505,9 +508,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\dgl_draw.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\dgl_texture.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\edit_bias.c">

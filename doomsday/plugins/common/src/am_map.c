@@ -168,7 +168,7 @@ void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
     if((!customPal && !cfg.automapCustomColors) ||
        (customPal && cfg.automapCustomColors != 2))
     {
-        R_GetColorPaletteRGBf(0, rgb, palidx, false);
+        R_GetColorPaletteRGBf(0, palidx, rgb, false);
         return;
     }
 

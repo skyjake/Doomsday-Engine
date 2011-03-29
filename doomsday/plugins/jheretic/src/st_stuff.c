@@ -371,7 +371,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
     DGL_Enable(DGL_TEXTURE_2D);
 
-    R_GetColorPaletteRGBf(0, rgb, theirColors[gemNum], false);
+    R_GetColorPaletteRGBf(0, theirColors[gemNum], rgb, false);
     DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgb[0], rgb[1], rgb[2], gemglow - (1 - iconAlpha));
 
     DGL_Disable(DGL_TEXTURE_2D);

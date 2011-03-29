@@ -44,12 +44,14 @@ void GL_InitDeferredTask(void);
 void GL_ShutdownDeferredTask(void);
 
 /// @return  Number of waiting tasks else @c 0
-int GL_GetDeferredTaskCount(void);
+int GL_DeferredTaskCount(void);
 
 /**
  * @param timeOutMilliSeconds  Zero for no timeout.
  */
-void GL_RunDeferredTasks(uint timeOutMilliSeconds);
+void GL_ProcessDeferredTasks(uint timeOutMilliSeconds);
+
+void GL_PurgeDeferredTasks(void);
 
 /**
  * @param type  Type of task to add.

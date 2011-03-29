@@ -269,7 +269,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     flip = sprFrame->flip[0];
 
     Materials_Prepare(&ms, sprFrame->mats[0], true,
-        Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0));
+        Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
@@ -348,7 +348,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
 
     if(renderTextures == 1)
     {
-        GL_SetPSprite(params->mat);
+        GL_SetPSprite(params->mat, 0, 0);
         glEnable(GL_TEXTURE_2D);
     }
     else if(renderTextures == 2)
@@ -357,7 +357,8 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_snapshot_t ms;
 
         Materials_Prepare(&ms, mat, true,
-            Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0));
+            Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true));
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }
@@ -868,7 +869,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
             Materials_VariantSpecificationForContext(MC_SPRITE, 0,
                 (renderTextures == 1? 1 : 0),
                 (renderTextures == 1? params->tClass : 0),
-                (renderTextures == 1? params->tMap : 0)) );
+                (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true) );
         GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
         glEnable(GL_TEXTURE_2D);
     }

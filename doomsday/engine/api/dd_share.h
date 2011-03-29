@@ -143,7 +143,7 @@ float           FloatSwap(float);
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)              ((x) >= 0 ? (x) : -(x))
 /// Ceiling of integer quotient of A divided by B
-#define CEILING(a, b)  ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
+#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
 
 // Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
 // Note that this should err on the side of being < 1/255 to prevent result
@@ -935,7 +935,7 @@ typedef struct {
 //#define MATF_UNUSED1            0x1
 #define MATF_NO_DRAW            0x2 // Material should never be drawn.
 #define MATF_SKYMASK            0x4 // Sky-mask surfaces using this material.
-/**@{*/
+/**@}*/
 
 #define DDMAX_MATERIAL_LAYERS   1
 

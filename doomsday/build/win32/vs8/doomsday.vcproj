@@ -945,6 +945,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\colorpalette.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\con_bar.c"
 				>
 			</File>
@@ -1066,10 +1070,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\dgl_draw.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\dgl_texture.c"
 				>
 			</File>
 			<File
@@ -1205,6 +1205,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\material.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\materialvariant.c"
 				>
 			</File>
@@ -1262,10 +1266,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\p_maputil.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\material.c"
 				>
 			</File>
 			<File
@@ -2606,6 +2606,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\colorpalette.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\con_bar.h"
 				>
 			</File>
@@ -2894,6 +2898,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\material.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\materialvariant.h"
 				>
 			</File>
@@ -2951,10 +2959,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_maputil.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\material.h"
 				>
 			</File>
 			<File

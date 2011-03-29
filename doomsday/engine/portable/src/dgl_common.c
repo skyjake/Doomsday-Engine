@@ -368,11 +368,6 @@ void GL_SelectTexUnits(int count)
     }
 }
 
-void GL_SetTextureCompression(boolean on)
-{
-    GL_state.currentUseTexCompression = on;
-}
-
 void GL_SetVSync(boolean on)
 {
     if(!GL_state.features.vsync)
@@ -696,14 +691,14 @@ void DGL_SetPatch(patchid_t id, int wrapS, int wrapT)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }
 
-void DGL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
-{
-    GL_SetTranslatedSprite(mat, tclass, tmap);
-}
-
 void DGL_SetPSprite(material_t* mat)
 {
-    GL_SetPSprite(mat);
+    GL_SetPSprite(mat, 0, 0);
+}
+
+void DGL_SetPSprite2(material_t* mat, int tclass, int tmap)
+{
+    GL_SetPSprite(mat, tclass, tmap);
 }
 
 void DGL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)

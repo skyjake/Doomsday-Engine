@@ -196,7 +196,7 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // Make sure that any remaining deferred content gets uploaded.
     if(!(isDedicated || (busyMode & BUSYF_NO_UPLOADS)))
     {
-        GL_RunDeferredTasks(0);
+        GL_ProcessDeferredTasks(0);
     }
 
     return result;
@@ -328,11 +328,9 @@ void Con_AcquireScreenshotTexture(void)
     frame = malloc(theWindow->width * theWindow->height * 3);
     GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_UploadTexture(frame, theWindow->width, theWindow->height,
-                                     false, false, true, false, true,
-                                     GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                     TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
+    texScreenshot = GL_UploadTextureWithParams(frame, theWindow->width, theWindow->height,
+        DGL_RGB, false, false, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
     GL_state.maxTexSize = oldMaxTexSize;
     free(frame);
 
@@ -369,7 +367,7 @@ static void Con_BusyLoop(void)
     busyDoneCopy = busyDone;
     Sys_Unlock(busy_Mutex);
 
-    while(!busyDoneCopy || (canUpload && GL_GetDeferredTaskCount() > 0))
+    while(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0))
     {
         Sys_Lock(busy_Mutex);
         busyDoneCopy = busyDone;
@@ -379,7 +377,7 @@ static void Con_BusyLoop(void)
 
         if(canUpload)
         {   // Make sure that any deferred content gets uploaded.
-            GL_RunDeferredTasks(15);
+            GL_ProcessDeferredTasks(15);
         }
 
         // Update the time.
@@ -728,8 +726,6 @@ void Con_DrawTransition(void)
 
     glBindTexture(GL_TEXTURE_2D, texScreenshot);
     glEnable(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
     switch(transitionStyle)
     {

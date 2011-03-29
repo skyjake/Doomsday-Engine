@@ -974,11 +974,6 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                 glActiveTexture((conditions & DCF_SET_LIGHT_ENV0)? GL_TEXTURE0 : GL_TEXTURE1);
                 rlBind(hdr->modTex, GL_LINEAR);
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, hdr->modColor);
-                // Make sure the light is not repeated.
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                                GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                                GL_CLAMP_TO_EDGE);
             }
 
             if(conditions & DCF_SET_MATRIX_DTEXTURE)
@@ -1176,9 +1171,6 @@ if(numTexUnits < 2)
     case LM_LIGHTS:
         // The light lists only contain dynlight primitives.
         rlBind2(TU(list, TU_PRIMARY));
-        // Make sure the texture is not repeated.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         return 0;
 
     case LM_BLENDED_MOD_TEXTURE:
@@ -1313,9 +1305,7 @@ if(numTexUnits < 2)
             GL_SelectTexUnits(2);
             // The intertex holds the info for the mask texture.
             rlBindTo(1, TU(list, TU_INTER));
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            {float           color[4];
+            { float color[4];
             color[0] = color[1] = color[2] = 0; color[3] = 1.0f;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color); }
         }
@@ -1325,9 +1315,6 @@ if(numTexUnits < 2)
         if(!TU(list, TU_INTER)->tex)
             GL_SelectTexUnits(1);
 
-        // Make sure the texture is not clamped.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         // Render all primitives.
         if(mode == LM_ALL_SHINY)
             return DCF_SET_BLEND_MODE;

@@ -30,6 +30,8 @@
 #include "de_console.h"
 #include "de_refresh.h"
 
+#include "colorpalette.h"
+
 static uint8_t* scratchBuffer = NULL;
 static size_t scratchBufferSize = 0;
 
@@ -81,11 +83,8 @@ static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStri
             weight = inPos & 0xffff;
             invWeight = 0x10000 - weight;
 
-            out[0] = (uint8_t)((col1[0] * invWeight + col2[0] * weight) >> 16);
-            out[1] = (uint8_t)((col1[1] * invWeight + col2[1] * weight) >> 16);
-            out[2] = (uint8_t)((col1[2] * invWeight + col2[2] * weight) >> 16);
-            if(comps == 4)
-                out[3] = (uint8_t)((col1[3] * invWeight + col2[3] * weight) >> 16);
+            for(c = 0; c < comps; ++c)
+                out[c] = (uint8_t)((col1[c] * invWeight + col2[c] * weight) >> 16);
         }
 
         // The last pixel.
@@ -126,24 +125,10 @@ static void scaleLine(const uint8_t* in, int inStride, uint8_t* out, int outStri
     }
 
     // No need for scaling.
-    if(comps == 3)
+    for(i = outLen; i > 0; i--, out += outStride, in += inStride)
     {
-        for(i = outLen; i > 0; --i, out += outStride, in += inStride)
-        {
-            out[0] = in[0];
-            out[1] = in[1];
-            out[2] = in[2];
-        }
-    }
-    else if(comps == 4)
-    {
-        for(i = outLen; i > 0; i--, out += outStride, in += inStride)
-        {
-            out[0] = in[0];
-            out[1] = in[1];
-            out[2] = in[2];
-            out[3] = in[3];
-        }
+        for(c = 0; c < comps; ++c)
+            out[c] = in[c];
     }
 }
 
@@ -162,14 +147,11 @@ uint8_t* GL_ScaleBuffer(const uint8_t* in, int width, int height, int comps,
     if(width <= 0 || height <= 0)
         return (uint8_t*)in;
 
-    if(comps != 3 && comps != 4)
-        Con_Error("GL_ScaleBuffer: Attempted on non-rgb(a) image (comps=%i).", comps);
-
     buffer = GetScratchBuffer(comps * outWidth * height);
 
-    if(0 == (out = malloc(comps * outWidth * outHeight)))
+    if(0 == (out = (uint8_t*) malloc(comps * outWidth * outHeight)))
         Con_Error("GL_ScaleBuffer: Failed on allocation of %lu bytes for "
-                  "output buffer.", (unsigned long) (comps * outWidth * outHeight));
+            "output buffer.", (unsigned long) (comps * outWidth * outHeight));
 
     // First scale horizontally, to outWidth, into the temporary buffer.
     inOff = in;
@@ -778,7 +760,7 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
     long count, numpels, avg[3] = { 0, 0, 0 };
     const uint8_t* start, *alphaStart;
     DGLubyte rgbUBV[3];
-    DGLuint pal;
+    colorpalette_t* pal;
 
     if(w <= 0 || h <= 0)
     {
@@ -796,17 +778,21 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
         return;
     }
 
+    pal = R_ToColorPalette(R_FindColorPaletteIndexForId(palid));
+    if(NULL == pal)
+        Con_Error("FindAverageLineColorIdx: Failed to locate ColorPalette for id %u.",
+            (uint) palid);
+
     numpels = w * h;
     start = data + w * line;
     alphaStart = data + numpels + w * line;
-    pal = R_GetColorPalette(palid);
     count = 0;
     { long i;
     for(i = 0; i < w; ++i)
     {
         if(!hasAlpha || alphaStart[i])
         {
-            GL_GetColorPaletteRGB(pal, rgbUBV, start[i]);
+            ColorPalette_Color(pal, start[i], rgbUBV);
             avg[CR] += rgbUBV[CR];
             avg[CG] += rgbUBV[CG];
             avg[CB] += rgbUBV[CB];
@@ -909,8 +895,8 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h,
     {
     long numpels, count, avg[3] = { 0, 0, 0 };
     const uint8_t* alphaStart;
-    DGLubyte rgbUBV[3];
-    DGLuint pal;
+    colorpalette_t* pal;
+    DGLubyte rgb[3];
 
     if(w <= 0 || h <= 0)
     {
@@ -918,19 +904,23 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h,
         return;
     }
 
+    pal = R_ToColorPalette(R_FindColorPaletteIndexForId(palid));
+    if(NULL == pal)
+        Con_Error("FindAverageColorIdx: Failed to locate ColorPalette for id %u.",
+            (uint) palid);
+
     numpels = w * h;
     alphaStart = data + numpels;
-    pal = R_GetColorPalette(palid);
     count = 0;
     { long i;
     for(i = 0; i < numpels; ++i)
     {
         if(!hasAlpha || alphaStart[i])
         {
-            GL_GetColorPaletteRGB(pal, rgbUBV, data[i]);
-            avg[CR] += rgbUBV[CR];
-            avg[CG] += rgbUBV[CG];
-            avg[CB] += rgbUBV[CB];
+            ColorPalette_Color(pal, data[i], rgb);
+            avg[CR] += rgb[CR];
+            avg[CG] += rgb[CG];
+            avg[CB] += rgb[CB];
             ++count;
         }
     }}

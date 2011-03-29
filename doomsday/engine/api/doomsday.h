@@ -455,10 +455,12 @@ void Con_SetString(const char* name, char* text);
     angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
 
-    colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const byte* data, size_t num);
-    colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
-    const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
-    void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3], int idx, boolean correctGamma);
+colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
+colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
+const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
+
+void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
+void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
 
 //------------------------------------------------------------------------
 //

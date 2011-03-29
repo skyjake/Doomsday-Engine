@@ -337,17 +337,8 @@ void ST_doRefresh(int player)
     drawWidgets(hud);
 }
 
-void ST_HUDSpriteSize(int sprite, int *w, int *h)
-{
-    spriteinfo_t        sprInfo;
-
-    R_GetSpriteInfo(sprite, 0, &sprInfo);
-    *w = sprInfo.width;
-    *h = sprInfo.height;
-}
-
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-                      float scale, float alpha, boolean flip)
+    float scale, float alpha, boolean flip, int* drawnWidth, int* drawnHeight)
 {
     spriteinfo_t info;
 
@@ -392,6 +383,9 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     DGL_End();
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    if(drawnWidth)  *drawnWidth  = info.width  * scale;
+    if(drawnHeight) *drawnHeight = info.height * scale;
 }
 
 void ST_doFullscreenStuff(int player)
@@ -485,9 +479,8 @@ Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
                 spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
             if(spr)
             {
-                ST_drawHUDSprite(spr, pos, h_height - 2,
-                                 HOT_BLEFT, 1, iconalpha, false);
-                ST_HUDSpriteSize(spr, &w, &h);
+                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BLEFT, 1,
+                    iconalpha, false, &w, &h);
                 pos += w + 2;
             }
         }
@@ -501,24 +494,22 @@ Draw_EndZoom();
         if(P_InventoryCount(player, IIT_DEMONKEY1))
         {
             spr = SPR_ART1;
-            ST_HUDSpriteSize(spr, &w, &h);
             ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 44,
-                             HOT_BLEFT, 1, iconalpha, false);
+                HOT_BLEFT, 1, iconalpha, false, &w, &h);
         }
 
         if(P_InventoryCount(player, IIT_DEMONKEY2))
         {
             spr = SPR_ART2;
-            ST_HUDSpriteSize(spr, &w, &h);
             ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 84,
-                             HOT_BLEFT, 1, iconalpha, false);
+                HOT_BLEFT, 1, iconalpha, false, &w, &h);
         }
 
         if(P_InventoryCount(player, IIT_DEMONKEY3))
         {
             spr = SPR_ART3;
-            ST_HUDSpriteSize(spr, &w, &h);
-            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 124, HOT_BLEFT, 1, iconalpha, false);
+            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 124,
+                HOT_BLEFT, 1, iconalpha, false, &w, &h);
         }
     }
 

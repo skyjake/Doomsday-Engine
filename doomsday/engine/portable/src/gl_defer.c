@@ -45,8 +45,8 @@ typedef struct deferredtask_s {
     void* data;
 } deferredtask_t;
 
-deferredtask_t* GL_GetNextDeferredTask(void);
-void GL_DestroyDeferredTask(deferredtask_t* d);
+static deferredtask_t* nextDeferredTask(void);
+static void destroyDeferredTask(deferredtask_t* d);
 
 static boolean inited = false;
 
@@ -58,6 +58,8 @@ static volatile deferredtask_t* deferredTaskLast = NULL;
 
 static deferredtask_t* allocDeferredTask(deferredtask_type_t type, void* data)
 {
+    assert(inited);
+    {
     deferredtask_t* dt;
     if(NULL == (dt = (deferredtask_t*)malloc(sizeof(*dt))))
     {
@@ -68,6 +70,37 @@ static deferredtask_t* allocDeferredTask(deferredtask_type_t type, void* data)
     dt->data = data;
     dt->next = 0;
     return dt;
+    }
+}
+
+static void destroyDeferredTask(deferredtask_t* d)
+{
+    assert(inited && d);
+    switch(d->type)
+    {
+    case DTT_UPLOAD_TEXTURECONTENT:
+        GL_DestroyTextureContent(d->data);
+        break;
+    default:
+        Con_Error("destroyDeferredTask: Unknown task type %i.", (int) d->type);
+        break; // Unreachable.
+    }
+    free(d);
+}
+
+static deferredtask_t* nextDeferredTask(void)
+{
+    assert(inited);
+    {
+    deferredtask_t* d = NULL;
+    if(NULL != (d = (deferredtask_t*) deferredTaskFirst))
+    {
+        deferredTaskFirst = d->next;
+    }
+    if(!deferredTaskFirst)
+        deferredTaskLast = NULL;
+    return d;
+    }
 }
 
 void GL_InitDeferredTask(void)
@@ -82,24 +115,17 @@ void GL_InitDeferredTask(void)
 
 void GL_ShutdownDeferredTask(void)
 {
-    deferredtask_t* d;
-
     if(!inited)
         return;
 
     GL_ReleaseReservedNames();
-
-    while((d = GL_GetNextDeferredTask()) != NULL)
-    {
-        GL_DestroyDeferredTask(d);
-    }
+    GL_PurgeDeferredTasks();
 
     Sys_DestroyMutex(deferredMutex);
     deferredMutex = 0;
-    reservedCount = 0;
 }
 
-int GL_GetDeferredTaskCount(void)
+int GL_DeferredTaskCount(void)
 {
     deferredtask_t* i = 0;
     int count = 0;
@@ -111,39 +137,6 @@ int GL_GetDeferredTaskCount(void)
     for(i = (deferredtask_t*) deferredTaskFirst; i; i = i->next, ++count);
     Sys_Unlock(deferredMutex);
     return count;
-}
-
-deferredtask_t* GL_GetNextDeferredTask(void)
-{
-    deferredtask_t* d = NULL;
-
-    if(!inited)
-        return NULL;
-
-    Sys_Lock(deferredMutex);
-    if((d = (deferredtask_t*) deferredTaskFirst) != NULL)
-    {
-        deferredTaskFirst = d->next;
-    }
-
-    if(!deferredTaskFirst) deferredTaskLast = NULL;
-    Sys_Unlock(deferredMutex);
-    return d;
-}
-
-void GL_DestroyDeferredTask(deferredtask_t* d)
-{
-    assert(d);
-    switch(d->type)
-    {
-    case DTT_UPLOAD_TEXTURECONTENT:
-        GL_DestroyTextureContent(d->data);
-        break;
-    default:
-        Con_Error("GL_DestroyDeferredTask: Unknown task type %i.", (int) d->type);
-        break; // Unreachable.
-    }
-    free(d);
 }
 
 void GL_ReserveNames(void)
@@ -203,6 +196,19 @@ DGLuint GL_GetReservedTextureName(void)
     return name;
 }
 
+void GL_PurgeDeferredTasks(void)
+{
+    if(!inited)
+        return;
+
+    Sys_Lock(deferredMutex);
+    { deferredtask_t* d;
+    while(NULL != (d = nextDeferredTask()))
+        destroyDeferredTask(d);
+    }
+    Sys_Unlock(deferredMutex);
+}
+
 void GL_EnqueueDeferredTask(deferredtask_type_t type, void* data)
 {
     deferredtask_t* d;
@@ -220,13 +226,24 @@ void GL_EnqueueDeferredTask(deferredtask_type_t type, void* data)
     Sys_Unlock(deferredMutex);
 }
 
-void GL_RunDeferredTasks(uint timeOutMilliSeconds)
+deferredtask_t* GL_NextDeferredTask(void)
+{
+    deferredtask_t* d = NULL;
+    if(!inited)
+        return NULL;
+    Sys_Lock(deferredMutex);
+    d = nextDeferredTask();
+    Sys_Unlock(deferredMutex);
+    return d;
+}
+
+void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
 {
     deferredtask_t* d;
     uint startTime;
 
     if(!inited)
-        Con_Error("GL_RunDeferredTasks: Deferred GL task system not initialized.");
+        Con_Error("GL_ProcessDeferredTasks: Deferred GL task system not initialized.");
 
     startTime = Sys_GetRealTime();
 
@@ -235,7 +252,7 @@ void GL_RunDeferredTasks(uint timeOutMilliSeconds)
     GL_ReserveNames();
     while((!timeOutMilliSeconds ||
            Sys_GetRealTime() - startTime < timeOutMilliSeconds) &&
-          (d = GL_GetNextDeferredTask()) != NULL)
+          (d = GL_NextDeferredTask()) != NULL)
     {
         switch(d->type)
         {
@@ -243,10 +260,10 @@ void GL_RunDeferredTasks(uint timeOutMilliSeconds)
             GL_UploadTextureContent(d->data);
             break;
         default:
-            Con_Error("GL_RunDeferredTasks: Unknown task type %i.", (int) d->type);
+            Con_Error("GL_ProcessDeferredTasks: Unknown task type %i.", (int) d->type);
             break; // Unreachable.
         }
-        GL_DestroyDeferredTask(d);
+        destroyDeferredTask(d);
         GL_ReserveNames();
     }
     GL_ReserveNames();
