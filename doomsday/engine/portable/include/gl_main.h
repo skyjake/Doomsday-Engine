@@ -148,7 +148,7 @@ int GL_ChooseSmartFilter(int width, int height, int flags);
  * 4 = RGBA
  */
 uint8_t* GL_ConvertBuffer(const uint8_t* src, int width, int height,
-    int informat, colorpaletteid_t pal, int outformat);
+    int informat, int paletteIdx, int outformat);
 
 /**
  * @param method  Unique identifier of the smart filtering method to apply.
@@ -175,7 +175,7 @@ boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(byte* buffer, int paletteIdx, int width, int height);
+void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height);
 
 /**
  * Calculates the properties of a dynamic light that the given sprite frame
@@ -184,7 +184,7 @@ void GL_DeSaturatePalettedImage(byte* buffer, int paletteIdx, int width, int hei
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
-    colorpaletteid_t palid, float* brightX, float* brightY, float color[3],
+    int paletteIdx, float* brightX, float* brightY, float color[3],
     float* lumSize);
 
 /**

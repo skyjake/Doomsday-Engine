@@ -267,11 +267,11 @@ int R_ColorPaletteCount(void)
     return numColorPalettes;
 }
 
-colorpalette_t* R_ToColorPalette(int palIdx)
+colorpalette_t* R_ToColorPalette(int paletteIdx)
 {
     assert(initedColorPalettes);
-    if(palIdx > 0 && numColorPalettes >= palIdx)
-        return colorPalettes[palIdx-1];
+    if(paletteIdx > 0 && numColorPalettes >= paletteIdx)
+        return colorPalettes[paletteIdx-1];
     return NULL;
 }
 
@@ -2338,7 +2338,7 @@ void R_PrecacheMobjNum(int num)
         return;
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true);
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false);
     assert(spec);
 
     /// \optimize Traverses the entire state list!
@@ -2378,7 +2378,7 @@ static void addToSurfaceLists(surface_t* suf, material_t* mat)
     /// \fixme We should not need to prepare in order to build the lists.
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, true, true));
+            GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
     if(ms.glowing > 0)
         R_SurfaceListAdd(glowingSurfaceList, suf);
     if(ms.isDecorated)
@@ -2400,7 +2400,7 @@ void R_PrecacheMap(void)
 
     startTime = Sys_GetSeconds();
     spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-        GL_REPEAT, GL_REPEAT, -1, true, true);
+        GL_REPEAT, GL_REPEAT, -1, true, true, false, false);
 
     { uint i;
     for(i = 0; i < numSideDefs; ++i)
@@ -2445,7 +2445,7 @@ void R_PrecacheMap(void)
     {
         int i;
         spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false);
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];

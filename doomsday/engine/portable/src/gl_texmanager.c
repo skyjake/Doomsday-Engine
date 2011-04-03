@@ -213,9 +213,13 @@ static int compareVariantSpecifications(const variantspecification_t* a,
         return 1;
     if(a->mipmapped != b->mipmapped)
         return 1;
+    if(a->noStretch != b->noStretch)
+        return 1;
     if(a->anisoFilter != b->anisoFilter)
         return 1;
     if(a->gammaCorrection != b->gammaCorrection)
+        return 1;
+    if(a->toAlpha != b->toAlpha)
         return 1;
     if(a->border  != b->border)
         return 1;
@@ -242,7 +246,8 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
 
 static variantspecification_t* applyVariantSpecification(
     variantspecification_t* spec, texturevariantusagecontext_t tc, int flags,
-    byte border, int tClass, int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
+    byte border, int tClass, int tMap, int wrapS, int wrapT, int anisoFilter,
+    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     assert(spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
@@ -256,6 +261,8 @@ static variantspecification_t* applyVariantSpecification(
     spec->wrapT = wrapT;
     spec->anisoFilter = anisoFilter < 0? -1 : MINMAX_OF(0, anisoFilter, 4);
     spec->gammaCorrection = gammaCorrection;
+    spec->noStretch = noStretch;
+    spec->toAlpha = toAlpha;
 
     if(0 != tMap || 0 != tClass)
     {
@@ -326,14 +333,16 @@ static texturevariantspecification_t* findVariantSpecification(
 
 static texturevariantspecification_t* getVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
-    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
+    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped,
+    boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     assert(texInited);
     {
     static texturevariantspecification_t tpl;
     texturevariantspecification_t* finalSpec;
     tpl.type = TS_NORMAL;
-    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap, wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection);
+    applyVariantSpecification(TS_NORMAL(&tpl), tc, flags, border, tClass, tMap,
+        wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
     finalSpec = findVariantSpecification(tpl.type, &tpl, true);
     /// We're finished with the template.
     /// \fixme Do not dynamically allocate during this process!
@@ -642,9 +651,8 @@ static byte prepareVariant(texturevariant_t* tex)
     boolean scaleSharp    = (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0;
     int wrapS = spec->wrapS, wrapT = spec->wrapT;
     int magFilter, minFilter, anisoFilter, grayMipmap = 0, flags = 0;
-    boolean noSmartFilter = false, didDefer = false, loadedPaletted = false;
+    boolean noSmartFilter = false, didDefer = false;
     dgltexformat_t dglFormat;
-    boolean alphaChannel;
     byte loadResult = 0;
     DGLuint glName;
     image_t image;
@@ -691,36 +699,57 @@ static byte prepareVariant(texturevariant_t* tex)
         return loadResult;
     }
 
-    { texturenamespaceid_t texNamespace = Texture_Namespace(TextureVariant_GeneralCase(tex));
-    if(TN_FLATS   == texNamespace || TN_TEXTURES == texNamespace ||
-       TN_PATCHES == texNamespace || TN_SPRITES  == texNamespace)
-        loadedPaletted = true;
-    }
+    if(spec->toAlpha)
+    {
+        if(0 != image.palette)
+        {   // Paletted.
+            uint8_t* newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height,
+                ((image.flags & IMGF_IS_MASKED)? 2 : 1), image.palette, 3);
+            free(image.pixels);
+            image.pixels = newPixels;
+            image.pixelSize = 3;
+            image.palette = 0;
+            image.flags &= ~IMGF_IS_MASKED;
+        }
 
-    if(image.pixelSize == 1)
+        GL_ConvertToLuminance(&image, false);
+        { long i, total = image.width * image.height;
+        for(i = 0; i < total; ++i)
+        {
+            image.pixels[total + i] = image.pixels[i];
+            image.pixels[i] = 255;
+        }}
+        image.pixelSize = 2;
+    }
+    else if(0 != image.palette)
     {
         if(monochrome && !scaleSharp)
-            GL_DeSaturatePalettedImage(image.pixels, R_FindColorPaletteIndexForId(0), image.width, image.height);
+            GL_DeSaturatePalettedImage(image.pixels, image.palette, image.width, image.height);
 
         if(scaleSharp)
         {
             int scaleMethod = GL_ChooseSmartFilter(image.width, image.height, 0);
             int numpels = image.width * image.height;
+            boolean origMasked = (image.flags & IMGF_IS_MASKED) != 0;
+            int origPalette = image.palette;
             uint8_t* newPixels;
 
-            newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, 4);
+            newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height,
+                ((image.flags & IMGF_IS_MASKED)? 2 : 1), image.palette, 4);
             if(newPixels != image.pixels)
             {
                 free(image.pixels);
                 image.pixels = newPixels;
                 image.pixelSize = 4;
-                image.originalBits = 32;
+                image.palette = 0;
+                image.flags &= ~IMGF_IS_MASKED;
             }
 
             if(monochrome)
                 Desaturate(image.pixels, image.width, image.height, image.pixelSize);
 
-            newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.width, image.height, 0, &image.width, &image.height);
+            newPixels = GL_SmartFilter(scaleMethod, image.pixels, image.width, image.height,
+                0, &image.width, &image.height);
             if(newPixels != image.pixels)
             {
                 free(image.pixels);
@@ -731,7 +760,7 @@ static byte prepareVariant(texturevariant_t* tex)
             //SharpenPixels(image.pixels, image.width, image.height, image.pixelSize);
             //BlackOutlines(image.pixels, image.width, image.height, image.pixelSize);
 
-            // Back to indexed+alpha?
+            // Back to paletted+alpha?
             if(monochrome)
             {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
@@ -739,14 +768,17 @@ static byte prepareVariant(texturevariant_t* tex)
                 AmplifyLuma(image.pixels, image.width, image.height, image.pixelSize == 2);
             }
             else
-            {   // Yes. Quantize down from RGA(+A) to Indexed(+A), replacing the old image.
-                newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height, ((image.flags & IMGF_IS_MASKED)? 2 : 1), 0, 4);
+            {   // Yes. Quantize down from RGA(+A) to Paletted(+A), replacing the old image.
+                newPixels = GL_ConvertBuffer(image.pixels, image.width, image.height,
+                    (origMasked? 2 : 1), origPalette, 4);
                 if(newPixels != image.pixels)
                 {
                     free(image.pixels);
                     image.pixels = newPixels;
-                    image.pixelSize = ((image.flags & IMGF_IS_MASKED)? 2 : 1);
-                    image.originalBits = image.pixelSize * 8;
+                    image.pixelSize = (origMasked? 2 : 1);
+                    image.palette = origPalette;
+                    if(origMasked)
+                        image.flags |= IMGF_IS_MASKED;
                 }
             }
 
@@ -754,7 +786,7 @@ static byte prepareVariant(texturevariant_t* tex)
             noSmartFilter = true;
         }
 
-        if(fillOutlines /*&& !scaleSharp*/ && (image.flags & IMGF_IS_MASKED) && image.pixelSize == 1)
+        if(fillOutlines && 0 != image.palette && (image.flags & IMGF_IS_MASKED))
             ColorOutlinesIdx(image.pixels, image.width, image.height);
     }
     else if(image.pixelSize > 2)
@@ -766,40 +798,17 @@ static byte prepareVariant(texturevariant_t* tex)
         }
     }
 
-    // Lightmaps and flare textures should always be monochrome images.
-    if(((TC_MAPSURFACE_LIGHTMAP == spec->context) ||
-        (TC_HALO_LUMINANCE      == spec->context && image.pixelSize != 4)) &&
-       !(image.flags & IMGF_IS_MASKED))
-    {
-        // An alpha channel is required. If one is not in the image data, we'll generate it.
-        GL_ConvertToAlpha(&image, true);
-    }
-
-    // Disable compression?
     if(noCompression || (image.width < 128 || image.height < 128))
         flags |= TXCF_NO_COMPRESSION;
 
     if(spec->gammaCorrection)
         flags |= TXCF_APPLY_GAMMACORRECTION;
 
-    if(TC_SPRITE_DIFFUSE == spec->context || TC_PSPRITE_DIFFUSE == spec->context)
+    if(spec->noStretch)
         flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
     if(spec->mipmapped)
         flags |= TXCF_MIPMAP;
-
-    alphaChannel = false;
-    if(loadedPaletted)
-    {
-        if((image.pixelSize == 1 && (image.flags & IMGF_IS_MASKED)) ||
-           image.pixelSize == 4)
-            alphaChannel = true;
-    }
-    else
-    {
-        if(image.pixelSize == 2 || image.pixelSize == 4)
-            alphaChannel = true;
-    }
 
     if(noSmartFilter)
         flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
@@ -810,12 +819,9 @@ static byte prepareVariant(texturevariant_t* tex)
     }
     else
     {
-        if(loadedPaletted)
-        {
-            if(image.pixelSize == 1)
-                dglFormat = alphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
-            else
-                dglFormat = alphaChannel? DGL_RGBA : DGL_RGB;
+        if(0 != image.palette)
+        {   // Paletted.
+            dglFormat = (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8;
         }
         else
         {
@@ -907,13 +913,13 @@ static byte prepareVariant(texturevariant_t* tex)
         }
 
         // Average color for glow planes and top line color.
-        if(image.pixelSize > 1)
+        if(0 == image.palette)
         {
             FindAverageLineColor(image.pixels, image.width, image.height, image.pixelSize, 0, avgTopColor->color);
         }
         else
         {
-            FindAverageLineColorIdx(image.pixels, image.width, image.height, 0, 0, false, avgTopColor->color);
+            FindAverageLineColorIdx(image.pixels, image.width, image.height, 0, image.palette, false, avgTopColor->color);
         }
    }
    
@@ -928,7 +934,7 @@ static byte prepareVariant(texturevariant_t* tex)
             TextureVariant_AddAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
         }
         // Calculate light source properties.
-        GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
+        GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, image.palette,
                          &pl->originX, &pl->originY, pl->color, &pl->brightMul);
     }
 
@@ -944,13 +950,13 @@ static byte prepareVariant(texturevariant_t* tex)
             TextureVariant_AddAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
         }
 
-        if(image.pixelSize > 1)
+        if(0 == image.palette)
         {
             FindAverageColor(image.pixels, image.width, image.height, image.pixelSize, al->color);
         }
         else
         {
-            FindAverageColorIdx(image.pixels, image.width, image.height, 0, false, al->color);
+            FindAverageColorIdx(image.pixels, image.width, image.height, image.palette, false, al->color);
         }
         memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
         amplify(al->colorAmplified);
@@ -1249,12 +1255,14 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection)
+    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
+    boolean noStretch, boolean toAlpha)
 {
     if(!texInited)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
-    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection);
+    return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
+        wrapT, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
@@ -1377,8 +1385,8 @@ void GL_InitImage(image_t* img)
     img->width = 0;
     img->height = 0;
     img->pixelSize = 0;
-    img->originalBits = 0;
     img->flags = 0;
+    img->palette = 0;
     img->pixels = 0;
 }
 
@@ -1387,7 +1395,6 @@ static boolean tryLoadPCX(image_t* img, DFILE* file)
     assert(img && file);
     GL_InitImage(img);
     img->pixels = PCX_Load(file, &img->width, &img->height, &img->pixelSize);
-    img->originalBits = 8 * img->pixelSize;
     return (0 != img->pixels);
 }
 
@@ -1396,7 +1403,6 @@ static boolean tryLoadPNG(image_t* img, DFILE* file)
     assert(img && file);
     GL_InitImage(img);
     img->pixels = PNG_Load(file, &img->width, &img->height, &img->pixelSize);
-    img->originalBits = 8 * img->pixelSize;
     return (0 != img->pixels);
 }
 
@@ -1405,7 +1411,6 @@ static boolean tryLoadTGA(image_t* img, DFILE* file)
     assert(img && file);
     GL_InitImage(img);
     img->pixels = TGA_Load(file, &img->width, &img->height, &img->pixelSize);
-    img->originalBits = 8 * img->pixelSize;
     return (0 != img->pixels);
 }
 
@@ -1479,7 +1484,6 @@ static uint8_t* GL_LoadImageDFile(image_t* img, DFILE* file, const char* filePat
         }
         // Color keying is done; now we have 4 bytes per pixel.
         img->pixelSize = 4;
-        img->originalBits = 32; // Effectively...
     }
 
     // Any alpha pixels?
@@ -1535,8 +1539,7 @@ boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
         colorpalette_t* pal = R_ToColorPalette(paletteIdx);
 
         if(NULL == pal)
-            Con_Error("GL_PalettizeImage: Failed to locate ColorPalette for name %i.",
-                paletteIdx);
+            Con_Error("GL_PalettizeImage: Failed to locate ColorPalette for index %i.", paletteIdx);
 
         { long i;
         for(i = 0; i < numPels; ++i)
@@ -1577,8 +1580,7 @@ boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
         colorpalette_t* pal = R_ToColorPalette(paletteIdx);
 
         if(NULL == pal)
-            Con_Error("GL_QuantizeImageToPalette: Failed to locate ColorPalette for name %i.",
-                paletteIdx);
+            Con_Error("GL_QuantizeImageToPalette: Failed to locate ColorPalette for index %i.", paletteIdx);
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
@@ -1613,8 +1615,7 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int 
 
     pal = R_ToColorPalette(paletteIdx);
     if(NULL == pal)
-        Con_Error("GL_DeSaturatePalettedImage: Failed to locate ColorPalette for name %i.",
-            paletteIdx);
+        Con_Error("GL_DeSaturatePalettedImage: Failed to locate ColorPalette for index %i.", paletteIdx);
 
     // What is the maximum color value?
     max = 0;
@@ -1980,7 +1981,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
     {
         // Convert a paletted source image to truecolor.
         uint8_t* newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight,
-            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1, content->palette,
+            DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 2 : 1, R_FindColorPaletteIndexForId(content->palette),
             DGL_COLOR_INDEX_8_PLUS_A8 == dglFormat ? 4 : 3);
         if(loadPixels != content->pixels)
             free((uint8_t*)loadPixels);
@@ -2452,7 +2453,6 @@ byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
                 return 0; // Unreachable.
             }
 
-            image->originalBits = 8;
             image->pixelSize = 1;
             bufSize = (size_t)image->width * image->height;
             image->pixels = (uint8_t*) malloc(bufSize);
@@ -2496,8 +2496,8 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
             /// \fixme not all flats are 64x64!
             image->width  = FLAT_WIDTH;
             image->height = FLAT_HEIGHT;
-            image->originalBits = 8;
             image->pixelSize = 1;
+            image->palette = R_FindColorPaletteIndexForId(0);
 
             bufSize = MAX_OF(fileLength, (size_t)image->width * image->height);
             image->pixels = (uint8_t*) malloc(bufSize);
@@ -2548,8 +2548,8 @@ byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, i
 
             image->width  = SHORT(patch->width)  + border*2;
             image->height = SHORT(patch->height) + border*2;
-            image->originalBits = 8;
             image->pixelSize = 1;
+            image->palette = R_FindColorPaletteIndexForId(0);
             image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
             if(NULL == image->pixels)
                 Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
@@ -2604,9 +2604,9 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
 
     GL_InitImage(image);
     image->pixelSize = 1;
-    image->originalBits = 8;
     image->width = texDef->width;
     image->height = texDef->height;
+    image->palette = R_FindColorPaletteIndexForId(0);
     if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
         Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for ",
             "new image pixel data.", (unsigned int) (2 * image->width * image->height));
@@ -2662,9 +2662,9 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
 
     GL_InitImage(image);
     image->pixelSize = 1;
-    image->originalBits = 8;
     image->width = width;
     image->height = height;
+    image->palette = R_FindColorPaletteIndexForId(0);
     if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
         Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for ",
             "new image pixel data.", (unsigned int) (2 * image->width * image->height));
@@ -2830,7 +2830,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false);
+                    0, 0, 0, 0, GL_CLAMP, GL_CLAMP, -1, false, false, false, true);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(lmap->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
@@ -2857,7 +2857,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
-                    TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false);
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, true);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(fTex->id, texSpec, 0)))
                 return TextureVariant_GLName(tex);
@@ -2878,7 +2878,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             GL_TextureVariantSpecificationForContext(TC_UI,
                 0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
                   | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-                0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false);
+                0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, false);
         const texturevariant_t* tex;
         if(NULL != (tex = GL_PrepareTexture(patchTex->texId, texSpec, NULL)))
             return TextureVariant_GLName(tex);
@@ -3316,10 +3316,7 @@ texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other)
     memcpy(c, other, sizeof(*c));
 
     // Duplicate the image buffer.
-    if(other->format == DGL_LUMINANCE && (other->flags & TXCF_CONVERT_8BIT_TO_ALPHA))
-        bytesPerPixel = 2; // We'll need a larger buffer.
-    else
-        bytesPerPixel = BytesPerPixelFmt(other->format);
+    bytesPerPixel = BytesPerPixelFmt(other->format);
     bufferSize = bytesPerPixel * other->width * other->height;
     pixels = malloc(bufferSize);
     memcpy(pixels, other->pixels, bufferSize);

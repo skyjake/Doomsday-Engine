@@ -1041,7 +1041,7 @@ void GL_SetMaterial(material_t* mat)
     Con_Error("GL_SetMaterial: No usage context specified.");
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, 0, false, false));
+            GL_REPEAT, GL_REPEAT, 0, false, false, false, false));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
@@ -1050,7 +1050,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     material_snapshot_t ms;
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
-            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true));
+            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true, true, false));
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
 }
 
@@ -1131,7 +1131,7 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
 }
 
 uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat,
-    colorpaletteid_t palid, int outformat)
+    int paletteIdx, int outformat)
 {
     assert(in);
     {
@@ -1155,16 +1155,14 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
-        GL_PalettizeImage(out, outformat, R_FindColorPaletteIndexForId(palid), false,
-            in, informat, width, height);
+        GL_PalettizeImage(out, outformat, paletteIdx, false, in, informat, width, height);
         return out;
     }
 
     // Conversion from RGB(A) to pal8(a), using pal18To8.
     if(informat >= 3 && outformat <= 2)
     {
-        GL_QuantizeImageToPalette(out, outformat, R_FindColorPaletteIndexForId(palid),
-            in, informat, width, height);
+        GL_QuantizeImageToPalette(out, outformat, paletteIdx, in, informat, width, height);
         return out;
     }
 
@@ -1189,8 +1187,7 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
 }
 
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
-    colorpaletteid_t palid, float* brightX, float* brightY, float color[3],
-    float* lumSize)
+    int paletteIdx, float* brightX, float* brightY, float color[3], float* lumSize)
 {
     assert(buffer && brightX && brightY && color && lumSize);
     {
@@ -1205,10 +1202,9 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
 
     if(pixelSize == 1)
     {
-        pal = R_ToColorPalette(R_FindColorPaletteIndexForId(palid));
+        pal = R_ToColorPalette(paletteIdx);
         if(NULL == pal)
-            Con_Error("GL_CalcLuminance: Failed to locate ColorPalette for id %u.",
-                (uint) palid);
+            Con_Error("GL_CalcLuminance: Failed to locate ColorPalette for index %i.", paletteIdx);
     }
 
     for(i = 0; i < 3; ++i)

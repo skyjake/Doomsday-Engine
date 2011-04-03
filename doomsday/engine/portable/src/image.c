@@ -31,39 +31,46 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 {
     assert(image);
     {
-    int p, total = image->width * image->height;
+    long p, numPels = image->width * image->height;
     uint8_t* alphaChannel = NULL;
     uint8_t* ptr = image->pixels;
 
-    if(image->pixelSize < 3)
-    {   // No need to convert anything.
+    if(0 != image->palette || (image->flags & IMGF_IS_MASKED))
+    {
+#if _DEBUG
+        Con_Message("Warning:GL_ConvertToLuminance: Attempt to convert "
+            "paletted/masked image. I don't know this format!");
+#endif
         return;
     }
+
+    if(image->pixelSize < 3)
+        return; // No conversion necessary.
 
     // Do we need to relocate the alpha data?
     if(retainAlpha && image->pixelSize == 4)
     {   // Yes. Take a copy.
-        if(NULL == (alphaChannel = malloc(total)))
+        if(NULL == (alphaChannel = malloc(numPels)))
             Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for "
-                "pixel alpha relocation buffer.", (unsigned int) total);
+                "pixel alpha relocation buffer.", (unsigned int) numPels);
         ptr = image->pixels;
-        for(p = 0; p < total; ++p, ptr += image->pixelSize)
+        for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
             alphaChannel[p] = ptr[3];
     }
 
     // Average the RGB colors.
     ptr = image->pixels;
-    for(p = 0; p < total; ++p, ptr += image->pixelSize)
+    for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
     {
         int min = MIN_OF(ptr[0], MIN_OF(ptr[1], ptr[2]));
         int max = MAX_OF(ptr[0], MAX_OF(ptr[1], ptr[2]));
-        image->pixels[p] = (min + max) / 2;
+        image->pixels[p] = (min == max? min : (min + max) / 2);
     }
 
     // Do we need to relocate the alpha data?
     if(alphaChannel)
     {
-        memcpy(image->pixels + total, alphaChannel, total);
+        memcpy(image->pixels + numPels, alphaChannel, numPels);
         image->pixelSize = 2;
         free(alphaChannel);
         return;
@@ -77,7 +84,7 @@ void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
 {
     assert(image);
     GL_ConvertToLuminance(image, true);
-    { int p, total = image->width * image->height;
+    { long p, total = image->width * image->height;
     for(p = 0; p < total; ++p)
     {
         image->pixels[total + p] = image->pixels[p];
@@ -87,18 +94,27 @@ void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
     image->pixelSize = 2;
 }
 
-boolean GL_ImageHasAlpha(const image_t* img)
+boolean GL_ImageHasAlpha(const image_t* image)
 {
-    assert(img);
-    if(img->pixelSize == 3)
+    assert(image);
+
+    if(0 != image->palette || (image->flags & IMGF_IS_MASKED))
+    {
+#if _DEBUG
+        Con_Message("Warning:GL_ImageHasAlpha: Attempt to determine alpha for "
+            "paletted/masked image. I don't know this format!");
+#endif
+        return false;
+    }
+
+    if(image->pixelSize == 3)
         return false;
 
-    if(img->pixelSize == 4)
+    if(image->pixelSize == 4)
     {
-        long i, numpels = img->width * img->height;
-        const uint8_t* in = img->pixels;
+        long i, numpels = image->width * image->height;
+        const uint8_t* in = image->pixels;
         boolean hasAlpha = false;
-
         for(i = 0; i < numpels; ++i, in += 4)
             if(in[3] < 255)
             {
@@ -107,8 +123,5 @@ boolean GL_ImageHasAlpha(const image_t* img)
             }
         return hasAlpha;
     }
-#if _DEBUG
-    Con_Error("GL_ImageHasAlpha: Attempted with non-rgb(a) image.");
-#endif
     return false;
 }

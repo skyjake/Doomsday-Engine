@@ -753,7 +753,7 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
 }
 
 void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
-    colorpaletteid_t palid, boolean hasAlpha, float col[3])
+    int paletteIdx, boolean hasAlpha, float col[3])
 {
     assert(data && col);
     {
@@ -778,10 +778,9 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
         return;
     }
 
-    pal = R_ToColorPalette(R_FindColorPaletteIndexForId(palid));
+    pal = R_ToColorPalette(paletteIdx);
     if(NULL == pal)
-        Con_Error("FindAverageLineColorIdx: Failed to locate ColorPalette for id %u.",
-            (uint) palid);
+        Con_Error("FindAverageLineColorIdx: Failed to locate ColorPalette for index %i.", paletteIdx);
 
     numpels = w * h;
     start = data + w * line;
@@ -888,8 +887,8 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
     }
 }
 
-void FindAverageColorIdx(const uint8_t* data, int w, int h,
-    colorpaletteid_t palid, boolean hasAlpha, float col[3])
+void FindAverageColorIdx(const uint8_t* data, int w, int h, int paletteIdx,
+    boolean hasAlpha, float col[3])
 {
     assert(data && col);
     {
@@ -904,10 +903,9 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h,
         return;
     }
 
-    pal = R_ToColorPalette(R_FindColorPaletteIndexForId(palid));
+    pal = R_ToColorPalette(paletteIdx);
     if(NULL == pal)
-        Con_Error("FindAverageColorIdx: Failed to locate ColorPalette for id %u.",
-            (uint) palid);
+        Con_Error("FindAverageColorIdx: Failed to locate ColorPalette for index %i.", paletteIdx);
 
     numpels = w * h;
     alphaStart = data + numpels;

@@ -145,7 +145,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
     if(result != 0)
     {
         // If 8-bit with no alpha, generate alpha automatically.
-        if(image.originalBits == 8)
+        if(image.pixelSize == 1)
             GL_ConvertToAlpha(&image, true);
 
         // Create a new texture and upload the image.

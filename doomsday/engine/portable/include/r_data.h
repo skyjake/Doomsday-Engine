@@ -321,7 +321,7 @@ int R_ColorPaletteCount(void);
  * Given a color palette index return the associated ColorPalette.
  * @return  ColorPalette if found else @c NULL
  */
-struct colorpalette_s* R_ToColorPalette(int palIdx);
+struct colorpalette_s* R_ToColorPalette(int paletteIdx);
 
 /**
  * Add a new (named) color palette.

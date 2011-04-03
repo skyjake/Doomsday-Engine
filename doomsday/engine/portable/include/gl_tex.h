@@ -124,12 +124,12 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param pixels  Index-color image to evaluate.
  * @param width  Logical width of the image in pixels.
  * @param height  Logical height of the image in pixels.
- * @param palid  Unique identifier of the color palette to use.
+ * @param paletteIdx  Index of the color palette to use else @c 0
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color  Determined average color written here.
  */
 void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
-    colorpaletteid_t palid, boolean hasAlpha, float color[3]);
+    int paletteIdx, boolean hasAlpha, float color[3]);
 
 /**
  * @param pixels  RGB(a) image to evaluate.
@@ -144,12 +144,12 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  * @param pixels  Index-color image to evaluate.
  * @param width  Logical width of the image in pixels.
  * @param height  Logical height of the image in pixels.
- * @param palid  Unique identifier of the color palette to use.
+ * @param paletteIdx  Index of the color palette to use else @c 0
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color  Determined average color written here.
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
-    int line, colorpaletteid_t palid, boolean hasAlpha, float color[3]);
+    int line, int paletteIdx, boolean hasAlpha, float color[3]);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.

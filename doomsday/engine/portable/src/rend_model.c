@@ -706,7 +706,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
-                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false);
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false, false, false);
             const texturevariant_t* tex;
             if(NULL != (tex = GL_PrepareTexture(sn->id, texSpec, NULL)))
             {
@@ -793,7 +793,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             material_snapshot_t ms;
             Materials_Prepare(&ms, mat, true,
                 Materials_VariantSpecificationForContext(MC_MODELSKIN,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
             skinTexture = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
         }
         else
@@ -814,7 +814,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true);
+                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false);
             const texturevariant_t* tex = GL_PrepareTexture(sn->id, texSpec, NULL);
             if(NULL != tex)
                 skinTexture = TextureVariant_GLName(tex);

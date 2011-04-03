@@ -82,7 +82,7 @@ typedef struct {
     int flags; /// @see textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
     int wrapS, wrapT;
-    boolean mipmapped, gammaCorrection;
+    boolean mipmapped, gammaCorrection, noStretch, toAlpha;
     int anisoFilter;
     colorpalettetranslationspecification_t* translated;
 } variantspecification_t;

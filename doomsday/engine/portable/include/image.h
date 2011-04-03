@@ -38,15 +38,24 @@
  * @defgroup imageFlags Image Flags
  */
 /*@{*/
-#define IMGF_IS_MASKED          0x1
+#define IMGF_IS_MASKED              (0x1)
 /*@}*/
 
 typedef struct image_s {
+    /// @see imageFlags
+    int flags;
+
+    /// Index of the color palette used/assumed or @c 0 if none (1-based).
+    int palette;
+
+    /// Dimensions of the image in logical pixels.
     int width;
     int height;
+
+    /// Bytes per pixel in the data buffer.
     int pixelSize;
-    int originalBits; /// Bits per pixel in the image file.
-    int flags; /// @see imageFlags
+
+    /// Pixel color/palette (+alpha) data buffer.
     uint8_t* pixels;
 } image_t;
 

@@ -423,7 +423,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside, boolean ignore
             // Ensure we have up to date info.
             Materials_Prepare(&ms, mat, true,
                 Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
 
             if(ignoreAlpha || (ms.isOpaque && !side->SW_middleblendmode && side->SW_middlergba[3] >= 1))
             {
@@ -1168,7 +1168,7 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
 {
     materialvariantspecification_t* spec =
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, true, true);
+            GL_REPEAT, GL_REPEAT, -1, true, true, false, false);
     float interPos = 0;
 
     Materials_Prepare(msA, mat, true, spec);
@@ -2053,7 +2053,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
             material_snapshot_t ms;
             surface_t* suf = &ssec->sector->planes[elmIdx]->surface;
             Materials_Prepare(&ms, suf->material, true,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
+                Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
             params.glowing = ms.glowing;
         }
 
@@ -2308,7 +2308,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             {
                 material_snapshot_t ms;
                 Materials_Prepare(&ms, surface->material, true,
-                    Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
+                    Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
                 glowing = ms.glowing;
             }
 
@@ -2969,7 +2969,7 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
     // regular world polys (with a few obvious properties).
 
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true));
+        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
 
     rTU[TU_PRIMARY].tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
     rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
@@ -5012,7 +5012,7 @@ static void Rend_RenderBoundingBoxes(void)
     mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":bbox"));
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
 
     GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
