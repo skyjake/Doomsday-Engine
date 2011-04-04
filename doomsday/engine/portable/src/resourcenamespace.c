@@ -324,6 +324,7 @@ void ResourceNamespace_Destruct(resourcenamespace_t* rn)
         Str_Delete(rn->_overrideName);
     if(rn->_overrideName2)
         Str_Delete(rn->_overrideName2);
+    free(rn);
 }
 
 void ResourceNamespace_Reset(resourcenamespace_t* rn)
