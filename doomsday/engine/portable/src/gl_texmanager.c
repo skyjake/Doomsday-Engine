@@ -1285,6 +1285,7 @@ void GL_ShutdownTextureManager(void)
     if(!texInited)
         return; // Already been here?
 
+    GL_ClearSystemTextures();
     destroyVariantSpecifications();
     destroyTextures();
     texInited = false;
