@@ -90,17 +90,17 @@ void DAM_Init(void)
  */
 void DAM_Shutdown(void)
 {
-    archivedmap_t      *dam;
-
     // Free all the archived map records.
-    dam = *archivedMaps;
-    while(dam)
+    if(NULL != archivedMaps)
     {
-        freeArchivedMap(dam);
+        uint i;
+        for(i = 0; i < numArchivedMaps; ++i)
+        {
+            freeArchivedMap(archivedMaps[i]);
+        }
+        Z_Free(archivedMaps);
+        archivedMaps = NULL;
     }
-
-    Z_Free(archivedMaps);
-    archivedMaps = NULL;
     numArchivedMaps = 0;
 
     P_ShutdownGameMapObjDefs();

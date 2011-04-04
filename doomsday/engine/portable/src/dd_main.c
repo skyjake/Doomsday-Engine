@@ -1074,6 +1074,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         // If a map was loaded; unload it.
         P_SetCurrentMap(0);
+        DAM_Shutdown();
         Cl_Reset();
 
         R_ShutdownVectorGraphics();

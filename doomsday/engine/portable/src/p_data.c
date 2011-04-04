@@ -621,11 +621,16 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     }
 
     // Looks good! Add it to the list of properties.
-    def->props = M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
+    if(NULL == (def->props = (mapobjprop_t*)
+       realloc(def->props, ++def->numProps * sizeof(*def->props))))
+        Con_Error("P_RegisterMapObjProperty: Failed on (re)allocation of %lu bytes for "
+            "new MapObjProperty.", (unsigned int) sizeof(*def->props));
 
     prop = &def->props[def->numProps - 1];
     prop->identifier = propIdentifier;
-    prop->name = M_Malloc(len + 1);
+    if(NULL == (prop->name = (char*) malloc(sizeof(*prop->name) * (len + 1))))
+        Con_Error("P_RegisterMapObjProperty: Failed on allocation of %lu bytes for "
+            "MapObjProperty::name.", (unsigned int) (sizeof(*prop->name) * (len + 1)));
     strncpy(prop->name, propName, len);
     prop->name[len] = '\0';
     prop->type = type;
@@ -647,29 +652,24 @@ void P_InitGameMapObjDefs(void)
  */
 void P_ShutdownGameMapObjDefs(void)
 {
-    uint                i, j;
-
-    if(gameMapObjDefs)
+    if(NULL != gameMapObjDefs)
     {
+        uint i;
         for(i = 0; i < numGameMapObjDefs; ++i)
         {
-            gamemapobjdef_t    *def = &gameMapObjDefs[i];
-
+            gamemapobjdef_t* def = &gameMapObjDefs[i];
+            { uint j;
             for(j = 0; j < def->numProps; ++j)
             {
-                mapobjprop_t       *prop = &def->props[i];
-
-                M_Free(prop->name);
-            }
-
-            M_Free(def->name);
-            M_Free(def->props);
+                mapobjprop_t* prop = &def->props[j];
+                free(prop->name);
+            }}
+            free(def->props);
+            free(def->name);
         }
-
-        M_Free(gameMapObjDefs);
+        free(gameMapObjDefs);
+        gameMapObjDefs = NULL;
     }
-
-    gameMapObjDefs = NULL;
     numGameMapObjDefs = 0;
 }
 
