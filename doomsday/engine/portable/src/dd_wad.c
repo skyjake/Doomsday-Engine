@@ -385,37 +385,55 @@ static void removeLumpsWithHandle(DFILE* handle)
  */
 static void resizeLumpStorage(int numItems)
 {
-    lumpInfo = M_Realloc(lumpInfo, sizeof(lumpinfo_t) * numItems);
+    if(0 != numItems)
+    {
+        lumpInfo = (lumpinfo_t*) Z_Realloc(lumpInfo, sizeof(*lumpInfo) * numItems, PU_APPSTATIC);
+        if(NULL == lumpInfo)
+            Con_Error("Wad::resizeLumpStorage: Failed on (re)allocation of %lu bytes for "
+                "LumpInfo record list.", (unsigned int) (sizeof(*lumpInfo) * numItems));
+    }
+    else if(NULL != lumpInfo)
+    {
+        Z_Free(lumpInfo); lumpInfo = NULL;
+    }
 
     // Updating the cache is a bit more difficult. We need to make sure
     // the user pointers in the memory zone remain valid.
     if(numCache != numItems)
     {
-        int i, numToMod;
-        void** newCache; // This is the new cache.
-        size_t newCacheBytes = numItems * sizeof(*newCache); // The new size of the cache (bytes).
-
-        newCache = M_Calloc(newCacheBytes);
-        if(lumpCache)
+        if(0 != numItems)
         {
-            // Copy the old cache.
-            if(numCache < numItems)
-                numToMod = numCache;
-            else
-                numToMod = numItems;
+            void** newCache = Z_Calloc(sizeof(*newCache) * numItems, PU_APPSTATIC, 0);
+            if(NULL == newCache)
+                Con_Error("Wad::resizeLumpStorage: Failed on allocation of %lu bytes for "
+                    "cached lump index.", (unsigned int) (sizeof(*newCache) * numItems));
 
-            memcpy(newCache, lumpCache, numToMod * sizeof(*lumpCache));
+            // Need to copy the old cache?
+            if(NULL != lumpCache)
+            {
+                int numToMod;
 
-            // Update the user information in the memory zone.
-            for(i = 0; i < numToMod; ++i)
-                if(newCache[i])
-                    Z_ChangeUser(newCache[i], newCache + i);
+                if(numCache < numItems)
+                    numToMod = numCache;
+                else
+                    numToMod = numItems;
+                memcpy(newCache, lumpCache, sizeof(*lumpCache) * numToMod);
 
-            // Get rid of the old cache.
-            M_Free(lumpCache);
+                // Also update the user information in the memory zone.
+                { int i;
+                for(i = 0; i < numToMod; ++i)
+                    if(newCache[i])
+                        Z_ChangeUser(newCache[i], newCache + i);
+                }
+                Z_Free(lumpCache);
+            }
+            lumpCache = newCache;
+        }
+        else if(NULL != lumpCache)
+        {
+            Z_Free(lumpCache); lumpCache = NULL;
         }
 
-        lumpCache = newCache;
         numCache = numItems;
     }
 }
@@ -740,7 +758,7 @@ int W_IsIWAD(const char* fn)
 static void initLumpInfo(void)
 {
     numLumps = 0;
-    lumpInfo = M_Malloc(1); // Will be realloced as lumps are added.
+    lumpInfo = Z_Malloc(1, PU_APPSTATIC, 0); // Will be realloced as lumps are added.
 }
 
 void W_Init(void)
