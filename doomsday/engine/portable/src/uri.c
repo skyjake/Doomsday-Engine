@@ -240,6 +240,7 @@ void Uri_Destruct(dduri_t* uri)
     }
     Str_Free(&uri->_scheme);
     Str_Free(&uri->_path);
+    free(uri);
 }
 
 dduri_t* Uri_Copy(dduri_t* uri, const dduri_t* other)
