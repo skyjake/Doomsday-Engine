@@ -608,6 +608,8 @@ static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString,
     int directive)
 {
+    boolean didSkip = false;
+
     // Semicolon terminates DO-blocks.
     if(!strcmp(commandString, ";"))
     {
@@ -631,7 +633,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     if((cmd = findCommand(commandString)))
     {
         boolean requiredOperands;
-        fi_operand_t* ops = 0;
+        fi_operand_t* ops = NULL;
         uint numOps;
 
         // Is this command supported for this directive?
@@ -642,23 +644,26 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
 
         // Check that there are enough operands.
         requiredOperands = (cmd->operands && cmd->operands[0]);
-        if(!requiredOperands || (ops = parseCommandArguments(fi, cmd, &numOps)))
+        if(0 == requiredOperands || NULL != (ops = parseCommandArguments(fi, cmd, &numOps)))
         {
             // Should we skip this command?
-            if(skippingCommand(fi, cmd))
-                return false;
-
-            // Execute forthwith!
-            cmd->func(cmd, ops, fi);
+            if(!(didSkip = skippingCommand(fi, cmd)))
+            {
+                // Execute forthwith!
+                cmd->func(cmd, ops, fi);
+            }
         }
 
-        if(fi->_gotoEnd)
+        if(!didSkip)
         {
-            fi->_wait = 1;
-        }
-        else
-        {   // Now we've executed the latest command.
-            fi->_lastSkipped = false;
+            if(fi->_gotoEnd)
+            {
+                fi->_wait = 1;
+            }
+            else
+            {   // Now we've executed the latest command.
+                fi->_lastSkipped = false;
+            }
         }
 
         if(ops)
@@ -673,7 +678,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
             free(ops);
         }
     }}
-    return true; // Success!
+    return !didSkip;
 }
 
 static boolean executeNextCommand(finaleinterpreter_t* fi)
