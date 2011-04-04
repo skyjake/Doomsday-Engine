@@ -2107,7 +2107,8 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     if(verbose)
     {
         ddstring_t* searchPath = Uri_ToString(skin);
-        Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(searchPath), (long) (1 + (st - skinNames)));
+        Con_Message("SkinTex: \"%s\" -> %li\n", Str_Text(F_PrettyPath(searchPath)),
+            (long) (1 + (st - skinNames)));
         Str_Delete(searchPath);
     }
     return 1 + (st - skinNames); // 1-based index.
