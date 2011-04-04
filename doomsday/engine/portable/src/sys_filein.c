@@ -965,9 +965,9 @@ static int C_DECL compareFoundEntryByName(const void* a, const void* b)
 /// Collect a list of paths including those which have been mapped.
 static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCount)
 {
-    int count = 0, max = 16;
-    foundentry_t* found = malloc(max * sizeof(*found));
     ddstring_t wildPath, origWildPath;
+    foundentry_t* found = NULL;
+    int count = 0, max = 0;
     finddata_t fd;
 
     Str_Init(&origWildPath);
@@ -992,7 +992,10 @@ static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCoun
                 {
                     if(count >= max)
                     {
-                        max *= 2;
+                        if(0 == max)
+                            max = 16;
+                        else
+                            max *= 2;
                         found = realloc(found, sizeof(*found) * max);
                     }
                     memset(&found[count], 0, sizeof(*found));
@@ -1005,9 +1008,16 @@ static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCoun
         myfindend(&fd);
     }}
 
+    Str_Free(&origWildPath);
+    Str_Free(&wildPath);
+
     if(retCount)
         *retCount = count;
-    return count > 0? found : 0;
+    if(0 != count)
+        return found;
+
+    free(found);
+    return NULL;
 }
 
 static int iterateFilePaths(const ddstring_t* pattern, const ddstring_t* searchPath,
@@ -1019,7 +1029,7 @@ static int iterateFilePaths(const ddstring_t* pattern, const ddstring_t* searchP
     int result = 0, count;
     foundentry_t* found;
 
-    if(0 != (found = collectFilePaths(searchPath, &count)))
+    if(NULL != (found = collectFilePaths(searchPath, &count)))
     {
         ddstring_t path, localPattern;
 
