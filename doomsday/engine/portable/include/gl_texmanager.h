@@ -43,7 +43,7 @@ struct image_s;
 struct texturecontent_s;
 struct texture_s;
 struct texturevariant_s;
-texturevariantspecification_t;
+struct texturevariantspecification_s;
 
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
