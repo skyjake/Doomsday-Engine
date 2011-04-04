@@ -1029,9 +1029,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Material"))
         {
-            int                 stage = 0;
-            uint                layer = 0;
-            ded_material_t*     mat;
+            ded_material_t* mat;
+            uint layer = 0;
+            int stage = 0;
 
             // A new material.
             idx = DED_AddMaterial(ded, "");
@@ -1041,21 +1041,42 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
                 const ded_material_t* prevMaterial = ded->materials + prevMaterialDefIdx;
+                dduri_t* uri = mat->id;
 
                 memcpy(mat, prevMaterial, sizeof(*mat));
-                if(mat->id) mat->id = Uri_ConstructCopy(mat->id);
+                mat->id = uri;
+                if(NULL != prevMaterial->id)
+                {
+                    if(NULL != mat->id)
+                        Uri_Copy(mat->id, prevMaterial->id);
+                    else
+                        mat->id = Uri_ConstructCopy(prevMaterial->id);
+                }
 
                 // Duplicate the stage arrays.
-                { uint i;
+                { int i;
                 for(i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
                 {
-                    ded_material_layer_t* l = &ded->materials[prevMaterialDefIdx].layers[i];
+                    const ded_material_layer_t* l = &prevMaterial->layers[i];
 
                     if(!l->stages)
                         continue;
 
-                    mat->layers[i].stages = M_Malloc(sizeof(ded_material_layer_stage_t) * mat->layers[i].stageCount.max);
-                    memcpy(mat->layers[i].stages, l->stages, sizeof(ded_material_layer_stage_t) * mat->layers[i].stageCount.num);
+                    if(NULL == (mat->layers[i].stages = (ded_material_layer_stage_t*)
+                       malloc(sizeof(*mat->layers[i].stages) * l->stageCount.max)))
+                    {
+                        SetError("Out of memory.");
+                        retVal = false;
+                        goto ded_end_read;
+                    }
+
+                    memcpy(mat->layers[i].stages, l->stages,
+                        sizeof(*mat->layers[i].stages) * l->stageCount.num);
+                    { int j;
+                    for(j = 0; j < l->stageCount.num; ++j)
+                        if(NULL != l->stages[j].texture)
+                            mat->layers[i].stages[j].texture = Uri_ConstructCopy(l->stages[j].texture);
+                    }
                 }}
             }
 
@@ -1130,7 +1151,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             {
                 prevModel = ded->models + prevModelDefIdx;
                 // Should we copy the previous definition?
-                if(bCopyNext) memcpy(mdl, prevModel, sizeof(*mdl));
+                if(bCopyNext)
+                {
+                    int i;
+                    memcpy(mdl, prevModel, sizeof(*mdl));
+                    for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
+                    {
+                        mdl->sub[i].filename = 0;
+                        mdl->sub[i].skinFilename = 0;
+                    }
+                }
             }
 
             FINDBEGIN;
@@ -1212,18 +1242,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 { int i;
                 for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
-                    if(mdl->sub[i].filename &&
-                       !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-") &&
-                       prevModel->sub[i].filename)
+                    if(prevModel->sub[i].filename &&
+                       !(mdl->sub[i].filename && Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-")))
                         mdl->sub[i].filename = Uri_ConstructCopy(prevModel->sub[i].filename);
 
-                    if(mdl->sub[i].skinFilename)
-                        mdl->sub[i].skinFilename = Uri_ConstructCopy(mdl->sub[i].skinFilename);
+                    if(prevModel->sub[i].skinFilename &&
+                       !(mdl->sub[i].skinFilename && Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].skinFilename), "-")))
+                        mdl->sub[i].skinFilename = Uri_ConstructCopy(prevModel->sub[i].skinFilename);
 
                     if(!strcmp(mdl->sub[i].frame, "-"))
                         strcpy(mdl->sub[i].frame, prevModel->sub[i].frame);
-
-                    //if(!strcmp(mdl->sub[i].flags, "-"))           strcpy(mdl->sub[i].flags,           prevModel->sub[i].flags);
                 }}
             }
 
