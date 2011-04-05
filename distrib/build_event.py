@@ -139,8 +139,11 @@ def text_build_summary(name):
     pkgCount = len(list_package_files(name))
         
     changesName = os.path.join(EVENT_DIR, name, 'changes.html')
+    commitCount = 0
     if os.path.exists(changesName):
-        msg += " contains %i commits and" % count_word('<li>', file(changesName).read())
+        commitCount = count_word('<li>', file(changesName).read())
+    if commitCount:
+        msg += " contains %i commits and" % commitCount
         
     msg += " produced %i installable binary package%s." % \
         (pkgCount, 's' if (pkgCount != 1) else '')
@@ -220,7 +223,8 @@ def html_build_description(name, encoded=True):
     # Changes.
     chgFn = os.path.join(buildDir, 'changes.html')
     if os.path.exists(chgFn):
-        msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
+        if count_word('<li>', file(chgFn).read()):
+            msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
         
     # Enclose it in a CDATA block if needed.
     if encoded: return '<![CDATA[' + msg + ']]>'    
