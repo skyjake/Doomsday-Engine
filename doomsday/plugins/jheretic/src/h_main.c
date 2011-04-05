@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -586,8 +586,14 @@ void G_Shutdown(void)
     Hu_UnloadData();
     Hu_LogShutdown();
 
-    P_DestroyIterList(spechit);
-    P_DestroyIterList(linespecials);
+    if(NULL != spechit)
+    {
+        IterList_Destruct(spechit); spechit = NULL;
+    }
+    if(NULL != linespecials)
+    {
+        IterList_Destruct(linespecials); linespecials = NULL;
+    }
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
     P_ShutdownInventory();

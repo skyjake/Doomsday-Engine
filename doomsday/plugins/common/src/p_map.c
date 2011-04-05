@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -320,7 +320,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    P_EmptyIterList(spechit);
+    IterList_Empty(spechit);
 
     box[BOXLEFT]   = tmBBox[BOXLEFT]   - MAXRADIUS;
     box[BOXRIGHT]  = tmBBox[BOXRIGHT]  + MAXRADIUS;
@@ -850,7 +850,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 if(thing->dPlayer)
                     thing->dPlayer->flags |= DDPF_FIXMOM;
             }
-            P_EmptyIterList(spechit);
+            IterList_Empty(spechit);
             return true;
         }
 
@@ -995,7 +995,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
         if(tmThing->flags & MF_MISSILE)
         {   // Missiles can trigger impact specials
             if(xline->special)
-                P_AddObjectToIterList(spechit, ld);
+                IterList_Push(spechit, ld);
         }
         return false;
     }
@@ -1072,7 +1072,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
 
     // If contacted a special line, add it to the list.
     if(P_ToXLine(ld)->special)
-        P_AddObjectToIterList(spechit, ld);
+        IterList_Push(spechit, ld);
 
 #if !__JHEXEN__
     tmThing->wallHit = false;
@@ -1142,7 +1142,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    P_EmptyIterList(spechit);
+    IterList_Empty(spechit);
 
 #if __JHEXEN__
     if((tmThing->flags & MF_NOCLIP) && !(tmThing->flags & MF_SKULLFLY))
@@ -1457,7 +1457,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
     // If any special lines were hit, do the effect.
     if(!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
     {
-        while((ld = P_PopIterList(spechit)) != NULL)
+        while((ld = IterList_Pop(spechit)) != NULL)
         {
             // See if the line was crossed.
             if(P_ToXLine(ld)->special)
@@ -1498,8 +1498,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
         }
 
-        P_IterListResetIterator(spechit, false);
-        while((ld = P_IterListIterator(spechit)) != NULL)
+        IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
+        IterList_RewindIterator(spechit);
+        while((ld = IterList_MoveIterator(spechit)) != NULL)
         {
             // See if the line was crossed.
             side = P_PointOnLinedefSide(thing->pos[VX], thing->pos[VY], ld);
@@ -2744,11 +2745,12 @@ static void CheckMissileImpact(mobj_t* mobj)
        !(mobj->flags & MF_MISSILE))
         return;
 
-    if(!(size = P_IterListSize(spechit)))
+    if(!(size = IterList_Size(spechit)))
         return;
 
-    P_IterListResetIterator(spechit, false);
-    while((ld = P_IterListIterator(spechit)) != NULL)
+    IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
+    IterList_RewindIterator(spechit);
+    while((ld = IterList_MoveIterator(spechit)) != NULL)
         P_ActivateLine(ld, mobj->target, 0, SPAC_IMPACT);
 }
 #endif
@@ -2859,7 +2861,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 
-    P_EmptyIterList(spechit);
+    IterList_Empty(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
         return NULL;

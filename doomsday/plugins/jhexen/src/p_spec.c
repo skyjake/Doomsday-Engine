@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -150,8 +150,9 @@ boolean EV_SectorSoundChange(byte* args)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         P_ToXSector(sec)->seqType = args[1];
         rtn = true;
@@ -804,7 +805,7 @@ void P_SpawnSpecials(void)
         if(xsec->tag)
         {
            list = P_GetSectorIterListForTag(xsec->tag, true);
-           P_AddObjectToIterList(list, sec);
+           IterList_Push(list, sec);
         }
 
         // Clients do not spawn sector specials.
@@ -829,7 +830,7 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_EmptyIterList(linespecials);
+    IterList_Empty(linespecials);
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
@@ -842,14 +843,14 @@ void P_SpawnSpecials(void)
         case 101: // Scroll_Texture_Right
         case 102: // Scroll_Texture_Up
         case 103: // Scroll_Texture_Down
-            P_AddObjectToIterList(linespecials, line);
+            IterList_Push(linespecials, line);
             break;
 
         case 121:               // Line_SetIdentification
             if(xline->arg1)
             {
                 list = P_GetLineIterListForTag((int) xline->arg1, true);
-                P_AddObjectToIterList(list, line);
+                IterList_Push(list, line);
             }
             xline->special = 0;
             break;
@@ -949,10 +950,11 @@ void P_AnimateSurfaces(void)
     }
 
     // Update scrolling wall materials.
-    if(P_IterListSize(linespecials))
+    if(IterList_Size(linespecials))
     {
-        P_IterListResetIterator(linespecials, false);
-        while((line = P_IterListIterator(linespecials)) != NULL)
+        IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
+        IterList_RewindIterator(linespecials);
+        while((line = IterList_MoveIterator(linespecials)) != NULL)
         {
             sidedef_t*          side = 0;
             fixed_t             texOff[2];

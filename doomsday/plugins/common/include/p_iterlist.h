@@ -1,9 +1,9 @@
-/**\file
+/**\file p_iterlist.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,34 +21,59 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_iterlist.c : Object lists.
- * The lists can be traversed through iteration but otherwise act like a
- * LIFO stack. Used for things like spechits, linespecials etc.
- */
-
-#ifndef __COMMON_ITERLIST_H__
-#define __COMMON_ITERLIST_H__
+#ifndef LIBCOMMON_ITERLIST_H
+#define LIBCOMMON_ITERLIST_H
 
 #include "dd_api.h"
 
+typedef enum {
+    ITERLIST_BACKWARD = 0, /// Top to bottom.
+    ITERLIST_FORWARD       /// Bottom to top.
+} iterlist_iterator_direction_t;
+
+/**
+ * IterList. A LIFO stack of pointers with facilities for bidirectional
+ * iteration through the use of an integral iterator (thus scopeless).
+ *
+ * \important Not thread safe!
+ */
 typedef struct iterlist_s {
-    void      **list;
-    int         max;
-    int         count;
-    int         rover; // used during iteration
-    boolean     forward; // if true iteration moves forward instead.
+    /// Direction of traversal.
+    iterlist_iterator_direction_t _direction;
+
+    /// Index of the current object being pointed at by the iterator.
+    int _currentObject;
+
+    /// Current maximum number of objects that can be pointed at in _objects.
+    int _maxObjects;
+
+    /// List of objects present.
+    int _objectsCount;
+    void** _objects;
 } iterlist_t;
 
-iterlist_t *P_CreateIterList(void);
-void        P_DestroyIterList(iterlist_t *list);
+iterlist_t* IterList_ConstructDefault(void);
 
-int         P_AddObjectToIterList(iterlist_t *list, void *obj);
-void       *P_PopIterList(iterlist_t *list);
+void IterList_Destruct(iterlist_t* list);
 
-void       *P_IterListIterator(iterlist_t *list);
-void        P_IterListResetIterator(iterlist_t *list, boolean forward);
+/**
+ * Push a new pointer onto the top of the stack.
+ * @param ptr  Pointer to be added.
+ * @return  Index associated to the newly added object.
+ */
+int IterList_Push(iterlist_t* list, void* ptr);
 
-void        P_EmptyIterList(iterlist_t *list);
-int         P_IterListSize(iterlist_t *list);
-#endif
+void* IterList_Pop(iterlist_t* list);
+
+void IterList_Empty(iterlist_t* list);
+
+int IterList_Size(iterlist_t* list);
+
+/// @return  Current pointer being pointed at.
+void* IterList_MoveIterator(iterlist_t* list);
+
+void IterList_RewindIterator(iterlist_t* list);
+
+void IterList_SetIteratorDirection(iterlist_t* list, iterlist_iterator_direction_t direction);
+
+#endif /* LIBCOMMON_ITERLIST_H */

@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,20 +80,14 @@ static int numSectorTagLists = 0;
 
 // CODE --------------------------------------------------------------------
 
-/**
- *
- */
 void P_DestroyLineTagLists(void)
 {
-    int                 i;
-
     if(numLineTagLists == 0)
         return;
 
+    { int i;
     for(i = 0; i < numLineTagLists; ++i)
-    {
-        P_EmptyIterList(lineTagLists[i].list);
-        P_DestroyIterList(lineTagLists[i].list);
+        IterList_Destruct(lineTagLists[i].list);
     }
 
     free(lineTagLists);
@@ -123,23 +117,17 @@ iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = P_CreateIterList());
+    return (tagList->list = IterList_ConstructDefault());
 }
 
-/**
- *
- */
 void P_DestroySectorTagLists(void)
 {
-    int                 i;
-
     if(numSectorTagLists == 0)
         return;
 
+    { int i;
     for(i = 0; i < numSectorTagLists; ++i)
-    {
-        P_EmptyIterList(sectorTagLists[i].list);
-        P_DestroyIterList(sectorTagLists[i].list);
+        IterList_Destruct(sectorTagLists[i].list);
     }
 
     free(sectorTagLists);
@@ -169,7 +157,7 @@ iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
     tagList = &sectorTagLists[numSectorTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = P_CreateIterList());
+    return (tagList->list = IterList_ConstructDefault());
 }
 
 /**

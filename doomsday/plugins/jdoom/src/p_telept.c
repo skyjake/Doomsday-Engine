@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -98,8 +98,9 @@ static mobj_t* getTeleportDestination(short tag)
         params.type = MT_TELEPORTMAN;
         params.foundMobj = NULL;
 
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             params.sec = sec;
 

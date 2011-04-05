@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1279,8 +1279,9 @@ static int CmdChangeFloor(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_FLOOR_MATERIAL, mat);
         }
@@ -1303,8 +1304,9 @@ static int CmdChangeFloorDirect(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_FLOOR_MATERIAL, mat);
         }
@@ -1327,8 +1329,9 @@ static int CmdChangeCeiling(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
@@ -1351,8 +1354,9 @@ static int CmdChangeCeilingDirect(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
@@ -1697,8 +1701,9 @@ static int CmdSetLineTexture(void)
     list = P_GetLineIterListForTag(lineTag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((line = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((line = IterList_MoveIterator(list)) != NULL)
         {
             sidedef_t*          sdef =
                 P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
@@ -1734,8 +1739,9 @@ static int CmdSetLineBlocking(void)
     list = P_GetLineIterListForTag(lineTag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((line = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((line = IterList_MoveIterator(list)) != NULL)
         {
             P_SetIntp(line, DMU_FLAGS,
                 (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | blocking);
@@ -1763,8 +1769,9 @@ static int CmdSetLineSpecial(void)
     list = P_GetLineIterListForTag(lineTag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((line = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((line = IterList_MoveIterator(list)) != NULL)
         {
             xline_t* xline = P_ToXLine(line);
             xline->special = special;

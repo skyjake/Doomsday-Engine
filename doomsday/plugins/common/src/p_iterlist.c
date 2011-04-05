@@ -1,4 +1,4 @@
-/**\file
+/**\file p_iterlist.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -21,191 +21,125 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_iterlist.c : Object lists.
- * The lists can be traversed through iteration but otherwise act like a
- * LIFO stack. Used for things like spechits, linespecials etc.
- */
+#include <assert.h>
+#include <stdlib.h>
 
-// HEADER FILES ------------------------------------------------------------
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#endif
+#include "doomsday.h"
 
 #include "p_iterlist.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Allocate and initialize a new iterlist.
- *
- * @return          Ptr to the new list.
- */
-iterlist_t *P_CreateIterList(void)
+iterlist_t* IterList_ConstructDefault(void)
 {
-    iterlist_t *list = malloc(sizeof(iterlist_t));
-
-    list->list = NULL;
-    list->count = list->max = list->rover = 0;
-    list->forward = false;
-
+    iterlist_t* list = (iterlist_t*) malloc(sizeof(*list));
+    if(NULL == list)
+        Con_Error("IterList::ConstructDefault: Failed on allocation of %lu bytes for "
+            "new IterList.", (unsigned int) sizeof(*list));
+    list->_objects = NULL;
+    list->_objectsCount = list->_maxObjects = list->_currentObject = 0;
+    list->_direction = ITERLIST_BACKWARD;
     return list;
 }
 
-/**
- * Free any memory used by the iterlist.
- *
- * @param list      Ptr to the list to be destroyed.
- */
-void P_DestroyIterList(iterlist_t *list)
+void IterList_Destruct(iterlist_t* list)
 {
-    if(!list)
-        return;
-
-    if(NULL != list->list)
+    assert(NULL != list);
+    if(NULL != list->_objects)
     {
-        free(list->list);
-        list->list = NULL;
+        free(list->_objects);
+        list->_objects = NULL;
     }
-
     free(list);
-    list = NULL;
 }
 
-/**
- * Add the given object to iterlist.
- *
- * @param list      Ptr to the list to add 'obj' too.
- * @param obj       Ptr to the object to be added to the list.
- * @return          The index of the object within 'list' once added,
- *                  ELSE @c -1.
- */
-int P_AddObjectToIterList(iterlist_t *list, void *obj)
+int IterList_Push(iterlist_t* list, void* obj)
 {
-    if(!list || !obj)
-        return -1;
-
-    if(++list->count > list->max)
+    assert(NULL != list);
+    if(++list->_objectsCount > list->_maxObjects)
     {
-         list->max = (list->max? list->max * 2 : 8);
-         list->list = realloc(list->list, sizeof(void*) * list->max);
+         list->_maxObjects = (list->_maxObjects? list->_maxObjects * 2 : 8);
+         list->_objects = (void**) realloc(list->_objects, sizeof(*list->_objects) * list->_maxObjects);
+         if(NULL == list->_objects)
+             Con_Error("IterList::Push: Failed on (re)allocation of %lu bytes for "
+                "object list.", (unsigned int) sizeof(*list->_objects));
     }
 
-    list->list[list->count - 1] = obj;
-
-    return list->count - 1;
-}
-
-/**
- * Pop the top of the iterlist and return the next element.
- *
- * @param list      Ptr to the list to be pop.
- * @return          Ptr to the next object in 'list'.
- */
-void* P_PopIterList(iterlist_t *list)
-{
-    if(!list)
-        return NULL;
-
-    if(list->count > 0)
-        return list->list[--list->count];
-    else
-        return NULL;
-}
-
-/**
- * Returns the next element in the iterlist.
- *
- * @param list      Ptr to the list to iterate.
- * @return          The next object in the iterlist.
- */
-void* P_IterListIterator(iterlist_t *list)
-{
-    if(!list || !list->count)
-        return NULL;
-
-    if(list->forward)
+    list->_objects[list->_objectsCount - 1] = obj;
+    if(1 == list->_objectsCount)
     {
-        if(list->rover < list->count - 1)
-            return list->list[++list->rover];
-        else
-            return NULL;
+        if(ITERLIST_FORWARD == list->_direction)
+            list->_currentObject = -1;
+        else // Backward iteration.
+            list->_currentObject = list->_objectsCount;
     }
-    else
-    {
-        if(list->rover > 0)
-            return list->list[--list->rover];
-        else
-            return NULL;
-    }
+
+    return list->_objectsCount - 1;
 }
 
-/**
- * Returns the iterlist iterator to the beginning (the end).
- *
- * @param list      Ptr to the list whoose iterator to reset.
- * @param forward   @c true = iteration will move forwards.
- */
-void P_IterListResetIterator(iterlist_t *list, boolean forward)
+void* IterList_Pop(iterlist_t* list)
 {
-    if(!list)
+    assert(NULL != list);
+    if(list->_objectsCount > 0)
+        return list->_objects[--list->_objectsCount];
+    return NULL;
+}
+
+void IterList_Empty(iterlist_t* list)
+{
+    assert(NULL != list);
+    list->_objectsCount = list->_maxObjects = list->_currentObject = 0;
+}
+
+int IterList_Size(iterlist_t* list)
+{
+    assert(NULL != list);
+    return list->_objectsCount;
+}
+
+void* IterList_MoveIterator(iterlist_t* list)
+{
+    assert(NULL != list);
+
+    if(!list->_objectsCount)
+        return NULL;
+
+    if(ITERLIST_FORWARD == list->_direction)
+    {
+        if(list->_currentObject < list->_objectsCount - 1)
+            return list->_objects[++list->_currentObject];
+        return NULL;
+    }
+    // Backward iteration.
+    if(list->_currentObject > 0)
+        return list->_objects[--list->_currentObject];
+    return NULL;
+}
+
+void IterList_RewindIterator(iterlist_t* list)
+{
+    assert(NULL != list);
+    if(ITERLIST_FORWARD == list->_direction)
+    {
+        list->_currentObject = -1;
+        return;
+    }
+    // Backward iteration.
+    list->_currentObject = list->_objectsCount;
+}
+
+void IterList_SetIteratorDirection(iterlist_t* list, iterlist_iterator_direction_t direction)
+{
+    assert(NULL != list);
+
+    list->_direction = direction;
+    if(0 == list->_objectsCount)
         return;
 
-    list->forward = forward;
-    if(list->forward)
-        list->rover = -1;
-    else
-        list->rover = list->count;
-}
-
-/**
- * Empty the iterlist.
- *
- * @param list      Ptr to the list to empty.
- */
-void P_EmptyIterList(iterlist_t *list)
-{
-    if(!list)
+    // Do we need to reposition?
+    if(-1 == list->_currentObject)
+    {
+        list->_currentObject = list->_objectsCount;
         return;
-
-    list->count = list->max = list->rover = 0;
-}
-
-/**
- * Return the size of the iterlist.
- *
- * @param list      Ptr to the list to return the size of.
- * @return          The size of the iterlist.
- */
-int P_IterListSize(iterlist_t *list)
-{
-    if(!list)
-        return 0;
-
-    return list->count;
+    }
+    if(list->_objectsCount == list->_currentObject)
+        list->_currentObject = -1;
 }
