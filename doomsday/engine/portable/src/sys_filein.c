@@ -1015,8 +1015,6 @@ static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCoun
         *retCount = count;
     if(0 != count)
         return found;
-
-    free(found);
     return NULL;
 }
 
