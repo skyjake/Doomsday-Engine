@@ -161,8 +161,8 @@ static int addFilePathWorker(const struct filedirectory_node_s* fdNode, void* pa
 
         // Create a new hash node.
         if((node = malloc(sizeof(*node))) == 0)
-            Con_Error("Error:ResourceNamespace::addFilePathWorker: Failed on allocation of %lu bytes (new node).",
-                      (unsigned long) sizeof(*node));
+            Con_Error("ResourceNamespace::addFilePathWorker: Failed on allocation of %lu bytes for "
+                "new ResourcenamespaceNamehashNode.", (unsigned long) sizeof(*node));
 
         node->data = (void*) fdNode;
         node->next = 0;
@@ -226,12 +226,12 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     resourcenamespace_t* rn;
 
     if(strlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
-        Con_Error("Error:ResourceNamespace::Construct: Invalid name '%s' "
-                  "(min length:%i)", name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
+        Con_Error("ResourceNamespace::Construct: Invalid name '%s' (min length:%i)",
+            name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
 
-    if((rn = malloc(sizeof(*rn))) == 0)
-        Con_Error("Error:ResourceNamespace::Construct: Failed on allocation of %lu bytes.",
-                  (unsigned long) sizeof(*rn));
+    if(NULL == (rn = (resourcenamespace_t*) malloc(sizeof(*rn))))
+        Con_Error("ResourceNamespace::Construct: Failed on allocation of %lu bytes.",
+            (unsigned long) sizeof(*rn));
 
     rn->_flags = flags;
     Str_Init(&rn->_name); Str_Set(&rn->_name, name);
@@ -246,9 +246,10 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     if(searchPaths && searchPathsCount != 0)
     {
         rn->_searchPathsCount = searchPathsCount;
-        if((rn->_searchPaths = malloc(sizeof(*rn->_searchPaths) * rn->_searchPathsCount)) == 0)
-            Con_Error("Error:ResourceNamespace::Construct: Failed on allocation of %lu bytes (_searchPaths).",
-                      (unsigned long) (sizeof(*rn->_searchPaths) * rn->_searchPathsCount));
+        rn->_searchPaths = (dduri_t**) malloc(sizeof(*rn->_searchPaths) * rn->_searchPathsCount);
+        if(NULL == rn->_searchPaths)
+            Con_Error("ResourceNamespace::Construct: Failed on allocation of %lu bytes for "
+                "searchPath list.", (unsigned long) (sizeof(*rn->_searchPaths) * rn->_searchPathsCount));
         { uint i;
         for(i = 0; i < rn->_searchPathsCount; ++i)
             rn->_searchPaths[i] = Uri_ConstructCopy(searchPaths[i]);
@@ -349,7 +350,6 @@ boolean ResourceNamespace_AddExtraSearchPath(resourcenamespace_t* rn, const ddur
         if(Uri_Equality(rn->_extraSearchPaths[i], newUri))
             return true;
     }}
-
     { uint i;
     for(i = 0; i < rn->_searchPathsCount; ++i)
     {
@@ -357,12 +357,16 @@ boolean ResourceNamespace_AddExtraSearchPath(resourcenamespace_t* rn, const ddur
             return true;
     }}
 
+    rn->_extraSearchPaths = (dduri_t**) realloc(rn->_extraSearchPaths,
+        sizeof(*rn->_extraSearchPaths) * ++rn->_extraSearchPathsCount);
+    if(NULL == rn->_extraSearchPaths)
+        Con_Error("ResourceNamespace::AddExtraSearchPath: Failed on reallocation of %lu bytes for "
+            "extraSearchPath list.", (unsigned long) sizeof(*rn->_extraSearchPaths) * (rn->_extraSearchPathsCount-1));
+
     // Prepend to the path list - newer paths have priority.
-    if(0 == (rn->_extraSearchPaths = realloc(rn->_extraSearchPaths, sizeof(*rn->_extraSearchPaths) * ++rn->_extraSearchPathsCount)))
-        Con_Error("Error:ResourceNamespace::AddExtraSearchPath: Failed on reallocation of %lu bytes (_extraSearchPaths).",
-                  sizeof(*rn->_extraSearchPaths) * (rn->_extraSearchPathsCount-1));
     if(rn->_extraSearchPathsCount > 1)
-        memmove(rn->_extraSearchPaths + 1, rn->_extraSearchPaths, sizeof(*rn->_extraSearchPaths) * (rn->_extraSearchPathsCount-1));
+        memmove(rn->_extraSearchPaths + 1, rn->_extraSearchPaths,
+            sizeof(*rn->_extraSearchPaths) * (rn->_extraSearchPathsCount-1));
     rn->_extraSearchPaths[0] = Uri_ConstructCopy(newUri);
 
     rn->_flags |= RNF_IS_DIRTY;

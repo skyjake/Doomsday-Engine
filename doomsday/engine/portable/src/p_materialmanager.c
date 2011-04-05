@@ -195,9 +195,8 @@ static materialvariantspecification_t* copyVariantSpecification(
 {
     materialvariantspecification_t* spec;
     if(NULL == (spec = (materialvariantspecification_t*) malloc(sizeof(*spec))))
-        Con_Error("Materials::copyVariantSpecification: Failed on allocation of "
-                  "%lu bytes for new MaterialVariantSpecification.",
-                  (unsigned int) sizeof(*spec));
+        Con_Error("Materials::copyVariantSpecification: Failed on allocation of %lu bytes for "
+            "new MaterialVariantSpecification.", (unsigned long) sizeof(*spec));
     memcpy(spec, tpl, sizeof(materialvariantspecification_t));
     return spec;
 }
@@ -227,9 +226,8 @@ static materialvariantspecification_t* linkVariantSpecification(
     {
     materialvariantspecificationlist_node_t* node;
     if(NULL == (node = (materialvariantspecificationlist_node_t*) malloc(sizeof(*node))))
-        Con_Error("Materials::linkVariantSpecification: Failed on allocation of "
-                  "%lu bytes for new MaterialVariantSpecificationListNode.",
-                  (unsigned int) sizeof(*node));
+        Con_Error("Materials::linkVariantSpecification: Failed on allocation of %lu bytes for "
+            "new MaterialVariantSpecificationListNode.", (unsigned long) sizeof(*node));
     node->spec = spec;
     node->next = variantSpecs;
     variantSpecs = (variantspecificationlist_t*)node;
@@ -438,7 +436,7 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
     materiallist_node_t* node;
     if(NULL == (node = malloc(sizeof(*node))))
         Con_Error("linkMaterialToGlobalList: Failed on allocation of %lu bytes for "
-                  "new MaterialList::Node.", (unsigned int) sizeof(*node));
+            "new MaterialList::Node.", (unsigned long) sizeof(*node));
     node->mat = mat;
     node->next = materials;
     materials = node;
@@ -1098,9 +1096,8 @@ static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_
     {
     variantcachequeue_node_t* node = (variantcachequeue_node_t*) malloc(sizeof(*node));
     if(NULL == node)
-        Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of "
-                  "%lu bytes for new VariantCacheQueueNode.",
-                  (unsigned int) sizeof(*node));
+        Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for "
+            "new VariantCacheQueueNode.", (unsigned long) sizeof(*node));
     node->mat = mat;
     node->spec = spec;
     node->next = variantCacheQueue;

@@ -40,7 +40,7 @@ materialvariant_t* MaterialVariant_Construct(material_t* generalCase,
 
     if(NULL == mat)
         Con_Error("MaterialVariant::Construct: Failed on allocation of %lu bytes for "
-                  "new MaterialVariant.", (unsigned int) sizeof(*mat));
+            "new MaterialVariant.", (unsigned long) sizeof(*mat));
 
     mat->_generalCase = generalCase;
     mat->_spec = spec;

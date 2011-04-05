@@ -35,7 +35,7 @@ static __inline dduri_t* allocUri(const char* path, resourceclass_t defaultResou
     dduri_t* uri;
     if((uri = malloc(sizeof(*uri))) == 0)
     {
-        Con_Error("Uri::allocUri: Failed on allocation of %lu bytes for new.", (unsigned long) sizeof(*uri));
+        Con_Error("Uri::allocUri: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*uri));
         return 0; // Unreachable.
     }
     Str_Init(&uri->_scheme);
@@ -99,8 +99,8 @@ static ddstring_t* resolveUri(const dduri_t* uri)
 
         if(*p != '(')
         {
-            Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n", *p,
-                        Str_Text(&uri->_path), p - Str_Text(&uri->_path));
+            Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
+                *p, Str_Text(&uri->_path), (unsigned long) (p - Str_Text(&uri->_path)));
             goto parseEnded;
         }
         // Skip over the opening brace.
@@ -157,7 +157,7 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             if(*p != '(')
             {
                 Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
-                            *p, Str_Text(&uri->_path), p - Str_Text(&uri->_path));
+                    *p, Str_Text(&uri->_path), p - Str_Text(&uri->_path));
                 goto parseEnded;
             }
             // Skip over the opening brace.

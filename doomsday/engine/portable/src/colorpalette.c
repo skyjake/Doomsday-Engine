@@ -39,7 +39,7 @@ colorpalette_t* ColorPalette_ConstructDefault(void)
     colorpalette_t* pal = (colorpalette_t*) malloc(sizeof(*pal));
     if(NULL == pal)
         Con_Error("ColorPalette::Construct: Failed on allocation of %lu bytes for "
-            "new ColorPalette.", (unsigned int) sizeof(*pal));
+            "new ColorPalette.", (unsigned long) sizeof(*pal));
 
     pal->_flags = CPF_UPDATE_18TO8; // Defer creation of the nearest color LUT.
     pal->_colorCount = 0;
@@ -148,7 +148,7 @@ static void prepareColorTable(colorpalette_t* pal, const int compOrder[3],
     pal->_colorCount = colorCount;
     if(NULL == (pal->_colorData = (uint8_t*) malloc(pal->_colorCount * 3 * sizeof(uint8_t))))
         Con_Error("ColorPalette::prepareColorTable: Failed on allocation of %lu bytes for "
-            "color table.", (unsigned int) (pal->_colorCount * 3 * sizeof(uint8_t)));
+            "color table.", (unsigned long) (pal->_colorCount * 3 * sizeof(uint8_t)));
 
     // Already in the format we want?
     if(8 == bits[CR] && 8 == bits[CG] && 8 == bits[CB])
@@ -238,7 +238,7 @@ static void prepareNearestLUT(colorpalette_t* pal)
         {
             if(NULL == (pal->_18To8LUT = (int*) malloc(SIZEOF18TO8)))
                 Con_Error("ColorPalette::prepareNearestLUT: Failed on allocation of %lu bytes for "
-                    "lookup table.", (unsigned int) SIZEOF18TO8);
+                    "lookup table.", (unsigned long) SIZEOF18TO8);
         }
 
         for(r = 0; r < 64; ++r)

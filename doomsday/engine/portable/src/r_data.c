@@ -182,7 +182,7 @@ static int createColorPalette(const int compOrder[3], const uint8_t compSize[3],
     colorPalettes = (colorpalette_t**) realloc(colorPalettes, (numColorPalettes + 1) * sizeof(*colorPalettes));
     if(NULL == colorPalettes)
         Con_Error("createColorPalette: Failed on (re)allocation of %lu bytes for "
-            "color palette list.", (unsigned int) ((numColorPalettes + 1) * sizeof(*colorPalettes)));
+            "color palette list.", (unsigned long) ((numColorPalettes + 1) * sizeof(*colorPalettes)));
     colorPalettes[numColorPalettes] = pal;
 
     return ++numColorPalettes; // 1-based index.
@@ -213,7 +213,7 @@ static void deleteColorPalettes(size_t n, const int* palettes)
         colorPalettes = (colorpalette_t**) realloc(colorPalettes, numColorPalettes * sizeof(colorpalette_t*));
         if(NULL == colorPalettes)
             Con_Error("deleteColorPalettes: Failed on (re)allocation of %lu bytes for "
-                "color palette list.", (unsigned int) (numColorPalettes * sizeof(*colorPalettes)));
+                "color palette list.", (unsigned long) (numColorPalettes * sizeof(*colorPalettes)));
     }
     else
     {
@@ -405,7 +405,7 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
                 (numColorPaletteBinds + 1) * sizeof(colorpalettebind_t));
         if(NULL == colorPaletteBinds)
             Con_Error("R_CreateColorPalette: Failed on (re)allocation of %lu bytes for "
-                "color palette bind list.", (unsigned int) ((numColorPaletteBinds + 1) * sizeof(colorpalettebind_t)));
+                "color palette bind list.", (unsigned long) ((numColorPaletteBinds + 1) * sizeof(colorpalettebind_t)));
 
         bind = &colorPaletteBinds[numColorPaletteBinds];
         memset(bind, 0, sizeof(*bind));

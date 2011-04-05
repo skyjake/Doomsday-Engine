@@ -52,7 +52,7 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
     {   // Yes. Take a copy.
         if(NULL == (alphaChannel = malloc(numPels)))
             Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for "
-                "pixel alpha relocation buffer.", (unsigned int) numPels);
+                "pixel alpha relocation buffer.", (unsigned long) numPels);
         ptr = image->pixels;
         for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
             alphaChannel[p] = ptr[3];

@@ -63,7 +63,8 @@ static deferredtask_t* allocDeferredTask(deferredtask_type_t type, void* data)
     deferredtask_t* dt;
     if(NULL == (dt = (deferredtask_t*)malloc(sizeof(*dt))))
     {
-        Con_Error("allocDeferredTask: Failed on allocation of %lu bytes.", sizeof(*dt));
+        Con_Error("allocDeferredTask: Failed on allocation of %lu bytes.",
+            (unsigned long) sizeof(*dt));
         return 0; // Unreachable.
     }
     dt->type = type;

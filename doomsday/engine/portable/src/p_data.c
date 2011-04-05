@@ -624,13 +624,13 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     if(NULL == (def->props = (mapobjprop_t*)
        realloc(def->props, ++def->numProps * sizeof(*def->props))))
         Con_Error("P_RegisterMapObjProperty: Failed on (re)allocation of %lu bytes for "
-            "new MapObjProperty.", (unsigned int) sizeof(*def->props));
+            "new MapObjProperty.", (unsigned long) sizeof(*def->props));
 
     prop = &def->props[def->numProps - 1];
     prop->identifier = propIdentifier;
     if(NULL == (prop->name = (char*) malloc(sizeof(*prop->name) * (len + 1))))
         Con_Error("P_RegisterMapObjProperty: Failed on allocation of %lu bytes for "
-            "MapObjProperty::name.", (unsigned int) (sizeof(*prop->name) * (len + 1)));
+            "MapObjProperty::name.", (unsigned long) (sizeof(*prop->name) * (len + 1)));
     strncpy(prop->name, propName, len);
     prop->name[len] = '\0';
     prop->type = type;

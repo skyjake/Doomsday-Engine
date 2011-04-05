@@ -390,7 +390,7 @@ static void resizeLumpStorage(int numItems)
         lumpInfo = (lumpinfo_t*) Z_Realloc(lumpInfo, sizeof(*lumpInfo) * numItems, PU_APPSTATIC);
         if(NULL == lumpInfo)
             Con_Error("Wad::resizeLumpStorage: Failed on (re)allocation of %lu bytes for "
-                "LumpInfo record list.", (unsigned int) (sizeof(*lumpInfo) * numItems));
+                "LumpInfo record list.", (unsigned long) (sizeof(*lumpInfo) * numItems));
     }
     else if(NULL != lumpInfo)
     {
@@ -406,7 +406,7 @@ static void resizeLumpStorage(int numItems)
             void** newCache = Z_Calloc(sizeof(*newCache) * numItems, PU_APPSTATIC, 0);
             if(NULL == newCache)
                 Con_Error("Wad::resizeLumpStorage: Failed on allocation of %lu bytes for "
-                    "cached lump index.", (unsigned int) (sizeof(*newCache) * numItems));
+                    "cached lump index.", (unsigned long) (sizeof(*newCache) * numItems));
 
             // Need to copy the old cache?
             if(NULL != lumpCache)
