@@ -163,7 +163,7 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
  *
  * @return  The name of the texture.
  */
-DGLuint GL_UploadTexture(const struct texturecontent_s* content);
+DGLuint GL_UploadTextureContent(const struct texturecontent_s* content);
 
 DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
     dgltexformat_t texFormat, boolean flagGenerateMipmaps,

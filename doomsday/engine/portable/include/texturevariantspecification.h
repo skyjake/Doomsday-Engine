@@ -87,8 +87,13 @@ typedef struct {
     colorpalettetranslationspecification_t* translated;
 } variantspecification_t;
 
+/**
+ * Detail textures are faded to gray depending on the contrast
+ * factor. The texture is also progressively faded towards gray
+ * when each mipmap level is loaded.
+ */
 typedef struct {
-    uint8_t contrast; /// Fade-to-gray contrast factor.
+    uint8_t contrast;
 } detailvariantspecification_t;
 
 #define TS_NORMAL(ts)       (&(ts)->data.variant)

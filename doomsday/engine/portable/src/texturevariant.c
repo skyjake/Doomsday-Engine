@@ -29,19 +29,19 @@
 #include "texturevariant.h"
 
 texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
-    texturevariantspecification_t* spec)
+    DGLuint glName, texturevariantspecification_t* spec)
 {
     assert(generalCase && spec);
     {
     texturevariant_t* tex = tex = (texturevariant_t*) malloc(sizeof(*tex));
     if(NULL == tex)
         Con_Error("TextureVariant::Construct: Failed on allocation of %lu bytes for "
-                  "new TextureVariant.", sizeof(*tex));
+            "new TextureVariant.", (unsigned long) sizeof(*tex));
     tex->_generalCase = generalCase;
     tex->_spec = spec;
-    tex->_isMasked = false;
-    tex->_glName = 0;
+    tex->_flags = 0;
     tex->_s = tex->_t = 0;
+    tex->_glName = glName;
     memset(tex->_analyses, 0, sizeof(tex->_analyses));
     return tex;
     }
@@ -67,13 +67,27 @@ struct texture_s* TextureVariant_GeneralCase(const texturevariant_t* tex)
 boolean TextureVariant_IsMasked(const texturevariant_t* tex)
 {
     assert(tex);
-    return tex->_isMasked;
+    return (tex->_flags & TVF_IS_MASKED) != 0;
 }
 
-void TextureVariant_SetMasked(texturevariant_t* tex, boolean yes)
+void TextureVariant_FlagMasked(texturevariant_t* tex, boolean yes)
 {
     assert(tex);
-    tex->_isMasked = yes;
+    // if(yes) tex->_flags |= TVF_IS_MASKED; else tex->_flags &= ~TVF_IS_MASKED;
+    tex->_flags ^= (-yes ^ tex->_flags) & TVF_IS_MASKED;
+}
+
+boolean TextureVariant_IsUploaded(const texturevariant_t* tex)
+{
+    assert(tex);
+    return (tex->_flags & TVF_IS_UPLOADED) != 0;
+}
+
+void TextureVariant_FlagUploaded(texturevariant_t* tex, boolean yes)
+{
+    assert(tex);
+    // if(yes) tex->_flags |= TVF_IS_UPLOADED; else tex->_flags &= ~TVF_IS_UPLOADED;
+    tex->_flags ^= (-yes ^ tex->_flags) & TVF_IS_UPLOADED;
 }
 
 void TextureVariant_Coords(const texturevariant_t* tex, float* s, float* t)

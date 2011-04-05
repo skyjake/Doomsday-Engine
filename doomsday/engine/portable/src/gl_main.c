@@ -579,7 +579,6 @@ void GL_Init(void)
  */
 void GL_InitRefresh(void)
 {
-    R_InitColorPalettes();
     GL_InitTextureManager();
     GL_LoadSystemTextures();
 }

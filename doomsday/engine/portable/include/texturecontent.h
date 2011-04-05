@@ -67,6 +67,4 @@ texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other);
 
 void GL_DestroyTextureContent(texturecontent_t* content);
 
-void GL_UploadTextureContent(const texturecontent_t* content);
-
 #endif /* LIBDENG_TEXTURECONTENT_H */

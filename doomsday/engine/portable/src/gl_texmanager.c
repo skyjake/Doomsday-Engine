@@ -174,7 +174,7 @@ static texturevariantspecification_t* copyVariantSpecification(
     if(NULL == (spec = (texturevariantspecification_t*) malloc(sizeof(*spec))))
         Con_Error("Textures::copyVariantSpecification: Failed on allocation of "
                   "%lu bytes for new TextureVariantSpecification.",
-                  (unsigned int) sizeof(*spec));
+                  (unsigned long) sizeof(*spec));
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
     if(TS_NORMAL(tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
@@ -182,7 +182,7 @@ static texturevariantspecification_t* copyVariantSpecification(
         if(NULL == (cpt = (colorpalettetranslationspecification_t*) malloc(sizeof(*cpt))))
             Con_Error("Textures::copyVariantSpecification: Failed on allocation of "
                   "%lu bytes for new ColorPaletteTranslationSpecification.",
-                  (unsigned int) sizeof(*cpt));
+                  (unsigned long) sizeof(*cpt));
         memcpy(cpt, TS_NORMAL(tpl)->translated, sizeof(colorpalettetranslationspecification_t));
         TS_NORMAL(spec)->translated = cpt;
     }
@@ -196,7 +196,7 @@ static texturevariantspecification_t* copyDetailVariantSpecification(
     if(NULL == (spec = (texturevariantspecification_t*) malloc(sizeof(*spec))))
         Con_Error("Textures::copyDetailVariantSpecification: Failed on allocation of "
                   "%lu bytes for new TextureVariantSpecification.",
-                  (unsigned int) sizeof(*spec));
+                  (unsigned long) sizeof(*spec));
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
     return spec;
 }
@@ -270,7 +270,7 @@ static variantspecification_t* applyVariantSpecification(
         spec->flags |= TSF_HAS_COLORPALETTE_XLAT;
         if(NULL == (cpt = (colorpalettetranslationspecification_t*) malloc(sizeof(*cpt))))
             Con_Error("applyVariantSpecification: Failed on allocation of %lu bytes for "
-                      "new ColorPaletteTranslationSpecification.", (unsigned int) sizeof(*cpt));
+                      "new ColorPaletteTranslationSpecification.", (unsigned long) sizeof(*cpt));
         cpt->tMap   = tMap;
         cpt->tClass = tClass;
         spec->translated = cpt;
@@ -296,7 +296,7 @@ static texturevariantspecification_t* linkVariantSpecification(
     if(NULL == (node = (texturevariantspecificationlist_node_t*) malloc(sizeof(*node))))
         Con_Error("Textures::linkVariantSpecification: Failed on allocation of "
                   "%lu bytes for new TextureVariantSpecificationListNode.",
-                  (unsigned int) sizeof(*node));
+                  (unsigned long) sizeof(*node));
     node->spec = spec;
     node->next = variantSpecs[type];
     variantSpecs[type] = (variantspecificationlist_t*)node;
@@ -421,13 +421,14 @@ static texturevariant_t* chooseTextureVariant(texture_t* tex,
 
 int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
 {
-    DGLuint glName = TextureVariant_GLName(variant);
     // Have we uploaded yet?
-    if(0 != glName)
+    if(TextureVariant_IsUploaded(variant))
     {
         // Delete and mark it not-loaded.
+        DGLuint glName = TextureVariant_GLName(variant);
         glDeleteTextures(1, (const GLuint*) &glName);
         TextureVariant_SetGLName(variant, 0);
+        TextureVariant_FlagUploaded(variant, false);
     }
     return 0; // Continue iteration.
 }
@@ -654,7 +655,6 @@ static byte prepareVariant(texturevariant_t* tex)
     boolean noSmartFilter = false, didDefer = false;
     dgltexformat_t dglFormat;
     byte loadResult = 0;
-    DGLuint glName;
     image_t image;
     float s, t;
 
@@ -865,17 +865,33 @@ static byte prepareVariant(texturevariant_t* tex)
 
     anisoFilter = spec->anisoFilter < 0? texAniso : spec->anisoFilter;
 
-    glName = GL_NewTextureWithParams3(dglFormat, image.width, image.height,
-        image.pixels, flags, grayMipmap, minFilter, magFilter, anisoFilter, wrapS,
-        wrapT, &didDefer);
+    // Upload texture content.
+    {
+    texturecontent_t c;
+    GL_InitTextureContent(&c);
+    c.name = TextureVariant_GLName(tex);
+    c.format = dglFormat;
+    c.width = image.width;
+    c.height = image.height;
+    c.pixels = image.pixels;
+    c.palette = image.palette;
+    c.flags = flags;
+    c.magFilter = magFilter;
+    c.minFilter = minFilter;
+    c.anisoFilter = anisoFilter;
+    c.wrap[0] = wrapS;
+    c.wrap[1] = wrapT;
+    c.grayMipmap = grayMipmap;
+    didDefer = GL_NewTexture(&c);
+    }
 
-    /// \todo Register name during variant construction/specification.
-    TextureVariant_SetGLName(tex, glName);
+    TextureVariant_FlagUploaded(tex, true);
+    TextureVariant_FlagMasked(tex, (image.flags & IMGF_IS_MASKED) != 0);
 
 #ifdef _DEBUG
-    VERBOSE( Con_Printf("Prepared TextureVariant \"%s\" (glName:%i)%s\n",
-                    Texture_Name(TextureVariant_GeneralCase(tex)), glName,
-                    !didDefer? " while not busy!" : "") );
+    VERBOSE( Con_Printf("Prepared TextureVariant \"%s\" (glName:%u)%s\n",
+        Texture_Name(TextureVariant_GeneralCase(tex)), (unsigned int) TextureVariant_GLName(tex),
+        !didDefer? " while not busy!" : "") );
     VERBOSE2( GL_PrintTextureVariantSpecification(TextureVariant_Spec(tex)) );
 #endif
 
@@ -899,7 +915,6 @@ static byte prepareVariant(texturevariant_t* tex)
     }
 
     TextureVariant_SetCoords(tex, s, t);
-    TextureVariant_SetMasked(tex, (image.flags & IMGF_IS_MASKED) != 0);
 
     if(TC_SKYSPHERE_DIFFUSE == spec->context)
     {
@@ -908,7 +923,7 @@ static byte prepareVariant(texturevariant_t* tex)
         {
             if(NULL == (avgTopColor = (averagecolor_analysis_t*) malloc(sizeof(*avgTopColor))))
                 Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
-                          "new AverageColorAnalysis.", (unsigned int) sizeof(*avgTopColor));
+                          "new AverageColorAnalysis.", (unsigned long) sizeof(*avgTopColor));
             TextureVariant_AddAnalysis(tex, TA_SKY_SPHEREFADECOLOR, avgTopColor);
         }
 
@@ -930,7 +945,7 @@ static byte prepareVariant(texturevariant_t* tex)
         {
             if(NULL == (pl = (pointlight_analysis_t*) malloc(sizeof(*pl))))
                 Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
-                          "new PointLightAnalysis.", (unsigned int) sizeof(*pl));
+                          "new PointLightAnalysis.", (unsigned long) sizeof(*pl));
             TextureVariant_AddAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
         }
         // Calculate light source properties.
@@ -946,7 +961,7 @@ static byte prepareVariant(texturevariant_t* tex)
         {
             if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
                 Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
-                          "new AmbientLightAnalysis.", (unsigned int) sizeof(*al));
+                          "new AmbientLightAnalysis.", (unsigned long) sizeof(*al));
             TextureVariant_AddAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
         }
 
@@ -972,15 +987,12 @@ static byte prepareDetailVariant(texturevariant_t* tex)
     assert(tex);
     {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
-    int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
-    boolean didDefer = false;
-    dgltexformat_t dglFormat;
     const detailtex_t* dTex;
     byte loadResult = 0;
-    DGLuint glName;
+    int flags = 0, idx;
+    texturecontent_t c;
     image_t image;
-    float s, t;
-    int idx;
+    boolean didDefer;
 
     idx = Texture_TypeIndex(TextureVariant_GeneralCase(tex));
     assert(idx >= 0 && idx < detailTexturesCount);
@@ -1011,57 +1023,53 @@ static byte prepareDetailVariant(texturevariant_t* tex)
         GL_ConvertToLuminance(&image, false);
     }
 
-    {
-    float baMul, hiMul, loMul;
+    { float baMul, hiMul, loMul;
     EqualizeLuma(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
     if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
     {
         Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
-                    Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul);
-    }
-    }
+            Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul);
+    }}
 
     // Disable compression?
     if(image.width < 128 || image.height < 128)
         flags |= TXCF_NO_COMPRESSION;
 
-    /**
-     * Detail textures are faded to gray depending on the contrast
-     * factor. The texture is also progressively faded towards gray
-     * when each mipmap level is loaded.
-     */
-    grayMipmap = spec->contrast;
-    flags |= TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
-    dglFormat = DGL_LUMINANCE;
-    magFilter = glmode[texMagMode];
-    minFilter = GL_LINEAR_MIPMAP_LINEAR;
-    anisoFilter = texAniso;
-    wrapS = wrapT = GL_REPEAT;
+    // Calculate prepared texture coordinates.
+    { int pw = M_CeilPow2(image.width), ph = M_CeilPow2(image.height);
+    float s =  image.width / (float) pw;
+    float t = image.height / (float) ph;
+    TextureVariant_SetCoords(tex, s, t);
+    }
 
-    glName = GL_NewTextureWithParams3(dglFormat, image.width, image.height,
-        image.pixels, flags, grayMipmap, minFilter, magFilter, anisoFilter, wrapS,
-        wrapT, &didDefer);
+    // Upload texture content.
+    GL_InitTextureContent(&c);
+    c.name = TextureVariant_GLName(tex);
+    c.format = DGL_LUMINANCE;
+    c.flags = flags | TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
+    c.grayMipmap = spec->contrast;
+    c.width = image.width;
+    c.height = image.height;
+    c.pixels = image.pixels;
+    c.anisoFilter = texAniso;
+    c.magFilter = glmode[texMagMode];
+    c.minFilter = GL_LINEAR_MIPMAP_LINEAR;
+    c.wrap[0] = GL_REPEAT;
+    c.wrap[1] = GL_REPEAT;
 
-    /// \todo Register name during variant construction/specification.
-    TextureVariant_SetGLName(tex, glName);
+    didDefer = GL_NewTexture(&c);
+    TextureVariant_FlagUploaded(tex, true);
+
+    // We're done with the image data.
+    GL_DestroyImagePixels(&image);
 
 #ifdef _DEBUG
-    VERBOSE( Con_Printf("Prepared TextureVariant \"%s\" (glName:%i)%s\n",
-                    Texture_Name(TextureVariant_GeneralCase(tex)), glName,
-                    !didDefer? " while not busy!" : "") );
+    VERBOSE( Con_Printf("Prepared TextureVariant \"%s\" (glName:%u)%s\n",
+        Texture_Name(TextureVariant_GeneralCase(tex)), (unsigned int) TextureVariant_GLName(tex),
+        !didDefer? " while not busy!" : "") );
     VERBOSE2( GL_PrintTextureVariantSpecification(TextureVariant_Spec(tex)) );
 #endif
 
-    {
-    int pw = M_CeilPow2(image.width), ph = M_CeilPow2(image.height);
-    s =  image.width / (float) pw;
-    t = image.height / (float) ph;
-    }
-
-    TextureVariant_SetCoords(tex, s, t);
-    TextureVariant_SetMasked(tex, false);
-
-    GL_DestroyImagePixels(&image);
     return loadResult;
     }
 }
@@ -1965,7 +1973,7 @@ DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
     return content.name;
 }
 
-DGLuint GL_UploadTexture(const texturecontent_t* content)
+DGLuint GL_UploadTextureContent(const texturecontent_t* content)
 {
     assert(content);
     {
@@ -2004,7 +2012,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
             if(loadPixels == content->pixels)
             {
                 if(0 == (localBuffer = (uint8_t*) malloc(comps * numPels)))
-                    Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for"
+                    Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for"
                               "tex-gamma translation buffer.", (unsigned long) (comps * numPels));
                 dst = localBuffer;
             }
@@ -2062,7 +2070,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         uint8_t* pixel, *localBuffer;
 
         if(NULL == (localBuffer = (uint8_t*) malloc(2 * numPixels)))
-            Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for "
+            Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for "
                 "luminance conversion buffer.", (unsigned long) (2 * numPixels));
         
         pixel = localBuffer;
@@ -2085,7 +2093,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         uint8_t* pixel, *localBuffer;
 
         if(NULL == (localBuffer = (uint8_t*) malloc(2 * numPixels)))
-            Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for "
+            Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for "
                 "luminance conversion buffer.", (unsigned long) (2 * numPixels));
 
         // Move the average color to the alpha channel, make the actual color white.
@@ -2120,7 +2128,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         {   // Copy the texture into a power-of-two canvas.
             uint8_t* localBuffer;
             if(NULL == (localBuffer = (uint8_t*) calloc(1, comps * loadWidth * loadHeight)))
-                Con_Error("GL_UploadTexture: Failed on allocation of %lu bytes for"
+                Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for"
                           "upscale buffer.", (unsigned long) (comps * loadWidth * loadHeight));
 
             // Copy line by line.
@@ -2165,7 +2173,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         case DGL_RGB:               loadFormat = GL_RGB; break;
         case DGL_RGBA:              loadFormat = GL_RGBA; break;
         default:
-            Con_Error("GL_UploadTexture: Unknown format %i.", (int) dglFormat);
+            Con_Error("GL_UploadTextureContent: Unknown format %i.", (int) dglFormat);
         }
 
         glFormat = ChooseTextureFormat(dglFormat, allowCompression);
@@ -2173,7 +2181,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         if(!GL_TexImage(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                 generateMipmaps ? true : false))
         {
-            Con_Error("GL_UploadTexture: TexImage failed (%u:%ix%i fmt%i).",
+            Con_Error("GL_UploadTextureContent: TexImage failed (%u:%ix%i fmt%i).",
                 content->name, loadWidth, loadHeight, (int) dglFormat);
         }
     }
@@ -2186,7 +2194,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         case DGL_LUMINANCE:         loadFormat = GL_LUMINANCE; break;
         case DGL_RGB:               loadFormat = GL_RGB; break;
         default:
-            Con_Error("GL_UploadTexture: Unknown format %i.", (int) dglFormat);
+            Con_Error("GL_UploadTextureContent: Unknown format %i.", (int) dglFormat);
         }
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, allowCompression);
@@ -2194,7 +2202,7 @@ DGLuint GL_UploadTexture(const texturecontent_t* content)
         if(!GL_TexImageGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                 content->grayMipmap * reciprocal255))
         {
-            Con_Error("GL_UploadTexture: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
+            Con_Error("GL_UploadTextureContent: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
                 content->name, loadWidth, loadHeight, (int) dglFormat);
         }
     }
@@ -2459,7 +2467,7 @@ byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
             image->pixels = (uint8_t*) malloc(bufSize);
             if(NULL == image->pixels)
                 Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for "
-                    "image pixel buffer.", (unsigned int) bufSize);
+                    "image pixel buffer.", (unsigned long) bufSize);
             if(fileLength < bufSize)
                 memset(image->pixels, 0, bufSize);
 
@@ -2504,7 +2512,7 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
             image->pixels = (uint8_t*) malloc(bufSize);
             if(NULL == image->pixels)
                 Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for "
-                    "image pixel buffer.", (unsigned int) bufSize);
+                    "image pixel buffer.", (unsigned long) bufSize);
             if(fileLength < bufSize)
                 memset(image->pixels, 0, bufSize);
 
@@ -2541,7 +2549,7 @@ byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, i
 
             if(NULL == buf)
                 Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                    "temporary lump buffer.", (unsigned int) (fileLength));
+                    "temporary lump buffer.", (unsigned long) (fileLength));
             F_Read(buf, fileLength, file);
             patch = (const doompatch_header_t*)buf;
 
@@ -2554,7 +2562,7 @@ byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, i
             image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
             if(NULL == image->pixels)
                 Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                    "image pixel buffer.", (unsigned int) (2 * image->width * image->height));
+                    "image pixel buffer.", (unsigned long) (2 * image->width * image->height));
 
             loadDoomPatch(image->pixels, image->width, image->height, patch,
                 border, border, tclass, tmap, false);
@@ -2610,7 +2618,7 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
     image->palette = R_FindColorPaletteIndexForId(0);
     if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
         Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for ",
-            "new image pixel data.", (unsigned int) (2 * image->width * image->height));
+            "new image pixel data.", (unsigned long) (2 * image->width * image->height));
 
     { int i;
     for(i = 0; i < texDef->patchCount; ++i)
@@ -2668,7 +2676,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     image->palette = R_FindColorPaletteIndexForId(0);
     if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
         Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for ",
-            "new image pixel data.", (unsigned int) (2 * image->width * image->height));
+            "new image pixel data.", (unsigned long) (2 * image->width * image->height));
 
     { int i;
     for(i = 0; i < texDef->patchCount; ++i)
@@ -3160,18 +3168,38 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
     return GL_TextureIndexForUri2(uri, false);
 }
 
+static boolean variantIsPrepared(texturevariant_t* variant)
+{
+    assert(texInited);
+    return TextureVariant_IsUploaded(variant) && 0 != TextureVariant_GLName(variant);
+}
+
+static texturevariant_t* findPreparedVariant(texture_t* tex,
+    const texturevariantspecification_t* spec)
+{
+    assert(texInited);
+    {
+    texturevariant_t* variant = GL_ChooseTextureVariant(tex, spec);
+    return NULL != variant && variantIsPrepared(variant)? variant : NULL;
+    }
+}
+
 const texturevariant_t* GL_PrepareTexture(textureid_t id,
     texturevariantspecification_t* spec, byte* result)
 {
+    assert(texInited);
+    {
     texture_t* tex = getTexture(id);
     texturevariant_t* variant = NULL;
     boolean variantIsNew = false;
     byte loadResult;
 
-    // Have we already registered and prepared a suitable variant?
-    variant = GL_ChooseTextureVariant(tex, spec);
-    if(NULL != variant && 0 != TextureVariant_GLName(variant))
-    {   // Already prepared.
+    if(NULL == tex)
+        Con_Error("GL_PrepareTexture: Failed to locate texture for id #%i.", id);
+
+    // Have we already prepared something suitable?
+    if(NULL != (variant = findPreparedVariant(tex, spec)))
+    {
         if(result) *result = 0;
         return variant;
     }
@@ -3179,8 +3207,15 @@ const texturevariant_t* GL_PrepareTexture(textureid_t id,
     // Do we need to allocate a variant?
     if(NULL == variant)
     {
-        variant = TextureVariant_Construct(tex, spec);
+        DGLuint glName = GL_GetReservedTextureName();
+        variant = TextureVariant_Construct(tex, glName, spec);
         variantIsNew = true;
+    }
+    // Are we re-preparing a released texture?
+    else if(0 == TextureVariant_GLName(variant))
+    {
+        DGLuint glName = GL_GetReservedTextureName();
+        TextureVariant_SetGLName(variant, glName);
     }
 
     // (Re)Prepare the variant according to the usage context.
@@ -3190,22 +3225,23 @@ const texturevariant_t* GL_PrepareTexture(textureid_t id,
     case TS_DETAIL:     loadResult = prepareDetailVariant(variant); break;
     }
 
-    if(variantIsNew)
+    if(0 == loadResult)
     {
-        if(0 != loadResult)
-        {
-            Texture_AddVariant(tex, variant);
-        }
-        else
-        {
-            free(variant);
-            variant = NULL;
-        }
+        /// \todo It should be possible to avoid unnecessary variant
+        /// construction by deferring until after the image load attempt.
+        if(variantIsNew)
+            TextureVariant_Destruct(variant);
+        variant = NULL;
+    }
+    else if(variantIsNew)
+    {
+        Texture_AddVariant(tex, variant);
     }
 
-    if(result)
-        *result = loadResult;
+    if(result) *result = loadResult;
+
     return variant;
+    }
 }
 
 texturevariant_t* GL_ChooseTextureVariant(texture_t* tex,
@@ -3332,11 +3368,6 @@ void GL_DestroyTextureContent(texturecontent_t* content)
     if(NULL != content->pixels)
         free((uint8_t*)content->pixels);
     free(content);
-}
-
-void GL_UploadTextureContent(const texturecontent_t* content)
-{
-    GL_UploadTexture(content);
 }
 
 boolean GL_NewTexture(const texturecontent_t* content)

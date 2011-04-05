@@ -366,11 +366,12 @@ boolean R_SetViewGrid(int numCols, int numRows)
  */
 void R_Init(void)
 {
+    R_InitColorPalettes();
+    R_InitTranslationTables();
     R_InitRawTexs();
     R_InitVectorGraphics();
     R_InitViewBorder();
     R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
-    R_InitTranslationTables();
     R_SkyInit();
     Rend_Init();
     frameCount = 0;
