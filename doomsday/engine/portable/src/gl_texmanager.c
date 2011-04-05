@@ -239,7 +239,7 @@ static int compareVariantSpecifications(const variantspecification_t* a,
 static int compareDetailVariantSpecifications(const detailvariantspecification_t* a,
     const detailvariantspecification_t* b)
 {
-    if(!INRANGE_OF(a->contrast, b->contrast, .05f))
+    if(a->contrast != b->contrast)
         return 1;
     return 0; // Equal.
 }
@@ -283,7 +283,7 @@ static detailvariantspecification_t* applyDetailVariantSpecification(
 {
     assert(spec);
     // Round off contrast to nearest 1/10
-    spec->contrast = MINMAX_OF(0, (int) ((contrast + .05f) * 10) / 10.f, 1);
+    spec->contrast = 255 * (int)MINMAX_OF(0, contrast * 10 + .5f, 10) * (1/10.f);
     return spec;
 }
 
@@ -1030,7 +1030,7 @@ static byte prepareDetailVariant(texturevariant_t* tex)
      * factor. The texture is also progressively faded towards gray
      * when each mipmap level is loaded.
      */
-    grayMipmap = MINMAX_OF(0, spec->contrast * 255, 255);
+    grayMipmap = spec->contrast;
     flags |= TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
     dglFormat = DGL_LUMINANCE;
     magFilter = glmode[texMagMode];
@@ -1232,7 +1232,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
     switch(spec->type)
     {
     case TS_DETAIL:
-        Con_Printf(" contrast:%g\n", TS_DETAIL(spec)->contrast);
+        Con_Printf(" contrast:%i%%\n", (int)(.5f + TS_DETAIL(spec)->contrast / 255.f * 100));
         break;
     case TS_NORMAL: {
         texturevariantusagecontext_t tc = TS_NORMAL(spec)->context;

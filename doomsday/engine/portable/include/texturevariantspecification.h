@@ -88,7 +88,7 @@ typedef struct {
 } variantspecification_t;
 
 typedef struct {
-    float contrast;
+    uint8_t contrast; /// Fade-to-gray contrast factor.
 } detailvariantspecification_t;
 
 #define TS_NORMAL(ts)       (&(ts)->data.variant)
