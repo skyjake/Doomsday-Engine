@@ -32,7 +32,7 @@ iterlist_t* IterList_ConstructDefault(void)
 {
     iterlist_t* list = (iterlist_t*) malloc(sizeof(*list));
     if(NULL == list)
-        Con_Error("IterList::ConstructDefault: Failed on allocation of %lu bytes for "
+        Con_Error("IterList::ConstructDefault: Failed on allocation of %u bytes for "
             "new IterList.", (unsigned int) sizeof(*list));
     list->_objects = NULL;
     list->_objectsCount = list->_maxObjects = list->_currentObject = 0;
@@ -59,7 +59,7 @@ int IterList_Push(iterlist_t* list, void* obj)
          list->_maxObjects = (list->_maxObjects? list->_maxObjects * 2 : 8);
          list->_objects = (void**) realloc(list->_objects, sizeof(*list->_objects) * list->_maxObjects);
          if(NULL == list->_objects)
-             Con_Error("IterList::Push: Failed on (re)allocation of %lu bytes for "
+             Con_Error("IterList::Push: Failed on (re)allocation of %u bytes for "
                 "object list.", (unsigned int) sizeof(*list->_objects));
     }
 
