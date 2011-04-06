@@ -273,7 +273,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
-    spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
     assert(NULL != spec);
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -spec->border;

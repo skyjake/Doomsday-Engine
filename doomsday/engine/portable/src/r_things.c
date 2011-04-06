@@ -613,7 +613,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
-    spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
     assert(NULL != spec);
 
     info->numFrames = sprDef->numFrames;
@@ -869,7 +869,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
     assert(NULL != sprTex);
-    spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
     assert(NULL != spec);
 
     params->width  =  ms.width + spec->border*2;

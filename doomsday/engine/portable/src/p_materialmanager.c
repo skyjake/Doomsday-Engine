@@ -599,6 +599,8 @@ static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant,
     for(i = 0; i < layerCount; ++i)
     {
         const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
+        if(0 == ml->tex) continue;
+
         GL_ReleaseGLTexturesForTexture(GL_ToTexture(ml->tex));
     }
     return 0; // Continue iteration.
@@ -778,7 +780,7 @@ Con_Message("Materials_New: Warning, attempted to create material in "
         { uint i;
         for(i = 0; i < mat->numLayers; ++i)
         {
-            if(Texture_IsFromIWAD(GL_ToTexture(mat->layers[i].tex)))
+            if(0 == mat->layers[i].tex || Texture_IsFromIWAD(GL_ToTexture(mat->layers[i].tex)))
                 continue;
             mat->_isCustom = true;
             break;
@@ -924,7 +926,7 @@ Con_Message("Warning: Attempted to create/update Material in unknown Namespace '
         { uint i;
         for(i = 0; i < mat->numLayers; ++i)
         {
-            if(Texture_IsFromIWAD(GL_ToTexture(mat->layers[0].tex)))
+            if(0 == mat->layers[0].tex || Texture_IsFromIWAD(GL_ToTexture(mat->layers[0].tex)))
                 continue;
             mat->_isCustom = true;
             break;
@@ -1185,19 +1187,19 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
     mtp->offset[1] = tOffset;
 }
 
-byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
+void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     boolean smoothed, materialvariantspecification_t* spec)
 {
     assert(mat && spec);
     {
     const texturevariant_t* layerTextures[MATERIALVARIANT_MAXLAYERS];
     const texturevariant_t* detailTex = NULL, *shinyTex = NULL, *shinyMaskTex = NULL;
-    const ded_detailtexture_t* detail = NULL;
+    preparetextureresult_t tmpResult = PTR_NOTFOUND;
     const ded_reflection_t* reflection = NULL;
+    const ded_detailtexture_t* detail = NULL;
     const ded_decor_t* decor = NULL;
     materialvariant_t* variant;
     materialbind_t* mb;
-    byte tmpResult = 0;
     uint i;
 
     // Have we already registered a suitable variant?
@@ -1237,19 +1239,21 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     for(i = 0; i < layerCount; ++i)
     {
         const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
-        byte result;
+        preparetextureresult_t result;
+
+        if(0 == ml->tex) continue;
 
         // Pick the instance matching the specified context.
-        layerTextures[i] = GL_PrepareTexture(ml->tex, spec->primarySpec, &result);
+        layerTextures[i] = GL_PrepareTexture2(GL_ToTexture(ml->tex), spec->primarySpec, &result);
 
-        if(result)
+        if(PTR_NOTFOUND != result)
             tmpResult = result;
     }}
 
     if((mb = bindForMaterial(mat)))
     {
-        if(tmpResult)
-            mb->prepared = tmpResult;
+        if(PTR_UPLOADED_ORIGINAL == tmpResult || PTR_UPLOADED_EXTERNAL == tmpResult)
+            mb->prepared = tmpResult == PTR_UPLOADED_ORIGINAL? 1 : 2;
 
         decor = mb->decoration[mb->prepared-1];
         detail = mb->detail[mb->prepared-1];
@@ -1273,7 +1277,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                     float contrast = detail->strength * detailFactor;
 
                     // Pick an instance matching the specified context.
-                    detailTex = GL_PrepareTexture(dTex->id, GL_DetailTextureVariantSpecificationForContext(contrast), 0);
+                    detailTex = GL_PrepareTexture(GL_ToTexture(dTex->id),
+                        GL_DetailTextureVariantSpecificationForContext(contrast));
                 }
             }
 
@@ -1292,18 +1297,18 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                 if((sTex = R_GetShinyTexture(reflection->shinyMap)))
                 {
                     // Pick an instance matching the specified context.
-                    shinyTex = GL_PrepareTexture(sTex->id,
+                    shinyTex = GL_PrepareTexture(GL_ToTexture(sTex->id),
                         GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                            TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false, false, false), 0);
+                            TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false, false, false));
                 }
 
                 if(shinyTex && // Don't bother searching unless the above succeeds.
                    (mTex = R_GetMaskTexture(reflection->maskMap)))
                 {
                     // Pick an instance matching the specified context.
-                    shinyMaskTex = GL_PrepareTexture(mTex->id,
+                    shinyMaskTex = GL_PrepareTexture(GL_ToTexture(mTex->id),
                         GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTIONMASK,
-                            0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, false, false, false), 0);
+                            0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, false, false, false));
                 }
             }
         }
@@ -1311,7 +1316,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     // If we arn't taking a snapshot, get out of here.
     if(!snapshot)
-        return tmpResult;
+        return;
 
     /**
      * Take a snapshot:
@@ -1343,7 +1348,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
         snapshot->isOpaque = !TextureVariant_IsMasked(layerTextures[0]);
 
-        if(TC_SKYSPHERE_DIFFUSE == TS_NORMAL(spec->primarySpec)->context)
+        if(TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec->primarySpec)->context)
         {
             const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
                 TextureVariant_Analysis(layerTextures[0], TA_SKY_SPHEREFADECOLOR);
@@ -1357,8 +1362,8 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
             snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
         }
 
-        if(TC_MAPSURFACE_DIFFUSE == TS_NORMAL(spec->primarySpec)->context ||
-           TC_SKYSPHERE_DIFFUSE  == TS_NORMAL(spec->primarySpec)->context)
+        if(TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec->primarySpec)->context ||
+           TC_SKYSPHERE_DIFFUSE  == TS_GENERAL(spec->primarySpec)->context)
         {
             const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
                 TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
@@ -1417,8 +1422,6 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                            snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
         }
     }
-
-    return tmpResult;
     }
 }
 

@@ -62,9 +62,9 @@ typedef enum {
 
 typedef enum {
     TEXTUREVARIANTSPECIFICATIONTYPE_FIRST = 0,
-    TS_NORMAL = TEXTUREVARIANTSPECIFICATIONTYPE_FIRST,
-    TS_DETAIL,
-    TEXTUREVARIANTSPECIFICATIONTYPE_LAST = TS_DETAIL
+    TST_GENERAL = TEXTUREVARIANTSPECIFICATIONTYPE_FIRST,
+    TST_DETAIL,
+    TEXTUREVARIANTSPECIFICATIONTYPE_LAST = TST_DETAIL
 } texturevariantspecificationtype_t;
 
 #define TEXTUREVARIANTSPECIFICATIONTYPE_COUNT (\
@@ -96,7 +96,7 @@ typedef struct {
     uint8_t contrast;
 } detailvariantspecification_t;
 
-#define TS_NORMAL(ts)       (&(ts)->data.variant)
+#define TS_GENERAL(ts)      (&(ts)->data.variant)
 #define TS_DETAIL(ts)       (&(ts)->data.detailvariant)
 
 typedef struct texturevariantspecification_s {

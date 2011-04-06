@@ -1000,7 +1000,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
                 if(ms.units[MTU_PRIMARY].tex)
                 {
-                    const variantspecification_t* spec = TS_NORMAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+                    const variantspecification_t* spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
                     /// \todo Utilize *all* properties of the Material.
                     tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
                     V3_Set(offset, -ms.units[MTU_PRIMARY].offset[0], -ms.units[MTU_PRIMARY].offset[1], 0);

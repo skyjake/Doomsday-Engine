@@ -1280,18 +1280,12 @@ void R_PrecacheModelSkins(modeldef_t* modef)
         {
             if((sn = R_GetSkinNameByIndex(mdl->skins[k].id)))
             {
-                GL_PrepareTexture(sn->id,
+                GL_PrepareTexture(GL_ToTexture(sn->id),
                     GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                         (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0,
-                        GL_REPEAT, GL_REPEAT, -1, true, true, false, false), NULL);
+                        GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
             }
         }
-
-        // Load the shiny skin.
-        /*if((sn = R_GetSkinNameByIndex(modef->sub[sub].shinySkin)))
-        {
-            GL_PrepareTexture(sn->id, NULL, NULL);
-        }*/
     }
 }
 

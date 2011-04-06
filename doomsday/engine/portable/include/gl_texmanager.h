@@ -312,21 +312,42 @@ struct texturevariant_s* GL_ChooseTextureVariant(struct texture_s* tex,
 
 void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);
 
+/**
+ * Given a texture identifier retrieve the associated texture.
+ * @return  Found Texture object else @c NULL
+ */
 struct texture_s* GL_ToTexture(textureid_t id);
+
+/// Result of a request to prepare a TextureVariant
+typedef enum {
+    PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
+    PTR_FOUND,              /// Success. Reusing a cached resource.
+    PTR_UPLOADED_ORIGINAL,  /// Success. Prepared and cached using an original-game resource.
+    PTR_UPLOADED_EXTERNAL,  /// Success. Prepared and cached using an external-replacement resource.
+} preparetextureresult_t;
 
 /**
  * Attempt to prepare a variant of Texture which fulfills the specification
- * defined by the usage context.
+ * defined by the usage context. If a suitable variant cannot be found a new
+ * one will be constructed and prepared.
  *
+ * \note If a cache miss occurs texture content data may need to be uploaded
+ * to GL to satisfy the variant specification. However the actual upload will
+ * be deferred if possible. This has the side effect that although the variant
+ * is considered "prepared", attempting to render using the associated texture
+ * will result in "uninitialized" white texels being used instead.
+ *
+ * @param tex  Texture from which a prepared variant is desired.
  * @param spec  Variant specification for the proposed usage context.
- * @param result  Result of this process:
- *      @c 0== Failed: No suitable variant could be found/prepared.
- *      @c 1== Success: Suitable variant prepared from an original resource.
- *      @c 2== Success: Suitable variant prepared from a replacement resource.
+ * @param returnOutcome  If not @c NULL detailed result information for this
+ *      process is written back here.
+ *
  * @return  Prepared variant if successful else @c NULL.
  */
-const struct texturevariant_s* GL_PrepareTexture(textureid_t id,
-    texturevariantspecification_t* spec, byte* result);
+const struct texturevariant_s* GL_PrepareTexture2(struct texture_s* tex,
+    texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+const struct texturevariant_s* GL_PrepareTexture(struct texture_s* tex,
+    texturevariantspecification_t* spec);
 
 const struct texture_s* GL_CreateTexture(const char* name, uint index, texturenamespaceid_t texNamespace);
 

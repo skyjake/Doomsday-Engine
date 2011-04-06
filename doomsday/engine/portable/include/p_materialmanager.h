@@ -154,7 +154,7 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num);
 const ded_decor_t*  Materials_Decoration(materialnum_t num);
 const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
 
-byte Materials_Prepare(struct material_snapshot_s* snapshot, struct material_s* mat,
+void Materials_Prepare(struct material_snapshot_s* snapshot, struct material_s* mat,
     boolean smoothed, struct materialvariantspecification_s* spec);
 
 int Materials_AnimGroupCount(void);
