@@ -139,7 +139,12 @@ static const imagehandler_t handlers[] = {
     { 0 } // Terminate.
 };
 
-static variantspecificationlist_t* variantSpecs[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT];
+static variantspecificationlist_t* variantSpecs;
+
+/// @c TST_DETAIL type specifications are stored separately into a set of
+/// buckets. Bucket selection is determined by their quantized contrast value.
+#define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
+static variantspecificationlist_t* detailVariantSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
 
 static int texturesCount;
 static texture_t** textures;
@@ -297,10 +302,18 @@ static variantspecification_t* applyVariantSpecification(
 static detailvariantspecification_t* applyDetailVariantSpecification(
     detailvariantspecification_t* spec, float contrast)
 {
-    assert(texInited && spec);
-    // Round off contrast to nearest 1/10
-    spec->contrast = 255 * (int)MINMAX_OF(0, contrast * 10 + .5f, 10) * (1/10.f);
+    assert(spec);
+    {
+    const int quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+    spec->contrast = 255 * (int)MINMAX_OF(0, contrast * quantFactor + .5f, quantFactor) * (1/(float)quantFactor);
     return spec;
+    }
+}
+
+static int hashDetailVariantSpecification(const detailvariantspecification_t* spec)
+{
+    assert(spec);
+    return (int) (spec->contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
 }
 
 static texturevariantspecification_t* linkVariantSpecification(
@@ -314,8 +327,19 @@ static texturevariantspecification_t* linkVariantSpecification(
                   "%lu bytes for new TextureVariantSpecificationListNode.",
                   (unsigned long) sizeof(*node));
     node->spec = spec;
-    node->next = variantSpecs[type];
-    variantSpecs[type] = (variantspecificationlist_t*)node;
+    switch(type)
+    {
+    case TST_GENERAL:
+        node->next = variantSpecs;
+        variantSpecs = (variantspecificationlist_t*)node;
+        break;
+    case TST_DETAIL: {
+        int hash = hashDetailVariantSpecification(TS_DETAIL(spec));
+        node->next = detailVariantSpecs[hash];
+        detailVariantSpecs[hash] = (variantspecificationlist_t*)node;
+        break;
+      }
+    }
     return spec;
     }
 }
@@ -327,22 +351,33 @@ static texturevariantspecification_t* findVariantSpecification(
     assert(texInited && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
     {
     texturevariantspecificationlist_node_t* node;
-    for(node = variantSpecs[type]; node; node = node->next)
+
+    // Select list head according to variant specification type.
+    switch(type)
+    {
+    case TST_GENERAL:   node = variantSpecs; break;
+    case TST_DETAIL: {
+        int hash = hashDetailVariantSpecification(TS_DETAIL(tpl));
+        node = detailVariantSpecs[hash];
+        break;
+      }
+    }
+
+    // Do we already have concrete version of the template specifcation?
+    for(; node; node = node->next)
     {
         if(!GL_CompareTextureVariantSpecifications(node->spec, tpl))
             return node->spec;
     }
-    if(!canCreate)
-        return NULL;
+
+    // Not found, can we create?
+    if(canCreate)
     switch(type)
     {
-    case TST_GENERAL:
-        return linkVariantSpecification(type, copyVariantSpecification(tpl));
-    case TST_DETAIL:
-        return linkVariantSpecification(type, copyDetailVariantSpecification(tpl));
+    case TST_GENERAL:   return linkVariantSpecification(type, copyVariantSpecification(tpl));
+    case TST_DETAIL:    return linkVariantSpecification(type, copyDetailVariantSpecification(tpl));
     }
-    // Unreachable (hopefully).
-    assert(1);
+
     return NULL;
     }
 }
@@ -376,31 +411,42 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
 static texturevariantspecification_t* getDetailVariantSpecificationForContext(
     float contrast)
 {
-    static texturevariantspecification_t tpl;
     assert(texInited);
+    {
+    static texturevariantspecification_t tpl;
     tpl.type = TST_DETAIL;
     applyDetailVariantSpecification(TS_DETAIL(&tpl), contrast);
     return findVariantSpecification(tpl.type, &tpl, true);
+    }
+}
+
+static void emptyVariantSpecificationList(variantspecificationlist_t* list)
+{
+    assert(texInited);
+    {
+    texturevariantspecificationlist_node_t* node =
+        (texturevariantspecificationlist_node_t*) list;
+    while(node)
+    {
+        texturevariantspecificationlist_node_t* next = node->next;
+        if(node->spec->type == TST_GENERAL &&
+           (TS_GENERAL(node->spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
+            free(TS_GENERAL(node->spec)->translated);
+        free(node->spec);
+        free(node);
+        node = next;
+    }
+    }
 }
 
 static void destroyVariantSpecifications(void)
 {
     assert(texInited);
+    emptyVariantSpecificationList(variantSpecs); variantSpecs = NULL;
     { int i;
-    for(i = 0; i < TEXTUREVARIANTSPECIFICATIONTYPE_COUNT; ++i)
+    for(i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
     {
-        texturevariantspecificationlist_node_t* node = variantSpecs[i];
-        while(node)
-        {
-            texturevariantspecificationlist_node_t* next = node->next;
-            if(node->spec->type == TST_GENERAL &&
-               (TS_GENERAL(node->spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
-                free(TS_GENERAL(node->spec)->translated);
-            free(node->spec);
-            free(node);
-            node = next;
-        }
-        variantSpecs[i] = NULL;
+        emptyVariantSpecificationList(detailVariantSpecs[i]); detailVariantSpecs[i] = NULL;
     }}
 }
 
@@ -1111,10 +1157,8 @@ void GL_EarlyInitTextureManager(void)
     GL_InitSmartFilterHQ2x();
     calcGammaTable();
 
-    { int i;
-    for(i = 0; i < TEXTUREVARIANTSPECIFICATIONTYPE_COUNT; ++i)
-        variantSpecs[i] = NULL;
-    }
+    variantSpecs = NULL;
+    memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
     textures = NULL;
     texturesCount = 0;
 

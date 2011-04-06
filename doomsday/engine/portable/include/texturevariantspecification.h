@@ -91,7 +91,12 @@ typedef struct {
  * Detail textures are faded to gray depending on the contrast
  * factor. The texture is also progressively faded towards gray
  * when each mipmap level is loaded.
+ *
+ * Contrast is quantized in order to reduce the number of variants.
+ * to a more sensible/manageable number per texture.
  */
+#define DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR  (10)
+
 typedef struct {
     uint8_t contrast;
 } detailvariantspecification_t;
