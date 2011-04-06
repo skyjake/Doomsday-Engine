@@ -363,7 +363,7 @@ static texturevariantspecification_t* findVariantSpecification(
       }
     }
 
-    // Do we already have concrete version of the template specifcation?
+    // Do we already have a concrete version of the template specification?
     for(; node; node = node->next)
     {
         if(!GL_CompareTextureVariantSpecifications(node->spec, tpl))
