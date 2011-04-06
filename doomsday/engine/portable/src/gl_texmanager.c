@@ -244,12 +244,30 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
     return 0; // Equal.
 }
 
+static colorpalettetranslationspecification_t* applyColorPaletteTranslationSpecification(
+    colorpalettetranslationspecification_t* spec, int tClass, int tMap)
+{
+    assert(texInited && spec);
+
+    spec->tClass = MAX_OF(0, tClass);
+    spec->tMap   = MAX_OF(0, tMap);
+
+#if _DEBUG
+    if(0 == tClass && 0 == tMap)
+        Con_Message("Warning:applyColorPaletteTranslationSpecification: Applied "
+            "unnecessary zero-translation (tClass:0 tMap:0).\n");
+#endif
+
+    return spec;
+}
+
 static variantspecification_t* applyVariantSpecification(
     variantspecification_t* spec, texturevariantusagecontext_t tc, int flags,
-    byte border, int tClass, int tMap, int wrapS, int wrapT, int anisoFilter,
-    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+    byte border, colorpalettetranslationspecification_t* colorPaletteTranslationSpec,
+    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
+    boolean noStretch, boolean toAlpha)
 {
-    assert(spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
+    assert(texInited && spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
     flags &= ~TSF_INTERNAL_MASK;
 
@@ -263,25 +281,23 @@ static variantspecification_t* applyVariantSpecification(
     spec->gammaCorrection = gammaCorrection;
     spec->noStretch = noStretch;
     spec->toAlpha = toAlpha;
-
-    if(0 != tMap || 0 != tClass)
+    if(NULL != colorPaletteTranslationSpec)
     {
-        colorpalettetranslationspecification_t* cpt;
         spec->flags |= TSF_HAS_COLORPALETTE_XLAT;
-        if(NULL == (cpt = (colorpalettetranslationspecification_t*) malloc(sizeof(*cpt))))
-            Con_Error("applyVariantSpecification: Failed on allocation of %lu bytes for "
-                      "new ColorPaletteTranslationSpecification.", (unsigned long) sizeof(*cpt));
-        cpt->tMap   = tMap;
-        cpt->tClass = tClass;
-        spec->translated = cpt;
+        spec->translated = colorPaletteTranslationSpec;
     }
+    else
+    {
+        spec->translated = NULL;
+    }
+
     return spec;
 }
 
 static detailvariantspecification_t* applyDetailVariantSpecification(
     detailvariantspecification_t* spec, float contrast)
 {
-    assert(spec);
+    assert(texInited && spec);
     // Round off contrast to nearest 1/10
     spec->contrast = 255 * (int)MINMAX_OF(0, contrast * 10 + .5f, 10) * (1/10.f);
     return spec;
@@ -339,16 +355,21 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
     assert(texInited);
     {
     static texturevariantspecification_t tpl;
-    texturevariantspecification_t* finalSpec;
+    static colorpalettetranslationspecification_t cptTpl;
+    boolean haveCpt = false;
+
     tpl.type = TST_GENERAL;
-    applyVariantSpecification(TS_GENERAL(&tpl), tc, flags, border, tClass, tMap,
+    if(0 != tClass || 0 != tMap)
+    {   // A color palette translation spec is required.
+        applyColorPaletteTranslationSpecification(&cptTpl, tClass, tMap);
+        haveCpt = true;
+    }
+
+    applyVariantSpecification(TS_GENERAL(&tpl), tc, flags, border, haveCpt? &cptTpl : NULL,
         wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
-    finalSpec = findVariantSpecification(tpl.type, &tpl, true);
-    /// We're finished with the template.
-    /// \fixme Do not dynamically allocate during this process!
-    if(TS_GENERAL(&tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
-        free(TS_GENERAL(&tpl)->translated);
-    return finalSpec;
+
+    // Retrieve a concrete version of the rationalized specification.
+    return findVariantSpecification(tpl.type, &tpl, true);
     }
 }
 
@@ -3234,7 +3255,7 @@ const texturevariant_t* GL_PrepareTexture2(texture_t* tex, texturevariantspecifi
         if(returnOutcome) *returnOutcome = PTR_FOUND;
     }
     else
-    {   // Suffer the cache miss and attempt to prepare a new variant.
+    {   // Suffer the cache miss and attempt to (re)prepare a variant.
         byte loadResult;
 
         variant = tryLoadImageAndPrepareVariant(tex, variant, spec, &loadResult);
