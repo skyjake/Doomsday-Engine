@@ -85,7 +85,7 @@ void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
  * @param colorIdx  Index of the color to lookup.
  * @param rgb  Associated R8G8B8 color triplet is written here.
  */
-void ColorPalette_Color(colorpalette_t* pal, int colorIdx, uint8_t rgb[3]);
+void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3]);
 
 /**
  * Given an R8G8B8 color triplet return the closet matching color index.

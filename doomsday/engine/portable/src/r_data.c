@@ -272,6 +272,8 @@ colorpalette_t* R_ToColorPalette(int paletteIdx)
     assert(initedColorPalettes);
     if(paletteIdx > 0 && numColorPalettes >= paletteIdx)
         return colorPalettes[paletteIdx-1];
+    Con_Error("R_ToColorPalette: Failed to locate palette for index #%i", paletteIdx);
+    // Unreachable.
     return NULL;
 }
 
@@ -457,9 +459,10 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
         return;
     }
 
-    { colorpalette_t* pal;
-    if(NULL != (pal = R_ToColorPalette(R_FindColorPaletteIndexForId(id))))
+    { int paletteIdx = R_FindColorPaletteIndexForId(id);
+    if(0 != paletteIdx)
     {
+        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
         ColorPalette_Color(pal, colorIdx, rgb);
         if(applyTexGamma)
         {
@@ -470,7 +473,7 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
         return;
     }}
 
-    Con_Error("R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %u.", (uint) id);
+    Con_Message("Warning:R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %i.\n", id);
 }
 
 void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
@@ -487,9 +490,10 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
         return;
     }
 
-    { colorpalette_t* pal;
-    if(NULL != (pal = R_ToColorPalette(R_FindColorPaletteIndexForId(id))))
+    { int paletteIdx = R_FindColorPaletteIndexForId(id);
+    if(0 != paletteIdx)
     {
+        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
         uint8_t ubv[3];
         ColorPalette_Color(pal, colorIdx, ubv);
         if(applyTexGamma)
@@ -504,7 +508,7 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
         return;
     }}
 
-    Con_Error("R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %u.", (uint) id);
+    Con_Message("Warning:R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %i.\n", id);
 }
 
 void R_InfoRendVerticesPool(void)

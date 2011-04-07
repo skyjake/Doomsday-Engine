@@ -124,12 +124,12 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param pixels  Index-color image to evaluate.
  * @param width  Logical width of the image in pixels.
  * @param height  Logical height of the image in pixels.
- * @param paletteIdx  Index of the color palette to use else @c 0
+ * @param palette  Color palette to use.
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color  Determined average color written here.
  */
 void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
-    int paletteIdx, boolean hasAlpha, float color[3]);
+    const struct colorpalette_s* palette, boolean hasAlpha, float color[3]);
 
 /**
  * @param pixels  RGB(a) image to evaluate.
@@ -144,12 +144,12 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  * @param pixels  Index-color image to evaluate.
  * @param width  Logical width of the image in pixels.
  * @param height  Logical height of the image in pixels.
- * @param paletteIdx  Index of the color palette to use else @c 0
+ * @param palette  Color palette to use.
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color  Determined average color written here.
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
-    int line, int paletteIdx, boolean hasAlpha, float color[3]);
+    int line, const struct colorpalette_s* palette, boolean hasAlpha, float color[3]);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.
@@ -202,17 +202,18 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
 void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height,
     float fade);
 
-boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
+boolean GL_PalettizeImage(uint8_t* out, int outformat, const struct colorpalette_s* palette,
     boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
 
-boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
-    const uint8_t* in, int informat, int width, int height);
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat,
+    struct colorpalette_s* palette, const uint8_t* in, int informat, int width, int height);
 
 /**
  * Desaturates the texture in the dest buffer by averaging the colour then
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height);
+void GL_DeSaturatePalettedImage(uint8_t* buffer, struct colorpalette_s* palette,
+    int width, int height);
 
 #endif /* LIBDENG_IMAGE_MANIPULATION_H */

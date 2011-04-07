@@ -752,10 +752,10 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
-boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
+boolean GL_PalettizeImage(uint8_t* out, int outformat, const colorpalette_t* palette,
     boolean applyTexGamma, const uint8_t* in, int informat, int width, int height)
 {
-    assert(in && out);
+    assert(in && out && palette);
 
     if(0 >= width || 0 >= height)
         return false;
@@ -765,15 +765,11 @@ boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
         long numPels = width * height;
         int inSize = (informat == 2 ? 1 : informat);
         int outSize = (outformat == 2 ? 1 : outformat);
-        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
-
-        if(NULL == pal)
-            Con_Error("GL_PalettizeImage: Failed to locate ColorPalette for index %i.", paletteIdx);
 
         { long i;
         for(i = 0; i < numPels; ++i)
         {
-            ColorPalette_Color(pal, *in, out);
+            ColorPalette_Color(palette, *in, out);
             if(applyTexGamma)
             {
                 out[CR] = gammaTable[out[CR]];
@@ -797,24 +793,20 @@ boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
     return false;
 }
 
-boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, colorpalette_t* palette,
     const uint8_t* in, int informat, int width, int height)
 {
-    assert(out && in);
+    assert(out && in && palette);
     if(informat >= 3 && outformat <= 2 && width > 0 && height > 0)
     {
         int inSize = (informat == 2 ? 1 : informat);
         int outSize = (outformat == 2 ? 1 : outformat);
         int i, numPixels = width * height;
-        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
-
-        if(NULL == pal)
-            Con_Error("GL_QuantizeImageToPalette: Failed to locate ColorPalette for index %i.", paletteIdx);
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
             // Convert the color value.
-            *out = ColorPalette_NearestIndexv(pal, in);
+            *out = ColorPalette_NearestIndexv(palette, in);
 
             // Alpha channel?
             if(outformat == 2)
@@ -830,28 +822,24 @@ boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
     return false;
 }
 
-void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height)
+void GL_DeSaturatePalettedImage(uint8_t* buffer, colorpalette_t* palette,
+    int width, int height)
 {
-    assert(buffer);
+    assert(buffer && palette);
     {
     const long numPels = width * height;
-    colorpalette_t* pal;
     uint8_t rgb[3];
     int max, temp;
 
     if(width == 0 || height == 0)
         return; // Nothing to do.
 
-    pal = R_ToColorPalette(paletteIdx);
-    if(NULL == pal)
-        Con_Error("GL_DeSaturatePalettedImage: Failed to locate ColorPalette for index %i.", paletteIdx);
-
     // What is the maximum color value?
     max = 0;
     { long i;
     for(i = 0; i < numPels; ++i)
     {
-        ColorPalette_Color(pal, buffer[i], rgb);
+        ColorPalette_Color(palette, buffer[i], rgb);
         if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
         {
             if(rgb[CR] > max)
@@ -867,7 +855,7 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int 
     { long i;
     for(i = 0; i < numPels; ++i)
     {
-        ColorPalette_Color(pal, buffer[i], rgb);
+        ColorPalette_Color(palette, buffer[i], rgb);
         if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
             continue;
 
@@ -875,20 +863,19 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int 
         temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
         if(max)
             temp *= 255.f / max;
-        buffer[i] = ColorPalette_NearestIndex(pal, temp, temp, temp);
+        buffer[i] = ColorPalette_NearestIndex(palette, temp, temp, temp);
     }}
     }
 }
 
 void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
-    int paletteIdx, boolean hasAlpha, float col[3])
+    const colorpalette_t* palette, boolean hasAlpha, float col[3])
 {
     assert(data && col);
     {
     long count, numpels, avg[3] = { 0, 0, 0 };
     const uint8_t* start, *alphaStart;
     DGLubyte rgbUBV[3];
-    colorpalette_t* pal;
 
     if(w <= 0 || h <= 0)
     {
@@ -906,10 +893,6 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
         return;
     }
 
-    pal = R_ToColorPalette(paletteIdx);
-    if(NULL == pal)
-        Con_Error("FindAverageLineColorIdx: Failed to locate ColorPalette for index %i.", paletteIdx);
-
     numpels = w * h;
     start = data + w * line;
     alphaStart = data + numpels + w * line;
@@ -919,7 +902,7 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
     {
         if(!hasAlpha || alphaStart[i])
         {
-            ColorPalette_Color(pal, start[i], rgbUBV);
+            ColorPalette_Color(palette, start[i], rgbUBV);
             avg[CR] += rgbUBV[CR];
             avg[CG] += rgbUBV[CG];
             avg[CB] += rgbUBV[CB];
@@ -1015,14 +998,13 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
     }
 }
 
-void FindAverageColorIdx(const uint8_t* data, int w, int h, int paletteIdx,
+void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t* palette,
     boolean hasAlpha, float col[3])
 {
     assert(data && col);
     {
     long numpels, count, avg[3] = { 0, 0, 0 };
     const uint8_t* alphaStart;
-    colorpalette_t* pal;
     DGLubyte rgb[3];
 
     if(w <= 0 || h <= 0)
@@ -1030,10 +1012,6 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h, int paletteIdx,
         col[CR] = col[CG] = col[CB] = 0;
         return;
     }
-
-    pal = R_ToColorPalette(paletteIdx);
-    if(NULL == pal)
-        Con_Error("FindAverageColorIdx: Failed to locate ColorPalette for index %i.", paletteIdx);
 
     numpels = w * h;
     alphaStart = data + numpels;
@@ -1043,7 +1021,7 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h, int paletteIdx,
     {
         if(!hasAlpha || alphaStart[i])
         {
-            ColorPalette_Color(pal, data[i], rgb);
+            ColorPalette_Color(palette, data[i], rgb);
             avg[CR] += rgb[CR];
             avg[CG] += rgb[CG];
             avg[CB] += rgb[CB];

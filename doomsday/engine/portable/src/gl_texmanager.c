@@ -753,7 +753,7 @@ static void prepareVariant(texturevariant_t* tex, image_t* image)
     else if(0 != image->palette)
     {
         if(monochrome && !scaleSharp)
-            GL_DeSaturatePalettedImage(image->pixels, image->palette, image->width, image->height);
+            GL_DeSaturatePalettedImage(image->pixels, R_ToColorPalette(image->palette), image->width, image->height);
 
         if(scaleSharp)
         {
@@ -963,7 +963,7 @@ static void prepareVariant(texturevariant_t* tex, image_t* image)
         }
         else
         {
-            FindAverageLineColorIdx(image->pixels, image->width, image->height, 0, image->palette, false, avgTopColor->color);
+            FindAverageLineColorIdx(image->pixels, image->width, image->height, 0, R_ToColorPalette(image->palette), false, avgTopColor->color);
         }
    }
    
@@ -1000,7 +1000,7 @@ static void prepareVariant(texturevariant_t* tex, image_t* image)
         }
         else
         {
-            FindAverageColorIdx(image->pixels, image->width, image->height, image->palette, false, al->color);
+            FindAverageColorIdx(image->pixels, image->width, image->height, R_ToColorPalette(image->palette), false, al->color);
         }
         memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
         amplify(al->colorAmplified);

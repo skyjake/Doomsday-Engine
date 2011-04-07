@@ -76,7 +76,7 @@ void ColorPalette_ReplaceColorTable(colorpalette_t* pal, const int compOrder[3],
     prepareColorTable(pal, compOrder, compBits, colorData, colorCount);
 }
 
-void ColorPalette_Color(colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
+void ColorPalette_Color(const colorpalette_t* pal, int colorIdx, uint8_t rgb[3])
 {
     assert(pal && rgb);
     {

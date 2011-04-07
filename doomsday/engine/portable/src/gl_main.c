@@ -1154,14 +1154,14 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
-        GL_PalettizeImage(out, outformat, paletteIdx, false, in, informat, width, height);
+        GL_PalettizeImage(out, outformat, R_ToColorPalette(paletteIdx), false, in, informat, width, height);
         return out;
     }
 
     // Conversion from RGB(A) to pal8(a), using pal18To8.
     if(informat >= 3 && outformat <= 2)
     {
-        GL_QuantizeImageToPalette(out, outformat, paletteIdx, in, informat, width, height);
+        GL_QuantizeImageToPalette(out, outformat, R_ToColorPalette(paletteIdx), in, informat, width, height);
         return out;
     }
 
@@ -1202,8 +1202,6 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
     if(pixelSize == 1)
     {
         pal = R_ToColorPalette(paletteIdx);
-        if(NULL == pal)
-            Con_Error("GL_CalcLuminance: Failed to locate ColorPalette for index %i.", paletteIdx);
     }
 
     for(i = 0; i < 3; ++i)
