@@ -456,9 +456,8 @@ typedef enum {
 } choosevariantmethod_t;
 
 typedef struct {
-    texturevariantspecificationtype_t type;
-    const texturevariantspecification_t* spec;
     choosevariantmethod_t method;
+    const texturevariantspecification_t* spec;
     texturevariant_t* chosen;
 } choosevariantworker_paramaters_t;
 
@@ -489,15 +488,14 @@ static int chooseVariantWorker(texturevariant_t* variant, void* context)
     }
 }
 
-static texturevariant_t* chooseVariant(texture_t* tex, const texturevariantspecification_t* spec,
-    choosevariantmethod_t method)
+static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* tex,
+    const texturevariantspecification_t* spec)
 {
     assert(texInited && tex && spec);
     {
     choosevariantworker_paramaters_t params;
-    params.type = spec->type;
-    params.spec = spec;
     params.method = method;
+    params.spec = spec;
     params.chosen = NULL;
     Texture_IterateVariants(tex, chooseVariantWorker, &params);
     return params.chosen;
@@ -3161,7 +3159,7 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
 {
     assert(texInited);
     { // Look for an exact match.
-    texturevariant_t* variant = chooseVariant(tex, spec, METHOD_MATCH);
+    texturevariant_t* variant = chooseVariant(METHOD_MATCH, tex, spec);
 #if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
@@ -3170,7 +3168,7 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
     // Presently this is used as a sanity check.
     if(NULL == variant)
     {   /// No luck, try fuzzy.
-        variant = chooseVariant(tex, spec, METHOD_FUZZY);
+        variant = chooseVariant(METHOD_FUZZY, tex, spec);
         assert(NULL == variant);
     }
 #endif
