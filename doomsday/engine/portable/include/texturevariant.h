@@ -91,6 +91,8 @@ void TextureVariant_FlagMasked(texturevariant_t* tex, boolean yes);
 boolean TextureVariant_IsUploaded(const texturevariant_t* tex);
 void TextureVariant_FlagUploaded(texturevariant_t* tex, boolean yes);
 
+boolean TextureVariant_IsPrepared(const texturevariant_t* tex);
+
 void TextureVariant_Coords(const texturevariant_t* tex, float* s, float* t);
 void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t);
 

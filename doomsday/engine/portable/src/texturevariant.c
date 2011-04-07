@@ -90,6 +90,11 @@ void TextureVariant_FlagUploaded(texturevariant_t* tex, boolean yes)
     tex->_flags ^= (-yes ^ tex->_flags) & TVF_IS_UPLOADED;
 }
 
+boolean TextureVariant_IsPrepared(const texturevariant_t* tex)
+{
+    return TextureVariant_IsUploaded(tex) && 0 != TextureVariant_GLName(tex);
+}
+
 void TextureVariant_Coords(const texturevariant_t* tex, float* s, float* t)
 {
     assert(tex);

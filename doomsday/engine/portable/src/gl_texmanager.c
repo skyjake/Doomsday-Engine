@@ -604,10 +604,10 @@ static const dduri_t* searchPath(texturenamespaceid_t texNamespace, int typeInde
     }
 }
 
-static byte loadSourceImage(image_t* img, const texture_t* tex,
-    const texturevariantspecification_t* baseSpec)
+static byte loadSourceImage(const texture_t* tex, const texturevariantspecification_t* baseSpec,
+    image_t* image)
 {
-    assert(img && tex && baseSpec);
+    assert(tex && baseSpec && image);
     {
     const variantspecification_t* spec = TS_GENERAL(baseSpec);
     byte loadResult = 0;
@@ -630,13 +630,13 @@ static byte loadSourceImage(image_t* img, const texture_t* tex,
                 FLATS_RESOURCE_NAMESPACE_NAME":%s;"
                 TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", flat->name, flat->name);
 
-            loadResult = GL_LoadExtTextureEX(img, Str_Text(&searchPath), Str_Text(&suffix), true);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
         {
             lumpnum_t lumpNum = W_CheckNumForName2(flat->name, true);
-            loadResult = GL_LoadFlatLump(img, lumpNum);
+            loadResult = GL_LoadFlatLump(image, lumpNum);
         }
         break;
       }
@@ -661,12 +661,12 @@ static byte loadSourceImage(image_t* img, const texture_t* tex,
             Str_Init(&searchPath);
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(pTex->lump));
 
-            loadResult = GL_LoadExtTextureEX(img, Str_Text(&searchPath), Str_Text(&suffix), true);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
         {
-            loadResult = GL_LoadPatchLump(img, pTex->lump, tclass, tmap, spec->border);
+            loadResult = GL_LoadPatchLump(image, pTex->lump, tclass, tmap, spec->border);
         }
         break;
       }
@@ -701,13 +701,31 @@ static byte loadSourceImage(image_t* img, const texture_t* tex,
             }
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", sprTex->name);
 
-            loadResult = GL_LoadExtTextureEX(img, Str_Text(&searchPath), Str_Text(&suffix), true);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
         {
             lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
-            loadResult = GL_LoadPatchLump(img, lumpNum, tclass, tmap, spec->border);
+            loadResult = GL_LoadPatchLump(image, lumpNum, tclass, tmap, spec->border);
+        }
+        break;
+      }
+    case TN_DETAILS: {
+        const detailtex_t* dTex;
+        int idx = Texture_TypeIndex(tex);
+        assert(idx >= 0 && idx < detailTexturesCount);
+        dTex = detailTextures[idx];
+        if(dTex->isExternal)
+        {
+            ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, false);
+            Str_Delete(searchPath);
+        }
+        else
+        {
+            lumpnum_t lumpNum = W_CheckNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
+            loadResult = GL_LoadDetailTextureLump(image, lumpNum);
         }
         break;
       }
@@ -719,7 +737,7 @@ static byte loadSourceImage(image_t* img, const texture_t* tex,
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
         ddstring_t* path = Uri_ComposePath(searchPath(Texture_Namespace(tex), Texture_TypeIndex(tex)));
-        loadResult = GL_LoadExtTextureEX(img, Str_Text(path), NULL, false);
+        loadResult = GL_LoadExtTextureEX(image, Str_Text(path), NULL, false);
         Str_Delete(path);
         break;
       }
@@ -3061,99 +3079,47 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
     return GL_TextureIndexForUri2(uri, false);
 }
 
-static boolean variantIsPrepared(texturevariant_t* variant)
-{
-    assert(texInited);
-    return TextureVariant_IsUploaded(variant) && 0 != TextureVariant_GLName(variant);
-}
-
-static texturevariant_t* findPreparedVariant(texture_t* tex,
-    const texturevariantspecification_t* spec)
-{
-    assert(texInited);
-    { // Look for an exact match.
-    texturevariant_t* variant = chooseVariant(tex, spec, METHOD_MATCH);
-#if _DEBUG
-    // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
-    // As such, the following should NOT return a valid variant iff the rest of
-    // this subsystem has been implemented correctly.
-    //
-    // Presently this is used as a sanity check.
-    if(NULL == variant)
-    {   /// No luck, try fuzzy.
-        variant = chooseVariant(tex, spec, METHOD_FUZZY);
-        assert(NULL == variant);
-    }
-#endif
-    return NULL != variant && variantIsPrepared(variant)? variant : NULL;
-    }
-}
-
 static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
-    texturevariant_t* variant, texturevariantspecification_t* spec,
+    texturevariantspecification_t* spec, texturevariant_t* variant,
     byte* result)
 {
     assert(texInited && spec);
     {
-    byte loadResult = 0;
     image_t image;
-
+    byte loadResult;
+    
     // Load the source image data.
-    switch(spec->type)
+    if(TN_TEXTURES == Texture_Namespace(tex))
     {
-    case TST_GENERAL:
-        if(TN_TEXTURES == Texture_Namespace(tex))
+        // Try to load a replacement version of this texture?
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
         {
-            // Try to load a replacement version of this texture?
-            if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
-            {
-                patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
-                const ddstring_t suffix = { "-ck" };
-                ddstring_t searchPath;
-                assert(NULL != texDef);
-                Str_Init(&searchPath);
-                Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
-                loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
-                Str_Free(&searchPath);
-            }
+            patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
+            const ddstring_t suffix = { "-ck" };
+            ddstring_t searchPath;
+            assert(NULL != texDef);
+            Str_Init(&searchPath);
+            Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
+            loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
+            Str_Free(&searchPath);
+        }
 
-            if(0 == loadResult)
+        if(0 == loadResult)
+        {
+            if(TC_SKYSPHERE_DIFFUSE != TS_GENERAL(spec)->context)
             {
-                if(TC_SKYSPHERE_DIFFUSE != TS_GENERAL(spec)->context)
-                {
-                    loadResult = GL_LoadPatchComposite(&image, tex);
-                }
-                else
-                {
-                    loadResult = GL_LoadPatchCompositeAsSky(&image, tex,
-                        (TS_GENERAL(spec)->flags & TSF_ZEROMASK) != 0);
-                }
+                loadResult = GL_LoadPatchComposite(&image, tex);
+            }
+            else
+            {
+                loadResult = GL_LoadPatchCompositeAsSky(&image, tex,
+                    (TS_GENERAL(spec)->flags & TSF_ZEROMASK) != 0);
             }
         }
-        else
-        {
-            loadResult = loadSourceImage(&image, tex, spec);
-        }
-        break;
-
-    case TST_DETAIL: {
-        const detailtex_t* dTex;
-        int idx = Texture_TypeIndex(tex);
-        assert(idx >= 0 && idx < detailTexturesCount);
-        dTex = detailTextures[idx];
-        if(dTex->isExternal)
-        {
-            ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
-            loadResult = GL_LoadExtTextureEX(&image, Str_Text(searchPath), NULL, false);
-            Str_Delete(searchPath);
-        }
-        else
-        {
-            lumpnum_t lumpNum = W_CheckNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
-            loadResult = GL_LoadDetailTextureLump(&image, lumpNum);
-        }
-        break;
-      }
+    }
+    else
+    {
+        loadResult = loadSourceImage(tex, spec, &image);
     }
 
     if(result) *result = loadResult;
@@ -3190,15 +3156,37 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     }
 }
 
+static texturevariant_t* findVariantForSpec(texture_t* tex,
+    const texturevariantspecification_t* spec)
+{
+    assert(texInited);
+    { // Look for an exact match.
+    texturevariant_t* variant = chooseVariant(tex, spec, METHOD_MATCH);
+#if _DEBUG
+    // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
+    // As such, the following should NOT return a valid variant iff the rest of
+    // this subsystem has been implemented correctly.
+    //
+    // Presently this is used as a sanity check.
+    if(NULL == variant)
+    {   /// No luck, try fuzzy.
+        variant = chooseVariant(tex, spec, METHOD_FUZZY);
+        assert(NULL == variant);
+    }
+#endif
+    return variant;
+    }
+}
+
 const texturevariant_t* GL_PrepareTexture2(texture_t* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
     assert(texInited);
     {
     // Have we already prepared something suitable?
-    texturevariant_t* variant = findPreparedVariant(tex, spec);
+    texturevariant_t* variant = findVariantForSpec(tex, spec);
 
-    if(NULL != variant)
+    if(NULL != variant && TextureVariant_IsPrepared(variant))
     {
         if(returnOutcome) *returnOutcome = PTR_FOUND;
     }
@@ -3206,7 +3194,7 @@ const texturevariant_t* GL_PrepareTexture2(texture_t* tex, texturevariantspecifi
     {   // Suffer the cache miss and attempt to (re)prepare a variant.
         byte loadResult;
 
-        variant = tryLoadImageAndPrepareVariant(tex, variant, spec, &loadResult);
+        variant = tryLoadImageAndPrepareVariant(tex, spec, variant, &loadResult);
 
         if(returnOutcome)
         switch(loadResult)
