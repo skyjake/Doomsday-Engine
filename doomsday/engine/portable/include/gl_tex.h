@@ -202,4 +202,17 @@ void GL_DownMipmap32(uint8_t* pixels, int width, int height, int pixelSize);
 void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height,
     float fade);
 
+boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
+    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
+
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
+    const uint8_t* in, int informat, int width, int height);
+
+/**
+ * Desaturates the texture in the dest buffer by averaging the colour then
+ * looking up the nearest match in the palette. Increases the brightness
+ * to maximum.
+ */
+void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height);
+
 #endif /* LIBDENG_IMAGE_MANIPULATION_H */

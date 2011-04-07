@@ -164,19 +164,6 @@ uint8_t* GL_ConvertBuffer(const uint8_t* src, int width, int height,
 uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
     int flags, int* outWidth, int* outHeight);
 
-boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
-    boolean gammaCorrect, const uint8_t* in, int informat, int width, int height);
-
-boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
-    const uint8_t* in, int informat, int width, int height);
-
-/**
- * Desaturates the texture in the dest buffer by averaging the colour then
- * looking up the nearest match in the palette. Increases the brightness
- * to maximum.
- */
-void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height);
-
 /**
  * Calculates the properties of a dynamic light that the given sprite frame
  * casts. Crop a boundary around the image to remove excess alpha'd pixels

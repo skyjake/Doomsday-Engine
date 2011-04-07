@@ -752,6 +752,134 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
+boolean GL_PalettizeImage(uint8_t* out, int outformat, int paletteIdx,
+    boolean applyTexGamma, const uint8_t* in, int informat, int width, int height)
+{
+    assert(in && out);
+
+    if(0 >= width || 0 >= height)
+        return false;
+
+    if(informat <= 2 && outformat >= 3)
+    {
+        long numPels = width * height;
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
+        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
+
+        if(NULL == pal)
+            Con_Error("GL_PalettizeImage: Failed to locate ColorPalette for index %i.", paletteIdx);
+
+        { long i;
+        for(i = 0; i < numPels; ++i)
+        {
+            ColorPalette_Color(pal, *in, out);
+            if(applyTexGamma)
+            {
+                out[CR] = gammaTable[out[CR]];
+                out[CG] = gammaTable[out[CG]];
+                out[CB] = gammaTable[out[CB]];
+            }
+
+            if(outformat == 4)
+            {
+                if(informat == 2)
+                    out[CA] = in[numPels * inSize];
+                else
+                    out[CA] = 0;
+            }
+
+            in  += inSize;
+            out += outSize;
+        }}
+        return true;
+    }
+    return false;
+}
+
+boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat, int paletteIdx,
+    const uint8_t* in, int informat, int width, int height)
+{
+    assert(out && in);
+    if(informat >= 3 && outformat <= 2 && width > 0 && height > 0)
+    {
+        int inSize = (informat == 2 ? 1 : informat);
+        int outSize = (outformat == 2 ? 1 : outformat);
+        int i, numPixels = width * height;
+        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
+
+        if(NULL == pal)
+            Con_Error("GL_QuantizeImageToPalette: Failed to locate ColorPalette for index %i.", paletteIdx);
+
+        for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
+        {
+            // Convert the color value.
+            *out = ColorPalette_NearestIndexv(pal, in);
+
+            // Alpha channel?
+            if(outformat == 2)
+            {
+                if(informat == 4)
+                    out[numPixels * outSize] = in[3];
+                else
+                    out[numPixels * outSize] = 0;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void GL_DeSaturatePalettedImage(uint8_t* buffer, int paletteIdx, int width, int height)
+{
+    assert(buffer);
+    {
+    const long numPels = width * height;
+    colorpalette_t* pal;
+    uint8_t rgb[3];
+    int max, temp;
+
+    if(width == 0 || height == 0)
+        return; // Nothing to do.
+
+    pal = R_ToColorPalette(paletteIdx);
+    if(NULL == pal)
+        Con_Error("GL_DeSaturatePalettedImage: Failed to locate ColorPalette for index %i.", paletteIdx);
+
+    // What is the maximum color value?
+    max = 0;
+    { long i;
+    for(i = 0; i < numPels; ++i)
+    {
+        ColorPalette_Color(pal, buffer[i], rgb);
+        if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
+        {
+            if(rgb[CR] > max)
+                max = rgb[CR];
+            continue;
+        }
+
+        temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
+        if(temp > max)
+            max = temp;
+    }}
+
+    { long i;
+    for(i = 0; i < numPels; ++i)
+    {
+        ColorPalette_Color(pal, buffer[i], rgb);
+        if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
+            continue;
+
+        // Calculate a weighted average.
+        temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
+        if(max)
+            temp *= 255.f / max;
+        buffer[i] = ColorPalette_NearestIndex(pal, temp, temp, temp);
+    }}
+    }
+}
+
 void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
     int paletteIdx, boolean hasAlpha, float col[3])
 {
