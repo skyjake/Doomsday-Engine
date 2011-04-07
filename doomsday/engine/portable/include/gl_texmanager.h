@@ -307,9 +307,6 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
  */
 void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
 
-struct texturevariant_s* GL_ChooseTextureVariant(struct texture_s* tex,
-    const texturevariantspecification_t* spec);
-
 void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);
 
 /**

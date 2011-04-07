@@ -450,38 +450,56 @@ static void destroyVariantSpecifications(void)
     }}
 }
 
+typedef enum {
+    METHOD_MATCH = 0,
+    METHOD_FUZZY
+} choosevariantmethod_t;
+
 typedef struct {
     texturevariantspecificationtype_t type;
     const texturevariantspecification_t* spec;
+    choosevariantmethod_t method;
     texturevariant_t* chosen;
-} choosetexturevariantworker_paramaters_t;
+} choosevariantworker_paramaters_t;
 
-static int chooseTextureVariantWorker(texturevariant_t* variant, void* context)
+static int chooseVariantWorker(texturevariant_t* variant, void* context)
 {
     assert(variant && context);
     {
-    choosetexturevariantworker_paramaters_t* p =
-        (choosetexturevariantworker_paramaters_t*) context;
+    choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) context;
     const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
-    if(!GL_CompareTextureVariantSpecifications(cand, p->spec))
-    {   // This will do fine.
-        p->chosen = variant;
-        return 1; // Stop iteration.
+    switch(p->method)
+    {
+    case METHOD_MATCH:
+        if(cand == p->spec)
+        {   // This is the one we're looking for.
+            p->chosen = variant;
+            return 1; // Stop iteration.
+        }
+        break;
+    case METHOD_FUZZY:
+        if(!GL_CompareTextureVariantSpecifications(cand, p->spec))
+        {   // This will do fine.
+            p->chosen = variant;
+            return 1; // Stop iteration.
+        }
+        break;
     }
     return 0; // Continue iteration.
     }
 }
 
-static texturevariant_t* chooseTextureVariant(texture_t* tex,
-    const texturevariantspecification_t* spec)
+static texturevariant_t* chooseVariant(texture_t* tex, const texturevariantspecification_t* spec,
+    choosevariantmethod_t method)
 {
     assert(texInited && tex && spec);
     {
-    choosetexturevariantworker_paramaters_t params;
+    choosevariantworker_paramaters_t params;
     params.type = spec->type;
     params.spec = spec;
+    params.method = method;
     params.chosen = NULL;
-    Texture_IterateVariants(tex, chooseTextureVariantWorker, &params);
+    Texture_IterateVariants(tex, chooseVariantWorker, &params);
     return params.chosen;
     }
 }
@@ -1202,6 +1220,8 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
     const texturevariantspecification_t* b)
 {
     assert(a && b);
+    if(a == b)
+        return 0;
     if(a->type != b->type)
         return 1;
     switch(a->type)
@@ -3051,8 +3071,20 @@ static texturevariant_t* findPreparedVariant(texture_t* tex,
     const texturevariantspecification_t* spec)
 {
     assert(texInited);
-    {
-    texturevariant_t* variant = GL_ChooseTextureVariant(tex, spec);
+    { // Look for an exact match.
+    texturevariant_t* variant = chooseVariant(tex, spec, METHOD_MATCH);
+#if _DEBUG
+    // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
+    // As such, the following should NOT return a valid variant iff the rest of
+    // this subsystem has been implemented correctly.
+    //
+    // Presently this is used as a sanity check.
+    if(NULL == variant)
+    {   /// No luck, try fuzzy.
+        variant = chooseVariant(tex, spec, METHOD_FUZZY);
+        assert(NULL == variant);
+    }
+#endif
     return NULL != variant && variantIsPrepared(variant)? variant : NULL;
     }
 }
@@ -3192,14 +3224,6 @@ const texturevariant_t* GL_PrepareTexture2(texture_t* tex, texturevariantspecifi
 const texturevariant_t* GL_PrepareTexture(texture_t* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTexture2(tex, spec, NULL);
-}
-
-texturevariant_t* GL_ChooseTextureVariant(texture_t* tex,
-    const texturevariantspecification_t* spec)
-{
-    if(!texInited)
-        Con_Error("GL_ChooseTextureVariant: Textures collection not yet initialized.");
-    return chooseTextureVariant(tex, spec);
 }
 
 void GL_ReleaseGLTexturesForTexture(texture_t* tex)

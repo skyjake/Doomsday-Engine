@@ -204,6 +204,9 @@ static materialvariantspecification_t* copyVariantSpecification(
 static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
+    assert(a && b);
+    if(a == b)
+        return 0;
     if(a->context != b->context)
         return 1;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
