@@ -97,6 +97,12 @@ boolean Material_IsSkyMasked(const material_t* mat);
 /// @return  @c true if Material should be rendered.
 boolean Material_IsDrawable(const material_t* mat);
 
+/// @return  @c true if one or more animation stages are defined as "glowing".
+boolean Material_HasGlow(material_t* mat);
+
+/// @return  @c true if one or more light decorations are defined.
+boolean Material_HasDecorations(material_t* mat);
+
 /// @return  Number of layers defined by this Material.
 int Material_LayerCount(const material_t* mat);
 

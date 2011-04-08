@@ -1618,9 +1618,9 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             // Strength of the shine.
             for(i = 0; i < numVertices; ++i)
             {
-                shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shiny.minColor[CR]);
-                shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shiny.minColor[CG]);
-                shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shiny.minColor[CB]);
+                shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shinyMinColor[CR]);
+                shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shinyMinColor[CG]);
+                shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shinyMinColor[CB]);
                 shinyColors[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
             }
         }
@@ -2936,9 +2936,9 @@ void lightGeometry(rendpolytype_t type, size_t count, rvertex_t* rvertices, rcol
             size_t i;
             for(i = 0; i < count; ++i)
             {
-                rcolorsShiny[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shiny.minColor[CR]);
-                rcolorsShiny[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shiny.minColor[CG]);
-                rcolorsShiny[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shiny.minColor[CB]);
+                rcolorsShiny[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shinyMinColor[CR]);
+                rcolorsShiny[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shinyMinColor[CG]);
+                rcolorsShiny[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shinyMinColor[CB]);
                 rcolorsShiny[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
             }
         }

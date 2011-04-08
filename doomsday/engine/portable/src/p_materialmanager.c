@@ -1173,30 +1173,42 @@ static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_
     blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
     float tOffset, float alpha)
 {
-    material_textureunit_t* mtp = &ss->units[unit];
+    assert(ss);
+    {
+    material_textureunit_t* tu = &MSU(ss, unit);
 
     if(NULL != tex)
     {
-        mtp->tex.texture = TextureVariant_GeneralCase(tex);
-        mtp->tex.spec = TextureVariant_Spec(tex);
-        mtp->tex.glName = TextureVariant_GLName(tex);
-        TextureVariant_Coords(tex, &mtp->tex.s, &mtp->tex.t);
+        tu->tex.texture = TextureVariant_GeneralCase(tex);
+        tu->tex.spec = TextureVariant_Spec(tex);
+        tu->tex.glName = TextureVariant_GLName(tex);
+        TextureVariant_Coords(tex, &tu->tex.s, &tu->tex.t);
     }
     else
     {
-        mtp->tex.texture = NULL;
-        mtp->tex.spec = NULL;
-        mtp->tex.glName = 0;
-        mtp->tex.s = mtp->tex.t = 0;
+        tu->tex.texture = NULL;
+        tu->tex.spec = NULL;
+        tu->tex.glName = 0;
+        tu->tex.s = tu->tex.t = 0;
     }
 
-    mtp->magMode = magMode;
-    mtp->blendMode = blendMode;
-    mtp->alpha = MINMAX_OF(0, alpha, 1);
-    mtp->scale[0] = sScale;
-    mtp->scale[1] = tScale;
-    mtp->offset[0] = sOffset;
-    mtp->offset[1] = tOffset;
+    tu->magMode = magMode;
+    tu->blendMode = blendMode;
+    tu->alpha = MINMAX_OF(0, alpha, 1);
+    tu->scale[0] = sScale;
+    tu->scale[1] = tScale;
+    tu->offset[0] = sOffset;
+    tu->offset[1] = tOffset;
+    }
+}
+
+void Materials_InitSnapshot(material_snapshot_t* ss)
+{
+    assert(ss);
+    { int i;
+    for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
+        setTexUnit(ss, i, NULL, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
+    }
 }
 
 void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
@@ -1212,7 +1224,6 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     const ded_decor_t* decor = NULL;
     materialvariant_t* variant;
     materialbind_t* mb;
-    uint i;
 
     // Have we already registered a suitable variant?
     variant = Materials_ChooseVariant(mat, spec);
@@ -1334,14 +1345,11 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
      * Take a snapshot:
      */
 
-    // Reset to the default state.
-    for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
-        setTexUnit(snapshot, i, 0, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
+    Materials_InitSnapshot(snapshot);
 
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
     snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowingTextures;
-    snapshot->isDecorated = (decor? true : false);
 
     // Setup the primary texturing pass.
     if(0 != MaterialVariant_Layer(variant, 0)->tex)
@@ -1420,9 +1428,9 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         // Setup the reflection (aka shiny) texturing pass(es)?
         if(shinyTex && reflection)
         {
-            snapshot->shiny.minColor[CR] = reflection->minColor[CR];
-            snapshot->shiny.minColor[CG] = reflection->minColor[CG];
-            snapshot->shiny.minColor[CB] = reflection->minColor[CB];
+            snapshot->shinyMinColor[CR] = reflection->minColor[CR];
+            snapshot->shinyMinColor[CG] = reflection->minColor[CG];
+            snapshot->shinyMinColor[CB] = reflection->minColor[CB];
 
             setTexUnit(snapshot, MTU_REFLECTION, shinyTex, reflection->blendMode, GL_LINEAR,
                 1, 1, 0, 0, reflection->shininess);

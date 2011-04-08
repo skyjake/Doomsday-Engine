@@ -121,6 +121,26 @@ boolean Material_IsDrawable(const material_t* mat)
     return 0 == (mat->_flags & MATF_NO_DRAW);
 }
 
+boolean Material_HasGlow(material_t* mat)
+{
+    assert(mat);
+    {
+    material_snapshot_t ms;
+    /// \fixme We should not need to prepare to determine this.
+    Materials_Prepare(&ms, mat, true,
+        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+            GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
+    return (ms.glowing > .0001f);
+    }
+}
+
+boolean Material_HasDecorations(material_t* mat)
+{
+    assert(mat);
+    /// \fixme We should not need to prepare to determine this.
+    return NULL != Materials_Decoration(Materials_ToMaterialNum(mat));
+}
+
 int Material_LayerCount(const material_t* mat)
 {
     assert(mat);

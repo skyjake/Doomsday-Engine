@@ -1242,11 +1242,9 @@ static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
 }
 #endif
 
-static __inline void initSurfaceMaterialOffset(surface_t *suf)
+static __inline void initSurfaceMaterialOffset(surface_t* suf)
 {
-    if(!suf)
-        return;
-
+    assert(suf);
     suf->visOffset[VX] = suf->oldOffset[0][VX] =
         suf->oldOffset[1][VX] = suf->offset[VX];
     suf->visOffset[VY] = suf->oldOffset[0][VY] =
@@ -1257,7 +1255,7 @@ static __inline void initSurfaceMaterialOffset(surface_t *suf)
  * Set intial values of various tracked and interpolated properties
  * (lighting, smoothed planes etc).
  */
-void R_InitMapSurfaces(boolean forceUpdate)
+void R_MapInitSurfaces(boolean forceUpdate)
 {
     { uint i;
     for(i = 0; i < numSectors; ++i)
@@ -1286,6 +1284,41 @@ void R_InitMapSurfaces(boolean forceUpdate)
     }}
 }
 
+static void addToSurfaceLists(surface_t* suf, material_t* mat)
+{
+    if(NULL == suf || NULL == mat)
+        return;
+
+    if(Material_HasGlow(mat))        R_SurfaceListAdd(glowingSurfaceList,   suf);
+    if(Material_HasDecorations(mat)) R_SurfaceListAdd(decoratedSurfaceList, suf);
+}
+
+void R_MapInitSurfaceLists(void)
+{
+    { uint i;
+    for(i = 0; i < numSideDefs; ++i)
+    {
+        sidedef_t* side = SIDE_PTR(i);
+
+        addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
+        addToSurfaceLists(&side->SW_topsurface,    side->SW_topmaterial);
+        addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
+    }}
+
+    { uint i;
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t* sec = SECTOR_PTR(i);
+        if(0 == sec->lineDefCount)
+            continue;
+
+        { uint j;
+        for(j = 0; j < sec->planeCount; ++j)
+            addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
+        }
+    }}
+}
+
 void R_SetupMap(int mode, int flags)
 {
     switch(mode)
@@ -1305,7 +1338,7 @@ void R_SetupMap(int mode, int flags)
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
         R_InitSkyFix();
-        R_InitMapSurfaces(false);
+        R_MapInitSurfaces(false);
         P_MapInitPolyobjs();
         return;
       }
@@ -1321,9 +1354,11 @@ void R_SetupMap(int mode, int flags)
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange(NULL);
 
-        R_InitMapSurfaces(true);
         P_MapInitPolyobjs();
-        R_PrecacheMap();
+
+        R_MapInitSurfaces(true);
+        R_MapInitSurfaceLists();
+        R_PrecacheForMap();
 
         Materials_ProcessCacheQueue();
 

@@ -407,9 +407,9 @@ boolean         R_UpdatePlane(struct plane_s* pln, boolean forceUpdate);
 boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
 /**
- * Prepare all texture resources for the current Map.
+ * Prepare resources for the current Map.
  */
-void R_PrecacheMap(void);
+void R_PrecacheForMap(void);
 
 /**
  * Prepare all texture resources for the specified mobjtype.

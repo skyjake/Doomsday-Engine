@@ -84,19 +84,14 @@ typedef struct material_textureunit_s {
 } material_textureunit_t;
 
 typedef struct material_snapshot_s {
-    int width, height; // In world units.
-    boolean isOpaque;
-    boolean isDecorated;
+    material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
+    int width, height; /// Material dimensions in world units.
     float color[3]; /// Average color (for lighting).
     float colorAmplified[3]; /// Average color amplified (for lighting).
     float topColor[3]; /// Average top line color (for sky fadeout).
+    float shinyMinColor[3];
     float glowing;
-    material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
-
-    /// \todo: the following should be removed once incorporated into the layers (above).
-    struct shinydata_s {
-        float minColor[3];
-    } shiny;
+    boolean isOpaque;
 } material_snapshot_t;
 
 #define MSU(ms, u) ((ms)->units[u])

@@ -2373,25 +2373,7 @@ void R_PrecacheMobjNum(int num)
     }}
 }
 
-static void addToSurfaceLists(surface_t* suf, material_t* mat)
-{
-    assert(suf);
-    {
-    material_snapshot_t ms;
-    if(NULL == mat)
-        return;
-    /// \fixme We should not need to prepare in order to build the lists.
-    Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
-    if(ms.glowing > 0)
-        R_SurfaceListAdd(glowingSurfaceList, suf);
-    if(ms.isDecorated)
-        R_SurfaceListAdd(decoratedSurfaceList, suf);
-    }
-}
-
-void R_PrecacheMap(void)
+void R_PrecacheForMap(void)
 {
     materialvariantspecification_t* spec;
     float startTime;
@@ -2413,36 +2395,26 @@ void R_PrecacheMap(void)
         sidedef_t* side = SIDE_PTR(i);
 
         if(NULL != side->SW_middlematerial)
-        {
             Materials_Precache(side->SW_middlematerial, spec);
-            addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
-        }
 
         if(NULL != side->SW_topmaterial)
-        {
             Materials_Precache(side->SW_topmaterial, spec);
-            addToSurfaceLists(&side->SW_topsurface, side->SW_topmaterial);
-        }
 
         if(NULL != side->SW_bottommaterial)
-        {
             Materials_Precache(side->SW_bottommaterial, spec);
-            addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
-        }
     }}
 
     { uint i;
     for(i = 0; i < numSectors; ++i)
     {
         sector_t* sec = SECTOR_PTR(i);
-        uint j;
         if(0 == sec->lineDefCount)
             continue;
+        { uint j;
         for(j = 0; j < sec->planeCount; ++j)
         {
             Materials_Precache(sec->SP_planematerial(j), spec);
-            addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
-        }
+        }}
     }}
 
     // Precache sprites?

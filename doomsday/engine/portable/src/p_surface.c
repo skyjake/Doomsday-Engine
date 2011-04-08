@@ -95,7 +95,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
         {
             if(!ddMapSetup)
             {
-                // If this plane's surface is in the deocrated list, remove it.
+                // If this plane's surface is in the decorated list, remove it.
                 R_SurfaceListRemove(decoratedSurfaceList, suf);
                 // If this plane's surface is in the glowing list, remove it.
                 R_SurfaceListRemove(glowingSurfaceList, suf);
