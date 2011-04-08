@@ -41,7 +41,6 @@
 
 #include "sys_opengl.h"
 #include "texture.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -379,7 +378,6 @@ static void addLuminous(mobj_t* mo)
     material_t* mat;
     float autoLightColor[3];
     material_snapshot_t ms;
-    const texturevariant_t* tex;
     const pointlight_analysis_t* pl;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -412,9 +410,8 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
-    tex = ms.units[MTU_PRIMARY].tex;
     pl = (const pointlight_analysis_t*) Texture_Analysis(
-        TextureVariant_GeneralCase(tex), TA_SPRITE_AUTOLIGHT);
+        MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
     if(NULL == pl)
         return; // Not good...
 
@@ -433,7 +430,7 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
     autoLightColor[CG] = pl->color[CG];
     autoLightColor[CB] = pl->color[CB];
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(tex)));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
 
     center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;

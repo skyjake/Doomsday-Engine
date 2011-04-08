@@ -36,7 +36,6 @@
 
 #include "math.h"
 #include "rend_console.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -498,7 +497,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
 
         Materials_Prepare(&ms, consoleBackgroundMaterial, Con_IsActive(),
             Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, false, false, false, false));
-        GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 
         bgX = (int) (ms.width  * consoleBackgroundZoom);
         bgY = (int) (ms.height * consoleBackgroundZoom);

@@ -47,7 +47,6 @@
 
 #include "def_main.h"
 #include "texture.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -811,7 +810,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
 
     off = sprTex->offY - ms.height;
@@ -1280,10 +1279,11 @@ void R_PrecacheModelSkins(modeldef_t* modef)
         {
             if((sn = R_GetSkinNameByIndex(mdl->skins[k].id)))
             {
-                GL_PrepareTexture(GL_ToTexture(sn->id),
+                texturevariantspecification_t* texSpec =
                     GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                         (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0,
-                        GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
+                        GL_REPEAT, GL_REPEAT, -1, true, true, false, false);
+                GL_PrepareTexture(GL_ToTexture(sn->id), texSpec);
             }
         }
     }

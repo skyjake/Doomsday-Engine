@@ -1169,18 +1169,27 @@ void Materials_Ticker(timespan_t time)
     animateAnimGroups();
 }
 
-/**
- * Subroutine of Materials_Prepare().
- */
-static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
-                                blendmode_t blendMode, int magMode,
-                                const texturevariant_t* tex,
-                                float sScale, float tScale,
-                                float sOffset, float tOffset, float alpha)
+static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_t* tex,
+    blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
+    float tOffset, float alpha)
 {
     material_textureunit_t* mtp = &ss->units[unit];
 
-    mtp->tex = tex;
+    if(NULL != tex)
+    {
+        mtp->tex.texture = TextureVariant_GeneralCase(tex);
+        mtp->tex.spec = TextureVariant_Spec(tex);
+        mtp->tex.glName = TextureVariant_GLName(tex);
+        TextureVariant_Coords(tex, &mtp->tex.s, &mtp->tex.t);
+    }
+    else
+    {
+        mtp->tex.texture = NULL;
+        mtp->tex.spec = NULL;
+        mtp->tex.glName = 0;
+        mtp->tex.s = mtp->tex.t = 0;
+    }
+
     mtp->magMode = magMode;
     mtp->blendMode = blendMode;
     mtp->alpha = MINMAX_OF(0, alpha, 1);
@@ -1247,7 +1256,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         if(0 == ml->tex) continue;
 
         // Pick the instance matching the specified context.
-        layerTextures[i] = GL_PrepareTexture2(GL_ToTexture(ml->tex), spec->primarySpec, &result);
+        layerTextures[i] = GL_PrepareTextureVariant2(GL_ToTexture(ml->tex), spec->primarySpec, &result);
 
         if(PTR_NOTFOUND != result)
             tmpResult = result;
@@ -1280,7 +1289,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                     float contrast = detail->strength * detailFactor;
 
                     // Pick an instance matching the specified context.
-                    detailTex = GL_PrepareTexture(GL_ToTexture(dTex->id),
+                    detailTex = GL_PrepareTextureVariant(GL_ToTexture(dTex->id),
                         GL_DetailTextureVariantSpecificationForContext(contrast));
                 }
             }
@@ -1300,7 +1309,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                 if((sTex = R_GetShinyTexture(reflection->shinyMap)))
                 {
                     // Pick an instance matching the specified context.
-                    shinyTex = GL_PrepareTexture(GL_ToTexture(sTex->id),
+                    shinyTex = GL_PrepareTextureVariant(GL_ToTexture(sTex->id),
                         GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
                             TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false, false, false));
                 }
@@ -1309,7 +1318,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
                    (mTex = R_GetMaskTexture(reflection->maskMap)))
                 {
                     // Pick an instance matching the specified context.
-                    shinyMaskTex = GL_PrepareTexture(GL_ToTexture(mTex->id),
+                    shinyMaskTex = GL_PrepareTextureVariant(GL_ToTexture(mTex->id),
                         GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTIONMASK,
                             0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, false, false, false));
                 }
@@ -1327,7 +1336,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     // Reset to the default state.
     for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
-        setTexUnit(snapshot, i, BM_NORMAL, GL_LINEAR, 0, 1, 1, 0, 0, 0);
+        setTexUnit(snapshot, i, 0, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
 
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
@@ -1345,7 +1354,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
             magMode = filterSprites? GL_LINEAR : GL_NEAREST;
         V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
 
-        setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, layerTextures[0],
+        setTexUnit(snapshot, MTU_PRIMARY, layerTextures[0], BM_NORMAL, magMode,
             scale[0], scale[1], MaterialVariant_Layer(variant, 0)->texOrigin[0],
             MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
 
@@ -1404,8 +1413,8 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
             if(detailScale > .001f)
                 scale *= detailScale;
 
-            setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, texMagMode?GL_LINEAR:GL_NEAREST,
-                detailTex, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+            setTexUnit(snapshot, MTU_DETAIL, detailTex, BM_NORMAL, texMagMode?GL_LINEAR:GL_NEAREST,
+                1.f / width * scale, 1.f / height * scale, 0, 0, 1);
         }
 
         // Setup the reflection (aka shiny) texturing pass(es)?
@@ -1415,14 +1424,14 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
             snapshot->shiny.minColor[CG] = reflection->minColor[CG];
             snapshot->shiny.minColor[CB] = reflection->minColor[CB];
 
-            setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode, GL_LINEAR,
-                shinyTex, 1, 1, 0, 0, reflection->shininess);
+            setTexUnit(snapshot, MTU_REFLECTION, shinyTex, reflection->blendMode, GL_LINEAR,
+                1, 1, 0, 0, reflection->shininess);
 
             if(shinyMaskTex)
-                setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskTex,
-                           1.f / (snapshot->width * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->width),
-                           1.f / (snapshot->height * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->height),
-                           snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
+                setTexUnit(snapshot, MTU_REFLECTION_MASK, shinyMaskTex, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode,
+                    1.f / (snapshot->width * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->width),
+                    1.f / (snapshot->height * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->height),
+                    snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
         }
     }
     }

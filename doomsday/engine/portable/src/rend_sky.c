@@ -42,7 +42,6 @@
 #include "de_play.h"
 
 #include "texture.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -278,10 +277,10 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             Materials_Prepare(&ms, material, true,
                 Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                     TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, false, true, false, false));
-            tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
-            magMode = ms.units[MTU_PRIMARY].magMode;
-            Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),
-                &skyTexWidth, &skyTexHeight);
+
+            tex     = MSU(&ms, MTU_PRIMARY).tex.glName;
+            Texture_Dimensions(MSU(&ms, MTU_PRIMARY).tex.texture, &skyTexWidth, &skyTexHeight);
+            magMode = MSU(&ms, MTU_PRIMARY).magMode;
         }
 
         GL_BindTexture(tex, magMode);

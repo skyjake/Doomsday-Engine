@@ -39,7 +39,6 @@
 #include "de_misc.h"
 
 #include "texture.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -271,9 +270,9 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     Materials_Prepare(&ms, sprFrame->mats[0], true,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true, true, false));
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
-    spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    spec = TS_GENERAL(MSU(&ms, MTU_PRIMARY).tex.spec);
     assert(NULL != spec);
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -spec->border;
@@ -282,7 +281,8 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     params->height = ms.height + spec->border*2;
 
     // Calculate texture coordinates.
-    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &params->texOffset[0], &params->texOffset[1]);
+    params->texOffset[0] = MSU(&ms, MTU_PRIMARY).tex.s;
+    params->texOffset[1] = MSU(&ms, MTU_PRIMARY).tex.t;
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
@@ -359,7 +359,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         Materials_Prepare(&ms, mat, true,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true, true, false));
-        GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -870,7 +870,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
                 (renderTextures == 1? 1 : 0),
                 (renderTextures == 1? params->tClass : 0),
                 (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false) );
-        GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
     else

@@ -36,7 +36,6 @@
 #include "m_vector.h"
 #include "rend_sky.h"
 #include "texture.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -172,10 +171,10 @@ static void prepareSkySphere(void)
                 TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
                 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, false, true, false, false));
 
-        slayer->tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
-        Texture_Dimensions(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex),
+        slayer->tex = MSU(&ms, MTU_PRIMARY).tex.glName;
+        Texture_Dimensions(MSU(&ms, MTU_PRIMARY).tex.texture,
             &slayer->texWidth, &slayer->texHeight);
-        slayer->texMagMode = ms.units[MTU_PRIMARY].magMode;
+        slayer->texMagMode = MSU(&ms, MTU_PRIMARY).magMode;
 
         slayer->fadeout.rgb[CR] = ms.topColor[CR];
         slayer->fadeout.rgb[CG] = ms.topColor[CG];

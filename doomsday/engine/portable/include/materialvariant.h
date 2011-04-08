@@ -62,11 +62,24 @@ enum {
 };
 
 typedef struct material_textureunit_s {
-    const struct texturevariant_s* tex;
+    struct material_textureunit_texture {
+        const struct texture_s* texture;
+        const struct texturevariantspecification_s* spec;
+        DGLuint glName;
+        float s, t;
+    } tex;
+
     int magMode;
-    blendmode_t blendMode; /// Currently used only with reflection.
-    float scale[2]; /// Material-space scale multiplier.
-    float offset[2]; /// Material-space origin translation.
+
+    /// Currently used only with reflection.
+    blendmode_t blendMode;
+
+    /// Material-space scale multiplier.
+    float scale[2];
+
+    /// Material-space origin translation.
+    float offset[2];
+
     float alpha;
 } material_textureunit_t;
 

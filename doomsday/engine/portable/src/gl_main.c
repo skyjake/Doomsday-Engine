@@ -49,7 +49,6 @@
 
 #include "colorpalette.h"
 #include "texturecontent.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
@@ -1041,7 +1040,7 @@ void GL_SetMaterial(material_t* mat)
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0,
             GL_REPEAT, GL_REPEAT, 0, false, false, false, false));
-    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
@@ -1050,7 +1049,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
             tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true, true, false));
-    GL_BindTexture(TextureVariant_GLName(ms.units[MTU_PRIMARY].tex), ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)

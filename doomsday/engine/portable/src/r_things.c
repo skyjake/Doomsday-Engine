@@ -55,7 +55,6 @@
 #include "blockset.h"
 #include "m_stack.h"
 #include "texture.h"
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -611,9 +610,9 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, false, true, true, false));
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
-    spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    spec = TS_GENERAL(MSU(&ms, MTU_PRIMARY).tex.spec);
     assert(NULL != spec);
 
     info->numFrames = sprDef->numFrames;
@@ -623,7 +622,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->topOffset = sprTex->offY + spec->border;
     info->width  = ms.width  + spec->border*2;
     info->height = ms.height + spec->border*2;
-    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &info->texCoord[0], &info->texCoord[1]);
+    info->texCoord[0] = MSU(&ms, MTU_PRIMARY).tex.s;
+    info->texCoord[1] = MSU(&ms, MTU_PRIMARY).tex.t;
 
     return true;
 }
@@ -867,9 +867,9 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
-    spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+    spec = TS_GENERAL(MSU(&ms, MTU_PRIMARY).tex.spec);
     assert(NULL != spec);
 
     params->width  =  ms.width + spec->border*2;
@@ -891,7 +891,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = tMap;
     params->tClass = tClass;
-    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &params->matOffset[0], &params->matOffset[1]);
+    params->matOffset[0] = MSU(&ms, MTU_PRIMARY).tex.s;
+    params->matOffset[1] = MSU(&ms, MTU_PRIMARY).tex.t;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = blendMode;
@@ -1110,7 +1111,7 @@ void R_ProjectSprite(mobj_t* mo)
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
             mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(TextureVariant_GeneralCase(ms.units[MTU_PRIMARY].tex)));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
 
     // Align to the view plane?
@@ -1408,7 +1409,6 @@ void R_ProjectSprite(mobj_t* mo)
         spriteframe_t* sprFrame;
         material_t* mat;
         material_snapshot_t ms;
-        const texturevariant_t* tex;
         const pointlight_analysis_t* pl;
 
         // Determine the sprite frame lump of the source.
@@ -1433,9 +1433,8 @@ if(!mat)
         Materials_Prepare(&ms, mat, true,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
-        tex = ms.units[MTU_PRIMARY].tex;
         pl = (const pointlight_analysis_t*) Texture_Analysis(
-            TextureVariant_GeneralCase(tex), TA_SPRITE_AUTOLIGHT);
+            MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)
             return; // Not good...
 

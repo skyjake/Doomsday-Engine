@@ -32,7 +32,6 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -527,7 +526,7 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
         material_snapshot_t ms;
         Materials_Prepare(&ms, p->_bg.material, true,
             Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, false, false, false, false));
-        tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
+        tex = ms.units[MTU_PRIMARY].tex.glName;
     }
     else
     {
@@ -998,14 +997,16 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 Materials_Prepare(&ms, mat, true,
                     Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, false));
 
-                if(ms.units[MTU_PRIMARY].tex)
+                if(ms.units[MTU_PRIMARY].tex.glName)
                 {
-                    const variantspecification_t* spec = TS_GENERAL(TextureVariant_Spec(ms.units[MTU_PRIMARY].tex));
+                    const texturevariantspecification_t* spec = MSU(&ms, MTU_PRIMARY).tex.spec;
+
                     /// \todo Utilize *all* properties of the Material.
-                    tex = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
-                    V3_Set(offset, -ms.units[MTU_PRIMARY].offset[0], -ms.units[MTU_PRIMARY].offset[1], 0);
-                    V3_Set(dimensions, ms.width + spec->border*2, ms.height + spec->border*2, 0);
-                    TextureVariant_Coords(ms.units[MTU_PRIMARY].tex, &texScale[0], &texScale[1]);
+                    tex = MSU(&ms, MTU_PRIMARY).tex.glName;
+                    V3_Set(offset, -MSU(&ms, MTU_PRIMARY).offset[0], -MSU(&ms, MTU_PRIMARY).offset[1], 0);
+                    V3_Set(dimensions, ms.width  + TS_GENERAL(spec)->border*2,
+                                       ms.height + TS_GENERAL(spec)->border*2, 0);
+                    V2_Set(texScale, MSU(&ms, MTU_PRIMARY).tex.s, MSU(&ms, MTU_PRIMARY).tex.t);
                 }
             }
             break;

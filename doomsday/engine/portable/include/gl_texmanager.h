@@ -331,11 +331,20 @@ typedef enum {
  * @param returnOutcome  If not @c NULL detailed result information for this
  *      process is written back here.
  *
- * @return  Prepared variant if successful else @c NULL.
+ * @return  GL-name of the prepared variant if successful else @c 0
  */
-const struct texturevariant_s* GL_PrepareTexture2(struct texture_s* tex,
+const DGLuint GL_PrepareTexture2(struct texture_s* tex,
     texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const struct texturevariant_s* GL_PrepareTexture(struct texture_s* tex,
+const DGLuint GL_PrepareTexture(struct texture_s* tex,
+    texturevariantspecification_t* spec);
+
+/**
+ * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
+ * \todo Should not need to be public.
+ */
+const struct texturevariant_s* GL_PrepareTextureVariant2(struct texture_s* tex,
+    texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+const struct texturevariant_s* GL_PrepareTextureVariant(struct texture_s* tex,
     texturevariantspecification_t* spec);
 
 const struct texture_s* GL_CreateTexture(const char* name, uint index, texturenamespaceid_t texNamespace);

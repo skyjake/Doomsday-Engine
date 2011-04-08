@@ -46,7 +46,6 @@
 #include "de_misc.h"
 
 #include "net_main.h"           // for gametic
-#include "texturevariant.h"
 #include "texture.h"
 #include "materialvariant.h"
 
@@ -707,15 +706,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, false, false, false, false);
-            const texturevariant_t* tex;
-            if(NULL != (tex = GL_PrepareTexture(GL_ToTexture(sn->id), texSpec)))
-            {
-                shinyTexture = TextureVariant_GLName(tex);
-            }
-            else
-            {
-                shininess = 0;
-            }
+            shinyTexture = GL_PrepareTexture(GL_ToTexture(sn->id), texSpec);
         }
         else
         {
@@ -794,7 +785,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             Materials_Prepare(&ms, mat, true,
                 Materials_VariantSpecificationForContext(MC_MODELSKIN,
                     0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
-            skinTexture = TextureVariant_GLName(ms.units[MTU_PRIMARY].tex);
+            skinTexture = MSU(&ms, MTU_PRIMARY).tex.glName;
         }
         else
         {
@@ -814,10 +805,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, true, true, false, false);
-            const texturevariant_t* tex = GL_PrepareTexture(GL_ToTexture(sn->id), texSpec);
-            if(NULL != tex)
-                skinTexture = TextureVariant_GLName(tex);
+                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
+                    GL_REPEAT, -1, true, true, false, false);
+            skinTexture = GL_PrepareTexture(GL_ToTexture(sn->id), texSpec);
         }
     }
 

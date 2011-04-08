@@ -2721,9 +2721,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
                     0, 0, 0, 0, GL_CLAMP, GL_CLAMP, -1, false, false, false, true);
-            const texturevariant_t* tex;
-            if(NULL != (tex = GL_PrepareTexture(GL_ToTexture(lmap->id), texSpec)))
-                return TextureVariant_GLName(tex);
+            return GL_PrepareTexture(GL_ToTexture(lmap->id), texSpec);
         }
     }
     // Return the default texture name.
@@ -2748,9 +2746,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, true);
-            const texturevariant_t* tex;
-            if(NULL != (tex = GL_PrepareTexture(GL_ToTexture(fTex->id), texSpec)))
-                return TextureVariant_GLName(tex);
+            return GL_PrepareTexture(GL_ToTexture(fTex->id), texSpec);
         }
     }
     else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
@@ -2769,9 +2765,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
                 0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
                   | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
                 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, false);
-        const texturevariant_t* tex;
-        if(NULL != (tex = GL_PrepareTexture(GL_ToTexture(patchTex->texId), texSpec)))
-            return TextureVariant_GLName(tex);
+        return GL_PrepareTexture(GL_ToTexture(patchTex->texId), texSpec);
     }
     return 0;
 }
@@ -3255,7 +3249,7 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
     }
 }
 
-const texturevariant_t* GL_PrepareTexture2(texture_t* tex, texturevariantspecification_t* spec,
+const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
     assert(texInited);
@@ -3286,7 +3280,21 @@ const texturevariant_t* GL_PrepareTexture2(texture_t* tex, texturevariantspecifi
     }
 }
 
-const texturevariant_t* GL_PrepareTexture(texture_t* tex, texturevariantspecification_t* spec)
+const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec)
+{
+    return GL_PrepareTextureVariant2(tex, spec, NULL);
+}
+
+const DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
+    preparetextureresult_t* returnOutcome)
+{
+    const texturevariant_t* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
+    if(NULL != variant)
+        return TextureVariant_GLName(variant);
+    return 0;
+}
+
+const DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTexture2(tex, spec, NULL);
 }
