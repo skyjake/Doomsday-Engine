@@ -26,148 +26,18 @@
  * Example of Doomsday plugin which is called at startup.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-
 #include "doomsday.h"
 #include "dd_api.h"
 
 #include "version.h"
 
-#define DLLEXPORT __declspec( dllexport )
-
-DLLEXPORT game_export_t* GetGameAPI(game_import_t* imports);
-
-// The interface to the Doomsday engine.
-game_import_t gi;
-game_export_t gx;
-
-void ExampleTicker(timespan_t ticLength)
-{
-
-}
-
-void ExampleDrawer(int layer)
-{
-
-}
-
-boolean ExampleResponder(event_t* ev)
-{
-    return false;
-}
-
-/**
- * Get a 32-bit integer value.
- */
-int G_GetInteger(int id)
-{
-    switch(id)
-    {
-    case DD_DMU_VERSION:
-        return DMUAPI_VER;
-
-    default:
-        break;
-    }
-    return 0;
-}
-
-/**
- * Get a pointer to the value of a named variable/constant.
- */
-void* G_GetVariable(int id)
-{
-    static float bob[2];
-
-    switch(id)
-    {
-    case DD_PLUGIN_NAME:
-        return PLUGIN_NAMETEXT;
-
-    case DD_PLUGIN_NICENAME:
-        return PLUGIN_NICENAME;
-
-    case DD_PLUGIN_VERSION_SHORT:
-        return PLUGIN_VERSION_TEXT;
-
-    case DD_PLUGIN_VERSION_LONG:
-        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
-
-    case DD_PLUGIN_HOMEURL:
-        return PLUGIN_HOMEURL;
-
-    case DD_PLUGIN_DOCSURL:
-        return PLUGIN_DOCSURL;
-
-    default:
-        break;
-    }
-    return 0;
-}
-
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
-game_export_t* GetGameAPI(game_import_t* imports)
-{
-    // Take a copy of the imports, but only copy as much data as is
-    // allowed and legal.
-    memset(&gi, 0, sizeof(gi));
-    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
-
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.Ticker = ExampleTicker;
-    gx.G_Drawer = ExampleDrawer;
-    //gx.G_Drawer2 = D_Display2;
-    //gx.PrivilegedResponder = (boolean (*)(event_t*)) G_PrivilegedResponder;
-    gx.G_Responder = ExampleResponder;
-    gx.GetInteger = G_GetInteger;
-    gx.GetVariable = G_GetVariable;
-
-#if 0
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-    gx.NetWriteCommands = D_NetWriteCommands;
-    gx.NetReadCommands = D_NetReadCommands;
-#endif
-
-    // Data structure sizes.
-    /*gx.ticcmdSize = sizeof(ticcmd_t);
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(polyobj_t);
-
-    gx.SetupForMapData = P_SetupForMapData;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;*/
-
-    return &gx;
-}
-
 /**
  * This function will be called ASAP after Doomsday has completed startup.
- *
- * @param parm
- * @param data
- *
- * @return              Non-zero if successful.
+ * @return  This operation should return non-zero if successful.
  */
-int ExampleHook(int hookType, int parm, void *data)
+int ExampleHook(int hookType, int parm, void* data)
 {
-    DD_AddGame("examplegame", DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\", DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\", PLUGIN_NAMETEXT ".cfg", "Example Game", PLUGIN_NICEAUTHOR, 0, 0);
+    Con_Message("ExampleHook: Hook successful!\n");
     return true;
 }
 

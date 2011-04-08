@@ -30,10 +30,6 @@
 #ifndef EXAMPLE_PLUGIN_VERSION_H
 #define EXAMPLE_PLUGIN_VERSION_H
 
-#ifndef __EXAMPLE_PLUGIN__
-#  error "Using ExampleGame headers without __EXAMPLE_PLUGIN__"
-#endif
-
 #include "dengproject.h"
 #include "dd_plugin.h"
 
@@ -46,22 +42,22 @@
 #endif
 
 // Used to derive filepaths.
-#define PLUGIN_NAMETEXT      "exampleplugin"
+#define PLUGIN_NAMETEXT     "exampleplugin"
 
 // Presented to the user in dialogs, messages etc.
 #define PLUGIN_NICENAME     "Example Plugin"
 #define PLUGIN_NICEAUTHOR   "deng team"
-#define PLUGIN_DETAILS      "Demos/tests various engine features."
+#define PLUGIN_DETAILS      "Example of a basic Doomsday plugin which outputs a log message during startup."
 
 #define PLUGIN_HOMEURL      DOOMSDAY_HOMEURL
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
 
-#define PLUGIN_VERSION_TEXT "1.0.0"
+#define PLUGIN_VERSION_TEXT "1.1.0"
 #define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" EXAMPLE_PLUGIN_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,0,0,0 // For WIN32 version info.
+#define PLUGIN_VERSION_NUMBER 1,1,0,0 // For WIN32 version info.
 
 // For WIN32 version info:
 #define PLUGIN_DESC         PLUGIN_NICENAME " " LIBDENG_PLUGINDESC
-#define PLUGIN_COPYRIGHT    "2003-2010, " DENGPROJECT_NICEAUTHOR
+#define PLUGIN_COPYRIGHT    "2003-2011, " DENGPROJECT_NICEAUTHOR
 
 #endif /* EXAMPLE_PLUGIN_VERSION_H */

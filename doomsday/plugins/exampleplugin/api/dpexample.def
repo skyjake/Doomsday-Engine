@@ -2,4 +2,3 @@ LIBRARY			DPEXAMPLE
 
 EXPORTS
     DP_Initialize   @1
-	GetGameAPI		@2
