@@ -27,6 +27,17 @@
 
 struct texturevariant_s;
 
+typedef enum {
+    TEXTURE_ANALYSIS_FIRST = 0,
+    TA_SPRITE_AUTOLIGHT = TEXTURE_ANALYSIS_FIRST,
+    TA_MAP_AMBIENTLIGHT,
+    TA_SKY_SPHEREFADEOUT,
+    TEXTURE_ANALYSIS_COUNT
+} texture_analysisid_t;
+
+#define VALID_TEXTURE_ANALYSISID(id) (\
+    (id) >= TEXTURE_ANALYSIS_FIRST && (id) < TEXTURE_ANALYSIS_COUNT)
+
 /**
  * Texture
  *
@@ -37,18 +48,22 @@ typedef struct texture_s {
     /// Unique identifier.
     textureid_t _id;
 
-    /// List of variants (e.g., color translations).
-    struct texture_variantlist_node_s* _variants;
-
     /// Type specific index (e.g., if _texNamespace=TN_FLATS this is a flat index).
     int _index;
-
-    /// Symbolic name.
-    char _name[9];
 
     /// Unique Texture Namespace Identifier.
     /// \todo make external.
     texturenamespaceid_t _texNamespace;
+
+    /// List of variants (e.g., color translations).
+    struct texture_variantlist_node_s* _variants;
+
+    /// Table of analyses object ptrs, used for various purposes depending
+    /// on the variant specification.
+    void* _analyses[TEXTURE_ANALYSIS_COUNT];
+
+    /// Symbolic name.
+    char _name[9];
 } texture_t;
 
 texture_t* Texture_Construct(textureid_t id, const char name[9],
@@ -77,6 +92,25 @@ struct texturevariant_s* Texture_AddVariant(texture_t* tex, struct texturevarian
 int Texture_IterateVariants(texture_t* tex,
     int (*callback)(struct texturevariant_s* instance, void* paramaters),
     void* paramaters);
+
+/**
+ * Attach new analysis data. If data is already present it will be replaced.
+ * Ownership is given to the Texture.
+ *
+ * @param analysis  Identifier of the data being attached.
+ * @param data  Data to be attached.
+ */
+void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis, void* data);
+
+/**
+ * Detach any associated analysis data. Ownership is relinquished to caller.
+ *
+ * @return  Associated data for the specified analysis identifier.
+ */
+void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis);
+
+/// @return  Associated data for the specified analysis identifier.
+void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis);
 
 /// @return  Unique identifier.
 textureid_t Texture_Id(const texture_t* tex);

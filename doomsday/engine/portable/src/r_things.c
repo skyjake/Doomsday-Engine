@@ -1434,7 +1434,8 @@ if(!mat)
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
         tex = ms.units[MTU_PRIMARY].tex;
-        pl = (const pointlight_analysis_t*) TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT);
+        pl = (const pointlight_analysis_t*) Texture_Analysis(
+            TextureVariant_GeneralCase(tex), TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)
             return; // Not good...
 

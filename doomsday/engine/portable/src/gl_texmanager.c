@@ -58,6 +58,11 @@
 #include "texture.h"
 #include "texturevariant.h"
 
+typedef enum {
+    METHOD_IMMEDIATE = 0,
+    METHOD_DEFERRED
+} uploadcontentmethod_t;
+
 typedef struct {
     const char* name; // Format/handler name.
     const char* ext; // Expected file extension.
@@ -450,6 +455,15 @@ static void destroyVariantSpecifications(void)
     }}
 }
 
+static uploadcontentmethod_t chooseContentUploadMethod(const texturecontent_t* content)
+{
+    // Must the operation be carried out immediately?
+    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
+        return METHOD_IMMEDIATE;
+    // We can defer.
+    return METHOD_DEFERRED;
+}
+
 typedef enum {
     METHOD_MATCH = 0,
     METHOD_FUZZY
@@ -502,7 +516,7 @@ static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* 
     }
 }
 
-int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
+static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
 {
     // Have we uploaded yet?
     if(TextureVariant_IsUploaded(variant))
@@ -550,6 +564,41 @@ static void destroyTextures(void)
         }
         memset(texNamespace->hashTable, 0, sizeof(textureNamespaces[i].hashTable));
     }}
+}
+
+static void uploadContent(uploadcontentmethod_t uploadMethod, const texturecontent_t* content)
+{
+    assert(content);
+    if(METHOD_IMMEDIATE == uploadMethod)
+    {   // Do this right away. No need to take a copy.
+        GL_UploadTextureContent(content);
+        return;
+    }
+    // Defer this operation. Need to make a copy.
+    GL_EnqueueDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+}
+
+static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
+    const texturecontent_t* content, texturevariant_t* variant)
+{
+    assert(content && variant);
+    uploadContent(uploadMethod, content);
+    TextureVariant_FlagUploaded(variant, true);
+    return uploadMethod;
+}
+
+static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
+    const texturecontent_t* content)
+{
+    assert(content);
+    if(METHOD_IMMEDIATE == uploadMethod)
+    {
+#ifdef _DEBUG
+        Con_Message("Uploading unmanaged texture (%i:%ix%i) while not busy! Should be "
+            "precached in busy mode?\n", content->name, content->width, content->height);
+#endif
+    }
+    uploadContent(uploadMethod, content);
 }
 
 static const dduri_t* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
@@ -748,7 +797,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
     }
 }
 
-static void prepareVariant(texturevariant_t* tex, image_t* image)
+static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* image)
 {
     assert(tex && image);
     {
@@ -758,8 +807,9 @@ static void prepareVariant(texturevariant_t* tex, image_t* image)
     boolean scaleSharp    = (spec->flags & TSF_UPSCALE_AND_SHARPEN) != 0;
     int wrapS = spec->wrapS, wrapT = spec->wrapT;
     int magFilter, minFilter, anisoFilter, grayMipmap = 0, flags = 0;
-    boolean noSmartFilter = false, didDefer = false;
+    boolean noSmartFilter = false;
     dgltexformat_t dglFormat;
+    texturecontent_t c;
     float s, t;
 
     if(spec->toAlpha)
@@ -928,42 +978,12 @@ static void prepareVariant(texturevariant_t* tex, image_t* image)
 
     anisoFilter = spec->anisoFilter < 0? texAniso : spec->anisoFilter;
 
-    // Upload texture content.
-    {
-    texturecontent_t c;
-    GL_InitTextureContent(&c);
-    c.name = TextureVariant_GLName(tex);
-    c.format = dglFormat;
-    c.width = image->width;
-    c.height = image->height;
-    c.pixels = image->pixels;
-    c.palette = image->palette;
-    c.flags = flags;
-    c.magFilter = magFilter;
-    c.minFilter = minFilter;
-    c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
-    c.grayMipmap = grayMipmap;
-    didDefer = GL_NewTexture(&c);
-    }
-
-    TextureVariant_FlagUploaded(tex, true);
-    TextureVariant_FlagMasked(tex, (image->flags & IMGF_IS_MASKED) != 0);
-
-#ifdef _DEBUG
-    VERBOSE( Con_Printf("Prepared TextureVariant \"%s\" (glName:%u)%s\n",
-        Texture_Name(TextureVariant_GeneralCase(tex)), (unsigned int) TextureVariant_GLName(tex),
-        !didDefer? " while not busy!" : "") );
-    VERBOSE2( GL_PrintTextureVariantSpecification(TextureVariant_Spec(tex)) );
-#endif
-
     /**
      * Calculate texture coordinates based on the image dimensions. The
      * coordinates are calculated as width/CeilPow2(width), or 1 if larger
      * than the maximum texture size.
      *
-     * \fixme Image dimensions may not be the same as the uploaded texture!
+     * \fixme Image dimensions may not be the same as the final uploaded texture!
      */
     if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        (!GL_state.features.texNonPowTwo || spec->mipmapped))
@@ -978,79 +998,33 @@ static void prepareVariant(texturevariant_t* tex, image_t* image)
     }
 
     TextureVariant_SetCoords(tex, s, t);
+    TextureVariant_FlagMasked(tex, (image->flags & IMGF_IS_MASKED) != 0);
 
-    if(TC_SKYSPHERE_DIFFUSE == spec->context)
-    {
-        averagecolor_analysis_t* avgTopColor;
-        if(NULL == (avgTopColor = (averagecolor_analysis_t*)TextureVariant_Analysis(tex, TA_SKY_SPHEREFADECOLOR)))
-        {
-            if(NULL == (avgTopColor = (averagecolor_analysis_t*) malloc(sizeof(*avgTopColor))))
-                Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
-                          "new AverageColorAnalysis.", (unsigned long) sizeof(*avgTopColor));
-            TextureVariant_AddAnalysis(tex, TA_SKY_SPHEREFADECOLOR, avgTopColor);
-        }
+    GL_InitTextureContent(&c);
+    c.name = TextureVariant_GLName(tex);
+    c.format = dglFormat;
+    c.width = image->width;
+    c.height = image->height;
+    c.pixels = image->pixels;
+    c.palette = image->palette;
+    c.flags = flags;
+    c.magFilter = magFilter;
+    c.minFilter = minFilter;
+    c.anisoFilter = anisoFilter;
+    c.wrap[0] = wrapS;
+    c.wrap[1] = wrapT;
+    c.grayMipmap = grayMipmap;
 
-        // Average color for glow planes and top line color.
-        if(0 == image->palette)
-        {
-            FindAverageLineColor(image->pixels, image->width, image->height, image->pixelSize, 0, avgTopColor->color);
-        }
-        else
-        {
-            FindAverageLineColorIdx(image->pixels, image->width, image->height, 0, R_ToColorPalette(image->palette), false, avgTopColor->color);
-        }
-   }
-   
-    if(TC_SPRITE_DIFFUSE == spec->context)
-    {
-        pointlight_analysis_t* pl;
-        if(NULL == (pl = (pointlight_analysis_t*)TextureVariant_Analysis(tex, TA_SPRITE_AUTOLIGHT)))
-        {
-            if(NULL == (pl = (pointlight_analysis_t*) malloc(sizeof(*pl))))
-                Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
-                          "new PointLightAnalysis.", (unsigned long) sizeof(*pl));
-            TextureVariant_AddAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
-        }
-        // Calculate light source properties.
-        GL_CalcLuminance(image->pixels, image->width, image->height, image->pixelSize, image->palette,
-                         &pl->originX, &pl->originY, pl->color, &pl->brightMul);
-    }
-
-    if(TC_MAPSURFACE_DIFFUSE == spec->context ||
-       TC_SKYSPHERE_DIFFUSE  == spec->context)
-    {
-        ambientlight_analysis_t* al;
-        if(NULL == (al = (ambientlight_analysis_t*)TextureVariant_Analysis(tex, TA_MAP_AMBIENTLIGHT)))
-        {
-            if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
-                Con_Error("Textures::prepareTextureVariant: Failed on allocation of %lu bytes for "
-                          "new AmbientLightAnalysis.", (unsigned long) sizeof(*al));
-            TextureVariant_AddAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
-        }
-
-        if(0 == image->palette)
-        {
-            FindAverageColor(image->pixels, image->width, image->height, image->pixelSize, al->color);
-        }
-        else
-        {
-            FindAverageColorIdx(image->pixels, image->width, image->height, R_ToColorPalette(image->palette), false, al->color);
-        }
-        memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
-        amplify(al->colorAmplified);
-    }
-
-    GL_DestroyImagePixels(image);
+    return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
     }
 }
 
-static void prepareDetailVariant(texturevariant_t* tex, image_t* image)
+static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t* image)
 {
     assert(tex && image);
     {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
     texturecontent_t c;
-    boolean didDefer;
     int flags = 0;
 
     if(image->pixelSize > 2)
@@ -1077,7 +1051,6 @@ static void prepareDetailVariant(texturevariant_t* tex, image_t* image)
     TextureVariant_SetCoords(tex, s, t);
     }
 
-    // Upload texture content.
     GL_InitTextureContent(&c);
     c.name = TextureVariant_GLName(tex);
     c.format = DGL_LUMINANCE;
@@ -1092,18 +1065,7 @@ static void prepareDetailVariant(texturevariant_t* tex, image_t* image)
     c.wrap[0] = GL_REPEAT;
     c.wrap[1] = GL_REPEAT;
 
-    didDefer = GL_NewTexture(&c);
-    TextureVariant_FlagUploaded(tex, true);
-
-    // We're done with the image data.
-    GL_DestroyImagePixels(image);
-
-#ifdef _DEBUG
-    VERBOSE( Con_Printf("Prepared TextureVariant \"%s\" (glName:%u)%s\n",
-        Texture_Name(TextureVariant_GeneralCase(tex)), (unsigned int) TextureVariant_GLName(tex),
-        !didDefer? " while not busy!" : "") );
-    VERBOSE2( GL_PrintTextureVariantSpecification(TextureVariant_Spec(tex)) );
-#endif
+    return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
     }
 }
 
@@ -1434,6 +1396,14 @@ void GL_InitImage(image_t* img)
     img->flags = 0;
     img->palette = 0;
     img->pixels = 0;
+}
+
+void GL_PrintImageMetadata(const image_t* image)
+{
+    assert(image);
+    Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->width, image->height,
+        image->flags, 0 != image->palette? "colorpalette" : "pixelsize",
+        0 != image->palette? image->palette : image->pixelSize);
 }
 
 static boolean tryLoadPCX(image_t* img, DFILE* file)
@@ -1861,27 +1831,29 @@ DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
     boolean flagNoSmartFilter, int minFilter, int magFilter, int anisoFilter,
     int wrapS, int wrapT, int otherFlags)
 {
-    texturecontent_t content;
+    texturecontent_t c;
 
-    GL_InitTextureContent(&content);
-    content.pixels = pixels;
-    content.format = format;
-    content.width = width;
-    content.height = height;
-    content.flags = otherFlags;
-    if(flagGenerateMipmaps) content.flags |= TXCF_MIPMAP;
-    if(flagNoStretch) content.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-    if(flagNoSmartFilter) content.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
-    content.minFilter = minFilter;
-    content.magFilter = magFilter;
-    content.anisoFilter = anisoFilter;
-    content.wrap[0] = wrapS;
-    content.wrap[1] = wrapT;
-    content.name = GL_GetReservedTextureName();
-    GL_NewTexture(&content);
-    return content.name;
+    GL_InitTextureContent(&c);
+    c.name = GL_GetReservedTextureName();
+    c.pixels = pixels;
+    c.format = format;
+    c.width = width;
+    c.height = height;
+    c.flags = otherFlags;
+    if(flagGenerateMipmaps) c.flags |= TXCF_MIPMAP;
+    if(flagNoStretch) c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+    if(flagNoSmartFilter) c.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
+    c.minFilter = minFilter;
+    c.magFilter = magFilter;
+    c.anisoFilter = anisoFilter;
+    c.wrap[0] = wrapS;
+    c.wrap[1] = wrapT;
+
+    uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
+    return c.name;
 }
 
+/// \important Texture parameters will NOT be set here!
 DGLuint GL_UploadTextureContent(const texturecontent_t* content)
 {
     assert(content);
@@ -3077,14 +3049,102 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
     return GL_TextureIndexForUri2(uri, false);
 }
 
+static void performImageAnalyses(texture_t* tex, const image_t* image,
+    const texturevariantspecification_t* spec, boolean forceUpdate)
+{
+    assert(spec && image);
+
+    // Calculate a point light source for Dynlight and/or Halo?
+    if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
+    {
+        pointlight_analysis_t* pl = (pointlight_analysis_t*) Texture_Analysis(tex, TA_SPRITE_AUTOLIGHT);
+        boolean firstInit = (NULL == pl);
+
+        if(firstInit)
+        {
+            if(NULL == (pl = (pointlight_analysis_t*) malloc(sizeof(*pl))))
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
+                    "new PointLightAnalysis.", (unsigned long) sizeof(*pl));
+            Texture_AttachAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
+        }
+
+        if(firstInit || forceUpdate)
+            GL_CalcLuminance(image->pixels, image->width, image->height, image->pixelSize,
+                image->palette, &pl->originX, &pl->originY, pl->color, &pl->brightMul);
+    }
+
+    // Average color for plane glow and/or sky light color?
+    if(TST_GENERAL == spec->type &&
+       (TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec)->context ||
+        TC_SKYSPHERE_DIFFUSE  == TS_GENERAL(spec)->context))
+    {
+        ambientlight_analysis_t* al = (ambientlight_analysis_t*) Texture_Analysis(tex, TA_MAP_AMBIENTLIGHT);
+        boolean firstInit = (NULL == al);
+
+        if(firstInit)
+        {
+            if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
+                    "new AmbientLightAnalysis.", (unsigned long) sizeof(*al));
+            Texture_AttachAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image->palette)
+            {
+                FindAverageColor(image->pixels, image->width, image->height,
+                    image->pixelSize, al->color);
+            }
+            else
+            {
+                FindAverageColorIdx(image->pixels, image->width, image->height,
+                    R_ToColorPalette(image->palette), false, al->color);
+            }
+            memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
+            amplify(al->colorAmplified);
+        }
+    }
+
+    // Average top line color for sky sphere fadeout?
+    if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
+    {
+        averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_SPHEREFADEOUT);
+        boolean firstInit = (NULL == sf);
+
+        if(firstInit)
+        {
+            if(NULL == (sf = (averagecolor_analysis_t*) malloc(sizeof(*sf))))
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
+                    "new AverageColorAnalysis.", (unsigned long) sizeof(*sf));
+            Texture_AttachAnalysis(tex, TA_SKY_SPHEREFADEOUT, sf);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image->palette)
+            {
+                FindAverageLineColor(image->pixels, image->width, image->height,
+                    image->pixelSize, 0, sf->color);
+            }
+            else
+            {
+                FindAverageLineColorIdx(image->pixels, image->width, image->height,
+                    0, R_ToColorPalette(image->palette), false, sf->color);
+            }
+        }
+    }
+}
+
 static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     texturevariantspecification_t* spec, texturevariant_t* variant,
     byte* result)
 {
     assert(texInited && spec);
     {
-    image_t image;
+    uploadcontentmethod_t uploadMethod;
     byte loadResult;
+    image_t image;
     
     // Load the source image data.
     if(TN_TEXTURES == Texture_Namespace(tex))
@@ -3129,6 +3189,8 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
         return NULL;
     }
 
+    performImageAnalyses(tex, &image, spec, true /*Always update*/);
+
     // Do we need to allocate a variant?
     if(NULL == variant)
     {
@@ -3143,12 +3205,29 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
         TextureVariant_SetGLName(variant, newGLName);
     }
 
-    // (Re)Prepare the variant according to the usage context.
+    // (Re)Prepare the variant according to specification.
     switch(spec->type)
     {
-    case TST_GENERAL: prepareVariant(variant, &image); break;
-    case TST_DETAIL:  prepareDetailVariant(variant, &image); break;
+    case TST_GENERAL: uploadMethod = prepareVariant(variant, &image); break;
+    case TST_DETAIL:  uploadMethod = prepareDetailVariant(variant, &image); break;
     }
+
+    // We're done with the image data.
+    GL_DestroyImagePixels(&image);
+
+#ifdef _DEBUG
+    VERBOSE(
+        Con_Printf("Prepared TextureVariant (name:\"%s\" glName:%u)%s\n",
+            Texture_Name(tex), (unsigned int) TextureVariant_GLName(variant),
+            (METHOD_IMMEDIATE == uploadMethod)? " while not busy!" : "");
+        )
+    VERBOSE2(
+        Con_Printf("  Content: ");
+        GL_PrintImageMetadata(&image);
+        Con_Printf("  Specification: ");
+        GL_PrintTextureVariantSpecification(spec);
+        )
+#endif
 
     return variant;
     }
@@ -3216,6 +3295,13 @@ void GL_ReleaseGLTexturesForTexture(texture_t* tex)
 {
     assert(tex);
     Texture_IterateVariants(tex, releaseVariantGLTexture, 0);
+    { int i;
+    for(i = (int) TEXTURE_ANALYSIS_FIRST; i < (int) TEXTURE_ANALYSIS_COUNT; ++i)
+    {
+        void* data = Texture_DetachAnalysis(tex, (texture_analysisid_t) i);
+        if(NULL != data)
+            free(data);
+    }}
 }
 
 void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace)
@@ -3335,48 +3421,31 @@ void GL_DestroyTextureContent(texturecontent_t* content)
     free(content);
 }
 
-boolean GL_NewTexture(const texturecontent_t* content)
-{
-    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
-    {
-#ifdef _DEBUG
-        Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! Should be "
-            "precached in busy mode?\n", content->name, content->width, content->height);
-#endif
-
-        // Let's do this right away. No need to take a copy.
-        GL_UploadTextureContent(content);
-        return false;
-    }
-    // Defer this operation. Need to make a copy.
-    GL_EnqueueDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
-    return true;
-}
-
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags)
 {
     texturecontent_t c;
 
     GL_InitTextureContent(&c);
+    c.name = GL_GetReservedTextureName();
     c.format = format;
     c.width = width;
     c.height = height;
     c.pixels = pixels;
     c.flags = flags;
-    c.name = GL_GetReservedTextureName();
-    GL_NewTexture(&c);
+
+    uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
     return c.name;
 }
 
-DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width, int height,
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT, boolean* didDefer)
+    int anisoFilter, int wrapS, int wrapT)
 {
     texturecontent_t c;
-    boolean deferred;
 
     GL_InitTextureContent(&c);
+    c.name = GL_GetReservedTextureName();
     c.format = format;
     c.width = width;
     c.height = height;
@@ -3388,19 +3457,9 @@ DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width, int height,
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
     c.grayMipmap = grayMipmap;
-    c.name = GL_GetReservedTextureName();
-    deferred = GL_NewTexture(&c);
-    if(didDefer)
-        *didDefer = deferred;
-    return c.name;
-}
 
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT)
-{
-    return GL_NewTextureWithParams3(format, width, height, pixels, flags,
-        grayMipmap, minFilter, magFilter, anisoFilter, wrapS, wrapT, NULL);
+    uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
+    return c.name;
 }
 
 D_CMD(LowRes)

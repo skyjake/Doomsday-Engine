@@ -158,10 +158,10 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
     int width, int height, float grayFactor);
 
 /**
- * Can be rather time-consuming due to scaling operations and mipmap
- * generation. The texture parameters will NOT be set here.
+ * \note Can be rather time-consuming due to forced scaling operations and
+ * the generation of mipmaps.
  *
- * @return  The name of the texture.
+ * @return  Name of the resultant GL texture object.
  */
 DGLuint GL_UploadTextureContent(const struct texturecontent_s* content);
 
@@ -170,19 +170,11 @@ DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
     boolean flagNoStretch, boolean flagNoSmartFilter, int minFilter,
     int magFilter, int anisoFilter, int wrapS, int wrapT, int otherFlags);
 
-/**
- * @return  @c true iff this operation was deferred.
- */
-boolean GL_NewTexture(const struct texturecontent_s* content);
-
 DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags);
 DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
-DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT, boolean* didDefer);
 
 /**
  * @return  The outcome:

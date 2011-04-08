@@ -1354,7 +1354,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         if(TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec->primarySpec)->context)
         {
             const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
-                TextureVariant_Analysis(layerTextures[0], TA_SKY_SPHEREFADECOLOR);
+                Texture_Analysis(TextureVariant_GeneralCase(layerTextures[0]), TA_SKY_SPHEREFADEOUT);
             assert(avgTopColor);
             snapshot->topColor[CR] = avgTopColor->color[CR];
             snapshot->topColor[CG] = avgTopColor->color[CG];
@@ -1369,7 +1369,7 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
            TC_SKYSPHERE_DIFFUSE  == TS_GENERAL(spec->primarySpec)->context)
         {
             const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
-                TextureVariant_Analysis(layerTextures[0], TA_MAP_AMBIENTLIGHT);
+                Texture_Analysis(TextureVariant_GeneralCase(layerTextures[0]), TA_MAP_AMBIENTLIGHT);
             assert(ambientLight);
             snapshot->color[CR] = ambientLight->color[CR];
             snapshot->color[CG] = ambientLight->color[CG];

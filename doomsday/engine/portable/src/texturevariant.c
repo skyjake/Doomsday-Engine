@@ -42,7 +42,6 @@ texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
     tex->_flags = 0;
     tex->_s = tex->_t = 0;
     tex->_glName = glName;
-    memset(tex->_analyses, 0, sizeof(tex->_analyses));
     return tex;
     }
 }
@@ -50,11 +49,6 @@ texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
 void TextureVariant_Destruct(texturevariant_t* tex)
 {
     assert(tex);
-    { int i;
-    for(i = 0; i < TEXTUREVARIANT_ANALYSIS_COUNT; ++i)
-        if(tex->_analyses[i])
-            free(tex->_analyses[i]);
-    }
     free(tex);
 }
 
@@ -113,23 +107,6 @@ texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex)
 {
     assert(tex);
     return tex->_spec;
-}
-
-void* TextureVariant_Analysis(const texturevariant_t* tex,
-    texturevariant_analysisid_t analysis)
-{
-    assert(tex && VALID_TEXTUREVARIANT_ANALYSISID(analysis));
-    return tex->_analyses[analysis];
-}
-
-void TextureVariant_AddAnalysis(texturevariant_t* tex, texturevariant_analysisid_t analysis,
-    void* data)
-{
-    assert(tex && VALID_TEXTUREVARIANT_ANALYSISID(analysis));
-    if(NULL != tex->_analyses[analysis])
-        Con_Message("Warning, image analysis #%i already present for \"%s\" (%i), replacing.\n",
-                    (int) analysis, Texture_Name(TextureVariant_GeneralCase(tex)), tex->_glName);
-    tex->_analyses[analysis] = data;
 }
 
 DGLuint TextureVariant_GLName(const texturevariant_t* tex)

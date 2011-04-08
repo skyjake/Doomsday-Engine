@@ -28,17 +28,6 @@
 
 struct texture_s;
 
-typedef enum {
-    TEXTUREVARIANT_ANALYSIS_FIRST = 0,
-    TA_SPRITE_AUTOLIGHT = TEXTUREVARIANT_ANALYSIS_FIRST,
-    TA_MAP_AMBIENTLIGHT,
-    TA_SKY_SPHEREFADECOLOR,
-    TEXTUREVARIANT_ANALYSIS_COUNT
-} texturevariant_analysisid_t;
-
-#define VALID_TEXTUREVARIANT_ANALYSISID(id) (\
-    (id) >= TEXTUREVARIANT_ANALYSIS_FIRST && (id) < TEXTUREVARIANT_ANALYSIS_COUNT)
-
 /**
  * @defgroup textureVariantFlags  Texture Variant Flags
  * @{
@@ -48,10 +37,6 @@ typedef enum {
 /**@}*/
 
 typedef struct texturevariant_s {
-    /// Table of analyses object ptrs, used for various purposes depending
-    /// on the variant specification.
-    void* _analyses[TEXTUREVARIANT_ANALYSIS_COUNT];
-
     /// Superior Texture of which this is a derivative.
     struct texture_s* _generalCase;
 
@@ -98,19 +83,5 @@ void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t);
 
 DGLuint TextureVariant_GLName(const texturevariant_t* tex);
 void TextureVariant_SetGLName(texturevariant_t* tex, DGLuint glName);
-
-/// @return  Associated data for the specified analysis identifier.
-void* TextureVariant_Analysis(const texturevariant_t* tex,
-    texturevariant_analysisid_t analysis);
-
-/**
- * Attach new analysis data to the variant. If data is already present
- * it will be replaced.
- *
- * @param analysis  Identifier of the data being attached.
- * @param data  Data to be attached. Ownership is given to the variant.
- */
-void TextureVariant_AddAnalysis(texturevariant_t* tex,
-    texturevariant_analysisid_t analysis, void* data);
 
 #endif /* LIBDENG_GL_TEXTUREVARIANT_H */

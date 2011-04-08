@@ -59,7 +59,9 @@ typedef struct image_s {
     uint8_t* pixels;
 } image_t;
 
-void GL_InitImage(image_t* img);
+void GL_InitImage(image_t* image);
+
+void GL_PrintImageMetadata(const image_t* image);
 
 /**
  * Loads PCX, TGA and PNG images. The returned buffer must be freed
@@ -67,11 +69,11 @@ void GL_InitImage(image_t* img);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t* GL_LoadImage(image_t* img, const char* filePath);
-uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath);
+uint8_t* GL_LoadImage(image_t* image, const char* filePath);
+uint8_t* GL_LoadImageStr(image_t* image, const ddstring_t* filePath);
 
 /// Release image pixel data.
-void GL_DestroyImagePixels(image_t* img);
+void GL_DestroyImagePixels(image_t* image);
 
 /// @return  @c true if the image pixel data contains alpha information.
 boolean GL_ImageHasAlpha(const image_t* image);

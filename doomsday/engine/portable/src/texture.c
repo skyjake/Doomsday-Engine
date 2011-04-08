@@ -44,15 +44,15 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
     assert(rawName && rawName[0] && VALID_TEXTURENAMESPACE(texNamespace));
     {
     texture_t* tex;
-
     if(NULL == (tex = (texture_t*) malloc(sizeof(*tex))))
         Con_Error("Texture::Construct: Failed on allocation of %lu bytes for "
-                  "new Texture.", (unsigned long) sizeof(*tex));
+            "new Texture.", (unsigned long) sizeof(*tex));
 
     tex->_id = id;
     tex->_variants = NULL;
     tex->_index = index;
     tex->_texNamespace = texNamespace;
+    memset(tex->_analyses, 0, sizeof(tex->_analyses));
 
     // Prepare name for hashing.
     memset(tex->_name, 0, sizeof(tex->_name));
@@ -84,6 +84,16 @@ static void destroyVariants(texture_t* tex)
         TextureVariant_Destruct(variant);
         free(tex->_variants);
         tex->_variants = next;
+    }
+}
+
+static void destroyAnalyses(texture_t* tex)
+{
+    assert(tex);
+    { int i;
+    for(i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
+        if(tex->_analyses[i])
+            free(tex->_analyses[i]);
     }
 }
 
@@ -280,5 +290,31 @@ int Texture_IterateVariants(texture_t* tex,
         }
     }
     return result;
+    }
+}
+
+void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis)
+{
+    assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
+    return tex->_analyses[analysis];
+}
+
+void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
+    void* data)
+{
+    assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
+    if(NULL != tex->_analyses[analysis])
+        Con_Message("Warning, image analysis #%i already present for \"%s\", "
+            "will replace.\n", (int) analysis, tex->_name);
+    tex->_analyses[analysis] = data;
+}
+
+void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis)
+{
+    assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
+    {
+    void* data = tex->_analyses[analysis];
+    tex->_analyses[analysis] = NULL;
+    return data;
     }
 }
