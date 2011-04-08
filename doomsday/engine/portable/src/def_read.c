@@ -2037,49 +2037,6 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 {
                     READURI(&decor->material, MN_FLATS_NAME)
                 }
-                else if(ISLABEL("Model"))
-                {
-                    ded_decormodel_t *dm = &decor->models[sub];
-
-                    if(sub == DED_DECOR_NUM_MODELS)
-                    {
-                        SetError("Too many models in decoration.");
-                        retVal = false;
-                        goto ded_end_read;
-                    }
-
-                    FINDBEGIN;
-                    for(;;)
-                    {
-                        READLABEL;
-                        RV_VEC("Offset", dm->pos, 2)
-                        RV_FLT("Distance", dm->elevation)
-                        RV_IVEC("Pattern offset", dm->patternOffset, 2)
-                        RV_IVEC("Pattern skip", dm->patternSkip, 2)
-                        if(ISLABEL("Levels"))
-                        {
-                            int                     b;
-
-                            FINDBEGIN;
-                            for(b = 0; b < 2; ++b)
-                            {
-                                READFLT(dm->lightLevels[b])
-                                dm->lightLevels[b] /= 255.0f;
-                                if(dm->lightLevels[b] < 0)
-                                    dm->lightLevels[b] = 0;
-                                else if(dm->lightLevels[b] > 1)
-                                    dm->lightLevels[b] = 1;
-                            }
-                            ReadToken();
-                        }
-                        else
-                        RV_STR("ID", dm->id)
-                        RV_FLT("Frame interval", dm->frameInterval)
-                        RV_END
-                        CHECKSC;
-                    }
-                    sub++;
-                }
                 else if(ISLABEL("Light"))
                 {
                     ded_decorlight_t *dl = &decor->lights[sub];

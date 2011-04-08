@@ -686,10 +686,10 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     sec->planes = newList;
 }
 
-surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf)
+surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf)
 {
-    uint                i;
-    surfacedecor_t     *d, *s, *decorations;
+    surfacedecor_t* d, *s, *decorations;
+    uint i;
 
     if(!suf)
         return NULL;
@@ -713,7 +713,6 @@ surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf)
 
     // Add the new decoration.
     d = &decorations[suf->numDecorations - 1];
-    d->type = type;
 
     suf->decorations = decorations;
 

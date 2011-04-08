@@ -169,31 +169,10 @@ internal
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
-// Decoration types.
-typedef enum {
-    DT_LIGHT,
-    DT_MODEL,
-    NUM_DECORTYPES
-} decortype_t;
-
-// Helper macros for accessing decor data.
-#define DEC_LIGHT(x)         (&((x)->data.light))
-#define DEC_MODEL(x)         (&((x)->data.model))
-
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
-    decortype_t         type;
     subsector_t*		subsector;
-    union surfacedecor_data_u {
-        struct surfacedecor_light_s {
-            const struct ded_decorlight_s* def;
-        } light;
-        struct surfacedecor_model_s {
-            const struct ded_decormodel_s* def;
-            struct modeldef_s* mf;
-            float               pitch, yaw;
-        } model;
-    } data;
+    const struct ded_decorlight_s* def;
 } surfacedecor_t;
 end
 

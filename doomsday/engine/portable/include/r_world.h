@@ -98,7 +98,7 @@ boolean         R_FindBottomTop(segsection_t section, float segOffset,
 plane_t*        R_NewPlaneForSector(sector_t* sec);
 void            R_DestroyPlaneOfSector(uint id, sector_t* sec);
 
-surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t* suf);
+surfacedecor_t* R_CreateSurfaceDecoration(surface_t* suf);
 void            R_ClearSurfaceDecorations(surface_t* suf);
 
 void            R_UpdateWatchedPlanes(watchedplanelist_t* wpl);

@@ -424,24 +424,10 @@ typedef struct ded_decorlight_s {
 // There is a fixed number of light decorations in each decoration.
 #define DED_DECOR_NUM_LIGHTS    16
 
-typedef struct ded_decormodel_s {
-    float           pos[2]; // Coordinates on the surface.
-    float           elevation; // Distance from the surface.
-    int             patternOffset[2];
-    int             patternSkip[2];
-    float           lightLevels[2]; // Fade by sector lightlevel.
-    ded_stringid_t  id;
-    float           frameInterval; // Seconds per frame.
-} ded_decormodel_t;
-
-// There is a fixed number of model decorations in each decoration.
-#define DED_DECOR_NUM_MODELS    8
-
 typedef struct ded_decor_s {
     dduri_t*        material;
     ded_flags_t     flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
-    ded_decormodel_t models[DED_DECOR_NUM_MODELS];
 } ded_decor_t;
 
 typedef struct ded_reflection_s {

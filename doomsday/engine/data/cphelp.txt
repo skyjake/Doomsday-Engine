@@ -816,9 +816,6 @@ desc = 1=Precache sprites at level setup (slow).
 [rend-model]
 desc = Render using 3D models when possible.
 
-[rend-model-decor]
-desc = 1=Enable surface model decorations.
-
 [rend-model-lights]
 desc = Maximum number of light sources on models.
 

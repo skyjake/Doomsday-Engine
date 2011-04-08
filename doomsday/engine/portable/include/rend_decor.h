@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_decor.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 #ifndef LIBDENG_RENDER_DECOR_H
 #define LIBDENG_RENDER_DECOR_H
 
-extern byte     useDecorations[NUM_DECORTYPES];
+extern byte     useLightDecorations;
 extern float    decorMaxDist;  // No decorations are visible beyond this.
 extern float    decorLightBrightFactor;
 extern float    decorLightFadeAngle;
