@@ -610,6 +610,8 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
  */
 static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 {
+    static material_snapshot_t ms;
+
     switch(DMU_GetType(suf->owner))
     {
     case DMU_PLANE:
@@ -621,6 +623,13 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 
         // Only produce a light for sectors with open space.
         if(sec->SP_floorvisheight >= sec->SP_ceilvisheight)
+            return true; // Continue iteration.
+
+        // Are we glowing at this moment in time?
+        Materials_Prepare(&ms, suf->material, true,
+            Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+                GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
+        if(!(ms.glowing > .0001f))
             return true; // Continue iteration.
 
         // \note Plane lights do not spread so simply link to all subsectors of this sector.
