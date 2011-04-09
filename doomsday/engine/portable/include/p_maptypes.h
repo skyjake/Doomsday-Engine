@@ -140,8 +140,6 @@ typedef struct material_s {
     short               _flags;        // @see materialFlags
     boolean             _inAnimGroup;  // @c true if belongs to some animgroup.
     boolean             _isCustom;
-    uint                numLayers;     // \deprecated (old init stuff).
-    material_layer_t    layers[DDMAX_MATERIAL_LAYERS]; // \deprecated (old init stuff).
 } material_t;
 
 // Internal surface flags:

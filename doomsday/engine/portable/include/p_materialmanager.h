@@ -84,8 +84,8 @@ const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_
  *
  * \note: May fail on invalid definitions.
  *
- * @param def           Material definition to construct from.
- * @return              The created material, ELSE @c 0.
+ * @param def  Material definition to construct from.
+ * @return  The created material else @c 0.
  */
 struct material_s* Materials_CreateFromDef(ded_material_t* def);
 

@@ -446,21 +446,6 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
     return mat;
 }
 
-static material_t* createMaterialFromDef(int width, int height, short flags,
-    material_env_class_t envClass, const texture_t* tex, ded_material_t* def)
-{
-    material_t* mat = linkMaterialToGlobalList(allocMaterial());
-
-    mat->_isCustom = !Texture_IsFromIWAD(tex);
-    mat->_width = width;
-    mat->_height = height;
-    mat->_envClass = envClass;
-    mat->_def = def;
-    mat->numLayers = 1;
-    mat->layers[0].tex = Texture_Id(tex);
-    return mat;
-}
-
 static material_t* getMaterialByNum(materialnum_t num)
 {
     if(num < numMaterialBinds)
@@ -689,27 +674,17 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     assert(def);
     {
-    materialnamespaceid_t mnamespace = MN_ANY; // No change.
-    const texture_t* tex = NULL; // No change.
-    float width = -1, height = -1; // No change.
-    material_env_class_t envClass;
-    const dduri_t* rawName;
-    materialnum_t oldMat;
+    materialnamespaceid_t mnamespace = MN_ANY;
+    int width = def->width, height = def->height;
+    const dduri_t* rawName = def->id;
+    const texture_t* tex = NULL;
+    byte flags = def->flags;
     material_t* mat;
     char name[9];
-    byte flags;
     uint hash;
 
     if(!initedOk)
-        return 0;
-
-    // Sanitize so that when updating we only change what is requested.
-    if(def->width > 0)
-        width = MAX_OF(1, def->width);
-    if(def->height > 0)
-        height = MAX_OF(1, def->height);
-    rawName = def->id;
-    flags = def->flags;
+        return NULL;
 
     if(def->layers[0].stageCount.num > 0)
     {
@@ -720,7 +695,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             {
                 ddstring_t* materialPath = Uri_ToString(def->id);
                 ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
-                VERBOSE( Con_Message("Warning: Unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
+                VERBOSE( Con_Message("Warning, unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
                          Str_Text(texturePath), Str_Text(materialPath), 0, 0) );
                 Str_Delete(materialPath);
                 Str_Delete(texturePath);
@@ -734,9 +709,10 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     if(!rawName || Str_IsEmpty(Uri_Path(rawName)) || !Str_CompareIgnoreCase(Uri_Path(rawName), "-"))
     {
 #if _DEBUG
-ddstring_t* path = Uri_ToString(rawName);
-Con_Message("Warning: Attempted to create/update Material with invalid path \"%s\", ignoring.\n", Str_Text(path));
-Str_Delete(path);
+        ddstring_t* path = Uri_ToString(rawName);
+        Con_Message("Warning, attempted to create Material with invalid path \"%s\", ignoring.\n",
+            Str_Text(path));
+        Str_Delete(path);
 #endif
         return 0;
     }
@@ -752,80 +728,39 @@ Str_Delete(path);
 
     mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
-    if(mnamespace == MN_ANY)
-    {   // Caller doesn't care which namespace. This is only valid if we
-        // can find a material by this name using a priority search order.
-        oldMat = getMaterialNumForName(name, hash, MN_SPRITES);
-        if(!oldMat)
-            oldMat = getMaterialNumForName(name, hash, MN_TEXTURES);
-        if(!oldMat)
-            oldMat = getMaterialNumForName(name, hash, MN_FLATS);
-    }
-    else
+    if(!VALID_MATERIALNAMESPACE(mnamespace))
     {
-        if(!VALID_MATERIALNAMESPACE(mnamespace))
-        {
 #if _DEBUG
-Con_Message("Warning: Attempted to create/update Material in unknown Namespace '%i', ignoring.\n",
+        Con_Message("Warning, attempted to create Material in unknown Namespace '%i', ignoring.\n",
             (int) mnamespace);
 #endif
-            return 0;
-        }
-
-        oldMat = getMaterialNumForName(name, hash, mnamespace);
+        return NULL;
     }
 
-    envClass = S_MaterialClassForName(rawName);
-
-    if(oldMat)
-    {   // We are updating an existing material.
-        materialbind_t* mb = &materialBinds[oldMat - 1];
-        material_t* mat = mb->mat;
-
-        // Update the (possibly new) meta data.
-        mat->_flags = flags;
-        if(tex)
-            mat->layers[0].tex = Texture_Id(tex);
-        if(width > 0)
-            mat->_width = width;
-        if(height > 0)
-            mat->_height = height;
-        mat->_def = def;
-        mat->_envClass = envClass;
-        mat->_inAnimGroup = false;
-
-        mat->_isCustom = false;
-        { uint i;
-        for(i = 0; i < mat->numLayers; ++i)
-        {
-            if(0 == mat->layers[0].tex || Texture_IsFromIWAD(GL_ToTexture(mat->layers[0].tex)))
-                continue;
-            mat->_isCustom = true;
-            break;
-        }}
-
-        Materials_ClearTranslation(mb->mat);
-        return mat;
-    }
-
-    if(mnamespace == MN_ANY)
+    { materialnum_t matNum = getMaterialNumForName(name, hash, mnamespace);
+    if(0 != matNum)
     {
 #if _DEBUG
-        Con_Message("Warning: Attempted to create Material in unknown namespace, ignoring.\n");
+        ddstring_t* path = Uri_ToString(rawName);
+        Con_Message("Warning, a Material with the path \"%s\" already exists, returning existing.\n",
+            Str_Text(path));
+        Str_Delete(path);
 #endif
-        return NULL;
-    }
+        return getMaterialByNum(matNum);
+    }}
 
-    /**
-     * A new material.
-     */
-
-    // Only create complete materials.
-    // \todo Doing this here isn't ideal.
-    if(tex == 0 || !(width > 0) || !(height > 0))
+    // Only create complete Materials.
+    if(NULL == tex || 0 >= width || 0 >= height)
         return NULL;
 
-    mat = createMaterialFromDef(width, height, flags, envClass, tex, def);
+    // A new Material.
+    mat = linkMaterialToGlobalList(allocMaterial());
+    mat->_flags = flags;
+    mat->_isCustom = !Texture_IsFromIWAD(tex);
+    mat->_def    = def;
+    mat->_width  = width;
+    mat->_height = height;
+    mat->_envClass = S_MaterialClassForName(rawName);
     newMaterialNameBinding(mat, name, mnamespace, hash);
     return mat;
     }
@@ -1722,11 +1657,11 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
         ded_material_t* def = Material_Definition(mat);
         float interp;
 
-        if(def && def->layers[0].stageCount.num > 1)
+        /*if(def && def->layers[0].stageCount.num > 1)
         {
             if(GL_TextureByUri(def->layers[0].stages[0].texture))
                 continue; // Animated elsewhere.
-        }
+        }*/
 
         if(group->flags & AGF_SMOOTH)
         {

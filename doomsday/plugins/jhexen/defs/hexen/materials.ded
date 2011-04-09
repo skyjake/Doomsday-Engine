@@ -15,45 +15,122 @@ SkipIf -nodefaultfx;
 # Glowing flats:
 #
 
-Material {
-  ID = "flats:X_001";
+Material Mods "flats:X_001" {
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "flats:X_002"; }
-* Material { ID = "flats:X_003"; }
-* Material { ID = "flats:X_004"; }
+Material Mods "flats:X_002" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "flats:X_003" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "flats:X_004" {
+  Layer { Stage { Glow = .9; } }
+}
 
 #
 # Glowing textures:
 #
 
-Material {
-  ID = "textures:X_FIRE01";
+Material Mods "textures:X_FIRE01" {
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "textures:X_FIRE02"; }
-* Material { ID = "textures:X_FIRE03"; }
-* Material { ID = "textures:X_FIRE04"; }
-* Material { ID = "textures:X_FAC01"; }
-* Material { ID = "textures:X_FAC02"; }
-* Material { ID = "textures:X_FAC03"; }
-* Material { ID = "textures:X_FAC04"; }
-* Material { ID = "textures:X_FAC05"; }
-* Material { ID = "textures:X_FAC06"; }
-* Material { ID = "textures:X_FAC07"; }
-* Material { ID = "textures:X_FAC08"; }
-* Material { ID = "textures:X_FAC09"; }
-* Material { ID = "textures:X_FAC10"; }
-* Material { ID = "textures:X_FAC11"; }
-* Material { ID = "textures:X_FAC12"; }
-* Material { ID = "textures:TPORT1"; }
-* Material { ID = "textures:TPORT2"; }
-* Material { ID = "textures:TPORT3"; }
-* Material { ID = "textures:TPORT4"; }
-* Material { ID = "textures:TPORT5"; }
-* Material { ID = "textures:TPORT6"; }
-* Material { ID = "textures:TPORT7"; }
-* Material { ID = "textures:TPORT8"; }
-* Material { ID = "textures:TPORT9"; }
+Material Mods "textures:X_FIRE02" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FIRE03" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FIRE04" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC01" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC02" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC03" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC04" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC05" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC06" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC07" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC08" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC09" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC10" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC11" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:X_FAC12" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT1" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT2" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT3" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT4" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT5" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT6" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT7" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT8" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:TPORT9" {
+  Layer { Stage { Glow = .9; } }
+}

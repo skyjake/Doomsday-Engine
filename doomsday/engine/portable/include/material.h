@@ -69,8 +69,7 @@ int Material_IterateVariants(material_t* mat,
     int (*callback)(struct materialvariant_s* variant, void* paramaters),
     void* paramaters);
 
-/// @return  Definition from which this Material was derived,
-///          else @c NULL if generated automatically.
+/// @return  Definition from which this Material was derived.
 struct ded_material_s* Material_Definition(const material_t* mat);
 
 /// Retrieve logical dimensions.

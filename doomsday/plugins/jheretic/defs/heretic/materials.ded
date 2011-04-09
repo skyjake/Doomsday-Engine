@@ -15,23 +15,34 @@ SkipIf -nodefaultfx;
 # Glowing flats:
 #
 
-Material {
-  ID = "flats:FLATHUH1";
+Material Mods "flats:FLATHUH1" {
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "flats:FLATHUH2"; }
-* Material { ID = "flats:FLATHUH3"; }
-* Material { ID = "flats:FLATHUH4"; }
+Material Mods "flats:FLATHUH2" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "flats:FLATHUH3" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "flats:FLATHUH4" {
+  Layer { Stage { Glow = .9; } }
+}
 
 #
 # Glowing textures:
 #
 
-Material {
-  ID = "textures:LAVAFL1";
+Material Mods "textures:LAVAFL1" {
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "textures:LAVAFL2"; }
-* Material { ID = "textures:LAVAFL3"; }
+Material Mods "textures:LAVAFL2" {
+  Layer { Stage { Glow = .9; } }
+}
+
+Material Mods "textures:LAVAFL3" {
+  Layer { Stage { Glow = .9; } }
+}

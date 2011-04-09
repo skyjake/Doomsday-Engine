@@ -145,7 +145,7 @@ public
 end
 
 struct material
-    -       ded_material_s* _def  
+    -       ded_material_s* _def
     -       material_variantlist_node_s* _variants
     -       material_env_class_t _envClass // Environmental sound class.
     -       uint        _bindId // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
@@ -154,8 +154,6 @@ struct material
     -       short       _flags // @see materialFlags
     -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
     -       boolean     _isCustom
-    -       uint        numLayers // \deprecated (old init stuff).
-    -       material_layer_t[DDMAX_MATERIAL_LAYERS] layers // \deprecated (old init stuff).
 end
 
 internal

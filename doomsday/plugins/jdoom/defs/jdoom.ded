@@ -11,8 +11,7 @@ Header {
   Default model scale = 1.2;
 }
 
-Material {
-  ID = "flats:F_SKY1";
+Material Mods "flats:F_SKY1" {
   Flags = skymask;
 }
 

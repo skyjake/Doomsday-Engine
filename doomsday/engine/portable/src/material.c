@@ -144,7 +144,7 @@ boolean Material_HasDecorations(material_t* mat)
 int Material_LayerCount(const material_t* mat)
 {
     assert(mat);
-    return mat->numLayers;
+    return 1;
 }
 
 void Material_SetGroupAnimated(material_t* mat, boolean yes)

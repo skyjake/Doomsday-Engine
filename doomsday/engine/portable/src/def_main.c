@@ -365,23 +365,49 @@ ded_sky_t* Def_GetSky(const char* id)
     return NULL;
 }
 
+static ded_material_t* findMaterialDef(const dduri_t* uri)
+{
+    int i;
+    for(i = defs.count.materials.num - 1; i >= 0; i--)
+    {
+        ded_material_t* def = &defs.materials[i];
+
+        if(!def->id) continue;
+
+        if(Uri_Equality(def->id, uri))
+            return def;
+    }
+    return NULL;
+}
+
 ded_material_t* Def_GetMaterial(const dduri_t* uri)
 {
+    ded_material_t* def = NULL;
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
-        int i;
-        for(i = defs.count.materials.num - 1; i >= 0; i--)
-        {
-            ded_material_t* def = &defs.materials[i];
+        if(Str_IsEmpty(Uri_Scheme(uri)))
+        {   // Caller doesn't care which namespace - use a priority search order.
+            dduri_t* temp = Uri_Construct2(Str_Text(Uri_Path(uri)), RC_NULL);
 
-            if(!def->id) continue;
-
-            if((Str_IsEmpty(Uri_Scheme(uri)) || !stricmp(Str_Text(Uri_Scheme(def->id)), Str_Text(Uri_Scheme(uri)))) &&
-               !stricmp(Str_Text(Uri_Path(def->id)),   Str_Text(Uri_Path(uri))))
-                return def;
+            Uri_SetScheme(temp, MN_SPRITES_NAME);
+            def = findMaterialDef(temp);
+            if(NULL == def)
+            {
+                Uri_SetScheme(temp, MN_TEXTURES_NAME);
+                def = findMaterialDef(temp);
+            }
+            if(NULL == def)
+            {
+                Uri_SetScheme(temp, MN_FLATS_NAME);
+                def = findMaterialDef(temp);
+            }
+            Uri_Destruct(temp);
         }
+        
+        if(NULL == def)
+            def = findMaterialDef(uri);
     }
-    return 0;
+    return def;
 }
 
 ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)

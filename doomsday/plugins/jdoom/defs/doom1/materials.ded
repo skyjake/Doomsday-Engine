@@ -15,58 +15,160 @@ SkipIf -nodefaultfx;
 # Glowing flats:
 #
 
-Material {
-  ID = "flats:LAVA1";
+Material Mods "flats:LAVA1" {
   Layer {
       Stage { Glow = .9; Tics = 35; Rnd = .8; }
       Stage { Glow = .8; Tics = 35; Rnd = .8; }
   }
 }
 
-* Material { ID = "flats:LAVA2"; }
-* Material { ID = "flats:LAVA3"; }
-* Material { ID = "flats:LAVA4"; }
+Material Mods "flats:LAVA2" {
+  Layer {
+      Stage { Glow = .9; Tics = 35; Rnd = .8; }
+      Stage { Glow = .8; Tics = 35; Rnd = .8; }
+  }
+}
 
-* Material {
-  ID = "flats:NUKAGE1";
+Material Mods "flats:LAVA3" {
+  Layer {
+      Stage { Glow = .9; Tics = 35; Rnd = .8; }
+      Stage { Glow = .8; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:LAVA4" {
+  Layer {
+      Stage { Glow = .9; Tics = 35; Rnd = .8; }
+      Stage { Glow = .8; Tics = 35; Rnd = .8; }
+  }
+}
+
+Material Mods "flats:NUKAGE1" {
   Layer {
       Stage { Glow = .75; Tics = 24; Rnd = .5; }
       Stage { Glow = .65; Tics = 24; Rnd = .5; }
   }
 }
-* Material { ID = "flats:NUKAGE2"; }
-* Material { ID = "flats:NUKAGE3"; }
 
-* Material {
-  ID = "flats:FWATER1";
+Material Mods "flats:NUKAGE2" {
+  Layer {
+      Stage { Glow = .75; Tics = 24; Rnd = .5; }
+      Stage { Glow = .65; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:NUKAGE3" {
+  Layer {
+      Stage { Glow = .75; Tics = 24; Rnd = .5; }
+      Stage { Glow = .65; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER1" {
   Layer {
       Stage { Glow = .175; Tics = 24; Rnd = .5; }
       Stage { Glow = .1;   Tics = 24; Rnd = .5; }
   }
 }
-* Material { ID = "flats:FWATER2"; }
-* Material { ID = "flats:FWATER3"; }
-* Material { ID = "flats:FWATER4"; }
+
+Material Mods "flats:FWATER2" {
+  Layer {
+      Stage { Glow = .175; Tics = 24; Rnd = .5; }
+      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER3" {
+  Layer {
+      Stage { Glow = .175; Tics = 24; Rnd = .5; }
+      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:FWATER4" {
+  Layer {
+      Stage { Glow = .175; Tics = 24; Rnd = .5; }
+      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+  }
+}
 
 #
 # Glowing textures:
 #
 
-Material {
-  ID = "textures:FIREBLU1";
+Material Mods "textures:FIREBLU1" {
   Layer {
       Stage { Glow = .9; Tics = 17; Rnd = .8; }
       Stage { Glow = .8; Tics = 17; Rnd = .8; }
   }
 }
 
-* Material { ID = "textures:FIREBLU2"; }
-* Material { ID = "textures:FIRELAVA"; }
-* Material { ID = "textures:FIRELAV2"; }
-* Material { ID = "textures:FIRELAV3"; }
-* Material { ID = "textures:FIREMAG1"; }
-* Material { ID = "textures:FIREMAG2"; }
-* Material { ID = "textures:FIREMAG3"; }
-* Material { ID = "textures:FIREWALL"; }
-* Material { ID = "textures:FIREWALA"; }
-* Material { ID = "textures:FIREWALB"; }
+Material Mods "textures:FIREBLU2" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAVA" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAV2" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIRELAV3" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREMAG1" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREMAG2" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREMAG3" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALL" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALA" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREWALB" {
+  Layer {
+      Stage { Glow = .9; Tics = 17; Rnd = .8; }
+      Stage { Glow = .8; Tics = 17; Rnd = .8; }
+  }
+}

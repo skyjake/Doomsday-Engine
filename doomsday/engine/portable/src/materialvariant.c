@@ -46,25 +46,17 @@ materialvariant_t* MaterialVariant_Construct(material_t* generalCase,
     mat->_spec = spec;
     mat->_current = mat->_next = mat;
     mat->_inter = 0;
-    memset(&mat->_layers, 0, sizeof(mat->_layers));
 
-    // Initialize layers according to the Material definition.
+    // Initialize layers.
     { int i;
     for(i = 0; i < layerCount; ++i)
     {
-        mat->_layers[i].tex = generalCase->layers[i].tex;
-
-        if(def && def->layers[i].stageCount.num > 0)
-        {
-            mat->_layers[i].glow = def->layers[i].stages[0].glow;
-            mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
-            mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
-            continue;
-        }
-
-        mat->_layers[i].glow = 0;
-        mat->_layers[i].texOrigin[0] = generalCase->layers[i].texOrigin[0];
-        mat->_layers[i].texOrigin[1] = generalCase->layers[i].texOrigin[1];
+        mat->_layers[i].stage = 0;
+        mat->_layers[i].tics = def->layers[i].stages[0].tics;
+        mat->_layers[i].glow = def->layers[i].stages[0].glow;
+        mat->_layers[i].tex  = Texture_Id(GL_TextureByUri(def->layers[i].stages[0].texture));
+        mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
+        mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
     }}
     return mat;
     }
@@ -82,9 +74,6 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
     {
     const ded_material_t* def = Material_Definition(mat->_generalCase);
     int i, layerCount;
-
-    if(!def) // Its a system generated material.
-        return;
 
     // Update layers.
     layerCount = Material_LayerCount(mat->_generalCase);
@@ -121,7 +110,7 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        {const texture_t* glTex;
+        /*{const texture_t* glTex;
         if((glTex = GL_TextureByUri(lsDef->texture)))
         {
             layer->tex = Texture_Id(glTex);
@@ -132,7 +121,7 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
             /// @fixme Should reset this to the non-stage animated texture here.
             //layer->tex = 0;
             //generalCase->inter = 0;
-        }}
+        }}*/
 
         if(inter == 0)
         {

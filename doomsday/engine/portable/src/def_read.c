@@ -1029,13 +1029,46 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 
         if(ISTOKEN("Material"))
         {
+            boolean bModify = false;
             ded_material_t* mat;
             uint layer = 0;
-            int stage = 0;
+            int stage;
 
-            // A new material.
-            idx = DED_AddMaterial(ded, "");
-            mat = &ded->materials[idx];
+            ReadToken();
+            if(!ISTOKEN("Mods"))
+            {
+                // A new material.
+                idx = DED_AddMaterial(ded, NULL);
+                mat = &ded->materials[idx];
+            }
+            else if(!bCopyNext)
+            {
+                dduri_t* otherMat = NULL;
+
+                READURI(&otherMat, NULL);
+                ReadToken();
+
+                mat = Def_GetMaterial(otherMat);
+                if(NULL == mat)
+                {
+                    ddstring_t* path = Uri_ToString(otherMat);
+                    SetError2("Unknown Material.", Str_Text(path));
+                    Str_Delete(path);
+
+                    retVal = false;
+                    goto ded_end_read;
+                }
+
+                idx = mat - ded->materials;
+                Uri_Destruct(otherMat);
+                bModify = true;
+            }
+            else
+            {
+                SetError("Cannot both Copy(Previous) and Modify.");
+                retVal = false;
+                goto ded_end_read;
+            }
 
             // Should we copy the previous definition?
             if(prevMaterialDefIdx >= 0 && bCopyNext)
@@ -1084,12 +1117,17 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             for(;;)
             {
                 READLABEL;
-                RV_URI("ID", &mat->id, 0)
-                RV_FLAGS("Flags", mat->flags, "matf_")
+                // ID cannot be changed when modifying
+                if(!bModify && ISLABEL("ID"))
+                {
+                    READURI(&mat->id, NULL);
+                }
+                else RV_FLAGS("Flags", mat->flags, "matf_")
                 RV_FLT("Width", mat->width)
                 RV_FLT("Height", mat->height)
                 if(ISLABEL("Layer"))
                 {
+                    stage = 0;
                     if(layer >= DED_MAX_MATERIAL_LAYERS)
                     {
                         SetError("Too many Material layers.");
@@ -1105,9 +1143,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                         {
                             ded_material_layer_stage_t* st = NULL;
 
+                            // Need to allocate a new stage?
                             if(stage >= mat->layers[layer].stageCount.num)
                             {
-                                // Allocate new stage.
                                 stage = DED_AddMaterialLayerStage(&mat->layers[layer]);
                             }
 
@@ -1125,12 +1163,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                                 RV_END
                                 CHECKSC;
                             }
-                            stage++;
+                            ++stage;
                         }
                         else RV_END
                         CHECKSC;
                     }
-                    layer++;
+                    ++layer;
                 }
                 else RV_END
                 CHECKSC;
