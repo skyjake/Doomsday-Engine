@@ -362,6 +362,13 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
 uint GL_TextureIndexForUri(const dduri_t* uri);
 
 /**
+ * Given a Texture construct a new Uri reference to it.
+ * \todo Do not construct. Store into a resource namespace and return a reference.
+ * @return  Associated Uri.
+ */
+dduri_t* GL_ConstructUriForTexture(struct texture_s* tex);
+
+/**
  * Change the GL minification filter for all prepared TextureVariants.
  */
 void GL_SetAllTexturesMinFilter(int minFilter);

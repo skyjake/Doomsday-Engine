@@ -446,22 +446,6 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
     return mat;
 }
 
-static material_t* createMaterial(int width, int height, short flags,
-    material_env_class_t envClass, const texture_t* tex, int texOriginX, int texOriginY)
-{
-    material_t* mat = linkMaterialToGlobalList(allocMaterial());
-
-    mat->_isCustom = !Texture_IsFromIWAD(tex);
-    mat->_width = width;
-    mat->_height = height;
-    mat->_envClass = envClass;
-    mat->numLayers = 1;
-    mat->layers[0].tex = Texture_Id(tex);
-    mat->layers[0].texOrigin[0] = texOriginX;
-    mat->layers[0].texOrigin[1] = texOriginY;
-    return mat;
-}
-
 static material_t* createMaterialFromDef(int width, int height, short flags,
     material_env_class_t envClass, const texture_t* tex, ded_material_t* def)
 {
@@ -701,122 +685,7 @@ materialnum_t Materials_ToMaterialNum(material_t* mat)
     return 0;
 }
 
-material_t* Materials_New(const dduri_t* rawName, int width, int height,
-    short flags, const material_layer_t* layers, int layerCount)
-{
-    materialnamespaceid_t mnamespace;
-    material_env_class_t envClass;
-    materialnum_t oldMat;
-    material_t* mat;
-    char name[9];
-    uint hash;
-    int n;
-
-    if(!initedOk)
-        return NULL;
-
-    // In original DOOM, texture name references beginning with the
-    // hypen '-' character are always treated as meaning "no reference"
-    // or "invalid texture" and surfaces using them were not drawn.
-    if(!rawName || Str_IsEmpty(Uri_Path(rawName)) || !Str_CompareIgnoreCase(Uri_Path(rawName), "-"))
-    {
-#if _DEBUG
-Con_Message("Materials_New: Warning, attempted to create material with "
-            "NULL name\n.");
-#endif
-        return NULL;
-    }
-
-    // Prepare 'name'.
-    { const char* c = Str_Text(Uri_Path(rawName));
-    for(n = 0; *c && n < 8; ++n, c++)
-        name[n] = tolower(*c);
-    }
-    name[n] = '\0';
-    hash = hashForName(name);
-
-    mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
-    // Check if we've already created a material for this.
-    if(mnamespace == MN_ANY)
-    {   // Caller doesn't care which namespace. This is only valid if we
-        // can find a material by this name using a priority search order.
-        oldMat = getMaterialNumForName(name, hash, MN_SPRITES);
-        if(!oldMat)
-            oldMat = getMaterialNumForName(name, hash, MN_TEXTURES);
-        if(!oldMat)
-            oldMat = getMaterialNumForName(name, hash, MN_FLATS);
-    }
-    else
-    {
-        if(!VALID_MATERIALNAMESPACE(mnamespace))
-        {
-#if _DEBUG
-Con_Message("Materials_New: Warning, attempted to create material in "
-            "unknown namespace '%i'.\n", (int) mnamespace);
-#endif
-            return NULL;
-        }
-
-        oldMat = getMaterialNumForName(name, hash, mnamespace);
-    }
-
-    envClass = S_MaterialClassForName(rawName);
-
-    if(oldMat)
-    {   // We are updating an existing material.
-        materialbind_t* mb = &materialBinds[oldMat - 1];
-        material_t* mat = mb->mat;
-
-        // Update the (possibly new) meta data.
-        mat->_flags = flags;
-        if(layers[0].tex)
-            mat->layers[0].tex = layers[0].tex;
-        if(width > 0)
-            mat->_width = width;
-        if(height > 0)
-            mat->_height = height;
-        //mat->def = 0;
-        mat->_envClass = envClass;
-        mat->_inAnimGroup = false;
-
-        mat->_isCustom = false;
-        { uint i;
-        for(i = 0; i < mat->numLayers; ++i)
-        {
-            if(0 == mat->layers[i].tex || Texture_IsFromIWAD(GL_ToTexture(mat->layers[i].tex)))
-                continue;
-            mat->_isCustom = true;
-            break;
-        }}
-
-        Materials_ClearTranslation(mb->mat);
-        return mat;
-    }
-
-    if(mnamespace == MN_ANY)
-    {
-#if _DEBUG
-        Con_Message("Warning: Attempted to create Material in unknown namespace, ignoring.\n");
-#endif
-        return NULL;
-    }
-
-    /**
-     * A new material.
-     */
-
-    // Only create complete materials.
-    // \todo Doing this here isn't ideal.
-    if(layers[0].tex == 0 || !(width > 0) || !(height > 0))
-        return NULL;
-
-    mat = createMaterial(width, height, flags, envClass, GL_ToTexture(layers[0].tex),
-        layers[0].texOrigin[0], layers[0].texOrigin[1]);
-    newMaterialNameBinding(mat, name, mnamespace, hash);
-    return mat;
-}
-
-material_t* Materials_NewFromDef(ded_material_t* def)
+material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     assert(def);
     {

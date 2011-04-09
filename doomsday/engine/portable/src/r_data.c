@@ -1787,8 +1787,16 @@ static void createTexturesForPatchCompositeDefs(void)
     int i;
     for(i = 0; i < patchCompositeTexturesCount; ++i)
     {
-        patchcompositetex_t* texDef = patchCompositeTextures[i];       
-        GL_CreateTexture2(texDef->name, i, TN_TEXTURES, texDef->width, texDef->height);
+        patchcompositetex_t* pcomTex = patchCompositeTextures[i];       
+        const texture_t* tex = GL_CreateTexture2(pcomTex->name, i, TN_TEXTURES,
+            pcomTex->width, pcomTex->height);
+        if(NULL == tex)
+        {
+            Con_Message("Warning, failed creating Texture for new patch composite %s.\n",
+                pcomTex->name);
+            continue;
+        }
+        pcomTex->texId = Texture_Id(tex);
     }
 }
 
@@ -1880,6 +1888,7 @@ static int R_NewFlat(const lumpname_t name, boolean isCustom)
     memset(flat->name, 0, sizeof(flat->name));
     strncpy(flat->name, name, sizeof(flat->name)-1);
     flat->isCustom = isCustom;
+    flat->texId = 0;
     }
     return flatTexturesCount - 1;
 }
@@ -1930,7 +1939,13 @@ void R_InitFlatTextures(void)
     for(i = 0; i < flatTexturesCount; ++i)
     {
         flat_t* flat = flatTextures[i];
-        GL_CreateTexture2(flat->name, i, TN_FLATS, 64, 64);
+        const texture_t* tex = GL_CreateTexture2(flat->name, i, TN_FLATS, 64, 64);
+        if(NULL == tex)
+        {
+            Con_Message("Warning, failed creating Texture for new flat %s.\n", flat->name);
+            continue;
+        }
+        flat->texId = Texture_Id(tex);
     }}
 
     VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -2062,13 +2077,11 @@ void R_InitSpriteTextures(void)
             Con_Message("Warning, failed creating Texture for sprite frame lump %s (#%i).\n",
                 sprTex->name, lumpNum);
             sprTex->offX = sprTex->offY = 0;
-            sprTex->isValid = false;
             continue;
         }
         sprTex->texId = Texture_Id(tex);
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
-        sprTex->isValid = true;
     }}
 
     VERBOSE2(

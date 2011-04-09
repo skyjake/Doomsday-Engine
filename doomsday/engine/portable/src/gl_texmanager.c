@@ -3088,6 +3088,16 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
     return GL_TextureIndexForUri2(uri, false);
 }
 
+dduri_t* GL_ConstructUriForTexture(struct texture_s* tex)
+{
+    assert(tex);
+    {
+    dduri_t* uri = Uri_Construct2(Texture_Name(tex), RC_NULL);
+    Uri_SetScheme(uri, Str_Text(DD_TextureNamespaceNameForId(Texture_Namespace(tex))));
+    return uri;
+    }
+}
+
 static void performImageAnalyses(texture_t* tex, const image_t* image,
     const texturevariantspecification_t* spec, boolean forceUpdate)
 {

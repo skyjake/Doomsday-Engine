@@ -597,7 +597,8 @@ int DED_AddMaterial(ded_t* ded, const char* path)
 {
     ded_material_t* mat = DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
 
-    mat->id = Uri_Construct2(path, RC_NULL);
+    if(NULL != path)
+        mat->id = Uri_Construct2(path, RC_NULL);
 
     return mat - ded->materials;
 }

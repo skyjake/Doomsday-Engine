@@ -138,19 +138,21 @@ typedef struct {
     char            name[9];
     short           width, height;
     short           flags;
+    textureid_t texId; /// Name of the associated Texture.
     short           patchCount;
     texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
 } patchcompositetex_t;
 
 typedef struct flat_s {
     lumpname_t name;
+    textureid_t texId; /// Name of the associated Texture.
     boolean isCustom;
 } flat_t;
 
 typedef struct {
     lumpname_t name;
     textureid_t texId; /// Name of the associated Texture.
-    boolean isCustom, isValid;
+    boolean isCustom;
     /// Offset to texture origin in logical pixels.
     short offX, offY;
 } spritetex_t;

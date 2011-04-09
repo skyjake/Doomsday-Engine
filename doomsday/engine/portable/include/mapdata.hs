@@ -145,7 +145,7 @@ public
 end
 
 struct material
-    -       ded_material_s* _def // Can be @c NULL (was generated automatically).   
+    -       ded_material_s* _def  
     -       material_variantlist_node_s* _variants
     -       material_env_class_t _envClass // Environmental sound class.
     -       uint        _bindId // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.

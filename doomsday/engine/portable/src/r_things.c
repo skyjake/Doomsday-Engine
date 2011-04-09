@@ -334,8 +334,8 @@ static void buildSpriteRotations(void)
         spriterecord_t* rec;
         boolean link;
 
-        if(!sprTex->isValid)
-            continue;
+        if(0 == sprTex->texId)
+            continue; // Not a valid sprite frame.
 
         // Check that the name is valid.
         if(!name[4] || !name[5] || (name[6] && !name[7]))

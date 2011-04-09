@@ -131,7 +131,7 @@ struct material_variantlist_node_s;
 
 typedef struct material_s {
     runtime_mapdata_header_t header;
-    struct ded_material_s* _def;       // Can be @c NULL (was generated automatically).   
+    struct ded_material_s* _def;
     struct material_variantlist_node_s* _variants;
     material_env_class_t _envClass;    // Environmental sound class.
     uint                _bindId;       // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.

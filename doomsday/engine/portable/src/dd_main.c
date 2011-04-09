@@ -2182,6 +2182,27 @@ texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
     return TEXTURENAMESPACE_COUNT; // Unknown.
 }
 
+const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
+{
+    static const ddstring_t namespaceNames[TEXTURENAMESPACE_COUNT] = {
+        /* TN_SYSTEM */                 { TN_SYSTEM_NAME },
+        /* TN_FLATS */                  { TN_FLATS_NAME  },
+        /* TN_TEXTURES */               { TN_TEXTURES_NAME },
+        /* TN_SPRITES */                { TN_SPRITES_NAME },
+        /* TN_PATCHES */                { TN_PATCHES_NAME },
+        /* TN_DETAILS */                { TN_DETAILS_NAME },
+        /* TN_REFLECTIONS */            { TN_REFLECTIONS_NAME },
+        /* TN_MASKS */                  { TN_MASKS_NAME },
+        /* TN_MODELSKINS */             { TN_MODELSKINS_NAME },
+        /* TN_MODELREFLECTIONSKINS */   { TN_MODELREFLECTIONSKINS_NAME },
+        /* TN_LIGHTMAPS */              { TN_LIGHTMAPS_NAME },
+        /* TN_FLAREMAPS */              { TN_FLAREMAPS_NAME }
+    };
+    if(VALID_TEXTURENAMESPACE(id))
+        return &namespaceNames[id - TEXTURENAMESPACE_FIRST];
+    return NULL;
+}
+
 materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
 {
     const texture_t* tex;

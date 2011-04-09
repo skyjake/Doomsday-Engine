@@ -80,24 +80,6 @@ const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_
 
 /**
  * Create a new material. If there exists one by the same name and in the
- * same namespace; it is returned else a new material is created.
- *
- * \important: May fail if @a name is invalid.
- *
- * @param name  Unique name for this material.
- * @param width  Logical width in world units.
- * @param height  Logical height in world units.
- * @param flags  @see materialFlags
- * @param layers  MaterialLayer config for each layer of the resultant Material.
- * @param layerCount  Number of layers.
- *
- * @return  Newly created MaterialVariant else @c NULL.
- */
-struct material_s* Materials_New(const dduri_t* name, int width,
-    int height, short flags, const material_layer_t* layers, int layerCount);
-
-/**
- * Create a new material. If there exists one by the same name and in the
  * same namespace, it is returned else a new material is created.
  *
  * \note: May fail on invalid definitions.
@@ -105,7 +87,7 @@ struct material_s* Materials_New(const dduri_t* name, int width,
  * @param def           Material definition to construct from.
  * @return              The created material, ELSE @c 0.
  */
-struct material_s* Materials_NewFromDef(ded_material_t* def);
+struct material_s* Materials_CreateFromDef(ded_material_t* def);
 
 struct material_s* Materials_ToMaterial(materialnum_t num);
 
