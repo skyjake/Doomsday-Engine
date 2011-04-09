@@ -32,6 +32,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "texture.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -957,7 +958,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     vec3_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2_t texScale = { 1, 1 };
     boolean showEdges = true, flipTextureS = false;
-    DGLuint tex = 0;
+    DGLuint glTexName = 0;
     size_t numVerts;
     rvertex_t* rvertices;
     rcolor_t* rcolors;
@@ -977,13 +978,13 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         case PFT_RAW:
             if((rawTex = R_GetRawTex(f->texRef.lump)))
             {
-                tex = GL_PrepareRawTex(rawTex);
+                glTexName = GL_PrepareRawTex(rawTex);
                 V3_Set(offset, 0, 0, 0);
                 V3_Set(dimensions, rawTex->width, rawTex->height, 0);
             }
             break;
         case PFT_XIMAGE:
-            tex = (DGLuint)f->texRef.tex;
+            glTexName = (DGLuint)f->texRef.tex;
             V3_Set(offset, 0, 0, 0);
             V3_Set(dimensions, 1, 1, 0);
             break;
@@ -1002,7 +1003,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                     const texturevariantspecification_t* spec = MSU(&ms, MTU_PRIMARY).tex.spec;
 
                     /// \todo Utilize *all* properties of the Material.
-                    tex = MSU(&ms, MTU_PRIMARY).tex.glName;
+                    glTexName = MSU(&ms, MTU_PRIMARY).tex.glName;
                     V3_Set(offset, -MSU(&ms, MTU_PRIMARY).offset[0], -MSU(&ms, MTU_PRIMARY).offset[1], 0);
                     V3_Set(dimensions, ms.width  + TS_GENERAL(spec)->border*2,
                                        ms.height + TS_GENERAL(spec)->border*2, 0);
@@ -1012,11 +1013,12 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
           }
         case PFT_PATCH:
-            if((patch = R_PatchTextureByIndex(f->texRef.patch)))
+            if(NULL != (patch = R_PatchTextureByIndex(f->texRef.patch)))
             {
-                tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
+                texture_t* tex = GL_ToTexture(patch->texId);
+                glTexName = (renderTextures==1? GL_PreparePatch(patch) : 0);
                 V3_Set(offset, patch->offX, patch->offY, 0);
-                V3_Set(dimensions, patch->width, patch->height, 0);
+                V3_Set(dimensions, Texture_Width(tex), Texture_Height(tex), 0);
             }
             break;
         default:
@@ -1025,7 +1027,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 
     // If we've not chosen a texture by now set some defaults.
-    if(!tex)
+    if(!glTexName)
     {
         V3_Copy(dimensions, scale);
         V3_Set(scale, 1, 1, 1);
@@ -1041,7 +1043,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(dimensions, tex, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(dimensions, glTexName, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
@@ -1067,7 +1069,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     // Scale up our unit-geometry to the desired dimensions.
     glScalef(dimensions[VX], dimensions[VY], dimensions[VZ]);
 
-    if(tex)
+    if(glTexName)
     {
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
@@ -1075,9 +1077,9 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         glEnable(GL_TEXTURE_2D);
     }
 
-    drawGeometry(tex, numVerts, rvertices, rcolors, rcoords);
+    drawGeometry(glTexName, numVerts, rvertices, rcolors, rcoords);
 
-    if(tex)
+    if(glTexName)
     {
         glDisable(GL_TEXTURE_2D);
         glMatrixMode(GL_TEXTURE);

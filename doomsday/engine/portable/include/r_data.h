@@ -77,9 +77,8 @@ typedef struct shinytex_s {
 } shinytex_t;
 
 typedef struct masktex_s {
-    textureid_t id;
     const dduri_t* external;
-    short width, height;
+    textureid_t id;
 } masktex_t;
 
 typedef struct skinname_s {
@@ -150,8 +149,10 @@ typedef struct flat_s {
 
 typedef struct {
     lumpname_t name;
-    boolean isCustom;
-    short width, height, offX, offY;
+    textureid_t texId; /// Name of the associated Texture.
+    boolean isCustom, isValid;
+    /// Offset to texture origin in logical pixels.
+    short offX, offY;
 } spritetex_t;
 
 // Patch flags.
@@ -160,12 +161,12 @@ typedef struct {
 
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
-    lumpnum_t       lump;
-    textureid_t     texId; // Name of the associated GL texture.
-    boolean         isCustom;
-    short           flags;
-    short           width, height;
-    short           offX, offY;
+    lumpnum_t lump;
+    textureid_t texId; /// Name of the associated Texture.
+    boolean isCustom;
+    short flags;
+    /// Offset to texture origin in logical pixels.
+    short offX, offY;
 } patchtex_t;
 
 #pragma pack(1)
@@ -443,7 +444,7 @@ shinytex_t*     R_CreateShinyTexture(const dduri_t* uri);
 shinytex_t*     R_GetShinyTexture(const dduri_t* uri);
 void            R_DestroyShinyTextures(void);
 
-masktex_t*      R_CreateMaskTexture(const dduri_t* uri, short width, short height);
+masktex_t*      R_CreateMaskTexture(const dduri_t* uri, int logicalWidth, int logicalHeight);
 masktex_t*      R_GetMaskTexture(const dduri_t* uri);
 void            R_DestroyMaskTextures(void);
 

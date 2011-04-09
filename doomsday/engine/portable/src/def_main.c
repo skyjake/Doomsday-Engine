@@ -859,13 +859,12 @@ void Def_CreateAutoMaterials(void)
         assert(tex);
 
         // Create a Material for this flat.
-        // \note that width = 64, height = 64 regardless of the flat dimensions.
         Uri_SetScheme(uri, MN_FLATS_NAME);
 
         layer.tex = Texture_Id(tex);
         layer.texOrigin[0] = layer.texOrigin[1] = 0;
 
-        Materials_New(uri, 64, 64, 0, &layer, 1);
+        Materials_New(uri, Texture_Width(tex), Texture_Height(tex), 0, &layer, 1);
     }}
 
     // Sprites.
@@ -876,7 +875,7 @@ void Def_CreateAutoMaterials(void)
         material_layer_t layer;
         const texture_t* tex;
 
-        if(sprTex->width <= 0 || sprTex->height <= 0)
+        if(!sprTex->isValid)
             continue;
 
         Uri_SetPath(uri, sprTex->name);
@@ -892,7 +891,7 @@ void Def_CreateAutoMaterials(void)
         layer.texOrigin[0] = sprTex->offX;
         layer.texOrigin[1] = sprTex->offY;
 
-        Materials_New(uri, sprTex->width, sprTex->height, 0, &layer, 1);
+        Materials_New(uri, Texture_Width(tex), Texture_Height(tex), 0, &layer, 1);
     }}
 
     Uri_Destruct(uri);

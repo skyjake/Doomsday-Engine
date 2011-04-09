@@ -69,7 +69,7 @@ typedef struct gl_state_s {
     /// Global config:
     boolean forceFinishBeforeSwap;
     int maxTexFilterAniso;
-    int maxTexSize; // Logical pixels.
+    int maxTexSize; // Pixels.
     int maxTexUnits;
     int multisampleFormat;
 

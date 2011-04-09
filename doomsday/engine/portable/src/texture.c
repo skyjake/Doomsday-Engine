@@ -49,6 +49,7 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
             "new Texture.", (unsigned long) sizeof(*tex));
 
     tex->_id = id;
+    tex->_width = tex->_height = 0;
     tex->_variants = NULL;
     tex->_index = index;
     tex->_texNamespace = texNamespace;
@@ -62,6 +63,14 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
     }
     return tex;
     }
+}
+
+texture_t* Texture_Construct2(textureid_t id, const char rawName[9],
+    texturenamespaceid_t texNamespace, int index, int width, int height)
+{
+    texture_t* tex = Texture_Construct(id, rawName, texNamespace, index);
+    Texture_SetDimensions(tex, width, height);
+    return tex;
 }
 
 static void destroyVariants(texture_t* tex)
@@ -179,85 +188,38 @@ boolean Texture_IsFromIWAD(const texture_t* tex)
 int Texture_Width(const texture_t* tex)
 {
     assert(tex);
-    switch(tex->_texNamespace)
-    {
-    case TN_FLATS:
-        return 64; /// \fixme not all flats are 64x64
+    return tex->_width;
+}
 
-    case TN_TEXTURES:
-        return R_PatchCompositeTextureByIndex(tex->_index)->width;
-
-    case TN_SPRITES:
-        return R_SpriteTextureByIndex(tex->_index)->width;
-
-    case TN_PATCHES:
-        return R_PatchTextureByIndex(tex->_index)->width;
-
-    case TN_DETAILS:
-        return 128;
-
-    case TN_REFLECTIONS:
-        return 128; // Could be used for something useful.
-
-    case TN_MASKS:
-        return maskTextures[tex->_index]->width;
-
-    case TN_SYSTEM: /// \fixme Do not assume!
-    case TN_MODELSKINS:
-    case TN_MODELREFLECTIONSKINS:
-    case TN_LIGHTMAPS:
-    case TN_FLAREMAPS:
-        return 64;
-
-    default:
-        Con_Error("Texture::Width: Internal error, invalid type %i.", (int) tex->_texNamespace);
-        return 0; // Unreachable.
-    }
+void Texture_SetWidth(texture_t* tex, int width)
+{
+    assert(tex);
+    tex->_width = width;
 }
 
 int Texture_Height(const texture_t* tex)
 {
     assert(tex);
-    switch(tex->_texNamespace)
-    {
-    case TN_FLATS:
-        return 64; /// \fixme not all flats are 64x64
+    return tex->_height;
+}
 
-    case TN_TEXTURES:
-        return R_PatchCompositeTextureByIndex(tex->_index)->height;
-
-    case TN_SPRITES:
-        return R_SpriteTextureByIndex(tex->_index)->height;
-
-    case TN_PATCHES:
-        return R_PatchTextureByIndex(tex->_index)->height;
-
-    case TN_DETAILS:
-        return 128;
-
-    case TN_REFLECTIONS:
-        return 128; // Could be used for something useful.
-
-    case TN_MASKS:
-        return maskTextures[tex->_index]->height;
-
-    case TN_SYSTEM: /// \fixme Do not assume!
-    case TN_MODELSKINS:
-    case TN_MODELREFLECTIONSKINS:
-    case TN_LIGHTMAPS:
-    case TN_FLAREMAPS:
-        return 64;
-
-    default:
-        Con_Error("Texture::Height: Internal error, invalid type %i.", (int) tex->_texNamespace);
-        return 0; // Unreachable.
-    }
+void Texture_SetHeight(texture_t* tex, int height)
+{
+    assert(tex);
+    tex->_height = height;
 }
 
 void Texture_Dimensions(const texture_t* tex, int* width, int* height)
 {
     if(width)   *width = Texture_Width(tex);
     if(height) *height = Texture_Height(tex);
+}
+
+void Texture_SetDimensions(texture_t* tex, int width, int height)
+{
+    assert(tex);
+    tex->_width  = width;
+    tex->_height = height;
 }
 
 int Texture_TypeIndex(const texture_t* tex)

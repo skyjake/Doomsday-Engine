@@ -51,6 +51,9 @@ typedef struct texture_s {
     /// Type specific index (e.g., if _texNamespace=TN_FLATS this is a flat index).
     int _index;
 
+    /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
+    int _width, _height;
+
     /// Unique Texture Namespace Identifier.
     /// \todo make external.
     texturenamespaceid_t _texNamespace;
@@ -68,6 +71,8 @@ typedef struct texture_s {
 
 texture_t* Texture_Construct(textureid_t id, const char name[9],
     texturenamespaceid_t texNamespace, int index);
+texture_t* Texture_Construct2(textureid_t id, const char name[9],
+    texturenamespaceid_t texNamespace, int index, int width, int height);
 
 void Texture_Destruct(texture_t* tex);
 
@@ -124,11 +129,30 @@ boolean Texture_IsFromIWAD(const texture_t* tex);
 /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
 void Texture_Dimensions(const texture_t* tex, int* width, int* height);
 
+/**
+ * Change logical dimensions.
+ * @param width  Logical width.
+ * @param height  Logical height.
+ */
+void Texture_SetDimensions(texture_t* tex, int width, int height);
+
 /// @return  Logical width (not necessarily the same as pixel width).
 int Texture_Width(const texture_t* tex);
 
+/**
+ * Change logical width.
+ * @param width  Width in logical pixels.
+ */
+void Texture_SetWidth(texture_t* tex, int width);
+
 /// @return  Logical height (not necessarily the same as pixel height).
 int Texture_Height(const texture_t* tex);
+
+/**
+ * Change logical height.
+ * @param height  Height in logical pixels.
+ */
+void Texture_SetHeight(texture_t* tex, int height);
 
 /// @return  Type-specific index of the wrapped image object.
 int Texture_TypeIndex(const texture_t* tex);

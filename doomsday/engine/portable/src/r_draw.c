@@ -34,6 +34,7 @@
 #include "de_refresh.h"
 
 #include "sys_opengl.h"
+#include "texture.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -180,19 +181,22 @@ void R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h)
 
 void R_DrawPatch(patchtex_t* p, int x, int y)
 {
-    R_DrawPatch2(p, x, y, p->width, p->height);
+    texture_t* tex = GL_ToTexture(p->texId);
+    if(NULL == tex) return;
+    R_DrawPatch2(p, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
 void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
 {
-    assert(p);
+    texture_t* tex = GL_ToTexture(p->texId);
+    if(NULL == tex) return;
 
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
 
-    GL_DrawRectTiled(x, y, w, h, p->width, p->height);
+    GL_DrawRectTiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
 }
 
 /**

@@ -45,8 +45,8 @@ typedef struct averagecolor_analysis_s {
 
 /**
  * @param pixels  Luminance image to be enhanced.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param hasAlpha  @c true == @a pixels is luminance plus alpha data.
  */
 void AmplifyLuma(uint8_t* pixels, int width, int height, boolean hasAlpha);
@@ -64,8 +64,8 @@ uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height,
 
 /**
  * @param pixels  RGBA data. Input read here, and output written here.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  */
 #if 0 // dj: Doesn't make sense, "darkness" applied to an alpha channel?
 void BlackOutlines(uint8_t* pixels, int width, int height);
@@ -80,8 +80,8 @@ void ColorOutlinesIdx(uint8_t* pixels, int width, int height);
 
 /**
  * @param pixels  RGB(a) image to be enhanced.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param pixelsize  Size of each pixel. Handles 3 and 4.
  */
 void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
@@ -91,8 +91,8 @@ void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
  * are applied symmetrically for all color components.
  *
  * @param pixels  RGB(a) image to be enhanced.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param pixelsize  Size of each pixel. Handles 3 and 4.
  */
 void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
@@ -105,16 +105,16 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
  * averaging the luminosity of all pixels in the original image.
  *
  * @param pixels  Luminance image to equalize.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  */
 void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
     float* rHiMul, float* rLoMul);
 
 /**
  * @param pixels  RGB(a) image to evaluate.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param color  Determined average color written here.
  */
 void FindAverageColor(const uint8_t* pixels, int width, int height,
@@ -122,8 +122,8 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 
 /**
  * @param pixels  Index-color image to evaluate.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param palette  Color palette to use.
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color  Determined average color written here.
@@ -133,8 +133,8 @@ void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
 
 /**
  * @param pixels  RGB(a) image to evaluate.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param color  Determined average color written here.
  */
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
@@ -142,8 +142,8 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
 
 /**
  * @param pixels  Index-color image to evaluate.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param palette  Color palette to use.
  * @param hasAlpha  @c true == @a pixels includes alpha data.
  * @param color  Determined average color written here.
@@ -156,8 +156,8 @@ void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
  * \algorithm: Cross spread from bottom > top, right > left (inside out).
  *
  * @param pixels  Image data to be processed.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param pixelsize  Size of each pixel. Handles 1 (==2), 3 and 4.
  * @param region  Determined region written here.
  */
@@ -166,8 +166,8 @@ void FindClipRegionNonAlpha(const uint8_t* pixels, int width, int height,
 
 /**
  * @param pixels  RGB(a) image to be enhanced.
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param pixelsize  Size of each pixel. Handles 3 and 4.
  */
 void SharpenPixels(uint8_t* pixels, int width, int height, int pixelSize);

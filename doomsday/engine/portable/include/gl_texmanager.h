@@ -134,8 +134,8 @@ void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
  * @param glFormat  Identifier of the desired GL texture format.
  * @param loadFormat  Identifier of the GL texture format used during upload.
  * @param pixels  Texture pixel data to be uploaded.
- * @param width  Logical width of the texture in pixels.
- * @param height  Logical height of the texture in pixels.
+ * @param width  Width of the texture in pixels.
+ * @param height  Height of the texture in pixels.
  * @param genMipmaps  If negative sets a specific mipmap level, e.g.:
  *      @c -1, means mipmap level 1.
  *
@@ -148,8 +148,8 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
  * @param glFormat  Identifier of the desired GL texture format.
  * @param loadFormat  Identifier of the GL texture format used during upload.
  * @param pixels  Texture pixel data to be uploaded.
- * @param width  Logical width of the texture in pixels.
- * @param height  Logical height of the texture in pixels.
+ * @param width  Width of the texture in pixels.
+ * @param height  Height of the texture in pixels.
  * @param grayFactor  Strength of the blend where @c 0:none @c 1:full.
  *
  * @return  @c true iff successful.
@@ -195,8 +195,10 @@ byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
 
 byte GL_LoadFlatLump(struct image_s* image, lumpnum_t lumpNum);
 
-byte GL_LoadPatchLump(struct image_s* image, lumpnum_t lumpNum, int tclass,
-    int tmap, int border);
+byte GL_LoadPatchLumpAsPatch(struct image_s* image, lumpnum_t lumpNum, int tclass,
+    int tmap, int border, patchtex_t* patchTex);
+byte GL_LoadPatchLumpAsSprite(struct image_s* image, lumpnum_t lumpNum, int tclass,
+    int tmap, int border, spritetex_t* spriteTex);
 
 byte GL_LoadDetailTextureLump(struct image_s* image, lumpnum_t lumpNum);
 
@@ -347,7 +349,10 @@ const struct texturevariant_s* GL_PrepareTextureVariant2(struct texture_s* tex,
 const struct texturevariant_s* GL_PrepareTextureVariant(struct texture_s* tex,
     texturevariantspecification_t* spec);
 
-const struct texture_s* GL_CreateTexture(const char* name, uint index, texturenamespaceid_t texNamespace);
+const struct texture_s* GL_CreateTexture2(const char* name, uint index,
+    texturenamespaceid_t texNamespace, int width, int height);
+const struct texture_s* GL_CreateTexture(const char* name, uint index,
+    texturenamespaceid_t texNamespace);
 
 const struct texture_s* GL_TextureByUri2(const dduri_t* uri, boolean silent);
 const struct texture_s* GL_TextureByUri(const dduri_t* uri);

@@ -123,8 +123,8 @@ int GL_GetTexAnisoMul(int level);
 /**
  * How many mipmap levels are needed for a texture of the given dimensions?
  *
- * @param width  Logical width of the texture in pixels.
- * @param height  Logical height of the texture in pixels.
+ * @param width  Width of the texture in pixels.
+ * @param height  Height of the texture in pixels.
  * @return  Number of mipmap levels required.
  */
 int GL_NumMipmapLevels(int width, int height);
@@ -134,8 +134,8 @@ int GL_NumMipmapLevels(int width, int height);
 unsigned char*  GL_GrabScreen(void);
 
 /**
- * @param width  Logical width of the image in pixels.
- * @param height  Logical height of the image in pixels.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
  * @param flags  @see imageConversionFlags.
  */
 int GL_ChooseSmartFilter(int width, int height, int flags);
@@ -153,11 +153,11 @@ uint8_t* GL_ConvertBuffer(const uint8_t* src, int width, int height,
 /**
  * @param method  Unique identifier of the smart filtering method to apply.
  * @param src  Source image to be filtered.
- * @param width  Logical width of the source image in pixels.
- * @param height  Logical height of the source image in pixels.
+ * @param width  Width of the source image in pixels.
+ * @param height  Height of the source image in pixels.
  * @param flags  @see imageConversionFlags.
- * @param outWidth  Logical width of resultant image in pixels.
- * @param outHeight  Logical height of resultant image in pixels.
+ * @param outWidth  Width of resultant image in pixels.
+ * @param outHeight  Height of resultant image in pixels.
  *
  * @return  Newly allocated version of the source image if filtered else @c == @a src.
  */

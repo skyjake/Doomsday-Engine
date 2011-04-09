@@ -688,7 +688,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         break;
       }
     case TN_PATCHES: {
-        const patchtex_t* pTex = R_PatchTextureByIndex(Texture_TypeIndex(tex));
+        patchtex_t* pTex = R_PatchTextureByIndex(Texture_TypeIndex(tex));
         int tclass = 0, tmap = 0;
 
         assert(NULL != pTex);
@@ -713,12 +713,12 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         if(0 == loadResult)
         {
-            loadResult = GL_LoadPatchLump(image, pTex->lump, tclass, tmap, spec->border);
+            loadResult = GL_LoadPatchLumpAsPatch(image, pTex->lump, tclass, tmap, spec->border, pTex);
         }
         break;
       }
     case TN_SPRITES: {
-        const spritetex_t* sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex));
+        spritetex_t* sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex));
         int tclass = 0, tmap = 0;
 
         assert(NULL != sprTex);
@@ -754,7 +754,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         if(0 == loadResult)
         {
             lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
-            loadResult = GL_LoadPatchLump(image, lumpNum, tclass, tmap, spec->border);
+            loadResult = GL_LoadPatchLumpAsSprite(image, lumpNum, tclass, tmap, spec->border, sprTex);
         }
         break;
       }
@@ -2410,7 +2410,7 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
     }
 }
 
-byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, int border)
+static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, int border)
 {
     assert(image);
     {
@@ -2420,14 +2420,22 @@ byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, i
     {
         if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
         {
-            result = 1;
+            result = 2;
         }
         else
         {   // A DOOM patch.
             const doompatch_header_t* patch;
             size_t fileLength = F_Length(file);
-            uint8_t* buf = (uint8_t*) malloc(fileLength);
+            uint8_t* buf;
 
+            if(fileLength < sizeof(doompatch_header_t))
+            {
+                //Con_Message("Warning, lump %s (#%i) does not appear to be a valid Patch.\n",
+                //    W_LumpName(lumpNum), lumpNum);
+                return result;
+            }
+
+            buf = (uint8_t*) malloc(fileLength);
             if(NULL == buf)
                 Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
                     "temporary lump buffer.", (unsigned long) (fileLength));
@@ -2457,6 +2465,36 @@ byte GL_LoadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, i
     }
     return result;
     }
+}
+
+byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
+    int tmap, int border, patchtex_t* patchTex)
+{
+    byte result = loadPatchLump(image, lumpNum, tclass, tmap, border);
+    if(1 == result && NULL != patchTex)
+    {   // Loaded from a lump assumed to be in DOOM's Patch format.
+        // Load the extended metadata from the lump.
+        const doompatch_header_t* patch = (const doompatch_header_t*)
+            W_CacheLumpNum(lumpNum, PU_APPSTATIC);
+        patchTex->offX = -SHORT(patch->leftOffset);
+        patchTex->offY = -SHORT(patch->topOffset);
+    }
+    return MIN_OF(1, result);
+}
+
+byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
+    int tmap, int border, spritetex_t* spriteTex)
+{
+    byte result = loadPatchLump(image, lumpNum, tclass, tmap, border);
+    if(1 == result && NULL != spriteTex)
+    {   // Loaded from a lump assumed to be in DOOM's Patch format.
+        // Load the extended metadata from the lump.
+        const doompatch_header_t* patch = (const doompatch_header_t*)
+            W_CacheLumpNum(lumpNum, PU_CACHE);
+        spriteTex->offX = SHORT(patch->leftOffset);
+        spriteTex->offY = SHORT(patch->topOffset);
+    }
+    return MIN_OF(1, result);
 }
 
 DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
@@ -2983,8 +3021,8 @@ void GL_SetAllTexturesMinFilter(int minFilter)
         Texture_IterateVariants(textures[i], setGLMinFilter, (void*)&localMinFilter);
 }
 
-const texture_t* GL_CreateTexture(const char* rawName, uint index,
-    texturenamespaceid_t texNamespace)
+const texture_t* GL_CreateTexture2(const char* rawName, uint index,
+    texturenamespaceid_t texNamespace, int width, int height)
 {
     assert(VALID_TEXTURENAMESPACE(texNamespace));
     {
@@ -3005,7 +3043,8 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
      * A new texture.
      */
 
-    tex = Texture_Construct(texturesCount+1/*1-based index*/, rawName, texNamespace, index);
+    tex = Texture_Construct2(texturesCount+1/*1-based index*/, rawName,
+        texNamespace, index, width, height);
 
     // We also hash the name for faster searching.
     hash = hashForTextureName(Texture_Name(tex));
@@ -3022,6 +3061,12 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
 
     return tex;
     }
+}
+
+const texture_t* GL_CreateTexture(const char* rawName, uint index,
+    texturenamespaceid_t texNamespace)
+{
+    return GL_CreateTexture2(rawName, index, texNamespace, 0, 0);
 }
 
 uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent)
@@ -3181,6 +3226,16 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
         //Con_Message("Warning:Textures::tryLoadImageAndPrepareVariant: No image found for "
         //      "\"%s\"\n", Texture_Name(tex));
         return NULL;
+    }
+
+    // Are we setting the logical dimensions to the actual pixel dimensions?
+    if(0 == Texture_Width(tex) || 0 == Texture_Height(tex))
+    {
+#if _DEBUG
+        VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
+            Texture_Name(tex), image.width, image.height) );
+#endif
+        Texture_SetDimensions(tex, image.width, image.height);
     }
 
     performImageAnalyses(tex, &image, spec, true /*Always update*/);

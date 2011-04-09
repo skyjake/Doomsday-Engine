@@ -1106,8 +1106,6 @@ patchid_t R_RegisterPatch(const char* name)
      */
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
-    p->width = SHORT(patch->width);
-    p->height = SHORT(patch->height);
     p->isCustom = !W_LumpFromIWAD(lump);
 
     // Take a copy of the current patch loading state so that future texture
@@ -1119,7 +1117,8 @@ patchid_t R_RegisterPatch(const char* name)
 
     // Register a texture for this.
     {
-    const texture_t* glTex = GL_CreateTexture(name, ++patchTexturesCount, TN_PATCHES);
+    const texture_t* glTex = GL_CreateTexture2(name, ++patchTexturesCount,
+        TN_PATCHES, SHORT(patch->width), SHORT(patch->height));
     p->texId = Texture_Id(glTex);
     }
 
@@ -1139,11 +1138,12 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     {
     const patchtex_t* p;
     memset(info, 0, sizeof(*info));
-    if((p = getPatchTex(id)) != NULL)
+    if(NULL != (p = getPatchTex(id)))
     {
+        texture_t* tex = GL_ToTexture(p->texId);
         info->id = id;
-        info->width = p->width;
-        info->height = p->height;
+        info->width = Texture_Width(tex);
+        info->height = Texture_Height(tex);
         info->offset = p->offX;
         info->topOffset = p->offY;
         info->isCustom = p->isCustom;
@@ -1788,7 +1788,7 @@ static void createTexturesForPatchCompositeDefs(void)
     for(i = 0; i < patchCompositeTexturesCount; ++i)
     {
         patchcompositetex_t* texDef = patchCompositeTextures[i];       
-        GL_CreateTexture(texDef->name, i, TN_TEXTURES);
+        GL_CreateTexture2(texDef->name, i, TN_TEXTURES, texDef->width, texDef->height);
     }
 }
 
@@ -1930,7 +1930,7 @@ void R_InitFlatTextures(void)
     for(i = 0; i < flatTexturesCount; ++i)
     {
         flat_t* flat = flatTextures[i];
-        GL_CreateTexture(flat->name, i, TN_FLATS);
+        GL_CreateTexture2(flat->name, i, TN_FLATS, 64, 64);
     }}
 
     VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -2024,9 +2024,8 @@ void R_InitSpriteTextures(void)
 
         // A new sprite texture.
         spriteTextures = Z_Realloc(spriteTextures, sizeof(spritetex_t*) * ++spriteTexturesCount, PU_SPRITE);
-        sprTex = spriteTextures[spriteTexturesCount-1] = Z_Malloc(sizeof(spritetex_t), PU_SPRITE, 0);
+        sprTex = spriteTextures[spriteTexturesCount-1] = Z_Calloc(sizeof(spritetex_t), PU_SPRITE, 0);
 
-        memset(sprTex->name, 0, sizeof(sprTex->name));
         strncpy(sprTex->name, name, sizeof(sprTex->name)-1);
         sprTex->isCustom = W_LumpFromIWAD(i);
     }}
@@ -2044,24 +2043,32 @@ void R_InitSpriteTextures(void)
         spritetex_t* sprTex = spriteTextures[i];
         lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
         const doompatch_header_t* patch;
+        const texture_t* tex;
 
         /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
         if(W_LumpLength(lumpNum) < sizeof(doompatch_header_t))
         {
-            Con_Message("Warning: Lump %s (#%i) does not appear to be a valid Patch.\n",
+            Con_Message("Warning, sprite frame lump %s (#%i) does not appear to be a valid Patch.\n",
                 sprTex->name, lumpNum);
-            sprTex->width = sprTex->height = 0;
             sprTex->offX = sprTex->offY = 0;
             continue;
         }
 
         patch = (const doompatch_header_t*) W_CacheLumpNum(lumpNum, PU_CACHE);
-        sprTex->width = SHORT(patch->width);
-        sprTex->height = SHORT(patch->height);
+
+        tex = GL_CreateTexture2(sprTex->name, i, TN_SPRITES, SHORT(patch->width), SHORT(patch->height));
+        if(NULL == tex)
+        {
+            Con_Message("Warning, failed creating Texture for sprite frame lump %s (#%i).\n",
+                sprTex->name, lumpNum);
+            sprTex->offX = sprTex->offY = 0;
+            sprTex->isValid = false;
+            continue;
+        }
+        sprTex->texId = Texture_Id(tex);
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
-
-        GL_CreateTexture(sprTex->name, i, TN_SPRITES);
+        sprTex->isValid = true;
     }}
 
     VERBOSE2(
@@ -2771,7 +2778,7 @@ void R_DestroyShinyTextures(void)
     shinyTexturesCount = 0;
 }
 
-masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
+masktex_t* R_CreateMaskTexture(const dduri_t* uri, int width, int height)
 {
     const texture_t* glTex;
     masktex_t* mTex;
@@ -2783,7 +2790,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
 
     if(M_NumDigits(maskTexturesCount + 1) > 8)
     {
-        Con_Message("Warning: Failed to create new mask texture (max:%i).\n", DDMAXINT);
+        Con_Message("Warning, failed to create mask image (max:%i).\n", DDMAXINT);
         return 0;
     }
 
@@ -2794,13 +2801,19 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, short width, short height)
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, maskTexturesCount + 1);
 
-    glTex = GL_CreateTexture(name, maskTexturesCount, TN_MASKS);
+    glTex = GL_CreateTexture2(name, maskTexturesCount, TN_MASKS, width, height);
+    if(NULL == glTex)
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning, failed creating Texture for mask image: %s\n",
+            Str_Text(F_PrettyPath(path)));
+        Str_Delete(path);
+        return 0;
+    }
 
     mTex = M_Malloc(sizeof(*mTex));
     mTex->id = Texture_Id(glTex);
     mTex->external = uri;
-    mTex->width = width;
-    mTex->height = height;
 
     // Add it to the list.
     maskTextures = M_Realloc(maskTextures, sizeof(masktex_t*) * ++maskTexturesCount);

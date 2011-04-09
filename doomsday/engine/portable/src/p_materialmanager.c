@@ -1437,8 +1437,8 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
             if(shinyMaskTex)
                 setTexUnit(snapshot, MTU_REFLECTION_MASK, shinyMaskTex, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode,
-                    1.f / (snapshot->width * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->width),
-                    1.f / (snapshot->height * maskTextures[Texture_TypeIndex(TextureVariant_GeneralCase(shinyMaskTex))]->height),
+                    1.f / (snapshot->width * Texture_Width(TextureVariant_GeneralCase(shinyMaskTex))),
+                    1.f / (snapshot->height * Texture_Height(TextureVariant_GeneralCase(shinyMaskTex))),
                     snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
         }
     }
