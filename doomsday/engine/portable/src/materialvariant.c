@@ -75,6 +75,14 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
     const ded_material_t* def = Material_Definition(mat->_generalCase);
     int i, layerCount;
 
+    if(NULL == def)
+    {
+        // Material is no longer valid. We can't yet purge them because
+        // we lack a reference counting mechanism (the game may be holding
+        // Material pointers and/or indices, which are considered eternal).
+        return;
+    }
+
     // Update layers.
     layerCount = Material_LayerCount(mat->_generalCase);
     for(i = 0; i < layerCount; ++i)

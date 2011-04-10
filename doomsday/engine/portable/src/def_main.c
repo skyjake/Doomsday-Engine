@@ -403,7 +403,7 @@ ded_material_t* Def_GetMaterial(const dduri_t* uri)
             }
             Uri_Destruct(temp);
         }
-        
+
         if(NULL == def)
             def = findMaterialDef(uri);
     }
@@ -941,13 +941,23 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        ResourceNamespace_ClearExtraSearchPaths(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)));
+        ResourceNamespace_ClearExtraSearchPaths(F_ToResourceNamespace(
+            F_DefaultResourceNamespaceForClass(RC_MODEL)));
+
+        { uint i, materialCount = Materials_Count();
+        for(i = 0; i < materialCount; ++i)
+        {
+            material_t* mat = Materials_ToMaterial(1+i); // 1-based index.
+            Material_SetDefinition(mat, NULL);
+        }}
+        /// \todo MaterialBind contains links to definitions; clear them also.
+
         Def_Destroy();
     }
 
     firstDED = true;
 
-    // Clear all existing definitions.
+    // Now we can clear all existing definitions and re-init.
     DED_Clear(&defs);
     DED_Init(&defs);
 
@@ -961,7 +971,7 @@ void Def_Read(void)
     // Any definition hooks?
     DD_CallHooks(HOOK_DEFS, 0, &defs);
 
-    // Composite fonts. 
+    // Composite fonts.
     for(i = defs.count.compositeFonts.num; i-- > 0; )
     {
         ded_compositefont_t* cfont = defs.compositeFonts + i;
@@ -1057,9 +1067,15 @@ void Def_Read(void)
     for(i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t* def = &defs.materials[i];
-        Materials_CreateFromDef(def);
+        material_t* mat = Materials_ToMaterial(Materials_IndexForUri(def->id));
+        if(NULL == mat)
+        {   // A new Material.
+            Materials_CreateFromDef(def);
+            continue;
+        }
+        // Update existing.
+        Materials_Rebuild(mat, def);
     }
-    Materials_LinkAssociatedDefinitions();
 
     DED_NewEntries((void**) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
 
@@ -1290,7 +1306,7 @@ void Def_PostInit(void)
     R_DestroyDetailTextures();
     for(i = 0; i < defs.count.details.num; ++i)
     {
-        R_CreateDetailTexture(&defs.details[i]);
+        R_CreateDetailTextureFromDef(&defs.details[i]);
     }
 
     // Lightmaps and flare textures.

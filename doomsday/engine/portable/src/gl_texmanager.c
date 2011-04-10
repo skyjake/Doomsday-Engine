@@ -759,10 +759,9 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         break;
       }
     case TN_DETAILS: {
-        const detailtex_t* dTex;
-        int idx = Texture_TypeIndex(tex);
-        assert(idx >= 0 && idx < detailTexturesCount);
-        dTex = detailTextures[idx];
+        const detailtex_t* dTex = R_DetailTextureByIndex(Texture_TypeIndex(tex));
+        assert(NULL != dTex);
+
         if(dTex->isExternal)
         {
             ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
@@ -3192,7 +3191,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     assert(texInited && spec);
     {
     uploadcontentmethod_t uploadMethod;
-    byte loadResult;
+    byte loadResult = 0;
     image_t image;
     
     // Load the source image data.

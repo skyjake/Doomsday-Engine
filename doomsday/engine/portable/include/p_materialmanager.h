@@ -46,12 +46,22 @@ void Materials_Initialize(void);
 void Materials_Shutdown(void);
 
 /**
- * Find name-associated definitions for the known material bindings.
+ * Update the Material according to the supplied definition.
+ * To be called after an engine update/reset.
+ *
+ * @parma mat  Material to be updated.
+ * @param def  Material definition to update using.
  */
-void Materials_LinkAssociatedDefinitions(void);
+void Materials_Rebuild(struct material_s* mat, struct ded_material_s* def);
 
+/**
+ * Empty the Material cache queue, cancelling all outstanding tasks.
+ */
 void Materials_PurgeCacheQueue(void);
 
+/**
+ * Process all outstanding tasks in the Material cache queue.
+ */
 void Materials_ProcessCacheQueue(void);
 
 /**
@@ -89,8 +99,10 @@ const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_
  */
 struct material_s* Materials_CreateFromDef(ded_material_t* def);
 
+/// @return  Material associated with the specified unique name else @c NULL.
 struct material_s* Materials_ToMaterial(materialnum_t num);
 
+/// @return  Unique name associated with the specified Material.
 materialnum_t Materials_ToMaterialNum(struct material_s* mat);
 
 /**

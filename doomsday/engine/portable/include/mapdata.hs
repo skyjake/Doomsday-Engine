@@ -130,11 +130,6 @@ typedef enum {
     NUM_MATERIAL_ENV_CLASSES
 } material_env_class_t;
 
-typedef struct {
-    textureid_t tex;
-    float texOrigin[2]; // Origin of the texture in material-space.
-} material_layer_t;
-
 struct material_variantlist_node_s;
 end
 
@@ -154,6 +149,9 @@ struct material
     -       short       _flags // @see materialFlags
     -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
     -       boolean     _isCustom
+    -       texture_s*  _detailTex;
+    -       texture_s*  _shinyTex;
+    -       texture_s*  _shinyMaskTex;
 end
 
 internal

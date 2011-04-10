@@ -72,11 +72,24 @@ ded_material_t* Material_Definition(const material_t* mat)
     return mat->_def;
 }
 
+void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
+{
+    assert(mat);
+    mat->_def = def;
+}
+
 void Material_Dimensions(const material_t* mat, int* width, int* height)
 {
     assert(mat);
     if(width) *width = mat->_width;
     if(height) *height = mat->_height;
+}
+
+void Material_SetDimensions(material_t* mat, int width, int height)
+{
+    assert(mat);
+    mat->_width = width;
+    mat->_height = height;
 }
 
 int Material_Width(const material_t* mat)
@@ -85,16 +98,34 @@ int Material_Width(const material_t* mat)
     return mat->_width;
 }
 
+void Material_SetWidth(material_t* mat, int width)
+{
+    assert(mat);
+    mat->_width = width;
+}
+
 int Material_Height(const material_t* mat)
 {
     assert(mat);
     return mat->_height;
 }
 
+void Material_SetHeight(material_t* mat, int height)
+{
+    assert(mat);
+    mat->_height = height;
+}
+
 short Material_Flags(const material_t* mat)
 {
     assert(mat);
     return mat->_flags;
+}
+
+void Material_SetFlags(material_t* mat, short flags)
+{
+    assert(mat);
+    mat->_flags = flags;
 }
 
 boolean Material_IsCustom(const material_t* mat)
@@ -165,7 +196,7 @@ void Material_SetBindId(material_t* mat, uint bindId)
     mat->_bindId = bindId;
 }
 
-material_env_class_t Material_EnvClass(const material_t* mat)
+material_env_class_t Material_EnvironmentClass(const material_t* mat)
 {
     assert(mat);
     if(!Material_IsDrawable(mat))
@@ -173,10 +204,46 @@ material_env_class_t Material_EnvClass(const material_t* mat)
     return mat->_envClass;
 }
 
-void Material_SetEnvClass(material_t* mat, material_env_class_t envClass)
+void Material_SetEnvironmentClass(material_t* mat, material_env_class_t envClass)
 {
     assert(mat);
     mat->_envClass = envClass;
+}
+
+texture_t* Material_DetailTexture(material_t* mat)
+{
+    assert(mat);
+    return mat->_detailTex;
+}
+
+void Material_SetDetailTexture(material_t* mat, texture_t* tex)
+{
+    assert(mat);
+    mat->_detailTex = tex;
+}
+
+texture_t* Material_ShinyTexture(material_t* mat)
+{
+    assert(mat);
+    return mat->_shinyTex;
+}
+
+void Material_SetShinyTexture(material_t* mat, texture_t* tex)
+{
+    assert(mat);
+    mat->_shinyTex = tex;
+}
+
+texture_t* Material_ShinyMaskTexture(material_t* mat)
+{
+    assert(mat);
+    return mat->_shinyMaskTex;
+}
+
+void Material_SetShinyMaskTexture(material_t* mat, texture_t* tex)
+{
+    assert(mat);
+    mat->_shinyMaskTex = tex;
 }
 
 materialvariant_t* Material_AddVariant(material_t* mat, materialvariant_t* variant)

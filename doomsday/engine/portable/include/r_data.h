@@ -239,9 +239,6 @@ extern byte* translationTables;
 extern systex_t** sysTextures;
 extern int sysTexturesCount;
 
-extern detailtex_t** detailTextures;
-extern int detailTexturesCount;
-
 extern lightmap_t** lightmapTextures;
 extern int lightmapTexturesCount;
 
@@ -430,9 +427,35 @@ boolean         R_DrawVLightVector(const vlight_t* light, void* context);
 
 void            R_InitAnimGroup(ded_group_t* def);
 
-detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
-detailtex_t*    R_GetDetailTexture(const dduri_t* filePath, boolean isExternal);
-void            R_DestroyDetailTextures(void);
+/**
+ * Construct a DetailTexture according to the paramaters of the definition.
+ * \note May return an existing DetailTexture if it is concluded that the
+ * definition does not infer a unique DetailTexture.
+ *
+ * @param def  Definition describing the desired DetailTexture.
+ * @return  DetailTexture inferred from the definition or @c NULL if invalid.
+ */
+detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def);
+
+/**
+ * Lookup a DetailTexture by it's unique path/name.
+ *
+ * @param path  Path/name reference to the potential candidate.
+ * @param isExternal  @c true= @a path is an "external" path, else a WAD lump name.
+ * @return  DetailTexture associated to this path if found else @c NULL.
+ */
+detailtex_t* R_FindDetailTextureForName(const dduri_t* path, boolean isExternal);
+
+/// @return  DetailTexture associated with the specified index.
+detailtex_t* R_DetailTextureByIndex(int idx);
+
+/// @return  Number of DetailTextures.
+int R_DetailTextureCount(void);
+
+/**
+ * Destroy all DetailTextures. To be called when they are no longer needed.
+ */
+void R_DestroyDetailTextures(void);
 
 lightmap_t*     R_CreateLightMap(const dduri_t* uri);
 lightmap_t*     R_GetLightMap(const dduri_t* uri);
@@ -443,11 +466,11 @@ flaretex_t*     R_GetFlareTexture(const dduri_t* uri);
 void            R_DestroyFlareTextures(void);
 
 shinytex_t*     R_CreateShinyTexture(const dduri_t* uri);
-shinytex_t*     R_GetShinyTexture(const dduri_t* uri);
+shinytex_t*     R_FindShinyTextureForName(const dduri_t* uri);
 void            R_DestroyShinyTextures(void);
 
 masktex_t*      R_CreateMaskTexture(const dduri_t* uri, int logicalWidth, int logicalHeight);
-masktex_t*      R_GetMaskTexture(const dduri_t* uri);
+masktex_t*      R_FindMaskTextureForName(const dduri_t* uri);
 void            R_DestroyMaskTextures(void);
 
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);

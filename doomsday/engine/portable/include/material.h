@@ -69,20 +69,43 @@ int Material_IterateVariants(material_t* mat,
     int (*callback)(struct materialvariant_s* variant, void* paramaters),
     void* paramaters);
 
-/// @return  Definition from which this Material was derived.
+/// @return  Definition associated with this.
 struct ded_material_s* Material_Definition(const material_t* mat);
 
-/// Retrieve logical dimensions.
+/**
+ * Change the associated definition.
+ * @param def  New definition. Can be @c NULL.
+ */
+void Material_SetDefinition(material_t* mat, struct ded_material_s* def);
+
+/// Retrieve dimensions in logical world units.
 void Material_Dimensions(const material_t* mat, int* width, int* height);
+
+/**
+ * Change dimensions.
+ * @param width  New width in logical world units.
+ * @param height  New height in logical world units.
+ */
+void Material_SetDimensions(material_t* mat, int width, int height);
 
 /// @return  Logical width.
 int Material_Width(const material_t* mat);
 
+void Material_SetWidth(material_t* mat, int width);
+
 /// @return  Logical height.
 int Material_Height(const material_t* mat);
 
+void Material_SetHeight(material_t* mat, int height);
+
 /// @return  @see materialFlags
 short Material_Flags(const material_t* mat);
+
+/**
+ * Change the public Material Flags.
+ * @param flags  @see materialFlags
+ */
+void Material_SetFlags(material_t* mat, short flags);
 
 /// @return  @c true if Material is not derived from an original game resource.
 boolean Material_IsCustom(const material_t* mat);
@@ -93,7 +116,7 @@ boolean Material_IsGroupAnimated(const material_t* mat);
 /// @return  @c true if Material should be replaced with Sky.
 boolean Material_IsSkyMasked(const material_t* mat);
 
-/// @return  @c true if Material should be rendered.
+/// @return  @c true if Material is considered drawable.
 boolean Material_IsDrawable(const material_t* mat);
 
 /// @return  @c true if one or more animation stages are defined as "glowing".
@@ -102,33 +125,56 @@ boolean Material_HasGlow(material_t* mat);
 /// @return  @c true if one or more light decorations are defined.
 boolean Material_HasDecorations(material_t* mat);
 
-/// @return  Number of layers defined by this Material.
+/// @return  Number of layers.
 int Material_LayerCount(const material_t* mat);
 
-/**
- * Changed the group animation status of this Material.
- */
+/// Change the group animation status.
 void Material_SetGroupAnimated(material_t* mat, boolean yes);
 
-/// @return  Unique MaterialBind identifier.
+/// @return  MaterialBind identifier associated with this.
 uint Material_BindId(const material_t* mat);
 
 /**
- * Set the MaterialBind identifier for this Material.
- *
+ * Change associated material binding identifier.
  * @param bindId  New identifier.
  */
 void Material_SetBindId(material_t* mat, uint bindId);
 
-/// @return  Environmental sound class.
-material_env_class_t Material_EnvClass(const material_t* mat);
+/// @return  MaterialEnvironmentClass.
+material_env_class_t Material_EnvironmentClass(const material_t* mat);
 
 /**
- * Change the environmental sound class for this Material.
+ * Change the associated environment class.
  * \todo If attached to a Map Surface update accordingly!
- *
- * @param envClass  New environmental sound class.
+ * @param envClass  New MaterialEnvironmentClass.
  */
-void Material_SetEnvClass(material_t* mat, material_env_class_t envClass);
+void Material_SetEnvironmentClass(material_t* mat, material_env_class_t envClass);
+
+/// @return  Detail Texture linked to this else @c NULL
+struct texture_s* Material_DetailTexture(material_t* mat);
+
+/**
+ * Change the Detail Texture linked to this.
+ * @param tex  Texture to be linked with.
+ */
+void Material_SetDetailTexture(material_t* mat, struct texture_s* tex);
+
+/// @return  Shiny Texture linked to this else @c NULL
+struct texture_s* Material_ShinyTexture(material_t* mat);
+
+/**
+ * Change the Shiny Texture linked to this.
+ * @param tex  Texture to be linked with.
+ */
+void Material_SetShinyTexture(material_t* mat, struct texture_s* tex);
+
+/// @return  ShinyMask Texture linked to this else @c NULL
+struct texture_s* Material_ShinyMaskTexture(material_t* mat);
+
+/**
+ * Change the ShinyMask Texture linked to this.
+ * @param tex  Texture to be linked with.
+ */
+void Material_SetShinyMaskTexture(material_t* mat, struct texture_s* tex);
 
 #endif /* LIBDENG_MATERIAL_H */

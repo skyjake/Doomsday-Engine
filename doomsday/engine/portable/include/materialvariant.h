@@ -75,22 +75,34 @@ typedef struct material_textureunit_s {
     blendmode_t blendMode;
 
     /// Material-space scale multiplier.
-    float scale[2];
+    vec2_t scale;
 
     /// Material-space origin translation.
-    float offset[2];
+    vec2_t offset;
 
     float alpha;
 } material_textureunit_t;
 
 typedef struct material_snapshot_s {
+    /// "Virtual" texturing units.
     material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
-    int width, height; /// Material dimensions in world units.
-    float color[3]; /// Average color (for lighting).
-    float colorAmplified[3]; /// Average color amplified (for lighting).
-    float topColor[3]; /// Average top line color (for sky fadeout).
-    float shinyMinColor[3];
+
+    /// Dimensions in logical world units.
+    int width, height;
+
+    /// Average colors (for lighting).
+    vec3_t color;
+    vec3_t colorAmplified;
+
+    /// Average top line color (for sky fadeout).
+    vec3_t topColor;
+
+    /// Minimum sector light color for shiny texturing.
+    vec3_t shinyMinColor;
+
+    /// Glow strength multiplier.
     float glowing;
+
     boolean isOpaque;
 } material_snapshot_t;
 

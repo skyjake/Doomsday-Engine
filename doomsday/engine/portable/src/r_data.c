@@ -103,9 +103,6 @@ patchtex_t** patchTextures = NULL;
 int sysTexturesCount = 0;
 systex_t** sysTextures = NULL;
 
-int detailTexturesCount = 0;
-detailtex_t** detailTextures = NULL;
-
 int lightmapTexturesCount = 0;
 lightmap_t** lightmapTextures = NULL;
 
@@ -139,6 +136,9 @@ static flat_t** flatTextures = NULL;
 
 static int patchCompositeTexturesCount;
 static patchcompositetex_t** patchCompositeTextures;
+
+static int detailTexturesCount = 0;
+static detailtex_t** detailTextures = NULL;
 
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
@@ -2503,14 +2503,14 @@ void R_InitAnimGroup(ded_group_t* def)
     }
 }
 
-detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
+detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
 {
     const texture_t* glTex;
     detailtex_t* dTex;
     char name[9];
 
     // Have we already created one for this?
-    if(NULL != (dTex = R_GetDetailTexture(def->detailTex, def->isExternal)))
+    if(NULL != (dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal)))
         return dTex;
 
     if(M_NumDigits(detailTexturesCount + 1) > 8)
@@ -2540,7 +2540,7 @@ detailtex_t* R_CreateDetailTexture(const ded_detailtexture_t* def)
     return dTex;
 }
 
-detailtex_t* R_GetDetailTexture(const dduri_t* filePath, boolean isExternal)
+detailtex_t* R_FindDetailTextureForName(const dduri_t* filePath, boolean isExternal)
 {
     if(!filePath)
         return 0;
@@ -2552,6 +2552,19 @@ detailtex_t* R_GetDetailTexture(const dduri_t* filePath, boolean isExternal)
             return dTex;
     }}
     return 0;
+}
+
+detailtex_t* R_DetailTextureByIndex(int idx)
+{
+    if(idx >= 0 && idx < detailTexturesCount)
+        return detailTextures[idx];
+    Con_Error("R_DetailTextureByIndex: Failed to locate by index #%i.", idx);
+    return NULL;
+}
+
+int R_DetailTextureCount(void)
+{
+    return detailTexturesCount;
 }
 
 void R_DestroyDetailTextures(void)
@@ -2727,7 +2740,7 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
     char name[9];
 
     // Have we already created one for this?
-    if(NULL != (sTex = R_GetShinyTexture(uri)))
+    if(NULL != (sTex = R_FindShinyTextureForName(uri)))
         return sTex;
 
     if(M_NumDigits(shinyTexturesCount + 1) > 8)
@@ -2756,7 +2769,7 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
     return sTex;
 }
 
-shinytex_t* R_GetShinyTexture(const dduri_t* uri)
+shinytex_t* R_FindShinyTextureForName(const dduri_t* uri)
 {
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
@@ -2798,7 +2811,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, int width, int height)
     char name[9];
 
     // Have we already created one for this?
-    if(NULL != (mTex = R_GetMaskTexture(uri)))
+    if(NULL != (mTex = R_FindMaskTextureForName(uri)))
         return mTex;
 
     if(M_NumDigits(maskTexturesCount + 1) > 8)
@@ -2835,7 +2848,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, int width, int height)
     return mTex;
 }
 
-masktex_t* R_GetMaskTexture(const dduri_t* uri)
+masktex_t* R_FindMaskTextureForName(const dduri_t* uri)
 {
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
