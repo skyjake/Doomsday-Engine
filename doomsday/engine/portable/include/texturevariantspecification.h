@@ -83,17 +83,52 @@ typedef struct {
     byte border; /// In pixels, added to all four edges of the texture.
     int wrapS, wrapT;
     boolean mipmapped, gammaCorrection, noStretch, toAlpha;
+
+    /**
+     * Minification filter modes. Specified using either a logical
+     * texture class id (actual mode used is then determined by the
+     * user's preference for that class) or a constant value.
+     *
+     * Texture class:
+     * -1: No class
+     *
+     * Constant:
+     * 0: Nearest or Nearest-Mipmap-Nearest (if mipmapping)
+     * 1: Linear  or Linear-Mipmap-Nearest (if mipmapping)
+     * 2: Nearest-Mipmap-Linear (mipmapping only)
+     * 3: Linear-Mipmap-Linear (mipmapping only)
+     */
+    int minFilter;
+
+    /**
+     * Magnification filter modes. Specified using either a logical
+     * texture class id (actual mode used is then determined by the
+     * user's preference for that class) or a constant value.
+     *
+     * Texture class:
+     * -2: Sprite class
+     * -1: No class
+     *
+     * Constant:
+     * 0: Nearest (in Manhattan distance)
+     * 1: Linear (weighted average)
+     */
+    int magFilter;
+
+    /// -1: User preference else a logical DGL anisotropic filter level.
     int anisoFilter;
+
+    /// Additional color palette translation spec.
     colorpalettetranslationspecification_t* translated;
 } variantspecification_t;
 
 /**
- * Detail textures are faded to gray depending on the contrast
- * factor. The texture is also progressively faded towards gray
- * when each mipmap level is loaded.
+ * Detail textures are faded to gray depending on the contrast factor.
+ * The texture is also progressively faded towards gray in each mipmap
+ * level uploaded.
  *
- * Contrast is quantized in order to reduce the number of variants
- * to a more sensible/manageable number per texture.
+ * Contrast is quantized in order to reduce the number of variants to
+ * a more sensible/manageable number per texture.
  */
 #define DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR  (10)
 

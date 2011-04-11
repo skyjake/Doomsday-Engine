@@ -2363,7 +2363,7 @@ void R_PrecacheMobjNum(int num)
         return;
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false);
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     assert(spec);
 
     /// \optimize Traverses the entire state list!
@@ -2407,7 +2407,7 @@ void R_PrecacheForMap(void)
 
     startTime = Sys_GetSeconds();
     spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-        GL_REPEAT, GL_REPEAT, -1, true, true, false, false);
+        GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
 
     { uint i;
     for(i = 0; i < numSideDefs; ++i)
@@ -2442,7 +2442,7 @@ void R_PrecacheForMap(void)
     {
         int i;
         spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];

@@ -608,7 +608,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     Materials_Prepare(&ms, mat, false,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, false, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -651,7 +651,7 @@ float R_VisualRadius(mobj_t* mo)
     // @fixme What about rotation?
     Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
     return ms.width / 2;
 }
 
@@ -865,7 +865,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -1109,7 +1109,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
-            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
+            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -1432,7 +1432,7 @@ if(!mat)
         // Ensure we have up-to-date information about the material.
         Materials_Prepare(&ms, mat, true,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false));
         pl = (const pointlight_analysis_t*) Texture_Analysis(
             MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)

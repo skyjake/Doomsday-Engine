@@ -211,6 +211,11 @@ static texturevariantspecification_t* copyDetailVariantSpecification(
     return spec;
 }
 
+/**
+ * \note Minification, Magnification and Anisotropic filter variance is
+ * handled through dynamic changes to GL's texture environment state.
+ * Consequently they are ignored here.
+ */
 static int compareVariantSpecifications(const variantspecification_t* a,
     const variantspecification_t* b)
 {
@@ -224,8 +229,6 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     if(a->mipmapped != b->mipmapped)
         return 1;
     if(a->noStretch != b->noStretch)
-        return 1;
-    if(a->anisoFilter != b->anisoFilter)
         return 1;
     if(a->gammaCorrection != b->gammaCorrection)
         return 1;
@@ -274,8 +277,8 @@ static colorpalettetranslationspecification_t* applyColorPaletteTranslationSpeci
 static variantspecification_t* applyVariantSpecification(
     variantspecification_t* spec, texturevariantusagecontext_t tc, int flags,
     byte border, colorpalettetranslationspecification_t* colorPaletteTranslationSpec,
-    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-    boolean noStretch, boolean toAlpha)
+    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter, boolean mipmapped,
+    boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     assert(texInited && spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
@@ -287,7 +290,9 @@ static variantspecification_t* applyVariantSpecification(
     spec->mipmapped = mipmapped;
     spec->wrapS = wrapS;
     spec->wrapT = wrapT;
-    spec->anisoFilter = anisoFilter < 0? -1 : MINMAX_OF(0, anisoFilter, 4);
+    spec->minFilter = MINMAX_OF(-1, minFilter, spec->mipmapped? 3:1);
+    spec->magFilter = MINMAX_OF(-2, magFilter, 1);
+    spec->anisoFilter = MINMAX_OF(-1, anisoFilter, 4);
     spec->gammaCorrection = gammaCorrection;
     spec->noStretch = noStretch;
     spec->toAlpha = toAlpha;
@@ -389,8 +394,8 @@ static texturevariantspecification_t* findVariantSpecification(
 
 static texturevariantspecification_t* getVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
-    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped,
-    boolean gammaCorrection, boolean noStretch, boolean toAlpha)
+    int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     assert(texInited);
     {
@@ -406,7 +411,8 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
     }
 
     applyVariantSpecification(TS_GENERAL(&tpl), tc, flags, border, haveCpt? &cptTpl : NULL,
-        wrapS, wrapT, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
+        wrapS, wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection,
+        noStretch, toAlpha);
 
     // Retrieve a concrete version of the rationalized specification.
     return findVariantSpecification(tpl.type, &tpl, true);
@@ -943,36 +949,26 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
         }
     }
 
-    switch(spec->context)
+    if(spec->minFilter >= 0) // Constant logical value.
     {
-    case TC_MAPSURFACE_DIFFUSE:
-    case TC_MAPSURFACE_REFLECTIONMASK:
-    case TC_MAPSURFACE_LIGHTMAP:
-        magFilter = glmode[texMagMode];
-        break;
-    case TC_SPRITE_DIFFUSE:
-    case TC_MODELSKIN_DIFFUSE:
-        magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
-        break;
-    default:
-        magFilter = GL_LINEAR;
-        break;
+        minFilter = (spec->mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + spec->minFilter;
+    }
+    else // "No class" preference.
+    {
+        minFilter = spec->mipmapped? glmode[mipmapping] : GL_LINEAR;
     }
 
-    switch(spec->context)
+    if(spec->magFilter >= 0) // Constant logical value.
     {
-    case TC_MAPSURFACE_DIFFUSE:
-    //case TC_MAPSURFACE_REFLECTION:
-    case TC_MAPSURFACE_REFLECTIONMASK:
-    //case TC_MAPSURFACE_LIGHTMAP:
-        minFilter = glmode[mipmapping];
-        break;
-    case TC_UI:
-        minFilter = GL_NEAREST;
-        break;
-    default:
-        minFilter = GL_LINEAR;
-        break;
+        magFilter = GL_NEAREST + spec->magFilter;
+    }
+    else if(spec->magFilter == -1) // "No class" preference.
+    {
+        magFilter = glmode[texMagMode];
+    }
+    else // Preference for texture class id.
+    {   // Just "Sprite" presently.
+        magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
     }
 
     anisoFilter = spec->anisoFilter < 0? texAniso : spec->anisoFilter;
@@ -1210,7 +1206,7 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
     return 1; // Unreachable.
 }
 
-void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec)
+void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* baseSpec)
 {
     static const char* textureUsageContextNames[1+TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
         /* TC_UNKNOWN */                    { "unknown" },
@@ -1230,28 +1226,65 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
         /* TST_GENERAL */   { "general" },
         /* TST_DETAIL */    { "detail"  }
     };
+    static const char* filterModeNames[] = { "sprite", "noclass", "const" };
+    static const char* glFilterNames[] = {
+        "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
+        "nearest_mipmap_linear", "linear_mipmap_linear"
+    };
 
-    if(NULL == spec) return;
+    if(NULL == baseSpec) return;
 
-    Con_Printf("type:%s", textureSpecificationTypeNames[spec->type]);
+    Con_Printf("type:%s", textureSpecificationTypeNames[baseSpec->type]);
 
-    switch(spec->type)
+    switch(baseSpec->type)
     {
-    case TST_DETAIL:
-        Con_Printf(" contrast:%i%%\n", (int)(.5f + TS_DETAIL(spec)->contrast / 255.f * 100));
+    case TST_DETAIL: {
+        const detailvariantspecification_t* spec = TS_DETAIL(baseSpec);
+        Con_Printf(" contrast:%i%%\n", (int)(.5f + spec->contrast / 255.f * 100));
         break;
+      }
     case TST_GENERAL: {
-        texturevariantusagecontext_t tc = TS_GENERAL(spec)->context;
+        const variantspecification_t* spec = TS_GENERAL(baseSpec);
+        texturevariantusagecontext_t tc = spec->context;
+        int glMinFilterNameIdx, glMagFilterNameIdx;
         assert(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
-        Con_Printf(" context:%s flags:%i border:%i",
-            textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
-            (TS_GENERAL(spec)->flags & ~TSF_INTERNAL_MASK), TS_GENERAL(spec)->border);
-        if(TS_GENERAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT)
+        if(spec->minFilter >= 0) // Constant logical value.
         {
-            const colorpalettetranslationspecification_t* cpt = TS_GENERAL(spec)->translated;
+            glMinFilterNameIdx = (spec->mipmapped? 2 : 0) + spec->minFilter;
+        }
+        else // "No class" preference.
+        {
+            glMinFilterNameIdx = spec->mipmapped? mipmapping : 1;
+        }
+
+        if(spec->magFilter >= 0) // Constant logical value.
+        {
+            glMagFilterNameIdx = spec->magFilter;
+        }
+        else if(spec->magFilter == -1) // "No class" preference.
+        {
+            glMagFilterNameIdx = texMagMode;
+        }
+        else // Preference for texture class id.
+        {   // Just sprites presently.
+            glMagFilterNameIdx = filterSprites;
+        }
+
+        Con_Printf(" context:%s flags:%i border:%i\n"
+            "    minFilter:(%s|%s) magFilter:(%s|%s) anisoFilter:%i",
+            textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
+            (spec->flags & ~TSF_INTERNAL_MASK), spec->border,
+            filterModeNames[1 + MINMAX_OF(-1, spec->minFilter, 0)],
+            glFilterNames[glMinFilterNameIdx],
+            filterModeNames[2 + MINMAX_OF(-2, spec->magFilter, 0)],
+            glFilterNames[glMagFilterNameIdx],
+            spec->anisoFilter);
+        if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
+        {
+            const colorpalettetranslationspecification_t* cpt = spec->translated;
             assert(cpt);
-            Con_Printf(" translated(tclass:%i tmap:%i)", cpt->tClass, cpt->tMap);
+            Con_Printf(" translated:(tclass:%i tmap:%i)", cpt->tClass, cpt->tMap);
         }
         Con_Printf("\n");
         break;
@@ -1261,14 +1294,14 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-    int wrapS, int wrapT, int anisoFilter, boolean mipmapped, boolean gammaCorrection,
-    boolean noStretch, boolean toAlpha)
+    int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     if(!texInited)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
     return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
-        wrapT, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
+        wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
@@ -2757,7 +2790,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
-                    0, 0, 0, 0, GL_CLAMP, GL_CLAMP, -1, false, false, false, true);
+                    0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
             return GL_PrepareTexture(GL_ToTexture(lmap->id), texSpec);
         }
     }
@@ -2782,7 +2815,8 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
-                    TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, true);
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                    1, 1, 0, false, false, false, true);
             return GL_PrepareTexture(GL_ToTexture(fTex->id), texSpec);
         }
     }
@@ -2801,7 +2835,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             GL_TextureVariantSpecificationForContext(TC_UI,
                 0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
                   | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-                0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, false, false, false);
+                0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
         return GL_PrepareTexture(GL_ToTexture(patchTex->texId), texSpec);
     }
     return 0;

@@ -160,7 +160,7 @@ boolean Material_HasGlow(material_t* mat)
     /// \fixme We should not need to prepare to determine this.
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
     return (ms.glowing > .0001f);
     }
 }

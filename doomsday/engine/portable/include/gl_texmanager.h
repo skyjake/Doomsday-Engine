@@ -279,8 +279,8 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
  */
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
-    int tMap, int wrapS, int wrapT, int anisoFilter, boolean mipmapped,
-    boolean gammaCorrection, boolean noStretch, boolean toAlpha);
+    int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
+    boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
 
 /**
  * Prepare a TextureVariantSpecification according to usage context.

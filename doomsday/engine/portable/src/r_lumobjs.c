@@ -409,7 +409,7 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
     // Ensure we have up-to-date information about the material.
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, -1, true, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
     pl = (const pointlight_analysis_t*) Texture_Analysis(
         MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
     if(NULL == pl)
@@ -592,7 +592,7 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
     material_snapshot_t ms;
     Materials_Prepare(&ms, surface->material, true,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
     V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
     V3_Copy(LUM_PLANE(l)->color, ms.colorAmplified);
     LUM_PLANE(l)->intensity = ms.glowing;
@@ -628,7 +628,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         // Are we glowing at this moment in time?
         Materials_Prepare(&ms, suf->material, true,
             Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                GL_REPEAT, GL_REPEAT, -1, true, true, false, false));
+                GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
         if(!(ms.glowing > .0001f))
             return true; // Continue iteration.
 

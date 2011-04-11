@@ -1039,7 +1039,7 @@ void GL_SetMaterial(material_t* mat)
     Con_Error("GL_SetMaterial: No usage context specified.");
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, 0, false, false, false, false));
+            GL_REPEAT, GL_REPEAT, 1, 1, 0, false, false, false, false));
     GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 
@@ -1048,7 +1048,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     material_snapshot_t ms;
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
-            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, false, true, true, false));
+            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false));
     GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 

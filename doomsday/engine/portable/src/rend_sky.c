@@ -276,7 +276,8 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
 
             Materials_Prepare(&ms, material, true,
                 Materials_VariantSpecificationForContext(MC_SKYSPHERE,
-                    TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, false, true, false, false));
+                    TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                    1, 1, 0, false, true, false, false));
 
             tex     = MSU(&ms, MTU_PRIMARY).tex.glName;
             Texture_Dimensions(MSU(&ms, MTU_PRIMARY).tex.texture, &skyTexWidth, &skyTexHeight);
