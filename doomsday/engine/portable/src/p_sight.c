@@ -221,7 +221,7 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
                     return false; // Stop iteration.
             }
 
-            *segPtr++;
+            segPtr++;
         }
     }
 
@@ -243,7 +243,7 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
                 return false;
         }
 
-        *segPtr++;
+        segPtr++;
     }
     }
 

@@ -312,7 +312,7 @@ void R_Update(void)
 
             Surface_Update(&side->SW_middlesurface);
 
-            *segPtr++;
+            segPtr++;
         }
     }
 

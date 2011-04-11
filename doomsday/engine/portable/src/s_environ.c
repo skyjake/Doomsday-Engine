@@ -298,7 +298,7 @@ static boolean calcSSecReverb(subsector_t* ssec)
             materials[mclass] += seg->length;
         }
 
-        *ptr++;
+        ptr++;
     }
 
     if(!total)

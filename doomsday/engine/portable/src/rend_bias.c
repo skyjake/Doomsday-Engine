@@ -373,7 +373,7 @@ void SB_InitForMap(const char* uniqueID)
         {
             subsector_t*        ssec = *ssecPtr;
             numVertIllums += ssec->numVertices * sec->planeCount;
-            *ssecPtr++;
+            ssecPtr++;
         }
     }
 
@@ -431,7 +431,7 @@ void SB_InitForMap(const char* uniqueID)
                 ssec->bsuf[j] = bsuf;
             }
 
-            *ssecPtr++;
+            ssecPtr++;
         }
     }
 

@@ -659,7 +659,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
             while(*ssec)
             {
                 createGlowLightPerPlaneForSubSector(*ssec);
-                *ssec++;
+                ssec++;
             }
         }
     }
@@ -872,7 +872,7 @@ void LO_UnlinkMobjLumobjs(cvar_t* var)
 void LO_DrawLumobjs(void)
 {
     static const float  black[4] = { 0, 0, 0, 0 };
-    static const float  white[4] = { 1, 1, 1, 1 };
+    //static const float  white[4] = { 1, 1, 1, 1 };
     float               color[4];
     uint                i;
 

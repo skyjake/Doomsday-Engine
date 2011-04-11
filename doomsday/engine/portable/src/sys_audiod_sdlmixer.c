@@ -98,7 +98,7 @@ audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerEvent
 };
 
-audiointerface_sfx_t audiod_sdlmixer_sfx = {
+audiointerface_sfx_t audiod_sdlmixer_sfx = { {
     DS_SDLMixer_SFX_Init,
     DS_SDLMixer_SFX_CreateBuffer,
     DS_SDLMixer_SFX_DestroyBuffer,
@@ -111,15 +111,15 @@ audiointerface_sfx_t audiod_sdlmixer_sfx = {
     DS_SDLMixer_SFX_Setv,
     DS_SDLMixer_SFX_Listener,
     DS_SDLMixer_SFX_Listenerv
-};
+} };
 
-audiointerface_music_t audiod_sdlmixer_music = {
+audiointerface_music_t audiod_sdlmixer_music = { {
     DS_SDLMixer_Music_Init,
     DS_SDLMixer_Music_Update,
     DS_SDLMixer_Music_Set,
     DS_SDLMixer_Music_Get,
     DS_SDLMixer_Music_Pause,
-    DS_SDLMixer_Music_Stop,
+    DS_SDLMixer_Music_Stop },
     NULL,
     NULL,
     DS_SDLMixer_Music_PlayFile,
@@ -131,7 +131,7 @@ static int numChannels;
 static boolean* usedChannels;
 
 static Mix_Music* lastMusic;
-static boolean playingMusic = false;
+//static boolean playingMusic = false;
 
 // CODE --------------------------------------------------------------------
 

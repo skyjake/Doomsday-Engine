@@ -466,7 +466,7 @@ int P_Iteratep(void *ptr, uint prop, void* context,
                 linedef_t**         linePtr = sec->lineDefs;
 
                 while(*linePtr && (result = callback(*linePtr, context)) != 0)
-                    *linePtr++;
+                    linePtr++;
             }
 
             return result;
@@ -482,7 +482,7 @@ int P_Iteratep(void *ptr, uint prop, void* context,
                 plane_t**           planePtr = sec->planes;
 
                 while(*planePtr && (result = callback(*planePtr, context)) != 0)
-                    *planePtr++;
+                    planePtr++;
             }
 
             return result;
@@ -498,7 +498,7 @@ int P_Iteratep(void *ptr, uint prop, void* context,
                 subsector_t**       ssecPtr = sec->ssectors;
 
                 while(*ssecPtr && (result = callback(*ssecPtr, context)) != 0)
-                    *ssecPtr++;
+                    ssecPtr++;
             }
 
             return result;
@@ -523,7 +523,7 @@ int P_Iteratep(void *ptr, uint prop, void* context,
                 seg_t**             segPtr = ssec->segs;
 
                 while(*segPtr && (result = callback(*segPtr, context)) != 0)
-                    *segPtr++;
+                    segPtr++;
             }
 
             return result;

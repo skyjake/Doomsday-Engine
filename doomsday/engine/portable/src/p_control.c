@@ -291,13 +291,16 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 
         switch(newState)
         {
-            case DBCS_POSITIVE:
-                Str_Append(symbolicName, "control-doubleclick-positive-");
-                break;
+        case DBCS_POSITIVE:
+            Str_Append(symbolicName, "control-doubleclick-positive-");
+            break;
 
-            case DBCS_NEGATIVE:
-                Str_Append(symbolicName, "control-doubleclick-negative-");
-                break;
+        case DBCS_NEGATIVE:
+            Str_Append(symbolicName, "control-doubleclick-negative-");
+            break;
+
+        default:
+            break;
         }
 
         // Compose the name of the symbolic event.

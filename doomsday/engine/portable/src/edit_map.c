@@ -317,6 +317,7 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
     M_Free(hits);
 }
 
+#if 0
 static void findEquivalentVertexes(editmap_t *src)
 {
     uint            i, newNum;
@@ -481,6 +482,7 @@ static void pruneUnusedSectors(editmap_t* map)
         map->numSectors = newNum;
     }
 }
+#endif
 
 /**
  * \note Order here is critical!
@@ -959,7 +961,7 @@ static void updateSSecMidPoint(subsector_t *sub)
     sub->bBox[0].pos[VX] = sub->bBox[1].pos[VX] = sub->midPoint.pos[VX] = vtx->pos[VX];
     sub->bBox[0].pos[VY] = sub->bBox[1].pos[VY] = sub->midPoint.pos[VY] = vtx->pos[VY];
 
-    *ptr++;
+    ptr++;
     while(*ptr)
     {
         vtx = &((*ptr)->SG_v1->v);
@@ -974,7 +976,7 @@ static void updateSSecMidPoint(subsector_t *sub)
 
         sub->midPoint.pos[VX] += vtx->pos[VX];
         sub->midPoint.pos[VY] += vtx->pos[VY];
-        *ptr++;
+        ptr++;
     }
 
     sub->midPoint.pos[VX] /= sub->segCount; // num vertices.
@@ -1836,7 +1838,7 @@ boolean MPE_End(void)
             po->originalPts[n].pos[VX] = seg->SG_v1pos[VX] - po->pos[VX];
             po->originalPts[n].pos[VY] = seg->SG_v1pos[VY] - po->pos[VY];
 
-            *segPtr++;
+            segPtr++;
             n++;
         }
     }

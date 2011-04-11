@@ -1302,7 +1302,7 @@ int C_CheckSubsector(subsector_t *ssec)
         // Shift for more accuracy.
         anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
                                  (int) ((vtx->V_pos[VX] - vx) * 100));
-        *ptr++;
+        ptr++;
     }
 
     // Check each of the ranges defined by the edges.

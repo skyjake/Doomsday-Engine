@@ -178,7 +178,7 @@ The default place where you should put your IWADs is @file{ Data\<Game>\ }. jDoo
 
 
 
-@section{ The @opt{-file} Option }
+@section{ The @opt{-file} option }
 
 @a{fileopt}
 The @opt{-file} option is used to load WAD files and other data files
@@ -352,8 +352,8 @@ example the contents of the PK3 might be:
    powerplant.2/
       a-E2M3.lmp
       b-THINGS.lmp
-   xyz.lmp
-}}
+   xyz.lmp}
+}
 
 @file{#assembly} would be mapped to @file{Data\<Game>\Auto\assembly\}.
 

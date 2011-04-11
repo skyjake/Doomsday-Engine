@@ -224,7 +224,7 @@ void P_MapInitPolyobjs(void)
             // All surfaces of a sidedef have the same normal.
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
-            *segPtr++;
+            segPtr++;
         }
 
         avg.pos[VX] /= po->numSegs;

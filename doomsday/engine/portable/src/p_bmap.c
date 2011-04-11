@@ -499,7 +499,7 @@ static boolean bmapBlockLinesIterator(void* ptr, void* context)
                     return false;
             }
 
-            *iter++;
+            iter++;
         }
     }
 
@@ -738,7 +738,7 @@ static boolean ssecBlockIterator(void* ptr, void* context)
                 }
             }
 
-            *iter++;
+            iter++;
         }
     }
 
@@ -1068,7 +1068,7 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
             glVertex2f(start[VX], end[VY]);
             glVertex2f(start[VX], start[VY]);
         glEnd();
-        *segs++;
+        segs++;
     }
     return true; // Continue iteration.
 }
@@ -1241,7 +1241,7 @@ static void drawBlockInfoBox(uint vBlock[2])
             while(*iter)
             {
                 lineCount++;
-                *iter++;
+                iter++;
             }
         }
 

@@ -248,6 +248,8 @@ static void projectDecoration(decorsource_t* src)
         }
         break;
         }
+    default:
+        break;
     }
 }
 
@@ -425,6 +427,9 @@ static void createDecorSource(const surface_t* suf,
         src->data.model.pitch = DEC_MODEL(dec)->pitch;
         src->data.model.yaw = DEC_MODEL(dec)->yaw;
         break;
+
+    default:
+        break;
     }
 }
 
@@ -456,6 +461,9 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         case DT_MODEL:
             if(!R_IsValidModelDecoration(DEC_MODEL(d)->def))
                 return true;
+            break;
+
+        default:
             break;
         }
 
@@ -759,6 +767,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
     case SEG_MIDDLE:
         suf = &side->SW_middlesurface;
         if(suf->material)
+        {
             if(!line->L_backside)
             {
                 top = frontCeil->visHeight;
@@ -783,6 +792,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
                     visible = true;
                 }
             }
+        }
         break;
 
     case SEG_TOP:

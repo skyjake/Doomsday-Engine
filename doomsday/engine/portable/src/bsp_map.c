@@ -299,7 +299,7 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
     found = false;
     while(*segp)
     {
-        seg_t*              seg = *segp;
+        seg_t* seg = *segp;
 
         if(!found && seg->lineDef && SEG_SIDEDEF(seg))
         {
@@ -310,7 +310,7 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
         }
 
         seg->subsector = dest;
-        *segp++;
+        segp++;
     }
 
     if(!dest->sector)

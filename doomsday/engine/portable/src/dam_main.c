@@ -314,7 +314,7 @@ static archivedmap_t* findArchivedMap(const char *mapID)
              if(!strnicmp(dam->identifier, mapID, 8))
                 return dam;
 
-            *p++;
+            p++;
         }
     }
 

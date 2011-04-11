@@ -215,8 +215,6 @@ void GL_InitTextureContent(texturecontent_t* content)
 
 void GL_UploadTextureContent(texturecontent_t* content)
 {
-    boolean             result = false;
-
     if(content->flags & TXCF_EASY_UPLOAD)
     {
         GL_UploadTexture2(content);

@@ -520,7 +520,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 
     if(numSprites)
     {
-        int                 n, idx = 0;
+        int                 n;
         spriteframe_t       sprTemp[MAX_FRAMES];
         int                 maxFrame;
 
@@ -1735,11 +1735,13 @@ void R_SortVisSprites(void)
     }
 }
 
+/*
 static void scaleFloatRGB(float* out, const float* in, float mul)
 {
     memset(out, 0, sizeof(float) * 3);
     R_ScaleAmbientRGB(out, in, mul);
 }
+*/
 
 /**
  * Iterator for processing light sources around a vissprite.

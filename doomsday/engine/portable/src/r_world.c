@@ -77,7 +77,7 @@ skyfix_t skyFix[2];
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean noSkyColorGiven;
-static float skyColorRGB[4], balancedRGB[4];
+static float skyColorRGB[4]/*, balancedRGB[4]*/;
 static float skyColorBalance;
 
 static surfacelistnode_t* unusedSurfaceListNodes = NULL;
@@ -89,18 +89,22 @@ static surfacelistnode_t* unusedSurfaceListNodes = NULL;
  */
 static surfacelistnode_t* allocListNode(void)
 {
-    surfacelistnode_t*      node = Z_Calloc(sizeof(*node), PU_STATIC, 0);
+    surfacelistnode_t* node = Z_Calloc(sizeof(*node), PU_STATIC, 0);
     return node;
 }
 
+#if 0
 /**
  * Free all memory acquired for the given surface list node.
+ *
+ * @todo  This function is never called anywhere?
  */
 static void freeListNode(surfacelistnode_t* node)
 {
     if(node)
         Z_Free(node);
 }
+#endif
 
 surfacelistnode_t* R_SurfaceListNodeCreate(void)
 {
@@ -506,7 +510,7 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
                 Surface_Update(&li->L_side(side^1)->SW_surface(SEG_TOP));
         }
 
-        *linep++;
+        linep++;
     }
 }
 
@@ -616,7 +620,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
 
         ssec->bsuf = newList;
 
-        *ssecPtr++;
+        ssecPtr++;
     }
 
     return plane;
@@ -678,7 +682,7 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
         SB_DestroySurface(ssec->bsuf[id]);
         if(id < sec->planeCount)
             memmove(ssec->bsuf + id, ssec->bsuf + id + 1, sizeof(biassurface_t*));
-        *ssecPtr++;
+        ssecPtr++;
     }
 
     // Destroy the specified plane.
@@ -823,7 +827,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
                     }
                 }
             }
-            *linePtr++;
+            linePtr++;
         }
     }
 }
@@ -1503,9 +1507,9 @@ void R_SetupMap(int mode, int flags)
 
         // The map setup has been completed. Run the special map setup
         // command, which the user may alias to do something useful.
-        if(mapID && mapID[0])
+        if(/*mapID &&*/ mapID[0])
         {
-            char                cmd[80];
+            char cmd[80];
 
             sprintf(cmd, "init-%s", mapID);
             if(Con_IsValidCommand(cmd))
@@ -1768,7 +1772,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     {
         uint                i;
         subsector_t**       ssecp;
-        sidedef_t*          front = NULL, *back = NULL;
+        //sidedef_t*          front = NULL, *back = NULL;
 
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
@@ -1811,12 +1815,12 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
                         SB_SurfaceMoved(seg->bsuf[i]);
                 }
 
-                *segp++;
+                segp++;
             }
 
             SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
 
-            *ssecp++;
+            ssecp++;
         }
 
         // We need the decorations updated.

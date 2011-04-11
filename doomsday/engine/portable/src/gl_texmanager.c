@@ -1483,7 +1483,7 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
 byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
                            void* context)
 {
-    int                 i, flags = 0;
+    int                 i;
     doomtexturedef_t*   texDef;
     boolean             loadAsSky = false, zeroMask = false;
     material_load_params_t* params = (material_load_params_t*) context;
@@ -3051,7 +3051,6 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
             {
                 texturecontent_t    content;
                 int                 flags = 0;
-                boolean             noCompression = false;
                 boolean             alphaChannel;
 
                 if(image.pixelSize > 1)

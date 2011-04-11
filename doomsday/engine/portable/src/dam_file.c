@@ -1110,6 +1110,7 @@ static void archivePolyobjs(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
+/*
 static void writeThing(const gamemap_t *map, uint idx)
 {
 
@@ -1119,6 +1120,7 @@ static void readThing(const gamemap_t *map, uint idx)
 {
 
 }
+*/
 
 static void archiveMap(gamemap_t *map, boolean write)
 {
