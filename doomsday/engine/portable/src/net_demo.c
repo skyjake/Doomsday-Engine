@@ -576,7 +576,7 @@ void Demo_ReadLocalCamera(void)
         // Instantaneous move.
         R_ResetViewer();
         demoFrameZ = z;
-        Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], z, demoOnGround);
+        ClPlayer_MoveLocal(posDelta[VX], posDelta[VY], z, demoOnGround);
         posDelta[VX] = posDelta[VY] = posDelta[VZ] = 0;
     }
 }
@@ -601,8 +601,7 @@ void Demo_Ticker(timespan_t time)
         ddpl->lookDir += lookdirDelta;
         /* $unifiedangles */
         // Move player (i.e. camera).
-        Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], demoFrameZ + demoZ,
-                           demoOnGround);
+        ClPlayer_MoveLocal(posDelta[VX], posDelta[VY], demoFrameZ + demoZ, demoOnGround);
         // Interpolate camera Z offset (to framez).
         demoZ += posDelta[VZ];
     }

@@ -32,6 +32,8 @@
  * These routines should be considered FROZEN. Do not change them.
  */
 
+#if 0
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -81,7 +83,7 @@ void Cl_ReadDeltaSet(void)
         acks[num_acks++] = set;
 
     if(present & BIT(DT_MOBJ))
-        while(Cl_ReadMobjDelta());
+        while(ClMobj_ReadDelta());
     if(present & BIT(DT_PLAYER))
         while(Cl_ReadPlayerDelta());
     if(present & BIT(DT_LUMP))
@@ -128,3 +130,5 @@ if(!gameReady)
     // Reset the predict counter.
     predicted_tics = 0;
 }
+
+#endif

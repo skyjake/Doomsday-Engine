@@ -268,9 +268,11 @@ void Cl_GetPackets(void)
 
             switch(netBuffer.msg.type)
             {
+            /*
             case PSV_FRAME:
                 Cl_FrameReceived();
                 break;
+                */
 
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
@@ -278,7 +280,7 @@ void Cl_GetPackets(void)
                 break;
 
             case PKT_COORDS:
-                Cl_CoordsReceived();
+                ClPlayer_CoordsReceived();
                 break;
 
             case PSV_SOUND:
@@ -314,7 +316,7 @@ void Cl_GetPackets(void)
         switch(netBuffer.msg.type)
         {
         case PSV_PLAYER_FIX:
-            Cl_HandlePlayerFix();
+            ClPlayer_HandleFix();
             break;
 
         case PKT_DEMOCAM:
@@ -399,13 +401,13 @@ void Cl_Assertions(int plrNum)
     if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
 
     plr = &ddPlayers[plrNum];
-    s = &clPlayerStates[plrNum];
+    s = ClPlayer_State(plrNum);
 
     // Must have a mobj!
-    if(!s->cmo || !plr->shared.mo)
+    if(!s->clMobjId || !plr->shared.mo)
         return;
 
-    clmo = &s->cmo->mo;
+    clmo = ClMobj_Find(s->clMobjId);
     mo = plr->shared.mo;
 
     /*
@@ -446,7 +448,7 @@ void Cl_Ticker(void)
     // player's clmobj to its updated state.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        Cl_UpdatePlayerPos(i); //P_GetDDPlayerIdx(mo->dPlayer));
+        ClPlayer_UpdatePos(i);
 
 #ifdef _DEBUG
         Cl_Assertions(i);
@@ -455,7 +457,7 @@ void Cl_Ticker(void)
 
     //Cl_LocalCommand();
 
-    Cl_PredictMovement();
+    //Cl_PredictMovement();
 
     //Cl_MovePsprites();
 

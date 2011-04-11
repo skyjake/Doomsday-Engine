@@ -32,6 +32,8 @@
  * These routines should be considered FROZEN. Do not change them.
  */
 
+#if 0
+
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
@@ -366,7 +368,7 @@ int Cl_ReadPolyDelta(void)
  *
  * THIS FUNCTION IS NOW OBSOLETE (only used with old PSV_FRAME packets)
  */
-int Cl_ReadMobjDelta(void)
+int ClMobj_ReadDelta(void)
 {
     thid_t      id = Msg_ReadShort();   // Read the ID.
     clmobj_t   *cmo;
@@ -499,7 +501,7 @@ if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
     if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z))
     {
         // This'll update floorz and ceilingz.
-        Cl_CheckMobj(cmo, justCreated);
+        ClMobj_CheckPlanes(cmo, justCreated);
     }
 
     // Update players.
@@ -512,3 +514,5 @@ if(justCreated && (!(df & MDF_POS_X) || !(df & MDF_POS_Y)))
     // Continue reading.
     return true;
 }
+
+#endif

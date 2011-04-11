@@ -184,7 +184,7 @@ void Cl_MoverThinker(mover_t *mover)
         return; // Can we think yet?
 
     // The move is cancelled if the consolePlayer becomes obstructed.
-    freeMove = Cl_IsFreeToMove(consolePlayer);
+    freeMove = ClPlayer_IsFreeToMove(consolePlayer);
     fspeed = mover->speed;
 
     // How's the gap?
@@ -212,7 +212,7 @@ void Cl_MoverThinker(mover_t *mover)
     P_SectorPlanesChanged(mover->sectornum);
 
     // Make sure the client didn't get stuck as a result of this move.
-    if(freeMove != Cl_IsFreeToMove(consolePlayer))
+    if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
 #ifdef _DEBUG
         Con_Message("Cl_MoverThinker: move blocked in sector %i, undoing\n", mover->sectornum);
@@ -564,8 +564,8 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_FLOOR_TEXMOVE)
     {   // Old clients might include these.
-        fixed_t moveX = Msg_ReadShort() << 8;
-        fixed_t moveY = Msg_ReadShort() << 8;
+        /*fixed_t moveX = */ Msg_ReadShort() /* << 8*/;
+        /*fixed_t moveY = */ Msg_ReadShort() /* << 8*/;
     }
     if(df & SDF_CEILING_TARGET)
     {
@@ -596,8 +596,8 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_CEILING_TEXMOVE)
     {   // Old clients might include these.
-        fixed_t moveX = Msg_ReadShort() << 8;
-        fixed_t moveY = Msg_ReadShort() << 8;
+        /*fixed_t moveX = */ Msg_ReadShort() /*<< 8*/;
+        /*fixed_t moveY = */ Msg_ReadShort() /*<< 8*/;
     }
     if(df & SDF_COLOR_RED)
         sec->rgb[0] = Msg_ReadByte() / 255.f;

@@ -113,9 +113,9 @@ boolean P_MobjTicker(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
+boolean PIT_ClientMobjTicker(mobj_t *cmo, void *parm)
 {
-    P_MobjTicker((thinker_t*) &cmo->mo, NULL);
+    P_MobjTicker((thinker_t*) cmo, NULL);
 
     // Continue iteration.
     return true;
@@ -146,5 +146,5 @@ void P_Ticker(timespan_t time)
     P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
 
     // Check all client mobjs.
-    Cl_MobjIterator(PIT_ClientMobjTicker, NULL);
+    ClMobj_Iterator(PIT_ClientMobjTicker, NULL);
 }

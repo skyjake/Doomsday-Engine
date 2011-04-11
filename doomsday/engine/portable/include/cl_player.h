@@ -31,9 +31,11 @@
 
 #include "cl_mobj.h"
 
+/**
+ * Information about a client player.
+ */
 typedef struct clplayerstate_s {
-    clmobj_t       *cmo;
-    thid_t          mobjId;
+    thid_t          clMobjId;
     float           forwardMove;
     float           sideMove;
     int             angle;
@@ -43,18 +45,20 @@ typedef struct clplayerstate_s {
 
 extern float pspMoveSpeed;
 extern float cplrThrustMul;
-extern clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
 void            Cl_InitPlayers(void);
 //void            Cl_LocalCommand(void);
-void            Cl_MovePlayer(int plrnum);
-void            Cl_MoveLocalPlayer(float dx, float dy, float dz, boolean onground);
-void            Cl_UpdatePlayerPos(int plrnum);
+void            ClPlayer_Move(int plrnum);
+void            ClPlayer_MoveLocal(float dx, float dy, float dz, boolean onground);
+void            ClPlayer_UpdatePos(int plrnum);
 //void            Cl_MovePsprites(void);
-void            Cl_CoordsReceived(void);
-void            Cl_HandlePlayerFix(void);
-int             Cl_ReadPlayerDelta(void);
-void            Cl_ReadPlayerDelta2(boolean skip);
-boolean         Cl_IsFreeToMove(int plrnum);
+void            ClPlayer_CoordsReceived(void);
+void            ClPlayer_HandleFix(void);
+//int             ClPlayer_ReadDelta(void);
+void            ClPlayer_ReadDelta2(boolean skip);
+clplayerstate_t *ClPlayer_State(int plrNum);
+mobj_t         *ClPlayer_LocalGameMobj(int plrNum);
+mobj_t         *ClPlayer_ClMobj(int plrNum);
+boolean         ClPlayer_IsFreeToMove(int plrnum);
 
 #endif

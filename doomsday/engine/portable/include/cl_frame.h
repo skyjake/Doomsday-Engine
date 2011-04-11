@@ -31,7 +31,7 @@
 
 void            Cl_InitFrame(void);
 void            Cl_ResetFrame(void);
-void            Cl_FrameReceived(void);
+//void            Cl_FrameReceived(void);
 void            Cl_Frame2Received(int packetType);
 
 #endif

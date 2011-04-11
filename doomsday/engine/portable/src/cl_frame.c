@@ -333,21 +333,21 @@ void Cl_Frame2Received(int packetType)
             {
             case DT_CREATE_MOBJ:
                 // The mobj will be created/shown.
-                Cl_ReadMobjDelta2(skip);
+                ClMobj_ReadDelta2(skip);
                 break;
 
             case DT_MOBJ:
                 // The mobj will be hidden if it's not yet Created.
-                Cl_ReadMobjDelta2(skip);
+                ClMobj_ReadDelta2(skip);
                 break;
 
             case DT_NULL_MOBJ:
                 // The mobj will be removed.
-                Cl_ReadNullMobjDelta2(skip);
+                ClMobj_ReadNullDelta2(skip);
                 break;
 
             case DT_PLAYER:
-                Cl_ReadPlayerDelta2(skip);
+                ClPlayer_ReadDelta2(skip);
                 break;
 
             case DT_SECTOR_R6: // Old format.
