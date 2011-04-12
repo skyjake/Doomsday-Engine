@@ -76,8 +76,6 @@ void            ClMobj_Destroy(mobj_t *mo);
 clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
 mobj_t         *ClMobj_Find(thid_t id);
 mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
-void            ClMobj_Link(mobj_t *mo, thid_t id);
-void            ClMobj_Unlink(mobj_t *cmo);
 boolean         ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm);
 void            ClMobj_UnsetPosition(mobj_t *cmo); // needed?
 void            ClMobj_SetPosition(mobj_t *cmo); // needed?

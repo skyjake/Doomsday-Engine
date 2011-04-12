@@ -654,7 +654,10 @@ void P_MobjThinker(mobj_t* mo)
         return; // Wha?
 
     if(mo->ddFlags & DDMF_REMOTE)
+    {
+        Con_Message("P_MobjThinker: mo %i is remote, ignored for now\n", mo->thinker.id);
         return; // Remote mobjs are handled separately.
+    }
 
     // Spectres get selector = 1.
     if(mo->type == MT_SHADOWS)

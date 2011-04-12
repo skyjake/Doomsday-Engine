@@ -94,7 +94,7 @@ static cmhash_t *ClMobj_Hash(thid_t id)
 /**
  * Links the clmobj into the client mobj hash table.
  */
-void ClMobj_Link(mobj_t *mo, thid_t id)
+static void ClMobj_Link(mobj_t *mo, thid_t id)
 {
     cmhash_t   *hash = ClMobj_Hash(id);
     clmoinfo_t *info = ClMobj_GetInfo(mo);
@@ -121,7 +121,7 @@ void ClMobj_Link(mobj_t *mo, thid_t id)
 /**
  * Unlinks the clmobj from the client mobj hash table.
  */
-void ClMobj_Unlink(mobj_t *mo)
+static void ClMobj_Unlink(mobj_t *mo)
 {
     cmhash_t   *hash = ClMobj_Hash(mo->thinker.id);
     clmoinfo_t *info = ClMobj_GetInfo(mo);
@@ -640,15 +640,17 @@ void Cl_PredictMovement(void)
  * Create a new client mobj.
  *
  * Memory layout of a client mobj:
+ * - client mobj magic1 (4 bytes)
  * - engineside clmobj info
- * - client mobj magic (4 bytes)
+ * - client mobj magic2 (4 bytes)
  * - gameside mobj (mobjSize bytes) <- this is returned from the function
  *
  * To check whether a given mobj_t is a clmobj_t, just check the presence of
  * the client mobj magic number (by calling Cl_IsClientMobj()).
  * The clmoinfo_s can then be accessed with ClMobj_GetInfo().
  *
- * @param id  Identifier of the client mobj. Every client mobj has a unique identifier.
+ * @param id  Identifier of the client mobj. Every client mobj has a unique
+ *            identifier.
  *
  * @return  Pointer to the gameside mobj.
  */
@@ -671,11 +673,16 @@ mobj_t* ClMobj_Create(thid_t id)
     ClMobj_Link(mo, id);
     P_SetMobjID(id, true);      // Mark this ID as used.
 
+    // Client mobjs are full-fludged game mobjs as well.
+    mo->thinker.function = gx.MobjThinker;
+    P_ThinkerAdd((thinker_t*) mo, true);
+
     return mo;
 }
 
 /**
- * Destroys the client mobj.
+ * Destroys the client mobj. Before this is called, the client mobj should be
+ * unlinked from the thinker list (P_ThinkerRemove).
  */
 void ClMobj_Destroy(mobj_t *mo)
 {

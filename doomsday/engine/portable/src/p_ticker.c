@@ -146,5 +146,5 @@ void P_Ticker(timespan_t time)
     P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
 
     // Check all client mobjs.
-    ClMobj_Iterator(PIT_ClientMobjTicker, NULL);
+    //ClMobj_Iterator(PIT_ClientMobjTicker, NULL);
 }
