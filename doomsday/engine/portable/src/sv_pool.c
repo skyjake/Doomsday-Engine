@@ -577,7 +577,7 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
         df |= MDF_POS_X;
     if(r->pos[VY] != s->pos[VY])
         df |= MDF_POS_Y;
-    if(r->pos[VZ] != Sv_GetMaxedMobjZ(s))
+    if(r->pos[VZ] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
         df |= MDF_POS_Z;
 
     if(r->mom[MX] != s->mom[MX])
