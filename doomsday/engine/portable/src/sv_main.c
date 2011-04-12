@@ -1235,24 +1235,25 @@ void Sv_ClientCoords(int plrNum)
         // has been misestimated on serverside.
 
         // Prevent illegal stepups.
-        if(tmpFloorZ - mo->pos[VZ] <= 24 ||
+        /*if(tmpFloorZ - mo->pos[VZ] <= 24 ||
            // But also allow warping the position.
            (fabs(clientPos[VX] - mo->pos[VX]) > WARP_LIMIT ||
             fabs(clientPos[VY] - mo->pos[VY]) > WARP_LIMIT ||
             fabs(clientPos[VZ] - mo->pos[VZ]) > WARP_LIMIT))
-        {
+        {*/
 #ifdef _DEBUG
             VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
                                   clientPos[VX], clientPos[VY], clientPos[VZ]) );
 #endif
             Sv_PlaceMobj(mo, clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
+            /*
         }
         else
         {
 #ifdef _DEBUG
             Con_Message("Sv_ClientCoords: Discarding coords for player %i.\n", plrNum);
 #endif
-        }
+        }*/
     }
 }
 

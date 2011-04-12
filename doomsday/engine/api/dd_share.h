@@ -844,7 +844,11 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     short           visTarget; /* -1 = mobj is becoming less visible, */ \
                                /* 0 = no change, 2= mobj is becoming more visible */ \
     int             reactionTime; /* if not zero, freeze controls */ \
-    int             tmap, tclass;
+    int             tmap, tclass;\
+    int             flags;\
+    int             flags2;\
+    int             flags3;\
+    int             health;
 
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \

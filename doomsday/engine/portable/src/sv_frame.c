@@ -228,10 +228,6 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         moreFlags |= MDFE_FADETARGET;
     }
 
-    // Do we need the longer floorclip entry?
-    if(d->floorClip > 64)
-        df |= MDF_LONG_FLOORCLIP;
-
     // Flags. What elements are included in the delta?
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
@@ -289,6 +285,9 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         fixed_t vz = FLT2FIX(d->pos[VZ]);
         Msg_WriteShort(vz >> FRACBITS);
         Msg_WriteByte(vz >> 8);
+
+        Msg_WriteFloat(d->floorZ);
+        Msg_WriteFloat(d->ceilingZ);
     }
 
     // Momentum using 8.8 fixed point.
@@ -327,19 +326,25 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(df & MDF_FLAGS)
     {
         Msg_WriteLong(d->ddFlags & DDMF_PACK_MASK);
+        Msg_WriteLong(d->flags);
+        Msg_WriteLong(d->flags2);
+        Msg_WriteLong(d->flags3);
     }
 
-    // Radius, height and floorclip are all bytes.
+    if(df & MDF_HEALTH)
+    {
+        Msg_WriteLong(d->health);
+    }
+
     if(df & MDF_RADIUS)
-        Msg_WriteByte((byte) d->radius);
+        Msg_WriteFloat(d->radius);
+
     if(df & MDF_HEIGHT)
-        Msg_WriteByte((byte) d->height);
+        Msg_WriteFloat(d->height);
+
     if(df & MDF_FLOORCLIP)
     {
-        if(df & MDF_LONG_FLOORCLIP)
-            Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
-        else
-            Msg_WriteByte(FLT2FIX(d->floorClip) >> 14);
+        Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
     }
 
     if(df & MDFC_TRANSLUCENCY)

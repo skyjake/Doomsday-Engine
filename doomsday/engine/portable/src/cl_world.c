@@ -204,9 +204,9 @@ void Cl_MoverThinker(mover_t *mover)
     }
 
 #ifdef _DEBUG
-    Con_Message("Cl_MoverThinker: plane height %f in sector %i\n",
+    VERBOSE2( Con_Message("Cl_MoverThinker: plane height %f in sector %i\n",
                 P_GetFloat(DMU_SECTOR, mover->sectornum, mover->property),
-                mover->sectornum);
+                mover->sectornum) );
 #endif
 
     P_SectorPlanesChanged(mover->sectornum);

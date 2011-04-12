@@ -219,6 +219,10 @@ void ClMobj_SetPosition(mobj_t *mo)
         // Client mobjs that belong to players remain unlinked.
         return;
     }
+#ifdef _DEBUG
+    Con_Message("ClMobj_SetPosition: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
+                mo->pos[VX], mo->pos[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no");
+#endif
 
     P_MobjLink(mo,
                 (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
@@ -254,7 +258,7 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
  * Updates floorz and ceilingz of the mobj.
  */
 void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
-{
+{/*
     clmoinfo_t *info = ClMobj_GetInfo(mo);
     boolean     onFloor = false, inCeiling = false;
 
@@ -292,7 +296,7 @@ void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
     if(inCeiling)
     {
         mo->pos[VZ] = mo->ceilingZ - mo->height;
-    }
+    }*/
 
 #if 0
     // P_CheckPosition sets blockingMobj.
@@ -688,6 +692,10 @@ void ClMobj_Destroy(mobj_t *mo)
 {
     clmoinfo_t* info = 0;
 
+#ifdef _DEBUG
+    Con_Message("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id);
+#endif
+
     CL_ASSERT_CLMOBJ(mo);
     info = ClMobj_GetInfo(mo);
 
@@ -703,9 +711,38 @@ void ClMobj_Destroy(mobj_t *mo)
     Z_Free(info);
 }
 
+/**
+ * Determines whether a mobj is a client mobj.
+ *
+ * @param mo  Mobj to check.
+ *
+ * @return  @c true, if the mobj is a client mobj; otherwise @c false.
+ */
 boolean Cl_IsClientMobj(mobj_t* mo)
 {
     return ClMobj_GetInfo(mo) != 0;
+}
+
+/**
+ * Determines whether a client mobj is valid for playsim.
+ * The primary reason for it not to be valid is that we haven't received
+ * enough information about it yet.
+ *
+ * @param mo  Mobj to check.
+ *
+ * @return  @c true, if the mobj is a client mobj; otherwise @c false.
+ */
+boolean ClMobj_IsValid(mobj_t* mo)
+{
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
+
+    if(!Cl_IsClientMobj(mo)) return false;
+    if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
+    {
+        // Should not use this for playsim.
+        return false;
+    }
+    return true;
 }
 
 clmoinfo_t* ClMobj_GetInfo(mobj_t* mo)
@@ -735,14 +772,14 @@ boolean ClMobj_Reveal(mobj_t *mo)
     if(mo->dPlayer != &ddPlayers[consolePlayer].shared &&
        (!(info->flags & CLMF_KNOWN_X) ||
         !(info->flags & CLMF_KNOWN_Y) ||
-        !(info->flags & CLMF_KNOWN_Z) ||
+        //!(info->flags & CLMF_KNOWN_Z) ||
         !(info->flags & CLMF_KNOWN_STATE)))
     {
         // Don't reveal just yet. We lack a vital piece of information.
         return false;
     }
 #ifdef _DEBUG
-    Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted.\n", mo->thinker.id);
+    Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).\n", mo->thinker.id, mo->pos[VZ]);
 #endif
 
     info->flags &= ~CLMF_HIDDEN;
@@ -814,7 +851,7 @@ void ClMobj_ReadDelta2(boolean skip)
             // This is a new ID, allocate a new mobj.
             mo = ClMobj_Create(id);
             info = ClMobj_GetInfo(mo);
-            mo->ddFlags |= DDMF_NOGRAVITY; // safer this way
+            //mo->ddFlags |= DDMF_NOGRAVITY; // safer this way
             justCreated = true;
             needsLinking = true;
 
@@ -878,6 +915,9 @@ void ClMobj_ReadDelta2(boolean skip)
             // The mobj won't stick if an explicit coordinate is supplied.
             info->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
         }
+
+        d->floorZ = Msg_ReadFloat();
+        d->ceilingZ = Msg_ReadFloat();
     }
 
     // When these flags are set, the normal Z coord is not included.
@@ -936,19 +976,26 @@ void ClMobj_ReadDelta2(boolean skip)
         // Only the flags in the pack mask are affected.
         d->ddFlags &= ~DDMF_PACK_MASK;
         d->ddFlags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
+
+        d->flags = Msg_ReadLong();
+        d->flags2 = Msg_ReadLong();
+        d->flags3 = Msg_ReadLong();
     }
 
-    // Radius, height and floorclip are all bytes.
+    if(df & MDF_HEALTH)
+    {
+        d->health = Msg_ReadLong();
+    }
+
     if(df & MDF_RADIUS)
-        d->radius = (float) Msg_ReadByte();
+        d->radius = Msg_ReadFloat();
+
     if(df & MDF_HEIGHT)
-        d->height = (float) Msg_ReadByte();
+        d->height = Msg_ReadFloat();
+
     if(df & MDF_FLOORCLIP)
     {
-        if(df & MDF_LONG_FLOORCLIP)
-            d->floorClip = FIX2FLT(Msg_ReadPackedShort() << 14);
-        else
-            d->floorClip = FIX2FLT(Msg_ReadByte() << 14);
+        d->floorClip = FIX2FLT(Msg_ReadPackedShort() << 14);
     }
 
     if(moreFlags & MDFE_TRANSLUCENCY)

@@ -208,8 +208,11 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
         }
     }
 
-    if(defs.states[statenum].execute)
-        Con_Execute(CMDS_DED, defs.states[statenum].execute, true, false);
+    if(!(mobj->ddFlags & DDMF_REMOTE))
+    {
+        if(defs.states[statenum].execute)
+            Con_Execute(CMDS_DED, defs.states[statenum].execute, true, false);
+    }
 }
 
 /**

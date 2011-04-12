@@ -258,10 +258,6 @@ typedef struct mobj_s {
     // Doom64-specific data:
     mobjinfo_t     *info;           // &mobjinfo[mobj->type]
     int             damage;         // For missiles
-    int             flags;
-    int             flags2;
-    int             flags3;
-    int             health;
 
     // Movement direction, movement generation (zig-zagging).
     int             moveDir;        // 0-7

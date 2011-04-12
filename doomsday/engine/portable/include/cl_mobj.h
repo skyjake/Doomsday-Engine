@@ -87,5 +87,6 @@ void            ClMobj_ReadDelta2(boolean skip);
 void            ClMobj_ReadNullDelta2(boolean skip);
 
 boolean         Cl_IsClientMobj(mobj_t* mo); // public
+boolean         ClMobj_IsValid(mobj_t* mo); // public
 
 #endif

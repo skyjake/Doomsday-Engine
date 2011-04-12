@@ -71,7 +71,7 @@ typedef enum {
 #define MDF_MOM_Z               0x0020
 #define MDF_MOM                 0x0038
 #define MDF_ANGLE               0x0040
-#define MDF_LONG_FLOORCLIP      0x0080
+#define MDF_HEALTH              0x0080
 #define MDF_MORE_FLAGS          0x0100 // A byte of extra flags follows.
 #define MDF_SELSPEC             0x0200 // Only during transfer.
 #define MDF_SELECTOR            0x0400
@@ -80,6 +80,8 @@ typedef enum {
 #define MDF_HEIGHT              0x2000
 #define MDF_FLAGS               0x4000
 #define MDF_FLOORCLIP           0x8000
+#define MDF_EVERYTHING          (MDF_POS | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
+                                 MDF_RADIUS | MDF_HEIGHT | MDF_FLAGS | MDF_HEALTH | MDF_FLOORCLIP)
 
 // Mobj Delta Control flags (not included directly in the frame).
 #define MDFC_NULL               0x10000 // The delta is not defined.

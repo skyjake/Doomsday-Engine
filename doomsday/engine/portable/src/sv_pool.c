@@ -279,9 +279,9 @@ uint Sv_RegisterHashFunction(thid_t id)
 }
 
 /**
- * @return              Pointer to the register-mobj, if it already exists.
+ * @return  Pointer to the register-mobj, if it already exists.
  */
-reg_mobj_t*             Sv_RegisterFindMobj(cregister_t* reg, thid_t id)
+reg_mobj_t* Sv_RegisterFindMobj(cregister_t* reg, thid_t id)
 {
     mobjhash_t*         hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
     reg_mobj_t*         iter;
@@ -371,6 +371,8 @@ void Sv_RegisterRemoveMobj(cregister_t* reg, reg_mobj_t* regMo)
  */
 float Sv_GetMaxedMobjZ(const mobj_t* mo)
 {
+    // No maxing for now.
+    /*
     if(mo->pos[VZ] == mo->floorZ)
     {
         return DDMINFLOAT;
@@ -379,6 +381,7 @@ float Sv_GetMaxedMobjZ(const mobj_t* mo)
     {
         return DDMAXFLOAT;
     }
+    */
     return mo->pos[VZ];
 }
 
@@ -407,6 +410,10 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
     reg->radius = mo->radius;
     reg->height = mo->height;
     reg->ddFlags = mo->ddFlags;
+    reg->flags = mo->flags;
+    reg->flags2 = mo->flags2;
+    reg->flags3 = mo->flags3;
+    reg->health = mo->health;
     reg->floorClip = mo->floorClip;
     reg->translucency = mo->translucency;
     reg->visTarget = mo->visTarget;
@@ -418,15 +425,19 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
  */
 void Sv_RegisterResetMobj(dt_mobj_t* reg)
 {
-    reg->pos[VX] = 0;
-    reg->pos[VY] = 0;
-    reg->pos[VZ] = 0;
+    reg->pos[VX] = DDMINFLOAT;
+    reg->pos[VY] = DDMINFLOAT;
+    reg->pos[VZ] = -1000000;
     reg->angle = 0;
     reg->selector = 0;
     reg->state = 0;
-    reg->radius = 0;
-    reg->height = 0;
+    reg->radius = -1;
+    reg->height = -1;
     reg->ddFlags = 0;
+    reg->flags = 0;
+    reg->flags2 = 0;
+    reg->flags3 = 0;
+    reg->health = 0;
     reg->floorClip = 0;
     reg->translucency = 0;
     reg->visTarget = 0;
@@ -559,7 +570,7 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
     else
     {
         // This didn't exist in the register, so it's a new mobj.
-        df = MDFC_CREATE;
+        df = MDFC_CREATE | MDF_EVERYTHING;
     }
 
     if(r->pos[VX] != s->pos[VX])
@@ -615,10 +626,13 @@ VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinke
         df |= MDF_RADIUS;
     if(r->height != s->height)
         df |= MDF_HEIGHT;
-    if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK))
+    if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK) ||
+       r->flags != s->flags || r->flags2 != s->flags2 || r->flags3 != s->flags3)
     {
         df |= MDF_FLAGS;
     }
+    if(r->health != s->health)
+        df |= MDF_HEALTH;
     if(r->floorClip != s->floorClip)
         df |= MDF_FLOORCLIP;
 
