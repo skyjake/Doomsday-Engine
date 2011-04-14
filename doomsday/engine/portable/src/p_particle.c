@@ -1440,7 +1440,7 @@ void P_CheckPtcPlanes(void)
         {
             uint plane = p;
             material_t* mat = sector->SP_planematerial(plane);
-            const ded_ptcgen_t* def = Materials_PtcGen(Materials_ToMaterialNum(mat));
+            const ded_ptcgen_t* def = Materials_PtcGenDef(Materials_ToMaterialNum(mat));
 
             if(!def)
                 continue;

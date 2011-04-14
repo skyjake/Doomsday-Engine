@@ -421,7 +421,7 @@ void Con_SetString(const char* name, char* text);
     materialnum_t   Materials_IndexForName(const char* path);
     dduri_t*        Materials_GetUri(struct material_s* mat);
 
-    const char*     Materials_GetSymbolicName(struct material_s* mat);
+    const ddstring_t* Materials_GetSymbolicName(struct material_s* mat);
     int             Materials_CreateAnimGroup(int flags);
     void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
 

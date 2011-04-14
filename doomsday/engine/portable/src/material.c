@@ -169,7 +169,7 @@ boolean Material_HasDecorations(material_t* mat)
 {
     assert(mat);
     /// \fixme We should not need to prepare to determine this.
-    return NULL != Materials_Decoration(Materials_ToMaterialNum(mat));
+    return NULL != Materials_DecorationDef(Materials_ToMaterialNum(mat));
 }
 
 int Material_LayerCount(const material_t* mat)

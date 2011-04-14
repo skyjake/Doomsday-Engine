@@ -110,7 +110,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
                         0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
                 if(ms.glowing > 0)
                     R_SurfaceListAdd(glowingSurfaceList, suf);
-                decor = Materials_Decoration(Materials_ToMaterialNum(mat));
+                decor = Materials_DecorationDef(Materials_ToMaterialNum(mat));
                 if(decor)
                     R_SurfaceListAdd(decoratedSurfaceList, suf);
             }

@@ -514,7 +514,7 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS,
         delta[VX] * delta[VZ] != 0 ||
         delta[VY] * delta[VZ] != 0))
     {
-        const ded_decor_t* def = Materials_Decoration(Materials_ToMaterialNum(suf->material));
+        const ded_decor_t* def = Materials_DecorationDef(Materials_ToMaterialNum(suf->material));
         if(def)
         {
             int axis = V3_MajorAxis(suf->normal);

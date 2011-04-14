@@ -2261,12 +2261,8 @@ boolean R_IsValidLightDecoration(const ded_decorlight_t *lightDef)
              lightDef->color[2] != 0));
 }
 
-/**
- * @return              @c true, if the given decoration works under the
- *                      specified circumstances.
- */
-boolean R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
-                              boolean hasExternal)
+boolean R_IsAllowedDecoration(ded_decor_t* def, const material_t* mat,
+    boolean hasExternal)
 {
     if(hasExternal)
     {
@@ -2279,12 +2275,8 @@ boolean R_IsAllowedDecoration(ded_decor_t* def, material_t* mat,
     return (def->flags & DCRF_PWAD) != 0;
 }
 
-/**
- * @return              @c true, if the given reflection works under the
- *                      specified circumstances.
- */
-boolean R_IsAllowedReflection(ded_reflection_t* def, material_t* mat,
-                              boolean hasExternal)
+boolean R_IsAllowedReflection(ded_reflection_t* def, const material_t* mat,
+    boolean hasExternal)
 {
     if(hasExternal)
     {
@@ -2297,12 +2289,8 @@ boolean R_IsAllowedReflection(ded_reflection_t* def, material_t* mat,
     return (def->flags & REFF_PWAD) != 0;
 }
 
-/**
- * @return              @c true, if the given decoration works under the
- *                      specified circumstances.
- */
-boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
-                             boolean hasExternal)
+boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, const material_t* mat,
+    boolean hasExternal)
 {
     if(hasExternal)
     {

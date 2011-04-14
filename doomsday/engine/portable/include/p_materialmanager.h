@@ -138,15 +138,22 @@ struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
 materialnum_t Materials_IndexForUri(const dduri_t* uri);
 materialnum_t Materials_IndexForName(const char* path);
 
-const char* Materials_GetSymbolicName(struct material_s* mat);
+/**
+ * Given a unique material identifier, lookup the associated name.
+ * \note Part of the Doomsday public API.
+ *
+ * @param mat  The material to lookup the name for.
+ *
+ * @return  The associated name.
+ */
+const ddstring_t* Materials_GetSymbolicName(struct material_s* mat);
+
 dduri_t* Materials_GetUri(struct material_s* mat);
 
 uint Materials_Count(void);
 
-const ded_detailtexture_t* Materials_Detail(materialnum_t num);
-const ded_reflection_t* Materials_Reflection(materialnum_t num);
-const ded_decor_t*  Materials_Decoration(materialnum_t num);
-const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
+const ded_decor_t*  Materials_DecorationDef(materialnum_t num);
+const ded_ptcgen_t* Materials_PtcGenDef(materialnum_t num);
 
 void Materials_Prepare(struct material_snapshot_s* snapshot, struct material_s* mat,
     boolean smoothed, struct materialvariantspecification_s* spec);

@@ -486,13 +486,25 @@ rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
 rawtex_t**      R_CollectRawTexs(int* count);
 
-boolean         R_IsAllowedDecoration(ded_decor_t* def, struct material_s* mat,
-                                      boolean hasExternal);
-boolean         R_IsAllowedReflection(ded_reflection_t* def, struct material_s* mat,
-                                      boolean hasExternal);
-boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, struct material_s* mat,
-                                     boolean hasExternal);
-boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
+/**
+ * @return  @c true if the given decoration works under the specified circumstances.
+ */
+boolean R_IsAllowedDecoration(ded_decor_t* def, const struct material_s* mat,
+    boolean hasExternal);
+
+/**
+ * @return  @c true if the given reflection works under the specified circumstances.
+ */
+boolean R_IsAllowedReflection(ded_reflection_t* def, const struct material_s* mat,
+    boolean hasExternal);
+
+/**
+ * @return  @c true if the given decoration works under the specified circumstances.
+ */
+boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, const struct material_s* mat,
+    boolean hasExternal);
+
+boolean R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
 void            R_InitVectorGraphics(void);
 void            R_UnloadVectorGraphics(void);

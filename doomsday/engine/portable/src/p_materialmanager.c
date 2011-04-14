@@ -68,18 +68,65 @@ typedef struct variantcachequeue_node_s {
 
 typedef variantcachequeue_node_t variantcachequeue_t;
 
-typedef struct materialbind_s {
-    char            name[9];
-    material_t*     mat;
-    materialnamespaceid_t mnamespace;
-    byte            prepared;
-    struct ded_detailtexture_s* detail[2];
-    struct ded_decor_s* decoration[2];
-    struct ded_ptcgen_s* ptcGen[2];
-    struct ded_reflection_s* reflection[2];
+/**
+ * Info is attached to a MaterialBind upon successfully preparing the first
+ * derived variant of the associated Material.
+ */
+typedef struct materialbindinfo_s {
+    ded_decor_t* decorationDefs[2];
+    ded_detailtexture_t* detailtextureDefs[2];
+    ded_ptcgen_t* ptcgenDefs[2];
+    ded_reflection_t* reflectionDefs[2];
+} materialbindinfo_t;
 
+typedef struct materialbind_s {
+    material_t*     _material;
+    ddstring_t      _name;
+    materialnamespaceid_t _mnamespace;
+    materialbindinfo_t* _info;
+
+    byte            prepared;
     uint            hashNext; // 1-based index
 } materialbind_t;
+
+/// @return  Material associated with this else @c NULL
+material_t* MaterialBind_Material(const materialbind_t* mb);
+
+/// @return  Symbolic name.
+const ddstring_t* MaterialBind_Name(const materialbind_t* mb);
+
+/// @return  Namespace in which this is present.
+materialnamespaceid_t MaterialBind_Namespace(const materialbind_t* mb);
+
+/// @return  Extended info owned by this else @c NULL
+materialbindinfo_t* MaterialBind_Info(materialbind_t* mb);
+
+/**
+ * Attach extended info data to this. If existing info is present it is replaced.
+ * MaterialBind is given ownership of the info.
+ * @param info  Extended info data to attach.
+ */
+void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info);
+
+/**
+ * Detach any extended info owned by this and relinquish ownership to the caller.
+ * @return  Extended info or else @c NULL if not present.
+ */
+materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb);
+
+/// @return  Detail texture definition associated with this else @c NULL
+ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb);
+
+/// @return  Decoration definition associated with this else @c NULL
+ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb);
+
+/// @return  Particle generator definition associated with this else @c NULL
+ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb);
+
+/// @return  Reflection definition associated with this else @c NULL
+ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb);
+
+static void updateMaterialBindInfo(materialbind_t* mb);
 
 typedef struct animframe_s {
     material_t*     mat;
@@ -106,7 +153,7 @@ static void animateAnimGroups(void);
 
 extern boolean ddMapSetup;
 
-materialnum_t numMaterialBinds = 0;
+materialnum_t bindingsCount = 0;
 
 static boolean initedOk = false;
 static variantspecificationlist_t* variantSpecs;
@@ -133,8 +180,8 @@ static variantcachequeue_t* variantCacheQueue;
 static blockset_t* materialsBlockSet;
 static materiallist_t* materials;
 
-static materialbind_t* materialBinds;
-static materialnum_t maxMaterialBinds;
+static materialbind_t* bindings;
+static materialnum_t bindingsMax;
 static uint hashTable[MATERIALNAMESPACE_COUNT][MATERIALNAMESPACE_HASH_SIZE];
 
 void P_MaterialsRegister(void)
@@ -331,40 +378,37 @@ static materialvariant_t* chooseVariant(material_t* mat,
 
 static materialbind_t* bindByIndex(uint bindId)
 {
-    if(0 != bindId) return &materialBinds[bindId-1];
+    if(0 != bindId) return &bindings[bindId-1];
     return 0;
 }
 
 static int compareMaterialBindByName(const void* e1, const void* e2)
 {
-    return stricmp((*(const materialbind_t**)e1)->name, (*(const materialbind_t**)e2)->name);
+    return stricmp(Str_Text(MaterialBind_Name(*(const materialbind_t**)e1)),
+                   Str_Text(MaterialBind_Name(*(const materialbind_t**)e2)));
 }
 
 /**
  * This is a hash function. Given a material name it generates a
  * somewhat-random number between 0 and MATERIALNAMESPACE_HASH_SIZE.
  *
- * @return              The generated hash index.
+ * @return  The generated hash index.
  */
 static uint hashForName(const char* name)
 {
-    ushort              key = 0;
-    int                 i;
-
-    // Stop when the name ends.
-    for(i = 0; *name; ++i, name++)
+    ushort key = 0;
+    size_t i = 0;
+    // Stop when name ends.
+    for(; *name; name++)
     {
-        if(i == 0)
-            key ^= (int) (*name);
-        else if(i == 1)
-            key *= (int) (*name);
-        else if(i == 2)
+        switch(i)
         {
-            key -= (int) (*name);
-            i = -1;
+        case 0: key ^= (int) (*name); break;
+        case 1: key *= (int) (*name); break;
+        case 2: key -= (int) (*name); break;
         }
+        i = (i == 2? 0 : i+1);
     }
-
     return key % MATERIALNAMESPACE_HASH_SIZE;
 }
 
@@ -383,66 +427,82 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
     // Go through the candidates.
     if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash])
     {
-        materialbind_t* mb = &materialBinds[hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] - 1];
+        materialbind_t* mb = &bindings[hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] - 1];
         for(;;)
         {
-            material_t* mat = mb->mat;
-            if(!strncmp(mb->name, name, 8))
-                return ((mb) - materialBinds) + 1;
+            if(!strncmp(Str_Text(MaterialBind_Name(mb)), name, 8))
+                return ((mb) - bindings) + 1;
             if(!mb->hashNext)
                 break;
 
-            mb = &materialBinds[mb->hashNext - 1];
+            mb = &bindings[mb->hashNext - 1];
         }
     }
     return 0; // Not found.
 }
 
-static void updateMaterialBindDefinitionLinks(materialbind_t* mb)
+static void updateMaterialBindInfo(materialbind_t* mb)
 {
     assert(initedOk && mb);
+    {
+    materialbindinfo_t* info = MaterialBind_Info(mb);
+    boolean attachInfo = false;
+    
+    if(NULL == info)
+    {
+        info = (materialbindinfo_t*) malloc(sizeof(*info));
+        if(NULL == info)
+            Con_Error("MaterialBind::LinkDefinitions: Failed on allocation of %lu bytes for "
+                "new MaterialBindInfo.", (unsigned long) sizeof(*info));
+        attachInfo = true;
+    }
+
     // Surface decorations (lights and models).
-    mb->decoration[0] = Def_GetDecoration(mb->mat, 0);
-    mb->decoration[1] = Def_GetDecoration(mb->mat, 1);
+    info->decorationDefs[0] = Def_GetDecoration(mb->_material, 0);
+    info->decorationDefs[1] = Def_GetDecoration(mb->_material, 1);
 
     // Reflection (aka shiny surface).
-    mb->reflection[0] = Def_GetReflection(mb->mat, 0);
-    mb->reflection[1] = Def_GetReflection(mb->mat, 1);
+    info->reflectionDefs[0] = Def_GetReflection(mb->_material, 0);
+    info->reflectionDefs[1] = Def_GetReflection(mb->_material, 1);
 
     // Generator (particles).
-    mb->ptcGen[0] = Def_GetGenerator(mb->mat, 0);
-    mb->ptcGen[1] = Def_GetGenerator(mb->mat, 1);
+    info->ptcgenDefs[0] = Def_GetGenerator(mb->_material, 0);
+    info->ptcgenDefs[1] = Def_GetGenerator(mb->_material, 1);
 
     // Detail texture.
-    mb->detail[0] = Def_GetDetailTex(mb->mat, 0);
-    mb->detail[1] = Def_GetDetailTex(mb->mat, 1);
+    info->detailtextureDefs[0] = Def_GetDetailTex(mb->_material, 0);
+    info->detailtextureDefs[1] = Def_GetDetailTex(mb->_material, 1);
+
+    if(attachInfo)
+        MaterialBind_AttachInfo(mb, info);
+    }
 }
 
-static void newMaterialNameBinding(material_t* mat, const char* name,
+static void newMaterialNameBinding(material_t* material, const char* name,
     materialnamespaceid_t mnamespace, uint hash)
 {
     materialbind_t* mb;
 
-    if(++numMaterialBinds > maxMaterialBinds)
+    if(++bindingsCount > bindingsMax)
     {   // Allocate more memory.
-        maxMaterialBinds += MATERIALS_BLOCK_ALLOC;
-        materialBinds = (materialbind_t*) realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds);
+        bindingsMax += MATERIALS_BLOCK_ALLOC;
+        bindings = (materialbind_t*) realloc(bindings, sizeof(*bindings) * bindingsMax);
     }
 
     // Add the new material to the end.
-    mb = &materialBinds[numMaterialBinds - 1];
-    memset(mb, 0, sizeof(*mb));
-    strncpy(mb->name, name, 8);
-    mb->name[8] = '\0';
-    mb->mat = mat;
-    mb->mnamespace = mnamespace;
+    mb = &bindings[bindingsCount - 1];
+    Str_Init(&mb->_name); Str_Set(&mb->_name, name);
+    mb->_material = material;
+    mb->_mnamespace = mnamespace;
+    mb->_info = NULL;
+
     mb->prepared = 0;
+
     // We also hash the name for faster searching.
     mb->hashNext = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash];
-    hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] = (mb - materialBinds) + 1;
+    hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] = (mb - bindings) + 1;
 
-    Material_SetBindId(mat, (mb - materialBinds) + 1);
-    updateMaterialBindDefinitionLinks(mb);
+    Material_SetBindId(material, (mb - bindings) + 1);
 }
 
 static material_t* allocMaterial(void)
@@ -468,11 +528,12 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
     return mat;
 }
 
-static material_t* getMaterialByNum(materialnum_t num)
+static __inline material_t* getMaterialByIndex(materialnum_t num)
 {
-    if(num < numMaterialBinds)
-        return materialBinds[num].mat;
-    return 0;
+    if(num < bindingsCount)
+        return MaterialBind_Material(&bindings[num]);
+    Con_Error("getMaterialByIndex: Invalid index #%u.", (unsigned int) num);
+    return NULL; // Unreachable.
 }
 
 void Materials_Initialize(void)
@@ -483,11 +544,11 @@ void Materials_Initialize(void)
     variantSpecs = NULL;
     variantCacheQueue = NULL;
 
+    bindings = NULL;
+    bindingsCount = bindingsMax = 0;
+
     materialsBlockSet = BlockSet_Construct(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
     materials = NULL;
-
-    materialBinds = NULL;
-    numMaterialBinds = maxMaterialBinds = 0;
 
     // Clear the name bind hash tables.
     memset(hashTable, 0, sizeof(hashTable));
@@ -508,7 +569,7 @@ void Materials_Shutdown(void)
 
     Materials_PurgeCacheQueue();
 
-    while(materials)
+    while(NULL != materials)
     {
         materiallist_node_t* next = materials->next;
         Material_DestroyVariants(materials->mat);
@@ -522,12 +583,21 @@ void Materials_Shutdown(void)
     destroyVariantSpecifications();
 
     // Destroy the bindings.
-    if(materialBinds)
+    if(NULL != bindings)
     {
-        free(materialBinds);
-        materialBinds = NULL;
+        materialnum_t i;
+        for(i = 0; i < bindingsCount; ++i)
+        {
+            materialbind_t* mb = &bindings[i];
+            materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
+            if(NULL != info)
+                free(info);
+            Str_Free(&mb->_name);
+        }
+        free(bindings);
+        bindings = NULL;
     }
-    numMaterialBinds = maxMaterialBinds = 0;
+    bindingsCount = bindingsMax = 0;
 
     initedOk = false;
 }
@@ -535,6 +605,10 @@ void Materials_Shutdown(void)
 void Materials_Rebuild(material_t* mat, ded_material_t* def)
 {
     assert(initedOk);
+    {
+    uint bindId;
+    materialbind_t* mb;
+
     if(NULL == mat || NULL == def)
         return;
 
@@ -550,11 +624,14 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     Material_SetShinyTexture(mat, NULL);
     Material_SetShinyMaskTexture(mat, NULL);
 
-    { uint bindId = Material_BindId(mat);
-    if(0 != bindId)
-    {
-        updateMaterialBindDefinitionLinks(bindByIndex(bindId));
-    }}
+    bindId = Material_BindId(mat);
+    if(0 == bindId)
+        return;
+    mb = bindByIndex(bindId);
+    if(NULL == MaterialBind_Info(mb))
+        return;
+    updateMaterialBindInfo(mb);
+    }
 }
 
 void Materials_PurgeCacheQueue(void)
@@ -631,21 +708,22 @@ void Materials_DeleteGLTextures(const char* namespaceName)
         Con_Error("Materials_DeleteGLTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) matNamespace);
 
-    if(materialBinds)
+    if(bindings)
     {
         uint i;
         for(i = 0; i < MATERIALNAMESPACE_HASH_SIZE; ++i)
             if(hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i])
             {
-                materialbind_t* mb = &materialBinds[hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i] - 1];
+                materialbind_t* mb = &bindings[hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i] - 1];
 
                 for(;;)
                 {
-                    releaseGLTexturesForMaterial(mb->mat);
+                    material_t* material = MaterialBind_Material(mb);
+                    releaseGLTexturesForMaterial(material);
 
                     if(!mb->hashNext)
                         break;
-                    mb = &materialBinds[mb->hashNext - 1];
+                    mb = &bindings[mb->hashNext - 1];
                 }
             }
     }
@@ -660,8 +738,8 @@ material_t* Materials_ToMaterial(materialnum_t num)
 {
     if(!initedOk)
         return NULL;
-    if(num != 0)
-        return getMaterialByNum(num - 1); // 1-based index.
+    if(num != 0 && num <= bindingsCount)
+        return getMaterialByIndex(num - 1); // 1-based index.
     return NULL;
 }
 
@@ -671,7 +749,7 @@ materialnum_t Materials_ToMaterialNum(material_t* mat)
     {
         materialbind_t* mb = bindByIndex(Material_BindId(mat));
         if(NULL != mb)
-            return (mb - materialBinds) + 1; // 1-based index.
+            return (mb - bindings) + 1; // 1-based index.
     }
     return 0;
 }
@@ -752,7 +830,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             Str_Text(path));
         Str_Delete(path);
 #endif
-        return getMaterialByNum(matNum);
+        return getMaterialByIndex(matNum);
     }}
 
     // Only create complete Materials.
@@ -863,22 +941,17 @@ materialnum_t Materials_IndexForName(const char* path)
     return 0;
 }
 
-/**
- * Given a unique material identifier, lookup the associated name.
- * \note Part of the Doomsday public API.
- *
- * @param mat           The material to lookup the name for.
- *
- * @return              The associated name.
- */
-const char* Materials_GetSymbolicName(material_t* mat)
+/// \note Part of the Doomsday public API.
+const ddstring_t* Materials_GetSymbolicName(material_t* mat)
 {
     materialnum_t num;
     if(!initedOk)
         return NULL;
-    if(mat && (num = Materials_ToMaterialNum(mat)))
-        return materialBinds[num-1].name;
-    return "NOMAT"; // Should never happen.
+    if(NULL == mat)
+        return NULL;
+    if(0 == (num = Materials_ToMaterialNum(mat)))
+        return NULL; // Should never happen. 
+    return MaterialBind_Name(&bindings[num-1]);
 }
 
 dduri_t* Materials_GetUri(material_t* mat)
@@ -899,7 +972,8 @@ dduri_t* Materials_GetUri(material_t* mat)
     mb = bindByIndex(Material_BindId(mat));
     if(NULL != mb)
     {
-        Str_Appendf(&path, "%s:%s", Str_Text(nameForMaterialNamespaceId(mb->mnamespace)), Materials_GetSymbolicName(mat));
+        Str_Appendf(&path, "%s:%s", Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))),
+            Str_Text(Materials_GetSymbolicName(mat)));
     }
     uri = Uri_Construct2(Str_Text(&path), RC_NULL);
     Str_Free(&path);
@@ -983,40 +1057,46 @@ void Materials_Ticker(timespan_t time)
 static texture_t* findDetailTextureLinkedToMaterialBinding(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 != mb->prepared)
     {
-        const ded_detailtexture_t* def = mb->detail[mb->prepared-1];
-        detailtex_t* dTex = (NULL != def? R_FindDetailTextureForName(def->detailTex, def->isExternal) : NULL);
-        if(NULL != dTex)
-            return GL_ToTexture(dTex->id);
+    const ded_detailtexture_t* def;
+    detailtex_t* dTex;
+    if(NULL != (def  = MaterialBind_DetailTextureDef(mb)) &&
+       NULL != (dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal)))
+    {
+        return GL_ToTexture(dTex->id);
     }
     return NULL;
+    }
 }
 
 static texture_t* findShinyTextureLinkedToMaterialBinding(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 != mb->prepared)
     {
-        const ded_reflection_t* def = mb->reflection[mb->prepared-1];
-        shinytex_t* sTex = (NULL != def? R_FindShinyTextureForName(def->shinyMap) : NULL);
-        if(NULL != sTex)
-            return GL_ToTexture(sTex->id);
+    const ded_reflection_t* def;
+    shinytex_t* sTex;
+    if(NULL != (def  = MaterialBind_ReflectionDef(mb)) &&
+       NULL != (sTex = R_FindShinyTextureForName(def->shinyMap)))
+    {
+        return GL_ToTexture(sTex->id);
     }
     return NULL;
+    }
 }
 
 static texture_t* findShinyMaskTextureLinkedToMaterialBinding(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 != mb->prepared)
     {
-        const ded_reflection_t* def = mb->reflection[mb->prepared-1];
-        masktex_t* mTex = (NULL != def? R_FindMaskTextureForName(def->maskMap) : NULL);
-        if(NULL != mTex)
-            return GL_ToTexture(mTex->id);
+    const ded_reflection_t* def;
+    masktex_t* mTex;
+    if(NULL != (def  = MaterialBind_ReflectionDef(mb)) &&
+       NULL != (mTex = R_FindMaskTextureForName(def->maskMap)))
+    {
+        return GL_ToTexture(mTex->id);
     }
     return NULL;
+    }
 }
 
 static void updateMaterialTextureLinks(material_t* mat)
@@ -1030,6 +1110,10 @@ static void updateMaterialTextureLinks(material_t* mat)
         return;
 
     mb = bindByIndex(bindId);
+    // Do we need to construct and attach the info data?
+    if(NULL == MaterialBind_Info(mb))
+        updateMaterialBindInfo(mb);
+
     Material_SetDetailTexture(mat,    findDetailTextureLinkedToMaterialBinding(mb));
     Material_SetShinyTexture(mat,     findShinyTextureLinkedToMaterialBinding(mb));
     Material_SetShinyMaskTexture(mat, findShinyMaskTextureLinkedToMaterialBinding(mb));
@@ -1150,11 +1234,11 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         }
     }}
 
-    if(NULL != mb && 0 != mb->prepared)
+    if(NULL != mb)
     {
-        decorDef    = mb->decoration[mb->prepared-1];
-        detailDef   =     mb->detail[mb->prepared-1];
-        shinyTexDef = mb->reflection[mb->prepared-1];
+        decorDef    = MaterialBind_DecorationDef(mb);
+        detailDef   = MaterialBind_DetailTextureDef(mb);
+        shinyTexDef = MaterialBind_ReflectionDef(mb);
 
         // Do we need to prepare a DetailTexture?
         if(detailDef && r_detail)
@@ -1306,58 +1390,30 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     }
 }
 
-const ded_reflection_t* Materials_Reflection(materialnum_t num)
+const ded_decor_t* Materials_DecorationDef(materialnum_t num)
 {
     if(num > 0)
     {
         const materialbind_t* mb = bindByIndex(Material_BindId(Materials_ToMaterial(num)));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false,
+            Materials_Prepare(NULL, MaterialBind_Material(mb), false,
                 Materials_VariantSpecificationForContext(MC_MAPSURFACE,
                     0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return mb->reflection[mb->prepared? mb->prepared-1:0];
+        return MaterialBind_DecorationDef(mb);
     }
     return 0;
 }
 
-const ded_detailtexture_t* Materials_Detail(materialnum_t num)
+const ded_ptcgen_t* Materials_PtcGenDef(materialnum_t num)
 {
     if(num > 0)
     {
         const materialbind_t* mb = bindByIndex(Material_BindId(Materials_ToMaterial(num)));
         if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false,
+            Materials_Prepare(NULL, MaterialBind_Material(mb), false,
                 Materials_VariantSpecificationForContext(MC_MAPSURFACE,
                     0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return mb->detail[mb->prepared? mb->prepared-1:0];
-    }
-    return 0;
-}
-
-const ded_decor_t* Materials_Decoration(materialnum_t num)
-{
-    if(num > 0)
-    {
-        const materialbind_t* mb = bindByIndex(Material_BindId(Materials_ToMaterial(num)));
-        if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return mb->decoration[mb->prepared? mb->prepared-1:0];
-    }
-    return 0;
-}
-
-const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
-{
-    if(num > 0)
-    {
-        const materialbind_t* mb = bindByIndex(Material_BindId(Materials_ToMaterial(num)));
-        if(!mb->prepared)
-            Materials_Prepare(NULL, mb->mat, false,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return mb->ptcGen[mb->prepared? mb->prepared-1:0];
+        return MaterialBind_PtcGenDef(mb);
     }
     return 0;
 }
@@ -1365,7 +1421,7 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
 uint Materials_Count(void)
 {
     if(initedOk)
-        return numMaterialBinds;
+        return bindingsCount;
     return 0;
 }
 
@@ -1391,13 +1447,13 @@ materialvariant_t* Materials_ChooseVariant(material_t* mat,
 
 static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
-    int numDigits = M_NumDigits(numMaterialBinds);
-    const material_t* mat = mb->mat;
+    int numDigits = M_NumDigits(bindingsCount);
+    const material_t* mat = MaterialBind_Material(mb);
 
     Con_Printf(" %*u: \"", numDigits, (unsigned int) Material_BindId(mat));
     if(printNamespace)
-        Con_Printf("%s:", Str_Text(nameForMaterialNamespaceId(mb->mnamespace)));
-    Con_Printf("%s\" [%i, %i]", mb->name, Material_Width(mat), Material_Height(mat));
+        Con_Printf("%s:", Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))));
+    Con_Printf("%s\" [%i, %i]", Str_Text(MaterialBind_Name(mb)), Material_Width(mat), Material_Height(mat));
     Con_Printf("\n");
 }
 
@@ -1408,18 +1464,18 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
 
     if(VALID_MATERIALNAMESPACE(mnamespace))
     {
-        if(materialBinds)
+        if(bindings)
         {
             uint i;
             for(i = 0; i < MATERIALNAMESPACE_HASH_SIZE; ++i)
                 if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i])
                 {
                     materialnum_t num = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i] - 1;
-                    materialbind_t* mb = &materialBinds[num];
+                    materialbind_t* mb = &bindings[num];
 
                     for(;;)
                     {
-                        if(!(like && like[0] && strnicmp(mb->name, like, strlen(like))))
+                        if(!(like && like[0] && strnicmp(Str_Text(MaterialBind_Name(mb)), like, strlen(like))))
                         {
                             if(storage)
                                 storage[n++] = mb;
@@ -1429,7 +1485,7 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
 
                         if(!mb->hashNext)
                             break;
-                        mb = &materialBinds[mb->hashNext - 1];
+                        mb = &bindings[mb->hashNext - 1];
                     }
                 }
         }
@@ -1437,10 +1493,10 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
     else
     {   // Any.
         materialnum_t i;
-        for(i = 0; i < numMaterialBinds; ++i)
+        for(i = 0; i < bindingsCount; ++i)
         {
-            materialbind_t* mb = &materialBinds[i];
-            if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
+            materialbind_t* mb = &bindings[i];
+            if(like && like[0] && strnicmp(Str_Text(MaterialBind_Name(mb)), like, strlen(like)))
                 continue;
             if(storage)
                 storage[n++] = mb;
@@ -1598,11 +1654,12 @@ void Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics,
     if(!group)
         Con_Error("Materials_AddAnimGroupFrame: Unknown anim group '%i'\n.", groupNum);
 
-    if(!num || !(mat = getMaterialByNum(num - 1)))
+    if(0 == num || num > bindingsCount)
     {
         Con_Message("Materials_AddAnimGroupFrame: Invalid material num '%i'\n.", num);
         return;
     }
+    mat = getMaterialByIndex(num - 1); // 1-based index.
 
     // Mark the material as being in an animgroup.
     Material_SetGroupAnimated(mat, true);
@@ -1785,6 +1842,92 @@ void Materials_ResetAnimGroups(void)
 
     // This'll get every group started on the first step.
     animateAnimGroups();
+}
+
+material_t* MaterialBind_Material(const materialbind_t* mb)
+{
+    assert(mb);
+    return mb->_material;
+}
+
+const ddstring_t* MaterialBind_Name(const materialbind_t* mb)
+{
+    assert(mb);
+    return &mb->_name;
+}
+
+materialnamespaceid_t MaterialBind_Namespace(const materialbind_t* mb)
+{
+    assert(mb);
+    return mb->_mnamespace;
+}
+
+materialbindinfo_t* MaterialBind_Info(materialbind_t* mb)
+{
+    assert(mb);
+    return mb->_info;
+}
+
+void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
+{
+    assert(mb);
+    if(NULL == info)
+        Con_Error("MaterialBind::AttachInfo: Attempted with invalid info.");
+    if(NULL != mb->_info)
+    {
+#if _DEBUG
+        ddstring_t name; Str_Init(&name);
+        Str_Appendf(&name, "%s:%s", Str_Text(MaterialBind_Name(mb)),
+            Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))));
+        Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.",
+            Str_Text(&name));
+        Str_Free(&name);
+#endif
+        free(mb->_info);
+    }
+    mb->_info = info;
+}
+
+materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb)
+{
+    assert(mb);
+    {
+    materialbindinfo_t* info = mb->_info;
+    mb->_info = NULL;
+    return info;
+    }
+}
+
+ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb)
+{
+    assert(mb);
+    if(0 == mb->prepared || NULL == mb->_info)
+        return NULL;
+    return mb->_info->detailtextureDefs[mb->prepared-1];
+}
+
+ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb)
+{
+    assert(mb);
+    if(0 == mb->prepared || NULL == mb->_info)
+        return NULL;
+    return mb->_info->decorationDefs[mb->prepared-1];
+}
+
+ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb)
+{
+    assert(mb);
+    if(0 == mb->prepared || NULL == mb->_info)
+        return NULL;
+    return mb->_info->ptcgenDefs[mb->prepared-1];
+}
+
+ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
+{
+    assert(mb);
+    if(0 == mb->prepared || NULL == mb->_info)
+        return NULL;
+    return mb->_info->reflectionDefs[mb->prepared-1];
 }
 
 D_CMD(ListMaterials)
