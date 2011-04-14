@@ -44,7 +44,6 @@
 #include "materialvariant.h"
 
 #define MATERIALS_BLOCK_ALLOC (32) // Num materials to allocate per block.
-#define MATERIALNAMESPACE_HASH_SIZE (512)
 
 typedef struct materialvariantspecificationlist_node_s {
     struct materialvariantspecificationlist_node_s* next;
@@ -57,7 +56,6 @@ typedef struct materiallist_node_s {
     struct materiallist_node_s* next;
     material_t* mat;
 } materiallist_node_t;
-
 typedef materiallist_node_t materiallist_t;
 
 typedef struct variantcachequeue_node_s {
@@ -86,7 +84,6 @@ typedef struct materialbind_s {
     materialbindinfo_t* _info;
 
     byte            prepared;
-    uint            hashNext; // 1-based index
 } materialbind_t;
 
 /// @return  Material associated with this else @c NULL
@@ -128,6 +125,18 @@ ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb);
 
 static void updateMaterialBindInfo(materialbind_t* mb);
 
+#define MATERIALNAMESPACE_NAMEHASH_SIZE (512)
+
+typedef struct materialnamespace_namehash_node_s {
+    struct materialnamespace_namehash_node_s* next;
+    materialnum_t bindId;
+} materialnamespace_namehash_node_t;
+typedef materialnamespace_namehash_node_t* materialnamespace_namehash_t[MATERIALNAMESPACE_NAMEHASH_SIZE];
+
+typedef struct materialnamespace_s {
+    materialnamespace_namehash_t nameHash;
+} materialnamespace_t;
+
 typedef struct animframe_s {
     material_t*     mat;
     ushort          tics;
@@ -153,8 +162,6 @@ static void animateAnimGroups(void);
 
 extern boolean ddMapSetup;
 
-materialnum_t bindingsCount = 0;
-
 static boolean initedOk = false;
 static variantspecificationlist_t* variantSpecs;
 
@@ -172,17 +179,19 @@ static variantcachequeue_t* variantCacheQueue;
  * 3) Dynamic creation/update of materials.
  * 4) Material name bindings are semi-independant from the materials. There
  *    may be multiple name bindings for a given material (aliases).
- *    The only requirement is that the name is unique among materials in
- *    a given material mnamespace.
+ *    The only requirement is that their symbolic names must be unique among
+ *    those in the same namespace.
  * 5) Super-fast look up by public material identifier.
  * 6) Fast look up by material name (a hashing scheme is used).
  */
 static blockset_t* materialsBlockSet;
 static materiallist_t* materials;
 
-static materialbind_t* bindings;
+static materialnum_t bindingsCount;
 static materialnum_t bindingsMax;
-static uint hashTable[MATERIALNAMESPACE_COUNT][MATERIALNAMESPACE_HASH_SIZE];
+static materialbind_t* bindings;
+
+static materialnamespace_t namespaces[MATERIALNAMESPACE_COUNT];
 
 void P_MaterialsRegister(void)
 {
@@ -198,7 +207,7 @@ static const ddstring_t* nameForMaterialNamespaceId(materialnamespaceid_t id)
         /* MN_TEXTURES */   { MN_TEXTURES_NAME },
         /* MN_SPRITES */    { MN_SPRITES_NAME }
     };
-    if(VALID_MATERIALNAMESPACE(id))
+    if(VALID_MATERIALNAMESPACEID(id))
         return &namespaces[id-MATERIALNAMESPACE_FIRST];
     return &emptyString;
 }
@@ -390,7 +399,7 @@ static int compareMaterialBindByName(const void* e1, const void* e2)
 
 /**
  * This is a hash function. Given a material name it generates a
- * somewhat-random number between 0 and MATERIALNAMESPACE_HASH_SIZE.
+ * somewhat-random number between 0 and MATERIALNAMESPACE_NAMEHASH_SIZE.
  *
  * @return  The generated hash index.
  */
@@ -409,34 +418,29 @@ static uint hashForName(const char* name)
         }
         i = (i == 2? 0 : i+1);
     }
-    return key % MATERIALNAMESPACE_HASH_SIZE;
+    return key % MATERIALNAMESPACE_NAMEHASH_SIZE;
 }
 
 /**
  * Given a name and namespace, search the materials db for a match.
  * \assume Caller knows what it's doing; params arn't validity checked.
  *
- * @param name          Name of the material to search for. Must have been
- *                      transformed to all lower case.
- * @param mnamespace    Specific MG_* material namespace NOT @c MN_ANY.
- * @return              Unique number of the found material, else zero.
+ * @param name  Name of the material to search for. Must have been transformed
+ *      to all lower case.
+ * @param namespaceId  Specific MG_* material namespace NOT @c MN_ANY.
+ * @return  Unique number of the found material, else zero.
  */
 static materialnum_t getMaterialNumForName(const char* name, uint hash,
-    materialnamespaceid_t mnamespace)
+    materialnamespaceid_t namespaceId)
 {
-    // Go through the candidates.
-    if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash])
+    materialnamespace_t* mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
+    materialnamespace_namehash_node_t* node;
+    for(node = (materialnamespace_namehash_node_t*)mn->nameHash[hash];
+        NULL != node; node = node->next)
     {
-        materialbind_t* mb = &bindings[hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] - 1];
-        for(;;)
-        {
-            if(!strncmp(Str_Text(MaterialBind_Name(mb)), name, 8))
-                return ((mb) - bindings) + 1;
-            if(!mb->hashNext)
-                break;
-
-            mb = &bindings[mb->hashNext - 1];
-        }
+        materialbind_t* mb = bindByIndex(node->bindId);
+        if(!strncmp(Str_Text(MaterialBind_Name(mb)), name, 8))
+            return node->bindId;
     }
     return 0; // Not found.
 }
@@ -479,8 +483,10 @@ static void updateMaterialBindInfo(materialbind_t* mb)
 }
 
 static void newMaterialNameBinding(material_t* material, const char* name,
-    materialnamespaceid_t mnamespace, uint hash)
+    materialnamespaceid_t namespaceId, uint hash)
 {
+    materialnamespace_namehash_node_t* node;
+    materialnamespace_t* mn;
     materialbind_t* mb;
 
     if(++bindingsCount > bindingsMax)
@@ -489,20 +495,25 @@ static void newMaterialNameBinding(material_t* material, const char* name,
         bindings = (materialbind_t*) realloc(bindings, sizeof(*bindings) * bindingsMax);
     }
 
-    // Add the new material to the end.
     mb = &bindings[bindingsCount - 1];
     Str_Init(&mb->_name); Str_Set(&mb->_name, name);
     mb->_material = material;
-    mb->_mnamespace = mnamespace;
+    mb->_mnamespace = namespaceId;
     mb->_info = NULL;
 
     mb->prepared = 0;
 
     // We also hash the name for faster searching.
-    mb->hashNext = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash];
-    hashTable[mnamespace-MATERIALNAMESPACE_FIRST][hash] = (mb - bindings) + 1;
+    mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
+    node = (materialnamespace_namehash_node_t*) malloc(sizeof(*node));
+    if(NULL == node)
+        Con_Error("Materials::newMaterialNameBinding: Failed on allocation of %lu bytes for"
+            "new MaterialNamespace::NameHash::Node.", (unsigned long) sizeof(*node));
+    node->next = mn->nameHash[hash];
+    node->bindId = bindingsCount; // 1-based index;
+    mn->nameHash[hash] = node;
 
-    Material_SetBindId(material, (mb - bindings) + 1);
+    Material_SetBindId(material, bindingsCount /* 1-based index */);
 }
 
 static material_t* allocMaterial(void)
@@ -551,7 +562,12 @@ void Materials_Initialize(void)
     materials = NULL;
 
     // Clear the name bind hash tables.
-    memset(hashTable, 0, sizeof(hashTable));
+    { int i;
+    for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
+    {
+        materialnamespace_t* mn = &namespaces[i];
+        memset(mn->nameHash, 0, sizeof(mn->nameHash));
+    }}
 
     initedOk = true;
 }
@@ -562,13 +578,9 @@ static int destroyVariant(materialvariant_t* variant, void* paramaters)
     return 1; // Continue iteration.
 }
 
-void Materials_Shutdown(void)
+static void destroyMaterials(void)
 {
-    if(!initedOk)
-        return;
-
-    Materials_PurgeCacheQueue();
-
+    assert(initedOk);
     while(NULL != materials)
     {
         materiallist_node_t* next = materials->next;
@@ -576,13 +588,33 @@ void Materials_Shutdown(void)
         free(materials);
         materials = next;
     }
-
     BlockSet_Destruct(materialsBlockSet);
     materialsBlockSet = NULL;
+}
 
-    destroyVariantSpecifications();
+static void destroyBindings(void)
+{
+    assert(initedOk);
 
-    // Destroy the bindings.
+    // Empty the namespace namehash tables.
+    { int i;
+    for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
+    {
+        materialnamespace_t* mn = &namespaces[i];
+        int j;
+        for(j = 0; j < MATERIALNAMESPACE_NAMEHASH_SIZE; ++j)
+        {
+            materialnamespace_namehash_node_t* next;
+            while(NULL != mn->nameHash[j])
+            {
+                next = mn->nameHash[j]->next;
+                free(mn->nameHash[j]);
+                mn->nameHash[j] = next;
+            }
+        }
+    }}
+
+    // Destroy the bindings themselves.
     if(NULL != bindings)
     {
         materialnum_t i;
@@ -598,6 +630,18 @@ void Materials_Shutdown(void)
         bindings = NULL;
     }
     bindingsCount = bindingsMax = 0;
+}
+
+void Materials_Shutdown(void)
+{
+    if(!initedOk)
+        return;
+
+    Materials_PurgeCacheQueue();
+
+    destroyBindings();
+    destroyMaterials();
+    destroyVariantSpecifications();
 
     initedOk = false;
 }
@@ -683,12 +727,12 @@ static void releaseGLTexturesForMaterial(material_t* mat)
 
 void Materials_DeleteGLTextures(const char* namespaceName)
 {
-    materialnamespaceid_t matNamespace = MN_ANY;
+    materialnamespaceid_t namespaceId = MN_ANY;
 
     if(namespaceName && namespaceName[0])
     {
-        matNamespace = DD_ParseMaterialNamespace(namespaceName);
-        if(!VALID_MATERIALNAMESPACE(matNamespace))
+        namespaceId = DD_ParseMaterialNamespace(namespaceName);
+        if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
 #if _DEBUG
             Con_Message("Warning:Materials_DeleteGLTextures: Attempt to delete in "
@@ -698,34 +742,34 @@ void Materials_DeleteGLTextures(const char* namespaceName)
         }
     }
 
-    if(matNamespace == MN_ANY)
+    if(namespaceId == MN_ANY)
     {   // Delete the lot.
         GL_ReleaseGLTexturesByNamespace(TN_ANY);
         return;
     }
 
-    if(!VALID_MATERIALNAMESPACE(matNamespace))
+    if(!VALID_MATERIALNAMESPACEID(namespaceId))
         Con_Error("Materials_DeleteGLTextures: Internal error, "
-                  "invalid materialgroup '%i'.", (int) matNamespace);
+                  "invalid materialgroup '%i'.", (int) namespaceId);
 
     if(bindings)
     {
-        uint i;
-        for(i = 0; i < MATERIALNAMESPACE_HASH_SIZE; ++i)
-            if(hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i])
+        materialnamespace_t* mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
+        int i;
+        for(i = 0; i < MATERIALNAMESPACE_NAMEHASH_SIZE; ++i)
+        {
+            materialnamespace_namehash_node_t* node;
+
+            if(NULL == mn->nameHash[i]) continue;
+
+            for(node = (materialnamespace_namehash_node_t*) mn->nameHash[i];
+                NULL != node; node = node->next)
             {
-                materialbind_t* mb = &bindings[hashTable[matNamespace-MATERIALNAMESPACE_FIRST][i] - 1];
-
-                for(;;)
-                {
-                    material_t* material = MaterialBind_Material(mb);
-                    releaseGLTexturesForMaterial(material);
-
-                    if(!mb->hashNext)
-                        break;
-                    mb = &bindings[mb->hashNext - 1];
-                }
+                materialbind_t* mb = bindByIndex(node->bindId);
+                material_t* material = MaterialBind_Material(mb);
+                releaseGLTexturesForMaterial(material);
             }
+        }
     }
 }
 
@@ -758,7 +802,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     assert(def);
     {
-    materialnamespaceid_t mnamespace = MN_ANY;
+    materialnamespaceid_t namespaceId = MN_ANY;
     int width = def->width, height = def->height;
     const dduri_t* rawName = def->id;
     const texture_t* tex = NULL;
@@ -810,18 +854,18 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
     hash = hashForName(name);
 
-    mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
+    namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
-    if(!VALID_MATERIALNAMESPACE(mnamespace))
+    if(!VALID_MATERIALNAMESPACEID(namespaceId))
     {
 #if _DEBUG
         Con_Message("Warning, attempted to create Material in unknown Namespace '%i', ignoring.\n",
-            (int) mnamespace);
+            (int) namespaceId);
 #endif
         return NULL;
     }
 
-    { materialnum_t matNum = getMaterialNumForName(name, hash, mnamespace);
+    { materialnum_t matNum = getMaterialNumForName(name, hash, namespaceId);
     if(0 != matNum)
     {
 #if _DEBUG
@@ -845,7 +889,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     mat->_width  = width;
     mat->_height = height;
     mat->_envClass = S_MaterialClassForName(rawName);
-    newMaterialNameBinding(mat, name, mnamespace, hash);
+    newMaterialNameBinding(mat, name, namespaceId, hash);
 
     return mat;
     }
@@ -856,7 +900,7 @@ static materialnum_t Materials_CheckNumForPath2(const dduri_t* uri)
     assert(initedOk && uri);
     {
     const char* rawName = Str_Text(Uri_Path(uri));
-    materialnamespaceid_t mnamespace;
+    materialnamespaceid_t namespaceId;
     uint hash;
     char name[9];
 
@@ -866,12 +910,12 @@ static materialnum_t Materials_CheckNumForPath2(const dduri_t* uri)
     if(Str_IsEmpty(Uri_Path(uri)) || !Str_CompareIgnoreCase(Uri_Path(uri), "-"))
         return 0;
 
-    mnamespace = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
-    if(mnamespace != MN_ANY && !VALID_MATERIALNAMESPACE(mnamespace))
+    namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+    if(namespaceId != MN_ANY && !VALID_MATERIALNAMESPACEID(namespaceId))
     {
 #if _DEBUG
 Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
-            (int) mnamespace);
+            (int) namespaceId);
 #endif
         return 0;
     }
@@ -884,7 +928,7 @@ Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
     }
     hash = hashForName(name);
 
-    if(mnamespace == MN_ANY)
+    if(namespaceId == MN_ANY)
     {   // Caller doesn't care which namespace.
         materialnum_t       matNum;
 
@@ -900,7 +944,7 @@ Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
     }
 
     // Caller wants a material in a specific namespace.
-    return getMaterialNumForName(name, hash, mnamespace);
+    return getMaterialNumForName(name, hash, namespaceId);
     }
 }
 
@@ -1457,37 +1501,36 @@ static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
     Con_Printf("\n");
 }
 
-static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const char* like,
-    size_t* count, materialbind_t** storage)
+static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
+    const char* like, size_t* count, materialbind_t** storage)
 {
     size_t n = 0;
 
-    if(VALID_MATERIALNAMESPACE(mnamespace))
+    if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
         if(bindings)
         {
-            uint i;
-            for(i = 0; i < MATERIALNAMESPACE_HASH_SIZE; ++i)
-                if(hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i])
+            materialnamespace_t* mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
+            int i;
+            for(i = 0; i < MATERIALNAMESPACE_NAMEHASH_SIZE; ++i)
+            {
+                materialnamespace_namehash_node_t* node;
+
+                if(NULL == mn->nameHash[i]) continue;
+
+                for(node = (materialnamespace_namehash_node_t*) mn->nameHash[i];
+                    NULL != node; node = node->next)
                 {
-                    materialnum_t num = hashTable[mnamespace-MATERIALNAMESPACE_FIRST][i] - 1;
-                    materialbind_t* mb = &bindings[num];
-
-                    for(;;)
+                    materialbind_t* mb = bindByIndex(node->bindId);
+                    if(!(like && like[0] && strnicmp(Str_Text(MaterialBind_Name(mb)), like, strlen(like))))
                     {
-                        if(!(like && like[0] && strnicmp(Str_Text(MaterialBind_Name(mb)), like, strlen(like))))
-                        {
-                            if(storage)
-                                storage[n++] = mb;
-                            else
-                                ++n;
-                        }
-
-                        if(!mb->hashNext)
-                            break;
-                        mb = &bindings[mb->hashNext - 1];
+                        if(storage)
+                            storage[n++] = mb;
+                        else
+                            ++n;
                     }
                 }
+            }
         }
     }
     else
@@ -1521,16 +1564,16 @@ static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const
     }
 
     storage = malloc(sizeof(materialbind_t*) * (n+1));
-    return collectMaterials(mnamespace, like, count, storage);
+    return collectMaterials(namespaceId, like, count, storage);
 }
 
-static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like)
+static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like)
 {
     size_t count = 0;
-    materialbind_t** foundMaterials = collectMaterials(mnamespace, like, &count, 0);
+    materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, 0);
 
-    if(VALID_MATERIALNAMESPACE(mnamespace))
-        Con_FPrintf(CBLF_YELLOW, "Known Materials in \"%s\":\n", Str_Text(nameForMaterialNamespaceId(mnamespace)));
+    if(VALID_MATERIALNAMESPACEID(namespaceId))
+        Con_FPrintf(CBLF_YELLOW, "Known Materials in \"%s\":\n", Str_Text(nameForMaterialNamespaceId(namespaceId)));
     else // Any namespace.
         Con_FPrintf(CBLF_YELLOW, "Known Materials:\n");
 
@@ -1541,7 +1584,7 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
     }
 
     // Print the result index key.
-    if(VALID_MATERIALNAMESPACE(mnamespace))
+    if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
         Con_Printf(" uid: \"name\" [width, height]\n");
         Con_FPrintf(CBLF_RULER, "");
@@ -1559,19 +1602,19 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
     for(ptr = foundMaterials; *ptr; ++ptr)
     {
         const materialbind_t* mb = *ptr;
-        printMaterialInfo(mb, (mnamespace == MN_ANY));
+        printMaterialInfo(mb, (namespaceId == MN_ANY));
     }}
 
     free(foundMaterials);
     return count;
 }
 
-static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
+static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 {
     // Only one namespace to print?
-    if(VALID_MATERIALNAMESPACE(mnamespace))
+    if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
-        printMaterials2(mnamespace, like);
+        printMaterials2(namespaceId, like);
         return;
     }
 
@@ -1932,12 +1975,12 @@ ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
 
 D_CMD(ListMaterials)
 {
-    materialnamespaceid_t mnamespace = (argc > 1? DD_ParseMaterialNamespace(argv[1]) : MN_ANY);
-    if(argc > 2 && !VALID_MATERIALNAMESPACE(mnamespace))
+    materialnamespaceid_t namespaceId = (argc > 1? DD_ParseMaterialNamespace(argv[1]) : MN_ANY);
+    if(argc > 2 && !VALID_MATERIALNAMESPACEID(namespaceId))
     {
         Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
         return false;
     }
-    printMaterials(mnamespace, (argc > 2? argv[2] : (argc > 1 && mnamespace == MN_ANY? argv[1] : NULL)));
+    printMaterials(namespaceId, (argc > 2? argv[2] : (argc > 1 && namespaceId == MN_ANY? argv[1] : NULL)));
     return true;
 }
