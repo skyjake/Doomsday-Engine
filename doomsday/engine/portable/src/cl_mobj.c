@@ -143,7 +143,7 @@ mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
     assert(info->startMagic == CLM_MAGIC1);
     assert(info->endMagic == CLM_MAGIC2);
 
-    return ((void*)info) + sizeof(clmoinfo_t);
+    return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
 
 /**
@@ -666,7 +666,7 @@ mobj_t* ClMobj_Create(thid_t id)
 
     // Allocate enough memory for all the data.
     info = data = Z_Calloc(sizeof(clmoinfo_t) + gx.mobjSize, PU_MAP, 0);
-    mo = data + sizeof(clmoinfo_t);
+    mo = (mobj_t*) ((char*)data + sizeof(clmoinfo_t));
 
     // Initialize the data.
     info->time = Sys_GetRealTime();
@@ -747,7 +747,7 @@ boolean ClMobj_IsValid(mobj_t* mo)
 
 clmoinfo_t* ClMobj_GetInfo(mobj_t* mo)
 {
-    clmoinfo_t* info = ((void*)mo) - sizeof(clmoinfo_t);
+    clmoinfo_t* info = (clmoinfo_t*) ((char*)mo - sizeof(clmoinfo_t));
     if(!mo || info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
     {
         // There is no valid info block preceding the mobj.
