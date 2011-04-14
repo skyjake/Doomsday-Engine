@@ -502,12 +502,12 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
 
                 for(g = 0; g < numGroups; ++g)
                 {
+                    if(Materials_IsPrecacheAnimGroup(g))
+                        continue; // Precache groups don't apply.
+
                     if(Materials_MaterialLinkedToAnimGroup(g, defMat) &&
                        Materials_MaterialLinkedToAnimGroup(g, mat))
                     {
-                        if(Materials_IsPrecacheAnimGroup(g))
-                            continue; // Precache groups don't apply.
-
                         // Both are in this group! This def will do.
                         return def;
                     }

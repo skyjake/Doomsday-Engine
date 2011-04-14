@@ -72,9 +72,8 @@ boolean Surface_IsAttachedToMap(surface_t* suf)
 /**
  * Change the material to be used on the specified surface.
  *
- * @param suf           Ptr to the surface to chage the material of.
- * @param mat           Ptr to the material to change to.
- * @return              @c true, if changed successfully.
+ * @param mat  Material to change to.
+ * @return  @c true if changed successfully.
  */
 boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
 {
@@ -91,28 +90,25 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
         if(mat && (suf->oldFlags & SUIF_FIX_MISSING_MATERIAL))
             suf->inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
 
-        if(mat != suf->material)
+        if(mat != suf->material && !ddMapSetup)
         {
-            if(!ddMapSetup)
-            {
-                // If this plane's surface is in the decorated list, remove it.
-                R_SurfaceListRemove(decoratedSurfaceList, suf);
-                // If this plane's surface is in the glowing list, remove it.
-                R_SurfaceListRemove(glowingSurfaceList, suf);
-            }
+            // If this plane's surface is in the decorated list, remove it.
+            R_SurfaceListRemove(decoratedSurfaceList, suf);
+            // If this plane's surface is in the glowing list, remove it.
+            R_SurfaceListRemove(glowingSurfaceList, suf);
 
-            if(!ddMapSetup && NULL != mat)
+            if(NULL != mat)
             {
-                material_snapshot_t ms;
-                const ded_decor_t* decor;
-                Materials_Prepare(&ms, mat, true,
-                    Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                        0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-                if(ms.glowing > 0)
+                if(Material_HasGlow(mat))
                     R_SurfaceListAdd(glowingSurfaceList, suf);
-                decor = Materials_DecorationDef(Materials_ToMaterialNum(mat));
-                if(decor)
+                if(Material_HasDecorations(mat))
                     R_SurfaceListAdd(decoratedSurfaceList, suf);
+
+                if(DMU_GetType(suf->owner) == DMU_PLANE)
+                {
+                    const ded_ptcgen_t* def = Materials_PtcGenDef(Materials_ToMaterialNum(mat));
+                    P_SpawnPlaneParticleGen(def, (plane_t*)suf->owner);
+                }
             }
         }
     }

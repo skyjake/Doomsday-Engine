@@ -556,7 +556,7 @@ static void renderParticles(int rtype, boolean withBlend)
         const ded_ptcstage_t* dst, *nextDst;
         float size, color[4], center[3], mark, invMark;
         float dist, maxdist, projected[2];
-        boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
+        boolean flatOnPlane = false, flatOnWall = false, nearPlane, nearWall;
         short stageType;
 
         gen = P_IndexToPtcGen(slot->ptcGenID);
@@ -657,10 +657,15 @@ static void renderParticles(int rtype, boolean withBlend)
         nearPlane = (pt->sector &&
                      (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->pos[VZ] ||
                       FLT2FIX(pt->sector->SP_ceilheight)  - 2 * FRACUNIT <= pt->pos[VZ]));
-        flatOnPlane = (st->flags & PTCF_PLANE_FLAT && nearPlane);
-
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
-        flatOnWall = (st->flags & PTCF_WALL_FLAT && nearWall);
+
+        if(stageType == PTC_POINT || (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES))
+        {
+            if((st->flags & PTCF_PLANE_FLAT) && nearPlane)
+                flatOnPlane = true;
+            if((st->flags & PTCF_WALL_FLAT) && nearWall)
+                flatOnWall = true;
+        }
 
         center[VX] = FIX2FLT(pt->pos[VX]);
         center[VZ] = FIX2FLT(pt->pos[VY]);

@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mobj.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_mobj.c: Map Objects
+ * Map Objects
  *
  * Contains various routines for moving mobjs, collision and Z checking.
  */
@@ -204,7 +204,7 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
         if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
         {
             // We are allowed to spawn the generator.
-            P_SpawnParticleGen(pg, mobj);
+            P_SpawnMobjParticleGen(pg, mobj);
         }
     }
 

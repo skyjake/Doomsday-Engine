@@ -181,6 +181,16 @@ static uint findSlotForNewGen(void)
     return slot;
 }
 
+/// @return  @c true iff there is an active ptcgen for the given plane.
+static boolean P_HasActivePtcGen(const plane_t* plane)
+{
+    ptcgenid_t i;
+    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
+        if(NULL != activePtcGens[i] && activePtcGens[i]->plane == plane)
+            return true;
+    return false;
+}
+
 static ptcgen_t* P_PtcGenCreate(void)
 {
     ptcgen_t*           gen = Z_Calloc(sizeof(ptcgen_t), PU_MAP, 0);
@@ -264,6 +274,30 @@ void P_PtcInitForMap(void)
     VERBOSE(Con_Message
             ("P_PtcInitForMap: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
+}
+
+void P_MapSpawnPlaneParticleGens(void)
+{
+    if(isDedicated || !useParticles)
+        return;
+
+    { uint i;
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t* sector = SECTOR_PTR(i);
+
+        // Only planes in sectors with volume on the world X/Y axis can support generators.
+        if(0 == sector->lineDefCount)
+            continue;
+
+        { int j;
+        for(j = 0; j < 2; ++j)
+        {
+            plane_t* plane = sector->SP_plane(j);
+            const ded_ptcgen_t* def = Materials_PtcGenDef(Materials_ToMaterialNum(plane->PS_material));
+            P_SpawnPlaneParticleGen(def, plane);
+        }}
+    }}
 }
 
 /**
@@ -448,7 +482,7 @@ static void P_PresimParticleGen(ptcgen_t* gen, int tics)
  * Creates a new mobj-triggered particle generator based on the given
  * definition. The generator is added to the list of active ptcgens.
  */
-void P_SpawnParticleGen(const ded_ptcgen_t* def, mobj_t* source)
+void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source)
 {
     ptcgen_t*           gen;
 
@@ -481,26 +515,36 @@ Con_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
     P_PresimParticleGen(gen, def->preSim);
 }
 
-/**
- * Creates a new flat-triggered particle generator based on the given
- * definition. The generator is added to the list of active ptcgens.
- */
-static void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, sector_t* sec,
-                                    boolean isCeiling)
+void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, plane_t* plane)
 {
-    ptcgen_t*           gen;
+    planetype_t relPlane;
+    ptcgen_t* gen;
 
-    if(isDedicated || !useParticles)
-        return;
+    if(isDedicated || !useParticles) return;
+    if(NULL == def || NULL == plane) return;
+    // Only planes in sectors with volume on the world X/Y axis can support generators.
+    if(0 == plane->sector->lineDefCount) return;
 
-    if(!(gen = P_NewPtcGen()))
-        return;
+    // Plane we spawn relative to may not be this one.
+    relPlane = plane->type;
+    if(def->flags & PGF_CEILING_SPAWN)
+        relPlane = PLN_CEILING;
+    if(def->flags & PGF_FLOOR_SPAWN)
+        relPlane = PLN_FLOOR;
+    plane = plane->sector->SP_plane(relPlane);
+
+    // Only one generator per plane.
+    if(P_HasActivePtcGen(plane)) return;
+
+    // Are we out of generators?
+    gen = P_NewPtcGen();
+    if(NULL == gen) return;
 
     gen->count = def->particles;
     // Size of source sector might determine count.
     if(def->flags & PGF_PARTS_PER_128)
     {
-        gen->spawnRateMultiplier = sec->approxArea;
+        gen->spawnRateMultiplier = plane->sector->approxArea;
     }
     else
     {
@@ -509,8 +553,7 @@ static void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, sector_t* sec,
 
     // Initialize the particle generator.
     P_InitParticleGen(gen, def);
-    gen->sector = sec;
-    gen->ceiling = isCeiling;
+    gen->plane = plane;
 
     // Is there a need to pre-simulate?
     P_PresimParticleGen(gen, def->preSim);
@@ -589,7 +632,7 @@ static void P_NewParticle(ptcgen_t* gen)
     fixed_t             uncertain, len;
     angle_t             ang, ang2;
     subsector_t*        subsec;
-    float*              box, inter = -1;
+    float               inter = -1;
     modeldef_t*         mf = 0, *nextmf = 0;
 
     // Check for model-only generators.
@@ -730,30 +773,33 @@ static void P_NewParticle(ptcgen_t* gen)
             pt->pos[VZ] += FLT2FIX(off[VY]);
         }
     }
-    else if(gen->sector) // The source is a plane?
+    else if(gen->plane)
     {
-        fixed_t             radius = gen->stages[pt->stage].radius;
+        fixed_t radius = gen->stages[pt->stage].radius;
+        const plane_t* plane = gen->plane;
+        const sector_t* sector = gen->plane->sector;
+        const float* bbox = sector->bBox;
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(gen->flags & PGF_SPACE_SPAWN)
         {
             pt->pos[VZ] =
-                FLT2FIX(gen->sector->SP_floorheight) + radius +
+                FLT2FIX(sector->SP_floorheight) + radius +
                 FixedMul(RNG_RandByte() << 8,
-                         FLT2FIX(gen->sector->SP_ceilheight -
-                                 gen->sector->SP_floorheight) - 2 * radius);
+                         FLT2FIX(sector->SP_ceilheight -
+                                 sector->SP_floorheight) - 2 * radius);
         }
         else if(gen->flags & PGF_FLOOR_SPAWN ||
                 (!(gen->flags & (PGF_FLOOR_SPAWN | PGF_CEILING_SPAWN)) &&
-                 !gen->ceiling))
+                plane->type == PLN_FLOOR))
         {
             // Spawn on the floor.
-            pt->pos[VZ] = FLT2FIX(gen->sector->SP_floorheight) + radius;
+            pt->pos[VZ] = FLT2FIX(plane->height) + radius;
         }
         else
         {
             // Spawn on the ceiling.
-            pt->pos[VZ] = FLT2FIX(gen->sector->SP_ceilheight) - radius;
+            pt->pos[VZ] = FLT2FIX(plane->height) - radius;
         }
 
         /**
@@ -763,17 +809,16 @@ static void P_NewParticle(ptcgen_t* gen)
          * \fixme Nothing prevents spawning on the wrong side (or inside)
          * of one-sided walls (large diagonal subsectors!).
          */
-        box = gen->sector->bBox;
         for(i = 0; i < 5; ++i) // Try a couple of times (max).
         {
             float               x =
-                (box[BOXLEFT]   + RNG_RandFloat() * (box[BOXRIGHT] - box[BOXLEFT]));
+                (bbox[BOXLEFT]   + RNG_RandFloat() * (bbox[BOXRIGHT] - bbox[BOXLEFT]));
             float               y =
-                (box[BOXBOTTOM] + RNG_RandFloat() * (box[BOXTOP]   - box[BOXBOTTOM]));
+                (bbox[BOXBOTTOM] + RNG_RandFloat() * (bbox[BOXTOP]   - bbox[BOXBOTTOM]));
 
             subsec = R_PointInSubsector(x, y);
 
-            if(subsec->sector == gen->sector)
+            if(subsec->sector == sector)
                 break;
             else
                 subsec = NULL;
@@ -818,8 +863,8 @@ static void P_NewParticle(ptcgen_t* gen)
 
     // The other place where this gets updated is after moving over
     // a two-sided line.
-    if(gen->sector)
-        pt->sector = gen->sector;
+    if(gen->plane)
+        pt->sector = gen->plane->sector;
     else
         pt->sector = R_PointInSubsector(FIX2FLT(pt->pos[VX]),
                                         FIX2FLT(pt->pos[VY]))->sector;
@@ -1124,7 +1169,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     // The exception is plane flat particles, which are rendered flat
     // against planes. They are almost entirely soft when it comes to plane
     // collisions.
-    if(st->flags & PTCF_PLANE_FLAT)
+    if((st->type == PTC_POINT || (st->type >= PTC_TEXTURE && st->type < PTC_TEXTURE + MAX_PTC_TEXTURES)) &&
+       (st->flags & PTCF_PLANE_FLAT))
         hardRadius = FRACUNIT;
 
     // Check the new Z position only if not stuck to a plane.
@@ -1174,7 +1220,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
                 // The particle has stopped moving. This means its Z-movement
                 // has ceased because of the collision with a plane. Plane-flat
                 // particles will stick to the plane.
-                if(st->flags & PTCF_PLANE_FLAT)
+                if((st->type == PTC_POINT || (st->type >= PTC_TEXTURE && st->type < PTC_TEXTURE + MAX_PTC_TEXTURES)) &&
+                   (st->flags & PTCF_PLANE_FLAT))
                 {
                     z = hitFloor ? DDMININT : DDMAXINT;
                 }
@@ -1334,7 +1381,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
 
     // Spawn new particles?
     if((gen->age <= def->spawnAge || def->spawnAge < 0) &&
-       (gen->source || gen->sector || gen->type >= 0 ||
+       (gen->source || gen->plane || gen->type >= 0 ||
         (gen->flags & PGF_UNTRIGGERED)))
     {
         newparts = def->spawnRate * gen->spawnRateMultiplier;
@@ -1398,64 +1445,6 @@ void P_PtcGenThinker(ptcgen_t* gen)
 
         // Try to move.
         P_MoveParticle(gen, pt);
-    }
-}
-
-/**
- * Returns true iff there is an active ptcgen for the given plane.
- */
-static boolean P_HasActivePtcGen(sector_t* sector, int isCeiling)
-{
-    ptcgenid_t          i;
-
-    for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
-        if(activePtcGens[i] && activePtcGens[i]->sector == sector &&
-           activePtcGens[i]->ceiling == isCeiling)
-            return true;
-    return false;
-}
-
-/**
- * Spawns new ptcgens for planes, if necessary.
- */
-void P_CheckPtcPlanes(void)
-{
-    sector_t* sector;
-    uint i, p;
-
-    if(isDedicated || !useParticles)
-        return;
-
-    // There is no need to do this on every tic.
-    if(SECONDS_TO_TICKS(gameTime) % 4)
-        return;
-
-    for(i = 0; i < numSectors; ++i)
-    {
-        sector = SECTOR_PTR(i);
-        if(0 == sector->lineDefCount)
-            continue;
-
-        for(p = 0; p < 2; ++p)
-        {
-            uint plane = p;
-            material_t* mat = sector->SP_planematerial(plane);
-            const ded_ptcgen_t* def = Materials_PtcGenDef(Materials_ToMaterialNum(mat));
-
-            if(!def)
-                continue;
-
-            if(def->flags & PGF_CEILING_SPAWN)
-                plane = 1;
-            if(def->flags & PGF_FLOOR_SPAWN)
-                plane = 0;
-
-            if(!P_HasActivePtcGen(sector, plane))
-            {
-                // Spawn it!
-                P_SpawnPlaneParticleGen(def, sector, plane);
-            }
-        }
     }
 }
 
@@ -1599,9 +1588,7 @@ void P_UpdateParticleGens(void)
 
         // Map generators cannot be updated (we have no means to reliably
         // identify them), so destroy them.
-        // Flat generators will be spawned automatically within a few tics so we'll
-        // just destroy those too.
-        if((gen->flags & PGF_UNTRIGGERED) || gen->sector)
+        if(gen->flags & PGF_UNTRIGGERED)
         {
             destroyPtcGen(gen, 0);
             continue;
@@ -1629,6 +1616,47 @@ void P_UpdateParticleGens(void)
                     gen->source->state - states == Def_GetStateNum(def->state))
             {
                 found = true;
+            }
+            // A flat generator?
+            else if(NULL != gen->plane && NULL != def->material)
+            {
+                material_t* mat = gen->plane->PS_material;
+                material_t* defMat = Materials_ToMaterial(Materials_IndexForUri(def->material));
+
+                if(def->flags & PGF_FLOOR_SPAWN)
+                    mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;
+                if(def->flags & PGF_CEILING_SPAWN)
+                    mat = gen->plane->sector->SP_plane(PLN_CEILING)->PS_material;
+
+                // Is this suitable?
+                if(mat == defMat)
+                {
+                    found = true;
+                }
+                else if(def->flags & PGF_GROUP)
+                {   // Generator triggered by all materials in the (animation) group.
+                    /**
+                     * A search is necessary only if we know both the used material and
+                     * the specified material in this definition are in *a* group.
+                     */
+                    if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
+                    {
+                        int g, numGroups = Materials_AnimGroupCount();
+                        for(g = 0; g < numGroups; ++g)
+                        {
+                            if(Materials_IsPrecacheAnimGroup(g))
+                                continue; // Precache groups don't apply.
+
+                            if(Materials_MaterialLinkedToAnimGroup(g, defMat) &&
+                               Materials_MaterialLinkedToAnimGroup(g, mat))
+                            {
+                                // Both are in this group! This def will do.
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             else
             {

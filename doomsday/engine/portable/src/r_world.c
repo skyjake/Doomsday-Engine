@@ -1354,6 +1354,7 @@ void R_SetupMap(int mode, int flags)
         Rend_CalcLightModRange(NULL);
 
         P_MapInitPolyobjs();
+        P_MapSpawnPlaneParticleGens();
 
         R_MapInitSurfaces(true);
         R_MapInitSurfaceLists();
