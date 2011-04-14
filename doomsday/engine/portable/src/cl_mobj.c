@@ -665,7 +665,7 @@ mobj_t* ClMobj_Create(thid_t id)
     mobj_t* mo = 0; // Gameside object.
 
     // Allocate enough memory for all the data.
-    info = data = Z_Calloc(sizeof(clmoinfo_t) + gx.mobjSize, PU_MAP, 0);
+    info = data = Z_Calloc(sizeof(clmoinfo_t) + MOBJ_SIZE, PU_MAP, 0);
     mo = (mobj_t*) ((char*)data + sizeof(clmoinfo_t));
 
     // Initialize the data.

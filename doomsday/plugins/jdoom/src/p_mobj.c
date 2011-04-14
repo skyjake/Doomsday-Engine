@@ -830,12 +830,6 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
-    /*
-    // Clients only spawn local objects.
-    if(IS_CLIENT && !(info->flags & MF_LOCAL) && )
-        return NULL;
-        */
-
     // Not for deathmatch?
     if(deathmatch && (info->flags & MF_NOTDMATCH))
         return NULL;
@@ -895,8 +889,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->flags2 = info->flags2;
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
-    mo->health =
-        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
     // Let the engine know about solid objects.

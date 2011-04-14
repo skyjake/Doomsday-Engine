@@ -397,9 +397,12 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     return true;
 }
 
-boolean P_IsPlayerStartMobjType(mobjtype_t type)
+/**
+ * Determines if a client is allowed to spawn a thing of type @a doomEdNum.
+ */
+static boolean P_IsClientAllowedToSpawn(int doomEdNum)
 {
-    switch(type)
+    switch(doomEdNum)
     {
     case 11: // Deathmatch
     case 1:
@@ -556,7 +559,7 @@ static void P_LoadMapObjs(void)
             // Check for things that clients don't spawn on their own.
             if(IS_CLIENT)
             {
-                if(!P_IsPlayerStartMobjType(type))
+                if(!P_IsClientAllowedToSpawn(spot->doomEdNum))
                     continue;
             }
 

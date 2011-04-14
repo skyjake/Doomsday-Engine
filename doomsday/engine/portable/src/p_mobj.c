@@ -125,6 +125,13 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     if(!function)
         Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
+#ifdef _DEBUG
+    if(isClient)
+    {
+        Con_Message("P_MobjCreate: Client creating mobj at %f,%f\n", x, y);
+    }
+#endif
+
     // Do we have any unused mobjs we can reuse?
     if(unusedMobjs)
     {
