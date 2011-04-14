@@ -1572,6 +1572,7 @@ void G_PlayerReborn(int player)
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
     p->health = maxHealth;
+    p->brain.changeWeapon = WT_NOCHANGE;
 
 #if __JDOOM__ || __JDOOM64__
     p->readyWeapon = p->pendingWeapon = WT_SECOND;

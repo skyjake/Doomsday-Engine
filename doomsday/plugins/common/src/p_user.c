@@ -1376,16 +1376,19 @@ void P_PlayerThinkWeapons(player_t* player)
         {
             if(IS_CLIENT)
             {
-                // Just send a request.
+                // Send a notification to the server.
                 NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, newweapon);
             }
-            else
-            {
-                player->pendingWeapon = newweapon;
-            }
+#ifdef _DEBUG
+            Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).\n",
+                        player - players, newweapon, brain->changeWeapon);
+#endif
+            player->pendingWeapon = newweapon;
+            brain->changeWeapon = WT_NOCHANGE;
         }
     }
 
+    /*
     if(player->pendingWeapon != oldweapon)
     {
 #if __JDOOM__ || __JDOOM64__
@@ -1394,6 +1397,7 @@ void P_PlayerThinkWeapons(player_t* player)
         player->update |= PSF_PENDING_WEAPON;
 #endif
     }
+    */
 }
 
 void P_PlayerThinkUse(player_t *player)

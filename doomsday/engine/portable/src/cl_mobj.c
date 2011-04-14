@@ -220,8 +220,8 @@ void ClMobj_SetPosition(mobj_t *mo)
         return;
     }
 #ifdef _DEBUG
-    Con_Message("ClMobj_SetPosition: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
-                mo->pos[VX], mo->pos[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no");
+    VERBOSE2( Con_Message("ClMobj_SetPosition: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
+                          mo->pos[VX], mo->pos[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no") );
 #endif
 
     P_MobjLink(mo,
@@ -779,7 +779,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
         return false;
     }
 #ifdef _DEBUG
-    Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).\n", mo->thinker.id, mo->pos[VZ]);
+    VERBOSE2( Con_Message("Cl_RevealMobj: clmobj %i Hidden status lifted (z=%f).\n", mo->thinker.id, mo->pos[VZ]) );
 #endif
 
     info->flags &= ~CLMF_HIDDEN;
@@ -845,7 +845,7 @@ void ClMobj_ReadDelta2(boolean skip)
         if(!mo)
         {
 #ifdef _DEBUG
-            Con_Message("Cl_ReadMobjDelta: Creating new clmobj %i (hidden).\n", id);
+            VERBOSE2( Con_Message("Cl_ReadMobjDelta: Creating new clmobj %i (hidden).\n", id) );
 #endif
 
             // This is a new ID, allocate a new mobj.

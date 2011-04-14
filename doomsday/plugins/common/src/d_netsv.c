@@ -1001,8 +1001,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
 void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
                            boolean reliable)
 {
-    int         pType =
-        srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE : GPT_PLAYER_STATE;
+    int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE : GPT_PLAYER_STATE);
     player_t   *pl = &players[srcPlrNum];
     byte        buffer[UPD_BUFFER_LEN], *ptr = buffer, fl;
     int         i, k;

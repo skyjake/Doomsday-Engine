@@ -518,6 +518,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     else
         p->pendingWeapon = p->readyWeapon;
 
+    p->brain.changeWeapon = WT_NOCHANGE;
+
     // Setup gun psprite.
     P_SetupPsprites(p);
 
