@@ -736,7 +736,7 @@ boolean ClMobj_IsValid(mobj_t* mo)
 {
     clmoinfo_t* info = ClMobj_GetInfo(mo);
 
-    if(!Cl_IsClientMobj(mo)) return false;
+    if(!Cl_IsClientMobj(mo)) return true;
     if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
     {
         // Should not use this for playsim.
