@@ -615,6 +615,10 @@ void R_SetupFrame(player_t* player)
     if(resetNextViewer ||
        V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
+#ifdef _DEBUG
+        Con_Message("R_SetupFrame: resetNextViewer = %i\n", resetNextViewer);
+#endif
+
         // Keep reseting until a new sharp world has arrived.
         if(resetNextViewer > 1)
             resetNextViewer = 0;
@@ -703,31 +707,31 @@ void R_SetupFrame(player_t* player)
     }
 
     // Update viewer.
-    tableAngle = viewData->current.angle >> ANGLETOFINESHIFT;
-    viewData->viewSin = FIX2FLT(finesine[tableAngle]);
-    viewData->viewCos = FIX2FLT(fineCosine[tableAngle]);
+    tableAngle = vd->current.angle >> ANGLETOFINESHIFT;
+    vd->viewSin = FIX2FLT(finesine[tableAngle]);
+    vd->viewCos = FIX2FLT(fineCosine[tableAngle]);
 
     // Calculate the front, up and side unit vectors.
     // The vectors are in the DGL coordinate system, which is a left-handed
     // one (same as in the game, but Y and Z have been swapped). Anyone
     // who uses these must note that it might be necessary to fix the aspect
     // ratio of the Y axis by dividing the Y coordinate by 1.2.
-    yawRad = ((viewData->current.angle / (float) ANGLE_MAX) *2) * PI;
+    yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
 
-    pitchRad = viewData->current.pitch * 85 / 110.f / 180 * PI;
+    pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
-    viewData->frontVec[VX] = cos(yawRad) * cos(pitchRad);
-    viewData->frontVec[VZ] = sin(yawRad) * cos(pitchRad);
-    viewData->frontVec[VY] = sin(pitchRad);
+    vd->frontVec[VX] = cos(yawRad) * cos(pitchRad);
+    vd->frontVec[VZ] = sin(yawRad) * cos(pitchRad);
+    vd->frontVec[VY] = sin(pitchRad);
 
     // The up vector.
-    viewData->upVec[VX] = -cos(yawRad) * sin(pitchRad);
-    viewData->upVec[VZ] = -sin(yawRad) * sin(pitchRad);
-    viewData->upVec[VY] = cos(pitchRad);
+    vd->upVec[VX] = -cos(yawRad) * sin(pitchRad);
+    vd->upVec[VZ] = -sin(yawRad) * sin(pitchRad);
+    vd->upVec[VY] = cos(pitchRad);
 
     // The side vector is the cross product of the front and up vectors.
-    M_CrossProduct(viewData->frontVec, viewData->upVec, viewData->sideVec);
+    M_CrossProduct(vd->frontVec, vd->upVec, vd->sideVec);
 
     if(showFrameTimePos)
     {

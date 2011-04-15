@@ -167,6 +167,13 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
  */
 void P_MobjDestroy(mobj_t* mo)
 {
+#ifdef _DEBUG
+    if(mo->ddFlags & DDMF_MISSILE)
+    {
+        Con_Message("P_MobjDestroy: Destroying missile %i.\n", mo->thinker.id);
+    }
+#endif
+
     // Unlink from sector and block lists.
     P_MobjUnlink(mo);
 
@@ -198,6 +205,12 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
 #if _DEBUG
     if(statenum < 0 || statenum >= defs.count.states.num)
         Con_Error("P_MobjSetState: statenum %i out of bounds.\n", statenum);
+    /*
+    if(mobj->ddFlags & DDMF_MISSILE)
+    {
+        Con_Message("P_MobjSetState: Missile %i going to state %i.\n", mobj->thinker.id, statenum);
+    }
+    */
 #endif
 
     mobj->state = st;

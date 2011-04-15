@@ -495,11 +495,22 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
        fabs(thing->pos[VY] - tm[VY]) >= blockdist)
         return true; // Didn't hit thing.
 
+    if(IS_CLIENT)
+    {
+        // On clientside, missiles don't collide with mobjs.
+        if(tmThing->ddFlags & DDMF_MISSILE)
+        {
+            return true;
+        }
+    }
+
+/*
 #if __JHEXEN__
     // Stop here if we are a client.
     if(IS_CLIENT)
         return false;
 #endif
+*/
 
 #if !__JHEXEN__
     if(!tmThing->player && (tmThing->flags2 & MF2_PASSMOBJ))
