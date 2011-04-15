@@ -41,19 +41,23 @@ typedef enum {
 #define VALID_FILEDIRECTORY_PATHTYPE(t)     ((t) >= FILEDIRECTORY_PATHTYPES_FIRST || (t) < FILEDIRECTORY_PATHTYPES_COUNT)
 
 /**
- * FileDirectory. Core system component representing a hierarchical file path structure.
+ * FileDirectory. Core system component representing a hierarchical
+ * file path structure.
  *
- * A specialization of de::PathDirectory which implements automatic population of the
- * directory itself from the virtual file system. Also, paths are resolved prior to pushing
- * them into the directory.
+ * A specialization of de::PathDirectory which implements automatic
+ * population of the directory itself from the virtual file system.
+ * Also, paths are resolved prior to pushing them into the directory.
  *
  * @todo Perhaps this should be derived from PathDirectory?
  *
  * @ingroup fs
  */
+// Number of entries in the hash table.
+#define FILEDIRECTORY_HASHSIZE 512
+
 typedef struct filedirectory_s {
-    /// First and last nodes in the directory.
-    struct filedirectory_node_s* _head, *_tail;
+    /// Path hash table.
+    struct filedirectory_node_s* _hashTable[FILEDIRECTORY_HASHSIZE];
 } filedirectory_t;
 
 filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char delimiter);
