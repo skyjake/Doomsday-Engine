@@ -2281,7 +2281,7 @@ D_CMD(Load)
     for(; arg < argc; ++arg)
     {
         // Try the resource locator.
-        if(F_FindResource2(RC_UNKNOWN, argv[arg], &foundPath) != 0 &&
+        if(F_FindResource2(RC_PACKAGE, argv[arg], &foundPath) != 0 &&
            W_AddFile(Str_Text(&foundPath), false))
             didLoadResource = true;
     }
