@@ -634,10 +634,10 @@ void Def_InitTextDef(ddtext_t* txt, char* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char* fn, filedirectory_pathtype_t type, void* parm)
+int Def_ReadDEDFile(const char* fn, pathdirectory_pathtype_t type, void* parm)
 {
     // Skip directories.
-    if(type == FDT_DIRECTORY)
+    if(type == PT_DIRECTORY)
         return true;
 
     if(F_CheckFileId(fn))
@@ -657,7 +657,7 @@ int Def_ReadDEDFile(const char* fn, filedirectory_pathtype_t type, void* parm)
 void Def_ReadProcessDED(const char* fileName)
 {
     assert(fileName && fileName[0]);
-    Def_ReadDEDFile(fileName, FDT_FILE, 0);
+    Def_ReadDEDFile(fileName, PT_LEAF, 0);
 }
 
 /**
@@ -748,10 +748,10 @@ static __inline void readDefinitionFile(const char* fileName)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDefsReader(const ddstring_t* fileName, filedirectory_pathtype_t type, void* paramaters)
+static int autoDefsReader(const ddstring_t* fileName, pathdirectory_pathtype_t type, void* paramaters)
 {
     // Ignore directories.
-    if(type != FDT_DIRECTORY)
+    if(type != PT_DIRECTORY)
         readDefinitionFile(Str_Text(fileName));
     return 0; // Continue searching.
 }

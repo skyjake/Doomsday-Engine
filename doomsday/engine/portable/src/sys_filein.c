@@ -940,7 +940,7 @@ unsigned int F_LastModified(const char* fileName)
 
 typedef struct {
     /// Callback to make for each processed node.
-    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters);
+    int (*callback) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters);
 
     /// Data passed to the callback.
     void* paramaters;
@@ -1019,7 +1019,7 @@ static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCoun
 }
 
 static int iterateFilePaths(const ddstring_t* pattern, const ddstring_t* searchPath,
-    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters),
     void* paramaters)
 {
     assert(pattern && searchPath && !Str_IsEmpty(searchPath) && callback);
@@ -1049,7 +1049,7 @@ static int iterateFilePaths(const ddstring_t* pattern, const ddstring_t* searchP
             if(F_MatchName(Str_Text(&path), Str_Text(&localPattern)))
             {
                 // If the callback returns false, stop immediately.
-                if(0 != (result = callback(&path, FDT_FILE, paramaters)))
+                if(0 != (result = callback(&path, PT_LEAF, paramaters)))
                 {
                     break;
                 }
@@ -1071,14 +1071,14 @@ static int findZipFileWorker(const ddstring_t* zipFileName, void* paramaters)
     findzipfileworker_paramaters_t* info = (findzipfileworker_paramaters_t*)paramaters;
     if(F_MatchName(Str_Text(zipFileName), Str_Text(info->pattern)))
     {
-        return info->callback(zipFileName, FDT_FILE, info->paramaters);
+        return info->callback(zipFileName, PT_LEAF, info->paramaters);
     }
     return 0; // Continue search.
     }
 }
 
 int F_AllResourcePaths2(const ddstring_t* searchPath,
-    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters),
     void* paramaters)
 {
     directory2_t searchPathDirectory;
@@ -1115,7 +1115,7 @@ int F_AllResourcePaths2(const ddstring_t* searchPath,
         lumpdirectory_record_t* rec = &lumpDirectory[i];
         if(!F_MatchName(Str_Text(&rec->path), Str_Text(&searchPathName)))
             continue;
-        if((result = callback(&rec->path, FDT_FILE, paramaters)) != 0)
+        if((result = callback(&rec->path, PT_LEAF, paramaters)) != 0)
             goto searchEnded;
     }}
 
@@ -1135,7 +1135,7 @@ searchEnded:
 }
 
 int F_AllResourcePaths(const ddstring_t* searchPath,
-    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters))
+    int (*callback) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters))
 {
     return F_AllResourcePaths2(searchPath, callback, 0);
 }

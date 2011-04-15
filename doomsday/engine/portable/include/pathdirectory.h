@@ -39,6 +39,8 @@ typedef enum {
 
 #define VALID_PATHDIRECTORY_PATHTYPE(t) ((t) >= PATHDIRECTORY_PATHTYPES_FIRST || (t) < PATHDIRECTORY_PATHTYPES_COUNT)
 
+#define PATHDIRECTORY_DEFAULTDELIMITER_CHAR     DIR_SEP_CHAR
+
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship
  * tree of string+value data pairs.
@@ -52,11 +54,14 @@ typedef enum {
 #define PATHDIRECTORY_HASHSIZE 512
 
 typedef struct pathdirectory_s {
+    /// Path fragment delimiter.
+    char _delimiter;
     /// Path hash table.
     struct pathdirectory_node_s* _hashTable[PATHDIRECTORY_HASHSIZE];
 } pathdirectory_t;
 
 pathdirectory_t* PathDirectory_ConstructDefault(void);
+pathdirectory_t* PathDirectory_Construct(char delimiter);
 
 void PathDirectory_Destruct(pathdirectory_t* pd);
 
@@ -68,14 +73,15 @@ void PathDirectory_Clear(pathdirectory_t* pd);
 /**
  * Check if @a searchPath exists in the directory.
  *
+ * @param type              If a valid path type only consider nodes of this type.
  * @param searchPath        Relative or absolute path.
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
 const struct pathdirectory_node_s* PathDirectory_FindStr(pathdirectory_t* pd,
-    const ddstring_t* searchPath);
+    pathdirectory_pathtype_t pathType, const ddstring_t* searchPath);
 const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
-    const char* searchPath);
+    pathdirectory_pathtype_t pathType, const char* searchPath);
 
 /**
  * Add a new path. Duplicates are automatically pruned however, note that their
@@ -83,10 +89,9 @@ const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
  *
  * @param path              New path to add to the directory.
  * @param value             Associated data value.
- * @param delimiter         Separates fragments of @a path (become tree nodes).
  */
-void PathDirectory_Insert(pathdirectory_t* pd, const ddstring_t* path, void* value,
-    char delimiter);
+struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
+    const ddstring_t* path, void* value);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -101,10 +106,18 @@ void PathDirectory_Insert(pathdirectory_t* pd, const ddstring_t* path, void* val
  */
 int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_pathtype_t type,
     struct pathdirectory_node_s* parent,
-    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
 int PathDirectory_Iterate(pathdirectory_t* pd, pathdirectory_pathtype_t type,
     struct pathdirectory_node_s* parent,
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters));
+
+int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
+    const struct pathdirectory_node_s* parent,
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
+    void* paramaters);
+int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
+    const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
 /**
@@ -138,5 +151,21 @@ boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node
  * Composes a relative path for the directory node.
  */
 void PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node, ddstring_t* path);
+
+/// @return  Type of this directory node.
+pathdirectory_pathtype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);
+
+/**
+ * Attach user data to this. PathDirectoryNode is given ownership of @a data
+ */
+void PathDirectoryNode_AttachUserData(struct pathdirectory_node_s* node, void* data);
+
+/**
+ * Detach user data from this. Ownership of the data is relinquished to the caller.
+ */
+void* PathDirectoryNode_DetachUserData(struct pathdirectory_node_s* node);
+
+/// @return  Data associated with this.
+void* PathDirectoryNode_UserData(const struct pathdirectory_node_s* node);
 
 #endif /* LIBDENG_PATHDIRECTORY_H */

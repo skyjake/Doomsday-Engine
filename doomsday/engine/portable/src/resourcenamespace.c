@@ -66,7 +66,7 @@ static void printPathHash(resourcenamespace_t* rn)
         while(node)
         {
             Str_Clear(&path);
-            FileDirectoryNode_ComposePath(node->data, &path);
+            PathDirectoryNode_ComposePath(node->data, &path);
             { ddstring_t* hashName = rn->_composeHashName(&path);
             Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, (unsigned long)i,
                        Str_Text(hashName), Str_Text(&path));
@@ -128,30 +128,30 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
 
     // Go through the candidates.
     node = rn->_pathHash[key].first;
-    while(node && !FileDirectoryNode_MatchDirectory(node->data, searchPath, DIR_SEP_CHAR))
+    while(node && !PathDirectoryNode_MatchDirectory(node->data, searchPath, DIR_SEP_CHAR))
         node = node->next;
 
     // Does the caller want to know the matched path?
     if(node && foundPath)
-        FileDirectoryNode_ComposePath(node->data, foundPath);
+        PathDirectoryNode_ComposePath(node->data, foundPath);
 
     return (node == 0? false : true);
     }
 }
 
-static int addFilePathWorker(const struct filedirectory_node_s* fdNode, void* paramaters)
+static int addFilePathWorker(const struct pathdirectory_node_s* fdNode, void* paramaters)
 {
     assert(fdNode && paramaters);
     {
     resourcenamespace_t* rn = (resourcenamespace_t*) paramaters;
     ddstring_t* hashName, filePath;
 
-    if(FileDirectoryNode_Type(fdNode) != FDT_FILE)
+    if(PathDirectoryNode_Type(fdNode) != PT_LEAF)
         return 0; // Continue adding.
 
     // Extract the file name and hash it.
     Str_Init(&filePath);
-    FileDirectoryNode_ComposePath(fdNode, &filePath);
+    PathDirectoryNode_ComposePath(fdNode, &filePath);
     hashName = rn->_composeHashName(&filePath);
 
     // Is this a new resource?

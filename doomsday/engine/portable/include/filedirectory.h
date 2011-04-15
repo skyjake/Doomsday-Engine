@@ -28,17 +28,7 @@
 #include "dd_string.h"
 #include "dd_uri.h"
 
-struct filedirectory_node_s;
-
-typedef enum {
-    FDT_ANY = -1,
-    FILEDIRECTORY_PATHTYPES_FIRST = 0,
-    FDT_DIRECTORY = FILEDIRECTORY_PATHTYPES_FIRST,
-    FDT_FILE,
-    FILEDIRECTORY_PATHTYPES_COUNT
-} filedirectory_pathtype_t;
-
-#define VALID_FILEDIRECTORY_PATHTYPE(t)     ((t) >= FILEDIRECTORY_PATHTYPES_FIRST || (t) < FILEDIRECTORY_PATHTYPES_COUNT)
+#include "pathdirectory.h"
 
 /**
  * FileDirectory. Core system component representing a hierarchical
@@ -48,16 +38,14 @@ typedef enum {
  * population of the directory itself from the virtual file system.
  * Also, paths are resolved prior to pushing them into the directory.
  *
- * @todo Perhaps this should be derived from PathDirectory?
+ * @todo Perhaps this should be derived from PathDirectory instead of
+ * encapsulating an instance of it?
  *
  * @ingroup fs
  */
-// Number of entries in the hash table.
-#define FILEDIRECTORY_HASHSIZE 512
-
 typedef struct filedirectory_s {
     /// Path hash table.
-    struct filedirectory_node_s* _hashTable[FILEDIRECTORY_HASHSIZE];
+    pathdirectory_t* _pathDirectory;
 } filedirectory_t;
 
 filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char delimiter);
@@ -86,9 +74,9 @@ void FileDirectory_Clear(filedirectory_t* pd);
  * @param count             Number of visited paths is written back here.
  *
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
- * Str_Free each string in the list and Z_Free the list itself.
+ *      Str_Free each string in the list and Z_Free the list itself.
  */
-ddstring_t* FileDirectory_AllPaths(filedirectory_t* pd, filedirectory_pathtype_t type,
+ddstring_t* FileDirectory_AllPaths(filedirectory_t* pd, pathdirectory_pathtype_t type,
     size_t* count);
 
 /**
@@ -100,9 +88,9 @@ ddstring_t* FileDirectory_AllPaths(filedirectory_t* pd, filedirectory_pathtype_t
  * @param paramaters        Passed to the callback.
  */
 void FileDirectory_AddPaths3(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters), void* paramaters);
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
 void FileDirectory_AddPaths2(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters));
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 void FileDirectory_AddPaths(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount);
 
 /**
@@ -113,13 +101,13 @@ void FileDirectory_AddPaths(filedirectory_t* pd, const dduri_t* const* paths, ui
  * @param paramaters        Passed to the callback.
  */
 void FileDirectory_AddPathList3(filedirectory_t* pd, const char* pathList,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters), void* paramaters);
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
 void FileDirectory_AddPathList2(filedirectory_t* pd, const char* pathList,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters));
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 void FileDirectory_AddPathList(filedirectory_t* pd, const char* pathList);
 
 /**
- * Find a path in the directory.
+ * Find a file in the directory.
  *
  * @param searchPath        Relative or absolute path.
  * @param foundPath         If not @c NULL, the full path of the node is written
@@ -127,7 +115,7 @@ void FileDirectory_AddPathList(filedirectory_t* pd, const char* pathList);
  *
  * @return  @c true, iff successful.
  */
-boolean FileDirectory_FindPath(filedirectory_t* fd, const char* searchPath, ddstring_t* foundPath);
+boolean FileDirectory_FindFile(filedirectory_t* fd, const char* searchPath, ddstring_t* foundPath);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -140,33 +128,16 @@ boolean FileDirectory_FindPath(filedirectory_t* fd, const char* searchPath, ddst
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate2(filedirectory_t* pd, filedirectory_pathtype_t type,
-    struct filedirectory_node_s* parent,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters),
+int FileDirectory_Iterate2(filedirectory_t* pd, pathdirectory_pathtype_t type,
+    const struct pathdirectory_node_s* parent,
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
-int FileDirectory_Iterate(filedirectory_t* pd, filedirectory_pathtype_t type,
-    struct filedirectory_node_s* parent,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters));
-
-/**
- * @param searchPath        A relative path.
- * @param delimiter         Delimiter used to separate fragments of @a searchPath.
- *
- * @return  @c true, if the path specified in the name begins from a directory in the search path.
- */
-boolean FileDirectoryNode_MatchDirectory(const struct filedirectory_node_s* node,
-    const ddstring_t* searchPath, char delimiter);
+int FileDirectory_Iterate(filedirectory_t* pd, pathdirectory_pathtype_t type,
+    const struct pathdirectory_node_s* parent,
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
 #if _DEBUG
 void FileDirectory_Print(filedirectory_t* pd);
 #endif
-
-/**
- * Composes a relative path for the directory node.
- */
-void FileDirectoryNode_ComposePath(const struct filedirectory_node_s* node, ddstring_t* path);
-
-/// @return  Type of this directory node.
-filedirectory_pathtype_t FileDirectoryNode_Type(const struct filedirectory_node_s* node);
 
 #endif /* LIBDENG_FILEDIRECTORY_H */
