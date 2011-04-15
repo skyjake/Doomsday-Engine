@@ -1989,7 +1989,7 @@ END_PROF( PROF_RL_RENDER_SHINY );
      * Shadow Pass: Objects and FakeRadio
      */
     {
-    int                 oldr = renderTextures;
+    int oldr = renderTextures;
 
     renderTextures = true;
 BEGIN_PROF( PROF_RL_RENDER_SHADOW );

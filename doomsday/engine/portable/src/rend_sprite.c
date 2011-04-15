@@ -855,8 +855,8 @@ boolean drawVLightVector(const vlight_t* light, void* context)
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     int                 i;
-    dgl_color_t          quadColors[4];
-    dgl_vertex_t         quadNormals[4];
+    dgl_color_t         quadColors[4];
+    dgl_vertex_t        quadNormals[4];
     boolean             restoreMatrix = false;
     boolean             restoreZ = false;
     float               spriteCenter[3];

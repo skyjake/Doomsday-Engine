@@ -714,8 +714,9 @@ void M_ProjectViewRelativeLine2D(const float center[2],
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     float sinrv, cosrv;
 
-    if(alignToViewPlane)
-    {   // Should be fully aligned to view plane.
+    if(alignToViewPlane)       
+    {
+        // Should be fully aligned to view plane.
         sinrv = -viewData->viewCos;
         cosrv = viewData->viewSin;
     }

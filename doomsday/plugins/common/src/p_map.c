@@ -1256,9 +1256,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             goto pushline;
         }
 #else
-# if __JHERETIC__
+#  if __JHERETIC__
         CheckMissileImpact(thing);
-# endif
+#  endif
         // Would we hit another thing or a solid wall?
         if(!thing->onMobj || thing->wallHit)
             return false;
@@ -1294,7 +1294,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         floatOk = true;
         if(!(thing->flags & MF_TELEPORT) && !(thing->flags2 & MF2_FLY) &&
            tmCeilingZ - thing->pos[VZ] < thing->height)
+        {
             return ret;
+        }
 
         // Too big a step up.
         if(!(thing->flags & MF_TELEPORT) &&
@@ -1360,6 +1362,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             return false;
         }
 #else
+
         /**
          * Allow certain objects to drop off.
          * Prevent monsters from getting stuck hanging off ledges.
@@ -1376,7 +1379,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             }
             else
             {
-                float                   floorZ = tmFloorZ;
+                float floorZ = tmFloorZ;
 
                 if(thing->onMobj)
                 {
@@ -1388,12 +1391,12 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 
                 if(!dropoff)
                 {
-                   if(thing->floorZ - floorZ > 24 ||
-                      thing->dropOffZ - tmDropoffZ > 24)
-                      return false;
+                    if(thing->floorZ - floorZ > 24 || thing->dropOffZ - tmDropoffZ > 24)
+                        return false;
                 }
                 else
-                {   // Set fellDown if drop > 24.
+                {
+                    // Set fellDown if drop > 24.
                     fellDown = !(thing->flags & MF_NOGRAVITY) &&
                         thing->pos[VZ] - floorZ > 24;
                 }

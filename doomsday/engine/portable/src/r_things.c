@@ -1171,7 +1171,8 @@ void R_ProjectSprite(mobj_t* mo)
         return;
     }
     if(sect->SP_floorvisheight >= sect->SP_ceilvisheight)
-    {   // Never make a vissprite when the mobj's origin sector is of zero height.
+    {
+        // Never make a vissprite when the mobj's origin sector is of zero height.
         return;
     }
 
