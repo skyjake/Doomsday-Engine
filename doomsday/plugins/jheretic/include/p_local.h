@@ -105,7 +105,6 @@ void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
 void            P_UpdateBeak(player_t* player, pspdef_t* psp);
 void            P_FireWeapon(player_t* player);
 
-void            P_ClientSideThink(void);
 void            P_Thrust(player_t* player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t* player);
 

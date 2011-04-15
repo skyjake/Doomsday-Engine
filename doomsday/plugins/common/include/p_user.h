@@ -57,8 +57,6 @@ boolean         P_IsPlayerOnGround(player_t *player);
 void            P_CheckPlayerJump(player_t *player);
 void            P_MovePlayer(player_t *player);
 void            P_PlayerReborn(player_t *player);
-
-void            P_ClientSideThink(void);
 void            P_DeathThink(player_t *player);
 
 void            P_PlayerThink(player_t *player, timespan_t ticLength);
