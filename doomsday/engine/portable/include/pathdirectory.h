@@ -46,16 +46,18 @@ typedef enum {
  * Somewhat similar to a Prefix Tree (Trie) representationally although
  * that is where the similarity ends.
  *
- * @todo Worst-case for insert and find are both O(n)
- *
  * @ingroup data
  */
+// Number of entries in the hash table.
+#define PATHDIRECTORY_HASHSIZE 512
+
 typedef struct pathdirectory_s {
-    /// First and last nodes.
-    struct pathdirectory_node_s* _head, *_tail;
+    /// Path hash table.
+    struct pathdirectory_node_s* _hashTable[PATHDIRECTORY_HASHSIZE];
 } pathdirectory_t;
 
 pathdirectory_t* PathDirectory_ConstructDefault(void);
+
 void PathDirectory_Destruct(pathdirectory_t* pd);
 
 /**
@@ -85,11 +87,6 @@ const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
  */
 void PathDirectory_Insert(pathdirectory_t* pd, const ddstring_t* path, void* value,
     char delimiter);
-
-/**
- * @return  @c true iff the directory contains no items.
- */
-boolean PathDirectory_IsEmpty(pathdirectory_t* pd);
 
 /**
  * Iterate over nodes in the directory making a callback for each.

@@ -42,7 +42,7 @@ typedef struct filedirectory_node_s {
 
 /**
  * This is a hash function. It uses the resource name to generate a
- * somewhat-random number between 0 and RESOURCENAMESPACE_HASHSIZE.
+ * somewhat-random number between 0 and FILEDIRECTORY_HASHSIZE.
  *
  * @return  The generated hash key.
  */
@@ -76,8 +76,8 @@ static size_t countNodes(filedirectory_t* fd, filedirectory_pathtype_t type)
 {
     assert(fd);
     {
-    filedirectory_node_t* node;
     boolean compareType = VALID_FILEDIRECTORY_PATHTYPE(type);
+    filedirectory_node_t* node;
     size_t n = 0;
     ushort i;
     for(i = 0; i < FILEDIRECTORY_HASHSIZE; ++i)
@@ -98,7 +98,7 @@ static size_t countNodes(filedirectory_t* fd, filedirectory_pathtype_t type)
 static filedirectory_node_t* direcNode(filedirectory_t* fd, filedirectory_node_t* parent,
     filedirectory_pathtype_t type, const ddstring_t* name, void* leafData)
 {
-    assert(fd && name && !Str_IsEmpty(name));
+    assert(NULL != fd && NULL != name && !Str_IsEmpty(name));
     {
     filedirectory_node_t* node;
     ushort hash = hashPath(Str_Text(name), Str_Length(name));
@@ -121,7 +121,7 @@ static filedirectory_node_t* direcNode(filedirectory_t* fd, filedirectory_node_t
     node = (filedirectory_node_t*) malloc(sizeof(*node));
     if(NULL == node)
         Con_Error("FileDirectory::direcNode: Failed on allocation of %lu bytes for "
-            "new node.", (unsigned long) sizeof(*node));
+            "new FileDirectory::Node.", (unsigned long) sizeof(*node));
 
     node->next = fd->_hashTable[hash];
     fd->_hashTable[hash] = node;
@@ -143,7 +143,7 @@ static filedirectory_node_t* direcNode(filedirectory_t* fd, filedirectory_node_t
 static filedirectory_node_t* buildDirecNodes(filedirectory_t* fd,
     const ddstring_t* path, void* leafData)
 {
-    assert(fd && path);
+    assert(NULL != fd && NULL != path);
     {
     filedirectory_node_t* node = NULL, *parent = NULL;
     ddstring_t part;
@@ -225,7 +225,7 @@ static int addPathWorker(const ddstring_t* filePath, filedirectory_pathtype_t ty
 }
 
 typedef struct {
-    ddstring_t* searchPath;
+    const ddstring_t* searchPath;
     filedirectory_node_t* foundNode;
 } findpathworker_paramaters_t;
 
@@ -260,7 +260,7 @@ static int iteratePaths(filedirectory_t* fd, filedirectory_pathtype_t type,
             continue;
         if(compareType && node->type != type)
             continue;
-        if((result = callback(node, paramaters)) != 0)
+        if(0 != (result = callback(node, paramaters)))
             break;
     }
     return result;
@@ -284,7 +284,7 @@ static int const_iteratePaths(filedirectory_t* fd, filedirectory_pathtype_t type
             continue;
         if(compareType && node->type != type)
             continue;
-        if((result = callback(node, paramaters)) != 0)
+        if(0 != (result = callback(node, paramaters)))
             break;
     }
     return result;
@@ -597,7 +597,7 @@ boolean FileDirectory_FindPath(filedirectory_t* fd, const char* _searchPath,
 ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filedirectory_pathtype_t type,
     size_t* count)
 {
-    assert(NULL != fd && count != 0);
+    assert(NULL != fd && 0 != count);
     {
     ddstring_t* paths = NULL;
     *count = countNodes(fd, type);
@@ -608,10 +608,10 @@ ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filedirectory_pathtype_t
         ddstring_t* path;
         ushort i;
 
-        paths = (ddstring_t*) Z_Malloc(sizeof(*paths) * (*count), PU_APPSTATIC, 0);
+        paths = (ddstring_t*) malloc(sizeof(*paths) * (*count));
         if(NULL == paths)
-            Con_Error("FileDirectory::AllPaths: Failed on allocation of %lu bytes for list.",
-                      (unsigned long) sizeof(*paths));
+            Con_Error("FileDirectory::AllPaths: Failed on allocation of %lu bytes for "
+                "new path list.", (unsigned long) sizeof(*paths));
 
         path = paths;
         for(i = 0; i < FILEDIRECTORY_HASHSIZE; ++i)
@@ -650,7 +650,7 @@ void FileDirectory_Print(filedirectory_t* fd)
             Con_Printf("  %s\n", Str_Text(F_PrettyPath(fileList + n)));
             Str_Free(fileList + n);
         } while(++n < numFiles);
-        Z_Free(fileList);
+        free(fileList);
     }
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "file":"files"));
     }
