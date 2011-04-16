@@ -95,12 +95,12 @@ static size_t countNodes(pathdirectory_t* pd, pathdirectory_pathtype_t type)
  * which has the specified parent node.
  */
 static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t* parent,
-    pathdirectory_pathtype_t type, const ddstring_t* name, void* leafData)
+    pathdirectory_pathtype_t type, const ddstring_t* name, char delimiter, void* leafData)
 {
     assert(NULL != pd && NULL != name && !Str_IsEmpty(name));
     {
     pathdirectory_node_t* node;
-    ushort hash = hashPath(Str_Text(name), Str_Length(name), pd->_delimiter);
+    ushort hash = hashPath(Str_Text(name), Str_Length(name), delimiter);
 
     // Have we already encountered this?
     for(node = pd->_hashTable[hash]; NULL != node; node = node->next)
@@ -139,7 +139,7 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
  * @return  The node that identifies the given path.
  */
 static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* path,
-    void* leafData)
+    char delimiter, void* leafData)
 {
     assert(NULL != pd && NULL != path);
     {
@@ -150,15 +150,15 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* pa
     // Continue splitting as long as there are parts.
     Str_Init(&part);
     p = path;
-    while(NULL != (p = Str_CopyDelim2(&part, p, pd->_delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
+    while(NULL != (p = Str_CopyDelim2(&part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
     {
-        node = direcNode(pd, parent, PT_DIRECTORY, &part, NULL);
+        node = direcNode(pd, parent, PT_DIRECTORY, &part, delimiter, NULL);
         parent = node;
     }
 
     if(Str_Length(&part) != 0)
     {
-        node = direcNode(pd, parent, PT_LEAF, &part, NULL);
+        node = direcNode(pd, parent, PT_LEAF, &part, delimiter, NULL);
     }
 
     Str_Free(&part);
@@ -167,11 +167,11 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* pa
 }
 
 static pathdirectory_node_t* addPath(pathdirectory_t* fd, const char* path,
-    void* leafData)
+    char delimiter, void* leafData)
 {
     assert(NULL != fd && NULL != path);
     {
-    pathdirectory_node_t* node = buildDirecNodes(fd, path, NULL);
+    pathdirectory_node_t* node = buildDirecNodes(fd, path, delimiter, NULL);
     assert(NULL != node);
     if(NULL != leafData)
         PathDirectoryNode_AttachUserData(node, leafData);
@@ -196,6 +196,7 @@ static void clearDirectory(pathdirectory_t* pd)
 typedef struct {
     const char* searchPath;
     size_t searchPathLen;
+    char delimiter;
     pathdirectory_node_t* foundNode;
 } findpathworker_paramaters_t;
 
@@ -204,7 +205,7 @@ static int findPathWorker(pathdirectory_t* pd, pathdirectory_node_t* node, void*
     assert(NULL != pd && NULL != node && NULL != paramaters);
     {
     findpathworker_paramaters_t* p = (findpathworker_paramaters_t*)paramaters;
-    if(PathDirectoryNode_MatchDirectory(node, p->searchPath, p->searchPathLen, pd->_delimiter))
+    if(PathDirectoryNode_MatchDirectory(node, p->searchPath, p->searchPathLen, p->delimiter))
     {
         p->foundNode = node;
         return 1; // A match; stop!
@@ -261,20 +262,14 @@ static int iteratePaths_const(const pathdirectory_t* pd, pathdirectory_pathtype_
     }
 }
 
-pathdirectory_t* PathDirectory_Construct(char delimiter)
+pathdirectory_t* PathDirectory_Construct(void)
 {
     pathdirectory_t* pd = (pathdirectory_t*) malloc(sizeof(*pd));
     if(NULL == pd)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for"
             "new PathDirectory.", (unsigned long) sizeof(*pd));
-    pd->_delimiter = delimiter;
     memset(pd->_hashTable, 0, sizeof(pd->_hashTable));
     return pd;
-}
-
-pathdirectory_t* PathDirectory_ConstructDefault(void)
-{
-    return PathDirectory_Construct(PATHDIRECTORY_DEFAULTDELIMITER_CHAR);
 }
 
 void PathDirectory_Destruct(pathdirectory_t* pd)
@@ -291,12 +286,12 @@ void PathDirectory_Clear(pathdirectory_t* pd)
 }
 
 struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
-    const char* path, void* value)
+    const char* path, char delimiter, void* value)
 {
     assert(NULL != pd);
     if(NULL == path || !path[0])
         return NULL;
-    return addPath(pd, path, value);
+    return addPath(pd, path, delimiter, value);
 }
 
 int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_pathtype_t type,
@@ -330,7 +325,7 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtyp
 }
 
 const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
-    pathdirectory_pathtype_t pathType, const char* searchPath)
+    pathdirectory_pathtype_t pathType, const char* searchPath, char delimiter)
 {
     assert(NULL != pd);
     if(NULL != searchPath && searchPath[0])
@@ -341,10 +336,11 @@ const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
 
         p.searchPath = searchPath;
         p.searchPathLen = strlen(searchPath);
+        p.delimiter = delimiter;
         p.foundNode = NULL;
 
         // Perform the search.
-        hash = hashPath(p.searchPath, p.searchPathLen, pd->_delimiter);
+        hash = hashPath(p.searchPath, p.searchPathLen, p.delimiter);
         { pathdirectory_node_t* node;
         for(node = pd->_hashTable[hash]; NULL != node; node = node->next)
         {
@@ -359,7 +355,7 @@ const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
 }
 
 ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_pathtype_t type,
-    size_t* count)
+    char delimiter, size_t* count)
 {
     assert(NULL != pd && 0 != count);
     {
@@ -384,7 +380,7 @@ ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_pathtype_t
             if(compareType && node->type != type) continue;
 
             Str_Init(path);
-            PathDirectoryNode_ComposePath(node, path, pd->_delimiter);
+            PathDirectoryNode_ComposePath(node, path, delimiter);
             path++;
         }
     }
@@ -398,7 +394,7 @@ static int C_DECL comparePaths(const void* a, const void* b)
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
 }
 
-void PathDirectory_Print(pathdirectory_t* pd)
+void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
 {
     assert(NULL != pd);
     {
@@ -406,7 +402,7 @@ void PathDirectory_Print(pathdirectory_t* pd)
     ddstring_t* pathList;
 
     Con_Printf("PathDirectory:\n");
-    if(NULL != (pathList = PathDirectory_AllPaths(pd, PT_LEAF, &numLeafs)))
+    if(NULL != (pathList = PathDirectory_AllPaths(pd, PT_LEAF, delimiter, &numLeafs)))
     {
         qsort(pathList, numLeafs, sizeof(*pathList), comparePaths);
         do

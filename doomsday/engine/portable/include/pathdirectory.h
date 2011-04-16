@@ -39,8 +39,6 @@ typedef enum {
 
 #define VALID_PATHDIRECTORY_PATHTYPE(t) ((t) >= PATHDIRECTORY_PATHTYPES_FIRST || (t) < PATHDIRECTORY_PATHTYPES_COUNT)
 
-#define PATHDIRECTORY_DEFAULTDELIMITER_CHAR     DIR_SEP_CHAR
-
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship
  * tree of string+value data pairs.
@@ -54,14 +52,11 @@ typedef enum {
 #define PATHDIRECTORY_HASHSIZE 512
 
 typedef struct pathdirectory_s {
-    /// Path fragment delimiter.
-    char _delimiter;
     /// Path hash table.
     struct pathdirectory_node_s* _hashTable[PATHDIRECTORY_HASHSIZE];
 } pathdirectory_t;
 
-pathdirectory_t* PathDirectory_ConstructDefault(void);
-pathdirectory_t* PathDirectory_Construct(char delimiter);
+pathdirectory_t* PathDirectory_Construct(void);
 
 void PathDirectory_Destruct(pathdirectory_t* pd);
 
@@ -75,21 +70,23 @@ void PathDirectory_Clear(pathdirectory_t* pd);
  *
  * @param type              If a valid path type only consider nodes of this type.
  * @param searchPath        Relative or absolute path.
+ * @param delimiter         Fragments of the path are delimited by this character.
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
 const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
-    pathdirectory_pathtype_t pathType, const char* searchPath);
+    pathdirectory_pathtype_t type, const char* searchPath, char delimiter);
 
 /**
  * Add a new path. Duplicates are automatically pruned however, note that their
  * associated value is replaced!
  *
  * @param path              New path to add to the directory.
+ * @param delimiter         Fragments of the path are delimited by this character.
  * @param value             Associated data value.
  */
 struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
-    const char* path, void* value);
+    const char* path, char delimiter, void* value);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -124,17 +121,14 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtyp
  * @todo Does this really belong here (perhaps a class static non-member)?
  *
  * @param type              If a valid type; only paths of this type will be visited.
+ * @param delimiter         Fragments of the path will be delimited by this character.
  * @param count             Number of visited paths is written back here.
  *
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and Z_Free the list itself.
  */
 ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_pathtype_t type,
-    size_t* count);
-
-#if _DEBUG
-void PathDirectory_Print(pathdirectory_t* pd);
-#endif
+    char delimiter, size_t* count);
 
 /**
  * @param searchPath        A relative path.
@@ -170,5 +164,9 @@ void* PathDirectoryNode_DetachUserData(struct pathdirectory_node_s* node);
 
 /// @return  Data associated with this.
 void* PathDirectoryNode_UserData(const struct pathdirectory_node_s* node);
+
+#if _DEBUG
+void PathDirectory_Print(pathdirectory_t* pd, char delimiter);
+#endif
 
 #endif /* LIBDENG_PATHDIRECTORY_H */

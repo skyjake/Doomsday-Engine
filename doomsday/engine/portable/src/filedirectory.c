@@ -59,7 +59,7 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectory_pathtype_t ty
         Str_Init(&relPath);
         F_RemoveBasePath(&relPath, filePath);
 
-        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), NULL);
+        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), FILEDIRECTORY_DELIMITER, NULL);
         assert(PT_LEAF == PathDirectoryNode_Type(node));
 
         // Has this already been processed?
@@ -101,7 +101,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
 
         if(Str_IsEmpty(searchPath)) continue;
 
-        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), NULL);
+        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), FILEDIRECTORY_DELIMITER, NULL);
 
         // Has this already been processed?
         info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
@@ -182,8 +182,8 @@ static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
 
         // Let's try to make it a relative path.
         F_RemoveBasePath(searchPath, searchPath);
-        if(Str_RAt(searchPath, 0) != DIR_SEP_CHAR)
-            Str_AppendChar(searchPath, DIR_SEP_CHAR);
+        if(Str_RAt(searchPath, 0) != FILEDIRECTORY_DELIMITER)
+            Str_AppendChar(searchPath, FILEDIRECTORY_DELIMITER);
 
         addPaths(fd, &searchPath, 1, callback, paramaters);
         Str_Delete(searchPath);
@@ -212,14 +212,14 @@ static void printPaths(const dduri_t* const* paths, size_t pathsCount)
     }
 }
 
-filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char delimiter)
+filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList)
 {
     filedirectory_t* fd = (filedirectory_t*) malloc(sizeof(*fd));
     if(NULL == fd)
         Con_Error("FileDirectory::Construct: Failed on allocation of %lu bytes for "
             "new FileDirectory.", (unsigned long) sizeof(*fd));
 
-    fd->_pathDirectory = PathDirectory_Construct(delimiter);
+    fd->_pathDirectory = PathDirectory_Construct();
     if(NULL != pathList)
     {
         size_t count;
@@ -230,12 +230,7 @@ filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char de
     return fd;
 }
 
-filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList)
-{
-    return FileDirectory_ConstructStr2(pathList, DIR_SEP_CHAR);
-}
-
-filedirectory_t* FileDirectory_Construct2(const char* pathList, char delimiter)
+filedirectory_t* FileDirectory_Construct(const char* pathList)
 {
     filedirectory_t* fd;
     ddstring_t _pathList, *paths = NULL;
@@ -246,25 +241,15 @@ filedirectory_t* FileDirectory_Construct2(const char* pathList, char delimiter)
         Str_Set(&_pathList, pathList);
         paths = &_pathList;
     }
-    fd = FileDirectory_ConstructStr2(paths, delimiter);
+    fd = FileDirectory_ConstructStr(paths);
     if(len != 0)
         Str_Free(paths);
     return fd;
 }
 
-filedirectory_t* FileDirectory_Construct(const char* pathList)
-{
-    return FileDirectory_Construct2(pathList, DIR_SEP_CHAR);
-}
-
-filedirectory_t* FileDirectory_ConstructEmpty2(char delimiter)
-{
-    return FileDirectory_ConstructStr2(0, delimiter);
-}
-
 filedirectory_t* FileDirectory_ConstructEmpty(void)
 {
-    return FileDirectory_ConstructEmpty2(DIR_SEP_CHAR);
+    return FileDirectory_ConstructStr(NULL);
 }
 
 filedirectory_t* FileDirectory_ConstructDefault(void)
@@ -397,13 +382,13 @@ boolean FileDirectory_FindFile(filedirectory_t* fd, const char* _searchPath,
     F_FixSlashes(&searchPath, &searchPath);
 
     // Perform the search.
-    foundNode = PathDirectory_Find(fd->_pathDirectory, PT_LEAF, Str_Text(&searchPath));
+    foundNode = PathDirectory_Find(fd->_pathDirectory, PT_LEAF, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?
     if(NULL != foundName && NULL != foundNode)
     {
-        PathDirectoryNode_ComposePath(foundNode, foundName, DIR_SEP_CHAR);
+        PathDirectoryNode_ComposePath(foundNode, foundName, FILEDIRECTORY_DELIMITER);
     }
 
     return (NULL != foundNode);
@@ -424,7 +409,7 @@ void FileDirectory_Print(filedirectory_t* fd)
     ddstring_t* fileList;
 
     Con_Printf("FileDirectory:\n");
-    if(NULL != (fileList = PathDirectory_AllPaths(fd->_pathDirectory, PT_LEAF, &numFiles)))
+    if(NULL != (fileList = PathDirectory_AllPaths(fd->_pathDirectory, PT_LEAF, FILEDIRECTORY_DELIMITER, &numFiles)))
     {
         qsort(fileList, numFiles, sizeof(*fileList), comparePaths);
         do

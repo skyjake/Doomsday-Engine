@@ -30,6 +30,9 @@
 
 #include "pathdirectory.h"
 
+// Default path delimiter is the platform-specific directory separator.
+#define FILEDIRECTORY_DELIMITER         DIR_SEP_CHAR
+
 /**
  * FileDirectory. Core system component representing a hierarchical
  * file path structure.
@@ -48,17 +51,9 @@ typedef struct filedirectory_s {
     pathdirectory_t* _pathDirectory;
 } filedirectory_t;
 
-filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char delimiter);
-filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList);
-
-filedirectory_t* FileDirectory_Construct2(const char* pathList, char delimiter);
-filedirectory_t* FileDirectory_Construct(const char* pathList);
-
-filedirectory_t* FileDirectory_ConstructEmpty2(char delimiter);
-filedirectory_t* FileDirectory_ConstructEmpty(void);
-
-/// \note Same as FileDirectory_ConstructEmpty
 filedirectory_t* FileDirectory_ConstructDefault(void);
+filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList);
+filedirectory_t* FileDirectory_Construct(const char* pathList);
 
 void FileDirectory_Destruct(filedirectory_t* fd);
 
