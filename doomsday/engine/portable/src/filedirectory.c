@@ -59,7 +59,7 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectory_pathtype_t ty
         Str_Init(&relPath);
         F_RemoveBasePath(&relPath, filePath);
 
-        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, &relPath, NULL);
+        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), NULL);
         assert(PT_LEAF == PathDirectoryNode_Type(node));
 
         // Has this already been processed?
@@ -101,7 +101,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
 
         if(Str_IsEmpty(searchPath)) continue;
 
-        node = PathDirectory_Insert(fd->_pathDirectory, searchPath, NULL);
+        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), NULL);
 
         // Has this already been processed?
         info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
@@ -397,7 +397,7 @@ boolean FileDirectory_FindFile(filedirectory_t* fd, const char* _searchPath,
     F_FixSlashes(&searchPath, &searchPath);
 
     // Perform the search.
-    foundNode = PathDirectory_FindStr(fd->_pathDirectory, PT_LEAF, &searchPath);
+    foundNode = PathDirectory_Find(fd->_pathDirectory, PT_LEAF, Str_Text(&searchPath));
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?

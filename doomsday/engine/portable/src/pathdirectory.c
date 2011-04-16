@@ -144,7 +144,7 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
  *
  * @return  The node that identifies the given path.
  */
-static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const ddstring_t* path,
+static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* path,
     void* leafData)
 {
     assert(NULL != pd && NULL != path);
@@ -155,7 +155,7 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const ddstring
 
     // Continue splitting as long as there are parts.
     Str_Init(&part);
-    p = Str_Text(path);
+    p = path;
     while(NULL != (p = Str_CopyDelim2(&part, p, pd->_delimiter, 0))) // Get the next part.
     {
         node = direcNode(pd, parent, PT_DIRECTORY, &part, NULL);
@@ -173,7 +173,7 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const ddstring
     }
 }
 
-static pathdirectory_node_t* addPath(pathdirectory_t* fd, const ddstring_t* path,
+static pathdirectory_node_t* addPath(pathdirectory_t* fd, const char* path,
     void* leafData)
 {
     assert(NULL != fd && NULL != path);
@@ -201,7 +201,7 @@ static void clearDirectory(pathdirectory_t* pd)
 }
 
 typedef struct {
-    const ddstring_t* searchPath;
+    const char* searchPath;
     pathdirectory_node_t* foundNode;
 } findpathworker_paramaters_t;
 
@@ -297,10 +297,10 @@ void PathDirectory_Clear(pathdirectory_t* pd)
 }
 
 struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
-    const ddstring_t* path, void* value)
+    const char* path, void* value)
 {
     assert(NULL != pd);
-    if(NULL == path || Str_IsEmpty(path))
+    if(NULL == path || !path[0])
         return NULL;
     return addPath(pd, path, value);
 }
@@ -335,14 +335,14 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtyp
     return PathDirectory_Iterate2_Const(pd, type, parent, callback, NULL);
 }
 
-const pathdirectory_node_t* PathDirectory_FindStr(pathdirectory_t* pd,
-    pathdirectory_pathtype_t pathType, const ddstring_t* searchPath)
+const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
+    pathdirectory_pathtype_t pathType, const char* searchPath)
 {
     assert(NULL != pd);
-    if(NULL != searchPath && !Str_IsEmpty(searchPath))
+    if(NULL != searchPath && !searchPath[0])
     {
         boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(pathType);
-        ushort hash = hashPath(Str_Text(searchPath), Str_Length(searchPath), pd->_delimiter);
+        ushort hash = hashPath(searchPath, strlen(searchPath), pd->_delimiter);
         findpathworker_paramaters_t p;
 
         // Perform the search.
@@ -357,21 +357,6 @@ const pathdirectory_node_t* PathDirectory_FindStr(pathdirectory_t* pd,
                 break;
         }}
         return p.foundNode;
-    }
-    return NULL;
-}
-
-const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
-    pathdirectory_pathtype_t pathType, const char* _searchPath)
-{
-    assert(NULL != pd);
-    if(NULL != _searchPath && _searchPath[0])
-    {
-        const pathdirectory_node_t* result;
-        ddstring_t searchPath; Str_Init(&searchPath);
-        result = PathDirectory_FindStr(pd, pathType, &searchPath);
-        Str_Free(&searchPath);
-        return result;
     }
     return NULL;
 }
@@ -440,22 +425,34 @@ void PathDirectory_Print(pathdirectory_t* pd)
 #endif
 
 boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
-    const ddstring_t* searchPath, char delimiter)
+    const char* searchPath, char delimiter)
 {
-    assert(NULL != node && NULL != searchPath);
+    assert(NULL != node);
     {
-    filename_t dir;
+    const char* begin, *from, *to, *c;
+    size_t len;
 
-    // Where does the directory searchPath begin? We'll do this in reverse order.
-    strncpy(dir, Str_Text(searchPath), FILENAME_T_MAXLEN);
-    { char* pos;
-    while(NULL != (pos = strrchr(dir, delimiter)))
+    if(NULL == searchPath || 0 == (len = strlen(searchPath)))
+        return false;
+
+    // In reverse order, compare path fragments in the search term.
+    from = begin = searchPath;
+    to = from + len;
+    for(;;)
     {
+        // Find the start of the next path fragment.
+        for(c = to; c > begin && !(*c == delimiter); c--) {}
+
         // Does this match?
-        if(Str_Length(&node->pair.path) < (strlen(pos-1)) ||
-           strnicmp(Str_Text(&node->pair.path), pos + 1,
+        if(Str_Length(&node->pair.path) < ((to - from) - (*from == delimiter? 1 : 0)))
+            return false;
+        if(strnicmp(Str_Text(&node->pair.path), *from == delimiter? from + 1 : from,
                     Str_Length(&node->pair.path) - (node->type == PT_DIRECTORY? 1:0)))
             return false;
+
+        // Have we arrived at the search target?
+        if(from == begin)
+            return true;
 
         // Are there no more parent directories?
         if(NULL == node->parent)
@@ -463,18 +460,12 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
 
         // So far so good. Move one directory level upwards.
         node = node->parent;
+
         // The string now ends here.
-        *pos = 0;
-    }}
-
-    // Anything remaining is the root directory or file searchPath - does it match?
-    if(Str_Length(&node->pair.path) < strlen(dir) ||
-       strnicmp(Str_Text(&node->pair.path), dir,
-                Str_Length(&node->pair.path) - (node->type == PT_DIRECTORY? 1:0)))
-        return false;
-
-    // We must have now arrived at the search target.
-    return true;
+        to = from-1;
+    }
+    // Unreachable.
+    return false;
     }
 }
 

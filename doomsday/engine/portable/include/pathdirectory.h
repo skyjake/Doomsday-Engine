@@ -78,8 +78,6 @@ void PathDirectory_Clear(pathdirectory_t* pd);
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
-const struct pathdirectory_node_s* PathDirectory_FindStr(pathdirectory_t* pd,
-    pathdirectory_pathtype_t pathType, const ddstring_t* searchPath);
 const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
     pathdirectory_pathtype_t pathType, const char* searchPath);
 
@@ -91,7 +89,7 @@ const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
  * @param value             Associated data value.
  */
 struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
-    const ddstring_t* path, void* value);
+    const char* path, void* value);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -145,7 +143,7 @@ void PathDirectory_Print(pathdirectory_t* pd);
  * @return  @c true, if the path specified in the name begins from a directory in the search path.
  */
 boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
-    const ddstring_t* searchPath, char delimiter);
+    const char* searchPath, char delimiter);
 
 /**
  * Composes a relative path for the directory node.

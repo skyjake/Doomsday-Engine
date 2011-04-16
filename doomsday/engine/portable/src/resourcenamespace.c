@@ -128,7 +128,7 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
 
     // Go through the candidates.
     node = rn->_pathHash[key].first;
-    while(node && !PathDirectoryNode_MatchDirectory(node->data, searchPath, DIR_SEP_CHAR))
+    while(node && !PathDirectoryNode_MatchDirectory(node->data, Str_Text(searchPath), DIR_SEP_CHAR))
         node = node->next;
 
     // Does the caller want to know the matched path?
