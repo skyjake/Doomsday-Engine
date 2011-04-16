@@ -600,8 +600,8 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     if(METHOD_IMMEDIATE == uploadMethod)
     {
 #ifdef _DEBUG
-        Con_Message("Uploading unmanaged texture (%i:%ix%i) while not busy! Should be "
-            "precached in busy mode?\n", content->name, content->width, content->height);
+        VERBOSE( Con_Message("Uploading unmanaged texture (%i:%ix%i) while not busy! Should be "
+            "precached in busy mode?\n", content->name, content->width, content->height) )
 #endif
     }
     uploadContent(uploadMethod, content);
