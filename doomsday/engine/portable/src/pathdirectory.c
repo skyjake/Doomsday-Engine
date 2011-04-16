@@ -339,7 +339,7 @@ const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
     pathdirectory_pathtype_t pathType, const char* searchPath)
 {
     assert(NULL != pd);
-    if(NULL != searchPath && !searchPath[0])
+    if(NULL != searchPath && searchPath[0])
     {
         boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(pathType);
         ushort hash = hashPath(searchPath, strlen(searchPath), pd->_delimiter);
