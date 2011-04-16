@@ -149,8 +149,11 @@ boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node
 
 /**
  * Composes a relative path for the directory node.
+ * @param path              Composed path is written here.
+ * @param delimiter         Path is composed with fragments delimited by this character.
  */
-void PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node, ddstring_t* path);
+void PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node, ddstring_t* path,
+    char delimiter);
 
 /// @return  Type of this directory node.
 pathdirectory_pathtype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);

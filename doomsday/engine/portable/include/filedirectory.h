@@ -60,12 +60,12 @@ filedirectory_t* FileDirectory_ConstructEmpty(void);
 /// \note Same as FileDirectory_ConstructEmpty
 filedirectory_t* FileDirectory_ConstructDefault(void);
 
-void FileDirectory_Destruct(filedirectory_t* pd);
+void FileDirectory_Destruct(filedirectory_t* fd);
 
 /**
  * Clear the directory contents.
  */
-void FileDirectory_Clear(filedirectory_t* pd);
+void FileDirectory_Clear(filedirectory_t* fd);
 
 /**
  * Resolve and collate all paths in the directory into a list.
@@ -76,7 +76,7 @@ void FileDirectory_Clear(filedirectory_t* pd);
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and Z_Free the list itself.
  */
-ddstring_t* FileDirectory_AllPaths(filedirectory_t* pd, pathdirectory_pathtype_t type,
+ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, pathdirectory_pathtype_t type,
     size_t* count);
 
 /**
@@ -87,11 +87,11 @@ ddstring_t* FileDirectory_AllPaths(filedirectory_t* pd, pathdirectory_pathtype_t
  * @param callback          Callback function ptr.
  * @param paramaters        Passed to the callback.
  */
-void FileDirectory_AddPaths3(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount,
+void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPaths2(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount,
+void FileDirectory_AddPaths2(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
-void FileDirectory_AddPaths(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount);
+void FileDirectory_AddPaths(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount);
 
 /**
  * Add a new set of paths from a path list. Duplicates are automatically pruned.
@@ -100,11 +100,11 @@ void FileDirectory_AddPaths(filedirectory_t* pd, const dduri_t* const* paths, ui
  * @param callback          Callback function ptr.
  * @param paramaters        Passed to the callback.
  */
-void FileDirectory_AddPathList3(filedirectory_t* pd, const char* pathList,
+void FileDirectory_AddPathList3(filedirectory_t* fd, const char* pathList,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPathList2(filedirectory_t* pd, const char* pathList,
+void FileDirectory_AddPathList2(filedirectory_t* fd, const char* pathList,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
-void FileDirectory_AddPathList(filedirectory_t* pd, const char* pathList);
+void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList);
 
 /**
  * Find a file in the directory.
@@ -128,16 +128,16 @@ boolean FileDirectory_FindFile(filedirectory_t* fd, const char* searchPath, ddst
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate2(filedirectory_t* pd, pathdirectory_pathtype_t type,
+int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_pathtype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
-int FileDirectory_Iterate(filedirectory_t* pd, pathdirectory_pathtype_t type,
+int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_pathtype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
 #if _DEBUG
-void FileDirectory_Print(filedirectory_t* pd);
+void FileDirectory_Print(filedirectory_t* fd);
 #endif
 
 #endif /* LIBDENG_FILEDIRECTORY_H */

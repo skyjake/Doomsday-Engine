@@ -999,7 +999,7 @@ static foundentry_t* collectFilePaths(const ddstring_t* searchPath, int* retCoun
                         found = realloc(found, sizeof(*found) * max);
                     }
                     memset(&found[count], 0, sizeof(*found));
-                    strncpy(found[count].name, fd.name, FILENAME_T_MAXLEN);
+                    dd_snprintf(found[count].name, FILENAME_T_MAXLEN, "%s%c", fd.name, ((fd.attrib & A_SUBDIR)? DIR_SEP_CHAR : 0));
                     found[count].attrib = fd.attrib;
                     ++count;
                 }
@@ -1049,7 +1049,7 @@ static int iterateFilePaths(const ddstring_t* pattern, const ddstring_t* searchP
             if(F_MatchName(Str_Text(&path), Str_Text(&localPattern)))
             {
                 // If the callback returns false, stop immediately.
-                if(0 != (result = callback(&path, PT_LEAF, paramaters)))
+                if(0 != (result = callback(&path, (found[i].attrib & A_SUBDIR)? PT_DIRECTORY : PT_LEAF, paramaters)))
                 {
                     break;
                 }

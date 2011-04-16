@@ -111,6 +111,7 @@ void Str_PartAppend(ddstring_t* dest, const char* src, int start, int count);
  * Prepend is not even a word, is it? It should be 'prefix'?
  */
 void Str_Prepend(ddstring_t* ds, const char* prependText);
+void Str_PrependChar(ddstring_t* ds, char ch);
 
 /**
  * This is safe for all strings.

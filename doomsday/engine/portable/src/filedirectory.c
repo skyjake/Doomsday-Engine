@@ -403,7 +403,7 @@ boolean FileDirectory_FindFile(filedirectory_t* fd, const char* _searchPath,
     // Does caller want to know the full path?
     if(NULL != foundName && NULL != foundNode)
     {
-        PathDirectoryNode_ComposePath(foundNode, foundName);
+        PathDirectoryNode_ComposePath(foundNode, foundName, DIR_SEP_CHAR);
     }
 
     return (NULL != foundNode);

@@ -254,6 +254,12 @@ void Str_Prepend(ddstring_t* str, const char* prepend)
     str->length += (int)incoming;
 }
 
+void Str_PrependChar(ddstring_t* str, char ch)
+{
+    char prepend[2] = { ch, 0 };
+    Str_Prepend(str, prepend);
+}
+
 char* Str_Text(const ddstring_t* str)
 {
     if(!str)

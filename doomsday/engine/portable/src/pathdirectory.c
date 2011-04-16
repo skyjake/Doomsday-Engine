@@ -25,11 +25,6 @@
 #include "de_base.h"
 #include "de_console.h"
 
-#include "sys_reslocator.h"
-#include "sys_timer.h"
-#include "sys_file.h"
-#include "sys_findfile.h"
-
 #include "pathdirectory.h"
 
 typedef struct pathdirectory_pair_s {
@@ -45,8 +40,8 @@ typedef struct pathdirectory_node_s {
 } pathdirectory_node_t;
 
 /**
- * This is a hash function. It uses the resource name to generate a
- * somewhat-random number between 0 and PATHDIRECTORY_HASHSIZE.
+ * This is a hash function. It uses the path fragment string to generate
+ * a somewhat-random number between @c 0 and @c PATHDIRECTORY_HASHSIZE
  *
  * @return  The generated hash key.
  */
@@ -85,11 +80,11 @@ static size_t countNodes(pathdirectory_t* pd, pathdirectory_pathtype_t type)
     size_t n = 0;
     ushort i;
     for(i = 0; i < PATHDIRECTORY_HASHSIZE; ++i)
+    for(node = (pathdirectory_node_t*) pd->_hashTable[i];
+        NULL != node; node = node->next)
     {
-        for(node = (pathdirectory_node_t*) pd->_hashTable[i];
-            NULL != node; node = node->next)
-            if(!compareType || node->type == type)
-                ++n;
+        if(!compareType || node->type == type)
+            ++n;
     }
     return n;
     }
@@ -116,8 +111,7 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
             continue;
         if(Str_Length(&node->pair.path) < Str_Length(name))
             continue;
-        if(!strnicmp(Str_Text(&node->pair.path), Str_Text(name),
-                     Str_Length(&node->pair.path) - (node->type == PT_DIRECTORY? 1:0)))
+        if(!strnicmp(Str_Text(&node->pair.path), Str_Text(name), Str_Length(&node->pair.path)))
             return node;
     }
 
@@ -156,7 +150,7 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* pa
     // Continue splitting as long as there are parts.
     Str_Init(&part);
     p = path;
-    while(NULL != (p = Str_CopyDelim2(&part, p, pd->_delimiter, 0))) // Get the next part.
+    while(NULL != (p = Str_CopyDelim2(&part, p, pd->_delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
     {
         node = direcNode(pd, parent, PT_DIRECTORY, &part, NULL);
         parent = node;
@@ -164,8 +158,7 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* pa
 
     if(Str_Length(&part) != 0)
     {
-        pathdirectory_pathtype_t type = (Str_RAt(&part, 0) != pd->_delimiter? PT_LEAF : PT_DIRECTORY);
-        node = direcNode(pd, parent, type, &part, NULL);
+        node = direcNode(pd, parent, PT_LEAF, &part, NULL);
     }
 
     Str_Free(&part);
@@ -244,7 +237,7 @@ static int iteratePaths(pathdirectory_t* pd, pathdirectory_pathtype_t type,
     }
 }
 
-static int const_iteratePaths(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
+static int iteratePaths_const(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
     const pathdirectory_node_t* parent,
     int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
@@ -326,7 +319,7 @@ int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_pathty
     void* paramaters)
 {
     assert(NULL != pd && (type == PT_ANY || VALID_PATHDIRECTORY_PATHTYPE(type)));
-    return const_iteratePaths(pd, type, parent, callback, paramaters);
+    return iteratePaths_const(pd, type, parent, callback, paramaters);
 }
 
 int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
@@ -391,7 +384,7 @@ ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_pathtype_t
             if(compareType && node->type != type) continue;
 
             Str_Init(path);
-            PathDirectoryNode_ComposePath(node, path);
+            PathDirectoryNode_ComposePath(node, path, pd->_delimiter);
             path++;
         }
     }
@@ -449,8 +442,7 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
         // Does this match?
         if(Str_Length(&node->pair.path) < ((to - from) - (*from == delimiter? 1 : 0)))
             return false;
-        if(strnicmp(Str_Text(&node->pair.path), *from == delimiter? from + 1 : from,
-                    Str_Length(&node->pair.path) - (node->type == PT_DIRECTORY? 1:0)))
+        if(strnicmp(Str_Text(&node->pair.path), *from == delimiter? from + 1 : from, Str_Length(&node->pair.path)))
             return false;
 
         // Have we arrived at the search target?
@@ -472,23 +464,33 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
     }
 }
 
-void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t* foundPath)
+void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t* foundPath,
+    char delimiter)
 {
     assert(NULL != node && NULL != foundPath);
     {
-    const pathdirectory_node_t* trav = node;
+    const int delimiterLen = delimiter? 1 : 0;
+    const pathdirectory_node_t* trav;
     int requiredLen = 0;
+
+    // Calculate the total length of the final composed path.
+    trav = node;
     do
     {
         requiredLen += Str_Length(&trav->pair.path);
+        if(NULL != trav->parent && delimiterLen != 0)
+            requiredLen += delimiterLen;
     } while(NULL != (trav = trav->parent));
 
+    // Compose the path.
     Str_Clear(foundPath);
     Str_Reserve(foundPath, requiredLen);
     trav = node;
     do
     {
         Str_Prepend(foundPath, Str_Text(&trav->pair.path));
+        if(NULL != trav->parent && delimiterLen != 0)
+            Str_PrependChar(foundPath, delimiter);
     } while(NULL != (trav = trav->parent));
     }
 }
