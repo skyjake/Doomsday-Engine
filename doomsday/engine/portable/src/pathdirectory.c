@@ -202,6 +202,7 @@ static void clearDirectory(pathdirectory_t* pd)
 
 typedef struct {
     const char* searchPath;
+    size_t searchPathLen;
     pathdirectory_node_t* foundNode;
 } findpathworker_paramaters_t;
 
@@ -210,7 +211,7 @@ static int findPathWorker(pathdirectory_t* pd, pathdirectory_node_t* node, void*
     assert(NULL != pd && NULL != node && NULL != paramaters);
     {
     findpathworker_paramaters_t* p = (findpathworker_paramaters_t*)paramaters;
-    if(PathDirectoryNode_MatchDirectory(node, p->searchPath, pd->_delimiter))
+    if(PathDirectoryNode_MatchDirectory(node, p->searchPath, p->searchPathLen, pd->_delimiter))
     {
         p->foundNode = node;
         return 1; // A match; stop!
@@ -342,12 +343,15 @@ const pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
     if(NULL != searchPath && searchPath[0])
     {
         boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(pathType);
-        ushort hash = hashPath(searchPath, strlen(searchPath), pd->_delimiter);
         findpathworker_paramaters_t p;
+        ushort hash;
+
+        p.searchPath = searchPath;
+        p.searchPathLen = strlen(searchPath);
+        p.foundNode = NULL;
 
         // Perform the search.
-        p.searchPath = searchPath;
-        p.foundNode = NULL;
+        hash = hashPath(p.searchPath, p.searchPathLen, pd->_delimiter);
         { pathdirectory_node_t* node;
         for(node = pd->_hashTable[hash]; NULL != node; node = node->next)
         {
@@ -425,19 +429,18 @@ void PathDirectory_Print(pathdirectory_t* pd)
 #endif
 
 boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
-    const char* searchPath, char delimiter)
+    const char* searchPath, size_t searchPathLen, char delimiter)
 {
     assert(NULL != node);
     {
     const char* begin, *from, *to, *c;
-    size_t len;
 
-    if(NULL == searchPath || 0 == (len = strlen(searchPath)))
+    if(NULL == searchPath || 0 == searchPathLen)
         return false;
 
     // In reverse order, compare path fragments in the search term.
     from = begin = searchPath;
-    to = from + len;
+    to = from + searchPathLen;
     for(;;)
     {
         // Find the start of the next path fragment.
@@ -472,12 +475,21 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
 void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t* foundPath)
 {
     assert(NULL != node && NULL != foundPath);
-    Str_Prepend(foundPath, Str_Text(&node->pair.path));
-    node = node->parent;
-    while(NULL != node)
     {
-        Str_Prepend(foundPath, Str_Text(&node->pair.path));
-        node = node->parent;
+    const pathdirectory_node_t* trav = node;
+    int requiredLen = 0;
+    do
+    {
+        requiredLen += Str_Length(&trav->pair.path);
+    } while(NULL != (trav = trav->parent));
+
+    Str_Clear(foundPath);
+    Str_Reserve(foundPath, requiredLen);
+    trav = node;
+    do
+    {
+        Str_Prepend(foundPath, Str_Text(&trav->pair.path));
+    } while(NULL != (trav = trav->parent));
     }
 }
 

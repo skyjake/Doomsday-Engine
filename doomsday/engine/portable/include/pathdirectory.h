@@ -138,12 +138,14 @@ void PathDirectory_Print(pathdirectory_t* pd);
 
 /**
  * @param searchPath        A relative path.
+ * @param searchPathLen     Number of characters from @a searchPath to match. Normally
+ *      equal to the full length of @a searchPath excluding any terminating '\0'.
  * @param delimiter         Delimiter used to separate fragments of @a searchPath.
  *
  * @return  @c true, if the path specified in the name begins from a directory in the search path.
  */
 boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
-    const char* searchPath, char delimiter);
+    const char* searchPath, size_t searchPathLen, char delimiter);
 
 /**
  * Composes a relative path for the directory node.
