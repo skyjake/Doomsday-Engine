@@ -252,7 +252,7 @@ static size_t countNodes(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType)
     size_t n = 0;
     if(NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(nodeType);
+        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ushort i;
 
@@ -404,7 +404,7 @@ static int iteratePaths(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
     int result = 0;
     if(NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(nodeType);
+        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ushort i;
 
@@ -431,7 +431,7 @@ static int iteratePaths_const(const pathdirectory_t* pd, pathdirectory_nodetype_
     int result = 0;
     if(NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(nodeType);
+        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ushort i;
 
@@ -495,7 +495,7 @@ int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_nodetype_t nodeTyp
     pathdirectory_node_t* parent, int (*callback) (pathdirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
-    assert(NULL != pd && (nodeType == PT_ANY || VALID_PATHDIRECTORY_PATHTYPE(nodeType)));
+    assert(NULL != pd && (nodeType == PT_ANY || VALID_PATHDIRECTORY_NODETYPE(nodeType)));
     return iteratePaths(pd, nodeType, parent, callback, paramaters);
 }
 
@@ -510,7 +510,7 @@ int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_nodety
     int (*callback) (const pathdirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
-    assert(NULL != pd && (nodeType == PT_ANY || VALID_PATHDIRECTORY_PATHTYPE(nodeType)));
+    assert(NULL != pd && (nodeType == PT_ANY || VALID_PATHDIRECTORY_NODETYPE(nodeType)));
     return iteratePaths_const(pd, nodeType, parent, callback, paramaters);
 }
 
@@ -521,53 +521,18 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_nodetyp
     return PathDirectory_Iterate2_Const(pd, nodeType, parent, callback, NULL);
 }
 
-typedef struct {
-    const char* searchPath;
-    size_t searchPathLen;
-    char delimiter;
-    pathdirectory_node_t* foundNode;
-} findpathworker_paramaters_t;
-
-static int findPathWorker(pathdirectory_t* pd, pathdirectory_node_t* node, void* paramaters)
-{
-    assert(NULL != pd && NULL != node && NULL != paramaters);
-    {
-    findpathworker_paramaters_t* p = (findpathworker_paramaters_t*)paramaters;
-    if(PathDirectoryNode_MatchDirectory(node, p->searchPath, p->searchPathLen, p->delimiter))
-    {
-        p->foundNode = node;
-        return 1; // A match; stop!
-    }
-    return 0; // Continue searching.
-    }
-}
-
-pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd,
-    pathdirectory_nodetype_t nodeType, const char* searchPath, char delimiter)
+pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, const char* searchPath, char delimiter)
 {
     assert(NULL != pd);
     if(NULL != searchPath && searchPath[0] && NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(nodeType);
-        findpathworker_paramaters_t p;
-        ushort hash;
-
-        p.searchPath = searchPath;
-        p.searchPathLen = strlen(searchPath);
-        p.delimiter = delimiter;
-        p.foundNode = NULL;
-
+        size_t searchPathLen = strlen(searchPath);
+        ushort hash = hashName(searchPath, searchPathLen, delimiter);
+        pathdirectory_node_t* node = (*pd->_pathHash)[hash];
         // Perform the search.
-        hash = hashName(p.searchPath, p.searchPathLen, p.delimiter);
-        { pathdirectory_node_t* node;
-        for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
-        {
-            if(compareType && nodeType != PathDirectoryNode_Type(node)) continue;
-
-            if(0 != findPathWorker(pd, node, (void*)&p))
-                break;
-        }}
-        return p.foundNode;
+        while(NULL != node && !PathDirectoryNode_MatchDirectory(node, searchPath, searchPathLen, delimiter))
+            node = node->next;
+        return node;
     }
     return NULL;
 }
@@ -581,7 +546,7 @@ ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t
     size_t count = countNodes(pd, nodeType);
     if(0 != count)
     {
-        boolean compareType = VALID_PATHDIRECTORY_PATHTYPE(nodeType);
+        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ddstring_t** pathPtr;
         ushort i;
@@ -668,7 +633,7 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
     {
     const pathdirectory_internname_t* intern;
     const char* begin, *from, *to;
-    uint i;
+    size_t i;
 
     if(NULL == searchPath || 0 == searchPathLen)
         return false;
@@ -724,6 +689,8 @@ void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t*
     int requiredLen = 0;
 
     // Calculate the total length of the final composed path.
+    if(PT_BRANCH == node->_type)
+        requiredLen += delimiterLen;
     trav = node;
     do
     {
@@ -738,6 +705,8 @@ void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t*
     // Compose the path.
     Str_Clear(foundPath);
     Str_Reserve(foundPath, requiredLen);
+    if(PT_BRANCH == node->_type)
+        Str_PrependChar(foundPath, delimiter);
     trav = node;
     do
     {

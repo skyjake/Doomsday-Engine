@@ -31,13 +31,13 @@ struct pathdirectory_node_s;
 
 typedef enum {
     PT_ANY = -1,
-    PATHDIRECTORY_PATHTYPES_FIRST = 0,
-    PT_BRANCH = PATHDIRECTORY_PATHTYPES_FIRST,
+    PATHDIRECTORY_NODETYPES_FIRST = 0,
+    PT_BRANCH = PATHDIRECTORY_NODETYPES_FIRST,
     PT_LEAF,
-    PATHDIRECTORY_PATHTYPES_COUNT
+    PATHDIRECTORY_NODETYPES_COUNT
 } pathdirectory_nodetype_t;
 
-#define VALID_PATHDIRECTORY_PATHTYPE(t) ((t) >= PATHDIRECTORY_PATHTYPES_FIRST && (t) < PATHDIRECTORY_PATHTYPES_COUNT)
+#define VALID_PATHDIRECTORY_NODETYPE(t) ((t) >= PATHDIRECTORY_NODETYPES_FIRST && (t) < PATHDIRECTORY_NODETYPES_COUNT)
 
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship
@@ -78,14 +78,13 @@ void PathDirectory_Clear(pathdirectory_t* pd);
 /**
  * Check if @a searchPath exists in the directory.
  *
- * @param type              If a valid path type only consider nodes of this type.
  * @param searchPath        Relative or absolute path.
  * @param delimiter         Fragments of the path are delimited by this character.
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
 struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
-    pathdirectory_nodetype_t type, const char* searchPath, char delimiter);
+    const char* searchPath, char delimiter);
 
 /**
  * Add a new path. Duplicates are automatically pruned however, note that their

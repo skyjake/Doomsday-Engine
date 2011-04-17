@@ -1275,7 +1275,7 @@ D_CMD(Dump)
 int printResourcePath(const ddstring_t* fileName, pathdirectory_nodetype_t type,
     void* paramaters)
 {
-    assert(fileName && VALID_PATHDIRECTORY_PATHTYPE(type));
+    assert(fileName && VALID_PATHDIRECTORY_NODETYPE(type));
     {
     boolean makePretty = F_IsRelativeToBasePath(fileName);
     Con_Printf("  %s\n", makePretty? Str_Text(F_PrettyPath(fileName)) : Str_Text(fileName));

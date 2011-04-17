@@ -45,7 +45,7 @@ typedef struct {
 static int addPathWorker(const ddstring_t* filePath, pathdirectory_nodetype_t type,
     void* paramaters)
 {
-    assert(NULL != filePath && VALID_PATHDIRECTORY_PATHTYPE(type) && NULL != paramaters);
+    assert(NULL != filePath && VALID_PATHDIRECTORY_NODETYPE(type) && NULL != paramaters);
     {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
     int result = 0; // Continue adding.
@@ -352,7 +352,7 @@ int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t type,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
 {
-    assert(NULL != fd && (type == PT_ANY || VALID_PATHDIRECTORY_PATHTYPE(type)));
+    assert(NULL != fd);
     return PathDirectory_Iterate2_Const(fd->_pathDirectory, type, parent, callback, paramaters);
 }
 
@@ -363,8 +363,7 @@ int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t type,
     return FileDirectory_Iterate2(fd, type, parent, callback, NULL);
 }
 
-boolean FileDirectory_FindFile(filedirectory_t* fd, const char* _searchPath,
-    ddstring_t* foundName)
+boolean FileDirectory_Find(filedirectory_t* fd, const char* _searchPath, ddstring_t* foundName)
 {
     assert(NULL != fd);
     {
@@ -382,7 +381,7 @@ boolean FileDirectory_FindFile(filedirectory_t* fd, const char* _searchPath,
     F_FixSlashes(&searchPath, &searchPath);
 
     // Perform the search.
-    foundNode = PathDirectory_Find(fd->_pathDirectory, PT_LEAF, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
+    foundNode = PathDirectory_Find(fd->_pathDirectory, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?
