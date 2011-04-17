@@ -32,28 +32,38 @@ struct pathdirectory_node_s;
 typedef enum {
     PT_ANY = -1,
     PATHDIRECTORY_PATHTYPES_FIRST = 0,
-    PT_DIRECTORY = PATHDIRECTORY_PATHTYPES_FIRST,
+    PT_BRANCH = PATHDIRECTORY_PATHTYPES_FIRST,
     PT_LEAF,
     PATHDIRECTORY_PATHTYPES_COUNT
-} pathdirectory_pathtype_t;
+} pathdirectory_nodetype_t;
 
-#define VALID_PATHDIRECTORY_PATHTYPE(t) ((t) >= PATHDIRECTORY_PATHTYPES_FIRST || (t) < PATHDIRECTORY_PATHTYPES_COUNT)
+#define VALID_PATHDIRECTORY_PATHTYPE(t) ((t) >= PATHDIRECTORY_PATHTYPES_FIRST && (t) < PATHDIRECTORY_PATHTYPES_COUNT)
 
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship
  * tree of string+value data pairs.
  *
- * Somewhat similar to a Prefix Tree (Trie) representationally although
- * that is where the similarity ends.
+ * Somewhat similar to a Prefix Tree (Trie) representationally although that
+ * is where the similarity ends.
  *
  * @ingroup data
  */
 // Number of entries in the hash table.
-#define PATHDIRECTORY_HASHSIZE 512
+#define PATHDIRECTORY_PATHHASH_SIZE 512
+typedef struct pathdirectory_node_s* pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
+
+typedef uint pathdirectory_internnameid_t;
 
 typedef struct pathdirectory_s {
-    /// Path hash table.
-    struct pathdirectory_node_s* _hashTable[PATHDIRECTORY_HASHSIZE];
+    /// Intern name list. Indices become class-private identifiers.
+    uint _internNamesCount;
+    struct pathdirectory_internname_s* _internNames;
+
+    /// Sorted redirection table.
+    pathdirectory_internnameid_t* _sortedNameIdMap;
+
+    /// Path hash map.
+    pathdirectory_pathhash_t* _pathHash;
 } pathdirectory_t;
 
 pathdirectory_t* PathDirectory_Construct(void);
@@ -74,8 +84,8 @@ void PathDirectory_Clear(pathdirectory_t* pd);
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
-const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
-    pathdirectory_pathtype_t type, const char* searchPath, char delimiter);
+struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
+    pathdirectory_nodetype_t type, const char* searchPath, char delimiter);
 
 /**
  * Add a new path. Duplicates are automatically pruned however, note that their
@@ -85,8 +95,10 @@ const struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
  * @param delimiter         Fragments of the path are delimited by this character.
  * @param value             Associated data value.
  */
-struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
+struct pathdirectory_node_s* PathDirectory_Insert2(pathdirectory_t* pd,
     const char* path, char delimiter, void* value);
+struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
+    const char* path, char delimiter);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -99,19 +111,19 @@ struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_pathtype_t type,
+int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_nodetype_t type,
     struct pathdirectory_node_s* parent,
     int (*callback) (struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
-int PathDirectory_Iterate(pathdirectory_t* pd, pathdirectory_pathtype_t type,
+int PathDirectory_Iterate(pathdirectory_t* pd, pathdirectory_nodetype_t type,
     struct pathdirectory_node_s* parent,
     int (*callback) (struct pathdirectory_node_s* node, void* paramaters));
 
-int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
+int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_nodetype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
-int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtype_t type,
+int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_nodetype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
@@ -127,7 +139,7 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_pathtyp
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and Z_Free the list itself.
  */
-ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_pathtype_t type,
+ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t type,
     char delimiter, size_t* count);
 
 /**
@@ -149,8 +161,11 @@ boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node
 void PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node, ddstring_t* path,
     char delimiter);
 
+/// @return  Parent of this directory node else @c NULL
+struct pathdirectory_node_s* PathDirectoryNode_Parent(const struct pathdirectory_node_s* node);
+
 /// @return  Type of this directory node.
-pathdirectory_pathtype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);
+pathdirectory_nodetype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);
 
 /**
  * Attach user data to this. PathDirectoryNode is given ownership of @a data

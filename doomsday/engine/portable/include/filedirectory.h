@@ -71,7 +71,7 @@ void FileDirectory_Clear(filedirectory_t* fd);
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and Z_Free the list itself.
  */
-ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, pathdirectory_pathtype_t type,
+ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, pathdirectory_nodetype_t type,
     size_t* count);
 
 /**
@@ -123,11 +123,11 @@ boolean FileDirectory_FindFile(filedirectory_t* fd, const char* searchPath, ddst
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_pathtype_t type,
+int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
-int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_pathtype_t type,
+int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 

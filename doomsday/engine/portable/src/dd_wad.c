@@ -1272,7 +1272,7 @@ D_CMD(Dump)
  * Prints the resource path to the console.
  * This is a f_allresourcepaths_callback_t.
  */
-int printResourcePath(const ddstring_t* fileName, pathdirectory_pathtype_t type,
+int printResourcePath(const ddstring_t* fileName, pathdirectory_nodetype_t type,
     void* paramaters)
 {
     assert(fileName && VALID_PATHDIRECTORY_PATHTYPE(type));

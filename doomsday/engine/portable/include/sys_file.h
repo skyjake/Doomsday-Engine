@@ -134,9 +134,9 @@ void F_ShutdownDirec(void);
  * Zip directory, DD_DIREC and the real files are scanned.
  */
 int F_AllResourcePaths2(const ddstring_t* searchPath,
-    int (*callback) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters),
     void* paramaters);
 int F_AllResourcePaths(const ddstring_t* searchPath,
-    int (*callback) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters));
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters));
 
 #endif /* LIBDENG_FILESYS_FILE_IO_H */

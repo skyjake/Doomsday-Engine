@@ -42,7 +42,7 @@ typedef struct {
     void* paramaters;
 } addpathworker_paramaters_t;
 
-static int addPathWorker(const ddstring_t* filePath, pathdirectory_pathtype_t type,
+static int addPathWorker(const ddstring_t* filePath, pathdirectory_nodetype_t type,
     void* paramaters)
 {
     assert(NULL != filePath && VALID_PATHDIRECTORY_PATHTYPE(type) && NULL != paramaters);
@@ -59,7 +59,7 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectory_pathtype_t ty
         Str_Init(&relPath);
         F_RemoveBasePath(&relPath, filePath);
 
-        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), FILEDIRECTORY_DELIMITER, NULL);
+        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), FILEDIRECTORY_DELIMITER);
         assert(PT_LEAF == PathDirectoryNode_Type(node));
 
         // Has this already been processed?
@@ -101,7 +101,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
 
         if(Str_IsEmpty(searchPath)) continue;
 
-        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), FILEDIRECTORY_DELIMITER, NULL);
+        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), FILEDIRECTORY_DELIMITER);
 
         // Has this already been processed?
         info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
@@ -121,7 +121,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
             // Does caller want to process it again?
             if(NULL != callback)
             {
-                if(PT_DIRECTORY == PathDirectoryNode_Type(node))
+                if(PT_BRANCH == PathDirectoryNode_Type(node))
                 {
                     PathDirectory_Iterate2_Const(fd->_pathDirectory, PT_LEAF, node, callback, paramaters);
                 }
@@ -133,7 +133,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
         }
         else
         {
-            if(PT_DIRECTORY == PathDirectoryNode_Type(node))
+            if(PT_BRANCH == PathDirectoryNode_Type(node))
             {
                 // Compose the search pattern. We're interested in *everything*.
                 addpathworker_paramaters_t p;
@@ -347,7 +347,7 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList)
     FileDirectory_AddPathList2(fd, pathList, NULL);
 }
 
-int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_pathtype_t type, 
+int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t type, 
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
@@ -356,7 +356,7 @@ int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_pathtype_t type,
     return PathDirectory_Iterate2_Const(fd->_pathDirectory, type, parent, callback, paramaters);
 }
 
-int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_pathtype_t type,
+int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t type,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters))
 {
