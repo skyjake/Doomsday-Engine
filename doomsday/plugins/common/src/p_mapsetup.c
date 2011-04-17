@@ -559,8 +559,13 @@ static void P_LoadMapObjs(void)
             // Check for things that clients don't spawn on their own.
             if(IS_CLIENT)
             {
-                if(!P_IsClientAllowedToSpawn(spot->doomEdNum))
-                    continue;
+                // Client is allowed to spawn objects that are flagged local.
+                // The server will not send any information about them.
+                if(!(MOBJINFO[type].flags & MF_LOCAL))
+                {
+                    if(!P_IsClientAllowedToSpawn(spot->doomEdNum))
+                        continue;
+                }
             }
 
             // Find which type to spawn.
