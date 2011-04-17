@@ -689,7 +689,7 @@ void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t*
     int requiredLen = 0;
 
     // Calculate the total length of the final composed path.
-    if(PT_BRANCH == node->_type)
+    if(PT_BRANCH == node->_type && 0 != delimiterLen)
         requiredLen += delimiterLen;
     trav = node;
     do
@@ -698,15 +698,15 @@ void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t*
         assert(NULL != intern);
 
         requiredLen += Str_Length(&intern->name);
-        if(NULL != trav->_parent && delimiterLen != 0)
+        if(NULL != trav->_parent && 0 != delimiterLen)
             requiredLen += delimiterLen;
     } while(NULL != (trav = trav->_parent));
 
     // Compose the path.
     Str_Clear(foundPath);
     Str_Reserve(foundPath, requiredLen);
-    if(PT_BRANCH == node->_type)
-        Str_PrependChar(foundPath, delimiter);
+    if(PT_BRANCH == node->_type && 0 != delimiterLen)
+        Str_AppendChar(foundPath, delimiter);
     trav = node;
     do
     {
@@ -714,7 +714,7 @@ void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t*
         assert(NULL != intern);
 
         Str_Prepend(foundPath, Str_Text(&intern->name));
-        if(NULL != trav->_parent && delimiterLen != 0)
+        if(NULL != trav->_parent && 0 != delimiterLen)
             Str_PrependChar(foundPath, delimiter);
     } while(NULL != (trav = trav->_parent));
     }

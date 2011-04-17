@@ -136,7 +136,7 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_nodetyp
  * @param count             Number of visited paths is written back here.
  *
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
- *      Str_Free each string in the list and Z_Free the list itself.
+ *      Str_Free each string in the list and free() the list itself.
  */
 ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t type,
     char delimiter, size_t* count);
@@ -147,7 +147,7 @@ ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t
  *      equal to the full length of @a searchPath excluding any terminating '\0'.
  * @param delimiter         Delimiter used to separate fragments of @a searchPath.
  *
- * @return  @c true, if the path specified in the name begins from a directory in the search path.
+ * @return  @c true iff @a searchPath matches this and begins from the same root point.
  */
 boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
     const char* searchPath, size_t searchPathLen, char delimiter);
