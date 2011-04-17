@@ -130,7 +130,7 @@ static pathdirectory_internnameid_t internName(pathdirectory_t* pd, const ddstri
 
     intern = &pd->_internNames[pd->_internNamesCount-1];
     Str_Init(&intern->name);
-    Str_Copy(&intern->name, name);
+    Str_Set(&intern->name, Str_Text(name));
     intern->hash = hash;
 
     // Update the intern name identifier map.
