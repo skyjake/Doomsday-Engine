@@ -41,7 +41,7 @@
 
 #define OBSOLETE            CVF_NO_ARCHIVE|CVF_HIDE
 
-// Macros for accessing the console command values through the shared data ptr.
+// Macros for accessing the console variable values through the shared data ptr.
 #define CV_INT(var)         (*(int*) var->ptr)
 #define CV_BYTE(var)        (*(byte*) var->ptr)
 #define CV_FLOAT(var)       (*(float*) var->ptr)
@@ -60,15 +60,21 @@ typedef struct ddccmd_s {
     /// Next and previous overloaded versions of this command (if any).
     struct ddccmd_s* nextOverload, *prevOverload;
 
-    /// List of argument types for this command.
-    cvartype_t args[MAX_ARGS];
+    /// Execute function.
+    int (*execFunc) (byte src, int argc, char** argv);
+
+    /// Name of the command.
+    const char* name;
+
+    /// @see consoleCommandFlags
+    int flags;
 
     /// Minimum and maximum number of arguments. Used with commands
     /// that utilize an engine-validated argument list.
     int minArgs, maxArgs;
 
-    /// Publicly visible shared data.
-    ccmd_t shared;
+    /// List of argument types for this command.
+    cvartype_t args[MAX_ARGS];
 } ddccmd_t;
 
 typedef struct cvar_s {

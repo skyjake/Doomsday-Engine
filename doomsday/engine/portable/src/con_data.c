@@ -155,6 +155,9 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
     // Make a static copy of the name in the zone (this allows the source
     // data to change in case of dynamic registrations).
     { char* nameCopy = Z_Malloc(strlen(tpl->name) + 1, PU_APPSTATIC, NULL);
+    if(NULL == nameCopy)
+        Con_Error("Con_AddVariable: Failed on allocation of %lu bytes for variable name.", 
+            (unsigned long) (strlen(tpl->name) + 1));
     strcpy(nameCopy, tpl->name);
     newVar->name = nameCopy;
     }
@@ -210,7 +213,7 @@ static const char* getKnownWordName(const knownword_t* word)
     assert(word);
     switch(word->type)
     {
-    case WT_CCMD:     return ((ddccmd_t*)word->data)->shared.name;
+    case WT_CCMD:     return ((ddccmd_t*)word->data)->name;
     case WT_CVAR:     return ((cvar_t*)word->data)->name;
     case WT_CALIAS:   return ((calias_t*)word->data)->name;
     case WT_GAMEINFO: return Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data));
@@ -843,7 +846,7 @@ if(ccmd->args == NULL)
                 }
 
                 // Sanity check.
-                if(!unique && variant->shared.execFunc == ccmd->execFunc)
+                if(!unique && variant->execFunc == ccmd->execFunc)
                     Con_Error("Con_AddCommand: A CCmd by the name '%s' is "
                               "already registered and the callback funcs are "
                               "the same, is this really what you wanted?",
@@ -862,8 +865,17 @@ if(ccmd->args == NULL)
     if(!ccmdBlockSet)
         ccmdBlockSet = BlockSet_Construct(sizeof(ddccmd_t), 32);
     newCCmd = BlockSet_Allocate(ccmdBlockSet);
-
-    memcpy(&newCCmd->shared, ccmd, sizeof(newCCmd->shared));
+    // Make a static copy of the name in the zone (this allows the source
+    // data to change in case of dynamic registrations).
+    { char* nameCopy = Z_Malloc(strlen(ccmd->name) + 1, PU_APPSTATIC, NULL);
+    if(NULL == nameCopy)
+        Con_Error("Con_AddCommand: Failed on allocation of %lu bytes for command name.", 
+            (unsigned long) (strlen(ccmd->name) + 1));
+    strcpy(nameCopy, ccmd->name);
+    newCCmd->name = nameCopy;
+    }
+    newCCmd->execFunc = ccmd->execFunc;
+    newCCmd->flags = ccmd->flags;
     newCCmd->nextOverload = newCCmd->prevOverload = 0;
     newCCmd->minArgs = minArgs;
     newCCmd->maxArgs = maxArgs;
@@ -903,7 +915,7 @@ ddccmd_t* Con_FindCommand(const char* name)
     {
         ddccmd_t* ccmd;
         for(ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
-            if(!stricmp(name, ccmd->shared.name))
+            if(!stricmp(name, ccmd->name))
             {
                 // Locate the head of the overload list.
                 while(ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
@@ -996,7 +1008,7 @@ void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
         return;
 
     // Print the expected form for this ccmd.
-    Con_Printf("Usage: %s", ccmd->shared.name);
+    Con_Printf("Usage: %s", ccmd->name);
     { int i;
     for(i = 0; i < ccmd->minArgs; ++i)
     {
@@ -1017,7 +1029,7 @@ void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
     {
         // Check for extra info about this ccmd's usage.
         char* str;
-        if((str = DH_GetString(DH_Find(ccmd->shared.name), HST_INFO)))
+        if((str = DH_GetString(DH_Find(ccmd->name), HST_INFO)))
         {
             // Lets indent for neatness.
             char* line;
@@ -1272,7 +1284,7 @@ D_CMD(HelpWhat)
     if((ccmd = Con_FindCommand(argv[1])) != 0)
     {
         char* str;
-        if((str = DH_GetString(DH_Find(ccmd->shared.name), HST_DESCRIPTION)))
+        if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
             Con_Printf("%s\n", str);
 
         // Print usage info for each variant.
@@ -1325,10 +1337,10 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
         if(ccmd->prevOverload)
             return 0; // Skip overloaded variants.
 
-        if((str = DH_GetString(DH_Find(ccmd->shared.name), HST_DESCRIPTION)))
-            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s (%s)\n", ccmd->shared.name, str);
+        if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
+            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s (%s)\n", ccmd->name, str);
         else
-            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", ccmd->shared.name);
+            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", ccmd->name);
         break;
       }
       case WT_CVAR: {

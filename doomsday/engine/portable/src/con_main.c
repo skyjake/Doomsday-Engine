@@ -689,16 +689,16 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
-        if((ccmd->shared.flags & CMDF_NO_NULLGAME) && DD_IsNullGameInfo(DD_GameInfo()))
+        if((ccmd->flags & CMDF_NO_NULLGAME) && DD_IsNullGameInfo(DD_GameInfo()))
         {
-            Con_Printf("executeSubCmd: '%s' impossible with no game loaded.\n", ccmd->shared.name);
+            Con_Printf("executeSubCmd: '%s' impossible with no game loaded.\n", ccmd->name);
             return true;
         }
 
         // A dedicated server, trying to execute a ccmd not available to us?
-        if(isDedicated && (ccmd->shared.flags & CMDF_NO_DEDICATED))
+        if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
         {
-            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n", ccmd->shared.name);
+            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n", ccmd->name);
             return true;
         }
 
@@ -706,10 +706,10 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         if(isServer && isNetCmd)
         {
             // Is the command permitted for use by clients?
-            if(ccmd->shared.flags & CMDF_CLIENT)
+            if(ccmd->flags & CMDF_CLIENT)
             {
                 Con_Printf("executeSubCmd: Blocked command. A client attempted to use '%s'.\n"
-                           "This command is not permitted for use by clients\n", ccmd->shared.name);
+                           "This command is not permitted for use by clients\n", ccmd->name);
                 // \todo Tell the client!
                 return true;
             }
@@ -736,7 +736,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                 Con_Printf("executeSubCmd: Blocked command. A client"
                            " attempted to use '%s' via %s.\n"
                            "This invocation method is not permitted "
-                           "by clients\n", ccmd->shared.name, CMDTYPESTR(src));
+                           "by clients\n", ccmd->name, CMDTYPESTR(src));
                 // \todo Tell the client!
                 return true;
 
@@ -753,42 +753,42 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             break;
 
         case CMDS_DDAY:
-            if(ccmd->shared.flags & CMDF_DDAY)
+            if(ccmd->flags & CMDF_DDAY)
                 canExecute = false;
             break;
 
         case CMDS_GAME:
-            if(ccmd->shared.flags & CMDF_GAME)
+            if(ccmd->flags & CMDF_GAME)
                 canExecute = false;
             break;
 
         case CMDS_CONSOLE:
-            if(ccmd->shared.flags & CMDF_CONSOLE)
+            if(ccmd->flags & CMDF_CONSOLE)
                 canExecute = false;
             break;
 
         case CMDS_BIND:
-            if(ccmd->shared.flags & CMDF_BIND)
+            if(ccmd->flags & CMDF_BIND)
                 canExecute = false;
             break;
 
         case CMDS_CONFIG:
-            if(ccmd->shared.flags & CMDF_CONFIG)
+            if(ccmd->flags & CMDF_CONFIG)
                 canExecute = false;
             break;
 
         case CMDS_PROFILE:
-            if(ccmd->shared.flags & CMDF_PROFILE)
+            if(ccmd->flags & CMDF_PROFILE)
                 canExecute = false;
             break;
 
         case CMDS_CMDLINE:
-            if(ccmd->shared.flags & CMDF_CMDLINE)
+            if(ccmd->flags & CMDF_CMDLINE)
                 canExecute = false;
             break;
 
         case CMDS_SCRIPT:
-            if(ccmd->shared.flags & CMDF_DED)
+            if(ccmd->flags & CMDF_DED)
                 canExecute = false;
             break;
 
@@ -799,7 +799,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         if(!canExecute)
         {
             Con_Printf("Error: '%s' cannot be executed via %s.\n",
-                       ccmd->shared.name, CMDTYPESTR(src));
+                       ccmd->name, CMDTYPESTR(src));
             return true;
         }
 
@@ -812,7 +812,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
              * this call.
              */
             int result;
-            if((result = ccmd->shared.execFunc(src, args.argc, args.argv)) == false)
+            if((result = ccmd->execFunc(src, args.argc, args.argv)) == false)
             {
                 Con_Printf("Error: '%s' failed.\n", args.argv[0]);
             }
@@ -1122,7 +1122,7 @@ static int completeWord(int mode)
               }
               case WT_CCMD: {
                 ddccmd_t* ccmd = (ddccmd_t*)(*match)->data;
-                foundWord = ccmd->shared.name;
+                foundWord = ccmd->name;
                 if(printCompletions)
                     Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", foundWord);
                 break;
@@ -1164,7 +1164,7 @@ static int completeWord(int mode)
         const char* str;
         switch(completeWord->type)
         {
-        case WT_CCMD:     str = ((ddccmd_t*)completeWord->data)->shared.name; break;
+        case WT_CCMD:     str = ((ddccmd_t*)completeWord->data)->name; break;
         case WT_CVAR:     str = ((cvar_t*)completeWord->data)->name; break;
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
