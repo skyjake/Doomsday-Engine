@@ -139,7 +139,7 @@ EXPORTS
     Con_AddVariable             @32 NONAME
     Con_AddCommandList          @33 NONAME
     Con_AddVariableList         @34 NONAME
-    Con_FindVariable            @35 NONAME
+    Con_GetVariableType         @35 NONAME
     Con_GetInteger              @226 NONAME
     Con_GetFloat                @227 NONAME
     Con_GetByte                 @228 NONAME

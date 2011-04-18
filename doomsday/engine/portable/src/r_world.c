@@ -1351,7 +1351,7 @@ void R_SetupMap(int mode, int flags)
         Sv_InitPools();
 
         // Recalculate the light range mod matrix.
-        Rend_CalcLightModRange(NULL);
+        Rend_CalcLightModRange();
 
         P_MapInitPolyobjs();
         P_MapSpawnPlaneParticleGens();

@@ -739,7 +739,7 @@ void CP_CvarList(ui_object_t *ob)
     if(!var)
         return;
 
-    Con_SetInteger2(var->shared.name, value, SVF_WRITE_OVERRIDE);
+    Con_SetInteger2(var->name, value, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarEdit(ui_object_t *ob)
@@ -763,23 +763,23 @@ void CP_CvarSlider(ui_object_t *ob)
         value += (slid->value < 0? -.5f : .5f);
     }
 
-    switch(var->shared.type)
+    switch(var->type)
     {
     case CVT_FLOAT:
         if(slid->step >= .01f)
         {
-            Con_SetFloat2(var->shared.name, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
+            Con_SetFloat2(var->name, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
         }
         else
         {
-            Con_SetFloat2(var->shared.name, value, SVF_WRITE_OVERRIDE);
+            Con_SetFloat2(var->name, value, SVF_WRITE_OVERRIDE);
         }
         break;
     case CVT_INT:
-        Con_SetInteger2(var->shared.name, (int) value, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2(var->name, (int) value, SVF_WRITE_OVERRIDE);
         break;
     case CVT_BYTE:
-        Con_SetInteger2(var->shared.name, (byte) value, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2(var->name, (byte) value, SVF_WRITE_OVERRIDE);
         break;
     default:
         break;

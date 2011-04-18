@@ -42,10 +42,10 @@
 #define OBSOLETE            CVF_NO_ARCHIVE|CVF_HIDE
 
 // Macros for accessing the console command values through the shared data ptr.
-#define CV_INT(var)         (*(int*) var->shared.ptr)
-#define CV_BYTE(var)        (*(byte*) var->shared.ptr)
-#define CV_FLOAT(var)       (*(float*) var->shared.ptr)
-#define CV_CHARPTR(var)     (*(char**) var->shared.ptr)
+#define CV_INT(var)         (*(int*) var->ptr)
+#define CV_BYTE(var)        (*(byte*) var->ptr)
+#define CV_FLOAT(var)       (*(float*) var->ptr)
+#define CV_CHARPTR(var)     (*(char**) var->ptr)
 
 typedef struct {
     char cmdLine[2048];
@@ -72,8 +72,23 @@ typedef struct ddccmd_s {
 } ddccmd_t;
 
 typedef struct ddcvar_s {
-    /// Publicly visible shared data.
-    cvar_t shared;
+    /// Name of the cvar.
+    const char* name;
+
+    /// @see consoleVariableFlags
+    int flags;
+
+    /// Type of this variable.
+    cvartype_t type;
+
+    /// Pointer to the user data.
+    void* ptr;
+
+    /// Minimum and maximum values (for ints and floats).
+    float min, max;
+
+    /// On-change notification callback.
+    void (*notifyChanged)(void);
 } ddcvar_t;
 
 typedef enum {
@@ -176,6 +191,9 @@ ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args);
 void Con_AddVariable(const cvar_t* tpl);
 void Con_AddVariableList(const cvar_t* tplList);
 ddcvar_t* Con_FindVariable(const char* name);
+
+/// @return  Type of the variable associated with @a name if found else @c CVT_NULL
+cvartype_t Con_GetVariableType(const char* name);
 
 int Con_GetInteger(const char* name);
 float Con_GetFloat(const char* name);

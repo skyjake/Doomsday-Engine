@@ -609,7 +609,7 @@ void SCCloseServer(mn_object_t* obj, int option)
 
 void SCEnterPlayerSetupMenu(mn_object_t* obj, int option)
 {
-    M_SetEditFieldText(&plrNameEd, *(char**) Con_FindVariable("net-name")->ptr);
+    M_SetEditFieldText(&plrNameEd, Con_GetString("net-name"));
     plrColor = cfg.netColor;
 #if __JHEXEN__
     plrClass = cfg.netClass;

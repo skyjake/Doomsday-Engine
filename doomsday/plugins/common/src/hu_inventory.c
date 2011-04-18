@@ -100,7 +100,7 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void        ST_ResizeInventory(const struct cvar_s* cvar);
+void        ST_ResizeInventory(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -746,7 +746,7 @@ void Hu_InventoryTicker(void)
     }
 }
 
-void ST_ResizeInventory(const cvar_t* unused)
+void ST_ResizeInventory(void)
 {
     int i;
     uint maxVisSlots;

@@ -1214,7 +1214,7 @@ typedef struct cvar_s {
     float min, max;
 
     /// On-change notification callback.
-    void (*notifyChanged)(const struct cvar_s* cvar);
+    void (*notifyChanged)(void);
 } cvar_t;
 
 /**

@@ -228,8 +228,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_NETGAME          (Get(DD_NETGAME))
 #define IS_DEDICATED        (Get(DD_DEDICATED))
 
-#define CVAR(typ, x)        (*((typ) *) Con_FindVariable(x)->ptr)
-
 #define SFXVOLUME           (Get(DD_SFX_VOLUME) / 17)
 #define MUSICVOLUME         (Get(DD_MUSIC_VOLUME) / 17)
 

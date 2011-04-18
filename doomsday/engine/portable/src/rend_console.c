@@ -46,7 +46,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Rend_ConsoleUpdateBackground(const cvar_t* /*cvar*/);
+void Rend_ConsoleUpdateBackground(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -141,7 +141,7 @@ void Rend_ConsoleInit(void)
     if(inited)
     {
         Rend_ConsoleUpdateTitle();
-        Rend_ConsoleUpdateBackground(0);
+        Rend_ConsoleUpdateBackground();
     }
     else
     {   // First init.
@@ -263,7 +263,7 @@ void Rend_ConsoleUpdateTitle(void)
     memset(statusText, 0, sizeof(statusText));
 }
 
-void Rend_ConsoleUpdateBackground(const cvar_t* unused)
+void Rend_ConsoleUpdateBackground(void)
 {
     assert(inited);
     consoleBackgroundMaterial = Materials_ToMaterial(

@@ -77,7 +77,7 @@ D_CMD(Test);
 D_CMD(MovePlane);
 D_CMD(ScreenShot);
 
-void G_UpdateEyeHeight(const cvar_t* /*cvar*/);
+void G_UpdateEyeHeight(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -218,7 +218,7 @@ void G_ConsoleRegistration(void)
 /**
  * Called when the player-eyeheight cvar is changed.
  */
-void G_UpdateEyeHeight(const cvar_t* unused)
+void G_UpdateEyeHeight(void)
 {
     player_t* plr = &players[CONSOLEPLAYER];
     if(!(plr->plr->flags & DDPF_CAMERA))

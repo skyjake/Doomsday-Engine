@@ -3022,13 +3022,12 @@ void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
 void Hu_MenuCvarButton(mn_object_t* obj, int option)
 {
     cvarbutton_t* cb = obj->data;
-    cvar_t* var = Con_FindVariable(cb->cvarname);
     int value;
 
     //strcpy(obj->text, cb->active? cb->yes : cb->no);
     obj->text = cb->active? cb->yes : cb->no;
 
-    if(!var)
+    if(CVT_NULL == Con_GetVariableType(cb->cvarname))
         return;
 
     if(cb->mask)
@@ -3054,23 +3053,22 @@ void Hu_MenuCvarButton(mn_object_t* obj, int option)
 void Hu_MenuCvarList(mn_object_t* obj, int option)
 {
     mndata_list_t* list = obj->data;
-    cvar_t* var = Con_FindVariable(list->data);
     int value = ((mndata_listitem_t*) list->items)[list->selection].data;
 
     if(list->selection < 0)
         return; // Hmm?
-    if(!var)
+    if(CVT_NULL == Con_GetVariableType(list->data))
         return;
-    Con_SetInteger2(var->name, value, SVF_WRITE_OVERRIDE);
+    Con_SetInteger2(list->data, value, SVF_WRITE_OVERRIDE);
 }
 
 void Hu_MenuCvarSlider(mn_object_t* obj, int option)
 {
     mndata_slider_t* slider = obj->data;
-    cvar_t* var = Con_FindVariable(slider->data);
     float value = slider->value;
+    cvartype_t varType = Con_GetVariableType(slider->data);
 
-    if(!var)
+    if(CVT_NULL == varType)
         return;
 
     if(!slider->floatMode)
@@ -3078,21 +3076,25 @@ void Hu_MenuCvarSlider(mn_object_t* obj, int option)
         value += (slider->value < 0? -.5f : .5f);
     }
 
-    if(var->type == CVT_FLOAT)
+    if(varType == CVT_FLOAT)
     {
         if(slider->step >= .01f)
         {
-            Con_SetFloat2(var->name, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
+            Con_SetFloat2(slider->data, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
         }
         else
         {
-            Con_SetFloat2(var->name, value, SVF_WRITE_OVERRIDE);
+            Con_SetFloat2(slider->data, value, SVF_WRITE_OVERRIDE);
         }
     }
-    else if(var->type == CVT_INT)
-        Con_SetInteger2(var->name, (int) value, SVF_WRITE_OVERRIDE);
-    else if(var->type == CVT_BYTE)
-        Con_SetInteger2(var->name, (byte) value, SVF_WRITE_OVERRIDE);
+    else if(varType == CVT_INT)
+    {
+        Con_SetInteger2(slider->data, (int) value, SVF_WRITE_OVERRIDE);
+    }
+    else if(varType == CVT_BYTE)
+    {
+        Con_SetInteger2(slider->data, (byte) value, SVF_WRITE_OVERRIDE);
+    }
 }
 
 void M_DrawLoad(const mn_page_t* page, int x, int y)

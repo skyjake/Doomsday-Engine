@@ -187,7 +187,7 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     void            Con_AddVariable(const cvar_t* var);
     void            Con_AddCommandList(const ccmd_t* cmdList);
     void            Con_AddVariableList(const cvar_t* varList);
-    cvar_t*         Con_FindVariable(const char* name);
+cvartype_t Con_GetVariableType(const char* name);
     byte            Con_GetByte(const char* name);
     int             Con_GetInteger(const char* name);
     float           Con_GetFloat(const char* name);

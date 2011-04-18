@@ -832,7 +832,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
          * a full update of the console databases; thus the @c cvar
          * pointer may be invalid once a callback executes.
          */
-        hasCallback = (cvar->shared.notifyChanged != 0);
+        hasCallback = (cvar->notifyChanged != 0);
 
         if(args.argc == 2 ||
            (args.argc == 3 && !stricmp(args.argv[1], "force")))
@@ -841,75 +841,75 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             boolean forced = args.argc == 3;
 
             setting = true;
-            if(cvar->shared.flags & CVF_READ_ONLY)
+            if(cvar->flags & CVF_READ_ONLY)
             {
                 Con_Printf("%s is read-only. It can't be changed (not even "
-                           "with force)\n", cvar->shared.name);
+                           "with force)\n", cvar->name);
             }
-            else if((cvar->shared.flags & CVF_PROTECTED) && !forced)
+            else if((cvar->flags & CVF_PROTECTED) && !forced)
             {
                 Con_Printf("%s is protected. You shouldn't change its value.\n"
                            "Use the command: '%s force %s' to modify it anyway.\n",
-                           cvar->shared.name, cvar->shared.name, argptr);
+                           cvar->name, cvar->name, argptr);
             }
-            else if(cvar->shared.type == CVT_BYTE)
+            else if(cvar->type == CVT_BYTE)
             {
                 byte    val = (byte) strtol(argptr, NULL, 0);
 
                 if(!forced &&
-                   ((!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min) ||
-                    (!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)))
+                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
+                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                     out_of_range = true;
                 else
-                    Con_SetInteger(cvar->shared.name, val);
+                    Con_SetInteger(cvar->name, val);
             }
-            else if(cvar->shared.type == CVT_INT)
+            else if(cvar->type == CVT_INT)
             {
                 int     val = strtol(argptr, NULL, 0);
 
                 if(!forced &&
-                   ((!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min) ||
-                    (!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)))
+                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
+                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                     out_of_range = true;
                 else
-                    Con_SetInteger(cvar->shared.name, val);
+                    Con_SetInteger(cvar->name, val);
             }
-            else if(cvar->shared.type == CVT_FLOAT)
+            else if(cvar->type == CVT_FLOAT)
             {
                 float   val = strtod(argptr, NULL);
 
                 if(!forced &&
-                   ((!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min) ||
-                    (!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)))
+                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
+                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                     out_of_range = true;
                 else
-                    Con_SetFloat(cvar->shared.name, val);
+                    Con_SetFloat(cvar->name, val);
             }
-            else if(cvar->shared.type == CVT_CHARPTR)
+            else if(cvar->type == CVT_CHARPTR)
             {
-                Con_SetString(cvar->shared.name, argptr);
+                Con_SetString(cvar->name, argptr);
             }
         }
 
         if(out_of_range)
         {
-            if(!(cvar->shared.flags & (CVF_NO_MIN | CVF_NO_MAX)))
+            if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
                 char    temp[20];
 
-                strcpy(temp, M_TrimmedFloat(cvar->shared.min));
-                Con_Printf("Error: %s <= %s <= %s\n", temp, cvar->shared.name,
-                           M_TrimmedFloat(cvar->shared.max));
+                strcpy(temp, M_TrimmedFloat(cvar->min));
+                Con_Printf("Error: %s <= %s <= %s\n", temp, cvar->name,
+                           M_TrimmedFloat(cvar->max));
             }
-            else if(cvar->shared.flags & CVF_NO_MAX)
+            else if(cvar->flags & CVF_NO_MAX)
             {
-                Con_Printf("Error: %s >= %s\n", cvar->shared.name,
-                           M_TrimmedFloat(cvar->shared.min));
+                Con_Printf("Error: %s >= %s\n", cvar->name,
+                           M_TrimmedFloat(cvar->min));
             }
             else
             {
-                Con_Printf("Error: %s <= %s\n", cvar->shared.name,
-                           M_TrimmedFloat(cvar->shared.max));
+                Con_Printf("Error: %s <= %s\n", cvar->name,
+                           M_TrimmedFloat(cvar->max));
             }
         }
         else if(!setting || !conSilentCVars) // Show the value.
@@ -1115,7 +1115,7 @@ static int completeWord(int mode)
             {
               case WT_CVAR: {
                 ddcvar_t* cvar = (ddcvar_t*)(*match)->data;
-                foundWord = cvar->shared.name;
+                foundWord = cvar->name;
                 if(printCompletions)
                     Con_PrintCVar(cvar, "  ");
                 break;
@@ -1165,7 +1165,7 @@ static int completeWord(int mode)
         switch(completeWord->type)
         {
         case WT_CCMD:     str = ((ddccmd_t*)completeWord->data)->shared.name; break;
-        case WT_CVAR:     str = ((ddcvar_t*)completeWord->data)->shared.name; break;
+        case WT_CVAR:     str = ((ddcvar_t*)completeWord->data)->name; break;
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
         }
@@ -2075,7 +2075,7 @@ static boolean cvarAddSub(const char* name, float delta, boolean force)
     if(!cvar)
         return false;
 
-    if(cvar->shared.flags & CVF_READ_ONLY)
+    if(cvar->flags & CVF_READ_ONLY)
     {
         Con_Printf("%s (cvar) is read-only. It can not be changed (not even with force)\n", name);
         return false;
@@ -2084,10 +2084,10 @@ static boolean cvarAddSub(const char* name, float delta, boolean force)
     val = Con_GetFloat(name) + delta;
     if(!force)
     {
-        if(!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)
-            val = cvar->shared.max;
-        if(!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min)
-            val = cvar->shared.min;
+        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
+            val = cvar->max;
+        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
+            val = cvar->min;
     }
     Con_SetFloat(name, val);
     return true;
@@ -2142,7 +2142,7 @@ D_CMD(IncDec)
     if(!cvar)
         return false;
 
-    if(cvar->shared.flags & CVF_READ_ONLY)
+    if(cvar->flags & CVF_READ_ONLY)
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", argv[1]);
         return false;
@@ -2153,10 +2153,10 @@ D_CMD(IncDec)
 
     if(!force)
     {
-        if(!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)
-            val = cvar->shared.max;
-        if(!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min)
-            val = cvar->shared.min;
+        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
+            val = cvar->max;
+        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
+            val = cvar->min;
     }
 
     Con_SetFloat(argv[1], val);
@@ -2218,12 +2218,12 @@ D_CMD(If)
         return false;           // Bad operator.
 
     // Value comparison depends on the type of the variable.
-    switch(var->shared.type)
+    switch(var->type)
     {
     case CVT_BYTE:
     case CVT_INT:
         {
-        int value = (var->shared.type == CVT_INT ? CV_INT(var) : CV_BYTE(var));
+        int value = (var->type == CVT_INT ? CV_INT(var) : CV_BYTE(var));
         int test = strtol(argv[3], 0, 0);
 
         isTrue = (oper == IF_EQUAL     ? value == test :

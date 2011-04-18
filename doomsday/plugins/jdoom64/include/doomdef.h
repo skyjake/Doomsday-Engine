@@ -239,8 +239,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_NETGAME          (Get(DD_NETGAME))
 #define IS_DEDICATED        (Get(DD_DEDICATED))
 
-#define CVAR(typ, x)        (*((typ)*) Con_FindVariable(x)->ptr)
-
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
 

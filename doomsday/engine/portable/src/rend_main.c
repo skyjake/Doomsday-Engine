@@ -4653,7 +4653,7 @@ void Rend_RenderMap(void)
  * The offsets in the lightRangeModTables are added to the sector->lightLevel
  * during rendering (both positive and negative).
  */
-void Rend_CalcLightModRange(const cvar_t* unused)
+void Rend_CalcLightModRange(void)
 {
     int                 j;
     int                 mapAmbient;

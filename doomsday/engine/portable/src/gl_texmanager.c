@@ -92,7 +92,7 @@ D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
 
-void GL_DoResetDetailTextures(const cvar_t* /*cvar*/);
+void GL_DoResetDetailTextures(void);
 
 static void calcGammaTable(void);
 
@@ -2955,7 +2955,7 @@ void GL_UpdateTexParams(int mipmode)
     GL_SetTextureParams(glmode[mipmode], true, false);
 }
 
-void GL_DoUpdateTexParams(const cvar_t* unused)
+void GL_DoUpdateTexParams(void)
 {
     GL_SetTextureParams(glmode[mipmapping], true, true);
 }
@@ -2996,7 +2996,7 @@ void GL_TexReset(void)
     }
 }
 
-void GL_DoUpdateTexGamma(const cvar_t* unused)
+void GL_DoUpdateTexGamma(void)
 {
     if(texInited)
     {
@@ -3007,12 +3007,12 @@ void GL_DoUpdateTexGamma(const cvar_t* unused)
     Con_Printf("Gamma correction set to %f.\n", texGamma);
 }
 
-void GL_DoTexReset(const cvar_t* unused)
+void GL_DoTexReset(void)
 {
     GL_TexReset();
 }
 
-void GL_DoResetDetailTextures(const cvar_t* unused)
+void GL_DoResetDetailTextures(void)
 {
     GL_ReleaseGLTexturesByNamespace(TN_DETAILS);
 }

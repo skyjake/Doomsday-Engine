@@ -108,19 +108,19 @@ void GL_DeleteRawImages(void);
  * Called when changing the value of any cvar affecting texture quality which
  * in turn calls GL_TexReset. Added to remove the need for reseting manually.
  */
-void GL_DoTexReset(const cvar_t* /*cvar*/);
+void GL_DoTexReset(void);
 
 /**
  * Called when changing the value of the texture gamma cvar.
  */
-void GL_DoUpdateTexGamma(const cvar_t* /*cvar*/);
+void GL_DoUpdateTexGamma(void);
 
 /**
  * Called when changing the value of any cvar affecting texture quality which
  * can be actioned by simply changing texture paramaters i.e. does not require
  * flushing GL textures).
  */
-void GL_DoUpdateTexParams(const cvar_t* /*cvar*/);
+void GL_DoUpdateTexParams(void);
 
 void GL_UpdateTexParams(int mipmode);
 

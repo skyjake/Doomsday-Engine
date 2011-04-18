@@ -87,7 +87,7 @@ typedef enum hotloc_e {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void unhideHUD(const cvar_t* /*cvar*/);
+void unhideHUD(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -652,7 +652,7 @@ void ST_Shutdown(void)
 /**
  * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
  */
-void unhideHUD(const cvar_t* unused)
+void unhideHUD(void)
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)

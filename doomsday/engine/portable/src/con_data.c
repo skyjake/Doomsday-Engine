@@ -104,19 +104,19 @@ static void clearVariables(void)
     ddcvar_t** cvar;
     for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
     {
-        if(((*cvar)->shared.flags & CVF_CAN_FREE) &&
-           (*cvar)->shared.type == CVT_CHARPTR)
+        if(((*cvar)->flags & CVF_CAN_FREE) &&
+           (*cvar)->type == CVT_CHARPTR)
         {
-            char** ptr = (char**) (*cvar)->shared.ptr;
+            char** ptr = (char**) (*cvar)->ptr;
 
             // \note Multiple vars could be using the same pointer (so ensure
             // that we attempt to free only once).
             { uint k;
             for(k = i; k < numCVars; ++k)
-                if(cvars[k]->shared.type == CVT_CHARPTR &&
-                   *(char**) cvars[k]->shared.ptr == *ptr)
+                if(cvars[k]->type == CVT_CHARPTR &&
+                   *(char**) cvars[k]->ptr == *ptr)
                 {
-                    cvars[k]->shared.flags &= ~CVF_CAN_FREE;
+                    cvars[k]->flags &= ~CVF_CAN_FREE;
                 }
             }
             free(*ptr);
@@ -138,23 +138,28 @@ static ddcvar_t* addVariable(const cvar_t* tpl)
 
     // Find the insertion point.
     for(idx = 0; idx < numCVars-1; ++idx)
-        if(stricmp(cvars[idx]->shared.name, tpl->name) > 0)
+        if(stricmp(cvars[idx]->name, tpl->name) > 0)
             break;
 
     // Make room for the new variable.
     if(idx != numCVars-1)
         memmove(cvars + idx + 1, cvars + idx, sizeof(*cvars) * (numCVars - 1 - idx));
 
-    // Add the new variable, making a static copy of the name in the zone (this allows
-    // the source data to change in case of dynamic registrations).
     newVar = cvars[idx] = malloc(sizeof(*newVar));
-    memcpy(&newVar->shared, tpl, sizeof(newVar->shared));
+    newVar->flags = tpl->flags;
+    newVar->type = tpl->type;
+    newVar->ptr = tpl->ptr;
+    newVar->min = tpl->min;
+    newVar->max = tpl->max;
+    newVar->notifyChanged = tpl->notifyChanged;
+    // Make a static copy of the name in the zone (this allows the source
+    // data to change in case of dynamic registrations).
     { char* nameCopy = Z_Malloc(strlen(tpl->name) + 1, PU_APPSTATIC, NULL);
     strcpy(nameCopy, tpl->name);
-    newVar->shared.name = nameCopy;
+    newVar->name = nameCopy;
     }
 
-    /*{ ddstring_t path; Str_Init(&path); Str_Set(&path, newVar->shared.name);
+    /*{ ddstring_t path; Str_Init(&path); Str_Set(&path, newVar->name);
     PathDirectory_Insert(cvarDirectory, &path, newVar, '-');
     Str_Free(&path);
     }*/
@@ -206,7 +211,7 @@ static const char* getKnownWordName(const knownword_t* word)
     switch(word->type)
     {
     case WT_CCMD:     return ((ddccmd_t*)word->data)->shared.name;
-    case WT_CVAR:     return ((ddcvar_t*)word->data)->shared.name;
+    case WT_CVAR:     return ((ddcvar_t*)word->data)->name;
     case WT_CALIAS:   return ((calias_t*)word->data)->name;
     case WT_GAMEINFO: return Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data));
     }
@@ -274,7 +279,7 @@ static void updateKnownWords(void)
     { uint i;
     ddcvar_t** cvar;
     for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
-        if(!((*cvar)->shared.flags & CVF_HIDE))
+        if(!((*cvar)->flags & CVF_HIDE))
             ++knownCVars;
     }
 
@@ -314,7 +319,7 @@ static void updateKnownWords(void)
         uint i;
         for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
         {
-            if((*cvar)->shared.flags & CVF_HIDE)
+            if((*cvar)->flags & CVF_HIDE)
                 continue;
             knownWords[c].type = WT_CVAR;
             knownWords[c].data = *cvar;
@@ -366,29 +371,29 @@ void Con_SetString2(const char* name, char* text, int svflags)
     if(!cvar)
         return;
 
-    if((cvar->shared.flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
+    if((cvar->flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed "
                    "(not even with force)\n", name);
         return;
     }
 
-    if(cvar->shared.type == CVT_CHARPTR)
+    if(cvar->type == CVT_CHARPTR)
     {
         if(!CV_CHARPTR(cvar) && strlen(name) != 0 || stricmp(text, CV_CHARPTR(cvar)))
             changed = true;
 
         // Free the old string, if one exists.
-        if((cvar->shared.flags & CVF_CAN_FREE) && CV_CHARPTR(cvar))
+        if((cvar->flags & CVF_CAN_FREE) && CV_CHARPTR(cvar))
             free(CV_CHARPTR(cvar));
         // Allocate a new string.
-        cvar->shared.flags |= CVF_CAN_FREE;
+        cvar->flags |= CVF_CAN_FREE;
         CV_CHARPTR(cvar) = malloc(strlen(text) + 1);
         strcpy(CV_CHARPTR(cvar), text);
 
         // Make the change notification callback
-        if(cvar->shared.notifyChanged != NULL && changed)
-            cvar->shared.notifyChanged(&cvar->shared);
+        if(cvar->notifyChanged != NULL && changed)
+            cvar->notifyChanged();
     }
     else
         Con_Error("Con_SetString: cvar is not of type char*.\n");
@@ -410,14 +415,14 @@ void Con_SetInteger2(const char* name, int value, int svflags)
     if(!var)
         return;
 
-    if((var->shared.flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
+    if((var->flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed "
-                   "(not even with force)\n", var->shared.name);
+                   "(not even with force)\n", var->name);
         return;
     }
 
-    switch(var->shared.type)
+    switch(var->type)
     {
     case CVT_INT:
         if(CV_INT(var) != value)
@@ -436,13 +441,13 @@ void Con_SetInteger2(const char* name, int value, int svflags)
         break;
     default:
         Con_Message("Warning:Con_SetInteger: Attempt to set incompatible cvar "
-                    "%s to %i, ignoring.\n", var->shared.name, value);
+                    "%s to %i, ignoring.\n", var->name, value);
         return;
     }
 
     // Make a change notification callback?
-    if(var->shared.notifyChanged != 0 && changed)
-        var->shared.notifyChanged(&var->shared);
+    if(var->notifyChanged != 0 && changed)
+        var->notifyChanged();
     }
 }
 
@@ -461,14 +466,14 @@ void Con_SetFloat2(const char* name, float value, int svflags)
     if(!var)
         return;
 
-    if((var->shared.flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
+    if((var->flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed "
                    "(not even with force)\n", name);
         return;
     }
 
-    switch(var->shared.type)
+    switch(var->type)
     {
     case CVT_INT:
         if(CV_INT(var) != (int) value)
@@ -492,8 +497,8 @@ void Con_SetFloat2(const char* name, float value, int svflags)
     }
 
     // Make a change notification callback?
-    if(var->shared.notifyChanged != 0 && changed)
-        var->shared.notifyChanged(&var->shared);
+    if(var->notifyChanged != 0 && changed)
+        var->notifyChanged();
     }
 }
 
@@ -508,7 +513,7 @@ int Con_GetInteger(const char* name)
     {
     ddcvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
-        switch(var->shared.type)
+        switch(var->type)
         {
         case CVT_BYTE:      return CV_BYTE(var);
         case CVT_INT:       return CV_INT(var);
@@ -524,7 +529,7 @@ float Con_GetFloat(const char* name)
     assert(inited);
     { ddcvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
-        switch(var->shared.type)
+        switch(var->type)
         {
         case CVT_BYTE:      return CV_BYTE(var);
         case CVT_INT:       return CV_INT(var);
@@ -540,7 +545,7 @@ byte Con_GetByte(const char* name)
     assert(inited);
     { ddcvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
-        switch(var->shared.type)
+        switch(var->type)
         {
         case CVT_BYTE:      return CV_BYTE(var);
         case CVT_INT:       return CV_INT(var);
@@ -554,7 +559,7 @@ byte Con_GetByte(const char* name)
 char* Con_GetString(const char* name)
 {
     ddcvar_t* var = Con_FindVariable(name);
-    if(!var || var->shared.type != CVT_CHARPTR)
+    if(!var || var->type != CVT_CHARPTR)
         return "";
     return CV_CHARPTR(var);
 }
@@ -562,12 +567,18 @@ char* Con_GetString(const char* name)
 void Con_AddVariable(const cvar_t* tpl)
 {   
     assert(inited);
-    if(!tpl)
+    if(NULL == tpl)
     {
-        Con_Message("Warning:Con_AddVariable: Passed invalid value for argument "
-                    "'tpl', ignoring.\n");
+        Con_Message("Warning:Con_AddVariable: Passed invalid value for argument 'tpl', ignoring.\n");
         return;
     }
+    if(CVT_NULL == tpl->type)
+    {
+        Con_Message("Warning:Con_AddVariable: Attempt to register variable \"%s\" as type "
+            "CVT_NULL, ignoring.\n", tpl->name);
+        return;
+    }
+
     if(Con_FindVariable(tpl->name))
         Con_Error("Error: A CVAR with the name \"%s\" is already registered.", tpl->name);
 
@@ -614,7 +625,7 @@ ddcvar_t* Con_FindVariable(const char* name)
     {
         pivot = bottomIdx + (topIdx - bottomIdx)/2;
 
-        result = stricmp(cvars[pivot]->shared.name, name);
+        result = stricmp(cvars[pivot]->name, name);
         if(result == 0)
         {   // Found.
             var = cvars[pivot];
@@ -640,6 +651,14 @@ ddcvar_t* Con_FindVariable(const char* name)
     }
 }
 
+/// \note Part of the Doomsday public API
+cvartype_t Con_GetVariableType(const char* name)
+{
+    ddcvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return CVT_NULL;
+    return var->type;
+}
+
 void Con_PrintCVar(ddcvar_t* var, char* prefix)
 {
     assert(inited);
@@ -649,31 +668,28 @@ void Con_PrintCVar(ddcvar_t* var, char* prefix)
     if(!var)
         return;
 
-    if((var->shared.flags & CVF_PROTECTED) || (var->shared.flags & CVF_READ_ONLY))
+    if((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
         equals = ':';
 
     if(prefix)
         Con_Printf("%s", prefix);
 
-    switch(var->shared.type)
+    switch(var->type)
     {
-    case CVT_NULL:
-        Con_Printf("%s", var->shared.name);
-        break;
     case CVT_BYTE:
-        Con_Printf("%s %c %d", var->shared.name, equals, CV_BYTE(var));
+        Con_Printf("%s %c %d", var->name, equals, CV_BYTE(var));
         break;
     case CVT_INT:
-        Con_Printf("%s %c %d", var->shared.name, equals, CV_INT(var));
+        Con_Printf("%s %c %d", var->name, equals, CV_INT(var));
         break;
     case CVT_FLOAT:
-        Con_Printf("%s %c %g", var->shared.name, equals, CV_FLOAT(var));
+        Con_Printf("%s %c %g", var->name, equals, CV_FLOAT(var));
         break;
     case CVT_CHARPTR:
-        Con_Printf("%s %c \"%s\"", var->shared.name, equals, CV_CHARPTR(var));
+        Con_Printf("%s %c \"%s\"", var->name, equals, CV_CHARPTR(var));
         break;
     default:
-        Con_Printf("%s (bad type!)", var->shared.name);
+        Con_Printf("%s (bad type!)", var->name);
         break;
     }
     Con_Printf("\n");
@@ -1273,7 +1289,7 @@ D_CMD(HelpWhat)
         if((cvar = Con_FindVariable(argv[1])) != 0)
         {
             char* str;
-            if((str = DH_GetString(DH_Find(cvar->shared.name), HST_DESCRIPTION)) != 0)
+            if((str = DH_GetString(DH_Find(cvar->name), HST_DESCRIPTION)) != 0)
             {
                 Con_Printf("%s\n", str);
                 found = true;
@@ -1318,7 +1334,7 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
       case WT_CVAR: {
         ddcvar_t* cvar = (ddcvar_t*) word->data;
 
-        if(cvar->shared.flags & CVF_HIDE)
+        if(cvar->flags & CVF_HIDE)
             return 0; // Skip hidden variables.
 
         Con_PrintCVar(cvar, "  ");

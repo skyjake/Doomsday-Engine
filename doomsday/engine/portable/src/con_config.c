@@ -76,29 +76,29 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     FILE* file = (FILE*)paramaters;
     ddcvar_t* cvar = (ddcvar_t*)word->data;
 
-    if(cvar->shared.type == CVT_NULL || (cvar->shared.flags & CVF_NO_ARCHIVE))
+    if(cvar->flags & CVF_NO_ARCHIVE)
         return 0; // Continue iteration.
 
     // First print the comment (help text).
     { const char* str;
-    if((str = DH_GetString(DH_Find(cvar->shared.name), HST_DESCRIPTION)))
+    if((str = DH_GetString(DH_Find(cvar->name), HST_DESCRIPTION)))
         M_WriteCommented(file, str);
     }
 
-    fprintf(file, "%s ", cvar->shared.name);
-    if(cvar->shared.flags & CVF_PROTECTED)
+    fprintf(file, "%s ", cvar->name);
+    if(cvar->flags & CVF_PROTECTED)
         fprintf(file, "force ");
-    if(cvar->shared.type == CVT_BYTE)
-        fprintf(file, "%d", *(byte*) cvar->shared.ptr);
-    if(cvar->shared.type == CVT_INT)
-        fprintf(file, "%d", *(int*) cvar->shared.ptr);
-    if(cvar->shared.type == CVT_FLOAT)
-        fprintf(file, "%s", M_TrimmedFloat(*(float*) cvar->shared.ptr));
-    if(cvar->shared.type == CVT_CHARPTR)
+    if(cvar->type == CVT_BYTE)
+        fprintf(file, "%d", *(byte*) cvar->ptr);
+    if(cvar->type == CVT_INT)
+        fprintf(file, "%d", *(int*) cvar->ptr);
+    if(cvar->type == CVT_FLOAT)
+        fprintf(file, "%s", M_TrimmedFloat(*(float*) cvar->ptr));
+    if(cvar->type == CVT_CHARPTR)
     {
         fprintf(file, "\"");
-        if(*(char**) cvar->shared.ptr)
-            M_WriteTextEsc(file, *(char**) cvar->shared.ptr);
+        if(*(char**) cvar->ptr)
+            M_WriteTextEsc(file, *(char**) cvar->ptr);
         fprintf(file, "\"");
     }
     fprintf(file, "\n\n");

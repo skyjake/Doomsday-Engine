@@ -242,7 +242,7 @@ static void prepareSkySphere(void)
     }}
 
     // When the sky light color changes we must update the lightgrid.
-    LG_MarkAllForUpdate(0);
+    LG_MarkAllForUpdate();
 }
 
 void R_SkyInit(void)

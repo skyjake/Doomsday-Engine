@@ -36,7 +36,7 @@ void LG_Update(void);
 /**
  * Called when a setting is changed which affects the lightgrid.
  */
-void LG_MarkAllForUpdate(const cvar_t* /*cvar*/);
+void LG_MarkAllForUpdate(void);
 
 void LG_SectorChanged(sector_t* sector);
 void LG_Evaluate(const float* point, float* destColor);

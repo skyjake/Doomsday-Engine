@@ -68,6 +68,6 @@ boolean         Rend_DoesMidTextureFillGap(linedef_t* line, int backside, boolea
 void            Rend_ApplyLightAdaptation(float* lightvalue);
 float           Rend_GetLightAdaptVal(float lightvalue);
 
-void            Rend_CalcLightModRange(const struct cvar_s* unused);
+void            Rend_CalcLightModRange(void);
 
 #endif /* LIBDENG_REND_MAIN_H */

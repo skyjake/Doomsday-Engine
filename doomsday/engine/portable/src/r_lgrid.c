@@ -630,7 +630,7 @@ void LG_SectorChanged(sector_t* sector)
     needsUpdate = true;
 }
 
-void LG_MarkAllForUpdate(const cvar_t* unused)
+void LG_MarkAllForUpdate(void)
 {
     if(!lgInited)
         return;
