@@ -61,7 +61,7 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CVARs for the crosshair
-cvar_t xhairCVars[] = {
+cvartemplate_t xhairCVars[] = {
     {"view-cross-type", 0, CVT_INT, &cfg.xhair, 0, NUM_XHAIRS},
     {"view-cross-size", 0, CVT_FLOAT, &cfg.xhairSize, 0, 1},
     {"view-cross-vitality", 0, CVT_BYTE, &cfg.xhairVitality, 0, 1},

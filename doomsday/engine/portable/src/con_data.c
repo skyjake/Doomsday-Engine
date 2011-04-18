@@ -129,7 +129,7 @@ static void clearVariables(void)
 }
 
 /// Construct a new variable from the specified template and add it to the database.
-static ddcvar_t* addVariable(const cvar_t* tpl)
+static ddcvar_t* addVariable(const cvartemplate_t* tpl)
 {
     ddcvar_t* newVar;
     uint idx;
@@ -564,7 +564,7 @@ char* Con_GetString(const char* name)
     return CV_CHARPTR(var);
 }
 
-void Con_AddVariable(const cvar_t* tpl)
+void Con_AddVariable(const cvartemplate_t* tpl)
 {   
     assert(inited);
     if(NULL == tpl)
@@ -585,7 +585,7 @@ void Con_AddVariable(const cvar_t* tpl)
     addVariable(tpl);
 }
 
-void Con_AddVariableList(const cvar_t* tplList)
+void Con_AddVariableList(const cvartemplate_t* tplList)
 {
     assert(inited);
     if(!tplList)

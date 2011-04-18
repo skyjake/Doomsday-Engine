@@ -188,8 +188,8 @@ ddccmd_t* Con_FindCommand(const char* name);
  */
 ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args);
 
-void Con_AddVariable(const cvar_t* tpl);
-void Con_AddVariableList(const cvar_t* tplList);
+void Con_AddVariable(const cvartemplate_t* tpl);
+void Con_AddVariableList(const cvartemplate_t* tplList);
 ddcvar_t* Con_FindVariable(const char* name);
 
 /// @return  Type of the variable associated with @a name if found else @c CVT_NULL

@@ -132,7 +132,7 @@ static float   mousey;
 static pcontrolstate_t controlStates[MAXPLAYERS];
 
 // CVars for control/input
-cvar_t controlCVars[] = {
+cvartemplate_t controlCVars[] = {
 // Control (options/preferences)
     {"ctl-aim-noauto", 0, CVT_INT, &cfg.noAutoAim, 0, 1},
 

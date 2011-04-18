@@ -85,7 +85,7 @@ flare_t flares[NUM_FLARES] = {
 
 void H_Register(void)
 {
-    cvar_t          cvars[] = {
+    cvartemplate_t cvars[] = {
         {"rend-halo", 0, CVT_INT, &haloMode, 0, 5},
         {"rend-halo-realistic", 0, CVT_INT, &haloRealistic, 0, 1},
         {"rend-halo-bright", 0, CVT_INT, &haloBright, 0, 100},

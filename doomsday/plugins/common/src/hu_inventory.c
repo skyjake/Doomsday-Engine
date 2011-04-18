@@ -117,7 +117,7 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* hud,
 
 static hud_inventory_t hudInventories[MAXPLAYERS];
 
-cvar_t hudInvCVars[] = {
+cvartemplate_t hudInvCVars[] = {
     {"hud-inventory-timer", 0, CVT_FLOAT, &cfg.inventoryTimer, 0, 30},
     {"hud-inventory-slot-showempty", 0, CVT_BYTE, &cfg.inventorySlotShowEmpty, 0, 1},
     {"hud-inventory-slot-max", CVF_NO_MAX, CVT_INT, &cfg.inventorySlotMaxVis, 0, 0, ST_ResizeInventory},

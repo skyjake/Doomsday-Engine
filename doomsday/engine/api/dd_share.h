@@ -1197,14 +1197,14 @@ typedef enum {
 /**
  * Console variable template. Used with Con_AddVariable.
  */
-typedef struct cvar_s {
-    /// Name of the cvar.
+typedef struct cvartemplate_s {
+    /// Name of the variable.
     const char* name;
 
     /// @see consoleVariableFlags
     int flags;
 
-    /// Type of this variable.
+    /// Type of variable.
     cvartype_t type;
 
     /// Pointer to the user data.
@@ -1215,14 +1215,14 @@ typedef struct cvar_s {
 
     /// On-change notification callback.
     void (*notifyChanged)(void);
-} cvar_t;
+} cvartemplate_t;
 
 /**
  * Helper macros for registering new console variables.
  */
 #define C_VAR(name, ptr, type, flags, min, max, notifyChanged)            \
-    { cvar_t _v = { name, flags, type, ptr, min, max, notifyChanged };    \
-        Con_AddVariable(&_v); }
+    { cvartemplate_t _template = { name, flags, type, ptr, min, max, notifyChanged };    \
+        Con_AddVariable(&_template); }
 
 #define C_VAR_BYTE(name, ptr, flags, min, max)    \
     C_VAR(name, ptr, CVT_BYTE, flags, min, max, NULL)

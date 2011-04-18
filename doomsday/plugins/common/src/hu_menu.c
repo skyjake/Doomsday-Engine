@@ -1101,7 +1101,7 @@ static mn_page_t ColorWidgetMenu = {
 };
 
 // Cvars for the menu:
-cvar_t menuCVars[] = {
+cvartemplate_t menuCVars[] = {
     { "menu-scale",     0,  CVT_FLOAT,  &cfg.menuScale, .1f, 1 },
     { "menu-nostretch", 0,  CVT_BYTE,   &cfg.menuNoStretch, 0, 1 },
     { "menu-flash-r",   0,  CVT_FLOAT,  &cfg.flashColor[CR], 0, 1 },

@@ -185,7 +185,7 @@ static patchinfo_t godLeft;
 static patchinfo_t godRight;
 
 // CVARs for the HUD/Statusbar
-cvar_t sthudCVars[] = {
+cvartemplate_t sthudCVars[] = {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1, unhideHUD},
     {"hud-wideoffset", 0, CVT_FLOAT, &cfg.hudWideOffset, 0, 1, unhideHUD},

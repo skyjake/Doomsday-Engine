@@ -99,7 +99,7 @@ typedef struct msglog_s {
 
 static msglog_t msgLogs[MAXPLAYERS];
 
-cvar_t msgLogCVars[] = {
+cvartemplate_t msgLogCVars[] = {
     // Behaviour
     {"msg-count", 0, CVT_INT, &cfg.msgCount, 1, 8},
     {"msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60},
@@ -692,7 +692,7 @@ int player_names_idx[] = {
 };
 #endif
 
-cvar_t chatCVars[] = {
+cvartemplate_t chatCVars[] = {
     // Chat macros
     {"chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0},
     {"chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0},

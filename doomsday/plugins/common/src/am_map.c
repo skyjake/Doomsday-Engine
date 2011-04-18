@@ -79,7 +79,7 @@ static void findMinMaxBoundaries(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-cvar_t mapCVars[] = {
+cvartemplate_t mapCVars[] = {
     {"map-opacity", 0, CVT_FLOAT, &cfg.automapOpacity, 0, 1},
     {"map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__

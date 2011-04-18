@@ -252,7 +252,7 @@ int gsvWPieces[4];
 
 static gamestate_t gameState = GS_STARTUP;
 
-cvar_t gamestatusCVars[] = {
+cvartemplate_t gamestatusCVars[] = {
    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
    {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0},
    {"game-paused", READONLYCVAR, CVT_INT, &paused, 0, 0},

@@ -238,7 +238,7 @@ static patchinfo_t armsBackground;
 static patchinfo_t arms[6][2];
 
 // CVARs for the HUD/Statusbar:
-cvar_t sthudCVars[] =
+cvartemplate_t sthudCVars[] =
 {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1, unhideHUD},

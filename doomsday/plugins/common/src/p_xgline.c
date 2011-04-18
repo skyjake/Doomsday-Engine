@@ -381,7 +381,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Always Stomp", "", -1} }}               // ip5: non-zero = Always telefrag
 };
 
-cvar_t xgCVars[] =
+cvartemplate_t xgCVars[] =
 {
     {"xg-dev", CVF_NO_ARCHIVE, CVT_INT, &xgDev, 0, 1},
     {NULL}

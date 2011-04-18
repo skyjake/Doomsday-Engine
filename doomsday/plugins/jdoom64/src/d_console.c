@@ -79,7 +79,7 @@ void G_UpdateEyeHeight(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Console variables.
-cvar_t gameCVars[] = {
+cvartemplate_t gameCVars[] = {
 // View/Refresh
     {"view-size", 0, CVT_INT, &cfg.setBlocks, 3, 11},
     {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},

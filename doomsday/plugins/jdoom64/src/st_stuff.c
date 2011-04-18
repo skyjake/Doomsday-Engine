@@ -98,7 +98,7 @@ void unhideHUD(void);
 static hudstate_t hudStates[MAXPLAYERS];
 
 // CVARs for the HUD/Statusbar.
-cvar_t sthudCVars[] =
+cvartemplate_t sthudCVars[] =
 {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10, unhideHUD},
