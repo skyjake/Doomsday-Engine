@@ -66,7 +66,7 @@ static boolean inited = false;
 
 /// Console variable database and search directory.
 static uint numCVars = 0;
-static ddcvar_t** cvars = 0;
+static cvar_t** cvars = 0;
 //static pathdirectory_t* cvarDirectory;
 
 static ddccmd_t* ccmdListHead;
@@ -101,7 +101,7 @@ static void clearVariables(void)
 
     // Free the data of the data cvars.
     { uint i;
-    ddcvar_t** cvar;
+    cvar_t** cvar;
     for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
     {
         if(((*cvar)->flags & CVF_CAN_FREE) &&
@@ -129,9 +129,9 @@ static void clearVariables(void)
 }
 
 /// Construct a new variable from the specified template and add it to the database.
-static ddcvar_t* addVariable(const cvartemplate_t* tpl)
+static cvar_t* addVariable(const cvartemplate_t* tpl)
 {
-    ddcvar_t* newVar;
+    cvar_t* newVar;
     uint idx;
 
     cvars = realloc(cvars, sizeof(*cvars) * ++numCVars);
@@ -211,7 +211,7 @@ static const char* getKnownWordName(const knownword_t* word)
     switch(word->type)
     {
     case WT_CCMD:     return ((ddccmd_t*)word->data)->shared.name;
-    case WT_CVAR:     return ((ddcvar_t*)word->data)->name;
+    case WT_CVAR:     return ((cvar_t*)word->data)->name;
     case WT_CALIAS:   return ((calias_t*)word->data)->name;
     case WT_GAMEINFO: return Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data));
     }
@@ -277,7 +277,7 @@ static void updateKnownWords(void)
     // Count the number of visible console variables.
     knownCVars = 0;
     { uint i;
-    ddcvar_t** cvar;
+    cvar_t** cvar;
     for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
         if(!((*cvar)->flags & CVF_HIDE))
             ++knownCVars;
@@ -315,7 +315,7 @@ static void updateKnownWords(void)
     if(0 != knownCVars)
     {
         /// \note cvars array is already sorted.
-        ddcvar_t** cvar;
+        cvar_t** cvar;
         uint i;
         for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
         {
@@ -365,7 +365,7 @@ void Con_SetString2(const char* name, char* text, int svflags)
 {
     assert(inited);
     {
-    ddcvar_t* cvar = Con_FindVariable(name);
+    cvar_t* cvar = Con_FindVariable(name);
     boolean changed = false;
 
     if(!cvar)
@@ -409,7 +409,7 @@ void Con_SetInteger2(const char* name, int value, int svflags)
 {
     assert(inited);
     {
-    ddcvar_t* var = Con_FindVariable(name);
+    cvar_t* var = Con_FindVariable(name);
     boolean changed = false;
 
     if(!var)
@@ -460,7 +460,7 @@ void Con_SetFloat2(const char* name, float value, int svflags)
 {
     assert(inited);
     {
-    ddcvar_t* var = Con_FindVariable(name);
+    cvar_t* var = Con_FindVariable(name);
     boolean changed = false;
 
     if(!var)
@@ -511,7 +511,7 @@ int Con_GetInteger(const char* name)
 {
     assert(inited);
     {
-    ddcvar_t* var;
+    cvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
         switch(var->type)
         {
@@ -527,7 +527,7 @@ int Con_GetInteger(const char* name)
 float Con_GetFloat(const char* name)
 {
     assert(inited);
-    { ddcvar_t* var;
+    { cvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
         switch(var->type)
         {
@@ -543,7 +543,7 @@ float Con_GetFloat(const char* name)
 byte Con_GetByte(const char* name)
 {
     assert(inited);
-    { ddcvar_t* var;
+    { cvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
         switch(var->type)
         {
@@ -558,7 +558,7 @@ byte Con_GetByte(const char* name)
 
 char* Con_GetString(const char* name)
 {
-    ddcvar_t* var = Con_FindVariable(name);
+    cvar_t* var = Con_FindVariable(name);
     if(!var || var->type != CVT_CHARPTR)
         return "";
     return CV_CHARPTR(var);
@@ -603,13 +603,13 @@ void Con_AddVariableList(const cvartemplate_t* tplList)
     }
 }
 
-ddcvar_t* Con_FindVariable(const char* name)
+cvar_t* Con_FindVariable(const char* name)
 {
     assert(inited);
     {
     int result;
     uint bottomIdx, topIdx, pivot;
-    ddcvar_t* var;
+    cvar_t* var;
     boolean isDone;
 
     if(numCVars == 0)
@@ -654,12 +654,12 @@ ddcvar_t* Con_FindVariable(const char* name)
 /// \note Part of the Doomsday public API
 cvartype_t Con_GetVariableType(const char* name)
 {
-    ddcvar_t* var = Con_FindVariable(name);
+    cvar_t* var = Con_FindVariable(name);
     if(NULL == var) return CVT_NULL;
     return var->type;
 }
 
-void Con_PrintCVar(ddcvar_t* var, char* prefix)
+void Con_PrintCVar(cvar_t* var, char* prefix)
 {
     assert(inited);
     {
@@ -1285,7 +1285,7 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Perhaps its a cvar then?
     {
-        ddcvar_t* cvar;
+        cvar_t* cvar;
         if((cvar = Con_FindVariable(argv[1])) != 0)
         {
             char* str;
@@ -1332,7 +1332,7 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
         break;
       }
       case WT_CVAR: {
-        ddcvar_t* cvar = (ddcvar_t*) word->data;
+        cvar_t* cvar = (cvar_t*) word->data;
 
         if(cvar->flags & CVF_HIDE)
             return 0; // Skip hidden variables.

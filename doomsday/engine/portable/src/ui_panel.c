@@ -700,7 +700,7 @@ void CP_DrawBorder(ui_object_t *ob)
 void CP_CvarButton(ui_object_t *ob)
 {
     cvarbutton_t *cb = ob->data;
-    ddcvar_t     *var = Con_FindVariable(cb->cvarname);
+    cvar_t     *var = Con_FindVariable(cb->cvarname);
     int         value;
 
     strcpy(ob->text, cb->active? cb->yes : cb->no);
@@ -731,7 +731,7 @@ void CP_CvarButton(ui_object_t *ob)
 void CP_CvarList(ui_object_t *ob)
 {
     uidata_list_t *list = ob->data;
-    ddcvar_t     *var = Con_FindVariable(list->data);
+    cvar_t     *var = Con_FindVariable(list->data);
     int         value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
     if(list->selection < 0)
@@ -752,7 +752,7 @@ void CP_CvarEdit(ui_object_t *ob)
 void CP_CvarSlider(ui_object_t *ob)
 {
     uidata_slider_t *slid = ob->data;
-    ddcvar_t     *var = Con_FindVariable(slid->data);
+    cvar_t     *var = Con_FindVariable(slid->data);
     float       value = slid->value;
 
     if(!var)

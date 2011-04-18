@@ -71,7 +71,7 @@ typedef struct ddccmd_s {
     ccmd_t shared;
 } ddccmd_t;
 
-typedef struct ddcvar_s {
+typedef struct cvar_s {
     /// Name of the cvar.
     const char* name;
 
@@ -89,7 +89,7 @@ typedef struct ddcvar_s {
 
     /// On-change notification callback.
     void (*notifyChanged)(void);
-} ddcvar_t;
+} cvar_t;
 
 typedef enum {
     WT_ANY = -1,
@@ -190,7 +190,7 @@ ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args);
 
 void Con_AddVariable(const cvartemplate_t* tpl);
 void Con_AddVariableList(const cvartemplate_t* tplList);
-ddcvar_t* Con_FindVariable(const char* name);
+cvar_t* Con_FindVariable(const char* name);
 
 /// @return  Type of the variable associated with @a name if found else @c CVT_NULL
 cvartype_t Con_GetVariableType(const char* name);
@@ -312,7 +312,7 @@ void Con_PrintPathList3(const char* pathList, const char* seperator, int flags);
 void Con_PrintPathList2(const char* pathList, const char* seperator);
 void Con_PrintPathList(const char* pathList);
 
-void Con_PrintCVar(ddcvar_t* cvar, char* prefix);
+void Con_PrintCVar(cvar_t* cvar, char* prefix);
 
 /**
  * Outputs the usage information for the given ccmd to the console if the

@@ -74,7 +74,7 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     assert(word && paramaters);
     {
     FILE* file = (FILE*)paramaters;
-    ddcvar_t* cvar = (ddcvar_t*)word->data;
+    cvar_t* cvar = (cvar_t*)word->data;
 
     if(cvar->flags & CVF_NO_ARCHIVE)
         return 0; // Continue iteration.

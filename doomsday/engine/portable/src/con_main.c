@@ -653,7 +653,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
     cmdargs_t   args;
     ddccmd_t   *ccmd;
-    ddcvar_t   *cvar;
+    cvar_t   *cvar;
     calias_t   *cal;
 
     PrepareCmdArgs(&args, subCmd);
@@ -1114,7 +1114,7 @@ static int completeWord(int mode)
             switch((*match)->type)
             {
               case WT_CVAR: {
-                ddcvar_t* cvar = (ddcvar_t*)(*match)->data;
+                cvar_t* cvar = (cvar_t*)(*match)->data;
                 foundWord = cvar->name;
                 if(printCompletions)
                     Con_PrintCVar(cvar, "  ");
@@ -1165,7 +1165,7 @@ static int completeWord(int mode)
         switch(completeWord->type)
         {
         case WT_CCMD:     str = ((ddccmd_t*)completeWord->data)->shared.name; break;
-        case WT_CVAR:     str = ((ddcvar_t*)completeWord->data)->name; break;
+        case WT_CVAR:     str = ((cvar_t*)completeWord->data)->name; break;
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
         }
@@ -2069,7 +2069,7 @@ D_CMD(Echo)
 
 static boolean cvarAddSub(const char* name, float delta, boolean force)
 {
-    ddcvar_t* cvar = Con_FindVariable(name);
+    cvar_t* cvar = Con_FindVariable(name);
     float val;
 
     if(!cvar)
@@ -2125,7 +2125,7 @@ D_CMD(AddSub)
 D_CMD(IncDec)
 {
     boolean force = false;
-    ddcvar_t* cvar;
+    cvar_t* cvar;
     float val;
 
     if(argc == 1)
@@ -2191,7 +2191,7 @@ D_CMD(If)
         {NULL,  0}
     };
     uint        i, oper;
-    ddcvar_t     *var;
+    cvar_t     *var;
     boolean     isTrue = false;
 
     if(argc != 5 && argc != 6)
