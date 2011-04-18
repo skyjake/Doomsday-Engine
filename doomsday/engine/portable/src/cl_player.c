@@ -327,6 +327,7 @@ mobj_t* ClPlayer_ClMobj(int plrNum)
     return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
 }
 
+#if 0
 /**
  * Predict the movement of the given player.
  *
@@ -389,6 +390,7 @@ void ClPlayer_Move(int plrNum)
     // Mirror changes in the (hidden) client mobj.
     ClPlayer_UpdatePos(plrNum);
 }
+#endif
 
 /**
  * Move the (hidden, unlinked) client player mobj to the same coordinates
@@ -491,22 +493,22 @@ void ClPlayer_HandleFix(void)
         pos[VZ] = FIX2FLT(Msg_ReadLong());
 
 #ifdef _DEBUG
-Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
-            ddpl->fixAcked.pos, pos[VX], pos[VY], pos[VZ]);
+        Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
+                    ddpl->fixAcked.pos, pos[VX], pos[VY], pos[VZ]);
 #endif
         if(mo)
         {
 #ifdef _DEBUG
-Con_Message("  Applying to mobj %p...\n", mo);
+            Con_Message("  Applying to mobj %p...\n", mo);
 #endif
-            Sv_PlaceMobj(mo, pos[VX], pos[VY], pos[VZ], false);
+            P_MobjSetPos(mo, pos[VX], pos[VY], pos[VZ]);
             mo->reactionTime = 18;
         }
 
         if(clmo)
         {
 #ifdef _DEBUG
-Con_Message("  Applying to clmobj %i...\n", clmo->thinker.id);
+            Con_Message("  Applying to clmobj %i...\n", clmo->thinker.id);
 #endif
             ClPlayer_UpdatePos(plr - ddPlayers);
         }

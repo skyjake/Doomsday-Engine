@@ -47,17 +47,18 @@
 // MACROS ------------------------------------------------------------------
 
 // Max. distance to move in one call to P_MobjMoveXY.
-#define MAXMOVE         30
+//#define MAXMOVE         30
 
 // Shortest possible movement step.
-#define MINMOVE         (1.0f/128)
+//#define MINMOVE         (1.0f/128)
 
-#define MIN_STEP(d)     ((d) <= MINMOVE && (d) >= -MINMOVE)
+//#define MIN_STEP(d)     ((d) <= MINMOVE && (d) >= -MINMOVE)
 
-#define STOPSPEED       (0.1f/1.6f)
+//#define STOPSPEED       (0.1f/1.6f)
 
 // TYPES -------------------------------------------------------------------
 
+/*
 typedef struct {
     mobj_t     *mo;
     vec2_t      box[2];
@@ -65,6 +66,7 @@ typedef struct {
     float       pos[3];
     float       height, floorZ, ceilingZ, dropOffZ;
 } checkpos_data_t;
+*/
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -77,14 +79,14 @@ typedef struct {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // If set to true, P_CheckPosition will skip the mobj hit test.
-boolean dontHitMobjs = false;
+//boolean dontHitMobjs = false;
 
-float tmpFloorZ;
-float tmpCeilingZ;
+//float tmpFloorZ;
+//float tmpCeilingZ;
 
 // When a mobj is contacted in PIT_CheckMobj, this pointer is set.
 // It's reset to NULL in the beginning of P_CheckPosition.
-mobj_t *blockingMobj;
+//mobj_t *blockingMobj;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -154,7 +156,9 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->ddFlags = ddflags;
     mo->thinker.function = function;
     if(mo->thinker.function)
+    {
         P_ThinkerAdd(&mo->thinker, true); // Make it public.
+    }
 
     return mo;
 }
@@ -236,6 +240,21 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
 }
 
 /**
+ * Sets a mobj's position.
+ *
+ * @return  @c true if successful, @c false otherwise. The object's position is
+ *          not changed if the move fails.
+ *
+ * @note  Internal to the engine.
+ */
+boolean P_MobjSetPos(struct mobj_s* mo, float x, float y, float z)
+{
+    assert(gx.MobjTryMove3f != 0);
+    return gx.MobjTryMove3f(mo, x, y, z);
+}
+
+#if 0
+/**
  * Adjusts tmpFloorZ and tmpCeilingZ as lines are contacted.
  */
 boolean PIT_LineCollide(linedef_t* ld, void* parm)
@@ -279,7 +298,9 @@ boolean PIT_LineCollide(linedef_t* ld, void* parm)
     tm->mo->wallHit = false;
     return true;
 }
+#endif
 
+#if 0
 boolean PIT_MobjCollide(mobj_t* mo, void* parm)
 {
     checkpos_data_t*    tm = parm;
@@ -353,7 +374,9 @@ boolean PIT_MobjCollide(mobj_t* mo, void* parm)
 
     return false;
 }
+#endif
 
+#if 0
 /**
  * @return              @c true, if the mobj can be positioned at the
  *                      specified coordinates.
@@ -418,7 +441,9 @@ boolean P_CheckPosXYZ(mobj_t *mo, float x, float y, float z)
     tmpDropOffZ = data.dropOffZ;
     return result;
 }
+#endif
 
+#if 0
 /**
  * @return              @c true, if the mobj can be positioned at the
  *                      specified coordinates, assuming traditional 2D DOOM
@@ -561,7 +586,9 @@ boolean P_StepMove(mobj_t *mo, float dx, float dy, float dz)
 
     return notHit;
 }
+#endif
 
+#if 0
 /**
  * Takes a valid mobj and adjusts the mobj->floorZ, mobj->ceilingZ, and
  * possibly mobj->z. This is called for all nearby mobjs whenever a sector
@@ -608,7 +635,9 @@ static boolean heightClip(mobj_t *mo)
         return false;
     return true;
 }
+#endif
 
+#if 0
 /**
  * Allows the player to slide along any angled walls. Adjusts the player's
  * momentum vector so that the next move slides along the linedef.
@@ -652,7 +681,9 @@ static void wallMomSlide(linedef_t *ld)
     tmpMom[VX] = newlen * FIX2FLT(fineCosine[an]);
     tmpMom[VY] = newlen * FIX2FLT(finesine[an]);
 }
+#endif
 
+#if 0
 static boolean slideTraverse(intercept_t *in)
 {
     linedef_t          *li;
@@ -700,7 +731,9 @@ static boolean slideTraverse(intercept_t *in)
 
     return false; // Stop iteration.
 }
+#endif
 
+#if 0
 /**
  * The momx / momy move is bad, so try to slide along a wall.
  * Find the first line hit, move flush to it, and slide along it
@@ -799,7 +832,9 @@ static void mobjSlideMove(mobj_t *mo)
         goto retry;
     }
 }
+#endif
 
+#if 0
 /**
  * After modifying a sectors floor or ceiling height, call this routine
  * to adjust the positions of all mobjs that touch the sector.
@@ -1001,3 +1036,4 @@ void P_MobjZMovement(mobj_t *mo)
         mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
 }
+#endif

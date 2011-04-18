@@ -209,7 +209,7 @@ void Cl_MoverThinker(mover_t *mover)
                 mover->sectornum) );
 #endif
 
-    P_SectorPlanesChanged(mover->sectornum);
+    //P_SectorPlanesChanged(mover->sectornum);
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
@@ -221,7 +221,7 @@ void Cl_MoverThinker(mover_t *mover)
         // Something was blocking the way! Go back to original height.
         P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original);
 
-        P_SectorPlanesChanged(mover->sectornum);
+        //P_SectorPlanesChanged(mover->sectornum);
     }
     else if(remove)             // Can we remove this thinker?
     {
@@ -647,7 +647,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // the sector.
     if(wasChanged)
     {
-        P_SectorPlanesChanged(GET_SECTOR_IDX(sec));
+        //P_SectorPlanesChanged(GET_SECTOR_IDX(sec));
     }
 
     // Do we need to start any moving planes?

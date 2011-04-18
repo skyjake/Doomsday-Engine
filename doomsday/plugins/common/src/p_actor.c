@@ -162,7 +162,7 @@ justDoIt:
  */
 void P_MobjSetPosition(mobj_t* mo)
 {
-    int                 flags = DDLINK_BLOCKMAP;
+    int flags = DDLINK_BLOCKMAP;
 
     if(!(mo->flags & MF_NOSECTOR))
         flags |= DDLINK_SECTOR;

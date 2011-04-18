@@ -1173,24 +1173,6 @@ boolean Sv_CheckBandwidth(int playerNumber)
     return qSize <= 10 * limit;
 }
 
-void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
-{
-    P_CheckPosXYZ(mo, x, y, z);
-
-    P_MobjUnlink(mo);
-    mo->pos[VX] = x;
-    mo->pos[VY] = y;
-    mo->pos[VZ] = z;
-    P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-    mo->floorZ = tmpFloorZ;
-    mo->ceilingZ = tmpCeilingZ;
-
-    if(onFloor)
-    {
-        mo->pos[VZ] = mo->floorZ;
-    }
-}
-
 /**
  * Reads a PKT_COORDS packet from the message buffer. We trust the
  * client's position and change ours to match it. The client better not
@@ -1228,32 +1210,25 @@ void Sv_ClientCoords(int plrNum)
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
-    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos &&
-       P_CheckPosXYZ(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
+    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
     {
-        // Large differences in the coordinates suggest that player position
-        // has been misestimated on serverside.
-
-        // Prevent illegal stepups.
-        /*if(tmpFloorZ - mo->pos[VZ] <= 24 ||
-           // But also allow warping the position.
-           (fabs(clientPos[VX] - mo->pos[VX]) > WARP_LIMIT ||
-            fabs(clientPos[VY] - mo->pos[VY]) > WARP_LIMIT ||
-            fabs(clientPos[VZ] - mo->pos[VZ]) > WARP_LIMIT))
-        {*/
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
-                                  clientPos[VX], clientPos[VY], clientPos[VZ]) );
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
+                              clientPos[VX], clientPos[VY], clientPos[VZ]) );
 #endif
-            Sv_PlaceMobj(mo, clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
-            /*
-        }
-        else
+        if(!P_MobjSetPos(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
         {
-#ifdef _DEBUG
-            Con_Message("Sv_ClientCoords: Discarding coords for player %i.\n", plrNum);
-#endif
-        }*/
+            Con_Message("Sv_ClientCoords: Player %i attempts an illegal move to: %f, %f, %f\n", plrNum,
+                        clientPos[VX], clientPos[VY], clientPos[VZ]);
+
+            // We need to restore the client's old position.
+            ddpl->flags |= DDPF_FIXPOS;
+        }
+        else // The move was successful.
+        {
+            if(onFloor)
+                mo->pos[VZ] = mo->floorZ;
+        }
     }
 }
 

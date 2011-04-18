@@ -64,9 +64,6 @@ size_t          Sv_InfoToString(serverinfo_t* info, ddstring_t* msg);
 boolean         Sv_StringToInfo(const char* valuePair, serverinfo_t* info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
-void            Sv_PlaceMobj(struct mobj_s* mo, float x, float y, float z,
-                             boolean onFloor);
-
 boolean         Sv_CheckBandwidth(int playerNumber);
 
 #endif
