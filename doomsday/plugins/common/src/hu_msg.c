@@ -63,7 +63,7 @@ D_CMD(MsgResponse);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ccmd_t msgCCmds[] = {
+ccmdtemplate_t msgCCmds[] = {
     {"messageyes",      "",     CCmdMsgResponse},
     {"messageno",       "",     CCmdMsgResponse},
     {"messagecancel",   "",     CCmdMsgResponse},

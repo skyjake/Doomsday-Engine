@@ -91,7 +91,7 @@ static uint finaleStackSize = 0;
 static fi_state_t* finaleStack = 0;
 
 // Console commands for this library:
-static ccmd_t ccmds[] = {
+static ccmdtemplate_t ccmds[] = {
     { "startfinale",    "s",    CCmdStartFinale },
     { "startinf",       "s",    CCmdStartFinale },
     { "stopfinale",     "",     CCmdStopFinale },

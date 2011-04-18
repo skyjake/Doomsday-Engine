@@ -195,7 +195,7 @@ void            D_NetMessage(int player, const char *msg);
 void            D_NetMessageNoSound(int player, const char *msg);
 
 // Console commands.
-extern ccmd_t   netCCmds[];
+extern ccmdtemplate_t   netCCmds[];
 
 extern float    netJumpPower;
 

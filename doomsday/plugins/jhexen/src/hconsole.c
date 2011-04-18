@@ -165,7 +165,7 @@ cvartemplate_t gameCVars[] = {
 };
 
 //  Console commands
-ccmd_t  gameCCmds[] = {
+ccmdtemplate_t  gameCCmds[] = {
     {"spy",         "",     CCmdCycleSpy},
     {"screenshot",  "",     CCmdScreenShot},
 

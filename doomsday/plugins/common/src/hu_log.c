@@ -709,7 +709,7 @@ cvartemplate_t chatCVars[] = {
 };
 
 // Console commands for the chat widget and message log.
-ccmd_t chatCCmds[] = {
+ccmdtemplate_t chatCCmds[] = {
     {"chatcancel",      "",     CCmdMsgAction},
     {"chatcomplete",    "",     CCmdMsgAction},
     {"chatdelete",      "",     CCmdMsgAction},

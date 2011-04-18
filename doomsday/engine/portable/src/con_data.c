@@ -699,7 +699,7 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
     }
 }
 
-void Con_AddCommand(const ccmd_t* ccmd)
+void Con_AddCommand(const ccmdtemplate_t* ccmd)
 {
     assert(inited);
     {
@@ -898,7 +898,7 @@ if(ccmd->args == NULL)
     }
 }
 
-void Con_AddCommandList(const ccmd_t* cmdList)
+void Con_AddCommandList(const ccmdtemplate_t* cmdList)
 {
     if(!cmdList)
         return;

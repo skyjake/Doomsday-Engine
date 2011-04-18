@@ -387,7 +387,7 @@ cvartemplate_t xgCVars[] =
     {NULL}
 };
 
-ccmd_t xgCCmds[] =
+ccmdtemplate_t xgCCmds[] =
 {
     {"movefloor",  NULL, CCmdMovePlane},
     {"moveceil",   NULL, CCmdMovePlane},

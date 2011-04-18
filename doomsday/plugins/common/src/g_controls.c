@@ -158,7 +158,7 @@ cvartemplate_t controlCVars[] = {
     {NULL}
 };
 
-ccmd_t  controlCmds[] = {
+ccmdtemplate_t  controlCmds[] = {
     { "defaultgamebindings",    "",     CCmdDefaultGameBinds },
     { "pause",                  "",     CCmdPause },
     { NULL }

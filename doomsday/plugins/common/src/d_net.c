@@ -79,7 +79,7 @@ char msgBuff[NETBUFFER_MAXMESSAGE];
 float netJumpPower = 9;
 
 // Net code related console commands
-ccmd_t netCCmds[] = {
+ccmdtemplate_t netCCmds[] = {
     {"setcolor", "i", CCmdSetColor},
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {"setmap", "ii", CCmdSetMap},

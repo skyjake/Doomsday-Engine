@@ -394,7 +394,7 @@ cvartemplate_t gamestatusCVars[] = {
    {NULL}
 };
 
-ccmd_t gameCmds[] = {
+ccmdtemplate_t gameCmds[] = {
     { "listmaps",    "",     CCmdListMaps },
     { NULL }
 };

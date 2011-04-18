@@ -1133,7 +1133,7 @@ cvartemplate_t menuCVars[] = {
 };
 
 // Console commands for the menu:
-ccmd_t menuCCmds[] = {
+ccmdtemplate_t menuCCmds[] = {
     { "menu",           "",     CCmdMenuAction },
     { "menuup",         "",     CCmdMenuAction },
     { "menudown",       "",     CCmdMenuAction },

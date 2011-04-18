@@ -1136,8 +1136,10 @@ typedef enum bfcinverse_e {
 #define CMDS_SCRIPT         8 /// Sent based on a def in a DED file eg (state->execute).
 /*@}*/
 
-// Console command.
-typedef struct ccmd_s {
+/**
+ * Console command template. Used with Con_AddCommand.
+ */
+typedef struct ccmdtemplate_s {
     /// Name of the command.
     const char* name;
 
@@ -1149,7 +1151,7 @@ typedef struct ccmd_s {
 
     /// @see consoleCommandFlags
     int flags;
-} ccmd_t;
+} ccmdtemplate_t;
 
 // Helper macro for declaring console command functions.
 #define D_CMD(x)            int CCmd##x(byte src, int argc, char** argv)
@@ -1158,10 +1160,10 @@ typedef struct ccmd_s {
  * Helper macros for registering new console commands.
  */
 #define C_CMD(name, argTemplate, fn) \
-    { ccmd_t _c = { name, argTemplate, CCmd##fn, 0 }; Con_AddCommand(&_c); }
+    { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, 0 }; Con_AddCommand(&_template); }
 
 #define C_CMD_FLAGS(name, argTemplate, fn, flags) \
-    { ccmd_t _c = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_c); }
+    { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_template); }
 
 /**
  * @defgroup consoleVariableFlags Console Variable flags.

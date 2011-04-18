@@ -173,8 +173,8 @@ void Con_FontScale(float* scaleX, float* scaleY);
 
 void Con_SetFontScale(float scaleX, float scaleY);
 
-void Con_AddCommand(const ccmd_t* cmd);
-void Con_AddCommandList(const ccmd_t* cmdList);
+void Con_AddCommand(const ccmdtemplate_t* cmd);
+void Con_AddCommandList(const ccmdtemplate_t* cmdList);
 
 /**
  * Search the console database for a named command. If one or more overloaded
