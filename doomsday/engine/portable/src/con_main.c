@@ -652,7 +652,7 @@ static void expandWithArguments(char **expCommand, cmdargs_t *args)
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
     cmdargs_t   args;
-    ddccmd_t   *ccmd;
+    ccmd_t   *ccmd;
     cvar_t   *cvar;
     calias_t   *cal;
 
@@ -1121,7 +1121,7 @@ static int completeWord(int mode)
                 break;
               }
               case WT_CCMD: {
-                ddccmd_t* ccmd = (ddccmd_t*)(*match)->data;
+                ccmd_t* ccmd = (ccmd_t*)(*match)->data;
                 foundWord = ccmd->name;
                 if(printCompletions)
                     Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", foundWord);
@@ -1164,7 +1164,7 @@ static int completeWord(int mode)
         const char* str;
         switch(completeWord->type)
         {
-        case WT_CCMD:     str = ((ddccmd_t*)completeWord->data)->name; break;
+        case WT_CCMD:     str = ((ccmd_t*)completeWord->data)->name; break;
         case WT_CVAR:     str = ((cvar_t*)completeWord->data)->name; break;
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;

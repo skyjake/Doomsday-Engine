@@ -69,7 +69,7 @@ static uint numCVars = 0;
 static cvar_t** cvars = 0;
 //static pathdirectory_t* cvarDirectory;
 
-static ddccmd_t* ccmdListHead;
+static ccmd_t* ccmdListHead;
 /// \todo Replace with a data structure that allows for deletion of elements.
 static blockset_t* ccmdBlockSet;
 /// Running total of the number of uniquely-named commands.
@@ -213,7 +213,7 @@ static const char* getKnownWordName(const knownword_t* word)
     assert(word);
     switch(word->type)
     {
-    case WT_CCMD:     return ((ddccmd_t*)word->data)->name;
+    case WT_CCMD:     return ((ccmd_t*)word->data)->name;
     case WT_CVAR:     return ((cvar_t*)word->data)->name;
     case WT_CALIAS:   return ((calias_t*)word->data)->name;
     case WT_GAMEINFO: return Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data));
@@ -304,7 +304,7 @@ static void updateKnownWords(void)
     c = 0;
     // Add commands?
     /// \note ccmd list is NOT yet sorted.
-    { ddccmd_t* ccmd;
+    { ccmd_t* ccmd;
     for(ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
     {
         if(ccmd->prevOverload)
@@ -705,7 +705,7 @@ void Con_AddCommand(const ccmdtemplate_t* ccmd)
     {
     int minArgs, maxArgs;
     cvartype_t args[MAX_ARGS];
-    ddccmd_t* newCCmd, *overloaded = 0;
+    ccmd_t* newCCmd, *overloaded = 0;
 
     if(!ccmd)
         return;
@@ -813,7 +813,7 @@ if(ccmd->args == NULL)
     // Now check that the ccmd to be registered is unique.
     // We allow multiple ccmds with the same name if we can determine by
     // their paramater lists that they are unique (overloading).
-    { ddccmd_t* other;
+    { ccmd_t* other;
     if((other = Con_FindCommand(ccmd->name)) != 0)
     {
         boolean unique = true;
@@ -826,7 +826,7 @@ if(ccmd->args == NULL)
         if(unique)
         {
             // Check each variant.
-            ddccmd_t* variant = other;
+            ccmd_t* variant = other;
             do
             {
                 // An existing ccmd with no validation?
@@ -863,7 +863,7 @@ if(ccmd->args == NULL)
     }}
 
     if(!ccmdBlockSet)
-        ccmdBlockSet = BlockSet_Construct(sizeof(ddccmd_t), 32);
+        ccmdBlockSet = BlockSet_Construct(sizeof(ccmd_t), 32);
     newCCmd = BlockSet_Allocate(ccmdBlockSet);
     // Make a static copy of the name in the zone (this allows the source
     // data to change in case of dynamic registrations).
@@ -907,13 +907,13 @@ void Con_AddCommandList(const ccmdtemplate_t* cmdList)
         Con_AddCommand(cmdList);
 }
 
-ddccmd_t* Con_FindCommand(const char* name)
+ccmd_t* Con_FindCommand(const char* name)
 {
     assert(inited);
     // \todo Use a faster than O(n) linear search.
     if(name && name[0])
     {
-        ddccmd_t* ccmd;
+        ccmd_t* ccmd;
         for(ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
             if(!stricmp(name, ccmd->name))
             {
@@ -925,17 +925,17 @@ ddccmd_t* Con_FindCommand(const char* name)
     return 0;
 }
 
-ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
+ccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
 {
     assert(inited);
 
     if(!args)
         return 0;
 
-    { ddccmd_t* ccmd;
+    { ccmd_t* ccmd;
     if((ccmd = Con_FindCommand(args->argv[0])) != 0)
     {
-        ddccmd_t* variant = ccmd;
+        ccmd_t* variant = ccmd;
         // Check each variant.
         do
         {
@@ -1000,7 +1000,7 @@ boolean Con_IsValidCommand(const char* name)
     return (Con_FindAlias(name) != 0);
 }
 
-void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
+void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean showExtra)
 {
     assert(inited);
 
@@ -1280,7 +1280,7 @@ D_CMD(HelpWhat)
     }
 
     // Try the console commands first.
-    { ddccmd_t* ccmd;
+    { ccmd_t* ccmd;
     if((ccmd = Con_FindCommand(argv[1])) != 0)
     {
         char* str;
@@ -1331,7 +1331,7 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
     switch(word->type)
     {
       case WT_CCMD: {
-        ddccmd_t* ccmd = (ddccmd_t*) word->data;
+        ccmd_t* ccmd = (ccmd_t*) word->data;
         char* str;
 
         if(ccmd->prevOverload)

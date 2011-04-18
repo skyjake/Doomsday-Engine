@@ -53,12 +53,12 @@ typedef struct {
     char* argv[MAX_ARGS];
 } cmdargs_t;
 
-typedef struct ddccmd_s {
+typedef struct ccmd_s {
     /// Next command in the global list.
-    struct ddccmd_s* next;
+    struct ccmd_s* next;
 
     /// Next and previous overloaded versions of this command (if any).
-    struct ddccmd_s* nextOverload, *prevOverload;
+    struct ccmd_s* nextOverload, *prevOverload;
 
     /// Execute function.
     int (*execFunc) (byte src, int argc, char** argv);
@@ -75,7 +75,7 @@ typedef struct ddccmd_s {
 
     /// List of argument types for this command.
     cvartype_t args[MAX_ARGS];
-} ddccmd_t;
+} ccmd_t;
 
 typedef struct cvar_s {
     /// Name of the cvar.
@@ -183,7 +183,7 @@ void Con_AddCommandList(const ccmdtemplate_t* cmdList);
  * @param name              Name of the command to search for.
  * @return  Found command else @c 0
  */
-ddccmd_t* Con_FindCommand(const char* name);
+ccmd_t* Con_FindCommand(const char* name);
 
 /**
  * Search the console database for a command. If one or more overloaded variants
@@ -192,7 +192,7 @@ ddccmd_t* Con_FindCommand(const char* name);
  * @param args  
  * @return  Found command else @c 0
  */
-ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args);
+ccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args);
 
 void Con_AddVariable(const cvartemplate_t* tpl);
 void Con_AddVariableList(const cvartemplate_t* tplList);
@@ -327,6 +327,6 @@ void Con_PrintCVar(cvar_t* cvar, char* prefix);
  * @param ccmd              Ptr to the ccmd to print the usage info for.
  * @param showExtra         If @c true, print any additional info we have.
  */
-void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra);
+void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean showExtra);
 
 #endif /* LIBDENG_CONSOLE_MAIN_H */
