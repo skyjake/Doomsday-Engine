@@ -63,6 +63,8 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance,
 void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance);
 #endif
 
+boolean         P_TryMove3f(mobj_t* thing, float x, float y, float z);
+
 #if !__JHEXEN__
 boolean         P_TryMove(mobj_t* thing, float x, float y,
                           boolean dropoff, boolean slide);

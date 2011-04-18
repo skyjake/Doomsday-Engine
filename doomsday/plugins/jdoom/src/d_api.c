@@ -37,6 +37,7 @@
 #include "hu_menu.h"
 #include "xgclass.h"
 #include "g_update.h"
+#include "p_map.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
 
@@ -157,6 +158,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.MobjTryMove3f = P_TryMove3f;
     gx.EndFrame = G_EndFrame;
     gx.ConsoleBackground = D_ConsoleBg;
     gx.UpdateState = G_UpdateState;

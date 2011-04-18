@@ -38,6 +38,7 @@
 #include "d_netsv.h"
 #include "p_setup.h"
 #include "p_mapsetup.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -157,6 +158,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.MobjTryMove3f = P_TryMove3f;
     gx.EndFrame = G_EndFrame;
     gx.ConsoleBackground = G_ConsoleBg;
     gx.UpdateState = G_UpdateState;

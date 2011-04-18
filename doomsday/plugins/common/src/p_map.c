@@ -1554,6 +1554,41 @@ boolean P_TryMove(mobj_t* thing, float x, float y, boolean dropoff,
 }
 
 /**
+ * Attempts to move a mobj to a new 3D position, crossing special lines
+ * and picking up things.
+ *
+ * @note  This function is exported from the game plugin.
+ *
+ * @param thing  Mobj to move.
+ * @param x      New X coordinate.
+ * @param y      New Y coordinate.
+ * @param z      New Z coordinate.
+ *
+ * @return  @c true, if the move was successful. Otherwise, @c false.
+ */
+boolean P_TryMove3f(mobj_t* thing, float x, float y, float z)
+{
+    float oldZ = thing->pos[VZ];
+
+    // Go to the new Z height.
+    thing->pos[VZ] = z;
+
+#ifdef __JHEXEN__
+    if(P_TryMove(thing, x, y))
+#else
+    if(P_TryMove(thing, x, y, false, false))
+#endif
+    {
+        // The move was successful.
+        return true;
+    }
+
+    // The move failed, so restore the original position.
+    thing->pos[VZ] = oldZ;
+    return false;
+}
+
+/**
  * \fixme DJS - This routine has gotten way too big, split if(in->isaline)
  * to a seperate routine?
  */

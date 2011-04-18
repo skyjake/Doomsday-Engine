@@ -97,6 +97,7 @@ typedef struct {
     // Miscellaneous.
     void          (*MobjThinker) ();
     float         (*MobjFriction) (void* mobj); // Returns a friction factor.
+    boolean       (*MobjTryMove3f) (struct mobj_s* mobj, float x, float y, float z);
 
     // Main structure sizes.
     size_t          mobjSize; // sizeof(mobj_t)
