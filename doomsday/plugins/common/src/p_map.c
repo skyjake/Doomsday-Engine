@@ -957,6 +957,16 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
     if(P_BoxOnLineSide(tmBBox, ld) != -1)
         return true;
 
+    /*
+    if(IS_CLIENT)
+    {
+        // On clientside, missiles don't collide with anything.
+        if(tmThing->ddFlags & DDMF_MISSILE)
+        {
+            return true;
+        }
+    }*/
+
     // A line has been hit
     xline = P_ToXLine(ld);
 #if !__JHEXEN__

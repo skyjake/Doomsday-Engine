@@ -128,13 +128,6 @@ boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
-    if(IS_CLIENT)
-    {
-        // Clients won't explode missiles.
-        P_MobjChangeState(mo, S_NULL);
-        return;
-    }
-
     if(mo->type == MT_WHIRLWIND)
     {
         if(++mo->special2 < 60)

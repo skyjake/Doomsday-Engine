@@ -116,13 +116,6 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
-    if(IS_CLIENT)
-    {
-        // Clients won't explode missiles.
-        P_MobjChangeState(mo, S_NULL);
-        return;
-    }
-
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
     P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
