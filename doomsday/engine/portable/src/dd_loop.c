@@ -329,7 +329,7 @@ void DD_Ticker(timespan_t time)
     if(!Con_TransitionInProgress() && (tickFrame || netGame)) // Advance frametime?
     {
         /**
-         * It will be reduced when new sharp world positions are calculated,
+         * realFrameTimePos will be reduced when new sharp world positions are calculated,
          * so that frametime always stays within the range 0..1.
          */
         realFrameTimePos += time * TICSPERSEC;
@@ -362,7 +362,7 @@ void DD_Ticker(timespan_t time)
             else
                 Sv_Ticker( /* time */ );
 
-            // Frametime will be set back by one tick (to stay in the 0..1 range).
+            // Set frametime back by one tick (to stay in the 0..1 range).
             realFrameTimePos -= 1;
             assert(realFrameTimePos < 1);
 
@@ -386,6 +386,9 @@ void DD_Ticker(timespan_t time)
 
     // Plugins tick always.
     Plug_DoHook(HOOK_TICKER, 0, &time);
+
+    // The netcode gets to tick, too.
+    Net_Ticker(/*ticLength*/);
 }
 
 /**
@@ -471,9 +474,6 @@ void DD_RunTics(void)
 
         // Call all the tickers.
         DD_Ticker(ticLength);
-
-        // The netcode gets to tick, too.
-        Net_Ticker(/*ticLength*/);
 
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);
