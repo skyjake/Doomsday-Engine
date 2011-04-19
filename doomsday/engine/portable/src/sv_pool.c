@@ -394,6 +394,7 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
     // (dt_mobj_t <=> mobj_t)
     // Just copy the data we need.
     reg->thinker.id = mo->thinker.id;
+    reg->type = mo->type;
     reg->dPlayer = mo->dPlayer;
     reg->subsector = mo->subsector;
     reg->pos[VX] = mo->pos[VX];
@@ -429,6 +430,7 @@ void Sv_RegisterResetMobj(dt_mobj_t* reg)
     reg->pos[VY] = DDMINFLOAT;
     reg->pos[VZ] = -1000000;
     reg->angle = 0;
+    reg->type = -1;
     reg->selector = 0;
     reg->state = 0;
     reg->radius = -1;
@@ -570,7 +572,7 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
     else
     {
         // This didn't exist in the register, so it's a new mobj.
-        df = MDFC_CREATE | MDF_EVERYTHING;
+        df = MDFC_CREATE | MDF_EVERYTHING | MDFC_TYPE;
     }
 
     if(r->pos[VX] != s->pos[VX])
@@ -593,9 +595,10 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
         df |= MDF_SELECTOR;
     if(r->translucency != s->translucency)
         df |= MDFC_TRANSLUCENCY;
-
     if(r->visTarget != s->visTarget)
         df |= MDFC_FADETARGET;
+    if(r->type != s->type)
+        df |= MDFC_TYPE;
 
     // Mobj state sent periodically, if it keeps changing.
     if((!(s->ddFlags & DDMF_MISSILE) && regMo &&

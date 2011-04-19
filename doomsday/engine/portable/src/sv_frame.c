@@ -228,6 +228,13 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         moreFlags |= MDFE_FADETARGET;
     }
 
+    // Mobj type?
+    if(df & MDFC_TYPE)
+    {
+        df |= MDF_MORE_FLAGS;
+        moreFlags |= MDFE_TYPE;
+    }
+
     // Flags. What elements are included in the delta?
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
@@ -332,9 +339,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
 
     if(df & MDF_HEALTH)
-    {
         Msg_WriteLong(d->health);
-    }
 
     if(df & MDF_RADIUS)
         Msg_WriteFloat(d->radius);
@@ -343,15 +348,16 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         Msg_WriteFloat(d->height);
 
     if(df & MDF_FLOORCLIP)
-    {
         Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
-    }
 
     if(df & MDFC_TRANSLUCENCY)
         Msg_WriteByte(d->translucency);
 
     if(df & MDFC_FADETARGET)
         Msg_WriteByte((byte)(d->visTarget +1));
+
+    if(df & MDFC_TYPE)
+        Msg_WriteLong(d->type);
 }
 
 /**

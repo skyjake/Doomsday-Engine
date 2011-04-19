@@ -166,7 +166,6 @@ typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
 
     // Doom-specific data:
-    mobjinfo_t     *info;           // &mobjinfo[mobj->type]
     int             damage;         // For missiles
 
     // Movement direction, movement generation (zig-zagging).

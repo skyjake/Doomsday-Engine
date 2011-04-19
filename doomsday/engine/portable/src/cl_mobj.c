@@ -1002,7 +1002,13 @@ void ClMobj_ReadDelta2(boolean skip)
         d->translucency = Msg_ReadByte();
 
     if(moreFlags & MDFE_FADETARGET)
-        d->visTarget = ((short)Msg_ReadByte()) -1;
+        d->visTarget = ((short)Msg_ReadByte()) - 1;
+
+    if(moreFlags & MDFE_TYPE)
+    {
+        d->type = Msg_ReadLong();
+        d->info = &mobjInfo[d->type]; /// @todo check validity of d->type
+    }
 
     // The delta has now been read. We can now skip if necessary.
     if(skip) return;

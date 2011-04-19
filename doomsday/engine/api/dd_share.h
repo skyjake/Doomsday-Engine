@@ -848,7 +848,8 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     int             flags;\
     int             flags2;\
     int             flags3;\
-    int             health;
+    int             health;\
+    mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \

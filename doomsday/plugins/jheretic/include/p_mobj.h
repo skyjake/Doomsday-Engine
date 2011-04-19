@@ -168,7 +168,6 @@ typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
 
     // Heretic-specific data:
-    mobjinfo_t     *info;           // &mobjinfo[mobj->type]
     int             damage;         // For missiles
     int             special1;       // Special info
     int             special2;       // Special info
