@@ -56,4 +56,9 @@ void            WI_Ticker(void);
 // Draw the intermission screen.
 void            WI_Drawer(void);
 
+/**
+ * Skip to the next state in the intermission.
+ */
+void IN_SkipToNext(void);
+
 #endif

@@ -1410,6 +1410,21 @@ void NetSv_DoAction(int player, const char *data)
                 angle, lookDir, readyWeapon);
 #endif
 
+    if(G_GetGameState() != GS_MAP)
+    {
+        if(G_GetGameState() == GS_INTERMISSION)
+        {
+            if(type == GPA_USE || type == GPA_FIRE)
+            {
+#ifdef _DEBUG
+                Con_Message("NetSv_DoAction: Intermission accelerate.\n");
+#endif
+                IN_SkipToNext();
+            }
+        }
+        return;
+    }
+
     if(pl->playerState == PST_DEAD)
     {
         // This player is dead. Rise, my friend!

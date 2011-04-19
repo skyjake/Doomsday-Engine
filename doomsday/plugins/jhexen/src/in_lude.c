@@ -290,6 +290,11 @@ void IN_Ticker(void)
     }
 }
 
+void IN_SkipToNext(void)
+{
+    skipIntermission = 1;
+}
+
 /**
  * Check to see if any player hit a key.
  */
@@ -308,7 +313,10 @@ static void CheckForSkip(void)
             {
                 if(!player->attackDown)
                 {
-                    skipIntermission = 1;
+                    if(IS_CLIENT)
+                        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                    else
+                        IN_SkipToNext();
                 }
                 player->attackDown = true;
             }
@@ -321,7 +329,10 @@ static void CheckForSkip(void)
             {
                 if(!player->useDown)
                 {
-                    skipIntermission = 1;
+                    if(IS_CLIENT)
+                        NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                    else
+                        IN_SkipToNext();
                 }
                 player->useDown = true;
             }

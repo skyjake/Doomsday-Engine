@@ -304,6 +304,11 @@ static dpatch_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 
 // CODE --------------------------------------------------------------------
 
+void IN_SkipToNext(void)
+{
+    accelerateStage = 1;
+}
+
 void WI_slamBackground(void)
 {
     GL_DrawPatch(0, 0, bg.lump);
@@ -1320,7 +1325,12 @@ void WI_checkForAccelerate(void)
             if(player->brain.attack)
             {
                 if(!player->attackDown)
-                    accelerateStage = 1;
+                {
+                    if(IS_CLIENT)
+                        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                    else
+                        IN_SkipToNext();
+                }
                 player->attackDown = true;
             }
             else
@@ -1331,7 +1341,12 @@ void WI_checkForAccelerate(void)
             if(player->brain.use)
             {
                 if(!player->useDown)
-                    accelerateStage = 1;
+                {
+                    if(IS_CLIENT)
+                        NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                    else
+                        IN_SkipToNext();
+                }
                 player->useDown = true;
             }
             else

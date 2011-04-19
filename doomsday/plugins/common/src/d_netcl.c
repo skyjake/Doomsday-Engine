@@ -968,13 +968,22 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     *ptr++ = LONG(actionType);
 
     // Position of the action.
-    *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VX]));
-    *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VY]));
-    *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VZ]));
+    if(G_GetGameState() == GS_MAP)
+    {
+        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VX]));
+        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VY]));
+        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VZ]));
 
-    // Which way is the player looking at?
-    *ptr++ = LONG(player->plr->mo->angle);
-    *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
+        // Which way is the player looking at?
+        *ptr++ = LONG(player->plr->mo->angle);
+        *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
+    }
+    else
+    {
+        // Not in a map, so can't provide position/direction.
+        int i;
+        for(i = 0; i < 5; ++i) *ptr++ = 0;
+    }
 
     // Currently active weapon.
     if(actionType == GPA_CHANGE_WEAPON)
