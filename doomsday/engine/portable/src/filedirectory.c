@@ -272,7 +272,7 @@ static void clearNodeInfo(filedirectory_t* fd)
 {
     assert(NULL != fd);
     if(NULL == fd->_pathDirectory) return;
-    PathDirectory_Iterate(fd->_pathDirectory, PT_ANY, NULL, freeNodeInfo);
+    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, freeNodeInfo);
 }
 
 void FileDirectory_Destruct(filedirectory_t* fd)

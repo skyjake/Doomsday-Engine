@@ -134,7 +134,7 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 
 static void clearVariables(void)
 {
-    PathDirectory_Iterate(cvarDirectory, PT_ANY, NULL, clearVariable);
+    PathDirectory_Iterate(cvarDirectory, PCF_NO_BRANCH, NULL, clearVariable);
     PathDirectory_Destruct(cvarDirectory); cvarDirectory = NULL;
     cvarCount = 0;
 }
