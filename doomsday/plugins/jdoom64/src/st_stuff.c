@@ -187,7 +187,7 @@ void ST_Ticker(void)
         player_t*           plr = &players[i];
         hudstate_t*         hud = &hudStates[i];
 
-        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        if(!plr->plr->inGame) // && (plr->plr->flags & DDPF_LOCAL)))
             continue;
 
         if(!P_IsPaused())

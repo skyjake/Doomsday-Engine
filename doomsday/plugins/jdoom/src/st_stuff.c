@@ -806,31 +806,30 @@ void ST_Ticker(void)
 {
     int                 i;
 
+    if(P_IsPaused()) return;
+
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t*           plr = &players[i];
         hudstate_t*         hud = &hudStates[i];
 
-        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        if(!plr->plr->inGame) // && (plr->plr->flags & DDPF_LOCAL)))
             continue;
 
-        if(!P_IsPaused())
+        if(cfg.hudTimer == 0)
         {
-            if(cfg.hudTimer == 0)
-            {
-                hud->hideTics = hud->hideAmount = 0;
-            }
-            else
-            {
-                if(hud->hideTics > 0)
-                    hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
-                    hud->hideAmount += 0.1f;
-            }
-
-            ST_updateWidgets(i);
-            hud->oldHealth = plr->health;
+            hud->hideTics = hud->hideAmount = 0;
         }
+        else
+        {
+            if(hud->hideTics > 0)
+                hud->hideTics--;
+            if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                hud->hideAmount += 0.1f;
+        }
+
+        ST_updateWidgets(i);
+        hud->oldHealth = plr->health;
     }
 }
 
