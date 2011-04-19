@@ -126,25 +126,20 @@ boolean PIT_ClientMobjTicker(mobj_t *cmo, void *parm)
  */
 void P_Ticker(timespan_t time)
 {
-    static trigger_t    fixed = { 1.0 / 35, 0 };
-
     P_ControlTicker(time);
     P_MaterialManagerTicker(time);
 
     if(!P_ThinkerListInited())
         return; // Not initialized yet.
 
-    if(!M_RunTrigger(&fixed, time))
-        return;
+    if(DD_IsSharpTick())
+    {
+        // New ptcgens for planes?
+        P_CheckPtcPlanes();
 
-    // New ptcgens for planes?
-    P_CheckPtcPlanes();
+        R_SkyTicker();
 
-    R_SkyTicker();
-
-    // Check all mobjs (always public).
-    P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
-
-    // Check all client mobjs.
-    //ClMobj_Iterator(PIT_ClientMobjTicker, NULL);
+        // Check all mobjs (always public).
+        P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
+    }
 }

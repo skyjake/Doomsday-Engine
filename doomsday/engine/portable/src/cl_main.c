@@ -164,9 +164,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     // Check the version number.
     if(shake.version != SV_VERSION)
     {
-        Con_Message
-            ("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
-             SV_VERSION, shake.version);
+        Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
+                    SV_VERSION, shake.version);
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
@@ -431,14 +430,10 @@ void Cl_Assertions(int plrNum)
  */
 void Cl_Ticker(void)
 {
-    //static trigger_t fixed = { 1.0 / 35 };
-    //static int ticSendTimer = 0;
     int i;
 
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
-
-    //if(!M_RunTrigger(&fixed, time)) return;
 
     // On clientside, players are represented by two mobjs: the real mobj,
     // created by the Game, is the one that is visible and modified by game
@@ -454,21 +449,6 @@ void Cl_Ticker(void)
         Cl_Assertions(i);
 #endif
     }
-
-    //Cl_LocalCommand();
-
-    //Cl_PredictMovement();
-
-    //Cl_MovePsprites();
-
-    /*
-    // Clients don't send commands on every tic (over the network).
-    if(++ticSendTimer > CLIENT_TICCMD_INTERVAL)
-    {
-        ticSendTimer = 0;
-        Net_SendCommands();
-    }
-    */
 }
 
 /**

@@ -36,7 +36,6 @@ extern boolean suspendMsgPump;
 
 extern int rFrameCount;
 extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
-extern trigger_t sharedFixedTrigger;
 extern boolean tickFrame;
 
 void            DD_RegisterLoop(void);
@@ -46,5 +45,6 @@ void            DD_StartFrame(void);
 void            DD_EndFrame(void);
 float           DD_GetFrameRate(void);
 void            DD_ResetTimer(void);
+boolean         DD_IsSharpTick(void);
 
 #endif

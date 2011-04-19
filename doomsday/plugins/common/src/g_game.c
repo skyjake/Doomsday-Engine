@@ -1215,15 +1215,13 @@ static void runGameAction(void)
  */
 void G_Ticker(timespan_t ticLength)
 {
-    static gamestate_t  oldGameState = -1;
-    static trigger_t    fixed = {1.0 / TICSPERSEC};
-
-    int                 i;
+    static gamestate_t oldGameState = -1;
+    int i;
 
     // Always tic:
-    Hu_FogEffectTicker(ticLength);
-    Hu_MenuTicker(ticLength);
-    Hu_MsgTicker(ticLength);
+    Hu_FogEffectTicker();
+    Hu_MenuTicker();
+    Hu_MsgTicker();
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
@@ -1231,7 +1229,7 @@ void G_Ticker(timespan_t ticLength)
     // Do player reborns if needed.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t       *plr = &players[i];
+        player_t *plr = &players[i];
 
         if(plr->plr->inGame && plr->playerState == PST_REBORN &&
            !P_MobjIsCamera(plr->plr->mo))
@@ -1290,7 +1288,7 @@ void G_Ticker(timespan_t ticLength)
     }
 
     // The following is restricted to fixed 35 Hz ticks.
-    if(M_RunTrigger(&fixed, ticLength))
+    if(DD_IsSharpTick())
     {
         // Do main actions.
         switch(G_GetGameState())

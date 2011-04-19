@@ -264,7 +264,7 @@ void Hu_MsgDrawer(void)
 /**
  * Updates on Game Tick.
  */
-void Hu_MsgTicker(timespan_t time)
+void Hu_MsgTicker(void)
 {
     // Check if there has been a response to a message.
     if(!messageToPrint || awaitingResponse)

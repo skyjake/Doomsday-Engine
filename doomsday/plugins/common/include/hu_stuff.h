@@ -95,7 +95,7 @@ extern dpatch_t dpInvPageRight[2];
 void            Hu_LoadData(void);
 void            Hu_Drawer(void);
 void            Hu_Ticker(void);
-void            Hu_FogEffectTicker(timespan_t time);
+void            Hu_FogEffectTicker(void);
 
 void            Hu_FogEffectSetAlphaTarget(float alpha);
 

@@ -89,7 +89,7 @@ typedef enum menucommand_e {
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 
-void            Hu_MenuTicker(timespan_t time);
+void            Hu_MenuTicker(void);
 int             Hu_MenuResponder(event_t* ev);
 void            Hu_MenuDrawer(void);
 

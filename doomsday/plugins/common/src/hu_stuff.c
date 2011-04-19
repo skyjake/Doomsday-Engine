@@ -1584,16 +1584,15 @@ void Hu_Ticker(void)
 /**
  * Updates on Game Tick.
  */
-void Hu_FogEffectTicker(timespan_t time)
+void Hu_FogEffectTicker(void)
 {
 #define fog                 (&fogEffectData)
 #define FOGALPHA_FADE_STEP (.07f)
 
     int                 i;
     static const float MENUFOGSPEED[2] = {.05f, -.085f};
-    static trigger_t    fixed = { 1 / 35.0 };
 
-    if(!M_RunTrigger(&fixed, time))
+    if(!DD_IsSharpTick())
         return;
 
     if(cfg.hudFog == 0)

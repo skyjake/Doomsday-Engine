@@ -316,6 +316,7 @@ extern          "C" {
     boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
 
     // Refresh.
+    boolean         DD_IsSharpTick(void);
     int             DD_GetFrameRate(void);
     void            R_SetDataPath(const char* path);
     void            R_SetupMap(int mode, int flags);
@@ -423,7 +424,7 @@ extern          "C" {
     int             M_ScreenShot(const char* filename, int bits);
     int             M_CeilPow2(int num);
 
-    // MiscellaneousL: Time utilities.
+    // Miscellaneous: Time utilities.
     boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
     boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
@@ -435,8 +436,7 @@ extern          "C" {
     binangle_t      bamsAtan2(int y, int x);
 
     // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(const char* longName,
-                                  const char* shortName);
+    void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
     int _DECALL     Argc(void);
     const char* _DECALL Argv(int i);
     const char** _DECALL ArgvPtr(int i);

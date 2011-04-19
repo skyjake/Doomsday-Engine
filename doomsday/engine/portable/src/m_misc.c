@@ -1312,13 +1312,14 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 }
 
 /**
-* Advances time and return true if the trigger is triggered.
+ * Checks if the trigger will trigger after @a advanceTime seconds.
+ * The trigger itself is not modified in any way.
  *
  * @param trigger      Time trigger.
  * @param advanceTime  Amount of time to advance the trigger.
  *
- * @return              @c true, if the trigger has accumulated enough time
- *                      to fill the trigger's time threshold.
+ * @return @c true, if the trigger will accumulate enough time after @a advanceTime
+ *         to fill the trigger's time threshold.
  */
 boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {

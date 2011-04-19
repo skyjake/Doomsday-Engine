@@ -3,7 +3,6 @@ NAME            "DOOMSDAY"
 ; Highest ordinal is currently
 ; --> 448 <--
 ; Other free ordinals:
-; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
 ; 68 formerly P_BlockLinesIterator
@@ -326,6 +325,7 @@ EXPORTS
     DD_IterateThinkers          @425 NONAME
 
 ; Refresh.
+    DD_IsSharpTick              @44 NONAME
     DD_GetFrameRate             @88 NONAME
     R_SetDataPath               @234 NONAME
     R_SetupMap                  @89 NONAME

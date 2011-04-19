@@ -1565,15 +1565,13 @@ float Hu_MenuAlpha(void)
 /**
  * Updates on Game Tick.
  */
-void Hu_MenuTicker(timespan_t time)
+void Hu_MenuTicker(void)
 {
 #define MENUALPHA_FADE_STEP (.07f)
 
-    float               diff;
-    static trigger_t    fixed = { 1 / 35.0 };
+    float diff;
 
-    if(!M_RunTrigger(&fixed, time))
-        return;
+    if(!DD_IsSharpTick()) return;
 
     typeInTime++;
 

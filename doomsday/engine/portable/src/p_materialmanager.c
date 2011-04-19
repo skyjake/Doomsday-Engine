@@ -779,9 +779,6 @@ void P_MaterialPrecache(material_t* mat)
  */
 void P_MaterialManagerTicker(timespan_t time)
 {
-//    material_t*         mat;
-    static trigger_t    fixed = { 1.0 / 35, 0 };
-
     // The animation will only progress when the game is not paused.
     if(clientPaused)
         return;
@@ -795,10 +792,10 @@ void P_MaterialManagerTicker(timespan_t time)
     }
 #endif
 
-    if(!M_RunTrigger(&fixed, time))
-        return;
-
-    animateAnimGroups();
+    if(DD_IsSharpTick())
+    {
+        animateAnimGroups();
+    }
 }
 
 static void printMaterialInfo(materialnum_t num, boolean printNamespace)

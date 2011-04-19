@@ -1791,8 +1791,11 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, ticLength);
 
-    if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
-        return; // It's too soon.
+    if(!DD_IsSharpTick())
+    {
+        // The rest of this function occurs only during sharp ticks.
+        return;
+    }
 
 #if __JHEXEN__
     player->worldTimer++;

@@ -1074,11 +1074,8 @@ void* DD_GetVariable(int ddvalue)
         case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
             return &pspLightLevelMultiplier;
 
-        case DD_SHARED_FIXED_TRIGGER:
-            return &sharedFixedTrigger;
-
-        case DD_CPLAYER_THRUST_MUL:
-            return &cplrThrustMul;
+        /*case DD_CPLAYER_THRUST_MUL:
+            return &cplrThrustMul;*/
 
         case DD_GRAVITY:
             return &mapGravity;
@@ -1158,9 +1155,9 @@ void DD_SetVariable(int ddvalue, void *parm)
             viewPitch = *(float*) parm;
             return;
 
-        case DD_CPLAYER_THRUST_MUL:
+        /*case DD_CPLAYER_THRUST_MUL:
             cplrThrustMul = *(float*) parm;
-            return;
+            return;*/
 
         case DD_GRAVITY:
             mapGravity = *(float*) parm;
