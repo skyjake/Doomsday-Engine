@@ -469,6 +469,9 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     case GPT_MESSAGE:
+#ifdef _DEBUG
+        Con_Message("D_HandlePacket: GPT_MESSAGE\n");
+#endif
         dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;

@@ -741,7 +741,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
  */
 void P_SetMessage(player_t* pl, char *msg, boolean noHide)
 {
-    byte                flags = (noHide? LMF_NOHIDE : 0);
+    byte flags = (noHide? LMF_NOHIDE : 0);
 
     Hu_LogPost(pl - players, flags, msg);
 

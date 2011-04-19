@@ -1504,6 +1504,10 @@ void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
         if(!players[plrNum].plr->inGame)
             return;
 
+#ifdef _DEBUG
+    Con_Message("NetSv_SendMessageEx: Message '%s'\n", msg);
+#endif
+
     if(plrNum == DDSP_ALL_PLAYERS)
     {
         // Also show locally. No sound is played!

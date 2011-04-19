@@ -447,7 +447,7 @@ void Hu_LogPost(int player, byte flags, const char* msg)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     log = &msgLogs[player];
