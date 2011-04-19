@@ -877,7 +877,9 @@ void ST_doPaletteStuff(int player)
         R_GetFilterColor(plr->plr->filterColor, palette);
     }
     else
+    {
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
+    }
 }
 
 typedef struct {

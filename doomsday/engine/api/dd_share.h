@@ -1275,18 +1275,20 @@ typedef struct ticcmd_s {
     } controltype_t;
 
     // Player flags.
-#define DDPF_FIXANGLES      0x1 // Server: send angle/pitch to client.
-#define DDPF_FILTER         0x2 // Server: send filter to client.
-#define DDPF_FIXPOS         0x4 // Server: send coords to client.
-#define DDPF_DEAD           0x8 // Cl & Sv: player is dead.
-#define DDPF_CAMERA         0x10 // Player is a cameraman.
-#define DDPF_LOCAL          0x20 // Player is local (e.g. player zero).
-#define DDPF_FIXMOM         0x40 // Server: send momentum to client.
-#define DDPF_NOCLIP         0x80 // Client: don't clip movement.
-#define DDPF_CHASECAM       0x100 // Chase camera mode (third person view).
-#define DDPF_INTERYAW       0x200 // Interpolate view yaw angles (used with locking).
-#define DDPF_INTERPITCH     0x400 // Interpolate view pitch angles (used with locking).
-#define DDPF_VIEW_FILTER    0x800 // Cl & Sv: Draw the current view filter.
+#define DDPF_FIXANGLES          0x0001 // Server: send angle/pitch to client.
+#define DDPF_FILTER             0x0002 // Server: send filter to client.
+#define DDPF_FIXPOS             0x0004 // Server: send coords to client.
+#define DDPF_DEAD               0x0008 // Cl & Sv: player is dead.
+#define DDPF_CAMERA             0x0010 // Player is a cameraman.
+#define DDPF_LOCAL              0x0020 // Player is local (e.g. player zero).
+#define DDPF_FIXMOM             0x0040 // Server: send momentum to client.
+#define DDPF_NOCLIP             0x0080 // Client: don't clip movement.
+#define DDPF_CHASECAM           0x0100 // Chase camera mode (third person view).
+#define DDPF_INTERYAW           0x0200 // Interpolate view yaw angles (used with locking).
+#define DDPF_INTERPITCH         0x0400 // Interpolate view pitch angles (used with locking).
+#define DDPF_VIEW_FILTER        0x0800 // Cl & Sv: Draw the current view filter.
+#define DDPF_REMOTE_VIEW_FILTER 0x1000 // Client: Draw the view filter (has been set remotely).
+#define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
 
 #define PLAYERNAMELEN       81
 

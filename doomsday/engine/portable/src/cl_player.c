@@ -244,14 +244,6 @@ int ClPlayer_ReadDelta(void)
         ddpl->filterColor[CG] = (filter >> 8) & 0xff;
         ddpl->filterColor[CB] = (filter >> 16) & 0xff;
         ddpl->filterColor[CA] = (filter >> 24) & 0xff;
-
-#ifdef _DEBUG
-        Con_Message("PDF_FILTER: Filter color set to (%f,%f,%f,%f)\n",
-                    ddpl->filterColor[CR],
-                    ddpl->filterColor[CG],
-                    ddpl->filterColor[CB],
-                    ddpl->filterColor[CA]);
-#endif
     }
     if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
         //pl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
@@ -816,17 +808,28 @@ void ClPlayer_ReadDelta2(boolean skip)
     }
     if(df & PDF_FILTER)
     {
-        int             filter = Msg_ReadLong();
+        unsigned int filter = Msg_ReadLong();
 
-        if(filter)
-            ddpl->flags |= DDPF_VIEW_FILTER;
+        ddpl->filterColor[CR] = (filter & 0xff) / 255.f;
+        ddpl->filterColor[CG] = ((filter >> 8) & 0xff) / 255.f;
+        ddpl->filterColor[CB] = ((filter >> 16) & 0xff) / 255.f;
+        ddpl->filterColor[CA] = ((filter >> 24) & 0xff) / 255.f;
+
+        if(ddpl->filterColor[CA] > 0)
+        {
+            ddpl->flags |= DDPF_REMOTE_VIEW_FILTER;
+        }
         else
-            ddpl->flags &= ~DDPF_VIEW_FILTER;
-
-        ddpl->filterColor[CR] = filter & 0xff;
-        ddpl->filterColor[CG] = (filter >> 8) & 0xff;
-        ddpl->filterColor[CB] = (filter >> 16) & 0xff;
-        ddpl->filterColor[CA] = (filter >> 24) & 0xff;
+        {
+            ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
+        }
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ReadDelta2: Filter color set remotely to (%f,%f,%f,%f)\n",
+                    ddpl->filterColor[CR],
+                    ddpl->filterColor[CG],
+                    ddpl->filterColor[CB],
+                    ddpl->filterColor[CA]);
+#endif
     }
     if(df & PDF_CLYAW) // Only sent when Fixangles is used.
         //ddpl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */

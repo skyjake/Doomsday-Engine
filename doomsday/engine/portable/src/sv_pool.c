@@ -458,8 +458,8 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
     //client_t*           c = &clients[number];
 
     reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
-    reg->forwardMove = 0; //c->lastCmd->forwardMove;
-    reg->sideMove = 0; //c->lastCmd->sideMove;
+    reg->forwardMove = 0;
+    reg->sideMove = 0;
     reg->angle = (ddpl->mo ? ddpl->mo->angle : 0);
     reg->turnDelta = (ddpl->mo ? ddpl->mo->angle - ddpl->lastAngle : 0);
     reg->friction = ddpl->mo &&
@@ -469,8 +469,9 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
     if(ddpl->flags & DDPF_VIEW_FILTER)
     {
         reg->filter = FMAKERGBA(ddpl->filterColor[CR],
-            ddpl->filterColor[CG], ddpl->filterColor[CB],
-            ddpl->filterColor[CA]);
+                                ddpl->filterColor[CG],
+                                ddpl->filterColor[CB],
+                                ddpl->filterColor[CA]);
     }
     else
     {
