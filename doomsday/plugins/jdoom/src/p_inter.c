@@ -550,67 +550,73 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_KEY_BLUE:
-        P_GiveKey(plr, KT_BLUECARD);
         if(!plr->keys[KT_BLUECARD])
+        {
+            P_GiveKey(plr, KT_BLUECARD);
             P_SetMessage(plr, GOTBLUECARD, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-
+            if(!mapSetup)
+                S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
         if(IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_YELLOW:
-        P_GiveKey(plr, KT_YELLOWCARD);
         if(!plr->keys[KT_YELLOWCARD])
+        {
+            P_GiveKey(plr, KT_YELLOWCARD);
             P_SetMessage(plr, GOTYELWCARD, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-
+            if(!mapSetup)
+                S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
         if(IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_RED:
-        P_GiveKey(plr, KT_REDCARD);
         if(!plr->keys[KT_REDCARD])
+        {
+            P_GiveKey(plr, KT_REDCARD);
             P_SetMessage(plr, GOTREDCARD, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-
+            if(!mapSetup)
+                S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
         if(IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_BLUESKULL:
-        P_GiveKey(plr, KT_BLUESKULL);
         if(!plr->keys[KT_BLUESKULL])
+        {
+            P_GiveKey(plr, KT_BLUESKULL);
             P_SetMessage(plr, GOTBLUESKUL, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-
+            if(!mapSetup)
+                S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
         if(IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_YELLOWSKULL:
-        P_GiveKey(plr, KT_YELLOWSKULL);
         if(!plr->keys[KT_YELLOWSKULL])
+        {
+            P_GiveKey(plr, KT_YELLOWSKULL);
             P_SetMessage(plr, GOTYELWSKUL, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-
+            if(!mapSetup)
+                S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
         if(IS_NETGAME)
             return false;
         break;
 
     case IT_KEY_REDSKULL:
-        P_GiveKey(plr, KT_REDSKULL);
         if(!plr->keys[KT_REDSKULL])
+        {
+            P_GiveKey(plr, KT_REDSKULL);
             P_SetMessage(plr, GOTREDSKULL, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
-
+            if(!mapSetup)
+                S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        }
         if(IS_NETGAME)
             return false;
         break;

@@ -544,11 +544,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!plr->keys[KT_BLUE])
         {
             P_SetMessage(plr, TXT_GOTBLUEKEY, false);
+            P_GiveKey(plr, KT_BLUE);
+            if(!mapSetup)
+                S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         }
-
-        P_GiveKey(plr, KT_BLUE);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -557,11 +556,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!plr->keys[KT_YELLOW])
         {
             P_SetMessage(plr, TXT_GOTYELLOWKEY, false);
+            P_GiveKey(plr, KT_YELLOW);
+            if(!mapSetup)
+                S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         }
-
-        P_GiveKey(plr, KT_YELLOW);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -570,11 +568,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!plr->keys[KT_GREEN])
         {
             P_SetMessage(plr, TXT_GOTGREENKEY, false);
+            P_GiveKey(plr, KT_GREEN);
+            if(!mapSetup)
+                S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         }
-
-        P_GiveKey(plr, KT_GREEN);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
