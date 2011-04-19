@@ -1222,7 +1222,7 @@ void Sv_ClientCoords(int plrNum)
                         clientPos[VX], clientPos[VY], clientPos[VZ]);
 
             // We need to restore the client's old position.
-            ddpl->flags |= DDPF_FIXPOS;
+            //ddpl->flags |= DDPF_FIXPOS;
         }
         else // The move was successful.
         {
