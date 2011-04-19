@@ -286,24 +286,6 @@ void Cl_GetPackets(void)
                 Cl_Sound();
                 break;
 
-                /*
-            case PSV_FILTER:
-                {
-                player_t*           plr = &ddPlayers[consolePlayer];
-                int                 filter = Msg_ReadLong();
-
-                if(filter)
-                    plr->shared.flags |= DDPF_VIEW_FILTER;
-                else
-                    plr->shared.flags &= ~DDPF_VIEW_FILTER;
-
-                plr->shared.filterColor[CR] = filter & 0xff;
-                plr->shared.filterColor[CG] = (filter >> 8) & 0xff;
-                plr->shared.filterColor[CB] = (filter >> 16) & 0xff;
-                plr->shared.filterColor[CA] = (filter >> 24) & 0xff;
-                break;
-                }*/
-
             default:
                 handled = false;
             }
@@ -378,8 +360,7 @@ void Cl_GetPackets(void)
             else
             {
 #ifdef _DEBUG
-Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
-           netBuffer.msg.type);
+                Con_Message("Cl_GetPackets: Packet (type %i) was discarded!\n", netBuffer.msg.type);
 #endif
             }
         }

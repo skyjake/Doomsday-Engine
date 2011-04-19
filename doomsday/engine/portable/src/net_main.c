@@ -482,18 +482,21 @@ static void Net_DoUpdate(void)
 
         coordTimer = 1; //netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
-        Msg_WriteShort((short) mo->pos[VX]);
-        Msg_WriteShort((short) mo->pos[VY]);
+        Msg_WriteFloat(mo->pos[VX]);
+        Msg_WriteFloat(mo->pos[VY]);
         if(mo->pos[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
-            Msg_WriteShort(DDMININT >> 16);
+            Msg_WriteLong(DDMININT);
         }
         else
         {
-            Msg_WriteShort((short) mo->pos[VZ]);
+            Msg_WriteLong(FLT2FIX(mo->pos[VZ]));
         }
-
+        // Also include momentum.
+        Msg_WriteShort((short) (mo->mom[VX] * 256));
+        Msg_WriteShort((short) (mo->mom[VY] * 256));
+        Msg_WriteShort((short) (mo->mom[VZ] * 256));
         Net_SendBuffer(0, 0);
     }
 }

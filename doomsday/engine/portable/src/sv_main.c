@@ -1185,22 +1185,41 @@ void Sv_ClientCoords(int plrNum)
     mobj_t             *mo = ddpl->mo;
     int                 clz;
     float               clientPos[3];
+    float               clientMom[3];
     boolean             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !ddpl->inGame || (ddpl->flags & DDPF_DEAD))
         return;
 
-    clientPos[VX] = (float) Msg_ReadShort();
-    clientPos[VY] = (float) Msg_ReadShort();
+    clientPos[VX] = Msg_ReadFloat();
+    clientPos[VY] = Msg_ReadFloat();
 
-    clz = Msg_ReadShort();
-    clientPos[VZ] = (float) clz;
-
-    if((unsigned) (clz << 16) == (DDMININT & 0xffff0000))
+    clz = Msg_ReadLong();
+    if(clz == DDMININT)
     {
         clientPos[VZ] = mo->floorZ;
         onFloor = true;
+    }
+    else
+    {
+        clientPos[VZ] = FIX2FLT(clz);
+    }
+
+    // The momentum.
+    clientMom[VX] = ((float) Msg_ReadShort()) / 256;
+    clientMom[VY] = ((float) Msg_ReadShort()) / 256;
+    clientMom[VZ] = ((float) Msg_ReadShort()) / 256;
+
+    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
+    {
+#ifdef _DEBUG
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
+                              clientMom[VX], clientMom[VY], clientMom[VZ]) );
+#endif
+        mo->mom[VX] = clientMom[VX];
+        mo->mom[VY] = clientMom[VY];
+        mo->mom[VZ] = clientMom[VZ];
     }
 
 #ifdef _DEBUG
