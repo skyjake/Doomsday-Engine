@@ -837,20 +837,23 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         if(args.argc == 2 ||
            (args.argc == 3 && !stricmp(args.argv[1], "force")))
         {
-            char   *argptr = args.argv[args.argc - 1];
+            char* argptr = args.argv[args.argc - 1];
             boolean forced = args.argc == 3;
 
             setting = true;
             if(cvar->flags & CVF_READ_ONLY)
             {
-                Con_Printf("%s is read-only. It can't be changed (not even "
-                           "with force)\n", cvar->name);
+                ddstring_t* name = CVar_ComposeName(cvar);
+                Con_Printf("%s is read-only. It can't be changed (not even with force)\n", Str_Text(name));
+                Str_Delete(name);
             }
             else if((cvar->flags & CVF_PROTECTED) && !forced)
             {
+                ddstring_t* name = CVar_ComposeName(cvar);
                 Con_Printf("%s is protected. You shouldn't change its value.\n"
                            "Use the command: '%s force %s' to modify it anyway.\n",
-                           cvar->name, cvar->name, argptr);
+                           Str_Text(name), Str_Text(name), argptr);
+                Str_Delete(name);
             }
             else if(cvar->type == CVT_BYTE)
             {
@@ -861,7 +864,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                     out_of_range = true;
                 else
-                    Con_SetInteger(cvar->name, val);
+                    CVar_SetInteger(cvar, val);
             }
             else if(cvar->type == CVT_INT)
             {
@@ -872,7 +875,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                     out_of_range = true;
                 else
-                    Con_SetInteger(cvar->name, val);
+                    CVar_SetInteger(cvar, val);
             }
             else if(cvar->type == CVT_FLOAT)
             {
@@ -883,34 +886,32 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                     (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
                     out_of_range = true;
                 else
-                    Con_SetFloat(cvar->name, val);
+                    CVar_SetFloat(cvar, val);
             }
             else if(cvar->type == CVT_CHARPTR)
             {
-                Con_SetString(cvar->name, argptr);
+                CVar_SetString(cvar, argptr);
             }
         }
 
         if(out_of_range)
         {
+            ddstring_t* name = CVar_ComposeName(cvar);
             if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
-                char    temp[20];
-
+                char temp[20];
                 strcpy(temp, M_TrimmedFloat(cvar->min));
-                Con_Printf("Error: %s <= %s <= %s\n", temp, cvar->name,
-                           M_TrimmedFloat(cvar->max));
+                Con_Printf("Error: %s <= %s <= %s\n", temp, Str_Text(name), M_TrimmedFloat(cvar->max));
             }
             else if(cvar->flags & CVF_NO_MAX)
             {
-                Con_Printf("Error: %s >= %s\n", cvar->name,
-                           M_TrimmedFloat(cvar->min));
+                Con_Printf("Error: %s >= %s\n", Str_Text(name), M_TrimmedFloat(cvar->min));
             }
             else
             {
-                Con_Printf("Error: %s <= %s\n", cvar->name,
-                           M_TrimmedFloat(cvar->max));
+                Con_Printf("Error: %s <= %s\n", Str_Text(name), M_TrimmedFloat(cvar->max));
             }
+            Str_Delete(name);
         }
         else if(!setting || !conSilentCVars) // Show the value.
         {
@@ -1109,25 +1110,27 @@ static int completeWord(int mode)
 
         for(match = matches; *match; ++match)
         {
+            ddstring_t* foundName = NULL;
             const char* foundWord;
 
             switch((*match)->type)
             {
-              case WT_CVAR: {
+            case WT_CVAR: {
                 cvar_t* cvar = (cvar_t*)(*match)->data;
-                foundWord = cvar->name;
+                foundName = CVar_ComposeName(cvar);
+                foundWord = Str_Text(foundName);
                 if(printCompletions)
                     Con_PrintCVar(cvar, "  ");
                 break;
               }
-              case WT_CCMD: {
+            case WT_CCMD: {
                 ccmd_t* ccmd = (ccmd_t*)(*match)->data;
                 foundWord = ccmd->name;
                 if(printCompletions)
                     Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", foundWord);
                 break;
               }
-              case WT_CALIAS: {
+            case WT_CALIAS: {
                 calias_t* calias = (calias_t*)(*match)->data;
                 foundWord = calias->name;
                 if(printCompletions)
@@ -1135,7 +1138,7 @@ static int completeWord(int mode)
                                 calias->command);
                 break;
               }
-              case WT_GAMEINFO: {
+            case WT_GAMEINFO: {
                 gameinfo_t* info = (gameinfo_t*)(*match)->data;
                 foundWord = Str_Text(GameInfo_IdentityKey(info));
                 if(printCompletions)
@@ -1155,18 +1158,26 @@ static int completeWord(int mode)
                 lastCompletion = match - matches;
                 updated = true;
             }
+
+            if(NULL != foundName)
+                Str_Delete(foundName);
         }
     }
 
     // Was a single match found?
     if(numMatches == 1 || (mode == 1 && numMatches > 1))
     {
+        ddstring_t* foundName = NULL;
         const char* str;
+
         switch(completeWord->type)
         {
-        case WT_CCMD:     str = ((ccmd_t*)completeWord->data)->name; break;
-        case WT_CVAR:     str = ((cvar_t*)completeWord->data)->name; break;
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
+        case WT_CCMD:     str = ((ccmd_t*)completeWord->data)->name; break;
+        case WT_CVAR:
+            foundName = CVar_ComposeName((cvar_t*)completeWord->data);
+            str = Str_Text(foundName);
+            break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
         }
 
@@ -1175,6 +1186,9 @@ static int completeWord(int mode)
             strcpy(wordBegin, str);
             cmdCursor = (uint) strlen(cmdLine);
         }
+
+        if(NULL != foundName)
+            Str_Delete(foundName);
     }
     else if(numMatches > 1)
     {

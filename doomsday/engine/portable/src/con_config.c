@@ -74,34 +74,38 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     assert(word && paramaters);
     {
     FILE* file = (FILE*)paramaters;
-    cvar_t* cvar = (cvar_t*)word->data;
+    cvar_t* var = (cvar_t*)word->data;
+    ddstring_t* name;
 
-    if(cvar->flags & CVF_NO_ARCHIVE)
+    if(var->flags & CVF_NO_ARCHIVE)
         return 0; // Continue iteration.
 
+    name = CVar_ComposeName(var);
     // First print the comment (help text).
     { const char* str;
-    if((str = DH_GetString(DH_Find(cvar->name), HST_DESCRIPTION)))
+    if(NULL != (str = DH_GetString(DH_Find(Str_Text(name)), HST_DESCRIPTION)))
         M_WriteCommented(file, str);
     }
 
-    fprintf(file, "%s ", cvar->name);
-    if(cvar->flags & CVF_PROTECTED)
+    fprintf(file, "%s ", Str_Text(name));
+    if(var->flags & CVF_PROTECTED)
         fprintf(file, "force ");
-    if(cvar->type == CVT_BYTE)
-        fprintf(file, "%d", *(byte*) cvar->ptr);
-    if(cvar->type == CVT_INT)
-        fprintf(file, "%d", *(int*) cvar->ptr);
-    if(cvar->type == CVT_FLOAT)
-        fprintf(file, "%s", M_TrimmedFloat(*(float*) cvar->ptr));
-    if(cvar->type == CVT_CHARPTR)
+    if(var->type == CVT_BYTE)
+        fprintf(file, "%d", *(byte*) var->ptr);
+    if(var->type == CVT_INT)
+        fprintf(file, "%d", *(int*) var->ptr);
+    if(var->type == CVT_FLOAT)
+        fprintf(file, "%s", M_TrimmedFloat(*(float*) var->ptr));
+    if(var->type == CVT_CHARPTR)
     {
         fprintf(file, "\"");
-        if(*(char**) cvar->ptr)
-            M_WriteTextEsc(file, *(char**) cvar->ptr);
+        if(*(char**) var->ptr)
+            M_WriteTextEsc(file, *(char**) var->ptr);
         fprintf(file, "\"");
     }
     fprintf(file, "\n\n");
+
+    Str_Delete(name);
     return 0; // Continue iteration.
     }
 }

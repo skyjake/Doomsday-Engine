@@ -104,13 +104,15 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList);
 /**
  * Find a path in the directory.
  *
+ * @param type              If a valid path type only consider nodes of this type.
  * @param searchPath        Relative or absolute path.
  * @param foundPath         If not @c NULL, the full path of the node is written
  *                          back here if found.
  *
  * @return  @c true, iff successful.
  */
-boolean FileDirectory_Find(filedirectory_t* fd, const char* searchPath, ddstring_t* foundPath);
+boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t type,
+    const char* searchPath, ddstring_t* foundPath);
 
 /**
  * Iterate over nodes in the directory making a callback for each.

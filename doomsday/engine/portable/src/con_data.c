@@ -39,9 +39,12 @@
 #include "m_args.h"
 #include "m_misc.h"
 #include "blockset.h"
-//#include "pathdirectory.h"
+#include "pathdirectory.h"
 
 // MACROS ------------------------------------------------------------------
+
+// Substrings in CVar names are delimited by this character.
+#define CVARDIRECTORY_DELIMITER         '-'
 
 // TYPES -------------------------------------------------------------------
 
@@ -64,10 +67,9 @@ D_CMD(ListVars);
 
 static boolean inited = false;
 
-/// Console variable database and search directory.
-static uint numCVars = 0;
-static cvar_t** cvars = 0;
-//static pathdirectory_t* cvarDirectory;
+/// Console variable directory.
+static uint cvarCount = 0;
+static pathdirectory_t* cvarDirectory;
 
 static ccmd_t* ccmdListHead;
 /// \todo Replace with a data structure that allows for deletion of elements.
@@ -85,6 +87,8 @@ static knownword_t* knownWords;
 static uint numKnownWords;
 static boolean knownWordsNeedUpdate;
 
+static char* emptyString = "";
+
 // CODE --------------------------------------------------------------------
 
 void Con_DataRegister(void)
@@ -95,77 +99,72 @@ void Con_DataRegister(void)
     C_CMD("listvars",       NULL,   ListVars);
 }
 
-static void clearVariables(void)
+static int markStringVariableFreed(struct pathdirectory_node_s* node, void* paramaters)
 {
-    static char* emptyString = "";
-
-    // Free the data of the data cvars.
-    { uint i;
-    cvar_t** cvar;
-    for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
+    assert(NULL != node && NULL != paramaters);
     {
-        if(((*cvar)->flags & CVF_CAN_FREE) &&
-           (*cvar)->type == CVT_CHARPTR)
-        {
-            char** ptr = (char**) (*cvar)->ptr;
+    cvar_t* var = PathDirectoryNode_DetachUserData(node);
+    char** ptr = (char**) paramaters;
+    if(NULL != var && CVT_CHARPTR == CVar_Type(var) && *ptr == CV_CHARPTR(var))
+    {
+        var->flags &= ~CVF_CAN_FREE;
+    }
+    return 0; // Continue iteration.
+    }
+}
 
+static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
+{
+    cvar_t* var = PathDirectoryNode_DetachUserData(node);
+    if(NULL != var)
+    {
+        if((var->flags & CVF_CAN_FREE) && var->type == CVT_CHARPTR)
+        {
+            char** ptr = (char**) var->ptr;
             // \note Multiple vars could be using the same pointer (so ensure
             // that we attempt to free only once).
-            { uint k;
-            for(k = i; k < numCVars; ++k)
-                if(cvars[k]->type == CVT_CHARPTR &&
-                   *(char**) cvars[k]->ptr == *ptr)
-                {
-                    cvars[k]->flags &= ~CVF_CAN_FREE;
-                }
-            }
+            PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, markStringVariableFreed, ptr);
             free(*ptr);
             *ptr = emptyString;
         }
-        free(*cvar);
-    }}
+        free(var);
+    }
+    return 0; // Continue iteration.
+}
 
-    //PathDirectory_Destruct(cvarDirectory); cvarDirectory = 0;
+static void clearVariables(void)
+{
+    PathDirectory_Iterate(cvarDirectory, PT_ANY, NULL, clearVariable);
+    PathDirectory_Destruct(cvarDirectory); cvarDirectory = NULL;
+    cvarCount = 0;
 }
 
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(const cvartemplate_t* tpl)
 {
+    struct pathdirectory_node_s* node = PathDirectory_Insert(cvarDirectory, tpl->name, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
-    uint idx;
 
-    cvars = realloc(cvars, sizeof(*cvars) * ++numCVars);
+    if(NULL != PathDirectoryNode_UserData(node))
+    {
+        Con_Error("Con_AddVariable: A variable by the name \"%s\" is already known!", tpl->name);
+        return NULL; // Unreachable.
+    }
 
-    // Find the insertion point.
-    for(idx = 0; idx < numCVars-1; ++idx)
-        if(stricmp(cvars[idx]->name, tpl->name) > 0)
-            break;
+    newVar = (cvar_t*) malloc(sizeof(*newVar));
+    if(NULL == newVar)
+        Con_Error("Con_AddVariable: Failed on allocation of %lu bytes for new CVar.",
+            (unsigned long) sizeof(*newVar));
 
-    // Make room for the new variable.
-    if(idx != numCVars-1)
-        memmove(cvars + idx + 1, cvars + idx, sizeof(*cvars) * (numCVars - 1 - idx));
-
-    newVar = cvars[idx] = malloc(sizeof(*newVar));
     newVar->flags = tpl->flags;
     newVar->type = tpl->type;
     newVar->ptr = tpl->ptr;
     newVar->min = tpl->min;
     newVar->max = tpl->max;
     newVar->notifyChanged = tpl->notifyChanged;
-    // Make a static copy of the name in the zone (this allows the source
-    // data to change in case of dynamic registrations).
-    { char* nameCopy = Z_Malloc(strlen(tpl->name) + 1, PU_APPSTATIC, NULL);
-    if(NULL == nameCopy)
-        Con_Error("Con_AddVariable: Failed on allocation of %lu bytes for variable name.", 
-            (unsigned long) (strlen(tpl->name) + 1));
-    strcpy(nameCopy, tpl->name);
-    newVar->name = nameCopy;
-    }
-
-    /*{ ddstring_t path; Str_Init(&path); Str_Set(&path, newVar->name);
-    PathDirectory_Insert(cvarDirectory, &path, newVar, '-');
-    Str_Free(&path);
-    }*/
+    newVar->directoryNode = node;
+    PathDirectoryNode_AttachUserData(node, newVar);
+    ++cvarCount;
 
     knownWordsNeedUpdate = true;
     return newVar;
@@ -208,24 +207,42 @@ static void clearKnownWords(void)
     knownWordsNeedUpdate = false;
 }
 
-static const char* getKnownWordName(const knownword_t* word)
+static int C_DECL compareKnownWordByName(const void* a, const void* b)
 {
-    assert(word);
-    switch(word->type)
-    {
-    case WT_CCMD:     return ((ccmd_t*)word->data)->name;
-    case WT_CVAR:     return ((cvar_t*)word->data)->name;
-    case WT_CALIAS:   return ((calias_t*)word->data)->name;
-    case WT_GAMEINFO: return Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data));
-    }
-    assert(0);
-    return 0;
-}
+    const knownword_t* wA = (const knownword_t*)a;
+    const knownword_t* wB = (const knownword_t*)b;
+    ddstring_t* textAString = NULL, *textBString = NULL;
+    const char* textA, *textB;
+    int result;
 
-static int C_DECL compareKnownWordByName(const void* e1, const void* e2)
-{
-    return stricmp(getKnownWordName((const knownword_t*)e1),
-                   getKnownWordName((const knownword_t*)e2));
+    switch(wA->type)
+    {
+    case WT_CALIAS:   textA = ((calias_t*)wA->data)->name; break;
+    case WT_CCMD:     textA = ((ccmd_t*)wA->data)->name; break;
+    case WT_CVAR:
+        textAString = CVar_ComposeName((cvar_t*)wA->data);
+        textA = Str_Text(textAString);
+        break;
+    case WT_GAMEINFO: textA = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wA->data)); break;
+    }
+
+    switch(wB->type)
+    {
+    case WT_CALIAS:   textB = ((calias_t*)wB->data)->name; break;
+    case WT_CCMD:     textB = ((ccmd_t*)wB->data)->name; break;
+    case WT_CVAR:
+        textBString = CVar_ComposeName((cvar_t*)wB->data);
+        textB = Str_Text(textBString);
+        break;
+    case WT_GAMEINFO: textB = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wB->data)); break;
+    }
+
+    result = stricmp(textA, textB);
+
+    if(NULL != textAString) Str_Delete(textAString);
+    if(NULL != textBString) Str_Delete(textBString);
+
+    return result;
 }
 
 static boolean removeFromKnownWords(knownwordtype_t type, void* data)
@@ -256,18 +273,37 @@ static boolean removeFromKnownWords(knownwordtype_t type, void* data)
     return false;
 }
 
+static int countVariable(const struct pathdirectory_node_s* node, void* paramaters)
+{
+    assert(NULL != node && NULL != paramaters);
+    {
+    cvar_t* var = PathDirectoryNode_UserData(node);
+    uint* count = (uint*) paramaters;
+    if(NULL != var && !(var->flags & CVF_HIDE))
+        ++(*count);
+    return 0; // Continue iteration.
+    }
+}
+
+static int addVariableToKnownWords(const struct pathdirectory_node_s* node, void* paramaters)
+{
+    assert(NULL != node && NULL != paramaters);
+    {
+    cvar_t* var = PathDirectoryNode_UserData(node);
+    uint* index = (uint*) paramaters;
+    if(NULL != var && !(var->flags & CVF_HIDE))
+    {
+        knownWords[*index].type = WT_CVAR;
+        knownWords[*index].data = var;
+        ++(*index);
+    }
+    return 0; // Continue iteration.
+    }
+}
+
 /**
  * Collate all known words and sort them alphabetically.
  * Commands, variables (except those hidden) and aliases are known words.
- *
- * \todo Quicksort is not the best algorithm for this. We are merging two
- * already sorted lists and one not-sorted.
- *
- * A better solution would be:
- *
- *   1) Add ccmds to knownWords and qsort them.
- *   2) Use a Mergesort-like algorithm when adding the cvars and caliases
- *      to join the three sets into one.
  */
 static void updateKnownWords(void)
 {
@@ -279,12 +315,7 @@ static void updateKnownWords(void)
 
     // Count the number of visible console variables.
     knownCVars = 0;
-    { uint i;
-    cvar_t** cvar;
-    for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
-        if(!((*cvar)->flags & CVF_HIDE))
-            ++knownCVars;
-    }
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, countVariable, &knownCVars);
 
     knownGames = 0;
     { int i, gameInfoCount = DD_GameInfoCount();
@@ -317,17 +348,8 @@ static void updateKnownWords(void)
     // Add variables?
     if(0 != knownCVars)
     {
-        /// \note cvars array is already sorted.
-        cvar_t** cvar;
-        uint i;
-        for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
-        {
-            if((*cvar)->flags & CVF_HIDE)
-                continue;
-            knownWords[c].type = WT_CVAR;
-            knownWords[c].data = *cvar;
-            ++c;
-        }
+        /// \note cvars are NOT sorted.
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, addVariableToKnownWords, &c);
     }
 
     // Add aliases?
@@ -364,64 +386,71 @@ static void updateKnownWords(void)
     knownWordsNeedUpdate = false;
 }
 
-void Con_SetString2(const char* name, char* text, int svflags)
+cvartype_t CVar_Type(const cvar_t* var)
 {
-    assert(inited);
+    assert(NULL != var);
+    return var->type;
+}
+
+ddstring_t* CVar_ComposeName(cvar_t* var)
+{
+    assert(NULL != var);
+    return PathDirectoryNode_ComposePath(var->directoryNode, Str_New(), CVARDIRECTORY_DELIMITER);
+}
+
+void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
+{
+    assert(NULL != var);
     {
-    cvar_t* cvar = Con_FindVariable(name);
     boolean changed = false;
 
-    if(!cvar)
-        return;
-
-    if((cvar->flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
+    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        Con_Printf("%s (cvar) is read-only. It can't be changed "
-                   "(not even with force)\n", name);
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Printf("%s (var) is read-only. It can't be changed (not even with force)\n", Str_Text(name));
+        Str_Delete(name);
         return;
     }
 
-    if(cvar->type == CVT_CHARPTR)
+    if(var->type != CVT_CHARPTR)
     {
-        if(!CV_CHARPTR(cvar) && strlen(name) != 0 || stricmp(text, CV_CHARPTR(cvar)))
-            changed = true;
-
-        // Free the old string, if one exists.
-        if((cvar->flags & CVF_CAN_FREE) && CV_CHARPTR(cvar))
-            free(CV_CHARPTR(cvar));
-        // Allocate a new string.
-        cvar->flags |= CVF_CAN_FREE;
-        CV_CHARPTR(cvar) = malloc(strlen(text) + 1);
-        strcpy(CV_CHARPTR(cvar), text);
-
-        // Make the change notification callback
-        if(cvar->notifyChanged != NULL && changed)
-            cvar->notifyChanged();
+        Con_Error("CVar::SetString: Not of type CVT_CHARPTR.");
+        return; // Unreachable.
     }
-    else
-        Con_Error("Con_SetString: cvar is not of type char*.\n");
+
+    if(!CV_CHARPTR(var) && strlen(text) != 0 || stricmp(text, CV_CHARPTR(var)))
+        changed = true;
+
+    // Free the old string, if one exists.
+    if((var->flags & CVF_CAN_FREE) && CV_CHARPTR(var))
+        free(CV_CHARPTR(var));
+    // Allocate a new string.
+    var->flags |= CVF_CAN_FREE;
+    CV_CHARPTR(var) = malloc(strlen(text) + 1);
+    strcpy(CV_CHARPTR(var), text);
+
+    // Make the change notification callback
+    if(var->notifyChanged != NULL && changed)
+        var->notifyChanged();
     }
 }
 
-void Con_SetString(const char* name, char* text)
+void CVar_SetString(cvar_t* var, const char* text)
 {
-    Con_SetString2(name, text, 0);
+    CVar_SetString2(var, text, 0);
 }
 
-void Con_SetInteger2(const char* name, int value, int svflags)
+void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
 {
-    assert(inited);
+    assert(NULL != var);
     {
-    cvar_t* var = Con_FindVariable(name);
     boolean changed = false;
 
-    if(!var)
-        return;
-
-    if((var->flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
+    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        Con_Printf("%s (cvar) is read-only. It can't be changed "
-                   "(not even with force)\n", var->name);
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Printf("%s (var) is read-only. It can't be changed (not even with force).\n", Str_Text(name));
+        Str_Delete(name);
         return;
     }
 
@@ -442,10 +471,13 @@ void Con_SetInteger2(const char* name, int value, int svflags)
             changed = true;
         CV_FLOAT(var) = (float) value;
         break;
-    default:
-        Con_Message("Warning:Con_SetInteger: Attempt to set incompatible cvar "
-                    "%s to %i, ignoring.\n", var->name, value);
+    default: {
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:Con_SetInteger: Attempt to set incompatible var %s to %i, ignoring.\n",
+            Str_Text(name), value);
+        Str_Delete(name);
         return;
+      }
     }
 
     // Make a change notification callback?
@@ -454,25 +486,22 @@ void Con_SetInteger2(const char* name, int value, int svflags)
     }
 }
 
-void Con_SetInteger(const char* name, int value)
+void CVar_SetInteger(cvar_t* var, int value)
 {
-    Con_SetInteger2(name, value, 0);
+    CVar_SetInteger2(var, value, 0);
 }
 
-void Con_SetFloat2(const char* name, float value, int svflags)
+void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
 {
-    assert(inited);
+    assert(NULL != var);
     {
-    cvar_t* var = Con_FindVariable(name);
     boolean changed = false;
 
-    if(!var)
-        return;
-
-    if((var->flags & CVF_READ_ONLY) && !(svflags & SVF_WRITE_OVERRIDE))
+    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
-        Con_Printf("%s (cvar) is read-only. It can't be changed "
-                   "(not even with force)\n", name);
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force).\n", Str_Text(name));
+        Str_Delete(name);
         return;
     }
 
@@ -493,10 +522,13 @@ void Con_SetFloat2(const char* name, float value, int svflags)
             changed = true;
         CV_FLOAT(var) = value;
         break;
-    default:
-        Con_Message("Warning:Con_SetFloat: Attempt to set incompatible cvar "
-                    "%s to %g, ignoring.\n", name, value);
+    default: {
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:Con_SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.\n",
+            Str_Text(name), value);
+        Str_Delete(name);
         return;
+      }
     }
 
     // Make a change notification callback?
@@ -505,64 +537,57 @@ void Con_SetFloat2(const char* name, float value, int svflags)
     }
 }
 
-void Con_SetFloat(const char* name, float value)
+void CVar_SetFloat(cvar_t* var, float value)
 {
-    Con_SetFloat2(name, value, 0);
+    CVar_SetFloat2(var, value, 0);
 }
 
-int Con_GetInteger(const char* name)
+int CVar_Integer(const cvar_t* var)
 {
-    assert(inited);
+    assert(NULL != var);
+    switch(var->type)
     {
-    cvar_t* var;
-    if((var = Con_FindVariable(name)) != 0)
-        switch(var->type)
-        {
-        case CVT_BYTE:      return CV_BYTE(var);
-        case CVT_INT:       return CV_INT(var);
-        case CVT_FLOAT:     return CV_FLOAT(var);
-        case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
-        }
-    return 0;
+    case CVT_BYTE:      return CV_BYTE(var);
+    case CVT_INT:       return CV_INT(var);
+    case CVT_FLOAT:     return CV_FLOAT(var);
+    case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
     }
-}
-
-float Con_GetFloat(const char* name)
-{
-    assert(inited);
-    { cvar_t* var;
-    if((var = Con_FindVariable(name)) != 0)
-        switch(var->type)
-        {
-        case CVT_BYTE:      return CV_BYTE(var);
-        case CVT_INT:       return CV_INT(var);
-        case CVT_FLOAT:     return CV_FLOAT(var);
-        case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
-        }
-    }
+    // Unreachable (hopefully).
     return 0;
 }
 
-byte Con_GetByte(const char* name)
+float CVar_Float(const cvar_t* var)
 {
-    assert(inited);
-    { cvar_t* var;
-    if((var = Con_FindVariable(name)) != 0)
-        switch(var->type)
-        {
-        case CVT_BYTE:      return CV_BYTE(var);
-        case CVT_INT:       return CV_INT(var);
-        case CVT_FLOAT:     return CV_FLOAT(var);
-        case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
-        }
+    assert(NULL != var);
+    switch(var->type)
+    {
+    case CVT_BYTE:      return CV_BYTE(var);
+    case CVT_INT:       return CV_INT(var);
+    case CVT_FLOAT:     return CV_FLOAT(var);
+    case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
     }
+    // Unreachable (hopefully).
     return 0;
 }
 
-char* Con_GetString(const char* name)
+byte CVar_Byte(const cvar_t* var)
 {
-    cvar_t* var = Con_FindVariable(name);
-    if(!var || var->type != CVT_CHARPTR)
+    assert(NULL != var);
+    switch(var->type)
+    {
+    case CVT_BYTE:      return CV_BYTE(var);
+    case CVT_INT:       return CV_INT(var);
+    case CVT_FLOAT:     return CV_FLOAT(var);
+    case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
+    }
+    // Unreachable (hopefully).
+    return 0;
+}
+
+char* CVar_String(const cvar_t* var)
+{
+    assert(NULL != var);
+    if(var->type != CVT_CHARPTR)
         return "";
     return CV_CHARPTR(var);
 }
@@ -582,7 +607,7 @@ void Con_AddVariable(const cvartemplate_t* tpl)
         return;
     }
 
-    if(Con_FindVariable(tpl->name))
+    if(NULL != Con_FindVariable(tpl->name))
         Con_Error("Error: A CVAR with the name \"%s\" is already registered.", tpl->name);
 
     addVariable(tpl);
@@ -610,47 +635,11 @@ cvar_t* Con_FindVariable(const char* name)
 {
     assert(inited);
     {
-    int result;
-    uint bottomIdx, topIdx, pivot;
-    cvar_t* var;
-    boolean isDone;
-
-    if(numCVars == 0)
-        return 0;
-    if(!name || !name[0])
-        return 0;
-
-    bottomIdx = 0;
-    topIdx = numCVars-1;
-    var = NULL;
-    isDone = false;
-    while(bottomIdx <= topIdx && !isDone)
-    {
-        pivot = bottomIdx + (topIdx - bottomIdx)/2;
-
-        result = stricmp(cvars[pivot]->name, name);
-        if(result == 0)
-        {   // Found.
-            var = cvars[pivot];
-            isDone = true;
-        }
-        else
-        {
-            if(result > 0)
-            {
-                if(pivot == 0)
-                {   // Not present.
-                    isDone = true;
-                }
-                else
-                    topIdx = pivot - 1;
-            }
-            else
-                bottomIdx = pivot + 1;
-        }
-    }
-
-    return var;
+    struct pathdirectory_node_s* node;
+    if(0 == cvarCount) return NULL;
+    node = PathDirectory_Find(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, name, CVARDIRECTORY_DELIMITER);
+    if(NULL == node) return NULL;
+    return (cvar_t*) PathDirectoryNode_UserData(node);
     }
 }
 
@@ -667,6 +656,7 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
     assert(inited);
     {
     char equals = '=';
+    ddstring_t* name;
 
     if(!var)
         return;
@@ -677,24 +667,16 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
     if(prefix)
         Con_Printf("%s", prefix);
 
+    name = CVar_ComposeName(var);
     switch(var->type)
     {
-    case CVT_BYTE:
-        Con_Printf("%s %c %d", var->name, equals, CV_BYTE(var));
-        break;
-    case CVT_INT:
-        Con_Printf("%s %c %d", var->name, equals, CV_INT(var));
-        break;
-    case CVT_FLOAT:
-        Con_Printf("%s %c %g", var->name, equals, CV_FLOAT(var));
-        break;
-    case CVT_CHARPTR:
-        Con_Printf("%s %c \"%s\"", var->name, equals, CV_CHARPTR(var));
-        break;
-    default:
-        Con_Printf("%s (bad type!)", var->name);
-        break;
+    case CVT_BYTE:      Con_Printf("%s %c %d",       Str_Text(name), equals, CV_BYTE(var)); break;
+    case CVT_INT:       Con_Printf("%s %c %d",       Str_Text(name), equals, CV_INT(var)); break;
+    case CVT_FLOAT:     Con_Printf("%s %c %g",       Str_Text(name), equals, CV_FLOAT(var)); break;
+    case CVT_CHARPTR:   Con_Printf("%s %c \"%s\"",   Str_Text(name), equals, CV_CHARPTR(var)); break;
+    default:            Con_Printf("%s (bad type!)", Str_Text(name)); break;
     }
+    Str_Delete(name);
     Con_Printf("\n");
     }
 }
@@ -1135,7 +1117,7 @@ void Con_DeleteAlias(calias_t* cal)
     if(idx == numCAliases)
         return;
 
-    // Try to avoid rebuilding known words by simply removing ourselves.
+    // Try to avoid rebuilding known words by simply removing ourself.
     if(!knownWordsNeedUpdate)
         removeFromKnownWords(WT_CALIAS, (void*)cal);
 
@@ -1166,9 +1148,31 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
         const knownword_t* word = &knownWords[i];
         if(matchType != WT_ANY && word->type != type)
             continue;
-        if(patternLength != 0 && strnicmp(getKnownWordName(word), pattern, patternLength))
-            continue;
-        if((result = callback(word, paramaters)) != 0)
+        if(0 != patternLength)
+        {
+            ddstring_t* textString = NULL;
+            const char* text;
+            int compareResult;
+
+            switch(word->type)
+            {
+            case WT_CALIAS:   text = ((calias_t*)word->data)->name; break;
+            case WT_CCMD:     text = ((ccmd_t*)word->data)->name; break;
+            case WT_CVAR:
+                textString = CVar_ComposeName((cvar_t*)word->data);
+                text = Str_Text(textString);
+                break;
+            case WT_GAMEINFO: text = Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data)); break;
+            }
+
+            compareResult = strnicmp(text, pattern, patternLength);
+
+            if(NULL != textString)
+                Str_Delete(textString);
+            if(0 != compareResult)
+                continue;
+        }
+        if(0 != (result = callback(word, paramaters)))
             break;
     }}
 
@@ -1238,9 +1242,8 @@ void Con_InitDatabases(void)
     if(inited) return;
 
     // Create the empty variable directory now.
-    //cvarDirectory = PathDirectory_ConstructDefault();
-    numCVars = 0;
-    cvars = 0;
+    cvarDirectory = PathDirectory_Construct();
+    cvarCount = 0;
 
     ccmdListHead = 0;
     ccmdBlockSet = 0;
@@ -1297,15 +1300,17 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Perhaps its a cvar then?
     {
-        cvar_t* cvar;
-        if((cvar = Con_FindVariable(argv[1])) != 0)
+        cvar_t* var = Con_FindVariable(argv[1]);
+        if(NULL != var)
         {
-            char* str;
-            if((str = DH_GetString(DH_Find(cvar->name), HST_DESCRIPTION)) != 0)
+            ddstring_t* name = CVar_ComposeName(var);
+            char* str = DH_GetString(DH_Find(Str_Text(name)), HST_DESCRIPTION);
+            if(NULL != str)
             {
                 Con_Printf("%s\n", str);
                 found = true;
             }
+            Str_Delete(name);
         }
     }
 
@@ -1364,6 +1369,80 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
       }
     }
     return 0; // Continue iteration.
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetString2(const char* name, const char* text, int svFlags)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return;
+    CVar_SetString2(var, text, svFlags);
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetString(const char* name, const char* text)
+{
+    Con_SetString2(name, text, 0);
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetInteger2(const char* name, int value, int svFlags)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return;
+    CVar_SetInteger2(var, value, svFlags);
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetInteger(const char* name, int value)
+{
+    Con_SetInteger2(name, value, 0);
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetFloat2(const char* name, float value, int svFlags)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return;
+    CVar_SetFloat2(var, value, svFlags);
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetFloat(const char* name, float value)
+{
+    Con_SetFloat2(name, value, 0);
+}
+
+/// \note Part of the Doomsday public API.
+int Con_GetInteger(const char* name)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return 0;
+    return CVar_Integer(var);
+}
+
+/// \note Part of the Doomsday public API.
+float Con_GetFloat(const char* name)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return 0;
+    return CVar_Float(var);
+}
+
+/// \note Part of the Doomsday public API.
+byte Con_GetByte(const char* name)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return 0;
+    return CVar_Byte(var);
+}
+
+/// \note Part of the Doomsday public API.
+char* Con_GetString(const char* name)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(NULL == var) return "";
+    return CVar_String(var);
 }
 
 D_CMD(ListCmds)

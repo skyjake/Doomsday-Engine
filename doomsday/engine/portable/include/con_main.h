@@ -78,14 +78,14 @@ typedef struct ccmd_s {
 } ccmd_t;
 
 typedef struct cvar_s {
-    /// Name of the cvar.
-    const char* name;
-
     /// @see consoleVariableFlags
     int flags;
 
     /// Type of this variable.
     cvartype_t type;
+
+    /// Pointer to this variable's node in the directory.
+    struct pathdirectory_node_s* directoryNode;
 
     /// Pointer to the user data.
     void* ptr;
@@ -96,6 +96,30 @@ typedef struct cvar_s {
     /// On-change notification callback.
     void (*notifyChanged)(void);
 } cvar_t;
+
+/// @return  Type of the variable.
+cvartype_t CVar_Type(const cvar_t* var);
+
+/// @return  Full symbolic name/path-to the variable. Must be destroyed with Str_Delete().
+ddstring_t* CVar_ComposeName(cvar_t* var);
+
+int CVar_Integer(const cvar_t* var);
+float CVar_Float(const cvar_t* var);
+byte CVar_Byte(const cvar_t* var);
+char* CVar_String(const cvar_t* var);
+
+/**
+ * \note Also used with @c CVT_BYTE.
+ * @param svflags           @see setVariableFlags
+ */
+void CVar_SetInteger2(cvar_t* var, int value, int svflags);
+void CVar_SetInteger(cvar_t* var, int value);
+
+void CVar_SetFloat2(cvar_t* var, float value, int svflags);
+void CVar_SetFloat(cvar_t* var, float value);
+
+void CVar_SetString2(cvar_t* var, const char* text, int svflags);
+void CVar_SetString(cvar_t* var, const char* text);
 
 typedef enum {
     WT_ANY = -1,
@@ -206,18 +230,14 @@ float Con_GetFloat(const char* name);
 byte Con_GetByte(const char* name);
 char* Con_GetString(const char* name);
 
-/**
- * \note Also used with @c CVT_BYTE.
- * @param svflags           @see setVariableFlags
- */
 void Con_SetInteger2(const char* name, int value, int svflags);
 void Con_SetInteger(const char* name, int value);
 
 void Con_SetFloat2(const char* name, float value, int svflags);
 void Con_SetFloat(const char* name, float value);
 
-void Con_SetString2(const char* name, char* text, int svflags);
-void Con_SetString(const char* name, char* text);
+void Con_SetString2(const char* name, const char* text, int svflags);
+void Con_SetString(const char* name, const char* text);
 
 calias_t* Con_AddAlias(const char* name, const char* command);
 

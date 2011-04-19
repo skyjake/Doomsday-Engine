@@ -245,14 +245,13 @@ static void clearPathHash(pathdirectory_pathhash_t* ph)
     }
 }
 
-static size_t countNodes(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType)
+static size_t countNodes(pathdirectory_t* pd, int flags)
 {
     assert(NULL != pd);
     {
-    size_t n = 0;
+    size_t count = 0;
     if(NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ushort i;
 
@@ -260,11 +259,13 @@ static size_t countNodes(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType)
         for(node = (pathdirectory_node_t*) (*pd->_pathHash)[i];
             NULL != node; node = node->next)
         {
-            if(!compareType || nodeType == PathDirectoryNode_Type(node))
-                ++n;
+            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                continue;
+            ++count;
         }
     }
-    return n;
+    return count;
     }
 }
 
@@ -395,8 +396,8 @@ static pathdirectory_node_t* addPath(pathdirectory_t* fd, const char* path,
     }
 }
 
-static int iteratePaths(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    pathdirectory_node_t* parent, int (*callback) (pathdirectory_node_t* node, void* paramaters),
+static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
+    int (*callback) (pathdirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
     assert(NULL != pd && NULL != callback);
@@ -404,15 +405,17 @@ static int iteratePaths(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
     int result = 0;
     if(NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ushort i;
 
         for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
         for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
         {
-            if(compareType && nodeType != PathDirectoryNode_Type(node)) continue;
-            if(parent != PathDirectoryNode_Parent(node)) continue;
+            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                continue;
+            if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
+                continue;
 
             if(0 != (result = callback(node, paramaters)))
                 break;
@@ -439,7 +442,7 @@ static int iteratePaths_const(const pathdirectory_t* pd, pathdirectory_nodetype_
         for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
         {
             if(compareType && nodeType != PathDirectoryNode_Type(node)) continue;
-            if(parent != PathDirectoryNode_Parent(node)) continue;
+            if(NULL != parent && parent != PathDirectoryNode_Parent(node)) continue;
 
             if(0 != (result = callback(node, paramaters)))
                 break;
@@ -491,37 +494,33 @@ pathdirectory_node_t* PathDirectory_Insert(pathdirectory_t* pd, const char* path
     return PathDirectory_Insert2(pd, path, delimiter, NULL);
 }
 
-int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    pathdirectory_node_t* parent, int (*callback) (pathdirectory_node_t* node, void* paramaters),
-    void* paramaters)
+int PathDirectory_Iterate2(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
+    int (*callback) (pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
-    assert(NULL != pd && (nodeType == PT_ANY || VALID_PATHDIRECTORY_NODETYPE(nodeType)));
-    return iteratePaths(pd, nodeType, parent, callback, paramaters);
+    return iteratePaths(pd, flags, parent, callback, paramaters);
 }
 
-int PathDirectory_Iterate(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    pathdirectory_node_t* parent, int (*callback) (pathdirectory_node_t* node, void* paramaters))
+int PathDirectory_Iterate(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
+    int (*callback) (pathdirectory_node_t* node, void* paramaters))
 {
-    return PathDirectory_Iterate2(pd, nodeType, parent, callback, NULL);
+    return PathDirectory_Iterate2(pd, flags, parent, callback, NULL);
 }
 
-int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    const pathdirectory_node_t* parent,
+int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, int flags, const pathdirectory_node_t* parent,
     int (*callback) (const pathdirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
-    assert(NULL != pd && (nodeType == PT_ANY || VALID_PATHDIRECTORY_NODETYPE(nodeType)));
-    return iteratePaths_const(pd, nodeType, parent, callback, paramaters);
+    return iteratePaths_const(pd, flags, parent, callback, paramaters);
 }
 
-int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    const pathdirectory_node_t* parent,
+int PathDirectory_Iterate_Const(const pathdirectory_t* pd, int flags, const pathdirectory_node_t* parent,
     int (*callback) (const pathdirectory_node_t* node, void* paramaters))
 {
-    return PathDirectory_Iterate2_Const(pd, nodeType, parent, callback, NULL);
+    return PathDirectory_Iterate2_Const(pd, flags, parent, callback, NULL);
 }
 
-pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, const char* searchPath, char delimiter)
+pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, int flags, const char* searchPath,
+    char delimiter)
 {
     assert(NULL != pd);
     if(NULL != searchPath && searchPath[0] && NULL != pd->_pathHash)
@@ -530,23 +529,22 @@ pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, const char* search
         ushort hash = hashName(searchPath, searchPathLen, delimiter);
         pathdirectory_node_t* node = (*pd->_pathHash)[hash];
         // Perform the search.
-        while(NULL != node && !PathDirectoryNode_MatchDirectory(node, searchPath, searchPathLen, delimiter))
+        while(NULL != node && !PathDirectoryNode_MatchDirectory(node, flags, searchPath, searchPathLen, delimiter))
             node = node->next;
         return node;
     }
     return NULL;
 }
 
-ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    char delimiter, size_t* retCount)
+ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter,
+    size_t* retCount)
 {
     assert(NULL != pd);
     {
     ddstring_t* paths = NULL;
-    size_t count = countNodes(pd, nodeType);
+    size_t count = countNodes(pd, flags);
     if(0 != count)
     {
-        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ddstring_t** pathPtr;
         ushort i;
@@ -560,7 +558,9 @@ ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t
         for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
         for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
         {
-            if(compareType && nodeType != PathDirectoryNode_Type(node)) continue;
+            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                continue;
 
             Str_Init(*pathPtr);
             PathDirectoryNode_ComposePath(node, *pathPtr, delimiter);
@@ -588,7 +588,7 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
     ddstring_t* pathList;
 
     Con_Printf("PathDirectory:\n");
-    if(NULL != (pathList = PathDirectory_AllPaths(pd, PT_LEAF, delimiter, &numLeafs)))
+    if(NULL != (pathList = PathDirectory_CollectPaths(pd, PT_LEAF, delimiter, &numLeafs)))
     {
         qsort(pathList, numLeafs, sizeof(*pathList), comparePaths);
         do
@@ -626,7 +626,7 @@ static void PathDirectoryNode_Destruct(pathdirectory_node_t* node)
     free(node);
 }
 
-boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
+boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, int flags,
     const char* searchPath, size_t searchPathLen, char delimiter)
 {
     assert(NULL != node);
@@ -636,6 +636,10 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
     size_t i;
 
     if(NULL == searchPath || 0 == searchPathLen)
+        return false;
+
+    if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+       ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
         return false;
 
     begin = searchPath;
@@ -661,7 +665,7 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
 
         // Have we arrived at the search target?
         if(from == begin)
-            return true;
+            return (!(flags & PCF_MATCH_FULL) || NULL == node->_parent);
 
         // Are there no more parent directories?
         if(NULL == node->_parent)
@@ -678,8 +682,8 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node,
     }
 }
 
-void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t* foundPath,
-    char delimiter)
+ddstring_t* PathDirectoryNode_ComposePath(const pathdirectory_node_t* node,
+    ddstring_t* foundPath, char delimiter)
 {
     assert(NULL != node && NULL != foundPath);
     {
@@ -717,6 +721,8 @@ void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t*
         if(NULL != trav->_parent && 0 != delimiterLen)
             Str_PrependChar(foundPath, delimiter);
     } while(NULL != (trav = trav->_parent));
+
+    return foundPath;
     }
 }
 

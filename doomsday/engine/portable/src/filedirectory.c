@@ -42,14 +42,14 @@ typedef struct {
     void* paramaters;
 } addpathworker_paramaters_t;
 
-static int addPathWorker(const ddstring_t* filePath, pathdirectory_nodetype_t type,
+static int addPathWorker(const ddstring_t* filePath, pathdirectory_nodetype_t nodeType,
     void* paramaters)
 {
-    assert(NULL != filePath && VALID_PATHDIRECTORY_NODETYPE(type) && NULL != paramaters);
+    assert(NULL != filePath && VALID_PATHDIRECTORY_NODETYPE(nodeType) && NULL != paramaters);
     {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
     int result = 0; // Continue adding.
-    if(type == PT_LEAF && !Str_IsEmpty(filePath))
+    if(PT_LEAF == nodeType && !Str_IsEmpty(filePath))
     {
         struct pathdirectory_node_s* node;
         filedirectory_nodeinfo_t* info;
@@ -123,7 +123,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
             {
                 if(PT_BRANCH == PathDirectoryNode_Type(node))
                 {
-                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PT_LEAF, node, callback, paramaters);
+                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, callback, paramaters);
                 }
                 else
                 {
@@ -347,28 +347,33 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList)
     FileDirectory_AddPathList2(fd, pathList, NULL);
 }
 
-int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t type, 
+int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t nodeType, 
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
 {
     assert(NULL != fd);
-    return PathDirectory_Iterate2_Const(fd->_pathDirectory, type, parent, callback, paramaters);
+    {
+    int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
+    return PathDirectory_Iterate2_Const(fd->_pathDirectory, flags, parent, callback, paramaters);
+    }
 }
 
-int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t type,
+int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters))
 {
-    return FileDirectory_Iterate2(fd, type, parent, callback, NULL);
+    return FileDirectory_Iterate2(fd, nodeType, parent, callback, NULL);
 }
 
-boolean FileDirectory_Find(filedirectory_t* fd, const char* _searchPath, ddstring_t* foundName)
+boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
+    const char* _searchPath, ddstring_t* foundName)
 {
     assert(NULL != fd);
     {
     const struct pathdirectory_node_s* foundNode;
     ddstring_t searchPath;
+    int flags;
 
     if(NULL != foundName)
         Str_Clear(foundName);
@@ -381,7 +386,8 @@ boolean FileDirectory_Find(filedirectory_t* fd, const char* _searchPath, ddstrin
     F_FixSlashes(&searchPath, &searchPath);
 
     // Perform the search.
-    foundNode = PathDirectory_Find(fd->_pathDirectory, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
+    flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
+    foundNode = PathDirectory_Find(fd->_pathDirectory, flags, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?
@@ -408,7 +414,7 @@ void FileDirectory_Print(filedirectory_t* fd)
     ddstring_t* fileList;
 
     Con_Printf("FileDirectory:\n");
-    if(NULL != (fileList = PathDirectory_AllPaths(fd->_pathDirectory, PT_LEAF, FILEDIRECTORY_DELIMITER, &numFiles)))
+    if(NULL != (fileList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, FILEDIRECTORY_DELIMITER, &numFiles)))
     {
         qsort(fileList, numFiles, sizeof(*fileList), comparePaths);
         do

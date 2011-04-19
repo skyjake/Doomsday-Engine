@@ -37,14 +37,28 @@ typedef enum {
     PATHDIRECTORY_NODETYPES_COUNT
 } pathdirectory_nodetype_t;
 
-#define VALID_PATHDIRECTORY_NODETYPE(t) ((t) >= PATHDIRECTORY_NODETYPES_FIRST && (t) < PATHDIRECTORY_NODETYPES_COUNT)
+// Helper macro for determining if the value v can be interpreted as a valid node type.
+#define VALID_PATHDIRECTORY_NODETYPE(v) (\
+    (v) >= PATHDIRECTORY_NODETYPES_FIRST && (v) < PATHDIRECTORY_NODETYPES_COUNT)
 
 /**
- * PathDirectory. Data structure for modelling a hierarchical relationship
- * tree of string+value data pairs.
+ * @defgroup pathComparisonFlags  Path Comparison Flags
+ * @{
+ */
+#define PCF_NO_LEAF         0x1 /// Do not consider leaves as possible candidates.
+#define PCF_NO_BRANCH       0x2 /// Do not consider branches as possible candidates.
+#define PCF_MATCH_PARENT    0x4 /// Only consider nodes whose parent matches that referenced.
+#define PCF_MATCH_FULL      0x8 /// Whole path must match completely (i.e., path begins
+                                /// from the same root point) otherwise allow partial
+                                /// (i.e., relative) matches.
+/**@}*/
+
+/**
+ * PathDirectory. Data structure for modelling a hierarchical relationship tree of
+ * string+value data pairs.
  *
- * Somewhat similar to a Prefix Tree (Trie) representationally although that
- * is where the similarity ends.
+ * Somewhat similar to a Prefix Tree (Trie) representationally although that is where
+ * the similarity ends.
  *
  * @ingroup data
  */
@@ -52,6 +66,7 @@ typedef enum {
 #define PATHDIRECTORY_PATHHASH_SIZE 512
 typedef struct pathdirectory_node_s* pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
 
+// Intern name identifier. Used privately by this class and friends.
 typedef uint pathdirectory_internnameid_t;
 
 typedef struct pathdirectory_s {
@@ -78,12 +93,13 @@ void PathDirectory_Clear(pathdirectory_t* pd);
 /**
  * Check if @a searchPath exists in the directory.
  *
+ * @param flags             @see pathComparisonFlags
  * @param searchPath        Relative or absolute path.
  * @param delimiter         Fragments of the path are delimited by this character.
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
-struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd,
+struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd, int flags,
     const char* searchPath, char delimiter);
 
 /**
@@ -103,27 +119,23 @@ struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
  * Iterate over nodes in the directory making a callback for each.
  * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
- * @param type              If a valid path type only process nodes of this type.
- * @param parent            If not @c NULL, only process child nodes of this node.
+ * @param flags             @see pathComparisonFlags
+ * @param parent            Parent node reference, used when restricting processing
+ *      to the child nodes of this node. Only used when the flag PCF_MATCH_PARENT
+ *      is set in @a flags.
  * @param callback          Callback function ptr.
  * @param paramaters        Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_nodetype_t type,
-    struct pathdirectory_node_s* parent,
-    int (*callback) (struct pathdirectory_node_s* node, void* paramaters),
-    void* paramaters);
-int PathDirectory_Iterate(pathdirectory_t* pd, pathdirectory_nodetype_t type,
-    struct pathdirectory_node_s* parent,
+int PathDirectory_Iterate2(pathdirectory_t* pd, int flags, struct pathdirectory_node_s* parent,
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
+int PathDirectory_Iterate(pathdirectory_t* pd, int flags, struct pathdirectory_node_s* parent,
     int (*callback) (struct pathdirectory_node_s* node, void* paramaters));
 
-int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, pathdirectory_nodetype_t type,
-    const struct pathdirectory_node_s* parent,
-    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
-    void* paramaters);
-int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_nodetype_t type,
-    const struct pathdirectory_node_s* parent,
+int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, int flags, const struct pathdirectory_node_s* parent,
+    int (*callback) (const struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
+int PathDirectory_Iterate_Const(const pathdirectory_t* pd, int flags, const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
 /**
@@ -131,34 +143,36 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, pathdirectory_nodetyp
  *
  * @todo Does this really belong here (perhaps a class static non-member)?
  *
- * @param type              If a valid type; only paths of this type will be visited.
+ * @param flags             @see pathComparisonFlags
  * @param delimiter         Fragments of the path will be delimited by this character.
  * @param count             Number of visited paths is written back here.
  *
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and free() the list itself.
  */
-ddstring_t* PathDirectory_AllPaths(pathdirectory_t* pd, pathdirectory_nodetype_t type,
-    char delimiter, size_t* count);
+ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter,
+    size_t* count);
 
 /**
+ * @param flags             @see pathComparisonFlags
  * @param searchPath        A relative path.
  * @param searchPathLen     Number of characters from @a searchPath to match. Normally
  *      equal to the full length of @a searchPath excluding any terminating '\0'.
  * @param delimiter         Delimiter used to separate fragments of @a searchPath.
  *
- * @return  @c true iff @a searchPath matches this and begins from the same root point.
+ * @return  @c true iff @a searchPath matches this.
  */
 boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
-    const char* searchPath, size_t searchPathLen, char delimiter);
+    int flags, const char* searchPath, size_t searchPathLen, char delimiter);
 
 /**
  * Composes a relative path for the directory node.
  * @param path              Composed path is written here.
  * @param delimiter         Path is composed with fragments delimited by this character.
+ * @return  The composed path pointer specified with @a path, for caller's convenience.
  */
-void PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node, ddstring_t* path,
-    char delimiter);
+ddstring_t* PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node,
+    ddstring_t* path, char delimiter);
 
 /// @return  Parent of this directory node else @c NULL
 struct pathdirectory_node_s* PathDirectoryNode_Parent(const struct pathdirectory_node_s* node);

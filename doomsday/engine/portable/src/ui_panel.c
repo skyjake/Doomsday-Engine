@@ -731,32 +731,30 @@ void CP_CvarButton(ui_object_t *ob)
 void CP_CvarList(ui_object_t *ob)
 {
     uidata_list_t *list = ob->data;
-    cvar_t     *var = Con_FindVariable(list->data);
-    int         value = ((uidata_listitem_t *) list->items)[list->selection].data;
+    cvar_t* var = Con_FindVariable(list->data);
+    int value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
-    if(list->selection < 0)
-        return;                 // Hmm?
-    if(!var)
-        return;
+    if(0 >= list->selection) return;
+    if(NULL == var) return;
 
-    Con_SetInteger2(var->name, value, SVF_WRITE_OVERRIDE);
+    CVar_SetInteger2(var, value, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarEdit(ui_object_t *ob)
 {
-    uidata_edit_t *ed = ob->data;
-
-    Con_SetString2(ed->data, ed->ptr, SVF_WRITE_OVERRIDE);
+    uidata_edit_t* ed = ob->data;
+    cvar_t* var = Con_FindVariable(ed->data);
+    if(NULL == var) return;
+    CVar_SetString2(var, ed->ptr, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarSlider(ui_object_t *ob)
 {
     uidata_slider_t *slid = ob->data;
-    cvar_t     *var = Con_FindVariable(slid->data);
-    float       value = slid->value;
+    cvar_t* var = Con_FindVariable(slid->data);
+    float value = slid->value;
 
-    if(!var)
-        return;
+    if(NULL == var) return;
 
     if(!slid->floatmode)
     {
@@ -768,18 +766,18 @@ void CP_CvarSlider(ui_object_t *ob)
     case CVT_FLOAT:
         if(slid->step >= .01f)
         {
-            Con_SetFloat2(var->name, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
+            CVar_SetFloat2(var, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
         }
         else
         {
-            Con_SetFloat2(var->name, value, SVF_WRITE_OVERRIDE);
+            CVar_SetFloat2(var, value, SVF_WRITE_OVERRIDE);
         }
         break;
     case CVT_INT:
-        Con_SetInteger2(var->name, (int) value, SVF_WRITE_OVERRIDE);
+        CVar_SetInteger2(var, (int) value, SVF_WRITE_OVERRIDE);
         break;
     case CVT_BYTE:
-        Con_SetInteger2(var->name, (byte) value, SVF_WRITE_OVERRIDE);
+        CVar_SetInteger2(var, (byte) value, SVF_WRITE_OVERRIDE);
         break;
     default:
         break;
