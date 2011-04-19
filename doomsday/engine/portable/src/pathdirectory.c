@@ -425,8 +425,7 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
     }
 }
 
-static int iteratePaths_const(const pathdirectory_t* pd, pathdirectory_nodetype_t nodeType,
-    const pathdirectory_node_t* parent,
+static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdirectory_node_t* parent,
     int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
     assert(NULL != pd && NULL != callback);
@@ -434,15 +433,17 @@ static int iteratePaths_const(const pathdirectory_t* pd, pathdirectory_nodetype_
     int result = 0;
     if(NULL != pd->_pathHash)
     {
-        boolean compareType = VALID_PATHDIRECTORY_NODETYPE(nodeType);
         pathdirectory_node_t* node;
         ushort i;
 
         for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
         for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
         {
-            if(compareType && nodeType != PathDirectoryNode_Type(node)) continue;
-            if(NULL != parent && parent != PathDirectoryNode_Parent(node)) continue;
+            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                continue;
+            if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
+                continue;
 
             if(0 != (result = callback(node, paramaters)))
                 break;
