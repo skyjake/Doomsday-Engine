@@ -870,17 +870,12 @@ void NetSv_SendGameState(int flags, int to)
 
     if(IS_CLIENT)
         return;
-    if(G_GetGameState() != GS_MAP)
-        return;
 
     gravity = FLT2FIX(P_GetGravity());
 
     // Print a short message that describes the game state.
-    if(verbose || IS_DEDICATED)
-    {
-        Con_Printf("Game setup: ep%u map%u %s\n", gameEpisode+1, gameMap+1,
-                   gameConfigString);
-    }
+    Con_Message("NetSv_SendGameState: Game setup: ep%u map%u %s\n",
+                gameEpisode+1, gameMap+1, gameConfigString);
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)

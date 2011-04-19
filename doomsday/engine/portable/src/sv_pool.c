@@ -610,9 +610,6 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
 
         if(s->state == NULL)
         {
-#ifdef _DEBUG
-            Con_Message("Sv_RegisterCompareMobj: Mobj state is NULL, ignoring.\n");
-#endif
             // No valid comparison can be generated because the mobj is gone.
             return false;
         }
