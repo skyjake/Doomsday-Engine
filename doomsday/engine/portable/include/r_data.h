@@ -124,9 +124,9 @@ typedef struct shadowlink_s {
 } shadowlink_t;
 
 typedef struct {
-    lumpnum_t       lump;
-    short           offX; // block origin (allways UL), which has allready
-    short           offY; // accounted for the patch's internal origin
+    lumpnum_t lumpNum;
+    short offX; /// block origin (always UL), which has allready
+    short offY; /// Accounted for the patch's internal origin
 } texpatch_t;
 
 #define TXDF_NODRAW         0x0001 // Not to be drawn.
@@ -135,22 +135,24 @@ typedef struct {
 // Describes a rectangular texture, which is composed of one
 // or more texpatch_t structures that arrange graphic patches.
 typedef struct {
-    char            name[9];
-    short           width, height;
-    short           flags;
+    ddstring_t name;
+    short width, height;
+    short flags;
     textureid_t texId; /// Name of the associated Texture.
-    short           patchCount;
-    texpatch_t      patches[1]; // [patchcount] drawn back to front into the cached texture.
+    short patchCount;
+    texpatch_t patches[1]; // [patchcount] drawn back to front into the cached texture.
 } patchcompositetex_t;
 
 typedef struct flat_s {
-    lumpname_t name;
+    ddstring_t name;
+    lumpnum_t lumpNum;
     textureid_t texId; /// Name of the associated Texture.
     boolean isCustom;
 } flat_t;
 
 typedef struct {
-    lumpname_t name;
+    ddstring_t name;
+    lumpnum_t lumpNum;
     textureid_t texId; /// Name of the associated Texture.
     boolean isCustom;
     /// Offset to texture origin in logical pixels.
@@ -163,7 +165,8 @@ typedef struct {
 
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
-    lumpnum_t lump;
+    ddstring_t name;
+    lumpnum_t lumpNum;
     textureid_t texId; /// Name of the associated Texture.
     boolean isCustom;
     short flags;
@@ -173,20 +176,22 @@ typedef struct patchtex_s {
 
 #pragma pack(1)
 typedef struct doompatch_header_s {
-    int16_t width; // Bounding box size.
+    int16_t width; /// Bounding box size.
     int16_t height;
-    int16_t leftOffset; // Pixels to the left of origin.
-    int16_t topOffset; // Pixels below the origin.
+    int16_t leftOffset; /// Pixels to the left of origin.
+    int16_t topOffset; /// Pixels below the origin.
 } doompatch_header_t;
 #pragma pack()
 
-// A rawtex is a lump raw graphic that has been prepared for render.
+/**
+ * A rawtex is a lump raw graphic that has been prepared for render.
+ */
 typedef struct rawtex_s {
-    lumpnum_t       lump;
-    DGLuint         tex; // Name of the associated DGL texture.
-    short           width, height;
-    byte            masked;
-
+    ddstring_t name;
+    lumpnum_t lumpNum;
+    DGLuint tex; /// Name of the associated DGL texture.
+    short width, height;
+    byte masked;
     struct rawtex_s* next;
 } rawtex_t;
 

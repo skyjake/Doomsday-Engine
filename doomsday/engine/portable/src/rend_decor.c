@@ -452,6 +452,9 @@ static uint generateDecorLights(const ded_decorlight_t* def,
     patternW = Material_Width(mat) * skip[0];
     patternH = Material_Height(mat) * skip[1];
 
+    if(0 == patternW && 0 == patternH)
+        return 0;
+
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
                     def->elevation * suf->normal[VZ]);

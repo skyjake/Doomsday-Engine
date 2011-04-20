@@ -511,6 +511,25 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
     }
 }
 
+static boolean markSurfaceForDecorationUpdate(surface_t* surface, void* paramaters)
+{
+    material_t* material = (material_t*) paramaters;
+    if(material == surface->material)
+    {
+        Surface_Update(surface);
+    }
+    return 1; // Continue iteration.
+}
+
+void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
+{
+    gamemap_t* map = P_GetCurrentMap();
+    if(NULL == material || NULL == map || ddMapSetup) return;
+
+    // Light decorations will need a refresh.
+    R_SurfaceListIterate(decoratedSurfaceList, markSurfaceForDecorationUpdate, material);
+}
+
 /**
  * Create a new plane for the given sector. The plane will be initialized
  * with default values.

@@ -329,7 +329,7 @@ static void buildSpriteRotations(void)
     for(i = 0; i < numSpriteTextures; ++i)
     {
         const spritetex_t* sprTex = R_SpriteTextureByIndex(i);
-        const char* name = sprTex->name;
+        const char* name = Str_Text(&sprTex->name);
         spriterecord_frame_t* frame;
         spriterecord_t* rec;
         boolean link;

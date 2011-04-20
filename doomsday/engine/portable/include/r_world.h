@@ -118,6 +118,13 @@ boolean         R_SurfaceListIterate(surfacelist_t* sl,
                                      void* context);
 
 void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
+
+/**
+ * To be called in response to a Material property changing which may
+ * require updating any map surfaces which are presently using it.
+ */
+void R_UpdateMapSurfacesOnMaterialChange(material_t* material);
+
 boolean         R_IsGlowingPlane(const plane_t* pln);
 
 lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const linedef_t* line);

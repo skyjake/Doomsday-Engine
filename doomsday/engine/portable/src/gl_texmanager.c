@@ -681,15 +681,14 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
             Str_Init(&searchPath);
             Str_Appendf(&searchPath,
                 FLATS_RESOURCE_NAMESPACE_NAME":%s;"
-                TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", flat->name, flat->name);
+                TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(&flat->name), Str_Text(&flat->name));
 
             loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
         {
-            lumpnum_t lumpNum = W_CheckNumForName2(flat->name, true);
-            loadResult = GL_LoadFlatLump(image, lumpNum);
+            loadResult = GL_LoadFlatLump(image, flat->lumpNum);
         }
         break;
       }
@@ -712,14 +711,14 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
             Str_Init(&searchPath);
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(pTex->lump));
+            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&pTex->name));
 
             loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
         {
-            loadResult = GL_LoadPatchLumpAsPatch(image, pTex->lump, tclass, tmap, spec->border, pTex);
+            loadResult = GL_LoadPatchLumpAsPatch(image, pTex->lumpNum, tclass, tmap, spec->border, pTex);
         }
         break;
       }
@@ -745,22 +744,21 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
             Str_Init(&searchPath);
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", sprTex->name);
+                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(&sprTex->name));
             }
             else if(tclass || tmap)
             {
                 Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
-                    sprTex->name, tclass, tmap);
+                    Str_Text(&sprTex->name), tclass, tmap);
             }
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", sprTex->name);
+            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(&sprTex->name));
 
             loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
         if(0 == loadResult)
         {
-            lumpnum_t lumpNum = W_GetNumForName(sprTex->name);
-            loadResult = GL_LoadPatchLumpAsSprite(image, lumpNum, tclass, tmap, spec->border, sprTex);
+            loadResult = GL_LoadPatchLumpAsSprite(image, sprTex->lumpNum, tclass, tmap, spec->border, sprTex);
         }
         break;
       }
@@ -2576,7 +2574,7 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         const doompatch_header_t* patch = (doompatch_header_t*)
-            W_CacheLumpNum(patchDef->lump, PU_CACHE);
+            W_CacheLumpNum(patchDef->lumpNum, PU_CACHE);
 
         // Draw the patch in the buffer.
         loadDoomPatch(image->pixels, image->width, image->height,
@@ -2610,7 +2608,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     if(texDef->patchCount == 1)
     {
         const doompatch_header_t* patch = (const doompatch_header_t*)
-            W_CacheLumpNum(texDef->patches[0].lump, PU_CACHE);
+            W_CacheLumpNum(texDef->patches[0].lumpNum, PU_CACHE);
         int bufHeight = SHORT(patch->height) > height ? SHORT(patch->height) : height;
         if(bufHeight > height)
         {
@@ -2634,7 +2632,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     {
         const texpatch_t* patchDef = &texDef->patches[i];
         const doompatch_header_t* patch = (const doompatch_header_t*)
-            W_CacheLumpNum(patchDef->lump, PU_CACHE);
+            W_CacheLumpNum(patchDef->lumpNum, PU_CACHE);
 
         if(texDef->patchCount != 1)
         {
@@ -2661,12 +2659,11 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 {
     assert(image);
     {
-    const char* lumpName = W_LumpName(r->lump);
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
     // First try to find an external resource.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", lumpName);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&r->name));
     Str_Init(&foundPath);
 
     if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
@@ -2677,10 +2674,9 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     else
     {
         DFILE* file;
-        lumpnum_t lumpIndex = W_CheckNumForName(lumpName);
-        if(NULL != (file = F_OpenLump(lumpIndex, false)))
+        if(NULL != (file = F_OpenLump(r->lumpNum, false)))
         {
-            if(0 != GL_LoadImageDFile(image, file, lumpName))
+            if(0 != GL_LoadImageDFile(image, file, Str_Text(&r->name)))
             {
                 result = 1;
             }
@@ -2723,7 +2719,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
     if(!raw)
         return 0; // Wha?
 
-    if(raw->lump < 0 || raw->lump >= W_NumLumps())
+    if(raw->lumpNum < 0 || raw->lumpNum >= W_NumLumps())
     {
         GL_BindTexture(0, 0);
         return 0;
@@ -3239,7 +3235,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
             ddstring_t searchPath;
             assert(NULL != texDef);
             Str_Init(&searchPath);
-            Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
+            Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&texDef->name));
             loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
             Str_Free(&searchPath);
         }
