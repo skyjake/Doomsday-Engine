@@ -331,7 +331,7 @@ typedef enum segsection_e {
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)0
+#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
 #define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
 #define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
