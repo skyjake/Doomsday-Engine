@@ -49,17 +49,17 @@ void Zip_Shutdown(void);
 /**
  * Opens the file zip, reads the directory and stores the info for later access.
  *
- * @param prevOpened    If not @c NULL, all data will be read from there.
+ * @param prevOpened  If not @c NULL, all data will be read from there.
  */
 boolean Zip_Open(const char* fileName, DFILE* prevOpened);
 
 /**
- * @return              Size of a zipentry specified by index.
+ * @return  Size of a zipentry specified by index.
  */
 size_t Zip_GetSize(zipindex_t index);
 
 /**
- * @return              "Last modified" timestamp of the zip entry.
+ * @return  "Last modified" timestamp of the zip entry.
  */
 uint Zip_GetLastModified(zipindex_t index);
 
@@ -67,9 +67,9 @@ uint Zip_GetLastModified(zipindex_t index);
  * Reads a zipentry into the buffer. The caller must make sure that
  * the buffer is large enough. Zip_GetSize() returns the size.
  *
- * @return              Number of bytes read.
+ * @return  Number of bytes read.
  */
-size_t Zip_Read(zipindex_t index, void *buffer);
+size_t Zip_Read(zipindex_t index, void* buffer);
 
 /**
  * Find a specific path in the zipentry list. Relative paths are converted
@@ -77,7 +77,7 @@ size_t Zip_Read(zipindex_t index, void *buffer);
  *
  * \note Good performance: O(log n)
  *
- * @return              Non-zero if something is found.
+ * @return  Non-zero if something is found.
  */
 zipindex_t Zip_Find(const char* searchPath);
 
@@ -85,10 +85,10 @@ zipindex_t Zip_Find(const char* searchPath);
  * Iterate over nodes in the Zip making a callback for each.
  * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
- * @param callback          Callback function ptr.
- * @param paramaters        Passed to the callback.
+ * @param callback  Callback function ptr.
+ * @param paramaters  Passed to the callback.
  *
- * @return                  @c 0 iff iteration completed wholly.
+ * @return  @c 0 iff iteration completed wholly.
  */
 int Zip_Iterate2(int (*callback) (const struct ddstring_s*, void*), void* paramaters);
 int Zip_Iterate(int (*callback) (const struct ddstring_s*, void*));
