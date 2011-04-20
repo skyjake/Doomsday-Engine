@@ -95,9 +95,6 @@ void F_InitResourceLocator(void);
  */
 void F_ShutdownResourceLocator(void);
 
-/// @return  Ptr to the global FileDirectory (singleton) instance used for file system paths.
-struct filedirectory_s* F_LocalPaths(void);
-
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
 

@@ -117,9 +117,6 @@ static const ddstring_t defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
 static resourcenamespace_t** namespaces = 0;
 static uint numNamespaces = 0;
 
-/// Local virtual file system paths on the host system.
-static filedirectory_t* fsLocalPaths;
-
 // CODE --------------------------------------------------------------------
 
 static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath)
@@ -580,9 +577,6 @@ void F_InitResourceLocator(void)
     if(!inited)
     {   // First init.
         createResourceNamespaces();
-
-        // Create the initial (empty) local file system path directory now.
-        fsLocalPaths = FileDirectory_ConstructDefault();
     }
 
     // Allow re-init.
@@ -595,14 +589,7 @@ void F_ShutdownResourceLocator(void)
     if(!inited)
         return;
     destroyAllNamespaces();
-    FileDirectory_Destruct(fsLocalPaths); fsLocalPaths = 0;
     inited = false;
-}
-
-filedirectory_t* F_LocalPaths(void)
-{
-    assert(inited);
-    return fsLocalPaths;
 }
 
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)

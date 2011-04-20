@@ -919,7 +919,10 @@ static int DD_ChangeGameWorker(void* paramaters)
         DD_AutoLoad();
     }
 
+    /// Re-initialize the resource locator as there are now new resources to be found
+    /// on existing search paths (probably that is).
     F_InitDirec();
+    F_InitResourceLocator();
     Cl_InitTranslations();
 
     Con_SetProgress(60);
@@ -1455,6 +1458,11 @@ int DD_Main(void)
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }}
+
+    /// Re-initialize the resource locator as there are now new resources to be found
+    /// on existing search paths (probably that is).
+    F_InitDirec();
+    F_InitResourceLocator();
 
     // One-time execution of various command line features available during startup.
     if(ArgCheckWith("-dumplump", 1))

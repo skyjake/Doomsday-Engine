@@ -189,6 +189,10 @@ static void rebuild(resourcenamespace_t* rn)
     if(rn->_flags & RNF_IS_DIRTY)
     {
         clearPathHash(rn);
+        if(NULL != rn->_fileDirectory)
+        {
+            FileDirectory_Clear(rn->_fileDirectory);
+        }
 
         { ddstring_t tmp; Str_Init(&tmp);
         formSearchPathList(&tmp, rn);
@@ -201,7 +205,7 @@ static void rebuild(resourcenamespace_t* rn)
             //startTime = verbose >= 2? Sys_GetRealTime(): 0;
 #endif
 
-            FileDirectory_AddPathList3(F_LocalPaths(), Str_Text(&tmp), addFilePathWorker, rn);
+            FileDirectory_AddPathList3(rn->_fileDirectory, Str_Text(&tmp), addFilePathWorker, rn);
 
 /*#if _DEBUG
             printPathHash(rn);
@@ -236,6 +240,7 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     rn->_flags = flags;
     Str_Init(&rn->_name); Str_Set(&rn->_name, name);
 
+    rn->_fileDirectory = FileDirectory_ConstructDefault();
     rn->_composeHashName = composeHashNameFunc;
     rn->_hashName = hashNameFunc;
     memset(rn->_pathHash, 0, sizeof(rn->_pathHash));
@@ -320,6 +325,11 @@ void ResourceNamespace_Destruct(resourcenamespace_t* rn)
     ResourceNamespace_ClearSearchPaths(rn);
     ResourceNamespace_ClearExtraSearchPaths(rn);
     clearPathHash(rn);
+    if(NULL != rn->_fileDirectory)
+    {
+        FileDirectory_Destruct(rn->_fileDirectory);
+        rn->_fileDirectory = NULL;
+    }
     Str_Free(&rn->_name);
     if(rn->_overrideName)
         Str_Delete(rn->_overrideName);
@@ -333,6 +343,10 @@ void ResourceNamespace_Reset(resourcenamespace_t* rn)
     assert(rn);
     ResourceNamespace_ClearExtraSearchPaths(rn);
     clearPathHash(rn);
+    if(NULL != rn->_fileDirectory)
+    {
+        FileDirectory_Clear(rn->_fileDirectory);
+    }
     rn->_flags |= RNF_IS_DIRTY;
 }
 

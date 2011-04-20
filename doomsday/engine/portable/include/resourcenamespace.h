@@ -78,6 +78,7 @@ typedef struct resourcenamespace_s {
     uint _extraSearchPathsCount;
 
     /// Path hash table.
+    filedirectory_t* _fileDirectory;
     ddstring_t* (*_composeHashName) (const ddstring_t* path);
     resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
     resourcenamespace_namehash_t _pathHash;
