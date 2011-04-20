@@ -88,8 +88,10 @@ void Material_Dimensions(const material_t* mat, int* width, int* height)
 void Material_SetDimensions(material_t* mat, int width, int height)
 {
     assert(mat);
+    if(width == mat->_width && height == mat->_height) return;
     mat->_width = width;
     mat->_height = height;
+    R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Width(const material_t* mat)
@@ -101,7 +103,9 @@ int Material_Width(const material_t* mat)
 void Material_SetWidth(material_t* mat, int width)
 {
     assert(mat);
+    if(width == mat->_width) return;
     mat->_width = width;
+    R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Height(const material_t* mat)
@@ -113,7 +117,9 @@ int Material_Height(const material_t* mat)
 void Material_SetHeight(material_t* mat, int height)
 {
     assert(mat);
+    if(height == mat->_height) return;
     mat->_height = height;
+    R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 short Material_Flags(const material_t* mat)

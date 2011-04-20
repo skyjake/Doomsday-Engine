@@ -878,7 +878,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }}
 
     // Only create complete Materials.
-    if(NULL == tex || 0 >= width || 0 >= height)
+    if(NULL == tex)
         return NULL;
 
     // A new Material.
@@ -886,8 +886,8 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     mat->_flags = flags;
     mat->_isCustom = !Texture_IsFromIWAD(tex);
     mat->_def    = def;
-    mat->_width  = width;
-    mat->_height = height;
+    mat->_width  = MAX_OF(0, width);
+    mat->_height = MAX_OF(0, height);
     mat->_envClass = S_MaterialClassForName(rawName);
     newMaterialNameBinding(mat, name, namespaceId, hash);
 
@@ -1263,18 +1263,25 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     {
         const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
         preparetextureresult_t result;
+        texture_t* tex;
 
         if(0 == ml->tex) continue;
 
         // Pick the instance matching the specified context.
-        texUnits[i].tex = GL_PrepareTextureVariant2(GL_ToTexture(ml->tex), spec->primarySpec, &result);
+        tex = GL_ToTexture(ml->tex);
+        texUnits[i].tex = GL_PrepareTextureVariant2(tex, spec->primarySpec, &result);
 
         if(0 == i && NULL != mb &&
            (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
-        {   // Primary texture was (re)prepared.
+        {
+            // Primary texture was (re)prepared.
             /// Update the prepared status. This should be moved out of the binding.
             mb->prepared = result == PTR_UPLOADED_ORIGINAL? 1 : 2;
             updateMaterialTextureLinks(mat);
+
+            // Are we inheriting the logical dimensions from the texture?
+            if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+                Material_SetDimensions(mat, Texture_Width(tex), Texture_Height(tex));
         }
     }}
 
@@ -1329,6 +1336,9 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         return;
 
     Materials_InitSnapshot(snapshot);
+
+    if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+        return;
 
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
