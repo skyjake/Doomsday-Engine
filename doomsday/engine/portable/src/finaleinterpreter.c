@@ -1402,16 +1402,18 @@ DEFFC(Image)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
-    lumpnum_t lumpNum;
+    lumpnum_t lumpNum = W_CheckNumForName(name);
+    rawtex_t* rawTex;
 
     FIData_PicClearAnimation(obj);
 
-    if((lumpNum = W_CheckNumForName(name)) != -1)
+    rawTex = R_GetRawTex(lumpNum);
+    if(NULL != rawTex)
     {
-        FIData_PicAppendFrame(obj, PFT_RAW, -1, &lumpNum, 0, false);
+        FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
+        return;
     }
-    else
-        Con_Message("FIC_Image: Warning, missing lump '%s'.\n", name);
+    Con_Message("FIC_Image: Warning, missing lump '%s'.\n", name);
 }
 
 DEFFC(ImageAt)
@@ -1420,17 +1422,19 @@ DEFFC(ImageAt)
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
     const char* name = OP_CSTRING(3);
-    lumpnum_t lumpNum;
+    lumpnum_t lumpNum = W_CheckNumForName(name);
+    rawtex_t* rawTex;
 
     AnimatorVector3_Init(obj->pos, x, y, 0);
     FIData_PicClearAnimation(obj);
 
-    if((lumpNum = W_CheckNumForName(name)) != -1)
+    rawTex = R_GetRawTex(lumpNum);
+    if(NULL != rawTex)
     {
-        FIData_PicAppendFrame(obj, PFT_RAW, -1, &lumpNum, 0, false);
+        FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
+        return;
     }
-    else
-        Con_Message("FIC_ImageAt: Warning, missing lump '%s'.\n", name);
+    Con_Message("FIC_ImageAt: Warning, missing lump '%s'.\n", name);
 }
 
 static DGLuint loadGraphics(const char* name, gfxmode_t mode, int useMipmap, boolean clamped, int otherFlags)
@@ -1532,15 +1536,15 @@ DEFFC(AnimImage)
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum;
-
-    if((lumpNum = W_CheckNumForName(name)) != -1)
+    lumpnum_t lumpNum = W_CheckNumForName(name);
+    rawtex_t* rawTex = R_GetRawTex(lumpNum);
+    if(NULL != rawTex)
     {
-        FIData_PicAppendFrame(obj, PFT_RAW, tics, &lumpNum, 0, false);
+        FIData_PicAppendFrame(obj, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
         ((fidata_pic_t*)obj)->animComplete = false;
+        return;
     }
-    else
-        Con_Message("FIC_AnimImage: Warning, lump '%s' not found.\n", name);
+    Con_Message("FIC_AnimImage: Warning, lump '%s' not found.\n", name);
 }
 
 DEFFC(Repeat)
