@@ -406,7 +406,7 @@ void            M_ResetRandom(void);
 extern unsigned char rndtable[256];
 
 void            SC_Open(const char* name);
-void            SC_OpenLump(lumpnum_t lump);
+void            SC_OpenLump(lumpnum_t lumpNum);
 void            SC_OpenFile(const char* name);
 void            SC_OpenFileCLib(const char* name);
 void            SC_Close(void);

@@ -545,9 +545,6 @@ typedef enum
 #define PU_PURGELEVEL       100
 #define PU_CACHE            101
 
-// Special purgelevel.
-#define PU_GETNAME          100000L
-
 //------------------------------------------------------------------------
 //
 // Map Data

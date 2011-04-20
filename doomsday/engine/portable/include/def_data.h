@@ -602,7 +602,7 @@ typedef struct ded_s {
 void            DED_Init(ded_t* ded);
 void            DED_Clear(ded_t* ded);
 int             DED_Read(ded_t* ded, const char* sPathName);
-int             DED_ReadLump(ded_t* ded, lumpnum_t lump);
+int             DED_ReadLump(ded_t* ded, lumpnum_t lumpNum);
 
 int             DED_AddFlag(ded_t* ded, char* name, char* text, int value);
 int             DED_AddMobj(ded_t* ded, char* idStr);

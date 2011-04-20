@@ -488,13 +488,13 @@ int Mus_Start(ded_music_t* def, boolean looped)
         case MUSP_MUS:
             if(iMusic)
             {
-                lumpnum_t lump;
-                if(def->lumpName && (lump = W_CheckNumForName(def->lumpName)) != -1)
+                lumpnum_t lumpNum;
+                if(def->lumpName && -1 != (lumpNum = W_CheckNumForName(def->lumpName)))
                 {
                     const char* srcFile = 0;
                     filename_t fname;
 
-                    if(Mus_IsMUSLump(lump))
+                    if(Mus_IsMUSLump(lumpNum))
                     {   // Lump is in DOOM's MUS format.
                         void* buf;
                         size_t len;
@@ -510,9 +510,9 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         // any player which relies on the it for format recognition works as
                         // expected.
 
-                        len = W_LumpLength(lump);
+                        len = W_LumpLength(lumpNum);
                         buf = M_Malloc(len);
-                        W_ReadLump(lump, buf);
+                        W_ReadLump(lumpNum, buf);
 
                         M_Mus2Midi(buf, len, srcFile);
                         M_Free(buf);
@@ -522,14 +522,14 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         // Write this lump to disk and play from there.
                         composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, 0);
                         srcFile = fname;
-                        if(!W_DumpLump(lump, srcFile))
+                        if(!W_DumpLump(lumpNum, srcFile))
                             return false;
                     }
 
                     if(srcFile)
                         return iMusic->PlayFile(srcFile, looped);
 
-                    W_ReadLump(lump, iMusic->SongBuffer(W_LumpLength(lump)));
+                    W_ReadLump(lumpNum, iMusic->SongBuffer(W_LumpLength(lumpNum)));
                     return iMusic->Play(looped);
                 }
             }

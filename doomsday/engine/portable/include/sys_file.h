@@ -71,7 +71,7 @@ void F_Close(DFILE* file);
  *
  * @return  Non-zero if a lump was found and opened successfully.
  */
-DFILE* F_OpenLump(lumpnum_t lump, boolean dontBuffer);
+DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
 
 /**
  * \note Stream position is not affected.

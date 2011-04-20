@@ -103,27 +103,27 @@ void Cl_InitTranslations(void)
     }
 }
 
-void Cl_SetLumpTranslation(lumpnum_t lump, char *name)
+void Cl_SetLumpTranslation(lumpnum_t lumpNum, char *name)
 {
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
+    if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
         return; // Can't do it, sir! We just don't the power!!
 
-    xlat_lump[lump] = W_CheckNumForName(name);
-    if(xlat_lump[lump] < 0)
+    xlat_lump[lumpNum] = W_CheckNumForName(name);
+    if(xlat_lump[lumpNum] < 0)
     {
         VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
-        xlat_lump[lump] = 0;
+        xlat_lump[lumpNum] = 0;
     }
 }
 
 /**
  * This is a fail-safe operation.
  */
-lumpnum_t Cl_TranslateLump(lumpnum_t lump)
+lumpnum_t Cl_TranslateLump(lumpnum_t lumpNum)
 {
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
+    if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
         return 0;
-    return xlat_lump[lump];
+    return xlat_lump[lumpNum];
 }
 
 /**

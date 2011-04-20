@@ -153,31 +153,31 @@ void DD_RegisterVFS(void)
     C_CMD("listwadfiles", "", ListWadFiles);
 }
 
-static lumpnum_t W_Index(lumpnum_t lump)
+static lumpnum_t W_Index(lumpnum_t lumpNum)
 {
     if(lumpCache == AuxiliaryLumpCache)
     {
-        lump += AUXILIARY_BASE;
+        lumpNum += AUXILIARY_BASE;
     }
-    return lump;
+    return lumpNum;
 }
 
 /**
  * Selects which lump cache to use, given a logical lump index. This is
  * called in all the functions that access the lump cache.
  */
-static lumpnum_t W_Select(lumpnum_t lump)
+static lumpnum_t W_Select(lumpnum_t lumpNum)
 {
-    if(lump >= AUXILIARY_BASE)
+    if(lumpNum >= AUXILIARY_BASE)
     {
         W_UseAuxiliary();
-        lump -= AUXILIARY_BASE;
+        lumpNum -= AUXILIARY_BASE;
     }
     else
     {
         W_UsePrimary();
     }
-    return lump;
+    return lumpNum;
 }
 
 int W_NumLumps(void)
@@ -190,15 +190,15 @@ int W_NumLumps(void)
  * (all functions named W_Record*)
  */
 
-static lumpinfo_t* lumpInfoForLump(lumpnum_t lump)
+static lumpinfo_t* lumpInfoForLump(lumpnum_t lumpNum)
 {
-    assert(lump >= 0 && lump < numLumps);
-    return lumpInfo + lump;
+    assert(lumpNum >= 0 && lumpNum < numLumps);
+    return lumpInfo + lumpNum;
 }
 
-static filerecord_t* findFileRecordForLump(lumpnum_t lump)
+static filerecord_t* findFileRecordForLump(lumpnum_t lumpNum)
 {
-    lumpinfo_t* info = lumpInfoForLump(lump);
+    lumpinfo_t* info = lumpInfoForLump(lumpNum);
     { int i;
     for(i = 0; i < numRecords; ++i)
     {
@@ -977,85 +977,84 @@ lumpnum_t W_GetNumForName(const char* name)
     return -1;
 }
 
-size_t W_LumpLength(lumpnum_t lump)
+size_t W_LumpLength(lumpnum_t lumpNum)
 {
-    lump = W_Select(lump);
+    lumpNum = W_Select(lumpNum);
 
-    if(lump >= numLumps)
+    if(lumpNum >= numLumps)
     {
-        Con_Error("Error:W_LumpLength: Lumpnum %i >= numLumps.", lump);
+        Con_Error("Error:W_LumpLength: Lumpnum #%i >= numLumps.", lumpNum);
     }
 
-    return lumpInfo[lump].size;
+    return lumpInfo[lumpNum].size;
 }
 
-const char* W_LumpName(lumpnum_t lump)
+const char* W_LumpName(lumpnum_t lumpNum)
 {
-    lump = W_Select(lump);
+    lumpNum = W_Select(lumpNum);
 
-    if(lump >= numLumps || lump < 0)
+    if(lumpNum >= numLumps || lumpNum < 0)
     {
         return NULL; // The caller must be able to handle this...
-        //Con_Error("Error:W_LumpName: Lumpnum %i >= numLumps.", lump);
+        //Con_Error("Error:W_LumpName: Lumpnum %i >= numLumps.", lumpNum);
     }
 
-    return lumpInfo[lump].name;
+    return lumpInfo[lumpNum].name;
 }
 
-void W_ReadLump(lumpnum_t lump, void *dest)
+void W_ReadLump(lumpnum_t lumpNum, void* dest)
 {
-    size_t              c;
-    lumpinfo_t         *l;
+    size_t c;
+    lumpinfo_t* l;
 
-    if(lump >= numLumps)
+    if(lumpNum >= numLumps)
     {
-        Con_Error("Error:W_ReadLump: Lumpnum %i >= numLumps.", lump);
+        Con_Error("Error:W_ReadLump: Lump #%i >= numLumps.", lumpNum);
     }
 
-    l = &lumpInfo[lump];
+    l = &lumpInfo[lumpNum];
     F_Seek(l->handle, l->position, SEEK_SET);
     c = F_Read(dest, l->size, l->handle);
     if(c < l->size)
     {
-        Con_Error("Error:W_ReadLump: Only read %lu of %lu bytes of lump %i.",
-                  (unsigned long) c, (unsigned long) l->size, lump);
+        Con_Error("Error:W_ReadLump: Only read %lu of %lu bytes of lump #%i.",
+                  (unsigned long) c, (unsigned long) l->size, lumpNum);
     }
 }
 
-void W_ReadLumpSection(lumpnum_t lump, void *dest, size_t startOffset,
-                       size_t length)
+void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length)
 {
-    size_t              c;
-    lumpinfo_t         *l;
+    size_t c;
+    lumpinfo_t* l;
 
-    lump = W_Select(lump);
-    if(lump >= numLumps)
+    lumpNum = W_Select(lumpNum);
+    if(lumpNum >= numLumps)
     {
-        Con_Error("Error:W_ReadLumpSection: Lumpnum %i >= numLumps.", lump);
+        Con_Error("Error:W_ReadLumpSection: Lump #%i >= numLumps.", lumpNum);
     }
 
-    l = &lumpInfo[lump];
+    l = &lumpInfo[lumpNum];
     F_Seek(l->handle, l->position + startOffset, SEEK_SET);
     c = F_Read(dest, length, l->handle);
     if(c < length)
     {
-        Con_Error("Error:W_ReadLumpSection: Only read %lu of %lu bytes of lump %i.",
-                  (unsigned long) c, (unsigned long) length, lump);
+        Con_Error("Error:W_ReadLumpSection: Only read %lu of %lu bytes of lump #%i.",
+                  (unsigned long) c, (unsigned long) length, lumpNum);
     }
 }
 
-boolean W_DumpLump(lumpnum_t lump, const char* fileName)
+boolean W_DumpLump(lumpnum_t lumpNum, const char* fileName)
 {
     FILE*               file;
     const byte*         lumpPtr;
     const char*         fname;
     char                buf[13]; // 8 (max lump chars) + 4 (ext) + 1.
 
-    lump = W_Select(lump);
-    if(lump >= numLumps)
+    lumpNum = W_Select(lumpNum);
+    if(lumpNum >= numLumps)
         return false;
 
-    lumpPtr = W_CacheLumpNum(lump, PU_APPSTATIC);
+    lumpPtr = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
 
     if(fileName && fileName[0])
     {
@@ -1064,22 +1063,22 @@ boolean W_DumpLump(lumpnum_t lump, const char* fileName)
     else
     {
         memset(buf, 0, sizeof(buf));
-        dd_snprintf(buf, 13, "%s.dum", lumpInfo[lump].name);
+        dd_snprintf(buf, 13, "%s.dum", lumpInfo[lumpNum].name);
         fname = buf;
     }
 
     if(!(file = fopen(fname, "wb")))
     {
         Con_Printf("Warning: Failed to open %s for writing (%s), aborting.\n", fname, strerror(errno));
-        W_ChangeCacheTag(lump, PU_CACHE);
+        W_ChangeCacheTag(lumpNum, PU_CACHE);
         return false;
     }
 
-    fwrite(lumpPtr, 1, lumpInfo[lump].size, file);
+    fwrite(lumpPtr, 1, lumpInfo[lumpNum].size, file);
     fclose(file);
-    W_ChangeCacheTag(lump, PU_CACHE);
+    W_ChangeCacheTag(lumpNum, PU_CACHE);
 
-    Con_Printf("%s dumped to %s.\n", lumpInfo[lump].name, fname);
+    Con_Printf("%s dumped to %s.\n", lumpInfo[lumpNum].name, fname);
     return true;
 }
 
@@ -1104,33 +1103,25 @@ const void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
 {
     static char retName[9];
 
-    lumpnum_t lump = W_Select(absoluteLump);
+    lumpnum_t lumpNum = W_Select(absoluteLump);
     byte* ptr;
 
-    if((unsigned) lump >= (unsigned) numLumps)
+    if((unsigned) lumpNum >= (unsigned) numLumps)
     {
-        Con_Error("Error:W_CacheLumpNum: Lumpnum %i >= numLumps.", lump);
+        Con_Error("Error:W_CacheLumpNum: Lump #%i >= numLumps.", lumpNum);
     }
 
-    // Return the name instead of data?
-    if(tag == PU_GETNAME)
-    {
-        strncpy(retName, lumpInfo[lump].name, 8);
-        retName[8] = 0;
-        return retName;
-    }
-
-    if(!lumpCache[lump])
+    if(!lumpCache[lumpNum])
     {    // Need to read the lump in
-        ptr = Z_Malloc(W_LumpLength(absoluteLump), tag, &lumpCache[lump]);
-        W_ReadLump(lump, lumpCache[lump]);
+        ptr = Z_Malloc(W_LumpLength(absoluteLump), tag, &lumpCache[lumpNum]);
+        W_ReadLump(lumpNum, lumpCache[lumpNum]);
     }
     else
     {
-        Z_ChangeTag(lumpCache[lump], tag);
+        Z_ChangeTag(lumpCache[lumpNum], tag);
     }
 
-    return lumpCache[lump];
+    return lumpCache[lumpNum];
 }
 
 const void* W_CacheLumpName(const char* name, int tag)
@@ -1138,27 +1129,27 @@ const void* W_CacheLumpName(const char* name, int tag)
     return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
 
-void W_ChangeCacheTag(lumpnum_t lump, int tag)
+void W_ChangeCacheTag(lumpnum_t lumpNum, int tag)
 {
-    lump = W_Select(lump);
-    if(lump < 0 || lump >= numLumps)
-        Con_Error("Error:W_ChangeCacheTag: Bad lump number %i.", lump);
-    if(!lumpCache[lump])
+    lumpNum = W_Select(lumpNum);
+    if(lumpNum < 0 || lumpNum >= numLumps)
+        Con_Error("W_ChangeCacheTag: Invalid lump index %i.", lumpNum);
+    if(!lumpCache[lumpNum])
         return;
-    //if(Z_GetBlock(lumpCache[lump])->id == 0x1d4a11)
+    //if(Z_GetBlock(lumpCache[lumpNum])->id == 0x1d4a11)
     {
-        Z_ChangeTag2(lumpCache[lump], tag);
+        Z_ChangeTag2(lumpCache[lumpNum], tag);
     }
 }
 
-const char* W_LumpSourceFile(lumpnum_t lump)
+const char* W_LumpSourceFile(lumpnum_t lumpNum)
 {
-    lump = W_Select(lump);
-    if(lump < 0 || lump >= numLumps)
-        Con_Error("Error:W_LumpSourceFile: Bad lump number %i.", lump);
+    lumpNum = W_Select(lumpNum);
+    if(lumpNum < 0 || lumpNum >= numLumps)
+        Con_Error("W_LumpSourceFile: Invalid lump index %i.", lumpNum);
 
-    { filerecord_t* rec;
-    if((rec = findFileRecordForLump(lump)))
+    { filerecord_t* rec = findFileRecordForLump(lumpNum);
+    if(NULL != rec)
     {
         return rec->fileName;
     }}
@@ -1236,11 +1227,11 @@ void W_GetPWADFileNames(char* buf, size_t bufSize, char separator)
     }
 }
 
-boolean W_LumpFromIWAD(lumpnum_t lump)
+boolean W_LumpFromIWAD(lumpnum_t lumpNum)
 {
-    lump = W_Select(lump);
-    if(lump < 0 || lump >= numLumps)
-    {   // This lump doesn't exist.
+    lumpNum = W_Select(lumpNum);
+    if(lumpNum < 0 || lumpNum >= numLumps)
+    {
         return false;
     }
 
@@ -1248,7 +1239,7 @@ boolean W_LumpFromIWAD(lumpnum_t lump)
     for(i = 0; i < numRecords; ++i)
     {
         filerecord_t* rec = &records[i];
-        if(rec->handle == lumpInfo[lump].handle)
+        if(rec->handle == lumpInfo[lumpNum].handle)
             return rec->iwad != 0;
     }
     }
@@ -1257,13 +1248,13 @@ boolean W_LumpFromIWAD(lumpnum_t lump)
 
 D_CMD(Dump)
 {
-    lumpnum_t lump;
-    if((lump = W_CheckNumForName(argv[1])) == -1)
+    lumpnum_t lumpNum = W_CheckNumForName(argv[1]);
+    if(-1 == lumpNum)
     {
         Con_Printf("No such lump.\n");
         return false;
     }
-    if(!W_DumpLump(lump, NULL))
+    if(!W_DumpLump(lumpNum, NULL))
         return false;
     return true;
 }

@@ -2548,21 +2548,22 @@ int DED_Read(ded_t* ded, const char* sPathName)
 /**
  * Reads definitions from the given lump.
  */
-int DED_ReadLump(ded_t* ded, lumpnum_t lump)
+int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
 {
     size_t lumpLength;
 
-    if(lump < 0 || lump >= W_NumLumps())
+    if(lumpNum < 0 || lumpNum >= W_NumLumps())
     {
         SetError("Bad lump number.");
         return false;
     }
 
-    if((lumpLength = W_LumpLength(lump)) > 0)
+    lumpLength = W_LumpLength(lumpNum);
+    if(0 != lumpLength)
     {
-        const void* lumpPtr = W_CacheLumpNum(lump, PU_APPSTATIC);
-        int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lump));
-        W_ChangeCacheTag(lump, PU_CACHE);
+        const void* lumpPtr = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
+        int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lumpNum));
+        W_ChangeCacheTag(lumpNum, PU_CACHE);
         return result;
     }
 

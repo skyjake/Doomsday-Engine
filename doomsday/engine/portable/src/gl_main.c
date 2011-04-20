@@ -1052,14 +1052,12 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 
-void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)
+void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 {
-    rawtex_t* rawTex;
-
-    if((rawTex = R_GetRawTex(lump)))
+    rawtex_t* rawTex = R_GetRawTex(lumpNum);
+    if(NULL != rawTex)
     {
         DGLuint tex = GL_PrepareRawTex(rawTex);
-
         GL_BindTexture(tex, (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);

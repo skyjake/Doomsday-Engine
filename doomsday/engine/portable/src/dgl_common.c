@@ -701,9 +701,9 @@ void DGL_SetPSprite2(material_t* mat, int tclass, int tmap)
     GL_SetPSprite(mat, tclass, tmap);
 }
 
-void DGL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)
+void DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 {
-    GL_SetRawImage(lump,
+    GL_SetRawImage(lumpNum,
         (wrapS == DGL_CLAMP? GL_CLAMP :
          wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
         (wrapT == DGL_CLAMP? GL_CLAMP :
@@ -808,16 +808,16 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
  * \todo No need for this special method now. Refactor callers to use the
  * normal DGL drawing methods.
  */
-void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
+void DGL_DrawRawScreen(lumpnum_t lumpNum, int x, int y)
 {
-    if(lump < 0 || lump >= W_NumLumps())
+    if(lumpNum < 0 || lumpNum >= W_NumLumps())
         return;
 
-    GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    GL_SetRawImage(lumpNum, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     glEnable(GL_TEXTURE_2D);
 
-    {rawtex_t* raw;
-    if((raw = R_GetRawTex(lump)))
+    {rawtex_t* raw = R_GetRawTex(lumpNum);
+    if(NULL != raw)
     {
         // The first part is rendered in any case.
         glBegin(GL_QUADS);

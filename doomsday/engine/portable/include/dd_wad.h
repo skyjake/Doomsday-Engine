@@ -101,43 +101,43 @@ lumpnum_t W_GetNumForName(const char* name);
 /**
  * Get the name of the given lump.
  */
-const char* W_LumpName(lumpnum_t lump);
+const char* W_LumpName(lumpnum_t lumpNum);
 
 /**
  * @return              The buffer size needed to load the given lump.
  */
-size_t W_LumpLength(lumpnum_t lump);
+size_t W_LumpLength(lumpnum_t lumpNum);
 
 /**
  * @return              The name of the WAD file where the given lump resides.
  *                      Always returns a valid filename (or an empty string).
  */
-const char* W_LumpSourceFile(lumpnum_t lump);
+const char* W_LumpSourceFile(lumpnum_t lumpNum);
 
 /**
  * @return              @ true, if the specified lump is in an IWAD.
  *                      Otherwise it's from a PWAD.
  */
-boolean W_LumpFromIWAD(lumpnum_t lump);
+boolean W_LumpFromIWAD(lumpnum_t lumpNum);
 
 /**
  * Loads the lump into the given buffer, which must be >= W_LumpLength().
  */
-void W_ReadLump(lumpnum_t lump, void* dest);
-void W_ReadLumpSection(lumpnum_t lump, void* dest, size_t startOffset, size_t length);
+void W_ReadLump(lumpnum_t lumpNum, void* dest);
+void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
 
 /**
  * If called with the special purgelevel PU_GETNAME, returns a pointer
  * to the name of the lump.
  */
-const void* W_CacheLumpNum(lumpnum_t lump, int tag);
+const void* W_CacheLumpNum(lumpnum_t lumpNum, int tag);
 
 /**
  * Identical to @see W_CacheLumpNum except the lump reference is a name.
  */
 const void* W_CacheLumpName(const char* name, int tag);
 
-void W_ChangeCacheTag(lumpnum_t lump, int tag);
+void W_ChangeCacheTag(lumpnum_t lumpNum, int tag);
 
 /**
  * Writes the specifed lump to file with the given name.

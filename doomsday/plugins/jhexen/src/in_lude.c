@@ -332,15 +332,15 @@ static void CheckForSkip(void)
 
 void IN_Drawer(void)
 {
-    lumpnum_t lump;
+    lumpnum_t lumpNum;
 
     if(!intermission || interState)
         return;
 
-    if((lump = W_GetNumForName("INTERPIC")) != -1)
+    if(-1 != (lumpNum = W_GetNumForName("INTERPIC")))
     {
         DGL_Color4f(1, 1, 1, 1);
-        DGL_DrawRawScreen(lump, 0, 0);
+        DGL_DrawRawScreen(lumpNum, 0, 0);
     }
 
     if(gameType != SINGLE)

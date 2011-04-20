@@ -624,26 +624,26 @@ void F_Release(DFILE* file)
     free(file);
 }
 
-DFILE* F_OpenLump(lumpnum_t lump, boolean dontBuffer)
+DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
 {
     DFILE* file;
 
-    if(lump < 0 || lump >= W_NumLumps())
+    if(lumpNum < 0 || lumpNum >= W_NumLumps())
         return NULL;
 
     file = F_GetFreeFile();
     if(!file)
         return NULL;
 
-    // Init and load in the lump data.
+    // Init and load in the lumpNum data.
     file->flags.open = true;
     file->flags.file = false;
     file->lastModified = time(NULL); // So I'm lazy...
     if(!dontBuffer)
     {
-        file->size = W_LumpLength(lump);
+        file->size = W_LumpLength(lumpNum);
         file->pos = file->data = malloc(file->size);
-        memcpy(file->data, W_CacheLumpNum(lump, PU_CACHE), file->size);
+        memcpy(file->data, W_CacheLumpNum(lumpNum, PU_CACHE), file->size);
     }
 
     return file;

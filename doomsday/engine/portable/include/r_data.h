@@ -487,8 +487,8 @@ boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 
 void R_InitRawTexs(void);
 void R_UpdateRawTexs(void);
-rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
-rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.
+rawtex_t*       R_FindRawTex(lumpnum_t lumpNum); // May return NULL.
+rawtex_t*       R_GetRawTex(lumpnum_t lumpNum); // Creates new entries.
 rawtex_t**      R_CollectRawTexs(int* count);
 
 /**

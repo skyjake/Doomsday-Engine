@@ -219,7 +219,7 @@ typedef struct fidata_pic_frame_s {
     union {
         struct material_s* material;
         patchid_t patch;
-        lumpnum_t lump;
+        lumpnum_t lumpNum;
         DGLuint tex;
     } texRef;
     short sound;

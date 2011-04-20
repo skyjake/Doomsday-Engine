@@ -544,13 +544,13 @@ void R_LoadColorPalettes(void)
 #define PALENTRIES          (256)
 #define PALID               (0)
 
-    lumpnum_t lump = W_GetNumForName(PALLUMPNAME);
+    lumpnum_t lumpNum = W_GetNumForName(PALLUMPNAME);
     uint8_t data[PALENTRIES*3];
 
     // Record whether we are using a custom palette.
-    customPal = !W_LumpFromIWAD(lump);
+    customPal = !W_LumpFromIWAD(lumpNum);
 
-    W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
+    W_ReadLumpSection(lumpNum, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
 
     /**
@@ -612,13 +612,13 @@ void R_LoadColorPalettes(void)
     for(i = 0; i < 3 * 7; ++i)
     {
         char name[9];
-        lumpnum_t lump;
+        lumpnum_t lumpNum;
 
         dd_snprintf(name, 9, "TRANTBL%X", i);
 
-        if((lump = W_CheckNumForName(name)) != -1)
+        if(-1 != (lumpNum = W_CheckNumForName(name)))
         {
-            W_ReadLumpSection(lump, &translationtables[i * 256], 0, 256);
+            W_ReadLumpSection(lumpNum, &translationtables[i * 256], 0, 256);
         }
     }
     }
@@ -2483,11 +2483,11 @@ boolean P_MapExists(uint episode, uint map)
  */
 const char* P_MapSourceFile(uint episode, uint map)
 {
-    lumpnum_t lump;
+    lumpnum_t lumpNum;
     char buf[9];
     P_MapId(episode, map, buf);
-    if((lump = W_CheckNumForName2(buf, true)) >= 0)
-        return W_LumpSourceFile(lump);
+    if((lumpNum = W_CheckNumForName2(buf, true)) >= 0)
+        return W_LumpSourceFile(lumpNum);
     return 0;
 }
 

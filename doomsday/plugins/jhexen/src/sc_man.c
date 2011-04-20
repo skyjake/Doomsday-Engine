@@ -84,14 +84,14 @@ static void checkOpen(void)
     }
 }
 
-static void openScriptLump(lumpnum_t lump)
+static void openScriptLump(lumpnum_t lumpNum)
 {
     SC_Close();
 
-    strcpy(ScriptName, W_LumpName(lump));
+    strcpy(ScriptName, W_LumpName(lumpNum));
 
-    ScriptBuffer = (char *) W_CacheLumpNum(lump, PU_GAMESTATIC);
-    ScriptSize = W_LumpLength(lump);
+    ScriptBuffer = (char *) W_CacheLumpNum(lumpNum, PU_GAMESTATIC);
+    ScriptSize = W_LumpLength(lumpNum);
 
     ScriptFreeCLib = false; // De-allocate using Z_Free()
 
@@ -161,9 +161,9 @@ void SC_Open(const char* name)
 /**
  * Loads a script (from the WAD files) and prepares it for parsing.
  */
-void SC_OpenLump(lumpnum_t lump)
+void SC_OpenLump(lumpnum_t lumpNum)
 {
-    openScriptLump(lump);
+    openScriptLump(lumpNum);
 }
 
 /**

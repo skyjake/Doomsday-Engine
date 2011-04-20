@@ -1335,7 +1335,7 @@ static lumpnum_t* loadPatchList(lumpnum_t lumpNum, size_t* num)
 /**
  * Read DOOM and Strife format texture definitions from the specified lump.
  */
-static patchcompositetex_t** readDoomTextureDefLump(lumpnum_t lump,
+static patchcompositetex_t** readDoomTextureDefLump(lumpnum_t lumpNum,
                                                  lumpnum_t* patchlookup,
                                                  size_t numPatches,
                                                  boolean firstNull, int* numDefs)
@@ -1389,14 +1389,13 @@ typedef struct {
     int                 numTexDefs, numValidTexDefs;
     patchcompositetex_t**  texDefs = NULL;
 
-    lumpSize = W_LumpLength(lump);
+    lumpSize = W_LumpLength(lumpNum);
     maptex1 = M_Malloc(lumpSize);
-    W_ReadLump(lump, maptex1);
+    W_ReadLump(lumpNum, maptex1);
 
     numTexDefs = LONG(*maptex1);
 
-    VERBOSE(Con_Message("R_ReadTextureDefs: Processing lump '%s'...\n",
-                        W_LumpName(lump)));
+    VERBOSE( Con_Message("R_ReadTextureDefs: Processing lump '%s'...\n", W_LumpName(lumpNum)) )
 
     validTexDefs = M_Calloc(numTexDefs * sizeof(byte));
     texDefNumPatches = M_Calloc(numTexDefs * sizeof(*texDefNumPatches));
@@ -1414,9 +1413,8 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            Con_Message("R_ReadTextureDefs: Bad offset %lu for definition "
-                        "%i in lump '%s'.\n", (unsigned long) offset, i,
-                        W_LumpName(lump));
+            Con_Message("R_ReadTextureDefs: Bad offset %lu for definition %i in lump '%s'.\n",
+                (unsigned long) offset, i, W_LumpName(lumpNum));
             continue;
         }
 
@@ -1601,16 +1599,16 @@ typedef struct {
             }
 
             /**
-             * DOOM.EXE had a bug in the way textures were managed resulting in
-             * the first texture being used dually as a "NULL" texture.
+             * Vanilla DOOM's implementation of the texture collection has a flaw which
+             * results in the first texture being used dually as a "NULL" texture.
              */
             if(firstNull && i == 0)
                 texDef->flags |= TXDF_NODRAW;
 
             /**
              * Is this a non-IWAD texture?
-             * At this stage we assume it is an IWAD texture definition
-             * unless one of the patches is not.
+             * At this stage we assume it is an IWAD texture definition unless one of the
+             * patches is not.
              */
             texDef->flags |= TXDF_IWAD;
             j = 0;
@@ -1627,8 +1625,7 @@ typedef struct {
         }
     }
 
-    VERBOSE(Con_Message("  Loaded %i of %i definitions.\n",
-                        numValidTexDefs, numTexDefs));
+    VERBOSE( Con_Message("  Loaded %i of %i definitions.\n", numValidTexDefs, numTexDefs) )
 
     // Free all temporary storage.
     M_Free(validTexDefs);

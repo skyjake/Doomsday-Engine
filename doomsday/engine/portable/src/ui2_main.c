@@ -281,7 +281,7 @@ static fidata_pic_frame_t* createPicFrame(int type, int tics, void* texRef, shor
     {
     case PFT_MATERIAL:  f->texRef.material = ((material_t*)texRef); break;
     case PFT_PATCH:     f->texRef.patch = *((patchid_t*)texRef);    break;
-    case PFT_RAW:       f->texRef.lump  = *((lumpnum_t*)texRef);    break;
+    case PFT_RAW:       f->texRef.lumpNum = *((lumpnum_t*)texRef);  break;
     case PFT_XIMAGE:    f->texRef.tex = *((DGLuint*)texRef);        break;
     default:
         Con_Error("Error - InFine: unknown frame type %i.", (int)type);
@@ -977,7 +977,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         switch(f->type)
         {
         case PFT_RAW:
-            if((rawTex = R_GetRawTex(f->texRef.lump)))
+            if(NULL != (rawTex = R_GetRawTex(f->texRef.lumpNum)))
             {
                 glTexName = GL_PrepareRawTex(rawTex);
                 V3_Set(offset, 0, 0, 0);
