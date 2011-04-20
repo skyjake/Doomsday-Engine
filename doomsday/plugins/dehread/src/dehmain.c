@@ -72,6 +72,10 @@
 
 #define CHECKKEY(a,b)       if (!stricmp (Line1, (a))) (b) = atoi(Line2);
 
+// Verbose messages.
+#define VERBOSE(code)   { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct Key {
@@ -2354,16 +2358,31 @@ void ApplyDEH(char *patch, int length)
 /**
  * Reads and applies the given lump as a DEH patch.
  */
-void ReadDehackedLump(int lumpnum)
+void ReadDehackedLump(lumpnum_t lumpNum)
 {
-    size_t      len;
-    byte       *lump;
+    uint8_t* lump;
+    size_t len;
 
-    Con_Message("Applying Dehacked: lump %i...\n", lumpnum);
-    len = W_LumpLength(lumpnum);
-    lump = calloc(len + 1, 1);
-    memcpy(lump, W_CacheLumpNum(lumpnum, PU_CACHE), len);
+    if(0 > lumpNum || lumpNum >= DD_GetInteger(DD_NUMLUMPS))
+    {
+        LPrintf("Warning:ReadDehackedLump: Invalid lump index #%i given, ignoring.\n", lumpNum);
+        return;
+    }
+
+    len = W_LumpLength(lumpNum);
+    lump = (uint8_t*) calloc(1, sizeof(*lump) * (len + 1));
+    if(NULL == lump)
+    {
+        LPrintf("Warning:ReadDehackedLump: Failed on allocation of %lu bytes when attempting to "
+            "cache a copy of '%s(#%i)', aborting.\n", (unsigned long) (sizeof(*lump) * (len + 1)),
+            W_LumpName(lumpNum), lumpNum);
+        return;
+    }
+    W_ReadLump(lumpNum, (void*)lump);
+
+    VERBOSE( Con_Message("Applying Dehacked patch '%s(#%i)' ...\n", W_LumpName(lumpNum), lumpNum) );
     ApplyDEH((char*)lump, len);
+
     free(lump);
 }
 
