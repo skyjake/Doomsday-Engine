@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 503 <--
-; Other free ordinals: 23 30 90 247
+; Other free ordinals: 20 23 30 90 133 247
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -103,7 +103,18 @@ EXPORTS
     DD_ClearKeyRepeaters        @13 NONAME
     DD_GetKeyCode               @236 NONAME
 
-; Base: WAD.
+; Base: File system.
+    F_Access                    @245 NONAME
+    F_LastModified              @246 NONAME
+    M_ReadFile              @134 NONAME
+    M_WriteFile                 @135 NONAME
+    M_ExtractFileBase           @136 NONAME
+    M_FindFileExtension         @137 NONAME
+    M_FileExists                @139 NONAME
+    M_CheckPath                 @138 NONAME
+    M_TranslatePath             @140 NONAME
+    M_PrettyPath                @421 NONAME
+
     W_CheckNumForName           @14 NONAME
     W_CheckNumForName2          @45 NONAME
     W_GetNumForName             @15 NONAME
@@ -112,7 +123,6 @@ EXPORTS
     W_ReadLump                  @18 NONAME
     W_ReadLumpSection           @253 NONAME
     W_CacheLumpNum              @19 NONAME
-    W_CacheLumpName             @20 NONAME
     W_ChangeCacheTag            @21 NONAME
     W_LumpSourceFile            @22 NONAME
     W_LumpFromIWAD              @239 NONAME
@@ -170,10 +180,6 @@ EXPORTS
     Sys_Sleep                   @50 NONAME
     Sys_CriticalMessage         @51 NONAME
     Sys_Quit                    @52 NONAME
-
-; System: File I/O.
-    F_Access                    @245 NONAME
-    F_LastModified              @246 NONAME
 
 ; Map building interface.
     MPE_Begin                   @350 NONAME
@@ -520,15 +526,6 @@ EXPORTS
     S_PauseMusic                @232 NONAME
 
 ; Miscellaneous.
-    M_ReadFile                  @133 NONAME
-    M_ReadFileCLib              @134 NONAME
-    M_WriteFile                 @135 NONAME
-    M_ExtractFileBase           @136 NONAME
-    M_FindFileExtension         @137 NONAME
-    M_FileExists                @139 NONAME
-    M_CheckPath                 @138 NONAME
-    M_TranslatePath             @140 NONAME
-    M_PrettyPath                @421 NONAME
     M_SkipWhite                 @141 NONAME
     M_FindWhite                 @142 NONAME
     M_StrCatQuoted              @248 NONAME

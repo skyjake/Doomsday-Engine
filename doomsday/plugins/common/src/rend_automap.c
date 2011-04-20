@@ -190,7 +190,7 @@ void Rend_AutomapLoadData(void)
         {
             amMaskTexture =
                 DGL_NewTextureWithParams(DGL_LUMINANCE, 256, 256,
-                                         W_CacheLumpName("mapmask", PU_CACHE),
+                                         W_CacheLumpNum(W_GetNumForName("mapmask"), PU_CACHE),
                                          0x8, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,
                                          DGL_REPEAT, DGL_REPEAT);

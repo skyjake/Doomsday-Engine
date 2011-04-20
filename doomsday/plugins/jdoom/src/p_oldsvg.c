@@ -875,13 +875,16 @@ boolean SV_v19_LoadGame(const char* savename)
     sprintf(vcheck, "version %i", SAVE_VERSION);
     if(strcmp((const char*) savePtr, vcheck))
     {
-        int                 saveVer;
+        int saveVer;
 
         sscanf((const char*) savePtr, "version %i", &saveVer);
         if(saveVer >= SAVE_VERSION_BASE)
         {
             // Must be from the wrong game.
             Con_Message("Bad savegame version.\n");
+            free(saveBuffer);
+            saveBuffer = NULL;
+            savePtr = NULL;
             return false;
         }
 
@@ -915,8 +918,7 @@ boolean SV_v19_LoadGame(const char* savename)
         Con_Error
             ("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
 
-    // Success!
-    Z_Free(saveBuffer);
+    free(saveBuffer);
     saveBuffer = NULL;
 
     // Spawn particle generators.

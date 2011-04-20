@@ -43,7 +43,6 @@ void            M_Free(void* ptr);
 
 // File system utility routines.
 size_t M_ReadFile(char const* name, byte** buffer);
-size_t M_ReadFileCLib(char const* name, byte** buffer);
 boolean M_WriteFile(char const* name, void* source, size_t length);
 
 void M_ExtractFileBase(char* dest, const char* path, size_t len);

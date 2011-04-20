@@ -60,9 +60,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MALLOC_CLIB 1
-#define MALLOC_ZONE 2
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -71,7 +68,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static size_t FileReader(char const *name, byte **buffer, int mallocType);
+static size_t FileReader(char const* name, byte** buffer);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -788,22 +785,14 @@ boolean M_WriteFile(const char *name, void *source, size_t length)
 }
 
 /**
- * Read a file into a buffer allocated using Z_Malloc().
- */
-size_t M_ReadFile(const char *name, byte **buffer)
-{
-    return FileReader(name, buffer, MALLOC_ZONE);
-}
-
-/**
  * Read a file into a buffer allocated using M_Malloc().
  */
-size_t M_ReadFileCLib(const char *name, byte **buffer)
+size_t M_ReadFile(const char* name, byte** buffer)
 {
-    return FileReader(name, buffer, MALLOC_CLIB);
+    return FileReader(name, buffer);
 }
 
-static size_t FileReader(const char *name, byte **buffer, int mallocType)
+static size_t FileReader(const char* name, byte** buffer)
 {
     int         handle;
     size_t      count, length;
@@ -815,35 +804,23 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
     if((file = lzOpen((char *) name, "rp")) != NULL)
     {
 #define BSIZE 1024
-        byte    rbuf[BSIZE];
+        byte rbuf[BSIZE];
 
         // Read 1kb pieces until file ends.
         length = 0;
         buf = 0;
         while(!lzEOF(file))
         {
+            byte* newbuf;
+
             count = lzRead(rbuf, BSIZE, file);
             // Allocate more memory.
-            if(mallocType == MALLOC_ZONE)
-            {
-                byte   *newbuf = Z_Malloc(length + count, PU_APPSTATIC, 0);
+            newbuf = M_Realloc(buf, length + count);
 
-                if(buf)
-                {
-                    memcpy(newbuf, buf, length);
-                    Z_Free(buf);
-                }
-                buf = newbuf;
-            }
-            else
-            {
-                byte   *newbuf = M_Realloc(buf, length + count);
+            if(newbuf == NULL)
+                Con_Error("FileReader: realloc failed.");
 
-                if(newbuf == NULL)
-                    Con_Error("FileReader: realloc failed.");
-
-                buf = newbuf;
-            }
+            buf = newbuf;
 
             // Copy new data to buffer.
             memcpy(buf + length, rbuf, count);
@@ -867,18 +844,12 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
     }
 
     length = fileinfo.st_size;
-    if(mallocType == MALLOC_ZONE)
-    {   // Use zone memory allocation
-        buf = Z_Malloc(length, PU_APPSTATIC, NULL);
-    }
-    else
-    {   // Use c library memory allocation
-        buf = M_Malloc(length);
-        if(buf == NULL)
-        {
-            Con_Error("FileReader: Failed on allocation of %lu bytes for file %s.\n",
-                      (unsigned long) length, name);
-        }
+    // Use c library memory allocation
+    buf = M_Malloc(length);
+    if(buf == NULL)
+    {
+        Con_Error("FileReader: Failed on allocation of %lu bytes for file %s.\n",
+                  (unsigned long) length, name);
     }
 
     count = read(handle, buf, length);

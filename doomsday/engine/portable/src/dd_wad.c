@@ -1101,14 +1101,13 @@ void W_DumpLumpDir(void)
 
 const void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
 {
-    static char retName[9];
-
     lumpnum_t lumpNum = W_Select(absoluteLump);
     byte* ptr;
 
-    if((unsigned) lumpNum >= (unsigned) numLumps)
+    if(0 > lumpNum || lumpNum >= numLumps)
     {
-        Con_Error("Error:W_CacheLumpNum: Lump #%i >= numLumps.", lumpNum);
+        Con_Message("Warning:W_CacheLumpNum: Lump index #%i >= numLumps, ignoring.", lumpNum);
+        return NULL;
     }
 
     if(!lumpCache[lumpNum])
@@ -1122,11 +1121,6 @@ const void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
     }
 
     return lumpCache[lumpNum];
-}
-
-const void* W_CacheLumpName(const char* name, int tag)
-{
-    return W_CacheLumpNum(W_GetNumForName(name), tag);
 }
 
 void W_ChangeCacheTag(lumpnum_t lumpNum, int tag)

@@ -148,6 +148,14 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     int             DD_GetKeyCode(const char* name);
 
     // Base: File system.
+    int             F_Access(const char* path);
+    int             M_FileExists(const char* file);
+    boolean         M_CheckPath(const char* path);
+    unsigned int    F_LastModified(const char* fileName);
+
+    size_t          M_ReadFile(const char* name, byte** buffer);
+    boolean         M_WriteFile(const char* name, void* source, size_t length);
+
     lumpnum_t       W_CheckNumForName(const char* name);
     lumpnum_t       W_CheckNumForName2(const char* name, boolean silent);
     lumpnum_t       W_GetNumForName(const char* name);
@@ -156,10 +164,16 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     void            W_ReadLump(lumpnum_t lumpNum, void* dest);
     void            W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
     const void*     W_CacheLumpNum(lumpnum_t lumpNum, int tag);
-    const void*     W_CacheLumpName(const char* name, int tag);
     void            W_ChangeCacheTag(lumpnum_t lumpNum, int tag);
     const char*     W_LumpSourceFile(lumpnum_t lumpNum);
     boolean         W_LumpFromIWAD(lumpnum_t lumpNum);
+
+    // Base: File system path/name utilities.
+    void            M_ExtractFileBase(char* dest, const char* path, size_t len);
+    char*           M_FindFileExtension(char* path);
+
+    void            M_TranslatePath(char* translated, const char* path, size_t len);
+    const char*     M_PrettyPath(const char* path);
 
     // Base: Zone.
     void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
@@ -224,10 +238,6 @@ void Con_SetString(const char* name, const char* text);
     void            Sys_Sleep(int millisecs);
     int             Sys_CriticalMessage(char* msg);
     void            Sys_Quit(void);
-
-    // System: Files.
-    int             F_Access(const char* path);
-    unsigned int    F_LastModified(const char* fileName);
 
 //------------------------------------------------------------------------
 //
@@ -511,20 +521,9 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
 //
 //------------------------------------------------------------------------
 
-    size_t          M_ReadFile(const char* name, byte** buffer);
-    size_t          M_ReadFileCLib(const char* name, byte** buffer);
-    boolean         M_WriteFile(const char* name, void* source, size_t length);
-    void            M_ExtractFileBase(char* dest, const char* path, size_t len);
-    char*           M_FindFileExtension(char* path);
-    boolean         M_CheckPath(const char* path);
-    int             M_FileExists(const char* file);
-    void            M_TranslatePath(char* translated, const char* path, size_t len);
-    const char*     M_PrettyPath(const char* path);
     char*           M_SkipWhite(char* str);
     char*           M_FindWhite(char* str);
     char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
-    byte            RNG_RandByte(void);
-    float           RNG_RandFloat(void);
     void            M_ClearBox(fixed_t* box);
     void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
     int             M_ScreenShot(const char* filename, int bits);
@@ -532,7 +531,11 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
     int             M_NumDigits(int value);
     int             M_RatioReduce(int* numerator, int* denominator);
 
-    // MiscellaneousL: Time utilities.
+    // Miscellaneous: Random Number Generator facilities.
+    byte            RNG_RandByte(void);
+    float           RNG_RandFloat(void);
+
+    // Miscellaneous: Time utilities.
     boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
     boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 

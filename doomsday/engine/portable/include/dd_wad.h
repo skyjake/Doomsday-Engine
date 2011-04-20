@@ -132,11 +132,6 @@ void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t
  */
 const void* W_CacheLumpNum(lumpnum_t lumpNum, int tag);
 
-/**
- * Identical to @see W_CacheLumpNum except the lump reference is a name.
- */
-const void* W_CacheLumpName(const char* name, int tag);
-
 void W_ChangeCacheTag(lumpnum_t lumpNum, int tag);
 
 /**

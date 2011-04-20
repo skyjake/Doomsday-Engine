@@ -37,7 +37,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_SCRIPTNAME_LEN      (32)
+#define SCRIPTNAME_MAXLEN       (33)
+#define SCRIPTNAME_LASTINDEX    (32)
+
 #define MAX_STRING_SIZE         (64)
 #define ASCII_COMMENT           (';')
 #define ASCII_QUOTE             (34)
@@ -64,7 +66,7 @@ const char* sc_ScriptsDir = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ScriptName[MAX_SCRIPTNAME_LEN+1];
+static char ScriptName[SCRIPTNAME_MAXLEN];
 static char* ScriptBuffer;
 static char* ScriptPtr;
 static char* ScriptEndPtr;
@@ -88,10 +90,15 @@ static void openScriptLump(lumpnum_t lumpNum)
 {
     SC_Close();
 
-    strcpy(ScriptName, W_LumpName(lumpNum));
-
-    ScriptBuffer = (char *) W_CacheLumpNum(lumpNum, PU_GAMESTATIC);
+    ScriptBuffer = (char*) W_CacheLumpNum(lumpNum, PU_GAMESTATIC);
+    if(NULL == ScriptBuffer)
+    {
+        Con_Message("Warning:SC_OpenLump: Failed caching lump index #%i, ignoring.\n", lumpNum);
+        return;
+    }
     ScriptSize = W_LumpLength(lumpNum);
+    memset(ScriptName, 0, sizeof(*ScriptName)); 
+    strncpy(ScriptName, W_LumpName(lumpNum), sizeof(*ScriptName)-1);
 
     ScriptFreeCLib = false; // De-allocate using Z_Free()
 
@@ -109,24 +116,8 @@ static void openScriptFile(const char* name)
     SC_Close();
 
     ScriptSize = M_ReadFile(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
-    ScriptFreeCLib = false; // De-allocate using Z_Free()
+    M_ExtractFileBase(ScriptName, name, SCRIPTNAME_LASTINDEX);
 
-    ScriptPtr = ScriptBuffer;
-    ScriptEndPtr = ScriptPtr + ScriptSize;
-    sc_Line = 1;
-    sc_End = false;
-    ScriptOpen = true;
-    sc_String = StringBuffer;
-    AlreadyGot = false;
-}
-
-static void openScriptCLib(const char* name)
-{
-    SC_Close();
-
-    ScriptSize = M_ReadFileCLib(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(ScriptName, name, MAX_SCRIPTNAME_LEN);
     ScriptFreeCLib = true;  // De-allocate using free()
 
     ScriptPtr = ScriptBuffer;
@@ -140,21 +131,15 @@ static void openScriptCLib(const char* name)
 
 void SC_Open(const char* name)
 {
-    char                fileName[128];
-
     if(sc_FileScripts == true)
     {
+        char fileName[128];
         sprintf(fileName, "%s%s.txt", sc_ScriptsDir, name);
-        SC_OpenFile(fileName);
+        SC_OpenFileCLib(fileName);
     }
     else
     {
-        lumpnum_t           lump = W_CheckNumForName(name);
-
-        if(lump == -1)
-            Con_Error("SC_Open: Failed opening lump %s.\n", name);
-
-        SC_OpenLump(lump);
+        SC_OpenLump(W_CheckNumForName(name));
     }
 }
 
@@ -167,21 +152,12 @@ void SC_OpenLump(lumpnum_t lumpNum)
 }
 
 /**
- * Loads a script (from a file) and prepares it for parsing.  Uses the
- * zone memory allocator for memory allocation and de-allocation.
- */
-void SC_OpenFile(const char* name)
-{
-    openScriptFile(name);
-}
-
-/**
  * Loads a script (from a file) and prepares it for parsing.  Uses C
  * library function calls for memory allocation and de-allocation.
  */
 void SC_OpenFileCLib(const char* name)
 {
-    openScriptCLib(name);
+    openScriptFile(name);
 }
 
 void SC_Close(void)

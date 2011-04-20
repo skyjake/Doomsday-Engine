@@ -237,7 +237,7 @@ void Hu_LoadData(void)
     {
         fogEffectData.texture =
             DGL_NewTextureWithParams(DGL_LUMINANCE, 64, 64,
-                                     W_CacheLumpName("menufog", PU_CACHE),
+                                     W_CacheLumpNum(W_GetNumForName("menufog"), PU_CACHE),
                                      0, DGL_NEAREST, DGL_LINEAR,
                                      -1 /*best anisotropy*/,
                                      DGL_REPEAT, DGL_REPEAT);

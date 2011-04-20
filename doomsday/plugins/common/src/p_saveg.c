@@ -889,7 +889,7 @@ static void CopyFile(char *sourceName, char *destName)
         lzWrite(buffer, length, outf);
         lzClose(outf);
     }
-    Z_Free(buffer);
+    free(buffer);
 }
 
 /**
@@ -5227,7 +5227,7 @@ static boolean SV_LoadGame2(void)
     SV_AssertSegment(ASEG_END);
 
 #if __JHEXEN__
-    Z_Free(saveBuffer);
+    free(saveBuffer);
 #endif
 
     // Load the current map state.
@@ -5529,7 +5529,7 @@ static void unarchiveMap(void)
 #if __JHEXEN__
     // Free mobj list and save buffer
     SV_FreeThingArchive();
-    Z_Free(saveBuffer);
+    free(saveBuffer);
 #endif
 
     // Spawn particle generators, fix HOMS etc, etc...
