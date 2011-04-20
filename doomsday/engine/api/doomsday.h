@@ -151,17 +151,15 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     lumpnum_t       W_CheckNumForName(const char* name);
     lumpnum_t       W_CheckNumForName2(const char* name, boolean silent);
     lumpnum_t       W_GetNumForName(const char* name);
-    size_t          W_LumpLength(lumpnum_t lump);
-    const char*     W_LumpName(lumpnum_t lump);
-    void            W_ReadLump(lumpnum_t lump, void* dest);
-    void            W_ReadLumpSection(lumpnum_t lump, void* dest, size_t startOffset, size_t length);
-    const void*     W_CacheLumpNum(lumpnum_t lump, int tag);
+    size_t          W_LumpLength(lumpnum_t lumpNum);
+    const char*     W_LumpName(lumpnum_t lumpNum);
+    void            W_ReadLump(lumpnum_t lumpNum, void* dest);
+    void            W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
+    const void*     W_CacheLumpNum(lumpnum_t lumpNum, int tag);
     const void*     W_CacheLumpName(const char* name, int tag);
-    void            W_ChangeCacheTag(lumpnum_t lump, int tag);
-    const char*     W_LumpSourceFile(lumpnum_t lump);
-    uint            W_CRCNumber(void);
-    boolean         W_LumpFromIWAD(lumpnum_t lump);
-    lumpnum_t       W_OpenAuxiliary(const char* fileName);
+    void            W_ChangeCacheTag(lumpnum_t lumpNum, int tag);
+    const char*     W_LumpSourceFile(lumpnum_t lumpNum);
+    boolean         W_LumpFromIWAD(lumpnum_t lumpNum);
 
     // Base: Zone.
     void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);

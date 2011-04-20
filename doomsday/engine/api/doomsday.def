@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 503 <--
-; Other free ordinals: 30 90
+; Other free ordinals: 23 30 90 247
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -115,9 +115,7 @@ EXPORTS
     W_CacheLumpName             @20 NONAME
     W_ChangeCacheTag            @21 NONAME
     W_LumpSourceFile            @22 NONAME
-    W_CRCNumber                 @23 NONAME
     W_LumpFromIWAD              @239 NONAME
-    W_OpenAuxiliary             @247 NONAME
 
 ; Base: Zone.
     Z_Malloc                    @24 NONAME
