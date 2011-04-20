@@ -58,7 +58,7 @@ static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* direct
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
     pathdirectory_internnameid_t nameId, void* userData);
 
-void PathDirectoryNode_Destruct(pathdirectory_node_t* node);
+static void PathDirectoryNode_Destruct(pathdirectory_node_t* node);
 
 static const pathdirectory_internname_t* getInternNameById(pathdirectory_t* pd,
     pathdirectory_internnameid_t id)
