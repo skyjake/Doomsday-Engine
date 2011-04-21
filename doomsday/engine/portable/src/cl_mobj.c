@@ -367,9 +367,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     //localMobj->nexttime = clmo->nexttime;
 #define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
-#ifdef _DEBUG
-    Con_Message("Cl_UpdateRealPlayerMobj: Setting localMobj flags to 0x%x\n", localMobj->ddFlags);
-#endif
     localMobj->radius = remoteClientMobj->radius;
     localMobj->height = remoteClientMobj->height;
     localMobj->floorClip = remoteClientMobj->floorClip;

@@ -421,8 +421,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // On clients, mark the remote players.
     if(IS_CLIENT && plrNum != CONSOLEPLAYER)
     {
-        mo->flags &= ~MF_SOLID;
-        mo->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
+        mo->ddFlags = DDMF_DONTDRAW;
         // The real flags are received from the server later on.
     }
 
@@ -587,20 +586,20 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 /**
  * Spawns the client's mobj on clientside.
  */
-void P_SpawnClient(void)
+void P_SpawnClient(int plrNum)
 {
 #if __JHEXEN__
-    playerclass_t       pClass = cfg.playerClass[CONSOLEPLAYER];
+    playerclass_t       pClass = cfg.playerClass[plrNum];
 #else
     playerclass_t       pClass = PCLASS_PLAYER;
 #endif
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnClient: Spawning client player mobj (consoleplayer %i).\n", CONSOLEPLAYER);
+    Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).\n", plrNum, CONSOLEPLAYER);
 #endif
 
     // The server will fix the player's position and angles soon after.
-    spawnPlayer(CONSOLEPLAYER, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false, false, false);
+    spawnPlayer(plrNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false, false, false);
 }
 
 /**
@@ -669,7 +668,7 @@ void P_RebornPlayer(int plrNum)
     // Determine the spawn position.
     if(IS_CLIENT)
     {
-        P_SpawnClient();
+        P_SpawnClient(plrNum);
         return;
 
         // Anywhere will do for now.
@@ -899,8 +898,12 @@ void P_SpawnPlayers(void)
 
     if(IS_CLIENT)
     {
-        // Spawn the client anywhere.
-        P_SpawnClient();
+        for(i = 0; i < MAXPLAYERS; ++i)
+            if(players[i].plr->inGame)
+            {
+                // Spawn the client anywhere.
+                P_SpawnClient(i);
+            }
         return;
     }
 

@@ -872,17 +872,19 @@ int P_CameraZMovement(mobj_t *mo)
  */
 void P_PlayerThinkCamera(player_t *player)
 {
-    mobj_t             *mo;
+    mobj_t *mo = player->plr->mo;
+
+    if(!mo) return;
 
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
     {
         if(player->playerState == PST_LIVE)
-            player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
+        {
+            mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
+        }
         return;
     }
-
-    mo = player->plr->mo;
 
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
 

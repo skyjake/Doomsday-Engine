@@ -993,7 +993,7 @@ void P_PlayerThinkFly(player_t *player)
     mobj_t             *plrmo = player->plr->mo;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
-    if(plrmo->reactionTime)
+    if(!plrmo || plrmo->reactionTime)
         return;
 
     // Is flying allowed?
@@ -1034,7 +1034,7 @@ void P_PlayerThinkFly(player_t *player)
 
 void P_PlayerThinkJump(player_t *player)
 {
-    if(player->plr->mo->reactionTime)
+    if(!player->plr->mo || player->plr->mo->reactionTime)
         return; // Not yet.
 
     // Jumping.
@@ -1046,11 +1046,16 @@ void P_PlayerThinkJump(player_t *player)
 
 void P_PlayerThinkView(player_t* player)
 {
-    P_CalcHeight(player);
+    if(player->plr->mo)
+    {
+        P_CalcHeight(player);
+    }
 }
 
 void P_PlayerThinkSpecial(player_t* player)
 {
+    if(!player->plr->mo) return;
+
     if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
 
@@ -1084,7 +1089,9 @@ void P_PlayerThinkInventory(player_t* player)
 void P_PlayerThinkSounds(player_t* player)
 {
 #if __JHEXEN__
-    mobj_t*             plrmo = player->plr->mo;
+    mobj_t* plrmo = player->plr->mo;
+
+    if(!plrmo) return;
 
     switch(player->class_)
     {
