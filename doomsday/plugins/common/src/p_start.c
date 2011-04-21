@@ -599,7 +599,7 @@ void P_SpawnClient(int plrNum)
 #endif
 
     // The server will fix the player's position and angles soon after.
-    spawnPlayer(plrNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false, false, false);
+    spawnPlayer(plrNum, pClass, -20000, -20000, 0, 0, MSF_Z_FLOOR, false, false, false);
 }
 
 /**
