@@ -848,7 +848,6 @@ void ClMobj_ReadDelta2(boolean skip)
             // This is a new ID, allocate a new mobj.
             mo = ClMobj_Create(id);
             info = ClMobj_GetInfo(mo);
-            //mo->ddFlags |= DDMF_NOGRAVITY; // safer this way
             justCreated = true;
             needsLinking = true;
 
@@ -1044,6 +1043,10 @@ void ClMobj_ReadDelta2(boolean skip)
         // Update players.
         if(d->dPlayer)
         {
+#ifdef _DEBUG
+            VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state (%f, %f, %f).\n",
+                                  P_GetDDPlayerIdx(d->dPlayer), mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+#endif
             // Players have real mobjs. The client mobj is hidden (unlinked).
             Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
         }

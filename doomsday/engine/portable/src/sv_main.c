@@ -1017,6 +1017,7 @@ void Sv_SendPlayerFixes(int plrNum)
         fixes |= 4;
 
     Msg_WriteLong(fixes);
+    Msg_WriteLong(ddpl->mo->thinker.id);
 
     // Increment counters.
     if(ddpl->flags & DDPF_FIXANGLES)
@@ -1073,7 +1074,7 @@ void Sv_Ticker(void)
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
+        player_t *plr = &ddPlayers[i];
 
         if(!plr->shared.inGame || !plr->shared.mo)
             continue;
@@ -1140,6 +1141,8 @@ boolean Sv_CheckBandwidth(int playerNumber)
     client_t           *client = &clients[playerNumber];
     uint                qSize = N_GetSendQueueSize(playerNumber);
     uint                limit = 400;
+
+    return true;
 
     // If there are too many messages in the queue, the player's bandwidth
     // is overrated.

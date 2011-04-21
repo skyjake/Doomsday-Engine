@@ -41,20 +41,23 @@ typedef struct clplayerstate_s {
     int             angle;
     angle_t         turnDelta;
     int             friction;
+    int             pendingFixes;
+    int             pendingFixTargetClMobjId;
+    int             pendingAngleFix;
+    float           pendingLookDirFix;
+    float           pendingPosFix[3];
+    float           pendingMomFix[3];
 } clplayerstate_t;
 
 extern float pspMoveSpeed;
 extern float cplrThrustMul;
 
 void            Cl_InitPlayers(void);
-//void            Cl_LocalCommand(void);
-//void            ClPlayer_Move(int plrnum);
 void            ClPlayer_MoveLocal(float dx, float dy, float dz, boolean onground);
 void            ClPlayer_UpdatePos(int plrnum);
-//void            Cl_MovePsprites(void);
 void            ClPlayer_CoordsReceived(void);
 void            ClPlayer_HandleFix(void);
-//int             ClPlayer_ReadDelta(void);
+void            ClPlayer_ApplyPendingFixes(int plrNum);
 void            ClPlayer_ReadDelta2(boolean skip);
 clplayerstate_t *ClPlayer_State(int plrNum);
 mobj_t         *ClPlayer_LocalGameMobj(int plrNum);

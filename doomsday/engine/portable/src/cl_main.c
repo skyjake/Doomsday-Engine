@@ -424,6 +424,7 @@ void Cl_Ticker(void)
     // player's clmobj to its updated state.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdatePos(i);
 
 #ifdef _DEBUG

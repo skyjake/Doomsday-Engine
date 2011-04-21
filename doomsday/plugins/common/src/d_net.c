@@ -301,8 +301,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     {
         int oldecho = cfg.echoMsg;
 
-        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
-                (const char *) data);
+        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
@@ -355,37 +354,6 @@ int D_NetWorldEvent(int type, int parm, void *data)
         // Client events:
         //
 #if 0
-    case DDWE_PROJECTILE:
-#  ifdef _DEBUG
-        if(parm > 32)           // Too many?
-            gi.Error("D_NetWorldEvent: Too many missiles (%i).\n", parm);
-#  endif
-        // Projectile data consists of shorts.
-        for(ptr = *(short **) data, i = 0; i < parm; ++i)
-        {
-            flags = *(unsigned short *) ptr & DDMS_FLAG_MASK;
-            mtype = *(unsigned short *) ptr & ~DDMS_FLAG_MASK;
-            ptr++;
-            x = *ptr++ << 16;
-            y = *ptr++ << 16;
-            z = *ptr++ << 16;
-            momx = momy = momz = 0;
-            if(flags & DDMS_MOVEMENT_XY)
-            {
-                momx = *ptr++ << 8;
-                momy = *ptr++ << 8;
-            }
-            if(flags & DDMS_MOVEMENT_Z)
-            {
-                momz = *ptr++ << 8;
-            }
-            NetCl_SpawnMissile(mtype, x, y, z, momx, momy, momz);
-        }
-        // Update pointer.
-        *(short **) data = ptr;
-        break;
-#endif
-
     case DDWE_SECTOR_SOUND:
         // High word: sector number, low word: sound id.
         if(parm & 0xffff)
@@ -397,6 +365,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
                                                DMU_SOUND_ORIGIN));
 
         break;
+#endif
 
     case DDWE_DEMO_END:
         // Demo playback has ended. Advance demo sequence.

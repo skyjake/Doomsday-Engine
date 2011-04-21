@@ -437,6 +437,64 @@ void ClPlayer_CoordsReceived(void)
     fixPos[VY] /= fixSpeed;
 }
 
+void ClPlayer_ApplyPendingFixes(int plrNum)
+{
+    clplayerstate_t *state = ClPlayer_State(plrNum);
+    player_t        *plr = &ddPlayers[plrNum];
+    mobj_t          *clmo = ClPlayer_ClMobj(plrNum);
+    ddplayer_t      *ddpl = &plr->shared;
+    mobj_t          *mo = ddpl->mo;
+
+    // If either mobj is missing, the fix cannot be applied yet.
+    if(!mo || !clmo) return;
+
+    if(clmo->thinker.id != state->pendingFixTargetClMobjId)
+        return;
+
+    assert(clmo->thinker.id == state->clMobjId);
+
+    if(state->pendingFixes & DDPF_FIXANGLES)
+    {
+        state->pendingFixes &= ~DDPF_FIXANGLES;
+
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...\n",
+                    state->pendingAngleFix, mo, clmo->thinker.id);
+#endif
+        clmo->angle = mo->angle = state->pendingAngleFix;
+        ddpl->lookDir = state->pendingLookDirFix;
+    }
+
+    if(state->pendingFixes & DDPF_FIXPOS)
+    {
+        state->pendingFixes &= ~DDPF_FIXPOS;
+
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...\n",
+                    state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ],
+                    mo, clmo->thinker.id);
+#endif
+        P_MobjSetPos(mo, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
+        mo->reactionTime = 18;
+
+        ClPlayer_UpdatePos(plrNum);
+    }
+
+    if(state->pendingFixes & DDPF_FIXMOM)
+    {
+        state->pendingFixes &= ~DDPF_FIXMOM;
+
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...\n",
+                    state->pendingMomFix[VX], state->pendingMomFix[VY], state->pendingMomFix[VZ],
+                    mo, clmo->thinker.id);
+#endif
+        mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
+        mo->mom[MY] = clmo->mom[VY] = state->pendingMomFix[VY];
+        mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
+    }
+}
+
 void ClPlayer_HandleFix(void)
 {
     player_t           *plr = &ddPlayers[consolePlayer];
@@ -444,102 +502,47 @@ void ClPlayer_HandleFix(void)
     ddplayer_t         *ddpl = &plr->shared;
     mobj_t             *mo = ddpl->mo;
     int                 fixes = Msg_ReadLong();
-    angle_t             angle;
-    float               lookdir;
+    clplayerstate_t    *state = ClPlayer_State(consolePlayer);
+
+    state->pendingFixTargetClMobjId = Msg_ReadLong();
 
     if(fixes & 1) // fix angles?
     {
         ddpl->fixCounter.angles = ddpl->fixAcked.angles = Msg_ReadLong();
-        angle = Msg_ReadLong();
-        lookdir = FIX2FLT(Msg_ReadLong());
+        state->pendingAngleFix = Msg_ReadLong();
+        state->pendingLookDirFix = FIX2FLT(Msg_ReadLong());
+        state->pendingFixes |= DDPF_FIXANGLES;
 
 #ifdef _DEBUG
         Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
-                    ddpl->fixAcked.angles, FIX2FLT(angle), lookdir);
+                    ddpl->fixAcked.angles, FIX2FLT(state->pendingAngleFix), state->pendingLookDirFix);
 #endif
-        if(mo)
-        {
-#ifdef _DEBUG
-            Con_Message("  Applying to mobj %p...\n", mo);
-#endif
-            mo->angle = angle;
-            ddpl->lookDir = lookdir;
-        }
-
-        if(clmo)
-        {
-#ifdef _DEBUG
-            Con_Message("  Applying to clmobj %i...\n", clmo->thinker.id);
-#endif
-            clmo->angle = angle;
-        }
     }
 
     if(fixes & 2) // fix pos?
     {
-        float               pos[3];
-
         ddpl->fixCounter.pos = ddpl->fixAcked.pos = Msg_ReadLong();
-        pos[VX] = FIX2FLT(Msg_ReadLong());
-        pos[VY] = FIX2FLT(Msg_ReadLong());
-        pos[VZ] = FIX2FLT(Msg_ReadLong());
+        state->pendingPosFix[VX] = FIX2FLT(Msg_ReadLong());
+        state->pendingPosFix[VY] = FIX2FLT(Msg_ReadLong());
+        state->pendingPosFix[VZ] = FIX2FLT(Msg_ReadLong());
+        state->pendingFixes |= DDPF_FIXPOS;
 
 #ifdef _DEBUG
         Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
-                    ddpl->fixAcked.pos, pos[VX], pos[VY], pos[VZ]);
+                    ddpl->fixAcked.pos, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
 #endif
-        if(mo)
-        {
-#ifdef _DEBUG
-            Con_Message("  Applying to mobj %p...\n", mo);
-#endif
-            P_MobjSetPos(mo, pos[VX], pos[VY], pos[VZ]);
-            mo->reactionTime = 18;
-        }
-
-        if(clmo)
-        {
-#ifdef _DEBUG
-            Con_Message("  Applying to clmobj %i...\n", clmo->thinker.id);
-#endif
-            ClPlayer_UpdatePos(plr - ddPlayers);
-        }
     }
 
     if(fixes & 4) // fix momentum?
     {
-        float               pos[3];
-
         ddpl->fixCounter.mom = ddpl->fixAcked.mom = Msg_ReadLong();
-
-        pos[0] = FIX2FLT(Msg_ReadLong());
-        pos[1] = FIX2FLT(Msg_ReadLong());
-        pos[2] = FIX2FLT(Msg_ReadLong());
-
-#ifdef _DEBUG
-Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
-            ddpl->fixAcked.mom, pos[0], pos[1], pos[2]);
-#endif
-        if(mo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to mobj %p...\n", mo);
-#endif
-            mo->mom[MX] = pos[0];
-            mo->mom[MY] = pos[1];
-            mo->mom[MZ] = pos[2];
-        }
-
-        if(clmo)
-        {
-#ifdef _DEBUG
-            Con_Message("  Applying to clmobj %i...\n", clmo->thinker.id);
-#endif
-            clmo->mom[MX] = pos[0];
-            clmo->mom[MY] = pos[1];
-            clmo->mom[MZ] = pos[2];
-        }
+        state->pendingMomFix[VX] = FIX2FLT(Msg_ReadLong());
+        state->pendingMomFix[VY] = FIX2FLT(Msg_ReadLong());
+        state->pendingMomFix[VZ] = FIX2FLT(Msg_ReadLong());
+        state->pendingFixes |= DDPF_FIXMOM;
     }
+
+    ClPlayer_ApplyPendingFixes(consolePlayer);
 
     // Send an acknowledgement.
     Msg_Begin(PCL_ACK_PLAYER_FIX);
@@ -717,6 +720,7 @@ void ClPlayer_ReadDelta2(boolean skip)
         // there will be linking problems otherwise.
         if(!skip && newId != s->clMobjId)
         {
+            // We are now changing the player's mobj.
             mobj_t* clmo = 0;
             clmoinfo_t* info = 0;
             boolean justCreated = false;
@@ -728,15 +732,20 @@ void ClPlayer_ReadDelta2(boolean skip)
             info = ClMobj_GetInfo(clmo);
             if(!clmo)
             {
+#ifdef _DEBUG
+                Con_Message("ClPlayer_ReadDelta2: Player %i's new clmobj is %i, but we don't know it yet.\n",
+                            num, newId);
+#endif
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
                 clmo = ClMobj_Create(s->clMobjId);
                 info = ClMobj_GetInfo(clmo);
+                /*
                 if(num == consolePlayer)
                 {
                     // Mark everything known about our local player.
-                    info->flags |= CLMF_KNOWN;
-                }
+                    //info->flags |= CLMF_KNOWN;
+                }*/
                 justCreated = true;
             }
             else
@@ -757,11 +766,15 @@ void ClPlayer_ReadDelta2(boolean skip)
 
             // If it was just created, the coordinates are not yet correct.
             // The update will be made when the mobj data is received.
-            if(!justCreated && num != consolePlayer)
+            if(!justCreated) // && num != consolePlayer)
             {
-                // Replace the hidden client mobj with the real player mobj.
+#ifdef _DEBUG
+                Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.\n",
+                            newId, num, ddpl->mo);
+#endif
                 Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff);
             }
+            /*
             else if(ddpl->mo)
             {
                 // Update the new client mobj's information from the real
@@ -777,6 +790,7 @@ void ClPlayer_ReadDelta2(boolean skip)
                 if(!skip)
                     ClPlayer_UpdatePos(num);
             }
+            */
 
 #if _DEBUG
             Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=0x%p\n", num, s->clMobjId, old);

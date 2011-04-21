@@ -314,9 +314,8 @@ void Cl_Frame2Received(int packetType)
                         // Yes, we've already got this. Must skip.
                         skip = true;
 
-                        VERBOSE2( Con_Printf("  Skipping delta %i (oldset=%i, rsid=%i), because history=%i resend=%i\n",
-                                             deltaType, oldSet, resend,
-                                             historyChecked, resendChecked) );
+                        Con_Message("CL_Frame2Received: Skipping delta %i (oldset=%i, rsid=%i), because history=%i resend=%i\n",
+                                    deltaType, oldSet, resend, historyChecked, resendChecked);
                     }
                 }
 
@@ -350,12 +349,12 @@ void Cl_Frame2Received(int packetType)
                 ClPlayer_ReadDelta2(skip);
                 break;
 
-            case DT_SECTOR_R6: // Old format.
+            //case DT_SECTOR_R6: // Old format.
             case DT_SECTOR:
                 Cl_ReadSectorDelta2(deltaType, skip);
                 break;
 
-            case DT_SIDE_R6: // Old format.
+            //case DT_SIDE_R6: // Old format.
             case DT_SIDE:
                 Cl_ReadSideDelta2(deltaType, skip);
                 break;

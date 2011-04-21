@@ -1159,8 +1159,8 @@ typedef struct ticcmd_s {
     // World events (handled by clients)
     enum {
         DDWE_HANDSHAKE, // Shake hands with a new player.
-        DDWE_PROJECTILE, // Spawn a projectile.
-        DDWE_SECTOR_SOUND, // Play a sector sound.
+        //DDWE_PROJECTILE, // Spawn a projectile.
+        //DDWE_SECTOR_SOUND, // Play a sector sound.
         DDWE_DEMO_END // Demo playback ends.
     };
 

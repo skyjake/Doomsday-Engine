@@ -276,7 +276,7 @@ boolean P_GivePower(player_t* player, int power)
 
     case PT_INVISIBILITY:
         player->powers[power] = INVISTICS;
-        player->plr->mo->flags |= MF_SHADOW;;
+        player->plr->mo->flags |= MF_SHADOW;
         break;
 
     case PT_FLIGHT:

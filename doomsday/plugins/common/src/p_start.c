@@ -400,8 +400,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     pClass = MINMAX_OF(0, pClass, NUM_PLAYER_CLASSES - 1);
 
     /* $unifiedangles */
-    if(!(mo = P_SpawnMobj3f(PCLASS_INFO(pClass)->mobjType, x, y, z, angle,
-                            spawnFlags)))
+    if(!(mo = P_SpawnMobj3f(PCLASS_INFO(pClass)->mobjType, x, y, z, angle, spawnFlags)))
         Con_Error("P_SpawnPlayer: Failed spawning mobj for player %i "
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
