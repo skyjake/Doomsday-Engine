@@ -296,15 +296,10 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
             P_DealPlayerStarts(0);
     }
     // DDPE_CHAT_MESSAGE occurs when a PKT_CHAT is received.
-    // Here we will only display the message (if not a local message).
-    else if(peType == DDPE_CHAT_MESSAGE && plrNumber != CONSOLEPLAYER)
+    // Here we will only display the message.
+    else if(peType == DDPE_CHAT_MESSAGE)
     {
-        int     i, num, oldecho = cfg.echoMsg;
-
-        // Count the number of players.
-        for(i = num = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->inGame)
-                num++;
+        int oldecho = cfg.echoMsg;
 
         dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
                 (const char *) data);
@@ -579,7 +574,7 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
         return;
     plr = &players[player];
 
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
