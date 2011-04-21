@@ -75,7 +75,7 @@ static pathdirectory_internnameid_t findInternNameIdForName(pathdirectory_t* pd,
     assert(NULL != pd && NULL != name);
     {
     pathdirectory_internnameid_t nameId = 0; // Not a valid id.
-    if(!Str_IsEmpty(name) && 0 != pd->_internNamesCount)
+    if(0 != pd->_internNamesCount)
     {
         uint bottomIdx = 0, topIdx = pd->_internNamesCount - 1, pivot;
         const pathdirectory_internname_t* intern;
@@ -299,7 +299,7 @@ static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t*
 static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t* parent,
     pathdirectory_nodetype_t nodeType, const ddstring_t* name, char delimiter, void* userData)
 {
-    assert(NULL != pd && NULL != name && !Str_IsEmpty(name));
+    assert(NULL != pd && NULL != name);
     {
     const pathdirectory_internname_t* intern;
     pathdirectory_internnameid_t nameId;
