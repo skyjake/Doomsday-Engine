@@ -33,6 +33,7 @@
 
 void*           NetCl_WriteCommands(ticcmd_t* cmd, int count);
 void            NetCl_UpdateGameState(byte* data);
+void            NetCl_PlayerSpawnPosition(byte* data);
 void            NetCl_CheatRequest(const char* command);
 void            NetCl_UpdatePlayerState(byte* data, int plrNum);
 void            NetCl_UpdatePlayerState2(byte* data, int plrNum);

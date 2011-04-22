@@ -73,6 +73,7 @@
 
 #define WRITE_SHORT(byteptr, val)   {(*(short*)(byteptr) = SHORT(val)); byteptr += 2;}
 #define WRITE_LONG(byteptr, val)    {(*(int*)(byteptr) = LONG(val)); byteptr += 4;}
+#define WRITE_FLOAT(byteptr, val)   {(*(int*)(byteptr) = LONG(*(int*)&val)); byteptr += 4;}
 
 // TYPES -------------------------------------------------------------------
 
@@ -941,6 +942,29 @@ void NetSv_SendGameState(int flags, int to)
         // Send the packet.
         Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, buffer, ptr - buffer);
     }
+}
+
+/**
+ * Sends the initial player position to a client. This is the position defined
+ * by the map's start spots. It is sent immediately after the server determines
+ * where a player is to spawn.
+ */
+void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle)
+{
+    byte buffer[200];
+    byte *ptr = buffer;
+
+    if(!IS_SERVER) return;
+
+    Con_Message("NetSv_SendPlayerSpawnPosition: player %i at %f, %f, %f facing %x\n",
+                plrNum, x, y, z, angle);
+
+    WRITE_FLOAT(ptr, x);
+    WRITE_FLOAT(ptr, y);
+    WRITE_FLOAT(ptr, z);
+    WRITE_LONG(ptr, angle);
+
+    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION, buffer, ptr - buffer);
 }
 
 /**

@@ -72,6 +72,7 @@ enum {
     GPT_CHEAT_REQUEST,
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
+    GPT_PLAYER_SPAWN_POSITION
 };
 
 #if 0

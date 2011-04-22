@@ -588,9 +588,9 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 void P_SpawnClient(int plrNum)
 {
 #if __JHEXEN__
-    playerclass_t       pClass = cfg.playerClass[plrNum];
+    playerclass_t pClass = cfg.playerClass[plrNum];
 #else
-    playerclass_t       pClass = PCLASS_PLAYER;
+    playerclass_t pClass = PCLASS_PLAYER;
 #endif
 
 #ifdef _DEBUG
@@ -598,7 +598,7 @@ void P_SpawnClient(int plrNum)
 #endif
 
     // The server will fix the player's position and angles soon after.
-    spawnPlayer(plrNum, pClass, -20000, -20000, 0, 0, MSF_Z_FLOOR, false, false, false);
+    spawnPlayer(plrNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
 }
 
 /**
@@ -979,6 +979,16 @@ void P_SpawnPlayers(void)
                             spawnFlags, makeCamera, false, true);
             }
     }
+
+    // Let clients know
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+        {
+            NetSv_SendPlayerSpawnPosition(i, players[i].plr->mo->pos[VX],
+                                          players[i].plr->mo->pos[VY],
+                                          players[i].plr->mo->pos[VZ],
+                                          players[i].plr->mo->angle);
+        }
 }
 
 /**
@@ -1011,7 +1021,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
         if(G_GetGameState() == GS_MAP)
         {
             // Anywhere will do, for now.
-            spawnPlayer(playerNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false,
+            spawnPlayer(playerNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false,
                         false, false);
         }
 

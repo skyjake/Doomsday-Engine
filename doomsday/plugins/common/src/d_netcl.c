@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -86,13 +87,20 @@ byte NetCl_ReadByte(void)
 short NetCl_ReadShort(void)
 {
     readbuffer += 2;
-    return SHORT( *(short *) (readbuffer - 2) );
+    return SHORT( *(short*) (readbuffer - 2) );
 }
 
 int NetCl_ReadLong(void)
 {
     readbuffer += 4;
-    return LONG( *(int *) (readbuffer - 4) );
+    return LONG( *(int*) (readbuffer - 4) );
+}
+
+float NetCl_ReadFloat(void)
+{
+    int value = LONG( *(int*) readbuffer );
+    readbuffer += 4;
+    return *(float*) &value;
 }
 
 void NetCl_Read(byte *buf, int len)
@@ -248,6 +256,32 @@ void NetCl_UpdateGameState(byte *data)
 
     // Tell the server we're ready to begin receiving frames.
     Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
+}
+
+void NetCl_PlayerSpawnPosition(byte* data)
+{
+    player_t* p = &players[CONSOLEPLAYER];
+    mobj_t* mo;
+    float x, y, z;
+    int angle;
+
+    NetCl_SetReadBuffer(data);
+
+    x = NetCl_ReadFloat();
+    y = NetCl_ReadFloat();
+    z = NetCl_ReadFloat();
+    angle = NetCl_ReadLong();
+
+#ifdef _DEBUG
+    Con_Message("NetCl_PlayerSpawnPosition: Got spawn position %f, %f, %f facing %x\n",
+                x, y, z, angle);
+#endif
+
+    mo = p->plr->mo;
+    assert(mo != 0);
+
+    P_TryMove3f(mo, x, y, z);
+    mo->angle = angle;
 }
 
 void NetCl_UpdatePlayerState2(byte *data, int plrNum)

@@ -421,15 +421,21 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
     //
     // Client events.
     //
-    switch (type)
+    switch(type)
     {
     case GPT_GAME_STATE:
-        Con_Printf("Received GTP_GAME_STATE\n");
+#ifdef _DEBUG
+        Con_Message("Received GTP_GAME_STATE\n");
+#endif
         NetCl_UpdateGameState(data);
 
         // Tell the engine we're ready to proceed. It'll start handling
         // the world updates after this variable is set.
         Set(DD_GAME_READY, true);
+        break;
+
+    case GPT_PLAYER_SPAWN_POSITION:
+        NetCl_PlayerSpawnPosition(data);
         break;
 
     case GPT_MESSAGE:
