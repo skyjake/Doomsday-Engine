@@ -278,7 +278,7 @@ void Cl_Sound(void)
         return;                 // Bad sound ID!
     }
 #ifdef _DEBUG
-Con_Printf("Cl_Sound: %i\n", sound);
+    Con_Printf("Cl_Sound: %i\n", sound);
 #endif
 
     if(flags & SNDF_VOLUME)

@@ -51,12 +51,10 @@
 
 typedef struct {
     thinker_t   thinker;
-    //sector_t   *sector;
     uint        sectornum;
     clmovertype_t type;
     int         property; // floor or ceiling
     int         dmuPlane;
-    //float      *current;
     float       destination;
     float       speed;
 } mover_t;

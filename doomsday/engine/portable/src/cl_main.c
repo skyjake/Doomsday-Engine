@@ -44,9 +44,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Clients send commands on every tic.
-//#define CLIENT_TICCMD_INTERVAL  0
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
