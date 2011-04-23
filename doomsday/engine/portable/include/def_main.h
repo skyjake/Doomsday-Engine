@@ -31,23 +31,21 @@
 
 #include "def_data.h"
 
-#define SFXINFO_EXTERNAL_MAXLENGTH  256
-#define SFXINFO_EXTERNAL_LASTINDEX  255
 typedef struct sfxinfo_s {
-    void*           data; // Pointer to sound data.
-    int             lumpNum;
-    char            lumpName[9]; // Actual lump name of the sound (full name).
-    char            id[32]; // Identifier name (from the def).
-    char            name[32]; // Long name.
-    struct sfxinfo_s* link; // Link to another sound.
-    int             linkPitch;
-    int             linkVolume;
-    int             priority;
-    int             channels; // Max. channels for the sound to occupy.
-    int             usefulness; // Used to determine when to cache out.
-    int             flags;
-    int             group;
-    char            external[SFXINFO_EXTERNAL_MAXLENGTH]; // Path to external file.
+    void* data; /// Pointer to sound data.
+    int lumpNum;
+    char lumpName[9]; /// Actual lump name of the sound (full name).
+    char id[32]; /// Identifier name (from the def).
+    char name[32]; /// Long name.
+    struct sfxinfo_s* link; /// Link to another sound.
+    int linkPitch;
+    int linkVolume;
+    int priority;
+    int channels; /// Max. channels for the sound to occupy.
+    int usefulness; /// Used to determine when to cache out.
+    int flags;
+    int group;
+    ddstring_t external; /// Path to external file.
 } sfxinfo_t;
 
 extern ded_t defs; // The main definitions database.

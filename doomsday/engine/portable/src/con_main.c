@@ -385,7 +385,7 @@ boolean Con_Init(void)
 
 void Con_Shutdown(void)
 {
-    Con_Message("Shuting down the console ...\n");
+    Con_Message("Shuting down the console...\n");
 
     Con_DestroyBuffer(histBuf); // The console history buffer.
     Con_DestroyBuffer(oldCmds); // The old commands buffer.
@@ -1777,7 +1777,7 @@ void Con_PrintPathList3(const char* pathList, const char* seperator, int flags)
     {
         if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
             Con_Printf("%i: ", n++);
-        Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? Str_Text(F_PrettyPath(&path)) : Str_Text(&path));
+        Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(&path)) : Str_Text(&path));
         if(seperator && strchr(p, ';') != 0)
             Con_Printf("%s", seperator);
         if(flags & PPF_MULTILINE)
@@ -1854,7 +1854,7 @@ void Con_Error(const char* error, ...)
     errorInProgress = true;
 
     // Get back to the directory we started from.
-    Dir_ChDir(&ddRuntimeDir);
+    Dir_SetCurrent(ddRuntimePath);
 
     va_start(argptr, error);
     dd_vsnprintf(err, sizeof(err), error, argptr);

@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_audiod_loader.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,22 @@
  */
 
 /**
- * sys_audiod_loader.h: Audio Driver, Loader.
+ * Audio Driver Loader.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_AUDIO_LOADER_H__
-#define __DOOMSDAY_SYSTEM_AUDIO_LOADER_H__
+#ifndef LIBDENG_SYSTEM_AUDIO_LOADER_H
+#define LIBDENG_SYSTEM_AUDIO_LOADER_H
 
 #include "sys_audiod.h"
 
-audiodriver_t*      Sys_LoadAudioDriver(const char* name);
-void                Sys_ShutdownAudioDriver(void);
-#endif
+/**
+ * Attempt to load the specified audio driver, import the entry points and
+ * add to the available audio drivers.
+ *
+ * @param name  Name of the driver to be loaded e.g., "openal".
+ * @return  Ptr to the audio driver interface if successful, else @c NULL.
+ */
+audiodriver_t* Sys_LoadAudioDriver(const char* name);
+
+void Sys_ShutdownAudioDriver(void);
+#endif /* LIBDENG_SYSTEM_AUDIO_LOADER_H */

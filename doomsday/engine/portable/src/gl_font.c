@@ -273,20 +273,18 @@ fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
         return 0;
     }
 
-    if(0 != findFontIdForName(name) ||
-       0 == F_Access(searchPath))
+    if(0 != findFontIdForName(name) || 0 == F_Access(searchPath))
     {   
         return 0; // Error.
     }
 
-    VERBOSE2( Con_Printf("Preparing font \"%s\" ...\n", M_PrettyPath(searchPath)) );
+    VERBOSE2( Con_Printf("Preparing font \"%s\"...\n", F_PrettyPath(searchPath)) );
     if(0 == (font = loadFont(name, searchPath)))
     {   // Error.
-        Con_Message("Warning: Unknown font format %s\n", searchPath);
+        Con_Message("Warning: Unknown format for %s\n", searchPath);
         return 0;
     }
 
-    VERBOSE2( Con_Printf("Done loading font '%s'.\n", Str_Text(BitmapFont_Name(font))) );
     // Make this the current font.
     currentFontIdx = numFonts-1;
 
@@ -1405,188 +1403,3 @@ int FR_TextHeight(const char* string, fontid_t fontId)
     FR_SetFont(oldFontId);
     return h;
 }
-
-#if 0 //defined(WIN32)
-
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#  define NOSOUND
-#  define NOCOMM
-#  define NOHELP
-#  define NOCOLOR
-#  define NOCLIPBOARD
-#  define NOCTLMGR
-#  define NOKERNEL
-#endif
-#include <windows.h>
-
-static void outByte(FILE* f, byte b)
-{
-    fwrite(&b, sizeof(b), 1, f);
-}
-
-static void outShort(FILE* f, short s)
-{
-    fwrite(&s, sizeof(s), 1, f);
-}
-
-static int dumpFont(const char* filename, const bitmapfont_char_t chars[256],
-    const uint32_t* image, int w, int h)
-{
-    FILE* file = fopen(filename, "wb");
-    int i, c, bit, numPels;
-    byte mask;
-
-    if(!file)
-        return false;
-
-    // Write header.
-    outByte(file, 0); // Version.
-    outShort(file, w);
-    outShort(file, h);
-    outShort(file, MAX_CHARS); // Number of characters.
-
-    // Characters.
-    for(i = 0; i < MAX_CHARS; ++i)
-    {
-        outShort(file, chars[i].x);
-        outShort(file, chars[i].y);
-        outByte(file, chars[i].w);
-        outByte(file, chars[i].h);
-    }
-
-    // Write a zero to indicate the data is in bitmap format (0,1).
-    outByte(file, 0);
-    numPels = w * h;
-    for(c = i = 0; i < (numPels + 7) / 8; ++i)
-    {
-        for(mask = 0, bit = 7; bit >= 0; bit--, ++c)
-            mask |= (c < numPels ? image[c] != 0 : false) << bit;
-        outByte(file, mask);
-    }
-
-    fclose(file);
-    return true;
-}
-
-/**
- * Prepare a GDI font. Select it as the current font.
- */
-static int prepareGDIFont(HFONT hfont)
-{
-    int i, x, y, maxh, bmpWidth = 256, bmpHeight = 0, imgWidth, imgHeight;
-    bitmapfont_t* font;
-    uint32_t* image;
-    HBITMAP hbmp;
-    RECT rect;
-    HDC hdc;
-
-    // Create a new font.
-    createFont();
-    font = &fonts[currentFontIdx];
-
-    // Now we'll create the actual data.
-    hdc = CreateCompatibleDC(NULL);
-    SetMapMode(hdc, MM_TEXT);
-    SelectObject(hdc, hfont);
-
-    // Let's first find out the sizes of all the characters.
-    // Then we can decide how large a texture we need.
-    for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
-    {
-        bitmapfont_char_t* fc = font->chars + i;
-        SIZE size;
-        byte ch[2];
-
-        ch[0] = i;
-        ch[1] = 0;
-
-        GetTextExtentPoint32(hdc, (LPCTSTR) ch, 1, &size);
-        fc->w = size.cx;
-        fc->h = size.cy;
-        maxh = max(maxh, fc->h);
-        x += fc->w + 1;
-        if(x >= bmpWidth)
-        {
-            x = 0;
-            y += maxh + 1;
-            maxh = 0;
-        }
-    }
-
-    bmpHeight = y + maxh;
-    hbmp = CreateCompatibleBitmap(hdc, bmpWidth, bmpHeight);
-    SelectObject(hdc, hbmp);
-    SetBkMode(hdc, OPAQUE);
-    SetBkColor(hdc, 0);
-    SetTextColor(hdc, 0xffffff);
-    rect.left = 0;
-    rect.top = 0;
-    rect.right = bmpWidth;
-    rect.bottom = bmpHeight;
-    FillRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
-
-    // Print all the characters.
-    for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
-    {
-        bitmapfont_char_t* fc = font->chars + i;
-        char ch[2];
-
-        ch[0] = i;
-        ch[1] = '\0';
-
-        if(x + fc->w + 1 >= bmpWidth)
-        {
-            x = 0;
-            y += maxh + 1;
-            maxh = 0;
-        }
-
-        if(i)
-            TextOut(hdc, x + 1, y + 1, ch, 1);
-
-        fc->x = x + 1;
-        fc->y = y + 1;
-        maxh = max(maxh, fc->h);
-        x += fc->w + 1;
-    }
-
-    // Now we can make a version that DGL can read.
-    imgWidth = M_CeilPow2(bmpWidth);
-    imgHeight = M_CeilPow2(bmpHeight);
-
-/*#if _DEBUG
-Con_Printf("font: %d x %d\n", imgWidth, imgHeight);
-#endif*/
-
-    image = malloc(4 * imgWidth * imgHeight);
-    memset(image, 0, 4 * imgWidth * imgHeight);
-    for(y = 0; y < bmpHeight; ++y)
-        for(x = 0; x < bmpWidth; ++x)
-            if(GetPixel(hdc, x, y))
-            {
-                image[x + y * imgWidth] = 0xffffffff;
-            }
-
-    font->texWidth = imgWidth;
-    font->texHeight = imgHeight;
-
-    // If necessary, write the font data to a file.
-    if(ArgCheck("-dumpfont"))
-    {
-        char buf[20];
-        sprintf(buf, "font%i.dfn", font->id);
-        dumpFont(buf, font->chars, image, font->texWidth, font->texHeight);
-    }
-
-    // Create the DGL texture.
-    font->tex = GL_NewTextureWithParams2(DGL_RGBA, imgWidth, imgHeight, image,
-        0, GL_NEAREST, GL_NEAREST, -1 /*best anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-    // We no longer need these.
-    free(image);
-    DeleteObject(hbmp);
-    DeleteDC(hdc);
-    return 0;
-}
-#endif /* WIN32 */

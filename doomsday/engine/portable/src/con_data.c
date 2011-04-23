@@ -147,7 +147,7 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
 
     if(NULL != PathDirectoryNode_UserData(node))
     {
-        Con_Error("Con_AddVariable: A variable by the name \"%s\" is already known!", tpl->name);
+        Con_Error("Con_AddVariable: A variable by the name '%s' is already known!", tpl->name);
         return NULL; // Unreachable.
     }
 
@@ -602,13 +602,13 @@ void Con_AddVariable(const cvartemplate_t* tpl)
     }
     if(CVT_NULL == tpl->type)
     {
-        Con_Message("Warning:Con_AddVariable: Attempt to register variable \"%s\" as type "
+        Con_Message("Warning:Con_AddVariable: Attempt to register variable '%s' as type "
             "CVT_NULL, ignoring.\n", tpl->name);
         return;
     }
 
     if(NULL != Con_FindVariable(tpl->name))
-        Con_Error("Error: A CVAR with the name \"%s\" is already registered.", tpl->name);
+        Con_Error("Error: A CVAR with the name '%s' is already registered.", tpl->name);
 
     addVariable(tpl);
 }
@@ -625,7 +625,7 @@ void Con_AddVariableList(const cvartemplate_t* tplList)
     for(; tplList->name; ++tplList)
     {
         if(Con_FindVariable(tplList->name))
-            Con_Error("Error: A CVAR with the name \"%s\" is already registered.", tplList->name);
+            Con_Error("Error: A CVAR with the name '%s' is already registered.", tplList->name);
 
         addVariable(tplList);
     }
@@ -696,7 +696,7 @@ void Con_AddCommand(const ccmdtemplate_t* ccmd)
         Con_Error("Con_AddCommand: CCmd missing a name.");
 
 /*#if _DEBUG
-Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", ccmd->name,
+Con_Message("Con_AddCommand: '%s' \"%s\" (%i).\n", ccmd->name,
             ccmd->argTemplate, ccmd->flags);
 #endif*/
 
@@ -764,7 +764,7 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", ccmd->name,
 /*#if _DEBUG
 {
 int i;
-Con_Message("Con_AddCommand: CCmd \"%s\": minArgs %i, maxArgs %i: \"",
+Con_Message("Con_AddCommand: CCmd '%s': minArgs %i, maxArgs %i: \"",
             ccmd->name, minArgs, maxArgs);
 for(i = 0; i < minArgs; ++i)
 {
@@ -787,8 +787,7 @@ Con_Printf("\".\n");
 
 /*#if _DEBUG
 if(ccmd->args == NULL)
-  Con_Message("Con_AddCommand: CCmd \"%s\" will not have it's usage "
-              "validated.\n", ccmd->name);
+  Con_Message("Con_AddCommand: CCmd '%s' will not have it's usage validated.\n", ccmd->name);
 #endif*/
     }
 

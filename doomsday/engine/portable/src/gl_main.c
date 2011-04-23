@@ -499,7 +499,7 @@ boolean GL_EarlyInit(void)
     if(novideo)
         return true;
 
-    Con_Message("Initializing Render subsystem ...\n");
+    Con_Message("Initializing Render subsystem...\n");
 
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
@@ -899,14 +899,31 @@ void GL_TotalRestore(void)
 /**
  * Copies the current contents of the frame buffer and returns a pointer
  * to data containing 24-bit RGB triplets. The caller must free the
- * returned buffer using M_Free()!
+ * returned buffer using free()!
  */
 unsigned char* GL_GrabScreen(void)
 {
-    unsigned char*      buffer = 0;
+    unsigned char* buffer = NULL;
 
-    buffer = M_Malloc(theWindow->width * theWindow->height * 3);
-    GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
+    if(!isDedicated && !novideo)
+    {
+        const int width = theWindow->width;
+        const int height = theWindow->height;
+
+        buffer = (unsigned char*) malloc(width * height * 3);
+        if(NULL == buffer)
+            Con_Error("GL_GrabScreen: Failed on allocation of %lu bytes for "
+                "frame buffer content copy.", (unsigned long) (width * height * 3));
+
+        if(!GL_Grab(0, 0, width, height, DGL_RGB, (void*) buffer))
+        {
+            free(buffer);
+            buffer = NULL;
+#if _DEBUG
+            Con_Message("Warning:GL_GrabScreen: Failed copying frame buffer content.\n");
+#endif
+        }
+    }
     return buffer;
 }
 

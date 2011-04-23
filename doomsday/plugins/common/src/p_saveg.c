@@ -260,8 +260,8 @@ static void CloseStreamOut(void);
 
 static void ClearSaveSlot(int slot);
 static void CopySaveSlot(int sourceSlot, int destSlot);
-static void CopyFile(char *sourceName, char *destName);
-static boolean ExistingFile(char *name);
+static void CopyFile(const char* sourceName, const char* destName);
+static boolean ExistingFile(char* name);
 #endif
 
 static void unarchiveMap(void);
@@ -271,8 +271,8 @@ static void unarchiveMap(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 LZFILE* savefile;
-filename_t savePath; // e.g., "savegame/"
-filename_t clientSavePath; // e.g., "savegame/client/"
+savefilename_t savePath; // e.g., "savegame/"
+savefilename_t clientSavePath; // e.g., "savegame/client/"
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -861,29 +861,31 @@ static boolean ExistingFile(char *name)
  */
 static void ClearSaveSlot(int slot)
 {
-    int                 i;
-    filename_t          fileName;
-
+    ddstring_t fileName;
+    Str_Init(&fileName);
+    { int i;
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs", savePath,
-                 slot, i);
-        M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
-        remove(fileName);
-    }
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath, slot);
-    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
-    remove(fileName);
+        Str_Clear(&fileName);
+        Str_Appendf(&fileName, "%shex%d%02d.hxs", savePath, slot, i);
+        F_TranslatePath(&fileName, &fileName);
+        remove(Str_Text(&fileName));
+    }}
+    Str_Clear(&fileName);
+    Str_Appendf(&fileName, "%shex%d.hxs", savePath, slot);
+    F_TranslatePath(&fileName, &fileName);
+    remove(Str_Text(&fileName));
+    Str_Free(&fileName);
 }
 
-static void CopyFile(char *sourceName, char *destName)
+static void CopyFile(const char* sourceName, const char* destName)
 {
-    size_t      length;
-    byte       *buffer;
-    LZFILE     *outf;
+    size_t length;
+    char* buffer;
+    LZFILE* outf;
 
     length = M_ReadFile(sourceName, &buffer);
-    outf = lzOpen(destName, "wp");
+    outf = lzOpen((char*)destName, "wp");
     if(outf)
     {
         lzWrite(buffer, length, outf);
@@ -897,35 +899,41 @@ static void CopyFile(char *sourceName, char *destName)
  */
 static void CopySaveSlot(int sourceSlot, int destSlot)
 {
-    int                 i;
-    filename_t          sourceName, destName;
+    ddstring_t src, dst;
 
+    Str_Init(&src);
+    Str_Init(&dst);
+
+    { int i;
     for(i = 0; i < MAX_MAPS; ++i)
     {
-        dd_snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
-                 savePath, sourceSlot, i);
-        M_TranslatePath(sourceName, sourceName, FILENAME_T_MAXLEN);
+        Str_Clear(&src);
+        Str_Appendf(&src, "%shex%d%02d.hxs", savePath, sourceSlot, i);
+        F_TranslatePath(&src, &src);
 
-        if(ExistingFile(sourceName))
+        if(ExistingFile(Str_Text(&src)))
         {
-            dd_snprintf(destName, FILENAME_T_MAXLEN, "%shex%d%02d.hxs",
-                     savePath, destSlot, i);
-            M_TranslatePath(destName, destName, FILENAME_T_MAXLEN);
-            CopyFile(sourceName, destName);
+            Str_Clear(&dst);
+            Str_Appendf(&dst, "%shex%d%02d.hxs", savePath, destSlot, i);
+            F_TranslatePath(&dst, &dst);
+            CopyFile(Str_Text(&src), Str_Text(&dst));
         }
-    }
+    }}
 
-    dd_snprintf(sourceName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
-             sourceSlot);
-    M_TranslatePath(sourceName, sourceName, FILENAME_T_MAXLEN);
+    Str_Clear(&src);
+    Str_Appendf(&src, "%shex%d.hxs", savePath, sourceSlot);
+    F_TranslatePath(&src, &src);
 
-    if(ExistingFile(sourceName))
+    if(ExistingFile(Str_Text(&src)))
     {
-        dd_snprintf(destName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
-                 destSlot);
-        M_TranslatePath(destName, destName, FILENAME_T_MAXLEN);
-        CopyFile(sourceName, destName);
+        Str_Clear(&dst);
+        Str_Appendf(&dst, "%shex%d.hxs", savePath, destSlot);
+        F_TranslatePath(&dst, &dst);
+        CopyFile(Str_Text(&src), Str_Text(&dst));
     }
+
+    Str_Free(&dst);
+    Str_Free(&src);
 }
 
 /**
@@ -948,16 +956,18 @@ int SV_HxGetRebornSlot(void)
 }
 
 /**
- * @return              @c true, if the reborn slot is available.
+ * @return  @c true if the reborn slot is available.
  */
 boolean SV_HxRebornSlotAvailable(void)
 {
-    filename_t          fileName;
-
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex%d.hxs", savePath,
-             REBORN_SLOT);
-    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
-    return ExistingFile(fileName);
+    boolean result;
+    ddstring_t path;
+    Str_Init(&path);
+    Str_Appendf(&path, "%shex%d.hxs", savePath, REBORN_SLOT);
+    F_TranslatePath(&path, &path);
+    result = ExistingFile(Str_Text(&path));
+    Str_Free(&path);
+    return result;
 }
 
 void SV_HxInitBaseSlot(void)
@@ -4749,22 +4759,32 @@ static void P_UnArchiveMap(void)
     SV_AssertSegment(ASEG_END);
 }
 
-int SV_GetSaveDescription(char* str, const char* filename, size_t len)
+int SV_GetSaveDescription(char* str, const char* filepath, size_t len)
 {
+    boolean found = false;
+    ddstring_t path;
 #if __JHEXEN__
-    LZFILE*         fp;
-    filename_t      name;
-    char            versionText[HXS_VERSION_TEXT_LENGTH];
-    boolean         found = false;
+    LZFILE* fp;
+#endif
 
-    strncpy(name, filename, FILENAME_T_MAXLEN);
-    M_TranslatePath(name, name, FILENAME_T_MAXLEN);
-    fp = lzOpen(name, "rp");
-    if(fp)
+    // Compose the full path to the saved game.
+#if __JHEXEN__
+    Str_Init(&path); Str_Set(&path, filepath);
+    F_TranslatePath(&path, &path);
+#else
+    Str_Init(&path); Str_Set(&path, filepath);
+    F_TranslatePath(&path, &path);
+#endif
+
+#if __JHEXEN__
+    fp = lzOpen(Str_Text(&path), "rp");
+    if(NULL != fp)
     {
+        // Read the header.
+        char versionText[HXS_VERSION_TEXT_LENGTH];
         lzRead(str, len, fp);
         lzRead(versionText, HXS_VERSION_TEXT_LENGTH, fp);
-        lzClose(fp);
+        lzClose(fp); fp = NULL;
         if(!strncmp(versionText, HXS_VERSION_TEXT, 8))
         {
             saveVersion = atoi(&versionText[8]);
@@ -4772,37 +4792,39 @@ int SV_GetSaveDescription(char* str, const char* filename, size_t len)
                 found = true;
         }
     }
-    return found;
 #else
-    savefile = lzOpen((char*)filename, "rp");
-    if(!savefile)
+    savefile = lzOpen(Str_Text(&path), "rp");
+    if(NULL != savefile)
     {
-# if __JDOOM64__
-        // We don't support the original game's save format (for obvious
-        // reasons).
-        return false;
-# else
-        // It might still be a v19 savegame.
-        savefile = lzOpen((char*)filename, "r");
-        if(!savefile)
-            return false;       // It just doesn't exist.
-        lzRead(str, len, savefile);
-        str[len - 1] = 0;
-        lzClose(savefile);
-        return true;
-# endif
+        // Read the header.
+        lzRead(&hdr, sizeof(hdr), savefile);
+        lzClose(savefile); savefile = NULL;
+        if(MY_SAVE_MAGIC == hdr.magic)
+        {
+            dd_snprintf(str, len, "%s", hdr.description);
+            found = true;
+        }
     }
 
-    // Read the header.
-    lzRead(&hdr, sizeof(hdr), savefile);
-    lzClose(savefile);
-    // Check the magic.
-    if(hdr.magic != MY_SAVE_MAGIC)
-        // This isn't a proper savegame file.
-        return false;
-    dd_snprintf(str, len, "%s", hdr.description);
-    return true;
+    // If not found or not recognized try other supported formats.
+#if !__JDOOM64__
+    if(!found)
+    {
+        // Perhaps a DOOM(2).EXE v19 saved game?
+        savefile = lzOpen(Str_Text(&path), "r");
+        if(NULL != savefile)
+        {
+            lzRead(str, len, savefile);
+            str[len - 1] = 0;
+            lzClose(savefile); savefile = NULL;
+            found = true;
+        }
+    }
+# endif
 #endif
+
+    Str_Free(&path);
+    return found;
 }
 
 /**
@@ -4821,10 +4843,10 @@ void SV_Init(void)
 {
     if(ArgCheckWith("-savedir", 1))
     {
-        strcpy(savePath, ArgNext());
+        strncpy(savePath, ArgNext(), SAVEFILENAME_T_MAXLEN);
         // Add a trailing backslash is necessary.
         if(savePath[strlen(savePath) - 1] != '/')
-            strcat(savePath, "/");
+            strncat(savePath, "/", SAVEFILENAME_T_MAXLEN);
     }
     else
     {   // Use the default path.
@@ -4832,9 +4854,9 @@ void SV_Init(void)
         if(DD_GetGameInfo(&gameInfo))
         {
 #if __JHEXEN__
-            sprintf(savePath, "hexndata/%s/", gameInfo.identityKey);
+            dd_snprintf(savePath, SAVEFILENAME_T_MAXLEN, "hexndata/%s/", gameInfo.identityKey);
 #else
-            sprintf(savePath, "savegame/%s/", gameInfo.identityKey);
+            dd_snprintf(savePath, SAVEFILENAME_T_MAXLEN, "savegame/%s/", gameInfo.identityKey);
 #endif
         }
         else
@@ -4842,36 +4864,29 @@ void SV_Init(void)
     }
 
     // Build the client save path.
-    strcpy(clientSavePath, savePath);
-    strcat(clientSavePath, "client/");
+    strncpy(clientSavePath, savePath, SAVEFILENAME_T_MAXLEN);
+    strncat(clientSavePath, "client/", SAVEFILENAME_T_MAXLEN);
 
     // Check that the save paths exist.
-    M_CheckPath(savePath);
-    M_CheckPath(clientSavePath);
-#if !__JHEXEN__
-    M_TranslatePath(savePath, savePath, FILENAME_T_MAXLEN);
-    M_TranslatePath(clientSavePath, clientSavePath, FILENAME_T_MAXLEN);
-#endif
+    F_MakePath(savePath);
+    F_MakePath(clientSavePath);
 }
 
 void SV_GetSaveGameFileName(char* str, int slot, size_t len)
 {
-    dd_snprintf(str, len, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION,
-             savePath, slot);
+    dd_snprintf(str, len, "%s" SAVEGAMENAME "%i." SAVEGAMEEXTENSION, savePath, slot);
 }
 
-void SV_GetClientSaveGameFileName(char* str, unsigned int gameID,
-                                  size_t len)
+void SV_GetClientSaveGameFileName(char* str, unsigned int gameID, size_t len)
 {
-    dd_snprintf(str, len, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION,
-             clientSavePath, gameID);
+    dd_snprintf(str, len, "%s" CLIENTSAVEGAMENAME "%08X." SAVEGAMEEXTENSION, clientSavePath, gameID);
 }
 
 static boolean openSaveGameFile(const char* fileName, boolean write)
 {
 #if __JHEXEN__
     if(!write)
-        return M_ReadFile(fileName, &saveBuffer) > 0;
+        return M_ReadFile(fileName, (char**)&saveBuffer) > 0;
     else
 #endif
     savefile = lzOpen((char*)fileName, write? "wp" : "rp");
@@ -4885,27 +4900,28 @@ enum {
 };
 
 typedef struct savegameparam_s {
+    const ddstring_t* path;
+    const char* description;
 #if __JHEXEN__
-    int             slot;
+    int slot;
 #endif
-    const char*     filename;
-    const char*     description;
 } savegameparam_t;
 
 int SV_SaveGameWorker(void* ptr)
 {
-    savegameparam_t*    param = ptr;
+    savegameparam_t* param = ptr;
 #if __JHEXEN__
-    char                versionText[HXS_VERSION_TEXT_LENGTH];
+    char versionText[HXS_VERSION_TEXT_LENGTH];
 #else
-    int                 i;
+    int i;
 #endif
 
-    VERBOSE(Con_Message("SV_SaveGame: Attempting save game to "
-                        "\"%s\".\n", M_PrettyPath(param->filename)));
+#if _DEBUG
+    VERBOSE( Con_Message("SV_SaveGame: Attempting save game to \"%s\".\n", Str_Text(param->path)) )
+#endif
 
     // Open the output file
-    if(!openSaveGameFile(param->filename, true))
+    if(!openSaveGameFile(Str_Text(param->path), true))
     {
         Con_BusyWorkerEnd();
         return SV_INVALIDFILENAME; // No success.
@@ -4984,18 +5000,17 @@ int SV_SaveGameWorker(void* ptr)
     // Save out the current map
 #if __JHEXEN__
     {
-        filename_t          fileName;
+    ddstring_t mapPath;
 
-        // Open the output file
-        dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs", savePath,
-                 gameMap+1);
-        M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
-        OpenStreamOut(fileName);
+    // Compose the full name to the saved map file.
+    Str_Init(&mapPath); Str_Appendf(&mapPath, "%shex6%02u.hxs", savePath, gameMap+1);
+    F_TranslatePath(&mapPath, &mapPath);
 
-        P_ArchiveMap(true); // true = save player info
+    OpenStreamOut(Str_Text(&mapPath));
+    P_ArchiveMap(true); // true = save player info
+    CloseStreamOut();
 
-        // Close the output file
-        CloseStreamOut();
+    Str_Free(&mapPath);
     }
 #else
     P_ArchiveMap(true);
@@ -5026,38 +5041,39 @@ int SV_SaveGameWorker(void* ptr)
 }
 
 #if __JHEXEN__
-boolean SV_SaveGame(int slot, const char *description)
+boolean SV_SaveGame(int slot, const char* description)
 #else
-boolean SV_SaveGame(const char* filename, const char *description)
+boolean SV_SaveGame(const char* filepath, const char* description)
 #endif
 {
-    int                 result;
-#if __JHEXEN__
-    filename_t          filename;
-#endif
-    savegameparam_t     param;
+    savegameparam_t params;
+    ddstring_t path;
+    int result;
 
 #if __JHEXEN__
-    param.slot = slot;
+    Str_Init(&path); Str_Appendf(&path, "%shex6.hxs", savePath);
+    F_TranslatePath(&path, &path);
+#else
+    Str_Init(&path); Str_Set(&path, filepath);
+    F_TranslatePath(&path, &path);
 #endif
+
+    params.path = &path;
+    params.description = description;
 #if __JHEXEN__
-    dd_snprintf(filename, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
-    M_TranslatePath(filename, filename, FILENAME_T_MAXLEN);
+    params.slot = slot;
 #endif
-    param.filename = filename;
-    param.description = description;
 
     // \todo Use progress bar mode and update progress during the setup.
-    result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/
-                      (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                      "Saving game...", SV_SaveGameWorker, &param);
+    result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                      "Saving game...", SV_SaveGameWorker, &params);
 
     if(result == SV_INVALIDFILENAME)
     {
-        Con_Message("P_SaveGame: Couldn't open \"%s\" for writing.\n",
-                    filename);
+        Con_Message("P_SaveGame: Couldn't open \"%s\" for writing.\n", Str_Text(&path));
     }
 
+    Str_Free(&path);
     return result;
 }
 
@@ -5322,13 +5338,12 @@ static boolean SV_LoadGame2(void)
 #if __JHEXEN__
 boolean SV_LoadGame(int slot)
 #else
-boolean SV_LoadGame(const char* fileName)
+boolean SV_LoadGame(const char* filePath)
 #endif
 {
-    boolean             result = false;
+    boolean result = false;
+    ddstring_t path;
 #if __JHEXEN__
-    filename_t          fileName;
-
     // Copy all needed save files to the base slot
     if(slot != BASE_SLOT)
     {
@@ -5337,31 +5352,36 @@ boolean SV_LoadGame(const char* fileName)
     }
 
     // Create the name
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6.hxs", savePath);
-    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
+    Str_Init(&path);
+    Str_Appendf(&path, "%shex6.hxs", savePath);
+#else
+    Str_Init(&path);
+    Str_Set(&path, filePath);
 #endif
 
-    VERBOSE(Con_Message("SV_LoadGame: Attempting load of save game "
-                        "\"%s\".\n", M_PrettyPath(fileName)));
+    F_TranslatePath(&path, &path);
 
-    if(openSaveGameFile(fileName, false))
+    VERBOSE( Con_Message("SV_LoadGame: Attempting load of save game \"%s\".\n", F_PrettyPath(Str_Text(&path))) )
+
+    if(openSaveGameFile(Str_Text(&path), false))
     {
         playerHeaderOK = false; // Uninitialized.
 
+        Str_Free(&path);
         return SV_LoadGame2();
     }
 
     // It might be an original game save?
 #if __JDOOM__
-    result = SV_v19_LoadGame(fileName);
+    result = SV_v19_LoadGame(Str_Text(&path));
 #elif __JHERETIC__
-    result = SV_v13_LoadGame(fileName);
+    result = SV_v13_LoadGame(Str_Text(&path));
 #endif
 
     if(!result)
-        Con_Message("SV_LoadGame: Warning, failed loading save game "
-                    "\"%s\".\n", M_PrettyPath(fileName));
+        Con_Message("SV_LoadGame: Warning, failed loading save game \"%s\".\n", Str_Text(&path));
 
+    Str_Free(&path);
     return result;
 }
 
@@ -5372,7 +5392,7 @@ boolean SV_LoadGame(const char* fileName)
 void SV_SaveClient(unsigned int gameID)
 {
 #if !__JHEXEN__ // unsupported in jHexen
-    filename_t          name;
+    savefilename_t          name;
     player_t*           pl = &players[CONSOLEPLAYER];
     mobj_t*             mo = pl->plr->mo;
 
@@ -5381,7 +5401,7 @@ void SV_SaveClient(unsigned int gameID)
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_GetClientSaveGameFileName(name, gameID, FILENAME_T_MAXLEN);
+    SV_GetClientSaveGameFileName(name, gameID, SAVEFILENAME_T_MAXLEN);
     // Open the file.
     savefile = lzOpen(name, "wp");
     if(!savefile)
@@ -5433,7 +5453,7 @@ void SV_SaveClient(unsigned int gameID)
 void SV_LoadClient(unsigned int gameid)
 {
 #if !__JHEXEN__ // unsupported in jHexen
-    filename_t          name;
+    savefilename_t          name;
     player_t*           cpl = players + CONSOLEPLAYER;
     mobj_t*             mo = cpl->plr->mo;
 
@@ -5442,7 +5462,7 @@ void SV_LoadClient(unsigned int gameid)
 
     playerHeaderOK = false; // Uninitialized.
 
-    SV_GetClientSaveGameFileName(name, gameid, FILENAME_T_MAXLEN);
+    SV_GetClientSaveGameFileName(name, gameid, SAVEFILENAME_T_MAXLEN);
     // Try to open the file.
     savefile = lzOpen(name, "rp");
     if(!savefile)
@@ -5508,19 +5528,18 @@ void SV_LoadClient(unsigned int gameid)
 static void unarchiveMap(void)
 {
 #if __JHEXEN__
-    filename_t          fileName;
+    ddstring_t path;
 
-    // Create the name
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs", savePath,
-             gameMap+1);
-    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
+    // Compose the full path to the saved map.
+    Str_Init(&path); Str_Appendf(&path, "%shex6%02u.hxs", savePath, gameMap+1);
+    F_TranslatePath(&path, &path);
 
 #ifdef _DEBUG
-    Con_Printf("unarchiveMap: Reading %s\n", fileName);
+    Con_Printf("unarchiveMap: Reading %s\n", Str_Text(&path));
 #endif
 
     // Load the file
-    M_ReadFile(fileName, &saveBuffer);
+    M_ReadFile(Str_Text(&path), (char**)&saveBuffer);
     saveptr.b = saveBuffer;
 #endif
 
@@ -5534,13 +5553,17 @@ static void unarchiveMap(void)
 
     // Spawn particle generators, fix HOMS etc, etc...
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
+
+#if __JHEXEN__
+    Str_Free(&path);
+#endif
 }
 
 #if __JHEXEN__
 void SV_MapTeleport(uint map, uint position)
 {
     int                 i, oldKeys = 0, oldPieces = 0, bestWeapon;
-    filename_t          fileName;
+    ddstring_t          fileName;
     player_t            playerBackup[MAXPLAYERS];
     uint                numInventoryItems[MAXPLAYERS][NUM_INVENTORYITEM_TYPES];
     inventoryitemtype_t readyItem[MAXPLAYERS];
@@ -5554,10 +5577,10 @@ void SV_MapTeleport(uint map, uint position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs", savePath, map+1);
-    M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
+    Str_Init(&fileName); Str_Appendf(&fileName, "%shex6%02u.hxs", savePath, map+1);
+    F_TranslatePath(&fileName, &fileName);
 
-    if(!deathmatch && ExistingFile(fileName))
+    if(!deathmatch && ExistingFile(Str_Text(&fileName)))
         revisit = true;
     else
         revisit = false;
@@ -5566,7 +5589,7 @@ void SV_MapTeleport(uint map, uint position)
     {
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
         {   // Same cluster - save current map without saving player mobjs.
-            filename_t          fileName;
+            ddstring_t otherFileName;
 
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
@@ -5574,12 +5597,12 @@ void SV_MapTeleport(uint map, uint position)
             // Create and populate the MaterialArchive.
             materialArchive = P_CreateMaterialArchive();
 
-            // Open the output file
-            dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs",
-                     savePath, gameMap+1);
-            M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
-            OpenStreamOut(fileName);
+            // Compose the full path name to the saved map file.
+            Str_Init(&otherFileName);
+            Str_Appendf(&otherFileName, "%shex6%02u.hxs", savePath, gameMap+1);
+            F_TranslatePath(&otherFileName, &otherFileName);
 
+            OpenStreamOut(Str_Text(&otherFileName));
             P_ArchiveMap(false);
 
             // We are done with the MaterialArchive.
@@ -5588,6 +5611,7 @@ void SV_MapTeleport(uint map, uint position)
 
             // Close the output file
             CloseStreamOut();
+            Str_Free(&otherFileName);
         }
         else
         {   // Entering new cluster - clear base slot
@@ -5753,7 +5777,7 @@ void SV_MapTeleport(uint map, uint position)
         }
         SV_FreeTargetPlayerList();
 
-        /* DJS - When XG is available in jHexen, call this after updating
+        /* dj: - When XG is available in jHexen, call this after updating
         target player references (after a load).
         // The activator mobjs must be set.
         XL_UpdateActivators();
@@ -5781,5 +5805,7 @@ void SV_MapTeleport(uint map, uint position)
     {
         SV_SaveGame(REBORN_SLOT, REBORN_DESCRIPTION);
     }
+
+    Str_Free(&fileName);
 }
 #endif

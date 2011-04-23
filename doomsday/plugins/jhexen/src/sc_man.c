@@ -67,9 +67,9 @@ const char* sc_ScriptsDir = "";
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char ScriptName[SCRIPTNAME_MAXLEN];
-static char* ScriptBuffer;
-static char* ScriptPtr;
-static char* ScriptEndPtr;
+static const char* ScriptBuffer;
+static const char* ScriptPtr;
+static const char* ScriptEndPtr;
 static char StringBuffer[MAX_STRING_SIZE];
 static boolean ScriptOpen = false;
 static boolean ScriptFreeCLib; // true = de-allocate using free()
@@ -90,7 +90,7 @@ static void openScriptLump(lumpnum_t lumpNum)
 {
     SC_Close();
 
-    ScriptBuffer = (char*) W_CacheLumpNum(lumpNum, PU_GAMESTATIC);
+    ScriptBuffer = W_CacheLump(lumpNum, PU_GAMESTATIC);
     if(NULL == ScriptBuffer)
     {
         Con_Message("Warning:SC_OpenLump: Failed caching lump index #%i, ignoring.\n", lumpNum);
@@ -115,8 +115,11 @@ static void openScriptFile(const char* name)
 {
     SC_Close();
 
-    ScriptSize = M_ReadFile(name, (byte **) &ScriptBuffer);
-    M_ExtractFileBase(ScriptName, name, SCRIPTNAME_LASTINDEX);
+    { char* bufferHandle;
+    ScriptSize = M_ReadFile(name, &bufferHandle);
+    ScriptBuffer = bufferHandle;
+    }
+    F_ExtractFileBase(ScriptName, name, SCRIPTNAME_LASTINDEX);
 
     ScriptFreeCLib = true;  // De-allocate using free()
 
@@ -139,7 +142,7 @@ void SC_Open(const char* name)
     }
     else
     {
-        SC_OpenLump(W_CheckNumForName(name));
+        SC_OpenLump(W_CheckLumpNumForName(name));
     }
 }
 
@@ -162,16 +165,15 @@ void SC_OpenFileCLib(const char* name)
 
 void SC_Close(void)
 {
-    if(ScriptOpen)
-    {
-        if(ScriptFreeCLib == true)
-            free(ScriptBuffer);
-        else
-            Z_Free(ScriptBuffer);
-        ScriptBuffer = 0;
+    if(!ScriptOpen)
+        return;
 
-        ScriptOpen = false;
-    }
+    if(ScriptFreeCLib == true)
+        free((char*)ScriptBuffer);
+    else
+        Z_Free((char*)ScriptBuffer);
+    ScriptBuffer = NULL;
+    ScriptOpen = false;
 }
 
 boolean SC_GetString(void)

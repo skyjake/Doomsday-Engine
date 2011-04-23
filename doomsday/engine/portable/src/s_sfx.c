@@ -1058,7 +1058,7 @@ boolean Sfx_Init(void)
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Sound Effects subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Sound Effects subsystem...\n") )
 
     // Use the external SFX playback facilities, if available.
     if(audioDriver == &audiod_dummy)

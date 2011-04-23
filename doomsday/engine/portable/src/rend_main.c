@@ -4713,7 +4713,7 @@ void Rend_ApplyLightAdaptation(float *lightvar)
     int                 lightval;
 
     if(lightvar == NULL)
-        return; // Can't apply adaptation to a NULL val ptr...
+        return; // Can't apply adaptation with a NULL val ptr...
 
     lightval = ROUND(255.0f * *lightvar);
     if(lightval > 254)

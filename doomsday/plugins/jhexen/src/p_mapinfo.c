@@ -175,7 +175,7 @@ void P_InitMapInfo(void)
     defMapInfo.sky2ScrollDelta = 0;
     defMapInfo.doubleSky = false;
     defMapInfo.lightning = false;
-    defMapInfo.fadetable = W_GetNumForName(DEFAULT_FADE_TABLE);
+    defMapInfo.fadetable = W_GetLumpNumForName(DEFAULT_FADE_TABLE);
     strcpy(defMapInfo.name, UNKNOWN_MAP_NAME);
 
     for(map = 0; map < 99; ++map)
@@ -285,7 +285,7 @@ void P_InitMapInfo(void)
 
             case MCMD_FADETABLE:
                 SC_MustGetString();
-                info->fadetable = W_GetNumForName(sc_String);
+                info->fadetable = W_GetLumpNumForName(sc_String);
                 break;
 
             case MCMD_CD_STARTTRACK:

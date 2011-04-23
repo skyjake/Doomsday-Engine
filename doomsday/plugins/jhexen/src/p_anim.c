@@ -104,12 +104,12 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 
 void P_InitPicAnims(void)
 {
-    lumpnum_t lumpNum = W_CheckNumForName("ANIMDEFS");
+    lumpnum_t lumpNum = W_CheckLumpNumForName("ANIMDEFS");
     boolean isCustom, isTexture;
 
     if(lumpNum == -1)
         return;
-    isCustom = !W_LumpFromIWAD(lumpNum);
+    isCustom = !W_LumpIsFromIWAD(lumpNum);
 
     SC_OpenLump(lumpNum);
     while(SC_GetString())

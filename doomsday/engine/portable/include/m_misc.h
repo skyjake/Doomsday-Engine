@@ -42,35 +42,8 @@ void*           M_Realloc(void* ptr, size_t size);
 void            M_Free(void* ptr);
 
 // File system utility routines.
-size_t M_ReadFile(char const* name, byte** buffer);
-boolean M_WriteFile(char const* name, void* source, size_t length);
-
-void M_ExtractFileBase(char* dest, const char* path, size_t len);
-void M_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
-const char* M_FindFileExtension(const char* path);
-
-/**
- * The new extension must not include a dot.
- */
-void M_ReplaceFileExt(char* path, const char* newext, size_t len);
-
-boolean M_CheckPath(const char* path);
-int M_FileExists(const char* file);
-
-void M_TranslatePath(char* translated, const char* path, size_t len);
-void M_PrependBasePath(char* newpath, const char* path, size_t len);
-void M_RemoveBasePath(char* newPath, const char* absPath, size_t len);
-
-/**
- * @return  A 'prettier' copy of the original path.
- */
-const char* M_PrettyPath(const char* path);
-
-/**
- * Removes references to the current (.) and parent (..) directories.
- * The given path should be an absolute path.
- */
-void M_ResolvePath(char* path);
+size_t M_ReadFile(char const* path, char** buffer);
+boolean M_WriteFile(char const* path, const char* source, size_t length);
 
 /**
  * Reads x bits from the source stream and writes them to out.
@@ -94,6 +67,9 @@ void            M_JoinBoxes(float box[4], const float other[4]);
 // Text utilities.
 char*           M_SkipWhite(char* str);
 char*           M_FindWhite(char* str);
+void            M_StripLeft(char* str);
+void            M_StripRight(char* str, size_t len);
+void            M_Strip(char* str, size_t len);
 char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
@@ -107,7 +83,7 @@ char*           M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                                 char separator, size_t bufLength);
 char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
 char*           M_StrTok(char** cursor, char* delimiters);
-char* M_TrimmedFloat(float val);
+char*           M_TrimmedFloat(float val);
 
 // Random numbers.
 byte            RNG_RandByte(void);

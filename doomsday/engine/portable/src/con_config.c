@@ -189,7 +189,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
     if(!(file = F_Open(fileName, "rt")))
         return false;
 
-    VERBOSE(Con_Printf("Con_ParseCommands: %s (def:%i)\n", M_PrettyPath(fileName), setdefault));
+    VERBOSE(Con_Printf("Con_ParseCommands: %s (def:%i)\n", F_PrettyPath(fileName), setdefault));
 
     // This file is filled with console commands.
     // Each line is a command.
@@ -201,7 +201,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
         {
             // Execute the commands silently.
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
-                Con_Message("%s(%d): error executing command\n \"%s\"\n", M_PrettyPath(fileName), line, buff);
+                Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
         }
         if(deof(file))
             break;
@@ -218,7 +218,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
  */
 boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
 {
-    VERBOSE( Con_Printf("Con_WriteState: %s %s\n", fileName, bindingsFileName) );
+    VERBOSE( Con_Printf("Writing state:\"%s\" bindings:\"%s\"...\n", fileName, bindingsFileName) )
 
     writeConsoleState(fileName);
     // Bindings go into a separate file.
@@ -237,6 +237,6 @@ void Con_SaveDefaults(void)
 
 D_CMD(WriteConsole)
 {
-    Con_Message("Writing to %s...\n", argv[1]);
+    Con_Message("Writing to \"%s\"...\n", argv[1]);
     return !Con_WriteState(argv[1], NULL);
 }

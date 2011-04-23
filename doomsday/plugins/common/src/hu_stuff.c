@@ -235,12 +235,17 @@ void Hu_LoadData(void)
     // Load the background fog texture.
     if(!fogEffectData.texture && !Get(DD_NOVIDEO))
     {
-        fogEffectData.texture =
-            DGL_NewTextureWithParams(DGL_LUMINANCE, 64, 64,
-                                     W_CacheLumpNum(W_GetNumForName("menufog"), PU_CACHE),
-                                     0, DGL_NEAREST, DGL_LINEAR,
-                                     -1 /*best anisotropy*/,
-                                     DGL_REPEAT, DGL_REPEAT);
+        lumpnum_t lumpNum = W_GetLumpNumForName("menufog");
+        if(lumpNum >= 0)
+        {
+            const uint8_t* pixels = (const uint8_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
+            int width = 64, height = 64;
+
+            fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height,
+                pixels, 0, DGL_NEAREST, DGL_LINEAR, -1 /*best anisotropy*/, DGL_REPEAT, DGL_REPEAT);
+
+            W_CacheChangeTag(lumpNum, PU_CACHE);
+        }
     }
 
     // Load the border patches

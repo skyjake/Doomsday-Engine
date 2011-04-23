@@ -86,7 +86,7 @@ void S_ParseSndInfoLump(void)
 {
     int                 i;
     char                buf[80];
-    lumpnum_t           lump = W_CheckNumForName("SNDINFO");
+    lumpnum_t           lump = W_CheckLumpNumForName("SNDINFO");
 
     if(lump != -1)
     {

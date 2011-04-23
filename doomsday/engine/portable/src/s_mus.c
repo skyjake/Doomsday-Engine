@@ -128,7 +128,7 @@ boolean Mus_Init(void)
         return true;
     }
 
-    VERBOSE( Con_Message("Initializing Music subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Music subsystem...\n") )
 
     // Use the external music playback facilities, if available.
     if(audioDriver == &audiod_dummy)
@@ -286,9 +286,9 @@ boolean Mus_IsMUSLump(int lump)
  * Check for the existence of an "external" music file.
  * Songs can be either in external files or non-MUS lumps.
  *
- * @return              Non-zero if an external file of that name exists.
+ * @return  Non-zero if an external file of that name exists.
  */
-int Mus_GetExt(ded_music_t* def, filename_t _foundPath)
+int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
 {
     if(!musAvail || !iMusic)
         return false;
@@ -296,42 +296,25 @@ int Mus_GetExt(ded_music_t* def, filename_t _foundPath)
     // All external music files are specified relative to the base path.
     if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
     {
-        filename_t relPath;
-        ddstring_t* path;
+        ddstring_t fullPath, *path;
 
-        M_PrependBasePath(relPath, Str_Text(Uri_Path(def->path)), FILENAME_T_MAXLEN);
-        if(F_Access(relPath))
+        Str_Init(&fullPath);
+        F_FixSlashes(&fullPath, Uri_Path(def->path));
+        F_PrependBasePath(&fullPath, &fullPath);
+        if(F_Access(Str_Text(&fullPath)))
         {
-            if(_foundPath)
-                strncpy(_foundPath, relPath, FILENAME_T_MAXLEN);
+            if(NULL != retPath)
+                Str_Set(retPath, Str_Text(&fullPath));
             return true;
         }
 
         path = Uri_ToString(def->path);
-        Con_Message("Warning \"%s\" for id %s not found.\n", Str_Text(path), def->id);
+        Con_Message("Warning \"%s\" for id '%s' not found.\n", Str_Text(path), def->id);
         Str_Delete(path);
     }
 
     // Try the resource locator.
-    {
-    ddstring_t foundPath, *foundPathPtr = 0;
-    boolean result;
-    
-    if(_foundPath)
-    {
-        Str_Init(&foundPath);
-        foundPathPtr = &foundPath;
-    }
-
-    result = F_FindResource2(RC_MUSIC, def->lumpName, foundPathPtr) != 0;
-    if(foundPathPtr)
-    {
-        if(result)
-            strncpy(_foundPath, Str_Text(foundPathPtr), FILENAME_T_MAXLEN);
-        Str_Free(foundPathPtr);
-    }
-    return result;
-    }
+    return F_FindResource2(RC_MUSIC, def->lumpName, retPath);
 }
 
 /**
@@ -351,34 +334,27 @@ int Mus_GetCD(ded_music_t* def)
     return 0;
 }
 
-static void composeBufferedMusicFilename(char* path, size_t len, int id, const char* ext)
+/// @return  Composed music file name. Must be released with Str_Delete()
+static ddstring_t* composeBufferedMusicFilename(int id, const char* ext)
 {
 #define BUFFERED_MUSIC_FILE      "dd-buffered-song"
 
     if(ext && ext[0])
     {
-        dd_snprintf(path, len, "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
-        return;
+        return Str_Appendf(Str_New(), "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
     }
 
-    dd_snprintf(path, len, "%s%i", BUFFERED_MUSIC_FILE, id);
+    return Str_Appendf(Str_New(), "%s%i", BUFFERED_MUSIC_FILE, id);
 
 #undef BUFFERED_MUSIC_FILE
 }
 
-/**
- * Start playing a song. The chosen interface depends on what's available
- * and what kind of resources have been associated with the song.
- * Any previously playing song is stopped.
- *
- * @return              Non-zero if the song is successfully played.
- */
 int Mus_Start(ded_music_t* def, boolean looped)
 {
-    static int          currentBufFile = 0;
+    static int currentBufFile = 0;
 
-    filename_t          path;
-    int                 i, order[3], songID;
+    int i, order[3], songID;
+    ddstring_t path;
 
     if(!musAvail)
         return false;
@@ -421,7 +397,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
     // Try to start the song.
     for(i = 0; i < 3; ++i)
     {
-        boolean             canPlayMUS = true;
+        boolean canPlayMUS = true;
 
         switch(order[i])
         {
@@ -431,47 +407,57 @@ int Mus_Start(ded_music_t* def, boolean looped)
             break;
 
         case MUSP_EXT:
-            if(Mus_GetExt(def, path))
+            Str_Init(&path);
+            if(Mus_GetExt(def, &path))
             {   // Its an external file.
                 // The song may be in a virtual file, so we must buffer
                 // it ourselves.
-                DFILE* file = F_Open(path, "rb");
+                DFILE* file = F_Open(Str_Text(&path), "rb");
                 size_t len = F_Length(file);
 
                 if(!iMusic->Play)
                 {   // Music interface does not offer buffer playback.
                     // Write to disk and play from there.
-                    filename_t fname;
+                    ddstring_t* fileName = composeBufferedMusicFilename(currentBufFile ^= 1, NULL);
 
-                    composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, NULL);
-
-                    { FILE* outFile;
-                    if((outFile = fopen(fname, "wb")))
+                    { FILE* outFile = fopen(Str_Text(fileName), "wb");
+                    if(NULL != outFile)
                     {
-                        void* buf = M_Malloc(len);
+                        int result;
+                        char* buf = (char*) malloc(len);
+                        if(NULL == buf)
+                        {
+                            Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
+                                "temporary song write buffer.\n", (unsigned long) len);
+                            Str_Delete(fileName);
+                            return false;
+                        }
 
+                        // Write the song into the buffer file.
                         F_Read(buf, len, file);
                         fwrite(buf, 1, len, outFile);
                         fclose(outFile);
                         F_Close(file);
+                        free(buf);
 
-                        M_Free(buf);
-
-                        return iMusic->PlayFile(fname, looped);
+                        // Music maestro, if you please!
+                        result = iMusic->PlayFile(Str_Text(fileName), looped);
+                        Str_Delete(fileName);
+                        return result;
                     }}
 
-                    Con_Message("Mus_Start: Couldn't open %s for writing. %s\n", fname, strerror(errno));
+                    Con_Message("Mus_Start: Failed opening \"%s\" for writing (%s).\n",
+                        Str_Text(fileName), strerror(errno));
                     F_Close(file);
+                    Str_Delete(fileName);
                     return false;
                 }
                 else
                 {   // Music interface offers buffered playback. Use it.
-                    void*               ptr;
+                    void* ptr;
 
-                    VERBOSE(Con_Message("Mus_GetExt: Opened Song %s "
-                                        "(File \"%s\" %u bytes)\n",
-                                        def->id, M_PrettyPath(path),
-                                        (unsigned int) len));
+                    VERBOSE( Con_Message("Mus_GetExt: Opened song '%s' (file \"%s\" %lu bytes).\n",
+                        def->id, F_PrettyPath(Str_Text(&path)), (unsigned long) len) )
 
                     ptr = iMusic->SongBuffer(len);
                     F_Read(ptr, len, file);
@@ -489,21 +475,19 @@ int Mus_Start(ded_music_t* def, boolean looped)
             if(iMusic)
             {
                 lumpnum_t lumpNum;
-                if(def->lumpName && -1 != (lumpNum = W_CheckNumForName(def->lumpName)))
+                if(def->lumpName && -1 != (lumpNum = W_CheckLumpNumForName(def->lumpName)))
                 {
-                    const char* srcFile = 0;
-                    filename_t fname;
+                    ddstring_t* fileName = NULL;
 
                     if(Mus_IsMUSLump(lumpNum))
                     {   // Lump is in DOOM's MUS format.
-                        void* buf;
+                        char* buf;
                         size_t len;
 
                         if(!canPlayMUS)
                             break;
 
-                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, ".mid");
-                        srcFile = fname;
+                        fileName = composeBufferedMusicFilename(currentBufFile ^= 1, ".mid");
 
                         // Read the lump, convert to MIDI and output to a temp file in the
                         // working directory. Use a filename with the .mid extension so that
@@ -511,32 +495,45 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         // expected.
 
                         len = W_LumpLength(lumpNum);
-                        buf = M_Malloc(len);
+                        buf = (char*) malloc(len);
+                        if(NULL == buf)
+                        {
+                            Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
+                                "temporary MUS to MIDI conversion buffer.\n", (unsigned long) len);
+                            Str_Delete(fileName);
+                            return false;
+                        }
                         W_ReadLump(lumpNum, buf);
 
-                        M_Mus2Midi(buf, len, srcFile);
-                        M_Free(buf);
+                        M_Mus2Midi((void*)buf, len, Str_Text(fileName));
+                        free(buf);
                     }
                     else if(!iMusic->Play)
                     {   // Music interface does not offer buffer playback.
                         // Write this lump to disk and play from there.
-                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, 0);
-                        srcFile = fname;
-                        if(!W_DumpLump(lumpNum, srcFile))
+                        fileName = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
+                        if(!W_DumpLump(lumpNum, Str_Text(fileName)))
+                        {
+                            Str_Delete(fileName);
                             return false;
+                        }
                     }
 
-                    if(srcFile)
-                        return iMusic->PlayFile(srcFile, looped);
+                    if(NULL != fileName)
+                    {
+                        int result = iMusic->PlayFile(Str_Text(fileName), looped);
+                        Str_Delete(fileName);
+                        return result;
+                    }
 
-                    W_ReadLump(lumpNum, iMusic->SongBuffer(W_LumpLength(lumpNum)));
+                    W_ReadLump(lumpNum, (char*)iMusic->SongBuffer(W_LumpLength(lumpNum)));
                     return iMusic->Play(looped);
                 }
             }
             break;
 
         default:
-            Con_Error("Mus_Start: Invalid value, order[i] = %i.", order[i]);
+            Con_Error("Mus_Start: Invalid value order[i] = %i.", order[i]);
             break;
         }
     }
@@ -550,14 +547,9 @@ int Mus_Start(ded_music_t* def, boolean looped)
  */
 D_CMD(PlayMusic)
 {
-    int                 i;
-    size_t              len;
-    void*               ptr;
-    filename_t          buf;
-
     if(!musAvail)
     {
-        Con_Printf("The Mus module is not available.\n");
+        Con_Printf("The Music module is not available.\n");
         return false;
     }
 
@@ -570,61 +562,72 @@ D_CMD(PlayMusic)
         Con_Printf("  %s cd (track)\n", argv[0]);
         break;
 
-    case 2:
-        i = Def_GetMusicNum(argv[1]);
-        if(i < 0)
+    case 2: {
+        int musIdx = Def_GetMusicNum(argv[1]);
+        if(musIdx < 0)
         {
             Con_Printf("Music '%s' not defined.\n", argv[1]);
             return false;
         }
 
-        Mus_Start(&defs.music[i], true);
+        Mus_Start(&defs.music[musIdx], true);
         break;
-
+      }
     case 3:
         if(!stricmp(argv[1], "lump"))
         {
-            i = W_CheckNumForName(argv[2]);
-            if(i < 0)
+            lumpnum_t lumpNum = W_CheckLumpNumForName(argv[2]);
+            char* ptr;
+
+            if(0 > lumpNum)
                 return false; // No such lump.
 
-            if(iMusic)
+            if(NULL == iMusic)
             {
-                Mus_Stop();
-
-                ptr = iMusic->SongBuffer(len = W_LumpLength(i));
-                W_ReadLump(i, ptr);
-
-                return iMusic->Play(true);
+                Con_Printf("No music interface available.\n");
+                return false;
             }
 
-            Con_Printf("No music interface available.\n");
-            return false;
+            Mus_Stop();
+            ptr = (char*) iMusic->SongBuffer(W_LumpLength(lumpNum));
+            W_ReadLump(lumpNum, ptr);
+
+            return iMusic->Play(true);
         }
         else if(!stricmp(argv[1], "file"))
         {
-            M_TranslatePath(buf, argv[2], FILENAME_T_MAXLEN);
-            if(iMusic)
+            ddstring_t path;
+            int result = 0;
+
+            if(NULL == iMusic)
             {
-                Mus_Stop();
-                return iMusic->PlayFile(buf, true);
+                Con_Printf("No music interface available.\n");
+                return false;
             }
 
-            Con_Printf("No music interface available.\n");
-            return false;
+            // Compose the file path.
+            Str_Init(&path);
+            Str_Set(&path, argv[2]);
+            F_FixSlashes(&path, &path);
+            F_ExpandBasePath(&path, &path);
+
+            Mus_Stop();
+            result = iMusic->PlayFile(Str_Text(&path), true);
+            Str_Free(&path);
+            return result;
         }
         else
         {   // Perhaps a CD track?
             if(!stricmp(argv[1], "cd"))
             {
-                if(iCD)
+                if(NULL == iCD)
                 {
-                    Mus_Stop();
-                    return iCD->Play(atoi(argv[2]), true);
+                    Con_Printf("No CDAudio interface available.\n");
+                    return false;
                 }
 
-                Con_Printf("No CDAudio interface available.\n");
-                return false;
+                Mus_Stop();
+                return iCD->Play(atoi(argv[2]), true);
             }
         }
         break;

@@ -93,25 +93,25 @@ void Str_Delete(ddstring_t* ds);
 void Str_Clear(ddstring_t* ds);
 
 void Str_Reserve(ddstring_t* ds, int length);
-void Str_Set(ddstring_t* ds, const char* text);
-void Str_Append(ddstring_t* ds, const char* appendText);
-void Str_AppendChar(ddstring_t* ds, char ch);
+ddstring_t* Str_Set(ddstring_t* ds, const char* text);
+ddstring_t* Str_Append(ddstring_t* ds, const char* appendText);
+ddstring_t* Str_AppendChar(ddstring_t* ds, char ch);
 
 /**
  * Append formated text.
  */
-void Str_Appendf(ddstring_t* ds, const char* format, ...) PRINTF_F(2,3);
+ddstring_t* Str_Appendf(ddstring_t* ds, const char* format, ...) PRINTF_F(2,3);
 
 /**
  * Appends a portion of a string.
  */
-void Str_PartAppend(ddstring_t* dest, const char* src, int start, int count);
+ddstring_t* Str_PartAppend(ddstring_t* dest, const char* src, int start, int count);
 
 /**
  * Prepend is not even a word, is it? It should be 'prefix'?
  */
-void Str_Prepend(ddstring_t* ds, const char* prependText);
-void Str_PrependChar(ddstring_t* ds, char ch);
+ddstring_t* Str_Prepend(ddstring_t* ds, const char* prependText);
+ddstring_t* Str_PrependChar(ddstring_t* ds, char ch);
 
 /**
  * This is safe for all strings.
@@ -128,7 +128,7 @@ char* Str_Text(const ddstring_t* ds);
 /**
  * Makes a true copy.
  */
-void Str_Copy(ddstring_t* dest, const ddstring_t* src);
+ddstring_t* Str_Copy(ddstring_t* dest, const ddstring_t* src);
 
 /**
  * Strip whitespace from beginning.

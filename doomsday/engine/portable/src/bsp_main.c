@@ -277,11 +277,7 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     superblock_t*       hEdgeList;
     binarytree_t*       rootNode;
 
-    if(verbose >= 1)
-    {
-        Con_Message("BSP_Build: Processing map using tunable "
-                    "factor of %d...\n", bspFactor);
-    }
+    VERBOSE( Con_Message("BSP_Build: Processing map using tunable factor of %d...\n", bspFactor) )
 
     // It begins...
     startTime = Sys_GetRealTime();

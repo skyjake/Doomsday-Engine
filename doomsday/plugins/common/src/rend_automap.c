@@ -181,19 +181,24 @@ void Rend_AutomapLoadData(void)
 #endif
 
     if(autopageLumpNum != -1)
-        autopageLumpNum = W_CheckNumForName("AUTOPAGE");
+        autopageLumpNum = W_CheckLumpNumForName("AUTOPAGE");
 
     if(DD_GetInteger(DD_MAX_TEXTURE_UNITS) > 1)
     {   // Great, we can replicate the map fade out effect using multitexture,
         // load the mask texture.
         if(!amMaskTexture && !Get(DD_NOVIDEO))
         {
-            amMaskTexture =
-                DGL_NewTextureWithParams(DGL_LUMINANCE, 256, 256,
-                                         W_CacheLumpNum(W_GetNumForName("mapmask"), PU_CACHE),
-                                         0x8, DGL_NEAREST, DGL_LINEAR,
-                                         0 /*no anisotropy*/,
-                                         DGL_REPEAT, DGL_REPEAT);
+            lumpnum_t lumpNum = W_GetLumpNumForName("mapmask");
+            if(lumpNum >= 0)
+            {
+                const uint8_t* pixels = (const uint8_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
+                int width = 256, height = 256;
+
+                amMaskTexture = DGL_NewTextureWithParams(DGL_LUMINANCE, width, height, pixels,
+                    0x8, DGL_NEAREST, DGL_LINEAR, 0 /*no anisotropy*/, DGL_REPEAT, DGL_REPEAT);
+
+                W_CacheChangeTag(lumpNum, PU_CACHE);
+            }
         }
     }
 }

@@ -774,7 +774,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         else
         {
-            lumpnum_t lumpNum = W_CheckNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
+            lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
             loadResult = GL_LoadDetailTextureLump(image, lumpNum);
         }
         break;
@@ -1464,7 +1464,7 @@ const imagehandler_t* findHandlerFromFileName(const char* filePath)
 {
     const imagehandler_t* hdlr = 0; // No handler for this format.
     const char* p;
-    if(0 != (p = M_FindFileExtension(filePath)))
+    if(0 != (p = F_FindFileExtension(filePath)))
     {
         int i = 0;
         do
@@ -1476,16 +1476,22 @@ const imagehandler_t* findHandlerFromFileName(const char* filePath)
     return hdlr;
 }
 
-/**
- * Returns true if the given path name refers to an image, which should
- * be color keyed.
- */
+/// @return  @c true if the given path name is formed with the "color keyed" suffix.
 static boolean isColorKeyed(const char* path)
 {
-    filename_t buf;
-    strncpy(buf, path, FILENAME_T_MAXLEN);
-    strlwr(buf);
-    return strstr(buf, "-ck.") != NULL;
+    boolean result = false;
+    ddstring_t buf;
+    if(NULL != path && path[0])
+    {
+        Str_Init(&buf);
+        F_FileName(&buf, path);
+        if(Str_Length(&buf) > 3)
+        {
+            result = (0 == stricmp(Str_Text(&buf) + Str_Length(&buf) - 3, "-ck"));
+        }
+        Str_Free(&buf);
+    }
+    return result;
 }
 
 /// \todo Remove the filePath argument by obtaining the path via the
@@ -1516,7 +1522,7 @@ static uint8_t* GL_LoadImageDFile(image_t* img, DFILE* file, const char* filePat
     if(0 == img->pixels)
         return 0; // Not a recogniseable format.
 
-    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n", M_PrettyPath(filePath), img->width, img->height) );
+    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n", F_PrettyPath(filePath), img->width, img->height) );
 
     // How about some color-keying?
     if(isColorKeyed(filePath))
@@ -2146,7 +2152,7 @@ byte GL_LoadExtTextureEX(image_t* image, const char* searchPath, const char* opt
     }
     Str_Free(&foundPath);
     if(!silent)
-        Con_Message("GL_LoadExtTextureEX: Warning, failed to load \"%s\"\n", M_PrettyPath(searchPath));
+        Con_Message("GL_LoadExtTextureEX: Warning, failed to load \"%s\"\n", F_PrettyPath(searchPath));
     return 0;
     }
 }
@@ -2504,10 +2510,10 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
     if(1 == result && NULL != patchTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
-        const doompatch_header_t* patch = (const doompatch_header_t*)
-            W_CacheLumpNum(lumpNum, PU_APPSTATIC);
-        patchTex->offX = -SHORT(patch->leftOffset);
-        patchTex->offY = -SHORT(patch->topOffset);
+        const doompatch_header_t hdr;
+        W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
+        patchTex->offX = -SHORT(hdr.leftOffset);
+        patchTex->offY = -SHORT(hdr.topOffset);
     }
     return MIN_OF(1, result);
 }
@@ -2519,10 +2525,10 @@ byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
     if(1 == result && NULL != spriteTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
-        const doompatch_header_t* patch = (const doompatch_header_t*)
-            W_CacheLumpNum(lumpNum, PU_CACHE);
-        spriteTex->offX = SHORT(patch->leftOffset);
-        spriteTex->offY = SHORT(patch->topOffset);
+        const doompatch_header_t hdr;
+        W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
+        spriteTex->offX = SHORT(hdr.leftOffset);
+        spriteTex->offY = SHORT(hdr.topOffset);
     }
     return MIN_OF(1, result);
 }
@@ -2573,12 +2579,13 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const doompatch_header_t* patch = (doompatch_header_t*)
-            W_CacheLumpNum(patchDef->lumpNum, PU_CACHE);
+        const char* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
 
         // Draw the patch in the buffer.
         loadDoomPatch(image->pixels, image->width, image->height,
-            patch, patchDef->offX, patchDef->offY, 0, 0, false);
+            (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
+
+        W_CacheChangeTag(patchDef->lumpNum, PU_CACHE);
     }}
 
     if(palettedIsMasked(image->pixels, image->width, image->height))
@@ -2607,15 +2614,16 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     height = texDef->height;
     if(texDef->patchCount == 1)
     {
-        const doompatch_header_t* patch = (const doompatch_header_t*)
-            W_CacheLumpNum(texDef->patches[0].lumpNum, PU_CACHE);
-        int bufHeight = SHORT(patch->height) > height ? SHORT(patch->height) : height;
+        const char* patch = W_CacheLump(texDef->patches[0].lumpNum, PU_APPSTATIC);
+        const doompatch_header_t* hdr = (const doompatch_header_t*) patch;
+        int bufHeight = SHORT(hdr->height) > height ? SHORT(hdr->height) : height;
         if(bufHeight > height)
         {
             height = bufHeight;
             if(height > 200)
                 height = 200;
         }
+        W_CacheChangeTag(texDef->patches[0].lumpNum, PU_CACHE);
     }
 
     GL_InitImage(image);
@@ -2631,8 +2639,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const doompatch_header_t* patch = (const doompatch_header_t*)
-            W_CacheLumpNum(patchDef->lumpNum, PU_CACHE);
+        const char* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
 
         if(texDef->patchCount != 1)
         {
@@ -2644,8 +2651,9 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
             offX = offY = 0;
         }
 
-        loadDoomPatch(image->pixels, image->width, image->height, patch,
+        loadDoomPatch(image->pixels, image->width, image->height, (const doompatch_header_t*) patch,
             offX, offY, 0, 0, zeroMask);
+        W_CacheChangeTag(patchDef->lumpNum, PU_CACHE);
     }}
 
     if(zeroMask)
@@ -2719,7 +2727,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
     if(!raw)
         return 0; // Wha?
 
-    if(raw->lumpNum < 0 || raw->lumpNum >= W_NumLumps())
+    if(raw->lumpNum < 0 || raw->lumpNum >= W_LumpCount())
     {
         GL_BindTexture(0, 0);
         return 0;

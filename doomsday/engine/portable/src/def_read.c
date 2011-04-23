@@ -624,20 +624,22 @@ static int ReadLabel(char* label)
     return true;
 }
 
-static void DED_Include(const char* fileName, directory_t* dir)
+static void DED_Include(const char* fileName, const char* parentDirectory)
 {
-    filename_t          tmp, path;
+    ddstring_t tmp;
 
-    M_TranslatePath(tmp, fileName, FILENAME_T_MAXLEN);
-    if(!Dir_IsAbsolute(tmp))
+    Str_Init(&tmp); Str_Set(&tmp, fileName);
+    F_FixSlashes(&tmp, &tmp);
+    F_ExpandBasePath(&tmp, &tmp);
+    if(!F_IsAbsolute(&tmp))
     {
-        dd_snprintf(path, FILENAME_T_MAXLEN, "%s%s", dir->path, tmp);
+        Str_Prepend(&tmp, parentDirectory);
     }
-    else
-    {
-        strncpy(path, tmp, FILENAME_T_MAXLEN);
-    }
-    Def_ReadProcessDED(path);
+
+    Def_ReadProcessDED(Str_Text(&tmp));
+    Str_Free(&tmp);
+
+    // Reset state for continuing.
     strncpy(token, "", MAX_TOKEN_LEN);
 }
 
@@ -705,9 +707,9 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
  * The definition is being loaded from @sourcefile (DED or WAD).
  *
  * @param buffer        The data to be read, must be null-terminated.
- * @param sourceFile    Just FYI.
+ * @param _sourceFile   Just FYI.
  */
-static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
+static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 {
     char                dummy[128], label[128], tmp[256];
     int                 dummyInt, idx, retVal = true;
@@ -727,15 +729,18 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
     int                 depth;
     char*               rootStr = 0, *ptr;
     int                 bCopyNext = 0;
-    directory_t         fileDir;
+    ddstring_t sourceFile, sourceFileDir;
 
-    memset(&fileDir, 0, sizeof(fileDir));
+    Str_Init(&sourceFile); Str_Set(&sourceFile, _sourceFile);
+    F_FixSlashes(&sourceFile, &sourceFile);
+    F_ExpandBasePath(&sourceFile, &sourceFile);
 
     // For including other files -- we must know where we are.
-    Dir_FileDir(sourceFile, &fileDir);
+    Str_Init(&sourceFileDir);
+    F_FileDir(&sourceFileDir, &sourceFile);
 
     // Get the next entry from the source stack.
-    DED_InitReader(buffer, sourceFile);
+    DED_InitReader(buffer, Str_Text(&sourceFile));
 
     while(ReadToken())
     {
@@ -753,7 +758,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 
         if(ISTOKEN("SkipIf"))
         {
-            boolean             expected = true;
+            boolean expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -776,13 +781,13 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             READSTR(tmp);
             CHECKSC;
 
-            DED_Include(tmp, &fileDir);
+            DED_Include(tmp, Str_Text(&sourceFileDir));
             strcpy(label, "");
         }
 
         if(ISTOKEN("IncludeIf")) // An optional include.
         {
-            boolean             expected = true;
+            boolean expected = true;
 
             ReadToken();
             if(ISTOKEN("Not"))
@@ -796,7 +801,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 READSTR(tmp);
                 CHECKSC;
 
-                DED_Include(tmp, &fileDir);
+                DED_Include(tmp, Str_Text(&sourceFileDir));
                 strcpy(label, "");
             }
             else
@@ -2504,44 +2509,56 @@ ded_end_read:
     // Free the source stack entry we were using.
     DED_CloseReader();
 
+    Str_Free(&sourceFile);
+    Str_Free(&sourceFileDir);
+
     return retVal;
 }
 /* *INDENT-ON* */
 
-/**
- * @return              @c true, if the file was successfully loaded.
- */
-int DED_Read(ded_t* ded, const char* sPathName)
+int DED_Read(ded_t* ded, const char* path)
 {
-    DFILE*              file;
-    char*               defData;
-    size_t              len;
-    int                 result;
-    filename_t          translated;
+    ddstring_t transPath;
+    size_t bufferedDefSize;
+    char* bufferedDef;
+    DFILE* file;
+    int result;
 
-    M_TranslatePath(translated, sPathName, FILENAME_T_MAXLEN);
+    // Compose the (possibly-translated) path.
+    Str_Init(&transPath);
+    Str_Set(&transPath, path);
+    F_FixSlashes(&transPath, &transPath);
+    F_ExpandBasePath(&transPath, &transPath);
 
-    if((file = F_Open(translated, "rb")) == NULL)
+    // Attempt to open a definition file on this path.
+    file = F_Open(Str_Text(&transPath), "rb");
+    if(NULL == file)
     {
-        SetError("File can't be opened for reading.");
+        SetError("File could not be opened for reading.");
+        Str_Free(&transPath);
         return false;
     }
 
-    // Allocate a large enough buffer and read the file.
+    // We will buffer a local copy of the file. How large a buffer do we need?
     F_Seek(file, 0, SEEK_END);
-    len = F_Tell(file);
+    bufferedDefSize = F_Tell(file);
     F_Rewind(file);
+    bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
+    if(NULL == bufferedDef)
+    {
+        SetError("Out of memory while trying to buffer file for reading.");
+        Str_Free(&transPath);
+        return false;
+    }
 
-    defData = M_Calloc(len + 1);
-    F_Read(defData, len, file);
+    // Copy the file into the local buffer and parse definitions.
+    F_Read((void*)bufferedDef, bufferedDefSize, file);
     F_Close(file);
+    result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 
-    // Parse the definitions.
-    result = DED_ReadData(ded, defData, translated);
-
-    // Now we can free the buffer.
-    M_Free(defData);
-
+    // Done. Release temporary storage and return the result.
+    free(bufferedDef);
+    Str_Free(&transPath);
     return result;
 }
 
@@ -2552,7 +2569,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
 {
     size_t lumpLength;
 
-    if(lumpNum < 0 || lumpNum >= W_NumLumps())
+    if(lumpNum < 0 || lumpNum >= W_LumpCount())
     {
         SetError("Bad lump number.");
         return false;
@@ -2561,9 +2578,9 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
     lumpLength = W_LumpLength(lumpNum);
     if(0 != lumpLength)
     {
-        const void* lumpPtr = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
+        const char* lumpPtr = W_CacheLump(lumpNum, PU_APPSTATIC);
         int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lumpNum));
-        W_ChangeCacheTag(lumpNum, PU_CACHE);
+        W_CacheChangeTag(lumpNum, PU_CACHE);
         return result;
     }
 

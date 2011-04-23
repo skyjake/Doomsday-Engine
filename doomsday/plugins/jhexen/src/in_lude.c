@@ -337,7 +337,7 @@ void IN_Drawer(void)
     if(!intermission || interState)
         return;
 
-    if(-1 != (lumpNum = W_GetNumForName("INTERPIC")))
+    if(-1 != (lumpNum = W_GetLumpNumForName("INTERPIC")))
     {
         DGL_Color4f(1, 1, 1, 1);
         DGL_DrawRawScreen(lumpNum, 0, 0);

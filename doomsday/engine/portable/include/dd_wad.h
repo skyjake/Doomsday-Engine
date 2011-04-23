@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_wad.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ void DD_RegisterVFS(void);
  */
 void W_Init(void);
 
-int W_NumLumps(void);
+int W_LumpCount(void);
 
 /**
  * Calculated using the lumps of the main IWAD.
@@ -44,7 +44,7 @@ int W_NumLumps(void);
 uint W_CRCNumber(void);
 
 /**
- * @return              @c true, iff the file exists and appears to be an IWAD.
+ * @return  @c true iff the file exists and appears to be an IWAD.
  */
 int W_IsIWAD(const char* fn);
 
@@ -68,16 +68,16 @@ void W_GetIWADFileName(char* buf, size_t bufSize);
  */
 void W_GetPWADFileNames(char* buf, size_t bufSize, char separator);
 
-void W_DumpLumpDir(void);
+void W_PrintLumpDirectory(void);
 
 /**
- * Files with a .wad extension are wadlink files with multiple lumps,
- * other files are single lumps with the base filename for the lump name.
+ * Files with a .wad extension are archived date files with multiple 'lumps',
+ * other files are single lumps whose base filename will become the lump name.
  *
  * \note Lump names can appear multiple times. The name searcher looks backwards,
  * so a later file can override an earlier one.
  *
- * @return              @c true, if the operation is successful.
+ * @return  @c true, if the operation is successful.
  */
 boolean W_AddFile(const char* fileName, boolean allowDuplicate);
 boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
@@ -88,15 +88,15 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num);
 lumpnum_t W_OpenAuxiliary(const char* fileName);
 
 /**
- * @return              @c -1, if name not found, else lump num.
+ * @return  @c -1, if name not found, else lump num.
  */
-lumpnum_t W_CheckNumForName(const char* name);
-lumpnum_t W_CheckNumForName2(const char* name, boolean silent);
+lumpnum_t W_CheckLumpNumForName(const char* name);
+lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent);
 
 /**
- * Calls W_CheckNumForName, but bombs out if not found.
+ * Calls W_CheckLumpNumForName, but bombs out if not found.
  */
-lumpnum_t W_GetNumForName(const char* name);
+lumpnum_t W_GetLumpNumForName(const char* name);
 
 /**
  * Get the name of the given lump.
@@ -104,39 +104,34 @@ lumpnum_t W_GetNumForName(const char* name);
 const char* W_LumpName(lumpnum_t lumpNum);
 
 /**
- * @return              The buffer size needed to load the given lump.
+ * @return  The buffer size needed to load the given lump.
  */
 size_t W_LumpLength(lumpnum_t lumpNum);
 
 /**
- * @return              The name of the WAD file where the given lump resides.
- *                      Always returns a valid filename (or an empty string).
+ * @return  The name of the WAD file where the given lump resides. Always
+ *      returns a valid filename (or an empty string).
  */
 const char* W_LumpSourceFile(lumpnum_t lumpNum);
 
 /**
- * @return              @ true, if the specified lump is in an IWAD.
- *                      Otherwise it's from a PWAD.
+ * @return  @ true, if the specified lump is in an IWAD. Otherwise it's from a PWAD.
  */
-boolean W_LumpFromIWAD(lumpnum_t lumpNum);
+boolean W_LumpIsFromIWAD(lumpnum_t lumpNum);
 
 /**
  * Loads the lump into the given buffer, which must be >= W_LumpLength().
  */
-void W_ReadLump(lumpnum_t lumpNum, void* dest);
+void W_ReadLump(lumpnum_t lumpNum, char* dest);
 void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
 
-/**
- * If called with the special purgelevel PU_GETNAME, returns a pointer
- * to the name of the lump.
- */
-const void* W_CacheLumpNum(lumpnum_t lumpNum, int tag);
+const char* W_CacheLump(lumpnum_t lumpNum, int tag);
 
-void W_ChangeCacheTag(lumpnum_t lumpNum, int tag);
+void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
 
 /**
  * Writes the specifed lump to file with the given name.
  */
-boolean W_DumpLump(lumpnum_t, const char* fileName);
+boolean W_DumpLump(lumpnum_t lumpNum, const char* fileName);
 
 #endif /* LIBDENG_WAD_H */

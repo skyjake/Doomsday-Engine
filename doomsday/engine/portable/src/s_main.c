@@ -584,25 +584,22 @@ int S_StartMusicNum(int id, boolean looped)
     if(isDedicated)
         return true;
 
-    if(verbose)
-        Con_Message("S_StartMusic: %s.\n", def->id);
+    VERBOSE( Con_Message("Starting music '%s'...\n", def->id) )
 
     return Mus_Start(def, looped);
 }
 
 /**
- * @return              @c NULL, if the song is found.
+ * @return  @c NULL, if the song is found.
  */
 int S_StartMusic(const char* musicID, boolean looped)
 {
-    int                 idx = Def_GetMusicNum(musicID);
-
+    int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        Con_Message("S_StartMusic: song %s not defined.\n", musicID);
+        Con_Message("Warning:S_StartMusic: Song \"%s\" not defined.\n", musicID);
         return false;
     }
-
     return S_StartMusicNum(idx, looped);
 }
 

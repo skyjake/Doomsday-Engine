@@ -152,7 +152,7 @@ static BOOL loadPlugin(const char* absolutePath)
         return TRUE;
     }
 
-    Con_Printf("loadPlugin: Error loading \"%s\" (%s)\n", absolutePath, getLastWINAPIErrorMessage());
+    Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", absolutePath, getLastWINAPIErrorMessage());
     if(plugin)
         FreeLibrary(plugin);
     return FALSE;
@@ -166,7 +166,7 @@ static BOOL unloadPlugin(HINSTANCE* handle)
     BOOL result = FreeLibrary(*handle);
     *handle = 0;
     if(!result)
-        Con_Printf("unloadPlugin: Error unloading plugin (%s)\n", getLastWINAPIErrorMessage());
+        Con_Printf("unloadPlugin: Error unloading plugin (%s).\n", getLastWINAPIErrorMessage());
     return result;
     }
 }
@@ -178,30 +178,38 @@ static BOOL loadAllPlugins(application_t* app)
 {
     assert(app);
     {
-    filename_t searchPattern, absolutePath;
+    ddstring_t searchPattern, absolutePath;
     struct _finddata_t fd;
     long hFile;
 
-    dd_snprintf(searchPattern, FILENAME_T_MAXLEN, "%sj*.dll", ddBinDir.path);
-    if((hFile = _findfirst(searchPattern, &fd)) != -1L)
+    Str_Init(&absolutePath);
+
+    Str_Init(&searchPattern);
+    Str_Appendf(&searchPattern, "%sj*.dll", ddBinPath);
+    if(-1L != (hFile = _findfirst(Str_Text(&searchPattern), &fd)))
     {
         do
         {
-            dd_snprintf(absolutePath, FILENAME_T_MAXLEN, "%s%s", ddBinDir.path, fd.name);
-            loadPlugin(absolutePath);
+            Str_Clear(&absolutePath);
+            Str_Appendf(&absolutePath, "%s%s", ddBinPath, fd.name);
+            loadPlugin(Str_Text(&absolutePath));
         } while(!_findnext(hFile, &fd));
     }
 
-    dd_snprintf(searchPattern, FILENAME_T_MAXLEN, "%sdp*.dll", ddBinDir.path);
-    if((hFile = _findfirst(searchPattern, &fd)) != -1L)
+    Str_Clear(&searchPattern);
+    Str_Appendf(&searchPattern, "%sdp*.dll", ddBinPath);
+    if(-1L != (hFile = _findfirst(Str_Text(&searchPattern), &fd)))
     {
         do
         {
-            dd_snprintf(absolutePath, FILENAME_T_MAXLEN, "%s%s", ddBinDir.path, fd.name);
-            loadPlugin(absolutePath);
+            Str_Clear(&absolutePath);
+            Str_Appendf(&absolutePath, "%s%s", ddBinPath, fd.name);
+            loadPlugin(Str_Text(&absolutePath));
         } while(!_findnext(hFile, &fd));
     }
 
+    Str_Free(&searchPattern);
+    Str_Free(&absolutePath);
     return TRUE;
     }
 }
@@ -267,48 +275,68 @@ static void determineGlobalPaths(application_t* app)
 
     // Where are we?
 #if defined(DENG_LIBRARY_DIR)
-# if !defined(_DEBUG)
+#  if !defined(_DEBUG)
 #pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
-# endif
-#endif
+#  endif
+    {
+    filename_t path;
+    directory_t* temp;
 
-#if defined(DENG_LIBRARY_DIR)
-    _snprintf(ddBinDir.path, 254, "%s", DENG_LIBRARY_DIR);
-    if(ddBinDir.path[strlen(ddBinDir.path)] != DIR_SEP_CHAR)
-        strncat(ddBinDir.path, DIR_SEP_STR, FILENAME_T_MAXLEN);
-    Dir_MakeAbsolute(ddBinDir.path);
-    ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
+    dd_snprintf(path, FILENAME_T_MAXLEN, "%s", DENG_LIBRARY_DIR);
+    // Ensure it ends with a directory separator.
+    if(path[strlen(path)-1] != DIR_SEP_CHAR)
+        strncat(path, DIR_SEP_STR, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolutePath(path);
+    temp = Dir_ConstructFromPathDir(path);
+    strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
+    Dir_Destruct(temp);
+    }
 #else
     { filename_t path;
+    directory_t* temp;
     GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-    Dir_FileDir(path, &ddBinDir);
+
+    temp = Dir_ConstructFromPathDir(path);
+    strncpy(ddBinPath, Dir_Path(temp), FILENAME_T_MAXLEN);
+    Dir_Destruct(temp);
     }
 #endif
 
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
-        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
+        directory_t* temp = Dir_ConstructFromPathDir(ArgNext());
+        app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
+        if(app->usingUserDir)
+        {
+            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        }
+        Dir_Destruct(temp);
     }
 
-    // The current working directory is the runtime dir.
-    Dir_GetDir(&ddRuntimeDir);
-
-    // The standard base directory is two levels upwards.
-    if(ArgCheck("-stdbasedir"))
+    if(!app->usingUserDir)
     {
-        strncpy(ddBasePath, ".."DIR_SEP_STR".."DIR_SEP_STR, FILENAME_T_MAXLEN);
+        // The current working directory is the runtime dir.
+        directory_t* temp = Dir_ConstructFromCurrentDir();
+        Dir_SetCurrent(Dir_Path(temp));
+        strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        Dir_Destruct(temp);
     }
 
     if(ArgCheckWith("-basedir", 1))
     {
         strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
     }
-
-    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
+    else if(ArgCheck("-stdbasedir"))
+    {
+        // The standard base directory is two levels upwards.
+        strncpy(ddBasePath, ".."DIR_SEP_STR".."DIR_SEP_STR, FILENAME_T_MAXLEN);
+    }
+    Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
+    // Ensure it ends with a directory separator.
+    if(ddBasePath[strlen(ddBasePath)-1] != DIR_SEP_CHAR)
+        strncat(ddBasePath, DIR_SEP_STR, FILENAME_T_MAXLEN);
 }
 
 static BOOL createMainWindow(int lnCmdShow)
@@ -328,7 +356,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
     app.className = TEXT(MAINWCLASS);
-    app.userDirOk = true;
 
     if(!initApplication(&app))
     {

@@ -736,7 +736,7 @@ int P_SetupMapWorker(void* ptr)
 
     Con_Message("Load ACS scripts\n");
     // \fixme Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetNumForName(mapID) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    P_LoadACScripts(W_GetLumpNumForName(mapID) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
 
     HU_UpdatePsprites();
@@ -840,7 +840,7 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
     int i;
     // Load colormap and set the fullbright flag
     i = P_GetMapFadeTable(map);
-    if(i == W_GetNumForName("COLORMAP"))
+    if(i == W_GetLumpNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
         GL_UseFog(false);
@@ -848,7 +848,7 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
     else
     {
         // Probably fog ... don't use fullbright sprites
-        if(i == W_GetNumForName("FOGMAP"))
+        if(i == W_GetLumpNumForName("FOGMAP"))
         {
             // Tell the renderer to turn on the fog.
             GL_UseFog(true);
@@ -999,7 +999,7 @@ boolean P_IsMapFromIWAD(uint episode, uint map)
 {
     char lumpName[9];
     P_MapId(episode, map, lumpName);
-    return W_LumpFromIWAD(W_GetNumForName(lumpName));
+    return W_LumpIsFromIWAD(W_GetLumpNumForName(lumpName));
 }
 
 const char* P_GetMapAuthor(boolean supressGameAuthor)

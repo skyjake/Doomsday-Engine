@@ -321,26 +321,29 @@ void XG_WriteTypes(FILE* f)
 }
 #endif
 
-void XG_ReadXGLump(char* name)
+void XG_ReadXGLump(lumpnum_t lumpNum)
 {
-    lumpnum_t           lump;
-    void*               buf;
-    int                 lc = 0, sc = 0, i;
-    linetype_t*         li;
-    sectortype_t*       sec;
-    boolean             done = false;
+    int lc = 0, sc = 0, i;
+    sectortype_t* sec;
+    linetype_t* li;
+    boolean done = false;
+    size_t len;
+    char* buf;
 
-    if((lump = W_CheckNumForName2(name, true)) < 0)
+    if(0 > lumpNum)
         return; // No such lump.
 
     xgDataLumps = true;
 
     Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
 
-    buf = malloc(W_LumpLength(lump));
-    W_ReadLump(lump, buf);
+    len = W_LumpLength(lumpNum);
+    buf = (char*) malloc(len);
+    if(NULL == buf)
+        Con_Error("XG_ReadTypes: Failed on allocation of %lu bytes for temporary buffer.", (unsigned long) len);
+    W_ReadLump(lumpNum, buf);
 
-    readptr = buf;
+    readptr = (byte*)buf;
 
     num_linetypes = ReadShort();
     num_sectypes = ReadShort();
@@ -473,7 +476,7 @@ void XG_ReadTypes(void)
     linetypes = 0;
     sectypes = 0;
 
-    XG_ReadXGLump("DDXGDATA");
+    XG_ReadXGLump(W_CheckLumpNumForName2("DDXGDATA", true));
 }
 
 linetype_t* XG_GetLumpLine(int id)

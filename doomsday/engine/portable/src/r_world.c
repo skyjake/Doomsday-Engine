@@ -1075,8 +1075,8 @@ void R_InitLinks(gamemap_t *map)
 {
     uint starttime;
 
-    VERBOSE( Con_Message("R_InitLinks: Initializing ...\n") );
-    VERBOSE2( starttime = Sys_GetRealTime() );
+    VERBOSE( Con_Message("R_InitLinks: Initializing...\n") )
+    VERBOSE2( starttime = Sys_GetRealTime() )
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
@@ -1091,7 +1091,7 @@ void R_InitLinks(gamemap_t *map)
     }
 
     // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) );
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) )
 }
 
 /**

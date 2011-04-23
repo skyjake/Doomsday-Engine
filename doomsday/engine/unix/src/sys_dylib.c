@@ -23,17 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Dynamic Libraries
- *
- * These functions provide roughly the same functionality as the ltdl
- * library.  Since the ltdl library appears to be broken on Mac OS X,
- * these will be used instead when loading plugin libraries.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
+#include "m_misc.h"
 #include "m_args.h"
 #include "sys_dylib.h"
 
@@ -43,25 +34,7 @@
 #include <dlfcn.h>
 #include <string.h>
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static filename_t appDir;
-
-// CODE --------------------------------------------------------------------
 
 void lt_dlinit(void)
 {
@@ -72,109 +45,97 @@ void lt_dlexit(void)
 {
 }
 
-const char *lt_dlerror(void)
+const char* lt_dlerror(void)
 {
     return dlerror();
 }
 
-void lt_dladdsearchdir(const char *searchPath)
+void lt_dladdsearchdir(const char* searchPath)
 {
 }
 
-static void getBundlePath(char *path)
+static void getBundlePath(char* path, size_t len)
 {
     if(ArgCheckWith("-libdir", 1))
     {
-        strcpy(path, ArgNext());
+        strncpy(path, ArgNext(), len);
+        return;
     }
-    else if(ArgCheckWith("-appdir", 1))
+
+    if(ArgCheckWith("-appdir", 1))
     {
-        sprintf(path, "%s/%s", appDir, ArgNext());
+        dd_snprintf(path, len, "%s/%s", appDir, ArgNext());
+        return;
     }
-    else
-    {
+
 #ifdef MACOSX
-        // This is the default location where bundles are.
-        sprintf(path, "%s/Bundles", appDir);
+    // This is the default location where bundles are.
+    dd_snprintf(path, len, "%s/Bundles", appDir);
 #endif
 #ifdef UNIX
 #ifdef DENG_LIBRARY_DIR
-        strcpy(path, DENG_LIBRARY_DIR);
+    strncpy(path, DENG_LIBRARY_DIR, len);
 #else
-        // Assume they are in the cwd.
-        strcpy(path, appDir);
+    // Assume they are in the cwd.
+    strncpy(path, appDir, len);
 #endif
 #endif
-    }
 }
 
 int lt_dlforeachfile(const char* searchPath,
     int (*func) (const char* fileName, lt_ptr data), lt_ptr data)
 {
-    DIR* dir = 0;
     struct dirent* entry = 0;
-    filename_t  bundlePath;
+    DIR* dir = 0;
+    filename_t bundlePath;
 
     // This is the default location where bundles are.
-    getBundlePath(bundlePath);
+    getBundlePath(bundlePath, FILENAME_T_MAXLEN);
 
-    if(searchPath == NULL)
+    if(NULL == searchPath)
         searchPath = bundlePath;
 
     dir = opendir(searchPath);
-    while((entry = readdir(dir)) != NULL)
+    while(NULL != (entry = readdir(dir)))
     {
-        if(entry->d_type != DT_DIR)
-        {
-            if(func(entry->d_name, data))
-                break;
-        }
+        if(DT_DIR == entry->d_type) continue;
+
+        if(func(entry->d_name, data))
+            break;
     }
     closedir(dir);
     return 0;
 }
 
-/**
- * The base file name should have the ".bundle" file name extension.
- */
-lt_dlhandle lt_dlopenext(const char *baseFileName)
+lt_dlhandle lt_dlopenext(const char* libraryName)
 {
     lt_dlhandle handle;
-    filename_t  bundleName;
+    filename_t bundlePath;
 #ifdef MACOSX
     char* ptr;
 #endif
 
-    getBundlePath(bundleName);
+    getBundlePath(bundlePath, FILENAME_T_MAXLEN);
 #ifdef MACOSX
-    strcat(bundleName, "/");
-    strcat(bundleName, baseFileName);
-    strcat(bundleName, "/Contents/MacOS/");
+    strncat(bundlePath, "/", FILENAME_T_MAXLEN);
+    strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);
+    strncat(bundlePath, "/Contents/MacOS/", FILENAME_T_MAXLEN);
 #endif
-    strcat(bundleName, baseFileName);
-//#ifdef UNIX
-//#ifndef MACOSX
-//  strcat(bundleName, ".so");
-//#endif
-//#endif
-
-
-/*  sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName,
-            baseFileName);*/
+    strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);
 #ifdef MACOSX
     // Get rid of the ".bundle" in the end.
-    if((ptr = strrchr(bundleName, '.')) != NULL)
+    if(NULL != (ptr = strrchr(bundlePath, '.')))
         *ptr = 0;
 #endif
-    handle = dlopen(bundleName, RTLD_NOW);
-    if(!handle)
+    handle = dlopen(bundlePath, RTLD_NOW);
+    if(NULL == handle)
     {
-        printf("While opening dynamic library\n%s:\n  %s\n", bundleName, dlerror());
+        printf("lt_dlopenext: Error opening \"%s\" (%s).\n", bundlePath, dlerror());
     }
     return handle;
 }
 
-lt_ptr lt_dlsym(lt_dlhandle module, const char *symbolName)
+lt_ptr lt_dlsym(lt_dlhandle module, const char* symbolName)
 {
     return dlsym(module, symbolName);
 }

@@ -34,50 +34,50 @@ struct DFILE;
 /**
  * Saves the buffer (which is formatted rgb565) to a Targa 24 image file.
  *
- * @param filename      Path to the file to be written to (need not exist).
+ * @param file          Handle to the open file to be written to.
  * @param w             Width of the image in pixels.
  * @param h             Height of the image in pixels.
  * @param buf           Ptr to the image data to be written.
  *
  * @return  Non-zero iff successful.
  */
-int TGA_Save24_rgb565(const char* filename, int w, int h, const uint16_t* buffer);
+int TGA_Save24_rgb565(FILE* file, int w, int h, const uint16_t* buffer);
 
 /**
  * Save the rgb888 buffer as Targa 24.
  *
- * @param filename      Path to the file to be written to (need not exist).
+ * @param file          Handle to the open file to be written to.
  * @param w             Width of the image in pixels.
  * @param h             Height of the image in pixels.
  * @param buf           Ptr to the image data to be written.
  *
  * @return  Non-zero iff successful.
  */
-int TGA_Save24_rgb888(const char* filename, int w, int h, const uint8_t* buf);
+int TGA_Save24_rgb888(FILE* file, int w, int h, const uint8_t* buf);
 
 /**
  * Save the rgb8888 buffer as Targa 24.
  *
- * @param filename      Path to the file to be written to (need not exist).
+ * @param file          Handle to the open file to be written to.
  * @param w             Width of the image in pixels.
  * @param h             Height of the image in pixels.
  * @param buf           Ptr to the image data to be written.
  *
  * @return  Non-zero iff successful.
  */
-int TGA_Save24_rgba8888(const char* filename, int w, int h, const uint8_t* buf);
+int TGA_Save24_rgba8888(FILE* file, int w, int h, const uint8_t* buf);
 
 /**
  * Save the rgb888 buffer as Targa 16.
  *
- * @param filename      Path to the file to be written to (need not exist).
+ * @param file          Handle to the open file to be written to.
  * @param w             Width of the image in pixels.
  * @param h             Height of the image in pixels.
  * @param buf           Ptr to the image data to be written.
  *
  * @return  Non-zero iff successful.
  */
-int TGA_Save16_rgb888(const char* filename, int w, int h, const uint8_t* buf);
+int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf);
 
 /**
  * Loads a 24-bit or a 32-bit image (24-bit color + 8-bit alpha).

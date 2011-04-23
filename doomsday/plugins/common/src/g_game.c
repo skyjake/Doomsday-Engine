@@ -219,7 +219,7 @@ mobj_t *bodyQueue[BODYQUEUESIZE];
 int bodyQueueSlot;
 #endif
 
-filename_t saveName;
+savefilename_t saveName;
 
 // vars used with game status cvars
 int gsvInMap = 0;
@@ -544,13 +544,13 @@ void R_LoadColorPalettes(void)
 #define PALENTRIES          (256)
 #define PALID               (0)
 
-    lumpnum_t lumpNum = W_GetNumForName(PALLUMPNAME);
+    lumpnum_t lumpNum = W_GetLumpNumForName(PALLUMPNAME);
     uint8_t data[PALENTRIES*3];
 
     // Record whether we are using a custom palette.
-    customPal = !W_LumpFromIWAD(lumpNum);
+    customPal = !W_LumpIsFromIWAD(lumpNum);
 
-    W_ReadLumpSection(lumpNum, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
+    W_ReadLumpSection(lumpNum, (char*)data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
 
     /**
@@ -616,9 +616,9 @@ void R_LoadColorPalettes(void)
 
         dd_snprintf(name, 9, "TRANTBL%X", i);
 
-        if(-1 != (lumpNum = W_CheckNumForName(name)))
+        if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
         {
-            W_ReadLumpSection(lumpNum, &translationtables[i * 256], 0, 256);
+            W_ReadLumpSection(lumpNum, (char*)&translationtables[i * 256], 0, 256);
         }
     }
     }
@@ -2189,6 +2189,17 @@ void G_DoSingleReborn(void)
 }
 #endif
 
+#if !__JHEXEN__
+void G_SetSavedGamePath(const char* path)
+{
+    ddstring_t buf;
+    Str_Init(&buf); Str_Set(&buf, path);
+    F_TranslatePath(&buf, &buf);
+    strncpy(saveName, Str_Text(&buf), SAVEFILENAME_T_MAXLEN);
+    Str_Free(&buf);
+}
+#endif
+
 /**
  * Can be called by the startup code or the menu task.
  */
@@ -2199,9 +2210,9 @@ void G_LoadGame(int slot)
     G_SetGameAction(GA_LOADGAME);
 }
 #else
-void G_LoadGame(const char* name)
+void G_LoadGame(const char* path)
 {
-    M_TranslatePath(saveName, name, FILENAME_T_MAXLEN);
+    G_SetSavedGamePath(path);
     G_SetGameAction(GA_LOADGAME);
 }
 #endif
@@ -2246,9 +2257,9 @@ void G_DoSaveGame(void)
 #if __JHEXEN__
     SV_SaveGame(saveGameSlot, saveDescription);
 #else
-    filename_t name;
+    savefilename_t name;
 
-    SV_GetSaveGameFileName(name, saveGameSlot, FILENAME_T_MAXLEN);
+    SV_GetSaveGameFileName(name, saveGameSlot, SAVEFILENAME_T_MAXLEN);
     SV_SaveGame(name, saveDescription);
 #endif
 
@@ -2475,7 +2486,7 @@ boolean P_MapExists(uint episode, uint map)
 {
     char buf[9];
     P_MapId(episode, map, buf);
-    return W_CheckNumForName2(buf, true) >= 0;
+    return W_CheckLumpNumForName2(buf, true) >= 0;
 }
 
 /**
@@ -2486,7 +2497,7 @@ const char* P_MapSourceFile(uint episode, uint map)
     lumpnum_t lumpNum;
     char buf[9];
     P_MapId(episode, map, buf);
-    if((lumpNum = W_CheckNumForName2(buf, true)) >= 0)
+    if((lumpNum = W_CheckLumpNumForName2(buf, true)) >= 0)
         return W_LumpSourceFile(lumpNum);
     return 0;
 }
@@ -2804,7 +2815,7 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
                 P_MapId(episode, i-1, mapId);
                 Con_Printf("%s", mapId);
             }
-            Con_Printf(": %s\n", M_PrettyPath(current));
+            Con_Printf(": %s\n", F_PrettyPath(current));
 
             // Moving on to a different file.
             current = files[i];
@@ -2959,33 +2970,50 @@ void G_ScreenShot(void)
     G_SetGameAction(GA_SCREENSHOT);
 }
 
-void G_DoScreenShot(void)
+/**
+ * Find an unused screenshot file name. Uses the game's identity key as the
+ * file name base.
+ * @return  Composed file name. Must be released with Str_Delete().
+ */
+static ddstring_t* composeScreenshotFileName(void)
 {
     ddgameinfo_t gameInfo;
-    filename_t name;
-    char* numPos;
+    ddstring_t* name;
+    int numPos;
 
     if(!DD_GetGameInfo(&gameInfo))
     {
-        Con_Message("G_DoScreenShot: Failed retrieving GameInfo - screenshot not saved.\n");
-        return;
+        Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
+        return NULL; // Unreachable.
     }
-
-    // Use game mode as the file name base.
-    sprintf(name, "%s-", gameInfo.identityKey);
-    numPos = name + strlen(name);
-
-    // Find an unused file name.
+   
+    name = Str_Appendf(Str_New(), "%s-", gameInfo.identityKey);
+    numPos = Str_Length(name);
     { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
-        sprintf(numPos, "%03i.tga", i);
-        if(!M_FileExists(name))
+        Str_Appendf(name, "%03i.tga", i);
+        if(!F_FileExists(Str_Text(name)))
             break;
+        Str_Truncate(name, numPos);
     }}
+    return name;
+}
 
-    M_ScreenShot(name, 24);
-    Con_Message("Wrote %s.\n", name);
+void G_DoScreenShot(void)
+{
+    ddstring_t* name = composeScreenshotFileName();
+    if(NULL == name)
+    {
+        Con_Message("G_DoScreenShot: Failed composing file name, screenshot not saved.\n");
+        return;
+    }
+
+    if(0 != M_ScreenShot(Str_Text(name), 24))
+    {
+        Con_Message("Wrote screenshot \"%s\"\n", F_PrettyPath(Str_Text(name)));
+    }
+    Str_Delete(name);
 }
 
 D_CMD(ListMaps)

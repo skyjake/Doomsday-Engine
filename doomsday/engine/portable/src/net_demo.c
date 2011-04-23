@@ -52,19 +52,15 @@
 // TYPES -------------------------------------------------------------------
 
 #pragma pack(1)
-
 typedef struct {
-    //ushort        angle;
-    //short         lookdir;
     ushort          length;
 } demopacket_header_t;
-
 #pragma pack()
 
 typedef struct {
     boolean         first;
     int             begintime;
-    boolean         canwrite;           // False until Handshake packet.
+    boolean         canwrite; /// @c false until Handshake packet.
     int             cameratimer;
     int             pausetime;
     float           fov;
@@ -90,10 +86,9 @@ extern float netConnectTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char demoPath[128] = "demo/";
+filename_t demoPath = "demo/";
 
-//int demotic = 0;
-LZFILE *playdemo = 0;
+LZFILE* playdemo = 0;
 int playback = false;
 int viewangleDelta = 0;
 float lookdirDelta = 0;
@@ -122,7 +117,7 @@ void Demo_Register(void)
 void Demo_Init(void)
 {
     // Make sure the demo path is there.
-    M_CheckPath(demoPath);
+    F_MakePath(demoPath);
 }
 
 /**
@@ -131,24 +126,27 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
-    filename_t          buf;
-    client_t*           cl = &clients[plrNum];
-    player_t*           plr = &ddPlayers[plrNum];
+    client_t* cl = &clients[plrNum];
+    player_t* plr = &ddPlayers[plrNum];
+    ddstring_t buf;
 
     // Is a demo already being recorded for this client?
-    if(cl->recording || playback || (isDedicated && !plrNum) ||
-       !plr->shared.inGame)
+    if(cl->recording || playback || (isDedicated && !plrNum) || !plr->shared.inGame)
         return false;
 
     // Compose the real file name.
-    strncpy(buf, demoPath, FILENAME_T_MAXLEN);
-    strncat(buf, fileName, FILENAME_T_MAXLEN);
-    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
+    Str_Init(&buf);
+    Str_Appendf(&buf, "%s%s", demoPath, fileName);
+    F_FixSlashes(&buf, &buf);
+    F_ExpandBasePath(&buf, &buf);
 
     // Open the demo file.
-    cl->demo = lzOpen(buf, "wp");
+    cl->demo = lzOpen(Str_Text(&buf), "wp");
+    Str_Free(&buf);
     if(!cl->demo)
+    {
         return false; // Couldn't open it!
+    }
 
     cl->recording = true;
     cl->recordPaused = false;
@@ -310,8 +308,7 @@ void Demo_BroadcastPacket(void)
 
 boolean Demo_BeginPlayback(const char* fileName)
 {
-    filename_t          buf;
-    int                 i;
+    ddstring_t buf;
 
     if(playback)
         return false; // Already in playback.
@@ -319,15 +316,26 @@ boolean Demo_BeginPlayback(const char* fileName)
         return false; // Can't do it.
 
     // Check that we aren't recording anything.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
         if(clients[i].recording)
             return false;
+    }}
+
+    // Compose the real file name.
+    Str_Init(&buf);
+    Str_Set(&buf, fileName);
+    if(!F_IsAbsolute(&buf))
+    {
+        Str_Prepend(&buf, demoPath);
+    }
+    F_FixSlashes(&buf, &buf);
+    F_ExpandBasePath(&buf, &buf);
 
     // Open the demo file.
-    dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s",
-             Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
-    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
-    playdemo = lzOpen(buf, "rp");
+    playdemo = lzOpen(Str_Text(&buf), "rp");
+    Str_Free(&buf);
     if(!playdemo)
         return false; // Failed to open the file.
 
@@ -717,8 +725,7 @@ D_CMD(StopDemo)
  */
 D_CMD(DemoLump)
 {
-    char        buf[64];
-
+    char buf[64];
     memset(buf, 0, sizeof(buf));
     strncpy(buf, argv[1], 64);
     return M_WriteFile(argv[2], buf, 64);

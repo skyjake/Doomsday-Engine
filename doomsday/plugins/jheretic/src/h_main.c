@@ -358,7 +358,7 @@ void H_PreInit(void)
  */
 void H_PostInit(void)
 {
-    filename_t file;
+    savefilename_t file;
     int p;
 
     /// \kludge Shareware WAD has different border background.
@@ -449,7 +449,7 @@ void H_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0', FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0', SAVEFILENAME_T_MAXLEN);
         G_LoadGame(file);
     }
 

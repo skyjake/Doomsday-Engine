@@ -66,17 +66,11 @@ static uint numArchivedMaps;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Called during init to register the cvars and ccmds for DAM.
- */
 void DAM_Register(void)
 {
     C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
 }
 
-/**
- * Initializes DAM.
- */
 void DAM_Init(void)
 {
     archivedMaps = NULL;
@@ -85,9 +79,6 @@ void DAM_Init(void)
     P_InitGameMapObjDefs();
 }
 
-/**
- * Shutdown DAM.
- */
 void DAM_Shutdown(void)
 {
     // Free all the archived map records.
@@ -235,63 +226,63 @@ static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
  */
 static archivedmap_t* allocArchivedMap(void)
 {
-    archivedmap_t *dam = Z_Calloc(sizeof(archivedmap_t), PU_APPSTATIC, 0);
+    archivedmap_t* dam = Z_Calloc(sizeof(*dam), PU_APPSTATIC, 0);
+    if(NULL == dam)
+        Con_Error("allocArchivedMap: Failed on allocation of %lu bytes for new ArchivedMap.",
+            (unsigned long) sizeof(*dam));
     return dam;
 }
 
-/**
- * Free all memory acquired for an archived map record.
- */
-static void freeArchivedMap(archivedmap_t *dam)
+/// Free all memory acquired for an archived map record.
+static void freeArchivedMap(archivedmap_t* dam)
 {
-    if(!dam)
-        return;
+    if(NULL == dam) return;
+    Str_Free(&dam->cachedMapPath);
     Z_Free(dam->lumpList);
     Z_Free(dam);
 }
 
-/**
- * Create a new archivedmap record.
- */
-static archivedmap_t* createArchivedMap(const char *mapID,
-                                        listnode_t *headPtr,
-                                        filename_t cachedMapDataFile)
+/// Create a new archived map record.
+static archivedmap_t* createArchivedMap(const char* mapID, listnode_t* headPtr,
+    const ddstring_t* cachedMapPath)
 {
-    uint                i;
-    listnode_t         *ln;
-    archivedmap_t      *dam = allocArchivedMap();
+    archivedmap_t* dam = allocArchivedMap();
+    listnode_t* node;
+    uint idx;
 
-    VERBOSE(
-    Con_Message("createArchivedMap: Add record for map \"%s\".\n", mapID));
+    VERBOSE( Con_Message("createArchivedMap: Add record for map '%s'.\n", mapID) )
 
     strncpy(dam->identifier, mapID, 8);
     dam->identifier[8] = '\0'; // Terminate.
     dam->lastLoadAttemptFailed = false;
-    memcpy(dam->cachedMapDataFile, cachedMapDataFile,
-           sizeof(dam->cachedMapDataFile));
-    if(DAM_MapIsValid(dam->cachedMapDataFile,
-                      W_GetNumForName(dam->identifier)))
+    Str_Init(&dam->cachedMapPath);
+    Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
+
+    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), W_GetLumpNumForName(dam->identifier)))
         dam->cachedMapFound = true;
 
-    // Count the lumps for this map
+    // Count the number of source data lumps.
     dam->numLumps = 0;
-    ln = headPtr;
-    while(ln)
+    node = headPtr;
+    while(NULL != node)
     {
-        dam->numLumps++;
-        ln = ln->next;
+        ++dam->numLumps;
+        node = node->next;
     }
 
-    // Allocate an array of the lump indices.
-    dam->lumpList = Z_Malloc(sizeof(int) * dam->numLumps, PU_APPSTATIC, 0);
-    ln = headPtr;
-    i = 0;
-    while(ln)
-    {
-        maplumpinfo_t      *info = (maplumpinfo_t*) ln->data;
+    // Allocate and populate the source data lump list.
+    dam->lumpList = Z_Malloc(sizeof(*dam->lumpList) * dam->numLumps, PU_APPSTATIC, 0);
+    if(NULL == dam->lumpList)
+        Con_Error("createArchivedMap: Failed on allocation of %lu bytes for lump list.",
+            (unsigned long) (sizeof(*dam->lumpList) * dam->numLumps));
 
-        dam->lumpList[i++] = info->lumpNum;
-        ln = ln->next;
+    node = headPtr;
+    idx = 0;
+    while(NULL != node)
+    {
+        maplumpinfo_t* info = (maplumpinfo_t*) node->data;
+        dam->lumpList[idx++] = info->lumpNum;
+        node = node->next;
     }
 
     return dam;
@@ -348,13 +339,13 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
 {
     uint numCollectedLumps = 0;
 
-    VERBOSE(Con_Message("collectMapLumps: Locating lumps...\n"));
+    VERBOSE( Con_Message("collectMapLumps: Locating lumps...\n") )
 
-    if(startLump > 0 && startLump < W_NumLumps())
+    if(startLump > 0 && startLump < W_LumpCount())
     {
         // Keep checking lumps to see if its a map data lump.
         int i;
-        for(i = startLump; i < W_NumLumps(); ++i)
+        for(i = startLump; i < W_LumpCount(); ++i)
         {
             const char* lumpName;
             int lumpType;
@@ -380,43 +371,59 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
     return numCollectedLumps;
 }
 
-/**
- * Compose the path where to put the cached map data.
- */
-void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
+/// Calculate the identity key for maps loaded from this path.
+static ushort calculateIdentifierForMapPath(const char* path)
 {
-    const char* sourceFile = W_LumpSourceFile(mainLump);
-    ushort identifier = 0;
-    filename_t base;
-
-    M_ExtractFileBase(base, sourceFile, FILENAME_T_MAXLEN);
-
-    { int i;
-    for(i = 0; sourceFile[i]; ++i)
-        identifier ^= sourceFile[i] << ((i * 3) % 11);
+    if(NULL != path && path[0])
+    {
+        ushort identifier = 0;
+        size_t i;
+        for(i = 0; path[i]; ++i)
+            identifier ^= path[i] << ((i * 3) % 11);
+        return identifier;
     }
-
-    // The cached map directory is relative to the runtime directory.
-    dd_snprintf(dir, len, "%s%s/%s-%04X/", mapCacheDir, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), base, identifier);
-
-    M_TranslatePath(dir, dir, len);
+    Con_Error("calculateMapIdentifier: Empty/NULL path given.");
+    return 0; // Unreachable.
 }
 
-static boolean loadMap(gamemap_t **map, archivedmap_t *dam)
+ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
 {
-    *map = Z_Calloc(sizeof(gamemap_t), PU_MAPSTATIC, 0);
+    const ddstring_t* gameIdentityKey;
+    ushort mapPathIdentifier;
+    ddstring_t mapFileName;
+    ddstring_t* path;
 
-    if(DAM_MapRead(*map, dam->cachedMapDataFile))
-        return true;
+    if(NULL == sourcePath || !sourcePath[0]) return NULL;
 
-    return false;
+    gameIdentityKey = GameInfo_IdentityKey(DD_GameInfo());
+    mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
+    Str_Init(&mapFileName);
+    F_FileName(&mapFileName, sourcePath);
+
+    // Compose the final path.
+    path = Str_New();
+    Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
+        Str_Text(&mapFileName), mapPathIdentifier);
+    F_FixSlashes(path, path);
+    F_ExpandBasePath(path, path);
+
+    Str_Free(&mapFileName);
+    return path;
+}
+
+static boolean loadMap(gamemap_t** map, archivedmap_t* dam)
+{
+    *map = (gamemap_t*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
+    if(NULL == *map)
+        Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
+    return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
 
 static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
 {
     boolean converted = false;
 
-    VERBOSE( Con_Message("convertMap: Attempting conversion of \"%s\".\n", dam->identifier) );
+    VERBOSE( Con_Message("convertMap: Attempting conversion of '%s'.\n", dam->identifier) );
 
     // Nope. See if there is a converter available.
     if(Plug_CheckForHook(HOOK_MAP_CONVERT))
@@ -441,48 +448,44 @@ static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
  */
 boolean DAM_AttemptMapLoad(const char* mapID)
 {
-    archivedmap_t*      dam;
-    boolean             loadedOK = false;
+    boolean loadedOK = false;
+    archivedmap_t* dam;
 
-    VERBOSE2(
-    Con_Message("DAM_AttemptMapLoad: Loading \"%s\"...\n", mapID));
+    VERBOSE2( Con_Message("DAM_AttemptMapLoad: Loading '%s'...\n", mapID) )
 
     dam = findArchivedMap(mapID);
-
-    if(!dam)
+    if(NULL == dam)
     {   // We've not yet attempted to load this map.
-        int                 startLump = W_CheckNumForName(mapID);
-        listnode_t*         headPtr = NULL;
-        filename_t          cachedMapDir;
-        filename_t          cachedMapDataFile;
+        int markerLump = W_CheckLumpNumForName(mapID);
+        listnode_t* sourceLumpListHead = NULL;
+        ddstring_t* cachedMapDir;
+        ddstring_t cachedMapPath;
 
-        if(startLump == -1)
+        if(0 > markerLump)
             return false;
 
         // Add the marker lump to the list of lumps for this map.
-        addLumpInfoToList(&headPtr, createMapLumpInfo(startLump, ML_LABEL));
+        addLumpInfoToList(&sourceLumpListHead, createMapLumpInfo(markerLump, ML_LABEL));
 
         // Find the rest of the map data lumps associated with this map.
-        collectMapLumps(&headPtr, startLump + 1);
+        collectMapLumps(&sourceLumpListHead, markerLump + 1);
 
-        DAM_GetCachedMapDir(cachedMapDir, startLump, FILENAME_T_MAXLEN);
+        // Compose the cache directory path and ensure it exists.
+        cachedMapDir = DAM_ComposeCacheDir(W_LumpSourceFile(markerLump));
+        F_MakePath(Str_Text(cachedMapDir));
 
-        // Make sure the directory exists.
-        M_CheckPath(cachedMapDir);
+        // Compose the full path to the cached map data file.
+        Str_Init(&cachedMapPath);
+        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), W_LumpName(markerLump));
 
-        // First test if we already have valid cached map data.
-        sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
-                                   W_LumpName(startLump));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
-                        FILENAME_T_MAXLEN);
-        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
-
-        // Create an archivedmap record and link it to our list
-        // of available maps.
-        dam = createArchivedMap(mapID, headPtr, cachedMapDataFile);
+        // Create an archived map record for this.
+        dam = createArchivedMap(mapID, sourceLumpListHead, &cachedMapPath);
         addArchivedMap(dam);
 
-        freeMapLumpInfoList(headPtr);
+        freeMapLumpInfoList(sourceLumpListHead);
+
+        Str_Delete(cachedMapDir);
+        Str_Free(&cachedMapPath);
     }
 
     // Load it in.

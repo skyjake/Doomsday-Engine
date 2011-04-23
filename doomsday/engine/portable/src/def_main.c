@@ -168,6 +168,8 @@ void Def_Init(void)
 
 void Def_Destroy(void)
 {
+    int i;
+
     // To make sure...
     DED_Clear(&defs);
     DED_Init(&defs);
@@ -176,7 +178,13 @@ void Def_Destroy(void)
     DED_DelArray((void**) &sprNames, &countSprNames);
     DED_DelArray((void**) &states, &countStates);
     DED_DelArray((void**) &mobjInfo, &countMobjInfo);
+
+    for(i = 0; i < countSounds.num; ++i)
+    {
+        Str_Free(&sounds[i].external);
+    }
     DED_DelArray((void**) &sounds, &countSounds);
+
     DED_DelArray((void**) &texts, &countTexts);
     DED_DelArray((void**) &stateOwners, &countStateOwners);
     DED_DelArray((void**) &statePtcGens, &countStatePtcGens);
@@ -647,7 +655,7 @@ int Def_ReadDEDFile(const char* fn, pathdirectory_nodetype_t type, void* parm)
     }
     else
     {
-        Con_Message("Def_ReadDEDFile: Warning %s not found!\n", fn);
+        Con_Message("Warning:Def_ReadDEDFile \"%s\" not found!\n", fn);
     }
 
     // Continue processing files.
@@ -677,7 +685,7 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    int i, numLumps = W_NumLumps();
+    int i, numLumps = W_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
         if(strnicmp(W_LumpName(i), "DD_DEFNS", 8))
@@ -797,45 +805,38 @@ static void readAllDefinitions(void)
         ddstring_t pattern;
         Str_Init(&pattern);
         Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
-        F_AllResourcePaths(&pattern, autoDefsReader);
+        F_AllResourcePaths(Str_Text(&pattern), autoDefsReader);
         Str_Free(&pattern);
     }
 
     // Any definition files on the command line?
-    { int p; filename_t fullFn;
+    { int p; ddstring_t buf;
+    Str_Init(&buf);
     for(p = 0; p < Argc(); ++p)
     {
         const char* arg = Argv(p);
         if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
             continue;
+
         while(++p != Argc() && !ArgIsOption(p))
         {
             const char* searchPath = Argv(p);
-            filename_t tmp, *fileName;
 
-            Con_Message("  Processing \"%s\" ...\n", searchPath);
+            Con_Message("  Processing '%s'...\n", F_PrettyPath(searchPath));
 
-            // We want an absolute path.
-            M_TranslatePath(tmp, searchPath, FILENAME_T_MAXLEN);
-            if(!Dir_IsAbsolute(tmp))
-            {
-                filename_t fn;
-                directory_t dir;
-                memset(&dir, 0, sizeof(dir));
-                Dir_FileName(fn, tmp, FILENAME_T_MAXLEN);
-                Dir_FileDir(tmp, &dir);
-                sprintf(fullFn, "%s%s", dir.path, fn);
-                fileName = &fullFn;
-            }
-            else
-            {
-                fileName = &tmp;
-            }
+            Str_Clear(&buf); Str_Set(&buf, searchPath);
+            F_FixSlashes(&buf, &buf);
+            F_ExpandBasePath(&buf, &buf);
+            // We must have an absolute path. If we still do not have one then
+            // prepend the current working directory if necessary.
+            F_PrependWorkPath(&buf, &buf);
 
-            readDefinitionFile(*fileName);
+            readDefinitionFile(Str_Text(&buf));
         }
         p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }}
+    }
+    Str_Free(&buf);
+    }
 
     // Read DD_DEFNS definition lumps.
     Def_ReadLumpDefs();
@@ -1107,7 +1108,7 @@ void Def_Read(void)
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckNumForName(snd->lumpName) : -1);
+        si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckLumpNumForName(snd->lumpName) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
         si->link = (k >= 0 ? sounds + k : 0);
@@ -1117,10 +1118,9 @@ void Def_Read(void)
         si->channels = snd->channels;
         si->flags = snd->flags;
         si->group = snd->group;
-        if(snd->ext)
-            strncpy(si->external, Str_Text(Uri_Path(snd->ext)), SFXINFO_EXTERNAL_MAXLENGTH);
-        else
-            memset(si->external, 0, sizeof(si->external));
+        Str_Init(&si->external);
+        if(NULL != snd->ext)
+            Str_Set(&si->external, Str_Text(Uri_Path(snd->ext)));
     }
 
     // Music.
@@ -1768,7 +1768,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         case DD_LUMP:
             S_StopSound(index, 0);
             strcpy(sounds[index].lumpName, ptr);
-            sounds[index].lumpNum = W_CheckNumForName(sounds[index].lumpName);
+            sounds[index].lumpNum = W_CheckLumpNumForName(sounds[index].lumpName);
             break;
 
         default:

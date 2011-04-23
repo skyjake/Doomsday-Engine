@@ -2282,7 +2282,7 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
 void M_LoadSelect(mn_object_t* obj, int option)
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    filename_t name;
+    savefilename_t name;
 #endif
 
     SaveMenu.focus = option+1;
@@ -2290,7 +2290,7 @@ void M_LoadSelect(mn_object_t* obj, int option)
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    SV_GetSaveGameFileName(name, option, FILENAME_T_MAXLEN);
+    SV_GetSaveGameFileName(name, option, SAVEFILENAME_T_MAXLEN);
     G_LoadGame(name);
 #else
     G_LoadGame(option);
@@ -2483,14 +2483,14 @@ void M_DrawFilesMenu(const mn_page_t* page, int x, int y)
 
 static void updateSaveList(void)
 {
-    filename_t fileName;
+    savefilename_t fileName;
     int i;
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         mn_object_t* loadSlot = &LoadItems[i];
 
-        SV_GetSaveGameFileName(fileName, i, FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(fileName, i, SAVEFILENAME_T_MAXLEN);
 
         memset(saveGameDescriptions[i].text, 0, MNDATA_EDIT_TEXT_MAX_LENGTH+1);
         if(SV_GetSaveDescription(saveGameDescriptions[i].text, fileName, MNDATA_EDIT_TEXT_MAX_LENGTH+1))
@@ -3188,9 +3188,9 @@ int M_QuickLoadResponse(msgresponse_t response, void* context)
     if(response == MSG_YES)
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        filename_t name;
+        savefilename_t name;
 
-        SV_GetSaveGameFileName(name, quickSaveSlot, FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(name, quickSaveSlot, SAVEFILENAME_T_MAXLEN);
         G_LoadGame(name);
 #else
         G_LoadGame(quickSaveSlot);
@@ -3223,9 +3223,9 @@ static void M_QuickLoad(void)
     if(!cfg.askQuickSaveLoad)
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        filename_t name;
+        savefilename_t name;
 
-        SV_GetSaveGameFileName(name, quickSaveSlot, FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(name, quickSaveSlot, SAVEFILENAME_T_MAXLEN);
         G_LoadGame(name);
 #else
         G_LoadGame(quickSaveSlot);

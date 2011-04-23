@@ -94,14 +94,14 @@ void Sys_Init(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    Con_Message("Setting up platform state ...\n");
+    Con_Message("Setting up platform state...\n");
 
-    VERBOSE( Con_Message("Initializing Timing subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Timing subsystem...\n") )
     Sys_InitTimer();
 
     if(!isDedicated)
     {
-        VERBOSE( Con_Message("Initializing Input subsystem ...\n") );
+        VERBOSE( Con_Message("Initializing Input subsystem...\n") )
         if(!I_Init())
             Con_Error("Failed to initialize Input subsystem.\n");
     }
@@ -109,10 +109,10 @@ void Sys_Init(void)
     // Virtual devices need to be created even in dedicated mode.
     I_InitVirtualInputDevices();
 
-    VERBOSE( Con_Message("Initializing Audio subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Audio subsystem...\n") )
     S_Init();
 
-    VERBOSE( Con_Message("Initializing Network subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Network subsystem...\n") )
     Huff_Init();
     N_Init();
 

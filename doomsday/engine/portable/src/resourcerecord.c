@@ -207,7 +207,7 @@ void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
     if(printStatus)
     {
         Con_Printf(" %s%s", rec->_searchPathUsed == 0? "- missing" : "- found ",
-                   rec->_searchPathUsed == 0? "" : Str_Text(F_PrettyPath(ResourceRecord_ResolvedPath(rec, false))));
+                   rec->_searchPathUsed == 0? "" : F_PrettyPath(Str_Text(ResourceRecord_ResolvedPath(rec, false))));
     }
     Con_Printf("\n");
     Str_Delete(searchPaths);

@@ -31,6 +31,10 @@
 
 #include "p_svtexarc.h"
 
+#define SAVEFILENAME_T_MAXLEN 256
+#define SAVEFILENAME_T_LASTINDEX 255
+typedef char            savefilename_t[SAVEFILENAME_T_MAXLEN];
+
 typedef enum gamearchivesegment_e {
     ASEG_GAME_HEADER = 101, //jhexen only
     ASEG_MAP_HEADER, //jhexen only

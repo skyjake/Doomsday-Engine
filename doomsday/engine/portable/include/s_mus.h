@@ -1,10 +1,10 @@
-/**\file
+/**\file s_mus.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,15 +39,24 @@ enum {
     MUSP_CD
 };
 
-extern int      musPreference;
+extern int musPreference;
 
-void            Mus_Register(void);
-boolean         Mus_Init(void);
-void            Mus_Shutdown(void);
-void            Mus_SetVolume(float vol);
-void            Mus_Pause(boolean doPause);
-void            Mus_StartFrame(void);
-int             Mus_Start(ded_music_t* def, boolean looped);
-void            Mus_Stop(void);
+void Mus_Register(void);
+boolean Mus_Init(void);
+void Mus_Shutdown(void);
+void Mus_SetVolume(float vol);
+void Mus_Pause(boolean doPause);
+void Mus_StartFrame(void);
+
+/**
+ * Start playing a song. The chosen interface depends on what's available
+ * and what kind of resources have been associated with the song.
+ * Any previously playing song is stopped.
+ *
+ * @return  Non-zero if the song is successfully played.
+ */
+int Mus_Start(ded_music_t* def, boolean looped);
+
+void Mus_Stop(void);
 
 #endif /* LIBDENG_SOUND_MUSIC_H */

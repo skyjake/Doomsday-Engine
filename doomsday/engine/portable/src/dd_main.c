@@ -94,7 +94,7 @@ extern int symbolicEchoMode;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
-directory_t ddRuntimeDir, ddBinDir;
+filename_t ddRuntimePath, ddBinPath;
 
 int isDedicated = false;
 
@@ -486,7 +486,7 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    if(!M_FileExists(filePath))
+    if(!F_FileExists(filePath))
         return false;
 
     { FILE* file;
@@ -510,7 +510,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
             const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
             for(; *lumpNames; lumpNames++)
             {
-                if(W_CheckNumForName2(Str_Text(*lumpNames), true) == -1)
+                if(W_CheckLumpNumForName2(Str_Text(*lumpNames), true) == -1)
                     return false;
             }
         }*/
@@ -522,7 +522,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
 static boolean recognizeZIP(const char* filePath, void* data)
 {
     /// \todo dj: write me.
-    return M_FileExists(filePath);
+    return F_FileExists(filePath);
 }
 
 static int validateResource(resourcerecord_t* rec, void* paramaters)
@@ -691,8 +691,8 @@ static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printSt
 
 #if _DEBUG
     Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info),
-               Str_Text(F_PrettyPath(GameInfo_DataPath(info))),
-               Str_Text(F_PrettyPath(GameInfo_DefsPath(info))));
+               F_PrettyPath(Str_Text(GameInfo_DataPath(info))),
+               F_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
     if(printBanner)
@@ -775,7 +775,7 @@ static int addFilesFromAutoData(boolean loadFiles)
     {
         Str_Clear(&pattern);
         Str_Appendf(&pattern, "%sauto"DIR_SEP_STR"*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
-        F_AllResourcePaths2(&pattern, autoDataAdder, (void*)&data);
+        F_AllResourcePaths2(Str_Text(&pattern), autoDataAdder, (void*)&data);
     }}
     Str_Free(&pattern);
     return data.count;
@@ -844,7 +844,7 @@ static int DD_ChangeGameWorker(void* paramaters)
         configFileName = GameInfo_MainConfig(p->info);
     }
 
-    Con_Message("Parsing primary config: \"%s\" ...\n", Str_Text(F_PrettyPath(configFileName)));
+    Con_Message("Parsing primary config: \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
     Con_ParseCommands(Str_Text(configFileName), true);
     if(configFileName == &tmp)
         Str_Free(&tmp);
@@ -856,8 +856,8 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_InitResourceLocator();
     F_InitializeResourcePathMap();
 
-    // Reset file IDs so previously seen files can be processed again.
-    F_ResetFileIDs();
+    // Reset file Ids so previously seen files can be processed again.
+    F_ResetFileIds();
 
     /**
      * Open all the files, load headers, count lumps, etc, etc...
@@ -1102,7 +1102,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         F_InitializeResourcePathMap();
 
         // Reset file IDs so previously seen files can be processed again.
-        F_ResetFileIDs();
+        F_ResetFileIds();
 
         R_InitVectorGraphics();
 
@@ -1116,7 +1116,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     titleFinale = 0; // If the title finale was in progress it isn't now.
     Materials_Shutdown();
 
-    VERBOSE( Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info))) );
+    VERBOSE( Con_Message("Selecting game '%s'...\n", Str_Text(GameInfo_IdentityKey(info))) )
 
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
@@ -1124,7 +1124,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         FI_Init();
         P_PtcInit();
 
-        Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
+        Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)GameInfo_PluginId(info));
         return false;
     }
 
@@ -1435,7 +1435,7 @@ int DD_Main(void)
         gameinfo_t* info = gameInfo[i];
         if(DD_IsNullGameInfo(info))
             continue;
-        VERBOSE( Con_Printf("Locating resources for \"%s\" ...\n", Str_Text(GameInfo_Title(info))) );
+        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(GameInfo_Title(info))) );
         locateGameResources(info);
         VERBOSE( printGameInfo(info, false, true, false, true) );
     }}
@@ -1468,11 +1468,11 @@ int DD_Main(void)
     if(ArgCheckWith("-dumplump", 1))
     {
         lumpnum_t lumpNum;
-        if((lumpNum = W_CheckNumForName(ArgNext())) != -1)
+        if((lumpNum = W_CheckLumpNumForName(ArgNext())) != -1)
             W_DumpLump(lumpNum, 0);
     }
     if(ArgCheck("-dumpwaddir"))
-        W_DumpLumpDir();
+        W_PrintLumpDirectory();
 
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
@@ -1490,7 +1490,7 @@ int DD_Main(void)
             const char* arg = ArgNext();
             if(!arg || arg[0] == '-')
                 break;
-            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
+            Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
             Con_ParseCommands(arg, false);
         }
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -1544,7 +1544,7 @@ int DD_Main(void)
         F_InitDirec();
 
         // Reset file IDs so previously seen files can be processed again.
-        F_ResetFileIDs();
+        F_ResetFileIds();
 
         R_InitPatchComposites();
         R_InitFlatTextures();
@@ -1598,7 +1598,7 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(20);
 
     // Was the change to userdir OK?
-    if(!app.userDirOk)
+    if(ArgCheckWith("-userdir", 1) && !app.usingUserDir)
         Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
     bamsInit(); // Binary angle calculations.
@@ -1629,7 +1629,7 @@ static int DD_StartupWorker(void* parm)
             const char* arg = ArgNext();
             if(!arg || arg[0] == '-')
                 break;
-            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
+            Con_Message("  Processing \"%s\"...\n", F_PrettyPath(arg));
             Con_ParseCommands(arg, false);
         }
         VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -1663,7 +1663,7 @@ static int DD_StartupWorker(void* parm)
     Materials_Initialize();
 
     Con_SetProgress(140);
-    Con_Message("Initializing Binding subsystem ...\n");
+    Con_Message("Initializing Binding subsystem...\n");
     B_Init();
 
     Con_SetProgress(150);
@@ -1673,10 +1673,10 @@ static int DD_StartupWorker(void* parm)
     Net_InitGame();
     Demo_Init();
 
-    Con_Message("Initializing InFine subsystem ...\n");
+    Con_Message("Initializing InFine subsystem...\n");
     FI_Init();
 
-    Con_Message("Initializing UI subsystem ...\n");
+    Con_Message("Initializing UI subsystem...\n");
     UI_Init();
 
     Con_SetProgress(190);
@@ -1762,7 +1762,7 @@ void DD_UpdateEngineState(void)
     boolean hadFog;
 
     // Update refresh.
-    Con_Message("Updating state...\n");
+    Con_Message("Updating engine state...\n");
 
     // Update the dir/WAD translations.
     F_InitDirec();
@@ -1865,7 +1865,7 @@ int DD_GetInteger(int ddvalue)
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
     case DD_NUMLUMPS:
-        return W_NumLumps();
+        return W_LumpCount();
 
     case DD_MAP_MUSIC:
         { gamemap_t *map = P_GetCurrentMap();
@@ -2071,7 +2071,7 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_NUMLUMPS:
         { static int count;
-        count = W_NumLumps();
+        count = W_LumpCount();
         return &count;
         }
     default: break;

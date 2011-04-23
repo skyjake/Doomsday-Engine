@@ -569,7 +569,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                         continue;
                     sprintf(lump, "MAP%02u", m);
 #endif
-                    if(W_CheckNumForName(lump) >= 0)
+                    if(W_CheckLumpNumForName(lump) >= 0)
                     {
                         tmp[0] = episode + '0';
                         tmp[1] = map + '0';

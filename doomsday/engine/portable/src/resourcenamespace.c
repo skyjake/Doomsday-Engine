@@ -200,7 +200,7 @@ static void rebuild(resourcenamespace_t* rn)
         {
 #if _DEBUG
             //uint startTime;
-            VERBOSE( Con_Message("Rebuilding rnamespace name hash ...\n") );
+            VERBOSE( Con_Message("Rebuilding rnamespace name hash...\n") )
             VERBOSE2( Con_PrintPathList(Str_Text(&tmp)) );
             //startTime = verbose >= 2? Sys_GetRealTime(): 0;
 #endif

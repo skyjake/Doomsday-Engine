@@ -872,7 +872,7 @@ boolean SV_v13_LoadGame(const char* savename)
     int                 i, a, b, c;
     char                vcheck[VERSIONSIZE];
 
-    if(!(length = M_ReadFile(savename, &savebuffer)))
+    if(!(length = M_ReadFile(savename, (char**)&savebuffer)))
         return false;
 
     save_p = savebuffer + V13_SAVESTRINGSIZE;

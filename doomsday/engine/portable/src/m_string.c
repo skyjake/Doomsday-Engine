@@ -123,12 +123,12 @@ void Str_Reserve(ddstring_t* str, int length)
     allocateString(str, length, true);
 }
 
-void Str_Set(ddstring_t* str, const char* text)
+ddstring_t* Str_Set(ddstring_t* str, const char* text)
 {
     if(!str)
     {
         Con_Error("Attempted String::Set with invalid reference (this==0).");
-        return; // Unreachable.
+        return str; // Unreachable.
     }
     { size_t incoming = strlen(text);
     if(incoming > DDSTRING_MAX_LENGTH)
@@ -142,21 +142,22 @@ void Str_Set(ddstring_t* str, const char* text)
     allocateString(str, incoming, false);
     strcpy(str->str, text);
     str->length = (int)incoming;
+    return str;
     }
 }
 
-void Str_Append(ddstring_t* str, const char* append)
+ddstring_t* Str_Append(ddstring_t* str, const char* append)
 {
     size_t incoming;
     if(!str)
     {
         Con_Error("Attempted String::Append with invalid reference (this==0).");
-        return; // Unreachable.
+        return str; // Unreachable.
     }
     // Don't allow extremely long strings.
     incoming = strlen(append);
     if(incoming == 0)
-        return;
+        return str;
     if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
     {
 #if _DEBUG
@@ -165,25 +166,26 @@ void Str_Append(ddstring_t* str, const char* append)
 #endif
         incoming = DDSTRING_MAX_LENGTH - str->length;
         if(incoming == 0)
-            return;
+            return str;
     }   
     allocateString(str, (unsigned)str->length + incoming, true);
     strcpy(str->str + str->length, append);
     str->length += (int)incoming;
+    return str;
 }
 
-void Str_AppendChar(ddstring_t* str, char ch)
+ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
 {
     char append[2] = { ch, 0 };
-    Str_Append(str, append);
+    return Str_Append(str, append);
 }
 
-void Str_Appendf(ddstring_t* str, const char* format, ...)
+ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
 {
     if(!str)
     {
         Con_Error("Attempted String::Appendf with invalid reference (this==0).");
-        return; // Unreachable.
+        return str; // Unreachable.
     }
     { char buf[1024];
     va_list args;
@@ -193,25 +195,26 @@ void Str_Appendf(ddstring_t* str, const char* format, ...)
     dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
     Str_Append(str, buf);
+    return str;
     }
 }
 
-void Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
+ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 {
     if(!str)
     {
         Con_Error("Attempted String::PartAppend with invalid reference (this==0).");
-        return; // Unreachable.
+        return str; // Unreachable.
     }
     if(!append)
     {
 #if _DEBUG
         Con_Message("Attempted String::PartAppend with invalid reference (@a append==0).\n");
 #endif
-        return;
+        return str;
     }
     if(start < 0 || count <= 0)
-        return;
+        return str;
 
     allocateString(str, str->length + count + 1, true);
     memcpy(str->str + str->length, append + start, count);
@@ -219,26 +222,27 @@ void Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 
     // Terminate the appended part.
     str->str[str->length] = 0;
+    return str;
 }
 
-void Str_Prepend(ddstring_t* str, const char* prepend)
+ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
 {
     size_t incoming;
     if(!str)
     {
         Con_Error("Attempted String::Prepend with invalid reference (this==0).");
-        return; // Unreachable.
+        return str; // Unreachable.
     }
     if(!prepend)
     {
 #if _DEBUG
         Con_Message("Attempted String::PartAppend with invalid reference (@a prepend==0).\n");
 #endif
-        return;
+        return str;
     }
     incoming = strlen(prepend);
     if(incoming == 0)
-        return;
+        return str;
     // Don't allow extremely long strings.
     if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
     {
@@ -246,18 +250,19 @@ void Str_Prepend(ddstring_t* str, const char* prepend)
         Con_Message("Resultant string would be longer than String::MAX_LENGTH (%lu).\n",
                     (unsigned long) DDSTRING_MAX_LENGTH);
 #endif
-        return;
+        return str;
     }
     allocateString(str, (unsigned)str->length + incoming, true);
     memmove(str->str + incoming, str->str, str->length + 1);
     memcpy(str->str, prepend, incoming);
     str->length += (int)incoming;
+    return str;
 }
 
-void Str_PrependChar(ddstring_t* str, char ch)
+ddstring_t* Str_PrependChar(ddstring_t* str, char ch)
 {
     char prepend[2] = { ch, 0 };
-    Str_Prepend(str, prepend);
+    return Str_Prepend(str, prepend);
 }
 
 char* Str_Text(const ddstring_t* str)
@@ -287,12 +292,12 @@ boolean Str_IsEmpty(const ddstring_t* str)
     return Str_Length(str) == 0;
 }
 
-void Str_Copy(ddstring_t* str, const ddstring_t* other)
+ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
 {
     if(!str)
     {
         Con_Error("Attempted String::Copy with invalid reference (this==0).");
-        return; // Unreachable.
+        return str; // Unreachable.
     }
     Str_Free(str);
     if(!other)
@@ -300,12 +305,13 @@ void Str_Copy(ddstring_t* str, const ddstring_t* other)
 #if _DEBUG
         Con_Message("Attempted String::Copy with invalid reference (@a other==0).\n");
 #endif
-        return;
+        return str;
     }
     str->size = other->size;
     str->length = other->length;
     str->str = Z_Malloc(other->size, PU_APPSTATIC, 0);
     memcpy(str->str, other->str, other->size);
+    return str;
 }
 
 int Str_StripLeft(ddstring_t* str)

@@ -33,10 +33,15 @@
 #include "sys_dylib.h"
 
 typedef struct {
-    boolean         userDirOk;
+    lt_dlhandle hInstPlug[MAX_PLUGS];
+    GETGAMEAPI GetGameAPI;
 
-    lt_dlhandle     hInstPlug[MAX_PLUGS]; // Instance handle to all libs.
-    GETGAMEAPI      GetGameAPI;
+    /// @c true = We are using a custom user dir specified on the command line.
+    boolean usingUserDir;
+#ifndef MACOSX
+    /// @c true = We are using the user dir defined in the HOME environment.
+    boolean usingHomeDir;
+#endif
 } application_t;
 
 extern uint windowIDX; // Main window.

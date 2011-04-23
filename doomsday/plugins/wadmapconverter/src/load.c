@@ -261,7 +261,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
 
     boolean     generateBMap = (createBMap == 2)? true : false;
 
-    Con_Message("WadMapConverter::loadBlockmap: Processing...\n");
+    VERBOSE( Con_Message("WadMapConverter::loadBlockmap: Processing...\n") )
 
     // Do we have a lump to process?
     if(maplump->lumpNum == -1 || maplump->length == 0)
@@ -274,8 +274,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
         // new data (we will have already announced it if the lump
         // was missing).
         if(maplump->lumpNum != -1)
-            VERBOSE(
-            Con_Message("loadBlockMap: Generating NEW blockmap...\n"));
+            VERBOSE2( Con_Message("loadBlockMap: Generating NEW blockmap...\n") )
     }
     else
     {   // No, the existing data is valid - so load it in.
@@ -293,7 +292,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
         startTime = Sys_GetRealTime();
 
         blockmapLump =
-            (short *) W_CacheLumpNum(maplump->lumpNum, PU_GAMESTATIC);
+            (short *) W_CacheLump(maplump->lumpNum, PU_GAMESTATIC);
 
         v[VX] = (float) SHORT(blockmapLump[0]);
         v[VY] = (float) SHORT(blockmapLump[1]);
@@ -858,18 +857,17 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 
 static void findPolyobjs(void)
 {
-    uint                i;
+    uint i;
 
-    VERBOSE(Con_Message("WadMapConverter::findPolyobjs: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::findPolyobjs: Processing...\n") )
 
     for(i = 0; i < map->numThings; ++i)
     {
-        mthing_t           *thing = &map->things[i];
+        mthing_t* thing = &map->things[i];
 
         if(thing->doomEdNum == PO_ANCHOR_DOOMEDNUM)
         {   // A polyobj anchor.
-            int                 tag = thing->angle;
-
+            int tag = thing->angle;
             findAndCreatePolyobj(tag, thing->pos[VX], thing->pos[VY]);
         }
     }
@@ -1040,13 +1038,13 @@ static void freeMapData(void)
     map->flats = NULL;
 }
 
-static boolean loadVertexes(const byte* buf, size_t len)
+static boolean loadVertexes(const char* buf, size_t len)
 {
-    uint                num, n;
-    size_t              elmSize;
-    const byte*         ptr;
+    uint num, n;
+    size_t elmSize;
+    const char* ptr;
 
-    VERBOSE(Con_Message("WadMapConverter::loadVertexes: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::loadVertexes: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
     num = len / elmSize;
@@ -1136,13 +1134,13 @@ static void interpretLineDefFlags(mline_t* l)
 #undef DOOM_VALIDMASK
 }
 
-static boolean loadLinedefs(const byte* buf, size_t len)
+static boolean loadLinedefs(const char* buf, size_t len)
 {
-    uint                num, n;
-    size_t              elmSize;
-    const byte*         ptr;
+    uint num, n;
+    size_t elmSize;
+    const char* ptr;
 
-    VERBOSE(Con_Message("WadMapConverter::loadLinedefs: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::loadLinedefs: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
         map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
@@ -1154,8 +1152,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
     case MF_DOOM:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            int                 idx;
-            mline_t*            l = &map->lines[n];
+            mline_t* l = &map->lines[n];
+            int idx;
 
             idx = USHORT(*((const uint16_t*) (ptr)));
             if(idx == 0xFFFF)
@@ -1190,8 +1188,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
     case MF_DOOM64:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            int                 idx;
-            mline_t*            l = &map->lines[n];
+            mline_t* l = &map->lines[n];
+            int idx;
 
             idx = USHORT(*((const uint16_t*) (ptr)));
             if(idx == 0xFFFF)
@@ -1204,10 +1202,10 @@ static boolean loadLinedefs(const byte* buf, size_t len)
             else
                 l->v[1] = idx + 1;
             l->flags = USHORT(*((const uint16_t*) (ptr+4)));
-            l->d64drawFlags = *((const byte*) (ptr + 6));
-            l->d64texFlags = *((const byte*) (ptr + 7));
-            l->d64type = *((const byte*) (ptr + 8));
-            l->d64useType = *((const byte*) (ptr + 9));
+            l->d64drawFlags = *((const uint8_t*) (ptr + 6));
+            l->d64texFlags = *((const uint8_t*) (ptr + 7));
+            l->d64type = *((const uint8_t*) (ptr + 8));
+            l->d64useType = *((const uint8_t*) (ptr + 9));
             l->d64tag = SHORT(*((const int16_t*) (ptr+10)));
             idx = USHORT(*((const uint16_t*) (ptr+12)));
             if(idx == 0xFFFF)
@@ -1243,12 +1241,12 @@ static boolean loadLinedefs(const byte* buf, size_t len)
             else
                 l->v[1] = idx + 1;
             l->flags = SHORT(*((const int16_t*) (ptr+4)));
-            l->xType = *((const byte*) (ptr+6));
-            l->xArgs[0] = *((const byte*) (ptr+7));
-            l->xArgs[1] = *((const byte*) (ptr+8));
-            l->xArgs[2] = *((const byte*) (ptr+9));
-            l->xArgs[3] = *((const byte*) (ptr+10));
-            l->xArgs[4] = *((const byte*) (ptr+11));
+            l->xType = *((const uint8_t*) (ptr+6));
+            l->xArgs[0] = *((const uint8_t*) (ptr+7));
+            l->xArgs[1] = *((const uint8_t*) (ptr+8));
+            l->xArgs[2] = *((const uint8_t*) (ptr+9));
+            l->xArgs[3] = *((const uint8_t*) (ptr+10));
+            l->xArgs[4] = *((const uint8_t*) (ptr+11));
             idx = USHORT(*((const uint16_t*) (ptr+12)));
             if(idx == 0xFFFF)
                 l->sides[RIGHT] = 0;
@@ -1270,13 +1268,13 @@ static boolean loadLinedefs(const byte* buf, size_t len)
     return true;
 }
 
-static boolean loadSidedefs(const byte* buf, size_t len)
+static boolean loadSidedefs(const char* buf, size_t len)
 {
-    uint                num, n;
-    size_t              elmSize;
-    const byte*         ptr;
+    uint num, n;
+    size_t elmSize;
+    const char* ptr;
 
-    VERBOSE(Con_Message("WadMapConverter::loadSidedefs: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::loadSidedefs: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
     num = len / elmSize;
@@ -1287,9 +1285,9 @@ static boolean loadSidedefs(const byte* buf, size_t len)
     case MF_DOOM:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            int                 idx;
-            char                name[9];
-            mside_t*            s = &map->sides[n];
+            mside_t* s = &map->sides[n];
+            char name[9];
+            int idx;
 
             s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
             s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
@@ -1313,8 +1311,8 @@ static boolean loadSidedefs(const byte* buf, size_t len)
     case MF_DOOM64:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            int                 idx;
-            mside_t*            s = &map->sides[n];
+            mside_t* s = &map->sides[n];
+            int idx;
 
             s->offset[VX] = SHORT(*((const int16_t*) (ptr)));
             s->offset[VY] = SHORT(*((const int16_t*) (ptr+2)));
@@ -1336,13 +1334,13 @@ static boolean loadSidedefs(const byte* buf, size_t len)
     return true;
 }
 
-static boolean loadSectors(const byte* buf, size_t len)
+static boolean loadSectors(const char* buf, size_t len)
 {
-    uint                num, n;
-    size_t              elmSize;
-    const byte*         ptr;
+    uint num, n;
+    size_t elmSize;
+    const char* ptr;
 
-    VERBOSE(Con_Message("WadMapConverter::loadSectors: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::loadSectors: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
     num = len / elmSize;
@@ -1352,8 +1350,8 @@ static boolean loadSectors(const byte* buf, size_t len)
     default:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            char                name[9];
-            msector_t*          s = &map->sectors[n];
+            msector_t* s = &map->sectors[n];
+            char name[9];
 
             s->floorHeight = SHORT(*((const int16_t*) ptr));
             s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
@@ -1372,8 +1370,8 @@ static boolean loadSectors(const byte* buf, size_t len)
     case MF_DOOM64:
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            int                 idx;
-            msector_t*          s = &map->sectors[n];
+            msector_t* s = &map->sectors[n];
+            int idx;
 
             s->floorHeight = SHORT(*((const int16_t*) ptr));
             s->ceilHeight = SHORT(*((const int16_t*) (ptr+2)));
@@ -1397,7 +1395,7 @@ static boolean loadSectors(const byte* buf, size_t len)
     return true;
 }
 
-static boolean loadThings(const byte* buf, size_t len)
+static boolean loadThings(const char* buf, size_t len)
 {
 // New flags: \todo get these from a game api header.
 #define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
@@ -1405,11 +1403,11 @@ static boolean loadThings(const byte* buf, size_t len)
 #define MTF_Z_RANDOM        0x80000000 // Random point between floor and ceiling.
 
 #define ANG45               0x20000000
-    uint                num, n;
-    size_t              elmSize;
-    const byte*         ptr;
+    uint num, n;
+    size_t elmSize;
+    const char* ptr;
 
-    VERBOSE(Con_Message("WadMapConverter::loadThings: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::loadThings: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
         map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
@@ -1436,7 +1434,7 @@ static boolean loadThings(const byte* buf, size_t len)
 
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            mthing_t*           t = &map->things[n];
+            mthing_t* t = &map->things[n];
 
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
@@ -1490,7 +1488,7 @@ static boolean loadThings(const byte* buf, size_t len)
 
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            mthing_t*           t = &map->things[n];
+            mthing_t* t = &map->things[n];
 
             t->pos[VX] = SHORT(*((const int16_t*) (ptr)));
             t->pos[VY] = SHORT(*((const int16_t*) (ptr+2)));
@@ -1555,7 +1553,7 @@ static boolean loadThings(const byte* buf, size_t len)
 
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
-            mthing_t*           t = &map->things[n];
+            mthing_t* t = &map->things[n];
 
             t->xTID = SHORT(*((const int16_t*) (ptr)));
             t->pos[VX] = SHORT(*((const int16_t*) (ptr+2)));
@@ -1627,19 +1625,19 @@ static boolean loadThings(const byte* buf, size_t len)
 #undef MTF_Z_RANDOM
 }
 
-static boolean loadLights(const byte* buf, size_t len)
+static boolean loadLights(const char* buf, size_t len)
 {
-    uint                num, n;
-    size_t              elmSize;
-    const byte*         ptr;
+    uint num, n;
+    size_t elmSize;
+    const char* ptr;
 
-    VERBOSE(Con_Message("WadMapConverter::loadLights: Processing...\n"));
+    VERBOSE( Con_Message("WadMapConverter::loadLights: Processing...\n") )
 
     elmSize = SIZEOF_LIGHT;
     num = len / elmSize;
     for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
     {
-        surfacetint_t*           t = &map->lights[n];
+        surfacetint_t* t = &map->lights[n];
 
         t->rgb[0] = (float) *(ptr) / 255;
         t->rgb[1] = (float) *(ptr+1) / 255;
@@ -1652,14 +1650,17 @@ static boolean loadLights(const byte* buf, size_t len)
     return true;
 }
 
-static void bufferLump(int lumpNum, byte** buf, size_t* len, size_t* oldLen)
+static void bufferLump(int lumpNum, char** buf, size_t* len, size_t* oldLen)
 {
     *len = W_LumpLength(lumpNum);
 
     // Need to enlarge our buffer?
     if(*len > *oldLen)
     {
-        *buf = realloc(*buf, *len);
+        *buf = (char*)realloc(*buf, *len);
+        if(NULL == *buf)
+            Con_Error("WadMapConverter::bufferLump: Failed on (re)allocation of %lu bytes for "
+                "temporary lump buffer.", (unsigned long) *len);
         *oldLen = *len;
     }
 
@@ -1669,9 +1670,8 @@ static void bufferLump(int lumpNum, byte** buf, size_t* len, size_t* oldLen)
 
 boolean LoadMap(const int* lumpList, int numLumps)
 {
-    int                 i;
-    byte*               buf = NULL;
-    size_t              oldLen = 0;
+    char* buf = NULL;
+    size_t oldLen = 0;
 
     // Allocate the data structure arrays.
     map->vertexes = malloc(map->numVertexes * 2 * sizeof(float));
@@ -1682,12 +1682,11 @@ boolean LoadMap(const int* lumpList, int numLumps)
     if(map->numLights)
         map->lights = malloc(map->numLights * sizeof(surfacetint_t));
 
+    { int i;
     for(i = 0; i < numLumps; ++i)
     {
-        size_t              len;
-        lumptype_t          lumpType;
-
-        lumpType = DataTypeForLumpName(W_LumpName(lumpList[i]));
+        lumptype_t lumpType = DataTypeForLumpName(W_LumpName(lumpList[i]));
+        size_t len;
 
         // Process it, transforming it into our local representation.
         switch(lumpType)
@@ -1735,7 +1734,7 @@ boolean LoadMap(const int* lumpList, int numLumps)
         default:
             break;
         }
-    }
+    }}
 
     if(buf)
         free(buf);

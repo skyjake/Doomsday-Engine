@@ -150,29 +150,27 @@ static audiodriver_t* importExternal(void)
     return d;
 }
 
-/**
- * Attempt to load the specified audio driver, import the entry points and
- * add to the available audio drivers.
- *
- * @param name          Name of the driver to be loaded e.g., "openal".
- * @return              Ptr to the audio driver interface if successful,
- *                      else @c NULL.
- */
 audiodriver_t* Sys_LoadAudioDriver(const char* name)
 {
-    char                fn[256];
+    audiodriver_t* ad = NULL;
+    if(NULL != name && name[0])
+    {
+        ddstring_t libPath;
+        // Compose the name using the prefix "ds".
+        Str_Init(&libPath);
+        Str_Appendf(&libPath, "%sds%s.dll", ddBinPath, name);
 
-    // Compose the name, use the prefix "ds".
-    sprintf(fn, "ds%s.dll", name);
-
-    // Load the DLL.
-    hInstExt = LoadLibrary(fn);
-    if(!hInstExt)
-    {   // Load failed.
-        Con_Message("Sys_LoadAudioDriver: Loading of %s failed.\n", fn);
-
-        return NULL;
+        // Load the audio driver library and import symbols.
+        hInstExt = LoadLibrary(Str_Text(&libPath));
+        if(NULL != hInstExt)
+        {
+            ad = importExternal();
+        }
+        if(NULL == ad)
+        {
+            Con_Message("Warning:Sys_LoadAudioDriver: Loading of \"%s\" failed.\n", Str_Text(&libPath));
+        }
+        Str_Free(&libPath);
     }
-
-    return importExternal();
+    return ad;
 }

@@ -336,7 +336,7 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     if(!(bc->flags & BCF_PROTECTED) && verbose >= 1)
 #endif
     {
-        Con_Message("B_ActivateContext: %s context \"%s\".\n",
+        Con_Message("B_ActivateContext: %s context '%s'.\n",
                     doActivate? "Activating" : "Deactivating",
                     bc->name);
     }

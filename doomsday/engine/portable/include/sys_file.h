@@ -100,8 +100,27 @@ void F_Rewind(DFILE* file);
  */
 unsigned int F_LastModified(const char* fileName);
 
-void F_ResetFileIDs(void);
+/**
+ * Reset known fileId records so that the next time F_CheckFileId() is
+ * called on a file, it will pass.
+ */
+void F_ResetFileIds(void);
+
+/**
+ * Calculate an identifier for the file based on its full path name.
+ * The identifier is the MD5 hash of the path.
+ */
+void F_GenerateFileId(const char* str, byte identifier[16]);
+
+/**
+ * Maintains a list of identifiers already seen.
+ *
+ * @return @c true if the given file can be read, or
+ *         @c false, if it has already been read.
+ */
 boolean F_CheckFileId(const char* path);
+
+/// @return  @c true if the FileId associated with @a path was released.
 boolean F_ReleaseFileId(const char* path);
 
 /**
@@ -133,10 +152,10 @@ void F_ShutdownDirec(void);
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
  */
-int F_AllResourcePaths2(const ddstring_t* searchPath,
+int F_AllResourcePaths2(const char* searchPath,
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters),
     void* paramaters);
-int F_AllResourcePaths(const ddstring_t* searchPath,
+int F_AllResourcePaths(const char* searchPath,
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters));
 
 #endif /* LIBDENG_FILESYS_FILE_IO_H */

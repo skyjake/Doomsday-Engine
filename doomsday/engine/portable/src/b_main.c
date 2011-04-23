@@ -495,12 +495,11 @@ D_CMD(ClearBindingContexts)
 
 D_CMD(ClearBindings)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < B_ContextCount(); ++i)
     {
-        Con_Printf("Clearing binding context \"%s\"...\n",
-                   B_ContextByPos(i)->name);
+        Con_Printf("Clearing binding context '%s'...\n", B_ContextByPos(i)->name);
         B_ClearContext(B_ContextByPos(i));
     }
 

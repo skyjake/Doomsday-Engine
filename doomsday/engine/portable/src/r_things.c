@@ -518,7 +518,7 @@ void R_InitSprites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    VERBOSE( Con_Message("Initializing Sprites ...\n") );
+    VERBOSE( Con_Message("Initializing Sprites...\n") )
 
     buildSpriteRotations();
 

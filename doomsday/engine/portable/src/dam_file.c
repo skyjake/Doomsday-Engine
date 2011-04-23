@@ -182,11 +182,11 @@ static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 //    return Materials_ToMaterial(Materials_IndexForName(Str_Text(&e->path), e->mnamespace));
 }
 
-static boolean openMapFile(char* path, boolean write)
+static boolean openMapFile(const char* path, boolean write)
 {
     mapFile = NULL;
     mapFileVersion = 0;
-    mapFile = lzOpen(path, (write? F_WRITE_PACKED : F_READ_PACKED));
+    mapFile = lzOpen((char*)path, (write? F_WRITE_PACKED : F_READ_PACKED));
 
     return ((mapFile)? true : false);
 }
@@ -1215,18 +1215,18 @@ static void archiveHeader(boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static boolean doArchiveMap(gamemap_t *map, filename_t path,
-                            boolean write)
+static boolean doArchiveMap(gamemap_t* map, const char* path, boolean write)
 {
-    if(!path)
+    if(NULL == path || !path[0])
         return false;
 
     // Open the file.
     if(!openMapFile(path, write))
         return false; // Hmm, invalid path?
 
-    materialDict = M_Calloc(sizeof(*materialDict));
+    Con_Message("DAM_MapRead: %s cached map %s.\n", write? "Saving" : "Loading", path);
 
+    materialDict = M_Calloc(sizeof(*materialDict));
     if(write)
         initMaterialDict(map, materialDict);
 
@@ -1243,45 +1243,33 @@ static boolean doArchiveMap(gamemap_t *map, filename_t path,
     return true;
 }
 
-/**
- * Load data from a Doomsday archived map file.
- */
-boolean DAM_MapWrite(gamemap_t *map, filename_t path)
+boolean DAM_MapWrite(gamemap_t* map, const char* path)
 {
     return doArchiveMap(map, path, true);
 }
 
-/**
- * Write the current state of a map into a Doomsday archived map file.
- */
-boolean DAM_MapRead(gamemap_t *map, filename_t path)
+boolean DAM_MapRead(gamemap_t* map, const char* path)
 {
-    Con_Message("DAM_MapRead: Loading cached map. %s\n", path);
     return doArchiveMap(map, path, false);
 }
 
-/**
- * Check if archived map file is current.
- */
-boolean DAM_MapIsValid(filename_t cachedMapDataFile, int markerLumpNum)
+boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
 {
-    uint                sourceTime, buildTime;
+    if(NULL != cachedMapPath && !cachedMapPath[0] && markerLumpNum >= 0)
+    {
+        uint sourceTime = F_LastModified(W_LumpSourceFile(markerLumpNum));
+        uint buildTime = F_LastModified(cachedMapPath);
 
-    // The source data must not be newer than the cached map data.
-    sourceTime = F_LastModified(W_LumpSourceFile(markerLumpNum));
-    buildTime = F_LastModified(cachedMapDataFile);
-
-    if(F_Access(cachedMapDataFile) && !(buildTime < sourceTime))
-    {   // Ok, lets check the header.
-        if(openMapFile(cachedMapDataFile, false))
-        {
-            archiveHeader(false);
-            closeMapFile();
-
-            if(mapFileVersion == DAM_VERSION)
-                return true; // Its good.
+        if(F_Access(cachedMapPath) && !(buildTime < sourceTime))
+        {   // Ok, lets check the header.
+            if(openMapFile(cachedMapPath, false))
+            {
+                archiveHeader(false);
+                closeMapFile();
+                if(mapFileVersion == DAM_VERSION)
+                    return true; // Its good.
+            }
         }
     }
-
     return false;
 }

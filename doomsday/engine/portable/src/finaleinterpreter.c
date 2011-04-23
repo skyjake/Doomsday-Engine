@@ -1402,7 +1402,7 @@ DEFFC(Image)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
-    lumpnum_t lumpNum = W_CheckNumForName(name);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(name);
     rawtex_t* rawTex;
 
     FIData_PicClearAnimation(obj);
@@ -1422,7 +1422,7 @@ DEFFC(ImageAt)
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
     const char* name = OP_CSTRING(3);
-    lumpnum_t lumpNum = W_CheckNumForName(name);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(name);
     rawtex_t* rawTex;
 
     AnimatorVector3_Init(obj->pos, x, y, 0);
@@ -1536,7 +1536,7 @@ DEFFC(AnimImage)
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum = W_CheckNumForName(name);
+    lumpnum_t lumpNum = W_CheckLumpNumForName(name);
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
     if(NULL != rawTex)
     {
@@ -1895,26 +1895,28 @@ DEFFC(TextFromDef)
 DEFFC(TextFromLump)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    int lnum;
+    lumpnum_t lumpNum;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    lnum = W_CheckNumForName(OP_CSTRING(3));
-    if(lnum < 0)
+    lumpNum = W_CheckLumpNumForName(OP_CSTRING(3));
+    if(0 > lumpNum)
     {
         FIData_TextCopy(obj, "(not found)");
     }
     else
     {
-        size_t i, incount, buflen;
-        const char* data;
+        size_t lumpSize = W_LumpLength(lumpNum);
+        const char* data = W_CacheLump(lumpNum, PU_APPSTATIC);
+        size_t bufSize = 2 * lumpSize + 1;
         char* str, *out;
 
-        // Load the lump.
-        data = W_CacheLumpNum(lnum, PU_APPSTATIC);
-        incount = W_LumpLength(lnum);
-        buflen = 2 * incount + 1;
-        str = calloc(1, buflen);
-        for(i = 0, out = str; i < incount; ++i)
+        str = (char*) calloc(1, bufSize);
+        if(NULL == str)
+            Con_Error("FinaleInterpreter::FIC_TextFromLump: Failed on allocation of %lu bytes for "
+                "text formatting translation buffer.", (unsigned long) bufSize);
+
+        { size_t i;
+        for(i = 0, out = str; i < lumpSize; ++i)
         {
             if(data[i] == '\n')
             {
@@ -1925,8 +1927,9 @@ DEFFC(TextFromLump)
             {
                 *out++ = data[i];
             }
-        }
-        W_ChangeCacheTag(lnum, PU_CACHE);
+        }}
+        W_CacheChangeTag(lumpNum, PU_CACHE);
+
         FIData_TextCopy(obj, str);
         free(str);
     }

@@ -389,7 +389,7 @@ void R_Update(void)
     R_InitSpriteTextures();
 
     // Reset file IDs so previously seen files can be processed again.
-    F_ResetFileIDs();
+    F_ResetFileIds();
     // Re-read definitions.
     Def_Read();
 

@@ -68,7 +68,7 @@
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static size_t FileReader(char const* name, byte** buffer);
+static size_t FileReader(char const* name, char** buffer);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -112,6 +112,40 @@ char* M_FindWhite(char* str)
     return str;
 }
 
+void M_StripLeft(char* str)
+{
+    size_t len, num;
+    if(NULL == str || !str[0]) return;
+
+    len = strlen(str);
+    // Count leading whitespace characters.
+    num = 0;
+    while(num < len && isspace(str[num]))
+        ++num;
+    if(0 == num) return;
+
+    // Remove 'num' characters.
+    memmove(str, str + num, len - num);
+    str[len] = 0;
+}
+
+void M_StripRight(char* str, size_t len)
+{
+    char* end;
+    if(NULL == str || 0 == len) return;
+
+    end = str + strlen(str) - 1;
+    while(end >= str && isspace(*end))
+        end--;
+    memset(end + 1, 0, len - (end - str) - 2);
+}
+
+void M_Strip(char* str, size_t len)
+{
+    M_StripLeft(str);
+    M_StripRight(str, len);
+}
+
 char* M_SkipLine(char* str)
 {
     while(*str && *str != '\n')
@@ -151,39 +185,6 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     }
 
     return buf;
-}
-
-void M_ExtractFileBase(char* dest, const char* path, size_t len)
-{
-    M_ExtractFileBase2(dest, path, len, 0);
-}
-
-void M_ExtractFileBase2(char* dest, const char* path, size_t max, int ignore)
-{
-    const char* src = path + strlen(path) - 1;
-
-    // Back up until a \ or the start.
-    while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
-    {
-        src--;
-    }
-
-    while(*src && *src != '.' && max-- > 0)
-    {
-        if(ignore-- > 0)
-        {
-            src++; // Skip chars.
-            max++; // Doesn't count.
-        }
-        else
-            *dest++ = toupper((int) *src++);
-    }
-
-    if(max > 0) // Room for a null?
-    {
-        // End with a terminating null.
-        *dest++ = 0;
-    }
 }
 
 void M_ReadLine(char* buffer, size_t len, DFILE *file)
@@ -766,71 +767,67 @@ void M_CopyBox(fixed_t dest[4], const fixed_t src[4])
 #  define O_BINARY 0
 #endif
 
-boolean M_WriteFile(const char *name, void *source, size_t length)
+boolean M_WriteFile(const char* name, const char* source, size_t length)
 {
-    int             handle;
-    size_t          count;
+    int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+    size_t count;
 
-    handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if(handle == -1)
         return false;
 
     count = write(handle, source, length);
     close(handle);
 
-    if(count < length)
-        return false;
-
-    return true;
+    return (count >= length);
 }
 
 /**
  * Read a file into a buffer allocated using M_Malloc().
  */
-size_t M_ReadFile(const char* name, byte** buffer)
+size_t M_ReadFile(const char* name, char** buffer)
 {
     return FileReader(name, buffer);
 }
 
-static size_t FileReader(const char* name, byte** buffer)
+static size_t FileReader(const char* name, char** buffer)
 {
-    int         handle;
-    size_t      count, length;
-    struct      stat fileinfo;
-    byte       *buf;
-    LZFILE     *file;
+    struct stat fileinfo;
+    char* buf = NULL;
+    size_t length = 0;
+    int handle;
 
     // First try with LZSS.
-    if((file = lzOpen((char *) name, "rp")) != NULL)
+    { LZFILE* file = lzOpen((char*) name, "rp");
+    if(NULL != file)
     {
 #define BSIZE 1024
-        byte rbuf[BSIZE];
+
+        char readBuf[BSIZE];
 
         // Read 1kb pieces until file ends.
-        length = 0;
-        buf = 0;
         while(!lzEOF(file))
         {
-            byte* newbuf;
+            size_t bytesRead = lzRead(readBuf, BSIZE, file);
+            char* newBuf;
 
-            count = lzRead(rbuf, BSIZE, file);
             // Allocate more memory.
-            newbuf = M_Realloc(buf, length + count);
-
-            if(newbuf == NULL)
+            newBuf = (char*) M_Realloc(buf, length + bytesRead);
+            if(NULL == newBuf)
                 Con_Error("FileReader: realloc failed.");
 
-            buf = newbuf;
+            buf = newBuf;
 
             // Copy new data to buffer.
-            memcpy(buf + length, rbuf, count);
-            length += count;
+            memcpy(buf + length, readBuf, bytesRead);
+            length += bytesRead;
         }
 
         lzClose(file);
-        *buffer = buf;
+        *buffer = (char*)buf;
         return length;
-    }
+
+#undef BSIZE
+    }}
 
     handle = open(name, O_RDONLY | O_BINARY, 0666);
     if(handle == -1)
@@ -852,12 +849,12 @@ static size_t FileReader(const char* name, byte** buffer)
                   (unsigned long) length, name);
     }
 
-    count = read(handle, buf, length);
+    { size_t bytesRead = read(handle, buf, length);
     close(handle);
-    if(count < length)
+    if(bytesRead < length)
     {
         Con_Error("FileReader: Couldn't read file %s\n", name);
-    }
+    }}
     *buffer = buf;
 
     return length;
@@ -951,239 +948,41 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
     return M_ApproxDistancef(M_ApproxDistancef(dx, dy), dz);
 }
 
-int M_ScreenShot(const char* filename, int bits)
+int M_ScreenShot(const char* name, int bits)
 {
-    if(bits == 16 || bits == 24)
-    {
-        byte* screen = GL_GrabScreen();
-        if(bits == 16)
-            TGA_Save16_rgb888(filename, theWindow->width, theWindow->height, screen);
-        else
-            TGA_Save24_rgb888(filename, theWindow->width, theWindow->height, screen);
-        M_Free(screen);
-        return true;
-    }
-    return false;
-}
+    byte* screen = (byte*) GL_GrabScreen();
+    ddstring_t fullName;
+    FILE* file;
 
-void M_PrependBasePath(char* newpath, const char* path, size_t len)
-{
-    filename_t          buf;
-
-    if(Dir_IsAbsolute(path))
+    if(NULL == screen)
     {
-        // Can't prepend to absolute paths.
-        strncpy(newpath, path, len);
+        Con_Message("Warning:M_ScreenShot: Failed acquiring frame buffer content.\n");
+        return false;
     }
+
+    // Compose the final file name.
+    Str_Init(&fullName); Str_Set(&fullName, name);
+    if(NULL == F_FindFileExtension(Str_Text(&fullName)))
+        Str_Append(&fullName, ".tga");
+
+    file = fopen(Str_Text(&fullName), "wb");
+    if(NULL == file)
+    {
+        Con_Message("Warning:M_Screenshot: Failed opening \"%s\" for write.\n", Str_Text(&fullName));
+        Str_Free(&fullName);
+        return false;
+    }
+
+    bits = (bits == 24? 24 : 16);
+    if(bits == 16)
+        TGA_Save16_rgb888(file, theWindow->width, theWindow->height, screen);
     else
-    {
-        dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s", ddBasePath, path);
-        strncpy(newpath, buf, len);
-    }
-}
+        TGA_Save24_rgb888(file, theWindow->width, theWindow->height, screen);
 
-/**
- * If the base path is found in the beginning of the path, it is removed.
- */
-void M_RemoveBasePath(char* newPath, const char* absPath, size_t len)
-{
-    if(!strnicmp(absPath, ddBasePath, strlen(ddBasePath)))
-    {
-        // This makes the new path relative to the base path.
-        strncpy(newPath, absPath + strlen(ddBasePath), len);
-    }
-    else
-    {
-        // This doesn't appear to be the base path.
-        strncpy(newPath, absPath, len);
-    }
-}
-
-/**
- * Expands >.
- */
-void M_TranslatePath(char* translated, const char* path, size_t len)
-{
-    filename_t          buf;
-
-    if(path[0] == '>' || path[0] == '}')
-    {
-        path++;
-        if(!Dir_IsAbsolute(path))
-            M_PrependBasePath(buf, path, FILENAME_T_MAXLEN);
-        else
-            strncpy(buf, path, FILENAME_T_MAXLEN);
-        strncpy(translated, buf, len);
-    }
-    else if(translated != path)
-    {
-        strncpy(translated, path, len);
-    }
-    Dir_FixSlashes(translated, len);
-}
-
-/**
- * Also checks for '>'.
- * The file must be a *real* file!
- */
-int M_FileExists(const char* file)
-{
-    filename_t          buf;
-
-    M_TranslatePath(buf, file, FILENAME_T_MAXLEN);
-    return !access(buf, 4);     // Read permission?
-}
-
-/**
- * Check that the given directory exists. If it doesn't, create it.
- * The path must be relative!
- *
- * @return              @c true, if the directory already exists.
- */
-boolean M_CheckPath(const char* path)
-{
-    filename_t          full, buf;
-    char*               ptr, *endptr;
-
-    // Convert all backslashes to normal slashes.
-    strncpy(full, path, FILENAME_T_MAXLEN);
-    Dir_FixSlashes(full, FILENAME_T_MAXLEN);
-
-    if(!access(full, 0))
-        return true;            // Quick test.
-
-    // Check and create the path in segments.
-    ptr = full;
-    memset(buf, 0, sizeof(buf));
-    do
-    {
-        endptr = strchr(ptr, DIR_SEP_CHAR);
-        if(!endptr)
-            strncat(buf, ptr, FILENAME_T_MAXLEN);
-        else
-            strncat(buf, ptr, endptr - ptr);
-        if(access(buf, 0))
-        {
-            // Path doesn't exist, create it.
-#if defined(WIN32)
-            mkdir(buf);
-#elif defined(UNIX)
-            mkdir(buf, 0775);
-#endif
-        }
-        strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
-        ptr = endptr + 1;
-
-    } while(endptr);
-
-    return false;
-}
-
-/**
- * The dot is not included in the returned extension.
- * The extension can be at most 10 characters long.
- */
-void M_GetFileExt(char* ext, const char* path, size_t len)
-{
-    char*               ptr = strrchr(path, '.');
-
-    *ext = 0;
-    if(!ptr)
-        return;
-    strncpy(ext, ptr + 1, len);
-    strlwr(ext);
-}
-
-const char* M_FindFileExtension(const char* path)
-{
-    if(path && path[0])
-    {
-        size_t len = strlen(path);
-        const char* p = path + len - 1;
-        if(p - path > 1 && *p != DIR_SEP_CHAR && *p != DIR_WRONG_SEP_CHAR)
-        {
-            do
-            {
-                if(*(p - 1) == DIR_SEP_CHAR ||
-                   *(p - 1) == DIR_WRONG_SEP_CHAR)
-                    break;
-                if(*p == '.')
-                    return p - path < len - 1? p + 1 : NULL;
-            } while(--p > path);
-        }
-    }
-    return NULL; // Not found.
-}
-
-void M_ReplaceFileExt(char* path, const char* newext, size_t len)
-{
-    const char* ptr = M_FindFileExtension(path);
-    if(!ptr)
-    {
-        strncat(path, ".", len);
-        strncat(path, newext, len);
-    }
-    else
-    {
-        strncpy(path + (ptr - path), newext, len);
-    }
-}
-
-const char* M_PrettyPath(const char* path)
-{
-#define NUM_BUFS            8
-
-    static filename_t buffers[NUM_BUFS];
-    static uint index = 0;
-
-    size_t basePathLen = strlen(ddBasePath), len = strlen(path);
-    if(len > basePathLen && !strnicmp(ddBasePath, path, basePathLen))
-    {
-        char* str = buffers[index++ % NUM_BUFS];
-        M_RemoveBasePath(str, path, FILENAME_T_MAXLEN);
-        Dir_FixSlashes(str, FILENAME_T_MAXLEN);
-        return str;
-    }
-    else if(len > 1 && (path[0] == '}' || path[0] == '>'))
-    {   // Skip over this special character.
-        return path+1;
-    }
-
-    return path; // We don't know how to make this prettier.
-
-#undef NUM_BUFS
-}
-
-void M_ResolvePath(char* path)
-{
-    assert(path);
-    {
-    char* ch = path;
-    char* end = path + strlen(path);
-    char* prev = path; // Assume an absolute path.
-
-    for(; *ch; ch++)
-    {
-        if(ch[0] == '/' && ch[1] == '.')
-        {
-            if(ch[2] == '/')
-            {
-                memmove(ch, ch + 2, end - ch - 1);
-                ch--;
-            }
-            else if(ch[2] == '.' && ch[3] == '/')
-            {
-                memmove(prev, ch + 3, end - ch - 2);
-                // Must restart from the beginning.
-                // This is a tad inefficient, though.
-                ch = path - 1;
-                continue;
-            }
-        }
-        if(*ch == '/')
-            prev = ch;
-    }
-    }
+    fclose(file);
+    Str_Free(&fullName);
+    free(screen);
+    return true;
 }
 
 /**

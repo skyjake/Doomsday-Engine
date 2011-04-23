@@ -43,11 +43,11 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
 
     Str_Init(&info->_dataPath);
     if(dataPath && !Str_IsEmpty(dataPath))
-        Str_Copy(&info->_dataPath, dataPath);
+        Str_Set(&info->_dataPath, Str_Text(dataPath));
 
     Str_Init(&info->_defsPath);
     if(defsPath && !Str_IsEmpty(defsPath))
-        Str_Copy(&info->_defsPath, defsPath);
+        Str_Set(&info->_defsPath, Str_Text(defsPath));
 
     Str_Init(&info->_mainConfig);
     Str_Init(&info->_bindingConfig);
@@ -71,7 +71,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
     if(cmdlineFlag)
     {
         info->_cmdlineFlag = Str_New();
-        Str_Copy(info->_cmdlineFlag, cmdlineFlag);
+        Str_Set(info->_cmdlineFlag, Str_Text(cmdlineFlag));
     }
     else
         info->_cmdlineFlag = 0;
@@ -79,7 +79,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
     if(cmdlineFlag2)
     {
         info->_cmdlineFlag2 = Str_New();
-        Str_Copy(info->_cmdlineFlag2, cmdlineFlag2);
+        Str_Set(info->_cmdlineFlag2, Str_Text(cmdlineFlag2));
     }
     else
         info->_cmdlineFlag2 = 0;

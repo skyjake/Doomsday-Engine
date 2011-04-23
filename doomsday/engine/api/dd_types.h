@@ -126,10 +126,6 @@ typedef double          timespan_t;
 #define LUMPNAME_T_LASTINDEX 8
 typedef signed char     lumpname_t[LUMPNAME_T_MAXLEN];
 
-#define FILENAME_T_MAXLEN 256
-#define FILENAME_T_LASTINDEX 255
-typedef char            filename_t[FILENAME_T_MAXLEN];
-
 /**
  * Resource Class.
  *
@@ -150,11 +146,6 @@ typedef enum {
 } resourceclass_t;
 
 #define VALID_RESOURCE_CLASS(n)     ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
-
-typedef struct directory_s {
-    int             drive;
-    filename_t      path;
-} directory_t;
 
 typedef struct trigger_s {
     timespan_t      duration;

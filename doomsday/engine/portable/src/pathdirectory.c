@@ -594,7 +594,7 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
         qsort(pathList, numLeafs, sizeof(*pathList), comparePaths);
         do
         {
-            Con_Printf("  %s\n", Str_Text(F_PrettyPath(pathList + n)));
+            Con_Printf("  %s\n", F_PrettyPath(Str_Text(pathList + n)));
             Str_Free(pathList + n);
         } while(++n < numLeafs);
         free(pathList);

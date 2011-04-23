@@ -35,13 +35,15 @@
 #define MAINWCLASS          "DoomsdayMainWClass"
 
 typedef struct {
-    HINSTANCE       hInstance;
-    LPCSTR          className;
-    BOOL            suspendMsgPump; // Set to true to disable checking windows msgs.
-    BOOL            userDirOk;
+    HINSTANCE hInstance;
+    LPCSTR className;
+    BOOL suspendMsgPump; /// @c true = do not pump the Windows message thread.
 
-    HINSTANCE       hInstPlug[MAX_PLUGS]; // Instances to plugin DLLs.
-    GETGAMEAPI      GetGameAPI;
+    /// @c true = We are using a custom user dir specified on the command line.
+    BOOL usingUserDir;
+
+    HINSTANCE hInstPlug[MAX_PLUGS];
+    GETGAMEAPI GetGameAPI;
 } application_t;
 
 extern uint windowIDX; // Main window.

@@ -31,6 +31,7 @@
 
 #include "dd_types.h"
 #include "gameinfo.h"
+#include "sys_direc.h"
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
@@ -40,7 +41,7 @@ extern int verbose;
 extern FILE* outFile; // Output file for console messages.
 
 extern filename_t ddBasePath;
-extern directory_t ddRuntimeDir, ddBinDir;
+extern filename_t ddRuntimePath, ddBinPath;
 
 extern char* gameStartupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 

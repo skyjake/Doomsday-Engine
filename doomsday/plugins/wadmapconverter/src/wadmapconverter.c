@@ -54,7 +54,7 @@ int ConvertMapHook(int hookType, int param, void *data)
 
     verbose = ArgExists("-verbose");
 
-    VERBOSE2( Con_Message("Attempting map conversion using WadMapConverter ...\n") );
+    VERBOSE2( Con_Message("Attempting map conversion using WadMapConverter...\n") );
     memset(map, 0, sizeof(*map));
 
     if(!IsSupportedFormat(lumpList, param))

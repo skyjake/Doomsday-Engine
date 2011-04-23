@@ -135,18 +135,20 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
         {
             if(PT_BRANCH == PathDirectoryNode_Type(node))
             {
-                // Compose the search pattern. We're interested in *everything*.
                 addpathworker_paramaters_t p;
                 ddstring_t searchPattern;
 
-                Str_Init(&searchPattern); Str_Appendf(&searchPattern, "%s*", Str_Text(searchPath));
-                F_PrependBasePath(&searchPattern, &searchPattern);
+                // Compose the search pattern. Resolve relative to the base path
+                // if not already absolute. We're interested in *everything*.
+                Str_Init(&searchPattern);
+                Str_Appendf(&searchPattern, "%s*", Str_Text(searchPath));
+                //F_PrependBasePath(&searchPattern, &searchPattern);
 
                 // Process this search.
                 p.fileDirectory = fd;
                 p.callback = callback;
                 p.paramaters = paramaters;
-                F_AllResourcePaths2(&searchPattern, addPathWorker, (void*)&p);
+                F_AllResourcePaths2(Str_Text(&searchPattern), addPathWorker, (void*)&p);
                 Str_Free(&searchPattern);
             }
             else
@@ -203,7 +205,7 @@ static void printPaths(const dduri_t* const* paths, size_t pathsCount)
         ddstring_t* resolvedPath = Uri_Resolved(path);
 
         Con_Printf("  \"%s\" %s%s\n", Str_Text(rawPath), (resolvedPath != 0? "-> " : "--(!)incomplete"),
-                   resolvedPath != 0? Str_Text(F_PrettyPath(resolvedPath)) : "");
+                   resolvedPath != 0? F_PrettyPath(Str_Text(resolvedPath)) : "");
 
         Str_Delete(rawPath);
         if(NULL != resolvedPath)
@@ -304,7 +306,7 @@ void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, u
     }
 
 #if _DEBUG
-    VERBOSE( Con_Message("Adding paths to FileDirectory ...\n") );
+    VERBOSE( Con_Message("Adding paths to FileDirectory...\n") );
     VERBOSE2( printPaths(paths, pathsCount) );
 #endif
     resolveAndAddSearchPathsToDirectory(fd, paths, pathsCount, callback, paramaters);
@@ -419,7 +421,7 @@ void FileDirectory_Print(filedirectory_t* fd)
         qsort(fileList, numFiles, sizeof(*fileList), comparePaths);
         do
         {
-            Con_Printf("  %s\n", Str_Text(F_PrettyPath(fileList + n)));
+            Con_Printf("  %s\n", F_PrettyPath(Str_Text(fileList + n)));
             Str_Free(fileList + n);
         } while(++n < numFiles);
         free(fileList);

@@ -649,7 +649,7 @@ static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
  */
 static void buildSectorSSecLists(gamemap_t *map)
 {
-    VERBOSE( Con_Message(" Build subsector tables ...\n") );
+    VERBOSE( Con_Message(" Build subsector tables...\n") )
     { uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
@@ -672,7 +672,7 @@ static void buildSectorLineLists(gamemap_t* map)
     linelink_t** sectorLineLinks;
     uint totallinks;
 
-    VERBOSE( Con_Message(" Build line tables ...\n") );
+    VERBOSE( Con_Message(" Build line tables...\n") )
 
     // build line tables for each sector.
     lineLinksBlockSet = ZBlockSet_Construct(sizeof(linelink_t), 512, PU_APPSTATIC);
@@ -872,7 +872,7 @@ static void finishLineDefs(gamemap_t* map)
     vertex_t           *v[2];
     seg_t              *startSeg, *endSeg;
 
-    VERBOSE2(Con_Message("Finalizing Linedefs...\n"));
+    VERBOSE2( Con_Message("Finalizing Linedefs...\n") )
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -1894,23 +1894,22 @@ boolean MPE_End(void)
      */
     if(gamemap->mapID && gamemap->mapID[0])
     {   // Yes, write the cached map data file.
-        filename_t              cachedMapDir;
-        filename_t              cachedMapDataFile;
-        int                     markerLumpNum;
+        lumpnum_t markerLumpNum = W_GetLumpNumForName(gamemap->mapID);
+        ddstring_t* cachedMapDir = DAM_ComposeCacheDir(W_LumpSourceFile(markerLumpNum));
+        ddstring_t cachedMapPath;
 
-        markerLumpNum = W_GetNumForName(gamemap->mapID);
-        DAM_GetCachedMapDir(cachedMapDir, markerLumpNum, FILENAME_T_MAXLEN);
+        Str_Init(&cachedMapPath);
+        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), W_LumpName(markerLumpNum));
+        F_ExpandBasePath(&cachedMapPath, &cachedMapPath);
 
-        // Ensure the destination path exists.
-        M_CheckPath(cachedMapDir);
+        // Ensure the destination directory exists.
+        F_MakePath(Str_Text(cachedMapDir));
 
-        sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
-                                   W_LumpName(markerLumpNum));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
-                        FILENAME_T_MAXLEN);
-        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
+        // Archive this map!
+        DAM_MapWrite(gamemap, Str_Text(&cachedMapPath));
 
-        DAM_MapWrite(gamemap, cachedMapDataFile);
+        Str_Delete(cachedMapDir);
+        Str_Free(&cachedMapPath);
     }
 
     lastBuiltMap = gamemap;

@@ -1097,11 +1097,11 @@ patchid_t R_RegisterPatch(const char* name)
     if(0 != (id = findPatchTextureByName(name)))
         return id;
 
-    if(-1 == (lumpNum = W_CheckNumForName(name)))
+    if(-1 == (lumpNum = W_CheckLumpNumForName(name)))
         return 0;
 
     /// \fixme What about min lumpNum size?
-    patch = (const doompatch_header_t*) W_CacheLumpNum(lumpNum, PU_APPSTATIC);
+    patch = (const doompatch_header_t*) W_CacheLump(lumpNum, PU_APPSTATIC);
 
     // An entirely new patch.
     p = Z_Calloc(sizeof(*p), PU_PATCH, NULL);
@@ -1114,7 +1114,7 @@ patchid_t R_RegisterPatch(const char* name)
      */
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
-    p->isCustom = !W_LumpFromIWAD(lumpNum);
+    p->isCustom = !W_LumpIsFromIWAD(lumpNum);
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
@@ -1133,7 +1133,7 @@ patchid_t R_RegisterPatch(const char* name)
     patchTextures = Z_Realloc(patchTextures, sizeof(patchtex_t*) * patchTexturesCount, PU_PATCH);
     patchTextures[patchTexturesCount-1] = p;
 
-    W_ChangeCacheTag(lumpNum, PU_CACHE);
+    W_CacheChangeTag(lumpNum, PU_CACHE);
     return patchTexturesCount;
     }
 }
@@ -1224,11 +1224,11 @@ rawtex_t** R_CollectRawTexs(int* count)
  */
 rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
 {
-    if(-1 == lumpNum || lumpNum >= W_NumLumps())
+    if(-1 == lumpNum || lumpNum >= W_LumpCount())
     {
 #if _DEBUG
         Con_Message("Warning:R_FindRawTex: LumpNum #%i out of bounds (%i), returning NULL.\n",
-                lumpNum, W_NumLumps());
+                lumpNum, W_LumpCount());
 #endif
         return NULL;
     }
@@ -1251,11 +1251,11 @@ rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
     rawtexhash_t* hash = 0;
     rawtex_t* r;
 
-    if(-1 == lumpNum || lumpNum >= W_NumLumps())
+    if(-1 == lumpNum || lumpNum >= W_LumpCount())
     {
 #if _DEBUG
         Con_Message("Warning:R_GetRawTex: LumpNum #%i out of bounds (%i), returning NULL.\n",
-                lumpNum, W_NumLumps());
+                lumpNum, W_LumpCount());
 #endif
         return NULL;
     }
@@ -1301,30 +1301,34 @@ static lumpnum_t* loadPatchList(lumpnum_t lumpNum, size_t* num)
 {
     char name[9], *names;
     lumpnum_t* patchLumpList;
-    size_t i, numPatches, lumpSize = W_LumpLength(lumpNum);
+    size_t numPatches, lumpSize = W_LumpLength(lumpNum);
 
-    names = M_Malloc(lumpSize);
+    names = (char*) malloc(lumpSize);
+    if(NULL == names)
+        Con_Error("loadPatchList: Failed on allocation of %lu bytes for patch name list.", (unsigned long) lumpSize);
     W_ReadLump(lumpNum, names);
 
-    numPatches = LONG(*((int *) names));
+    numPatches = LONG(*((int*) names));
     if(numPatches > (lumpSize - 4) / 8)
     {   // Lump is truncated.
-        Con_Message("loadPatchList: Warning, lumpNum '%s' truncated (%lu bytes, "
-                    "expected %lu).\n", W_LumpName(lumpNum),
-                    (unsigned long) lumpSize,
-                    (unsigned long) (numPatches * 8 + 4));
+        Con_Message("loadPatchList: Warning, lumpNum '%s' truncated (%lu bytes, expected %lu).\n",
+            W_LumpName(lumpNum), (unsigned long) lumpSize, (unsigned long) (numPatches * 8 + 4));
         numPatches = (lumpSize - 4) / 8;
     }
 
-    patchLumpList = M_Malloc(numPatches * sizeof(*patchLumpList));
+    patchLumpList = (lumpnum_t*) malloc(numPatches * sizeof(*patchLumpList));
+    if(NULL == patchLumpList)
+        Con_Error("loadPatchList: Failed on allocation of %lu bytes for patch lump list.", (unsigned long) (numPatches * sizeof(*patchLumpList)));
+
+    { size_t i;
     for(i = 0; i < numPatches; ++i)
     {
         memset(name, 0, sizeof(name));
         strncpy(name, names + 4 + i * 8, 8);
-        patchLumpList[i] = W_CheckNumForName(name);
-    }
+        patchLumpList[i] = W_CheckLumpNumForName(name);
+    }}
 
-    M_Free(names);
+    free(names);
 
     if(num)
         *num = numPatches;
@@ -1387,18 +1391,28 @@ typedef struct {
     byte*               validTexDefs;
     short*              texDefNumPatches;
     int                 numTexDefs, numValidTexDefs;
-    patchcompositetex_t**  texDefs = NULL;
+    patchcompositetex_t** texDefs = NULL;
 
     lumpSize = W_LumpLength(lumpNum);
-    maptex1 = M_Malloc(lumpSize);
-    W_ReadLump(lumpNum, maptex1);
+    maptex1 = (int*) malloc(lumpSize);
+    if(NULL == maptex1)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of "
+            "archived DOOM texture definitions.", (unsigned long) lumpSize);
+    W_ReadLump(lumpNum, (char*)maptex1);
 
     numTexDefs = LONG(*maptex1);
 
-    VERBOSE( Con_Message("R_ReadTextureDefs: Processing lump '%s'...\n", W_LumpName(lumpNum)) )
+    VERBOSE( Con_Message("R_ReadTextureDefs: Processing lump \"%s\"...\n", W_LumpName(lumpNum)) )
 
-    validTexDefs = M_Calloc(numTexDefs * sizeof(byte));
-    texDefNumPatches = M_Calloc(numTexDefs * sizeof(*texDefNumPatches));
+    validTexDefs = (byte*) calloc(1, numTexDefs * sizeof(*validTexDefs));
+    if(NULL == validTexDefs)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for valid texture record list.",
+            (unsigned long) (numTexDefs * sizeof(*validTexDefs)));
+
+    texDefNumPatches = (short*) calloc(1, numTexDefs * sizeof(*texDefNumPatches));
+    if(NULL == texDefNumPatches)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for texture patch count record list.",
+            (unsigned long) (numTexDefs * sizeof(*texDefNumPatches)));
 
     /**
      * Pass #1
@@ -1413,7 +1427,7 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            Con_Message("R_ReadTextureDefs: Bad offset %lu for definition %i in lump '%s'.\n",
+            Con_Message("R_ReadTextureDefs: Bad offset %lu for definition %i in lump \"%s\".\n",
                 (unsigned long) offset, i, W_LumpName(lumpNum));
             continue;
         }
@@ -1614,7 +1628,7 @@ typedef struct {
             j = 0;
             while(j < texDef->patchCount && (texDef->flags & TXDF_IWAD))
             {
-                if(!W_LumpFromIWAD(texDef->patches[j].lumpNum))
+                if(!W_LumpIsFromIWAD(texDef->patches[j].lumpNum))
                     texDef->flags &= ~TXDF_IWAD;
                 else
                     j++;
@@ -1628,9 +1642,9 @@ typedef struct {
     VERBOSE( Con_Message("  Loaded %i of %i definitions.\n", numValidTexDefs, numTexDefs) )
 
     // Free all temporary storage.
-    M_Free(validTexDefs);
-    M_Free(texDefNumPatches);
-    M_Free(maptex1);
+    free(validTexDefs);
+    free(texDefNumPatches);
+    free(maptex1);
 
     if(numDefs)
         *numDefs = numValidTexDefs;
@@ -1646,7 +1660,7 @@ static void loadPatchCompositeDefs(void)
     size_t numPatches;
     boolean firstNull;
 
-    if((pnamesLump = W_CheckNumForName2("PNAMES", true)) == -1)
+    if((pnamesLump = W_CheckLumpNumForName2("PNAMES", true)) == -1)
         return;
 
     // Load the patch names from the PNAMES lump.
@@ -1663,7 +1677,7 @@ static void loadPatchCompositeDefs(void)
      * definition does not come from an IWAD lump.
      */
     firstNull = true;
-    for(i = 0; i < W_NumLumps(); ++i)
+    for(i = 0; i < W_LumpCount(); ++i)
     {
         char name[9];
 
@@ -1673,7 +1687,7 @@ static void loadPatchCompositeDefs(void)
 
         if(!strncmp(name, "TEXTURE1", 8) || !strncmp(name, "TEXTURE2", 8))
         {
-            boolean isFromIWAD = W_LumpFromIWAD(i);
+            boolean isFromIWAD = W_LumpIsFromIWAD(i);
             int newNumTexDefs;
             patchcompositetex_t** newTexDefs;
 
@@ -1828,7 +1842,7 @@ void R_InitPatchComposites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    VERBOSE2( Con_Message("Initializing PatchComposites ...\n") );
+    VERBOSE2( Con_Message("Initializing PatchComposites...\n") )
 
     patchCompositeTexturesCount = 0;
     patchCompositeTextures = NULL;
@@ -1918,8 +1932,8 @@ void R_InitFlatTextures(void)
 
     assert(flatTexturesCount == 0);
 
-    VERBOSE( Con_Message("Initializing Flats ...\n") );
-    { int i, numLumps = W_NumLumps();
+    VERBOSE( Con_Message("Initializing Flats...\n") )
+    { int i, numLumps = W_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
         const char* name = W_LumpName(i);
@@ -1945,7 +1959,7 @@ void R_InitFlatTextures(void)
         if(!Stack_Height(stack))
             continue;
 
-        R_NewFlat(name, (lumpnum_t)i, !W_LumpFromIWAD(i));
+        R_NewFlat(name, (lumpnum_t)i, !W_LumpIsFromIWAD(i));
     }}
 
     while(Stack_Height(stack))
@@ -2004,7 +2018,7 @@ void R_InitSpriteTextures(void)
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack;
 
-    VERBOSE( Con_Message("Initializing Sprites ...\n") );
+    VERBOSE( Con_Message("Initializing Sprites...\n") )
 
     clearSpriteTextures();
     assert(spriteTexturesCount == 0);
@@ -2013,7 +2027,7 @@ void R_InitSpriteTextures(void)
      * Step 1: Collection.
      */
     stack = Stack_New();
-    { int i, numLumps = W_NumLumps();
+    { int i, numLumps = W_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
         const char* name = W_LumpName(i);
@@ -2047,7 +2061,7 @@ void R_InitSpriteTextures(void)
             if(!Str_CompareIgnoreCase(&spriteTextures[j]->name, name))
             {
                 // Update metadata and move the sprite to the end (relative indices must be respected).
-                spriteTextures[j]->isCustom = W_LumpFromIWAD(i);
+                spriteTextures[j]->isCustom = W_LumpIsFromIWAD(i);
                 spriteTextures[j]->lumpNum = (lumpnum_t) i;
                 if(j != spriteTexturesCount-1)
                 {
@@ -2069,7 +2083,7 @@ void R_InitSpriteTextures(void)
         Str_Init(&sprTex->name);
         Str_Set(&sprTex->name, name);
         sprTex->lumpNum = (lumpnum_t)i;
-        sprTex->isCustom = W_LumpFromIWAD(i);
+        sprTex->isCustom = W_LumpIsFromIWAD(i);
     }}
 
     while(Stack_Height(stack))
@@ -2096,7 +2110,7 @@ void R_InitSpriteTextures(void)
             continue;
         }
 
-        patch = (const doompatch_header_t*) W_CacheLumpNum(sprTex->lumpNum, PU_CACHE);
+        patch = (const doompatch_header_t*) W_CacheLump(sprTex->lumpNum, PU_APPSTATIC);
 
         tex = GL_CreateTexture2(Str_Text(&sprTex->name), i, TN_SPRITES, SHORT(patch->width), SHORT(patch->height));
         if(NULL == tex)
@@ -2105,11 +2119,13 @@ void R_InitSpriteTextures(void)
                 Str_Text(&sprTex->name), sprTex->lumpNum);
             sprTex->offX = sprTex->offY = 0;
             sprTex->lumpNum = -1;
+            W_CacheChangeTag(sprTex->lumpNum, PU_CACHE);
             continue;
         }
         sprTex->texId = Texture_Id(tex);
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
+        W_CacheChangeTag(sprTex->lumpNum, PU_CACHE);
     }}
 
     VERBOSE2(
@@ -2159,7 +2175,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     if(verbose)
     {
         ddstring_t* searchPath = Uri_ToString(skin);
-        Con_Message("SkinTex: \"%s\" -> %li\n", Str_Text(F_PrettyPath(searchPath)),
+        Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(Str_Text(searchPath)),
             (long) (1 + (st - skinNames)));
         Str_Delete(searchPath);
     }
@@ -2179,11 +2195,10 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
     if(modelfn)
     {
         // The "first choice" directory is that in which the model file resides.
-        directory_t mydir;
-        memset(&mydir, 0, sizeof(mydir));
-        Dir_FileDir(modelfn, &mydir);
-        Str_Appendf(&searchPath, "%s%s", mydir.path, skin);
+        directory_t* mydir = Dir_ConstructFromPathDir(modelfn);
+        Str_Appendf(&searchPath, "%s%s", mydir->path, skin);
         found = 0 != F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath);
+        Dir_Destruct(mydir);
     }
 
     if(!found)
@@ -2858,8 +2873,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, int width, int height)
     if(NULL == glTex)
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning, failed creating Texture for mask image: %s\n",
-            Str_Text(F_PrettyPath(path)));
+        Con_Message("Warning, failed creating Texture for mask image: %s\n", F_PrettyPath(Str_Text(path)));
         Str_Delete(path);
         return 0;
     }

@@ -42,7 +42,9 @@ static void setLastError(const char* msg)
         return;
     }
 
-    lastErrorMsg = realloc(lastErrorMsg, len+1);
+    lastErrorMsg = (char*) realloc(lastErrorMsg, len+1);
+    if(NULL == lastErrorMsg)
+        Con_Error("setLastError: Failed on (re)allocation of %lu bytes for last error buffer.", (unsigned long) (len+1));
     strcpy(lastErrorMsg, msg);
 }
 

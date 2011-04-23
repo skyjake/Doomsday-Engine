@@ -334,16 +334,14 @@ static void DM_Mus_Stop(void)
     // Not needed.
 }
 
-static void *DM_Mus_SongBuffer(int length)
+static void* DM_Mus_SongBuffer(int length)
 {
     return DM_Ext_SongBuffer(length);
 }
 
 static int DM_Mus_Play(int looped)
 {
-    char fileName[256];
-
-    sprintf(fileName, "%s.mid", BUFFERED_MUSIC_FILE);
+    const char* fileName = (BUFFERED_MUSIC_FILE".mid");
     convertMusToMidi((byte*) song, songSize, fileName);
     return playFile(fileName, looped);
 }

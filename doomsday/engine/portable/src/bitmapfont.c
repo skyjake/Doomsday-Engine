@@ -263,7 +263,7 @@ static void prepareFont(bitmapfont_t* font)
             // Upload the texture.
             if(!novideo && !isDedicated)
             {
-                VERBOSE2( Con_Printf("Uploading GL texture for font '%s' ...\n", Str_Text(&font->_name)) );
+                VERBOSE2( Con_Printf("Uploading GL texture for font '%s'...\n", Str_Text(&font->_name)) );
 
                 font->_tex = GL_NewTextureWithParams2(DGL_RGBA, font->_texWidth,
                     font->_texHeight, image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,

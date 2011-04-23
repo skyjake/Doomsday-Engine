@@ -264,7 +264,7 @@ void P_LoadACScripts(int lump)
 
     if(lumpLength >= sizeof(acsheader_t))
     {
-        header = W_CacheLumpNum(lump, PU_MAP);
+        header = (const acsheader_t*) W_CacheLump(lump, PU_MAP);
         ActionCodeBase = (const byte*) header;
 
         if(LONG(header->infoOffset) < (int)lumpLength)

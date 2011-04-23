@@ -864,7 +864,7 @@ boolean SV_v19_LoadGame(const char* savename)
     size_t              length;
     char                vcheck[VERSIONSIZE];
 
-    if(!(length = M_ReadFile(savename, &saveBuffer)))
+    if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
         return false;
 
     // Skip the description field.

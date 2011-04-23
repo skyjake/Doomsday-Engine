@@ -297,7 +297,11 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
                      sizeof(int) * mdl->lodInfo[0].numGlCommands);
 
     // Load skins.
-    mdl->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
+    mdl->skins = (dmd_skin_t*) calloc(1, sizeof(*mdl->skins) * inf->numSkins);
+    if(NULL == mdl->skins)
+        Con_Error("R_LoadModelMD2: Failed on allocation of %lu bytes for skin list.",
+            (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
+
     F_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
         F_Read(mdl->skins[i].name, 64, file);
@@ -1125,7 +1129,7 @@ void R_InitModels(void)
     if(isDedicated || ArgCheck("-nomd2"))
         return;
 
-    VERBOSE( Con_Message("Initializing Models ...\n") );
+    VERBOSE( Con_Message("Initializing Models...\n") )
     usedTime = Sys_GetRealTime();
 
     if(modefs)

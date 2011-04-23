@@ -97,8 +97,8 @@ void P_DestroyGameInfo(gameinfo_t* info);
  * \note Resource registration order defines the order in which resources of
  * each type are loaded.
  *
- * @param rclass        Class of resource being added.
- * @param record        Resource record being added.
+ * @param rclass  Class of resource being added.
+ * @param record  Resource record being added.
  */
 struct resourcerecord_s* GameInfo_AddResource(gameinfo_t* info,
     resourceclass_t rclass, struct resourcerecord_s* record);
@@ -136,7 +136,7 @@ struct resourcerecord_s* const* GameInfo_Resources(gameinfo_t* info,
 
 /**
  * \note Unless caller is the resource locator then you probably shouldn't be calling.
- * This is the base data path and shouldn't be used directly for resource location.
+ * This is the absolute data path and shouldn't be used directly for resource location.
  *
  * @return  Ptr to a string containing the base data-class resource directory.
  */
@@ -144,7 +144,7 @@ const ddstring_t* GameInfo_DataPath(gameinfo_t* info);
 
 /**
  * \note Unless caller is the resource locator then you probably shouldn't be calling.
- * This is the base defs path and shouldn't be used directly for resource location.
+ * This is the absolute defs path and shouldn't be used directly for resource location.
  *
  * @return  Ptr to a string containing the base defs-class resource directory.
  */

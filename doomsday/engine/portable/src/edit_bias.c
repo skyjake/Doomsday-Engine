@@ -381,33 +381,40 @@ static void SBE_Dupe(int which)
     }
 }
 
-static boolean SBE_Save(const char *name)
+static boolean SBE_Save(const char* name)
 {
-    int                 i;
-    source_t           *s;
-    FILE               *file;
-    filename_t          fileName;
-    gamemap_t          *map = P_GetCurrentMap();
-    const char         *uid = P_GetUniqueMapID(map);
+    gamemap_t* map = P_GetCurrentMap();
+    const char* uid = P_GetUniqueMapID(map);
+    ddstring_t fileName;
+    source_t* s;
+    FILE* file;
 
-    if(!name)
+    Str_Init(&fileName);
+    if(NULL == name || !name[0])
     {
-        sprintf(fileName, "%s.ded", P_GetMapID(map));
+        Str_Appendf(&fileName, "%s.ded", P_GetMapID(map));
     }
     else
     {
-        strcpy(fileName, name);
-        if(!strchr(fileName, '.'))
+        Str_Set(&fileName, name);
+        F_FixSlashes(&fileName, &fileName);
+        F_ExpandBasePath(&fileName, &fileName);
+        // Do we need to append an extension?
+        if(NULL == F_FindFileExtension(Str_Text(&fileName)))
         {
-            // Append the file name extension.
-            strcat(fileName, ".ded");
+            Str_Append(&fileName, ".ded");
         }
     }
 
-    Con_Printf("Saving to %s...\n", fileName);
-
-    if((file = fopen(fileName, "wt")) == NULL)
+    file = fopen(Str_Text(&fileName), "wt");
+    if(NULL == file)
+    {
+        Con_Message("Warning failed to open \"%s\" for writing. Bias Lights not saved.\n", Str_Text(&fileName));
+        Str_Free(&fileName);
         return false;
+    }
+
+    Con_Printf("Saving to \"%s\"...\n", F_PrettyPath(Str_Text(&fileName)));
 
     fprintf(file, "# %i Bias Lights for %s\n\n", numSources, uid);
 
@@ -416,6 +423,7 @@ static boolean SBE_Save(const char *name)
     fprintf(file, "SkipIf Not %s\n", Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
 
     s = SB_GetSource(0);
+    { int i;
     for(i = 0; i < numSources; ++i, ++s)
     {
         fprintf(file, "\nLight {\n");
@@ -428,9 +436,10 @@ static boolean SBE_Save(const char *name)
         fprintf(file, "  Sector levels { %g %g }\n", s->sectorLevel[0],
                 s->sectorLevel[1]);
         fprintf(file, "}\n");
-    }
+    }}
 
     fclose(file);
+    Str_Free(&fileName);
     return true;
 }
 

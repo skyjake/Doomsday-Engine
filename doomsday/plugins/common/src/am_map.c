@@ -390,7 +390,7 @@ static void initAutomapConfig(int player)
     AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_ARROW);
 
 #if __JHERETIC__ || __JHEXEN__
-    if(W_CheckNumForName("AUTOPAGE") == -1)
+    if(W_CheckLumpNumForName("AUTOPAGE") == -1)
     {
         setColorAndAlpha(mcfg, AMO_BACKGROUND, .55f, .45f, .35f,
                          cfg.automapOpacity);

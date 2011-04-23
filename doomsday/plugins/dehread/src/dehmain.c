@@ -2360,7 +2360,7 @@ void ApplyDEH(char *patch, int length)
  */
 void ReadDehackedLump(lumpnum_t lumpNum)
 {
-    uint8_t* lump;
+    char* lump;
     size_t len;
 
     if(0 > lumpNum || lumpNum >= DD_GetInteger(DD_NUMLUMPS))
@@ -2370,7 +2370,7 @@ void ReadDehackedLump(lumpnum_t lumpNum)
     }
 
     len = W_LumpLength(lumpNum);
-    lump = (uint8_t*) calloc(1, sizeof(*lump) * (len + 1));
+    lump = (char*) calloc(1, (len + 1));
     if(NULL == lump)
     {
         LPrintf("Warning:ReadDehackedLump: Failed on allocation of %lu bytes when attempting to "
@@ -2378,10 +2378,10 @@ void ReadDehackedLump(lumpnum_t lumpNum)
             W_LumpName(lumpNum), lumpNum);
         return;
     }
-    W_ReadLump(lumpNum, (void*)lump);
+    W_ReadLump(lumpNum, lump);
 
-    VERBOSE( Con_Message("Applying Dehacked patch '%s(#%i)' ...\n", W_LumpName(lumpNum), lumpNum) );
-    ApplyDEH((char*)lump, len);
+    VERBOSE( Con_Message("Applying Dehacked patch '%s(#%i)'...\n", W_LumpName(lumpNum), lumpNum) );
+    ApplyDEH(lump, len);
 
     free(lump);
 }
@@ -2417,14 +2417,13 @@ void ReadDehacked(char *filename)
  * This will be called after the engine has loaded all definitions but
  * before the data they contain has been initialized.
  */
-int DefsHook(int hook_type, int parm, void *data)
+int DefsHook(int hook_type, int parm, void* data)
 {
-    int                 i;
-
     verbose = ArgExists("-verbose");
     ded = (ded_t *) data;
 
     // Check for a DEHACKED lumps.
+    { int i;
     for(i = DD_GetInteger(DD_NUMLUMPS) - 1; i >= 0; i--)
         if(!strnicmp(W_LumpName(i), "DEHACKED", 8))
         {
@@ -2433,22 +2432,27 @@ int DefsHook(int hook_type, int parm, void *data)
             if(!ArgCheck("-alldehs"))
                 break;
         }
+    }
 
     // How about the -deh option?
     if(ArgCheckWith("-deh", 1))
     {
-        filename_t          temp;
-        const char*         fn;
+        ddstring_t buf;
+        const char* fn;
 
         // Aha! At least one DEH specified. Let's read all of 'em.
-        while((fn = ArgNext()) != NULL && fn[0] != '-')
+        Str_Init(&buf);
+        while(NULL != (fn = ArgNext()) && '-' != fn[0])
         {
-            M_TranslatePath(temp, fn, FILENAME_T_MAXLEN);
-            if(!M_FileExists(temp))
+            Str_Set(&buf, fn);
+            Str_Strip(&buf);
+            F_TranslatePath(&buf, &buf);
+            if(!F_FileExists(Str_Text(&buf)))
                 continue;
 
-            ReadDehacked(temp);
+            ReadDehacked(Str_Text(&buf));
         }
+        Str_Free(&buf);
     }
     return true;
 }
@@ -2936,12 +2940,12 @@ void DP_Initialize(void)
 "W_Reload: couldn't open %s"
 "W_InitFiles: no files found"
 "Couldn't allocate lumpcache"
-"W_GetNumForName: %s not found!"
+"W_GetLumpNumForName: %s not found!"
 "W_LumpLength: %i >= numlumps"
 "W_ReadLump: %i >= numlumps"
 "W_ReadLump: couldn't open %s"
 "W_ReadLump: only read %i of %i on lump %i"
-"W_CacheLumpNum: %i >= numlumps"
+"W_CacheLump: %i >= numlumps"
 "Z_CT at w_wad.c:%i"
 "w"
 "waddump.txt"

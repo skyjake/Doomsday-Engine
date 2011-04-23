@@ -216,7 +216,7 @@ void P_InitSwitchList(void)
 void P_InitSwitchList(void)
 {
     int i, index, episode;
-    lumpnum_t lumpNum = W_CheckNumForName2("SWITCHES", true);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2("SWITCHES", true);
     switchlist_t* sList = switchInfo;
     ddstring_t path; Str_Init(&path);
 
@@ -239,12 +239,12 @@ void P_InitSwitchList(void)
     // Has a custom SWITCHES lump been loaded?
     if(lumpNum > 0)
     {
-        VERBOSE( Con_Message("Processing lump %s::SWITCHES ...\n", M_PrettyPath(W_LumpSourceFile(lumpNum))) );
-        sList = (switchlist_t*) W_CacheLumpNum(lumpNum, PU_GAMESTATIC);
+        VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))) );
+        sList = (switchlist_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
     }
     else
     {
-        VERBOSE( Con_Message("Registering default switches ...\n") );
+        VERBOSE( Con_Message("Registering default switches...\n") );
     }
 
     for(index = 0, i = 0; ; ++i)
@@ -274,7 +274,7 @@ void P_InitSwitchList(void)
     Str_Free(&path);
 
     if(lumpNum > 0)
-        W_ChangeCacheTag(lumpNum, PU_CACHE);
+        W_CacheChangeTag(lumpNum, PU_CACHE);
 
     numswitches = index / 2;
     switchlist[index] = 0;

@@ -227,17 +227,13 @@ static void readImageSpec(tga_imagespec_t* dst, DFILE* file)
     dst->attributeBits = (bits & 0xf);
 }
 
-int TGA_Save24_rgb565(const char* filename, int w, int h, const uint16_t* buf)
+int TGA_Save24_rgb565(FILE* file, int w, int h, const uint16_t* buf)
 {
     int i, k;
-    FILE* file;
     uint8_t* outBuf;
     size_t outBufStart;
 
-    if(!buf || !(w > 0 && h > 0))
-        return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
@@ -273,8 +269,6 @@ int TGA_Save24_rgb565(const char* filename, int w, int h, const uint16_t* buf)
     fwrite(outBuf, w * h * 3, 1, file);
     free(outBuf);
 
-    fclose(file);
-
     return 1; // Success.
 }
 
@@ -285,17 +279,13 @@ const char* TGA_LastError(void)
     return 0;
 }
 
-int TGA_Save24_rgb888(const char* filename, int w, int h, const uint8_t* buf)
+int TGA_Save24_rgb888(FILE* file, int w, int h, const uint8_t* buf)
 {
     uint8_t* outBuf;
-    FILE* file;
     int i;
 
-    if(!buf || !(w > 0 && h > 0))
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
-        return 0; // Huh?
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
     writeHeader(0, 0, 2, file);
@@ -316,22 +306,16 @@ int TGA_Save24_rgb888(const char* filename, int w, int h, const uint8_t* buf)
     fwrite(outBuf, w * h * 3, 1, file);
     free(outBuf);
 
-    fclose(file);
-
     return 1; // Success.
 }
 
-int TGA_Save24_rgba8888(const char* filename, int w, int h, const uint8_t* buf)
+int TGA_Save24_rgba8888(FILE* file, int w, int h, const uint8_t* buf)
 {
     uint8_t* outBuf;
-    FILE* file;
     int i;
 
-    if(!buf || !(w > 0 && h > 0))
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
-        return 0; // Huh?
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
     writeHeader(0, 0, 2, file);
@@ -352,22 +336,16 @@ int TGA_Save24_rgba8888(const char* filename, int w, int h, const uint8_t* buf)
     fwrite(outBuf, w * h * 3, 1, file);
     free(outBuf);
 
-    fclose(file);
-
     return 1; // Success.
 }
 
-int TGA_Save16_rgb888(const char* filename, int w, int h, const uint8_t* buf)
+int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
 {
     int16_t* outBuf;
-    FILE* file;
     int i;
 
-    if(!buf || !(w > 0 && h > 0))
+    if(NULL == file || !buf || !(w > 0 && h > 0))
         return 0;
-
-    if((file = fopen(filename, "wb")) == NULL)
-        return 0; // Huh?
 
     // No identification field, no color map, Targa type 2 (unmapped RGB).
     writeHeader(0, 0, 2, file);
@@ -385,8 +363,6 @@ int TGA_Save16_rgb888(const char* filename, int w, int h, const uint8_t* buf)
     }
     fwrite(outBuf, w * h * 2, 1, file);
     free(outBuf);
-
-    fclose(file);
 
     return 1; // Success.
 }

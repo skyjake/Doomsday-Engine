@@ -201,47 +201,75 @@ static int initDGL(void)
 
 static void determineGlobalPaths(application_t* app)
 {
-    assert(app);
+    assert(NULL != app);
 
 #ifndef MACOSX
     if(getenv("HOME"))
     {
-        filename_t homeDir;
-        sprintf(homeDir, "%s/.deng", getenv("HOME"));
-        M_CheckPath(homeDir);
-        Dir_MakeDir(homeDir, &ddRuntimeDir);
-        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
+        filename_t homePath;
+        directory_t* temp;
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.deng", getenv("HOME"));
+        temp = Dir_ConstructFromPathDir(homePath);
+        Dir_mkpath(Dir_Path(temp));
+        app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
+        if(app->usingHomeDir)
+        {
+            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        }
+        Dir_Destruct(temp);
     }
 #endif
 
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
-        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
+        directory_t* temp = Dir_ConstructFromPathDir(ArgNext());
+        app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
+        if(app->usingUserDir)
+        {
+            strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+#ifndef MACOSX
+            app->usingHomeDir = false;
+#endif
+        }
+        Dir_Destruct(temp);
     }
 
-    // The current working directory is the runtime dir.
-    Dir_GetDir(&ddRuntimeDir);
+#ifndef MACOSX
+    if(!app->usingHomeDir && !app->usingUserDir)
+#else
+    if(!app->usingUserDir)
+#endif
+    {
+        // The current working directory is the runtime dir.
+        directory_t* temp = Dir_ConstructFromCurrentDir();
+        Dir_SetCurrent(Dir_Path(temp));
+        strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        Dir_Destruct(temp);
+    }
 
     /**
-     * The base path is always the same and depends on the build configuration. 
+     * Determine the base path. Unless overridden on the command line this is
+     * determined according to the the build configuration.
      * Usually this is something like "/usr/share/deng/".
      */
-#ifdef MACOSX
-    strcpy(ddBasePath, "./");
-#else
-    strcpy(ddBasePath, DENG_BASE_DIR);
-#endif
-
     if(ArgCheckWith("-basedir", 1))
     {
         strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
     }
-
-    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
+    else
+    {
+#ifdef MACOSX
+        strncpy(ddBasePath, "./", FILENAME_T_MAXLEN);
+#else
+        strncpy(ddBasePath, DENG_BASE_DIR, FILENAME_T_MAXLEN);
+#endif
+    }
+    Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
+    // Ensure it ends with a directory separator.
+    if(ddBasePath[strlen(ddBasePath)-1] != DIR_SEP_CHAR)
+        strncat(ddBasePath, DIR_SEP_STR, FILENAME_T_MAXLEN);
 }
 
 static char* buildCommandLineString(int argc, char** argv)
@@ -284,7 +312,6 @@ int main(int argc, char** argv)
     int exitCode = 0;
 
     memset(&app, 0, sizeof(app));
-    app.userDirOk = true;
 
     /*if(!initApplication(&app))
     {

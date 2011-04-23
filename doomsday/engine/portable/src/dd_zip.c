@@ -38,6 +38,7 @@
 #include "de_platform.h"
 #include "de_defs.h"
 #include "de_console.h"
+#include "de_misc.h"
 
 #include "sys_direc.h"
 #include "sys_reslocator.h"
@@ -493,7 +494,7 @@ static boolean locateCentralDirectory(DFILE* file)
 
 void Zip_Init(void)
 {
-    VERBOSE( Con_Message("Initializing Package subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Package subsystem...\n") );
 
     zipRoot = NULL;
     zipFiles = 0;
@@ -541,7 +542,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     {   // Try to open the file.
         if((file = F_Open(fileName, "rb")) == NULL)
         {
-            Con_Message("Zip_Open: Warning, \"%s\" not found!\n", fileName);
+            Con_Message("Warning:Zip_Open: \"%s\" not found!\n", fileName);
             return false;
         }
     }
@@ -550,12 +551,12 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
         file = prevOpened;
     }
 
-    VERBOSE( Con_Message("Zip_Open: %s\n", fileName) );
+    VERBOSE( Con_Message("Zip_Open: \"%s\"\n", F_PrettyPath(fileName)) );
 
     // Scan the end of the file for the central directory end record.
     if(!locateCentralDirectory(file))
     {
-        Con_Error("Zip_Open: Error, central directory in \"%s\" not found!\n", fileName);
+        Con_Error("Zip_Open: Central directory in \"%s\" not found!\n", fileName);
     }
 
     // Read the central directory end record.
@@ -564,7 +565,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     // Does the summary say something we don't like?
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
     {
-        Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n", fileName);
+        Con_Error("Zip_Open: Multipart Zip file \"%s\" not supported.\n", fileName);
     }
 
     // Read the entire central directory into memory.
@@ -757,8 +758,8 @@ size_t Zip_Read(zipindex_t index, void* buffer)
     if((entry = findZipEntryForIndex(index)))
     {
         VERBOSE2(
-        Con_Message("Zip_Read: %s:%s (%lu bytes%s)\n", Str_Text(F_PrettyPath(&entry->package->name)),
-                    Str_Text(F_PrettyPath(&entry->name)), (unsigned long) entry->size,
+        Con_Message("Zip_Read: \"%s:%s\" (%lu bytes%s)\n", F_PrettyPath(Str_Text(&entry->package->name)),
+                    F_PrettyPath(Str_Text(&entry->name)), (unsigned long) entry->size,
                     (entry->deflatedSize? ", deflated" : "")) );
         return readZipEntry(entry, buffer);
     }

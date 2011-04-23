@@ -29,9 +29,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef WIN32
+#  include <direct.h>
+#endif
+
 #ifdef UNIX
 #  include <pwd.h>
 #  include <limits.h>
+#  include <unistd.h>
 #endif
 
 #include "de_base.h"
@@ -122,7 +127,7 @@ static uint numNamespaces = 0;
 static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath)
 {
     ddstring_t* hashName = Str_New();
-    F_FileName(hashName, filePath);
+    F_FileName(hashName, Str_Text(filePath));
     return hashName;
 }
 
@@ -240,7 +245,7 @@ static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchP
     const char* ptr;
 
     // Has an extension been specified?
-    ptr = M_FindFileExtension(Str_Text(searchPath));
+    ptr = F_FindFileExtension(Str_Text(searchPath));
     if(ptr && *ptr != '*') // Try this first.
         found = tryFindResource2(rclass, searchPath, foundPath, rnamespace);
 
@@ -296,7 +301,7 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
     boolean found = false;
 
 #if _DEBUG
-    VERBOSE2( Con_Message("Using rnamespace \"%s\" ...\n", rnamespace? Str_Text(ResourceNamespace_Name(rnamespace)) : "None") );
+    VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespace? Str_Text(ResourceNamespace_Name(rnamespace)) : "None") )
 #endif
 
     // First try with the optional suffix.
@@ -307,7 +312,7 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
         Str_Init(&fn);
 
         // Has an extension been specified?
-        { const char* ptr = M_FindFileExtension(Str_Text(searchPath));
+        { const char* ptr = F_FindFileExtension(Str_Text(searchPath));
         if(ptr && *ptr != '*')
         {
             char ext[10];
@@ -912,8 +917,8 @@ resourcetype_t F_GuessResourceTypeByName(const char* path)
         return RT_NONE; // Unrecognizable.
 
     // We require a file extension for this.
-    {char* ext;
-    if((ext = strrchr(path, '.')))
+    { char* ext = strrchr(path, '.');
+    if(NULL != ext)
     {
         uint i;
         ++ext;
@@ -962,47 +967,108 @@ const char* F_ResourceClassStr(resourceclass_t rclass)
     }
 }
 
-void F_FileDir(const ddstring_t* str, directory2_t* dir)
+void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
-    assert(str && dir);
+    assert(NULL != dst && NULL != src);
     {
-    filename_t fullPath, pth, drive;
-
-    strncpy(pth, Str_Text(str), FILENAME_T_MAXLEN);
-    _fullpath(fullPath, pth, FILENAME_T_MAXLEN);
-    _splitpath(fullPath, drive, pth, 0, 0);
-
-    Str_Clear(&dir->path);
-    Str_Appendf(&dir->path, "%s%s", drive, pth);
-#ifdef WIN32
-    dir->drive = toupper(Str_At(&dir->path, 0)) - 'A' + 1;
-#else
-    dir->drive = 0;
-#endif
+    /// \fixme Potentially truncates @a src to FILENAME_T_MAXLEN
+    directory_t* dir = Dir_ConstructFromPathDir(Str_Text(src));
+    Str_Set(dst, Dir_Path(dir));
+    Dir_Destruct(dir);
     }
 }
 
-void F_FileName(ddstring_t* dst, const ddstring_t* src)
+void F_FileName(ddstring_t* dst, const char* src)
 {
 #ifdef WIN32
     char name[_MAX_FNAME];
 #else
     char name[NAME_MAX];
 #endif
-    _splitpath(Str_Text(src), 0, 0, name, 0);
+    _splitpath(src, 0, 0, name, 0);
     Str_Set(dst, name);
 }
 
-void F_FileNameAndExtension(ddstring_t* dst, const ddstring_t* src)
+void F_FileNameAndExtension(ddstring_t* dst, const char* src)
 {
 #ifdef WIN32
     char name[_MAX_FNAME], ext[_MAX_EXT];
 #else
     char name[NAME_MAX], ext[NAME_MAX];
 #endif
-    _splitpath(Str_Text(src), 0, 0, name, ext);
+    _splitpath(src, 0, 0, name, ext);
     Str_Clear(dst);
     Str_Appendf(dst, "%s%s", name, ext);
+}
+
+int F_FileExists(const char* file)
+{
+    int result = -1;
+    if(NULL != file && file[0])
+    {
+        ddstring_t buf;
+        // Normalize the path into one we can process.
+        Str_Init(&buf); Str_Set(&buf, file);
+        Str_Strip(&buf);
+        F_FixSlashes(&buf, &buf);
+        F_ExpandBasePath(&buf, &buf);
+
+        result = !access(Str_Text(&buf), 4); // Read permission?
+
+        Str_Free(&buf);
+    }
+    return result;
+}
+
+boolean F_MakePath(const char* path)
+{
+#if !defined(WIN32) && !defined(UNIX)
+#  error F_MakePath has no implementation for this platform.
+#endif
+
+    ddstring_t full, buf;
+    char* ptr, *endptr;
+    boolean result;
+
+    // Convert all backslashes to normal slashes.
+    Str_Init(&full); Str_Set(&full, path);
+    Str_Strip(&full);
+    F_FixSlashes(&full, &full);
+
+    // Does this path already exist?
+    if(0 == access(Str_Text(&full), 0))
+    {
+        Str_Free(&full);
+        return true;
+    }
+
+    // Check and create the path in segments.
+    ptr = Str_Text(&full);
+    Str_Init(&buf);
+    do
+    {
+        endptr = strchr(ptr, DIR_SEP_CHAR);
+        if(!endptr)
+            Str_Append(&buf, ptr);
+        else
+            Str_PartAppend(&buf, ptr, 0, endptr - ptr);
+        if(0 != access(Str_Text(&buf), 0))
+        {
+            // Path doesn't exist, create it.
+#ifdef WIN32
+            mkdir(Str_Text(&buf));
+#elif UNIX
+            mkdir(Str_Text(&buf), 0775);
+#endif
+        }
+        Str_AppendChar(&buf, DIR_SEP_CHAR);
+        ptr = endptr + 1;
+    } while(NULL != endptr);
+
+    result = (0 == access(Str_Text(&full), 0));
+    Str_Free(&buf);
+    Str_Free(&full);
+    return result;
 }
 
 /// \todo dj: Find a suitable home for this.
@@ -1069,6 +1135,60 @@ boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
     }
 }
 
+const char* F_FindFileExtension(const char* path)
+{
+    if(path && path[0])
+    {
+        size_t len = strlen(path);
+        const char* p = path + len - 1;
+        if(p - path > 1 && *p != DIR_SEP_CHAR && *p != DIR_WRONG_SEP_CHAR)
+        {
+            do
+            {
+                if(*(p - 1) == DIR_SEP_CHAR ||
+                   *(p - 1) == DIR_WRONG_SEP_CHAR)
+                    break;
+                if(*p == '.')
+                    return p - path < len - 1? p + 1 : NULL;
+            } while(--p > path);
+        }
+    }
+    return NULL; // Not found.
+}
+
+void F_ExtractFileBase2(char* dest, const char* path, size_t max, int ignore)
+{
+    const char* src = path + strlen(path) - 1;
+
+    // Back up until a \ or the start.
+    while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
+    {
+        src--;
+    }
+
+    while(*src && *src != '.' && max-- > 0)
+    {
+        if(ignore-- > 0)
+        {
+            src++; // Skip chars.
+            max++; // Doesn't count.
+        }
+        else
+            *dest++ = toupper((int) *src++);
+    }
+
+    if(max > 0) // Room for a null?
+    {
+        // End with a terminating null.
+        *dest++ = 0;
+    }
+}
+
+void F_ExtractFileBase(char* dest, const char* path, size_t len)
+{
+    F_ExtractFileBase2(dest, path, len, 0);
+}
+
 /// \todo dj: Find a suitable home for this.
 void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
 {
@@ -1084,7 +1204,7 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
             Str_Init(&buf);
             Str_Set(&buf, ddBasePath);
             Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
-            Str_Copy(dst, &buf);
+            Str_Set(dst, Str_Text(&buf));
             return;
         }
 
@@ -1097,18 +1217,18 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
 
     if(dst == src)
     {
-        Str_Prepend(dst, ddRuntimeDir.path);
+        Str_Prepend(dst, ddRuntimePath);
         return;
     }
 
-    Str_Appendf(dst, "%s%s", ddRuntimeDir.path, Str_Text(src));
+    Str_Appendf(dst, "%s%s", ddRuntimePath, Str_Text(src));
 }
 
 /// \todo dj: Find a suitable home for this.
-boolean F_IsRelativeToBasePath(const ddstring_t* path)
+boolean F_IsRelativeToBasePath(const char* path)
 {
     assert(path);
-    return !strnicmp(Str_Text(path), ddBasePath, strlen(ddBasePath));
+    return !strnicmp(path, ddBasePath, strlen(ddBasePath));
 }
 
 /// \todo dj: Find a suitable home for this.
@@ -1116,29 +1236,27 @@ boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
 {
     assert(dst && absPath);
 
-    if(F_IsRelativeToBasePath(absPath))
+    if(F_IsRelativeToBasePath(Str_Text(absPath)))
     {
         boolean mustCopy = (dst == absPath);
         if(mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf);
-            Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath),
-                           Str_Length(absPath) - strlen(ddBasePath));
-            Str_Copy(dst, &buf);
+            Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+            Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
 
         Str_Clear(dst);
-        Str_PartAppend(dst, Str_Text(absPath), strlen(ddBasePath),
-                       Str_Length(absPath) - strlen(ddBasePath));
+        Str_PartAppend(dst, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
         return true;
     }
 
     // Do we need to copy anyway?
     if(dst != absPath)
-        Str_Copy(dst, absPath);
+        Str_Set(dst, Str_Text(absPath));
 
     // This doesn't appear to be the base path.
     return false;
@@ -1167,15 +1285,46 @@ boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
     if(!F_IsAbsolute(src))
     {
         if(dst != src)
-            Str_Copy(dst, src);
+            Str_Set(dst, Str_Text(src));
         Str_Prepend(dst, ddBasePath);
         return true;
     }
 
     // Do we need to copy anyway?
     if(dst != src)
-        Str_Copy(dst, src);
+        Str_Set(dst, Str_Text(src));
 
+    return false; // Not done.
+}
+
+/// \todo dj: Find a suitable home for this.
+boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
+{
+    assert(dst && src);
+
+    if(!F_IsAbsolute(src))
+    {
+        ddstring_t dir;
+        Str_Init(&dir);
+        F_FileDir(&dir, src);
+        Str_Prepend(dst, Str_Text(&dir));
+        Str_Free(&dir);
+        return true;
+    }
+
+    // Do we need to copy anyway?
+    if(dst != src)
+        Str_Set(dst, Str_Text(src));
+
+    return false; // Not done.
+}
+
+boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src)
+{
+    if(F_ExpandBasePath(dst, src)) return true;
+    // src is equal to dst
+    if(F_PrependBasePath(dst, dst)) return true;
+    if(F_PrependWorkPath(dst, dst)) return true;
     return false; // Not done.
 }
 
@@ -1215,7 +1364,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
             // Append the rest of the original path.
             Str_PartAppend(&buf, Str_Text(src), 2, Str_Length(src)-2);
 
-            Str_Copy(dst, &buf);
+            Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
@@ -1241,7 +1390,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
             }
 
             Str_Append(&buf, Str_Text(src) + 1);
-            Str_Copy(dst, &buf);
+            Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
         }
         Str_Free(&userName);
@@ -1253,51 +1402,76 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 
     // Do we need to copy anyway?
     if(dst != src)
-        Str_Copy(dst, src);
+        Str_Set(dst, Str_Text(src));
 
     // No expansion done.
     return false;
 }
 
+boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src)
+{
+    F_FixSlashes(dst, src); // Will copy src to dst if not equal.
+    return F_ExpandBasePath(dst, dst);
+}
+
+/// @return  @c true if @a path begins with a known directive.
+static boolean pathHasDirective(const char* path)
+{
+    if(NULL != path && path[0])
+    {
+#ifdef UNIX
+        if('~' == path[0]) return true;
+#endif
+        if('}' == path[0] || '>' == path[0]) return true;
+    }
+    return false;
+}
+
 /// \todo dj: Find a suitable home for this.
-const ddstring_t* F_PrettyPath(const ddstring_t* path)
+const char* F_PrettyPath(const char* path)
 {
 #define NUM_BUFS            8
 
     static ddstring_t buffers[NUM_BUFS]; // \fixme: never free'd!
     static uint index = 0;
 
-    size_t len, basePathLen;
+    ddstring_t* buf = NULL;
+    size_t len;
 
-    if(!path || Str_IsEmpty(path))
+    if(NULL == path || 0 == (len = strlen(path)))
         return path;
 
-    len = Str_Length(path);
-    if(len > 1 && (Str_At(path, 0) == '}' || Str_At(path, 0) == '>'))
-    {   // Skip over this special character.
-        ddstring_t* str = &buffers[index++ % NUM_BUFS];
-        Str_Clear(str);
-        Str_PartAppend(str, Str_Text(path), 1, len-1);
-        F_FixSlashes(str, str);
-        return str;
+    // Hide relative directives like '}'
+    if(len > 1 && pathHasDirective(path))
+    {
+        buf = &buffers[index++ % NUM_BUFS];
+        Str_Clear(buf);
+        Str_PartAppend(buf, path, 1, len-1);
+        path = Str_Text(buf);
     }
 
-    basePathLen = strlen(ddBasePath);
-    if(len > basePathLen && !strnicmp(ddBasePath, Str_Text(path), basePathLen))
+    // If within our the base directory cut out the base path.
+    if(F_IsRelativeToBasePath(path))
     {
-        ddstring_t* str = &buffers[index++ % NUM_BUFS];
-        Str_Clear(str);
-        F_RemoveBasePath(str, path);
-        F_FixSlashes(str, str);
-        return str;
+        if(NULL == buf)
+        {
+            buf = &buffers[index++ % NUM_BUFS];
+            Str_Set(buf, path);
+        }
+        F_RemoveBasePath(buf, buf);
+        path = Str_Text(buf);
     }
 
-    if(strchr(Str_Text(path), DIR_WRONG_SEP_CHAR))
+    // Swap directory separators with their system-specific version.
+    if(strchr(path, DIR_WRONG_SEP_CHAR))
     {
-        ddstring_t* str = &buffers[index++ % NUM_BUFS];
-        Str_Clear(str);
-        F_FixSlashes(str, path);
-        return str;
+        if(NULL == buf)
+        {
+            buf = &buffers[index++ % NUM_BUFS];
+            Str_Set(buf, path);
+        }
+        F_FixSlashes(buf, buf);
+        path = Str_Text(buf);
     }
 
     return path;

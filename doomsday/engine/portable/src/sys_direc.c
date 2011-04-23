@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_direc.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,28 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * sys_direc.c: Directory Utilities
- *
- * Directory and file system related stuff.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
-#include "de_platform.h"
-
-#if defined(WIN32)
-#   include <direct.h>
-#endif
-#if defined(UNIX)
-#   include <unistd.h>
-#endif
-
-#include "de_platform.h"
-
 #if defined(WIN32)
 #  include <direct.h>
 #endif
+
 #if defined(UNIX)
 #  include <unistd.h>
 #  include <limits.h>
@@ -55,256 +37,355 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "de_platform.h"
 #include "de_base.h"
-#include "de_console.h"
 #include "de_system.h"
-#include "de_misc.h"
+#include "m_misc.h"
 
-// MACROS ------------------------------------------------------------------
+static void setPathFromPathDir(directory_t* dir, const char* path);
 
-// TYPES -------------------------------------------------------------------
+static void prependBasePath(char* newPath, const char* path, size_t maxLen);
+static void resolveAppRelativeDirectives(char* translated, const char* path, size_t maxLen);
+#if defined(UNIX)
+static void resolveHomeRelativeDirectives(char* path, size_t maxLen);
+#endif
+static void resolvePathRelativeDirectives(char* path);
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-void Dir_GetDir(directory_t *dir)
+directory_t* Dir_Construct(const char* path)
 {
-    memset(dir, 0, sizeof(*dir));
+    directory_t* dir = (directory_t*) malloc(sizeof(*dir));
+    if(NULL == dir)
+        printf("Dir::Construct: Failed on allocation of %lu bytes for new Dir.", (unsigned long) sizeof(*dir));
+    Dir_SetPath(dir, path);
+    return dir;
+}
+
+directory_t* Dir_ConstructFromCurrentDir(void)
+{
+    directory_t* dir = (directory_t*) malloc(sizeof(*dir));
+    size_t lastIndex;
+    char* cwd;
+    if(NULL == dir)
+        printf("Dir::ConstructFromWorkDir: Failed on allocation of %lu bytes for new Dir.\n",
+            (unsigned long) sizeof(*dir));
+
+    cwd = Dir_CurrentPath();
+    lastIndex = strlen(cwd);
+    lastIndex = MIN_OF(lastIndex, FILENAME_T_LASTINDEX);
 
     dir->drive = _getdrive();
-    _getcwd(dir->path, 255);
-
-    if(LAST_CHAR(dir->path) != DIR_SEP_CHAR)
-        strcat(dir->path, DIR_SEP_STR);
-
-    /* VERBOSE2( printf("Dir_GetDir: %s\n", dir->path) ); */
+    memcpy(dir->path, cwd, lastIndex);
+    dir->path[lastIndex] = '\0';
+    free(cwd);
+    return dir;
 }
 
-int Dir_ChDir(directory_t* dir)
+directory_t* Dir_ConstructFromPathDir(const char* path)
 {
-    int                 success;
+    directory_t* dir;
+    if(NULL == path || !path[0])
+        return Dir_ConstructFromCurrentDir();
 
-    _chdrive(dir->drive);
-    success = !_chdir(dir->path);   // Successful if == 0.
-
-    VERBOSE2(Con_Printf
-             ("Dir_ChDir: %s: %s\n", success ? "Succeeded" : "Failed",
-              M_PrettyPath(dir->path)));
-
-    return success;
+    dir = (directory_t*) malloc(sizeof(*dir));
+    if(NULL == dir)
+        printf("Dir::ConstructFromFileDir: Failed on allocation of %lu bytes for new Dir.", (unsigned long) sizeof(*dir));
+    setPathFromPathDir(dir, path);
+    return dir;
 }
 
-void Dir_MakeDir(const char* path, directory_t* dir)
+void Dir_Destruct(directory_t* dir)
 {
-    filename_t          temp;
-
-    Dir_FileDir(path, dir);
-    Dir_FileName(temp, path, FILENAME_T_MAXLEN);
-    strncat(dir->path, temp, FILENAME_T_MAXLEN);
-    // Make it a well formed path.
-    Dir_ValidDir(dir->path, FILENAME_T_MAXLEN);
+    assert(NULL != dir);
+    free(dir);
 }
 
-/**
- * Translates the given filename (>,} => basedir).
- */
-void Dir_FileDir(const char* str, directory_t* dir)
+boolean Dir_IsEqual(directory_t* a, directory_t* b)
 {
-    filename_t          temp, pth;
-    
-    if(!str)
-    {
-        // Nothing to do.
-        return;
-    }
-    
-    M_TranslatePath(pth, str, FILENAME_T_MAXLEN);
-
-    _fullpath(temp, pth, FILENAME_T_MAXLEN);
-    _splitpath(temp, dir->path, pth, 0, 0);
-    strncat(dir->path, pth, FILENAME_T_MAXLEN);
-#ifdef WIN32
-    dir->drive = toupper(dir->path[0]) - 'A' + 1;
-#endif
-}
-
-void Dir_FileName(char* name, const char* str, size_t len)
-{
-    char                ext[100];
-
-    _splitpath(str, 0, 0, name, ext);
-    strncat(name, ext, len);
-}
-
-/**
- * Calculate an identifier for the file based on its full path name.
- * The identifier is the MD5 hash of the path.
- */
-void Dir_FileID(const char *str, byte identifier[16])
-{
-    filename_t          temp;
-    md5_ctx_t           context;
-
-    // First normalize the name.
-    memset(temp, 0, FILENAME_T_MAXLEN);
-    _fullpath(temp, str, FILENAME_T_MAXLEN);
-    Dir_FixSlashes(temp, FILENAME_T_MAXLEN);
-
-#if defined(WIN32) || defined(MACOSX)
-    // This is a case insensitive operation.
-    strupr(temp);
-#endif
-
-    md5_init(&context);
-    md5_update(&context, (byte*) temp, (unsigned int) strlen(temp));
-    md5_final(&context, identifier);
-}
-
-/**
- * @return              @c true, if the directories are equal.
- */
-boolean Dir_IsEqual(directory_t *a, directory_t *b)
-{
+    if(a == b) return true;
     if(a->drive != b->drive)
         return false;
     return !stricmp(a->path, b->path);
 }
 
-/**
- * @return              @c true, if the given path is absolute
- *                      (starts with \ or / or the second character is
- *                      a ':' (drive).
- */
-int Dir_IsAbsolute(const char* str)
+const char* Dir_Path(directory_t* dir)
 {
-    if(!str)
-        return 0;
-
-    if(str[0] == '\\' || str[0] == '/' || str[1] == ':')
-        return true;
-#ifdef UNIX
-    if(str[0] == '~')
-        return true;
-#endif
-    return false;
+    assert(NULL != dir);
+    return dir->path;
 }
 
-/**
- * Converts directory slashes to the correct type of slash.
- */
-void Dir_FixSlashes(char* path, size_t len)
+void Dir_SetPath(directory_t* dir, const char* path)
 {
-    size_t              i;
-
-    for(i = 0; i < len && path[i]; ++i)
+    assert(NULL != dir);
     {
-        if(path[i] == DIR_WRONG_SEP_CHAR)
-            path[i] = DIR_SEP_CHAR;
+    filename_t fileName;
+    setPathFromPathDir(dir, path);
+    Dir_FileName(fileName, path, FILENAME_T_MAXLEN);
+    strncat(dir->path, fileName, FILENAME_T_MAXLEN);
+    // Ensure we've a well-formed path.
+    Dir_CleanPath(dir->path, FILENAME_T_MAXLEN);
     }
 }
 
-#ifdef UNIX
-/**
- * If the path begins with a tilde, replace it with either the value
- * of the HOME environment variable or a user's home directory (from
- * passwd).
- *
- * @param str  Path to expand. Overwritten by the result.
- * @param len  Maximum length of str.
- */
-void Dir_ExpandHome(char* str, size_t len)
+static void setPathFromPathDir(directory_t* dir, const char* path)
 {
-    ddstring_t buf;
+    assert(NULL != dir && NULL != path && path[0]);
+    {
+    filename_t temp, transPath;
 
-    if(str[0] != '~')
+    resolveAppRelativeDirectives(transPath, path, FILENAME_T_MAXLEN);
+    Dir_ToNativeSeparators(transPath, FILENAME_T_MAXLEN);
+
+    _fullpath(temp, transPath, FILENAME_T_MAXLEN);
+    _splitpath(temp, dir->path, transPath, 0, 0);
+    strncat(dir->path, transPath, FILENAME_T_MAXLEN);
+#if defined(WIN32)
+    dir->drive = toupper(dir->path[0]) - 'A' + 1;
+#endif
+    }
+}
+
+/// Class-Static Members:
+
+static void prependBasePath(char* newPath, const char* path, size_t maxLen)
+{
+    assert(NULL != newPath && NULL != path);
+    // Cannot prepend to absolute paths.
+    if(!Dir_IsAbsolutePath(path))
+    {
+        filename_t buf;
+        dd_snprintf(buf, maxLen, "%s%s", ddBasePath, path);
+        memcpy(newPath, buf, maxLen);
+        return;
+    }
+    strncpy(newPath, path, maxLen);
+}
+
+static void resolveAppRelativeDirectives(char* translated, const char* path, size_t maxLen)
+{
+    assert(NULL != translated && NULL != path);
+    {
+    filename_t buf;
+    if(path[0] == '>' || path[0] == '}')
+    {
+        path++;
+        if(!Dir_IsAbsolutePath(path))
+            prependBasePath(buf, path, maxLen);
+        else
+            strncpy(buf, path, maxLen);
+        strncpy(translated, buf, maxLen);
+    }
+    else if(translated != path)
+    {
+        strncpy(translated, path, maxLen);
+    }
+    }
+}
+
+#if defined(UNIX)
+static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
+{
+    assert(NULL != path);
+    {
+    filename_t buf;
+
+    if(!path[0] || 0 == maxLen || path[0] != '~')
         return;
 
-    Str_Init(&buf);
+    memset(buf, 0, sizeof(buf));
 
-    if(str[1] == '/')
+    if(path[1] == '/')
     {
         // Replace it with the HOME environment variable.
-        Str_Set(&buf, getenv("HOME"));
-        if(Str_RAt(&buf, 0) != '/')
-            Str_Append(&buf, "/");
+        strncpy(buf, getenv("HOME"), FILENAME_T_MAXLEN);
+        if(LAST_CHAR(buf) != '/')
+            strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
 
         // Append the rest of the original path.
-        Str_Append(&buf, str + 2);
+        strncat(buf, path + 2, FILENAME_T_MAXLEN);
     }
     else
     {
         char userName[PATH_MAX], *end = NULL;
         struct passwd *pw;
 
-        end = strchr(str + 1, '/');
-        strncpy(userName, str, end - str - 1);
-        userName[end - str - 1] = 0;
+        end = strchr(path + 1, '/');
+        strncpy(userName, path, end - path - 1);
+        userName[end - path - 1] = 0;
 
-        if((pw = getpwnam(userName)) != NULL)
+        pw = getpwnam(userName);
+        if(NULL != pw)
         {
-            Str_Set(&buf, pw->pw_dir);
-            if(Str_RAt(&buf, 0) != '/')
-                Str_Append(&buf, "/");
+            strncpy(buf, pw->pw_dir, FILENAME_T_MAXLEN);
+            if(LAST_CHAR(buf) != DIR_SEP_CHAR)
+                strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
         }
 
-        Str_Append(&buf, str + 1);
+        strncat(buf, path + 1, FILENAME_T_MAXLEN);
     }
 
     // Replace the original.
-    str[len - 1] = 0;
-    strncpy(str, Str_Text(&buf), len - 1);
-
-    Str_Free(&buf);
+    strncpy(path, buf, maxLen - 1);
+    }
 }
 #endif
 
-/**
- * Appends a backslash, if necessary. Also converts forward slashes into
- * backward ones. Does not check if the directory actually exists, just
- * that it's a well-formed path name.
- */
-void Dir_ValidDir(char* str, size_t len)
+static void resolvePathRelativeDirectives(char* path)
 {
-    char*               end;
+    assert(NULL != path);
+    {
+    char* ch = path;
+    char* end = path + strlen(path);
+    char* prev = path; // Assume an absolute path.
 
-    if(!len)
-        return; // Nothing to do.
+    for(; *ch; ch++)
+    {
+        if(ch[0] == '/' && ch[1] == '.')
+        {
+            if(ch[2] == '/')
+            {
+                memmove(ch, ch + 2, end - ch - 1);
+                ch--;
+            }
+            else if(ch[2] == '.' && ch[3] == '/')
+            {
+                memmove(prev, ch + 3, end - ch - 2);
+                // Must restart from the beginning.
+                // This is a tad inefficient, though.
+                ch = path - 1;
+                continue;
+            }
+        }
+        if(*ch == '/')
+            prev = ch;
+    }
+    }
+}
 
-    Dir_FixSlashes(str, len);
+void Dir_CleanPath(char* path, size_t len)
+{
+    if(NULL == path || 0 == len) return;
 
-    // Remove whitespace from the end.
-    end = str + strlen(str) - 1;
-    while(end >= str && isspace(*end))
-        end--;
-    memset(end + 1, 0, len - (end - str) - 2);
-
-    // Make sure it ends in a directory separator character.
-    if(*end != DIR_SEP_CHAR)
-        strncat(end + 1, DIR_SEP_STR, len - (end - str) - 2);
-
-#ifdef UNIX
-    Dir_ExpandHome(str, len);
+    M_Strip(path, len);
+    Dir_ToNativeSeparators(path, len);
+#if defined(UNIX)
+    resolveHomeRelativeDirectives(path, len);
 #endif
 }
 
-/**
- * Converts a possibly relative path to a full path.
- */
-void Dir_MakeAbsolute(char* path, size_t len)
+char* Dir_CurrentPath(void)
 {
-    filename_t          buf;
+    char* path = _getcwd(NULL, 0);
+    size_t len = strlen(path);
+    // Why oh why does the OS not do this for us?
+    if(len != 0 && path[len - 1] != DIR_SEP_CHAR)
+    {
+        path = (char*) realloc(path, len+2);
+        if(NULL == path)
+        {
+            Sys_CriticalMessagef("Dir::WorkDir: Failed on reallocation of %lu bytes for out string.", (unsigned long) (len+2));
+            return NULL;
+        }
+        strcat(path, DIR_SEP_STR);
+    }
+    return path;
+}
 
+void Dir_FileName(char* name, const char* path, size_t len)
+{
+    char ext[100];
+    if(NULL == path || NULL == name || 0 == len) return;
+    _splitpath(path, 0, 0, name, ext);
+    strncat(name, ext, len);
+}
+
+int Dir_IsAbsolutePath(const char* path)
+{
+    if(NULL == path || !path[0]) return 0;
+    if(path[0] == '\\' || path[0] == '/' || path[1] == ':')
+        return true;
+#if defined(UNIX)
+    if(path[0] == '~')
+        return true;
+#endif
+    return false;
+}
+
+boolean Dir_mkpath(const char* path)
+{
+#if !defined(WIN32) && !defined(UNIX)
+#  error Dir_mkpath has no implementation for this platform.
+#endif
+
+    filename_t full, buf;
+    char* ptr, *endptr;
+
+    if(NULL == path || !path[0]) return false;
+
+    // Convert all backslashes to normal slashes.
+    strncpy(full, path, FILENAME_T_MAXLEN);
+    Dir_ToNativeSeparators(full, FILENAME_T_MAXLEN);
+
+    // Does this path already exist?
+    if(0 == access(full, 0))
+        return true;
+
+    // Check and create the path in segments.
+    ptr = full;
+    memset(buf, 0, sizeof(buf));
+    do
+    {
+        endptr = strchr(ptr, DIR_SEP_CHAR);
+        if(!endptr)
+            strncat(buf, ptr, FILENAME_T_MAXLEN);
+        else
+            strncat(buf, ptr, endptr - ptr);
+        if(access(buf, 0))
+        {
+            // Path doesn't exist, create it.
+#if defined(WIN32)
+            mkdir(buf);
+#elif defined(UNIX)
+            mkdir(buf, 0775);
+#endif
+        }
+        strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
+        ptr = endptr + 1;
+
+    } while(endptr);
+
+    return (0 == access(full, 0));
+}
+
+void Dir_MakeAbsolutePath(char* path, size_t len)
+{
+    filename_t buf;
+    if(NULL == path || !path[0] || 0 == len) return;
+
+#if defined(UNIX)
+    resolveHomeRelativeDirectives(path, len);
+#endif
     _fullpath(buf, path, FILENAME_T_MAXLEN);
     strncpy(path, buf, len);
+}
+
+void Dir_ToNativeSeparators(char* path, size_t len)
+{
+    if(NULL == path || !path[0] || 0 == len) return;
+    { size_t i;
+    for(i = 0; i < len && path[i]; ++i)
+    {
+        if(path[i] == DIR_WRONG_SEP_CHAR)
+            path[i] = DIR_SEP_CHAR;
+    }}
+}
+
+boolean Dir_SetCurrent(const char* path)
+{
+    boolean success = false;
+    if(NULL != path && path[0])
+    {
+        success = !_chdir(path);
+    }
+    printf("Dir::ChangeWorkDir: %s: %s\n", success ? "Succeeded" : "Failed", path);
+    return success;
 }

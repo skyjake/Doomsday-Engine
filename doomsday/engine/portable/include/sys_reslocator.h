@@ -164,7 +164,7 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 
 /**
  * @return  Unique identifier of the resource namespace associated with @a name,
- *          else @c 0 (not found).
+ *      else @c 0 (not found).
  */
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
@@ -191,14 +191,26 @@ boolean F_ApplyPathMapping(ddstring_t* path);
 
 // Utility routines:
 
-typedef struct directory2_s {
-    int drive;
-    ddstring_t path;
-} directory2_t;
+void F_FileDir(ddstring_t* dst, const ddstring_t* str);
+void F_FileName(ddstring_t* dst, const char* src);
+void F_FileNameAndExtension(ddstring_t* dst, const char* src);
+const char* F_FindFileExtension(const char* path);
+void F_ExtractFileBase(char* dest, const char* path, size_t len);
+void F_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
 
-void F_FileDir(const ddstring_t* str, directory2_t* dir);
-void F_FileName(ddstring_t* dst, const ddstring_t* src);
-void F_FileNameAndExtension(ddstring_t* dst, const ddstring_t* src);
+/**
+ * @param file  File to check existence of. Relative path directives are expanded
+ *      automatically: '>' '}' (plus '~' on Unix-based platforms).
+ * @return  @c 0 if the path points to a readable file on the local file system.
+ */
+int F_FileExists(const char* file);
+
+/**
+ * Check that the given directory exists. If it doesn't, create it.
+ *
+ * @return  @c true if successful.
+ */
+boolean F_MakePath(const char* path);
 
 const char* F_ParseSearchPath2(struct dduri_s* dst, const char* src, char delim,
     resourceclass_t defaultResourceClass);
@@ -225,13 +237,13 @@ boolean F_IsAbsolute(const ddstring_t* str);
 /**
  * @return  @c true iff the path can be made into a relative path. 
  */
-boolean F_IsRelativeToBasePath(const ddstring_t* path);
+boolean F_IsRelativeToBasePath(const char* path);
 
 /**
  * Attempt to remove the base path if found at the beginning of the path.
  *
- * @param dst           Potential base-relative path written here.
- * @param src           Possibly absolute path.
+ * @param dst  Potential base-relative path written here.
+ * @param src  Possibly absolute path.
  *
  * @return  @c true iff the base path was found and removed.
  */
@@ -240,12 +252,22 @@ boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src);
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
  *
- * @param dst           Expanded path written here.
- * @param src           Original path.
+ * @param dst  Absolute path written here.
+ * @param src  Original path.
  *
- * @return  @c true iff the path was expanded.
+ * @return  @c true iff the path was prepended.
  */
 boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src);
+
+/**
+ * Attempt to prepend the current work path. If @a src is already absolute do nothing.
+ *
+ * @param dst  Absolute path written here.
+ * @param src  Original path.
+ *
+ * @return  @c true iff the path was prepended.
+ */
+boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Expands relative path directives like '>'.
@@ -256,18 +278,23 @@ boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src);
  * ! Handles '~' on UNIX-based platforms.
  * ! No other transform applied to @a src path.
  *
- * @param dst           Expanded path written here.
- * @param src           Original path.
+ * @param dst  Expanded path written here.
+ * @param src  Original path.
  *
  * @return  @c true iff the path was expanded.
  */
 boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src);
 
+boolean F_MakeAbsolute(ddstring_t* dst, const ddstring_t* src);
+
+/// \todo Refactor me away (duplication).
+boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
+
 /**
  * \important Not thread-safe!
  * @return  A prettier copy of the original path.
  */
-const ddstring_t* F_PrettyPath(const ddstring_t* path);
+const char* F_PrettyPath(const char* path);
 
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.

@@ -105,27 +105,31 @@ EXPORTS
 
 ; Base: File system.
     F_Access                    @245 NONAME
+    F_FileExists                @139 NONAME
     F_LastModified              @246 NONAME
+    F_MakePath                  @138 NONAME
+
     M_ReadFile                  @134 NONAME
     M_WriteFile                 @135 NONAME
-    M_ExtractFileBase           @136 NONAME
-    M_FindFileExtension         @137 NONAME
-    M_FileExists                @139 NONAME
-    M_CheckPath                 @138 NONAME
-    M_TranslatePath             @140 NONAME
-    M_PrettyPath                @421 NONAME
 
-    W_CheckNumForName           @14 NONAME
-    W_CheckNumForName2          @45 NONAME
-    W_GetNumForName             @15 NONAME
-    W_LumpLength                @16 NONAME
-    W_LumpName                  @17 NONAME
+    W_CheckLumpNumForName       @14 NONAME
+    W_CheckLumpNumForName2      @45 NONAME
+    W_GetLumpNumForName         @15 NONAME
+
     W_ReadLump                  @18 NONAME
     W_ReadLumpSection           @253 NONAME
-    W_CacheLumpNum              @19 NONAME
-    W_ChangeCacheTag            @21 NONAME
+    W_CacheLump                 @19 NONAME
+    W_CacheChangeTag            @21 NONAME
+
+    W_LumpLength                @16 NONAME
+    W_LumpName                  @17 NONAME
     W_LumpSourceFile            @22 NONAME
-    W_LumpFromIWAD              @239 NONAME
+    W_LumpIsFromIWAD            @239 NONAME
+
+    F_ExtractFileBase           @136 NONAME
+    F_FindFileExtension         @137 NONAME
+    F_TranslatePath             @140 NONAME
+    F_PrettyPath                @421 NONAME
 
 ; Base: Zone.
     Z_Malloc                    @24 NONAME

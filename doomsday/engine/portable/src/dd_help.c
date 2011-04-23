@@ -293,7 +293,7 @@ void DD_InitHelp(void)
     if(helpInited)
         return; // Already inited.
 
-    VERBOSE( Con_Message("Initializing Help subsystem ...\n") );
+    VERBOSE( Con_Message("Initializing Help subsystem...\n") )
     starttime = (verbose >= 2? Sys_GetSeconds() : 0);
 
     // Init the links.
@@ -321,14 +321,17 @@ void DD_InitHelp(void)
  */
 void DD_ReadGameHelp(void)
 {
-    filename_t helpFileName;
+    ddstring_t helpFileName;
 
     if(!helpInited || DD_IsNullGameInfo(DD_GameInfo()))
         return; // Nothing to do.
 
-    dd_snprintf(helpFileName, FILENAME_T_MAXLEN, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_GameInfo())));
-    M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);
-    DH_ReadStrings(helpFileName);
+    Str_Init(&helpFileName);
+    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_GameInfo())));
+    F_FixSlashes(&helpFileName, &helpFileName);
+    F_ExpandBasePath(&helpFileName, &helpFileName);
+    DH_ReadStrings(Str_Text(&helpFileName));
+    Str_Free(&helpFileName);
 }
 
 /**

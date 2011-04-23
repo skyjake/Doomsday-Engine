@@ -439,7 +439,7 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
+static ddwindow_t* createDDWindow(application_t *app, int w, int h, int bpp,
                                   int flags, ddwindowtype_t type,
                                   const char *title)
 {
@@ -454,7 +454,10 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 
         // Initialize curses.
         if(!initscr())
+        {
             Sys_CriticalMessage("createDDWindow: Failed creating terminal.");
+            return NULL;
+        }
 
         cbreak();
         noecho();
