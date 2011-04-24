@@ -209,7 +209,7 @@ static void determineGlobalPaths(application_t* app)
         filename_t homePath;
         directory_t* temp;
         dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.deng", getenv("HOME"));
-        temp = Dir_ConstructFromPathDir(homePath);
+        temp = Dir_Construct(homePath);
         Dir_mkpath(Dir_Path(temp));
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingHomeDir)
@@ -223,7 +223,7 @@ static void determineGlobalPaths(application_t* app)
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
-        directory_t* temp = Dir_ConstructFromPathDir(ArgNext());
+        directory_t* temp = Dir_Construct(ArgNext());
         app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingUserDir)
         {
