@@ -208,7 +208,7 @@ static void determineGlobalPaths(application_t* app)
     {
         filename_t homePath;
         directory_t* temp;
-        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.deng", getenv("HOME"));
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.deng/", getenv("HOME"));
         temp = Dir_Construct(homePath);
         Dir_mkpath(Dir_Path(temp));
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));
@@ -243,7 +243,6 @@ static void determineGlobalPaths(application_t* app)
     {
         // The current working directory is the runtime dir.
         directory_t* temp = Dir_ConstructFromCurrentDir();
-        Dir_SetCurrent(Dir_Path(temp));
         strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
         Dir_Destruct(temp);
     }
