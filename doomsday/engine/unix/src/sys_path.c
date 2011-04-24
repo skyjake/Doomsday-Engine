@@ -68,8 +68,6 @@ char* _fullpath(char* full, const char* original, int maxLen)
 {
     char* cwd, *buf;
 
-    Str_Init(&dir);
-
     // \fixme Check for '~'.
 
     if(original[0] != DIR_SEP_CHAR) // A relative path?
@@ -85,9 +83,9 @@ char* _fullpath(char* full, const char* original, int maxLen)
         // dj: I can't find any info about whether I can safely realloc the
         // pointer returned by getcwd so I'm building a copy.
         buf = (char*) malloc(strlen(cwd) + 1/*DIR_SEP_CHAR*/ + strlen(original) + 1);
-        strncpy(buf, cwd);
-        strncat(buf, DIR_SEP_STR);
-        strncat(buf, original);
+        strcpy(buf, cwd);
+        strcat(buf, DIR_SEP_STR);
+        strcat(buf, original);
         free(cwd);
     }
     else
