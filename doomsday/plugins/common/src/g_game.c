@@ -2269,7 +2269,8 @@ boolean G_SaveGame(int slot, const char* name)
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
-    strncpy(gaSaveGameName, name, MNDATA_EDIT_TEXT_MAX_LENGTH+1);
+    strncpy(gaSaveGameName, name, GA_SAVEGAME_NAME_MAXLENGTH);
+    gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH] = '\0';
     G_SetGameAction(GA_SAVEGAME);
     return true;
 }

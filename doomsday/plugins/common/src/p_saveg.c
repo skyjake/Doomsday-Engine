@@ -4812,7 +4812,7 @@ static boolean composeGameSavePathForSlot(int slot, ddstring_t* path)
  * with @a gameId. If the game-save path is unreachable then @a path
  * will be made empty.
  *
- * @param slot  Logical save slot identifier.
+ * @param gameId  Unique game identifier.
  * @param path  String buffer to populate with the game save path.
  * @return  @c true if @a path was set.
  */
