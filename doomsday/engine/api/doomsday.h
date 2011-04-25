@@ -523,12 +523,17 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
 //
 //------------------------------------------------------------------------
 
-    char*           M_SkipWhite(char* str);
-    char*           M_FindWhite(char* str);
-    char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
+char* M_SkipWhite(char* str);
+char* M_FindWhite(char* str);
+char* M_StrCatQuoted(char* dest, const char* src, size_t len);
+boolean M_IsStringValidInt(const char* str);
+boolean M_IsStringValidByte(const char* str);
+boolean M_IsStringValidFloat(const char* str);
+
+    int             M_ScreenShot(const char* filename, int bits);
+
     void            M_ClearBox(fixed_t* box);
     void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
-    int             M_ScreenShot(const char* filename, int bits);
     int             M_CeilPow2(int num);
     int             M_NumDigits(int value);
     int             M_RatioReduce(int* numerator, int* denominator);

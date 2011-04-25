@@ -1,10 +1,10 @@
-/**\file
+/**\file g_game.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * g_game.h: Top-level (common) game routines jDoom - specific.
+ * Top-level (common) game routines jDoom - specific.
  */
 
-#ifndef __G_GAME_H__
-#define __G_GAME_H__
+#ifndef LIBJDOOM_G_GAME_H
+#define LIBJDOOM_G_GAME_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -37,6 +37,10 @@
 #include "doomdef.h"
 #include "d_event.h"
 #include "d_player.h"
+
+extern int quickSaveSlot;
+extern int gaSaveGameSlot;
+extern int gaLoadGameSlot;
 
 extern player_t players[MAXPLAYERS];
 extern uint nextMap;
@@ -78,14 +82,25 @@ void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
 
 void            G_DeferedPlayDemo(char* demo);
 
-// Can be called by the startup code or Hu_MenuResponder,
-// calls P_SetupMap or W_EnterWorld.
-void            G_LoadGame(const char* name);
+/// @return  @c true = loading is presently possible.
+boolean G_IsLoadGamePossible(void);
 
-void            G_DoLoadGame(void);
+/**
+ * To be called to schedule a load game-save action.
+ * @param saveSlot  Logical identifier of the save slot to use.
+ * @return  @c true iff @a saveSlot is in use and loading is presently possible.
+ */
+boolean G_LoadGame(int slot);
 
-// Called by Hu_MenuResponder.
-void            G_SaveGame(int slot, const char* description);
+/// @return  @c true = saving is presently possible.
+boolean G_IsSaveGamePossible(void);
+
+/**
+ * To be called to schedule a save game-save action.
+ * @param saveSlot  Logical identifier of the save slot to use.
+ * @return  @c true iff @a saveSlot is valid and saving is presently possible.
+ */
+boolean G_SaveGame(int slot, const char* name);
 
 void            G_StopDemo(void);
 
@@ -112,4 +127,5 @@ void            G_ScreenShot(void);
 void            G_PrepareWIData(void);
 
 void            G_QueueBody(mobj_t* body);
-#endif
+
+#endif /* LIBJDOOM_G_GAME_H */

@@ -912,7 +912,7 @@ boolean SV_v13_LoadGame(const char* savename)
     if(*save_p != SAVE_GAME_TERMINATOR)
         Con_Error("Bad savegame"); // Missing savegame termination marker.
 
-    free(savebuffer);
+    Z_Free(savebuffer);
 
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);

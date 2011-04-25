@@ -98,8 +98,8 @@ static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* m
 {
     assert(mat);
     {
-    dduri_t* path;
-    if((path = Materials_GetUri(mat)))
+    dduri_t* path = Materials_GetUri(mat);
+    if(NULL != path)
     {
         // Insert a new element in the index.
         insertSerialId(mArc, mArc->count+1, path, mat);
@@ -116,8 +116,8 @@ static materialarchive_serialid_t getSerialIdForMaterial(materialarchive_t* mArc
     assert(mat);
     {
     materialarchive_serialid_t id = 0;
-    dduri_t* path;
-    if((path = Materials_GetUri(mat)))
+    dduri_t* path = Materials_GetUri(mat);
+    if(NULL != path)
     {
         uint i;
         for(i = 0; i < mArc->count; ++i)
@@ -200,7 +200,7 @@ static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
         SV_Read(buf, length);
         if(!rec->path)
             rec->path = Uri_ConstructDefault();
-        Uri_SetUri2(rec->path, buf);
+        Uri_SetUri3(rec->path, buf, RC_NULL);
         free(buf);
     }
     else

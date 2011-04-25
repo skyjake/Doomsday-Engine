@@ -128,6 +128,10 @@ MonsterMissileInfo[] =
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(ListMaps);
+D_CMD(SaveGame);
+D_CMD(SaveGameName);
+D_CMD(LoadGame);
+D_CMD(LoadGameName);
 
 void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, uint episode, uint map);
@@ -211,15 +215,19 @@ boolean customPal = false; // If @c true, a non-IWAD palette is in use.
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
-int saveGameSlot;
-char saveDescription[MNDATA_EDIT_TEXT_MAX_LENGTH];
+int quickSaveSlot; // -1 = Not yet chosen/determined.
+
+// Game Action Variables:
+#define GA_SAVEGAME_NAME_MAXLENGTH   24
+
+int gaSaveGameSlot = 0;
+char gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH+1];
+int gaLoadGameSlot = 0;
 
 #if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
 int bodyQueueSlot;
 #endif
-
-savefilename_t saveName;
 
 // vars used with game status cvars
 int gsvInMap = 0;
@@ -395,7 +403,11 @@ cvartemplate_t gamestatusCVars[] = {
 };
 
 ccmdtemplate_t gameCmds[] = {
-    { "listmaps",    "",     CCmdListMaps },
+    { "listmaps",       "",     CCmdListMaps },
+    { "savegame",       "is",   CCmdSaveGameName },
+    { "savegame",       "",     CCmdSaveGame },
+    { "loadgame",       "s",    CCmdLoadGameName },
+    { "loadgame",       "",     CCmdLoadGame },
     { NULL }
 };
 
@@ -403,10 +415,6 @@ ccmdtemplate_t gameCmds[] = {
 
 static uint dEpisode;
 static uint dMap;
-
-#if __JHEXEN__
-static int gameLoadSlot;
-#endif
 
 static gameaction_t gameAction;
 
@@ -826,8 +834,10 @@ void G_CommonPostInit(void)
     FI_StackInit();
     GUI_Init();
 
-    // Init the save system and create the game save directory
+    // Init the save system and create the game save directory.
     SV_Init();
+    // -1 = No save slot yet chosen/used.
+    quickSaveSlot = -1;
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -875,6 +885,7 @@ void G_CommonShutdown(void)
     Hu_UnloadData();
     Hu_LogShutdown();
 
+    SV_Shutdown();
     P_Shutdown();
     G_ShutdownEventSequences();
 
@@ -2189,64 +2200,78 @@ void G_DoSingleReborn(void)
 }
 #endif
 
-#if !__JHEXEN__
-void G_SetSavedGamePath(const char* path)
+boolean G_IsLoadGamePossible(void)
 {
-    ddstring_t buf;
-    Str_Init(&buf); Str_Set(&buf, path);
-    F_TranslatePath(&buf, &buf);
-    strncpy(saveName, Str_Text(&buf), SAVEFILENAME_T_MAXLEN);
-    Str_Free(&buf);
+    return !(IS_CLIENT && !Get(DD_PLAYBACK));
 }
-#endif
 
-/**
- * Can be called by the startup code or the menu task.
- */
-#if __JHEXEN__
-void G_LoadGame(int slot)
+boolean G_LoadGame(int slot)
 {
-    gameLoadSlot = slot;
+    const gamesaveinfo_t* info;
+
+    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(!G_IsLoadGamePossible()) return false;
+
+    // Check whether this slot is in use. We do this here also because we
+    // need to provide our caller with instant feedback. Naturally this is
+    // no guarantee that the game-save will be acessible come load time.
+
+    // First ensure we have up-to-date info.
+    SV_UpdateGameSaveInfo();
+
+    // Now see if the slot is in use. An empty filePath clearly means no.
+    info = SV_GetGameSaveInfoForSlot(slot);
+    if(Str_IsEmpty(&info->filePath))
+        return false;
+
+    // Everything appears to be in order - schedule the game-save load!
+    gaLoadGameSlot = slot;
     G_SetGameAction(GA_LOADGAME);
+    return true;
 }
-#else
-void G_LoadGame(const char* path)
-{
-    G_SetSavedGamePath(path);
-    G_SetGameAction(GA_LOADGAME);
-}
-#endif
 
 /**
  * Called by G_Ticker based on gameaction.
  */
 void G_DoLoadGame(void)
 {
-    G_StopDemo();
-    FI_StackClear();
     G_SetGameAction(GA_NONE);
-
+    if(SV_LoadGame(gaLoadGameSlot))
+    {
 #if __JHEXEN__
-    SV_LoadGame(gameLoadSlot);
-    if(!IS_NETGAME)
-    {                           // Copy the base slot to the reborn slot
-        SV_HxUpdateRebornSlot();
-    }
-#else
-    SV_LoadGame(saveName);
+        if(!IS_NETGAME)
+        {
+            // Copy the base slot to the reborn slot.
+            SV_HxUpdateRebornSlot();
+        }
 #endif
+    }
 }
 
-/**
- * Called by the menu task.
- *
- * @param description       A 24 byte text string.
- */
-void G_SaveGame(int slot, const char* description)
+boolean G_IsSaveGamePossible(void)
 {
-    saveGameSlot = slot;
-    strncpy(saveDescription, description, MNDATA_EDIT_TEXT_MAX_LENGTH);
+    player_t* player;
+
+    if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
+    if(GS_MAP != G_GetGameState()) return false;
+
+    player = &players[CONSOLEPLAYER];
+    if(PST_DEAD == player->playerState) return false;
+
+    return true;
+}
+
+boolean G_SaveGame(int slot, const char* name)
+{
+    player_t* player = &players[CONSOLEPLAYER];
+
+    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(!G_IsSaveGamePossible()) return false;
+
+    gaSaveGameSlot = slot;
+    strncpy(gaSaveGameName, name, MNDATA_EDIT_TEXT_MAX_LENGTH+1);
     G_SetGameAction(GA_SAVEGAME);
+    return true;
 }
 
 /**
@@ -2254,19 +2279,17 @@ void G_SaveGame(int slot, const char* description)
  */
 void G_DoSaveGame(void)
 {
-#if __JHEXEN__
-    SV_SaveGame(saveGameSlot, saveDescription);
-#else
-    savefilename_t name;
+    const char* unnamed = "UNNAMED";
+    // If no name was specified replace it with "something".
+    if(0 == strlen(gaSaveGameName))
+    {
+        strncpy(gaSaveGameName, unnamed, GA_SAVEGAME_NAME_MAXLENGTH);
+        gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH] = '\0';
+    }
 
-    SV_GetSaveGameFileName(name, saveGameSlot, SAVEFILENAME_T_MAXLEN);
-    SV_SaveGame(name, saveDescription);
-#endif
-
-    G_SetGameAction(GA_NONE);
-    saveDescription[0] = 0;
-
+    SV_SaveGame(gaSaveGameSlot, gaSaveGameName);
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+    G_SetGameAction(GA_NONE);
 }
 
 #if __JHEXEN__
@@ -3020,5 +3043,86 @@ D_CMD(ListMaps)
 {
     Con_Message("Available maps:\n");
     G_PrintMapList();
+    return true;
+}
+
+static void openLoadMenu(void)
+{
+    Hu_MenuCommand(MCMD_OPEN);
+    /// \fixme This should be called automatically when opening the page
+    /// thus making this function redundant.
+    MN_UpdateGameSaveWidgets();
+    MN_GotoPage(&LoadMenu);
+}
+
+static void openSaveMenu(void)
+{
+    Hu_MenuCommand(MCMD_OPEN);
+    /// \fixme This should be called automatically when opening the page
+    /// thus making this function redundant.
+    MN_UpdateGameSaveWidgets();
+    MN_GotoPage(&SaveMenu);
+}
+
+D_CMD(LoadGameName)
+{
+    int slot;
+    if(!G_IsLoadGamePossible()) return false;
+
+    // Determine the save slot to use. First try a search by name.
+    slot = SV_FindGameSaveSlotForName(argv[1]);
+    if(0 > slot)
+    {
+        // Perhaps a logical identifier?
+        if(M_IsStringValidInt(argv[1]))
+        {
+            slot = atoi(argv[1]);
+        }
+    }
+
+    if(G_LoadGame(slot))
+    {
+        // GA_LOADGAME scheduled.
+        return true;
+    }
+
+    // Clearly the caller needs some assistance...
+    Con_Message("Failed to determine game-save slot from \"%s\"\n", argv[1]);
+
+    // We'll open the load menu if caller is the console.
+    // Reasoning: User attempted to load a named game-save however the name
+    // specified didn't match anything known. Opening the load menu allows
+    // the user to see the names of the known game-saves.
+    if(CMDS_CONSOLE == src)
+    {
+        Con_Message("Opening game-save load menu...\n");
+        openLoadMenu();
+        return true;
+    }
+
+    // No action means the command failed.
+    return false;
+}
+
+D_CMD(LoadGame)
+{
+    if(!G_IsLoadGamePossible()) return false;
+    openLoadMenu();
+    return true;
+}
+
+D_CMD(SaveGameName)
+{
+    int slot;
+    if(!G_IsSaveGamePossible()) return false;
+    // We do not care if there is a save already present in this slot.
+    slot = atoi(argv[1]);
+    return G_SaveGame(slot, argv[2]);
+}
+
+D_CMD(SaveGame)
+{
+    if(!G_IsSaveGamePossible()) return false;
+    openSaveMenu();
     return true;
 }

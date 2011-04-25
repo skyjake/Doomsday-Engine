@@ -19,6 +19,19 @@ desc = Begin map rotation.
 [endcycle]
 desc = End map rotation.
 
+[endgame]
+desc = End the game.
+
+[helpscreen]
+desc = Show the Help screens.
+
+[loadgame]
+desc = Load a game-save or open the load menu.
+inf = Params: loadgame (game-save name|save slot)\nExample 1: 'loadgame "running low on ammo"'\nExample 2: 'loadgame 1'\nExample 3: 'loadgame'
+
+[listmaps]
+desc = List all loaded maps.
+
 [menu]
 desc = Open/Close the menu.
 
@@ -40,36 +53,6 @@ desc = Select/Accept the current menu item.
 [menuback]
 desc = Return to the previous menu page.
 
-[helpscreen]
-desc = Show the Help screens.
-
-[savegame]
-desc = Open the save game menu.
-
-[loadgame]
-desc = Open the load game menu.
-
-[listmaps]
-desc = List all loaded maps.
-
-[soundmenu]
-desc = Open the sound settings menu.
-
-[quicksave]
-desc = Quicksave the game.
-
-[endgame]
-desc = End the game.
-
-[togglemsgs]
-desc = Messages on/off.
-
-[quickload]
-desc = Load the quicksaved game.
-
-[togglegamma]
-desc = Cycle gamma correction levels.
-
 [messageyes]
 desc = Respond - YES to the message promt.
 
@@ -78,6 +61,25 @@ desc = Respond - NO to the message promt.
 
 [messagecancel]
 desc = Respond - CANCEL to the message promt.
+
+[quicksave]
+desc = Quicksave the game.
+
+[quickload]
+desc = Load the quicksaved game.
+
+[savegame]
+desc = Create a new game-save or open the save menu.
+inf = Params: savegame (save slot) (game-save name)\nExample 1: 'savegame 1 "running low on ammo"'\nExample 2: 'savegame'
+
+[soundmenu]
+desc = Open the sound settings menu.
+
+[togglemsgs]
+desc = Messages on/off.
+
+[togglegamma]
+desc = Cycle gamma correction levels.
     
 [spy]
 desc = Spy mode: cycle player views in co-op.

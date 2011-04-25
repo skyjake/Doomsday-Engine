@@ -46,7 +46,8 @@ desc = Show the Help screens.
 desc = Kill all the monsters on the map.
 
 [loadgame]
-desc = Open the load game menu.
+desc = Load a game-save or open the load menu.
+inf = Params: loadgame (game-save name|save slot)\nExample 1: 'loadgame "running low on ammo"'\nExample 2: 'loadgame 1'\nExample 3: 'loadgame'
 
 [lockmode]
 desc = Set camera viewlock mode.
@@ -126,7 +127,8 @@ desc = Map cheat.
 inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors
 
 [savegame]
-desc = Open the save game menu.
+desc = Create a new game-save or open the save menu.
+inf = Params: savegame (save slot) (game-save name)\nExample 1: 'savegame 1 "running low on ammo"'\nExample 2: 'savegame'
 
 [screenshot]
 desc = Takes a screenshot.

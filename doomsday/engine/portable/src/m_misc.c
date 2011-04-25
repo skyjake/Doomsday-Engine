@@ -220,14 +220,12 @@ boolean M_IsComment(const char* buffer)
     return false;
 }
 
-/**
- * Can the given string be interpreted as a valid integer?
- */
-boolean M_IsStringValidInt(const char *str)
+/// \note Part of the Doomsday public API
+boolean M_IsStringValidInt(const char* str)
 {
-    size_t          i, len;
-    const char     *c;
-    boolean         isBad;
+    size_t i, len;
+    const char* c;
+    boolean isBad;
 
     if(!str)
         return false;
@@ -247,30 +245,24 @@ boolean M_IsStringValidInt(const char *str)
     return !isBad;
 }
 
-/**
- * Can the given string be interpreted as a valid byte?
- */
-boolean M_IsStringValidByte(const char *str)
+/// \note Part of the Doomsday public API
+boolean M_IsStringValidByte(const char* str)
 {
     if(M_IsStringValidInt(str))
     {
-        int             val = atoi(str);
-
+        int val = atoi(str);
         if(!(val < 0 || val > 255))
             return true;
     }
-
     return false;
 }
 
-/**
- * Can the given string be interpreted as a valid float?
- */
-boolean M_IsStringValidFloat(const char *str)
+/// \note Part of the Doomsday public API
+boolean M_IsStringValidFloat(const char* str)
 {
-    size_t          i, len;
-    const char     *c;
-    boolean         isBad, foundDP = false;
+    size_t i, len;
+    const char* c;
+    boolean isBad, foundDP = false;
 
     if(!str)
         return false;
@@ -811,10 +803,14 @@ static size_t FileReader(const char* name, char** buffer)
             char* newBuf;
 
             // Allocate more memory.
-            newBuf = (char*) M_Realloc(buf, length + bytesRead);
+            newBuf = (char*) Z_Malloc(length + bytesRead, PU_APPSTATIC, 0);
             if(NULL == newBuf)
                 Con_Error("FileReader: realloc failed.");
-
+            if(NULL != buf)
+            {
+                memcpy(newBuf, buf, length);
+                Z_Free(buf);
+            }
             buf = newBuf;
 
             // Copy new data to buffer.
@@ -832,10 +828,13 @@ static size_t FileReader(const char* name, char** buffer)
     handle = open(name, O_RDONLY | O_BINARY, 0666);
     if(handle == -1)
     {
-        Con_Error("FileReader: Couldn't read file %s\n", name);
+#if _DEBUG
+        Con_Message("Warning:FileReader: Failed opening \"%s\" for reading.\n", name);
+#endif
+        return length;
     }
 
-    if(fstat(handle, &fileinfo) == -1)
+    if(-1 == fstat(handle, &fileinfo))
     {
         Con_Error("FileReader: Couldn't read file %s\n", name);
     }

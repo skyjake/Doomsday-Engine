@@ -1,9 +1,9 @@
-/**\file
+/**\file g_game.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@
  */
 
 /**
- * g_game.h:
+ * Top-level (common) game routines jHexen - specific.
  */
 
-#ifndef __G_GAME_H__
-#define __G_GAME_H__
+#ifndef LIBJHEXEN_G_GAME_H
+#define LIBJHEXEN_G_GAME_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -35,6 +35,10 @@
 #include "p_mobj.h"
 
 extern int debugSound; // debug flag for displaying sound info
+
+extern int quickSaveSlot;
+extern int gaSaveGameSaveSlot;
+extern int gaLoadGameSaveSlot;
 
 extern uint gameEpisode;
 extern uint gameMap;
@@ -55,13 +59,11 @@ extern int gsvMapMusic;
 void            G_CommonShutdown(void);
 
 void            R_InitRefresh(void);
-void            R_GetTranslation(int plrClass, int plrColor, int* tclass,
-                                 int* tmap);
+void            R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap);
 void            R_SetTranslation(mobj_t* mo);
 
 void            G_PrintMapList(void);
 void            G_PlayerReborn(int player);
-void            G_SaveGame(int slot, const char* description);
 
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
@@ -72,4 +74,24 @@ boolean         P_MapExists(uint episode, uint map);
 const char*     P_MapSourceFile(uint episode, uint map);
 void            P_MapId(uint episode, uint map, char* name);
 
-#endif
+/// @return  @c true = loading is presently possible.
+boolean G_IsLoadGamePossible(void);
+
+/**
+ * To be called to schedule a load game-save action.
+ * @param saveSlot  Logical identifier of the save slot to use.
+ * @return  @c true iff @a saveSlot is in use and loading is presently possible.
+ */
+boolean G_LoadGame(int slot);
+
+/// @return  @c true = saving is presently possible.
+boolean G_IsSaveGamePossible(void);
+
+/**
+ * To be called to schedule a save game-save action.
+ * @param saveSlot  Logical identifier of the save slot to use.
+ * @return  @c true iff @a saveSlot is valid and saving is presently possible.
+ */
+boolean G_SaveGame(int slot, const char* name);
+
+#endif /* LIBJHEXEN_G_GAME_H */

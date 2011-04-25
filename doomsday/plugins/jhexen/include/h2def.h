@@ -112,6 +112,8 @@ typedef enum {
 #define TICRATE             35
 #define TICSPERSEC          35
 
+#define NUMSAVESLOTS        6
+
 /**
  * Armor types.
  */
@@ -377,8 +379,7 @@ void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
 void            G_DeferredNewGame(skillmode_t skill);
 void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
-void            G_LoadGame(int slot);
-void            G_DoLoadGame(void);
+
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
 void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
@@ -407,7 +408,7 @@ extern unsigned char rndtable[256];
 
 void            SC_Open(const char* name);
 void            SC_OpenLump(lumpnum_t lumpNum);
-void            SC_OpenFileCLib(const char* name);
+void            SC_OpenFile(const char* name);
 void            SC_Close(void);
 boolean         SC_GetString(void);
 void            SC_MustGetString(void);

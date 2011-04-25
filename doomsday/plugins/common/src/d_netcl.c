@@ -704,25 +704,28 @@ void NetCl_SendPlayerInfo()
     Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, buffer, ptr - buffer);
 }
 
-void NetCl_SaveGame(void *data)
+void NetCl_SaveGame(void* data)
 {
     if(Get(DD_PLAYBACK))
         return;
 
-    SV_SaveClient(*(unsigned int *) data);
+#if !__JHEXEN__
+    SV_SaveClient(*(unsigned int*) data);
+#endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 #endif
 }
 
-void NetCl_LoadGame(void *data)
+void NetCl_LoadGame(void* data)
 {
     if(!IS_CLIENT)
         return;
     if(Get(DD_PLAYBACK))
         return;
-
-    SV_LoadClient(*(unsigned int *) data);
+#if !__JHEXEN__
+    SV_LoadClient(*(unsigned int*) data);
+#endif
     //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);

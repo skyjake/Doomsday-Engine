@@ -344,7 +344,6 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
-    savefilename_t file;
     int p;
 
     /// \kludge Border background is different in DOOM2.
@@ -456,8 +455,8 @@ void D_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0', SAVEFILENAME_T_MAXLEN);
-        G_LoadGame(file);
+        const int saveSlot = Argv(p + 1)[0] - '0';
+        G_LoadGame(saveSlot);
     }
 
     // Check valid episode and map

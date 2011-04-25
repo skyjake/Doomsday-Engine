@@ -161,10 +161,7 @@ extern char* weaponNames[];
 char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
-// -1 = no quicksave slot picked!
-int quickSaveSlot;
-
-mndata_edit_t saveGameDescriptions[NUMSAVESLOTS];
+mndata_edit_t gameSaveSlotEditWidgets[NUMSAVESLOTS];
 
 char endstring[160];
 
@@ -543,15 +540,15 @@ mn_page_t FilesMenu = {
 #endif
 
 static mn_object_t LoadItems[] = {
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[0], 0 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[1], 1 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[2], 2 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[3], 3 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[4], 4 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[5], 5 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[0], 0 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[1], 1 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[2], 2 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[3], 3 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[4], 4 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[5], 5 },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[6], 6 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &saveGameDescriptions[7], 7 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[6], 6 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[7], 7 },
 #endif
     { MN_NONE }
 };
@@ -575,15 +572,15 @@ static mn_object_t SaveItems[] = {
 #elif __JHERETIC__ || __JHEXEN__
     { MN_TEXT,      0,  0,              "Save Game", GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
 #endif
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[0] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[1] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[2] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[3] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[4] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[5] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[0] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[1] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[2] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[3] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[4] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[5] },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[6] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &saveGameDescriptions[7] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[6] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[7] },
 #endif
     { MN_NONE }
 };
@@ -1144,13 +1141,11 @@ ccmdtemplate_t menuCCmds[] = {
     { "menuselect",     "",     CCmdMenuAction },
     { "menudelete",     "",     CCmdMenuAction },
     { "menuback",       "",     CCmdMenuAction },
-    { "savegame",       "",     CCmdMenuAction },
-    { "loadgame",       "",     CCmdMenuAction },
-    { "soundmenu",      "",     CCmdMenuAction },
-    { "quicksave",      "",     CCmdMenuAction },
-    { "endgame",        "",     CCmdMenuAction },
-    { "togglemsgs",     "",     CCmdMenuAction },
-    { "quickload",      "",     CCmdMenuAction },
+    { "soundmenu",      "",     CCmdShortcut },
+    { "quicksave",      "",     CCmdShortcut },
+    { "endgame",        "",     CCmdShortcut },
+    { "togglemsgs",     "",     CCmdShortcut },
+    { "quickload",      "",     CCmdShortcut },
     { "helpscreen",     "",     CCmdShortcut   },
     { "togglegamma",    "",     CCmdShortcut   },
     { NULL }
@@ -1466,7 +1461,7 @@ void Hu_MenuInit(void)
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        mndata_edit_t* edit = &saveGameDescriptions[i];
+        mndata_edit_t* edit = &gameSaveSlotEditWidgets[i];
         edit->data = i;
         edit->emptyString = EMPTYSTRING;
         edit->onChange = M_DoSaveGame;
@@ -2281,20 +2276,12 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
  */
 void M_LoadSelect(mn_object_t* obj, int option)
 {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    savefilename_t name;
-#endif
+    const int saveSlot = option;
 
     SaveMenu.focus = option+1;
-
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    SV_GetSaveGameFileName(name, option, SAVEFILENAME_T_MAXLEN);
-    G_LoadGame(name);
-#else
-    G_LoadGame(option);
-#endif
+    G_LoadGame(saveSlot);
 }
 
 void M_DrawMainMenu(const mn_page_t* page, int x, int y)
@@ -2481,27 +2468,30 @@ void M_DrawFilesMenu(const mn_page_t* page, int x, int y)
     quickload = 0;
 }
 
-static void updateSaveList(void)
+void MN_UpdateGameSaveWidgets(void)
 {
-    savefilename_t fileName;
-    int i;
+    // Prompt a refresh of the game-save info. We don't yet actively monitor
+    // the contents of the game-save paths, so instead we settle for manual
+    // updates whenever the save/load menu is opened.
+    SV_UpdateGameSaveInfo();
 
+    // Update widgets.
+    { int i;
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        mn_object_t* loadSlot = &LoadItems[i];
+        mn_object_t* obj = &LoadItems[i];
+        mndata_edit_t* edit = &gameSaveSlotEditWidgets[i];
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(i);
 
-        SV_GetSaveGameFileName(fileName, i, SAVEFILENAME_T_MAXLEN);
+        obj->flags |= MNF_DISABLED;
+        memset(edit->text, 0, sizeof(edit->text));
 
-        memset(saveGameDescriptions[i].text, 0, MNDATA_EDIT_TEXT_MAX_LENGTH+1);
-        if(SV_GetSaveDescription(saveGameDescriptions[i].text, fileName, MNDATA_EDIT_TEXT_MAX_LENGTH+1))
+        if(!Str_IsEmpty(&info->filePath))
         {
-            loadSlot->flags &= ~MNF_DISABLED;
+            strncpy(edit->text, Str_Text(&info->name), sizeof(edit->text)-1);
+            obj->flags &= ~MNF_DISABLED;
         }
-        else
-        {
-            loadSlot->flags |= MNF_DISABLED;
-        }
-    }
+    }}
 }
 
 /**
@@ -2512,6 +2502,7 @@ void M_DoSaveGame(const mndata_edit_t* ef)
     // Picked a quicksave slot yet?
     if(quickSaveSlot == -2)
         quickSaveSlot = ef->data;
+
     SaveMenu.focus = ef->data+1;
     LoadMenu.focus = ef->data;
 
@@ -3135,7 +3126,7 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 int M_QuickSaveResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
-        G_SaveGame(quickSaveSlot, saveGameDescriptions[quickSaveSlot].text);
+        G_SaveGame(quickSaveSlot, gameSaveSlotEditWidgets[quickSaveSlot].text);
     return true;
 }
 
@@ -3165,17 +3156,17 @@ static void M_QuickSave(void)
     if(quickSaveSlot < 0)
     {
         Hu_MenuCommand(MCMD_OPEN);
-        updateSaveList();
+        MN_UpdateGameSaveWidgets();
         MN_GotoPage(&SaveMenu);
         quickSaveSlot = -2; // Means to pick a slot now.
         return;
     }
-    sprintf(buf, QSPROMPT, saveGameDescriptions[quickSaveSlot].text);
+    sprintf(buf, QSPROMPT, gameSaveSlotEditWidgets[quickSaveSlot].text);
 
     if(!cfg.askQuickSaveLoad)
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_SaveGame(quickSaveSlot, saveGameDescriptions[quickSaveSlot].text);
+        G_SaveGame(quickSaveSlot, gameSaveSlotEditWidgets[quickSaveSlot].text);
         return;
     }
 
@@ -3187,16 +3178,8 @@ int M_QuickLoadResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        savefilename_t name;
-
-        SV_GetSaveGameFileName(name, quickSaveSlot, SAVEFILENAME_T_MAXLEN);
-        G_LoadGame(name);
-#else
         G_LoadGame(quickSaveSlot);
-#endif
     }
-
     return true;
 }
 
@@ -3218,18 +3201,11 @@ static void M_QuickLoad(void)
         return;
     }
 
-    sprintf(buf, QLPROMPT, saveGameDescriptions[quickSaveSlot].text);
+    sprintf(buf, QLPROMPT, gameSaveSlotEditWidgets[quickSaveSlot].text);
 
     if(!cfg.askQuickSaveLoad)
     {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        savefilename_t name;
-
-        SV_GetSaveGameFileName(name, quickSaveSlot, SAVEFILENAME_T_MAXLEN);
-        G_LoadGame(name);
-#else
         G_LoadGame(quickSaveSlot);
-#endif
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return;
     }
@@ -3742,13 +3718,16 @@ void M_HUDBlue(mn_object_t* obj, int option)
 
 void M_LoadGame(mn_object_t* obj, int option)
 {
-    if(IS_CLIENT && !Get(DD_PLAYBACK))
+    if(!Get(DD_DEDICATED))
     {
-        Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, NULL);
-        return;
+        if(IS_CLIENT && !Get(DD_PLAYBACK))
+        {
+            Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, NULL);
+            return;
+        }
     }
 
-    updateSaveList();
+    MN_UpdateGameSaveWidgets();
     MN_GotoPage(&LoadMenu);
 }
 
@@ -3756,31 +3735,31 @@ void M_SaveGame(mn_object_t* obj, int option)
 {
     player_t* player = &players[CONSOLEPLAYER];
 
-    if(Get(DD_PLAYBACK))
-        return;
-
-    if(G_GetGameState() != GS_MAP)
+    if(!Get(DD_DEDICATED))
     {
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
-        return;
-    }
-
-    if(player->playerState == PST_DEAD)
-    {
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
-        return;
-    }
-
-    if(IS_CLIENT)
-    {
+        if(IS_CLIENT)
+        {
 #if __JDOOM__ || __JDOOM64__
-        Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, NULL);
+            Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, NULL);
 #endif
-        return;
+            return;
+        }
+
+        if(G_GetGameState() != GS_MAP)
+        {
+            Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+            return;
+        }
+
+        if(player->playerState == PST_DEAD)
+        {
+            Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+            return;
+        }
     }
 
     Hu_MenuCommand(MCMD_OPEN);
-    updateSaveList();
+    MN_UpdateGameSaveWidgets();
     MN_GotoPage(&SaveMenu);
 }
 
@@ -4132,38 +4111,6 @@ D_CMD(MenuAction)
         }
     }
 
-    // Menu-related hotkey shortcuts.
-    if(!stricmp(argv[0], "SaveGame"))
-    {
-        M_SaveGame(0, 0);
-    }
-    else if(!stricmp(argv[0], "LoadGame"))
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-        M_LoadGame(0, 0);
-    }
-    else if(!stricmp(argv[0], "SoundMenu"))
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-        MN_GotoPage(&SoundMenu);
-    }
-    else if(!stricmp(argv[0], "QuickSave"))
-    {
-        M_QuickSave();
-    }
-    else if(!stricmp(argv[0], "EndGame"))
-    {
-        M_EndGame(0, 0);
-    }
-    else if(!stricmp(argv[0], "ToggleMsgs"))
-    {
-        M_ChangeMessages(0, 0);
-    }
-    else if(!stricmp(argv[0], "QuickLoad"))
-    {
-        M_QuickLoad();
-    }
-
     return true;
 }
 
@@ -4184,6 +4131,34 @@ D_CMD(Shortcut)
         R_CycleGammaLevel();
         return true;
     }
+    if(!stricmp(argv[0], "ToggleMsgs"))
+    {
+        M_ChangeMessages(0, 0);
+        return true;
+    }
+    // Menu-related hotkey shortcuts.
+    if(!stricmp(argv[0], "SoundMenu"))
+    {
+        Hu_MenuCommand(MCMD_OPEN);
+        MN_GotoPage(&SoundMenu);
+        return true;
+    }
+    if(!stricmp(argv[0], "EndGame"))
+    {
+        M_EndGame(0, 0);
+        return true;
+    }
+    if(!stricmp(argv[0], "QuickSave"))
+    {
+        M_QuickSave();
+        return true;
+    }
+    if(!stricmp(argv[0], "QuickLoad"))
+    {
+        M_QuickLoad();
+        return true;
+    }
+
     return false;
 }
 

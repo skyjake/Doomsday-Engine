@@ -72,7 +72,6 @@ static const char* ScriptPtr;
 static const char* ScriptEndPtr;
 static char StringBuffer[MAX_STRING_SIZE];
 static boolean ScriptOpen = false;
-static boolean ScriptFreeCLib; // true = de-allocate using free()
 static size_t ScriptSize;
 static boolean AlreadyGot = false;
 
@@ -100,8 +99,6 @@ static void openScriptLump(lumpnum_t lumpNum)
     memset(ScriptName, 0, sizeof(*ScriptName)); 
     strncpy(ScriptName, W_LumpName(lumpNum), sizeof(*ScriptName)-1);
 
-    ScriptFreeCLib = false; // De-allocate using Z_Free()
-
     ScriptPtr = ScriptBuffer;
     ScriptEndPtr = ScriptPtr + ScriptSize;
     sc_Line = 1;
@@ -113,15 +110,19 @@ static void openScriptLump(lumpnum_t lumpNum)
 
 static void openScriptFile(const char* name)
 {
+    char* bufferHandle;
+    // Close any other open script file.
     SC_Close();
 
-    { char* bufferHandle;
     ScriptSize = M_ReadFile(name, &bufferHandle);
-    ScriptBuffer = bufferHandle;
+    if(0 == ScriptSize)
+    {
+        Con_Message("Warning:SC_Open: Failed opening \"%s\" for reading.\n", name);
+        return;
     }
-    F_ExtractFileBase(ScriptName, name, SCRIPTNAME_LASTINDEX);
 
-    ScriptFreeCLib = true;  // De-allocate using free()
+    ScriptBuffer = bufferHandle;
+    F_ExtractFileBase(ScriptName, name, SCRIPTNAME_LASTINDEX);
 
     ScriptPtr = ScriptBuffer;
     ScriptEndPtr = ScriptPtr + ScriptSize;
@@ -138,7 +139,7 @@ void SC_Open(const char* name)
     {
         char fileName[128];
         sprintf(fileName, "%s%s.txt", sc_ScriptsDir, name);
-        SC_OpenFileCLib(fileName);
+        SC_OpenFile(fileName);
     }
     else
     {
@@ -158,7 +159,7 @@ void SC_OpenLump(lumpnum_t lumpNum)
  * Loads a script (from a file) and prepares it for parsing.  Uses C
  * library function calls for memory allocation and de-allocation.
  */
-void SC_OpenFileCLib(const char* name)
+void SC_OpenFile(const char* name)
 {
     openScriptFile(name);
 }
@@ -168,10 +169,7 @@ void SC_Close(void)
     if(!ScriptOpen)
         return;
 
-    if(ScriptFreeCLib == true)
-        free((char*)ScriptBuffer);
-    else
-        Z_Free((char*)ScriptBuffer);
+    Z_Free((char*)ScriptBuffer);
     ScriptBuffer = NULL;
     ScriptOpen = false;
 }

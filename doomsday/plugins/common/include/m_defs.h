@@ -216,12 +216,6 @@ void            MNBindings_Dimensions(const mn_object_t* obj, int* width, int* h
 #define MN_CURSOR_COUNT         2
 #define MN_CURSOR_TICSPERFRAME  8
 
-#if __JHEXEN__
-# define NUMSAVESLOTS           6
-#else
-# define NUMSAVESLOTS           8
-#endif
-
 extern int mnTime;
 extern boolean shiftdown;
 extern mn_page_t* mnCurrentPage;
@@ -266,6 +260,8 @@ void            M_FloatMod10(float* variable, int option);
 void            SCEnterMultiplayerMenu(mn_object_t* obj, int option);
 
 void            MN_TickerEx(void); // The extended ticker.
+
+void            MN_UpdateGameSaveWidgets(void);
 
 // Color widget.
 void            MN_ActivateColorBox(mn_object_t* obj, int option);

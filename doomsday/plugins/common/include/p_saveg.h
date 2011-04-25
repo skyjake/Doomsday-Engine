@@ -1,10 +1,10 @@
-/**\file
+/**\file p_saveg.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_saveg.h: Common save game handling.
+ * Common save game handling.
  */
 
 #ifndef LIBCOMMON_SAVESTATE_H
@@ -31,9 +31,11 @@
 
 #include "p_svtexarc.h"
 
-#define SAVEFILENAME_T_MAXLEN 256
-#define SAVEFILENAME_T_LASTINDEX 255
-typedef char            savefilename_t[SAVEFILENAME_T_MAXLEN];
+typedef struct gamesaveinfo_s {
+    ddstring_t filePath;
+    ddstring_t name;
+    int slot;
+} gamesaveinfo_t;
 
 typedef enum gamearchivesegment_e {
     ASEG_GAME_HEADER = 101, //jhexen only
@@ -92,32 +94,72 @@ typedef enum thinkclass_e {
     NUMTHINKERCLASSES
 } thinkerclass_t;
 
-void            SV_Init(void);
-void            SV_GetSaveGameFileName(char* str, int slot, size_t len);
-int             SV_GetSaveDescription(char* str, const char* filename, size_t len);
+/// Initialize this module.
+void SV_Init(void);
 
-materialarchive_t* SV_MaterialArchive(void);
+/// Shutdown this module.
+void SV_Shutdown(void);
+
+/**
+ * Force an update of the cached game-save info. To be called (sparingly)
+ * at strategic points when an update is necessary (e.g., the game-save
+ * paths have changed).
+ *
+ * \note It is not necessary to call this after a game-save is made, this
+ * module will do so automatically.
+ */
+void SV_UpdateGameSaveInfo(void);
+
+/**
+ * Lookup a save slot by searching for a match on game-save name.
+ * Search is in ascending logical slot order 0...N (where N is the
+ * number of available save slots in the current game).
+ *
+ * @param name  Name of the game-save to look for. Case insensitive.
+ * @return  Logical slot number of the found game-save else @c -1
+ */
+int SV_FindGameSaveSlotForName(const char* name);
+
+/**
+ * @return  Game-save info for logical save @a slot. Always returns valid
+ *      info even if supplied with an invalid or unused slot identifer.
+ */
+const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot);
+
+#if !__JHEXEN__
+/**
+ * Compose the (possibly relative) path to the game-save associated
+ * with the unique @a gameId. If the game-save path is unreachable
+ * then @a path will be made empty.
+ *
+ * @param gameId  Unique game identifier.
+ * @param path  String buffer to populate with the game-save path.
+ * @return  @c true if @a path was set.
+ */
+boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path);
+#endif
+
+boolean SV_SaveGame(int slot, const char* name);
+
+boolean SV_LoadGame(int slot);
 
 #if __JHEXEN__
-boolean         SV_SaveGame(int slot, const char* description);
-boolean         SV_LoadGame(int slot);
 void            SV_MapTeleport(uint map, uint position);
-
 void            SV_HxInitBaseSlot(void);
 void            SV_HxUpdateRebornSlot(void);
 void            SV_HxClearRebornSlot(void);
 boolean         SV_HxRebornSlotAvailable(void);
 int             SV_HxGetRebornSlot(void);
 #else
-boolean         SV_SaveGame(const char* filename, const char* description);
-boolean         SV_LoadGame(const char* filename);
+/**
+ * Saves a snapshot of the world, a still image.
+ * No data of movement is included (server sends it).
+ */
+void SV_SaveClient(uint gameId);
+
+void SV_LoadClient(uint gameId);
 #endif
 
-// Write a client savegame file.
-void            SV_SaveClient(unsigned int gameid);
-void            SV_GetClientSaveGameFileName(char* str, unsigned int gameID,
-                                             size_t len);
-void            SV_LoadClient(unsigned int gameid);
 
 #if __JHEXEN__
 int             SV_ThingArchiveNum(mobj_t* mo);
@@ -126,9 +168,17 @@ unsigned short  SV_ThingArchiveNum(mobj_t* mo);
 #endif
 mobj_t*         SV_GetArchiveThing(int thingid, void* address);
 
+materialarchive_t* SV_MaterialArchive(void);
 material_t*     SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
-void            SV_AssertSegment(int segType);
+/**
+ * Exit with a fatal error if the value at the current location in the
+ * game-save file does not match that associated with the segment type.
+ *
+ * @param segType  Segment type identifier to check alignment of.
+ */
+void SV_AssertSegment(int segType);
+
 void            SV_BeginSegment(int segType);
 
 void            SV_Write(const void* data, int len);
@@ -150,6 +200,15 @@ short           SV_ReadShort(void);
 long            SV_ReadLong(void);
 float           SV_ReadFloat(void);
 
-// Misc save/load routines.
-void            SV_UpdateReadMobjFlags(mobj_t* mo, int ver);
+/**
+ * Update mobj flag values from those used in legacy game-save formats
+ * to their current values.
+ *
+ * To be called after loading a legacy game-save for each mobj loaded.
+ *
+ * @param mo  Mobj whoose flags are to be updated.
+ * @param ver  The MOBJ save version to update from.
+ */
+void SV_UpdateReadMobjFlags(mobj_t* mo, int ver);
+
 #endif /* LIBCOMMON_SAVESTATE_H */

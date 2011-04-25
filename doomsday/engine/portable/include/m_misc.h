@@ -76,9 +76,16 @@ void            M_WriteTextEsc(FILE* file, const char* text);
 void            M_ReadLine(char* buffer, size_t len, DFILE* file);
 
 boolean         M_IsComment(const char* text);
-boolean         M_IsStringValidInt(const char* str);
-boolean         M_IsStringValidByte(const char* str);
-boolean         M_IsStringValidFloat(const char* str);
+
+/// @return  @c true if @a string can be interpreted as a valid integer.
+boolean M_IsStringValidInt(const char* string);
+
+/// @return  @c true if @a string can be interpreted as a valid byte.
+boolean M_IsStringValidByte(const char* string);
+
+/// @return  @c true if @a string can be interpreted as a valid floating-point value.
+boolean M_IsStringValidFloat(const char* string);
+
 char*           M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                                 char separator, size_t bufLength);
 char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
