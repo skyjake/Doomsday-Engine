@@ -199,7 +199,9 @@ typedef struct mndata_slider_s {
 } mndata_slider_t;
 
 void            MNSlider_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNSlider_SecondsDrawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
+void            MNSlider_SecondsDimensions(const mn_object_t* obj, int* width, int* height);
 int             MNSlider_ThumbPos(const mn_object_t* obj);
 
 /**

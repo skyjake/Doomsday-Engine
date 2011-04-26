@@ -116,8 +116,8 @@ typedef struct {
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     float           filterStrength;
-    byte            counterCheat;
-    float           counterCheatScale;
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
 
     // Automap stuff.
 /*    int             automapPos;

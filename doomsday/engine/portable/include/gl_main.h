@@ -104,7 +104,7 @@ void            GL_DrawElements(dglprimtype_t type, int count,
 boolean         GL_Grab(int x, int y, int width, int height,
                         dgltexformat_t format, void* buffer);
 
-void GL_SetMaterial(struct material_s* mat);
+void GL_SetMaterialUI(struct material_s* mat);
 void GL_SetPSprite(struct material_s* mat, int tclass, int tmap);
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
 void GL_BindTexture(DGLuint texname, int magMode);

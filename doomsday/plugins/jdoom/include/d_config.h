@@ -148,8 +148,8 @@ typedef struct jdoom_config_s {
     byte            fixOuchFace;
     byte            fixStatusbarOwnedWeapons;
 
-    byte            counterCheat;
-    float           counterCheatScale;
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
 
     // Automap stuff.
 /*  int             automapPos;

@@ -209,7 +209,7 @@ DGLuint         DGL_EndList(void);
 void            DGL_CallList(DGLuint list);
 void            DGL_DeleteLists(DGLuint list, int range);
 
-void            DGL_SetMaterial(struct material_s* mat);
+void            DGL_SetMaterialUI(struct material_s* mat);
 void            DGL_SetNoMaterial(void);
 void            DGL_SetPatch(patchid_t id, int wrapS, int wrapT);
 void            DGL_SetPSprite(struct material_s* mat);

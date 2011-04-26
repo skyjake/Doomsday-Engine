@@ -298,7 +298,7 @@ void H_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.counterCheatScale = .7f;
+    cfg.hudCheatCounterScale = .7f;
 
     cfg.msgCount = 4;
     cfg.msgScale = .8f;

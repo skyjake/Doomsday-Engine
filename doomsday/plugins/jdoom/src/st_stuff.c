@@ -280,8 +280,8 @@ cvartemplate_t sthudCVars[] =
     {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
     {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
 
-    {"hud-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63, unhideHUD},
-    {"hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1, unhideHUD},
+    {"hud-cheat-counter", 0, CVT_BYTE, &cfg.hudShownCheatCounters, 0, 63, unhideHUD},
+    {"hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.hudCheatCounterScale, .1f, 1, unhideHUD},
     {NULL}
 };
 
@@ -1741,7 +1741,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     char buf[40], tmp[20];
 
-    if(!(cfg.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT)))
+    if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
@@ -1749,16 +1749,16 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
         return;
 
     strcpy(buf, "Kills: ");
-    if(cfg.counterCheat & CCH_KILLS)
+    if(cfg.hudShownCheatCounters & CCH_KILLS)
     {
         sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
         strcat(buf, tmp);
     }
-    if(cfg.counterCheat & CCH_KILLS_PRCNT)
+    if(cfg.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""),
                 totalKills ? plr->killCount * 100 / totalKills : 100,
-                (cfg.counterCheat & CCH_KILLS ? ")" : ""));
+                (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
         strcat(buf, tmp);
     }
 
@@ -1781,23 +1781,23 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     char buf[40], tmp[20];
 
-    if(!(cfg.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
+    if(!(cfg.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     strcpy(buf, "Items: ");
-    if(cfg.counterCheat & CCH_ITEMS)
+    if(cfg.hudShownCheatCounters & CCH_ITEMS)
     {
         sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
         strcat(buf, tmp);
     }
-    if(cfg.counterCheat & CCH_ITEMS_PRCNT)
+    if(cfg.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""),
                 totalItems ? plr->itemCount * 100 / totalItems : 100,
-                (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
+                (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
         strcat(buf, tmp);
     }
 
@@ -1820,7 +1820,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     char buf[40], tmp[20];
 
-    if(!(cfg.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT)))
+    if(!(cfg.hudShownCheatCounters & (CCH_SECRET | CCH_SECRET_PRCNT)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
@@ -1828,16 +1828,16 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
         return;
 
     strcpy(buf, "Secret: ");
-    if(cfg.counterCheat & CCH_SECRET)
+    if(cfg.hudShownCheatCounters & CCH_SECRET)
     {
         sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
         strcat(buf, tmp);
     }
-    if(cfg.counterCheat & CCH_SECRET_PRCNT)
+    if(cfg.hudShownCheatCounters & CCH_SECRET_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRET ? "(" : ""),
                 totalSecret ? plr->secretCount * 100 / totalSecret : 100,
-                (cfg.counterCheat & CCH_SECRET ? ")" : ""));
+                (cfg.hudShownCheatCounters & CCH_SECRET ? ")" : ""));
         strcat(buf, tmp);
     }
 
@@ -1922,9 +1922,9 @@ void ST_Drawer(int player)
             { UWG_BOTTOM, HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_TOP, HUD_LOG, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_TOP, -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_COUNTERS, -1, &cfg.counterCheatScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_COUNTERS, -1, &cfg.counterCheatScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_COUNTERS, -1, &cfg.counterCheatScale, 1, drawKillsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawKillsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
         };
         size_t i;
 

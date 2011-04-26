@@ -1046,17 +1046,16 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterial(material_t* mat)
+void GL_SetMaterialUI(material_t* mat)
 {
     material_snapshot_t ms;
 
     if(!mat)
         return; // \fixme we need a "NULL material".
 
-    Con_Error("GL_SetMaterial: No usage context specified.");
     Materials_Prepare(&ms, mat, true,
-        Materials_VariantSpecificationForContext(MC_UNKNOWN, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, 1, 1, 0, false, false, false, false));
+        Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false));
     GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 

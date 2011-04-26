@@ -145,8 +145,8 @@ typedef struct jheretic_config_s {
     byte            fixFloorFire; // Fix Heretic bug; explode Maulotaur floor fire when feetclipped.
     byte            fixPlaneScrollMaterialsEastOnly; // Fix Heretic bug; plane materials would only scroll east.
 
-    byte            counterCheat;
-    float           counterCheatScale;
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
 
     // Automap stuff.
 /*  int             automapPos;

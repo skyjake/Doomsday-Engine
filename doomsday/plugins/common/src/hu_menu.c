@@ -29,6 +29,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
@@ -102,8 +103,6 @@ void M_ReadThis(mn_object_t* obj, int option);
 
 void M_OpenDCP(mn_object_t* obj, int option);
 void M_ChangeMessages(mn_object_t* obj, int option);
-void M_HUDHideTime(mn_object_t* obj, int option);
-void M_MessageUptime(mn_object_t* obj, int option);
 #if __JHERETIC__ || __JHEXEN__
 void M_InventoryHideTime(mn_object_t* obj, int option);
 void M_InventorySlotMaxVis(mn_object_t* obj, int option);
@@ -114,12 +113,6 @@ void M_HUDRed(mn_object_t* obj, int option);
 void M_HUDGreen(mn_object_t* obj, int option);
 void M_HUDBlue(mn_object_t* obj, int option);
 void M_LoadSelect(mn_object_t* obj, int option);
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-void M_KillCounter(mn_object_t* obj, int option);
-void M_ItemCounter(mn_object_t* obj, int option);
-void M_SecretCounter(mn_object_t* obj, int option);
-#endif
 
 static void M_QuickSave(void);
 static void M_QuickLoad(void);
@@ -741,6 +734,7 @@ mndata_slider_t sld_hud_viewsize = { 0, 11, 0, 1, false, "view-size" };
 mndata_slider_t sld_hud_viewsize = { 0, 13, 0, 1, false, "view-size" };
 #endif
 mndata_slider_t sld_hud_wideoffset = { 0, 1, 0, .1f, true, "hud-wideoffset" };
+mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1, false, "hud-timer" };
 mndata_slider_t sld_hud_xhair_size = { 0, 1, 0, .1f, true, "view-cross-size" };
 mndata_slider_t sld_hud_xhair_opacity = { 0, 1, 0, .1f, true, "view-cross-a" };
 mndata_slider_t sld_hud_size = { 0, 1, 0, .1f, true, "hud-scale" };
@@ -748,6 +742,7 @@ mndata_slider_t sld_hud_counter_size = { 0, 1, 0, .1f, true, "hud-cheat-counter-
 mndata_slider_t sld_hud_statusbar_size = { 0, 1, 0, .1f, true, "hud-status-size" };
 mndata_slider_t sld_hud_statusbar_opacity = { 0, 1, 0, .1f, true, "hud-status-alpha" };
 mndata_slider_t sld_hud_messages_size = { 0, 1, 0, .1f, true, "msg-scale" };
+mndata_slider_t sld_hud_messages_uptime = { 1, 60, 0, 1, false, "msg-uptime" };
 
 mndata_listitem_t lstit_hud_xhair_symbols[] = {
     { "None", 0 },
@@ -762,6 +757,44 @@ mndata_listinline_t lst_hud_xhair_symbol = {
     lstit_hud_xhair_symbols, NUMLISTITEMS(lstit_hud_xhair_symbols), "view-cross-type"
 };
 
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_listitem_t lstit_hud_killscounter_displaymethods[] = {
+    { "Hidden", 0 },
+    { "Count", 1 },
+    { "Percent", 2 },
+    { "Count+Percent", 3 },
+};
+mndata_listinline_t lst_hud_killscounter = {
+    lstit_hud_killscounter_displaymethods,
+    NUMLISTITEMS(lstit_hud_killscounter_displaymethods),
+    "hud-cheat-counter"
+};
+
+mndata_listitem_t lstit_hud_itemscounter_displaymethods[] = {
+    { "Hidden", 0 },
+    { "Count", 1 },
+    { "Percent", 2 },
+    { "Count+Percent", 3 },
+};
+mndata_listinline_t lst_hud_itemscounter = {
+    lstit_hud_itemscounter_displaymethods,
+    NUMLISTITEMS(lstit_hud_itemscounter_displaymethods),
+    "hud-cheat-counter"
+};
+
+mndata_listitem_t lstit_hud_secretscounter_displaymethods[] = {
+    { "Hidden", 0 },
+    { "Count", 1 },
+    { "Percent", 2 },
+    { "Count+Percent", 3 },
+};
+mndata_listinline_t lst_hud_secretscounter = {
+    lstit_hud_secretscounter_displaymethods,
+    NUMLISTITEMS(lstit_hud_secretscounter_displaymethods),
+    "hud-cheat-counter"
+};
+#endif
+
 static mn_object_t HUDItems[] = {
     { MN_TEXT,      0,  0,  "View Size", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "", GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_viewsize },
@@ -771,7 +804,8 @@ static mn_object_t HUDItems[] = {
     { MN_TEXT,      0,  0,  "Single Key Display", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "hud-keys-combine", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
-    { MN_LISTINLINE, 0, 0,  "AutoHide", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_HUDHideTime },
+    { MN_TEXT,      0,  0,  "AutoHide", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,  "", GF_FONTA, 0, MNSlider_SecondsDrawer, MNSlider_SecondsDimensions, Hu_MenuCvarSlider, &sld_hud_uptime },
     { MN_TEXT,      0,  0,  "UnHide Events", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
     { MN_TEXT,      0,  0,  "Receive Damage", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "hud-unhide-damage", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -801,7 +835,8 @@ static mn_object_t HUDItems[] = {
     { MN_BUTTON2,   0,  0,  "Shown",    GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, M_ChangeMessages },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_messages_size },
-    { MN_LISTINLINE, 0, 0,  "Uptime",   GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_MessageUptime },
+    { MN_TEXT,      0,  0,  "Uptime",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,  "",         GF_FONTA, 0, MNSlider_SecondsDrawer, MNSlider_SecondsDimensions, Hu_MenuCvarSlider, &sld_hud_messages_uptime },
 
     { MN_TEXT,      0,  0,  "Crosshair", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
     { MN_TEXT,      0,  0,  "Symbol",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
@@ -824,9 +859,12 @@ static mn_object_t HUDItems[] = {
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      0,  0,  "Counters", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
-    { MN_LISTINLINE, 0, 0,  "Kills",    GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_KillCounter },
-    { MN_LISTINLINE, 0, 0,  "Items",    GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_ItemCounter },
-    { MN_LISTINLINE, 0, 0,  "Secrets",  GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_SecretCounter },
+    { MN_TEXT,      0,  0,  "Kills",    GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_killscounter },
+    { MN_TEXT,      0,  0,  "Items",    GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_itemscounter },
+    { MN_TEXT,      0,  0,  "Secrets",  GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_secretscounter },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_counter_size },
 #endif
@@ -869,13 +907,13 @@ static mn_object_t HUDItems[] = {
 
 mn_page_t HUDMenu = {
 #if __JHEXEN__
-    HUDItems, 54,
+    HUDItems, 56,
 #elif __JHERETIC__
-    HUDItems, 63,
+    HUDItems, 68,
 #elif __JDOOM64__
-    HUDItems, 59,
+    HUDItems, 64,
 #elif __JDOOM__
-    HUDItems, 63,
+    HUDItems, 68,
 #endif
     0,
 #if __JDOOM__ || __JDOOM64__
@@ -907,17 +945,19 @@ static mn_object_t InventoryItems[] = {
     { MN_BUTTON2,   0,  0,  "ctl-inventory-use-immediate", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,  "Select Next If Use Failed", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "ctl-inventory-use-next", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_LISTINLINE, 0, 0,  "AutoHide", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_InventoryHideTime },
+    { MN_TEXT,      0,  0,  "AutoHide", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_InventoryHideTime },
 
     { MN_TEXT,      0,  0,  "Fullscreen HUD", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
-    { MN_LISTINLINE, 0, 0,  "Max Visible Slots", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_InventorySlotMaxVis, "hud-inventory-slot-max" },
+    { MN_TEXT,      0,  0,  "Max Visible Slots", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_InventorySlotMaxVis, "hud-inventory-slot-max" },
     { MN_TEXT,      0,  0,  "Show Empty Slots", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "hud-inventory-slot-showempty", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_NONE }
 };
 
 mn_page_t InventoryMenu = {
-    InventoryItems, 12,
+    InventoryItems, 14,
     0,
     { 78, 48 },
     M_DrawInventoryMenu,
@@ -3071,6 +3111,25 @@ void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY, float alpha)
 #undef OFFSET_X
 }
 
+static char* composeSecondsString(float seconds, float defaultValue,
+    const char* defaultString, size_t bufSize, char* buf)
+{
+    assert(0 != bufSize && NULL != buf);
+    {
+    const char* strOneSecond = "second", *strSeconds = "seconds";
+    if(INRANGE_OF(seconds, defaultValue, .0001f))
+    {
+        strncpy(buf, defaultString, bufSize);
+        buf[bufSize] = '\0';
+    }
+    else
+    {
+        dd_snprintf(buf, bufSize, "%.0f %s", seconds, seconds > 1? strSeconds : strOneSecond);
+    }
+    return buf;
+    }
+}
+
 void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
 {
     patchinfo_t middleInfo;
@@ -3080,6 +3139,39 @@ void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
         *width = (int) ceil(middleInfo.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE);
     if(height)
         *height = (int) ceil(middleInfo.height * MNDATA_SLIDER_SCALE);
+}
+
+void MNSlider_SecondsDrawer(const mn_object_t* obj, int x, int y, float alpha)
+{
+    assert(NULL != obj);
+    {
+    const mndata_slider_t* slider = (const mndata_slider_t*) obj->data;
+    const float seconds = MINMAX_OF(slider->min, slider->value, slider->max);
+    char textualSeconds[21];
+    const char* str = composeSecondsString(seconds, 0, "Disabled", 20, textualSeconds);
+
+    DGL_Translatef(x, y, 0);
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], alpha);
+
+    M_DrawMenuText2(str, 0, 0, obj->fontIdx);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_Translatef(-x, -y, 0);
+    }
+}
+
+void MNSlider_SecondsDimensions(const mn_object_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    if(NULL != width || NULL != height)
+    {
+        const mndata_slider_t* slider = (const mndata_slider_t*) obj->data;
+        const float seconds = MINMAX_OF(slider->min, slider->value, slider->max);
+        char textualSeconds[21];
+        const char* str = composeSecondsString(seconds, 0, "Disabled", 20, textualSeconds);
+        FR_TextFragmentDimensions(width, height, str);
+    }
 }
 
 void Hu_MenuCvarButton(mn_object_t* obj, int option)
@@ -3521,9 +3613,6 @@ void M_DrawInventoryMenu(const mn_page_t* page, int x, int y)
  */
 void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
 {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    static const char* countnames[4] = { "HIDDEN", "COUNT", "PERCENT", "COUNT+PCNT" };
-#endif
 #if __JDOOM__ || __JDOOM64__
     char buf[1024];
 #endif
@@ -3544,40 +3633,6 @@ void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
     GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
 #endif
 
-    // Auto-hide HUD options:
-    {
-    char secString[11];
-    const char* str;
-    uint seconds = MINMAX_OF(0, cfg.hudTimer, 30);
-    if(seconds > 0)
-    {
-        memset(secString, 0, sizeof(secString));
-        dd_snprintf(secString, 11, "%2u %s", seconds, seconds > 1? "seconds" : "second");
-        str = secString;
-    }
-    else
-        str = "Disabled";
-    //M_WriteMenuText(page, 0, x, y, str);
-    }
-
-    {
-    char secString[11];
-    const char* str;
-    uint seconds = MINMAX_OF(1, cfg.msgUptime, 30);
-
-    memset(secString, 0, sizeof(secString));
-    dd_snprintf(secString, 11, "%2u %s", seconds, seconds > 1? "seconds" : "second");
-    str = secString;
-    //M_WriteMenuText(page, 0, x, y, str);
-    }
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    // Counters:
-    //M_WriteMenuText(page, 0, x, y, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
-    //M_WriteMenuText(page, 0, x, y, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
-    //M_WriteMenuText(page, 0, x, y, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
-#endif
-
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -3593,54 +3648,6 @@ void M_FloatMod10(float* variable, int option)
     else if(val > 0)
         val--;
     *variable = val / 10.0f;
-}
-
-/**
- * Set the show kills counter
- */
-void M_KillCounter(mn_object_t* obj, int option)
-{
-    int op = (cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2);
-
-    op += option == RIGHT_DIR ? 1 : -1;
-    if(op < 0)
-        op = 0;
-    if(op > 3)
-        op = 3;
-    cfg.counterCheat &= ~0x9;
-    cfg.counterCheat |= (op & 0x1) | ((op & 0x2) << 2);
-}
-
-/**
- * Set the show objects counter
- */
-void M_ItemCounter(mn_object_t* obj, int option)
-{
-    int op = ((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3);
-
-    op += option == RIGHT_DIR ? 1 : -1;
-    if(op < 0)
-        op = 0;
-    if(op > 3)
-        op = 3;
-    cfg.counterCheat &= ~0x12;
-    cfg.counterCheat |= ((op & 0x1) << 1) | ((op & 0x2) << 3);
-}
-
-/**
- * Set the show secrets counter
- */
-void M_SecretCounter(mn_object_t* obj, int option)
-{
-    int op = ((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4);
-
-    op += option == RIGHT_DIR ? 1 : -1;
-    if(op < 0)
-        op = 0;
-    if(op > 3)
-        op = 3;
-    cfg.counterCheat &= ~0x24;
-    cfg.counterCheat |= ((op & 0x1) << 2) | ((op & 0x2) << 4);
 }
 
 void M_WGCurrentColor(mn_object_t* obj, int option)
@@ -3730,36 +3737,6 @@ void M_ChangeMessages(mn_object_t* obj, int option)
 {
     cfg.hudShown[HUD_LOG] = !cfg.hudShown[HUD_LOG];
     P_SetMessage(players + CONSOLEPLAYER, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON, true);
-}
-
-void M_HUDHideTime(mn_object_t* obj, int option)
-{
-    int val = cfg.hudTimer;
-
-    if(option == RIGHT_DIR)
-    {
-        if(val < 30)
-            val++;
-    }
-    else if(val > 0)
-        val--;
-
-    cfg.hudTimer = val;
-}
-
-void M_MessageUptime(mn_object_t* obj, int option)
-{
-    int                 val = cfg.msgUptime;
-
-    if(option == RIGHT_DIR)
-    {
-        if(val < 30)
-            val++;
-    }
-    else if(val > 1)
-        val--;
-
-    cfg.msgUptime = val;
 }
 
 #if __JHERETIC__ || __JHEXEN__

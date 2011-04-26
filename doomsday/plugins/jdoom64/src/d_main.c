@@ -292,7 +292,7 @@ void D_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.counterCheatScale = .7f; // From jHeretic.
+    cfg.hudCheatCounterScale = .7f; // From jHeretic.
 
     cfg.msgCount = 1;
     cfg.msgScale = .8f;

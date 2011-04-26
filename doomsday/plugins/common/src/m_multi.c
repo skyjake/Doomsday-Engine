@@ -142,13 +142,13 @@ mndata_listinline_t lst_net_gamemode = {
 #endif
 
 #if __JDOOM__
-# define NUM_GAMESETUP_ITEMS        34
+# define NUM_GAMESETUP_ITEMS        37
 #elif __JDOOM64__
-# define NUM_GAMESETUP_ITEMS        32
+# define NUM_GAMESETUP_ITEMS        35
 #elif __JHERETIC__
-# define NUM_GAMESETUP_ITEMS        24
+# define NUM_GAMESETUP_ITEMS        27
 #elif __JHEXEN__
-# define NUM_GAMESETUP_ITEMS        17
+# define NUM_GAMESETUP_ITEMS        20
 #endif
 
 mn_object_t GameSetupItems[] = {
@@ -201,9 +201,12 @@ mn_object_t GameSetupItems[] = {
 #endif
     { MN_TEXT,      0,  0,  "No Max Z Radius Attacks", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "server-game-radiusattack-nomaxz", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_LISTINLINE, 0, 0,  "Damage Multiplier", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupDamageMod },
-    { MN_LISTINLINE, 0, 0,  "Health Multiplier", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupHealthMod },
-    { MN_LISTINLINE, 0, 0,  "Gravity Multiplier", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupGravity },
+    { MN_TEXT,      0,  0,  "Damage Multiplier", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupDamageMod },
+    { MN_TEXT,      0,  0,  "Health Multiplier", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupHealthMod },
+    { MN_TEXT,      0,  0,  "Gravity Multiplier", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupGravity },
     { MN_BUTTON,    0,  0,  "Proceed...",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCOpenServer },
     { MN_NONE }
 };

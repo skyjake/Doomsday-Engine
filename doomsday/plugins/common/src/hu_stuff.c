@@ -732,7 +732,7 @@ DGL_Enable(DGL_TEXTURE_2D);
                     cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
                     cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
 
-                    DGL_SetMaterial(sprInfo.material);
+                    DGL_SetMaterialUI(sprInfo.material);
 
                     drawQuad(cX, cY, w, h, sprInfo.texCoord[0], sprInfo.texCoord[1], 1, 1, 1, alpha);
                 }
@@ -1302,7 +1302,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 
     if(background)
     {
-        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, Materials_IndexForName(borderGraphics[0])));
+        DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_IndexForName(borderGraphics[0])));
         DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 

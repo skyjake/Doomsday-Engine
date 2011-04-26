@@ -673,9 +673,9 @@ if(glGetError() == GL_STACK_OVERFLOW)
 #endif
 }
 
-void DGL_SetMaterial(material_t* mat)
+void DGL_SetMaterialUI(material_t* mat)
 {
-    GL_SetMaterial(mat);
+    GL_SetMaterialUI(mat);
 }
 
 void DGL_SetNoMaterial(void)

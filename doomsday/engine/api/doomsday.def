@@ -385,7 +385,7 @@ EXPORTS
     R_GetColorPaletteRGBubv     @436 NONAME
 
 ; DGL.
-    DGL_SetMaterial             @117 NONAME
+    DGL_SetMaterialUI             @117 NONAME
     DGL_SetNoMaterial           @115 NONAME
     DGL_SetPSprite              @114 NONAME
     DGL_SetPSprite2             @334 NONAME
