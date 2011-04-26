@@ -981,7 +981,7 @@ boolean Con_IsValidCommand(const char* name)
     return (Con_FindAlias(name) != 0);
 }
 
-void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean showExtra)
+void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo)
 {
     assert(inited);
 
@@ -1006,16 +1006,26 @@ void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean showExtra)
         Con_Printf(" ...");
     Con_Printf("\n");
 
-    if(showExtra)
+    if(printInfo)
     {
         // Check for extra info about this ccmd's usage.
-        char* str;
-        if((str = DH_GetString(DH_Find(ccmd->name), HST_INFO)))
+        char* info = DH_GetString(DH_Find(ccmd->name), HST_INFO);
+        if(NULL != info)
         {
             // Lets indent for neatness.
-            char* line;
-            while(*(line = M_StrTok(&str, "\n")))
-                Con_Printf("  %s\n", line);
+            const size_t infoLen = strlen(info);
+            char* line, *infoCopy, *infoCopyBuf = (char*) malloc(infoLen+1);
+            if(NULL == infoCopyBuf)
+                Con_Error("Con_PrintCCmdUsage: Failed on allocation of %lu bytes for "
+                    "info copy buffer.", (unsigned long) (infoLen+1));
+            memcpy(infoCopyBuf, info, infoLen+1);
+
+            infoCopy = infoCopyBuf;
+            while(*(line = M_StrTok(&infoCopy, "\n")))
+            {
+                Con_FPrintf(CBLF_LIGHT, "  %s\n", line);
+            }
+            free(infoCopyBuf);
         }
     }
 }
@@ -1282,19 +1292,41 @@ D_CMD(HelpWhat)
     }
 
     // Try the console commands first.
-    { ccmd_t* ccmd;
-    if((ccmd = Con_FindCommand(argv[1])) != 0)
+    { ccmd_t* ccmd = Con_FindCommand(argv[1]);
+    if(NULL != ccmd)
     {
-        char* str;
-        if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
-            Con_Printf("%s\n", str);
+        void* helpRecord = DH_Find(ccmd->name);
+        char* description = DH_GetString(helpRecord, HST_DESCRIPTION);
+        char* info = DH_GetString(helpRecord, HST_INFO);
+
+        if(NULL != description)
+            Con_Printf("%s\n", description);
 
         // Print usage info for each variant.
         do
         {
-            Con_PrintCCmdUsage(ccmd, (found == 0));
-            found++;
-        } while((ccmd = ccmd->nextOverload) != 0);
+            Con_PrintCCmdUsage(ccmd, false);
+            ++found;
+        } while(NULL != (ccmd = ccmd->nextOverload));
+
+        // Any extra info?
+        if(NULL != info)
+        {
+            // Lets indent for neatness.
+            const size_t infoLen = strlen(info);
+            char* line, *infoCopy, *infoCopyBuf = (char*) malloc(infoLen+1);
+            if(NULL == infoCopyBuf)
+                Con_Error("CCmdHelpWhat: Failed on allocation of %lu bytes for "
+                    "info copy buffer.", (unsigned long) (infoLen+1));
+            memcpy(infoCopyBuf, info, infoLen+1);
+
+            infoCopy = infoCopyBuf;
+            while(*(line = M_StrTok(&infoCopy, "\n")))
+            {
+                Con_FPrintf(CBLF_LIGHT, "  %s\n", line);
+            }
+            free(infoCopyBuf);
+        }
     }}
 
     if(found == 0) // Perhaps its a cvar then?

@@ -345,8 +345,8 @@ void Con_PrintCVar(cvar_t* cvar, char* prefix);
  * ccmd's usage is validated by Doomsday.
  *
  * @param ccmd              Ptr to the ccmd to print the usage info for.
- * @param showExtra         If @c true, print any additional info we have.
+ * @param printInfo         If @c true, print any additional info we have.
  */
-void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean showExtra);
+void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo);
 
 #endif /* LIBDENG_CONSOLE_MAIN_H */
