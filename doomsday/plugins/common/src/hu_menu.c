@@ -3201,7 +3201,7 @@ static void M_QuickSave(void)
     }
     else
     {
-        char identifier[10];
+        char identifier[11];
         dd_snprintf(identifier, 10, "#%10.i", slot);
         dd_snprintf(buf, 80, QLPROMPT, identifier);
     }
