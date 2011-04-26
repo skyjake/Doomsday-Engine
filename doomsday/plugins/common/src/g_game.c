@@ -215,8 +215,6 @@ boolean customPal = false; // If @c true, a non-IWAD palette is in use.
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
-int quickSaveSlot; // -1 = Not yet chosen/determined.
-
 // Game Action Variables:
 #define GA_SAVEGAME_NAME_MAXLENGTH   24
 
@@ -404,7 +402,7 @@ cvartemplate_t gamestatusCVars[] = {
 
 ccmdtemplate_t gameCmds[] = {
     { "listmaps",       "",     CCmdListMaps },
-    { "savegame",       "is",   CCmdSaveGameName },
+    { "savegame",       "ss",   CCmdSaveGameName },
     { "savegame",       "",     CCmdSaveGame },
     { "loadgame",       "s",    CCmdLoadGameName },
     { "loadgame",       "",     CCmdLoadGame },
@@ -473,6 +471,7 @@ void G_CommonPreInit(void)
     D_NetConsoleRegistration(); // For network.
     G_Register();               // Read-only game status cvars (for playsim).
     G_ControlRegister();        // For controls/input.
+    SV_Register();              // Game-save system.
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     Hu_LogRegister();           // For the player message logs.
@@ -836,8 +835,6 @@ void G_CommonPostInit(void)
 
     // Init the save system and create the game save directory.
     SV_Init();
-    // -1 = No save slot yet chosen/used.
-    quickSaveSlot = -1;
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
@@ -2207,9 +2204,6 @@ boolean G_IsLoadGamePossible(void)
 
 boolean G_LoadGame(int slot)
 {
-    const gamesaveinfo_t* info;
-
-    if(0 > slot || slot >= NUMSAVESLOTS) return false;
     if(!G_IsLoadGamePossible()) return false;
 
     // Check whether this slot is in use. We do this here also because we
@@ -2218,11 +2212,11 @@ boolean G_LoadGame(int slot)
 
     // First ensure we have up-to-date info.
     SV_UpdateGameSaveInfo();
-
-    // Now see if the slot is in use. An empty filePath clearly means no.
-    info = SV_GetGameSaveInfoForSlot(slot);
-    if(Str_IsEmpty(&info->filePath))
+    if(!SV_IsGameSaveSlotUsed(slot))
+    {
+        Con_Message("Warning:G_LoadGame: Save slot #%i is not in use, aborting load.\n", slot);
         return false;
+    }
 
     // Everything appears to be in order - schedule the game-save load!
     gaLoadGameSlot = slot;
@@ -2281,7 +2275,7 @@ boolean G_SaveGame(int slot, const char* name)
 void G_DoSaveGame(void)
 {
     const char* unnamed = "UNNAMED";
-    // If no name was specified replace it with "something".
+    // If no name was specified replace it with *something*.
     if(0 == strlen(gaSaveGameName))
     {
         strncpy(gaSaveGameName, unnamed, GA_SAVEGAME_NAME_MAXLENGTH);
@@ -3070,21 +3064,11 @@ D_CMD(LoadGameName)
     int slot;
     if(!G_IsLoadGamePossible()) return false;
 
-    // Determine the save slot to use. First try a search by name.
-    slot = SV_FindGameSaveSlotForName(argv[1]);
-    if(0 > slot)
+    slot = SV_ParseGameSaveSlot(argv[1]);
+    if(slot >= 0)
     {
-        // Perhaps a logical identifier?
-        if(M_IsStringValidInt(argv[1]))
-        {
-            slot = atoi(argv[1]);
-        }
-    }
-
-    if(G_LoadGame(slot))
-    {
-        // GA_LOADGAME scheduled.
-        return true;
+        // A known slot identifier. Try to schedule a GA_LOADGAME action.
+        return G_LoadGame(slot);
     }
 
     // Clearly the caller needs some assistance...
@@ -3116,9 +3100,19 @@ D_CMD(SaveGameName)
 {
     int slot;
     if(!G_IsSaveGamePossible()) return false;
-    // We do not care if there is a save already present in this slot.
-    slot = atoi(argv[1]);
-    return G_SaveGame(slot, argv[2]);
+    
+    slot = SV_ParseGameSaveSlot(argv[1]);
+    if(slot >= 0)
+    {
+        // A known slot identifier. Try to schedule a GA_SAVEGAME action.
+        // We do not care if there is a save already present in this slot.
+        return G_SaveGame(slot, argv[2]);
+    }
+
+    // Clearly the caller needs some assistance...
+    Con_Message("Failed to determine game-save slot from \"%s\"\n", argv[1]);
+    // No action means the command failed.
+    return false;
 }
 
 D_CMD(SaveGame)

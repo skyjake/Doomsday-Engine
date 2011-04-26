@@ -46,11 +46,11 @@ desc = Show the Help screens.
 
 [savegame]
 desc = Create a new game-save or open the save menu.
-inf = Params: savegame (save slot) (game-save name)\nExample 1: 'savegame 1 "running low on ammo"'\nExample 2: 'savegame'
+inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name)\nExamples:\nOpen save menu: 'savegame'\nSaving to current "quick" slot: 'savegame <quick> "running low on ammo"'\nSaving to slot #0: 'savegame 0 "running low on ammo"'
 
 [loadgame]
 desc = Load a game-save or open the load menu.
-inf = Params: loadgame (game-save name|save slot)\nExample 1: 'loadgame "running low on ammo"'\nExample 2: 'loadgame 1'\nExample 3: 'loadgame'
+inf = Params: loadgame (game-save-name|<keyword>|save-slot-num)\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot: 'loadgame <quick>'\nLoading slot #0: 'loadgame 0'
 
 [listmaps]
 desc = List all loaded maps.
@@ -361,6 +361,9 @@ desc = Current hub.
 
 [game-music]
 desc = Currently playing music (id).
+
+[game-save-quick-slot]
+desc = Current "quick" save slot number. -1=None (default).
 
 [map-music]
 desc = Music (id) for current map.

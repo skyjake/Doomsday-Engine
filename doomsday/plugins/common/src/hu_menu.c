@@ -311,6 +311,8 @@ static boolean mnActive = false;
 static float mnAlpha = 0; // Alpha level for the entire menu.
 static float mnTargetAlpha = 0; // Target alpha for the entire UI.
 
+static boolean nominatingQuickGameSaveSlot = false;
+
 #if __JHERETIC__
 static patchinfo_t dpRotatingSkull[18];
 #elif __JHEXEN__
@@ -1121,7 +1123,7 @@ cvartemplate_t menuCVars[] = {
     { "menu-shadow",    0,  CVT_FLOAT,  &cfg.menuShadow, 0, 1 },
     { "menu-patch-replacement", 0, CVT_BYTE, &cfg.usePatchReplacement, 0, 2 },
     { "menu-slam",      0,  CVT_BYTE,   &cfg.menuSlam,  0, 1 },
-    { "menu-quick-ask", 0,  CVT_BYTE,   &cfg.askQuickSaveLoad, 0, 1 },
+    { "menu-quick-ask", 0,  CVT_BYTE,   &cfg.confirmQuickGameSave, 0, 1 },
     { "menu-hotkeys",   0,  CVT_BYTE,   &cfg.menuHotkeys, 0, 1 },
 #if __JDOOM__ || __JDOOM64__
     { "menu-quitsound", 0,  CVT_INT,    &cfg.menuQuitSound, 0, 1 },
@@ -1477,7 +1479,6 @@ void Hu_MenuInit(void)
     mnFocusObjectIndex = mnCurrentPage->focus;
     whichSkull = 0;
     skullAnimCounter = MN_CURSOR_TICSPERFRAME;
-    quickSaveSlot = -1;
 
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
@@ -1657,7 +1658,7 @@ void MN_GotoPage(mn_page_t* page)
 {
     if(!mnActive)
         return;
-    if(!page)
+    if(!page || mnCurrentPage == page)
         return;
 
     mnCurrentPage = page;
@@ -1689,6 +1690,8 @@ void MN_GotoPage(mn_page_t* page)
     menu_color = 0;
     skull_angle = 0;
     FR_ResetTypeInTimer();
+
+    nominatingQuickGameSaveSlot = false;
 }
 
 /**
@@ -1858,6 +1861,8 @@ void Hu_MenuCommand(menucommand_e cmd)
 {
     if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
+        nominatingQuickGameSaveSlot = false;
+
         Hu_FogEffectSetAlphaTarget(0);
 
         if(cmd == MCMD_CLOSEFAST)
@@ -2495,19 +2500,26 @@ void MN_UpdateGameSaveWidgets(void)
 }
 
 /**
- * Called after an save game description has been modified to action the save.
+ * Called after the save name has been modified and to action the game-save.
  */
 void M_DoSaveGame(const mndata_edit_t* ef)
 {
-    // Picked a quicksave slot yet?
-    if(quickSaveSlot == -2)
-        quickSaveSlot = ef->data;
+    const int saveSlot = ef->data;
+    const char* saveName = ef->text;
+
+    if(nominatingQuickGameSaveSlot)
+    {
+        Con_SetInteger("game-save-quick-slot", saveSlot);
+        nominatingQuickGameSaveSlot = false;
+    }
+
+    if(!G_SaveGame(saveSlot, saveName))
+        return;
 
     SaveMenu.focus = ef->data+1;
     LoadMenu.focus = ef->data;
 
     S_LocalSound(SFX_MENU_ACCEPT, NULL);
-    G_SaveGame(ef->data, ef->text);
     Hu_MenuCommand(MCMD_CLOSEFAST);
 }
 
@@ -3126,7 +3138,16 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 int M_QuickSaveResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
-        G_SaveGame(quickSaveSlot, gameSaveSlotEditWidgets[quickSaveSlot].text);
+    {
+        const int slot = Con_GetInteger("game-save-quick-slot");
+        if(0 > slot || slot >= NUMSAVESLOTS)
+        {
+            Con_Message("Warning:M_QuickSaveResponse: Nominated \"quicksave\" slot #%i "
+                "is not valid, aborting...", slot);
+            return true;
+        }
+        G_SaveGame(slot, gameSaveSlotEditWidgets[slot].text);
+    }
     return true;
 }
 
@@ -3137,6 +3158,8 @@ int M_QuickSaveResponse(msgresponse_t response, void* context)
 static void M_QuickSave(void)
 {
     player_t* player = &players[CONSOLEPLAYER];
+    const int slot = Con_GetInteger("game-save-quick-slot");
+    boolean slotIsUsed;
     char buf[80];
 
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
@@ -3153,21 +3176,34 @@ static void M_QuickSave(void)
         return;
     }
 
-    if(quickSaveSlot < 0)
+    // If no quick-save slot has been nominated - allow doing so now.
+    if(0 > slot)
     {
         Hu_MenuCommand(MCMD_OPEN);
         MN_UpdateGameSaveWidgets();
         MN_GotoPage(&SaveMenu);
-        quickSaveSlot = -2; // Means to pick a slot now.
+        nominatingQuickGameSaveSlot = true;
         return;
     }
-    sprintf(buf, QSPROMPT, gameSaveSlotEditWidgets[quickSaveSlot].text);
 
-    if(!cfg.askQuickSaveLoad)
+    slotIsUsed = SV_IsGameSaveSlotUsed(slot);
+    if(!slotIsUsed || !cfg.confirmQuickGameSave)
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_SaveGame(quickSaveSlot, gameSaveSlotEditWidgets[quickSaveSlot].text);
+        G_SaveGame(slot, gameSaveSlotEditWidgets[slot].text);
         return;
+    }
+
+    if(slotIsUsed)
+    {
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        sprintf(buf, QSPROMPT, Str_Text(&info->name));
+    }
+    else
+    {
+        char identifier[10];
+        dd_snprintf(identifier, 10, "#%10.i", slot);
+        dd_snprintf(buf, 80, QLPROMPT, identifier);
     }
 
     S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
@@ -3178,13 +3214,16 @@ int M_QuickLoadResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        G_LoadGame(quickSaveSlot);
+        const int slot = Con_GetInteger("game-save-quick-slot");
+        G_LoadGame(slot);
     }
     return true;
 }
 
 static void M_QuickLoad(void)
 {
+    const int slot = Con_GetInteger("game-save-quick-slot");
+    const gamesaveinfo_t* info;
     char buf[80];
 
     if(IS_NETGAME)
@@ -3194,21 +3233,22 @@ static void M_QuickLoad(void)
         return;
     }
 
-    if(quickSaveSlot < 0)
+    if(0 > slot || !SV_IsGameSaveSlotUsed(slot))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
         return;
     }
 
-    sprintf(buf, QLPROMPT, gameSaveSlotEditWidgets[quickSaveSlot].text);
-
-    if(!cfg.askQuickSaveLoad)
+    if(!cfg.confirmQuickGameSave)
     {
-        G_LoadGame(quickSaveSlot);
+        G_LoadGame(slot);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return;
     }
+
+    info = SV_GetGameSaveInfoForSlot(slot);
+    dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
 
     S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
     Hu_MsgStart(MSG_YESNO, buf, M_QuickLoadResponse, NULL);

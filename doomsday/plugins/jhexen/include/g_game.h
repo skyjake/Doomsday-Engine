@@ -36,7 +36,6 @@
 
 extern int debugSound; // debug flag for displaying sound info
 
-extern int quickSaveSlot;
 extern int gaSaveGameSaveSlot;
 extern int gaLoadGameSaveSlot;
 
@@ -79,7 +78,7 @@ boolean G_IsLoadGamePossible(void);
 
 /**
  * To be called to schedule a load game-save action.
- * @param saveSlot  Logical identifier of the save slot to use.
+ * @param slot  Logical identifier of the save slot to use.
  * @return  @c true iff @a saveSlot is in use and loading is presently possible.
  */
 boolean G_LoadGame(int slot);
@@ -89,7 +88,8 @@ boolean G_IsSaveGamePossible(void);
 
 /**
  * To be called to schedule a save game-save action.
- * @param saveSlot  Logical identifier of the save slot to use.
+ * @param slot  Logical identifier of the save slot to use.
+ * @param name  Name for the game-save.
  * @return  @c true iff @a saveSlot is valid and saving is presently possible.
  */
 boolean G_SaveGame(int slot, const char* name);

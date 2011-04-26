@@ -247,7 +247,7 @@ void D_PreInit(void)
     cfg.menuColors[2][CB] = 0;
     cfg.menuSlam = false;
     cfg.menuHotkeys = true;
-    cfg.askQuickSaveLoad = true;
+    cfg.confirmQuickGameSave = true;
 
     cfg.maxSkulls = true;
     cfg.allowSkullsInWalls = false;

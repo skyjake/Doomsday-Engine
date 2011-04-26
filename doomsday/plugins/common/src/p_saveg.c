@@ -280,6 +280,7 @@ static ddstring_t savePath; // e.g., "savegame/"
 static ddstring_t clientSavePath; // e.g., "savegame/client/"
 #endif
 
+static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 static gamesaveinfo_t* gameSaveInfo;
 
 static LZFILE* savefile;
@@ -479,7 +480,19 @@ static thinkerinfo_t thinkerInfo[] = {
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };
 
+cvartemplate_t cvars[] = {
+   {"game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0},
+   {NULL}
+};
+
 // CODE --------------------------------------------------------------------
+
+void SV_Register(void)
+{
+    int i;
+    for(i = 0; cvars[i].name; ++i)
+        Con_AddVariable(cvars + i);
+}
 
 static void errorIfNotInited(const char* callerName)
 {
@@ -4944,6 +4957,8 @@ static void buildGameSaveInfo(void)
 /// Given a logical save slot identifier retrieve the assciated game-save info.
 static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
 {
+    assert(inited);
+    {
     static gamesaveinfo_t invalidInfo = { { "" }, { "" }, -1 };
     if(slot >= 0 && slot < NUMSAVESLOTS)
     {
@@ -4954,6 +4969,15 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
         return &gameSaveInfo[slot];
     }
     return &invalidInfo;
+    }
+}
+
+boolean SV_IsGameSaveSlotUsed(int slot)
+{
+    const gamesaveinfo_t* info;
+    errorIfNotInited("SV_IsGameSaveSlotUsed");
+    info = findGameSaveInfoForSlot(slot);
+    return !Str_IsEmpty(&info->filePath);
 }
 
 const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot)
@@ -5003,7 +5027,7 @@ static ddstring_t* composeSaveDir(void)
     }}
 
     Str_Delete(dir);
-    Con_Error("SV_Init: Error, failed retrieving GameInfo.");
+    Con_Error("composeSaveDir: Error, failed retrieving GameInfo.");
     return NULL; // Unreachable.
 }
 
@@ -5056,6 +5080,9 @@ void SV_Init(void)
         numSoundTargets = 0;
 #endif
         gameSaveInfo = NULL;
+
+        // -1 = Not yet chosen/determined.
+        cvarQuickSlot = -1;
     }
 
     // (Re)Initialize the saved game paths, possibly creating them if they do not exist.
@@ -5069,6 +5096,7 @@ void SV_Shutdown(void)
 #if !__JHEXEN__
     Str_Free(&clientSavePath);
 #endif
+    cvarQuickSlot = -1;
     if(NULL != gameSaveInfo)
     {
         int i;
@@ -5081,6 +5109,33 @@ void SV_Shutdown(void)
         free(gameSaveInfo); gameSaveInfo = NULL;
     }
     inited = false;
+}
+
+int SV_ParseGameSaveSlot(const char* str)
+{
+    int slot;
+
+    // Try game-save name match.
+    slot = SV_FindGameSaveSlotForName(str);
+    if(slot >= 0)
+    {
+        return slot;
+    }
+
+    // Try keyword identifiers.
+    if(!stricmp(str, "<quick>"))
+    {
+        return cvarQuickSlot;
+    }
+
+    // Try logical slot identifier.
+    if(M_IsStringValidInt(str))
+    {
+        return atoi(str);
+    }
+
+    // Unknown/not found.
+    return -1;
 }
 
 int SV_FindGameSaveSlotForName(const char* name)

@@ -37,6 +37,96 @@ typedef struct gamesaveinfo_s {
     int slot;
 } gamesaveinfo_t;
 
+/// Register the console commands and variables of this module.
+void SV_Register(void);
+
+/// Initialize this module.
+void SV_Init(void);
+
+/// Shutdown this module.
+void SV_Shutdown(void);
+
+/**
+ * Parse the given string and determine whether it references a logical
+ * game-save slot.
+ *
+ * @param str  String to be parsed. Parse is divided into three passes.
+ *   Pass 1: Check for a known game-save name which matches this.
+ *      Search is in ascending logical slot order 0...N (where N is
+ *      the number of available save slots in the current game).
+ *   Pass 2: Check for keyword identifiers.
+ *      <quick> = The currently nominated "quick save" slot.
+ *   Pass 3: Check for a logical save slot identifier.
+ *
+ * @return  Save slot identifier of the slot else @c -1
+ */
+int SV_ParseGameSaveSlot(const char* str);
+
+/**
+ * Force an update of the cached game-save info. To be called (sparingly)
+ * at strategic points when an update is necessary (e.g., the game-save
+ * paths have changed).
+ *
+ * \note It is not necessary to call this after a game-save is made,
+ * this module will do so automatically.
+ */
+void SV_UpdateGameSaveInfo(void);
+
+/**
+ * Lookup a save slot by searching for a match on game-save name.
+ * Search is in ascending logical slot order 0...N (where N is the number
+ * of available save slots in the current game).
+ *
+ * @param name  Name of the game-save to look for. Case insensitive.
+ * @return  Logical slot number of the found game-save else @c -1
+ */
+int SV_FindGameSaveSlotForName(const char* name);
+
+/**
+ * @return  @c true iff a game-save is present for logical save @a slot.
+ */
+boolean SV_IsGameSaveSlotUsed(int slot);
+
+/**
+ * @return  Game-save info for logical save @a slot. Always returns valid
+ *      info even if supplied with an invalid or unused slot identifer.
+ */
+const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot);
+
+#if !__JHEXEN__
+/**
+ * Compose the (possibly relative) path to the game-save associated with
+ * the unique @a gameId. If the game-save path is unreachable then
+ * @a path will be made empty.
+ *
+ * @param gameId  Unique game identifier.
+ * @param path  String buffer to populate with the game-save path.
+ * @return  @c true if @a path was set.
+ */
+boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path);
+#endif
+
+boolean SV_SaveGame(int slot, const char* name);
+
+boolean SV_LoadGame(int slot);
+
+#if __JHEXEN__
+void            SV_MapTeleport(uint map, uint position);
+void            SV_HxInitBaseSlot(void);
+void            SV_HxUpdateRebornSlot(void);
+void            SV_HxClearRebornSlot(void);
+boolean         SV_HxRebornSlotAvailable(void);
+int             SV_HxGetRebornSlot(void);
+#else
+/**
+ * Saves a snapshot of the world, a still image.
+ * No data of movement is included (server sends it).
+ */
+void SV_SaveClient(uint gameId);
+
+void SV_LoadClient(uint gameId);
+#endif
+
 typedef enum gamearchivesegment_e {
     ASEG_GAME_HEADER = 101, //jhexen only
     ASEG_MAP_HEADER, //jhexen only
@@ -93,73 +183,6 @@ typedef enum thinkclass_e {
     TC_MATERIALCHANGER,
     NUMTHINKERCLASSES
 } thinkerclass_t;
-
-/// Initialize this module.
-void SV_Init(void);
-
-/// Shutdown this module.
-void SV_Shutdown(void);
-
-/**
- * Force an update of the cached game-save info. To be called (sparingly)
- * at strategic points when an update is necessary (e.g., the game-save
- * paths have changed).
- *
- * \note It is not necessary to call this after a game-save is made, this
- * module will do so automatically.
- */
-void SV_UpdateGameSaveInfo(void);
-
-/**
- * Lookup a save slot by searching for a match on game-save name.
- * Search is in ascending logical slot order 0...N (where N is the
- * number of available save slots in the current game).
- *
- * @param name  Name of the game-save to look for. Case insensitive.
- * @return  Logical slot number of the found game-save else @c -1
- */
-int SV_FindGameSaveSlotForName(const char* name);
-
-/**
- * @return  Game-save info for logical save @a slot. Always returns valid
- *      info even if supplied with an invalid or unused slot identifer.
- */
-const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot);
-
-#if !__JHEXEN__
-/**
- * Compose the (possibly relative) path to the game-save associated
- * with the unique @a gameId. If the game-save path is unreachable
- * then @a path will be made empty.
- *
- * @param gameId  Unique game identifier.
- * @param path  String buffer to populate with the game-save path.
- * @return  @c true if @a path was set.
- */
-boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path);
-#endif
-
-boolean SV_SaveGame(int slot, const char* name);
-
-boolean SV_LoadGame(int slot);
-
-#if __JHEXEN__
-void            SV_MapTeleport(uint map, uint position);
-void            SV_HxInitBaseSlot(void);
-void            SV_HxUpdateRebornSlot(void);
-void            SV_HxClearRebornSlot(void);
-boolean         SV_HxRebornSlotAvailable(void);
-int             SV_HxGetRebornSlot(void);
-#else
-/**
- * Saves a snapshot of the world, a still image.
- * No data of movement is included (server sends it).
- */
-void SV_SaveClient(uint gameId);
-
-void SV_LoadClient(uint gameId);
-#endif
-
 
 #if __JHEXEN__
 int             SV_ThingArchiveNum(mobj_t* mo);

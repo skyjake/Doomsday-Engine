@@ -230,7 +230,7 @@ void X_PreInit(void)
     cfg.menuEffects = 0;
     cfg.menuHotkeys = true;
     cfg.menuNoStretch = false;
-    cfg.askQuickSaveLoad = true;
+    cfg.confirmQuickGameSave = true;
     cfg.hudFog = 5;
     cfg.menuSlam = true;
     cfg.flashColor[0] = 1.0f;

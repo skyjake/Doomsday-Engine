@@ -251,7 +251,7 @@ void H_PreInit(void)
     cfg.menuColors[2][2] = defFontRGB3[2];
     cfg.menuSlam = true;
     cfg.menuHotkeys = true;
-    cfg.askQuickSaveLoad = true;
+    cfg.confirmQuickGameSave = true;
 
     cfg.monstersStuckInDoors = false;
     cfg.avoidDropoffs = true;
