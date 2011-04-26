@@ -2501,7 +2501,7 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
     t = sprInfo.texCoord[1],
 
     DGL_SetPSprite2(sprInfo.material, 1, tmap);
-    
+
     DGL_Color4f(1, 1, 1, mnAlpha);
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0 * s, 0);
@@ -3051,7 +3051,7 @@ void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY, float alpha)
 #if __JHERETIC__ || __JHEXEN__
 # define OFFSET_X               (24)
 # define OFFSET_Y               (2)
-#else   
+#else
 # define OFFSET_X               (0)
 # define OFFSET_Y               (0)
 #endif
