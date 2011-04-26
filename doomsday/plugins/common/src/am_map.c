@@ -1675,7 +1675,7 @@ mndata_listitem_t lstit_map_statusbar[] = {
     { "CURRENT", 1 },
     { "STATUSBAR", 2 }
 };
-mndata_list_t lst_map_statusbar = {
+mndata_listinline_t lst_map_statusbar = {
     lstit_map_statusbar, NUMLISTITEMS(lstit_map_statusbar), "map-huddisplay"
 };
 
@@ -1684,7 +1684,7 @@ mndata_listitem_t lstit_map_customcolors[] = {
     { "AUTO", 1 },
     { "ALWAYS", 2 }
 };
-mndata_list_t lst_map_customcolors = {
+mndata_listinline_t lst_map_customcolors = {
     lstit_map_customcolors, NUMLISTITEMS(lstit_map_customcolors), "map-customcolors"
 };
 
@@ -1694,13 +1694,13 @@ mn_object_t MAPItems[] = {
     { MN_TEXT,      0,  0,              "Line Opacity", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,              "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_lineopacity },
     { MN_TEXT,      0,  0,              "HUD Display", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,              "",         GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_map_statusbar },
+    { MN_LISTINLINE, 0, 0,              "",         GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_map_statusbar },
     { MN_TEXT,      0,  0,              "Door Colors", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,              "map-door-colors", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,              "Door Glow", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,              "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_doorglow },
     { MN_TEXT,      0,  0,              "Use Custom Colors", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,              "",         GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_map_customcolors },
+    { MN_LISTINLINE, 0, 0,              "",         GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_map_customcolors },
     { MN_TEXT,      0,  0,              "Wall",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 1 },
     { MN_TEXT,      0,  0,              "Floor Height Change", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },

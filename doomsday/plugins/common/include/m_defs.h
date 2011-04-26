@@ -44,6 +44,7 @@ typedef enum {
     MN_BUTTON2EX, // Staydown/2-state with additional data.
     MN_EDIT,
     MN_LIST,
+    MN_LISTINLINE,
     MN_SLIDER,
     MN_COLORBOX,
     MN_BINDINGS
@@ -169,8 +170,10 @@ typedef struct mndata_list_s {
 void            MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
 
-void            MNList_InlineDrawer(const mn_object_t* obj, int x, int y, float alpha);
-void            MNList_InlineDimensions(const mn_object_t* obj, int* width, int* height);
+typedef mndata_list_t mndata_listinline_t;
+
+void            MNListInline_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
  * Color preview box.

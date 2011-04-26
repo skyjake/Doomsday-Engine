@@ -37,7 +37,7 @@ typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.
     MCMD_CLOSE, // Close the menu.
     MCMD_CLOSEFAST, // Instantly close the menu.
-    MCMD_NAV_OUT, // Navigate "out" of the current menu (up a level).
+    MCMD_NAV_OUT, // Navigate "out" of the current menu/widget (up a level).
     MCMD_NAV_LEFT,
     MCMD_NAV_RIGHT,
     MCMD_NAV_DOWN,
@@ -54,6 +54,7 @@ typedef enum menucommand_e {
 #define SFX_MENU_OPEN       (SFX_SWTCHN)
 #define SFX_MENU_CANCEL     (SFX_SWTCHN)
 #define SFX_MENU_NAV_UP     (SFX_PSTOP)
+#define SFX_MENU_NAV_DOWN   (SFX_PSTOP)
 #define SFX_MENU_NAV_RIGHT  (SFX_PSTOP)
 #define SFX_MENU_ACCEPT     (SFX_PISTOL)
 #define SFX_MENU_CYCLE      (SFX_PISTOL) // Cycle available options.
@@ -65,6 +66,7 @@ typedef enum menucommand_e {
 #define SFX_MENU_OPEN       (SFX_SWITCH)
 #define SFX_MENU_CANCEL     (SFX_SWITCH)
 #define SFX_MENU_NAV_UP     (SFX_SWITCH)
+#define SFX_MENU_NAV_DOWN   (SFX_SWITCH)
 #define SFX_MENU_NAV_RIGHT  (SFX_SWITCH)
 #define SFX_MENU_ACCEPT     (SFX_DORCLS)
 #define SFX_MENU_CYCLE      (SFX_DORCLS) // Cycle available options.
@@ -76,6 +78,7 @@ typedef enum menucommand_e {
 #define SFX_MENU_OPEN       (SFX_DOOR_LIGHT_CLOSE)
 #define SFX_MENU_CANCEL     (SFX_PICKUP_KEY)
 #define SFX_MENU_NAV_UP     (SFX_FIGHTER_HAMMER_HITWALL)
+#define SFX_MENU_NAV_DOWN   (SFX_FIGHTER_HAMMER_HITWALL)
 #define SFX_MENU_NAV_RIGHT  (SFX_FIGHTER_HAMMER_HITWALL)
 #define SFX_MENU_ACCEPT     (SFX_PLATFORM_STOP)
 #define SFX_MENU_CYCLE      (SFX_CHAT) // Cycle available options.

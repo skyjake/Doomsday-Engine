@@ -758,7 +758,7 @@ mndata_listitem_t lstit_hud_xhair_symbols[] = {
     { "Diamond", 5 },
     { "V", 6 }
 };
-mndata_list_t lst_hud_xhair_symbol = {
+mndata_listinline_t lst_hud_xhair_symbol = {
     lstit_hud_xhair_symbols, NUMLISTITEMS(lstit_hud_xhair_symbols), "view-cross-type"
 };
 
@@ -771,7 +771,7 @@ static mn_object_t HUDItems[] = {
     { MN_TEXT,      0,  0,  "Single Key Display", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "hud-keys-combine", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
-    { MN_LIST,      0,  0,  "AutoHide", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_HUDHideTime },
+    { MN_LISTINLINE, 0, 0,  "AutoHide", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_HUDHideTime },
     { MN_TEXT,      0,  0,  "UnHide Events", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
     { MN_TEXT,      0,  0,  "Receive Damage", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "hud-unhide-damage", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -801,11 +801,11 @@ static mn_object_t HUDItems[] = {
     { MN_BUTTON2,   0,  0,  "Shown",    GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, M_ChangeMessages },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_messages_size },
-    { MN_LIST,      0,  0,  "Uptime",   GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_MessageUptime },
+    { MN_LISTINLINE, 0, 0,  "Uptime",   GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_MessageUptime },
 
     { MN_TEXT,      0,  0,  "Crosshair", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
     { MN_TEXT,      0,  0,  "Symbol",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "",         GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_hud_xhair_symbol },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_xhair_symbol },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_xhair_size },
     { MN_TEXT,      0,  0,  "Opacity",  GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
@@ -824,9 +824,9 @@ static mn_object_t HUDItems[] = {
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      0,  0,  "Counters", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
-    { MN_LIST,      0,  0,  "Kills",    GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_KillCounter },
-    { MN_LIST,      0,  0,  "Items",    GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_ItemCounter },
-    { MN_LIST,      0,  0,  "Secrets",  GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_SecretCounter },
+    { MN_LISTINLINE, 0, 0,  "Kills",    GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_KillCounter },
+    { MN_LISTINLINE, 0, 0,  "Items",    GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_ItemCounter },
+    { MN_LISTINLINE, 0, 0,  "Secrets",  GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_SecretCounter },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_counter_size },
 #endif
@@ -907,10 +907,10 @@ static mn_object_t InventoryItems[] = {
     { MN_BUTTON2,   0,  0,  "ctl-inventory-use-immediate", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,  "Select Next If Use Failed", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "ctl-inventory-use-next", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_LIST,      0,  0,  "AutoHide", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_InventoryHideTime },
+    { MN_LISTINLINE, 0, 0,  "AutoHide", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_InventoryHideTime },
 
     { MN_TEXT,      0,  0,  "Fullscreen HUD", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
-    { MN_LIST,      0,  0,  "Max Visible Slots", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, M_InventorySlotMaxVis, "hud-inventory-slot-max" },
+    { MN_LISTINLINE, 0, 0,  "Max Visible Slots", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, M_InventorySlotMaxVis, "hud-inventory-slot-max" },
     { MN_TEXT,      0,  0,  "Show Empty Slots", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "hud-inventory-slot-showempty", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_NONE }
@@ -936,7 +936,7 @@ mndata_listitem_t lstit_weapons_autoswitch_pickup[] = {
     { "If Better", 1 },
     { "Always", 2 }
 };
-mndata_list_t lst_weapons_autoswitch_pickup = {
+mndata_listinline_t lst_weapons_autoswitch_pickup = {
     lstit_weapons_autoswitch_pickup, NUMLISTITEMS(lstit_weapons_autoswitch_pickup), "player-autoswitch"
 };
 
@@ -945,13 +945,13 @@ mndata_listitem_t lstit_weapons_autoswitch_pickupammo[] = {
     { "If Better", 1 },
     { "Always", 2 }
 };
-mndata_list_t lst_weapons_autoswitch_pickupammo = {
+mndata_listinline_t lst_weapons_autoswitch_pickupammo = {
     lstit_weapons_autoswitch_pickupammo, NUMLISTITEMS(lstit_weapons_autoswitch_pickupammo), "player-autoswitch-ammo"
 };
 
 static mn_object_t WeaponItems[] = {
     { MN_TEXT,      0,  0,  "Priority Order", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2},
-    { MN_LIST,      0,  0,  "",         GF_FONTA, 0, MNList_Drawer, MNList_Dimensions, M_WeaponOrder, &lst_weapons_order },
+    { MN_LIST,      0,  MNF_INACTIVE,  "",         GF_FONTA, 0, MNList_Drawer, MNList_Dimensions, M_WeaponOrder, &lst_weapons_order },
     { MN_TEXT,      0,  0,  "Cycling",  GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
     { MN_TEXT,      0,  0,  "Use Priority Order", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "player-weapon-nextmode", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -960,11 +960,11 @@ static mn_object_t WeaponItems[] = {
 
     { MN_TEXT,      0,  0,  "Autoswitch", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions, 0, 0, MENU_COLOR2 },
     { MN_TEXT,      0,  0,  "Pickup Weapon", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_weapons_autoswitch_pickup },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_weapons_autoswitch_pickup },
     { MN_TEXT,      0,  0,  "   If Not Firing", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "player-autoswitch-notfiring", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,  "Pickup Ammo", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_weapons_autoswitch_pickupammo },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_weapons_autoswitch_pickupammo },
 #if __JDOOM__ || __JDOOM64__
     { MN_TEXT,      0,  0,  "Pickup Beserk", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "player-autoswitch-berserk", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -1590,7 +1590,8 @@ void Hu_MenuTicker(timespan_t ticLength)
 #define SKULL_REWIND_SPEED 20
             const mn_object_t* focusObj = focusObject();
 
-            if(focusObj && !(focusObj->flags & (MNF_DISABLED|MNF_INACTIVE)) && (focusObj->type == MN_LIST || focusObj->type == MN_SLIDER))
+            if(focusObj && !(focusObj->flags & (MNF_DISABLED|MNF_INACTIVE)) &&
+               (focusObj->type == MN_LISTINLINE || focusObj->type == MN_SLIDER))
             {
                 skull_angle += (float)(5 * ticLength * TICRATE);
             }
@@ -1859,6 +1860,28 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
  */
 void Hu_MenuCommand(menucommand_e cmd)
 {
+    // If a close command is received while currently working with a selected
+    // "active" widget - interpret the command instead as "navigate out".
+    if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
+    {
+        mn_object_t* obj = focusObject();
+        if(mnActive && NULL != obj)
+        {
+            switch(obj->type)
+            {
+            case MN_EDIT:
+            case MN_LIST:
+                if(!(obj->flags & MNF_INACTIVE))
+                {
+                    cmd = MCMD_NAV_OUT;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
     if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
         nominatingQuickGameSaveSlot = false;
@@ -1876,11 +1899,15 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         if(mnActive)
         {
-            mnCurrentPage->focus = mnFocusObjectIndex;
-            mnActive = false;
+            if(NULL != mnCurrentPage)
+            {
+                mnCurrentPage->focus = mnFocusObjectIndex;
+            }
 
             if(cmd != MCMD_CLOSEFAST)
                 S_LocalSound(SFX_MENU_CLOSE, NULL);
+
+            mnActive = false;
 
             // Disable the menu binding class
             DD_Execute(true, "deactivatebcontext menu");
@@ -1952,7 +1979,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             break;
 
         case MCMD_NAV_LEFT:
-            if((obj->type == MN_SLIDER || obj->type == MN_LIST) && obj->action != NULL)
+            if((obj->type == MN_SLIDER || obj->type == MN_LISTINLINE) && obj->action != NULL)
             {
                 S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
                 obj->action(obj, LEFT_DIR);
@@ -1960,7 +1987,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             break;
 
         case MCMD_NAV_RIGHT:
-            if((obj->type == MN_SLIDER || obj->type == MN_LIST) && obj->action != NULL)
+            if((obj->type == MN_SLIDER || obj->type == MN_LISTINLINE) && obj->action != NULL)
             {
                 S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
                 obj->action(obj, RIGHT_DIR);
@@ -1969,45 +1996,70 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         case MCMD_NAV_PAGEUP:
         case MCMD_NAV_PAGEDOWN:
-            S_LocalSound(SFX_MENU_NAV_UP, NULL);
-            Hu_MenuNavigatePage(menu, cmd == MCMD_NAV_PAGEUP? -1 : +1);
+            if(!(MN_LIST == obj->type && !(obj->flags & MNF_INACTIVE)))
+            {
+                S_LocalSound(SFX_MENU_NAV_UP, NULL);
+                Hu_MenuNavigatePage(menu, cmd == MCMD_NAV_PAGEUP? -1 : +1);
+            }
+            else
+            {
+                S_LocalSound(SFX_MENU_CANCEL, NULL);
+            }
             break;
 
         case MCMD_NAV_DOWN:
-            i = 0;
-            do
+            if(MN_LIST == obj->type && !(obj->flags & MNF_INACTIVE))
             {
-                if(hasFocus + 1 > menu->_size - 1)
-                    hasFocus = 0;
-                else
-                    hasFocus++;
-            } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
-            mnFocusObjectIndex = hasFocus;
-            menu_color = 0;
-            S_LocalSound(SFX_MENU_NAV_UP, NULL);
-            calcNumVisObjects(mnCurrentPage);
+                S_LocalSound(SFX_MENU_NAV_DOWN, NULL);
+            }
+            else
+            {
+                i = 0;
+                do
+                {
+                    if(hasFocus + 1 > menu->_size - 1)
+                        hasFocus = 0;
+                    else
+                        hasFocus++;
+                } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
+                mnFocusObjectIndex = hasFocus;
+                menu_color = 0;
+                S_LocalSound(SFX_MENU_NAV_DOWN, NULL);
+                calcNumVisObjects(mnCurrentPage);
+            }
             break;
 
         case MCMD_NAV_UP:
-            i = 0;
-            do
+            if(MN_LIST == obj->type && !(obj->flags & MNF_INACTIVE))
             {
-                if(hasFocus <= 0)
-                    hasFocus = menu->_size - 1;
-                else
-                    hasFocus--;
-            } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
-            mnFocusObjectIndex = hasFocus;
-            menu_color = 0;
-            S_LocalSound(SFX_MENU_NAV_UP, NULL);
-            calcNumVisObjects(mnCurrentPage);
+                S_LocalSound(SFX_MENU_NAV_UP, NULL);
+            }
+            else
+            {
+                i = 0;
+                do
+                {
+                    if(hasFocus <= 0)
+                        hasFocus = menu->_size - 1;
+                    else
+                        hasFocus--;
+                } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
+                mnFocusObjectIndex = hasFocus;
+                menu_color = 0;
+                S_LocalSound(SFX_MENU_NAV_UP, NULL);
+                calcNumVisObjects(mnCurrentPage);
+            }
             break;
 
         case MCMD_NAV_OUT:
             menu->focus = hasFocus;
-            if(!menu->previous)
+            if(MN_LIST == obj->type && !(obj->flags & MNF_INACTIVE))
             {
-                menu->focus = hasFocus;
+                obj->flags |= MNF_INACTIVE;
+                S_LocalSound(SFX_MENU_CANCEL, NULL);
+            }
+            else if(!menu->previous)
+            {
                 S_LocalSound(SFX_MENU_CLOSE, NULL);
                 Hu_MenuCommand(MCMD_CLOSE);
             }
@@ -2027,7 +2079,14 @@ void Hu_MenuCommand(menucommand_e cmd)
             break;
 
         case MCMD_SELECT:
-            if(obj->action)
+            if(MN_LIST == obj->type && (obj->flags & MNF_INACTIVE))
+            {
+                menu->focus = hasFocus;
+                S_LocalSound(SFX_MENU_CYCLE, NULL);
+                obj->action(obj, obj->data2);
+                obj->flags &= ~MNF_INACTIVE;
+            }
+            else if(obj->action)
             {
                 menu->focus = hasFocus;
                 switch(obj->type)
@@ -2039,8 +2098,9 @@ void Hu_MenuCommand(menucommand_e cmd)
                 case MN_COLORBOX:
                 case MN_BINDINGS:
                 case MN_LIST:
+                case MN_LISTINLINE:
                     S_LocalSound(SFX_MENU_CYCLE, NULL);
-                    obj->action(obj, (obj->type == MN_LIST? RIGHT_DIR : obj->data2));
+                    obj->action(obj, (obj->type == MN_LISTINLINE? RIGHT_DIR : obj->data2));
                     break;
                 default:
                     break;
@@ -2745,9 +2805,9 @@ void MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNList_InlineDrawer(const mn_object_t* obj, int x, int y, float alpha)
+void MNListInline_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 {
-    const mndata_list_t* list = (const mndata_list_t*) obj->data;
+    const mndata_listinline_t* list = (const mndata_listinline_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
     float color[4];
 
@@ -2790,9 +2850,9 @@ void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
     }
 }
 
-void MNList_InlineDimensions(const mn_object_t* obj, int* width, int* height)
+void MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height)
 {
-    const mndata_list_t* list = (const mndata_list_t*) obj->data;
+    const mndata_listinline_t* list = (const mndata_listinline_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
     FR_SetFont(FID(GF_FONTA));
     if(width)
@@ -3055,7 +3115,7 @@ void Hu_MenuCvarButton(mn_object_t* obj, int option)
 
 void Hu_MenuCvarList(mn_object_t* obj, int option)
 {
-    mndata_list_t* list = obj->data;
+    mndata_listinline_t* list = obj->data;
     int value = ((mndata_listitem_t*) list->items)[list->selection].data;
 
     if(list->selection < 0)
@@ -3374,12 +3434,12 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
     /**
      * \kludge Inform the user how to change the order.
      */
-    if(mnFocusObjectIndex - 1 == 0)
+    /*if(mnFocusObjectIndex - 1 == 0)
     {
         const char* str = "Use left/right to move weapon up/down";
         DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], mnAlpha);
         M_DrawMenuText3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
-    }
+    }*/
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

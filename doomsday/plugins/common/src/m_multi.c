@@ -120,13 +120,13 @@ mn_page_t MultiplayerMenu = {
 };
 
 #if __JDOOM__ || __JHERETIC__
-mndata_list_t lst_net_episode = {
+mndata_listinline_t lst_net_episode = {
     0, 0, "server-game-episode"
 };
 #endif
 
 mndata_listitem_t lstit_net_skill[NUM_SKILL_MODES];
-mndata_list_t lst_net_skill = {
+mndata_listinline_t lst_net_skill = {
     lstit_net_skill, NUMLISTITEMS(lstit_net_skill), "server-game-skill"
 };
 
@@ -136,7 +136,7 @@ mndata_listitem_t lstit_net_gamemode[] = {
     { "Deathmatch 1", 1 },
     { "Deathmatch 2", 2 }
 };
-mndata_list_t lst_net_gamemode = {
+mndata_listinline_t lst_net_gamemode = {
     lstit_net_gamemode, NUMLISTITEMS(lstit_net_gamemode), "server-game-deathmatch"
 };
 #endif
@@ -154,12 +154,12 @@ mndata_list_t lst_net_gamemode = {
 mn_object_t GameSetupItems[] = {
 #if __JDOOM__ || __JHERETIC__
     { MN_TEXT,      0,  0,  "Episode",      GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_net_episode },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_episode },
 #endif
     { MN_TEXT,      0,  0,  "Map",          GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupMap },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupMap },
     { MN_TEXT,      0,  0,  "Skill",        GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_net_skill },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_skill },
 #if __JHEXEN__
     { MN_TEXT,      0,  0,  "Deathmatch",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "server-game-deathmatch", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -167,7 +167,7 @@ mn_object_t GameSetupItems[] = {
     { MN_BUTTON2,   0,  0,  "server-game-randclass", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #else
     { MN_TEXT,      0,  0,  "Mode",         GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_net_gamemode },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_gamemode },
 #endif
     { MN_TEXT,      0,  0,  "Monsters",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "server-game-nomonsters", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -201,9 +201,9 @@ mn_object_t GameSetupItems[] = {
 #endif
     { MN_TEXT,      0,  0,  "No Max Z Radius Attacks", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "server-game-radiusattack-nomaxz", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_LIST,      0,  0,  "Damage Multiplier", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupDamageMod },
-    { MN_LIST,      0,  0,  "Health Multiplier", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupHealthMod },
-    { MN_LIST,      0,  0,  "Gravity Multiplier", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupGravity },
+    { MN_LISTINLINE, 0, 0,  "Damage Multiplier", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupDamageMod },
+    { MN_LISTINLINE, 0, 0,  "Health Multiplier", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupHealthMod },
+    { MN_LISTINLINE, 0, 0,  "Gravity Multiplier", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupGravity },
     { MN_BUTTON,    0,  0,  "Proceed...",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCOpenServer },
     { MN_NONE }
 };
@@ -231,10 +231,10 @@ mn_object_t PlayerSetupItems[] = {
     { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &plrNameEd },
 #if __JHEXEN__
     { MN_TEXT,      0,  0,              "Class",    GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,              "",         GF_FONTB, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCPlayerClass },
+    { MN_LISTINLINE, 0, 0,              "",         GF_FONTB, 0, MNListInline_Drawer, MNListInline_Dimensions, SCPlayerClass },
 #endif
     { MN_TEXT,      0,  0,              "Color",    GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  0,              "",         GF_FONTB, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCPlayerColor },
+    { MN_LISTINLINE, 0, 0,              "",         GF_FONTB, 0, MNListInline_Drawer, MNListInline_Dimensions, SCPlayerColor },
     { MN_BUTTON,    0,  0,              "Accept Changes", GF_FONTB, 0, MNButton_Drawer, MNButton_Dimensions, SCAcceptPlayer },
     { MN_NONE }
 };
