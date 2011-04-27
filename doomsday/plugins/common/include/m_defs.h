@@ -57,7 +57,7 @@ typedef enum {
 #define MNF_HIDDEN              0x1
 #define MNF_DISABLED            0x2 // Can't be interacted with.
 //#define MNF_PAUSED              0x4 // Ticker not called.
-//#define MNF_CLICKED             0x8
+#define MNF_CLICKED             0x8
 #define MNF_INACTIVE            0x10 // Object active.
 //#define MNF_FOCUS               0x20 // Has focus.
 //#define MNF_NO_FOCUS            0x40 // Can't receive focus.
@@ -78,6 +78,7 @@ typedef struct mn_object_s {
     int             flags; // @see menuObjectFlags.
     const char*     text;
     int             fontIdx;
+    int             colorIdx;
     patchid_t*      patch;
     void          (*drawer) (const struct mn_object_s* obj, int x, int y, float alpha);
     void          (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
@@ -195,13 +196,18 @@ typedef struct mndata_slider_s {
     float           value;
     float           step; // Button step.
     boolean         floatMode; // Otherwise only integers are allowed.
-    void*           data;
+    /// \todo Turn this into a property record or something.
+    void*           data1;
+    void*           data2;
+    void*           data3;
+    void*           data4;
+    void*           data5;
 } mndata_slider_t;
 
 void            MNSlider_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-void            MNSlider_SecondsDrawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
-void            MNSlider_SecondsDimensions(const mn_object_t* obj, int* width, int* height);
+void            MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height);
 int             MNSlider_ThumbPos(const mn_object_t* obj);
 
 /**
@@ -240,14 +246,20 @@ extern mn_page_t SoundMenu;
 extern mn_page_t GameplayMenu;
 extern mn_page_t HUDMenu;
 extern mn_page_t AutomapMenu;
+extern mn_object_t MAPItems[];
 #if __JHERETIC__ || __JHEXEN__
 extern mn_page_t FilesMenu;
 #endif
 extern mn_page_t LoadMenu;
 extern mn_page_t SaveMenu;
 extern mn_page_t MultiplayerMenu;
+extern mn_object_t MultiplayerItems[];
+extern mn_object_t MultiplayerServerItems[];
+extern mn_object_t MultiplayerClientItems[];
 extern mn_page_t GameSetupMenu;
+extern mn_object_t GameSetupItems[];
 extern mn_page_t PlayerSetupMenu;
+extern mn_object_t PlayerSetupItems[];
 #if __JHERETIC__ || __JHEXEN__
 extern mn_page_t InventoryMenu;
 #endif

@@ -90,22 +90,22 @@ mndata_edit_t plrNameEd;
 int CurrentPlrFrame = 0;
 
 mn_object_t MultiplayerItems[] = {
-    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
-    { MN_BUTTON,    0,  0,  "Join Game",    GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterJoinMenu },
-    { MN_BUTTON,    0,  0,  "Host Game",    GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterHostMenu },
+    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
+    { MN_BUTTON,    0,  0,  "Join Game",    GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterJoinMenu },
+    { MN_BUTTON,    0,  0,  "Host Game",    GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterHostMenu },
     { MN_NONE }
 };
 
 mn_object_t MultiplayerServerItems[] = {
-    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
-    { MN_BUTTON,    0,  0,  "Game Setup",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterHostMenu },
-    { MN_BUTTON,    0,  0,  "Close Server", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCCloseServer },
+    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
+    { MN_BUTTON,    0,  0,  "Game Setup",   GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterHostMenu },
+    { MN_BUTTON,    0,  0,  "Close Server", GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCCloseServer },
     { MN_NONE }
 };
 
 mn_object_t MultiplayerClientItems[] = {
-    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
-    { MN_BUTTON,    0,  0,  "Disconnect",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterJoinMenu },
+    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
+    { MN_BUTTON,    0,  0,  "Disconnect",   GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterJoinMenu },
     { MN_NONE}
 };
 
@@ -153,61 +153,61 @@ mndata_listinline_t lst_net_gamemode = {
 
 mn_object_t GameSetupItems[] = {
 #if __JDOOM__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "Episode",      GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_episode },
+    { MN_TEXT,      0,  0,  "Episode",      GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_episode },
 #endif
-    { MN_TEXT,      0,  0,  "Map",          GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupMap },
-    { MN_TEXT,      0,  0,  "Skill",        GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_skill },
+    { MN_TEXT,      0,  0,  "Map",          GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupMap },
+    { MN_TEXT,      0,  0,  "Skill",        GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_skill },
 #if __JHEXEN__
-    { MN_TEXT,      0,  0,  "Deathmatch",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-deathmatch", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Random Classes", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-randclass", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Deathmatch",   GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-deathmatch", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Random Classes", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-randclass", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #else
-    { MN_TEXT,      0,  0,  "Mode",         GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_gamemode },
+    { MN_TEXT,      0,  0,  "Mode",         GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "",             GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_net_gamemode },
 #endif
-    { MN_TEXT,      0,  0,  "Monsters",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-nomonsters", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Monsters",     GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-nomonsters", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "Respawn Monsters", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-respawn", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Allow Jumping", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-jump", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Respawn Monsters", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-respawn", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Allow Jumping", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-jump", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  "Allow BFG Aiming", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-bfg-freeaim", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Allow BFG Aiming", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-bfg-freeaim", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "No CoOp Damage", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-coop-nodamage", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No CoOp Damage", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-nodamage", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
 #if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  "No CoOp Weapons", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-coop-noweapons", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "No CoOp Objects", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-coop-nothing", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "CoOp Items Respawn", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-coop-respawn-items", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "No BFG 9000",  GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-nobfg",  GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No CoOp Weapons", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-noweapons", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No CoOp Objects", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-nothing", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "CoOp Items Respawn", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-respawn-items", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No BFG 9000",  GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-nobfg",  GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "No Team Damage", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-noteamdamage", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No Team Damage", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-noteamdamage", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #endif
-    { MN_TEXT,      0,  0,  "No Max Z Radius Attacks", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "server-game-radiusattack-nomaxz", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Damage Multiplier", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupDamageMod },
-    { MN_TEXT,      0,  0,  "Health Multiplier", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupHealthMod },
-    { MN_TEXT,      0,  0,  "Gravity Multiplier", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupGravity },
-    { MN_BUTTON,    0,  0,  "Proceed...",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCOpenServer },
+    { MN_TEXT,      0,  0,  "No Max Z Radius Attacks", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-radiusattack-nomaxz", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Damage Multiplier", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupDamageMod },
+    { MN_TEXT,      0,  0,  "Health Multiplier", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupHealthMod },
+    { MN_TEXT,      0,  0,  "Gravity Multiplier", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, SCGameSetupGravity },
+    { MN_BUTTON,    0,  0,  "Proceed...",   GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCOpenServer },
     { MN_NONE }
 };
 
@@ -231,14 +231,14 @@ mn_page_t GameSetupMenu = {
 };
 
 mn_object_t PlayerSetupItems[] = {
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &plrNameEd },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &plrNameEd },
 #if __JHEXEN__
-    { MN_TEXT,      0,  0,              "Class",    GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,              "",         GF_FONTB, 0, MNListInline_Drawer, MNListInline_Dimensions, SCPlayerClass },
+    { MN_TEXT,      0,  0,              "Class",    GF_FONTB, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,              "",         GF_FONTB, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, SCPlayerClass },
 #endif
-    { MN_TEXT,      0,  0,              "Color",    GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,              "",         GF_FONTB, 0, MNListInline_Drawer, MNListInline_Dimensions, SCPlayerColor },
-    { MN_BUTTON,    0,  0,              "Accept Changes", GF_FONTB, 0, MNButton_Drawer, MNButton_Dimensions, SCAcceptPlayer },
+    { MN_TEXT,      0,  0,              "Color",    GF_FONTB, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,              "",         GF_FONTB, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, SCPlayerColor },
+    { MN_BUTTON,    0,  0,              "Accept Changes", GF_FONTB, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCAcceptPlayer },
     { MN_NONE }
 };
 

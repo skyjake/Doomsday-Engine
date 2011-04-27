@@ -369,7 +369,7 @@ void M_InitControlsMenu(void)
             obj->fontIdx = GF_FONTA;
             obj->drawer = MNText_Drawer;
             obj->dimensions = MNText_Dimensions;
-            obj->data2 = MENU_COLOR2; 
+            obj->colorIdx = MENU_COLOR2; 
         }
         else 
         {
