@@ -107,7 +107,9 @@ void            Hu_MenuPageString(char* string, const mn_page_t* page);
 void            Hu_MenuCvarButton(mn_object_t* obj, int option);
 void            Hu_MenuCvarList(mn_object_t* obj, int option);
 void            Hu_MenuCvarSlider(mn_object_t* obj, int option);
+void            Hu_MenuCvarEdit(mn_object_t* obj, int option);
 
+void            Hu_MenuSaveSlotEdit(mn_object_t* obj, int option);
 void            Hu_MenuBindings(mn_object_t* obj, int option);
 
 void            M_DrawMenuText(const char* string, int x, int y);
@@ -116,11 +118,6 @@ void            M_DrawMenuText3(const char* string, int x, int y, int fontIdx, s
 void            M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
 void            M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
 
-void            M_SetEditFieldText(mndata_edit_t* ef, const char* string);
-void            M_ActivateEditField(mn_object_t* obj, int option);
-
-// @todo Remove this placeholder.
-void            MN_DrawSlider(const mn_page_t* page, int index, int x, int y, int range, int pos);
 
 D_CMD(MenuAction);
 D_CMD(Shortcut);

@@ -107,6 +107,7 @@ typedef enum {
 #define SCREEN_MUL          1
 
 #define MAXPLAYERS          8
+#define NUMPLAYERCOLORS     8
 
 // Playsim, core timing rate in cycles per second.
 #define TICRATE             35

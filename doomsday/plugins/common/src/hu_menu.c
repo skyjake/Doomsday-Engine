@@ -131,9 +131,10 @@ void M_DrawInventoryMenu(const mn_page_t* page, int x, int y);
 #endif
 void M_DrawWeaponMenu(const mn_page_t* page, int x, int y);
 void M_DrawLoad(const mn_page_t* page, int x, int y);
+void M_DrawSave(const mn_page_t* page, int x, int y);
 void M_DrawFilesMenu(const mn_page_t* page, int x, int y);
 
-void M_DoSaveGame(const mndata_edit_t* ef);
+void M_DoSaveGame(mn_object_t* obj);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -149,8 +150,6 @@ extern char* weaponNames[];
 /// The end message strings will be initialized in Hu_MenuInit().
 char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
-
-mndata_edit_t gameSaveSlotEditWidgets[NUMSAVESLOTS];
 
 char endstring[160];
 
@@ -337,7 +336,9 @@ static float menu_calpha = 0;
 static int quicksave;
 static int quickload;
 
+#if __JHERETIC__
 static char notDesignedForMessage[80];
+#endif
 
 #if __JDOOM__ || __JDOOM64__
 static patchinfo_t m_doom;
@@ -403,10 +404,10 @@ mn_object_t MainItems[] = {
 mn_page_t MainMenu = {
     MainItems, 5,
     0,
-    { 110, 50 },
+    { 110, 56 },
     M_DrawMainMenu,
-    0, 0,
-    0, 5
+    //0, 0,
+    //0, 5
 };
 #elif __JHERETIC__
 mn_page_t MainMenu = {
@@ -414,8 +415,8 @@ mn_page_t MainMenu = {
     0,
     { 110, 56 },
     M_DrawMainMenu,
-    0, 0,
-    0, 5
+    //0, 0,
+    //0, 5
 };
 #elif __JDOOM64__
 mn_page_t MainMenu = {
@@ -423,8 +424,8 @@ mn_page_t MainMenu = {
     0,
     { 97, 64 },
     M_DrawMainMenu,
-    0, 0,
-    0, 5
+    //0, 0,
+    //0, 5
 };
 #elif __JDOOM__
 mn_page_t MainMenu = {
@@ -432,14 +433,14 @@ mn_page_t MainMenu = {
     0,
     { 97, 64 },
     M_DrawMainMenu,
-    0, 0,
-    0, 6
+    //0, 0,
+    //0, 6
 };
 #endif
 
 mn_object_t NewGameItems[] = {
-    { MN_BUTTON,    0,  0,  "S",    GF_FONTB, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, M_NewGame },
-    { MN_BUTTON,    0,  0,  "M",    GF_FONTB, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterMultiplayerMenu },
+    { MN_BUTTON,    0,  0,  "{case}Singleplayer",    GF_FONTB, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, M_NewGame },
+    { MN_BUTTON,    0,  0,  "{case}Multiplayer",    GF_FONTB, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, M_EnterMultiplayerMenu },
     { MN_NONE }
 };
 
@@ -450,34 +451,34 @@ mn_page_t GameTypeMenu = {
     { 110, 50 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    0, 2
+    //0, 2
 };
 #elif __JHERETIC__
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    { 110, 64 },
+    { 97, 65 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    0, 2
+    //0, 2
 };
 #elif __JDOOM64__
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    { 97, 64 },
+    { 97, 65 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    0, 2
+    //0, 2
 };
 #else
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    { 97, 64 },
+    { 97, 65 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    0, 2
+    //0, 2
 };
 #endif
 
@@ -490,27 +491,25 @@ mn_page_t PlayerClassMenu = {
     { 66, 66 },
     M_DrawClassMenu,
     0, &GameTypeMenu,
-    0, 0
+    //0, 0
 };
 #endif
 
 #if __JDOOM__ || __JHERETIC__
+static mn_object_t* EpisodeItems;
+
 mn_page_t EpisodeMenu = {
     0, 0,
     0,
 # if __JDOOM__
     { 48, 63 },
 # else
-    { 48, 50 },
+    { 80, 50 },
 # endif
     M_DrawEpisode,
     0, &GameTypeMenu,
-    0, 0
+    //0, 0
 };
-#endif
-
-#if __JDOOM__ || __JHERETIC__
-static mn_object_t* EpisodeItems;
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -526,20 +525,33 @@ mn_page_t FilesMenu = {
     { 110, 60 },
     M_DrawFilesMenu,
     0, &MainMenu,
-    0, 2
+    //0, 2
 };
 #endif
 
+mndata_edit_t edit_saveslots[NUMSAVESLOTS] = {
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 0, M_DoSaveGame },
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 1, M_DoSaveGame },
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 2, M_DoSaveGame },
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 3, M_DoSaveGame },
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 4, M_DoSaveGame },
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 5, M_DoSaveGame },
+#if !__JHEXEN__
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 6, M_DoSaveGame },
+    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 7, M_DoSaveGame }
+#endif
+};
+
 static mn_object_t LoadItems[] = {
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[0], 0 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[1], 1 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[2], 2 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[3], 3 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[4], 4 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[5], 5 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[0], 0 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[1], 1 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[2], 2 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[3], 3 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[4], 4 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[5], 5 },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[6], 6 },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &gameSaveSlotEditWidgets[7], 7 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[6], 6 },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_LoadSelect, &edit_saveslots[7], 7 },
 #endif
     { MN_NONE }
 };
@@ -548,45 +560,40 @@ mn_page_t LoadMenu = {
     LoadItems, NUMSAVESLOTS,
     0,
 #if __JDOOM__ || __JDOOM64__
-    { 64, 44 },
+    { 80, 54 },
 #else
-    { 64, 30 },
+    { 70, 30 },
 #endif
     M_DrawLoad,
     0, &MainMenu,
-    0, NUMSAVESLOTS
+    //0, NUMSAVESLOTS
 };
 
 static mn_object_t SaveItems[] = {
-#if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      0,  0,              "{case}Save game", GF_FONTB, MENU_COLOR, &m_saveg.id, MNText_Drawer, MNText_Dimensions },
-#elif __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      0,  0,              "Save Game", GF_FONTB, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-#endif
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[0] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[1] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[2] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[3] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[4] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[5] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[0] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[1] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[2] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[3] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[4] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[5] },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[6] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &gameSaveSlotEditWidgets[7] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[6] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[7] },
 #endif
     { MN_NONE }
 };
 
 mn_page_t SaveMenu = {
-    SaveItems, 1+NUMSAVESLOTS,
+    SaveItems, NUMSAVESLOTS,
     0,
 #if __JDOOM__ || __JDOOM64__
-    { 64, 24 },
+    { 80, 54 },
 #else
     { 64, 10 },
 #endif
-    NULL,
-    1, &MainMenu,
-    0, 1+NUMSAVESLOTS
+    M_DrawSave,
+    0, &MainMenu,
+    //0, 1+NUMSAVESLOTS
 };
 
 #if __JHEXEN__
@@ -605,7 +612,7 @@ mn_page_t SkillLevelMenu = {
     { 120, 44 },
     M_DrawSkillMenu,
     2, &PlayerClassMenu,
-    0, 5
+    //0, 5
 };
 #elif __JHERETIC__
 static mn_object_t SkillItems[] = {
@@ -623,7 +630,7 @@ mn_page_t SkillLevelMenu = {
     { 38, 30 },
     M_DrawSkillMenu,
     2, &EpisodeMenu,
-    0, 5
+    //0, 5
 };
 #elif __JDOOM64__
 static mn_object_t SkillItems[] = {
@@ -639,7 +646,7 @@ static mn_page_t SkillLevelMenu = {
     { 48, 63 },
     M_DrawSkillMenu,
     2, &GameTypeMenu,
-    0, 4
+    //0, 4
 };
 #else
 static mn_object_t SkillItems[] = {
@@ -657,7 +664,7 @@ mn_page_t SkillLevelMenu = {
     { 48, 63 },
     M_DrawSkillMenu,
     2, &EpisodeMenu,
-    0, 5
+    //0, 5
 };
 #endif
 
@@ -689,11 +696,11 @@ mn_page_t OptionsMenu = {
     { 110, 63 },
     M_DrawOptions,
     0, &MainMenu,
-    0,
+    //0,
 #if __JHERETIC__ || __JHEXEN__
-    11
+    //11
 #else
-    10
+    //10
 #endif
 };
 
@@ -713,15 +720,15 @@ mn_page_t SoundMenu = {
     SoundMenuItems, 5,
     0,
 #if __JHEXEN__
-    { 70, 25 },
+    { 97, 25 },
 #elif __JHERETIC__
-    { 70, 30 },
+    { 97, 30 },
 #elif __JDOOM__ || __JDOOM64__
-    { 70, 40 },
+    { 97, 40 },
 #endif
     M_DrawOptions2,
     0, &OptionsMenu,
-    0, 5
+    //0, 5
 };
 
 #if __JDOOM64__
@@ -740,7 +747,7 @@ mndata_slider_t sld_hud_statusbar_opacity = { 0, 1, 0, .1f, true, "hud-status-al
 mndata_slider_t sld_hud_messages_size = { 0, 1, 0, .1f, true, "msg-scale" };
 mndata_slider_t sld_hud_messages_uptime = { 0, 60, 0, 1.f, true, "msg-uptime", "Disabled", NULL, " second", " seconds" };
 
-mndata_listitem_t lstit_hud_xhair_symbols[] = {
+mndata_listitem_t listit_hud_xhair_symbols[] = {
     { "None", 0 },
     { "Cross", 1 },
     { "Angles", 2 },
@@ -749,44 +756,44 @@ mndata_listitem_t lstit_hud_xhair_symbols[] = {
     { "Diamond", 5 },
     { "V", 6 }
 };
-mndata_listinline_t lst_hud_xhair_symbol = {
-    lstit_hud_xhair_symbols, NUMLISTITEMS(lstit_hud_xhair_symbols), "view-cross-type"
+mndata_listinline_t list_hud_xhair_symbol = {
+    listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), "view-cross-type"
 };
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_listitem_t lstit_hud_killscounter_displaymethods[] = {
+mndata_listitem_t listit_hud_killscounter_displaymethods[] = {
     { "Hidden", 0 },
     { "Count", 1 },
     { "Percent", 2 },
     { "Count+Percent", 3 },
 };
-mndata_listinline_t lst_hud_killscounter = {
-    lstit_hud_killscounter_displaymethods,
-    NUMLISTITEMS(lstit_hud_killscounter_displaymethods),
+mndata_listinline_t list_hud_killscounter = {
+    listit_hud_killscounter_displaymethods,
+    NUMLISTITEMS(listit_hud_killscounter_displaymethods),
     "hud-cheat-counter"
 };
 
-mndata_listitem_t lstit_hud_itemscounter_displaymethods[] = {
+mndata_listitem_t listit_hud_itemscounter_displaymethods[] = {
     { "Hidden", 0 },
     { "Count", 1 },
     { "Percent", 2 },
     { "Count+Percent", 3 },
 };
-mndata_listinline_t lst_hud_itemscounter = {
-    lstit_hud_itemscounter_displaymethods,
-    NUMLISTITEMS(lstit_hud_itemscounter_displaymethods),
+mndata_listinline_t list_hud_itemscounter = {
+    listit_hud_itemscounter_displaymethods,
+    NUMLISTITEMS(listit_hud_itemscounter_displaymethods),
     "hud-cheat-counter"
 };
 
-mndata_listitem_t lstit_hud_secretscounter_displaymethods[] = {
+mndata_listitem_t listit_hud_secretscounter_displaymethods[] = {
     { "Hidden", 0 },
     { "Count", 1 },
     { "Percent", 2 },
     { "Count+Percent", 3 },
 };
-mndata_listinline_t lst_hud_secretscounter = {
-    lstit_hud_secretscounter_displaymethods,
-    NUMLISTITEMS(lstit_hud_secretscounter_displaymethods),
+mndata_listinline_t list_hud_secretscounter = {
+    listit_hud_secretscounter_displaymethods,
+    NUMLISTITEMS(listit_hud_secretscounter_displaymethods),
     "hud-cheat-counter"
 };
 #endif
@@ -837,7 +844,7 @@ static mn_object_t HUDItems[] = {
 
     { MN_TEXT,      0,  0,  "Crosshair", GF_FONTA, MENU_COLOR2, 0, MNText_Drawer, MNText_Dimensions },
     { MN_TEXT,      0,  0,  "Symbol",   GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_xhair_symbol },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_xhair_symbol },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, MENU_COLOR, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_xhair_size },
     { MN_TEXT,      0,  0,  "Opacity",  GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
@@ -857,11 +864,11 @@ static mn_object_t HUDItems[] = {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      0,  0,  "Counters", GF_FONTA, MENU_COLOR2, 0, MNText_Drawer, MNText_Dimensions },
     { MN_TEXT,      0,  0,  "Kills",    GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_killscounter },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_killscounter },
     { MN_TEXT,      0,  0,  "Items",    GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_itemscounter },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_itemscounter },
     { MN_TEXT,      0,  0,  "Secrets",  GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_hud_secretscounter },
+    { MN_LISTINLINE, 0, 0,  "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_secretscounter },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, MENU_COLOR, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_counter_size },
 #endif
@@ -910,24 +917,24 @@ mn_page_t HUDMenu = {
 #elif __JDOOM64__
     HUDItems, 65,
 #elif __JDOOM__
-    HUDItems, 69,
+    HUDItems, 70,
 #endif
     0,
 #if __JDOOM__ || __JDOOM64__
-    { 80, 40 },
+    { 97, 40 },
 #else
-    { 80, 28 },
+    { 97, 28 },
 #endif
     M_DrawHUDMenu,
     0, &OptionsMenu,
 #if __JHEXEN__
-    0, 15        // 21
+    //0, 15        // 21
 #elif __JHERETIC__
-    0, 15        // 23
+    //0, 15        // 23
 #elif __JDOOM64__
-    0, 19
+    //0, 19
 #elif __JDOOM__
-    0, 19
+    //0, 19
 #endif
 };
 
@@ -937,7 +944,8 @@ mndata_slider_t sld_inv_uptime = { 0, 30, 0, 1.f, true, "hud-inventory-timer", "
 mndata_slider_t sld_inv_maxvisslots = { 0, 16, 0, 1, false, "hud-inventory-slot-max", "Automatic" };
 
 static mn_object_t InventoryItems[] = {
-    { MN_BUTTON2EX, 0,  0,  "Select Mode", GF_FONTA, MENU_COLOR, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton, &btn_inv_selectmode },
+    { MN_TEXT,      0,  0,  "Select Mode", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2EX, 0,  0,  "", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton, &btn_inv_selectmode },
     { MN_TEXT,      0,  0,  "Wrap Around", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "ctl-inventory-wrap", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,  "Choose And Use", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
@@ -956,41 +964,41 @@ static mn_object_t InventoryItems[] = {
 };
 
 mn_page_t InventoryMenu = {
-    InventoryItems, 14,
+    InventoryItems, 15,
     0,
     { 78, 48 },
     M_DrawInventoryMenu,
     0, &OptionsMenu,
-    0, 12, { 12, 48 }
+    //0, 12, { 12, 48 }
 };
 #endif
 
-mndata_listitem_t lstit_weapons_order[NUM_WEAPON_TYPES];
-mndata_list_t lst_weapons_order = {
-    lstit_weapons_order, NUMLISTITEMS(lstit_weapons_order)
+mndata_listitem_t listit_weapons_order[NUM_WEAPON_TYPES];
+mndata_list_t list_weapons_order = {
+    listit_weapons_order, NUMLISTITEMS(listit_weapons_order)
 };
 
-mndata_listitem_t lstit_weapons_autoswitch_pickup[] = {
+mndata_listitem_t listit_weapons_autoswitch_pickup[] = {
     { "Never", 0 },
     { "If Better", 1 },
     { "Always", 2 }
 };
-mndata_listinline_t lst_weapons_autoswitch_pickup = {
-    lstit_weapons_autoswitch_pickup, NUMLISTITEMS(lstit_weapons_autoswitch_pickup), "player-autoswitch"
+mndata_listinline_t list_weapons_autoswitch_pickup = {
+    listit_weapons_autoswitch_pickup, NUMLISTITEMS(listit_weapons_autoswitch_pickup), "player-autoswitch"
 };
 
-mndata_listitem_t lstit_weapons_autoswitch_pickupammo[] = {
+mndata_listitem_t listit_weapons_autoswitch_pickupammo[] = {
     { "Never", 0 },
     { "If Better", 1 },
     { "Always", 2 }
 };
-mndata_listinline_t lst_weapons_autoswitch_pickupammo = {
-    lstit_weapons_autoswitch_pickupammo, NUMLISTITEMS(lstit_weapons_autoswitch_pickupammo), "player-autoswitch-ammo"
+mndata_listinline_t list_weapons_autoswitch_pickupammo = {
+    listit_weapons_autoswitch_pickupammo, NUMLISTITEMS(listit_weapons_autoswitch_pickupammo), "player-autoswitch-ammo"
 };
 
 static mn_object_t WeaponItems[] = {
     { MN_TEXT,      0,  0,  "Priority Order", GF_FONTA, MENU_COLOR2, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LIST,      0,  MNF_INACTIVE,  "",         GF_FONTA, MENU_COLOR3, 0, MNList_Drawer, MNList_Dimensions, M_WeaponOrder, &lst_weapons_order },
+    { MN_LIST,      0,  MNF_INACTIVE,  "",         GF_FONTA, MENU_COLOR3, 0, MNList_Drawer, MNList_Dimensions, M_WeaponOrder, &list_weapons_order },
     { MN_TEXT,      0,  0,  "Cycling",  GF_FONTA, MENU_COLOR2, 0, MNText_Drawer, MNText_Dimensions },
     { MN_TEXT,      0,  0,  "Use Priority Order", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "player-weapon-nextmode", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -999,11 +1007,11 @@ static mn_object_t WeaponItems[] = {
 
     { MN_TEXT,      0,  0,  "Autoswitch", GF_FONTA, MENU_COLOR2, 0, MNText_Drawer, MNText_Dimensions },
     { MN_TEXT,      0,  0,  "Pickup Weapon", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_weapons_autoswitch_pickup },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &list_weapons_autoswitch_pickup },
     { MN_TEXT,      0,  0,  "   If Not Firing", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "player-autoswitch-notfiring", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,  "Pickup Ammo", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &lst_weapons_autoswitch_pickupammo },
+    { MN_LISTINLINE, 0, 0,  "", GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_Dimensions, Hu_MenuCvarList, &list_weapons_autoswitch_pickupammo },
 #if __JDOOM__ || __JDOOM64__
     { MN_TEXT,      0,  0,  "Pickup Beserk", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, MNText_Dimensions },
     { MN_BUTTON2,   0,  0,  "player-autoswitch-berserk", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
@@ -1028,7 +1036,7 @@ mn_page_t WeaponMenu = {
 #endif
     M_DrawWeaponMenu,
     1, &OptionsMenu,
-    0, 12, { 12, 38 }
+    //0, 12, { 12, 38 }
 };
 
 static mn_object_t GameplayItems[] = {
@@ -1092,7 +1100,7 @@ mn_page_t GameplayMenu = {
     { 88, 25 },
     M_DrawGameplay,
     0, &OptionsMenu,
-    0, 6, { 6, 25 }
+    //0, 6, { 6, 25 }
 };
 #else
 mn_page_t GameplayMenu = {
@@ -1108,11 +1116,11 @@ mn_page_t GameplayMenu = {
     M_DrawGameplay,
     0, &OptionsMenu,
 #if __JDOOM64__
-    0, 16, { 16, 40 }
+    //0, 16, { 16, 40 }
 #elif __JDOOM__
-    0, 18, { 18, 40 }
+    //0, 18, { 18, 40 }
 #else
-    0, 11, { 11, 40 }
+    //0, 11, { 11, 40 }
 #endif
 };
 #endif
@@ -1135,7 +1143,7 @@ static mn_page_t ColorWidgetMenu = {
     { 98, 60 },
     NULL,
     0, &OptionsMenu,
-    0, 8
+    //0, 8
 };
 
 // Cvars for the menu:
@@ -1316,7 +1324,7 @@ void M_InitWeaponsMenu(void)
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        mndata_listitem_t* item = &((mndata_listitem_t*)lstit_weapons_order)[i];
+        mndata_listitem_t* item = &((mndata_listitem_t*)listit_weapons_order)[i];
 #if __JDOOM__ || __JDOOM64__
         const char* name = GET_TXT(TXT_WEAPON1 + i);
 #elif __JHERETIC__
@@ -1338,7 +1346,7 @@ void M_InitWeaponsMenu(void)
         item->data = i;
     }
 
-    qsort(lstit_weapons_order, NUM_WEAPON_TYPES, sizeof(lstit_weapons_order[0]), compareWeaponPriority);
+    qsort(listit_weapons_order, NUM_WEAPON_TYPES, sizeof(listit_weapons_order[0]), compareWeaponPriority);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -1390,7 +1398,7 @@ void M_InitEpisodeMenu(void)
     // Finalize setup.
     EpisodeMenu._objects = EpisodeItems;
     EpisodeMenu._size = numEpisodes;
-    EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu._size, 10);
+    //EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu._size, 10);
     EpisodeMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
 }
 #endif
@@ -1450,7 +1458,7 @@ void M_InitPlayerClassMenu(void)
     // Finalize setup.
     PlayerClassMenu._objects = ClassItems;
     PlayerClassMenu._size = count + 1;
-    PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu._size, 10);
+    //PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu._size, 10);
 }
 #endif
 
@@ -1469,7 +1477,6 @@ void Hu_MenuInit(void)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     int w, maxw;
 #endif
-    int i;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     R_GetGammaMessageStrings();
@@ -1478,12 +1485,15 @@ void Hu_MenuInit(void)
 #if __JDOOM__ || __JDOOM64__
     // Quit messages.
     endmsg[0] = GET_TXT(TXT_QUITMSG);
+    { int i;
     for(i = 1; i <= NUM_QUITMESSAGES; ++i)
         endmsg[i] = GET_TXT(TXT_QUITMESSAGE1 + i - 1);
+    }
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Skill names.
+    { int i;
     for(i = 0, maxw = 0; i < NUM_SKILL_MODES; ++i)
     {
         SkillItems[i].text = GET_TXT(TXT_SKILL1 + i);
@@ -1491,22 +1501,24 @@ void Hu_MenuInit(void)
         w = FR_TextFragmentWidth(SkillItems[i].text);
         if(w > maxw)
             maxw = w;
-    }
+    }}
     // Center the skill menu appropriately.
-    SkillLevelMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 12;
+    SkillLevelMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 14;
 #endif
+
+    { int i;
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mndata_edit_t* edit = &edit_saveslots[i];
+        if(NULL != edit->emptyString && ((unsigned int)edit->emptyString < NUMTEXT))
+        {
+            edit->emptyString = GET_TXT((unsigned int)edit->emptyString);
+        }
+    }}
 
     // Play modes.
     NewGameItems[0].text = GET_TXT(TXT_SINGLEPLAYER);
     NewGameItems[1].text = GET_TXT(TXT_MULTIPLAYER);
-
-    for(i = 0; i < NUMSAVESLOTS; ++i)
-    {
-        mndata_edit_t* edit = &gameSaveSlotEditWidgets[i];
-        edit->data = i;
-        edit->emptyString = EMPTYSTRING;
-        edit->onChange = M_DoSaveGame;
-    }
 
     mnCurrentPage = &MainMenu;
     mnActive = false;
@@ -1671,22 +1683,20 @@ void Hu_MenuTicker(timespan_t ticLength)
 
         // Used for Heretic's rotating skulls.
         frame = (mnTime / 3) % 18;
-
-        MN_TickerEx();
     }
 }
 
 void Hu_MenuPageString(char* str, const mn_page_t* page)
 {
-    sprintf(str, "PAGE %i/%i", (page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1,
-            (int)ceil((float)page->_size/page->numVisObjects));
+/*    sprintf(str, "PAGE %i/%i", (page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1,
+            (int)ceil((float)page->_size/page->numVisObjects));*/
 }
 
 static void calcNumVisObjects(mn_page_t* page)
 {
-    page->firstObject = MAX_OF(0, mnFocusObjectIndex - page->numVisObjects/2);
+/*    page->firstObject = MAX_OF(0, mnFocusObjectIndex - page->numVisObjects/2);
     page->firstObject = MIN_OF(page->firstObject, page->_size - page->numVisObjects);
-    page->firstObject = MAX_OF(0, page->firstObject);
+    page->firstObject = MAX_OF(0, page->firstObject);*/
 }
 
 mn_page_t* MN_CurrentPage(void)
@@ -1793,7 +1803,8 @@ void MN_GotoPage(mn_page_t* page)
  */
 void Hu_MenuDrawer(void)
 {
-    float pos[2], offset[2];
+    mn_page_t* page = mnCurrentPage;
+    int offset[2];
     uint i;
 
     // Popped at the end of the function.
@@ -1815,37 +1826,35 @@ void Hu_MenuDrawer(void)
     if(!mnActive && !(mnAlpha > 0))
         goto end_draw_menu;
 
-    if(mnCurrentPage->unscaled.numVisObjects)
+    /*if(page->unscaled.numVisObjects)
     {
-        mnCurrentPage->numVisObjects = mnCurrentPage->unscaled.numVisObjects / cfg.menuScale;
-        mnCurrentPage->_offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - mnCurrentPage->unscaled.y) / cfg.menuScale;
+        page->numVisObjects = page->unscaled.numVisObjects / cfg.menuScale;
+        page->_offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - page->unscaled.y) / cfg.menuScale;
+    }*/
+
+    if(page->drawer)
+    {
+        page->drawer(page, page->_offset[VX], page->_offset[VY]);
     }
 
-    if(mnCurrentPage->drawer)
-        mnCurrentPage->drawer(mnCurrentPage, mnCurrentPage->_offset[VX], mnCurrentPage->_offset[VY]);
-
-    pos[VX] = mnCurrentPage->_offset[VX];
-    pos[VY] = mnCurrentPage->_offset[VY];
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(page->_offset[VX], page->_offset[VY], 0);
 
     if(mnAlpha > 0.0125f)
     {
         const mn_object_t* focusObj = focusObject();
-        for(i = mnCurrentPage->firstObject; i < mnCurrentPage->_size && i < mnCurrentPage->firstObject + mnCurrentPage->numVisObjects; ++i)
+        int pos[2] = { 0, 0 };
+
+        for(i = 0/*page->firstObject*/;
+            i < page->_size /*&& i < page->firstObject + page->numVisObjects*/; ++i)
         {
-            const mn_object_t* obj = &mnCurrentPage->_objects[i];
+            const mn_object_t* obj = &page->_objects[i];
             int height = 0;
 
             if(obj->type == MN_NONE||(obj->flags & MNF_HIDDEN)||!obj->drawer)
                 continue;
 
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PushMatrix();
-            DGL_Translatef(pos[VX], pos[VY], 0);
-
-            obj->drawer(obj, 0, 0, mnAlpha);
-
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PopMatrix();
+            obj->drawer(obj, pos[VX], pos[VY], mnAlpha);
 
             if(obj->dimensions)
                 obj->dimensions(obj, NULL, &height);
@@ -1855,17 +1864,17 @@ void Hu_MenuDrawer(void)
             {
 #if __JDOOM__ || __JDOOM64__
 # define MN_CURSOR_OFFSET_X         (-22)
-# define MN_CURSOR_OFFSET_Y         (0)
+# define MN_CURSOR_OFFSET_Y         (-2)
 #elif __JHERETIC__ || __JHEXEN__
-# define MN_CURSOR_OFFSET_X         (-2)
-# define MN_CURSOR_OFFSET_Y         (-1)
+# define MN_CURSOR_OFFSET_X         (-16)
+# define MN_CURSOR_OFFSET_Y         (3)
 #endif
 
-                mn_page_t* mn = ((focusObj && focusObj->type == MN_COLORBOX && !(focusObj->flags & MNF_INACTIVE))? &ColorWidgetMenu : mnCurrentPage);
-                float scale = MIN_OF((float) height / cursorst[whichSkull].height, 1);
+                mn_page_t* mn = ((focusObj && focusObj->type == MN_COLORBOX && !(focusObj->flags & MNF_INACTIVE))? &ColorWidgetMenu : page);
+                float scale = MIN_OF((float) (height * 1.267f) / cursorst[whichSkull].height, 1);
 
                 offset[VX] = MN_CURSOR_OFFSET_X * scale;
-                offset[VY] = height/2 + MN_CURSOR_OFFSET_Y * scale;
+                offset[VY] = MN_CURSOR_OFFSET_Y * scale + height/2;
 
                 DGL_MatrixMode(DGL_MODELVIEW);
                 DGL_PushMatrix();
@@ -1889,7 +1898,7 @@ void Hu_MenuDrawer(void)
 #undef MN_CURSOR_OFFSET_X
             }
 
-            pos[VY] += height * (1+.125f); // Leading.
+            pos[VY] += height * (1.08f); // Leading.
         }
 
         // Draw the colour widget?
@@ -1900,6 +1909,10 @@ void Hu_MenuDrawer(void)
             Draw_EndZoom();
         }
     }
+
+    // Unnecessary given the matrix will be popped imminently.
+    //DGL_MatrixMode(DGL_MODELVIEW);
+    //DGL_Translatef(-page->_offset[VX], -page->_offset[VY], 0);
 
   end_draw_menu:
 
@@ -1919,6 +1932,7 @@ void Hu_MenuDrawer(void)
 
 void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
 {
+#if 0
     uint index = MAX_OF(0, mnFocusObjectIndex), oldIndex = index;
 
     if(pageDelta < 0)
@@ -1944,6 +1958,7 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
     }
 
     calcNumVisObjects(mnCurrentPage);
+#endif
 }
 
 /**
@@ -1997,18 +2012,18 @@ void MN_InitCvarButtons(mn_object_t* obj)
             }
             cvb = NULL;
         }
-        /*else if(obj->action == Hu_MenuCvarList)
+        else if(obj->action == Hu_MenuCvarList)
         {
             mndata_list_t* list = obj->data;
             // Choose the correct list item based on the value of the cvar.
-            list->selection = Hu_MenuListFindItem(obj, Con_GetInteger(list->data));
+            list->selection = MNList_FindItem(obj, Con_GetInteger(list->data));
         }
         else if(obj->action == Hu_MenuCvarEdit)
         {
-            mndata_edit_t* ed = obj->data;
-
-            strncpy(ed->ptr, Con_GetString(ed->data), ed->maxLen);
-        }*/
+            mndata_edit_t* edit = obj->data;
+            MNEdit_SetText(obj, Con_GetString(edit->data1));
+            //strncpy(edit->ptr, Con_GetString(edit->data), edit->maxLen);
+        }
     }
 }
 
@@ -2044,9 +2059,7 @@ static void initAllObjectsOnAllPages(void)
     initObjectsInCollection(ColorWidgetItems);
     initObjectsInCollection(MAPItems);
     initObjectsInCollection(MultiplayerItems);
-    initObjectsInCollection(MultiplayerServerItems);
     initObjectsInCollection(MultiplayerClientItems);
-    initObjectsInCollection(GameSetupItems);
     initObjectsInCollection(PlayerSetupItems);
 
     // Set default Yes/No strings.
@@ -2167,8 +2180,8 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         hasFocus = MAX_OF(0, mnFocusObjectIndex);
 
-        firstVisible = menu->firstObject;
-        lastVisible = firstVisible + menu->numVisObjects - 1 - numVisObjectsOffset;
+        firstVisible = 0;//menu->firstObject;
+        lastVisible = firstVisible + menu->_size/*numVisObjects*/ - 1 - numVisObjectsOffset;
         if(lastVisible > menu->_size - 1 - numVisObjectsOffset)
             lastVisible = menu->_size - 1 - numVisObjectsOffset;
         obj = &menu->_objects[hasFocus];
@@ -2360,8 +2373,8 @@ int Hu_MenuResponder(event_t* ev)
         uint i, first, last; // First and last, visible page objects.
         int cand = toupper(ev->data1);
 
-        first = last = page->firstObject;
-        last += page->numVisObjects - 1;
+        first = last = 0;//page->firstObject;
+        last += page->_size/*page->numVisObjects*/ - 1;
 
         if(last > page->_size - 1)
             last = page->_size - 1;
@@ -2550,7 +2563,7 @@ void M_LoadSelect(mn_object_t* obj, int option)
 {
     const int saveSlot = option;
 
-    SaveMenu.focus = option+1;
+    SaveMenu.focus = option;
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
     G_LoadGame(saveSlot);
@@ -2564,24 +2577,24 @@ void M_DrawMainMenu(const mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnAlpha);
 
-    GL_DrawPatch(m_htic.id, 88, 0);
-    GL_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
-    GL_DrawPatch(dpBullWithFire[frame].id, 278, 80);
+    GL_DrawPatch(m_htic.id, x - 22, y - 56);
+    GL_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, x - 73, y + 24);
+    GL_DrawPatch(dpBullWithFire[frame].id, x + 168, y + 24);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
 #elif __JHERETIC__
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(m_htic.id, 88, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
+    WI_DrawPatch4(m_htic.id, x - 22, y - 56, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
     DGL_Color4f(1, 1, 1, mnAlpha);
-    GL_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
-    GL_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
+    GL_DrawPatch(dpRotatingSkull[17 - frame].id, x - 70, y - 46);
+    GL_DrawPatch(dpRotatingSkull[frame].id, x + 122, y - 46);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch4(m_doom.id, 94, 2, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
+    WI_DrawPatch4(m_doom.id, x - 3, y - 62, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 }
@@ -2591,7 +2604,7 @@ void M_DrawNewGameMenu(const mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 
-    M_DrawMenuText3(GET_TXT(TXT_PICKGAMETYPE), SCREENWIDTH/2, y-30, GF_FONTB, DTF_ALIGN_TOP);
+    M_DrawMenuText3(GET_TXT(TXT_PICKGAMETYPE), x + 60, y - 25, GF_FONTB, DTF_ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -2630,8 +2643,8 @@ static void composeNotDesignedForMessage(const char* str)
 #if __JHEXEN__
 void M_DrawClassMenu(const mn_page_t* page, int x, int y)
 {
-#define BG_X            (174)
-#define BG_Y            (8)
+#define BG_X            (108)
+#define BG_Y            (-58)
 
     float w, h, s, t;
     int pClass;
@@ -2641,7 +2654,7 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-    M_DrawMenuText2("Choose class:", 34, 24, GF_FONTB);
+    M_DrawMenuText2("Choose class:", x - 32, y - 42, GF_FONTB);
 
     pClass = focusObject()->data2;
     if(pClass < 0)
@@ -2697,9 +2710,6 @@ void M_DrawEpisode(const mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JHERETIC__
-    DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-    M_DrawMenuText3("WHICH EPISODE?", SCREENWIDTH/2, y-4, GF_FONTB, DTF_ALIGN_TOP);
-
     /**
      * \kludge Inform the user episode 6 is designed for deathmatch only.
      */
@@ -2711,7 +2721,7 @@ void M_DrawEpisode(const mn_page_t* page, int x, int y)
         M_DrawMenuText3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, GF_FONTA, DTF_ALIGN_BOTTOM);
     }
 #else // __JDOOM__
-    WI_DrawPatch4(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    WI_DrawPatch4(m_episod.id, x + 7, y - 25, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2723,11 +2733,11 @@ void M_DrawSkillMenu(const mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JDOOM__ || __JDOOM64__
-    WI_DrawPatch4(m_newg.id, 96, 14, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-    WI_DrawPatch4(m_skill.id, 54, 38, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-#else
+    WI_DrawPatch4(m_newg.id, x + 48, y - 49, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    WI_DrawPatch4(m_skill.id, x + 6, y - 25, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+#elif __JHEXEN__
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-    M_DrawMenuText3("CHOOSE SKILL LEVEL:", SCREENWIDTH/2, y-8, GF_FONTB, DTF_ALIGN_TOP);
+    M_DrawMenuText3("Choose Skill Level:", x + 4, y - 28, GF_FONTB, DTF_ALIGN_TOPLEFT);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2752,7 +2762,7 @@ void MN_UpdateGameSaveWidgets(void)
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         mn_object_t* obj = &LoadItems[i];
-        mndata_edit_t* edit = &gameSaveSlotEditWidgets[i];
+        mndata_edit_t* edit = &edit_saveslots[i];
         const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(i);
 
         obj->flags |= MNF_DISABLED;
@@ -2769,10 +2779,13 @@ void MN_UpdateGameSaveWidgets(void)
 /**
  * Called after the save name has been modified and to action the game-save.
  */
-void M_DoSaveGame(const mndata_edit_t* ef)
+void M_DoSaveGame(mn_object_t* obj)
 {
-    const int saveSlot = ef->data;
-    const char* saveName = ef->text;
+    assert(NULL != obj);
+    {
+    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    const int saveSlot = edit->data2;
+    const char* saveName = edit->text;
 
     if(nominatingQuickGameSaveSlot)
     {
@@ -2783,23 +2796,12 @@ void M_DoSaveGame(const mndata_edit_t* ef)
     if(!G_SaveGame(saveSlot, saveName))
         return;
 
-    SaveMenu.focus = ef->data+1;
-    LoadMenu.focus = ef->data;
+    SaveMenu.focus = edit->data2;
+    LoadMenu.focus = edit->data2;
 
     S_LocalSound(SFX_MENU_ACCEPT, NULL);
     Hu_MenuCommand(MCMD_CLOSEFAST);
-}
-
-void M_SetEditFieldText(mndata_edit_t* ef, const char* string)
-{
-    dd_snprintf(ef->text, MNDATA_EDIT_TEXT_MAX_LENGTH, "%s", string);
-}
-
-void M_ActivateEditField(mn_object_t* obj, int option)
-{
-    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
-    memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
-    obj->flags &= ~MNF_INACTIVE;
+    }
 }
 
 void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
@@ -2822,7 +2824,7 @@ void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     if(obj->patch)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, obj->fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
+        WI_DrawPatch4(*obj->patch, x, y, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, obj->fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -2830,7 +2832,7 @@ void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
 
-    M_DrawMenuText2(obj->text, 0, 0, obj->fontIdx);
+    M_DrawMenuText2(obj->text, x, y, obj->fontIdx);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -2856,10 +2858,14 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 {
 #if __JDOOM__ || __JDOOM64__
 # define COLOR_IDX              (0)
-# define OFFSET_Y               (4)
+# define OFFSET_X               (0)
+# define OFFSET_Y               (0)
+# define BG_OFFSET_X            (-11)
 #else
 # define COLOR_IDX              (2)
+# define OFFSET_X               (13)
 # define OFFSET_Y               (5)
+# define BG_OFFSET_X            (-5)
 #endif
 
     const mndata_edit_t* edit = (const mndata_edit_t*) obj->data;
@@ -2868,6 +2874,7 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     const char* string;
     float light = 1;
 
+    x += OFFSET_X;
     y += OFFSET_Y;
 
     if(isActive)
@@ -2903,7 +2910,7 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     else
         numVisCharacters = MNDATA_EDIT_TEXT_MAX_LENGTH;
     width = numVisCharacters * FR_CharWidth('_') + 20;
-    M_DrawSaveLoadBorder(x - 10, y, width);
+    M_DrawSaveLoadBorder(x + BG_OFFSET_X, y - 1, width);
     }
 
     if(string)
@@ -2930,8 +2937,19 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 
     DGL_Disable(DGL_TEXTURE_2D);
 
+#undef BG_OFFSET_X
 #undef OFFSET_Y
+#undef OFFSET_X
 #undef COLOR_IDX
+}
+
+void MNEdit_SetText(mn_object_t* obj, const char* string)
+{
+    assert(NULL != obj);
+    {
+    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH, "%s", string);
+    }
 }
 
 /**
@@ -3011,6 +3029,19 @@ void MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
+}
+
+int MNList_FindItem(const mn_object_t* obj, int dataValue)
+{
+    assert(NULL != obj);
+    {
+    mndata_list_t* list = obj->data;
+    int i;
+    for(i = 0; i < list->count; ++i)
+        if(((mndata_listitem_t*) list->items)[i].data == dataValue)
+            return i;
+    return -1;
+    }
 }
 
 void MNListInline_Drawer(const mn_object_t* obj, int x, int y, float alpha)
@@ -3108,7 +3139,7 @@ void MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     if(obj->patch)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, obj->fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
+        WI_DrawPatch4(*obj->patch, x, y, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, obj->fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -3217,12 +3248,11 @@ int MNSlider_ThumbPos(const mn_object_t* obj)
 
 void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY, float alpha)
 {
+#define OFFSET_X                (0)
 #if __JHERETIC__ || __JHEXEN__
-# define OFFSET_X               (24)
-# define OFFSET_Y               (2)
+#  define OFFSET_Y              (MNDATA_SLIDER_PADDING_Y + 1)
 #else
-# define OFFSET_X               (0)
-# define OFFSET_Y               (0)
+#  define OFFSET_Y              (MNDATA_SLIDER_PADDING_Y)
 #endif
 #define WIDTH                   (middleInfo.width)
 #define HEIGHT                  (middleInfo.height)
@@ -3386,13 +3416,20 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
 
 void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
 {
-    patchinfo_t middleInfo;
-    if(!R_GetPatchInfo(dpSliderMiddle, &middleInfo))
+    patchinfo_t info;
+    if(!R_GetPatchInfo(dpSliderMiddle, &info))
         return;
     if(width)
-        *width = (int) ceil(middleInfo.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE);
+        *width = (int) (info.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE + .5f);
     if(height)
-        *height = (int) ceil(middleInfo.height * MNDATA_SLIDER_SCALE);
+    {
+        int max = info.height;
+        if(R_GetPatchInfo(dpSliderLeft, &info))
+            max = MAX_OF(max, info.height);
+        if(R_GetPatchInfo(dpSliderRight, &info))
+            max = MAX_OF(max, info.height);
+        *height = (int) ((max + MNDATA_SLIDER_PADDING_Y * 2) * MNDATA_SLIDER_SCALE + .5f);
+    }
 }
 
 void MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y, float alpha)
@@ -3434,6 +3471,85 @@ void MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* he
         FR_TextFragmentDimensions(width, height, str);
     }
     }
+}
+
+static void findSpriteForMobjType(mobjtype_t mobjType, spritetype_e* sprite, int* frame)
+{
+    assert(mobjType >= MT_FIRST && mobjType < NUMMOBJTYPES && NULL != sprite && NULL != frame);
+    {
+    mobjinfo_t* info = &MOBJINFO[mobjType];
+    int stateNum = info->states[SN_SPAWN];
+    *sprite = STATES[stateNum].sprite;
+    *frame = ((mnTime >> 3) & 3);
+    }
+}
+
+/// \todo We can do better - the engine should be able to render this visual for us.
+void MNMobjPreview_Drawer(const mn_object_t* obj, int inX, int inY, float alpha)
+{
+    assert(NULL != obj);
+    {
+    mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*) obj->data;
+    float x = inX, y = inY, w, h, s, t, scale;
+    int tClass, tMap, spriteFrame;
+    spritetype_e sprite;
+    spriteinfo_t info;
+
+    findSpriteForMobjType(mop->mobjType, &sprite, &spriteFrame);
+    if(!R_GetSpriteInfo(sprite, spriteFrame, &info))
+        return;
+
+    w = info.width;
+    h = info.height;
+    scale = (h > w? MNDATA_MOBJPREVIEW_HEIGHT / h : MNDATA_MOBJPREVIEW_WIDTH / w);
+    w *= scale;
+    h *= scale;
+
+    x += MNDATA_MOBJPREVIEW_WIDTH/2 - info.width/2 * scale;
+    y += MNDATA_MOBJPREVIEW_HEIGHT  - info.height  * scale;
+
+    tClass = mop->tClass;
+    tMap = mop->tMap;
+    // Are we cycling the translation map?
+    if(tMap == NUMPLAYERCOLORS)
+        tMap = mnTime / 5 % NUMPLAYERCOLORS;
+#if __JHEXEN__
+    if(mop->plrClass >= PCLASS_FIGHTER)
+        R_GetTranslation(mop->plrClass, tMap, &tClass, &tMap);
+#endif
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_SetPSprite2(info.material, tClass, tMap);
+
+    s = info.texCoord[0];
+    t = info.texCoord[1];
+
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0 * s, 0);
+        DGL_Vertex2f(x, y);
+
+        DGL_TexCoord2f(0, 1 * s, 0);
+        DGL_Vertex2f(x + w, y);
+
+        DGL_TexCoord2f(0, 1 * s, t);
+        DGL_Vertex2f(x + w, y + h);
+
+        DGL_TexCoord2f(0, 0 * s, t);
+        DGL_Vertex2f(x, y + h);
+    DGL_End();
+
+    DGL_Disable(DGL_TEXTURE_2D);
+    }
+}
+
+void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height)
+{
+    // @fixme calculate visible dimensions properly!
+    if(width)
+        *width = MNDATA_MOBJPREVIEW_WIDTH;
+    if(height)
+        *height = MNDATA_MOBJPREVIEW_HEIGHT;
 }
 
 void Hu_MenuCvarButton(mn_object_t* obj, int option)
@@ -3571,6 +3687,30 @@ void Hu_MenuCvarList(mn_object_t* obj, int option)
     }
 }
 
+void Hu_MenuSaveSlotEdit(mn_object_t* obj, int option)
+{
+    assert(NULL != obj);
+    {
+    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
+    obj->flags &= ~MNF_INACTIVE;
+    }
+}
+
+void Hu_MenuCvarEdit(mn_object_t* obj, int option)
+{
+    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    //cvartype_t varType;
+
+    // Activate this.
+    memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
+    obj->flags &= ~MNF_INACTIVE;
+
+    /*varType = Con_GetVariableType(edit->data1);
+    if(CVT_CHARPTR != varType) return;
+    Con_SetString2(edit->data1, edit->text, SVF_WRITE_OVERRIDE);*/
+}
+
 void Hu_MenuCvarSlider(mn_object_t* obj, int option)
 {
     mndata_slider_t* sldr = obj->data;
@@ -3630,7 +3770,21 @@ void M_DrawLoad(const mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("Load Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #else
-    WI_DrawPatch4(m_loadg.id, SCREENWIDTH/2, 24, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    WI_DrawPatch4(m_loadg.id, x - 8, y - 26, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+#endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
+}
+
+void M_DrawSave(const mn_page_t* page, int x, int y)
+{
+    DGL_Enable(DGL_TEXTURE_2D);
+
+#if __JHERETIC__ || __JHEXEN__
+    DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    M_DrawMenuText3("Save Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
+#else
+    WI_DrawPatch4(m_loadg.id, x - 8, y - 26, "{case}Save game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3668,7 +3822,7 @@ int M_QuickSaveResponse(msgresponse_t response, void* context)
                 "is not valid, aborting...", slot);
             return true;
         }
-        G_SaveGame(slot, gameSaveSlotEditWidgets[slot].text);
+        G_SaveGame(slot, edit_saveslots[slot].text);
     }
     return true;
 }
@@ -3712,7 +3866,7 @@ static void M_QuickSave(void)
     if(!slotIsUsed || !cfg.confirmQuickGameSave)
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_SaveGame(slot, gameSaveSlotEditWidgets[slot].text);
+        G_SaveGame(slot, edit_saveslots[slot].text);
         return;
     }
 
@@ -3789,12 +3943,12 @@ void M_DrawOptions(const mn_page_t* page, int x, int y)
 
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-    M_DrawMenuText3("OPTIONS", SCREENWIDTH/2, y-32, GF_FONTB, DTF_ALIGN_TOP);
+    M_DrawMenuText3("OPTIONS", x + 42, y - 38, GF_FONTB, DTF_ALIGN_TOP);
 #else
 # if __JDOOM64__
-    WI_DrawPatch4(0, 160, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    WI_DrawPatch4(m_optttl.id, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 #else
-    WI_DrawPatch4(m_optttl.id, 160, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    WI_DrawPatch4(m_optttl.id, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 # endif
 #endif
 
@@ -3833,7 +3987,7 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("WEAPONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
-#if __JDOOM__ || __JDOOM64__
+/*#if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, page);
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
@@ -3842,7 +3996,7 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
     GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
-#endif
+#endif*/
 
     /**
      * \kludge Inform the user how to change the order.
@@ -3898,9 +4052,6 @@ void M_DrawInventoryMenu(const mn_page_t* page, int x, int y)
 }
 #endif
 
-/**
- * @todo This could use a cleanup.
- */
 void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
 {
 #if __JDOOM__ || __JDOOM64__
@@ -3910,18 +4061,18 @@ void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
-    M_DrawMenuText3("HUD options", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
+    M_DrawMenuText3("HUD options", SCREENWIDTH/2, y - 20, GF_FONTB, DTF_ALIGN_TOP);
 
-#if __JDOOM__ || __JDOOM64__
+/*#if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, page);
     DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
-    M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
+    M_DrawMenuText3(buf, x + SCREENWIDTH/2, y + -12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
-    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
-#endif
+    GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y + -22);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y + -22);
+#endif*/
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -4354,19 +4505,17 @@ D_CMD(MenuAction)
                 break;
 
             case 1: // Edit Field
+                if(NULL != focusObj)
                 {
-                mndata_edit_t* edit = (mndata_edit_t*)focusObj->data;
-                if(edit->onChange)
-                {
-                    edit->onChange(edit);
-                }
-                else
-                {
+                    mndata_edit_t* edit = (mndata_edit_t*)focusObj->data;
                     S_LocalSound(SFX_MENU_ACCEPT, NULL);
+                    if(edit->onChange)
+                    {
+                        edit->onChange(focusObj);
+                    }
+                    focusObj->flags |= MNF_INACTIVE;
                 }
-                focusObj->flags |= MNF_INACTIVE;
                 break;
-                }
             case 2: // Widget edit
                 // Set the new color
                 *widgetColors[editcolorindex].r = currentcolor[0];
@@ -4490,12 +4639,4 @@ D_CMD(Shortcut)
     }
 
     return false;
-}
-
-/**
- * @todo Remove this placeholder.
- */
-void MN_DrawSlider(const mn_page_t* page, int index, int x, int y, int range, int pos)
-{
-    // Stub.
 }

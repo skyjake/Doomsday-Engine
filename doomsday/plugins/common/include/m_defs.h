@@ -47,7 +47,8 @@ typedef enum {
     MN_LISTINLINE,
     MN_SLIDER,
     MN_COLORBOX,
-    MN_BINDINGS
+    MN_BINDINGS,
+    MN_MOBJPREVIEW
 } mn_obtype_e;
 
 /**
@@ -109,9 +110,9 @@ typedef struct mn_page_s {
     int             focus; // Index of the focus object.
     struct mn_page_s* previous; // Pointer to the previous page, if any.
     // For scrollable multi-pages.
-    uint            firstObject, numVisObjects;
+    //uint            firstObject, numVisObjects;
     // Scalable pages.
-    mn_page_unscaledstate_t unscaled;
+    //mn_page_unscaledstate_t unscaled;
 } mn_page_t;
 
 mn_page_t*      MN_CurrentPage(void);
@@ -140,13 +141,15 @@ typedef struct mndata_edit_s {
     char            oldtext[MNDATA_EDIT_TEXT_MAX_LENGTH+1]; // If the current edit is canceled...
     uint            maxVisibleChars;
     const char*     emptyString; // Drawn when editfield is empty/null.
-    int             data;
-    void          (*onChange) (const struct mndata_edit_s*);
+    void*           data1;
+    int             data2;
+    void          (*onChange) (mn_object_t* obj);
 } mndata_edit_t;
 
 void            MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 boolean         MNEdit_Responder(mn_object_t* obj, const event_t* ev);
 void            MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
+void            MNEdit_SetText(mn_object_t* obj, const char* string);
 
 /**
  * List selection.
@@ -157,7 +160,7 @@ void            MNEdit_Dimensions(const mn_object_t* obj, int* width, int* heigh
 typedef struct {
     char            text[256];
     int             data;
-    int             data2;
+    const char*     data2;
 } mndata_listitem_t;
 
 typedef struct mndata_list_s {
@@ -170,6 +173,7 @@ typedef struct mndata_list_s {
 
 void            MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
+int             MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 typedef mndata_list_t mndata_listinline_t;
 
@@ -190,6 +194,11 @@ void            MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* h
  */
 #define MNDATA_SLIDER_SLOTS     10
 #define MNDATA_SLIDER_SCALE     .75f
+#if __JDOOM__ || __JDOOM64__
+#  define MNDATA_SLIDER_PADDING_Y   2
+#else
+#  define MNDATA_SLIDER_PADDING_Y   0
+#endif
 
 typedef struct mndata_slider_s {
     float           min, max;
@@ -224,6 +233,24 @@ typedef struct mndata_bindings_s {
 void            MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
 
+/**
+ * Mobj preview visual.
+ */
+#define MNDATA_MOBJPREVIEW_WIDTH    38
+#define MNDATA_MOBJPREVIEW_HEIGHT   52
+
+typedef struct mndata_mobjpreview_s {
+    mobjtype_t mobjType;
+    /// Color translation class and map.
+    int tClass, tMap;
+#if __JHEXEN__
+    int plrClass; /// Player class identifier.
+#endif
+} mndata_mobjpreview_t;
+
+void            MNMobjPreview_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
+
 #define MN_CURSOR_COUNT         2
 #define MN_CURSOR_TICSPERFRAME  8
 
@@ -254,10 +281,7 @@ extern mn_page_t LoadMenu;
 extern mn_page_t SaveMenu;
 extern mn_page_t MultiplayerMenu;
 extern mn_object_t MultiplayerItems[];
-extern mn_object_t MultiplayerServerItems[];
 extern mn_object_t MultiplayerClientItems[];
-extern mn_page_t GameSetupMenu;
-extern mn_object_t GameSetupItems[];
 extern mn_page_t PlayerSetupMenu;
 extern mn_object_t PlayerSetupItems[];
 #if __JHERETIC__ || __JHEXEN__
@@ -274,9 +298,7 @@ void            M_QuitDOOM(mn_object_t* obj, int option);
 
 void            M_FloatMod10(float* variable, int option);
 
-void            SCEnterMultiplayerMenu(mn_object_t* obj, int option);
-
-void            MN_TickerEx(void); // The extended ticker.
+void            M_EnterMultiplayerMenu(mn_object_t* obj, int option);
 
 void            MN_UpdateGameSaveWidgets(void);
 

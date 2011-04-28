@@ -75,6 +75,7 @@ typedef enum {
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS          16
+#define NUMPLAYERCOLORS     4
 
 // State updates, number of tics / second.
 #define TICRATE             35

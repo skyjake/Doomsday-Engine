@@ -28,6 +28,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <assert.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -96,7 +97,7 @@ mn_page_t ControlsMenu = {
     32, 40,
     M_DrawControlsMenu,
     0, &OptionsMenu,
-    0, 17, { 17, 40 }
+    //0, 17, { 17, 40 }
 };
 #endif
 
@@ -107,7 +108,7 @@ mn_page_t ControlsMenu = {
     32, 26,
     M_DrawControlsMenu,
     0, &OptionsMenu,
-    0, 15, { 15, 26 }
+    //0, 15, { 15, 26 }
 };
 #endif
 
@@ -118,7 +119,7 @@ mn_page_t ControlsMenu = {
     32, 21,
     M_DrawControlsMenu,
     0, &OptionsMenu,
-    0, 16, { 16, 21 }
+    //0, 16, { 16, 21 }
 };
 #endif
 
@@ -637,7 +638,7 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
     M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
-#if __JDOOM__ || __JDOOM64__
+/*#if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, page);
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
@@ -646,7 +647,7 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
     GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 12);
-#endif
+#endif*/
 
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
     M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);

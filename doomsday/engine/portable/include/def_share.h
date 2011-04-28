@@ -52,7 +52,8 @@ typedef struct state_s {
 } state_t;
 
 typedef enum {
-    SN_SPAWN,
+    STATENAMES_FIRST,
+    SN_SPAWN = STATENAMES_FIRST,
     SN_SEE,
     SN_PAIN,
     SN_MELEE,
@@ -61,7 +62,7 @@ typedef enum {
     SN_DEATH,
     SN_XDEATH,
     SN_RAISE,
-    NUM_STATE_NAMES
+    STATENAMES_COUNT
 } statename_t;
 
 typedef struct {
@@ -77,7 +78,7 @@ typedef struct {
     int             flags3;
     int             reactionTime;
     int             painChance;
-    int             states[NUM_STATE_NAMES];
+    int             states[STATENAMES_COUNT];
     int             painSound;
     int             deathSound;
     int             activeSound;

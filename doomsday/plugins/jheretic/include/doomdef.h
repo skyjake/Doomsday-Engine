@@ -78,6 +78,7 @@ typedef enum {
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS          16
+#define NUMPLAYERCOLORS     4
 
 // Playsim, core timing rate in cycles per second.
 #define TICRATE             35

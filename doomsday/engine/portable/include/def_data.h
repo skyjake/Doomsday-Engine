@@ -83,7 +83,7 @@ typedef struct {
     int             doomEdNum;
     ded_string_t    name;
 
-    ded_stateid_t   states[NUM_STATE_NAMES];
+    ded_stateid_t   states[STATENAMES_COUNT];
 
     ded_soundid_t   seeSound;
     ded_soundid_t   attackSound;

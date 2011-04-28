@@ -1051,7 +1051,7 @@ void Def_Read(void)
         mo->flags = dmo->flags[0];
         mo->flags2 = dmo->flags[1];
         mo->flags3 = dmo->flags[2];
-        for(k = 0; k < NUM_STATE_NAMES; ++k)
+        for(k = 0; k < STATENAMES_COUNT; ++k)
         {
             mo->states[k] = Def_StateForMobj(dmo->states[k]);
         }

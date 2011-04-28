@@ -1727,9 +1727,9 @@ mn_page_t AutomapMenu = {
     M_DrawMapMenu,
     0, &OptionsMenu,
 #if __JHERETIC__ || __JHEXEN__
-    0, 11, { 11, 28 }
+    //0, 11, { 11, 28 }
 #else
-    0, 13, { 13, 40 }
+    //0, 13, { 13, 40 }
 #endif
 };
 
@@ -1743,12 +1743,12 @@ void M_DrawMapMenu(const mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
     M_DrawMenuText3("Automap OPTIONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
-#if __JHERETIC__ || __JHEXEN__
+/*#if __JHERETIC__ || __JHEXEN__
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
     GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
-#endif
+#endif*/
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

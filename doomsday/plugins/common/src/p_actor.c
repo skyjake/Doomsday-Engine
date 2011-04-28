@@ -299,7 +299,7 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
 {
     if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
         return S_NULL;
-    if(name < 0 || name >= NUM_STATE_NAMES)
+    if(name < 0 || name >= STATENAMES_COUNT)
         return S_NULL;
 
     return MOBJINFO[type].states[name];
