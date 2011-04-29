@@ -33,21 +33,6 @@
 #include "dd_types.h"
 #include "m_defs.h"
 
-typedef enum menucommand_e {
-    MCMD_OPEN, // Open the menu.
-    MCMD_CLOSE, // Close the menu.
-    MCMD_CLOSEFAST, // Instantly close the menu.
-    MCMD_NAV_OUT, // Navigate "out" of the current menu/widget (up a level).
-    MCMD_NAV_LEFT,
-    MCMD_NAV_RIGHT,
-    MCMD_NAV_DOWN,
-    MCMD_NAV_UP,
-    MCMD_NAV_PAGEDOWN,
-    MCMD_NAV_PAGEUP,
-    MCMD_SELECT, // Execute whatever action is attaced to the current item.
-    MCMD_DELETE
-} menucommand_e;
-
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
 #define SFX_MENU_CLOSE      (SFX_SWTCHX)
@@ -94,8 +79,6 @@ void            Hu_MenuTicker(timespan_t time);
 int             Hu_MenuResponder(event_t* ev);
 int             Hu_MenuObjectResponder(event_t* ev);
 void            Hu_MenuDrawer(void);
-
-void            Hu_MenuCommand(menucommand_e cmd);
 
 boolean         Hu_MenuIsActive(void);
 void            Hu_MenuSetAlpha(float alpha);

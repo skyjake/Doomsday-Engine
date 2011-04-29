@@ -32,6 +32,21 @@
 
 #include "r_common.h"
 
+typedef enum menucommand_e {
+    MCMD_OPEN, // Open the menu.
+    MCMD_CLOSE, // Close the menu.
+    MCMD_CLOSEFAST, // Instantly close the menu.
+    MCMD_NAV_OUT, // Navigate "out" of the current menu/widget (up a level).
+    MCMD_NAV_LEFT,
+    MCMD_NAV_RIGHT,
+    MCMD_NAV_DOWN,
+    MCMD_NAV_UP,
+    MCMD_NAV_PAGEDOWN,
+    MCMD_NAV_PAGEUP,
+    MCMD_SELECT, // Execute whatever action is attaced to the current item.
+    MCMD_DELETE
+} menucommand_e;
+
 #define LEFT_DIR                0
 #define RIGHT_DIR               1
 
@@ -82,6 +97,7 @@ typedef struct mn_object_s {
     int             colorIdx;
     patchid_t*      patch;
     void          (*drawer) (const struct mn_object_s* obj, int x, int y, float alpha);
+    boolean       (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
     void          (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
     void          (*action) (struct mn_object_s* obj, int option);
     void*           data; // Pointer to extra data.
@@ -129,6 +145,7 @@ typedef struct mndata_button_s {
 } mndata_button_t;
 
 void            MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
 void            MNButton_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
@@ -147,7 +164,8 @@ typedef struct mndata_edit_s {
 } mndata_edit_t;
 
 void            MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNEdit_Responder(mn_object_t* obj, const event_t* ev);
+boolean         MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
+boolean         MNEdit_EventResponder(mn_object_t* obj, const event_t* ev);
 void            MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
 void            MNEdit_SetText(mn_object_t* obj, const char* string);
 
@@ -171,12 +189,14 @@ typedef struct mndata_list_s {
 } mndata_list_t;
 
 void            MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
 void            MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
 int             MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 typedef mndata_list_t mndata_listinline_t;
 
 void            MNListInline_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
 void            MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
@@ -192,6 +212,7 @@ typedef struct mndata_colorbox_s {
 } mndata_colorbox_t;
 
 void            MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
 void            MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
@@ -220,6 +241,7 @@ typedef struct mndata_slider_s {
 
 void            MNSlider_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
 void            MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
 void            MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height);
 int             MNSlider_ThumbPos(const mn_object_t* obj);
@@ -236,6 +258,7 @@ typedef struct mndata_bindings_s {
 } mndata_bindings_t;
 
 void            MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
 void            MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
@@ -289,6 +312,8 @@ extern mn_page_t InventoryMenu;
 #endif
 extern mn_page_t WeaponMenu;
 extern mn_page_t ControlsMenu;
+
+void            Hu_MenuCommand(menucommand_e cmd);
 
 void            MN_GotoPage(mn_page_t* page);
 

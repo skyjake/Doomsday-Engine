@@ -375,7 +375,7 @@ void M_InitControlsMenu(void)
         else 
         {
             mn_object_t* labelObj = &ControlsItems[n++];
-            mn_object_t* displayObj = &ControlsItems[n++];
+            mn_object_t* visObj   = &ControlsItems[n++];
 
             labelObj->type = MN_TEXT;
             if(binds->text && ((unsigned int) binds->text < NUMTEXT))
@@ -390,15 +390,16 @@ void M_InitControlsMenu(void)
             labelObj->dimensions = MNText_Dimensions;
             labelObj->fontIdx = GF_FONTA;
 
-            displayObj->type = MN_BINDINGS;
-            displayObj->flags = MNF_INACTIVE;
-            displayObj->drawer = MNBindings_Drawer;
-            displayObj->dimensions = MNBindings_Dimensions;
-            displayObj->action = Hu_MenuBindings;
-            displayObj->data = binds;
+            visObj->type = MN_BINDINGS;
+            visObj->flags = MNF_INACTIVE;
+            visObj->drawer = MNBindings_Drawer;
+            visObj->cmdResponder = MNBindings_CommandResponder;
+            visObj->dimensions = MNBindings_Dimensions;
+            visObj->action = Hu_MenuBindings;
+            visObj->data = binds;
 
             if(!ControlsMenu.focus)
-                ControlsMenu.focus = displayObj - ControlsItems;
+                ControlsMenu.focus = visObj - ControlsItems;
         }
     }
     ControlsItems[count-1].type = MN_NONE; // Terminate.
@@ -613,6 +614,33 @@ void MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     draw.y = y;
     draw.alpha = alpha;
     MN_IterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+}
+
+boolean MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
+{
+    assert(NULL != obj);
+    switch(cmd)
+    {
+    case MCMD_DELETE:
+        if(NULL != obj->action)
+        {
+            S_LocalSound(SFX_MENU_CANCEL, NULL);
+            obj->action(obj, -1);
+            return true;
+        }
+        break;
+    case MCMD_SELECT:
+        if(NULL != obj->action)
+        {
+            S_LocalSound(SFX_MENU_CYCLE, NULL);
+            obj->action(obj, obj->data2);
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false; // Not eaten.
 }
 
 void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height)
