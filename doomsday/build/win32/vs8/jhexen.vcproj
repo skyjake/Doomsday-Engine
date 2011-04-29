@@ -1089,10 +1089,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\m_multi.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\src\p_actor.c"
 				>
 			</File>

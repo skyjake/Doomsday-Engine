@@ -73,6 +73,8 @@ boolean         P_MapExists(uint episode, uint map);
 const char*     P_MapSourceFile(uint episode, uint map);
 void            P_MapId(uint episode, uint map, char* name);
 
+void            G_QuitGame(void);
+
 /// @return  @c true = loading is presently possible.
 boolean G_IsLoadGamePossible(void);
 

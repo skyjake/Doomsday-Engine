@@ -37,9 +37,4 @@
 // All important printed strings.
 #include "d_englsh.h"
 
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
-
-extern char *endmsg[NUM_QUITMESSAGES + 1];
-
 #endif

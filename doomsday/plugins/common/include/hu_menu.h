@@ -87,8 +87,6 @@ typedef enum menucommand_e {
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #endif
 
-extern float menu_glitter, menu_shadow;
-
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 

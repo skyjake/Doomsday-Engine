@@ -82,6 +82,8 @@ void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
 
 void            G_DeferedPlayDemo(char* demo);
 
+void            G_QuitGame(void);
+
 /// @return  @c true = loading is presently possible.
 boolean G_IsLoadGamePossible(void);
 

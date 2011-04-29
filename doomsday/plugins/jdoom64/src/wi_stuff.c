@@ -173,13 +173,13 @@ void WI_drawLF(void)
     }
 
     // Draw <LevelName>
-    WI_DrawPatch2(mapNamePatches[mapnum], SCREENWIDTH / 2, y, lname, false, 0);
+    WI_DrawPatch2(pMapNames[mapnum], SCREENWIDTH / 2, y, lname, false, 0);
 
     // Draw "Finished!"
     /// \fixme WI_DrawPatch2 should return the visible height.
     {
     patchinfo_t info;
-    if(R_GetPatchInfo(mapNamePatches[mapnum], &info))
+    if(R_GetPatchInfo(pMapNames[mapnum], &info))
         y += (5 * info.height) / 4;
     }
 
@@ -219,11 +219,11 @@ void WI_drawEL(void)
     // Draw level.
     {
     patchinfo_t info;
-    if(R_GetPatchInfo(mapNamePatches[wbs->nextMap], &info))
+    if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4;
     }
 
-    WI_DrawPatch2(mapNamePatches[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, lname, false, 0);
+    WI_DrawPatch2(pMapNames[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, lname, false, 0);
 }
 
 void WI_initAnimatedBack(void)

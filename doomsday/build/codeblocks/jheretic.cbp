@@ -155,7 +155,6 @@
 		<Unit filename="..\..\plugins\common\src\hu_pspr.c" />
 		<Unit filename="..\..\plugins\common\src\hu_stuff.c" />
 		<Unit filename="..\..\plugins\common\src\m_fixed.c" />
-		<Unit filename="..\..\plugins\common\src\m_multi.c" />
 		<Unit filename="..\..\plugins\common\src\p_actor.c" />
 		<Unit filename="..\..\plugins\common\src\p_automap.c" />
 		<Unit filename="..\..\plugins\common\src\p_ceiling.c" />

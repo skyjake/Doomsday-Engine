@@ -145,10 +145,7 @@ void G_PostInit(gameid_t gameId)
  */
 boolean G_TryShutdown(void)
 {
-    if(G_GetGameAction() == GA_QUIT)
-        return false; // Already in progress.
-    S_LocalSound(SFX_SWTCHN, NULL);
-    M_QuitDOOM(0, 0);
+    G_QuitGame();
     return true;
 }
 

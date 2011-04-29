@@ -327,12 +327,12 @@ void WI_drawLF(void)
     }
 
     // Draw <MapName>
-    WI_DrawPatch3(mapNamePatches[mapNum], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
+    WI_DrawPatch3(pMapNames[mapNum], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
 
     // Draw "Finished!"
     /// \fixme WI_DrawPatch2 should return the visible height.
     { patchinfo_t info;
-    if(R_GetPatchInfo(mapNamePatches[mapNum], &info))
+    if(R_GetPatchInfo(pMapNames[mapNum], &info))
         y += (5 * info.height) / 4; }
     WI_DrawPatch3(finished, SCREENWIDTH / 2, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
 }
@@ -373,9 +373,9 @@ void WI_drawEL(void)
 
     // Draw map.
     { patchinfo_t info;
-    if(R_GetPatchInfo(mapNamePatches[wbs->nextMap], &info))
+    if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4; }
-    WI_DrawPatch3(mapNamePatches[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
+    WI_DrawPatch3(pMapNames[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
 }
 
 void WI_DrawOnMapNode(int n, const patchid_t* c)

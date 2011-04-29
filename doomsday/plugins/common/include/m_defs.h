@@ -86,7 +86,7 @@ typedef struct mn_object_s {
     void          (*action) (struct mn_object_s* obj, int option);
     void*           data; // Pointer to extra data.
     int             data2; // Extra numerical data.
-    int             timer;
+    //int             timer;
 } mn_object_t;
 
 /**
@@ -158,9 +158,8 @@ void            MNEdit_SetText(mn_object_t* obj, const char* string);
 #define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
 typedef struct {
-    char            text[256];
+    const char*     text;
     int             data;
-    const char*     data2;
 } mndata_listitem_t;
 
 typedef struct mndata_list_s {
@@ -185,6 +184,12 @@ void            MNListInline_Dimensions(const mn_object_t* obj, int* width, int*
  */
 #define MNDATA_COLORBOX_WIDTH   4 // Inner width in fixed 320x200 space.
 #define MNDATA_COLORBOX_HEIGHT  4 // Inner height in fixed 320x200 space.
+#define MNDATA_COLORBOX_PADDING_X   3 // Inclusive of the outer border.
+#define MNDATA_COLORBOX_PADDING_Y   5 //
+
+typedef struct mndata_colorbox_s {
+    float*          r, *g, *b, *a;
+} mndata_colorbox_t;
 
 void            MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
@@ -251,13 +256,11 @@ typedef struct mndata_mobjpreview_s {
 void            MNMobjPreview_Drawer(const mn_object_t* obj, int x, int y, float alpha);
 void            MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
 
-#define MN_CURSOR_COUNT         2
-#define MN_CURSOR_TICSPERFRAME  8
+#define MENU_CURSOR_FRAMECOUNT      2
+#define MENU_CURSOR_TICSPERFRAME    8
 
 extern int mnTime;
-extern boolean shiftdown;
-extern mn_page_t* mnCurrentPage;
-extern short mnFocusObjectIndex;
+extern int mnFocusObjectIndex;
 
 extern mn_page_t MainMenu;
 extern mn_page_t GameTypeMenu;
@@ -267,38 +270,33 @@ extern mn_page_t PlayerClassMenu;
 #if __JDOOM__ || __JHERETIC__
 extern mn_page_t EpisodeMenu;
 #endif
-extern mn_page_t SkillLevelMenu;
+extern mn_page_t SkillMenu;
 extern mn_page_t OptionsMenu;
 extern mn_page_t SoundMenu;
 extern mn_page_t GameplayMenu;
-extern mn_page_t HUDMenu;
+extern mn_page_t HudMenu;
 extern mn_page_t AutomapMenu;
-extern mn_object_t MAPItems[];
+extern mn_object_t AutomapMenuObjects[];
 #if __JHERETIC__ || __JHEXEN__
 extern mn_page_t FilesMenu;
 #endif
 extern mn_page_t LoadMenu;
 extern mn_page_t SaveMenu;
 extern mn_page_t MultiplayerMenu;
-extern mn_object_t MultiplayerItems[];
-extern mn_object_t MultiplayerClientItems[];
 extern mn_page_t PlayerSetupMenu;
-extern mn_object_t PlayerSetupItems[];
 #if __JHERETIC__ || __JHEXEN__
 extern mn_page_t InventoryMenu;
 #endif
 extern mn_page_t WeaponMenu;
 extern mn_page_t ControlsMenu;
 
-void            M_DrawSaveLoadBorder(int x, int y, int width);
 void            MN_GotoPage(mn_page_t* page);
 
 void            M_StartControlPanel(void);
-void            M_QuitDOOM(mn_object_t* obj, int option);
 
 void            M_FloatMod10(float* variable, int option);
 
-void            M_EnterMultiplayerMenu(mn_object_t* obj, int option);
+void            M_SelectMultiplayer(mn_object_t* obj, int option);
 
 void            MN_UpdateGameSaveWidgets(void);
 

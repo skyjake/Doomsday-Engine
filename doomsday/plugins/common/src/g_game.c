@@ -822,6 +822,31 @@ void R_InitRefresh(void)
     }
 }
 
+void R_InitHud(void)
+{
+    Hu_LoadData();
+
+    VERBOSE2( Con_Message("Initializing player chat...\n") )
+    Chat_Init();
+
+#if __JHERETIC__ || __JHEXEN__
+    VERBOSE( Con_Message("Initializing inventory...\n") )
+    Hu_InventoryInit();
+#endif
+
+    VERBOSE2( Con_Message("Initializing automap...\n") )
+    AM_Init();
+
+    VERBOSE2( Con_Message("Initializing statusbar...\n") )
+    ST_Init();
+
+    VERBOSE2( Con_Message("Initializing menu...\n") )
+    Hu_MenuInit();
+
+    VERBOSE2( Con_Message("Initializing status-message/question system...\n") )
+    Hu_MsgInit();
+}
+
 /**
  * Common Post Game Initialization routine.
  * Game-specific post init actions should be placed in eg D_PostInit()
@@ -840,28 +865,16 @@ void G_CommonPostInit(void)
     XG_ReadTypes();
 #endif
 
-    Con_Message("P_Init: Init Playloop state.\n");
+    VERBOSE( Con_Message("Initializing playsim...\n") )
     P_Init();
 
-    Con_Message("Hu_LoadData: Setting up heads up display.\n");
-    Hu_LoadData();
-#if __JHERETIC__ || __JHEXEN__
-    Hu_InventoryInit();
-#endif
-    Con_Message("AM_Init: Init automap.\n");
-    AM_Init();
-
-    Con_Message("ST_Init: Init status bar.\n");
-    ST_Init();
+    VERBOSE( Con_Message("Initializing head-up displays...\n") )
+    R_InitHud();
 
     G_InitEventSequences();
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     Cht_Init();
 #endif
-
-    Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
-    Hu_MenuInit();
-    Hu_MsgInit();
 
     // From this point on, the shortcuts are always active.
     DD_Execute(true, "activatebcontext shortcut");
@@ -2455,6 +2468,40 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     NetSv_UpdateGameConfig();
 
     G_DoLoadMap();
+}
+
+int G_QuitGameResponse(msgresponse_t response, void* context)
+{
+    if(response == MSG_YES)
+    {
+        G_SetGameAction(GA_QUIT);
+    }
+    return true;
+}
+
+void G_QuitGame(void)
+{
+    const char* endString;
+
+    if(G_GetGameAction() == GA_QUIT)
+        return; // Already in progress.
+
+#if __JDOOM__ || __JDOOM64__
+    endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
+#else
+    endString = GET_TXT(TXT_QUITMSG);
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    S_LocalSound(SFX_SWTCHN, NULL);
+#elif __JHERETIC__
+    S_LocalSound(SFX_SWITCH, NULL);
+#elif __JHEXEN__
+    S_LocalSound(SFX_PICKUP_KEY, NULL);
+#endif
+
+    Con_Open(false);
+    Hu_MsgStart(MSG_YESNO, endString, G_QuitGameResponse, NULL);
 }
 
 /**

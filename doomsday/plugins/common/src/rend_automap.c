@@ -1357,14 +1357,14 @@ static void renderMapName(const automap_t* map)
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
         mapNum = gameMap;
-        patch = mapNamePatches[mapNum];
+        patch = pMapNames[mapNum];
 #elif __JDOOM__
         if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
             mapNum = gameMap;
         else
             mapNum = (gameEpisode * 9) + gameMap;
 
-        patch = mapNamePatches[mapNum];
+        patch = pMapNames[mapNum];
 #endif
 
         //Automap_GetWindow(map, &wx, &wy, &ww, &wh);

@@ -645,8 +645,8 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
-    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 12);
+    GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 12);
 #endif*/
 
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());

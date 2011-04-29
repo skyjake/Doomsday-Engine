@@ -104,21 +104,26 @@ fontid_t fonts[NUM_GAME_FONTS];
 
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
-patchid_t* mapNamePatches = NULL;
+patchid_t* pMapNames = NULL;
 // Name graphics of each skill mode.
-patchid_t skillModeNames[NUM_SKILL_MODES];
+patchid_t pSkillModeNames[NUM_SKILL_MODES];
 #endif
 
 #if __JDOOM__
 // Name graphics of each episode.
-patchid_t* episodeNamePatches = NULL;
+patchid_t* pEpisodeNames = NULL;
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+/// The end message strings.
+char* endmsg[NUM_QUITMESSAGES + 1];
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-patchid_t dpInvItemBox;
-patchid_t dpInvSelectBox;
-patchid_t dpInvPageLeft[2];
-patchid_t dpInvPageRight[2];
+patchid_t pInvItemBox;
+patchid_t pInvSelectBox;
+patchid_t pInvPageLeft[2];
+patchid_t pInvPageRight[2];
 #endif
 
 boolean shiftdown = false;
@@ -261,29 +266,29 @@ void Hu_LoadData(void)
 #if __JDOOM__ || __JDOOM64__
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
-        skillModeNames[i] = R_PrecachePatch(skillModePatchNames[i], NULL);
+        pSkillModeNames[i] = R_PrecachePatch(skillModePatchNames[i], NULL);
     }
 
     // Load the map name patches.
 # if __JDOOM64__
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
+        pMapNames = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "WILV%2.2d", i);
-            mapNamePatches[i] = R_PrecachePatch(name, NULL);
+            pMapNames[i] = R_PrecachePatch(name, NULL);
         }
     }
 # else
     if(gameModeBits & GM_ANY_DOOM2)
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
+        pMapNames = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
-            mapNamePatches[i] = R_PrecachePatch(name, NULL);
+            pMapNames[i] = R_PrecachePatch(name, NULL);
         }
     }
     else
@@ -292,47 +297,58 @@ void Hu_LoadData(void)
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        mapNamePatches = Z_Malloc(sizeof(patchid_t) * (9*4), PU_GAMESTATIC, 0);
+        pMapNames = Z_Malloc(sizeof(patchid_t) * (9*4), PU_GAMESTATIC, 0);
         for(i = 0; i < 4; ++i) // Number of episodes.
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (i * 10) + j);
-                mapNamePatches[(i* 9) + j] = R_PrecachePatch(name, NULL);
+                pMapNames[(i* 9) + j] = R_PrecachePatch(name, NULL);
             }
         }
 
-        episodeNamePatches = Z_Malloc(sizeof(patchid_t) * 4, PU_GAMESTATIC, 0);
+        pEpisodeNames = Z_Malloc(sizeof(patchid_t) * 4, PU_GAMESTATIC, 0);
         for(i = 0; i < 4; ++i)
-            episodeNamePatches[i] = R_PrecachePatch(episodePatchNames[i], NULL);
+            pEpisodeNames[i] = R_PrecachePatch(episodePatchNames[i], NULL);
     }
 # endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    dpInvItemBox = R_PrecachePatch("ARTIBOX", NULL);
-    dpInvSelectBox = R_PrecachePatch("SELECTBO", NULL);
-    dpInvPageLeft[0] = R_PrecachePatch("INVGEML1", NULL);
-    dpInvPageLeft[1] = R_PrecachePatch("INVGEML2", NULL);
-    dpInvPageRight[0] = R_PrecachePatch("INVGEMR1", NULL);
-    dpInvPageRight[1] = R_PrecachePatch("INVGEMR2", NULL);
+    pInvItemBox = R_PrecachePatch("ARTIBOX", NULL);
+    pInvSelectBox = R_PrecachePatch("SELECTBO", NULL);
+    pInvPageLeft[0] = R_PrecachePatch("INVGEML1", NULL);
+    pInvPageLeft[1] = R_PrecachePatch("INVGEML2", NULL);
+    pInvPageRight[0] = R_PrecachePatch("INVGEMR1", NULL);
+    pInvPageRight[1] = R_PrecachePatch("INVGEMR2", NULL);
 #endif
 
-    Chat_Init();
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    R_GetGammaMessageStrings();
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    // Quit messages.
+    endmsg[0] = GET_TXT(TXT_QUITMSG);
+    { int i;
+    for(i = 1; i <= NUM_QUITMESSAGES; ++i)
+        endmsg[i] = GET_TXT(TXT_QUITMESSAGE1 + i - 1);
+    }
+#endif
 }
 
 void Hu_UnloadData(void)
 {
 #if __JDOOM__ || __JDOOM64__
-    if(mapNamePatches)
-        Z_Free(mapNamePatches);
-    mapNamePatches = 0;
+    if(pMapNames)
+        Z_Free(pMapNames);
+    pMapNames = 0;
 #endif
 
 #if __JDOOM__
-    if(episodeNamePatches)
-        Z_Free(episodeNamePatches);
-    episodeNamePatches = 0;
+    if(pEpisodeNames)
+        Z_Free(pEpisodeNames);
+    pEpisodeNames = 0;
 #endif
 
     if(!Get(DD_NOVIDEO))
@@ -1176,8 +1192,9 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int fontIdx, s
  * @param built-in      (True) if the altstring is a built-in replacement
  *                      (ie it does not originate from a DED definition).
  */
-void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
-    int fontIdx, boolean builtin, short flags, float r, float g, float b, float a)
+void WI_DrawPatch5(patchid_t patch, int x, int y, const char* altstring,
+    int fontIdx, boolean builtin, short flags, float r, float g, float b, float a,
+    float glitter, float shadow)
 {
     int patchString = 0, posx = x;
     char def[80], *string;
@@ -1194,7 +1211,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            FR_DrawText(altstring, x, y, FID(fontIdx), translatePatchToTextDrawFlags(flags), .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+            FR_DrawText(altstring, x, y, FID(fontIdx), translatePatchToTextDrawFlags(flags), .5f, 0, r, g, b, a, glitter, shadow, false);
             return;
         }
     }
@@ -1224,14 +1241,14 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                FR_DrawText(string, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+                FR_DrawText(string, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+                FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
                 return;
             }
         }
@@ -1240,6 +1257,12 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
     // No replacement possible/wanted - use the original patch.
     DGL_Color4f(1, 1, 1, a);
     GL_DrawPatch2(patch, posx, y, flags);
+}
+
+void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
+    int fontIdx, boolean builtin, short flags, float r, float g, float b, float a)
+{
+    WI_DrawPatch5(patch, x, y, altstring, fontIdx, builtin, flags, r, g, b, a, 0, 0);
 }
 
 void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags)
@@ -1642,7 +1665,7 @@ static void drawMapTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(mapNamePatches[mapnum], 0, 0, lname, GF_FONTB, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
+    WI_DrawPatch4(pMapNames[mapnum], 0, 0, lname, GF_FONTB, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
 

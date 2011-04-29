@@ -73,20 +73,27 @@ enum {
 
 extern fontid_t fonts[NUM_GAME_FONTS];
 
-extern patchid_t* mapNamePatches; // Name graphics of each map.
+extern patchid_t* pMapNames; // Name graphics of each map.
 #if __JDOOM__ || __JDOOM64__
-extern patchid_t skillModeNames[NUM_SKILL_MODES]; // Name graphics of each skill mode.
+extern patchid_t pSkillModeNames[NUM_SKILL_MODES]; // Name graphics of each skill mode.
 #endif
 #if __JDOOM__
-extern patchid_t* episodeNamePatches; // Name graphics of each episode.
+extern patchid_t* pEpisodeNames; // Name graphics of each episode.
 #endif
 #if __JHERETIC__ || __JHEXEN__
-extern patchid_t dpInvItemBox;
-extern patchid_t dpInvSelectBox;
-extern patchid_t dpInvPageLeft[2];
-extern patchid_t dpInvPageRight[2];
+extern patchid_t pInvItemBox;
+extern patchid_t pInvSelectBox;
+extern patchid_t pInvPageLeft[2];
+extern patchid_t pInvPageRight[2];
 #endif
 
+#if __JDOOM__ || __JDOOM64__
+// Quit messages.
+#define NUM_QUITMESSAGES    22
+extern char* endmsg[NUM_QUITMESSAGES + 1];
+#endif
+
+extern boolean shiftdown;
 extern const char shiftXForm[];
 
 void            Hu_LoadData(void);
@@ -118,6 +125,7 @@ void            WI_DrawPatch(patchid_t id, int x, int y);
 void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin);
 void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags);
 void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags, float r, float g, float b, float a);
+void            WI_DrawPatch5(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags, float r, float g, float b, float a, float glitter, float shadow);
 
 /**
  * Misc specialised elements:

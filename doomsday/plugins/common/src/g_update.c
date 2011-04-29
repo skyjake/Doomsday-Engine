@@ -45,6 +45,7 @@
 
 #include "hu_pspr.h"
 #include "hu_menu.h"
+#include "hu_log.h"
 #include "rend_automap.h"
 #include "p_inventory.h"
 #include "p_start.h"
@@ -175,6 +176,7 @@ void G_UpdateState(int step)
 
     case DD_RENDER_RESTART_POST:
         Hu_LoadData();
+        Chat_Init();
         Rend_AutomapLoadData();
         break;
     }

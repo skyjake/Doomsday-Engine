@@ -1522,7 +1522,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(!R_GetPatchInfo(dpInvItemBox, &boxInfo))
+    if(!R_GetPatchInfo(pInvItemBox, &boxInfo))
         return;
 
     if(hud->currentInvItemFlash > 0)
@@ -1530,7 +1530,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        GL_DrawPatch2(dpInvItemBox, 0, 0, DPF_ALIGN_BOTTOMRIGHT|DPF_NO_OFFSET);
+        GL_DrawPatch2(pInvItemBox, 0, 0, DPF_ALIGN_BOTTOMRIGHT|DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -boxInfo.width, -boxInfo.height + 1);
 
@@ -1548,7 +1548,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            GL_DrawPatch2(dpInvItemBox, 0, 0, DPF_ALIGN_BOTTOMRIGHT|DPF_NO_OFFSET);
+            GL_DrawPatch2(pInvItemBox, 0, 0, DPF_ALIGN_BOTTOMRIGHT|DPF_NO_OFFSET);
             DGL_Color4f(1, 1, 1, iconAlpha);
             GL_DrawPatch(patch, -boxInfo.width, -boxInfo.height);
             if((count = P_InventoryCount(player, readyItem)) > 1)

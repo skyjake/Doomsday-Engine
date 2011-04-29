@@ -371,7 +371,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         a = i == selected? .5f : light / 2;
 
         DGL_Color4f(light, light, light, a * iconAlpha);
-        GL_DrawPatch(dpInvItemBox, x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0), y);
+        GL_DrawPatch(pInvItemBox, x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0), y);
 
         if(i >= startSlot && i < endSlot)
         {
@@ -405,7 +405,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(dpInvSelectBox, x + selected * ST_INVSLOTWIDTH + (selected > 1? (selected-1) * ST_INVSLOTOFFX : 0), y + ST_INVSELECTOFFY - BORDER);
+    GL_DrawPatch(pInvSelectBox, x + selected * ST_INVSLOTWIDTH + (selected > 1? (selected-1) * ST_INVSLOTOFFX : 0), y + ST_INVSELECTOFFY - BORDER);
 
     if(inv->numUsedSlots > maxVisSlots)
     {
@@ -415,13 +415,13 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         if(cfg.inventoryWrap || first != 0)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch2(dpInvPageLeft[!(mapTime & 4)? 1 : 0], x - ARROW_RELXOFF, y + ARROW_YOFFSET, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP);
+            GL_DrawPatch2(pInvPageLeft[!(mapTime & 4)? 1 : 0], x - ARROW_RELXOFF, y + ARROW_YOFFSET, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP);
         }
 
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], x + numVisSlots * ST_INVSLOTWIDTH + (numVisSlots > 1? (numVisSlots-1) * ST_INVSLOTOFFX : 0) + ARROW_RELXOFF - 2, y + ARROW_YOFFSET);
+            GL_DrawPatch(pInvPageRight[!(mapTime & 4)? 1 : 0], x + numVisSlots * ST_INVSLOTWIDTH + (numVisSlots > 1? (numVisSlots-1) * ST_INVSLOTOFFX : 0) + ARROW_RELXOFF - 2, y + ARROW_YOFFSET);
         }
 
 #undef ARROW_XOFFSET
@@ -501,7 +501,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
     }
 
     DGL_Color4f(1, 1, 1, alpha);
-    GL_DrawPatch(dpInvSelectBox, x + cursor * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
+    GL_DrawPatch(pInvSelectBox, x + cursor * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
 
     if(inv->numUsedSlots > NUMVISINVSLOTS)
     {
@@ -509,14 +509,14 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         if(cfg.inventoryWrap || first != 0)
         {
             DGL_Color4f(1, 1, 1, alpha);
-            GL_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0], x - 12, y - 1);
+            GL_DrawPatch(pInvPageLeft[!(mapTime & 4)? 1 : 0], x - 12, y - 1);
         }
 
         // Draw more right indicator.
         if(cfg.inventoryWrap || inv->numUsedSlots - first > NUMVISINVSLOTS)
         {
             DGL_Color4f(1, 1, 1, alpha);
-            GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], x + NUMVISINVSLOTS * ST_INVSLOTWIDTH + (NUMVISINVSLOTS-1) * ST_INVSLOTOFFX - 2, y - 1);
+            GL_DrawPatch(pInvPageRight[!(mapTime & 4)? 1 : 0], x + NUMVISINVSLOTS * ST_INVSLOTWIDTH + (NUMVISINVSLOTS-1) * ST_INVSLOTOFFX - 2, y - 1);
         }
     }
 

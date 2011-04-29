@@ -1626,7 +1626,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         return;
     if((readyItem = P_InventoryReadyItem(player)) == IIT_NONE)
         return;
-    if(!R_GetPatchInfo(dpInvItemBox, &boxInfo))
+    if(!R_GetPatchInfo(pInvItemBox, &boxInfo))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2091,7 +2091,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(!R_GetPatchInfo(dpInvItemBox, &boxInfo))
+    if(!R_GetPatchInfo(pInvItemBox, &boxInfo))
         return;
 
     if(hud->currentInvItemFlash > 0)
@@ -2099,7 +2099,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        GL_DrawPatch(dpInvItemBox, -30, -30);
+        GL_DrawPatch(pInvItemBox, -30, -30);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -27, -30);
@@ -2118,7 +2118,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            GL_DrawPatch(dpInvItemBox, -30, -30);
+            GL_DrawPatch(pInvItemBox, -30, -30);
 
             DGL_Color4f(1, 1, 1, iconAlpha);
             GL_DrawPatch(patch, -32, -31);
