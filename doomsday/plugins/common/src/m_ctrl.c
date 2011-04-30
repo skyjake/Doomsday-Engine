@@ -286,7 +286,7 @@ static mndata_bindings_t controlConfig[] =
     { "Quick Save", "shortcut", 0, "quicksave" },
     { "Quick Load", "shortcut", 0, "quickload" },
     { "Sound Options", "shortcut", 0, "soundmenu" },
-    { "Toggle Messages", "shortcut", 0, "togglemsgs" },
+    { "Toggle Messages", "shortcut", 0, "toggle msg-show" },
     { "Gamma Correction", "shortcut", 0, "togglegamma" },
     { "Screenshot", "shortcut", 0, "screenshot" },
     { "Quit", "shortcut", 0, "quit" },

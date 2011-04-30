@@ -103,7 +103,6 @@ void M_AcceptPlayerSetup(mn_object_t* obj, int option);
 
 void M_SaveGame(mn_object_t* obj);
 
-void M_ChangeMessages(mn_object_t* obj, int option);
 void M_WeaponOrder(mn_object_t* obj, int option);
 #if __JHEXEN__
 void M_ChangePlayerClass(mn_object_t* obj, int option);
@@ -779,7 +778,7 @@ static mn_object_t HudMenuObjects[] = {
 
     { MN_TEXT,      0,  0,  "Messages", GF_FONTA, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
     { MN_TEXT,      0,  0,  "Shown",    GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "msg-show", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton }, //M_ChangeMessages },
+    { MN_BUTTON2,   0,  0,  "msg-show", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
     { MN_TEXT,      0,  0,  "Size",     GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
     { MN_SLIDER,    0,  0,  "",         GF_FONTA, MENU_COLOR, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_messages_size },
     { MN_TEXT,      0,  0,  "Uptime",   GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
@@ -1232,7 +1231,6 @@ ccmdtemplate_t menuCCmds[] = {
     { "soundmenu",      "",     CCmdShortcut },
     { "quicksave",      "",     CCmdShortcut },
     { "endgame",        "",     CCmdShortcut },
-    { "togglemsgs",     "",     CCmdShortcut },
     { "quickload",      "",     CCmdShortcut },
     { "helpscreen",     "",     CCmdShortcut },
     { "togglegamma",    "",     CCmdShortcut },
@@ -4454,12 +4452,6 @@ void M_SelectEndGame(mn_object_t* obj, int option)
     Hu_MsgStart(MSG_YESNO, ENDGAME, M_EndGameResponse, NULL);
 }
 
-void M_ChangeMessages(mn_object_t* obj, int option)
-{
-    cfg.hudShown[HUD_LOG] = !cfg.hudShown[HUD_LOG];
-    P_SetMessage(players + CONSOLEPLAYER, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON, true);
-}
-
 void M_OpenLoadMenu(mn_object_t* obj, int option)
 {
     if(!Get(DD_DEDICATED))
@@ -4874,11 +4866,6 @@ D_CMD(Shortcut)
     if(!stricmp(argv[0], "ToggleGamma"))
     {
         R_CycleGammaLevel();
-        return true;
-    }
-    if(!stricmp(argv[0], "ToggleMsgs"))
-    {
-        M_ChangeMessages(0, 0);
         return true;
     }
     // Menu-related hotkey shortcuts.

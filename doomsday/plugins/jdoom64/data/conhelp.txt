@@ -75,9 +75,6 @@ inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-n
 [soundmenu]
 desc = Open the sound settings menu.
 
-[togglemsgs]
-desc = Messages on/off.
-
 [togglegamma]
 desc = Cycle gamma correction levels.
     

@@ -398,7 +398,7 @@ D_CMD(DefaultGameBinds)
         "bindevent shortcut:key-f4 soundmenu",
         "bindevent shortcut:key-f6 quicksave",
         "bindevent shortcut:key-f7 endgame",
-        "bindevent shortcut:key-f8 togglemsgs",
+        "bindevent shortcut:key-f8 {toggle msg-show}",
         "bindevent shortcut:key-f9 quickload",
         "bindevent shortcut:key-f10 quit",
         "bindevent shortcut:key-f11 togglegamma",

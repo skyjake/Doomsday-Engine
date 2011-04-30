@@ -23,14 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Player's game message log.
- *
- * \todo Chat widget is here and should be moved.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,93 +44,92 @@
 #include "p_tick.h" // for P_IsPaused()
 #include "d_net.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define LOG_MAX_MESSAGES    (8)
 
 #define LOG_MSG_FLASHFADETICS (1*TICSPERSEC)
 #define LOG_MSG_TIMEOUT     (4*TICRATE)
 
-// Local Message flags:
-#define MF_JUSTADDED        (0x1)
-
-// TYPES -------------------------------------------------------------------
+/**
+ * @defgroup messageFlags  Message Flags.
+ * @{
+ */
+#define MF_JUSTADDED        0x1 
+#define MF_NOHIDE           0x2 /// Message cannot be hidden.
+/**@}*/
 
 typedef struct logmsg_s {
-    char*           text;
-    size_t          maxLen;
-    uint            ticsRemain, tics;
-    byte            flags;
+    char* text;
+    size_t maxLen;
+    uint ticsRemain, tics;
+    int flags;
 } logmsg_t;
 
 typedef struct msglog_s {
-    boolean         visible;
+    /// @c true if this log is presently visible.
+    boolean visible;
 
-    boolean         notToBeFuckedWith;
-    boolean         dontFuckWithMe;
+    /// Log message list.
+    logmsg_t msgs[LOG_MAX_MESSAGES];
 
-    logmsg_t        msgs[LOG_MAX_MESSAGES];
-    uint            msgCount; // Number of used msg slots.
-    uint            nextMsg; // Index of the next slot to be used in msgs.
-    uint            numVisibleMsgs; // Number of visible messages.
+    /// Number of used msg slots.
+    uint msgCount;
 
-    int             timer; // Auto-hide timer.
+    /// Index of the next slot to be used in msgs.
+    uint nextMsg;
+
+    /// Number of potentially-visible messages.
+    uint numVisibleMsgs;
+
+    /// Auto-hide timer.
+    int timer;
 } msglog_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+D_CMD(LocalMessage);
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+void Hu_LogPostVisibilityChangeNotification(void);
 
 static msglog_t msgLogs[MAXPLAYERS];
 
 cvartemplate_t msgLogCVars[] = {
     // Behaviour
-    {"msg-count", 0, CVT_INT, &cfg.msgCount, 1, 8},
-    {"msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60},
+    { "msg-count",  0, CVT_INT, &cfg.msgCount, 1, 8 },
+    { "msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60 },
 
     // Display
-    {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
-    {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
-    {"msg-scale", 0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1},
-    {"msg-show", 0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1},
+    { "msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2 },
+    { "msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0 },
+    { "msg-scale", 0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1 },
+    { "msg-show",  0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1, Hu_LogPostVisibilityChangeNotification },
 
     // Colour defaults
-    {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1},
-    {"msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1},
-    {"msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1},
-    {NULL}
+    { "msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1 },
+    { "msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1 },
+    { "msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1 },
+    { NULL }
 };
 
-// CODE --------------------------------------------------------------------
+ccmdtemplate_t msgLogCCmds[] = {
+    { "message", "s", CCmdLocalMessage },
+    { NULL }
+};
 
-/**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the opperation/look of the message log.
- */
 void Hu_LogRegister(void)
 {
     int i;
-
     for(i = 0; msgLogCVars[i].name; ++i)
         Con_AddVariable(msgLogCVars + i);
+    for(i = 0; msgLogCCmds[i].name; ++i)
+        Con_AddCommand(msgLogCCmds + i);
 }
 
 /**
- * Adds the given message to the buffer.
+ * Push a new message into to log.
  *
- * @param log           Ptr to the msglog to add the message to.
- * @param txt           The message to be added.
- * @param tics          The length of time the message should be visible.
+ * @param flags  @see messageFlags
+ * @param txt  The message to be added.
+ * @param tics  The length of time the message should be visible.
  */
-static void logPush(msglog_t* log, const char* txt, int tics)
+static void logPush(msglog_t* log, int flags, const char* txt, int tics)
 {
     size_t len;
     logmsg_t* msg;
@@ -158,7 +149,7 @@ static void logPush(msglog_t* log, const char* txt, int tics)
     memset(msg->text, 0, msg->maxLen);
     dd_snprintf(msg->text, msg->maxLen, "%s", txt);
     msg->ticsRemain = msg->tics = tics;
-    msg->flags = MF_JUSTADDED;
+    msg->flags = MF_JUSTADDED | flags;
 
     if(log->nextMsg < LOG_MAX_MESSAGES - 1)
         log->nextMsg++;
@@ -171,9 +162,6 @@ static void logPush(msglog_t* log, const char* txt, int tics)
     if(log->numVisibleMsgs < (unsigned) cfg.msgCount)
         log->numVisibleMsgs++;
 
-    log->notToBeFuckedWith = log->dontFuckWithMe;
-    log->dontFuckWithMe = 0;
-
     // Reset the auto-hide timer.
     log->timer = LOG_MSG_TIMEOUT;
 
@@ -181,9 +169,7 @@ static void logPush(msglog_t* log, const char* txt, int tics)
 }
 
 /**
- * Remove the oldest message from the msglog.
- *
- * @param log           Ptr to the msglog.
+ * Remove the oldest message from the log.
  */
 static void logPop(msglog_t* log)
 {
@@ -205,27 +191,24 @@ static void logPop(msglog_t* log)
 }
 
 /**
- * Tick the given msglog. Jobs include ticking messages and adjusting values
+ * Process gametic. Jobs include ticking messages and adjusting values
  * used when drawing the buffer for animation.
- *
- * @param log           Ptr to the msglog to tick.
  */
 static void logTicker(msglog_t* log)
 {
-    int i;
-
     // Don't tick if the game is paused.
     if(P_IsPaused())
         return;
 
     // All messags tic away. When zero, the earliest is pop'd.
+    { int i;
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
         logmsg_t* msg = &log->msgs[i];
 
         if(msg->ticsRemain > 0)
             msg->ticsRemain--;
-    }
+    }}
 
     if(log->numVisibleMsgs)
     {
@@ -246,20 +229,15 @@ static void logTicker(msglog_t* log)
 
     // Tic the auto-hide timer.
     if(log->timer > 0)
-        log->timer--;
+    {
+        --log->timer;
+    }
     if(log->timer == 0)
     {
         log->visible = false;
-        log->notToBeFuckedWith = false;
     }
 }
 
-/**
- * Initialize the message log of the specified player. Typically called after
- * map load or when said player enters the world.
- *
- * @param player        Player (local) number whose message log to init.
- */
 void Hu_LogStart(int player)
 {
     player_t* plr;
@@ -276,13 +254,9 @@ void Hu_LogStart(int player)
     memset(log, 0, sizeof(msglog_t));
 }
 
-/**
- * Called during final shutdown.
- */
 void Hu_LogShutdown(void)
 {
     int i;
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         msglog_t* log = &msgLogs[i];
@@ -291,7 +265,6 @@ void Hu_LogShutdown(void)
         for(j = 0; j < LOG_MAX_MESSAGES; ++j)
         {
             logmsg_t* msg = &log->msgs[j];
-
             if(msg->text)
                 free(msg->text);
             msg->text = NULL;
@@ -302,86 +275,99 @@ void Hu_LogShutdown(void)
     }
 }
 
-/**
- * Called TICSPERSEC times a second.
- */
 void Hu_LogTicker(void)
 {
     int i;
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         logTicker(&msgLogs[i]);
     }
 }
 
-/**
- * Draw the message log of the specified player.
- *
- * @param player        Player (local) number whose message log to draw.
- */
+static __inline uint calcPVisMessageCount(msglog_t* log)
+{
+    assert(NULL != log);
+    return MIN_OF(log->numVisibleMsgs, (unsigned) cfg.msgCount);
+}
+
 void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     assert(player >= 0 && player < MAXPLAYERS);
     {
+    const short textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
     msglog_t* log = &msgLogs[player];
-    int n, y, viewW, viewH, lineHeight;
-    uint i, numVisible;
+    int n, y, viewW, viewH, lineHeight, firstPVisMsg, firstMsg;
+    uint i, pvisMsgCount;
     float scale, yOffset;
-    byte textFlags;
+    logmsg_t* msg;
 
-    // Don't draw the message log while the map title is up.
+    *drawnWidth  = 0;
+    *drawnHeight = 0;
+
+    /// \kludge Do not draw the message log while the map title is being displayed.
     if(cfg.mapTitle && actualMapTime < 6 * 35)
         return;
+    /// kludge end.
+
+    pvisMsgCount = calcPVisMessageCount(log);
+    if(0 == pvisMsgCount) return;
+
+    // Determine the index of the first potentially-visible message.
+    firstPVisMsg = (unsigned)log->nextMsg - (unsigned)pvisMsgCount;
+    if(firstPVisMsg < 0)
+        firstPVisMsg += LOG_MAX_MESSAGES; // Wrap around.
+
+    firstMsg = firstPVisMsg;
+    if(!cfg.hudShown[HUD_LOG])
+    {
+        // Advance to the first non-hidden message.
+        i = 0;
+        while(0 == (log->msgs[firstMsg].flags & MF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            ++firstMsg;
+        }
+
+        // Nothing visible?
+        if(i == pvisMsgCount) return;
+
+        // There is possibly fewer potentially-visible messages now.
+        pvisMsgCount -= firstMsg - firstPVisMsg;
+    } 
+
+    FR_SetFont(FID(GF_FONTA));
+    /// \fixme Query line height from the font.
+    lineHeight = FR_CharHeight('Q')+1;
 
     R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
     scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
 
-    // How many messages should we print?
-    // First 'num' messages starting from the first one.
-    numVisible = MIN_OF(log->numVisibleMsgs, (unsigned) cfg.msgCount);
-    if(!numVisible)
-        return;
-
-    n = log->nextMsg - numVisible;
-    if(n < 0)
-        n += LOG_MAX_MESSAGES;
-
-    {
-    logmsg_t* msg;
-    msg = &log->msgs[n];
-    lineHeight = FR_TextHeight(msg->text, FID(GF_FONTA))+1;
-
+    // Scroll offset is calculated using the timeout of the first visible message.
+    msg = &log->msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
         yOffset = -(lineHeight-2) * (1.f - ((float)(msg->ticsRemain)/lineHeight));
     else
         yOffset = 0;
-    }
-
-    *drawnWidth = 0;
-    *drawnHeight = 0;
-
     yOffset *= scale;
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, yOffset, 0);
-
-    textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     y = 0;
-    for(i = 0; i < numVisible; ++i)
+    n = firstMsg;
+    for(i = 0; i < pvisMsgCount; ++i, n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0)
     {
-        logmsg_t* msg = &log->msgs[n];
         int width, height;
         float col[4];
 
-        width = FR_TextWidth(msg->text, FID(GF_FONTA));
-        height = FR_TextHeight(msg->text, FID(GF_FONTA));
+        msg = &log->msgs[n];
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & MF_NOHIDE))
+            continue;
 
-        // Default colour and alpha.
+        FR_TextDimensions(&width, &height, msg->text, FID(GF_FONTA));
+
+        // Default color and alpha.
         col[CR] = cfg.msgColor[CR];
         col[CG] = cfg.msgColor[CG];
         col[CB] = cfg.msgColor[CB];
@@ -401,11 +387,11 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
             }
             else if(blinkSpeed != 0 && msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS && msgTics >= blinkSpeed)
             {
-                int c;
-
                 // Fade color to normal.
+                float fade = (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
+                int c;
                 for(c = 0; c < 3; ++c)
-                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) * (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
+                    col[c] += (1.0f - col[c]) / LOG_MSG_FLASHFADETICS * fade;
             }
         }
         else
@@ -417,15 +403,15 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
 
         // Draw using param text.
         // Messages may use the params to override the way the message is
-        // is displayed, e.g. colour (Hexen's important messages).
-        FR_DrawText(msg->text, 0, y, FID(GF_FONTA), textFlags, .5f, 0, col[CR], col[CG], col[CB], col[CA], 0, 0, false);
+        // is displayed (e.g., coloring of Hexen's "important" messages).
+        FR_DrawText(msg->text, 0, y, FID(GF_FONTA), textFlags, .5f, 0,
+            col[CR], col[CG], col[CB], col[CA], 0, 0, false);
 
         if(width > *drawnWidth)
             *drawnWidth = width;
         *drawnHeight += height;
 
         y += height + 1;
-        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -433,29 +419,20 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnHeight += (numVisible-1) * 1;
+    *drawnHeight += (pvisMsgCount-1) * 1;
     *drawnHeight -= -yOffset/scale;
     }
 }
 
-/**
- * Post a message to the specified player's log.
- *
- * @param player        Player (local) number whose log to post to.
- * @param flags         LMF_* flags
- *                      LMF_NOHIDE:
- *                      Always display this message regardless whether the
- *                      player's message log has been hidden.
- *                      LMF_YELLOW:
- *                      Prepend the YELLOW param string to msg.
- * @param msg           Message text to be posted.
- */
 void Hu_LogPost(int player, byte flags, const char* msg)
 {
 #define YELLOW_FMT      "{r=1; g=0.7; b=0.3;}"
 #define YELLOW_FMT_LEN  19
 #define SMALLBUF_MAXLEN 128
 
+    char smallBuf[SMALLBUF_MAXLEN+1];
+    char* bigBuf = NULL, *p;
+    size_t requiredLen;
     player_t* plr;
     msglog_t* log;
 
@@ -471,46 +448,38 @@ void Hu_LogPost(int player, byte flags, const char* msg)
 
     log = &msgLogs[player];
 
-    if(!log->notToBeFuckedWith || log->dontFuckWithMe)
+    requiredLen = strlen(msg) + ((flags & LMF_YELLOW)? YELLOW_FMT_LEN : 0);
+    if(requiredLen <= SMALLBUF_MAXLEN)
     {
-        char smallBuf[SMALLBUF_MAXLEN+1];
-        char* bigBuf = NULL, *p;
-        size_t requiredLen = strlen(msg) +
-            ((flags & LMF_YELLOW)? YELLOW_FMT_LEN : 0);
-
-        if(requiredLen <= SMALLBUF_MAXLEN)
-        {
-            p = smallBuf;
-        }
-        else
-        {
-            bigBuf = malloc(requiredLen + 1);
-            p = bigBuf;
-        }
-
-        p[requiredLen] = '\0';
-        if(flags & LMF_YELLOW)
-            sprintf(p, YELLOW_FMT "%s", msg);
-        else
-            sprintf(p, "%s", msg);
-
-        logPush(log, p, cfg.msgUptime * TICSPERSEC);
-
-        if(bigBuf)
-            free(bigBuf);
+        p = smallBuf;
+    }
+    else
+    {
+        bigBuf = malloc(requiredLen + 1);
+        p = bigBuf;
     }
 
-#undef YELLOW_FMT
-#undef YELLOW_FMT_LEN
+    p[requiredLen] = '\0';
+    if(flags & LMF_YELLOW)
+        sprintf(p, YELLOW_FMT "%s", msg);
+    else
+        sprintf(p, "%s", msg);
+
+    logPush(log, 0 | ((flags & LMF_NOHIDE) != 0? MF_NOHIDE : 0), p, cfg.msgUptime * TICSPERSEC);
+
+    if(bigBuf)
+        free(bigBuf);
+
 #undef SMALLBUF_MAXLEN
+#undef YELLOW_FMT_LEN
+#undef YELLOW_FMT
 }
 
-/**
- * Rewind the message log of the specified player, making the last few
- * messages visible again.
- *
- * @param player        Player (local) number whose message log to refresh.
- */
+void Hu_LogPostVisibilityChangeNotification(void)
+{
+    Hu_LogPost(CONSOLEPLAYER, LMF_NOHIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
+}
+
 void Hu_LogRefresh(int player)
 {
     player_t* plr;
@@ -551,11 +520,6 @@ void Hu_LogRefresh(int player)
     }
 }
 
-/**
- * Empty the message log of the specified player.
- *
- * @param player        Player (local) number whose message log to empty.
- */
 void Hu_LogEmpty(int player)
 {
     player_t* plr;
@@ -572,6 +536,15 @@ void Hu_LogEmpty(int player)
 
     while(log->numVisibleMsgs)
         logPop(log);
+}
+
+/**
+ * Display a local game message.
+ */
+D_CMD(LocalMessage)
+{
+    D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
+    return true;
 }
 
 /**\file
@@ -657,7 +630,6 @@ typedef struct {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(MsgAction);
-D_CMD(LocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -715,7 +687,6 @@ ccmdtemplate_t chatCCmds[] = {
     {"chatdelete",      "",     CCmdMsgAction},
     {"chatsendmacro",   NULL,   CCmdMsgAction},
     {"beginchat",       NULL,   CCmdMsgAction},
-    {"message",         "s",    CCmdLocalMessage},
     {NULL}
 };
 
@@ -950,15 +921,6 @@ static boolean sendMacro(int player, int num)
     }
 
     return false;
-}
-
-/**
- * Display a local game message.
- */
-D_CMD(LocalMessage)
-{
-    D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
-    return true;
 }
 
 /**

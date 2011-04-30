@@ -64,9 +64,6 @@ desc = Quicksave the game.
 [endgame]
 desc = End the game.
 
-[togglemsgs]
-desc = Messages on/off.
-
 [quickload]
 desc = Load the quicksaved game.
 
