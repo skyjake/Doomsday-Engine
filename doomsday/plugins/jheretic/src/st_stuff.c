@@ -40,6 +40,7 @@
 #include "p_player.h"
 #include "am_map.h"
 #include "hu_lib.h"
+#include "hu_chat.h"
 #include "hu_inventory.h"
 #include "hu_log.h"
 #include "p_inventory.h"

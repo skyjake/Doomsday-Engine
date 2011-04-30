@@ -46,6 +46,7 @@
 #include "p_player.h"
 #include "am_map.h"
 #include "p_user.h"
+#include "hu_chat.h"
 #include "hu_log.h"
 #include "r_common.h"
 

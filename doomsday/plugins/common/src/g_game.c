@@ -61,6 +61,7 @@
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_log.h"
+#include "hu_chat.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
 #include "g_common.h"

@@ -37,6 +37,7 @@
 #include "g_common.h"
 #include "p_inventory.h"
 #include "hu_lib.h"
+#include "hu_chat.h"
 #include "hu_inventory.h"
 #include "hu_log.h"
 #include "r_common.h"

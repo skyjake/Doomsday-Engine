@@ -42,6 +42,7 @@
 #endif
 
 #include "m_argv.h"
+#include "hu_chat.h"
 #include "hu_log.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
@@ -51,8 +52,9 @@
 #include "g_controls.h"
 #include "p_saveg.h"
 #include "g_common.h"
-#include "hu_menu.h"
 #include "r_common.h"
+
+#include "hu_menu.h"
 
 // MACROS ------------------------------------------------------------------
 

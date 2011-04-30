@@ -848,6 +848,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\hu_chat.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\hu_inventory.h"
 				>
 			</File>
@@ -1041,6 +1045,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\gl_drawpatch.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\hu_chat.c"
 				>
 			</File>
 			<File

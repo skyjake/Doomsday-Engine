@@ -100,6 +100,7 @@
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
 		<Unit filename="..\..\plugins\common\include\gl_drawpatch.h" />
+		<Unit filename="..\..\plugins\common\include\hu_chat.h" />
 		<Unit filename="..\..\plugins\common\include\hu_inventory.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_log.h" />
@@ -163,6 +164,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\gl_drawpatch.c" />
+		<Unit filename="..\..\plugins\common\src\hu_chat.c" />
 		<Unit filename="..\..\plugins\common\src\hu_inventory.c" />
 		<Unit filename="..\..\plugins\common\src\hu_lib.c" />
 		<Unit filename="..\..\plugins\common\src\hu_log.c">

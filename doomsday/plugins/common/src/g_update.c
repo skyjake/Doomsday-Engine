@@ -43,9 +43,10 @@
 #  include "m_cheat.h"
 #endif
 
-#include "hu_pspr.h"
-#include "hu_menu.h"
+#include "hu_chat.h"
 #include "hu_log.h"
+#include "hu_menu.h"
+#include "hu_pspr.h"
 #include "rend_automap.h"
 #include "p_inventory.h"
 #include "p_start.h"

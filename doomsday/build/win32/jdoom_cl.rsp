@@ -50,6 +50,7 @@
  .\..\..\plugins\common\src\hu_pspr.c
  .\..\..\plugins\common\src\hu_log.c
  .\..\..\plugins\common\src\hu_lib.c
+ .\..\..\plugins\common\src\hu_chat.c
  .\..\..\plugins\common\src\hu_msg.c
  .\..\..\plugins\common\src\am_map.c
  .\..\..\plugins\jdoom\src\tables.c
