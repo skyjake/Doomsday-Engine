@@ -297,7 +297,7 @@ boolean Net_GetPacket(void)
 /**
  * This is the public interface of the message sender.
  */
-void Net_SendPacket(int to_player, int type, void *data, size_t length)
+void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 {
     int                 flags = 0;
 

@@ -904,7 +904,11 @@ void Hu_Ticker(void)
 {
     int i;
 
-    Hu_LogTicker();
+    // Do not tick the message logs if the game is paused.
+    if(!P_IsPaused())
+    {
+        Hu_LogTicker();
+    }
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {

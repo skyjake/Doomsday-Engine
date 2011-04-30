@@ -41,19 +41,23 @@
 #endif
 
 /// Maximum number of messages each log will buffer.
-#define LOG_MAX_MESSAGES    (8)
+#define LOG_MAX_MESSAGES            (8)
 
 /// When a message is first added to the log it may flash depending on
-/// the user's configuration. This is number of tics it takes for each
-/// message to animate from flashing to non-flashing.
-#define LOG_MESSAGE_FLASHFADETICS   (1*TICSPERSEC)
+/// the user's configuration. This is the number of tics it takes for 
+/// each message to animate from flashing to non-flashing.
+#define LOG_MESSAGE_FLASHFADETICS   (35)
+
+/// When a message's uptime counter reaches zero it will be removed the
+/// from the visible list log. This is the number of tics it takes for
+/// each message to animate from visible to non-visible.
+#define LOG_MESSAGE_SCROLLTICS      (10)
 
 /**
  * @defgroup logMessageFlags  Log Message Flags.
  * @{
  */
-#define LMF_NOHIDE          (0x1) /// Message will always be displayed (cannot be hidden by the player).
-#define LMF_YELLOW          (0x2) /// Prepend the "yellow" paramater string to given message.
+#define LMF_NOHIDE          0x1 /// Always displayed (cannot be hidden by the user).
 /**@}*/
 
 /// To be called to register the console commands and variables of this module.
@@ -70,9 +74,10 @@ void Hu_LogShutdown(void);
  *
  * @param player  Player (local) number whose log to post to.
  * @param flags  @see logMessageFlags
- * @param msg  Message text to be posted.
+ * @param text  Message Text to be posted. Messages may use the same
+ *      paramater control blocks as with the engine's Text rendering API.
  */
-void Hu_LogPost(int player, byte flags, const char* msg);
+void Hu_LogPost(int player, byte flags, const char* text);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
@@ -93,8 +98,9 @@ void Hu_LogEmpty(int player);
  * Draw the message log of the specified player.
  *
  * @param player  Local player number whose message log to draw.
+ * @param alpha  Opacity of the log where @c 1= opaque and @c 0= transparent.
  */
-void Hu_LogDrawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
+void Hu_LogDrawer(int player, float alpha, int* drawnWidth, int* drawnHeight);
 
 /**
  * Process gametic for all players with an active message log.

@@ -2238,6 +2238,20 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
 #undef ORIGINX
 }
 
+void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    if(NULL != drawnWidth)  *drawnWidth = 0;
+    if(NULL != drawnHeight) *drawnHeight = 0;
+
+    /// \kludge Do not draw message logs while the map title is being displayed.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
+        return;
+    /// kludge end.
+
+    Hu_LogDrawer(player, textAlpha, drawnWidth, drawnHeight);
+}
+
 typedef struct {
     int group;
     int id;
@@ -2354,7 +2368,7 @@ void ST_Drawer(int player)
             { UWG_BOTTOMLEFT, -1, &cfg.hudScale, 1, drawFragsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_BOTTOMRIGHT, HUD_CURRENTITEM, &cfg.hudScale, 1, drawCurrentItemWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_BOTTOM, -1, &cfg.hudScale, .75f, drawInventoryWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_TOP, -1, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOP, -1, &cfg.msgScale, 1, drawMessageLogWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_TOP, -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha }
         };
         size_t i;

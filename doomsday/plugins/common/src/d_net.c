@@ -60,10 +60,10 @@
 
 D_CMD(SetColor);
 D_CMD(SetMap);
-
 #if __JHEXEN__
 D_CMD(SetClass);
 #endif
+D_CMD(LocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -80,27 +80,28 @@ float netJumpPower = 9;
 
 // Net code related console commands
 ccmdtemplate_t netCCmds[] = {
-    {"setcolor", "i", CCmdSetColor},
+    { "setcolor", "i", CCmdSetColor },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {"setmap", "ii", CCmdSetMap},
+    { "setmap", "ii", CCmdSetMap },
 #else
-    {"setmap", "i", CCmdSetMap},
+    { "setmap", "i", CCmdSetMap },
 #endif
 #if __JHEXEN__
-    {"setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED},
+    { "setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED },
 #endif
-    {"startcycle", "", CCmdMapCycle},
-    {"endcycle", "", CCmdMapCycle},
-    {NULL}
+    { "startcycle", "", CCmdMapCycle },
+    { "endcycle", "", CCmdMapCycle },
+    { "message", "s", CCmdLocalMessage },
+    { NULL }
 };
 
 // Net code related console variables
 cvartemplate_t netCVars[] = {
-    {"mapcycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle},
-    {"server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle},
-    {"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1},
-    {"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1},
-    {NULL}
+    { "mapcycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle },
+    { "server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle },
+    { "server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1 },
+    { "server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1 },
+    { NULL }
 };
 
 // PRIVATE DATA -------------------------------------------------------------
@@ -112,8 +113,7 @@ cvartemplate_t netCVars[] = {
  */
 void D_NetConsoleRegistration(void)
 {
-    int         i;
-
+    int i;
     for(i = 0; netCCmds[i].name; ++i)
         Con_AddCommand(netCCmds + i);
     for(i = 0; netCVars[i].name; ++i)
@@ -756,5 +756,14 @@ D_CMD(SetMap)
 
     // Use the configured network skill level for the new map.
     G_DeferedInitNew(cfg.netSkill, ep, map);
+    return true;
+}
+
+/**
+ * Post a local game message.
+ */
+D_CMD(LocalMessage)
+{
+    D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
     return true;
 }

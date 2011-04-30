@@ -1,10 +1,10 @@
-/**\file
+/**\file p_player.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_player.h: Common playsim routines relating to players.
+ * Common playsim routines relating to players.
  */
 
-#ifndef __COMMON_PLAYER_H__
-#define __COMMON_PLAYER_H__
+#ifndef LIBCOMMON_PLAYER_H
+#define LIBCOMMON_PLAYER_H
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -76,9 +76,9 @@ void            P_ShotAmmo(player_t* plr);
 void            P_PlayerChangeClass(player_t* plr, playerclass_t newClass);
 #endif
 
-void            P_SetMessage(player_t* plr, char* msg, boolean noHide);
+void            P_SetMessage(player_t* plr, const char* msg, boolean noHide);
 #if __JHEXEN__
-void            P_SetYellowMessage(player_t* plr, char* msg, boolean noHide);
+void            P_SetYellowMessage(player_t* plr, const char* msg, boolean noHide);
 #endif
 
 void            P_PlayerThinkCamera(player_t* plr);
@@ -90,4 +90,4 @@ int             P_PlayerGiveArmorBonus(player_t* plr, int points);
 int             P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points);
 #endif
 
-#endif
+#endif /* LIBCOMMON_PLAYER_H */

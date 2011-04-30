@@ -1855,6 +1855,20 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth  = FR_TextFragmentWidth(buf);
 }
 
+void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    if(NULL != drawnWidth)  *drawnWidth = 0;
+    if(NULL != drawnHeight) *drawnHeight = 0;
+
+    /// \kludge Do not draw message logs while the map title is being displayed.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
+        return;
+    /// kludge end.
+
+    Hu_LogDrawer(player, textAlpha, drawnWidth, drawnHeight);
+}
+
 typedef struct {
     int group;
     int id;
@@ -1921,7 +1935,7 @@ void ST_Drawer(int player)
             { UWG_BOTTOMRIGHT, HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_BOTTOMRIGHT, HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_BOTTOM, HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_TOP, -1, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOP, -1, &cfg.msgScale, 1, drawMessageLogWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_TOP, -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
