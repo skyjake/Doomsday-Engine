@@ -233,6 +233,7 @@ void X_PreInit(void)
     cfg.confirmQuickGameSave = true;
     cfg.hudFog = 5;
     cfg.menuSlam = true;
+    cfg.menuGameSaveSuggestName = true;
     cfg.flashColor[0] = 1.0f;
     cfg.flashColor[1] = .5f;
     cfg.flashColor[2] = .5f;

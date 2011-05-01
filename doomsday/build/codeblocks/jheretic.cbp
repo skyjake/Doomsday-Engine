@@ -205,7 +205,6 @@
 		<Unit filename="..\..\plugins\jheretic\include\info.h" />
 		<Unit filename="..\..\plugins\jheretic\include\jheretic.h" />
 		<Unit filename="..\..\plugins\jheretic\include\m_cheat.h" />
-		<Unit filename="..\..\plugins\jheretic\include\m_menu.h" />
 		<Unit filename="..\..\plugins\jheretic\include\m_random.h" />
 		<Unit filename="..\..\plugins\jheretic\include\p_enemy.h" />
 		<Unit filename="..\..\plugins\jheretic\include\p_inter.h" />

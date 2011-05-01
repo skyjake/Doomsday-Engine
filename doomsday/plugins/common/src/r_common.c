@@ -44,6 +44,8 @@
 
 #include "am_map.h"
 #include "p_player.h"
+#include "g_common.h"
+
 #include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
@@ -315,7 +317,12 @@ void R_GetGammaMessageStrings(void)
 
 void R_CycleGammaLevel(void)
 {
-    char                buf[50];
+    char buf[50];
+
+    if(GA_QUIT == G_GetGameAction())
+    {
+        return;
+    }
 
     gammaLevel++;
     if(gammaLevel > 4)

@@ -29,6 +29,7 @@
 #include "doomsday.h"
 #include "dd_api.h"
 
+#include "hu_stuff.h"
 #include "hu_log.h"
 
 /**

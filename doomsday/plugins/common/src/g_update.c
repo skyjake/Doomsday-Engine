@@ -47,6 +47,7 @@
 #include "hu_log.h"
 #include "hu_menu.h"
 #include "hu_pspr.h"
+#include "hu_stuff.h"
 #include "rend_automap.h"
 #include "p_inventory.h"
 #include "p_start.h"

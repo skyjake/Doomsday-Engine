@@ -1,10 +1,10 @@
-/**\file
+/**\file jdoom.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * jdoom.h: All jDoom Headers
+ * All jDoom Headers
  *
  * A convenience header for including all jDoom headers.
  */
@@ -46,7 +46,6 @@
 #include "../../jdoom/include/info.h"
 #include "../../jdoom/include/m_cheat.h"
 #include "../../jdoom/include/m_random.h"
-#include "../../jdoom/include/m_menu.h"
 #include "../../jdoom/include/p_enemy.h"
 #include "../../jdoom/include/p_inter.h"
 #include "../../jdoom/include/p_lights.h"

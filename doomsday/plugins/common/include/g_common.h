@@ -1,4 +1,4 @@
-/**\file
+/**\file g_common.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,12 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * g_common.h:
- */
-
-#ifndef __COMMON_GAME_H__
-#define __COMMON_GAME_H__
+#ifndef LIBCOMMON_GAME_H
+#define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
 #include "g_controls.h"
@@ -54,9 +50,8 @@ extern boolean singledemo;
 
 void            G_Register(void);
 void            G_StartTitle(void);
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 void            G_StartHelp(void);
-#endif
+void            G_EndGame(void);
 
 gamestate_t     G_GetGameState(void);
 void            G_ChangeGameState(gamestate_t state);
@@ -73,4 +68,4 @@ D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );
 D_CMD( CCmdLocalMessage );
 D_CMD( CCmdExitLevel );
-#endif
+#endif /* LIBCOMMON_GAME_H */

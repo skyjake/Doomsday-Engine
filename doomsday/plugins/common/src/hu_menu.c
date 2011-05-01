@@ -110,6 +110,7 @@ void M_WeaponOrder(mn_object_t* obj, int option);
 void M_ChangePlayerClass(mn_object_t* obj, int option);
 #endif
 void M_ChangePlayerColor(mn_object_t* obj, int option);
+void M_ChangePlayerName(mn_object_t* obj, int option);
 
 void M_DrawMainMenu(const mn_page_t* page, int x, int y);
 void M_DrawGameTypeMenu(const mn_page_t* page, int x, int y);
@@ -262,6 +263,7 @@ cvarbutton_t mnCVarButtons[] = {
 };
 
 int mnFocusObjectIndex; // Index of the page object which has focus.
+boolean mnNominatingQuickSaveSlot = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -290,11 +292,7 @@ static float cursorAngle = 0;
 static int cursorAnimCounter; // Skull animation counter.
 static int cursorAnimFrame; // Which skull to draw.
 
-static boolean nominatingQuickGameSaveSlot = false;
-
 static boolean rgba = false; // Used to swap between rgb / rgba modes for the color widget.
-
-static int editColorIndex = 0; // The index of the widgetColors array of the obj being currently edited.
 
 static float currentColor[4] = {0, 0, 0, 0}; // Used by the widget as temporay values.
 
@@ -1137,7 +1135,7 @@ mndata_list_t list_player_color = {
 
 mn_object_t PlayerSetupMenuObjects[] = {
     { MN_MOBJPREVIEW, 0,0,              "",         0, 0, 0, MNMobjPreview_Drawer, NULL, MNMobjPreview_Dimensions, NULL, &mop_player_preview },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuCvarEdit, &edit_player_name },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_ChangePlayerName, &edit_player_name },
 #if __JHEXEN__
     { MN_TEXT,      0,  0,              "Class",    GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
     { MN_LISTINLINE, 0, 0,              "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, M_ChangePlayerClass, &list_player_class },
@@ -1215,27 +1213,23 @@ cvartemplate_t menuCVars[] = {
 #if __JDOOM__ || __JDOOM64__
     { "menu-quitsound", 0,  CVT_INT,    &cfg.menuQuitSound, 0, 1 },
 #endif
+    { "menu-save-suggestname", 0, CVT_BYTE, &cfg.menuGameSaveSuggestName, 0, 1 },
     { NULL }
 };
 
 // Console commands for the menu:
 ccmdtemplate_t menuCCmds[] = {
-    { "menu",           "",     CCmdMenuAction },
-    { "menuup",         "",     CCmdMenuAction },
-    { "menudown",       "",     CCmdMenuAction },
-    { "menupageup",     "",     CCmdMenuAction },
-    { "menupagedown",   "",     CCmdMenuAction },
-    { "menuleft",       "",     CCmdMenuAction },
-    { "menuright",      "",     CCmdMenuAction },
-    { "menuselect",     "",     CCmdMenuAction },
-    { "menudelete",     "",     CCmdMenuAction },
-    { "menuback",       "",     CCmdMenuAction },
-    { "soundmenu",      "",     CCmdShortcut },
-    { "quicksave",      "",     CCmdShortcut },
-    { "endgame",        "",     CCmdShortcut },
-    { "quickload",      "",     CCmdShortcut },
-    { "helpscreen",     "",     CCmdShortcut },
-    { "togglegamma",    "",     CCmdShortcut },
+    { "menu",           "s",    CCmdMenuOpen },
+    { "menu",           "",     CCmdMenuOpen },
+    { "menuup",         "",     CCmdMenuCommand },
+    { "menudown",       "",     CCmdMenuCommand },
+    { "menupageup",     "",     CCmdMenuCommand },
+    { "menupagedown",   "",     CCmdMenuCommand },
+    { "menuleft",       "",     CCmdMenuCommand },
+    { "menuright",      "",     CCmdMenuCommand },
+    { "menuselect",     "",     CCmdMenuCommand },
+    { "menudelete",     "",     CCmdMenuCommand },
+    { "menuback",       "",     CCmdMenuCommand },
     { NULL }
 };
 
@@ -1258,13 +1252,58 @@ static __inline mn_object_t* focusObject(void)
 {
     //if(!mnActive)
     //    return NULL;
-    return &mnCurrentPage->_objects[mnFocusObjectIndex];
+    return &mnCurrentPage->objects[mnFocusObjectIndex];
+}
+
+mn_page_t* Hu_MenuFindPageForName(const char* name)
+{
+    const struct pagename_pair_s {
+        mn_page_t* page;
+        const char* name;
+    } pairs[] = {
+        { &MainMenu,        "Main" },
+        { &GameTypeMenu,    "GameType" },
+#if __JHEXEN__
+        { &PlayerClassMenu, "PlayerClass" },
+#endif
+#if __JDOOM__ || __JHERETIC__
+        { &EpisodeMenu,     "Episode" },
+#endif
+        { &SkillMenu,       "Skill" },
+        { &OptionsMenu,     "Options" },
+        { &SoundMenu,       "SoundOptions" },
+        { &GameplayMenu,    "GameplayOptions" },
+        { &HudMenu,         "HudOptions" },
+        { &AutomapMenu,     "AutomapOptions" },
+#if __JHERETIC__ || __JHEXEN__
+        { &FilesMenu,       "Files" },
+#endif
+        { &LoadMenu,        "LoadGame" },
+        { &SaveMenu,        "SaveGame" },
+        { &MultiplayerMenu, "Multiplayer" },
+        { &PlayerSetupMenu, "PlayerSetup" },
+#if __JHERETIC__ || __JHEXEN__
+        { &InventoryMenu,   "InventoryOptions" },
+#endif
+        { &WeaponMenu,      "WeaponOptions" },
+        { &ControlsMenu,    "ControlOptions" },
+        { NULL }
+    };
+    size_t i;
+    for(i = 0; NULL != pairs[i].page; ++i)
+    {
+        if(!stricmp(name, pairs[i].name))
+        {
+            return pairs[i].page;
+        }
+    }
+    return NULL;
 }
 
 /**
  * Load any resources the menu needs.
  */
-void M_LoadData(void)
+void Hu_MenuLoadResources(void)
 {
     char buffer[9];
 
@@ -1442,10 +1481,10 @@ void M_InitEpisodeMenu(void)
     EpisodeMenuObjects[i].type = MN_NONE;
 
     // Finalize setup.
-    EpisodeMenu._objects = EpisodeMenuObjects;
-    EpisodeMenu._size = numEpisodes;
-    //EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu._size, 10);
-    EpisodeMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
+    EpisodeMenu.objects = EpisodeMenuObjects;
+    EpisodeMenu.objectsCount = numEpisodes;
+    //EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu.objectsCount, 10);
+    EpisodeMenu.offset[VX] = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
 }
 #endif
 
@@ -1504,9 +1543,9 @@ void M_InitPlayerClassMenu(void)
     PlayerClassMenuObjects[n].fontIdx = GF_FONTB;
 
     // Finalize setup.
-    PlayerClassMenu._objects = PlayerClassMenuObjects;
-    PlayerClassMenu._size = count + 1;
-    //PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu._size, 10);
+    PlayerClassMenu.objects = PlayerClassMenuObjects;
+    PlayerClassMenu.objectsCount = count + 1;
+    //PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu.objectsCount, 10);
 }
 #endif
 
@@ -1538,7 +1577,7 @@ void Hu_MenuInit(void)
             maxw = w;
     }}
     // Center the skill menu appropriately.
-    SkillMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 14;
+    SkillMenu.offset[VX] = SCREENWIDTH/2 - maxw / 2 + 14;
 #endif
 
     mnCurrentPage = &MainMenu;
@@ -1546,7 +1585,7 @@ void Hu_MenuInit(void)
     DD_Execute(true, "deactivatebcontext menu");
     mnAlpha = mnTargetAlpha = 0;
 
-    M_LoadData();
+    Hu_MenuLoadResources();
 
     mnFocusObjectIndex = mnCurrentPage->focus;
     cursorAnimFrame = 0;
@@ -1559,8 +1598,8 @@ void Hu_MenuInit(void)
         obj->action = M_SelectQuitGame;
         obj->text = "{case}Quit Game";
         obj->patch = &pQuitGame;
-        MainMenu._size = 5;
-        MainMenu._offset[VY] += 8;
+        MainMenu.objectsCount = 5;
+        MainMenu.offset[VY] += 8;
     }
 
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
@@ -1695,13 +1734,13 @@ void Hu_MenuTicker(timespan_t ticLength)
 void Hu_MenuPageString(char* str, const mn_page_t* page)
 {
 /*    sprintf(str, "PAGE %i/%i", (page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1,
-            (int)ceil((float)page->_size/page->numVisObjects));*/
+            (int)ceil((float)page->objectsCount/page->numVisObjects));*/
 }
 
 static void calcNumVisObjects(mn_page_t* page)
 {
 /*    page->firstObject = MAX_OF(0, mnFocusObjectIndex - page->numVisObjects/2);
-    page->firstObject = MIN_OF(page->firstObject, page->_size - page->numVisObjects);
+    page->firstObject = MIN_OF(page->firstObject, page->objectsCount - page->numVisObjects);
     page->firstObject = MAX_OF(0, page->firstObject);*/
 }
 
@@ -1719,7 +1758,7 @@ void MN_GotoPage(mn_page_t* page)
 
     // Init objects.
     { uint i; mn_object_t* obj;
-    for(i = 0, obj = page->_objects; i < page->_size; ++i, obj++)
+    for(i = 0, obj = page->objects; i < page->objectsCount; ++i, obj++)
     {
         // Calculate real coordinates.
         /*obj->x = UI_ScreenX(obj->relx);
@@ -1807,14 +1846,14 @@ void MN_GotoPage(mn_page_t* page)
     else
     {   // Select the first active object on this page.
         uint i;
-        for(i = 0; i < page->_size; ++i)
+        for(i = 0; i < page->objectsCount; ++i)
         {
-            const mn_object_t* obj = &page->_objects[i];
+            const mn_object_t* obj = &page->objects[i];
             if(obj->action && !(obj->flags & (MNF_DISABLED|MNF_HIDDEN)))
                 break;
         }
 
-        if(i >= page->_size)
+        if(i >= page->objectsCount)
             mnFocusObjectIndex = -1;
         else
             mnFocusObjectIndex = i;
@@ -1823,7 +1862,7 @@ void MN_GotoPage(mn_page_t* page)
 
     menu_color = 0;
     cursorAngle = 0;
-    nominatingQuickGameSaveSlot = false;
+    mnNominatingQuickSaveSlot = false;
     FR_ResetTypeInTimer();
 
     // This is now the current page.
@@ -1905,16 +1944,16 @@ void Hu_MenuDrawer(void)
     /*if(page->unscaled.numVisObjects)
     {
         page->numVisObjects = page->unscaled.numVisObjects / cfg.menuScale;
-        page->_offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - page->unscaled.y) / cfg.menuScale;
+        page->offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - page->unscaled.y) / cfg.menuScale;
     }*/
 
     if(page->drawer)
     {
-        page->drawer(page, page->_offset[VX], page->_offset[VY]);
+        page->drawer(page, page->offset[VX], page->offset[VY]);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(page->_offset[VX], page->_offset[VY], 0);
+    DGL_Translatef(page->offset[VX], page->offset[VY], 0);
 
     if(mnAlpha > 0.0125f)
     {
@@ -1922,9 +1961,9 @@ void Hu_MenuDrawer(void)
         int pos[2] = { 0, 0 };
 
         for(i = 0/*page->firstObject*/;
-            i < page->_size /*&& i < page->firstObject + page->numVisObjects*/; ++i)
+            i < page->objectsCount /*&& i < page->firstObject + page->numVisObjects*/; ++i)
         {
-            const mn_object_t* obj = &page->_objects[i];
+            const mn_object_t* obj = &page->objects[i];
             int height = 0;
 
             if(obj->type == MN_NONE||(obj->flags & MNF_HIDDEN)||!obj->drawer)
@@ -1956,7 +1995,7 @@ void Hu_MenuDrawer(void)
 
     // Unnecessary given the matrix will be popped imminently.
     //DGL_MatrixMode(DGL_MODELVIEW);
-    //DGL_Translatef(-page->_offset[VX], -page->_offset[VY], 0);
+    //DGL_Translatef(-page->offset[VX], -page->offset[VY], 0);
 
   end_draw_menu:
 
@@ -1985,13 +2024,13 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
     }
     else
     {
-        index = MIN_OF(page->_size-1, index + page->numVisObjects);
+        index = MIN_OF(page->objectsCount-1, index + page->numVisObjects);
     }
 
     // Don't land on empty objects.
-    while((!page->_objects[index].action || (page->_objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && (index > 0))
+    while((!page->objects[index].action || (page->objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && (index > 0))
         index--;
-    while((!page->_objects[index].action || (page->_objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && index < page->_size)
+    while((!page->objects[index].action || (page->objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && index < page->objectsCount)
         index++;
 
     if(index != oldIndex)
@@ -2126,10 +2165,8 @@ static void initAllObjectsOnAllPages(void)
     }}
 }
 
-/**
- * Execute a menu navigation/action command.
- */
-void Hu_MenuCommand(menucommand_e cmd)
+/// Depending on the current menu state some commands require translating.
+static menucommand_e translateCommand(menucommand_e cmd)
 {
     // If a close command is received while currently working with a selected
     // "active" widget - interpret the command instead as "navigate out".
@@ -2152,24 +2189,30 @@ void Hu_MenuCommand(menucommand_e cmd)
             }
         }
     }
+    return cmd;
+}
+
+void Hu_MenuCommand(menucommand_e cmd)
+{
+    cmd = translateCommand(cmd);
 
     if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
-        nominatingQuickGameSaveSlot = false;
-
-        Hu_FogEffectSetAlphaTarget(0);
-
-        if(cmd == MCMD_CLOSEFAST)
-        {   // Hide the menu instantly.
-            mnAlpha = mnTargetAlpha = 0;
-        }
-        else
-        {
-            mnTargetAlpha = 0;
-        }
-
         if(mnActive)
         {
+            mnNominatingQuickSaveSlot = false;
+
+            Hu_FogEffectSetAlphaTarget(0);
+
+            if(cmd == MCMD_CLOSEFAST)
+            {   // Hide the menu instantly.
+                mnAlpha = mnTargetAlpha = 0;
+            }
+            else
+            {
+                mnTargetAlpha = 0;
+            }
+
             if(NULL != mnCurrentPage)
             {
                 mnCurrentPage->focus = mnFocusObjectIndex;
@@ -2183,14 +2226,24 @@ void Hu_MenuCommand(menucommand_e cmd)
             // Disable the menu binding class
             DD_Execute(true, "deactivatebcontext menu");
         }
+        return;
+    }
 
+    // No other commands are responded to once shutdown has begun.
+    if(GA_QUIT == G_GetGameAction())
+    {
         return;
     }
 
     if(!mnActive)
     {
-        if(cmd == MCMD_OPEN)
+        if(MCMD_OPEN == cmd)
         {
+            if(Chat_IsActive(CONSOLEPLAYER))
+            {
+                return;
+            }
+
             S_LocalSound(SFX_MENU_OPEN, NULL);
 
             Con_Open(false);
@@ -2209,7 +2262,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
             // Enable the menu binding class
             DD_Execute(true, "activatebcontext menu");
-            B_SetContextFallback("menu", Hu_MenuResponder);
+            B_SetContextFallback("menu", Hu_MenuFallbackResponder);
         }
     }
     else
@@ -2236,9 +2289,9 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         /*firstVisible = menu->firstObject;
         lastVisible = firstVisible + menu->numVisObjects - 1 - numVisObjectsOffset;
-        if(lastVisible > menu->_size - 1 - numVisObjectsOffset)
-            lastVisible = menu->_size - 1 - numVisObjectsOffset;*/
-        obj = &menu->_objects[hasFocus];
+        if(lastVisible > menu->objectsCount - 1 - numVisObjectsOffset)
+            lastVisible = menu->objectsCount - 1 - numVisObjectsOffset;*/
+        obj = &menu->objects[hasFocus];
 
         if(updateFocus)
             menu->focus = mnFocusObjectIndex;
@@ -2252,32 +2305,23 @@ void Hu_MenuCommand(menucommand_e cmd)
         if(!cmdEaten)
         switch(cmd)
         {
-        default:
-            //Con_Error("Internal Error: Menu cmd %i not handled in Hu_MenuCommand.", (int) cmd);
-            break; // Unreachable.
+        default: break;
 
         case MCMD_NAV_PAGEUP:
         case MCMD_NAV_PAGEDOWN:
-            if(!(MN_LIST == obj->type && !(obj->flags & MNF_INACTIVE)))
-            {
-                S_LocalSound(SFX_MENU_NAV_UP, NULL);
-                Hu_MenuNavigatePage(menu, cmd == MCMD_NAV_PAGEUP? -1 : +1);
-            }
-            else
-            {
-                S_LocalSound(SFX_MENU_CANCEL, NULL);
-            }
+            S_LocalSound(cmd == MCMD_NAV_PAGEUP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
+            Hu_MenuNavigatePage(menu, cmd == MCMD_NAV_PAGEUP? -1 : +1);
             break;
 
         case MCMD_NAV_DOWN: {
             uint i = 0;
             do
             {
-                if(hasFocus + 1 > menu->_size - 1)
+                if(hasFocus + 1 > menu->objectsCount - 1)
                     hasFocus = 0;
                 else
                     hasFocus++;
-            } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
+            } while((!menu->objects[hasFocus].action || (menu->objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->objectsCount);
             mnFocusObjectIndex = hasFocus;
             menu_color = 0;
             S_LocalSound(SFX_MENU_NAV_DOWN, NULL);
@@ -2289,11 +2333,11 @@ void Hu_MenuCommand(menucommand_e cmd)
             do
             {
                 if(hasFocus <= 0)
-                    hasFocus = menu->_size - 1;
+                    hasFocus = menu->objectsCount - 1;
                 else
                     hasFocus--;
-            } while((!menu->_objects[hasFocus].action ||
-                     (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
+            } while((!menu->objects[hasFocus].action ||
+                     (menu->objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->objectsCount);
             mnFocusObjectIndex = hasFocus;
             menu_color = 0;
             S_LocalSound(SFX_MENU_NAV_UP, NULL);
@@ -2317,23 +2361,18 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
 }
 
-int Hu_MenuObjectResponder(event_t* ev)
+int Hu_MenuResponder(event_t* ev)
 {
     mn_object_t* focusObj;
     if(!Hu_MenuIsActive())
         return false;
-    focusObj = &mnCurrentPage->_objects[mnFocusObjectIndex];
+    focusObj = &mnCurrentPage->objects[mnFocusObjectIndex];
     if(focusObj->type != MN_EDIT || (focusObj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
         return false;
     return MNEdit_EventResponder(focusObj, ev);
 }
 
-/**
- * Handles the hotkey selection in the menu.
- *
- * @return              @c true, if it ate the event.
- */
-int Hu_MenuResponder(event_t* ev)
+int Hu_MenuFallbackResponder(event_t* ev)
 {
     mn_page_t* page;
     mn_object_t* focusObj;
@@ -2360,15 +2399,15 @@ int Hu_MenuResponder(event_t* ev)
         int cand = toupper(ev->data1);
 
         first = last = 0;//page->firstObject;
-        last += page->_size/*page->numVisObjects*/ - 1;
+        last += page->objectsCount/*page->numVisObjects*/ - 1;
 
-        if(last > page->_size - 1)
-            last = page->_size - 1;
+        if(last > page->objectsCount - 1)
+            last = page->objectsCount - 1;
         page->focus = mnFocusObjectIndex;
 
         for(i = first; i <= last; ++i)
         {
-            const mn_object_t* obj = &page->_objects[i];
+            const mn_object_t* obj = &page->objects[i];
 
             if(obj->text && obj->text[0] && obj->action && !(obj->flags & (MNF_DISABLED|MNF_HIDDEN)))
             {
@@ -2471,8 +2510,8 @@ static void drawColorWidget(void)
 #endif
 
     const mn_page_t* page = &ColorWidgetMenu;
-    int x = ColorWidgetMenu._offset[VX];
-    int y = ColorWidgetMenu._offset[VY];
+    int x = ColorWidgetMenu.offset[VX];
+    int y = ColorWidgetMenu.offset[VY];
 
     M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, mnAlpha);
 
@@ -2512,9 +2551,6 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
     currentColor[1] = *cbox->g;
     currentColor[2] = *cbox->b;
 
-    // Set the option of the colour being edited
-    editColorIndex = option;
-
     // Remember the focus object on the current page.
     mnPreviousFocusObjectIndex = mnFocusObjectIndex;
 
@@ -2527,9 +2563,9 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
         rgba = true;
         currentColor[3] = *cbox->a;
 #if __JHERETIC__ || __JHEXEN__
-        ColorWidgetMenu._size = 12;
+        ColorWidgetMenu.objectsCount = 12;
 #else
-        ColorWidgetMenu._size = 4;
+        ColorWidgetMenu.objectsCount = 4;
 #endif
     }
     else
@@ -2537,9 +2573,9 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
         rgba = false;
         currentColor[3] = 1.0f;
 #if __JHERETIC__ || __JHEXEN__
-        ColorWidgetMenu._size = 9;
+        ColorWidgetMenu.objectsCount = 9;
 #else
-        ColorWidgetMenu._size = 3;
+        ColorWidgetMenu.objectsCount = 3;
 #endif
     }
 
@@ -2658,7 +2694,7 @@ void M_DrawPlayerClassMenu(const mn_page_t* page, int x, int y)
     if(pClass < 0)
     {   // Random class.
         // Number of user-selectable classes.
-        pClass = (mnTime / 5) % (page->_size - 1);
+        pClass = (mnTime / 5) % (page->objectsCount - 1);
     }
 
     R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite, ((mnTime >> 3) & 3), &sprInfo);
@@ -2711,7 +2747,7 @@ void M_DrawEpisodeMenu(const mn_page_t* page, int x, int y)
     /**
      * \kludge Inform the user episode 6 is designed for deathmatch only.
      */
-    if(mnFocusObjectIndex >= 0 && page->_objects[mnFocusObjectIndex].data2 == 5)
+    if(mnFocusObjectIndex >= 0 && page->objects[mnFocusObjectIndex].data2 == 5)
     {
         const char* str = notDesignedForMessage;
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
@@ -2743,6 +2779,8 @@ void M_DrawSkillMenu(const mn_page_t* page, int x, int y)
 
 void MN_UpdateGameSaveWidgets(void)
 {
+    if(!mnActive) return;
+
     // Prompt a refresh of the game-save info. We don't yet actively monitor
     // the contents of the game-save paths, so instead we settle for manual
     // updates whenever the save/load menu is opened.
@@ -2778,19 +2816,17 @@ void M_SaveGame(mn_object_t* obj)
     const int saveSlot = edit->data2;
     const char* saveName = edit->text;
 
-    if(nominatingQuickGameSaveSlot)
+    if(mnNominatingQuickSaveSlot)
     {
         Con_SetInteger("game-save-quick-slot", saveSlot);
-        nominatingQuickGameSaveSlot = false;
+        mnNominatingQuickSaveSlot = false;
     }
 
-    if(!G_SaveGame(saveSlot, saveName))
+    if(!G_SaveGame2(saveSlot, saveName))
         return;
 
     SaveMenu.focus = edit->data2;
     LoadMenu.focus = edit->data2;
-
-    S_LocalSound(SFX_MENU_ACCEPT, NULL);
     Hu_MenuCommand(MCMD_CLOSEFAST);
     }
 }
@@ -2980,13 +3016,44 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 boolean MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
-    if(MCMD_SELECT == cmd && NULL != obj->action)
     {
-        S_LocalSound(SFX_MENU_CYCLE, NULL);
-        obj->action(obj, obj->data2);
-        return true;
+    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    switch(cmd)
+    {
+    case MCMD_SELECT:
+        if(obj->flags & MNF_INACTIVE)
+        {
+            if(NULL != obj->action)
+            {
+                S_LocalSound(SFX_MENU_CYCLE, NULL);
+                obj->action(obj, obj->data2);
+                return true;
+            }
+        }
+        else
+        {
+            obj->flags |= MNF_INACTIVE;
+            if(NULL != edit->onChange)
+            {
+                edit->onChange(obj);
+            }
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            return true;
+        }
+        break;
+    case MCMD_NAV_OUT:
+        if(!(obj->flags & MNF_INACTIVE))
+        {
+            memcpy(edit->text, edit->oldtext, sizeof(edit->text));
+            obj->flags |= MNF_INACTIVE;
+            return true;
+        }
+        break;
+    default:
+        break;
     }
     return false; // Not eaten.
+    }
 }
 
 void MNEdit_SetText(mn_object_t* obj, const char* string)
@@ -3003,26 +3070,35 @@ void MNEdit_SetText(mn_object_t* obj, const char* string)
  */
 boolean MNEdit_EventResponder(mn_object_t* obj, const event_t* ev)
 {
+    assert(NULL != obj);
+    {
+    mndata_edit_t* edit = (mndata_edit_t*) obj->data;
     int ch = -1;
     char* ptr;
 
     if(ev->type != EV_KEY)
         return false;
 
-    if(ev->data1 == DDKEY_RSHIFT)
+    if(DDKEY_RSHIFT == ev->data1)
     {
-        shiftdown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
+        shiftdown = (EVS_DOWN == ev->state || EVS_REPEAT == ev->state);
         return true;
     }
 
-    if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+    if(!(EVS_DOWN == ev->state || EVS_REPEAT == ev->state))
         return false;
 
-    ch = ev->data1;
+    if(DDKEY_BACKSPACE == ev->data1)
+    {
+        size_t len = strlen(edit->text);
+        if(0 != len)
+            edit->text[len - 1] = '\0';
+        return true;
+    }
 
+    ch = ev->data1;
     if(ch >= ' ' && ch <= 'z')
     {
-        mndata_edit_t* edit = (mndata_edit_t*) obj->data;
         if(shiftdown)
             ch = shiftXForm[ch];
 
@@ -3034,13 +3110,13 @@ boolean MNEdit_EventResponder(mn_object_t* obj, const event_t* ev)
         {
             ptr = edit->text + strlen(edit->text);
             ptr[0] = ch;
-            ptr[1] = 0;
+            ptr[1] = '\0';
         }
-
         return true;
     }
 
     return false;
+    }
 }
 
 void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -3100,6 +3176,14 @@ boolean MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         if(!(obj->flags & MNF_INACTIVE))
         {
             obj->flags |= MNF_INACTIVE;
+            S_LocalSound(SFX_MENU_CANCEL, NULL);
+            return true;
+        }
+        break;
+    case MCMD_NAV_PAGEUP:
+    case MCMD_NAV_PAGEDOWN:
+        if(!(obj->flags & MNF_INACTIVE))
+        {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
             return true;
         }
@@ -3354,13 +3438,52 @@ void MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 boolean MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
-    if(MCMD_SELECT == cmd && NULL != obj->action)
     {
-        S_LocalSound(SFX_MENU_CYCLE, NULL);
-        obj->action(obj, obj->data2);
-        return true;
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->data;
+    switch(cmd)
+    {
+    case MCMD_SELECT:
+        if(obj->flags & MNF_INACTIVE)
+        {
+            if(NULL != obj->action)
+            {
+                S_LocalSound(SFX_MENU_CYCLE, NULL);
+                obj->action(obj, obj->data2);
+                return true;
+            }
+        }
+        else
+        {
+            // Set the new color
+            *cbox->r = currentColor[CR];
+            *cbox->g = currentColor[CG];
+            *cbox->b = currentColor[CB];
+            if(rgba)
+                *cbox->a = currentColor[CA];
+
+            obj->flags |= MNF_INACTIVE;
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            // Restore the position of the cursor.
+            mnFocusObjectIndex = mnPreviousFocusObjectIndex;
+            return true;
+        }
+        break;
+
+    case MCMD_NAV_OUT:
+        if(!(obj->flags & MNF_INACTIVE))
+        {
+            obj->flags |= MNF_INACTIVE;
+            S_LocalSound(SFX_MENU_CANCEL, NULL);
+            // Restore the position of the cursor.
+            mnFocusObjectIndex = mnPreviousFocusObjectIndex;
+            return true;
+        }
+        break;
+    default:
+        break;
     }
     return false; // Not eaten.
+    }
 }
 
 void MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -3871,7 +3994,17 @@ void Hu_MenuSaveSlotEdit(mn_object_t* obj, int option)
     assert(NULL != obj);
     {
     mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    // Store a copy of the present text value so we can restore it.
     memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
+
+    // Are we suggesting a new name?
+    if(cfg.menuGameSaveSuggestName)
+    {
+        ddstring_t* suggestName = G_GenerateSaveGameName();
+        strncpy(edit->text, Str_Text(suggestName), MNDATA_EDIT_TEXT_MAX_LENGTH);
+        edit->text[MNDATA_EDIT_TEXT_MAX_LENGTH] = '\0';
+        Str_Free(suggestName);
+    }
     obj->flags &= ~MNF_INACTIVE;
     }
 }
@@ -3969,125 +4102,6 @@ void M_DrawSaveMenu(const mn_page_t* page, int x, int y)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int M_QuickSaveResponse(msgresponse_t response, void* context)
-{
-    if(response == MSG_YES)
-    {
-        const int slot = Con_GetInteger("game-save-quick-slot");
-        if(0 > slot || slot >= NUMSAVESLOTS)
-        {
-            Con_Message("Warning:M_QuickSaveResponse: Nominated \"quicksave\" slot #%i "
-                "is not valid, aborting...", slot);
-            return true;
-        }
-        G_SaveGame(slot, edit_saveslots[slot].text);
-    }
-    return true;
-}
-
-/**
- * Called via the bindings mechanism when a player wishes to save their
- * game to a preselected save slot.
- */
-static void M_QuickSave(void)
-{
-    player_t* player = &players[CONSOLEPLAYER];
-    const int slot = Con_GetInteger("game-save-quick-slot");
-    boolean slotIsUsed;
-    char buf[80];
-
-    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
-    {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
-        return;
-    }
-
-    if(G_GetGameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
-        return;
-    }
-
-    // If no quick-save slot has been nominated - allow doing so now.
-    if(0 > slot)
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-        MN_UpdateGameSaveWidgets();
-        MN_GotoPage(&SaveMenu);
-        nominatingQuickGameSaveSlot = true;
-        return;
-    }
-
-    slotIsUsed = SV_IsGameSaveSlotUsed(slot);
-    if(!slotIsUsed || !cfg.confirmQuickGameSave)
-    {
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_SaveGame(slot, edit_saveslots[slot].text);
-        return;
-    }
-
-    if(slotIsUsed)
-    {
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
-        sprintf(buf, QSPROMPT, Str_Text(&info->name));
-    }
-    else
-    {
-        char identifier[11];
-        dd_snprintf(identifier, 10, "#%10.i", slot);
-        dd_snprintf(buf, 80, QLPROMPT, identifier);
-    }
-
-    S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-    Hu_MsgStart(MSG_YESNO, buf, M_QuickSaveResponse, NULL);
-}
-
-int M_QuickLoadResponse(msgresponse_t response, void* context)
-{
-    if(response == MSG_YES)
-    {
-        const int slot = Con_GetInteger("game-save-quick-slot");
-        G_LoadGame(slot);
-    }
-    return true;
-}
-
-static void M_QuickLoad(void)
-{
-    const int slot = Con_GetInteger("game-save-quick-slot");
-    const gamesaveinfo_t* info;
-    char buf[80];
-
-    if(IS_NETGAME)
-    {
-        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
-        return;
-    }
-
-    if(0 > slot || !SV_IsGameSaveSlotUsed(slot))
-    {
-        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
-        return;
-    }
-
-    if(!cfg.confirmQuickGameSave)
-    {
-        G_LoadGame(slot);
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        return;
-    }
-
-    info = SV_GetGameSaveInfoForSlot(slot);
-    dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
-
-    S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-    Hu_MsgStart(MSG_YESNO, buf, M_QuickLoadResponse, NULL);
-}
-
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 void M_OpenHelp(mn_object_t* obj, int option)
 {
@@ -4153,7 +4167,7 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y - 22);
 #endif*/
 
     /**
@@ -4200,7 +4214,7 @@ void M_DrawHudMenu(const mn_page_t* page, int x, int y)
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y + -22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y + -22);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y + -22);
 #endif*/
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -4307,11 +4321,11 @@ void M_SelectMultiplayer(mn_object_t* obj, int option)
     // Show the appropriate menu.
     if(IS_NETGAME)
     {
-        MultiplayerMenu._objects = MultiplayerClientMenuObjects;
+        MultiplayerMenu.objects = MultiplayerClientMenuObjects;
     }
     else
     {
-        MultiplayerMenu._objects = MultiplayerMenuObjects;
+        MultiplayerMenu.objects = MultiplayerMenuObjects;
     }
 
     MN_GotoPage(&MultiplayerMenu);
@@ -4331,7 +4345,9 @@ void M_OpenMultiplayerClientMenu(mn_object_t* obj, int option)
 
 void M_OpenPlayerSetupMenu(mn_object_t* obj, int option)
 {
+    /// \fixme Find objects by id.
     mndata_mobjpreview_t* mop = &mop_player_preview;
+    mndata_edit_t* name = &edit_player_name;
 
 #if __JHEXEN__
     mop->mobjType = PCLASS_INFO(cfg.netClass)->mobjType;
@@ -4346,6 +4362,10 @@ void M_OpenPlayerSetupMenu(mn_object_t* obj, int option)
 #if __JHEXEN__
     list_player_class.selection = cfg.netClass;
 #endif
+
+    strncpy(name->text, Con_GetString("net-name"), MNDATA_EDIT_TEXT_MAX_LENGTH);
+    name->text[MNDATA_EDIT_TEXT_MAX_LENGTH] = '\0';
+    memcpy(name->oldtext, name->text, sizeof(name->oldtext));
 
     MN_GotoPage(&PlayerSetupMenu);
 }
@@ -4390,6 +4410,14 @@ void M_ChangePlayerColor(mn_object_t* obj, int option)
     mop->tMap = *val;}
 }
 
+void M_ChangePlayerName(mn_object_t* obj, int option)
+{
+    mndata_edit_t* edit = (mndata_edit_t*)obj->data;
+    memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
+    // Activate this.
+    obj->flags &= ~MNF_INACTIVE;
+}
+
 void M_AcceptPlayerSetup(mn_object_t* obj, int option)
 {
     char buf[300];
@@ -4426,32 +4454,9 @@ void M_SelectQuitGame(mn_object_t* obj, int option)
     G_QuitGame();
 }
 
-int M_EndGameResponse(msgresponse_t response, void* context)
-{
-    if(response == MSG_YES)
-    {
-        G_StartTitle();
-        return true;
-    }
-
-    return true;
-}
-
 void M_SelectEndGame(mn_object_t* obj, int option)
 {
-    if(!userGame)
-    {
-        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, NULL);
-        return;
-    }
-
-    if(IS_NETGAME)
-    {
-        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, NULL);
-        return;
-    }
-
-    Hu_MsgStart(MSG_YESNO, ENDGAME, M_EndGameResponse, NULL);
+    G_EndGame();
 }
 
 void M_OpenLoadMenu(mn_object_t* obj, int option)
@@ -4514,7 +4519,7 @@ void M_SelectPlayerClass(mn_object_t* obj, int option)
     if(option < 0)
     {   // Random class.
         // Number of user-selectable classes.
-        mnPlrClass = (mnTime / 5) % (PlayerClassMenu._size - 1);
+        mnPlrClass = (mnTime / 5) % (PlayerClassMenu.objectsCount - 1);
     }
     else
     {
@@ -4524,7 +4529,7 @@ void M_SelectPlayerClass(mn_object_t* obj, int option)
     switch(mnPlrClass)
     {
     case PCLASS_FIGHTER:
-        SkillMenu._offset[VX] = 120;
+        SkillMenu.offset[VX] = 120;
         SkillMenuObjects[0].text = GET_TXT(TXT_SKILLF1);
         SkillMenuObjects[1].text = GET_TXT(TXT_SKILLF2);
         SkillMenuObjects[2].text = GET_TXT(TXT_SKILLF3);
@@ -4533,7 +4538,7 @@ void M_SelectPlayerClass(mn_object_t* obj, int option)
         break;
 
     case PCLASS_CLERIC:
-        SkillMenu._offset[VX] = 116;
+        SkillMenu.offset[VX] = 116;
         SkillMenuObjects[0].text = GET_TXT(TXT_SKILLC1);
         SkillMenuObjects[1].text = GET_TXT(TXT_SKILLC2);
         SkillMenuObjects[2].text = GET_TXT(TXT_SKILLC3);
@@ -4542,7 +4547,7 @@ void M_SelectPlayerClass(mn_object_t* obj, int option)
         break;
 
     case PCLASS_MAGE:
-        SkillMenu._offset[VX] = 112;
+        SkillMenu.offset[VX] = 112;
         SkillMenuObjects[0].text = GET_TXT(TXT_SKILLM1);
         SkillMenuObjects[1].text = GET_TXT(TXT_SKILLM2);
         SkillMenuObjects[2].text = GET_TXT(TXT_SKILLM3);
@@ -4619,13 +4624,12 @@ void M_SelectSkillMode(mn_object_t* obj, int option)
 void M_OpenControlPanel(mn_object_t* obj, int option)
 {
 #define NUM_PANEL_NAMES 3
-    static const char *panelNames[] = {
+    static const char* panelNames[] = {
         "panel",
         "panel audio",
         "panel input"
     };
-    int                 idx = option;
-
+    int idx = option;
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
         idx = 0;
 
@@ -4635,263 +4639,77 @@ void M_OpenControlPanel(mn_object_t* obj, int option)
 #undef NUM_PANEL_NAMES
 }
 
-/**
- * Routes menu commands, actions and navigation.
- */
-D_CMD(MenuAction)
+D_CMD(MenuOpen)
 {
-    if(G_GetGameAction() == GA_QUIT)
-        return false;
-
-    if(!mnActive)
+    if(argc > 1)
     {
-        if(!stricmp(argv[0], "menu") && !Chat_IsActive(CONSOLEPLAYER)) // Open menu.
+        mn_page_t* page = Hu_MenuFindPageForName(argv[1]);
+        if(NULL != page)
         {
             Hu_MenuCommand(MCMD_OPEN);
+            MN_GotoPage(page);
             return true;
         }
-    }
-    else
-    {
-        mn_object_t* focusObj = focusObject();
-        int mode = 0;
-
-        // Determine what "mode" the menu is in currently.
-        if(focusObj && !(focusObj->flags & MNF_INACTIVE))
-        {
-            switch(focusObj->type)
-            {
-            case MN_EDIT:       mode = 1; break;
-            case MN_COLORBOX:   mode = 2; break;
-            default: break;
-            }
-        }
-
-        if(!stricmp(argv[0], "menuup"))
-        {
-            switch(mode)
-            {
-            case 2: // Widget edit
-            case 0: // Menu nav
-                Hu_MenuCommand(MCMD_NAV_UP);
-                break;
-
-            default:
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menudown"))
-        {
-            switch(mode)
-            {
-            case 2: // Widget edit
-            case 0: // Menu nav
-                Hu_MenuCommand(MCMD_NAV_DOWN);
-                break;
-
-            default:
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menupagedown"))
-        {
-            switch(mode)
-            {
-            case 0: // Menu nav
-            case 2: // Widget edit
-                Hu_MenuCommand(MCMD_NAV_PAGEDOWN);
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menupageup"))
-        {
-            switch(mode)
-            {
-            case 0: // Menu nav
-            case 2: // Widget edit
-                Hu_MenuCommand(MCMD_NAV_PAGEUP);
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menuleft"))
-        {
-            switch(mode)
-            {
-            case 0: // Menu nav
-            case 2: // Widget edit
-                Hu_MenuCommand(MCMD_NAV_LEFT);
-                break;
-
-            default:
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menuright"))
-        {
-            switch(mode)
-            {
-            case 0: // Menu nav
-            case 2: // Widget edit
-                Hu_MenuCommand(MCMD_NAV_RIGHT);
-                break;
-
-            default:
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menudelete"))
-        {
-            if(!mode)
-            {
-                Hu_MenuCommand(MCMD_DELETE);
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menuselect"))
-        {
-            switch(mode)
-            {
-            case 0: // Menu nav
-                Hu_MenuCommand(MCMD_SELECT);
-                break;
-
-            case 1: // Edit Field
-                if(NULL != focusObj)
-                {
-                    mndata_edit_t* edit = (mndata_edit_t*)focusObj->data;
-                    if(edit->onChange)
-                    {
-                        edit->onChange(focusObj);
-                    }
-                    focusObj->flags |= MNF_INACTIVE;
-                }
-                S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                break;
-            case 2: // Widget edit
-                if(NULL != focusObj)
-                {
-                    mndata_colorbox_t* cbox = (mndata_colorbox_t*)focusObj->data;
-                    // Set the new color
-                    *cbox->r = currentColor[0];
-                    *cbox->g = currentColor[1];
-                    *cbox->b = currentColor[2];
-                    if(rgba)
-                        *cbox->a = currentColor[3];
-
-                    focusObj->flags |= MNF_INACTIVE;
-                }
-
-                S_LocalSound(SFX_MENU_ACCEPT, NULL);
-                // Restore the position of the cursor.
-                mnFocusObjectIndex = mnPreviousFocusObjectIndex;
-                break;
-            }
-            return true;
-        }
-        else if(!stricmp(argv[0], "menuback"))
-        {
-            int c;
-
-            switch(mode)
-            {
-            case 0: // Menu nav: Previous menu.
-                Hu_MenuCommand(MCMD_NAV_OUT);
-                break;
-
-            case 1: // Edit Field: Del char.
-                {
-                mndata_edit_t* edit = (mndata_edit_t*) focusObj->data;
-                c = strlen(edit->text);
-                if(c > 0)
-                    edit->text[c - 1] = 0;
-                break;
-                }
-            case 2: // Widget edit: Close widget.
-                // Restore the position of the cursor.
-                mnFocusObjectIndex = mnPreviousFocusObjectIndex;
-                focusObj->flags |= MNF_INACTIVE;
-                S_LocalSound(SFX_MENU_CANCEL, NULL);
-                break;
-            }
-
-            return true;
-        }
-        else if(!stricmp(argv[0], "menu"))
-        {
-            switch(mode)
-            {
-            case 0: // Menu nav: Close menu.
-                Hu_MenuCommand(MCMD_CLOSE);
-                break;
-
-            case 1: // Edit Field.
-                {
-                mndata_edit_t* edit = (mndata_edit_t*) focusObj->data;
-                memcpy(edit->text, edit->oldtext, sizeof(edit->text));
-                focusObj->flags |= MNF_INACTIVE;
-                break;
-                }
-
-            case 2: // Widget edit: Close widget.
-                // Restore the position of the cursor.
-                mnFocusObjectIndex = mnPreviousFocusObjectIndex;
-                focusObj->flags |= MNF_INACTIVE;
-                S_LocalSound(SFX_MENU_CLOSE, NULL);
-                break;
-            }
-
-            return true;
-        }
+        return false;
     }
 
+    Hu_MenuCommand(!mnActive? MCMD_OPEN : MCMD_CLOSE);
     return true;
 }
 
-D_CMD(Shortcut)
+/**
+ * Routes menu commands for actions and navigation into the menu.
+ */
+D_CMD(MenuCommand)
 {
-    if(G_GetGameAction() == GA_QUIT)
-        return false;
-
-#if !__JDOOM64__
-    if(!stricmp(argv[0], "helpscreen"))
+    if(mnActive)
     {
-        G_StartHelp();
-        return true;
+        const char* cmd = argv[0] + 4;
+        if(!stricmp(cmd, "up"))
+        {
+            Hu_MenuCommand(MCMD_NAV_UP);
+            return true;
+        }
+        if(!stricmp(cmd, "down"))
+        {
+            Hu_MenuCommand(MCMD_NAV_DOWN);
+            return true;
+        }
+        if(!stricmp(cmd, "left"))
+        {
+            Hu_MenuCommand(MCMD_NAV_LEFT);
+            return true;
+        }
+        if(!stricmp(cmd, "right"))
+        {
+            Hu_MenuCommand(MCMD_NAV_RIGHT);
+            return true;
+        }
+        if(!stricmp(cmd, "back"))
+        {
+            Hu_MenuCommand(MCMD_NAV_OUT);
+            return true;
+        }
+        if(!stricmp(cmd, "delete"))
+        {
+            Hu_MenuCommand(MCMD_DELETE);
+            return true;
+        }
+        if(!stricmp(cmd, "select"))
+        {
+            Hu_MenuCommand(MCMD_SELECT);
+            return true;
+        }
+        if(!stricmp(cmd, "pagedown"))
+        {
+            Hu_MenuCommand(MCMD_NAV_PAGEDOWN);
+            return true;
+        }
+        if(!stricmp(cmd, "pageup"))
+        {
+            Hu_MenuCommand(MCMD_NAV_PAGEUP);
+            return true;
+        }
     }
-#endif
-    if(!stricmp(argv[0], "ToggleGamma"))
-    {
-        R_CycleGammaLevel();
-        return true;
-    }
-    // Menu-related hotkey shortcuts.
-    if(!stricmp(argv[0], "SoundMenu"))
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-        MN_GotoPage(&SoundMenu);
-        return true;
-    }
-    if(!stricmp(argv[0], "EndGame"))
-    {
-        M_SelectEndGame(0, 0);
-        return true;
-    }
-    if(!stricmp(argv[0], "QuickSave"))
-    {
-        M_QuickSave();
-        return true;
-    }
-    if(!stricmp(argv[0], "QuickLoad"))
-    {
-        M_QuickLoad();
-        return true;
-    }
-
     return false;
 }

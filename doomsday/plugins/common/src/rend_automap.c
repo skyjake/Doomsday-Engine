@@ -56,6 +56,7 @@
 #if __JDOOM64__
 #  include "p_inventory.h"
 #endif
+#include "hu_stuff.h"
 
 #include "rend_automap.h"
 

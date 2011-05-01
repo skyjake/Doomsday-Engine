@@ -1249,10 +1249,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\include\m_menu.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\include\m_random.h"
 				>
 			</File>

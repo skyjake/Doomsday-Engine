@@ -1,10 +1,10 @@
-/**\file
+/**\file p_user.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2000-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * p_user.c : Player related stuff.
+ * Player related stuff.
  *
  * Bobbing POV/weapon, movement, pending weapon...
  */
@@ -56,6 +56,7 @@
 #include "g_common.h"
 #include "am_map.h"
 #include "hu_log.h"
+#include "hu_Stuff.h"
 #include "r_common.h"
 
 #if __JHERETIC__ || __JHEXEN__

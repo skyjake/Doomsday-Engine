@@ -246,8 +246,9 @@ void D_PreInit(void)
     cfg.menuSlam = false;
     cfg.menuHotkeys = true;
     cfg.menuNoStretch = false;
-    cfg.confirmQuickGameSave = true;
+    cfg.menuGameSaveSuggestName = true;
 
+    cfg.confirmQuickGameSave = true;
     cfg.maxSkulls = true;
     cfg.allowSkullsInWalls = false;
     cfg.anyBossDeath = false;

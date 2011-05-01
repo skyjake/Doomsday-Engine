@@ -147,9 +147,6 @@ desc = Set camera viewlock.
 desc = Set map.
 inf = Params: setmap (episode) (map)\nFor example, 'setmap 1 7'.
 
-[soundmenu]
-desc = Open the sound settings menu.
-
 [spawnmobj]
 desc = Spawn a new mobj.
 
@@ -700,6 +697,9 @@ desc = 1=Unhide the HUD when player collects a key.
 
 [menu-quitsound]
 desc = 1=Play a sound when quitting the game.
+
+[menu-save-suggestname]
+desc = 1=Suggest an auto-generated name when selecting a save slot.
 
 [view-size]
 desc = View window size (3-13).

@@ -93,7 +93,7 @@ typedef enum joyaxis_e {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-int M_ControlsPrivilegedResponder(event_t *event); // m_ctrl.c
+int M_ControlsPrivilegedResponder(event_t* ev);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -395,7 +395,7 @@ D_CMD(DefaultGameBinds)
 #endif
         "bindevent shortcut:key-f2 savegame",
         "bindevent shortcut:key-f3 loadgame",
-        "bindevent shortcut:key-f4 soundmenu",
+        "bindevent shortcut:key-f4 {menu soundoptions}",
         "bindevent shortcut:key-f6 quicksave",
         "bindevent shortcut:key-f7 endgame",
         "bindevent shortcut:key-f8 {toggle msg-show}",
@@ -1236,70 +1236,6 @@ void G_ControlReset(int player)
 */
 
 /**
- * Called by G_Responder.
- * Depending on the type of the event we may wish to eat it before
- * it is sent to the engine to check for bindings.
- *
- * \todo all controls should be handled by the engine.
- * Merge in engine-side axis controls from 1.8 alpha.
- *
- * @return boolean  (True) If the event should be checked for bindings
- */
-boolean G_AdjustControlState(event_t* ev)
-{
-/*
-    switch (ev->type)
-    {
-    case EV_KEY:
-        return false;           // always let key events filter down
-
-    case EV_MOUSE_AXIS:
-        mousex += (float)(ev->data1 * (1 + cfg.mouseSensiX/5.0f)) / DD_MICKEY_ACCURACY;
-        mousey += (float)(ev->data2 * (1 + cfg.mouseSensiY/5.0f)) / DD_MICKEY_ACCURACY;
-        return true;            // eat events
-
-    case EV_MOUSE_BUTTON:
-        return false;           // always let mouse button events filter down
-
-    case EV_JOY_AXIS:           // Joystick movement
-        joymove[JA_X] = ev->data1;
-        joymove[JA_Y] = ev->data2;
-        joymove[JA_Z] = ev->data3;
-        joymove[JA_RX] = ev->data4;
-        joymove[JA_RY] = ev->data5;
-        joymove[JA_RZ] = ev->data6;
-        return true;            // eat events
-
-    case EV_JOY_SLIDER:         // Joystick slider movement
-        joymove[JA_SLIDER0] = ev->data1;
-        joymove[JA_SLIDER1] = ev->data2;
-        return true;
-
-    case EV_JOY_BUTTON:
-        return false;           // always let joy button events filter down
-
-    case EV_POV:
-        if(!automapactive && !Hu_MenuIsActive())
-        {
-            if(ev->state == EVS_UP)
-                povangle = -1;
-            else
-                povangle = ev->data1;
-
-            // If looking around with PoV, don't allow bindings.
-            if(cfg.povLookAround)
-                return true;
-        }
-        break;
-
-    default:
-        break;
-    }
-*/
-    return false;
-}
-
-/**
  * Resets the mouse position to 0,0
  * Called e.g. when starting a new map.
  */
@@ -1319,23 +1255,4 @@ void G_ResetLookOffset(int pnum)
     cstate->lookOffset = 0;
     cstate->targetLookOffset = 0;
     cstate->lookheld = 0;
-}
-
-int G_PrivilegedResponder(event_t* ev)
-{
-    if(M_ControlsPrivilegedResponder(ev))
-    {
-        return true;
-    }
-
-    // Process the screen shot key right away.
-    if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
-    {
-        if(ev->state == EVS_DOWN)
-            G_ScreenShot();
-
-        return true; // All F1 events are eaten.
-    }
-
-    return false;
 }

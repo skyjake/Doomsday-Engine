@@ -270,7 +270,6 @@
 		<Unit filename="..\..\plugins\jhexen\include\info.h" />
 		<Unit filename="..\..\plugins\jhexen\include\jhexen.h" />
 		<Unit filename="..\..\plugins\jhexen\include\m_cheat.h" />
-		<Unit filename="..\..\plugins\jhexen\include\m_menu.h" />
 		<Unit filename="..\..\plugins\jhexen\include\m_random.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_acs.h" />
 		<Unit filename="..\..\plugins\jhexen\include\p_anim.h" />

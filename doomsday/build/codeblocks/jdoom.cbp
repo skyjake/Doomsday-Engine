@@ -283,7 +283,6 @@
 		<Unit filename="..\..\plugins\jdoom\include\info.h" />
 		<Unit filename="..\..\plugins\jdoom\include\jdoom.h" />
 		<Unit filename="..\..\plugins\jdoom\include\m_cheat.h" />
-		<Unit filename="..\..\plugins\jdoom\include\m_menu.h" />
 		<Unit filename="..\..\plugins\jdoom\include\m_random.h" />
 		<Unit filename="..\..\plugins\jdoom\include\oldinfo.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_enemy.h" />

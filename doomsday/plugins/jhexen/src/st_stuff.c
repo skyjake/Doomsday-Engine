@@ -40,7 +40,9 @@
 #include "hu_chat.h"
 #include "hu_inventory.h"
 #include "hu_log.h"
+#include "hu_stuff.h"
 #include "r_common.h"
+#include "gl_drawpatch.h"
 
 // MACROS ------------------------------------------------------------------
 

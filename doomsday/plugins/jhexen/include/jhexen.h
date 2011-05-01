@@ -1,10 +1,10 @@
-/**\file
+/**\file jhexen.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * jhexen.h: All jHexen Headers
+ * All jHexen Headers
  *
  * A convenience header for including all jHexen headers.
  */
@@ -38,7 +38,6 @@
 #include "../../jhexen/include/g_game.h"
 #include "../../jhexen/include/in_lude.h"
 #include "../../jhexen/include/m_cheat.h"
-#include "../../jhexen/include/m_menu.h"
 #include "../../jhexen/include/m_random.h"
 #include "../../jhexen/include/p_acs.h"
 #include "../../jhexen/include/p_anim.h"

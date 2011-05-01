@@ -128,11 +128,16 @@ MonsterMissileInfo[] =
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(CycleTextureGamma);
+D_CMD(EndGame);
+D_CMD(HelpScreen);
 D_CMD(ListMaps);
-D_CMD(SaveGame);
-D_CMD(SaveGameName);
 D_CMD(LoadGame);
 D_CMD(LoadGameName);
+D_CMD(QuickLoadGame);
+D_CMD(QuickSaveGame);
+D_CMD(SaveGame);
+D_CMD(SaveGameName);
 
 void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, uint episode, uint map);
@@ -217,10 +222,12 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 // Game Action Variables:
-#define GA_SAVEGAME_NAME_MAXLENGTH   24
+#define GA_SAVEGAME_NAME_LASTINDEX      (24)
+#define GA_SAVEGAME_NAME_MAXLENGTH      (GA_SAVEGAME_NAME_LASTINDEX+1)
 
 int gaSaveGameSlot = 0;
-char gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH+1];
+boolean gaSaveGameGenerateName = true;
+char gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH];
 int gaLoadGameSlot = 0;
 
 #if __JDOOM__ || __JDOOM64__
@@ -402,11 +409,16 @@ cvartemplate_t gamestatusCVars[] = {
 };
 
 ccmdtemplate_t gameCmds[] = {
+    { "endgame",        "",     CCmdEndGame },
+    { "helpscreen",     "",     CCmdHelpScreen },
     { "listmaps",       "",     CCmdListMaps },
-    { "savegame",       "ss",   CCmdSaveGameName },
-    { "savegame",       "",     CCmdSaveGame },
     { "loadgame",       "s",    CCmdLoadGameName },
     { "loadgame",       "",     CCmdLoadGame },
+    { "quickload",      "",     CCmdQuickLoadGame },
+    { "quicksave",      "",     CCmdQuickSaveGame },
+    { "savegame",       "s*",   CCmdSaveGameName },
+    { "savegame",       "",     CCmdSaveGame },
+    { "togglegamma",    "",     CCmdCycleTextureGamma },
     { NULL }
 };
 
@@ -1058,13 +1070,18 @@ void G_StartTitle(void)
     G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
 }
 
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 /**
  * Begin the helpscreen animation sequence.
  */
 void G_StartHelp(void)
 {
     ddfinale_t fin;
+
+    if(GA_QUIT == G_GetGameAction())
+    {
+        return;
+    }
+
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
@@ -1073,7 +1090,37 @@ void G_StartHelp(void)
     }
     Con_Message("G_GetFinaleScript: Warning, script \"help\" not defined.\n");    
 }
-#endif
+
+int G_EndGameResponse(msgresponse_t response, void* context)
+{
+    if(response == MSG_YES)
+    {
+        G_StartTitle();
+    }
+    return true;
+}
+
+void G_EndGame(void)
+{
+    if(GA_QUIT == G_GetGameAction())
+    {
+        return;
+    }
+
+    if(!userGame)
+    {
+        Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, NULL);
+        return;
+    }
+
+    if(IS_NETGAME)
+    {
+        Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, NULL);
+        return;
+    }
+
+    Hu_MsgStart(MSG_YESNO, ENDGAME, G_EndGameResponse, NULL);
+}
 
 void G_DoLoadMap(void)
 {
@@ -1203,39 +1250,46 @@ void G_DoLoadMap(void)
     }
 }
 
-/**
- * Get info needed to make ticcmd_ts for the players.
- * Return false if the event should be checked for bindings.
- */
-boolean G_Responder(event_t *ev)
+boolean G_Responder(event_t* ev)
 {
-    if(G_GetGameAction() == GA_QUIT)
-        return false; // Eat all events once shutdown has begun.
+    assert(NULL != ev);
+
+    // Eat all events once shutdown has begun.
+    if(GA_QUIT == G_GetGameAction())
+        return true; 
 
     // With the menu active, none of these should respond to input events.
     if(G_GetGameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
-        // Try the chatmode responder.
         if(Chat_Responder(ev))
             return true;
 
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        // Check for cheats.
         if(G_EventSequenceResponder(ev))
             return true;
-#endif
     }
 
-    // Try a menu object responder.
-    if(Hu_MenuObjectResponder(ev))
+    if(Hu_MenuResponder(ev))
         return true;
 
-    // We may wish to eat the event depending on type...
-    if(G_AdjustControlState(ev))
-        return true;
+    return false; // Not eaten.
+}
 
-    // The event wasn't used.
-    return false;
+boolean G_PrivilegedResponder(event_t* ev)
+{
+    if(M_ControlsPrivilegedResponder(ev))
+    {
+        return true;
+    }
+
+    // Process the screen shot key right away.
+    if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
+    {
+        if(ev->state == EVS_DOWN)
+            G_ScreenShot();
+        return true; // All F1 events are eaten.
+    }
+
+    return false; // Not eaten.
 }
 
 /**
@@ -2269,7 +2323,7 @@ boolean G_IsSaveGamePossible(void)
     return true;
 }
 
-boolean G_SaveGame(int slot, const char* name)
+boolean G_SaveGame2(int slot, const char* name)
 {
     player_t* player = &players[CONSOLEPLAYER];
 
@@ -2277,10 +2331,65 @@ boolean G_SaveGame(int slot, const char* name)
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
-    strncpy(gaSaveGameName, name, GA_SAVEGAME_NAME_MAXLENGTH);
-    gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH] = '\0';
+    if(NULL != name && name[0])
+    {
+        // A new name.
+        strncpy(gaSaveGameName, name, GA_SAVEGAME_NAME_LASTINDEX);
+        gaSaveGameName[GA_SAVEGAME_NAME_LASTINDEX] = '\0';
+    }
+    else
+    {
+        // Reusing the current name or generating a new one.
+        gaSaveGameGenerateName = (NULL != name && !name[0]);
+        memset(gaSaveGameName, 0, GA_SAVEGAME_NAME_LASTINDEX);
+    }
     G_SetGameAction(GA_SAVEGAME);
     return true;
+}
+
+boolean G_SaveGame(int slot)
+{
+    return G_SaveGame2(slot, NULL);
+}
+
+ddstring_t* G_GenerateSaveGameName(void)
+{
+    ddstring_t* str = Str_New();
+    int time = mapTime / TICRATE, hours, seconds, minutes;
+    const char* baseName = NULL, *mapName = P_GetMapNiceName();
+    lumpname_t mapIdentifier;
+    char baseNameBuf[256];
+
+    hours   = time / 3600; time -= hours * 3600;
+    minutes = time / 60;   time -= minutes * 60;
+    seconds = time;
+
+#if __JHEXEN__
+    // No map name? Try MAPINFO.
+    if(NULL == mapName)
+    {
+        mapName = P_GetMapName(gameMap);
+    }
+#endif
+    // Still no map name? Use the identifier.
+    // Some tricksy modders provide us with an empty map name...
+    // \todo Move this logic engine-side.
+    if(NULL == mapName || !mapName[0] || mapName[0] == ' ')
+    {
+        P_MapId(gameEpisode, gameMap, mapIdentifier);
+        mapName = mapIdentifier;
+    }
+
+    if(!P_IsMapFromIWAD(gameEpisode, gameMap))
+    {
+        F_ExtractFileBase(baseNameBuf, P_MapSourceFile(gameEpisode, gameMap), 256);
+        baseName = baseNameBuf;
+    }
+
+    Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (NULL != baseName? baseName : ""),
+        (NULL != baseName? ":" : ""), mapName, hours, minutes, seconds);
+
+    return str;
 }
 
 /**
@@ -2288,17 +2397,41 @@ boolean G_SaveGame(int slot, const char* name)
  */
 void G_DoSaveGame(void)
 {
-    const char* unnamed = "UNNAMED";
-    // If no name was specified replace it with *something*.
-    if(0 == strlen(gaSaveGameName))
+    boolean mustFreeNameStr = false;
+    const ddstring_t* nameStr = NULL;
+    const char* name;
+
+    if(0 != strlen(gaSaveGameName))
     {
-        strncpy(gaSaveGameName, unnamed, GA_SAVEGAME_NAME_MAXLENGTH);
-        gaSaveGameName[GA_SAVEGAME_NAME_MAXLENGTH] = '\0';
+        name = gaSaveGameName;
+    }
+    else
+    {
+        // No name specified.
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(gaSaveGameSlot);
+        if(!gaSaveGameGenerateName && !Str_IsEmpty(&info->name))
+        {
+            // Slot already in use; reuse the existing name.
+            nameStr = &info->name;
+        }
+        else
+        {
+            nameStr = G_GenerateSaveGameName();
+            mustFreeNameStr = true;
+        }
+        name = Str_Text(nameStr);
     }
 
-    SV_SaveGame(gaSaveGameSlot, gaSaveGameName);
-    P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+    // Try to make a new game-save.
+    if(SV_SaveGame(gaSaveGameSlot, name))
+    {
+        MN_UpdateGameSaveWidgets();
+        P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
+    }
     G_SetGameAction(GA_NONE);
+
+    if(mustFreeNameStr)
+        Str_Delete((ddstring_t*)nameStr);
 }
 
 #if __JHEXEN__
@@ -3082,13 +3215,6 @@ void G_DoScreenShot(void)
     Str_Delete(name);
 }
 
-D_CMD(ListMaps)
-{
-    Con_Message("Available maps:\n");
-    G_PrintMapList();
-    return true;
-}
-
 static void openLoadMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
@@ -3105,6 +3231,125 @@ static void openSaveMenu(void)
     /// thus making this function redundant.
     MN_UpdateGameSaveWidgets();
     MN_GotoPage(&SaveMenu);
+}
+
+int G_QuickLoadGameResponse(msgresponse_t response, void* context)
+{
+    if(response == MSG_YES)
+    {
+        const int slot = Con_GetInteger("game-save-quick-slot");
+        G_LoadGame(slot);
+    }
+    return true;
+}
+
+void G_QuickLoadGame(void)
+{
+    const int slot = Con_GetInteger("game-save-quick-slot");
+    const gamesaveinfo_t* info;
+    char buf[80];
+
+    if(GA_QUIT == G_GetGameAction())
+    {
+        return;
+    }
+
+    if(IS_NETGAME)
+    {
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
+        return;
+    }
+
+    if(0 > slot || !SV_IsGameSaveSlotUsed(slot))
+    {
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
+        return;
+    }
+
+    if(!cfg.confirmQuickGameSave)
+    {
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        G_LoadGame(slot);
+        return;
+    }
+
+    info = SV_GetGameSaveInfoForSlot(slot);
+    dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
+
+    S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+    Hu_MsgStart(MSG_YESNO, buf, G_QuickLoadGameResponse, NULL);
+}
+
+int G_QuickSaveGameResponse(msgresponse_t response, void* context)
+{
+    if(response == MSG_YES)
+    {
+        const int slot = Con_GetInteger("game-save-quick-slot");
+        G_SaveGame(slot);
+    }
+    return true;
+}
+
+void G_QuickSaveGame(void)
+{
+    player_t* player = &players[CONSOLEPLAYER];
+    const int slot = Con_GetInteger("game-save-quick-slot");
+    boolean slotIsUsed;
+    char buf[80];
+
+    if(GA_QUIT == G_GetGameAction())
+    {
+        return;
+    }
+
+    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
+    {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+        return;
+    }
+
+    if(G_GetGameState() != GS_MAP)
+    {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+        return;
+    }
+
+    // If no quick-save slot has been nominated - allow doing so now.
+    if(0 > slot)
+    {
+        Hu_MenuCommand(MCMD_OPEN);
+        MN_UpdateGameSaveWidgets();
+        MN_GotoPage(&SaveMenu);
+        mnNominatingQuickSaveSlot = true;
+        return;
+    }
+
+    slotIsUsed = SV_IsGameSaveSlotUsed(slot);
+    if(!slotIsUsed || !cfg.confirmQuickGameSave)
+    {
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        G_SaveGame(slot);
+        return;
+    }
+
+    if(slotIsUsed)
+    {
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        sprintf(buf, QSPROMPT, Str_Text(&info->name));
+    }
+    else
+    {
+        char identifier[11];
+        dd_snprintf(identifier, 10, "#%10.i", slot);
+        dd_snprintf(buf, 80, QLPROMPT, identifier);
+    }
+
+    S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+    Hu_MsgStart(MSG_YESNO, buf, G_QuickSaveGameResponse, NULL);
 }
 
 D_CMD(LoadGameName)
@@ -3154,7 +3399,7 @@ D_CMD(SaveGameName)
     {
         // A known slot identifier. Try to schedule a GA_SAVEGAME action.
         // We do not care if there is a save already present in this slot.
-        return G_SaveGame(slot, argv[2]);
+        return G_SaveGame2(slot, argc > 2? argv[2] : NULL);
     }
 
     // Clearly the caller needs some assistance...
@@ -3167,5 +3412,42 @@ D_CMD(SaveGame)
 {
     if(!G_IsSaveGamePossible()) return false;
     openSaveMenu();
+    return true;
+}
+
+D_CMD(QuickLoadGame)
+{
+    G_QuickLoadGame();
+    return true;
+}
+
+D_CMD(QuickSaveGame)
+{
+    G_QuickSaveGame();
+    return true;
+}
+
+D_CMD(HelpScreen)
+{
+    G_StartHelp();
+    return true;
+}
+
+D_CMD(EndGame)
+{
+    G_EndGame();
+    return true;
+}
+
+D_CMD(CycleTextureGamma)
+{
+    R_CycleGammaLevel();
+    return true;
+}
+
+D_CMD(ListMaps)
+{
+    Con_Message("Available maps:\n");
+    G_PrintMapList();
     return true;
 }

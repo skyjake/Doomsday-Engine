@@ -72,13 +72,24 @@
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #endif
 
+extern boolean mnNominatingQuickSaveSlot;
+
 void            Hu_MenuRegister(void);
+
 void            Hu_MenuInit(void);
+void            Hu_MenuLoadResources(void);
 
 void            Hu_MenuTicker(timespan_t time);
-int             Hu_MenuResponder(event_t* ev);
-int             Hu_MenuObjectResponder(event_t* ev);
 void            Hu_MenuDrawer(void);
+
+/// @return  @c true if the input event @a ev was eaten.
+int Hu_MenuResponder(event_t* ev);
+
+/**
+ * Handle "hotkey" navigation in the menu.
+ * @return  @c true if the input event @a ev was eaten.
+ */
+int Hu_MenuFallbackResponder(event_t* ev);
 
 boolean         Hu_MenuIsActive(void);
 void            Hu_MenuSetAlpha(float alpha);
@@ -99,8 +110,8 @@ void            M_DrawMenuText3(const char* string, int x, int y, int fontIdx, s
 void            M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
 void            M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
 
-
-D_CMD(MenuAction);
+D_CMD(MenuOpen);
+D_CMD(MenuCommand);
 D_CMD(Shortcut);
 
 #endif /* LIBCOMMON_HU_MENU_H */

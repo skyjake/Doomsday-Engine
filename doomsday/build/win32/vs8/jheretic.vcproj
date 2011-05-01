@@ -1284,10 +1284,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jheretic\include\m_menu.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jheretic\include\m_random.h"
 				>
 			</File>

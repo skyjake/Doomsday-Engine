@@ -1,10 +1,10 @@
-/**\file
+/**\file x_hair.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * x_hair.c: Crosshairs, drawing and config.
+ * Crosshairs, drawing and config.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -43,6 +43,7 @@
 
 #include "x_hair.h"
 #include "p_user.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -40,6 +40,7 @@
 #include "hu_msg.h"
 #include "hu_pspr.h"
 #include "hu_log.h"
+#include "hu_stuff.h"
 #include "am_map.h"
 #include "x_hair.h"
 #include "p_tick.h"

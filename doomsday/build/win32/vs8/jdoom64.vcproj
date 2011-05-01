@@ -1269,10 +1269,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom64\include\m_menu.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom64\include\m_random.h"
 				>
 			</File>

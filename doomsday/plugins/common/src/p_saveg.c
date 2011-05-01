@@ -5338,13 +5338,24 @@ int SV_SaveGameWorker(void* ptr)
 
 boolean SV_SaveGame(int slot, const char* name)
 {
+    assert(NULL != name);
+    {
     savegameparam_t params;
     ddstring_t path;
     int result;
 
     errorIfNotInited("SV_SaveGame");
 
-    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(0 > slot || slot >= NUMSAVESLOTS)
+    {
+        Con_Message("Warning:SV_SaveGame: Invalid slot '%i' specified, game not saved.\n", slot);
+        return false;
+    }
+    if(!name[0])
+    {
+        Con_Message("Warning:SV_SaveGame: Empty name specified for slot #%i, game not save.\n", slot);
+        return false;
+    }
 
     Str_Init(&path);
 #if __JHEXEN__
@@ -5371,7 +5382,8 @@ boolean SV_SaveGame(int slot, const char* name)
     buildGameSaveInfo();
 
     Str_Free(&path);
-    return result;
+    return (0 == result);
+    }
 }
 
 #if __JHEXEN__

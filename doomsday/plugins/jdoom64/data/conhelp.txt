@@ -72,9 +72,6 @@ desc = Load the quicksaved game.
 desc = Create a new game-save or open the save menu.
 inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name)\nExamples:\nOpen save menu: 'savegame'\nSaving to current "quick" slot: 'savegame <quick> "running low on ammo"'\nSaving to slot #0: 'savegame 0 "running low on ammo"'
 
-[soundmenu]
-desc = Open the sound settings menu.
-
 [togglegamma]
 desc = Cycle gamma correction levels.
     
@@ -243,6 +240,9 @@ desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
 
 [menu-quick-ask]
 desc = 1=Ask me to confirm when quick saving/loading.
+
+[menu-save-suggestname]
+desc = 1=Suggest an auto-generated name when selecting a save slot.
 
 [menu-scale]
 desc = Scaling for menus.

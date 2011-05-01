@@ -118,10 +118,10 @@ typedef struct mn_page_unscaledstate_s {
 } mn_page_unscaledstate_t;
 
 typedef struct mn_page_s {
-    mn_object_t*    _objects; // List of objects.
-    uint            _size;
+    mn_object_t*    objects; // List of objects.
+    uint            objectsCount;
     int             flags; // @see menuPageFlags.
-    int             _offset[2];
+    int             offset[2];
     void          (*drawer) (const struct mn_page_s*, int, int);
     int             focus; // Index of the focus object.
     struct mn_page_s* previous; // Pointer to the previous page, if any.
@@ -313,7 +313,10 @@ extern mn_page_t InventoryMenu;
 extern mn_page_t WeaponMenu;
 extern mn_page_t ControlsMenu;
 
-void            Hu_MenuCommand(menucommand_e cmd);
+/**
+ * Execute a menu navigation/action command.
+ */
+void Hu_MenuCommand(menucommand_e cmd);
 
 void            MN_GotoPage(mn_page_t* page);
 

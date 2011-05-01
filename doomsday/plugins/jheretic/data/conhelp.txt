@@ -54,9 +54,6 @@ inf = Params: loadgame (game-save-name|<keyword>|save-slot-num)\nExamples:\nOpen
 [listmaps]
 desc = List all loaded maps.
 
-[soundmenu]
-desc = Open the sound settings menu.
-
 [quicksave]
 desc = Quicksave the game.
 
@@ -253,6 +250,9 @@ desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
 
 [menu-quick-ask]
 desc = 1=Ask me to confirm when quick saving/loading.
+
+[menu-save-suggestname]
+desc = 1=Suggest an auto-generated name when selecting a save slot.
 
 [menu-scale]
 desc = Scaling for menus.

@@ -46,6 +46,7 @@
 
 #include "hu_msg.h"
 #include "hu_menu.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 

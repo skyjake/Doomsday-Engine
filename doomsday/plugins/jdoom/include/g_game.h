@@ -74,7 +74,6 @@ uint            G_GetMapNumber(uint episode, uint map);
 
 void            G_InitNew(skillmode_t skill, uint episode, uint map);
 
-// Can be called by the startup code or Hu_MenuResponder.
 // A normal game starts at map 1,
 // but a warp test can start elsewhere
 void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
@@ -96,13 +95,19 @@ boolean G_LoadGame(int slot);
 /// @return  @c true = saving is presently possible.
 boolean G_IsSaveGamePossible(void);
 
+/// @return  Generated name. Must be released with Str_Delete()
+ddstring_t* G_GenerateSaveGameName(void);
+
 /**
  * To be called to schedule a save game-save action.
  * @param slot  Logical identifier of the save slot to use.
- * @param name  Name for the game-save.
+ * @param name  New name for the game-save. Can be @c NULL in which case
+ *      the name will not change if the slot has already been used.
+ *      If an empty string a new name will be generated automatically.
  * @return  @c true iff @a saveSlot is valid and saving is presently possible.
  */
-boolean G_SaveGame(int slot, const char* name);
+boolean G_SaveGame2(int slot, const char* name);
+boolean G_SaveGame(int slot);
 
 void            G_StopDemo(void);
 
@@ -122,7 +127,12 @@ void            P_MapId(uint episode, uint map, char* name);
 void            G_WorldDone(void);
 
 void            G_Ticker(timespan_t ticLength);
-boolean         G_Responder(event_t* ev);
+
+/// @return  @c true if the input event @a ev was eaten.
+boolean G_Responder(event_t* ev);
+
+/// @return  @c true if the input event @a ev was eaten.
+boolean G_PrivilegedResponder(event_t* ev);
 
 void            G_ScreenShot(void);
 

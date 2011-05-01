@@ -38,15 +38,12 @@
 #if __JDOOM__
 #  include "jdoom.h"
 #  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
 #  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
 #  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif
@@ -67,6 +64,7 @@
 #include "p_inventory.h"
 #include "p_mapspec.h"
 #include "dmu_lib.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 

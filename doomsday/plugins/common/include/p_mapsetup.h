@@ -48,6 +48,8 @@ extern boolean mapSetup;
 void P_SetupForMapData(int type, uint num);
 
 void P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
+
+boolean P_IsMapFromIWAD(uint episode, uint map);
 const char* P_GetMapNiceName(void);
 const char* P_GetMapAuthor(boolean supressGameAuthor);
 

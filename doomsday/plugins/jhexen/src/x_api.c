@@ -147,15 +147,14 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.Ticker = G_Ticker;
     gx.G_Drawer = G_Display;
     gx.G_Drawer2 = G_Display2;
-    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
-    gx.FallbackResponder = NULL; //Hu_MenuResponder;
+    gx.PrivilegedResponder = G_PrivilegedResponder;
+    gx.FallbackResponder = NULL;
     gx.FinaleResponder = FI_Responder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.EndFrame = X_EndFrame;
     gx.UpdateState = G_UpdateState;
-#undef Get
     gx.GetInteger = X_GetInteger;
     gx.GetVariable = X_GetVariable;
 

@@ -46,6 +46,7 @@
 #endif
 
 #include "p_tick.h"
+#include "hu_stuff.h"
 #include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
