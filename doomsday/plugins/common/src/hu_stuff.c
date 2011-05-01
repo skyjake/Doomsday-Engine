@@ -1067,7 +1067,7 @@ void HU_ScoreBoardUnHide(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     hud = &hudStates[player];
@@ -1566,7 +1566,7 @@ void Hu_Ticker(void)
         hudstate_t*         hud = &hudStates[i];
         player_t*           plr = &players[i];
 
-        if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        if(!plr->plr->inGame)
             continue;
 
         if(hud->scoreHideTics > 0)

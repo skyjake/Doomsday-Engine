@@ -360,7 +360,7 @@ void Hu_LogStart(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     log = &msgLogs[player];
@@ -503,7 +503,7 @@ void Hu_LogRefresh(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     log = &msgLogs[player];
@@ -546,7 +546,7 @@ void Hu_LogEmpty(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     log = &msgLogs[player];

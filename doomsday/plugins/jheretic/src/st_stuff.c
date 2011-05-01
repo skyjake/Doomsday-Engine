@@ -519,7 +519,7 @@ void ST_Ticker(void)
         player_t*           plr = &players[i];
         hudstate_t*         hud = &hudStates[i];
 
-        if(!plr->plr->inGame) // && (plr->plr->flags & DDPF_LOCAL)))
+        if(!plr->plr->inGame)
             continue;
 
         ST_updateWidgets(i);
@@ -695,7 +695,7 @@ void ST_FlashCurrentItem(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     hud = &hudStates[player];
@@ -759,7 +759,7 @@ void ST_HUDUnHide(int player, hueevent_t ev)
         return;
 
     plr = &players[player];
-    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+    if(!plr->plr->inGame)
         return;
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
@@ -1085,7 +1085,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     hud = &hudStates[player];

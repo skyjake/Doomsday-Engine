@@ -265,7 +265,7 @@ void N_SendPacket(int flags)
 
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
-            if((ddpl->flags & DDPF_LOCAL) ||
+            if(/*(ddpl->flags & DDPF_LOCAL) ||*/
                !clients[netBuffer.player].connected)
             {
                 // Do not send anything to local or disconnected players.
