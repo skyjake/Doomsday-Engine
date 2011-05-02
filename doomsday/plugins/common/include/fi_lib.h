@@ -93,6 +93,6 @@ boolean FI_RequestSkip(void);
 /// @return  @c true iff the event should open the menu.
 boolean FI_IsMenuTrigger(void);
 
-boolean FI_Responder(const void* ev);
+boolean FI_PrivilegedResponder(const void* ev);
 
 #endif /* LIBCOMMON_INFINE_LIB */

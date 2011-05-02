@@ -222,7 +222,7 @@ void Chat_Open(int player, boolean open)
     }
 }
 
-boolean Chat_Responder(event_t* ev)
+int Chat_Responder(event_t* ev)
 {
     int player = CONSOLEPLAYER;
     uiwidget_chat_t* chat = &chatWidgets[player];

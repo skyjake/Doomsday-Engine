@@ -92,33 +92,27 @@ static mn_object_t* ControlsItems;
 
 #if __JDOOM__ || __JDOOM64__
 mn_page_t ControlsMenu = {
-    NULL, 0,
-    MNPF_NOHOTKEYS,
-    32, 40,
-    M_DrawControlsMenu,
-    0, &OptionsMenu,
+    NULL, 0, -1, MNPF_NOHOTKEYS, 32, 40, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawControlsMenu, NULL,
+    &OptionsMenu,
     //0, 17, { 17, 40 }
 };
 #endif
 
 #ifdef __JHERETIC__
 mn_page_t ControlsMenu = {
-    NULL, 0,
-    MNPF_NOHOTKEYS,
-    32, 26,
-    M_DrawControlsMenu,
-    0, &OptionsMenu,
+    NULL, 0, -1, MNPF_NOHOTKEYS, 32, 26, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawControlsMenu, NULL,
+    &OptionsMenu,
     //0, 15, { 15, 26 }
 };
 #endif
 
 #ifdef __JHEXEN__
 mn_page_t ControlsMenu = {
-    NULL, 0,
-    MNPF_NOHOTKEYS,
-    32, 21,
-    M_DrawControlsMenu,
-    0, &OptionsMenu,
+    NULL, 0, -1, MNPF_NOHOTKEYS, 32, 21, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawControlsMenu, NULL,
+    &OptionsMenu,
     //0, 16, { 16, 21 }
 };
 #endif
@@ -367,10 +361,10 @@ void M_InitControlsMenu(void)
             mn_object_t* obj = &ControlsItems[n++];
             obj->type = MN_TEXT;
             obj->text = (char*) binds->text;
-            obj->fontIdx = GF_FONTA;
+            obj->pageFontIdx = MENU_FONT1;
             obj->drawer = MNText_Drawer;
             obj->dimensions = MNText_Dimensions;
-            obj->colorIdx = MENU_COLOR2; 
+            obj->pageColorIdx = MENU_COLOR2; 
         }
         else 
         {
@@ -388,7 +382,7 @@ void M_InitControlsMenu(void)
             }
             labelObj->drawer = MNText_Drawer;
             labelObj->dimensions = MNText_Dimensions;
-            labelObj->fontIdx = GF_FONTA;
+            labelObj->pageFontIdx = MENU_FONT1;
 
             visObj->type = MN_BINDINGS;
             visObj->flags = MNF_INACTIVE;
@@ -408,7 +402,7 @@ void M_InitControlsMenu(void)
     ControlsMenu.objectsCount = count;
 }
 
-static void drawSmallText(const char* string, int x, int y)
+static void drawSmallText(const char* string, int x, int y, float alpha)
 {
     int height;
 
@@ -422,14 +416,15 @@ static void drawSmallText(const char* string, int x, int y)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
 
-    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    DGL_Color4f(1, 1, 1, alpha);
     FR_DrawTextFragment2(string, x, y, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
 
-static void drawBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void *data)
+static void drawBinding(bindingitertype_t type, int bid, const char* name,
+    boolean isInverse, void *data)
 {
 #define BIND_GAP                (2)
 
@@ -451,10 +446,10 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name, boole
         height = FR_TextFragmentHeight(name);
 
         DGL_SetNoMaterial();
-        DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
+        DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
 
         DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(name, d->x + 1, d->y);
+        drawSmallText(name, d->x + 1, d->y, d->alpha);
         DGL_Disable(DGL_TEXTURE_2D);
 
         d->x += width * SMALL_SCALE + 2 + BIND_GAP;
@@ -470,7 +465,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name, boole
         height = FR_TextFragmentHeight(temp);
 
         DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(temp, d->x, d->y);
+        drawSmallText(temp, d->x, d->y, d->alpha);
         DGL_Disable(DGL_TEXTURE_2D);
 
         d->x += width * SMALL_SCALE + BIND_GAP;
@@ -596,7 +591,7 @@ void MN_IterateBindings(mndata_bindings_t* binds, const char* bindings, int flag
     }
 }
 
-void MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha)
+void MNBindings_Drawer(const mn_object_t* obj, int x, int y)
 {
     mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
     bindingdrawerdata_t draw;
@@ -612,11 +607,11 @@ void MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     }
     draw.x = x;
     draw.y = y;
-    draw.alpha = alpha;
+    draw.alpha = mnRendState->page_alpha;
     MN_IterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
 
-boolean MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
     switch(cmd)
@@ -663,31 +658,28 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], mnRendState->page_alpha);
     M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
-    Hu_MenuPageString(buf, page);
-    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
+    MNPage_ComposeSubpageString(page, 1024, buf);
+    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], mnRendState->page_alpha);
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    DGL_Color4f(1, 1, 1, mnRendState->page_alpha);
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
     GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y - 12);
 #endif*/
 
-    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
+    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], mnRendState->page_alpha);
     M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void M_ControlGrabDrawer(void)
+void M_ControlGrabDrawer(const char* niceName)
 {
-    mn_object_t* grabbing = &MN_CurrentPage()->objects[mnFocusObjectIndex];
-    mndata_bindings_t* binds = (mndata_bindings_t*) grabbing->data;
-
     DGL_SetNoMaterial();
     DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, .7f);
 
@@ -704,7 +696,7 @@ void M_ControlGrabDrawer(void)
     M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
     DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], 1);
-    M_DrawMenuText3(binds->text, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawMenuText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -712,11 +704,11 @@ void M_ControlGrabDrawer(void)
     DGL_PopMatrix();
 }
 
-boolean M_ControlsPrivilegedResponder(event_t* ev)
+int M_ControlsPrivilegedResponder(event_t* ev)
 {
-    mn_object_t* grabbing = &MN_CurrentPage()->objects[mnFocusObjectIndex];
+    mn_object_t* grabbing = MNPage_FocusObject(Hu_MenuActivePage());
     // We're interested in key or button down events.
-    if(grabbing && ev->type == EV_SYMBOLIC)
+    if(grabbing && grabbing->type == MN_BINDINGS && ev->type == EV_SYMBOLIC)
     {
         mndata_bindings_t* binds = (mndata_bindings_t*) grabbing->data;
         const char* bindContext = "game";
@@ -847,7 +839,7 @@ boolean M_ControlsPrivilegedResponder(event_t* ev)
          */
 
         // We've finished the grab.
-        MN_CurrentPage()->objects[mnFocusObjectIndex].flags |= MNF_INACTIVE;
+        grabbing->flags |= MNF_INACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;

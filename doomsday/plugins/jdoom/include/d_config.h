@@ -35,6 +35,7 @@
 #endif
 
 #include "doomdef.h"
+#include "m_defs.h"
 
 enum {
     HUD_HEALTH,
@@ -120,7 +121,7 @@ typedef struct jdoom_config_s {
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColors[NUM_MENU_COLORS][3];
+    float           menuColors[MENU_COLOR_COUNT][3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;

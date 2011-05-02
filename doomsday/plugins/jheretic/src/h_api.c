@@ -147,9 +147,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.G_Drawer = H_Display;
     gx.G_Drawer2 = H_Display2;
     gx.PrivilegedResponder = G_PrivilegedResponder;
-    gx.FallbackResponder = NULL;
-    gx.FinaleResponder = FI_Responder;
-    gx.G_Responder = G_Responder;
+    gx.Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.UpdateState = G_UpdateState;

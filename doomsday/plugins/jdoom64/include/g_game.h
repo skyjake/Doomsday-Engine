@@ -132,10 +132,10 @@ void            G_WorldDone(void);
 void            G_Ticker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
-boolean G_Responder(event_t* ev);
+int G_PrivilegedResponder(event_t* ev);
 
 /// @return  @c true if the input event @a ev was eaten.
-boolean G_PrivilegedResponder(event_t* ev);
+int G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);
 

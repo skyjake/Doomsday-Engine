@@ -36,6 +36,7 @@
 #endif
 
 #include "doomdef.h"
+#include "m_defs.h"
 
 enum {
     HUD_HEALTH,

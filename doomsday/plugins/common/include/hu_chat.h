@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_chat.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * hu_chat.h:
+ * Player chat UI widget:
  */
 
-#ifndef __HUD_CHAT_H__
-#define __HUD_CHAT_H__
+#ifndef LIBCOMMON_HUD_CHAT_H
+#define LIBCOMMON_HUD_CHAT_H
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -46,7 +46,7 @@ void            Chat_Init(void);
 void            Chat_Start(void);
 void            Chat_Open(int player, boolean open);
 boolean         Chat_IsActive(int player);
-boolean         Chat_Responder(event_t* ev);
+int             Chat_Responder(event_t* ev);
 
 void            Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
-#endif
+#endif /* LIBCOMMON_HUD_CHAT_H */

@@ -379,6 +379,7 @@ byte            P_Random(void);
 void            M_ResetRandom(void);
 
 extern unsigned char rndtable[256];
+extern boolean  chatmodeon;
 
 void            SC_Open(const char* name);
 void            SC_OpenLump(lumpnum_t lumpNum);
@@ -403,24 +404,5 @@ extern boolean sc_End;
 extern boolean sc_Crossed;
 extern boolean sc_FileScripts;
 extern const char* sc_ScriptsDir;
-
-//----------------------
-// Chat mode (CT_chat.c)
-//----------------------
-
-void            CT_Init(void);
-void            CT_Drawer(void);
-boolean         CT_Responder(event_t* ev);
-void            CT_Ticker(void);
-char            CT_dequeueChatChar(void);
-
-extern boolean  chatmodeon;
-
-enum {
-    MENU_COLOR,
-    MENU_COLOR2,
-    MENU_COLOR3,
-    NUM_MENU_COLORS
-};
 
 #endif // __H2DEF_H__

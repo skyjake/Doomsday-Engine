@@ -125,7 +125,7 @@ void G_ShutdownEventSequences(void)
     inited = false;
 }
 
-boolean G_EventSequenceResponder(event_t* ev)
+int G_EventSequenceResponder(event_t* ev)
 {
     assert(inited && ev);
     {

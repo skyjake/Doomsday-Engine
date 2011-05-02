@@ -876,9 +876,6 @@ static void dispatchEvents(timespan_t ticLength)
             if(gx.PrivilegedResponder)
                 if(gx.PrivilegedResponder(&ev))
                     continue;
-
-            if(gx.FinaleResponder && gx.FinaleResponder(ddev))
-                continue;
         }
 
         if(UI_Responder(ddev))
@@ -886,8 +883,8 @@ static void dispatchEvents(timespan_t ticLength)
         if(Con_Responder(ddev))
             continue;
 
-        // The game responder only returns true if the bindings can't be used (like when chatting).
-        if(callGameResponders && gx.G_Responder(&ev))
+        // The game's normal responder only returns true if the bindings can't be used (like when chatting).
+        if(callGameResponders && gx.Responder(&ev))
             continue;
 
         // The bindings responder.

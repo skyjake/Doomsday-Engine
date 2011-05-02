@@ -1250,7 +1250,7 @@ void G_DoLoadMap(void)
     }
 }
 
-boolean G_Responder(event_t* ev)
+int G_Responder(event_t* ev)
 {
     assert(NULL != ev);
 
@@ -1274,12 +1274,17 @@ boolean G_Responder(event_t* ev)
     return false; // Not eaten.
 }
 
-boolean G_PrivilegedResponder(event_t* ev)
+int G_PrivilegedResponder(event_t* ev)
 {
-    if(M_ControlsPrivilegedResponder(ev))
-    {
+    // Ignore all events once shutdown has begun.
+    if(GA_QUIT == G_GetGameAction())
+        return false;
+
+    if(FI_PrivilegedResponder(ev))
         return true;
-    }
+
+    if(Hu_MenuPrivilegedResponder(ev))
+        return true;
 
     // Process the screen shot key right away.
     if(devParm && ev->type == EV_KEY && ev->data1 == DDKEY_F1)
@@ -2425,7 +2430,7 @@ void G_DoSaveGame(void)
     // Try to make a new game-save.
     if(SV_SaveGame(gaSaveGameSlot, name))
     {
-        MN_UpdateGameSaveWidgets();
+        Hu_MenuUpdateGameSaveWidgets();
         P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
     }
     G_SetGameAction(GA_NONE);
@@ -3220,8 +3225,8 @@ static void openLoadMenu(void)
     Hu_MenuCommand(MCMD_OPEN);
     /// \fixme This should be called automatically when opening the page
     /// thus making this function redundant.
-    MN_UpdateGameSaveWidgets();
-    MN_GotoPage(&LoadMenu);
+    Hu_MenuUpdateGameSaveWidgets();
+    Hu_MenuSetActivePage(&LoadMenu);
 }
 
 static void openSaveMenu(void)
@@ -3229,8 +3234,8 @@ static void openSaveMenu(void)
     Hu_MenuCommand(MCMD_OPEN);
     /// \fixme This should be called automatically when opening the page
     /// thus making this function redundant.
-    MN_UpdateGameSaveWidgets();
-    MN_GotoPage(&SaveMenu);
+    Hu_MenuUpdateGameSaveWidgets();
+    Hu_MenuSetActivePage(&SaveMenu);
 }
 
 int G_QuickLoadGameResponse(msgresponse_t response, void* context)
@@ -3322,9 +3327,9 @@ void G_QuickSaveGame(void)
     if(0 > slot)
     {
         Hu_MenuCommand(MCMD_OPEN);
-        MN_UpdateGameSaveWidgets();
-        MN_GotoPage(&SaveMenu);
-        mnNominatingQuickSaveSlot = true;
+        Hu_MenuUpdateGameSaveWidgets();
+        Hu_MenuSetActivePage(&SaveMenu);
+        menuNominatingQuickSaveSlot = true;
         return;
     }
 

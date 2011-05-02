@@ -259,7 +259,7 @@ void Hu_MsgTicker(timespan_t time)
 /**
  * If an "any key" message is active, respond to the event.
  */
-boolean Hu_MsgResponder(event_t* ev)
+int Hu_MsgResponder(event_t* ev)
 {
     if(!messageToPrint || msgType != MSG_ANYKEY)
         return false;

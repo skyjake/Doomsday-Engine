@@ -66,7 +66,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void M_DrawAutomapMenu(const mn_page_t* page, int x, int y);
+void M_DrawAutomapMenu(mn_page_t* page, int x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -1708,43 +1708,43 @@ mndata_colorbox_t cbox_map_mobj_color = {
 };
 
 mn_object_t AutomapMenuObjects[] = {
-    { MN_TEXT,      0,  0,              "Opacity",  GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,              "",         GF_FONTA, MENU_COLOR, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_opacity },
-    { MN_TEXT,      0,  0,              "Line Opacity", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,              "",         GF_FONTA, MENU_COLOR, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_lineopacity },
-    { MN_TEXT,      0,  0,              "HUD Display", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,              "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &lst_map_statusbar },
-    { MN_TEXT,      0,  0,              "Door Colors", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,              "map-door-colors", GF_FONTA, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,              "Door Glow", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,              "",         GF_FONTA, MENU_COLOR, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_doorglow },
-    { MN_TEXT,      0,  0,              "Use Custom Colors", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,              "",         GF_FONTA, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &lst_map_customcolors },
-    { MN_TEXT,      0,  0,              "Wall",     GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, MN_ActivateColorBox, &cbox_map_line_solid_color },
-    { MN_TEXT,      0,  0,              "Floor Height Change", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, MN_ActivateColorBox, &cbox_map_line_floor_color },
-    { MN_TEXT,      0,  0,              "Ceiling Height Change", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, MN_ActivateColorBox, &cbox_map_line_ceiling_color },
-    { MN_TEXT,      0,  0,              "Unseen",   GF_FONTA, MENU_COLOR, 0, MNText_Drawer,  NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, MN_ActivateColorBox, &cbox_map_line_unseen_color },
-    { MN_TEXT,      0,  0,              "Thing",    GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, MN_ActivateColorBox, &cbox_map_mobj_color },
-    { MN_TEXT,      0,  0,              "Background", GF_FONTA, MENU_COLOR, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, MENU_COLOR, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, MN_ActivateColorBox, &cbox_map_background_color },
+    { MN_TEXT,      0,  0,              "Opacity",  MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,              "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_opacity },
+    { MN_TEXT,      0,  0,              "Line Opacity", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,              "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_lineopacity },
+    { MN_TEXT,      0,  0,              "HUD Display", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,              "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &lst_map_statusbar },
+    { MN_TEXT,      0,  0,              "Door Colors", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,              "map-door-colors", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,              "Door Glow", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,              "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_doorglow },
+    { MN_TEXT,      0,  0,              "Use Custom Colors", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_LISTINLINE, 0, 0,              "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &lst_map_customcolors },
+    { MN_TEXT,      0,  0,              "Wall",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_map_line_solid_color },
+    { MN_TEXT,      0,  0,              "Floor Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_map_line_floor_color },
+    { MN_TEXT,      0,  0,              "Ceiling Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_map_line_ceiling_color },
+    { MN_TEXT,      0,  0,              "Unseen",   MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer,  NULL, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_map_line_unseen_color },
+    { MN_TEXT,      0,  0,              "Thing",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_map_mobj_color },
+    { MN_TEXT,      0,  0,              "Background", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_map_background_color },
     { MN_NONE }
 };
 
 mn_page_t AutomapMenu = {
-    AutomapMenuObjects, 24,
-    0,
+    AutomapMenuObjects, 24, -1, 0,
 #if __JHERETIC__ || __JHEXEN__
     { 64, 28 },
 #else
     { 70, 40 },
 #endif
-    M_DrawAutomapMenu,
-    0, &OptionsMenu,
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawAutomapMenu, NULL,
+    &OptionsMenu,
 #if __JHERETIC__ || __JHEXEN__
     //0, 11, { 11, 28 }
 #else
@@ -1755,16 +1755,16 @@ mn_page_t AutomapMenu = {
 /**
  * Draws the automap options menu
  */
-void M_DrawAutomapMenu(const mn_page_t* page, int x, int y)
+void M_DrawAutomapMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], mnRendState->page_alpha);
     M_DrawMenuText3("Automap OPTIONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JHERETIC__ || __JHEXEN__
     // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    DGL_Color4f(1, 1, 1, mnRendState->page_alpha);
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
     GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
 #endif*/

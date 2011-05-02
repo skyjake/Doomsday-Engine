@@ -72,43 +72,124 @@
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #endif
 
-extern boolean mnNominatingQuickSaveSlot;
+extern mn_page_t MainMenu;
+extern mn_page_t GameTypeMenu;
+#if __JHEXEN__
+extern mn_page_t PlayerClassMenu;
+#endif
+#if __JDOOM__ || __JHERETIC__
+extern mn_page_t EpisodeMenu;
+#endif
+extern mn_page_t SkillMenu;
+extern mn_page_t OptionsMenu;
+extern mn_page_t SoundMenu;
+extern mn_page_t GameplayMenu;
+extern mn_page_t HudMenu;
+extern mn_page_t AutomapMenu;
+extern mn_object_t AutomapMenuObjects[];
+#if __JHERETIC__ || __JHEXEN__
+extern mn_page_t FilesMenu;
+#endif
+extern mn_page_t LoadMenu;
+extern mn_page_t SaveMenu;
+extern mn_page_t MultiplayerMenu;
+extern mn_page_t PlayerSetupMenu;
+#if __JHERETIC__ || __JHEXEN__
+extern mn_page_t InventoryMenu;
+#endif
+extern mn_page_t WeaponMenu;
+extern mn_page_t ControlsMenu;
 
-void            Hu_MenuRegister(void);
+extern boolean menuNominatingQuickSaveSlot;
 
-void            Hu_MenuInit(void);
-void            Hu_MenuLoadResources(void);
+void Hu_MenuRegister(void);
 
-void            Hu_MenuTicker(timespan_t time);
-void            Hu_MenuDrawer(void);
+/**
+ * Menu initialization.
+ * Called during (post-engine) init and after updating game/engine state.
+ *
+ * Initializes the various vars, fonts, adjust the menu structs and
+ * anything else that needs to be done before the menu can be used.
+ */
+void Hu_MenuInit(void);
+
+/**
+ * Load any resources the menu needs.
+ */
+void Hu_MenuLoadResources(void);
+
+/**
+ * Updates on Game Tick.
+ */
+void Hu_MenuTicker(timespan_t time);
+
+/// @return  @c true if the menu is presently visible.
+boolean Hu_MenuIsVisible(void);
+
+/**
+ * This is the main menu drawing routine (called every tic by the drawing
+ * loop) Draws the current menu 'page' by calling the funcs attached to
+ * each menu obj.
+ */
+void Hu_MenuDrawer(void);
+
+/// @return  @c true if the input event @a ev was eaten.
+int Hu_MenuPrivilegedResponder(event_t* ev);
 
 /// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuResponder(event_t* ev);
 
 /**
- * Handle "hotkey" navigation in the menu.
+ * Handles "hotkey" navigation in the menu.
  * @return  @c true if the input event @a ev was eaten.
  */
 int Hu_MenuFallbackResponder(event_t* ev);
 
-boolean         Hu_MenuIsActive(void);
-void            Hu_MenuSetAlpha(float alpha);
-float           Hu_MenuAlpha(void);
-void            Hu_MenuPageString(char* string, const mn_page_t* page);
+/**
+ * @return  @c true iff the menu is currently active (open).
+ */
+boolean Hu_MenuIsActive(void);
 
-void            Hu_MenuCvarButton(mn_object_t* obj, int option);
-void            Hu_MenuCvarList(mn_object_t* obj, int option);
-void            Hu_MenuCvarSlider(mn_object_t* obj, int option);
-void            Hu_MenuCvarEdit(mn_object_t* obj, int option);
+/**
+ * @return  Current alpha level of the menu.
+ */
+float Hu_MenuAlpha(void);
 
-void            Hu_MenuSaveSlotEdit(mn_object_t* obj, int option);
-void            Hu_MenuBindings(mn_object_t* obj, int option);
+/**
+ * Set the alpha level of the entire menu.
+ *
+ * @param alpha  Alpha level to set the menu too (0...1)
+ */
+void Hu_MenuSetAlpha(float alpha);
 
-void            M_DrawMenuText(const char* string, int x, int y);
-void            M_DrawMenuText2(const char* string, int x, int y, int fontIdx);
-void            M_DrawMenuText3(const char* string, int x, int y, int fontIdx, short flags);
-void            M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
-void            M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
+/**
+ * Retrieve the currently active page.
+ */
+mn_page_t* Hu_MenuActivePage(void);
+
+/**
+ * Change the current active page.
+ */
+void Hu_MenuSetActivePage(mn_page_t* page);
+
+void Hu_MenuUpdateGameSaveWidgets(void);
+
+void Hu_MenuCvarButton(mn_object_t* obj, int option);
+void Hu_MenuCvarList(mn_object_t* obj, int option);
+void Hu_MenuCvarSlider(mn_object_t* obj, int option);
+void Hu_MenuCvarEdit(mn_object_t* obj, int option);
+
+void Hu_MenuSaveSlotEdit(mn_object_t* obj, int option);
+void Hu_MenuBindings(mn_object_t* obj, int option);
+
+void Hu_MenuActivateColorWidget(mn_object_t* obj, int option);
+void Hu_MenuColorWidgetSlider(mn_object_t* obj, int option);
+
+void M_DrawMenuText(const char* string, int x, int y);
+void M_DrawMenuText2(const char* string, int x, int y, int fontIdx);
+void M_DrawMenuText3(const char* string, int x, int y, int fontIdx, short flags);
+void M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
+void M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
 
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);

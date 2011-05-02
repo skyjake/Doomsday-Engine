@@ -34,7 +34,7 @@
 #endif
 
 // The fonts.
-enum {
+typedef enum {
     GF_FIRST = 1,
     GF_FONTA = GF_FIRST,
     GF_FONTB,
@@ -49,7 +49,7 @@ enum {
     GF_SMALLIN,
 #endif
     NUM_GAME_FONTS
-};
+} gamefontid_t;
 
 // Vector graphics.
 enum {

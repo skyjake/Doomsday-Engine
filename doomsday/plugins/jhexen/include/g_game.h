@@ -129,9 +129,9 @@ void            G_StopDemo(void);
 void            G_Ticker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
-boolean G_Responder(event_t* ev);
+int G_PrivilegedResponder(event_t* ev);
 
 /// @return  @c true if the input event @a ev was eaten.
-boolean G_PrivilegedResponder(event_t* ev);
+int G_Responder(event_t* ev);
 
 #endif /* LIBJHEXEN_G_GAME_H */

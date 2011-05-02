@@ -160,6 +160,6 @@ void        G_ControlReset(int pnum);
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
 
-boolean M_ControlsPrivilegedResponder(event_t* ev);
+int M_ControlsPrivilegedResponder(event_t* ev);
 
 #endif

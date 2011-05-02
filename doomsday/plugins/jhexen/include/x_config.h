@@ -29,6 +29,9 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "h2def.h"
+#include "m_defs.h"
+
 enum {
     HUD_MANA,
     HUD_HEALTH,

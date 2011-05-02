@@ -31,6 +31,7 @@
 #define LIBCOMMON_M_DEFS_H
 
 #include "r_common.h"
+#include "hu_stuff.h"
 
 typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.
@@ -89,20 +90,20 @@ typedef enum {
 /*@}*/
 
 typedef struct mn_object_s {
-    mn_obtype_e     type; // Type of the object.
-    int             group;
-    int             flags; // @see menuObjectFlags.
-    const char*     text;
-    int             fontIdx;
-    int             colorIdx;
-    patchid_t*      patch;
-    void          (*drawer) (const struct mn_object_s* obj, int x, int y, float alpha);
-    boolean       (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
-    void          (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
-    void          (*action) (struct mn_object_s* obj, int option);
-    void*           data; // Pointer to extra data.
-    int             data2; // Extra numerical data.
-    //int             timer;
+    mn_obtype_e type; // Type of the object.
+    int group;
+    int flags; // @see menuObjectFlags.
+    const char* text;
+    int pageFontIdx;
+    int pageColorIdx;
+    patchid_t* patch;
+    void (*drawer) (const struct mn_object_s* obj, int x, int y);
+    int (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
+    void (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
+    void (*action) (struct mn_object_s* obj, int option);
+    void* data; // Pointer to extra data.
+    int data2; // Extra numerical data.
+    //int timer;
 } mn_object_t;
 
 /**
@@ -112,41 +113,83 @@ typedef struct mn_object_s {
 #define MNPF_NOHOTKEYS          0x00000001 // Hotkeys are disabled.
 /*@}*/
 
-typedef struct mn_page_unscaledstate_s {
-    uint            numVisObjects;
-    int             y;
-} mn_page_unscaledstate_t;
+typedef enum {
+    MENU_COLOR1,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    MENU_COLOR4,
+    MENU_COLOR5,
+    MENU_COLOR6,
+    MENU_COLOR7,
+    MENU_COLOR8,
+    MENU_COLOR9,
+    MENU_COLOR10,
+    MENU_COLOR_COUNT
+} mn_page_colorid_t;
+
+#define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
+
+typedef enum {
+    MENU_FONT1,
+    MENU_FONT2,
+    MENU_FONT3,
+    MENU_FONT4,
+    MENU_FONT5,
+    MENU_FONT6,
+    MENU_FONT7,
+    MENU_FONT8,
+    MENU_FONT9,
+    MENU_FONT10,
+    MENU_FONT_COUNT
+} mn_page_fontid_t;
+
+#define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
+
+/*typedef struct mn_page_unscaledstate_s {
+    uint numVisObjects;
+    int y;
+} mn_page_unscaledstate_t;*/
 
 typedef struct mn_page_s {
-    mn_object_t*    objects; // List of objects.
-    uint            objectsCount;
-    int             flags; // @see menuPageFlags.
-    int             offset[2];
-    void          (*drawer) (const struct mn_page_s*, int, int);
-    int             focus; // Index of the focus object.
+    mn_object_t* objects; // List of objects.
+    uint objectsCount;
+    int focus; // Index of the focus object.
+    int flags; // @see menuPageFlags.
+    int offset[2];
+    gamefontid_t fonts[MENU_FONT_COUNT];
+    uint colors[MENU_COLOR_COUNT];
+    void (*drawer) (struct mn_page_s* page, int x, int y);
+    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
     struct mn_page_s* previous; // Pointer to the previous page, if any.
+    void* data;
     // For scrollable multi-pages.
-    //uint            firstObject, numVisObjects;
+    //uint firstObject, numVisObjects;
     // Scalable pages.
     //mn_page_unscaledstate_t unscaled;
 } mn_page_t;
 
-mn_page_t*      MN_CurrentPage(void);
+void MNPage_ComposeSubpageString(mn_page_t* page, size_t bufSize, char* buf);
+mn_object_t* MNPage_FocusObject(mn_page_t* page);
+void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3]);
+int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 
-void            MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-void            MNText_Dimensions(const mn_object_t* obj, int* width, int* height);
+/**
+ * Text objects.
+ */
+void MNText_Drawer(const mn_object_t* obj, int x, int y);
+void MNText_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
  * Two-state button.
  */
 typedef struct mndata_button_s {
-    void*           data;
-    const char*     yes, *no;
+    void* data;
+    const char* yes, *no;
 } mndata_button_t;
 
-void            MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
-void            MNButton_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNButton_Drawer(const mn_object_t* obj, int x, int y);
+int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
  * Edit field.
@@ -154,20 +197,20 @@ void            MNButton_Dimensions(const mn_object_t* obj, int* width, int* hei
 #define MNDATA_EDIT_TEXT_MAX_LENGTH 24
 
 typedef struct mndata_edit_s {
-    char            text[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
-    char            oldtext[MNDATA_EDIT_TEXT_MAX_LENGTH+1]; // If the current edit is canceled...
-    uint            maxVisibleChars;
-    const char*     emptyString; // Drawn when editfield is empty/null.
-    void*           data1;
-    int             data2;
-    void          (*onChange) (mn_object_t* obj);
+    char text[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
+    char oldtext[MNDATA_EDIT_TEXT_MAX_LENGTH+1]; // If the current edit is canceled...
+    uint maxVisibleChars;
+    const char* emptyString; // Drawn when editfield is empty/null.
+    void* data1;
+    int data2;
+    void (*onChange) (mn_object_t* obj);
 } mndata_edit_t;
 
-void            MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
-boolean         MNEdit_EventResponder(mn_object_t* obj, const event_t* ev);
-void            MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
-void            MNEdit_SetText(mn_object_t* obj, const char* string);
+void MNEdit_Drawer(const mn_object_t* obj, int x, int y);
+int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
+int MNEdit_EventResponder(mn_object_t* obj, const event_t* ev);
+void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNEdit_SetText(mn_object_t* obj, const char* string);
 
 /**
  * List selection.
@@ -176,28 +219,28 @@ void            MNEdit_SetText(mn_object_t* obj, const char* string);
 #define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
 typedef struct {
-    const char*     text;
-    int             data;
+    const char* text;
+    int data;
 } mndata_listitem_t;
 
 typedef struct mndata_list_s {
-    void*           items;
-    int             count; // Number of items.
-    void*           data;
-    int             selection; // Selected item (-1 if none).
-    int             first; // First visible item.
+    void* items;
+    int count; // Number of items.
+    void* data;
+    int selection; // Selected item (-1 if none).
+    int first; // First visible item.
 } mndata_list_t;
 
-void            MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
-void            MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
-int             MNList_FindItem(const mn_object_t* obj, int dataValue);
+void MNList_Drawer(const mn_object_t* obj, int x, int y);
+int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
+int MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 typedef mndata_list_t mndata_listinline_t;
 
-void            MNListInline_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
-void            MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNListInline_Drawer(const mn_object_t* obj, int x, int y);
+int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
  * Color preview box.
@@ -208,12 +251,12 @@ void            MNListInline_Dimensions(const mn_object_t* obj, int* width, int*
 #define MNDATA_COLORBOX_PADDING_Y   5 //
 
 typedef struct mndata_colorbox_s {
-    float*          r, *g, *b, *a;
+    float* r, *g, *b, *a;
 } mndata_colorbox_t;
 
-void            MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
-void            MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNColorBox_Drawer(const mn_object_t* obj, int x, int y);
+int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
  * Graphical slider.
@@ -227,39 +270,39 @@ void            MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* h
 #endif
 
 typedef struct mndata_slider_s {
-    float           min, max;
-    float           value;
-    float           step; // Button step.
-    boolean         floatMode; // Otherwise only integers are allowed.
+    float min, max;
+    float value;
+    float step; // Button step.
+    boolean floatMode; // Otherwise only integers are allowed.
     /// \todo Turn this into a property record or something.
-    void*           data1;
-    void*           data2;
-    void*           data3;
-    void*           data4;
-    void*           data5;
+    void* data1;
+    void* data2;
+    void* data3;
+    void* data4;
+    void* data5;
 } mndata_slider_t;
 
-void            MNSlider_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-void            MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
-void            MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
-void            MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height);
-int             MNSlider_ThumbPos(const mn_object_t* obj);
+void MNSlider_Drawer(const mn_object_t* obj, int x, int y);
+void MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y);
+int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height);
+int MNSlider_ThumbPos(const mn_object_t* obj);
 
 /**
  * Bindings visualizer.
  */
 typedef struct mndata_bindings_s {
-    const char*     text;
-    const char*     bindContext;
-    const char*     controlName;
-    const char*     command;
-    int             flags;
+    const char* text;
+    const char* bindContext;
+    const char* controlName;
+    const char* command;
+    int flags;
 } mndata_bindings_t;
 
-void            MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-boolean         MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
-void            MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNBindings_Drawer(const mn_object_t* obj, int x, int y);
+int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
  * Mobj preview visual.
@@ -276,60 +319,39 @@ typedef struct mndata_mobjpreview_s {
 #endif
 } mndata_mobjpreview_t;
 
-void            MNMobjPreview_Drawer(const mn_object_t* obj, int x, int y, float alpha);
-void            MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNMobjPreview_Drawer(const mn_object_t* obj, int x, int y);
+void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 #define MENU_CURSOR_FRAMECOUNT      2
 #define MENU_CURSOR_TICSPERFRAME    8
 
-extern int mnTime;
-extern int mnFocusObjectIndex;
+// Menu render state:
+typedef struct mn_rendstate_s {
+    float page_alpha;
+    float text_glitter;
+    float text_shadow;
+} mn_rendstate_t;
+extern const mn_rendstate_t* mnRendState;
 
-extern mn_page_t MainMenu;
-extern mn_page_t GameTypeMenu;
-#if __JHEXEN__
-extern mn_page_t PlayerClassMenu;
-#endif
-#if __JDOOM__ || __JHERETIC__
-extern mn_page_t EpisodeMenu;
-#endif
-extern mn_page_t SkillMenu;
-extern mn_page_t OptionsMenu;
-extern mn_page_t SoundMenu;
-extern mn_page_t GameplayMenu;
-extern mn_page_t HudMenu;
-extern mn_page_t AutomapMenu;
-extern mn_object_t AutomapMenuObjects[];
-#if __JHERETIC__ || __JHEXEN__
-extern mn_page_t FilesMenu;
-#endif
-extern mn_page_t LoadMenu;
-extern mn_page_t SaveMenu;
-extern mn_page_t MultiplayerMenu;
-extern mn_page_t PlayerSetupMenu;
-#if __JHERETIC__ || __JHEXEN__
-extern mn_page_t InventoryMenu;
-#endif
-extern mn_page_t WeaponMenu;
-extern mn_page_t ControlsMenu;
+/**
+ * Retrieve the current menu page. Note that this is the menu systems'
+ * state-defined current page and NOT the active page, which may or may
+ * not be the same.
+ * @return  Current menu page.
+ */
+mn_page_t* MN_CurrentPage(void);
+
+/**
+ * Change the current menu page. Note that this is the menu systems'
+ * state-defined current page and NOT the active page, which may or may
+ * not be the same.
+ * @return  New current menu page, for caller convenience.
+ */
+mn_page_t* MN_SetCurrentPage(mn_page_t* page);
 
 /**
  * Execute a menu navigation/action command.
  */
 void Hu_MenuCommand(menucommand_e cmd);
-
-void            MN_GotoPage(mn_page_t* page);
-
-void            M_StartControlPanel(void);
-
-void            M_FloatMod10(float* variable, int option);
-
-void            M_SelectMultiplayer(mn_object_t* obj, int option);
-
-void            MN_UpdateGameSaveWidgets(void);
-
-// Color widget.
-void            MN_ActivateColorBox(mn_object_t* obj, int option);
-void            M_WGCurrentColor(mn_object_t* obj, int option);
 
 #endif /* LIBCOMMON_M_DEFS_H */

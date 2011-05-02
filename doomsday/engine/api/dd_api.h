@@ -83,10 +83,9 @@ typedef struct {
     void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
-    boolean       (*FinaleResponder) (const void* ev);
-    boolean       (*PrivilegedResponder) (event_t* ev);
-    boolean       (*G_Responder) (event_t* ev);
-    boolean       (*FallbackResponder) (event_t* ev);
+    int           (*PrivilegedResponder) (event_t* ev);
+    int           (*Responder) (event_t* ev);
+    int           (*FallbackResponder) (event_t* ev);
 
     // Refresh.
     void          (*BeginFrame) (void);

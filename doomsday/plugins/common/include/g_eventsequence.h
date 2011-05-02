@@ -1,10 +1,10 @@
-/**\file
+/**\file g_eventsequence.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-20011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -38,11 +38,11 @@ void G_ShutdownEventSequences(void);
  * Responds to an input event if determined to be part of a known event
  * sequence.
  *
- * @param ev            Ptr to the event to be checked.
+ * @param ev  Ptr to the event to be checked.
  *
- * @return              @c true, if the event was 'eaten'.
+ * @return  @c true, if the event was 'eaten'.
  */
-boolean G_EventSequenceResponder(event_t* ev);
+int G_EventSequenceResponder(event_t* ev);
 
 void G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
                         int (*callback) (const int*, int));
