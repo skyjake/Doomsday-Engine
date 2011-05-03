@@ -593,39 +593,46 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
                 glColor4fv(origColor);
 
             // Do the type-in effect?
-            if(!noTypein && ((!noGlitter && pass) || (!noShadow && !pass)))
+            if(!noTypein && (pass || (!noShadow && !pass)))
             {
                 int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
 
                 if(pass)
                 {
-                    if(count == maxCount)
+                    if(!noGlitter)
                     {
-                        glitterMul = 1;
-                        flashColor[CR] = origColor[0];
-                        flashColor[CG] = origColor[1];
-                        flashColor[CB] = origColor[2];
-                    }
-                    else if(count + 1 == maxCount)
-                    {
-                        glitterMul = 0.88f;
-                        flashColor[CR] = (1 + origColor[0]) / 2;
-                        flashColor[CG] = (1 + origColor[1]) / 2;
-                        flashColor[CB] = (1 + origColor[2]) / 2;
-                    }
-                    else if(count + 2 == maxCount)
-                    {
-                        glitterMul = 0.75f;
-                        flashColor[CR] = origColor[0];
-                        flashColor[CG] = origColor[1];
-                        flashColor[CB] = origColor[2];
-                    }
-                    else if(count + 3 == maxCount)
-                    {
-                        glitterMul = 0.5f;
-                        flashColor[CR] = origColor[0];
-                        flashColor[CG] = origColor[1];
-                        flashColor[CB] = origColor[2];
+                        if(count == maxCount)
+                        {
+                            glitterMul = 1;
+                            flashColor[CR] = origColor[0];
+                            flashColor[CG] = origColor[1];
+                            flashColor[CB] = origColor[2];
+                        }
+                        else if(count + 1 == maxCount)
+                        {
+                            glitterMul = 0.88f;
+                            flashColor[CR] = (1 + origColor[0]) / 2;
+                            flashColor[CG] = (1 + origColor[1]) / 2;
+                            flashColor[CB] = (1 + origColor[2]) / 2;
+                        }
+                        else if(count + 2 == maxCount)
+                        {
+                            glitterMul = 0.75f;
+                            flashColor[CR] = origColor[0];
+                            flashColor[CG] = origColor[1];
+                            flashColor[CB] = origColor[2];
+                        }
+                        else if(count + 3 == maxCount)
+                        {
+                            glitterMul = 0.5f;
+                            flashColor[CR] = origColor[0];
+                            flashColor[CG] = origColor[1];
+                            flashColor[CB] = origColor[2];
+                        }
+                        else if(count > maxCount)
+                        {
+                            break;
+                        }
                     }
                     else if(count > maxCount)
                     {
