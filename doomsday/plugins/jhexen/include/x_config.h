@@ -151,19 +151,21 @@ typedef struct {
     int             dclickUse;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
+    int             hudFog;
+
     float           menuScale;
     int             menuEffects;
-    int             hudFog;
-    float           menuGlitter;
     float           menuShadow;
-    float           flashColor[3];
-    int             flashSpeed;
-    byte            turningSkull;
-    float           menuColors[3][3];
+
     byte            menuSlam;
     byte            menuHotkeys;
     byte            menuNoStretch;
     byte            menuGameSaveSuggestName;
+    byte            menuCursorRotate;
+    float           menuTextColors[MENU_COLOR_COUNT][3];
+    float           menuTextFlashColor[3];
+    int             menuTextFlashSpeed;
+    float           menuTextGlitter;
 
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode; // Unused in Hexen.

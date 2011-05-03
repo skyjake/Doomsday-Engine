@@ -87,21 +87,23 @@ typedef struct jdoom64_config_s {
     byte            slidingCorpses;
     byte            fastMonsters;
     byte            echoMsg;
+    int             hudFog;
+
     float           menuScale;
     int             menuEffects;
-    int             hudFog;
-    float           menuGlitter;
     float           menuShadow;
     int             menuQuitSound;
     byte            menuSlam;
     byte            menuHotkeys;
     byte            menuNoStretch;
     byte            menuGameSaveSuggestName;
+    byte            menuCursorRotate;
+    float           menuTextColors[MENU_COLOR_COUNT][3];
+    float           menuTextFlashColor[3];
+    int             menuTextFlashSpeed;
+    float           menuTextGlitter;
 
     byte            confirmQuickGameSave;
-    float           flashColor[3];
-    int             flashSpeed;
-    byte            turningSkull;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     float           hudScale; // How to scale HUD data?
     float           hudWideOffset;
@@ -123,7 +125,6 @@ typedef struct jdoom64_config_s {
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColors[3][3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;

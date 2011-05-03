@@ -648,12 +648,12 @@ void M_DrawControlsMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->page_alpha);
     M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
     MNPage_ComposeSubpageString(page, 1024, buf);
-    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->page_alpha);
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     // Draw the page arrows.
@@ -662,7 +662,7 @@ void M_DrawControlsMenu(mn_page_t* page, int x, int y)
     GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y - 12);
 #endif*/
 
-    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->page_alpha);
     M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -672,10 +672,10 @@ void M_ControlGrabDrawer(const char* niceName, float alpha)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], alpha);
+    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
     M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
-    DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], alpha);
+    DGL_Color4f(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
     M_DrawMenuText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);

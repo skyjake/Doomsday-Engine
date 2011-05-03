@@ -202,13 +202,13 @@ static void drawMessage(void)
     }
 
     FR_SetFont(FID(GF_FONTA));
-    FR_DrawText(msgText, x, y, FID(GF_FONTA), DTF_ALIGN_TOP, LEADING, 0, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], 1, cfg.menuGlitter, cfg.menuShadow, false);
+    FR_DrawText(msgText, x, y, FID(GF_FONTA), DTF_ALIGN_TOP, LEADING, 0, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], 1, cfg.menuTextGlitter, cfg.menuShadow, false);
     y += FR_TextHeight(msgText, FID(GF_FONTA));
     // An additional blank line between the message and response prompt.
     y += FR_CharHeight('A') * (1+LEADING);
 
     FR_SetFont(FID(GF_FONTA));
-    FR_DrawTextFragment6(questionString, x, y, DTF_ALIGN_TOP, 0, 0, cfg.menuGlitter, cfg.menuShadow);
+    FR_DrawTextFragment6(questionString, x, y, DTF_ALIGN_TOP, 0, 0, cfg.menuTextGlitter, cfg.menuShadow);
 
 #undef LEADING
 }

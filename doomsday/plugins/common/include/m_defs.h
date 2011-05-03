@@ -48,9 +48,6 @@ typedef enum menucommand_e {
     MCMD_DELETE
 } menucommand_e;
 
-#define LEFT_DIR                0
-#define RIGHT_DIR               1
-
 // Menu object types.
 typedef enum {
     MN_NONE,
@@ -77,7 +74,7 @@ typedef enum {
 #define MNF_CLICKED             0x8
 #define MNF_INACTIVE            0x10 // Object active.
 //#define MNF_FOCUS               0x20 // Has focus.
-//#define MNF_NO_FOCUS            0x40 // Can't receive focus.
+#define MNF_NO_FOCUS            0x40 // Can't receive focus.
 //#define MNF_DEFAULT             0x80 // Has focus by default.
 //#define MNF_LEFT_ALIGN          0x100
 //#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
@@ -336,9 +333,6 @@ typedef struct mndata_mobjpreview_s {
 
 void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
 void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
-
-#define MENU_CURSOR_FRAMECOUNT      2
-#define MENU_CURSOR_TICSPERFRAME    8
 
 // Menu render state:
 typedef struct mn_rendstate_s {

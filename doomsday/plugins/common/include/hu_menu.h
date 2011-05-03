@@ -72,6 +72,10 @@
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #endif
 
+#define MENU_CURSOR_REWIND_SPEED    20
+#define MENU_CURSOR_FRAMECOUNT      2
+#define MENU_CURSOR_TICSPERFRAME    8
+
 extern mn_page_t MainMenu;
 extern mn_page_t GameTypeMenu;
 #if __JHEXEN__
