@@ -71,47 +71,47 @@ typedef struct cvarbutton_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void M_InitControlsMenu(void);
-void M_ControlGrabDrawer(const char* niceName);
+void M_ControlGrabDrawer(const char* niceName, float alpha);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void M_SetMenu(mn_object_t* obj, int option);
+void M_SetMenu(mn_object_t* obj);
 
-void M_OpenLoadMenu(mn_object_t* obj, int option);
-void M_OpenSaveMenu(mn_object_t* obj, int option);
+void M_OpenLoadMenu(mn_object_t* obj);
+void M_OpenSaveMenu(mn_object_t* obj);
 #if __JHEXEN__
-void M_OpenFilesMenu(mn_object_t* obj, int option);
+void M_OpenFilesMenu(mn_object_t* obj);
 #endif
-void M_OpenPlayerSetupMenu(mn_object_t* obj, int option);
-void M_OpenMultiplayerClientMenu(mn_object_t* obj, int option);
+void M_OpenPlayerSetupMenu(mn_object_t* obj);
+void M_OpenMultiplayerClientMenu(mn_object_t* obj);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-void M_OpenHelp(mn_object_t* obj, int option);
+void M_OpenHelp(mn_object_t* obj);
 #endif
-void M_OpenControlPanel(mn_object_t* obj, int option);
+void M_OpenControlPanel(mn_object_t* obj);
 
-void M_SelectSingleplayer(mn_object_t* obj, int option);
-void M_SelectMultiplayer(mn_object_t* obj, int option);
+void M_SelectSingleplayer(mn_object_t* obj);
+void M_SelectMultiplayer(mn_object_t* obj);
 #if __JDOOM__ || __JHERETIC__
-void M_SelectEpisode(mn_object_t* obj, int option);
+void M_SelectEpisode(mn_object_t* obj);
 #endif
 #if __JHEXEN__
-void M_SelectPlayerClass(mn_object_t* obj, int option);
+void M_SelectPlayerClass(mn_object_t* obj);
 #endif
-void M_SelectSkillMode(mn_object_t* obj, int option);
-void M_SelectLoad(mn_object_t* obj, int option);
-void M_SelectQuitGame(mn_object_t* obj, int option);
-void M_SelectEndGame(mn_object_t* obj, int option);
-void M_AcceptPlayerSetup(mn_object_t* obj, int option);
+void M_SelectSkillMode(mn_object_t* obj);
+void M_SelectLoad(mn_object_t* obj);
+void M_SelectQuitGame(mn_object_t* obj);
+void M_SelectEndGame(mn_object_t* obj);
+void M_AcceptPlayerSetup(mn_object_t* obj);
 
 void M_SaveGame(mn_object_t* obj);
 
-void M_WeaponOrder(mn_object_t* obj, int option);
+void M_WeaponOrder(mn_object_t* obj);
 #if __JHEXEN__
-void M_ChangePlayerClass(mn_object_t* obj, int option);
+void M_ChangePlayerClass(mn_object_t* obj);
 #endif
-void M_ChangePlayerColor(mn_object_t* obj, int option);
-void M_ChangePlayerName(mn_object_t* obj, int option);
+void M_ChangePlayerColor(mn_object_t* obj);
+void M_ChangePlayerName(mn_object_t* obj);
 
 void M_DrawMainMenu(mn_page_t* page, int x, int y);
 void M_DrawGameTypeMenu(mn_page_t* page, int x, int y);
@@ -347,24 +347,24 @@ static patchid_t pEditMiddle;
 
 mn_object_t MainMenuObjects[] = {
 #if __JDOOM__
-    { MN_BUTTON,    0,  0,  "{case}New Game",  MENU_FONT2, MENU_COLOR1, &pNGame,    MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &GameTypeMenu },
-    { MN_BUTTON,    0,  0,  "{case}Options",   MENU_FONT2, MENU_COLOR1, &pOptions,  MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &OptionsMenu },
-    { MN_BUTTON,    0,  0,  "{case}Load game", MENU_FONT2, MENU_COLOR1, &pLoadGame, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenLoadMenu },
-    { MN_BUTTON,    0,  0,  "{case}Save game", MENU_FONT2, MENU_COLOR1, &pSaveGame, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenSaveMenu },
-    { MN_BUTTON,    0,  0,  "{case}Read This!", MENU_FONT2, MENU_COLOR1,&pReadThis, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenHelp },
-    { MN_BUTTON,    0,  0,  "{case}Quit Game", MENU_FONT2, MENU_COLOR1, &pQuitGame, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectQuitGame },
+    { MN_BUTTON,    0,  0,  "{case}New Game",  MENU_FONT2, MENU_COLOR1, &pNGame,    MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &GameTypeMenu },
+    { MN_BUTTON,    0,  0,  "{case}Options",   MENU_FONT2, MENU_COLOR1, &pOptions,  MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &OptionsMenu },
+    { MN_BUTTON,    0,  0,  "{case}Load game", MENU_FONT2, MENU_COLOR1, &pLoadGame, MNButton_Dimensions, MNButton_Drawer, M_OpenLoadMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "{case}Save game", MENU_FONT2, MENU_COLOR1, &pSaveGame, MNButton_Dimensions, MNButton_Drawer, M_OpenSaveMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "{case}Read This!", MENU_FONT2, MENU_COLOR1,&pReadThis, MNButton_Dimensions, MNButton_Drawer, M_OpenHelp, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "{case}Quit Game", MENU_FONT2, MENU_COLOR1, &pQuitGame, MNButton_Dimensions, MNButton_Drawer, M_SelectQuitGame, MNButton_CommandResponder },
 #elif __JDOOM64__
-    { MN_BUTTON,    0,  0,  "{case}New Game",  MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &GameTypeMenu },
-    { MN_BUTTON,    0,  0,  "{case}Options",   MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &OptionsMenu },
-    { MN_BUTTON,    0,  0,  "{case}Load Game", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenLoadMenu },
-    { MN_BUTTON,    0,  0,  "{case}Save Game", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenSaveMenu },
-    { MN_BUTTON,    0,  0,  "{case}Quit Game", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectQuitGame },
+    { MN_BUTTON,    0,  0,  "{case}New Game",  MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &GameTypeMenu },
+    { MN_BUTTON,    0,  0,  "{case}Options",   MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &OptionsMenu },
+    { MN_BUTTON,    0,  0,  "{case}Load Game", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenLoadMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "{case}Save Game", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenSaveMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "{case}Quit Game", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectQuitGame, MNButton_CommandResponder },
 #else
-    { MN_BUTTON,    0,  0,  "New Game", MENU_FONT2,   MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &GameTypeMenu },
-    { MN_BUTTON,    0,  0,  "Options",  MENU_FONT2,   MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &OptionsMenu },
-    { MN_BUTTON,    0,  0,  "Game Files", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &FilesMenu },
-    { MN_BUTTON,    0,  0,  "Info",     MENU_FONT2,   MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenHelp },
-    { MN_BUTTON,    0,  0,  "Quit Game", MENU_FONT2,  MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectQuitGame },
+    { MN_BUTTON,    0,  0,  "New Game", MENU_FONT2,   MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &GameTypeMenu },
+    { MN_BUTTON,    0,  0,  "Options",  MENU_FONT2,   MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &OptionsMenu },
+    { MN_BUTTON,    0,  0,  "Game Files", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &FilesMenu },
+    { MN_BUTTON,    0,  0,  "Info",     MENU_FONT2,   MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenHelp, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Quit Game", MENU_FONT2,  MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectQuitGame, MNButton_CommandResponder },
 #endif
     { MN_NONE }
 };
@@ -396,8 +396,8 @@ mn_page_t MainMenu = {
 #endif
 
 mn_object_t GameTypeMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  (const char*)TXT_SINGLEPLAYER,  MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSingleplayer },
-    { MN_BUTTON,    0,  0,  (const char*)TXT_MULTIPLAYER,   MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectMultiplayer },
+    { MN_BUTTON,    0,  0,  (const char*)TXT_SINGLEPLAYER,  MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSingleplayer, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  (const char*)TXT_MULTIPLAYER,   MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectMultiplayer, MNButton_CommandResponder },
     { MN_NONE }
 };
 
@@ -444,8 +444,8 @@ mn_page_t EpisodeMenu = {
 
 #if __JHERETIC__ || __JHEXEN__
 static mn_object_t FilesMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "Load Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenLoadMenu },
-    { MN_BUTTON,    0,  0,  "Save Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenSaveMenu },
+    { MN_BUTTON,    0,  0,  "Load Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenLoadMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Save Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenSaveMenu, MNButton_CommandResponder },
     { MN_NONE }
 };
 
@@ -472,15 +472,15 @@ mndata_edit_t edit_saveslots[NUMSAVESLOTS] = {
 };
 
 static mn_object_t LoadMenuObjects[] = {
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[0] },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[1] },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[2] },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[3] },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[4] },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[5] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[0] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[1] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[2] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[3] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[4] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[5] },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[6] },
-    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_SelectLoad, &edit_saveslots[7] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[6] },
+    { MN_EDIT,      0,  MNF_DISABLED|MNF_INACTIVE,  "",     MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_SelectLoad, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[7] },
 #endif
     { MN_NONE }
 };
@@ -499,15 +499,15 @@ mn_page_t LoadMenu = {
 };
 
 static mn_object_t SaveMenuObjects[] = {
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[0] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[1] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[2] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[3] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[4] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[5] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[0] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[1] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[2] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[3] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[4] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[5] },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[6] },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, Hu_MenuSaveSlotEdit, &edit_saveslots[7] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[6] },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, Hu_MenuSaveSlotEdit, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[7] },
 #endif
     { MN_NONE }
 };
@@ -527,11 +527,11 @@ mn_page_t SaveMenu = {
 
 #if __JHEXEN__
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_HARD },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
     { MN_NONE }
 };
 
@@ -544,11 +544,11 @@ mn_page_t SkillMenu = {
 };
 #elif __JHERETIC__
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "W",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "Y",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,  "B",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "S",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_HARD },
-    { MN_BUTTON,    0,  0,  "P",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  0,  "W",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "Y",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  0,  "B",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "S",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "P",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
     { MN_NONE }
 };
 
@@ -561,10 +561,10 @@ mn_page_t SkillMenu = {
 };
 #elif __JDOOM64__
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, 0 },
-    { MN_BUTTON,    0,  0,  "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, 1 },
-    { MN_BUTTON,    0,  0,  "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, 2 },
-    { MN_BUTTON,    0,  0,  "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, 3 },
+    { MN_BUTTON,    0,  0,  "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  0,  "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
     { MN_NONE }
 };
 static mn_page_t SkillMenu = {
@@ -576,11 +576,11 @@ static mn_page_t SkillMenu = {
 };
 #else
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,              "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,              "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_HARD },
-    { MN_BUTTON,    0,  MNF_NO_ALTTEXT, "N",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[4], MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectSkillMode, 0, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  0,              "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,              "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  MNF_NO_ALTTEXT, "N",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[4], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
     { MN_NONE }
 };
 
@@ -594,19 +594,19 @@ mn_page_t SkillMenu = {
 #endif
 
 static mn_object_t OptionsMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "End Game", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SelectEndGame },
-    { MN_BUTTON,    0,  0,  "Control Panel", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenControlPanel, 0, 0 },
-    { MN_BUTTON,    0,  0,  "Controls", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &ControlsMenu },
-    { MN_BUTTON,    0,  0,  "Gameplay", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &GameplayMenu },
-    { MN_BUTTON,    0,  0,  "HUD",      MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &HudMenu },
-    { MN_BUTTON,    0,  0,  "Automap",  MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &AutomapMenu },
-    { MN_BUTTON,    0,  0,  "Weapons",  MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &WeaponMenu },
+    { MN_BUTTON,    0,  0,  "End Game", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectEndGame, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Control Panel", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenControlPanel, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Controls", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &ControlsMenu },
+    { MN_BUTTON,    0,  0,  "Gameplay", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &GameplayMenu },
+    { MN_BUTTON,    0,  0,  "HUD",      MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &HudMenu },
+    { MN_BUTTON,    0,  0,  "Automap",  MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &AutomapMenu },
+    { MN_BUTTON,    0,  0,  "Weapons",  MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &WeaponMenu },
 #if __JHERETIC__ || __JHEXEN__
-    { MN_BUTTON,    0,  0,  "Inventory", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &InventoryMenu },
+    { MN_BUTTON,    0,  0,  "Inventory", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &InventoryMenu },
 #endif
-    { MN_BUTTON,    0,  0,  "Sound",    MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_SetMenu, &SoundMenu },
-    { MN_BUTTON,    0,  0,  "Mouse",    MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenControlPanel, 0, 2 },
-    { MN_BUTTON,    0,  0,  "Joystick", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenControlPanel, 0, 2 },
+    { MN_BUTTON,    0,  0,  "Sound",    MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &SoundMenu },
+    { MN_BUTTON,    0,  0,  "Mouse",    MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenControlPanel, MNButton_CommandResponder, NULL, NULL, 0, 2 },
+    { MN_BUTTON,    0,  0,  "Joystick", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenControlPanel, MNButton_CommandResponder, NULL, NULL, 0, 2 },
     { MN_NONE }
 };
 
@@ -632,11 +632,11 @@ mndata_slider_t sld_sound_volume = { 0, 255, 0, 5, false, "sound-volume" };
 mndata_slider_t sld_music_volume = { 0, 255, 0, 5, false, "music-volume" };
 
 mn_object_t SoundMenuObjects[] = {
-    { MN_TEXT,      0,  0,  "SFX Volume",   MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",             MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_sound_volume },
-    { MN_TEXT,      0,  0,  "Music Volume", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",             MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_music_volume },
-    { MN_BUTTON,    0,  0,  "Open Audio Panel", MENU_FONT1, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenControlPanel, 0, 1 },
+    { MN_TEXT,      0,  0,  "SFX Volume",   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",             MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_sound_volume },
+    { MN_TEXT,      0,  0,  "Music Volume", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",             MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_music_volume },
+    { MN_BUTTON,    0,  0,  "Open Audio Panel", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenControlPanel, MNButton_CommandResponder, NULL, NULL, 0, 1 },
     { MN_NONE }
 };
 
@@ -731,112 +731,112 @@ mndata_listinline_t list_hud_secretscounter = {
 #endif
 
 static mn_object_t HudMenuObjects[] = {
-    { MN_TEXT,      0,  0,  "View Size", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",          MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_viewsize },
-    { MN_TEXT,      0,  0,  "Wide Offset", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",          MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_wideoffset },
+    { MN_TEXT,      0,  0,  "View Size", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",          MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_viewsize },
+    { MN_TEXT,      0,  0,  "Wide Offset", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",          MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_wideoffset },
 #if __JDOOM__
-    { MN_TEXT,      0,  0,  "Single Key Display", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-keys-combine", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Single Key Display", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-keys-combine", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
-    { MN_TEXT,      0,  0,  "AutoHide", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDrawer, MNSlider_CommandResponder, MNSlider_TextualValueDimensions, Hu_MenuCvarSlider, &sld_hud_uptime },
-    { MN_TEXT,      0,  0,  "UnHide Events", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Receive Damage", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-damage", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Pickup Health", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-health", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Pickup Armor", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-armor", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Pickup Powerup", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-powerup", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Pickup Weapon", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-weapon", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "AutoHide", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDimensions, MNSlider_TextualValueDrawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_uptime },
+    { MN_TEXT,      0,  0,  "UnHide Events", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Receive Damage", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer},
+    { MN_BUTTON2,   0,  0,  "hud-unhide-damage", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Pickup Health", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-health", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Pickup Armor", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-armor", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Pickup Powerup", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-powerup", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Pickup Weapon", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-weapon", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #if __JHEXEN__
-    { MN_TEXT,      0,  0,  "Pickup Mana", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-ammo", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Pickup Mana", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-ammo", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #else
-    { MN_TEXT,      0,  0,  "Pickup Ammo", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-ammo", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Pickup Ammo", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-ammo", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
-    { MN_TEXT,      0,  0,  "Pickup Key", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-key", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Pickup Key", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-key", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #if __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      0,  0,  "Pickup Item", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-invitem", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Pickup Item", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-unhide-pickup-invitem", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 
-    { MN_TEXT,      0,  0,  "Messages", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Shown",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "msg-show", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_messages_size },
-    { MN_TEXT,      0,  0,  "Uptime",   MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDrawer, MNSlider_CommandResponder, MNSlider_TextualValueDimensions, Hu_MenuCvarSlider, &sld_hud_messages_uptime },
+    { MN_TEXT,      0,  0,  "Messages", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Shown",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "msg-show", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_messages_size },
+    { MN_TEXT,      0,  0,  "Uptime",   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDimensions, MNSlider_TextualValueDrawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_messages_uptime },
 
-    { MN_TEXT,      0,  0,  "Crosshair", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Symbol",   MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_xhair_symbol },
-    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_xhair_size },
-    { MN_TEXT,      0,  0,  "Opacity",  MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",  MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_xhair_opacity },
-    { MN_TEXT,      0,  0,  "Vitality Color", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "view-cross-vitality", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Color",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE, "", MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_hud_xhair_color },
+    { MN_TEXT,      0,  0,  "Crosshair", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Symbol",   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &list_hud_xhair_symbol },
+    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_size },
+    { MN_TEXT,      0,  0,  "Opacity",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",  MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_opacity },
+    { MN_TEXT,      0,  0,  "Vitality Color", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "view-cross-vitality", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Color",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_COLORBOX,  0,  MNF_INACTIVE, "", MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_hud_xhair_color },
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      0,  0,  "Statusbar", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_statusbar_size },
-    { MN_TEXT,      0,  0,  "Opacity",  MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_statusbar_opacity },
+    { MN_TEXT,      0,  0,  "Statusbar", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_statusbar_size },
+    { MN_TEXT,      0,  0,  "Opacity",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_statusbar_opacity },
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "Counters", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Kills",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_killscounter },
-    { MN_TEXT,      0,  0,  "Items",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_itemscounter },
-    { MN_TEXT,      0,  0,  "Secrets",  MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &list_hud_secretscounter },
-    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_counter_size },
+    { MN_TEXT,      0,  0,  "Counters", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Kills",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &list_hud_killscounter },
+    { MN_TEXT,      0,  0,  "Items",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &list_hud_itemscounter },
+    { MN_TEXT,      0,  0,  "Secrets",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &list_hud_secretscounter },
+    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_counter_size },
 #endif
 
-    { MN_TEXT,      0,  0,  "Fullscreen HUD", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_hud_size },
-    { MN_TEXT,      0,  0,  "Text Color", MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_COLORBOX,  0,  MNF_INACTIVE, "", MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Drawer, MNColorBox_CommandResponder, MNColorBox_Dimensions, Hu_MenuActivateColorWidget, &cbox_hud_color },
+    { MN_TEXT,      0,  0,  "Fullscreen HUD", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Size",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_hud_size },
+    { MN_TEXT,      0,  0,  "Text Color", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_COLORBOX,  0,  MNF_INACTIVE, "", MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_hud_color },
 #if __JHEXEN__
-    { MN_TEXT,      0,  0,  "Show Mana", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-mana",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Mana", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-mana",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "Show Ammo",  MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-ammo",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Show Armor", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-armor",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Ammo",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-ammo",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Show Armor", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-armor",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 #if __JDOOM64__
-    { MN_TEXT,      0,  0,  "Show Power Keys", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-power",       MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Power Keys", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-power",       MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 #if __JDOOM__
-    { MN_TEXT,      0,  0,  "Show Face", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-face",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Face", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-face",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
-    { MN_TEXT,      0,  0,  "Show Health", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-health",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Health", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-health",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      0,  0,  "Show Keys", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-keys",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Keys", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-keys",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      0,  0,  "Show Item",        MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-currentitem",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Show Item",        MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-currentitem",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
     { MN_NONE }
 };
@@ -877,22 +877,22 @@ mndata_slider_t sld_inv_uptime = { 0, 30, 0, 1.f, true, "hud-inventory-timer", "
 mndata_slider_t sld_inv_maxvisslots = { 0, 16, 0, 1, false, "hud-inventory-slot-max", "Automatic" };
 
 static mn_object_t InventoryMenuObjects[] = {
-    { MN_TEXT,      0,  0,  "Select Mode", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2EX, 0,  0,  "",            MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton, &btn_inv_selectmode },
-    { MN_TEXT,      0,  0,  "Wrap Around",          MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "ctl-inventory-wrap",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Choose And Use",               MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "ctl-inventory-use-immediate",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Select Next If Use Failed", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "ctl-inventory-use-next",    MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "AutoHide", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDrawer, MNSlider_CommandResponder, MNSlider_TextualValueDimensions, Hu_MenuCvarSlider, &sld_inv_uptime },
+    { MN_TEXT,      0,  0,  "Select Mode", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2EX, 0,  0,  "",            MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder, NULL, NULL, &btn_inv_selectmode },
+    { MN_TEXT,      0,  0,  "Wrap Around",          MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "ctl-inventory-wrap",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Choose And Use",               MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "ctl-inventory-use-immediate",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Select Next If Use Failed", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "ctl-inventory-use-next",    MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "AutoHide", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDimensions, MNSlider_TextualValueDrawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_inv_uptime },
 
-    { MN_TEXT,      0,  0,  "Fullscreen HUD", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Max Visible Slots", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",                  MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDrawer, MNSlider_CommandResponder, MNSlider_TextualValueDimensions, Hu_MenuCvarSlider, &sld_inv_maxvisslots },
-    { MN_TEXT,      0,  0,  "Show Empty Slots",             MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-inventory-slot-showempty", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Fullscreen HUD", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Max Visible Slots", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",                  MENU_FONT1, MENU_COLOR3, 0, MNSlider_TextualValueDimensions, MNSlider_TextualValueDrawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_inv_maxvisslots },
+    { MN_TEXT,      0,  0,  "Show Empty Slots",             MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-inventory-slot-showempty", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
     { MN_NONE }
 };
 
@@ -929,24 +929,24 @@ mndata_listinline_t list_weapons_autoswitch_pickupammo = {
 };
 
 static mn_object_t WeaponMenuObjects[] = {
-    { MN_TEXT,      0,  0,  "Priority Order", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LIST,      0,  MNF_INACTIVE,  "",    MENU_FONT1, MENU_COLOR3, 0, MNList_Drawer, MNList_CommandResponder, MNList_Dimensions, M_WeaponOrder, &list_weapons_order },
-    { MN_TEXT,      0,  0,  "Cycling", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Use Priority Order",     MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "player-weapon-nextmode", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Sequential",                     MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "player-weapon-cycle-sequential", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Priority Order", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LIST,      0,  MNF_INACTIVE,  "",    MENU_FONT1, MENU_COLOR3, 0, MNList_Dimensions, MNList_Drawer, M_WeaponOrder, MNList_CommandResponder, NULL, NULL, &list_weapons_order },
+    { MN_TEXT,      0,  0,  "Cycling", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Use Priority Order",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "player-weapon-nextmode", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Sequential",                     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "player-weapon-cycle-sequential", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 
-    { MN_TEXT,      0,  0,  "Autoswitch", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_TEXT,      0,  0,  "Pickup Weapon", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",              MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &list_weapons_autoswitch_pickup },
-    { MN_TEXT,      0,  0,  "   If Not Firing",             MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "player-autoswitch-notfiring",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Pickup Ammo", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,  "",            MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, Hu_MenuCvarList, &list_weapons_autoswitch_pickupammo },
+    { MN_TEXT,      0,  0,  "Autoswitch", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "Pickup Weapon", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,  "",              MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &list_weapons_autoswitch_pickup },
+    { MN_TEXT,      0,  0,  "   If Not Firing",             MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "player-autoswitch-notfiring",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Pickup Ammo", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,  "",            MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &list_weapons_autoswitch_pickupammo },
 #if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  "Pickup Beserk",             MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "player-autoswitch-berserk", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Pickup Beserk",             MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "player-autoswitch-berserk", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
     { MN_NONE }
 };
@@ -973,54 +973,54 @@ mn_page_t WeaponMenu = {
 };
 
 static mn_object_t GameplayMenuObjects[] = {
-    { MN_TEXT,      0,  0, "Always Run", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0, "ctl-run",    MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0, "Use LookSpring",   MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0, "ctl-look-spring",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0, "Use AutoAim",      MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0, "ctl-aim-noauto",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0, "Always Run", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0, "ctl-run",    MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0, "Use LookSpring",   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0, "ctl-look-spring",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0, "Use AutoAim",      MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0, "ctl-aim-noauto",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_TEXT,      0,  0, "Allow Jumping", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0, "player-jump",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0, "Allow Jumping", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0, "player-jump",   MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 #if __JDOOM64__
-    { MN_TEXT,      0,  0, "Weapon Recoil",         MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0, "player-weapon-recoil",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0, "Weapon Recoil",         MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0, "player-weapon-recoil",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  "Compatibility", MENU_FONT1, MENU_COLOR2, 0, MNText_Drawer, NULL, MNText_Dimensions },
+    { MN_TEXT,      0,  0,  "Compatibility", MENU_FONT1, MENU_COLOR2, 0, MNText_Dimensions, MNText_Drawer },
 # if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  "Any Boss Trigger 666", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-anybossdeath666", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Any Boss Trigger 666", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-anybossdeath666", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #  if !__JDOOM64__
-    { MN_TEXT,      0,  0,  "Av Resurrects Ghosts", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-raiseghosts",     MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Av Resurrects Ghosts", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-raiseghosts",     MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 #  endif
-    { MN_TEXT,      0,  0,  "PE Limited To 21 Lost Souls", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-maxskulls",              MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "LS Can Get Stuck Inside Walls", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-skullsinwalls",            MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "PE Limited To 21 Lost Souls", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-maxskulls",              MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "LS Can Get Stuck Inside Walls", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-skullsinwalls",            MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 # endif
-    { MN_TEXT,      0,  0,  "Monsters Can Get Stuck In Doors",  MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-monsters-stuckindoors",       MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Some Objects Never Hang Over Ledges",  MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-objects-neverhangoverledges",     MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Objects Fall Under Own Weight",    MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-objects-falloff",             MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Corpses Slide Down Stairs",    MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-corpse-sliding",          MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Use Exactly Doom's Clipping Code", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-objects-clipping",            MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "  ^If Not NorthOnly WallRunning",  MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-player-wallrun-northonly",    MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Monsters Can Get Stuck In Doors",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-monsters-stuckindoors",       MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Some Objects Never Hang Over Ledges",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-objects-neverhangoverledges",     MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Objects Fall Under Own Weight",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-objects-falloff",             MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Corpses Slide Down Stairs",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-corpse-sliding",          MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Use Exactly Doom's Clipping Code", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-objects-clipping",            MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "  ^If Not NorthOnly WallRunning",  MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-player-wallrun-northonly",    MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 # if __JDOOM__ || __JDOOM64__
-    { MN_TEXT,      0,  0,  "Zombie Players Can Exit Maps", MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "game-zombiescanexit",          MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Fix Ouch Face",    MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-face-ouchfix", MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
-    { MN_TEXT,      0,  0,  "Fix Weapon Slot Display",          MENU_FONT1, MENU_COLOR1,  0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_BUTTON2,   0,  0,  "hud-status-weaponslots-ownedfix",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Zombie Players Can Exit Maps", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "game-zombiescanexit",          MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Fix Ouch Face",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-face-ouchfix", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
+    { MN_TEXT,      0,  0,  "Fix Weapon Slot Display",          MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_BUTTON2,   0,  0,  "hud-status-weaponslots-ownedfix",  MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
 # endif
 #endif
     { MN_NONE }
@@ -1058,14 +1058,14 @@ mn_page_t GameplayMenu = {
 
 
 mn_object_t MultiplayerMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenPlayerSetupMenu },
-    { MN_BUTTON,    0,  0,  "Join Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenMultiplayerClientMenu },
+    { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenPlayerSetupMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Join Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenMultiplayerClientMenu, MNButton_CommandResponder },
     { MN_NONE }
 };
 
 mn_object_t MultiplayerClientMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenPlayerSetupMenu },
-    { MN_BUTTON,    0,  0,  "Disconnect",   MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_OpenMultiplayerClientMenu },
+    { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenPlayerSetupMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Disconnect",   MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenMultiplayerClientMenu, MNButton_CommandResponder },
     { MN_NONE}
 };
 
@@ -1122,15 +1122,15 @@ mndata_list_t list_player_color = {
 };
 
 mn_object_t PlayerSetupMenuObjects[] = {
-    { MN_MOBJPREVIEW, 0,0,              "",         0, 0, 0, MNMobjPreview_Drawer, NULL, MNMobjPreview_Dimensions, NULL, &mop_player_preview },
-    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Drawer, MNEdit_CommandResponder, MNEdit_Dimensions, M_ChangePlayerName, &edit_player_name },
+    { MN_MOBJPREVIEW, 0,0,              "",         0, 0, 0, MNMobjPreview_Dimensions, MNMobjPreview_Drawer, NULL, NULL, NULL, NULL, &mop_player_preview },
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNEdit_Dimensions, MNEdit_Drawer, M_ChangePlayerName, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_player_name },
 #if __JHEXEN__
-    { MN_TEXT,      0,  0,              "Class",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,              "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, M_ChangePlayerClass, &list_player_class },
+    { MN_TEXT,      0,  0,              "Class",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,              "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, M_ChangePlayerClass, MNListInline_CommandResponder, NULL, NULL, &list_player_class },
 #endif
-    { MN_TEXT,      0,  0,              "Color",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_LISTINLINE, 0, 0,              "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Drawer, MNListInline_CommandResponder, MNListInline_Dimensions, M_ChangePlayerColor, &list_player_color },
-    { MN_BUTTON,    0,  0,              "Accept Changes", MENU_FONT2, MENU_COLOR1, 0, MNButton_Drawer, MNButton_CommandResponder, MNButton_Dimensions, M_AcceptPlayerSetup },
+    { MN_TEXT,      0,  0,              "Color",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_LISTINLINE, 0, 0,              "",         MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, M_ChangePlayerColor, MNListInline_CommandResponder, NULL, NULL, &list_player_color },
+    { MN_BUTTON,    0,  0,              "Accept Changes", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_AcceptPlayerSetup, MNButton_CommandResponder },
     { MN_NONE }
 };
 
@@ -1164,14 +1164,14 @@ mndata_slider_t sld_colorwidget_alpha = {
 };
 
 static mn_object_t ColorWidgetMenuObjects[] = {
-    { MN_TEXT,      0,  0,  "Red",      MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuColorWidgetSlider, &sld_colorwidget_red },
-    { MN_TEXT,      0,  0,  "Green",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuColorWidgetSlider, &sld_colorwidget_green },
-    { MN_TEXT,      0,  0,  "Blue",     MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuColorWidgetSlider, &sld_colorwidget_blue },
-    { MN_TEXT,      0,  0,  "Alpha",    MENU_FONT1, MENU_COLOR1, 0, MNText_Drawer, NULL, MNText_Dimensions },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Drawer, MNSlider_CommandResponder, MNSlider_Dimensions, Hu_MenuColorWidgetSlider, &sld_colorwidget_alpha },
+    { MN_TEXT,      0,  0,  "Red",      MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_red, 0 },
+    { MN_TEXT,      0,  0,  "Green",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_green, 1 },
+    { MN_TEXT,      0,  0,  "Blue",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_blue, 2 },
+    { MN_TEXT,      0,  0,  "Alpha",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_alpha, 3 },
     { MN_NONE }
 };
 
@@ -1927,7 +1927,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     for(i = 0/*page->firstObject*/;
         i < page->objectsCount /*&& i < page->firstObject + page->numVisObjects*/; ++i)
     {
-        const mn_object_t* obj = &page->objects[i];
+        mn_object_t* obj = &page->objects[i];
         int height = 0;
 
         if(obj->type == MN_NONE || (obj->flags & MNF_HIDDEN) || !obj->drawer)
@@ -1958,8 +1958,33 @@ boolean Hu_MenuIsVisible(void)
     return (menuActive || mnAlpha > .0001f);
 }
 
+static void beginOverlayDraw(float darken)
+{
+#define SMALL_SCALE             .75f
+
+    DGL_SetNoMaterial();
+    DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+    DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
+    DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
+
+#undef SMALL_SCALE
+}
+
+static void endOverlayDraw(void)
+{
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+}
+
 void Hu_MenuDrawer(void)
 {
+#define OVERLAY_DARKEN          .7f
+
     boolean showFocusCursor = true;
     mn_object_t* focusObj;
 
@@ -1995,17 +2020,22 @@ void Hu_MenuDrawer(void)
         if(focusObj->type == MN_COLORBOX)
         {
             // Draw the color widget.
-            Draw_BeginZoom(0.5f, SCREENWIDTH/2, SCREENHEIGHT/2);
+            beginOverlayDraw(OVERLAY_DARKEN);
             MN_DrawPage(&ColorWidgetMenu, 1, true);
-            Draw_EndZoom();
+            endOverlayDraw();
         }
         else if(focusObj->type == MN_BINDINGS)
         {
             // Draw the control-grab visual.
             mndata_bindings_t* binds = (mndata_bindings_t*) focusObj->data;
-            M_ControlGrabDrawer(binds->text);
+
+            beginOverlayDraw(OVERLAY_DARKEN);
+            M_ControlGrabDrawer(binds->text, 1);
+            endOverlayDraw();
         }
     }
+
+#undef OVERLAY_DARKEN
 }
 
 void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
@@ -2084,7 +2114,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
         case MN_LIST:
         case MN_LISTINLINE: {
             mndata_list_t* list = obj->data;
-            if(obj->action == Hu_MenuCvarList)
+            if(obj->action == Hu_MenuCvarListInline)
             {
                 // Choose the correct list item based on the value of the cvar.
                 list->selection = MNList_FindItem(obj, Con_GetInteger(list->data));
@@ -2397,9 +2427,13 @@ int Hu_MenuPrivilegedResponder(event_t* ev)
 {
     if(Hu_MenuIsActive())
     {
-        if(M_ControlsPrivilegedResponder(ev))
+        mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
+        if(NULL != obj && !(obj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
         {
-            return true;
+            if(NULL != obj->privilegedResponder)
+            {
+                return obj->privilegedResponder(obj, ev);
+            }
         }
     }
     return false;
@@ -2410,17 +2444,12 @@ int Hu_MenuResponder(event_t* ev)
     if(Hu_MenuIsActive())
     {
         mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
-        if(NULL != obj)
-        switch(obj->type)
+        if(NULL != obj && !(obj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
         {
-        case MN_EDIT:
-            if(!(obj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
+            if(NULL != obj->responder)
             {
-                return MNEdit_EventResponder(obj, ev);
+                return obj->responder(obj, ev);
             }
-            break;
-        default:
-            break;
         }
     }
     return false; // Not eaten.
@@ -2564,8 +2593,9 @@ void M_DrawColorWidgetMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, rs.page_alpha);
-    DGL_SetNoMaterial();
+    //M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, rs.page_alpha);
+    //DGL_SetNoMaterial();
+
     DGL_DrawRect(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, colorWidgetColor[0], colorWidgetColor[1], colorWidgetColor[2], colorWidgetColor[3]);
     M_DrawBackgroundBox(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, false, BORDERDOWN, 1, 1, 1, rs.page_alpha);
 
@@ -2581,9 +2611,15 @@ void M_DrawColorWidgetMenu(mn_page_t* page, int x, int y)
  * to by the index (these match an index in the widgetColors array) into
  * the "hot" colorWidgetColor[] slots.
  */
-void Hu_MenuActivateColorWidget(mn_object_t* obj, int option)
+void Hu_MenuActivateColorWidget(mn_object_t* obj)
 {
-    mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
+    /// \fixme Find the objects by id.
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->data;
+    mndata_slider_t* sldrRed   = (mndata_slider_t*)ColorWidgetMenu.objects[1].data;
+    mndata_slider_t* sldrGreen = (mndata_slider_t*)ColorWidgetMenu.objects[3].data;
+    mndata_slider_t* sldrBlue  = (mndata_slider_t*)ColorWidgetMenu.objects[5].data;
+    mndata_slider_t* sldrAlpha = (mndata_slider_t*)ColorWidgetMenu.objects[7].data;
+    boolean rgbaMode = (NULL != cbox->a);
 
     MNPage_Initialize(&ColorWidgetMenu);
     ColorWidgetMenu.data = obj;
@@ -2591,21 +2627,23 @@ void Hu_MenuActivateColorWidget(mn_object_t* obj, int option)
     colorWidgetColor[CR] = *cbox->r;
     colorWidgetColor[CG] = *cbox->g;
     colorWidgetColor[CB] = *cbox->b;
+    colorWidgetColor[CA] = (rgbaMode? *cbox->a : 1.0f);
 
-    // RGB or RGBA mode?
-    if(NULL == cbox->a)
+    sldrRed->value   = *cbox->r;
+    sldrGreen->value = *cbox->g;
+    sldrBlue->value  = *cbox->b;
+    sldrAlpha->value = (rgbaMode? *cbox->a : 1.0f);
+
+    // Hide the alpha slider and label if not in rgbaMode.
+    if(rgbaMode)
     {
-        colorWidgetColor[CA] = 1.0f;
-        /// \fixme Find the objects by id.
-        ColorWidgetMenu.objects[6].flags |= MNF_HIDDEN;
-        ColorWidgetMenu.objects[7].flags |= MNF_HIDDEN;
+        ColorWidgetMenu.objects[6].flags &= ~MNF_HIDDEN;
+        ColorWidgetMenu.objects[7].flags &= ~MNF_HIDDEN;
     }
     else
     {
-        colorWidgetColor[CA] = *cbox->a;
-        /// \fixme Find the objects by id.
-        ColorWidgetMenu.objects[6].flags &= ~MNF_HIDDEN;
-        ColorWidgetMenu.objects[7].flags &= ~MNF_HIDDEN;
+        ColorWidgetMenu.objects[6].flags |= MNF_HIDDEN;
+        ColorWidgetMenu.objects[7].flags |= MNF_HIDDEN;
     }
 
     obj->flags &= ~MNF_INACTIVE; 
@@ -2615,11 +2653,11 @@ void Hu_MenuActivateColorWidget(mn_object_t* obj, int option)
 /**
  * User wants to load this game
  */
-void M_SelectLoad(mn_object_t* obj, int option)
+void M_SelectLoad(mn_object_t* obj)
 {
-    const int saveSlot = option;
+    const int saveSlot = obj->data2;
 
-    SaveMenu.focus = option;
+    SaveMenu.focus = saveSlot;
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
     G_LoadGame(saveSlot);
@@ -2911,7 +2949,7 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
     }
 }
 
-void MNText_Drawer(const mn_object_t* obj, int x, int y)
+void MNText_Drawer(mn_object_t* obj, int x, int y)
 {
     float color[4];
     int fontIdx = MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx);
@@ -2997,7 +3035,7 @@ static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, 
 #endif
 }
 
-void MNEdit_Drawer(const mn_object_t* obj, int x, int y)
+void MNEdit_Drawer(mn_object_t* obj, int x, int y)
 {
 #if __JDOOM__ || __JDOOM64__
 # define COLOR_IDX              (0)
@@ -3084,7 +3122,7 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y)
         color[CB] *= light;
 
         DGL_Color4fv(color);
-        M_DrawMenuText3(string, x, y, fontIdx, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+        M_DrawMenuText3(string, x, y, fontIdx, DTF_ALIGN_TOPLEFT);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3108,7 +3146,7 @@ int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             if(NULL != obj->action)
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                obj->action(obj, obj->data2);
+                obj->action(obj);
                 return true;
             }
         }
@@ -3150,7 +3188,7 @@ void MNEdit_SetText(mn_object_t* obj, const char* string)
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int MNEdit_EventResponder(mn_object_t* obj, const event_t* ev)
+int MNEdit_Responder(mn_object_t* obj, const event_t* ev)
 {
     assert(NULL != obj);
     {
@@ -3210,7 +3248,7 @@ void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height)
         *height = 14;
 }
 
-void MNList_Drawer(const mn_object_t* obj, int x, int y)
+void MNList_Drawer(mn_object_t* obj, int x, int y)
 {
     const mndata_list_t* list = (const mndata_list_t*) obj->data;
     float color[4];
@@ -3272,13 +3310,13 @@ int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             if(obj->flags & MNF_INACTIVE)
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                obj->action(obj, obj->data2);
+                obj->action(obj);
                 obj->flags &= ~MNF_INACTIVE;
             }
             else
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                obj->action(obj, obj->data2);
+                obj->action(obj);
             }
         }
         return true;
@@ -3301,7 +3339,7 @@ int MNList_FindItem(const mn_object_t* obj, int dataValue)
     }
 }
 
-void MNListInline_Drawer(const mn_object_t* obj, int x, int y)
+void MNListInline_Drawer(mn_object_t* obj, int x, int y)
 {
     const mndata_listinline_t* list = (const mndata_listinline_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
@@ -3321,36 +3359,48 @@ void MNListInline_Drawer(const mn_object_t* obj, int x, int y)
 int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
+    {
+    mndata_listinline_t* list = obj->data;
     switch(cmd)
     {
+    case MCMD_SELECT: // Treat as @c MCMD_NAV_RIGHT
     case MCMD_NAV_LEFT:
-        if(NULL != obj->action)
+    case MCMD_NAV_RIGHT: {
+        int oldsel = list->selection;
+
+        if(MCMD_NAV_LEFT == cmd)
+        {
+            if(list->selection > 0)
+                --list->selection;
+        }
+        else
+        {
+            if(list->selection < list->count - 1)
+                ++list->selection;
+        }
+
+        // Adjust the first visible item.
+        if(list->selection >= 0)
+        {
+            if(list->selection < list->first)
+                list->first = list->selection;
+            //if(list->selection > list->first + list->numvis - 1)
+            //    list->first = list->selection - list->numvis + 1;
+        }
+
+        // Call action function?
+        if(oldsel != list->selection && NULL != obj->action)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            obj->action(obj, LEFT_DIR);
-            return true;
+            obj->action(obj);
         }
-        break;
-    case MCMD_NAV_RIGHT:
-        if(NULL != obj->action)
-        {
-            S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            obj->action(obj, RIGHT_DIR);
-            return true;
-        }
-        break;
-    case MCMD_SELECT:
-        if(NULL != obj->action)
-        {
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
-            obj->action(obj, RIGHT_DIR);
-            return true;
-        }
-        break;
+        return true;
+      }
     default:
         break;
     }
     return false; // Not eaten.
+    }
 }
 
 void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -3391,7 +3441,7 @@ void MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height)
         *height = FR_TextFragmentHeight(item->text);
 }
 
-void MNButton_Drawer(const mn_object_t* obj, int x, int y)
+void MNButton_Drawer(mn_object_t* obj, int x, int y)
 {
     int dis = (obj->flags & MNF_DISABLED) != 0;
     int act = (obj->flags & MNF_INACTIVE) == 0;
@@ -3445,10 +3495,61 @@ void MNButton_Drawer(const mn_object_t* obj, int x, int y)
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
-    if(MCMD_SELECT == cmd && NULL != obj->action)
+    if(MCMD_SELECT == cmd)
     {
-        S_LocalSound(SFX_MENU_CYCLE, NULL);
-        obj->action(obj, obj->data2);
+        if(obj->flags & MNF_CLICKED)
+        {
+            //if((ev->device == IDEV_KEYBOARD || ev->device == IDEV_MOUSE) && IS_TOGGLE_UP(ev))
+            {
+                //UI_Capture(0);
+                obj->flags &= ~MNF_CLICKED;
+                //if(UI_MouseInside(obj) || ev->device == IDEV_KEYBOARD)
+                {
+                    // Activate?
+                    if(NULL != obj->action)
+                    {
+                        S_LocalSound(SFX_MENU_CYCLE, NULL);
+                        obj->action(obj);
+                    }
+                }
+            }
+        }
+        else /*if(IS_TOGGLE_DOWN(ev) &&
+                ((ev->device == IDEV_MOUSE && UI_MouseInside(obj)) ||
+                 (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))*/
+        {
+            if(obj->type == MN_BUTTON)
+            {
+                // Capture input.
+                //UI_Capture(obj);
+                obj->flags |= MNF_CLICKED;
+            }
+            else
+            {
+                // Stay-down buttons change state.
+                obj->flags ^= MNF_INACTIVE;
+
+                if(obj->data)
+                {
+                    void* data;
+
+                    if(obj->type == MN_BUTTON2EX)
+                        data = ((mndata_button_t*) obj->data)->data;
+                    else
+                        data = obj->data;
+
+                    *(char*) data = (obj->flags & MNF_INACTIVE) == 0;
+                }
+            }
+
+            // Call the action function.
+            if(NULL != obj->action)
+            {
+                S_LocalSound(SFX_MENU_CYCLE, NULL);
+                obj->action(obj);
+            }
+            //obj->timer = 0;
+        }
         return true;
     }
     return false; // Not eaten.
@@ -3490,25 +3591,21 @@ void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height)
     FR_TextFragmentDimensions(width, height, text);
 }
 
-void MNColorBox_Drawer(const mn_object_t* obj, int x, int y)
+void MNColorBox_Drawer(mn_object_t* obj, int x, int y)
 {
-#define WIDTH                   ((float)MNDATA_COLORBOX_WIDTH)
-#define HEIGHT                  ((float)MNDATA_COLORBOX_HEIGHT)
-
     const mndata_colorbox_t* cbox = (const mndata_colorbox_t*) obj->data;
+    const int width = MNDATA_COLORBOX_WIDTH;
+    const int height = MNDATA_COLORBOX_HEIGHT;
 
     x += MNDATA_COLORBOX_PADDING_X;
     y += MNDATA_COLORBOX_PADDING_Y;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    M_DrawBackgroundBox(x, y, WIDTH, HEIGHT, true, BORDERDOWN, 1, 1, 1, rs.page_alpha);
+    M_DrawBackgroundBox(x, y, width, height, true, BORDERDOWN, 1, 1, 1, rs.page_alpha);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRect(x, y, WIDTH, HEIGHT, *cbox->r, *cbox->g, *cbox->b, cbox->a? *cbox->a : 1 * rs.page_alpha);
-
-#undef WIDTH
-#undef HEIGHT
+    DGL_DrawRect(x, y, width, height, *cbox->r, *cbox->g, *cbox->b, cbox->a? *cbox->a : 1 * rs.page_alpha);
 }
 
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
@@ -3524,7 +3621,7 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             if(NULL != obj->action)
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                obj->action(obj, obj->data2);
+                obj->action(obj);
                 return true;
             }
         }
@@ -3571,7 +3668,7 @@ int MNSlider_ThumbPos(const mn_object_t* obj)
 #undef WIDTH
 }
 
-void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY)
+void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
 {
 #define OFFSET_X                (0)
 #if __JHERETIC__ || __JHEXEN__
@@ -3638,28 +3735,40 @@ void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY)
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
+    {
+    mndata_slider_t* sldr = (mndata_slider_t*)obj->data;
     switch(cmd)
     {
     case MCMD_NAV_LEFT:
-        if(NULL != obj->action)
+    case MCMD_NAV_RIGHT: {
+        float oldvalue = sldr->value;
+
+        if(MCMD_NAV_LEFT == cmd)
+        {
+            sldr->value -= sldr->step;
+            if(sldr->value < sldr->min)
+                sldr->value = sldr->min;
+        }
+        else
+        {
+            sldr->value += sldr->step;
+            if(sldr->value > sldr->max)
+                sldr->value = sldr->max;
+        }
+
+        // Did the value change?
+        if(oldvalue != sldr->value && NULL != obj->action)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            obj->action(obj, LEFT_DIR);
-            return true;
+            obj->action(obj);
         }
-        break;
-    case MCMD_NAV_RIGHT:
-        if(NULL != obj->action)
-        {
-            S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            obj->action(obj, RIGHT_DIR);
-            return true;
-        }
-        break;
+        return true;
+      }
     default:
         break;
     }
     return false; // Not eaten.
+    }
 }
 
 static __inline boolean valueIsOne(float value, boolean floatMode)
@@ -3784,7 +3893,7 @@ void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
     }
 }
 
-void MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y)
+void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
 {
     assert(NULL != obj);
     {
@@ -3841,7 +3950,7 @@ static void findSpriteForMobjType(mobjtype_t mobjType, spritetype_e* sprite, int
 }
 
 /// \todo We can do better - the engine should be able to render this visual for us.
-void MNMobjPreview_Drawer(const mn_object_t* obj, int inX, int inY)
+void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
 {
     assert(NULL != obj);
     {
@@ -3908,67 +4017,16 @@ void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height)
         *height = MNDATA_MOBJPREVIEW_HEIGHT;
 }
 
-void Hu_MenuCvarButton(mn_object_t* obj, int option)
+void Hu_MenuCvarButton(mn_object_t* obj)
 {
     cvarbutton_t* cb = obj->data;
+    cvartype_t varType = Con_GetVariableType(cb->cvarname);
     int value;
-
-    // Respond to input event.
-    if(obj->flags & MNF_CLICKED)
-    {
-        //if((ev->device == IDEV_KEYBOARD || ev->device == IDEV_MOUSE) && IS_TOGGLE_UP(ev))
-        {
-            //UI_Capture(0);
-            obj->flags &= ~MNF_CLICKED;
-            /*if(UI_MouseInside(obj) || ev->device == IDEV_KEYBOARD)
-            {
-                // Activate?
-                if(obj->action)
-                    obj->action(obj);
-            }
-            return true;*/
-        }
-    }
-    else /*if(IS_TOGGLE_DOWN(ev) &&
-            ((ev->device == IDEV_MOUSE && UI_MouseInside(obj)) ||
-             (ev->device == IDEV_KEYBOARD && IS_ACTKEY(ev->toggle.id))))*/
-    {
-        if(obj->type == MN_BUTTON)
-        {
-            // Capture input.
-            //UI_Capture(obj);
-            obj->flags |= MNF_CLICKED;
-        }
-        else
-        {
-            // Stay-down buttons change state.
-            obj->flags ^= MNF_INACTIVE;
-
-            if(obj->data)
-            {
-                void* data;
-
-                if(obj->type == MN_BUTTON2EX)
-                    data = ((mndata_button_t*) obj->data)->data;
-                else
-                    data = obj->data;
-
-                *(char*) data = (obj->flags & MNF_INACTIVE) == 0;
-            }
-
-            // Call the action function.
-            //if(obj->action)
-            //    obj->action(obj);
-        }
-        //obj->timer = 0;
-        //return true;
-    }
-    // End.
 
     //strcpy(obj->text, cb->active? cb->yes : cb->no);
     obj->text = cb->active? cb->yes : cb->no;
 
-    if(CVT_NULL == Con_GetVariableType(cb->cvarname))
+    if(CVT_NULL == varType)
         return;
 
     if(cb->mask)
@@ -3991,40 +4049,18 @@ void Hu_MenuCvarButton(mn_object_t* obj, int option)
     Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
 }
 
-void Hu_MenuCvarList(mn_object_t* obj, int option)
+void Hu_MenuCvarListInline(mn_object_t* obj)
 {
+    assert(NULL != obj);
+    {
     mndata_listinline_t* list = obj->data;
-    cvartype_t varType = Con_GetVariableType(list->data);
-    int oldsel = list->selection, value;
-
-    // Respond to input event.
-    if(0 == option)
-    {
-        if(list->selection > 0)
-            list->selection--;
-    }
-    else
-    {
-        if(list->selection < list->count - 1)
-            list->selection++;
-    }
-
-    // Adjust the first visible item.
-    if(list->selection >= 0)
-    {
-        if(list->selection < list->first)
-            list->first = list->selection;
-        //if(list->selection > list->first + list->numvis - 1)
-        //    list->first = list->selection - list->numvis + 1;
-    }
-    // Call action function?
-    //if(oldsel != list->selection && obj->action)
-    //    obj->action(obj);
-    // End
+    cvartype_t varType;
+    int value;
 
     if(list->selection < 0)
         return; // Hmm?
 
+    varType = Con_GetVariableType(list->data);
     if(CVT_NULL == varType)
         return;
 
@@ -4038,12 +4074,13 @@ void Hu_MenuCvarList(mn_object_t* obj, int option)
         Con_SetInteger2(list->data, (byte) value, SVF_WRITE_OVERRIDE);
         break;
     default:
-        Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
+        Con_Error("Hu_MenuCvarListInline: Unsupported variable type %i", (int)varType);
         break;
+    }
     }
 }
 
-void Hu_MenuSaveSlotEdit(mn_object_t* obj, int option)
+void Hu_MenuSaveSlotEdit(mn_object_t* obj)
 {
     assert(NULL != obj);
     {
@@ -4063,7 +4100,7 @@ void Hu_MenuSaveSlotEdit(mn_object_t* obj, int option)
     }
 }
 
-void Hu_MenuCvarEdit(mn_object_t* obj, int option)
+void Hu_MenuCvarEdit(mn_object_t* obj)
 {
     mndata_edit_t* edit = (mndata_edit_t*)obj->data;
     //cvartype_t varType;
@@ -4077,38 +4114,25 @@ void Hu_MenuCvarEdit(mn_object_t* obj, int option)
     Con_SetString2(edit->data1, edit->text, SVF_WRITE_OVERRIDE);*/
 }
 
-void Hu_MenuCvarSlider(mn_object_t* obj, int option)
+void Hu_MenuCvarSlider(mn_object_t* obj)
 {
+    assert(NULL != obj);
+    {
     mndata_slider_t* sldr = obj->data;
     cvartype_t varType = Con_GetVariableType(sldr->data1);
-    float value;
+    float value = sldr->value;
 
     if(CVT_NULL == varType)
         return;
-
-    // Respond to input event. 
-    if(0 == option)
-    {
-        sldr->value -= sldr->step;
-        if(sldr->value < sldr->min)
-            sldr->value = sldr->min;
-    }
-    else
-    {
-        sldr->value += sldr->step;
-        if(sldr->value > sldr->max)
-            sldr->value = sldr->max;
-    }
-    value = sldr->value;
-    // End.
 
     if(!sldr->floatMode)
     {
         value += (sldr->value < 0? -.5f : .5f);
     }
 
-    if(varType == CVT_FLOAT)
+    switch(varType)
     {
+    case CVT_FLOAT:
         if(sldr->step >= .01f)
         {
             Con_SetFloat2(sldr->data1, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
@@ -4117,14 +4141,16 @@ void Hu_MenuCvarSlider(mn_object_t* obj, int option)
         {
             Con_SetFloat2(sldr->data1, value, SVF_WRITE_OVERRIDE);
         }
-    }
-    else if(varType == CVT_INT)
-    {
+        break;
+    case CVT_INT:
         Con_SetInteger2(sldr->data1, (int) value, SVF_WRITE_OVERRIDE);
-    }
-    else if(varType == CVT_BYTE)
-    {
+        break;
+    case CVT_BYTE:
         Con_SetInteger2(sldr->data1, (byte) value, SVF_WRITE_OVERRIDE);
+        break;
+    default:
+        break;
+    }
     }
 }
 
@@ -4157,7 +4183,7 @@ void M_DrawSaveMenu(mn_page_t* page, int x, int y)
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-void M_OpenHelp(mn_object_t* obj, int option)
+void M_OpenHelp(mn_object_t* obj)
 {
     G_StartHelp();
 }
@@ -4294,57 +4320,25 @@ void M_DrawPlayerSetupMenu(mn_page_t* page, int x, int y)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void M_SetMenu(mn_object_t* obj, int option)
+void M_SetMenu(mn_object_t* obj)
 {
     assert(NULL != obj);
     S_LocalSound(SFX_MENU_ACCEPT, NULL);
     Hu_MenuSetActivePage((mn_page_t*)obj->data);
 }
 
-void Hu_MenuColorWidgetSlider(mn_object_t* obj, int option)
+void Hu_MenuUpdateColorWidgetColor(mn_object_t* obj)
 {
     assert(NULL != obj);
     {
     mndata_slider_t* sldr = (mndata_slider_t*)obj->data;
-    float value;
-
-    // Respond to input event. 
-    if(0 == option)
-    {
-        sldr->value -= sldr->step;
-        if(sldr->value < sldr->min)
-            sldr->value = sldr->min;
-    }
-    else
-    {
-        sldr->value += sldr->step;
-        if(sldr->value > sldr->max)
-            sldr->value = sldr->max;
-    }
-    value = sldr->value;
-    // End.
-
-    /*if(sldr->floatMode)
-    {
-        if(sldr->step >= .01f)
-        {
-            value = (int) (100 * value) / 100.0f;
-        }
-        else
-        {
-            value = value;
-        }
-    }
-    else
-    {
-        value = (int) (value + (sldr->value < 0? -.5f : .5f));
-    }*/
+    colorWidgetColor[obj->data2] = sldr->value;
     }
 }
 
-void M_WeaponOrder(mn_object_t* obj, int option)
+void M_WeaponOrder(mn_object_t* obj)
 {
-    int         choice = option >> NUM_WEAPON_TYPES;
+    /*int         choice = option >> NUM_WEAPON_TYPES;
     int         temp;
 
     if(option & RIGHT_DIR)
@@ -4364,10 +4358,10 @@ void M_WeaponOrder(mn_object_t* obj, int option)
             cfg.weaponOrder[choice] = cfg.weaponOrder[choice-1];
             cfg.weaponOrder[choice-1] = temp;
         }
-    }
+    }*/
 }
 
-void M_SelectSingleplayer(mn_object_t* obj, int option)
+void M_SelectSingleplayer(mn_object_t* obj)
 {
     if(IS_NETGAME)
     {
@@ -4389,7 +4383,7 @@ void M_SelectSingleplayer(mn_object_t* obj, int option)
 #endif
 }
 
-void M_SelectMultiplayer(mn_object_t* obj, int option)
+void M_SelectMultiplayer(mn_object_t* obj)
 {
     // Show the appropriate menu.
     if(IS_NETGAME)
@@ -4404,7 +4398,7 @@ void M_SelectMultiplayer(mn_object_t* obj, int option)
     Hu_MenuSetActivePage(&MultiplayerMenu);
 }
 
-void M_OpenMultiplayerClientMenu(mn_object_t* obj, int option)
+void M_OpenMultiplayerClientMenu(mn_object_t* obj)
 {
     if(IS_NETGAME)
     {
@@ -4416,7 +4410,7 @@ void M_OpenMultiplayerClientMenu(mn_object_t* obj, int option)
     DD_Execute(false, "net setup client");
 }
 
-void M_OpenPlayerSetupMenu(mn_object_t* obj, int option)
+void M_OpenPlayerSetupMenu(mn_object_t* obj)
 {
     /// \fixme Find objects by id.
     mndata_mobjpreview_t* mop = &mop_player_preview;
@@ -4444,46 +4438,39 @@ void M_OpenPlayerSetupMenu(mn_object_t* obj, int option)
 }
 
 #if __JHEXEN__
-void M_ChangePlayerClass(mn_object_t* obj, int option)
+void M_ChangePlayerClass(mn_object_t* obj)
 {
-    int *val = &list_player_class.selection;
-    if(option == RIGHT_DIR)
+    assert(NULL != obj);
     {
-        if(*val < 2)
-            ++(*val);
-    }
-    else if(*val > 0)
-    {
-        --(*val);
-    }
+    mndata_listinline_t* lil = (mndata_listinline_t*) obj->data;
+    mndata_mobjpreview_t* mop;
+
+    if(lil->selection < 0) return;
 
     /// \fixme Find the object by id.
-    { mndata_mobjpreview_t* mop = &mop_player_preview;
-    mop->mobjType = PCLASS_INFO(*val)->mobjType;
-    mop->plrClass = *val;
+    mop = &mop_player_preview;
+    mop->mobjType = PCLASS_INFO(lil->selection)->mobjType;
+    mop->plrClass = lil->selection;
     }
 }
 #endif
 
-void M_ChangePlayerColor(mn_object_t* obj, int option)
+void M_ChangePlayerColor(mn_object_t* obj)
 {
-    int *val = &list_player_color.selection;
-    if(option == RIGHT_DIR)
+    assert(NULL != obj);
     {
-        if(*val < NUMPLAYERCOLORS)
-            ++(*val);
-    }
-    else if(*val > 0)
-    {
-        --(*val);
-    }
+    mndata_listinline_t* lil = (mndata_listinline_t*) obj->data;
+    mndata_mobjpreview_t* mop;
+
+    if(lil->selection < 0) return;
 
     /// \fixme Find the object by id.
-    { mndata_mobjpreview_t* mop = &mop_player_preview;
-    mop->tMap = *val;}
+    mop = &mop_player_preview;
+    mop->tMap = lil->selection;
+    }
 }
 
-void M_ChangePlayerName(mn_object_t* obj, int option)
+void M_ChangePlayerName(mn_object_t* obj)
 {
     mndata_edit_t* edit = (mndata_edit_t*)obj->data;
     memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
@@ -4491,7 +4478,7 @@ void M_ChangePlayerName(mn_object_t* obj, int option)
     obj->flags &= ~MNF_INACTIVE;
 }
 
-void M_AcceptPlayerSetup(mn_object_t* obj, int option)
+void M_AcceptPlayerSetup(mn_object_t* obj)
 {
     char buf[300];
 
@@ -4522,17 +4509,17 @@ void M_AcceptPlayerSetup(mn_object_t* obj, int option)
     Hu_MenuSetActivePage(&MultiplayerMenu);
 }
 
-void M_SelectQuitGame(mn_object_t* obj, int option)
+void M_SelectQuitGame(mn_object_t* obj)
 {
     G_QuitGame();
 }
 
-void M_SelectEndGame(mn_object_t* obj, int option)
+void M_SelectEndGame(mn_object_t* obj)
 {
     G_EndGame();
 }
 
-void M_OpenLoadMenu(mn_object_t* obj, int option)
+void M_OpenLoadMenu(mn_object_t* obj)
 {
     if(!Get(DD_DEDICATED))
     {
@@ -4547,7 +4534,7 @@ void M_OpenLoadMenu(mn_object_t* obj, int option)
     Hu_MenuSetActivePage(&LoadMenu);
 }
 
-void M_OpenSaveMenu(mn_object_t* obj, int option)
+void M_OpenSaveMenu(mn_object_t* obj)
 {
     player_t* player = &players[CONSOLEPLAYER];
 
@@ -4579,13 +4566,14 @@ void M_OpenSaveMenu(mn_object_t* obj, int option)
     Hu_MenuSetActivePage(&SaveMenu);
 }
 
-void M_SelectPlayerClass(mn_object_t* obj, int option)
+void M_SelectPlayerClass(mn_object_t* obj)
 {
 #if __JHEXEN__
+    int option = obj->data2;
+
     if(IS_NETGAME)
     {
-        P_SetMessage(&players[CONSOLEPLAYER],
-                     "YOU CAN'T START A NEW GAME FROM WITHIN A NETGAME!", false);
+        P_SetMessage(&players[CONSOLEPLAYER], "You can't start a new game from within a netgame!", false);
         return;
     }
 
@@ -4633,17 +4621,17 @@ void M_SelectPlayerClass(mn_object_t* obj, int option)
 }
 
 #if __JDOOM__ || __JHERETIC__
-void M_SelectEpisode(mn_object_t* obj, int option)
+void M_SelectEpisode(mn_object_t* obj)
 {
 #if __JHERETIC__
-    if(gameMode == heretic_shareware && option)
+    if(gameMode == heretic_shareware && obj->data2)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         G_StartHelp();
         return;
     }
 #else
-    if(gameMode == doom_shareware && option)
+    if(gameMode == doom_shareware && obj->data2)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         G_StartHelp();
@@ -4651,7 +4639,7 @@ void M_SelectEpisode(mn_object_t* obj, int option)
     }
 #endif
 
-    epi = option;
+    epi = obj->data2;
     Hu_MenuSetActivePage(&SkillMenu);
 }
 #endif
@@ -4669,15 +4657,19 @@ int M_VerifyNightmare(msgresponse_t response, void* context)
 }
 #endif
 
-void M_SelectSkillMode(mn_object_t* obj, int option)
+void M_SelectSkillMode(mn_object_t* obj)
 {
+    assert(NULL != obj);
+    {
+    skillmode_t skillmode = (skillmode_t)obj->data2;
+
 #if __JHEXEN__
     Hu_MenuCommand(MCMD_CLOSEFAST);
     cfg.playerClass[CONSOLEPLAYER] = mnPlrClass;
-    G_DeferredNewGame(option);
+    G_DeferredNewGame(skillmode);
 #else
 # if __JDOOM__
-    if(option == SM_NIGHTMARE)
+    if(SM_NIGHTMARE == obj->data2)
     {
         Hu_MsgStart(MSG_YESNO, NIGHTMARE, M_VerifyNightmare, NULL);
         return;
@@ -4687,14 +4679,15 @@ void M_SelectSkillMode(mn_object_t* obj, int option)
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
 # if __JDOOM64__
-    G_DeferedInitNew(option, 0, 0);
+    G_DeferedInitNew(skillmode, 0, 0);
 # else
-    G_DeferedInitNew(option, epi, 0);
+    G_DeferedInitNew(skillmode, epi, 0);
 # endif
 #endif
+    }
 }
 
-void M_OpenControlPanel(mn_object_t* obj, int option)
+void M_OpenControlPanel(mn_object_t* obj)
 {
 #define NUM_PANEL_NAMES 3
     static const char* panelNames[] = {
@@ -4702,7 +4695,7 @@ void M_OpenControlPanel(mn_object_t* obj, int option)
         "panel audio",
         "panel input"
     };
-    int idx = option;
+    int idx = obj->data2;
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
         idx = 0;
 

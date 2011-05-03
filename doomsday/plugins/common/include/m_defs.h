@@ -97,10 +97,12 @@ typedef struct mn_object_s {
     int pageFontIdx;
     int pageColorIdx;
     patchid_t* patch;
-    void (*drawer) (const struct mn_object_s* obj, int x, int y);
-    int (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
     void (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
-    void (*action) (struct mn_object_s* obj, int option);
+    void (*drawer) (struct mn_object_s* obj, int x, int y);
+    void (*action) (struct mn_object_s* obj);
+    int (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
+    int (*responder) (struct mn_object_s* obj, event_t* ev);
+    int (*privilegedResponder) (struct mn_object_s* obj, event_t* ev);
     void* data; // Pointer to extra data.
     int data2; // Extra numerical data.
     //int timer;
@@ -176,7 +178,7 @@ int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 /**
  * Text objects.
  */
-void MNText_Drawer(const mn_object_t* obj, int x, int y);
+void MNText_Drawer(mn_object_t* obj, int x, int y);
 void MNText_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 /**
@@ -187,7 +189,7 @@ typedef struct mndata_button_s {
     const char* yes, *no;
 } mndata_button_t;
 
-void MNButton_Drawer(const mn_object_t* obj, int x, int y);
+void MNButton_Drawer(mn_object_t* obj, int x, int y);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height);
 
@@ -206,9 +208,9 @@ typedef struct mndata_edit_s {
     void (*onChange) (mn_object_t* obj);
 } mndata_edit_t;
 
-void MNEdit_Drawer(const mn_object_t* obj, int x, int y);
+void MNEdit_Drawer(mn_object_t* obj, int x, int y);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNEdit_EventResponder(mn_object_t* obj, const event_t* ev);
+int MNEdit_Responder(mn_object_t* obj, const event_t* ev);
 void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
 void MNEdit_SetText(mn_object_t* obj, const char* string);
 
@@ -231,14 +233,14 @@ typedef struct mndata_list_s {
     int first; // First visible item.
 } mndata_list_t;
 
-void MNList_Drawer(const mn_object_t* obj, int x, int y);
+void MNList_Drawer(mn_object_t* obj, int x, int y);
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
 int MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 typedef mndata_list_t mndata_listinline_t;
 
-void MNListInline_Drawer(const mn_object_t* obj, int x, int y);
+void MNListInline_Drawer(mn_object_t* obj, int x, int y);
 int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height);
 
@@ -254,7 +256,7 @@ typedef struct mndata_colorbox_s {
     float* r, *g, *b, *a;
 } mndata_colorbox_t;
 
-void MNColorBox_Drawer(const mn_object_t* obj, int x, int y);
+void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
 
@@ -282,8 +284,8 @@ typedef struct mndata_slider_s {
     void* data5;
 } mndata_slider_t;
 
-void MNSlider_Drawer(const mn_object_t* obj, int x, int y);
-void MNSlider_TextualValueDrawer(const mn_object_t* obj, int x, int y);
+void MNSlider_Drawer(mn_object_t* obj, int x, int y);
+void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
 void MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height);
@@ -292,6 +294,16 @@ int MNSlider_ThumbPos(const mn_object_t* obj);
 /**
  * Bindings visualizer.
  */
+
+// Binding iteration flags
+#define MIBF_IGNORE_REPEATS     0x1
+
+typedef enum {
+    MIBT_KEY,
+    MIBT_MOUSE,
+    MIBT_JOY
+} bindingitertype_t;
+
 typedef struct mndata_bindings_s {
     const char* text;
     const char* bindContext;
@@ -300,9 +312,12 @@ typedef struct mndata_bindings_s {
     int flags;
 } mndata_bindings_t;
 
-void MNBindings_Drawer(const mn_object_t* obj, int x, int y);
+void MNBindings_Drawer(mn_object_t* obj, int x, int y);
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
+int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
 void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNBindings_IterateBinds(mn_object_t* obj, const char* bindings, int flags, void* paramaters,
+    void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void* paramaters));
 
 /**
  * Mobj preview visual.
@@ -319,7 +334,7 @@ typedef struct mndata_mobjpreview_s {
 #endif
 } mndata_mobjpreview_t;
 
-void MNMobjPreview_Drawer(const mn_object_t* obj, int x, int y);
+void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
 void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
 
 #define MENU_CURSOR_FRAMECOUNT      2

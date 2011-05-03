@@ -59,16 +59,7 @@
 
 #define SMALL_SCALE             .75f
 
-// Binding iteration flags for MN_IterateBindings().
-#define MIBF_IGNORE_REPEATS     0x1
-
 // TYPES -------------------------------------------------------------------
-
-typedef enum {
-    MIBT_KEY,
-    MIBT_MOUSE,
-    MIBT_JOY
-} bindingitertype_t;
 
 typedef struct bindingdrawerdata_s {
     int             x;
@@ -80,11 +71,9 @@ typedef struct bindingdrawerdata_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void M_DrawControlsMenu(const mn_page_t* page, int x, int y);
+void M_DrawControlsMenu(mn_page_t* page, int x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void MN_IterateBindings(mndata_bindings_t* obj, const char* bindings, int flags, void* data, void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void *data));
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -307,29 +296,11 @@ static void deleteBinding(bindingitertype_t type, int bid, const char* name, boo
     DD_Executef(true, "delbind %i", bid);
 }
 
-void Hu_MenuBindings(mn_object_t* obj, int option)
+void Hu_MenuActivateBindingsGrab(mn_object_t* obj)
 {
-    mndata_bindings_t* binds = obj->data;
-    char buf[1024];
-
-    if(option == -1)
-    {
-        if(binds->controlName)
-        {
-            B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
-        }
-        else
-        {
-            B_BindingsForCommand(binds->command, buf, sizeof(buf));
-        }
-
-        MN_IterateBindings(binds, buf, 0, NULL, deleteBinding);
-    }
-    else
-    {
-        obj->flags &= ~MNF_INACTIVE; // Start grabbing for this control.
-        DD_SetInteger(DD_SYMBOLIC_ECHO, true);
-    }
+    assert(NULL != obj);
+    obj->flags &= ~MNF_INACTIVE; // Start grabbing for this control.
+    DD_SetInteger(DD_SYMBOLIC_ECHO, true);
 }
 
 void M_InitControlsMenu(void)
@@ -388,8 +359,9 @@ void M_InitControlsMenu(void)
             visObj->flags = MNF_INACTIVE;
             visObj->drawer = MNBindings_Drawer;
             visObj->cmdResponder = MNBindings_CommandResponder;
+            visObj->privilegedResponder = MNBindings_PrivilegedResponder;
             visObj->dimensions = MNBindings_Dimensions;
-            visObj->action = Hu_MenuBindings;
+            visObj->action = Hu_MenuActivateBindingsGrab;
             visObj->data = binds;
 
             if(!ControlsMenu.focus)
@@ -493,9 +465,12 @@ static const char* findInString(const char* str, const char* token, int n)
     return NULL;
 }
 
-void MN_IterateBindings(mndata_bindings_t* binds, const char* bindings, int flags, void* data,
+void MNBindings_IterateBinds(mn_object_t* obj, const char* bindings, int flags, void* data,
     void (*callback)(bindingitertype_t type, int bid, const char* ev, boolean isInverse, void *data))
 {
+    assert(NULL != obj);
+    {
+    mndata_bindings_t* binds = (mndata_bindings_t*)obj->data;
     const char* ptr = strchr(bindings, ':');
     const char* begin, *end, *end2, *k, *bindingStart, *bindingEnd;
     char buf[80], *b;
@@ -589,10 +564,13 @@ void MN_IterateBindings(mndata_bindings_t* binds, const char* bindings, int flag
 
         ptr = strchr(ptr, ':');
     }
+    }
 }
 
-void MNBindings_Drawer(const mn_object_t* obj, int x, int y)
+void MNBindings_Drawer(mn_object_t* obj, int x, int y)
 {
+    assert(NULL != obj);
+    {
     mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
     bindingdrawerdata_t draw;
     char buf[1024];
@@ -608,27 +586,38 @@ void MNBindings_Drawer(const mn_object_t* obj, int x, int y)
     draw.x = x;
     draw.y = y;
     draw.alpha = mnRendState->page_alpha;
-    MN_IterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+    MNBindings_IterateBinds(obj, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+    }
 }
 
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
+    {
+    mndata_bindings_t* binds = (mndata_bindings_t*)obj->data;
     switch(cmd)
     {
-    case MCMD_DELETE:
-        if(NULL != obj->action)
+    case MCMD_DELETE: {
+        char buf[1024];
+
+        S_LocalSound(SFX_MENU_CANCEL, NULL);
+        if(binds->controlName)
         {
-            S_LocalSound(SFX_MENU_CANCEL, NULL);
-            obj->action(obj, -1);
-            return true;
+            B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
         }
-        break;
+        else
+        {
+            B_BindingsForCommand(binds->command, buf, sizeof(buf));
+        }
+
+        MNBindings_IterateBinds(obj, buf, 0, NULL, deleteBinding);
+        return true;
+      }
     case MCMD_SELECT:
         if(NULL != obj->action)
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            obj->action(obj, obj->data2);
+            obj->action(obj);
             return true;
         }
         break;
@@ -636,6 +625,7 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         break;
     }
     return false; // Not eaten.
+    }
 }
 
 void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -650,7 +640,7 @@ void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height)
 /**
  * M_DrawControlsMenu
  */
-void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
+void M_DrawControlsMenu(mn_page_t* page, int x, int y)
 {
 #if __JDOOM__ || __JDOOM64__
     char buf[1024];
@@ -678,39 +668,26 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void M_ControlGrabDrawer(const char* niceName)
+void M_ControlGrabDrawer(const char* niceName, float alpha)
 {
-    DGL_SetNoMaterial();
-    DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, .7f);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-    DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
-    DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], 1);
+    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], alpha);
     M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
-    DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], 1);
+    DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], alpha);
     M_DrawMenuText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
 }
 
-int M_ControlsPrivilegedResponder(event_t* ev)
+int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 {
-    mn_object_t* grabbing = MNPage_FocusObject(Hu_MenuActivePage());
+    assert(NULL != obj && NULL != ev);
     // We're interested in key or button down events.
-    if(grabbing && grabbing->type == MN_BINDINGS && ev->type == EV_SYMBOLIC)
+    if(ev->type == EV_SYMBOLIC)
     {
-        mndata_bindings_t* binds = (mndata_bindings_t*) grabbing->data;
+        mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
         const char* bindContext = "game";
         const char* symbol = 0;
         char cmd[512];
@@ -807,7 +784,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
             sprintf(cmd, "bindcontrol {%s} {%s%s}", binds->controlName, temp3, extra);
         }
 
-        VERBOSE( Con_Message("M_ControlsPrivilegedResponder: %s\n", cmd) );
+        VERBOSE( Con_Message("MNBindings_PrivilegedResponder: %s\n", cmd) );
         DD_Execute(true, cmd);
 
         /*
@@ -839,7 +816,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
          */
 
         // We've finished the grab.
-        grabbing->flags |= MNF_INACTIVE;
+        obj->flags |= MNF_INACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;

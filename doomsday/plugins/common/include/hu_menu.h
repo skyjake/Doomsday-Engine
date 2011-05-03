@@ -174,16 +174,16 @@ void Hu_MenuSetActivePage(mn_page_t* page);
 
 void Hu_MenuUpdateGameSaveWidgets(void);
 
-void Hu_MenuCvarButton(mn_object_t* obj, int option);
-void Hu_MenuCvarList(mn_object_t* obj, int option);
-void Hu_MenuCvarSlider(mn_object_t* obj, int option);
-void Hu_MenuCvarEdit(mn_object_t* obj, int option);
+void Hu_MenuCvarButton(mn_object_t* obj);
+void Hu_MenuCvarListInline(mn_object_t* obj);
+void Hu_MenuCvarSlider(mn_object_t* obj);
+void Hu_MenuCvarEdit(mn_object_t* obj);
 
-void Hu_MenuSaveSlotEdit(mn_object_t* obj, int option);
-void Hu_MenuBindings(mn_object_t* obj, int option);
+void Hu_MenuSaveSlotEdit(mn_object_t* obj);
+void Hu_MenuBindings(mn_object_t* obj);
 
-void Hu_MenuActivateColorWidget(mn_object_t* obj, int option);
-void Hu_MenuColorWidgetSlider(mn_object_t* obj, int option);
+void Hu_MenuActivateColorWidget(mn_object_t* obj);
+void Hu_MenuUpdateColorWidgetColor(mn_object_t* obj);
 
 void M_DrawMenuText(const char* string, int x, int y);
 void M_DrawMenuText2(const char* string, int x, int y, int fontIdx);

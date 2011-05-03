@@ -93,8 +93,6 @@ typedef enum joyaxis_e {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-int M_ControlsPrivilegedResponder(event_t* ev);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(DefaultGameBinds);

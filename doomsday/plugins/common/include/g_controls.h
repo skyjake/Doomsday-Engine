@@ -1,10 +1,10 @@
-/**\file
+/**\file g_controls.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * g_controls.h: Common code for game controls
+ * Common code for game controls
  */
 
-#ifndef __COMMON_CONTROLS_H__
-#define __COMMON_CONTROLS_H__
+#ifndef LIBCOMMON_CONTROLS_H
+#define LIBCOMMON_CONTROLS_H
 
 /*
 // Game registered bindContexts
@@ -160,6 +160,4 @@ void        G_ControlReset(int pnum);
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
 
-int M_ControlsPrivilegedResponder(event_t* ev);
-
-#endif
+#endif /* LIBCOMMON_CONTROLS_H */
