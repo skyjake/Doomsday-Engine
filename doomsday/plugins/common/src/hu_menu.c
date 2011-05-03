@@ -275,7 +275,6 @@ const mn_rendstate_t* mnRendState = &rs;
 static mn_page_t* menuActivePage = NULL;
 static boolean menuActive = false;
 
-static mn_page_t* mnCurrentPage = NULL;
 static float mnAlpha = 0; // Alpha level for the entire menu.
 static float mnTargetAlpha = 0; // Target alpha for the entire UI.
 
@@ -527,16 +526,16 @@ mn_page_t SaveMenu = {
 
 #if __JHEXEN__
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
-    { MN_BUTTON,    0,  0,  "",     MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT, "", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
     { MN_NONE }
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 5, 2, 0,
+    SkillMenuObjects, 5, -1, 0,
     { 120, 44 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &PlayerClassMenu,
@@ -544,16 +543,16 @@ mn_page_t SkillMenu = {
 };
 #elif __JHERETIC__
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "W",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "Y",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,  "B",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "S",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
-    { MN_BUTTON,    0,  0,  "P",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  0,  "W",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "Y",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT, "B", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "S",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "P",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
     { MN_NONE }
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 5, 2, 0,
+    SkillMenuObjects, 5, -1, 0,
     { 38, 30 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &EpisodeMenu,
@@ -561,14 +560,14 @@ mn_page_t SkillMenu = {
 };
 #elif __JDOOM64__
 static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,  "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "I",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "H",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT, "H", MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "U",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
     { MN_NONE }
 };
 static mn_page_t SkillMenu = {
-    SkillMenuObjects, 4, 2, 0,
+    SkillMenuObjects, 4, -1, 0,
     { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &GameTypeMenu,
@@ -578,14 +577,14 @@ static mn_page_t SkillMenu = {
 static mn_object_t SkillMenuObjects[] = {
     { MN_BUTTON,    0,  0,              "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
     { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  MNF_DEFAULT,    "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
     { MN_BUTTON,    0,  0,              "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
     { MN_BUTTON,    0,  MNF_NO_ALTTEXT, "N",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[4], MNButton_Dimensions, MNButton_Drawer, M_SelectSkillMode, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
     { MN_NONE }
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 5, 2, 0,
+    SkillMenuObjects, 5, -1, 0,
     { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &EpisodeMenu,
@@ -1055,7 +1054,6 @@ mn_page_t GameplayMenu = {
 #endif
 };
 #endif
-
 
 mn_object_t MultiplayerMenuObjects[] = {
     { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenPlayerSetupMenu, MNButton_CommandResponder },
@@ -1705,16 +1703,6 @@ static void calcNumVisObjects(mn_page_t* page)
     page->firstObject = MAX_OF(0, page->firstObject);*/
 }
 
-mn_page_t* MN_CurrentPage(void)
-{
-    return mnCurrentPage;
-}
-
-mn_page_t* MN_SetCurrentPage(mn_page_t* page)
-{
-    return (mnCurrentPage = page);
-}
-
 void MNPage_Initialize(mn_page_t* page)
 {
     assert(NULL != page);
@@ -1802,20 +1790,34 @@ void MNPage_Initialize(mn_page_t* page)
     }}
 
     // If we haven't yet visited this page and no initial focus object is
-    // sepecified then find the first focusable object and select it.
+    // specified then find the first focusable object and select it.
     if(0 > page->focus)
     {
         uint i;
+        // First look for a default focus object. There should only be one
+        // but find the last with this flag...
         for(i = 0; i < page->objectsCount; ++i)
         {
-            const mn_object_t* obj = &page->objects[i];
-            if(!(obj->flags & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)))
+            mn_object_t* obj = &page->objects[i];
+            obj->flags &= ~MNF_FOCUS;
+            if((obj->flags & MNF_DEFAULT) && !(obj->flags & (MNF_DISABLED|MNF_NO_FOCUS)))
+                page->focus = i;
+        }
+
+        // No default focus? Find the first focusable object.
+        if(0 > page->focus)
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* obj = &page->objects[i];
+            if(!(obj->flags & (MNF_DISABLED | MNF_NO_FOCUS)))
             {
+                obj->flags |= MNF_FOCUS;
                 page->focus = i;
                 break;
             }
         }
-        if(i == page->objectsCount)
+
+        if(0 > page->focus)
         {
 #if _DEBUG
             Con_Message("Warning:MNPage::Initialize: No focusable object on page.");
@@ -1897,19 +1899,24 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 {
     assert(NULL != page);
     {
-    mn_object_t* focusObj;
     int pos[2] = { 0, 0 };
     uint i;
 
     if(!(alpha > .0001f)) return;
 
-    page = MN_SetCurrentPage(page);
-    focusObj = MNPage_FocusObject(page);
-
     // Configure default render state:
-    rs.page_alpha = alpha;
-    rs.text_glitter = cfg.menuTextGlitter;
-    rs.text_shadow = cfg.menuShadow;
+    rs.pageAlpha = alpha;
+    rs.textGlitter = cfg.menuTextGlitter;
+    rs.textShadow = cfg.menuShadow;
+    for(i = 0; i < MENU_FONT_COUNT; ++i)
+    {
+        rs.textFonts[i] = MNPage_PredefinedFont(page, i);
+    }
+    for(i = 0; i < MENU_COLOR_COUNT; ++i)
+    {
+        MNPage_PredefinedColor(page, i, rs.textColors[i]);
+        rs.textColors[i][CA] = alpha; // For convenience.
+    }
 
     /*if(page->unscaled.numVisObjects)
     {
@@ -1938,10 +1945,10 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
         if(obj->dimensions)
         {
-            obj->dimensions(obj, NULL, &height);
+            obj->dimensions(obj, page, NULL, &height);
         }
 
-        if(showFocusCursor && obj == focusObj)
+        if(showFocusCursor && (obj->flags & MNF_FOCUS))
         {
             drawFocusCursor(pos[VX], pos[VY], cursorAnimFrame, height, cursorAngle, alpha);
         }
@@ -2056,19 +2063,23 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
     }
 
     // Don't land on empty objects.
-    while((page->objects[index].flags & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)) && (index > 0))
+    while((page->objects[index].flags & (MNF_DISABLED | MNF_NO_FOCUS)) && (index > 0))
         index--;
-    while((page->objects[index].flags & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)) && index < page->objectsCount)
+    while((page->objects[index].flags & (MNF_DISABLED | MNF_NO_FOCUS)) && index < page->objectsCount)
         index++;
 
     if(index != oldIndex)
     {
+        uint i;
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            page->objects[i].flags &= ~MNF_FOCUS;
+        }
+        page->objects[index].flags |= MNF_FOCUS;
         page->focus = index;
-        // Make a sound, too.
+        calcNumVisObjects(page);
         S_LocalSound(SFX_MENU_NAV_RIGHT, NULL);
     }
-
-    calcNumVisObjects(page);
     }
 #endif
 }
@@ -2257,7 +2268,9 @@ static void fallbackCommandResponder(mn_page_t* page, menucommand_e cmd)
 
         if(hasFocus != page->focus)
         {
+            page->objects[page->focus].flags &= ~MNF_FOCUS;
             page->focus = hasFocus;
+            page->objects[page->focus].flags |= MNF_FOCUS;
             flashCounter = 0;
             S_LocalSound(cmd == MCMD_NAV_UP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
             calcNumVisObjects(page);
@@ -2420,7 +2433,7 @@ int Hu_MenuPrivilegedResponder(event_t* ev)
     if(Hu_MenuIsActive())
     {
         mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
-        if(NULL != obj && !(obj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
+        if(NULL != obj && !(obj->flags & (MNF_DISABLED | MNF_INACTIVE)))
         {
             if(NULL != obj->privilegedResponder)
             {
@@ -2436,7 +2449,7 @@ int Hu_MenuResponder(event_t* ev)
     if(Hu_MenuIsActive())
     {
         mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
-        if(NULL != obj && !(obj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
+        if(NULL != obj && !(obj->flags & (MNF_DISABLED | MNF_INACTIVE)))
         {
             if(NULL != obj->responder)
             {
@@ -2452,12 +2465,10 @@ int Hu_MenuFallbackResponder(event_t* ev)
 #if 0
     /// \fixme This can no longer work this way. A shortcut should be defined in mn_object_t
     mn_page_t* page;
-    mn_object_t* focusObj;
 
     if(!Hu_MenuIsActive()) return false;
 
     page = Hu_MenuActivePage();
-    focusObj = MNPage_FocusObject(page);
 
     /**
      * Handle navigation by "hotkeys", if enabled.
@@ -2516,7 +2527,9 @@ int Hu_MenuFallbackResponder(event_t* ev)
 
                 if(ch && *ch == cand)
                 {
+                    page->objects[page->focus].flags &= ~MNF_FOCUS;
                     page->focus = i;
+                    page->objects[page->focus].flags |= MNF_FOCUS;
                     return true;
                 }
             }
@@ -2544,12 +2557,12 @@ void M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags,
 
 void M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength)
 {
-    M_DrawMenuText5(string, x, y, fontIdx, flags, glitterStrength, rs.text_shadow);
+    M_DrawMenuText5(string, x, y, fontIdx, flags, glitterStrength, rs.textShadow);
 }
 
 void M_DrawMenuText3(const char* string, int x, int y, int fontIdx, short flags)
 {
-    M_DrawMenuText4(string, x, y, fontIdx, flags, rs.text_glitter);
+    M_DrawMenuText4(string, x, y, fontIdx, flags, rs.textGlitter);
 }
 
 void M_DrawMenuText2(const char* string, int x, int y, int fontIdx)
@@ -2583,11 +2596,11 @@ void M_DrawColorWidgetMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    //M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, rs.page_alpha);
+    //M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, rs.pageAlpha);
     //DGL_SetNoMaterial();
 
     DGL_DrawRect(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, colorWidgetColor[0], colorWidgetColor[1], colorWidgetColor[2], colorWidgetColor[3]);
-    M_DrawBackgroundBox(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, false, BORDERDOWN, 1, 1, 1, rs.page_alpha);
+    M_DrawBackgroundBox(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, false, BORDERDOWN, 1, 1, 1, rs.pageAlpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2627,13 +2640,13 @@ void Hu_MenuActivateColorWidget(mn_object_t* obj)
     // Hide the alpha slider and label if not in rgbaMode.
     if(rgbaMode)
     {
-        ColorWidgetMenu.objects[6].flags &= ~MNF_HIDDEN;
-        ColorWidgetMenu.objects[7].flags &= ~MNF_HIDDEN;
+        ColorWidgetMenu.objects[6].flags &= ~(MNF_DISABLED | MNF_HIDDEN);
+        ColorWidgetMenu.objects[7].flags &= ~(MNF_DISABLED | MNF_HIDDEN);
     }
     else
     {
-        ColorWidgetMenu.objects[6].flags |= MNF_HIDDEN;
-        ColorWidgetMenu.objects[7].flags |= MNF_HIDDEN;
+        ColorWidgetMenu.objects[6].flags |= MNF_DISABLED | MNF_HIDDEN;
+        ColorWidgetMenu.objects[7].flags |= MNF_DISABLED | MNF_HIDDEN;
     }
 
     obj->flags &= ~MNF_INACTIVE; 
@@ -2659,7 +2672,7 @@ void M_DrawMainMenu(mn_page_t* page, int x, int y)
     int frame = (mnTime / 5) % 7;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
 
     GL_DrawPatch(pMainTitle, x - 22, y - 56);
     GL_DrawPatch(pBullWithFire[(frame + 2) % 7], x - 73, y + 24);
@@ -2670,15 +2683,15 @@ void M_DrawMainMenu(mn_page_t* page, int x, int y)
 #elif __JHERETIC__
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch5(pMainTitle, x - 22, y - 56, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, rs.page_alpha, rs.text_glitter, rs.text_shadow);
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    WI_DrawPatch5(pMainTitle, x - 22, y - 56, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, rs.pageAlpha, rs.textGlitter, rs.textShadow);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatch(pRotatingSkull[17 - frame], x - 70, y - 46);
     GL_DrawPatch(pRotatingSkull[frame], x + 122, y - 46);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch5(pMainTitle, x - 3, y - 62, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pMainTitle, x - 3, y - 62, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, rs.pageAlpha, rs.textGlitter, rs.textShadow);
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 }
@@ -2692,7 +2705,7 @@ void M_DrawGameTypeMenu(mn_page_t* page, int x, int y)
 #endif
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
 
     M_DrawMenuText3(GET_TXT(TXT_PICKGAMETYPE), x + TITLEOFFSET_X, y - 25, GF_FONTB, DTF_ALIGN_TOP);
 
@@ -2747,7 +2760,7 @@ void M_DrawPlayerClassMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText2("Choose class:", x - 32, y - 42, GF_FONTB);
 
     pClass = MNPage_FocusObject(page)->data2;
@@ -2759,7 +2772,7 @@ void M_DrawPlayerClassMenu(mn_page_t* page, int x, int y)
 
     R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite, ((mnTime >> 3) & 3), &sprInfo);
 
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatch(pPlayerClassBG[pClass % 3], x + BG_X, y + BG_Y);
 
     // Fighter's colors are a bit different.
@@ -2776,7 +2789,7 @@ void M_DrawPlayerClassMenu(mn_page_t* page, int x, int y)
 
     DGL_SetPSprite2(sprInfo.material, 1, tmap);
 
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0 * s, 0);
         DGL_Vertex2f(x, y);
@@ -2815,12 +2828,12 @@ void M_DrawEpisodeMenu(mn_page_t* page, int x, int y)
     {
         const char* str = notDesignedForMessage;
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
-        DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], rs.page_alpha);
+        DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], rs.pageAlpha);
         M_DrawMenuText3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, GF_FONTA, DTF_ALIGN_BOTTOM);
     }
     // kludge end.
 #else // __JDOOM__
-    WI_DrawPatch5(pEpisode, x + 7, y - 25, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pEpisode, x + 7, y - 25, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2832,10 +2845,10 @@ void M_DrawSkillMenu(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JDOOM__ || __JDOOM64__
-    WI_DrawPatch5(pNewGame, x + 48, y - 49, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
-    WI_DrawPatch5(pSkill, x + 6, y - 25, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pNewGame, x + 48, y - 49, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
+    WI_DrawPatch5(pSkill, x + 6, y - 25, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
 #elif __JHEXEN__
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("Choose Skill Level:", x - 46, y - 28, GF_FONTB, DTF_ALIGN_TOPLEFT);
 #endif
 
@@ -2941,15 +2954,13 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
 
 void MNText_Drawer(mn_object_t* obj, int x, int y)
 {
+    gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
     float color[4];
-    int fontIdx = MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx);
 
-    MNPage_PredefinedColor(MN_CurrentPage(), obj->pageColorIdx, color);
-    color[CA] = rs.page_alpha;
+    memcpy(color, rs.textColors[obj->pageColorIdx], sizeof(color));
 
     // Flash the focused object?
-    /// \fixme Do not make this decision here using the current page!
-    if(obj == MNPage_FocusObject(MN_CurrentPage()))
+    if(obj->flags & MNF_FOCUS)
     {
         float t = (flashCounter <= 50? flashCounter / 50.0f : (100 - flashCounter) / 50.0f);
         color[CR] *= t; color[CG] *= t; color[CB] *= t;
@@ -2959,7 +2970,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     if(obj->patch)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*obj->patch, x, y, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA], rs.text_glitter, rs.text_shadow);
+        WI_DrawPatch5(*obj->patch, x, y, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -2972,7 +2983,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNText_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNText_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     // @fixme What if patch replacement is disabled?
     if(obj->patch)
@@ -2985,7 +2996,7 @@ void MNText_Dimensions(const mn_object_t* obj, int* width, int* height)
             *height = info.height;
         return;
     }
-    FR_SetFont(FID(MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx)));
+    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->pageFontIdx)));
     FR_TextFragmentDimensions(width, height, obj->text);
 }
 
@@ -3040,12 +3051,11 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
 #endif
 
     const mndata_edit_t* edit = (const mndata_edit_t*) obj->data;
-    int fontIdx = MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx);
+    gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
     char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
-    float light = 1, textAlpha = rs.page_alpha;
+    float light = 1, textAlpha = rs.pageAlpha;
     const char* string;
-    /// \fixme Do not make this decision here using the current page!
-    boolean isActive = (!(obj->flags & MNF_INACTIVE) && obj == MNPage_FocusObject(MN_CurrentPage()));
+    boolean isActive = (!(obj->flags & MNF_INACTIVE) && (obj->flags & MNF_FOCUS));
 
     x += OFFSET_X;
     y += OFFSET_Y;
@@ -3070,7 +3080,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         {
             string = edit->emptyString;
             light *= .5f;
-            textAlpha = rs.page_alpha * .75f;
+            textAlpha = rs.pageAlpha * .75f;
         }
     }
 
@@ -3083,7 +3093,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
     else
         numVisCharacters = MNDATA_EDIT_TEXT_MAX_LENGTH;
     width = numVisCharacters * FR_CharWidth('_') + 20;
-    drawEditBackground(obj, x + BG_OFFSET_X, y - 1, width, rs.page_alpha);
+    drawEditBackground(obj, x + BG_OFFSET_X, y - 1, width, rs.pageAlpha);
     }
 
     if(string)
@@ -3229,7 +3239,7 @@ int MNEdit_Responder(mn_object_t* obj, const event_t* ev)
     }
 }
 
-void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     // @fixme calculate visible dimensions properly.
     if(width)
@@ -3241,19 +3251,16 @@ void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height)
 void MNList_Drawer(mn_object_t* obj, int x, int y)
 {
     const mndata_list_t* list = (const mndata_list_t*) obj->data;
-    float color[4];
+    gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
     int i;
 
-    MNPage_PredefinedColor(MN_CurrentPage(), obj->pageColorIdx, color);
-    color[CA] = rs.page_alpha;
-
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(color);
+    DGL_Color4fv(rs.textColors[obj->pageColorIdx]);
     for(i = 0; i < list->count; ++i)
     {
         const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
-        M_DrawMenuText2(item->text, x, y, GF_FONTA);
-        FR_SetFont(FID(GF_FONTA));
+        M_DrawMenuText2(item->text, x, y, fontIdx);
+        FR_SetFont(FID(fontIdx));
         y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
     }
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3334,15 +3341,11 @@ void MNListInline_Drawer(mn_object_t* obj, int x, int y)
 {
     const mndata_listinline_t* list = (const mndata_listinline_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
-    float color[4];
-
-    MNPage_PredefinedColor(MN_CurrentPage(), obj->pageColorIdx, color);
-    color[CA] = rs.page_alpha;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(color);
+    DGL_Color4fv(rs.textColors[obj->pageColorIdx]);
 
-    M_DrawMenuText2(item->text, x, y, GF_FONTA);
+    M_DrawMenuText2(item->text, x, y, rs.textFonts[obj->pageFontIdx]);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3394,7 +3397,7 @@ int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNList_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     const mndata_list_t* list = (const mndata_list_t*) obj->data;
     int i;
@@ -3404,7 +3407,7 @@ void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
         *width = 0;
     if(height)
         *height = 0;
-    FR_SetFont(FID(GF_FONTA));
+    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->pageFontIdx)));
     for(i = 0; i < list->count; ++i)
     {
         const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
@@ -3421,11 +3424,11 @@ void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
     }
 }
 
-void MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNListInline_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     const mndata_listinline_t* list = (const mndata_listinline_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
-    FR_SetFont(FID(GF_FONTA));
+    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->pageFontIdx)));
     if(width)
         *width = FR_TextFragmentWidth(item->text);
     if(height)
@@ -3438,16 +3441,14 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     int act = (obj->flags & MNF_INACTIVE) == 0;
     int click = (obj->flags & MNF_CLICKED) != 0;
     boolean down = act || click;
-    const int fontIdx = MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx);
+    const gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
     const char* text;
     float color[4];
 
-    MNPage_PredefinedColor(MN_CurrentPage(), obj->pageColorIdx, color);
-    color[CA] = rs.page_alpha;
+    memcpy(color, rs.textColors[obj->pageColorIdx], sizeof(color));
 
     // Flash the focused object?
-    /// \fixme Do not make this decision here using the current page!
-    if(obj == MNPage_FocusObject(MN_CurrentPage()))
+    if(obj->flags & MNF_FOCUS)
     {
         float t = (flashCounter <= 50? flashCounter / 50.0f : (100 - flashCounter) / 50.0f);
         color[CR] *= t; color[CG] *= t; color[CB] *= t;
@@ -3470,7 +3471,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     if(obj->patch)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*obj->patch, x, y, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA], rs.text_glitter, rs.text_shadow);
+        WI_DrawPatch5(*obj->patch, x, y, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -3546,7 +3547,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     int dis = (obj->flags & MNF_DISABLED) != 0;
     int act = (obj->flags & MNF_INACTIVE) == 0;
@@ -3578,7 +3579,7 @@ void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height)
     {
         text = obj->text;
     }
-    FR_SetFont(FID(MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx)));
+    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->pageFontIdx)));
     FR_TextFragmentDimensions(width, height, text);
 }
 
@@ -3592,11 +3593,11 @@ void MNColorBox_Drawer(mn_object_t* obj, int x, int y)
     y += MNDATA_COLORBOX_PADDING_Y;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    M_DrawBackgroundBox(x, y, width, height, true, BORDERDOWN, 1, 1, 1, rs.page_alpha);
+    M_DrawBackgroundBox(x, y, width, height, true, BORDERDOWN, 1, 1, 1, rs.pageAlpha);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRect(x, y, width, height, *cbox->r, *cbox->g, *cbox->b, cbox->a? *cbox->a : 1 * rs.page_alpha);
+    DGL_DrawRect(x, y, width, height, *cbox->r, *cbox->g, *cbox->b, cbox->a? *cbox->a : 1 * rs.pageAlpha);
 }
 
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
@@ -3624,7 +3625,7 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     if(width)  *width  = MNDATA_COLORBOX_WIDTH  + MNDATA_COLORBOX_PADDING_X*2;
     if(height) *height = MNDATA_COLORBOX_HEIGHT + MNDATA_COLORBOX_PADDING_Y*2;
@@ -3698,10 +3699,10 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
         from[1] = 1+HEIGHT/2;
         to[0] = (MNDATA_SLIDER_SLOTS * WIDTH) - 2;
         to[1] = 1+HEIGHT/2;
-        M_DrawGlowBar(from, to, HEIGHT*1.1f, true, true, true, 0, 0, 0, rs.page_alpha * rs.text_shadow);
+        M_DrawGlowBar(from, to, HEIGHT*1.1f, true, true, true, 0, 0, 0, rs.pageAlpha * rs.textShadow);
     }
 
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
 
     GL_DrawPatch2(pSliderLeft, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP|DPF_NO_OFFSETX);
     GL_DrawPatch(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
@@ -3709,7 +3710,7 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(0, middleInfo.topOffset, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.width, middleInfo.height);
 
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatch2(pSliderHandle, MNSlider_ThumbPos(obj), 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3866,7 +3867,7 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
     }
 }
 
-void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNSlider_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     patchinfo_t info;
     if(!R_GetPatchInfo(pSliderMiddle, &info))
@@ -3890,18 +3891,14 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     {
     const mndata_slider_t* sldr = (const mndata_slider_t*) obj->data;
     const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
-    const int fontIdx = MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx);
+    const gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
     char textualValue[41];
     const char* str = composeValueString(value, 0, sldr->floatMode, 0, 
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
-    float color[4];
-
-    MNPage_PredefinedColor(MN_CurrentPage(), obj->pageColorIdx, color);
-    color[CA] = rs.page_alpha;
 
     DGL_Translatef(x, y, 0);
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(color);
+    DGL_Color4fv(rs.textColors[obj->pageColorIdx]);
 
     M_DrawMenuText2(str, 0, 0, fontIdx);
 
@@ -3910,14 +3907,14 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     }
 }
 
-void MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height)
+void MNSlider_TextualValueDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     assert(NULL != obj);
     {
     const mndata_slider_t* sldr = (const mndata_slider_t*) obj->data;
     if(NULL != width || NULL != height)
     {
-        const int fontIdx = MNPage_PredefinedFont(MN_CurrentPage(), obj->pageFontIdx);
+        const gamefontid_t fontIdx = MNPage_PredefinedFont(page, obj->pageFontIdx);
         const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
         char textualValue[41];
         const char* str = composeValueString(value, 0, sldr->floatMode, 0,
@@ -3980,7 +3977,7 @@ void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
     s = info.texCoord[0];
     t = info.texCoord[1];
 
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0 * s, 0);
         DGL_Vertex2f(x, y);
@@ -3999,7 +3996,7 @@ void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
     }
 }
 
-void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNMobjPreview_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     // @fixme calculate visible dimensions properly!
     if(width)
@@ -4150,10 +4147,10 @@ void M_DrawLoadMenu(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JHERETIC__ || __JHEXEN__
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("Load Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #else
-    WI_DrawPatch5(pLoadGame, x - 8, y - 26, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pLoadGame, x - 8, y - 26, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -4164,10 +4161,10 @@ void M_DrawSaveMenu(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JHERETIC__ || __JHEXEN__
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("Save Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #else
-    WI_DrawPatch5(pSaveGame, x - 8, y - 26, "{case}Save game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pSaveGame, x - 8, y - 26, "{case}Save game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -4185,13 +4182,13 @@ void M_DrawOptionsMenu(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JHERETIC__ || __JHEXEN__
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("OPTIONS", x + 42, y - 38, GF_FONTB, DTF_ALIGN_TOP);
 #else
 #  if __JDOOM64__
-    WI_DrawPatch5(pOptionsTitle, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pOptionsTitle, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
 #  else
-    WI_DrawPatch5(pOptionsTitle, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha, rs.text_glitter, rs.text_shadow);
+    WI_DrawPatch5(pOptionsTitle, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha, rs.textGlitter, rs.textShadow);
 #  endif
 #endif
 
@@ -4202,7 +4199,7 @@ void M_DrawSoundMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("SOUND OPTIONS", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -4212,7 +4209,7 @@ void M_DrawGameplayMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("GAMEPLAY", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -4227,16 +4224,16 @@ void M_DrawWeaponMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("WEAPONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
     MNPage_ComposeSubpageString(page, 1024, buf);
-    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], rs.pageAlpha);
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #elif __JHERETIC__
     // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
     GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y - 22);
 #endif*/
@@ -4246,7 +4243,7 @@ void M_DrawWeaponMenu(mn_page_t* page, int x, int y)
     if(NULL != obj && obj == &page->objects[1])
     {
         const char* str = "Use left/right to move weapon up/down";
-        DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], rs.page_alpha);
+        DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], rs.pageAlpha);
         M_DrawMenuText3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
     }}*/
     // kludge end.
@@ -4259,7 +4256,7 @@ void M_DrawInventoryMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("Inventory Options", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -4274,16 +4271,16 @@ void M_DrawHudMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], rs.pageAlpha);
     M_DrawMenuText3("HUD options", SCREENWIDTH/2, y - 20, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
     MNPage_ComposeSubpageString(page, 1024, buf);
-    DGL_Color4f(1, .7f, .3f, rs.page_alpha);
+    DGL_Color4f(1, .7f, .3f, rs.pageAlpha);
     M_DrawMenuText3(buf, x + SCREENWIDTH/2, y + -12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, rs.page_alpha);
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y + -22);
     GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y + -22);
 #endif*/
@@ -4294,7 +4291,7 @@ void M_DrawHudMenu(mn_page_t* page, int x, int y)
 void M_DrawMultiplayerMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], rs.pageAlpha);
 
     M_DrawMenuText3(GET_TXT(TXT_MULTIPLAYER), x + 60, y - 25, GF_FONTB, DTF_ALIGN_TOP);
 
@@ -4304,7 +4301,7 @@ void M_DrawMultiplayerMenu(mn_page_t* page, int x, int y)
 void M_DrawPlayerSetupMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], rs.page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], rs.pageAlpha);
 
     M_DrawMenuText3(GET_TXT(TXT_PLAYERSETUP), x + 90, y - 25, GF_FONTB, DTF_ALIGN_TOP);
 

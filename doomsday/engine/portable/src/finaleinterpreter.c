@@ -1179,7 +1179,7 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
         }
     }
 
-    // If we can't skip, there'fi no interaction of any kind.
+    // If we can't skip, there's no interaction of any kind.
     if(!fi->flags.can_skip && !fi->flags.paused)
         return false;
 

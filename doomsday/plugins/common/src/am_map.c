@@ -1759,7 +1759,7 @@ void M_DrawAutomapMenu(mn_page_t* page, int x, int y)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
     M_DrawMenuText3("Automap OPTIONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JHERETIC__ || __JHEXEN__

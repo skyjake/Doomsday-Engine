@@ -147,6 +147,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.Ticker = G_Ticker;
     gx.G_Drawer = G_Display;
     gx.G_Drawer2 = G_Display2;
+    gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;

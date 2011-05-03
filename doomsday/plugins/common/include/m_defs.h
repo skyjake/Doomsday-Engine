@@ -5,7 +5,6 @@
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,9 +72,9 @@ typedef enum {
 //#define MNF_PAUSED              0x4 // Ticker not called.
 #define MNF_CLICKED             0x8
 #define MNF_INACTIVE            0x10 // Object active.
-//#define MNF_FOCUS               0x20 // Has focus.
+#define MNF_FOCUS               0x20 // Has focus.
 #define MNF_NO_FOCUS            0x40 // Can't receive focus.
-//#define MNF_DEFAULT             0x80 // Has focus by default.
+#define MNF_DEFAULT             0x80 // Has focus by default.
 //#define MNF_LEFT_ALIGN          0x100
 //#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
 //#define MNF_NEVER_FADE          0x400
@@ -86,23 +85,60 @@ typedef enum {
 #define MNF_ID3                 0x80000000
 /*@}*/
 
+/**
+ * MNObject. Abstract base from which all menu page objects must be derived.
+ */
 typedef struct mn_object_s {
-    mn_obtype_e type; // Type of the object.
+    /// Type of the object.
+    mn_obtype_e type;
+
+    /// Object group identifier.
     int group;
-    int flags; // @see menuObjectFlags.
+
+    /// @see menuObjectFlags.
+    int flags;
+
+    /// Used in various ways depending on the context.
+    /// \todo Does not belong here, move it out.
     const char* text;
+
+    /// Index of the predefined page font to use when drawing this.
+    /// \todo Does not belong here, move it out.
     int pageFontIdx;
+
+    /// Index of the predefined page color to use when drawing this.
+    /// \todo Does not belong here, move it out.
     int pageColorIdx;
+
+    /// Patch to be used when drawing this.
+    /// \todo Does not belong here, move it out.
     patchid_t* patch;
-    void (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
+
+    /// Calculate dimensions for this when visible on the specified page.
+    void (*dimensions) (const struct mn_object_s* obj, struct mn_page_s* page, int* width, int* height);
+
+    /// Draw this at the specified offset within the owning view-space.
+    /// Can be @c NULL in which case this will never be drawn.
     void (*drawer) (struct mn_object_s* obj, int x, int y);
+
+    /// "Action" callback to be exectued as directed by the logic of the
+    /// responder callbacks. Can be @c NULL.
     void (*action) (struct mn_object_s* obj);
+
+    /// Respond to the given (menu) @a command. Can be @c NULL.
+    /// @return  @c true if the command is eaten.
     int (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
+
+    /// Respond to the given (input) event @a ev. Can be @c NULL.
+    /// @return  @c true if the event is eaten.
     int (*responder) (struct mn_object_s* obj, event_t* ev);
+
+    /// Respond to the given (input) event @a ev. Can be @c NULL.
+    /// @return  @c true if the event is eaten.
     int (*privilegedResponder) (struct mn_object_s* obj, event_t* ev);
+
     void* data; // Pointer to extra data.
     int data2; // Extra numerical data.
-    //int timer;
 } mn_object_t;
 
 /**
@@ -176,7 +212,7 @@ int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
  * Text objects.
  */
 void MNText_Drawer(mn_object_t* obj, int x, int y);
-void MNText_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNText_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 /**
  * Two-state button.
@@ -188,7 +224,7 @@ typedef struct mndata_button_s {
 
 void MNButton_Drawer(mn_object_t* obj, int x, int y);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 /**
  * Edit field.
@@ -208,7 +244,7 @@ typedef struct mndata_edit_s {
 void MNEdit_Drawer(mn_object_t* obj, int x, int y);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNEdit_Responder(mn_object_t* obj, const event_t* ev);
-void MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 void MNEdit_SetText(mn_object_t* obj, const char* string);
 
 /**
@@ -232,14 +268,14 @@ typedef struct mndata_list_s {
 
 void MNList_Drawer(mn_object_t* obj, int x, int y);
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNList_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 int MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 typedef mndata_list_t mndata_listinline_t;
 
 void MNListInline_Drawer(mn_object_t* obj, int x, int y);
 int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNListInline_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNListInline_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 /**
  * Color preview box.
@@ -255,7 +291,7 @@ typedef struct mndata_colorbox_s {
 
 void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 /**
  * Graphical slider.
@@ -284,8 +320,8 @@ typedef struct mndata_slider_s {
 void MNSlider_Drawer(mn_object_t* obj, int x, int y);
 void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
-void MNSlider_TextualValueDimensions(const mn_object_t* obj, int* width, int* height);
+void MNSlider_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
+void MNSlider_TextualValueDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 int MNSlider_ThumbPos(const mn_object_t* obj);
 
 /**
@@ -312,7 +348,7 @@ typedef struct mndata_bindings_s {
 void MNBindings_Drawer(mn_object_t* obj, int x, int y);
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
-void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 void MNBindings_IterateBinds(mn_object_t* obj, const char* bindings, int flags, void* paramaters,
     void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void* paramaters));
 
@@ -332,31 +368,17 @@ typedef struct mndata_mobjpreview_s {
 } mndata_mobjpreview_t;
 
 void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
-void MNMobjPreview_Dimensions(const mn_object_t* obj, int* width, int* height);
+void MNMobjPreview_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 // Menu render state:
 typedef struct mn_rendstate_s {
-    float page_alpha;
-    float text_glitter;
-    float text_shadow;
+    float pageAlpha;
+    float textGlitter;
+    float textShadow;
+    float textColors[MENU_COLOR_COUNT][4];
+    gamefontid_t textFonts[MENU_FONT_COUNT];
 } mn_rendstate_t;
 extern const mn_rendstate_t* mnRendState;
-
-/**
- * Retrieve the current menu page. Note that this is the menu systems'
- * state-defined current page and NOT the active page, which may or may
- * not be the same.
- * @return  Current menu page.
- */
-mn_page_t* MN_CurrentPage(void);
-
-/**
- * Change the current menu page. Note that this is the menu systems'
- * state-defined current page and NOT the active page, which may or may
- * not be the same.
- * @return  New current menu page, for caller convenience.
- */
-mn_page_t* MN_SetCurrentPage(mn_page_t* page);
 
 /**
  * Execute a menu navigation/action command.

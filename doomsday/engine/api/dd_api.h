@@ -83,6 +83,7 @@ typedef struct {
     void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
+    int           (*FinaleResponder) (const void* ddev);
     int           (*PrivilegedResponder) (event_t* ev);
     int           (*Responder) (event_t* ev);
     int           (*FallbackResponder) (event_t* ev);

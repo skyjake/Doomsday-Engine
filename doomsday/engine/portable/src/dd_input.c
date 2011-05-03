@@ -876,6 +876,10 @@ static void dispatchEvents(timespan_t ticLength)
             if(gx.PrivilegedResponder)
                 if(gx.PrivilegedResponder(&ev))
                     continue;
+
+            if(gx.FinaleResponder)
+                if(gx.FinaleResponder((void*)ddev))
+                    continue;
         }
 
         if(UI_Responder(ddev))

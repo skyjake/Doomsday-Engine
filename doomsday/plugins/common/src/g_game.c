@@ -971,8 +971,8 @@ int G_UIResponder(event_t* ev)
     if(!Hu_MenuIsActive())
     {
         // Any key/button down pops up menu if in demos.
-        if((G_GetGameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
-           (G_GetGameState() == GS_INFINE && FI_IsMenuTrigger()))
+        if((G_GetGameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK))/* ||
+           (G_GetGameState() == GS_INFINE && FI_IsMenuTrigger())*/)
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;
@@ -1279,9 +1279,6 @@ int G_PrivilegedResponder(event_t* ev)
     // Ignore all events once shutdown has begun.
     if(GA_QUIT == G_GetGameAction())
         return false;
-
-    if(FI_PrivilegedResponder(ev))
-        return true;
 
     if(Hu_MenuPrivilegedResponder(ev))
         return true;

@@ -585,7 +585,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
     }
     draw.x = x;
     draw.y = y;
-    draw.alpha = mnRendState->page_alpha;
+    draw.alpha = mnRendState->pageAlpha;
     MNBindings_IterateBinds(obj, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
     }
 }
@@ -628,7 +628,7 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height)
+void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
     // @fixme calculate visible dimensions properly!
     if(width)
@@ -648,21 +648,21 @@ void M_DrawControlsMenu(mn_page_t* page, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
     M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
     MNPage_ComposeSubpageString(page, 1024, buf);
-    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, mnRendState->page_alpha);
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
     GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y - 12);
 #endif*/
 
-    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->page_alpha);
+    DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
     M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     DGL_Disable(DGL_TEXTURE_2D);
