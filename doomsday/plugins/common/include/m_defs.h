@@ -256,10 +256,10 @@ void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int*
 
 /**
  * Change the current contents of the edit field.
- * @param string  New text string which will replace the existing string.
  * @param flags  @see mneditSetTextFlags
+ * @param string  New text string which will replace the existing string.
  */
-void MNEdit_SetText(mn_object_t* obj, const char* string, int flags);
+void MNEdit_SetText(mn_object_t* obj, int flags, const char* string);
 
 /**
  * List selection.
@@ -302,19 +302,19 @@ int MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 /**
  * Change the currently selected item.
- * @param itemIndex  Index of the new selection.
  * @param flags  @see mnlistSelectItemFlags
+ * @param itemIndex  Index of the new selection.
  * @return  @c true if the selected item changed.
  */
-boolean MNList_SelectItem(mn_object_t* obj, int itemIndex, int flags);
+boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex);
 
 /**
  * Change the currently selected item by looking up its data value.
- * @param dataValue  Value associated to the candidate item being selected.
  * @param flags  @see mnlistSelectItemFlags
+ * @param dataValue  Value associated to the candidate item being selected.
  * @return  @c true if the selected item changed.
  */
-boolean MNList_SelectItemByValue(mn_object_t* obj, int itemIndex, int flags);
+boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int itemIndex);
 
 /**
  * Color preview box.
@@ -325,12 +325,33 @@ boolean MNList_SelectItemByValue(mn_object_t* obj, int itemIndex, int flags);
 #define MNDATA_COLORBOX_PADDING_Y   5 //
 
 typedef struct mndata_colorbox_s {
-    float* r, *g, *b, *a;
+    float r, g, b, a;
+    boolean rgbaMode;
+    void* data1;
+    void* data2;
+    void* data3;
+    void* data4;
 } mndata_colorbox_t;
 
 void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
+
+/**
+ * @defgroup mncolorboxSetColorFlags  MNColorBox Set Color Flags.
+ * @{
+ */
+#define MNCOLORBOX_SCF_NO_ACTION        0x1 /// Do not call any linked action function.
+/**@}*/
+
+/**
+ * Change the current color of the color box.
+ * @param flags  @see mncolorboxSetColorFlags
+ * @param rgba  New color and alpha. Note that alpha will be ignored if this
+ *      colorbox is not operating in "rgba mode".
+ * @return  @c true if the current color changed.
+ */
+boolean MNColorBox_SetColor(mn_object_t* obj, int flags, float rgba[4]);
 
 /**
  * Graphical slider.
@@ -372,10 +393,10 @@ int MNSlider_ThumbPos(const mn_object_t* obj);
 
 /**
  * Change the current value represented by the slider.
- * @param value  New value.
  * @param flags  @see mnsliderSetValueFlags
+ * @param value  New value.
  */
-void MNSlider_SetValue(mn_object_t* obj, float value, int flags);
+void MNSlider_SetValue(mn_object_t* obj, int flags, float value);
 
 /**
  * Bindings visualizer.

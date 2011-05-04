@@ -182,11 +182,11 @@ void Hu_MenuCvarButton(mn_object_t* obj);
 void Hu_MenuCvarList(mn_object_t* obj);
 void Hu_MenuCvarSlider(mn_object_t* obj);
 void Hu_MenuCvarEdit(mn_object_t* obj);
+void Hu_MenuCvarColorBox(mn_object_t* obj);
 
 void Hu_MenuSaveSlotEdit(mn_object_t* obj);
 void Hu_MenuBindings(mn_object_t* obj);
 
-void Hu_MenuActivateColorWidget(mn_object_t* obj);
 void Hu_MenuUpdateColorWidgetColor(mn_object_t* obj);
 
 void M_DrawMenuText(const char* string, int x, int y);

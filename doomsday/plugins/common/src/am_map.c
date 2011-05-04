@@ -1689,22 +1689,28 @@ mndata_list_t lst_map_customcolors = {
 };
 
 mndata_colorbox_t cbox_map_line_unseen_color = { 
-    &cfg.automapL0[0], &cfg.automapL0[1], &cfg.automapL0[2], NULL
+    0, 0, 0, 0, false,
+    "map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"
 };
 mndata_colorbox_t cbox_map_line_solid_color = {
-    &cfg.automapL1[0], &cfg.automapL1[1], &cfg.automapL1[2], NULL
+    0, 0, 0, 0, false,
+    "map-wall-r", "map-wall-g", "map-wall-b"
 };
 mndata_colorbox_t cbox_map_line_floor_color = {
-    &cfg.automapL2[0], &cfg.automapL2[1], &cfg.automapL2[2], NULL
+    0, 0, 0, 0, false,
+    "map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"
 };
 mndata_colorbox_t cbox_map_line_ceiling_color = {
-    &cfg.automapL3[0], &cfg.automapL3[1], &cfg.automapL3[2], NULL
-};
-mndata_colorbox_t cbox_map_background_color = {
-    &cfg.automapBack[0], &cfg.automapBack[1], &cfg.automapBack[2], NULL
+    0, 0, 0, 0, false,
+    "map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"
 };
 mndata_colorbox_t cbox_map_mobj_color = {
-    &cfg.automapMobj[0], &cfg.automapMobj[1], &cfg.automapMobj[2], NULL
+    0, 0, 0, 0, false,
+    "map-mobj-r", "map-mobj-g", "map-mobj-b"
+};
+mndata_colorbox_t cbox_map_background_color = {
+    0, 0, 0, 0, false,
+    "map-background-r", "map-background-g", "map-background-b"
 };
 
 mn_object_t AutomapMenuObjects[] = {
@@ -1721,17 +1727,17 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_TEXT,      0,  0,  "Use Custom Colors", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
     { MN_LIST,      0,  0,  "",                  MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, Hu_MenuCvarList, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
     { MN_TEXT,      0,  0,  "Wall",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
+    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuCvarColorBox, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
     { MN_TEXT,      0,  0,  "Floor Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",                    MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
+    { MN_COLORBOX,  0,  0,  "",                    MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuCvarColorBox, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
     { MN_TEXT,      0,  0,  "Ceiling Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",                      MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
+    { MN_COLORBOX,  0,  0,  "",                      MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuCvarColorBox, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
     { MN_TEXT,      0,  0,  "Unseen",   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
+    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuCvarColorBox, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
     { MN_TEXT,      0,  0,  "Thing",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
+    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuCvarColorBox, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
     { MN_TEXT,      0,  0,  "Background", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",           MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
+    { MN_COLORBOX,  0,  0,  "",           MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuCvarColorBox, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
     { MN_NONE }
 };
 
