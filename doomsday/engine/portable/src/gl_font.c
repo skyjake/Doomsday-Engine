@@ -530,9 +530,9 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     {
     bitmapfont_t* cf = fonts[currentFontIdx];
     boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
-    boolean noGlitter = (glitterStrength <= 0? true : false);
-    boolean noShadow  = ((shadowStrength <= 0 || (flags & DTF_NO_SHADOW) ||
-                         (BitmapFont_Flags(cf) & BFF_HAS_EMBEDDEDSHADOW))? true : false);
+    boolean noGlitter = (glitterStrength <= 0 || (flags & DTF_NO_GLITTER) != 0);
+    boolean noShadow  = (shadowStrength  <= 0 || (flags & DTF_NO_SHADOW)  != 0 ||
+                         (BitmapFont_Flags(cf) & BFF_HAS_EMBEDDEDSHADOW)  != 0);
     float glitter = (noGlitter? 0 : MIN_OF(glitterStrength, 1)), glitterMul;
     float shadow  = (noShadow ? 0 : MIN_OF(shadowStrength,  1)), shadowMul;
     int w, h, cx, cy, count, yoff;

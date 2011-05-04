@@ -2579,7 +2579,7 @@ void M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags,
 
     if(cfg.menuEffects == 0)
     {
-        flags |= DTF_NO_TYPEIN|DTF_NO_SHADOW;
+        flags |= DTF_NO_TYPEIN|DTF_NO_SHADOW|DTF_NO_GLITTER;
         glitterStrength = 0;
         shadowStrength = 0;
     }

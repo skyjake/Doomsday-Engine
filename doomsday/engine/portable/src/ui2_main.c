@@ -409,7 +409,7 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font)
     t->id = id;
     t->flags.looping = false;
     t->animComplete = true;
-    t->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN;
+    t->textFlags = DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW;
     objectSetName((fi_object_t*)t, name);
     AnimatorVector4_Init(t->color, 1, 1, 1, 1);
     AnimatorVector3_Init(t->scale, 1, 1, 1);

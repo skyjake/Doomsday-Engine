@@ -1209,7 +1209,7 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         FR_SetFont(FID(GF_SMALLIN));
         DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
 
-        FR_DrawTextFragment3(buf, 0, *drawnHeight+2, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN, TRACKING);
+        FR_DrawTextFragment3(buf, 0, *drawnHeight+2, DTF_ALIGN_TOPRIGHT|DTF_ONLY_SHADOW, TRACKING);
 
         DGL_Disable(DGL_TEXTURE_2D);
 

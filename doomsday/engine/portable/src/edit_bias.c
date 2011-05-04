@@ -690,30 +690,30 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     // - color
 
     FR_SetFont(glFontFixed);
-    UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
     sprintf(buf, "# %03i %s", SB_ToIndex(s), (s->flags & BLF_LOCKED ? "(lock)" : ""));
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
     sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
     sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
             (int) (255.0f * s->sectorLevel[0]),
             (int) (255.0f * s->sectorLevel[1]));
 
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
     sprintf(buf, "R:%.3f G:%.3f B:%.3f", s->color[0], s->color[1], s->color[2]);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 }
 
@@ -791,13 +791,13 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
 
     // The number values.
     sprintf(buf, "%03i", (short) (255.0f * sector->lightLevel));
-    UI_TextOutEx2(buf, x, secY, UI_Color(UIC_TITLE), .7f, DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x, secY, UI_Color(UIC_TITLE), .7f, DTF_ONLY_SHADOW);
     if(maxLevel != minLevel)
     {
         sprintf(buf, "%03i", (short) (255.0f * maxLevel));
-        UI_TextOutEx2(buf, x + 2*off, maxY, UI_Color(UIC_TEXT), .7f, DTF_NO_TYPEIN);
+        UI_TextOutEx2(buf, x + 2*off, maxY, UI_Color(UIC_TEXT), .7f, DTF_ONLY_SHADOW);
         sprintf(buf, "%03i", (short) (255.0f * minLevel));
-        UI_TextOutEx2(buf, x + 2*off, minY, UI_Color(UIC_TEXT), .7f, DTF_NO_TYPEIN);
+        UI_TextOutEx2(buf, x + 2*off, minY, UI_Color(UIC_TEXT), .7f, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -829,10 +829,10 @@ void SBE_DrawHUD(void)
     h = FR_TextFragmentHeight(buf) + 16;
     y = theWindow->height - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
-    UI_TextOutEx2(buf, 18, y + h / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, 18, y + h / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
 
     // The map ID.
-    UI_TextOutEx2(P_GetUniqueMapID(map), 18, y - h/2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(P_GetUniqueMapID(map), 18, y - h/2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
 
     // Stats for nearest & grabbed:
     if(numSources)

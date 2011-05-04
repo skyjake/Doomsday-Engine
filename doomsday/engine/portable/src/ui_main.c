@@ -891,7 +891,7 @@ void UIText_Drawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -899,7 +899,7 @@ void UIText_BrightDrawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -994,7 +994,7 @@ void UIButton_Drawer(ui_object_t* ob)
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, DTF_NO_TYPEIN | ((ob->flags & UIF_LEFT_ALIGN)? DTF_ALIGN_LEFT : 0));
+    UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, DTF_ONLY_SHADOW| ((ob->flags & UIF_LEFT_ALIGN)? DTF_ALIGN_LEFT : 0));
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1123,7 +1123,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     {   // It fits!
         strcpy(buf, ob->text);
     }
-    UI_TextOutEx2(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), dis ? .2f : 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), dis ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     if(act && ob->timer & 4)
     {
         // Draw cursor.
@@ -1366,7 +1366,7 @@ void UIList_Drawer(ui_object_t* ob)
                 strcpy(tmp, ptr);
             memset(buf, 0, sizeof(buf));
             strCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
-            UI_TextOutEx2(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+            UI_TextOutEx2(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
             if(!endptr)
                 break;
             ptr = endptr + 1;
@@ -1607,7 +1607,7 @@ void UISlider_Drawer(ui_object_t* ob)
         strcpy(buf, dat->zerotext);
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 

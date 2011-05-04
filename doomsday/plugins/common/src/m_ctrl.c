@@ -684,10 +684,10 @@ void M_ControlGrabDrawer(const char* niceName, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
-    M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
+    M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_ONLY_SHADOW);
 
     DGL_Color4f(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
-    M_DrawMenuText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawMenuText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

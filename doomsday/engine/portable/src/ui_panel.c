@@ -829,7 +829,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     else
         sprintf(buf, "%i", key);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx2(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), alpha, DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), alpha, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -860,7 +860,7 @@ void CP_VideoModeInfo(ui_object_t *ob)
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx2(buf, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1050,7 +1050,7 @@ void CP_Drawer(ui_page_t *page)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx2(DENGPROJECT_HOMEURL,
                   UI_ScreenW(1000) - UI_BORDER,
-                  UI_ScreenY(25), UI_Color(UIC_TEXT), 0.2f, DTF_ALIGN_RIGHT|DTF_NO_TYPEIN);
+                  UI_ScreenY(25), UI_Color(UIC_TEXT), 0.2f, DTF_ALIGN_RIGHT|DTF_ONLY_SHADOW);
 
     // Is the help box visible?
     if(panel_help_offset <= 0 || !panel_help_source)

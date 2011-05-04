@@ -659,7 +659,7 @@ static void drawTable(float x, float ly, float width, float height,
             cX += CELL_PADDING;
 
         HU_DrawText(columns[n].label, GF_FONTA, cX, cY,
-            fontScale, 1.f, 1.f, 1.f, alpha, DTF_ALIGN_TOP|DTF_NO_TYPEIN|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
+            fontScale, 1.f, 1.f, 1.f, alpha, DTF_ALIGN_TOP|DTF_ONLY_SHADOW|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
     }
     ly += lineHeight;
     DGL_Disable(DGL_TEXTURE_2D);
@@ -760,21 +760,21 @@ DGL_Enable(DGL_TEXTURE_2D);
             case 1: // Name.
                 HU_DrawText(name, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+                            alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
                 HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+                            alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
                 HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+                            alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
                 break;
             }
         }
@@ -888,7 +888,7 @@ void HU_DrawScoreBoard(int player)
     // Title:
     FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
-    FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
@@ -1682,7 +1682,7 @@ static void drawMapTitle(void)
 
         FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
-        FR_DrawTextFragment2(lname, 0, 0, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        FR_DrawTextFragment2(lname, 0, 0, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
         y += 20;
@@ -1695,7 +1695,7 @@ static void drawMapTitle(void)
 
         FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(.5f, .5f, .5f, alpha);
-        FR_DrawTextFragment2(lauthor, 0, y, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        FR_DrawTextFragment2(lauthor, 0, y, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }

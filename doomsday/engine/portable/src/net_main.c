@@ -899,7 +899,7 @@ void Net_DrawDemoOverlay(void)
     glEnable(GL_TEXTURE_2D);
 
     glColor3f(1, 1, 1);
-    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN);
+    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     glDisable(GL_TEXTURE_2D);
 

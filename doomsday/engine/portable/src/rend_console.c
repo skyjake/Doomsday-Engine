@@ -430,7 +430,7 @@ void Rend_ConsoleFPS(int x, int y)
     UI_GradientEx(x-w, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .8f);
     UI_DrawRectEx(x-w, y, w, h, 6, false, UI_Color(UIC_BRD_HI), UI_Color(UIC_BG_MEDIUM), .2f, -1);
     UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx2(buf, x - 8, y + h / 2, UI_Color(UIC_TITLE), 1, DTF_ALIGN_RIGHT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(buf, x - 8, y + h / 2, UI_Color(UIC_TITLE), 1, DTF_ALIGN_RIGHT|DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 }
@@ -460,19 +460,19 @@ static void drawConsoleTitleBar(float alpha)
     UI_Gradient(0, height, theWindow->width, border*2, UI_Color(UIC_BG_DARK),
                 UI_Color(UIC_SHADOW), .2f * alpha, 0);
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+    UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     if(secondaryTitleText[0])
     {
         width = FR_TextFragmentWidth(consoleTitle) + FR_TextFragmentWidth("  ");
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx2(secondaryTitleText, border + width, height / 2, UI_Color(UIC_TEXT), .33f * alpha,
-                      DTF_ALIGN_LEFT|DTF_NO_TYPEIN);
+                      DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     }
     if(statusText[0])
     {
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx2(statusText, theWindow->width - border, height / 2, UI_Color(UIC_TEXT), .75f * alpha,
-                      DTF_ALIGN_RIGHT|DTF_NO_TYPEIN);
+                      DTF_ALIGN_RIGHT|DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -563,7 +563,7 @@ static void drawSideText(const char* text, int line, float alpha)
         }
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
-        FR_DrawTextFragment2(text, ssw - 3, y / scale[1], DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN|(!consoleTextShadow?DTF_NO_SHADOW:0));
+        FR_DrawTextFragment2(text, ssw - 3, y / scale[1], DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
     }
 }
@@ -662,7 +662,7 @@ static void drawConsole(float consoleAlpha)
                 }
                 else
                 {
-                    short flags = DTF_NO_TYPEIN|(!consoleTextShadow?DTF_NO_SHADOW:0);
+                    short flags = DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0);
                     float xOffset;
 
                     memset(buff, 0, sizeof(buff));
@@ -713,7 +713,7 @@ static void drawConsole(float consoleAlpha)
     else
         glColor4f(1, 1, 1, consoleAlpha);
 
-    FR_DrawTextFragment2(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN|(!consoleTextShadow?DTF_NO_SHADOW:0));
+    FR_DrawTextFragment2(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
 
     glDisable(GL_TEXTURE_2D);
 
