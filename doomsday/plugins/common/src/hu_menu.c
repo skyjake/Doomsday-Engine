@@ -2195,6 +2195,16 @@ static void initObjects(mn_object_t* objs)
 
 static void initAllObjectsOnAllPages(void)
 {
+    // Set default Yes/No strings.
+    { cvarbutton_t* cvb;
+    for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
+    {
+        if(!cvb->yes)
+            cvb->yes = "Yes";
+        if(!cvb->no)
+            cvb->no = "No";
+    }}
+
 #if __JHEXEN__
     initObjects(PlayerClassMenuObjects);
 #endif
@@ -2222,16 +2232,6 @@ static void initAllObjectsOnAllPages(void)
     initObjects(PlayerSetupMenuObjects);
 
     initObjects(ColorWidgetMenuObjects);
-
-    // Set default Yes/No strings.
-    { cvarbutton_t* cvb;
-    for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
-    {
-        if(!cvb->yes)
-            cvb->yes = "Yes";
-        if(!cvb->no)
-            cvb->no = "No";
-    }}
 }
 
 int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
