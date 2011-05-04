@@ -920,7 +920,7 @@ void CP_SetVidMode(ui_object_t *ob)
 
     if(!x || !y)
         return;
-    if(x < 320 || y < 240)
+    if(x < SCREENWIDTH || y < SCREENHEIGHT)
         return;
 
     ob->flags |= UIF_DISABLED;
