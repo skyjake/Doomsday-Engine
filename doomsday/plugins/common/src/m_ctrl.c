@@ -312,7 +312,7 @@ static void deleteBinding(bindingitertype_t type, int bid, const char* name, boo
 void Hu_MenuActivateBindingsGrab(mn_object_t* obj)
 {
     assert(NULL != obj);
-    obj->flags &= ~MNF_INACTIVE; // Start grabbing for this control.
+    obj->flags |= MNF_ACTIVE; // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
 }
 
@@ -369,7 +369,6 @@ void M_InitControlsMenu(void)
             labelObj->pageFontIdx = MENU_FONT1;
 
             visObj->type = MN_BINDINGS;
-            visObj->flags = MNF_INACTIVE;
             visObj->drawer = MNBindings_Drawer;
             visObj->cmdResponder = MNBindings_CommandResponder;
             visObj->privilegedResponder = MNBindings_PrivilegedResponder;
@@ -697,7 +696,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 {
     assert(NULL != obj && NULL != ev);
     // We're interested in key or button down events.
-    if(ev->type == EV_SYMBOLIC)
+    if((obj->flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
         mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
         const char* bindContext = "game";
@@ -828,7 +827,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
          */
 
         // We've finished the grab.
-        obj->flags |= MNF_INACTIVE;
+        obj->flags &= ~MNF_ACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;

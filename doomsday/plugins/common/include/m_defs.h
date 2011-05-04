@@ -70,7 +70,7 @@ typedef enum {
 #define MNF_DISABLED            0x2 // Can't be interacted with.
 //#define MNF_PAUSED              0x4 // Ticker not called.
 #define MNF_CLICKED             0x8
-#define MNF_INACTIVE            0x10 // Object active.
+#define MNF_ACTIVE              0x10 // Object active.
 #define MNF_FOCUS               0x20 // Has focus.
 #define MNF_NO_FOCUS            0x40 // Can't receive focus.
 #define MNF_DEFAULT             0x80 // Has focus by default.
