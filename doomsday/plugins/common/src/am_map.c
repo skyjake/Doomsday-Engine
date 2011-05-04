@@ -1675,7 +1675,7 @@ mndata_listitem_t lstit_map_statusbar[] = {
     { "CURRENT", 1 },
     { "STATUSBAR", 2 }
 };
-mndata_listinline_t lst_map_statusbar = {
+mndata_list_t lst_map_statusbar = {
     lstit_map_statusbar, NUMLISTITEMS(lstit_map_statusbar), "map-huddisplay"
 };
 
@@ -1684,7 +1684,7 @@ mndata_listitem_t lstit_map_customcolors[] = {
     { "AUTO", 1 },
     { "ALWAYS", 2 }
 };
-mndata_listinline_t lst_map_customcolors = {
+mndata_list_t lst_map_customcolors = {
     lstit_map_customcolors, NUMLISTITEMS(lstit_map_customcolors), "map-customcolors"
 };
 
@@ -1713,13 +1713,13 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_TEXT,      0,  0,              "Line Opacity", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
     { MN_SLIDER,    0,  0,              "",             MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
     { MN_TEXT,      0,  0,              "HUD Display", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_LISTINLINE, 0, 0,              "",            MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &lst_map_statusbar },
+    { MN_LIST,      0,  0,              "",            MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, Hu_MenuCvarList, MNList_InlineCommandResponder, NULL, NULL, &lst_map_statusbar },
     { MN_TEXT,      0,  0,              "Door Colors",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
     { MN_BUTTON2,   0,  0,              "map-door-colors", MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, Hu_MenuCvarButton, MNButton_CommandResponder },
     { MN_TEXT,      0,  0,              "Door Glow", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
     { MN_SLIDER,    0,  0,              "",          MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuCvarSlider, MNSlider_CommandResponder, NULL, NULL, &sld_map_doorglow },
     { MN_TEXT,      0,  0,              "Use Custom Colors", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_LISTINLINE, 0, 0,              "",                  MENU_FONT1, MENU_COLOR3, 0, MNListInline_Dimensions, MNListInline_Drawer, Hu_MenuCvarListInline, MNListInline_CommandResponder, NULL, NULL, &lst_map_customcolors },
+    { MN_LIST,      0,  0,              "",                  MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, Hu_MenuCvarList, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
     { MN_TEXT,      0,  0,              "Wall",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
     { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, Hu_MenuActivateColorWidget, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
     { MN_TEXT,      0,  0,              "Floor Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },

@@ -61,6 +61,15 @@
 
 // TYPES -------------------------------------------------------------------
 
+// Binding iteration flags
+#define MIBF_IGNORE_REPEATS     0x1
+
+typedef enum {
+    MIBT_KEY,
+    MIBT_MOUSE,
+    MIBT_JOY
+} bindingitertype_t;
+
 typedef struct bindingdrawerdata_s {
     int             x;
     int             y;
@@ -74,6 +83,10 @@ typedef struct bindingdrawerdata_s {
 void M_DrawControlsMenu(mn_page_t* page, int x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+void MN_IterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* paramaters,
+    void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void* paramaters));
+
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -465,12 +478,11 @@ static const char* findInString(const char* str, const char* token, int n)
     return NULL;
 }
 
-void MNBindings_IterateBinds(mn_object_t* obj, const char* bindings, int flags, void* data,
+void MN_IterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* data,
     void (*callback)(bindingitertype_t type, int bid, const char* ev, boolean isInverse, void *data))
 {
-    assert(NULL != obj);
+    assert(NULL != binds);
     {
-    mndata_bindings_t* binds = (mndata_bindings_t*)obj->data;
     const char* ptr = strchr(bindings, ':');
     const char* begin, *end, *end2, *k, *bindingStart, *bindingEnd;
     char buf[80], *b;
@@ -586,7 +598,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
     draw.x = x;
     draw.y = y;
     draw.alpha = mnRendState->pageAlpha;
-    MNBindings_IterateBinds(obj, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+    MN_IterateBindings((mndata_bindings_t*)obj->data, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
     }
 }
 
@@ -610,7 +622,7 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             B_BindingsForCommand(binds->command, buf, sizeof(buf));
         }
 
-        MNBindings_IterateBinds(obj, buf, 0, NULL, deleteBinding);
+        MN_IterateBindings(binds, buf, 0, NULL, deleteBinding);
         return true;
       }
     case MCMD_SELECT:

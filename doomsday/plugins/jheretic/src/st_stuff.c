@@ -98,14 +98,6 @@
 #define ST_FRAGSY           (13)
 #define ST_FRAGSWIDTH       (2)
 
-// Counter Cheat flags.
-#define CCH_KILLS           0x01
-#define CCH_ITEMS           0x02
-#define CCH_SECRET          0x04
-#define CCH_KILLS_PRCNT     0x08
-#define CCH_ITEMS_PRCNT     0x10
-#define CCH_SECRET_PRCNT    0x20
-
 // TYPES -------------------------------------------------------------------
 
 enum {
@@ -1672,7 +1664,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     char buf[40], tmp[20];
 
-    if(!(cfg.hudShownCheatCounters & (CCH_SECRET | CCH_SECRET_PRCNT)))
+    if(!(cfg.hudShownCheatCounters & (CCH_SECRETS | CCH_SECRETS_PRCNT)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
@@ -1680,14 +1672,14 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
         return;
 
     strcpy(buf, "Secret: ");
-    if(cfg.hudShownCheatCounters & CCH_SECRET)
+    if(cfg.hudShownCheatCounters & CCH_SECRETS)
     {
         sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
         strcat(buf, tmp);
     }
-    if(cfg.hudShownCheatCounters & CCH_SECRET_PRCNT)
+    if(cfg.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRET ? "(" : ""), totalSecret ? plr->secretCount * 100 / totalSecret : 100, (cfg.hudShownCheatCounters & CCH_SECRET ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""), totalSecret ? plr->secretCount * 100 / totalSecret : 100, (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
         strcat(buf, tmp);
     }
 

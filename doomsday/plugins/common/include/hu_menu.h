@@ -179,7 +179,7 @@ void Hu_MenuSetActivePage(mn_page_t* page);
 void Hu_MenuUpdateGameSaveWidgets(void);
 
 void Hu_MenuCvarButton(mn_object_t* obj);
-void Hu_MenuCvarListInline(mn_object_t* obj);
+void Hu_MenuCvarList(mn_object_t* obj);
 void Hu_MenuCvarSlider(mn_object_t* obj);
 void Hu_MenuCvarEdit(mn_object_t* obj);
 

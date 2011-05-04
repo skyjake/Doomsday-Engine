@@ -53,14 +53,6 @@
 #define ST_FRAGSY           171
 #define ST_FRAGSWIDTH       2
 
-// Counter Cheat flags.
-#define CCH_KILLS               0x1
-#define CCH_ITEMS               0x2
-#define CCH_SECRET              0x4
-#define CCH_KILLS_PRCNT         0x8
-#define CCH_ITEMS_PRCNT         0x10
-#define CCH_SECRET_PRCNT        0x20
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct {

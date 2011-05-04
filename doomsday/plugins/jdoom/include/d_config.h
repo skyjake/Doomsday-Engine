@@ -61,6 +61,14 @@ typedef enum {
     NUMHUDUNHIDEEVENTS
 } hueevent_t;
 
+// Counter Cheat flags.
+#define CCH_KILLS           0x01
+#define CCH_ITEMS           0x02
+#define CCH_SECRETS         0x04
+#define CCH_KILLS_PRCNT     0x08
+#define CCH_ITEMS_PRCNT     0x10
+#define CCH_SECRETS_PRCNT   0x20
+
 // WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
 

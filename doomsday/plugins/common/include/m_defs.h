@@ -56,7 +56,6 @@ typedef enum {
     MN_BUTTON2EX, // Staydown/2-state with additional data.
     MN_EDIT,
     MN_LIST,
-    MN_LISTINLINE,
     MN_SLIDER,
     MN_COLORBOX,
     MN_BINDINGS,
@@ -140,6 +139,8 @@ typedef struct mn_object_s {
     void* data; // Pointer to extra data.
     int data2; // Extra numerical data.
 } mn_object_t;
+
+int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e command);
 
 /**
  * @defGroup menuPageFlags Menu Page Flags
@@ -245,7 +246,20 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNEdit_Responder(mn_object_t* obj, const event_t* ev);
 void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
-void MNEdit_SetText(mn_object_t* obj, const char* string);
+
+/**
+ * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
+ * @{
+ */
+#define MNEDIT_STF_NO_ACTION            0x1 /// Do not call any linked action function.
+/**@}*/
+
+/**
+ * Change the current contents of the edit field.
+ * @param string  New text string which will replace the existing string.
+ * @param flags  @see mneditSetTextFlags
+ */
+void MNEdit_SetText(mn_object_t* obj, const char* string, int flags);
 
 /**
  * List selection.
@@ -262,20 +276,45 @@ typedef struct mndata_list_s {
     void* items;
     int count; // Number of items.
     void* data;
+    int mask;
     int selection; // Selected item (-1 if none).
     int first; // First visible item.
+    int numvis;
 } mndata_list_t;
 
 void MNList_Drawer(mn_object_t* obj, int x, int y);
+void MNList_InlineDrawer(mn_object_t* obj, int x, int y);
+
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
+int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e command);
+
 void MNList_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
+void MNList_InlineDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
+
 int MNList_FindItem(const mn_object_t* obj, int dataValue);
 
-typedef mndata_list_t mndata_listinline_t;
+/**
+ * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
+ * @{
+ */
+#define MNLIST_SIF_NO_ACTION            0x1 /// Do not call any linked action function.
+/**@}*/
 
-void MNListInline_Drawer(mn_object_t* obj, int x, int y);
-int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNListInline_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
+/**
+ * Change the currently selected item.
+ * @param itemIndex  Index of the new selection.
+ * @param flags  @see mnlistSelectItemFlags
+ * @return  @c true if the selected item changed.
+ */
+boolean MNList_SelectItem(mn_object_t* obj, int itemIndex, int flags);
+
+/**
+ * Change the currently selected item by looking up its data value.
+ * @param dataValue  Value associated to the candidate item being selected.
+ * @param flags  @see mnlistSelectItemFlags
+ * @return  @c true if the selected item changed.
+ */
+boolean MNList_SelectItemByValue(mn_object_t* obj, int itemIndex, int flags);
 
 /**
  * Color preview box.
@@ -325,18 +364,22 @@ void MNSlider_TextualValueDimensions(const mn_object_t* obj, mn_page_t* page, in
 int MNSlider_ThumbPos(const mn_object_t* obj);
 
 /**
+ * @defgroup mnsliderSetValueFlags  MNSlider Set Value Flags
+ * @{
+ */
+#define MNSLIDER_SVF_NO_ACTION            0x1 /// Do not call any linked action function.
+/**@}*/
+
+/**
+ * Change the current value represented by the slider.
+ * @param value  New value.
+ * @param flags  @see mnsliderSetValueFlags
+ */
+void MNSlider_SetValue(mn_object_t* obj, float value, int flags);
+
+/**
  * Bindings visualizer.
  */
-
-// Binding iteration flags
-#define MIBF_IGNORE_REPEATS     0x1
-
-typedef enum {
-    MIBT_KEY,
-    MIBT_MOUSE,
-    MIBT_JOY
-} bindingitertype_t;
-
 typedef struct mndata_bindings_s {
     const char* text;
     const char* bindContext;
@@ -349,8 +392,6 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y);
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
 void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
-void MNBindings_IterateBinds(mn_object_t* obj, const char* bindings, int flags, void* paramaters,
-    void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void* paramaters));
 
 /**
  * Mobj preview visual.
