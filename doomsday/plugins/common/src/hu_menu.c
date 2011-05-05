@@ -3372,11 +3372,15 @@ int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e cmd)
         {
             if(list->selection > 0)
                 --list->selection;
+            else
+                list->selection = list->count - 1;
         }
         else
         {
             if(list->selection < list->count - 1)
                 ++list->selection;
+            else
+                list->selection = 0;
         }
 
         // Adjust the first visible item.
