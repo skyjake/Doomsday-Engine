@@ -319,12 +319,15 @@ boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int itemIndex);
 /**
  * Color preview box.
  */
-#define MNDATA_COLORBOX_WIDTH   4 // Inner width in fixed 320x200 space.
-#define MNDATA_COLORBOX_HEIGHT  4 // Inner height in fixed 320x200 space.
+#define MNDATA_COLORBOX_WIDTH   4 // Default inner width in fixed 320x200 space.
+#define MNDATA_COLORBOX_HEIGHT  4 // Default inner height in fixed 320x200 space.
 #define MNDATA_COLORBOX_PADDING_X   3 // Inclusive of the outer border.
 #define MNDATA_COLORBOX_PADDING_Y   5 //
 
 typedef struct mndata_colorbox_s {
+    /// Inner dimensions in fixed 320x200 space. If @c <= 0 the default
+    /// dimensions will be used instead.
+    int width, height;
     float r, g, b, a;
     boolean rgbaMode;
     void* data1;
@@ -347,11 +350,37 @@ void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, 
 /**
  * Change the current color of the color box.
  * @param flags  @see mncolorboxSetColorFlags
- * @param rgba  New color and alpha. Note that alpha will be ignored if this
- *      colorbox is not operating in "rgba mode".
+ * @param rgba  New color and alpha. Note: will be NOP if this colorbox
+ *      is not operating in "rgba mode".
  * @return  @c true if the current color changed.
  */
-boolean MNColorBox_SetColor(mn_object_t* obj, int flags, float rgba[4]);
+boolean MNColorBox_SetColor4fv(mn_object_t* obj, int flags, float rgba[4]);
+boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float green,
+    float blue, float alpha);
+
+/// Change the current red color component.
+/// @return  @c true if the value changed.
+boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red);
+
+/// Change the current green color component.
+/// @return  @c true if the value changed.
+boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green);
+
+/// Change the current blue color component.
+/// @return  @c true if the value changed.
+boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue);
+
+/// Change the current alpha value. Note: will be NOP if this colorbox
+/// is not operating in "rgba mode".
+/// @return  @c true if the value changed.
+boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha);
+
+/**
+ * Copy the current color from @a other.
+ * @param flags  @see mncolorboxSetColorFlags
+ * @return  @c true if the current color changed.
+ */
+boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* otherObj);
 
 /**
  * Graphical slider.

@@ -1689,27 +1689,27 @@ mndata_list_t lst_map_customcolors = {
 };
 
 mndata_colorbox_t cbox_map_line_unseen_color = { 
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"
 };
 mndata_colorbox_t cbox_map_line_solid_color = {
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "map-wall-r", "map-wall-g", "map-wall-b"
 };
 mndata_colorbox_t cbox_map_line_floor_color = {
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"
 };
 mndata_colorbox_t cbox_map_line_ceiling_color = {
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"
 };
 mndata_colorbox_t cbox_map_mobj_color = {
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "map-mobj-r", "map-mobj-g", "map-mobj-b"
 };
 mndata_colorbox_t cbox_map_background_color = {
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "map-background-r", "map-background-g", "map-background-b"
 };
 

@@ -133,7 +133,6 @@ void M_DrawLoadMenu(mn_page_t* page, int x, int y);
 void M_DrawSaveMenu(mn_page_t* page, int x, int y);
 void M_DrawMultiplayerMenu(mn_page_t* page, int x, int y);
 void M_DrawPlayerSetupMenu(mn_page_t* page, int x, int y);
-void M_DrawColorWidgetMenu(mn_page_t* page, int x, int y);
 
 int MN_ColorWidgetMenuCmdResponder(mn_page_t* page, menucommand_e cmd);
 
@@ -293,7 +292,6 @@ static int cursorAnimCounter = 0;
 static int cursorAnimFrame = 0;
 
 static boolean colorWidgetActive = false;
-static float colorWidgetColor[4] = {0, 0, 0, 0};
 
 #if __JHERETIC__
 static char notDesignedForMessage[80];
@@ -670,7 +668,7 @@ mndata_slider_t sld_hud_messages_size = { 0, 1, 0, .1f, true, "msg-scale" };
 mndata_slider_t sld_hud_messages_uptime = { 0, 60, 0, 1.f, true, "msg-uptime", "Disabled", NULL, " second", " seconds" };
 
 mndata_colorbox_t cbox_hud_color = {
-    0, 0, 0, 0, true,
+    0, 0, 0, 0, 0, 0, true,
     "hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a"
 };
 
@@ -688,7 +686,7 @@ mndata_list_t list_hud_xhair_symbol = {
 };
 
 mndata_colorbox_t cbox_hud_xhair_color = {
-    0, 0, 0, 0, false,
+    0, 0, 0, 0, 0, 0, false,
     "view-cross-r", "view-cross-g", "view-cross-b",
 };
 
@@ -1161,22 +1159,27 @@ mndata_slider_t sld_colorwidget_alpha = {
     0, 1, 0, .05f, true
 };
 
+mndata_colorbox_t cbox_colorwidget_mixcolor = {
+    SCREENHEIGHT/7, SCREENHEIGHT/7, 0, 0, 0, 0, true
+};
+
 static mn_object_t ColorWidgetMenuObjects[] = {
+    { MN_COLORBOX,  0,  MNF_NO_FOCUS, "", MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, NULL, NULL, NULL, NULL, &cbox_colorwidget_mixcolor },
     { MN_TEXT,      0,  0,  "Red",      MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_red, 0 },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_red, CR },
     { MN_TEXT,      0,  0,  "Green",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_green, 1 },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_green, CG },
     { MN_TEXT,      0,  0,  "Blue",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_blue, 2 },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_blue, CB },
     { MN_TEXT,      0,  0,  "Alpha",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_alpha, 3 },
+    { MN_SLIDER,    0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, Hu_MenuUpdateColorWidgetColor, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_alpha, CA },
     { MN_NONE }
 };
 
 static mn_page_t ColorWidgetMenu = {
-    ColorWidgetMenuObjects, 8, -1, MNPF_NOHOTKEYS,
+    ColorWidgetMenuObjects, 9, -1, MNPF_NOHOTKEYS,
     { 98, 60 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawColorWidgetMenu, MN_ColorWidgetMenuCmdResponder,
+    NULL, MN_ColorWidgetMenuCmdResponder,
     &OptionsMenu,
     //0, 8
 };
@@ -1796,6 +1799,10 @@ void MNPage_Initialize(mn_page_t* page)
             mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
             if(!cbox->rgbaMode)
                 cbox->a = 1.f;
+            if(0 >= cbox->width)
+                cbox->width = MNDATA_COLORBOX_WIDTH;
+            if(0 >= cbox->height)
+                cbox->height = MNDATA_COLORBOX_HEIGHT;
             break;
           }
         default:
@@ -2176,9 +2183,8 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
                 rgba[CR] = Con_GetFloat(cbox->data1);
                 rgba[CG] = Con_GetFloat(cbox->data2);
                 rgba[CB] = Con_GetFloat(cbox->data3);
-                if(cbox->rgbaMode)
-                    rgba[CA] = Con_GetFloat(cbox->data4);
-                MNColorBox_SetColor(obj, MNCOLORBOX_SCF_NO_ACTION, rgba);
+                rgba[CA] = (cbox->rgbaMode? Con_GetFloat(cbox->data4) : 1.f);
+                MNColorBox_SetColor4fv(obj, MNCOLORBOX_SCF_NO_ACTION, rgba);
             }
             break;
           }
@@ -2266,7 +2272,8 @@ int MN_ColorWidgetMenuCmdResponder(mn_page_t* page, menucommand_e cmd)
         obj->flags &= ~MNF_ACTIVE;
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        MNColorBox_SetColor(obj, 0, colorWidgetColor);
+        /// \fixme Find object by id.
+        MNColorBox_CopyColor(obj, 0, &ColorWidgetMenu.objects[0]);
         return true;
       }
     default:
@@ -2605,39 +2612,6 @@ void M_DrawMenuText2(const char* string, int x, int y, int fontIdx)
 void M_DrawMenuText(const char* string, int x, int y)
 {
     M_DrawMenuText2(string, x, y, GF_FONTA);
-}
-
-/**
- * The color widget edits the "hot" colorWidgetColor[]
- * The widget responder handles setting the specified vars to that of the
- * current color.
- */
-void M_DrawColorWidgetMenu(mn_page_t* page, int x, int y)
-{
-#if __JDOOM__ || __JDOOM64__
-# define BGWIDTH            (160)
-# define BGHEIGHT           (rgbaMode? 85 : 75)
-#elif __JHERETIC__ || __JHEXEN__
-# define BGWIDTH            (180)
-# define BGHEIGHT           (rgbaMode? 170 : 140)
-#endif
-
-    mn_object_t* obj = (mn_object_t*) page->data;
-    mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
-    boolean rgbaMode = cbox->rgbaMode;
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    //M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, rs.pageAlpha);
-    //DGL_SetNoMaterial();
-
-    DGL_DrawRect(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, colorWidgetColor[0], colorWidgetColor[1], colorWidgetColor[2], colorWidgetColor[3]);
-    M_DrawBackgroundBox(x + BGWIDTH/2 - 24/2 - 24, y + 10 - 40, 24, 22, false, BORDERDOWN, 1, 1, 1, rs.pageAlpha);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-#undef BGWIDTH
-#undef BGHEIGHT
 }
 
 /**
@@ -3612,18 +3586,16 @@ void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, in
 void MNColorBox_Drawer(mn_object_t* obj, int x, int y)
 {
     const mndata_colorbox_t* cbox = (const mndata_colorbox_t*) obj->data;
-    const int width = MNDATA_COLORBOX_WIDTH;
-    const int height = MNDATA_COLORBOX_HEIGHT;
 
     x += MNDATA_COLORBOX_PADDING_X;
     y += MNDATA_COLORBOX_PADDING_Y;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    M_DrawBackgroundBox(x, y, width, height, true, BORDERDOWN, 1, 1, 1, rs.pageAlpha);
+    M_DrawBackgroundBox(x, y, cbox->width, cbox->height, true, BORDERDOWN, 1, 1, 1, rs.pageAlpha);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRect(x, y, width, height, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
+    DGL_DrawRect(x, y, cbox->width, cbox->height, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
 }
 
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
@@ -3654,29 +3626,136 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 
 void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
 {
-    if(width)  *width  = MNDATA_COLORBOX_WIDTH  + MNDATA_COLORBOX_PADDING_X*2;
-    if(height) *height = MNDATA_COLORBOX_HEIGHT + MNDATA_COLORBOX_PADDING_Y*2;
+    assert(NULL != obj);
+    {
+    const mndata_colorbox_t* cbox = (const mndata_colorbox_t*) obj->data;
+    if(width)  *width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
+    if(height) *height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
+    }
 }
 
-boolean MNColorBox_SetColor(mn_object_t* obj, int flags, float rgba[4])
+boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red)
 {
     assert(NULL != obj);
     {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
-    float oldR = cbox->r, oldG = cbox->g, oldB = cbox->b, oldA = cbox->a;
-    boolean hasChanged;
-    if(NULL == rgba) return false;
-    cbox->r = rgba[CR];
-    cbox->g = rgba[CG];
-    cbox->b = rgba[CB];
+    float oldRed = cbox->r;
+    cbox->r = red;
+    if(cbox->r != oldRed)
+    {
+        if(NULL != obj->action && !(flags & MNCOLORBOX_SCF_NO_ACTION))
+        {
+            obj->action(obj);
+        }
+        return true;
+    }
+    return false;
+    }
+}
+
+boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green)
+{
+    assert(NULL != obj);
+    {
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
+    float oldGreen = cbox->g;
+    cbox->g = green;
+    if(cbox->g != oldGreen)
+    {
+        if(NULL != obj->action && !(flags & MNCOLORBOX_SCF_NO_ACTION))
+        {
+            obj->action(obj);
+        }
+        return true;
+    }
+    return false;
+    }
+}
+
+boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue)
+{
+    assert(NULL != obj);
+    {
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
+    float oldBlue = cbox->b;
+    cbox->b = blue;
+    if(cbox->b != oldBlue)
+    {
+        if(NULL != obj->action && !(flags & MNCOLORBOX_SCF_NO_ACTION))
+        {
+            obj->action(obj);
+        }
+        return true;
+    }
+    return false;
+    }
+}
+
+boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha)
+{
+    assert(NULL != obj);
+    {
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
     if(cbox->rgbaMode)
-        cbox->a = rgba[CA];
-    hasChanged = (cbox->r != oldR || cbox->g != oldG || cbox->b != oldB || (cbox->rgbaMode && cbox->a != oldA));
-    if(hasChanged && NULL != obj->action && !(flags & MNCOLORBOX_SCF_NO_ACTION))
+    {
+        float oldAlpha = cbox->a;
+        cbox->a = alpha;
+        if(cbox->a != oldAlpha)
+        {
+            if(NULL != obj->action && !(flags & MNCOLORBOX_SCF_NO_ACTION))
+            {
+                obj->action(obj);
+            }
+            return true;
+        }
+    }
+    return false;
+    }
+}
+
+boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float green,
+    float blue, float alpha)
+{
+    assert(NULL != obj);
+    {
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->data;
+    int setComps = 0, setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
+
+    if(MNColorBox_SetRedf(  obj, setCompFlags, red))   setComps |= 0x1;
+    if(MNColorBox_SetGreenf(obj, setCompFlags, green)) setComps |= 0x2;
+    if(MNColorBox_SetBluef( obj, setCompFlags, blue))  setComps |= 0x4;
+    if(MNColorBox_SetAlphaf(obj, setCompFlags, alpha)) setComps |= 0x8;
+
+    if(0 == setComps) return false;
+    
+    if(NULL != obj->action && !(flags & MNCOLORBOX_SCF_NO_ACTION))
     {
         obj->action(obj);
     }
-    return hasChanged;
+    return true;
+    }
+}
+
+boolean MNColorBox_SetColor4fv(mn_object_t* obj, int flags, float rgba[4])
+{
+    if(NULL == rgba) return false;
+    return MNColorBox_SetColor4f(obj, flags, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+}
+
+boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* otherObj)
+{
+    assert(NULL != obj);
+    {
+    mndata_colorbox_t* other;
+    if(otherObj == NULL)
+    {
+#if _DEBUG
+        Con_Error("MNColorBox::CopyColor: Called with invalid 'otherObj' argument.");
+#endif
+        return false;
+    }
+    other = (mndata_colorbox_t*) otherObj->data;
+    return MNColorBox_SetColor4f(obj, flags, other->r, other->g, other->b, other->rgbaMode? other->a : 1.f);
     }
 }
 
@@ -4213,19 +4292,17 @@ void Hu_MenuCvarColorBox(mn_object_t* obj)
     {
         // Activate the color widget.
         /// \fixme Find the objects by id.
-        mn_object_t* sldrRed   = &ColorWidgetMenu.objects[1];
-        mn_object_t* sldrGreen = &ColorWidgetMenu.objects[3];
-        mn_object_t* sldrBlue  = &ColorWidgetMenu.objects[5];
-        mn_object_t* textAlpha = &ColorWidgetMenu.objects[6];
-        mn_object_t* sldrAlpha = &ColorWidgetMenu.objects[7];
+        mn_object_t* cboxMix   = &ColorWidgetMenu.objects[0];
+        mn_object_t* sldrRed   = &ColorWidgetMenu.objects[2];
+        mn_object_t* sldrGreen = &ColorWidgetMenu.objects[4];
+        mn_object_t* sldrBlue  = &ColorWidgetMenu.objects[6];
+        mn_object_t* textAlpha = &ColorWidgetMenu.objects[7];
+        mn_object_t* sldrAlpha = &ColorWidgetMenu.objects[8];
 
         MNPage_Initialize(&ColorWidgetMenu);
         ColorWidgetMenu.data = obj;
 
-        colorWidgetColor[CR] = cbox->r;
-        colorWidgetColor[CG] = cbox->g;
-        colorWidgetColor[CB] = cbox->b;
-        colorWidgetColor[CA] = (cbox->rgbaMode? cbox->a : 1.0f);
+        MNColorBox_CopyColor(cboxMix, 0, obj);
 
         MNSlider_SetValue(sldrRed,   MNSLIDER_SVF_NO_ACTION, cbox->r);
         MNSlider_SetValue(sldrGreen, MNSLIDER_SVF_NO_ACTION, cbox->g);
@@ -4436,7 +4513,17 @@ void Hu_MenuUpdateColorWidgetColor(mn_object_t* obj)
     assert(NULL != obj);
     {
     mndata_slider_t* sldr = (mndata_slider_t*)obj->data;
-    colorWidgetColor[obj->data2] = sldr->value;
+    /// \fixme Find object by id.
+    mn_object_t* cboxMix = &ColorWidgetMenu.objects[0];
+    switch(obj->data2)
+    {
+    case CR: MNColorBox_SetRedf(  cboxMix, MNCOLORBOX_SCF_NO_ACTION, sldr->value); break;
+    case CG: MNColorBox_SetGreenf(cboxMix, MNCOLORBOX_SCF_NO_ACTION, sldr->value); break;
+    case CB: MNColorBox_SetBluef( cboxMix, MNCOLORBOX_SCF_NO_ACTION, sldr->value); break;
+    case CA: MNColorBox_SetAlphaf(cboxMix, MNCOLORBOX_SCF_NO_ACTION, sldr->value); break;
+    default:
+        Con_Error("Hu_MenuUpdateColorWidgetColor: Invalid value (%i) for data2.", obj->data2);
+    }
     }
 }
 
