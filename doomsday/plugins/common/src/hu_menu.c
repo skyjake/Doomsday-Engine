@@ -1190,7 +1190,7 @@ cvartemplate_t menuCVars[] = {
     { "menu-flash-b",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CB], 0, 1 },
     { "menu-flash-speed", 0, CVT_INT,   &cfg.menuTextFlashSpeed, 0, 50 },
     { "menu-turningskull", 0, CVT_BYTE, &cfg.menuCursorRotate, 0, 1 },
-    { "menu-effect",    0,  CVT_INT,    &cfg.menuEffects, 0, 1 },
+    { "menu-effect",    0,  CVT_INT,    &cfg.menuEffectFlags, 0, MEF_EVERYTHING },
     { "menu-color-r",   0,  CVT_FLOAT,  &cfg.menuTextColors[0][CR], 0, 1 },
     { "menu-color-g",   0,  CVT_FLOAT,  &cfg.menuTextColors[0][CG], 0, 1 },
     { "menu-color-b",   0,  CVT_FLOAT,  &cfg.menuTextColors[0][CB], 0, 1 },
@@ -2572,19 +2572,18 @@ int Hu_MenuFallbackResponder(event_t* ev)
     return false;
 }
 
+short MN_MergeMenuEffectWithDrawTextFlags(short f)
+{
+    return ((~(cfg.menuEffectFlags << DTFTOMEF_SHIFT) & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
+}
+
 void M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags,
     float glitterStrength, float shadowStrength)
 {
     if(NULL == string || !string[0]) return;
 
-    if(cfg.menuEffects == 0)
-    {
-        flags |= DTF_NO_TYPEIN|DTF_NO_SHADOW|DTF_NO_GLITTER;
-        glitterStrength = 0;
-        shadowStrength = 0;
-    }
-
     FR_SetFont(FID(fontIdx));
+    flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
     FR_DrawTextFragment7(string, x, y, flags, 0, 0, glitterStrength, shadowStrength, 0, 0);
 }
 

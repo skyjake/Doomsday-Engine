@@ -339,7 +339,7 @@ void H_PreInit(void)
 
     cfg.weaponCycleSequential = true;
 
-    cfg.menuEffects = 0;
+    cfg.menuEffectFlags = MEF_TEXT_SHADOW;
     cfg.hudFog = 5;
 
     cfg.ringFilter = 1;

@@ -184,7 +184,7 @@ void D_PreInit(void)
     cfg.menuTextGlitter = .5f;
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
-    cfg.menuEffects = 1; // Do type-in effect.
+    cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
     cfg.menuNoStretch = false;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;

@@ -98,7 +98,7 @@ typedef struct jdoom64_config_s {
     int             hudFog;
 
     float           menuScale;
-    int             menuEffects;
+    int             menuEffectFlags;
     float           menuShadow;
     int             menuQuitSound;
     byte            menuSlam;

@@ -178,9 +178,9 @@ static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
 
-static __inline short translatePatchToTextDrawFlags(short in)
+static short translatePatchToTextDrawFlags(short in)
 {
-    short out = DTF_NO_EFFECTS;
+    short out = 0;
     if(in & DPF_ALIGN_LEFT)
         out |= DTF_ALIGN_LEFT;
     if(in & DPF_ALIGN_RIGHT)
@@ -189,7 +189,14 @@ static __inline short translatePatchToTextDrawFlags(short in)
         out |= DTF_ALIGN_BOTTOM;
     if(in & DPF_ALIGN_TOP)
         out |= DTF_ALIGN_TOP;
-    return out;
+    /**
+     * \kludge
+     * Correct behavior is no-merge but due to the way the state for this is
+     * managed it means the menu strings do not have text effects applied
+     * when they should. This should be addressed by redesigning the API for
+     * patch replacement.
+     */
+    return MN_MergeMenuEffectWithDrawTextFlags(out);
 }
 
 /**
@@ -1232,20 +1239,10 @@ void WI_DrawPatch5(patchid_t patch, int x, int y, const char* altstring,
 
         if(!info.isCustom)
         {
-            short textFlags = translatePatchToTextDrawFlags(flags);
-            /**
-             * \kludge Remove the DTF_NO_EFFECTS flag.
-             * Correct behavior is off but due to the way the state for
-             * this is managed it means the menu strings don't typein
-             * and/or shadow when they should. This should be addressed
-             * by redesigning the API for patch replacement.
-             */
-            if(cfg.menuEffects)
-                textFlags &= ~DTF_NO_EFFECTS;
-
             // A user replacement?
             if(patchString)
             {
+                short textFlags = translatePatchToTextDrawFlags(flags);
                 FR_DrawText(string, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
                 return;
             }
@@ -1253,6 +1250,7 @@ void WI_DrawPatch5(patchid_t patch, int x, int y, const char* altstring,
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
+                short textFlags = translatePatchToTextDrawFlags(flags);
                 FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
                 return;
             }

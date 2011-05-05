@@ -154,7 +154,7 @@ typedef struct {
     int             hudFog;
 
     float           menuScale;
-    int             menuEffects;
+    int             menuEffectFlags;
     float           menuShadow;
 
     byte            menuSlam;

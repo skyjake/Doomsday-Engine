@@ -443,6 +443,21 @@ typedef struct mn_rendstate_s {
 extern const mn_rendstate_t* mnRendState;
 
 /**
+ * @defgroup menuEffectFlags  Menu Effect Flags
+ * @{
+ */
+#define DTFTOMEF_SHIFT              (4) // 0x10000 to 0x1
+
+#define MEF_TEXT_TYPEIN             (DTF_NO_TYPEIN  >> DTFTOMEF_SHIFT)
+#define MEF_TEXT_SHADOW             (DTF_NO_SHADOW  >> DTFTOMEF_SHIFT)
+#define MEF_TEXT_GLITTER            (DTF_NO_GLITTER >> DTFTOMEF_SHIFT)
+
+#define MEF_EVERYTHING              (MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER)
+/**@}*/
+
+short MN_MergeMenuEffectWithDrawTextFlags(short f);
+
+/**
  * Execute a menu navigation/action command.
  */
 void Hu_MenuCommand(menucommand_e cmd);

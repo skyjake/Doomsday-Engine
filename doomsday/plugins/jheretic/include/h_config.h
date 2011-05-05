@@ -97,7 +97,7 @@ typedef struct jheretic_config_s {
     int             hudFog;
 
     float           menuScale;
-    int             menuEffects;
+    int             menuEffectFlags;
     float           menuShadow;
 
     byte            menuSlam;
