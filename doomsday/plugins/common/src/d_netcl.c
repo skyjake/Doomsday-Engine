@@ -368,7 +368,9 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     NetCl_SetReadBuffer(data);
     flags = NetCl_ReadShort();
 
-    //Con_Printf("NetCl_UpdPlrState: fl=%x\n", flags);
+#ifdef _DEBUG
+    Con_Message("NetCl_UpdatePlayerState: fl=%x\n", flags);
+#endif
 
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {

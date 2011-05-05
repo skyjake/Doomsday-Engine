@@ -130,7 +130,7 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
 #ifdef _DEBUG
     if(isClient)
     {
-        Con_Message("P_MobjCreate: Client creating mobj at %f,%f\n", x, y);
+        VERBOSE2( Con_Message("P_MobjCreate: Client creating mobj at %f,%f\n", x, y) );
     }
 #endif
 
@@ -174,7 +174,7 @@ void P_MobjDestroy(mobj_t* mo)
 #ifdef _DEBUG
     if(mo->ddFlags & DDMF_MISSILE)
     {
-        Con_Message("P_MobjDestroy: Destroying missile %i.\n", mo->thinker.id);
+        VERBOSE2( Con_Message("P_MobjDestroy: Destroying missile %i.\n", mo->thinker.id) );
     }
 #endif
 

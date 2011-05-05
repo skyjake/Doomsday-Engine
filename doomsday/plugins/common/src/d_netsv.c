@@ -375,12 +375,13 @@ void NetSv_Ticker(void)
     // Send the player state updates.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
+        player_t* plr = &players[i];
 
         // Don't send on every tic. Also, don't send to all
         // players at the same time.
         if(((int) GAMETIC + i) % 10)
             continue;
+
         if(!plr->plr->inGame || !plr->update)
             continue;
 
@@ -1029,6 +1030,10 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
        (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
         !players[destPlrNum].plr->inGame))
         return;
+
+#ifdef _DEBUG
+    Con_Message("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x\n", srcPlrNum, destPlrNum, flags);
+#endif
 
     // Include the player number if necessary.
     if(pType == GPT_PLAYER_STATE)
