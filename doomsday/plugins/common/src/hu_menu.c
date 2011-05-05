@@ -652,9 +652,9 @@ mn_page_t SoundMenu = {
 };
 
 #if __JDOOM64__
-mndata_slider_t sld_hud_viewsize = { 0, 11, 0, 1, false, "view-size" };
+mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, "view-size" };
 #else
-mndata_slider_t sld_hud_viewsize = { 0, 13, 0, 1, false, "view-size" };
+mndata_slider_t sld_hud_viewsize = { 3, 13, 0, 1, false, "view-size" };
 #endif
 mndata_slider_t sld_hud_wideoffset = { 0, 1, 0, .1f, true, "hud-wideoffset" };
 mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1.f, true, "hud-timer", "Disabled", NULL, " second", " seconds" };
