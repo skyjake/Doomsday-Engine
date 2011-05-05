@@ -83,7 +83,7 @@ void M_OpenSaveMenu(mn_object_t* obj);
 void M_OpenFilesMenu(mn_object_t* obj);
 #endif
 void M_OpenPlayerSetupMenu(mn_object_t* obj);
-void M_OpenMultiplayerClientMenu(mn_object_t* obj);
+void M_OpenMultiplayerMenu(mn_object_t* obj);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 void M_OpenHelp(mn_object_t* obj);
@@ -335,12 +335,6 @@ static patchid_t pEditMiddle;
 static patchid_t pEditMiddle;
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
-# define READTHISID      3
-#elif !__JDOOM64__
-# define READTHISID      4
-#endif
-
 mn_object_t MainMenuObjects[] = {
 #if __JDOOM__
     { MN_BUTTON,    0,  0,  "{case}New Game",  MENU_FONT2, MENU_COLOR1, &pNGame,    MNButton_Dimensions, MNButton_Drawer, M_SetMenu, MNButton_CommandResponder, NULL, NULL, &GameTypeMenu },
@@ -365,31 +359,23 @@ mn_object_t MainMenuObjects[] = {
     { MN_NONE }
 };
 
+mn_page_t MainMenu = {
+    MainMenuObjects, -1, 0,
 #if __JHEXEN__ || __JHERETIC__
-mn_page_t MainMenu = {
-    MainMenuObjects, 5, -1, 0,
-    { 110, 56 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 110, 56 },
+#else
+    {  97, 64 },
+#endif
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawMainMenu,
-    //0, 0,
-    //0, 5
-};
-#elif __JDOOM64__
-mn_page_t MainMenu = {
-    MainMenuObjects, 5, -1, 0,
-    { 97, 64 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawMainMenu,
-    //0, 0,
-    //0, 5
-};
-#elif __JDOOM__
-mn_page_t MainMenu = {
-    MainMenuObjects, 6, -1, 0,
-    { 97, 64 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawMainMenu,
+#if defined(__JDOOM__) && !defined(__JDOOM64__)
     //0, 0,
     //0, 6
-};
+#else
+    //0, 0,
+    //0, 5
 #endif
+};
 
 mn_object_t GameTypeMenuObjects[] = {
     { MN_BUTTON,    0,  0,  (const char*)TXT_SINGLEPLAYER,  MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_SelectSingleplayer, MNButton_CommandResponder },
@@ -398,9 +384,9 @@ mn_object_t GameTypeMenuObjects[] = {
 };
 
 mn_page_t GameTypeMenu = {
-    GameTypeMenuObjects, 2, -1, 0,
+    GameTypeMenuObjects, -1, 0,
 #if __JDOOM__ || __JDOOM64__
-    { 97, 65 },
+    {  97, 65 },
 #else
     { 104, 65 },
 #endif
@@ -414,7 +400,7 @@ mn_page_t GameTypeMenu = {
 static mn_object_t* PlayerClassMenuObjects;
 
 mn_page_t PlayerClassMenu = {
-    0, 0, -1, 0, { 66, 66 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    0, -1, 0, { 66, 66 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawPlayerClassMenu, NULL,
     &GameTypeMenu,
     //0, 0
@@ -425,7 +411,7 @@ mn_page_t PlayerClassMenu = {
 static mn_object_t* EpisodeMenuObjects;
 
 mn_page_t EpisodeMenu = {
-    0, 0, -1, 0,
+    0, -1, 0,
 # if __JDOOM__
     { 48, 63 },
 # else
@@ -446,7 +432,7 @@ static mn_object_t FilesMenuObjects[] = {
 };
 
 mn_page_t FilesMenu = {
-    FilesMenuObjects, 2, -1, 0,
+    FilesMenuObjects, -1, 0,
     { 110, 60 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     NULL, NULL,
     &MainMenu,
@@ -482,7 +468,7 @@ static mn_object_t LoadMenuObjects[] = {
 };
 
 mn_page_t LoadMenu = {
-    LoadMenuObjects, NUMSAVESLOTS, -1, 0,
+    LoadMenuObjects, -1, 0,
 #if __JDOOM__ || __JDOOM64__
     { 80, 54 },
 #else
@@ -509,7 +495,7 @@ static mn_object_t SaveMenuObjects[] = {
 };
 
 mn_page_t SaveMenu = {
-    SaveMenuObjects, NUMSAVESLOTS, -1, 0,
+    SaveMenuObjects, -1, 0,
 #if __JDOOM__ || __JDOOM64__
     { 80, 54 },
 #else
@@ -532,7 +518,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 5, -1, 0,
+    SkillMenuObjects, -1, 0,
     { 120, 44 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &PlayerClassMenu,
@@ -549,7 +535,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 5, -1, 0,
+    SkillMenuObjects, -1, 0,
     { 38, 30 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &EpisodeMenu,
@@ -564,7 +550,7 @@ static mn_object_t SkillMenuObjects[] = {
     { MN_NONE }
 };
 static mn_page_t SkillMenu = {
-    SkillMenuObjects, 4, -1, 0,
+    SkillMenuObjects, -1, 0,
     { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &GameTypeMenu,
@@ -581,7 +567,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 5, -1, 0,
+    SkillMenuObjects, -1, 0,
     { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &EpisodeMenu,
@@ -607,13 +593,13 @@ static mn_object_t OptionsMenuObjects[] = {
 };
 
 mn_page_t OptionsMenu = {
-    OptionsMenuObjects,
+    OptionsMenuObjects, -1, 0,
 #if __JHERETIC__ || __JHEXEN__
-    11,
+    { 110, 63 },
 #else
-    10,
+    { 110, 63 },
 #endif
-    -1, 0, { 110, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawOptionsMenu, NULL,
     &MainMenu,
     //0,
@@ -637,7 +623,7 @@ mn_object_t SoundMenuObjects[] = {
 };
 
 mn_page_t SoundMenu = {
-    SoundMenuObjects, 5, -1, 0,
+    SoundMenuObjects, -1, 0,
 #if __JHEXEN__
     { 97, 25 },
 #elif __JHERETIC__
@@ -840,16 +826,7 @@ static mn_object_t HudMenuObjects[] = {
 };
 
 mn_page_t HudMenu = {
-#if __JHEXEN__
-    HudMenuObjects, 57,
-#elif __JHERETIC__
-    HudMenuObjects, 69,
-#elif __JDOOM64__
-    HudMenuObjects, 65,
-#elif __JDOOM__
-    HudMenuObjects, 70,
-#endif
-    -1, 0,
+    HudMenuObjects, -1, 0,
 #if __JDOOM__ || __JDOOM64__
     { 97, 40 },
 #else
@@ -894,7 +871,7 @@ static mn_object_t InventoryMenuObjects[] = {
 };
 
 mn_page_t InventoryMenu = {
-    InventoryMenuObjects, 15, -1, 0,
+    InventoryMenuObjects, -1, 0,
     { 78, 48 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawInventoryMenu, NULL,
     &OptionsMenu,
@@ -902,7 +879,40 @@ mn_page_t InventoryMenu = {
 };
 #endif
 
-mndata_listitem_t listit_weapons_order[NUM_WEAPON_TYPES];
+mndata_listitem_t listit_weapons_order[NUM_WEAPON_TYPES] = {
+#if __JDOOM__ || __JDOOM64__
+    { (const char*)TXT_WEAPON1,             WT_FIRST },
+    { (const char*)TXT_WEAPON2,             WT_SECOND },
+    { (const char*)TXT_WEAPON3,             WT_THIRD },
+    { (const char*)TXT_WEAPON4,             WT_FOURTH },
+    { (const char*)TXT_WEAPON5,             WT_FIFTH },
+    { (const char*)TXT_WEAPON6,             WT_SIXTH },
+    { (const char*)TXT_WEAPON7,             WT_SEVENTH },
+    { (const char*)TXT_WEAPON8,             WT_EIGHTH },
+    { (const char*)TXT_WEAPON9,             WT_NINETH },
+#  if __JDOOM64__
+    { (const char*)TXT_WEAPON10,            WT_TENTH }
+#  endif
+#elif __JHERETIC__
+    { (const char*)TXT_TXT_WPNSTAFF,        WT_FIRST },
+    { (const char*)TXT_TXT_WPNWAND,         WT_SECOND },
+    { (const char*)TXT_TXT_WPNCROSSBOW,     WT_THIRD },
+    { (const char*)TXT_TXT_WPNBLASTER,      WT_FOURTH },
+    { (const char*)TXT_TXT_WPNSKULLROD,     WT_FIFTH },
+    { (const char*)TXT_TXT_WPNPHOENIXROD,   WT_SIXTH },
+    { (const char*)TXT_TXT_WPNMACE,         WT_SEVENTH },
+    { (const char*)TXT_TXT_WPNGAUNTLETS,    WT_EIGHTH }
+#elif __JHEXEN__
+    /**
+     * \fixme We should allow different weapon preferences per player-class.
+     */
+    { "First",  WT_FIRST },
+    { "Second", WT_SECOND },
+    { "Third",  WT_THIRD },
+    { "Fourth", WT_FOURTH }
+#endif
+};
+
 mndata_list_t list_weapons_order = {
     listit_weapons_order, NUMLISTITEMS(listit_weapons_order)
 };
@@ -949,13 +959,7 @@ static mn_object_t WeaponMenuObjects[] = {
 };
 
 mn_page_t WeaponMenu = {
-    WeaponMenuObjects,
-#if __JDOOM__ || __JDOOM64__
-    16,
-#else
-    14,
-#endif
-    -1, MNPF_NOHOTKEYS,
+    WeaponMenuObjects, -1, MNPF_NOHOTKEYS,
 #if __JDOOM__ || __JDOOM64__
     { 78, 40 },
 #elif __JHERETIC__
@@ -1023,27 +1027,21 @@ static mn_object_t GameplayMenuObjects[] = {
     { MN_NONE }
 };
 
+mn_page_t GameplayMenu = {
+    GameplayMenuObjects, -1, 0,
 #if __JHEXEN__
-mn_page_t GameplayMenu = {
-    GameplayMenuObjects, 6, -1, 0,
-    { 88, 25 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawGameplayMenu, NULL,
-    &OptionsMenu,
-    //0, 6, { 6, 25 }
-};
+    { 88, 25 },
+#elif __JHERETIC__
+    { 30, 40 },
 #else
-mn_page_t GameplayMenu = {
-#if __JDOOM64__
-    GameplayMenuObjects, 33,
-#elif __JDOOM__
-    GameplayMenuObjects, 35,
-#else
-    GameplayMenuObjects, 21,
+    { 30, 40 },
 #endif
-    -1, 0, { 30, 40 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawGameplayMenu, NULL,
     &OptionsMenu,
-#if __JDOOM64__
+#if __JHEXEN__
+    //0, 6, { 6, 25 }
+#elif __JDOOM64__
     //0, 16, { 16, 40 }
 #elif __JDOOM__
     //0, 18, { 18, 40 }
@@ -1051,23 +1049,21 @@ mn_page_t GameplayMenu = {
     //0, 11, { 11, 40 }
 #endif
 };
-#endif
 
 mn_object_t MultiplayerMenuObjects[] = {
     { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenPlayerSetupMenu, MNButton_CommandResponder },
-    { MN_BUTTON,    0,  0,  "Join Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenMultiplayerClientMenu, MNButton_CommandResponder },
+    { MN_BUTTON,    0,  0,  "Join Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenMultiplayerMenu, MNButton_CommandResponder },
     { MN_NONE }
 };
 
-mn_object_t MultiplayerClientMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "Player Setup", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenPlayerSetupMenu, MNButton_CommandResponder },
-    { MN_BUTTON,    0,  0,  "Disconnect",   MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, M_OpenMultiplayerClientMenu, MNButton_CommandResponder },
-    { MN_NONE}
-};
-
 mn_page_t MultiplayerMenu = {
-    MultiplayerMenuObjects, 2, -1, 0,
-    { 97, 65 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    MultiplayerMenuObjects, -1, 0,
+#if __JHERETIC__ || __JHEXEN__
+    { 97, 65 },
+#else
+    { 97, 65 },
+#endif
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawMultiplayerMenu, NULL,
     &GameTypeMenu,
     //0, 2
@@ -1131,12 +1127,13 @@ mn_object_t PlayerSetupMenuObjects[] = {
 };
 
 mn_page_t PlayerSetupMenu = {
-#if __JHEXEN__
-    PlayerSetupMenuObjects, 7,
+    PlayerSetupMenuObjects, -1, 0,
+#if __JHERETIC__ || __JHEXEN__
+    { 70, 54 },
 #else
-    PlayerSetupMenuObjects, 5,
+    { 70, 54 },
 #endif
-    -1, 0, { 70, 54 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawPlayerSetupMenu, NULL,
     &MultiplayerMenu,
 #if __JHEXEN__
@@ -1177,8 +1174,13 @@ static mn_object_t ColorWidgetMenuObjects[] = {
 };
 
 static mn_page_t ColorWidgetMenu = {
-    ColorWidgetMenuObjects, 9, -1, MNPF_NOHOTKEYS,
-    { 98, 60 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    ColorWidgetMenuObjects, -1, MNPF_NOHOTKEYS,
+#if __JHERETIC__ || __JHEXEN__
+    { 98, 60 },
+#else
+    { 98, 60 },
+#endif
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     NULL, MN_ColorWidgetMenuCmdResponder,
     &OptionsMenu,
     //0, 8
@@ -1398,36 +1400,8 @@ static int compareWeaponPriority(const void* _a, const void* _b)
 
 void M_InitWeaponsMenu(void)
 {
-#if __JHEXEN__
-    const char* weaponids[] = { "First", "Second", "Third", "Fourth"};
-#endif
-    int i;
-
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        mndata_listitem_t* item = &((mndata_listitem_t*)listit_weapons_order)[i];
-#if __JDOOM__ || __JDOOM64__
-        const char* name = GET_TXT(TXT_WEAPON1 + i);
-#elif __JHERETIC__
-        /**
-         * \fixme We should allow different weapon preferences per player
-         * class. However, since the only other class in jHeretic is the
-         * chicken which has only 1 weapon anyway -we'll just show the
-         * names of the player's weapons for now.
-         */
-        const char* name = GET_TXT(TXT_TXT_WPNSTAFF + i);
-#elif __JHEXEN__
-        /**
-         * \fixme We should allow different weapon preferences per player
-         * class. Then we can show the real names here.
-         */
-        const char* name = weaponids[i];
-#endif
-        item->text = name;
-        item->data = i;
-    }
-
-    qsort(listit_weapons_order, NUM_WEAPON_TYPES, sizeof(listit_weapons_order[0]), compareWeaponPriority);
+    qsort(listit_weapons_order, NUMLISTITEMS(listit_weapons_order),
+        sizeof(listit_weapons_order[0]), compareWeaponPriority);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -1479,8 +1453,6 @@ void M_InitEpisodeMenu(void)
 
     // Finalize setup.
     EpisodeMenu.objects = EpisodeMenuObjects;
-    EpisodeMenu.objectsCount = numEpisodes;
-    //EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu.objectsCount, 10);
     EpisodeMenu.offset[VX] = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
 }
 #endif
@@ -1498,13 +1470,12 @@ void M_InitPlayerClassMenu(void)
     for(i = 0; i < NUM_PLAYER_CLASSES; ++i)
     {
         classinfo_t* info = PCLASS_INFO(i);
-
         if(info->userSelectable)
-            count++;
+            ++count;
     }
 
     // Allocate the menu objects array.
-    PlayerClassMenuObjects = Z_Calloc(sizeof(mn_object_t) * (count + 1), PU_GAMESTATIC, 0);
+    PlayerClassMenuObjects = Z_Calloc(sizeof(mn_object_t) * (count+2), PU_GAMESTATIC, 0);
 
     // Add the selectable classes.
     n = i = 0;
@@ -1525,7 +1496,6 @@ void M_InitPlayerClassMenu(void)
         obj->data2 = n;
         obj->text = info->niceName;
         obj->pageFontIdx = MENU_FONT2;
-
         ++n;
     }
 
@@ -1539,10 +1509,11 @@ void M_InitPlayerClassMenu(void)
     PlayerClassMenuObjects[n].text = GET_TXT(TXT_RANDOMPLAYERCLASS);
     PlayerClassMenuObjects[n].pageFontIdx = MENU_FONT2;
 
+    // Terminate.
+    PlayerClassMenuObjects[++n].type = MN_NONE;
+
     // Finalize setup.
     PlayerClassMenu.objects = PlayerClassMenuObjects;
-    PlayerClassMenu.objectsCount = count + 1;
-    //PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu.objectsCount, 10);
 }
 #endif
 
@@ -1577,11 +1548,9 @@ void Hu_MenuInit(void)
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
     {
+        /// \fixme Find objects by id.
         mn_object_t* obj = &MainMenuObjects[4]; // Read This!
-        obj->action = M_SelectQuitGame;
-        obj->text = "{case}Quit Game";
-        obj->patch = &pQuitGame;
-        MainMenu.objectsCount = 5;
+        obj->flags |= MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS;
         MainMenu.offset[VY] += 8;
     }
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
@@ -1693,6 +1662,13 @@ void Hu_MenuTicker(timespan_t ticLength)
     }
 }
 
+int MN_CountObjects(mn_object_t* list)
+{
+    int count;
+    for(count = 0; list->type != MN_NONE; list++, count++);
+    return count;
+}
+
 mn_object_t* MNPage_FocusObject(mn_page_t* page)
 {
     assert(NULL != page);
@@ -1717,6 +1693,9 @@ static void calcNumVisObjects(mn_page_t* page)
 void MNPage_Initialize(mn_page_t* page)
 {
     assert(NULL != page);
+
+    page->objectsCount = MN_CountObjects(page->objects);
+
     // Init objects.
     { uint i; mn_object_t* obj;
     for(i = 0, obj = page->objects; i < page->objectsCount; ++i, obj++)
@@ -2234,7 +2213,6 @@ static void initAllObjectsOnAllPages(void)
     initObjects(GameplayMenuObjects);
     initObjects(AutomapMenuObjects);
     initObjects(MultiplayerMenuObjects);
-    initObjects(MultiplayerClientMenuObjects);
     initObjects(PlayerSetupMenuObjects);
 
     initObjects(ColorWidgetMenuObjects);
@@ -4580,20 +4558,21 @@ void M_SelectSingleplayer(mn_object_t* obj)
 
 void M_SelectMultiplayer(mn_object_t* obj)
 {
-    // Show the appropriate menu.
+    // Set the appropriate label.
+    /// \fixme Find object by id.
+    mn_object_t* labelObj = &MultiplayerMenu.objects[1];
     if(IS_NETGAME)
     {
-        MultiplayerMenu.objects = MultiplayerClientMenuObjects;
+        labelObj->text = "Disconnect";
     }
     else
     {
-        MultiplayerMenu.objects = MultiplayerMenuObjects;
+        labelObj->text = "Join Game";
     }
-
     Hu_MenuSetActivePage(&MultiplayerMenu);
 }
 
-void M_OpenMultiplayerClientMenu(mn_object_t* obj)
+void M_OpenMultiplayerMenu(mn_object_t* obj)
 {
     if(IS_NETGAME)
     {

@@ -45,7 +45,7 @@ extern int gameModeBits;
 
 extern char* borderGraphics[];
 
-// Default font colours.
+// Default font colors.
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
 extern const float defFontRGB3[];

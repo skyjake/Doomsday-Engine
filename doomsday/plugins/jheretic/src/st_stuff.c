@@ -739,7 +739,7 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -789,7 +789,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
@@ -840,7 +840,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
@@ -944,7 +944,7 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], iconAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], iconAlpha);
 
     FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
@@ -1054,7 +1054,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
                 dd_snprintf(buf, 20, "%i", count);
 
                 FR_SetFont(FID(GF_SMALLIN));
-                DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+                DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
                 FR_DrawTextFragment3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
             }
         }
@@ -1207,7 +1207,7 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_SMALLIN));
-        DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+        DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
         FR_DrawTextFragment3(buf, 0, *drawnHeight+2, DTF_ALIGN_TOPRIGHT|DTF_ONLY_SHADOW, TRACKING);
 
@@ -1314,7 +1314,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         GL_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
 
         FR_SetFont(FID(GF_STATUS));
-        DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+        DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
         FR_DrawTextFragment3(buf, dp->width+2, -2, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -1386,7 +1386,7 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment3(buf, -1, -11, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -1489,7 +1489,7 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment3(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -1548,7 +1548,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             {
                 char buf[20];
                 FR_SetFont(FID(GF_SMALLIN));
-                DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+                DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
                 dd_snprintf(buf, 20, "%i", count);
                 FR_DrawTextFragment3(buf, -1, -7, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
             }

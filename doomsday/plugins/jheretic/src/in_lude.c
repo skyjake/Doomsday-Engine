@@ -652,7 +652,7 @@ void IN_DrawOldLevel(void)
     FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2], 1);
     FR_DrawTextFragment2("FINISHED", 160, 25, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     if(wbs->currentMap == 8)
@@ -697,7 +697,7 @@ void IN_DrawYAH(void)
     uint i;
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
     FR_DrawTextFragment2("NOW ENTERING:", 160, 10, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
@@ -739,7 +739,7 @@ void IN_DrawSingleStats(void)
     FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
 
     FR_DrawTextFragment2("FINISHED", 160, 25, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
@@ -839,7 +839,7 @@ void IN_DrawSingleStats(void)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
-        DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
         FR_DrawTextFragment2("NOW ENTERING:", SCREENWIDTH/2, 160, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
         FR_SetFont(FID(GF_FONTB));
@@ -871,7 +871,7 @@ void IN_DrawCoopStats(void)
     FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
     FR_DrawTextFragment2("FINISHED", SCREENWIDTH/2, 25, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -943,7 +943,7 @@ void IN_DrawDMStats(void)
     FR_DrawTextFragment("TOTAL", 265, 30);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
     FR_DrawTextFragment("VICTIMS", 140, 8);
 
     for(i = 0; i < 7; ++i)

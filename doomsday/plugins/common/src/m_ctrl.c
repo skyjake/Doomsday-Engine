@@ -92,32 +92,26 @@ void MN_IterateBindings(const mndata_bindings_t* binds, const char* bindings, in
 
 static mn_object_t* ControlsItems;
 
+mn_page_t ControlsMenu = {
+    NULL, -1, MNPF_NOHOTKEYS,
 #if __JDOOM__ || __JDOOM64__
-mn_page_t ControlsMenu = {
-    NULL, 0, -1, MNPF_NOHOTKEYS, 32, 40, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 32, 40 },
+#elif __JHERETIC__
+    { 32, 26 },
+#elif __JHEXEN__
+    { 32, 21 },
+#endif
+    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawControlsMenu, NULL,
     &OptionsMenu,
+#if __JDOOM__ || __JDOOM64__
     //0, 17, { 17, 40 }
-};
-#endif
-
-#ifdef __JHERETIC__
-mn_page_t ControlsMenu = {
-    NULL, 0, -1, MNPF_NOHOTKEYS, 32, 26, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawControlsMenu, NULL,
-    &OptionsMenu,
+#elif __JHERETIC__
     //0, 15, { 15, 26 }
-};
-#endif
-
-#ifdef __JHEXEN__
-mn_page_t ControlsMenu = {
-    NULL, 0, -1, MNPF_NOHOTKEYS, 32, 21, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawControlsMenu, NULL,
-    &OptionsMenu,
+#elif __JHEXEN__
     //0, 16, { 16, 21 }
-};
 #endif
+};
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

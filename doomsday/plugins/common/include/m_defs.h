@@ -188,7 +188,6 @@ typedef enum {
 
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
-    uint objectsCount;
     int focus; // Index of the focus object.
     int flags; // @see menuPageFlags.
     int offset[2];
@@ -202,6 +201,8 @@ typedef struct mn_page_s {
     //uint firstObject, numVisObjects;
     // Scalable pages.
     //mn_page_unscaledstate_t unscaled;
+    // Auto-initialized.
+    uint objectsCount;
 } mn_page_t;
 
 void MNPage_ComposeSubpageString(mn_page_t* page, size_t bufSize, char* buf);
@@ -485,6 +486,8 @@ extern const mn_rendstate_t* mnRendState;
 /**@}*/
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
+
+int MN_CountObjects(mn_object_t* list);
 
 /**
  * Execute a menu navigation/action command.

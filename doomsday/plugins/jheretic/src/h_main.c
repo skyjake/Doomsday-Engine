@@ -307,9 +307,9 @@ void H_PreInit(void)
     cfg.msgAlign = 1; // Center.
     cfg.msgBlink = 5;
 
-    cfg.msgColor[0] = defFontRGB2[0];
-    cfg.msgColor[1] = defFontRGB2[1];
-    cfg.msgColor[2] = defFontRGB2[2];
+    cfg.msgColor[0] = defFontRGB3[0];
+    cfg.msgColor[1] = defFontRGB3[1];
+    cfg.msgColor[2] = defFontRGB3[2];
 
     cfg.inventoryTimer = 5;
     cfg.inventoryWrap = false;
