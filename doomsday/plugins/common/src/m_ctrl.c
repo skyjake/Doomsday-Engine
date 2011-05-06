@@ -303,11 +303,12 @@ static void deleteBinding(bindingitertype_t type, int bid, const char* name, boo
     DD_Executef(true, "delbind %i", bid);
 }
 
-void Hu_MenuActivateBindingsGrab(mn_object_t* obj)
+int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
     assert(NULL != obj);
     obj->flags |= MNF_ACTIVE; // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
+    return 0;
 }
 
 void M_InitControlsMenu(void)
@@ -367,7 +368,7 @@ void M_InitControlsMenu(void)
             visObj->cmdResponder = MNBindings_CommandResponder;
             visObj->privilegedResponder = MNBindings_PrivilegedResponder;
             visObj->dimensions = MNBindings_Dimensions;
-            visObj->action = Hu_MenuActivateBindingsGrab;
+            visObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
             visObj->data = binds;
 
             if(!ControlsMenu.focus)
@@ -619,10 +620,10 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         return true;
       }
     case MCMD_SELECT:
-        if(NULL != obj->action)
+        if(MNObject_HasAction(obj, MNA_ACTIVE))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            obj->action(obj);
+            MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
             return true;
         }
         break;

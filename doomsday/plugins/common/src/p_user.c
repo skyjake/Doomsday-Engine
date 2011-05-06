@@ -100,7 +100,7 @@ int armorClass[4]; // Green, blue, IDFA and IDKFA armor classes.
 #if __JDOOM__ || __JDOOM64__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
-        NULL, true,
+        PCLASS_PLAYER, NULL, true,
         MT_PLAYER,
         S_PLAY,
         S_PLAY_RUN1,
@@ -119,7 +119,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 #elif __JHERETIC__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
-        NULL, true,
+        PCLASS_PLAYER, NULL, true,
         MT_PLAYER,
         S_PLAY,
         S_PLAY_RUN1,
@@ -134,8 +134,8 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         24,
         SFX_NONE
     },
-    {   // Chicken
-        NULL, false,
+    {
+        PCLASS_CHICKEN, NULL, false,
         MT_CHICPLAYER,
         S_CHICPLAY,
         S_CHICPLAY_RUN1,
@@ -153,8 +153,8 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 };
 #elif __JHEXEN__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
-    {   // Fighter
-        NULL, true,
+    {
+        PCLASS_FIGHTER, NULL, true,
         MT_PLAYER_FIGHTER,
         S_FPLAY,
         S_FPLAY_RUN1,
@@ -173,7 +173,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         {190, 225, 234}
     },
     {   // Cleric
-        NULL, true,
+        PCLASS_CLERIC, NULL, true,
         MT_PLAYER_CLERIC,
         S_CPLAY,
         S_CPLAY_RUN1,
@@ -192,7 +192,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         {190, 212, 225}
     },
     {   // Mage
-        NULL, true,
+        PCLASS_MAGE, NULL, true,
         MT_PLAYER_MAGE,
         S_MPLAY,
         S_MPLAY_RUN1,
@@ -211,7 +211,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         {190, 205, 224}
     },
     {   // Pig
-        NULL, false,
+        PCLASS_PIG, NULL, false,
         MT_PIGPLAYER,
         S_PIGPLAY,
         S_PIGPLAY_RUN1,

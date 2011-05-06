@@ -85,6 +85,43 @@ typedef enum {
 /*@}*/
 
 /**
+ * Logical Menu (object) Action identifiers. Associated with/to events which
+ * produce/result-in callbacks made either automatically by this subsystem,
+ * or "actioned" through the type-specific event/command responders of the
+ * various widgets, according to their own widget-specific logic.
+ */
+typedef enum {
+    MNA_NONE = -1,
+    MNACTION_FIRST = 0,
+    MNA_ACTIVE = MNACTION_FIRST,/// Object becomes "active".
+    MNA_MODIFIED,               /// Object's internal "modified" status changed.
+    MNA_FOCUS,                  /// Object gains "focus".
+    MNACTION_LAST = MNA_FOCUS
+} mn_actionid_t;
+
+/// Total number of known Menu Actions.
+#define MNACTION_COUNT          (MNACTION_LAST + 1 - MNACTION_FIRST)
+
+/// Non-zero if the value @a val can be interpreted as a known, valid Menu Action identifier.
+#define VALID_MNACTION(val)     ((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST)
+
+/**
+ * Menu Action Info (Record). Holds information about an "actionable" menu
+ * event, such as an object being activated or upon receiving focus.
+ */
+typedef struct {
+    /// Callback to be made when this action is executed. Can be @c NULL in
+    /// which case attempts to action this will be NOPs.
+    ///
+    /// @param obj  Object being referenced for this callback.
+    /// @param action  Identifier of the Menu Action to be processed.
+    /// @param paramaters  Passed to the callback from event which actioned this.
+    /// @return  Callback return value. Callback should return zero if the action
+    ///     was recognised and processed, regardless of outcome.
+    int (*callback) (struct mn_object_s* obj, mn_actionid_t action, void* paramaters);
+} mn_actioninfo_t;
+
+/**
  * MNObject. Abstract base from which all menu page objects must be derived.
  */
 typedef struct mn_object_s {
@@ -120,9 +157,8 @@ typedef struct mn_object_s {
     /// Can be @c NULL in which case this will never be drawn.
     void (*drawer) (struct mn_object_s* obj, int x, int y);
 
-    /// "Action" callback to be exectued as directed by the logic of the
-    /// responder callbacks. Can be @c NULL.
-    void (*action) (struct mn_object_s* obj);
+    /// Info about "actionable event" callbacks.
+    mn_actioninfo_t actions[MNACTION_COUNT];
 
     /// Respond to the given (menu) @a command. Can be @c NULL.
     /// @return  @c true if the command is eaten.
@@ -141,6 +177,24 @@ typedef struct mn_object_s {
 } mn_object_t;
 
 int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e command);
+
+/**
+ * Lookup the unique ActionInfo associated with the identifier @a id.
+ * @return  Associated info if found else @c NULL.
+ */
+const mn_actioninfo_t* MNObject_Action(mn_object_t*obj, mn_actionid_t action);
+
+/// @return  @c true if this object has a registered executeable action
+/// associated with the unique identifier @a action.
+boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
+
+/**
+ * Execute the action associated with @a id
+ * @param action  Identifier of the action to be executed (if found).
+ * @param paramaters  Passed to the action callback.
+ * @return  Return value of the executed action else @c -1 if NOP.
+ */
+int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 /**
  * @defGroup menuPageFlags Menu Page Flags
@@ -240,7 +294,6 @@ typedef struct mndata_edit_s {
     const char* emptyString; // Drawn when editfield is empty/null.
     void* data1;
     int data2;
-    void (*onChange) (mn_object_t* obj);
 } mndata_edit_t;
 
 void MNEdit_Drawer(mn_object_t* obj, int x, int y);

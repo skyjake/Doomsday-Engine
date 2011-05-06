@@ -178,16 +178,16 @@ void Hu_MenuSetActivePage(mn_page_t* page);
 
 void Hu_MenuUpdateGameSaveWidgets(void);
 
-void Hu_MenuCvarButton(mn_object_t* obj);
-void Hu_MenuCvarList(mn_object_t* obj);
-void Hu_MenuCvarSlider(mn_object_t* obj);
-void Hu_MenuCvarEdit(mn_object_t* obj);
-void Hu_MenuCvarColorBox(mn_object_t* obj);
+int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuCvarSlider(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuCvarColorBox(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
-void Hu_MenuSaveSlotEdit(mn_object_t* obj);
-void Hu_MenuBindings(mn_object_t* obj);
+int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuBindings(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
-void Hu_MenuUpdateColorWidgetColor(mn_object_t* obj);
+int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 void M_DrawMenuText(const char* string, int x, int y);
 void M_DrawMenuText2(const char* string, int x, int y, int fontIdx);
