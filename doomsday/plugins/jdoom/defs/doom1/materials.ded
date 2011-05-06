@@ -15,6 +15,30 @@ SkipIf -nodefaultfx;
 # Glowing flats:
 #
 
+Material Mods "flats:NUKAGE1" {
+  Layer {
+      Stage { Glow = .75; Tics = 24; Rnd = .5; }
+      Stage { Glow = .65; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:NUKAGE2" {
+  Layer {
+      Stage { Glow = .75; Tics = 24; Rnd = .5; }
+      Stage { Glow = .65; Tics = 24; Rnd = .5; }
+  }
+}
+
+Material Mods "flats:NUKAGE3" {
+  Layer {
+      Stage { Glow = .75; Tics = 24; Rnd = .5; }
+      Stage { Glow = .65; Tics = 24; Rnd = .5; }
+  }
+}
+
+# The rest of this file is skipped if DOOM - shareware.
+SkipIf doom1-share;
+
 Material Mods "flats:LAVA1" {
   Layer {
       Stage { Glow = .9; Tics = 35; Rnd = .8; }
@@ -40,27 +64,6 @@ Material Mods "flats:LAVA4" {
   Layer {
       Stage { Glow = .9; Tics = 35; Rnd = .8; }
       Stage { Glow = .8; Tics = 35; Rnd = .8; }
-  }
-}
-
-Material Mods "flats:NUKAGE1" {
-  Layer {
-      Stage { Glow = .75; Tics = 24; Rnd = .5; }
-      Stage { Glow = .65; Tics = 24; Rnd = .5; }
-  }
-}
-
-Material Mods "flats:NUKAGE2" {
-  Layer {
-      Stage { Glow = .75; Tics = 24; Rnd = .5; }
-      Stage { Glow = .65; Tics = 24; Rnd = .5; }
-  }
-}
-
-Material Mods "flats:NUKAGE3" {
-  Layer {
-      Stage { Glow = .75; Tics = 24; Rnd = .5; }
-      Stage { Glow = .65; Tics = 24; Rnd = .5; }
   }
 }
 
