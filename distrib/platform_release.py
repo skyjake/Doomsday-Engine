@@ -15,7 +15,8 @@ DOOMSDAY_VERSION = "0.0.0-Name"
 DOOMSDAY_VERSION_PLAIN = "0.0.0"
 DOOMSDAY_RELEASE_TYPE = "Unstable"
 now = time.localtime()
-DOOMSDAY_BUILD = 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
+DOOMSDAY_BUILD_NUMBER = str((now.tm_year - 2011)*365 + now.tm_yday)
+DOOMSDAY_BUILD = 'build' + DOOMSDAY_BUILD_NUMBER
 TIMESTAMP = time.strftime('%y-%m-%d')
 
 print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
@@ -105,7 +106,7 @@ def mac_release():
     os.chdir(WORK_DIR)
     mkdir('release_build')
     os.chdir('release_build')
-    if os.system('cmake -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD + '" -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
+    if os.system('cmake -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '" -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
@@ -203,7 +204,7 @@ def win_release():
     
     # Execute the win32 release script.
     os.chdir('win32')
-    if os.system('dorel.bat'):
+    if os.system('dorel.bat ' + DOOMSDAY_BUILD_NUMBER):
         raise Exception("Failure in the Windows release script.")
         
         
@@ -224,7 +225,7 @@ import snowberry"""
     if os.system('cmake -D SYSTEMARCH=`dpkg --print-architecture`' + 
                  ' -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
                  ' -D DOOMSDAY_BUILD=' + DOOMSDAY_BUILD +
-                 ' -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD + '"' +
+                 ' -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '"' +
                  ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && fakeroot make package'):
         raise Exception("Failure to build from source.")
         
