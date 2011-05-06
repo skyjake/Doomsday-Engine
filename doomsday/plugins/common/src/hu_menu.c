@@ -76,6 +76,7 @@ void M_ControlGrabDrawer(const char* niceName, float alpha);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuActionInitNewGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 int M_OpenLoadMenu(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int M_OpenSaveMenu(mn_object_t* obj, mn_actionid_t action, void* paramaters);
@@ -93,13 +94,14 @@ int M_OpenControlPanel(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 int M_SelectSingleplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int M_SelectMultiplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 #if __JDOOM__ || __JHERETIC__
-int M_SelectEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 #endif
 #if __JHEXEN__
 int M_FocusOnPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int M_SelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 #endif
-int M_SelectSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int M_SelectLoad(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int M_SelectQuitGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int M_SelectEndGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
@@ -286,11 +288,10 @@ static boolean menuActive = false;
 static float mnAlpha = 0; // Alpha level for the entire menu.
 static float mnTargetAlpha = 0; // Target alpha for the entire UI.
 
-#if __JDOOM__ || __JHERETIC__
-static int epi;
-#endif
+static skillmode_t mnSkillmode = SM_MEDIUM;
+static int mnEpisode = 0;
 #if __JHEXEN__
-static int mnPlrClass;
+static int mnPlrClass = PCLASS_FIGHTER;
 #endif
 
 static int frame = 0; // Used by any graphic animations that need to be pumped.
@@ -438,6 +439,74 @@ mn_page_t EpisodeMenu = {
 };
 #endif
 
+#if __JHEXEN__
+static mn_object_t SkillMenuObjects[] = {
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT, "", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
+    { MN_NONE }
+};
+
+mn_page_t SkillMenu = {
+    SkillMenuObjects, 0, 0,
+    { 120, 44 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawSkillMenu, NULL,
+    &PlayerClassMenu,
+    //0, 5
+};
+#elif __JHERETIC__
+static mn_object_t SkillMenuObjects[] = {
+    { MN_BUTTON,    0,  0,  "W",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "Y",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT, "B", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "S",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  0,  "P",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
+    { MN_NONE }
+};
+
+mn_page_t SkillMenu = {
+    SkillMenuObjects, 0, 0,
+    { 38, 30 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawSkillMenu, NULL,
+    &EpisodeMenu,
+    //0, 5
+};
+#elif __JDOOM64__
+static mn_object_t SkillMenuObjects[] = {
+    { MN_BUTTON,    0,  0,  "I",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,  "H",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT, "H", MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,  "U",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_NONE }
+};
+static mn_page_t SkillMenu = {
+    SkillMenuObjects, 0, 0,
+    { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawSkillMenu, NULL,
+    &GameTypeMenu,
+    //0, 4
+};
+#else
+static mn_object_t SkillMenuObjects[] = {
+    { MN_BUTTON,    0,  0,              "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
+    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
+    { MN_BUTTON,    0,  MNF_DEFAULT,    "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
+    { MN_BUTTON,    0,  0,              "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
+    { MN_BUTTON,    0,  MNF_NO_ALTTEXT, "N",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[4], MNButton_Dimensions, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuSelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
+    { MN_NONE }
+};
+
+mn_page_t SkillMenu = {
+    SkillMenuObjects, 0, 0,
+    { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    M_DrawSkillMenu, NULL,
+    &EpisodeMenu,
+    //0, 5
+};
+#endif
+
 #if __JHERETIC__ || __JHEXEN__
 static mn_object_t FilesMenuObjects[] = {
     { MN_BUTTON,    0,  0,  "Load Game",    MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_OpenLoadMenu }, MNButton_CommandResponder },
@@ -520,74 +589,6 @@ mn_page_t SaveMenu = {
     &MainMenu,
     //0, 1+NUMSAVESLOTS
 };
-
-#if __JHEXEN__
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  MNF_DEFAULT, "", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
-    { MN_BUTTON,    0,  0,  "",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
-    { MN_NONE }
-};
-
-mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
-    { 120, 44 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawSkillMenu, NULL,
-    &PlayerClassMenu,
-    //0, 5
-};
-#elif __JHERETIC__
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "W",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "Y",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  MNF_DEFAULT, "B", MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "S",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
-    { MN_BUTTON,    0,  0,  "P",          MENU_FONT2, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
-    { MN_NONE }
-};
-
-mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
-    { 38, 30 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawSkillMenu, NULL,
-    &EpisodeMenu,
-    //0, 5
-};
-#elif __JDOOM64__
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  "I",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,  "H",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  MNF_DEFAULT, "H", MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,  "U",          MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
-    { MN_NONE }
-};
-static mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
-    { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawSkillMenu, NULL,
-    &GameTypeMenu,
-    //0, 4
-};
-#else
-static mn_object_t SkillMenuObjects[] = {
-    { MN_BUTTON,    0,  0,              "I",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[0], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_BABY },
-    { MN_BUTTON,    0,  0,              "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[1], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_EASY },
-    { MN_BUTTON,    0,  MNF_DEFAULT,    "H",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[2], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_MEDIUM },
-    { MN_BUTTON,    0,  0,              "U",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[3], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_HARD },
-    { MN_BUTTON,    0,  MNF_NO_ALTTEXT, "N",    MENU_FONT2, MENU_COLOR1, &pSkillModeNames[4], MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectSkillMode }, MNButton_CommandResponder, NULL, NULL, 0, SM_NIGHTMARE },
-    { MN_NONE }
-};
-
-mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
-    { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawSkillMenu, NULL,
-    &EpisodeMenu,
-    //0, 5
-};
-#endif
 
 static mn_object_t OptionsMenuObjects[] = {
     { MN_BUTTON,    0,  0,  "End Game", MENU_FONT1, MENU_COLOR1, 0, MNButton_Dimensions, MNButton_Drawer, { NULL, M_SelectEndGame }, MNButton_CommandResponder },
@@ -1458,7 +1459,29 @@ void M_InitEpisodeMenu(void)
         obj->drawer = MNButton_Drawer;
         obj->cmdResponder = MNButton_CommandResponder;
         obj->dimensions = MNButton_Dimensions;
-        obj->actions[MNA_ACTIVEOUT].callback = M_SelectEpisode;
+
+#if __JHERETIC__
+        if(gameMode == heretic_shareware && i != 0)
+        {
+            obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
+        }
+        else
+        {
+            obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+            obj->data = &SkillMenu;
+        }
+#else
+        if(gameMode == doom_shareware && i != 0)
+        {
+            obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
+        }
+        else
+        {
+            obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+            obj->data = &SkillMenu;
+        }
+#endif
+        obj->actions[MNA_FOCUS].callback = Hu_MenuSelectEpisode;
         obj->data2 = i;
         obj->text = GET_TXT(TXT_EPISODE1 + i);
         obj->pageFontIdx = MENU_FONT2;
@@ -1515,7 +1538,7 @@ void M_InitPlayerClassMenu(void)
         obj->dimensions = MNButton_Dimensions;
         obj->actions[MNA_ACTIVEOUT].callback = M_SelectPlayerClass;
         obj->actions[MNA_FOCUS].callback = M_FocusOnPlayerClass;
-        obj->data2 = info->plrClass;
+        obj->data2 = (int)info->plrClass;
         obj->text = info->niceName;
         obj->pageFontIdx = MENU_FONT2;
         obj++;
@@ -5067,75 +5090,69 @@ int M_FocusOnPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramater
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int M_SelectEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuSelectEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+{
+    if(MNA_FOCUS != action) return 1;
+    mnEpisode = obj->data2;
+    return 0;
+}
+
+int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t response, void* context)
+{
+    G_StartHelp();
+    return true;
+}
+
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
     if(MNA_ACTIVEOUT != action) return 1;
-
-#if __JHERETIC__
-    if(gameMode == heretic_shareware && obj->data2)
-    {
-        Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
-        G_StartHelp();
-        return 0;
-    }
-#else
-    if(gameMode == doom_shareware && obj->data2)
-    {
-        Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
-        G_StartHelp();
-        return 0;
-    }
-#endif
-
-    epi = obj->data2;
-    Hu_MenuSetActivePage(&SkillMenu);
+    Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, NULL);
     return 0;
 }
 #endif
 
-#if __JDOOM__ || __JHERETIC__
-int M_VerifyNightmare(msgresponse_t response, void* context)
+int Hu_MenuSelectSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+{
+    assert(NULL != obj);
+    if(MNA_FOCUS != action) return 1;
+    mnSkillmode = (skillmode_t)obj->data2;
+    return 0;
+}
+
+#if __JDOOM__
+int Hu_MenuConfirmInitNewGame(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        Hu_MenuCommand(chooseCloseMethod());
-        G_DeferedInitNew(SM_NIGHTMARE, epi, 0);
+        Hu_MenuInitNewGame(true);
     }
-
     return true;
 }
 #endif
 
-int M_SelectSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+void Hu_MenuInitNewGame(boolean confirmed)
 {
-    assert(NULL != obj);
+#if __JDOOM__
+    if(!confirmed && SM_NIGHTMARE == mnSkillmode)
     {
-    skillmode_t skillmode = (skillmode_t)obj->data2;
-
-    if(MNA_ACTIVEOUT != action) return 1;
-#if __JHEXEN__
-    Hu_MenuCommand(chooseCloseMethod());
-    cfg.playerClass[CONSOLEPLAYER] = mnPlrClass;
-    G_DeferredNewGame(skillmode);
-#else
-# if __JDOOM__
-    if(SM_NIGHTMARE == obj->data2)
-    {
-        Hu_MsgStart(MSG_YESNO, NIGHTMARE, M_VerifyNightmare, NULL);
-        return 0;
+        Hu_MsgStart(MSG_YESNO, NIGHTMARE, Hu_MenuConfirmInitNewGame, NULL);
+        return;
     }
-# endif
-
-    Hu_MenuCommand(chooseCloseMethod());
-
-# if __JDOOM64__
-    G_DeferedInitNew(skillmode, 0, 0);
-# else
-    G_DeferedInitNew(skillmode, epi, 0);
-# endif
 #endif
+    Hu_MenuCommand(chooseCloseMethod());
+#if __JHEXEN__
+    cfg.playerClass[CONSOLEPLAYER] = mnPlrClass;
+    G_DeferredNewGame(mnSkillmode);
+#else
+    G_DeferedInitNew(mnSkillmode, mnEpisode, 0);
+#endif
+}
+
+int Hu_MenuActionInitNewGame(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+{
+    if(MNA_ACTIVEOUT != action) return 1;
+    Hu_MenuInitNewGame(false);
     return 0;
-    }
 }
 
 int M_OpenControlPanel(mn_object_t* obj, mn_actionid_t action, void* paramaters)
