@@ -4950,7 +4950,11 @@ static void buildGameSaveInfo(void)
             continue;
         }
 
-        readGameSaveInfoFromFile(&info->filePath, &info->name);
+        if(!readGameSaveInfoFromFile(&info->filePath, &info->name))
+        {
+            // Not a valid save file.
+            Str_Clear(&info->filePath);
+        }
     }}
 }
 
