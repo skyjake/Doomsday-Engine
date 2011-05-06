@@ -21,7 +21,7 @@
 ##
 ################################################################################
 
-CMAKE_MINIMUM_REQUIRED (VERSION 2.8.4 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.3 FATAL_ERROR)
 
 ## Supported Build Types are:
 ##    * None (CMAKE_C_FLAGS) Cmake gcc default of $CFLAGS.
