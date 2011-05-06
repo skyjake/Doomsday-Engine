@@ -2427,7 +2427,7 @@ void G_DoSaveGame(void)
     // Try to make a new game-save.
     if(SV_SaveGame(gaSaveGameSlot, name))
     {
-        Hu_MenuUpdateGameSaveWidgets();
+        //Hu_MenuUpdateGameSaveWidgets();
         P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
     }
     G_SetGameAction(GA_NONE);

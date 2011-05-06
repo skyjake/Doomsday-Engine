@@ -1727,22 +1727,22 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_TEXT,      0,  0,  "Use Custom Colors", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
     { MN_LIST,      0,  0,  "",                  MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
     { MN_TEXT,      0,  0,  "Wall",     MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
+    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { NULL, Hu_MenuCvarColorBox, Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
     { MN_TEXT,      0,  0,  "Floor Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",                    MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
+    { MN_COLORBOX,  0,  0,  "",                    MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { NULL, Hu_MenuCvarColorBox, Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
     { MN_TEXT,      0,  0,  "Ceiling Height Change", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",                      MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
+    { MN_COLORBOX,  0,  0,  "",                      MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { NULL, Hu_MenuCvarColorBox, Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
     { MN_TEXT,      0,  0,  "Unseen",   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
+    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { NULL, Hu_MenuCvarColorBox, Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
     { MN_TEXT,      0,  0,  "Thing",    MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
+    { MN_COLORBOX,  0,  0,  "",         MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { NULL, Hu_MenuCvarColorBox, Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
     { MN_TEXT,      0,  0,  "Background", MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",           MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
+    { MN_COLORBOX,  0,  0,  "",           MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { NULL, Hu_MenuCvarColorBox, Hu_MenuCvarColorBox }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
     { MN_NONE }
 };
 
 mn_page_t AutomapMenu = {
-    AutomapMenuObjects, -1, 0,
+    AutomapMenuObjects, 0, 0,
 #if __JHERETIC__ || __JHEXEN__
     { 64, 28 },
 #else

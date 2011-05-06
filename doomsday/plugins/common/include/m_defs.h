@@ -93,9 +93,12 @@ typedef enum {
 typedef enum {
     MNA_NONE = -1,
     MNACTION_FIRST = 0,
-    MNA_ACTIVE = MNACTION_FIRST,/// Object becomes "active".
-    MNA_MODIFIED,               /// Object's internal "modified" status changed.
-    MNA_FOCUS,                  /// Object gains "focus".
+    MNA_MODIFIED = MNACTION_FIRST, /// Object's internal "modified" status changed.
+    MNA_ACTIVEOUT,              /// Deactivated i.e., no longer active.
+    MNA_ACTIVE,                 /// Becomes "active".
+    MNA_CLOSE,                  /// Normally means changed-state to be discarded.
+    MNA_FOCUSOUT,               /// Loses selection "focus".
+    MNA_FOCUS,                  /// Gains selection "focus".
     MNACTION_LAST = MNA_FOCUS
 } mn_actionid_t;
 
@@ -256,12 +259,59 @@ typedef struct mn_page_s {
     // Scalable pages.
     //mn_page_unscaledstate_t unscaled;
     // Auto-initialized.
-    uint objectsCount;
+    int objectsCount;
 } mn_page_t;
 
-void MNPage_ComposeSubpageString(mn_page_t* page, size_t bufSize, char* buf);
+/// @return  Currently focused object else @c NULL
 mn_object_t* MNPage_FocusObject(mn_page_t* page);
+
+/**
+ * Attempt to give focus to the MNObject @a obj which is thought to be on
+ * this page. If @a obj is found to present and is not currently in-focus,
+ * an out-focus action is first sent to the presently focused object, then
+ * this page's focused object is set before finally executing an in-focus
+ * action on the new object. If the object is not found on this page then
+ * this is a NOP.
+ *
+ * @param obj  MNObject to be given focus.
+ */
+void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj);
+
+/**
+ * Retrieve an object on this page in the specified object group.
+ * @param flags  Flags used to locate the object. All specified flags must
+ *      must be set @see mnobjectFlags
+ * @return  Found MNObject else @c NULL
+ */
+mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags);
+
+/**
+ * Lookup the logical index of an object thought to be on this page.
+ * @param obj  MNObject to lookup the index of.
+ * @return  Index of the found object else @c -1.
+ */
+int MNPage_FindObjectIndex(mn_page_t* page, mn_object_t* obj);
+
+/**
+ * Retrieve an object on this page by it's logical index.
+ * @return  Found MNObject else fatal error.
+ */
+mn_object_t* MNPage_ObjectByIndex(mn_page_t* page, int idx);
+
+/**
+ * Retrieve a predefined color triplet associated with this page by it's
+ * logical page color identifier.
+ * @param id  Unique identifier of the predefined color being retrieved.
+ * @param rgb  Found color values are written here, else set to white.
+ */
 void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3]);
+
+/**
+ * Retrieve a predefined Doomsday font-identifier associated with this page
+ * by it's logical page font identifier.
+ * @param id  Unique identifier of the predefined font being retrieved.
+ * @return  Identifier of the found font else @c 0
+ */
 int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 
 /**

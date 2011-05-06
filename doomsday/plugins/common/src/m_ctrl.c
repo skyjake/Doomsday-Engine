@@ -305,8 +305,7 @@ static void deleteBinding(bindingitertype_t type, int bid, const char* name, boo
 
 int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(NULL != obj);
-    obj->flags |= MNF_ACTIVE; // Start grabbing for this control.
+     // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
     return 0;
 }
@@ -620,9 +619,10 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         return true;
       }
     case MCMD_SELECT:
+        S_LocalSound(SFX_MENU_CYCLE, NULL);
+        obj->flags |= MNF_ACTIVE;
         if(MNObject_HasAction(obj, MNA_ACTIVE))
         {
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
             MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
             return true;
         }
@@ -658,7 +658,7 @@ void M_DrawControlsMenu(mn_page_t* page, int x, int y)
     M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
-    MNPage_ComposeSubpageString(page, 1024, buf);
+    Hu_MenuComposeSubpageString(page, 1024, buf);
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
     M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else

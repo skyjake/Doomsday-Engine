@@ -176,6 +176,8 @@ mn_page_t* Hu_MenuActivePage(void);
  */
 void Hu_MenuSetActivePage(mn_page_t* page);
 
+void Hu_MenuComposeSubpageString(mn_page_t* page, size_t bufSize, char* buf);
+
 void Hu_MenuUpdateGameSaveWidgets(void);
 
 int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters);
