@@ -1099,8 +1099,11 @@ patchid_t R_RegisterPatch(const char* name)
     if(0 != (id = findPatchTextureByName(name)))
         return id;
 
-    if(-1 == (lumpNum = W_CheckLumpNumForName(name)))
+    if(-1 == (lumpNum = W_CheckLumpNumForName2(name, true)))
+    {
+        Con_Message("Warning:R_RegisterPatch: Failed to locate lump for patch '%s'.\n", name);
         return 0;
+    }
 
     /// \fixme What about min lumpNum size?
     patch = (const doompatch_header_t*) W_CacheLump(lumpNum, PU_APPSTATIC);
@@ -1168,8 +1171,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 
 patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
 {
-    if(!name)
-        Con_Error("R_PrecachePatch: Argument 'name' cannot be NULL.");
+    patchid_t patchId;
 
     if(info)
         memset(info, 0, sizeof(patchinfo_t));
@@ -1177,17 +1179,20 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     if(isDedicated)
         return 0;
 
-    {patchid_t patch;
-    if((patch = R_RegisterPatch(name)) != 0)
+    if(NULL == name || !name[0])
     {
-        GL_PreparePatch(getPatchTex(patch));
+        Con_Message("Warning:R_PrecachePatch: Invalid 'name' argument, ignoring.\n");
+        return 0;
+    }
+
+    patchId = R_RegisterPatch(name);
+    if(0 != patchId)
+    {
+        GL_PreparePatch(getPatchTex(patchId));
         if(info)
-            R_GetPatchInfo(patch, info);
+            R_GetPatchInfo(patchId, info);
     }
-    else
-        VERBOSE(Con_Message("R_PrecachePatch: Warning, unknown Patch %s.\n", name));
-    return patch;
-    }
+    return patchId;
 }
 
 /**
