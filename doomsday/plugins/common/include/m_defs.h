@@ -78,10 +78,16 @@ typedef enum {
 //#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
 //#define MNF_NEVER_FADE          0x400
 #define MNF_NO_ALTTEXT          0x800 // Don't use alt text instead of lump (M_NMARE)
-#define MNF_ID0                 0x10000000
-#define MNF_ID1                 0x20000000
-#define MNF_ID2                 0x40000000
-#define MNF_ID3                 0x80000000
+
+/// \todo We need a new dynamic id allocating mechanism.
+#define MNF_ID7                 0x1000000
+#define MNF_ID6                 0x2000000
+#define MNF_ID5                 0x4000000
+#define MNF_ID4                 0x8000000
+#define MNF_ID3                 0x10000000
+#define MNF_ID2                 0x20000000
+#define MNF_ID1                 0x40000000
+#define MNF_ID0                 0x80000000
 /*@}*/
 
 /**
@@ -284,19 +290,6 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj);
  * @return  Found MNObject else @c NULL
  */
 mn_object_t* MNPage_FindObject(mn_page_t* page, int group, int flags);
-
-/**
- * Lookup the logical index of an object thought to be on this page.
- * @param obj  MNObject to lookup the index of.
- * @return  Index of the found object else @c -1.
- */
-int MNPage_FindObjectIndex(mn_page_t* page, mn_object_t* obj);
-
-/**
- * Retrieve an object on this page by it's logical index.
- * @return  Found MNObject else fatal error.
- */
-mn_object_t* MNPage_ObjectByIndex(mn_page_t* page, int idx);
 
 /**
  * Retrieve a predefined color triplet associated with this page by it's
@@ -591,6 +584,7 @@ extern const mn_rendstate_t* mnRendState;
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
 int MN_CountObjects(mn_object_t* list);
+mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 
 /**
  * Execute a menu navigation/action command.
