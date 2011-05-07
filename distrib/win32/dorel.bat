@@ -4,6 +4,10 @@ REM -- Does a complete Win32 Binary Release distribution.
 REM -- Visual C++ environment.
 call "c:\Program Files\Microsoft Visual Studio 10.0\vc\vcvarsall.bat"
 
+REM -- Build number.
+SET DOOMSDAY_BUILD=%1
+echo Doomsday build number is %DOOMSDAY_BUILD%.
+
 REM -- Package a Snowberry binary.
 cd ..\..\snowberry
 call build.bat
