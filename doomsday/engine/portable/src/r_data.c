@@ -54,6 +54,8 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef char patchname_t[9];
+
 typedef struct rawtexhash_s {
     rawtex_t*     first;
 } rawtexhash_t;
@@ -1148,6 +1150,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     if(NULL != (p = getPatchTex(id)))
     {
         texture_t* tex = GL_ToTexture(p->texId);
+        assert(NULL != tex);
         info->id = id;
         info->width = Texture_Width(tex);
         info->height = Texture_Height(tex);
@@ -1297,52 +1300,62 @@ void R_UpdateRawTexs(void)
     R_InitRawTexs();
 }
 
-static lumpnum_t* loadPatchList(lumpnum_t lumpNum, size_t* num)
+static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
-    char name[9], *names;
-    lumpnum_t* patchLumpList;
-    size_t numPatches, lumpSize = W_LumpLength(lumpNum);
+    size_t lumpSize = W_LumpLength(lumpNum);
+    const char* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
+    patchname_t* names, *name;
+    int numNames;
 
-    names = (char*) malloc(lumpSize);
-    if(NULL == names)
-        Con_Error("loadPatchList: Failed on allocation of %lu bytes for patch name list.", (unsigned long) lumpSize);
-    W_ReadLump(lumpNum, names);
-
-    numPatches = LONG(*((int*) names));
-    if(numPatches > (lumpSize - 4) / 8)
-    {   // Lump is truncated.
-        Con_Message("loadPatchList: Warning, lumpNum '%s' truncated (%lu bytes, expected %lu).\n",
-            W_LumpName(lumpNum), (unsigned long) lumpSize, (unsigned long) (numPatches * 8 + 4));
-        numPatches = (lumpSize - 4) / 8;
+    if(lumpSize < 4)
+    {
+        Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) is not valid PNAMES data.\n",
+            W_LumpName(lumpNum), lumpNum);
+        if(NULL != num) *num = 0;
+        return NULL;
     }
 
-    patchLumpList = (lumpnum_t*) malloc(numPatches * sizeof(*patchLumpList));
-    if(NULL == patchLumpList)
-        Con_Error("loadPatchList: Failed on allocation of %lu bytes for patch lump list.", (unsigned long) (numPatches * sizeof(*patchLumpList)));
-
-    { size_t i;
-    for(i = 0; i < numPatches; ++i)
+    numNames = LONG(*((int*) lump));
+    if(numNames <= 0)
     {
-        memset(name, 0, sizeof(name));
-        strncpy(name, names + 4 + i * 8, 8);
-        patchLumpList[i] = W_CheckLumpNumForName(name);
+        if(NULL != num) *num = 0;
+        return NULL;
+    }
+
+    if((unsigned)numNames > (lumpSize - 4) / 8)
+    {   // Lump is truncated.
+        Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) truncated (%lu bytes, expected %lu).\n",
+            W_LumpName(lumpNum), lumpNum, (unsigned long) lumpSize, (unsigned long) (numNames * 8 + 4));
+        numNames = (int) ((lumpSize - 4) / 8);
+    }
+
+    names = (patchname_t*) calloc(1, numNames * sizeof(*names));
+    if(NULL == names)
+        Con_Error("loadPatchNames: Failed on allocation of %lu bytes for patch name list.",
+            (unsigned long) (numNames * sizeof(*names)));
+
+    name = names;
+    { int i;
+    for(i = 0; i < numNames; ++i)
+    {
+        /// \fixme Some filtering of invalid characters wouldn't go amiss...
+        strncpy(*name, lump + 4 + i * 8, 8);
+        name++;
     }}
 
-    free(names);
+    W_CacheChangeTag(lumpNum, PU_CACHE);
 
-    if(num)
-        *num = numPatches;
+    if(NULL != num)
+        *num = numNames;
 
-    return patchLumpList;
+    return names;
 }
 
 /**
  * Read DOOM and Strife format texture definitions from the specified lump.
  */
 static patchcompositetex_t** readDoomTextureDefLump(lumpnum_t lumpNum,
-                                                 lumpnum_t* patchlookup,
-                                                 size_t numPatches,
-                                                 boolean firstNull, int* numDefs)
+    patchname_t* patchNames, int numPatchNames, boolean firstNull, int* numDefs)
 {
 #pragma pack(1)
 typedef struct {
@@ -1383,15 +1396,28 @@ typedef struct {
 } strifemaptexture_t;
 #pragma pack()
 
-    int                 i;
-    int*                maptex1;
-    size_t              lumpSize, offset, n, numValidPatchRefs;
-    int*                directory;
-    void*               storage;
-    byte*               validTexDefs;
-    short*              texDefNumPatches;
-    int                 numTexDefs, numValidTexDefs;
+typedef struct {
+    lumpnum_t lumpNum;
+    struct {
+        char processed:1; /// @c true if this patch has already been searched for.
+    } flags;
+} patchinfo_t;
+
     patchcompositetex_t** texDefs = NULL;
+    size_t lumpSize, offset, n, numValidPatchRefs;
+    int numTexDefs, numValidTexDefs;
+    short* texDefNumPatches;
+    patchinfo_t* patchInfo;
+    byte* validTexDefs;
+    int* directory;
+    void* storage;
+    int* maptex1;
+    int i;
+
+    patchInfo = (patchinfo_t*)calloc(1, sizeof(*patchInfo) * numPatchNames);
+    if(NULL == patchInfo)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for patch info.",
+            (unsigned long) (sizeof(*patchInfo) * numPatchNames));
 
     lumpSize = W_LumpLength(lumpNum);
     maptex1 = (int*) malloc(lumpSize);
@@ -1427,49 +1453,57 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            Con_Message("R_ReadTextureDefs: Bad offset %lu for definition %i in lump \"%s\".\n",
+            Con_Message("Warning:R_ReadTextureDefs: Bad offset %lu for definition %i in lump \"%s\".\n",
                 (unsigned long) offset, i, W_LumpName(lumpNum));
             continue;
         }
 
         if(gameDataFormat == 0)
         {   // DOOM format.
-            maptexture_t*       mtexture =
-                (maptexture_t *) ((byte *) maptex1 + offset);
-            short               j, n, patchCount = SHORT(mtexture->patchCount);
+            maptexture_t* mtexture = (maptexture_t*) ((byte*) maptex1 + offset);
+            short j, n, patchCount = SHORT(mtexture->patchCount);
 
             n = 0;
             if(patchCount > 0)
             {
-                mappatch_t*         mpatch = &mtexture->patches[0];
+                mappatch_t* mpatch = &mtexture->patches[0];
 
                 for(j = 0; j < patchCount; ++j, mpatch++)
                 {
-                    short               patchNum = SHORT(mpatch->patch);
+                    short patchNum = SHORT(mpatch->patch);
+                    patchinfo_t* pinfo;
 
-                    if(patchNum < 0 || (unsigned) patchNum >= numPatches)
+                    if(patchNum < 0 || patchNum >= numPatchNames)
                     {
-                        Con_Message("R_ReadTextureDefs: Invalid patch %i in "
-                                    "texture '%s'.\n", (int) patchNum,
-                                    mtexture->name);
+                        Con_Message("Warning:R_ReadTextureDefs: Invalid patch %i in texture '%s'.\n",
+                            (int) patchNum, mtexture->name);
                         continue;
                     }
+                    pinfo = patchInfo + patchNum;
 
-                    if(patchlookup[patchNum] == -1)
+                    if(!pinfo->flags.processed)
                     {
-                        Con_Message("R_ReadTextureDefs: Missing patch %i in "
-                                    "texture '%s'.\n", (int) j, mtexture->name);
-                        continue;
+                        pinfo->lumpNum = W_CheckLumpNumForName2(*(patchNames + patchNum), true);
+                        pinfo->flags.processed = true;
+                        if(-1 == pinfo->lumpNum)
+                        {
+                            Con_Message("Warning:R_ReadTextureDefs: Failed to locate patch '%s'.\n", *(patchNames + patchNum));
+                        }
                     }
 
-                    n++;
+                    if(-1 == pinfo->lumpNum)
+                    {
+                        Con_Message("Warning:R_ReadTextureDefs: Missing patch %i in texture '%s'.\n",
+                            (int) j, mtexture->name);
+                        continue;
+                    }
+                    ++n;
                 }
             }
             else
             {
-                Con_Message("R_ReadTextureDefs: Invalid patchcount %i in "
-                            "texture '%s'.\n", (int) patchCount,
-                            mtexture->name);
+                Con_Message("Warning:R_ReadTextureDefs: Invalid patchcount %i in texture '%s'.\n",
+                    (int) patchCount, mtexture->name);
             }
 
             texDefNumPatches[i] = n;
@@ -1477,41 +1511,49 @@ typedef struct {
         }
         else if(gameDataFormat == 3)
         {   // Strife format.
-            strifemaptexture_t* smtexture =
-                (strifemaptexture_t *) ((byte *) maptex1 + offset);
-            short               j, n, patchCount = SHORT(smtexture->patchCount);
+            strifemaptexture_t* smtexture = (strifemaptexture_t *) ((byte *) maptex1 + offset);
+            short j, n, patchCount = SHORT(smtexture->patchCount);
 
             n = 0;
             if(patchCount > 0)
             {
-                strifemappatch_t*   smpatch = &smtexture->patches[0];
+                strifemappatch_t* smpatch = &smtexture->patches[0];
                 for(j = 0; j < patchCount; ++j, smpatch++)
                 {
-                    short               patchNum = SHORT(smpatch->patch);
+                    short patchNum = SHORT(smpatch->patch);
+                    patchinfo_t* pinfo;
 
-                    if(patchNum < 0 || (unsigned) patchNum >= numPatches)
+                    if(patchNum < 0 || patchNum >= numPatchNames)
                     {
-                        Con_Message("R_ReadTextureDefs: Invalid patch %i in "
-                                    "texture '%s'.\n", (int) patchNum,
-                                    smtexture->name);
+                        Con_Message("Warning:R_ReadTextureDefs: Invalid patch %i in texture '%s'.\n",
+                            (int) patchNum, smtexture->name);
                         continue;
                     }
+                    pinfo = patchInfo + patchNum;
 
-                    if(patchlookup[patchNum] == -1)
+                    if(!pinfo->flags.processed)
                     {
-                        Con_Message("R_ReadTextureDefs: Missing patch %i in "
-                                    "texture '%s'.\n", (int) j, smtexture->name);
-                        continue;
+                        pinfo->lumpNum = W_CheckLumpNumForName2(*(patchNames + patchNum), true);
+                        pinfo->flags.processed = true;
+                        if(-1 == pinfo->lumpNum)
+                        {
+                            Con_Message("Warning:R_ReadTextureDefs: Failed to locate patch '%s'.\n", *(patchNames + patchNum));
+                        }
                     }
 
-                    n++;
+                    if(-1 == pinfo->lumpNum)
+                    {
+                        Con_Message("Warning:R_ReadTextureDefs: Missing patch %i in texture '%s'.\n",
+                            (int) j, smtexture->name);
+                        continue;
+                    }
+                    ++n;
                 }
             }
             else
             {
-                Con_Message("R_ReadTextureDefs: Invalid patchcount %i in "
-                            "texture '%s'.\n", (int) patchCount,
-                            smtexture->name);
+                Con_Message("Warning:R_ReadTextureDefs: Invalid patchcount %i in texture '%s'.\n",
+                    (int) patchCount, smtexture->name);
             }
 
             texDefNumPatches[i] = n;
@@ -1571,13 +1613,13 @@ typedef struct {
                 {
                     short patchNum = SHORT(mpatch->patch);
 
-                    if(patchNum < 0 || (unsigned) patchNum >= numPatches ||
-                       patchlookup[patchNum] == -1)
+                    if(patchNum < 0 || patchNum >= numPatchNames ||
+                       patchInfo[patchNum].lumpNum == -1)
                         continue;
 
                     patch->offX = SHORT(mpatch->originX);
                     patch->offY = SHORT(mpatch->originY);
-                    patch->lumpNum = patchlookup[patchNum];
+                    patch->lumpNum = patchInfo[patchNum].lumpNum;
                     patch++;
                 }
             }
@@ -1601,13 +1643,13 @@ typedef struct {
                 {
                     short patchNum = SHORT(smpatch->patch);
 
-                    if(patchNum < 0 || (unsigned) patchNum >= numPatches ||
-                       patchlookup[patchNum] == -1)
+                    if(patchNum < 0 || patchNum >= numPatchNames ||
+                       patchInfo[patchNum].lumpNum == -1)
                         continue;
 
                     patch->offX = SHORT(smpatch->originX);
                     patch->offY = SHORT(smpatch->originY);
-                    patch->lumpNum = patchlookup[patchNum];
+                    patch->lumpNum = patchInfo[patchNum].lumpNum;
                     patch++;
                 }
             }
@@ -1654,19 +1696,23 @@ typedef struct {
 
 static void loadPatchCompositeDefs(void)
 {
-    lumpnum_t i, pnamesLump, *patchLumpList;
     patchcompositetex_t** list = 0, **listCustom = 0, ***eList = 0;
     int count = 0, countCustom = 0, *eCount = 0;
-    size_t numPatches;
+    lumpnum_t i, pnamesLump;
+    patchname_t* patchNames;
+    int numPatchNames;
     boolean firstNull;
 
-    if((pnamesLump = W_CheckLumpNumForName2("PNAMES", true)) == -1)
+    if(-1 == (pnamesLump = W_CheckLumpNumForName2("PNAMES", true)))
         return;
 
     // Load the patch names from the PNAMES lump.
-    patchLumpList = loadPatchList(pnamesLump, &numPatches);
-    if(!patchLumpList)
-        Con_Error("loadPatchCompositeDefs: Error loading PNAMES.");
+    patchNames = loadPatchNames(pnamesLump, &numPatchNames);
+    if(NULL == patchNames)
+    {
+        Con_Message("Warning:loadPatchCompositeDefs: Unexpected error occured loading PNAMES.\n");
+        return;
+    }
 
     /**
      * Many PWADs include new TEXTURE1/2 lumps including the IWAD doomtexture
@@ -1692,7 +1738,7 @@ static void loadPatchCompositeDefs(void)
             patchcompositetex_t** newTexDefs;
 
             // Read in the new texture defs.
-            newTexDefs = readDoomTextureDefLump(i, patchLumpList, numPatches, firstNull, &newNumTexDefs);
+            newTexDefs = readDoomTextureDefLump(i, patchNames, numPatchNames, firstNull, &newNumTexDefs);
 
             eList = (isFromIWAD? &list : &listCustom);
             eCount = (isFromIWAD? &count : &countCustom);
@@ -1808,8 +1854,8 @@ static void loadPatchCompositeDefs(void)
         patchCompositeTexturesCount = count;
     }
 
-    // We're finished with the patch lump list now.
-    M_Free(patchLumpList);
+    // We're finished with the patch names now.
+    free(patchNames);
 }
 
 static void createTexturesForPatchCompositeDefs(void)
@@ -1842,7 +1888,7 @@ void R_InitPatchComposites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
-    VERBOSE2( Con_Message("Initializing PatchComposites...\n") )
+    VERBOSE( Con_Message("Initializing PatchComposites...\n") )
 
     patchCompositeTexturesCount = 0;
     patchCompositeTextures = NULL;
