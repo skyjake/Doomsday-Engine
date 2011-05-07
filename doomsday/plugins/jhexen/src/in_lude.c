@@ -307,7 +307,7 @@ static void CheckForSkip(void)
 
     for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
-        if(players[i].plr->inGame)
+        if(player->plr->inGame)
         {
             if(player->brain.attack)
             {

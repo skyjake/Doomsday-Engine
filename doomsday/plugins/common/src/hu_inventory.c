@@ -606,7 +606,7 @@ void Hu_InventoryOpen(int player, boolean show)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     inv = &hudInventories[player];
@@ -688,7 +688,7 @@ boolean Hu_InventoryMove(int player, int dir, boolean canWrap, boolean silent)
         return false;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return false;
     inv = &hudInventories[player];
 

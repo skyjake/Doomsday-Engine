@@ -1836,11 +1836,12 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkSounds(player);
-#if __JHERETIC__ || __JHEXEN__
-        P_PlayerThinkInventory(player);
-#endif
-        P_PlayerThinkItems(player);
     }
+
+#if __JHERETIC__ || __JHEXEN__
+    P_PlayerThinkInventory(player);
+    P_PlayerThinkItems(player);
+#endif
 
     P_PlayerThinkUse(player);
     P_PlayerThinkWeapons(player);

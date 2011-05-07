@@ -405,8 +405,8 @@ void IN_Ticker(void)
             IN_WaitStop();
             return;
         }
-        IN_CheckForSkip();
     }
+    IN_CheckForSkip();
 
     // Counter for general background animation.
     bcnt++;
@@ -489,7 +489,7 @@ void IN_CheckForSkip(void)
 
     for(i = 0, player = players; i < MAXPLAYERS; ++i, player++)
     {
-        if(players->plr->inGame)
+        if(player->plr->inGame)
         {
             if(player->brain.attack)
             {

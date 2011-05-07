@@ -341,6 +341,7 @@ void P_ShotAmmo(player_t *player)
         player->ammo[i].owned = MAX_OF(0,
             player->ammo[i].owned - wInfo->mode[fireMode].perShot[i]);
     }
+    player->update |= PSF_AMMO;
 }
 
 /**

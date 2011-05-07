@@ -364,7 +364,7 @@ void DD_Ticker(timespan_t time)
 
             // Set frametime back by one tick (to stay in the 0..1 range).
             realFrameTimePos -= 1;
-            assert(realFrameTimePos < 1);
+            //assert(realFrameTimePos < 1);
 
             // Camera smoothing: now that the world tic has occurred, the next sharp
             // position can be processed.
