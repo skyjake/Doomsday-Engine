@@ -158,7 +158,7 @@ typedef struct {
     float           menuShadow;
 
     byte            menuSlam;
-    byte            menuHotkeys;
+    byte            menuShortcutsEnabled;
     byte            menuNoStretch;
     byte            menuGameSaveSuggestName;
     byte            menuCursorRotate;

@@ -228,7 +228,7 @@ void X_PreInit(void)
     cfg.menuTextColors[2][1] = defFontRGB3[1];
     cfg.menuTextColors[2][2] = defFontRGB3[2];
     cfg.menuEffectFlags = MEF_TEXT_SHADOW;
-    cfg.menuHotkeys = true;
+    cfg.menuShortcutsEnabled = true;
     cfg.menuNoStretch = false;
     cfg.confirmQuickGameSave = true;
     cfg.hudFog = 5;

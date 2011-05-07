@@ -102,7 +102,7 @@ typedef struct jdoom64_config_s {
     float           menuShadow;
     int             menuQuitSound;
     byte            menuSlam;
-    byte            menuHotkeys;
+    byte            menuShortcutsEnabled;
     byte            menuNoStretch;
     byte            menuGameSaveSuggestName;
     byte            menuCursorRotate;

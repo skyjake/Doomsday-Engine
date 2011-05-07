@@ -116,6 +116,18 @@ typedef enum {
 #define NUMSAVESLOTS        6
 
 /**
+ * Difficulty/skill settings/filters.
+ */
+typedef enum {
+    SM_BABY,
+    SM_EASY,
+    SM_MEDIUM,
+    SM_HARD,
+    SM_NIGHTMARE,
+    NUM_SKILL_MODES
+} skillmode_t;
+
+/**
  * Armor types.
  */
 typedef enum {
@@ -163,6 +175,7 @@ typedef struct classinfo_s{
     int         failUseSound; // sound played when a use fails.
     int         armorIncrement[NUMARMOR];
     int         pieceX[3]; // temp.
+    textenum_t  skillModeNames[NUM_SKILL_MODES];
 } classinfo_t;
 
 extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
@@ -182,18 +195,6 @@ typedef enum {
     GS_INFINE,
     NUM_GAME_STATES
 } gamestate_t;
-
-/**
- * Difficulty/skill settings/filters.
- */
-typedef enum {
-    SM_BABY,
-    SM_EASY,
-    SM_MEDIUM,
-    SM_HARD,
-    SM_NIGHTMARE,
-    NUM_SKILL_MODES
-} skillmode_t;
 
 /**
  * Keys (as in, keys to lockables).

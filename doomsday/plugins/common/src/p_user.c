@@ -170,7 +170,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_FIGHTER_FAILED_USE,
         {25 * FRACUNIT, 20 * FRACUNIT, 15 * FRACUNIT, 5 * FRACUNIT},
-        {190, 225, 234}
+        {190, 225, 234},
+        { TXT_SKILLF1, TXT_SKILLF2, TXT_SKILLF3, TXT_SKILLF4, TXT_SKILLF5 }
+
     },
     {   // Cleric
         PCLASS_CLERIC, NULL, true,
@@ -189,7 +191,8 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_CLERIC_FAILED_USE,
         {10 * FRACUNIT, 25 * FRACUNIT, 5 * FRACUNIT, 20 * FRACUNIT},
-        {190, 212, 225}
+        {190, 212, 225},
+        { TXT_SKILLC1, TXT_SKILLC2, TXT_SKILLC3, TXT_SKILLC4, TXT_SKILLC5 }
     },
     {   // Mage
         PCLASS_MAGE, NULL, true,
@@ -208,7 +211,8 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_MAGE_FAILED_USE,
         {5 * FRACUNIT, 15 * FRACUNIT, 10 * FRACUNIT, 25 * FRACUNIT},
-        {190, 205, 224}
+        {190, 205, 224},
+        { TXT_SKILLM1, TXT_SKILLM2, TXT_SKILLM3, TXT_SKILLM4, TXT_SKILLM5 }
     },
     {   // Pig
         PCLASS_PIG, NULL, false,
@@ -224,10 +228,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         {0x17, 0x27},
         2048,
         {640, 1280},
-        18,
-        SFX_NONE,
-        {0, 0, 0, 0},
-        {0, 0, 0}
+        18
     },
 };
 #endif

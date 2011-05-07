@@ -246,7 +246,7 @@ void D_PreInit(void)
     cfg.menuTextColors[2][CG] = 0;
     cfg.menuTextColors[2][CB] = 0;
     cfg.menuSlam = false;
-    cfg.menuHotkeys = true;
+    cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestName = true;
 
     cfg.confirmQuickGameSave = true;

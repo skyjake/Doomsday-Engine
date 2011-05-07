@@ -93,7 +93,7 @@ void MN_IterateBindings(const mndata_bindings_t* binds, const char* bindings, in
 static mn_object_t* ControlsItems;
 
 mn_page_t ControlsMenu = {
-    NULL, MNPF_NOHOTKEYS,
+    NULL,
 #if __JDOOM__ || __JDOOM64__
     { 32, 40 },
 #elif __JHERETIC__

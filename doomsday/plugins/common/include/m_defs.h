@@ -147,12 +147,14 @@ typedef struct mn_object_s {
     /// \todo Does not belong here, move it out.
     const char* text;
 
+    /// DDKEY shortcut used to switch focus to this object directly.
+    /// @c 0= no shortcut defined.
+    int shortcut;
+
     /// Index of the predefined page font to use when drawing this.
-    /// \todo Does not belong here, move it out.
     int pageFontIdx;
 
     /// Index of the predefined page color to use when drawing this.
-    /// \todo Does not belong here, move it out.
     int pageColorIdx;
 
     /// Patch to be used when drawing this.
@@ -183,7 +185,7 @@ typedef struct mn_object_s {
 
     void* typedata; // Type-specific extra data.
 
-    // Extra poperty values.
+    // Extra property values.
     void* data1;
     int data2;
 } mn_object_t;
@@ -207,13 +209,6 @@ boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
  * @return  Return value of the executed action else @c -1 if NOP.
  */
 int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-
-/**
- * @defGroup menuPageFlags Menu Page Flags
- */
-/*@{*/
-#define MNPF_NOHOTKEYS          0x00000001 // Hotkeys are disabled.
-/*@}*/
 
 typedef enum {
     MENU_COLOR1,
@@ -254,7 +249,6 @@ typedef enum {
 
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
-    int flags; // @see menuPageFlags.
     int offset[2];
     gamefontid_t fonts[MENU_FONT_COUNT];
     uint colors[MENU_COLOR_COUNT];
