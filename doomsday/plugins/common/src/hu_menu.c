@@ -386,7 +386,7 @@ mn_object_t MainMenuObjects[] = {
 };
 
 mn_page_t MainMenu = {
-    MainMenuObjects, 0, 0,
+    MainMenuObjects, 0,
 #if __JHEXEN__ || __JHERETIC__
     { 110, 56 },
 #else
@@ -410,7 +410,7 @@ mn_object_t GameTypeMenuObjects[] = {
 };
 
 mn_page_t GameTypeMenu = {
-    GameTypeMenuObjects, 0, 0,
+    GameTypeMenuObjects, 0,
 #if __JDOOM__ || __JDOOM64__
     {  97, 65 },
 #else
@@ -428,7 +428,7 @@ static mndata_mobjpreview_t mop_playerclass_preview;
 static mn_object_t* PlayerClassMenuObjects;
 
 mn_page_t PlayerClassMenu = {
-    0, 0, 0, { 66, 66 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    0, 0, { 66, 66 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawPlayerClassMenu, NULL,
     &GameTypeMenu,
     //0, 0
@@ -439,7 +439,7 @@ mn_page_t PlayerClassMenu = {
 static mn_object_t* EpisodeMenuObjects;
 
 mn_page_t EpisodeMenu = {
-    0, 0, 0,
+    0, 0,
 # if __JDOOM__
     { 48, 63 },
 # else
@@ -463,7 +463,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
+    SkillMenuObjects, 0,
     { 120, 44 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &PlayerClassMenu,
@@ -480,7 +480,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
+    SkillMenuObjects, 0,
     { 38, 30 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &EpisodeMenu,
@@ -495,7 +495,7 @@ static mn_object_t SkillMenuObjects[] = {
     { MN_NONE }
 };
 static mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
+    SkillMenuObjects, 0,
     { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &GameTypeMenu,
@@ -512,7 +512,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 
 mn_page_t SkillMenu = {
-    SkillMenuObjects, 0, 0,
+    SkillMenuObjects, 0,
     { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawSkillMenu, NULL,
     &EpisodeMenu,
@@ -528,7 +528,7 @@ static mn_object_t FilesMenuObjects[] = {
 };
 
 mn_page_t FilesMenu = {
-    FilesMenuObjects, 0, 0,
+    FilesMenuObjects, 0,
     { 110, 60 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     NULL, NULL,
     &MainMenu,
@@ -564,7 +564,7 @@ static mn_object_t LoadMenuObjects[] = {
 };
 
 mn_page_t LoadMenu = {
-    LoadMenuObjects, 0, 0,
+    LoadMenuObjects, 0,
 #if __JDOOM__ || __JDOOM64__
     { 80, 54 },
 #else
@@ -591,7 +591,7 @@ static mn_object_t SaveMenuObjects[] = {
 };
 
 mn_page_t SaveMenu = {
-    SaveMenuObjects, 0, 0,
+    SaveMenuObjects, 0,
 #if __JDOOM__ || __JDOOM64__
     { 80, 54 },
 #else
@@ -621,7 +621,7 @@ static mn_object_t OptionsMenuObjects[] = {
 };
 
 mn_page_t OptionsMenu = {
-    OptionsMenuObjects, 0, 0,
+    OptionsMenuObjects, 0,
 #if __JHERETIC__ || __JHEXEN__
     { 110, 63 },
 #else
@@ -651,7 +651,7 @@ mn_object_t SoundMenuObjects[] = {
 };
 
 mn_page_t SoundMenu = {
-    SoundMenuObjects, 0, 0,
+    SoundMenuObjects, 0,
 #if __JHEXEN__
     { 97, 25 },
 #elif __JHERETIC__
@@ -854,7 +854,7 @@ static mn_object_t HudMenuObjects[] = {
 };
 
 mn_page_t HudMenu = {
-    HudMenuObjects, 0, 0,
+    HudMenuObjects, 0,
 #if __JDOOM__ || __JDOOM64__
     { 97, 40 },
 #else
@@ -899,7 +899,7 @@ static mn_object_t InventoryMenuObjects[] = {
 };
 
 mn_page_t InventoryMenu = {
-    InventoryMenuObjects, 0, 0,
+    InventoryMenuObjects, 0,
     { 78, 48 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
     M_DrawInventoryMenu, NULL,
     &OptionsMenu,
@@ -987,7 +987,7 @@ static mn_object_t WeaponMenuObjects[] = {
 };
 
 mn_page_t WeaponMenu = {
-    WeaponMenuObjects, 0, MNPF_NOHOTKEYS,
+    WeaponMenuObjects, MNPF_NOHOTKEYS,
 #if __JDOOM__ || __JDOOM64__
     { 78, 40 },
 #elif __JHERETIC__
@@ -1056,7 +1056,7 @@ static mn_object_t GameplayMenuObjects[] = {
 };
 
 mn_page_t GameplayMenu = {
-    GameplayMenuObjects, 0, 0,
+    GameplayMenuObjects, 0,
 #if __JHEXEN__
     { 88, 25 },
 #elif __JHERETIC__
@@ -1085,7 +1085,7 @@ mn_object_t MultiplayerMenuObjects[] = {
 };
 
 mn_page_t MultiplayerMenu = {
-    MultiplayerMenuObjects, 0, 0,
+    MultiplayerMenuObjects, 0,
 #if __JHERETIC__ || __JHEXEN__
     { 97, 65 },
 #else
@@ -1155,7 +1155,7 @@ mn_object_t PlayerSetupMenuObjects[] = {
 };
 
 mn_page_t PlayerSetupMenu = {
-    PlayerSetupMenuObjects, 0, 0,
+    PlayerSetupMenuObjects, 0,
 #if __JHERETIC__ || __JHEXEN__
     { 70, 54 },
 #else
@@ -1202,7 +1202,7 @@ static mn_object_t ColorWidgetMenuObjects[] = {
 };
 
 static mn_page_t ColorWidgetMenu = {
-    ColorWidgetMenuObjects, 0, MNPF_NOHOTKEYS,
+    ColorWidgetMenuObjects, MNPF_NOHOTKEYS,
 #if __JHERETIC__ || __JHEXEN__
     { 98, 60 },
 #else

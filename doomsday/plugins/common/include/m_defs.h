@@ -251,7 +251,6 @@ typedef enum {
 
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
-    int focus; // Index of the focus object.
     int flags; // @see menuPageFlags.
     int offset[2];
     gamefontid_t fonts[MENU_FONT_COUNT];
@@ -266,6 +265,7 @@ typedef struct mn_page_s {
     //mn_page_unscaledstate_t unscaled;
     // Auto-initialized.
     int objectsCount;
+    int focus; // Index of the focus object.
 } mn_page_t;
 
 /// @return  Currently focused object else @c NULL

@@ -1742,7 +1742,7 @@ mn_object_t AutomapMenuObjects[] = {
 };
 
 mn_page_t AutomapMenu = {
-    AutomapMenuObjects, 0, 0,
+    AutomapMenuObjects, 0,
 #if __JHERETIC__ || __JHEXEN__
     { 64, 28 },
 #else
