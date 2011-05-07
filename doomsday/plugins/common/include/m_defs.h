@@ -181,8 +181,11 @@ typedef struct mn_object_s {
     /// @return  @c true if the event is eaten.
     int (*privilegedResponder) (struct mn_object_s* obj, event_t* ev);
 
-    void* data; // Pointer to extra data.
-    int data2; // Extra numerical data.
+    void* typedata; // Type-specific extra data.
+
+    // Extra poperty values.
+    void* data1;
+    int data2;
 } mn_object_t;
 
 int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e command);

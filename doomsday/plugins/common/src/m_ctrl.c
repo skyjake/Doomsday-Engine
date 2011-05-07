@@ -368,7 +368,7 @@ void M_InitControlsMenu(void)
             visObj->privilegedResponder = MNBindings_PrivilegedResponder;
             visObj->dimensions = MNBindings_Dimensions;
             visObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            visObj->data = binds;
+            visObj->typedata = binds;
 
             if(!ControlsMenu.focus)
                 ControlsMenu.focus = visObj - ControlsItems;
@@ -576,7 +576,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
 {
     assert(NULL != obj);
     {
-    mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
+    mndata_bindings_t* binds = (mndata_bindings_t*) obj->typedata;
     bindingdrawerdata_t draw;
     char buf[1024];
 
@@ -591,7 +591,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
     draw.x = x;
     draw.y = y;
     draw.alpha = mnRendState->pageAlpha;
-    MN_IterateBindings((mndata_bindings_t*)obj->data, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+    MN_IterateBindings((mndata_bindings_t*)obj->typedata, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
     }
 }
 
@@ -599,7 +599,7 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
     {
-    mndata_bindings_t* binds = (mndata_bindings_t*)obj->data;
+    mndata_bindings_t* binds = (mndata_bindings_t*)obj->typedata;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -693,7 +693,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
     // We're interested in key or button down events.
     if((obj->flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
-        mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
+        mndata_bindings_t* binds = (mndata_bindings_t*) obj->typedata;
         const char* bindContext = "game";
         const char* symbol = 0;
         char cmd[512];
