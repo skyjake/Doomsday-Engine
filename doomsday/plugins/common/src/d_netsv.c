@@ -1225,16 +1225,6 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
                    ptr - buffer);
 }
 
-void NetSv_PSpriteChange(int plrNum, int state)
-{
-    /*  byte buffer[20], *ptr = buffer;
-
-       if(IS_CLIENT) return;
-
-       WRITE_SHORT(ptr, state);
-       Net_SendPacket(plrNum, GPT_PSPRITE_STATE, buffer, ptr-buffer); */
-}
-
 void NetSv_SendPlayerInfo(int whose, int to_whom)
 {
     byte        buffer[10], *ptr = buffer;

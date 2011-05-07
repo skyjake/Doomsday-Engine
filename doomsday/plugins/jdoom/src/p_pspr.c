@@ -166,7 +166,6 @@ void P_FireWeapon(player_t *player)
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
     newstate = weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_ATTACK];
     P_SetPsprite(player, ps_weapon, newstate);
-    NetSv_PSpriteChange(player - players, newstate);
     P_NoiseAlert(player->plr->mo, player->plr->mo);
 }
 

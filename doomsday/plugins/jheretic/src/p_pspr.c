@@ -560,7 +560,6 @@ void P_ActivateMorphWeapon(player_t *player)
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     player->pSprites[ps_weapon].pos[VY] = WEAPONTOP;
     P_SetPsprite(player, ps_weapon, S_BEAKREADY);
-    NetSv_PSpriteChange(player - players, S_BEAKREADY);
 }
 
 void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
@@ -602,6 +601,8 @@ void P_FireWeapon(player_t *player)
     if(!P_CheckAmmo(player))
         return;
 
+    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
 
     if(player->refire)
@@ -609,7 +610,6 @@ void P_FireWeapon(player_t *player)
     else
         attackState = weaponInfo[player->readyWeapon][player->class_].mode[lvl].states[WSN_ATTACK];
 
-    NetSv_PSpriteChange(player - players, attackState);
     P_SetPsprite(player, ps_weapon, attackState);
 
     P_NoiseAlert(player->plr->mo, player->plr->mo);
@@ -718,12 +718,10 @@ void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
         if(player->powers[PT_WEAPONLEVEL2])
         {
             P_SetPsprite(player, ps_weapon, S_BEAKATK2_1);
-            NetSv_PSpriteChange(player - players, S_BEAKATK2_1);
         }
         else
         {
             P_SetPsprite(player, ps_weapon, S_BEAKATK1_1);
-            NetSv_PSpriteChange(player - players, S_BEAKATK1_1);
         }
         P_NoiseAlert(player->plr->mo, player->plr->mo);
     }
@@ -1643,7 +1641,6 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
     if(--player->flameCount == 0)
     {   // Out of flame
         P_SetPsprite(player, ps_weapon, S_PHOENIXATK2_4);
-        NetSv_PSpriteChange(player - players, S_PHOENIXATK2_4);
         player->refire = 0;
         return;
     }

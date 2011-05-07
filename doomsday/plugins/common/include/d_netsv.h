@@ -54,7 +54,6 @@ void            NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
                                       boolean reliable);
 void            NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum,
                                        int flags, boolean reliable);
-void            NetSv_PSpriteChange(int plrNum, int state);
 void            NetSv_Sound(mobj_t *origin, int sound_id, int toPlr);   // toPlr=0: broadcast.
 void            NetSv_SoundAtVolume(mobj_t *origin, int sound_id, int volume,
                                     int toPlr);

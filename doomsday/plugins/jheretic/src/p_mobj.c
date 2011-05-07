@@ -91,18 +91,13 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
         return false;
     }
 
-    if(mobj->ddFlags & DDMF_REMOTE)
-    {
-        Con_Error("P_MobjChangeState: Can't set Remote state!\n");
-    }
-
     st = &STATES[state];
     P_MobjSetState(mobj, state);
 
     mobj->turnTime = false; // $visangle-facetarget.
-    if(st->action)
-    {   // Call action function.
-        st->action(mobj);
+    if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+    {
+        if(st->action) st->action(mobj); // Call action function.
     }
 
     return true;
@@ -828,8 +823,8 @@ void P_NightmareRespawn(mobj_t* mobj)
 
 void P_MobjThinker(mobj_t *mobj)
 {
-    if(mobj->ddFlags & DDMF_REMOTE)
-        return; // Remote mobjs are handled separately.
+    if(IS_CLIENT && !ClMobj_IsValid(mobj))
+        return; // We should not touch this right now.
 
     if(mobj->type == MT_BLASTERFX1)
     {
