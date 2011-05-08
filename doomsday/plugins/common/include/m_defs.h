@@ -340,7 +340,7 @@ typedef struct mndata_edit_s {
 
 void MNEdit_Drawer(mn_object_t* obj, int x, int y);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNEdit_Responder(mn_object_t* obj, const event_t* ev);
+int MNEdit_Responder(mn_object_t* obj, event_t* ev);
 void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 /**

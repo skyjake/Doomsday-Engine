@@ -3424,7 +3424,7 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int MNEdit_Responder(mn_object_t* obj, const event_t* ev)
+int MNEdit_Responder(mn_object_t* obj, event_t* ev)
 {
     assert(NULL != obj);
     {
