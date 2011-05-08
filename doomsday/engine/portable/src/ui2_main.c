@@ -559,18 +559,18 @@ void FIPage_Drawer(fi_page_t* p)
     // Now lets go into 3D mode for drawing the p objects.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadIdentity();
+    //glLoadIdentity();
 
     GL_SetMultisample(true);
 
     // The 3D projection matrix.
     // We're assuming pixels are squares.
-    {float aspect = theWindow->width / (float) theWindow->height;
+    /*{float aspect = theWindow->width / (float) theWindow->height;
     yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
-    GL_InfinitePerspective(yfov, aspect, .05f);}
+    GL_InfinitePerspective(yfov, aspect, .05f);}*/
 
     // We need a left-handed yflipped coordinate system.
-    glScalef(1, -1, -1);
+    //glScalef(1, -1, -1);
 
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -581,7 +581,9 @@ void FIPage_Drawer(fi_page_t* p)
     glEnable(GL_ALPHA_TEST);
 
     {vec3_t worldOrigin;
-    V3_Set(worldOrigin, -SCREENWIDTH/2 - p->_offset[VX].value, -SCREENHEIGHT/2 - p->_offset[VY].value, .05f - p->_offset[VZ].value);
+    V3_Set(worldOrigin, /*-SCREENWIDTH/2*/ - p->_offset[VX].value,
+                        /*-SCREENHEIGHT/2*/ - p->_offset[VY].value,
+                        0/*.05f - p->_offset[VZ].value*/);
     objectsDraw(&p->_objects, FI_NONE/* treated as 'any' */, worldOrigin);
 
     /*{rendmodelparams_t params;
@@ -810,8 +812,8 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
 
 void UI2_Drawer(void)
 {
-    borderedprojectionstate_t borderedProjection;
-    boolean bordered;
+    //borderedprojectionstate_t borderedProjection;
+    //boolean bordered;
 
     if(!inited)
     {
@@ -822,12 +824,12 @@ void UI2_Drawer(void)
     }
 
     /// \fixme need to refactor.
-    bordered = true; //(FI_ScriptActive() && FI_ScriptCmdExecuted());
+    /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
     if(bordered)
     {   // Draw using the special bordered projection.
         R_ConfigureBorderedProjection(&borderedProjection);
         R_BeginBorderedProjection(&borderedProjection);
-    }
+    }*/
 
     {uint i;
     for(i = 0; i < numPages; ++i)
@@ -836,8 +838,8 @@ void UI2_Drawer(void)
         page->drawer(page);
     }}
 
-    if(bordered)
-        R_EndBorderedProjection(&borderedProjection);
+    //if(bordered)
+    //    R_EndBorderedProjection(&borderedProjection);
 }
 
 void FIData_PicThink(fi_object_t* obj)
@@ -1050,7 +1052,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
+    //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
 
     // Move to the object origin.
     glTranslatef(origin[VX], origin[VY], origin[VZ]);
@@ -1234,7 +1236,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
+    //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
     glTranslatef(t->pos[0].value + offset[VX], t->pos[1].value + offset[VY], t->pos[2].value + offset[VZ]);
 
     if(t->angle.value != 0)
