@@ -27,11 +27,6 @@
 #define LIBCOMMON_HU_STUFF_H
 
 #include "gl_drawpatch.h"
-#if __JHEXEN__
-# include "h2def.h"
-#else
-# include "doomdef.h"
-#endif
 
 // The fonts.
 typedef enum {
@@ -74,12 +69,7 @@ enum {
 extern fontid_t fonts[NUM_GAME_FONTS];
 
 extern patchid_t* pMapNames; // Name graphics of each map.
-#if __JDOOM__ || __JDOOM64__
-extern patchid_t pSkillModeNames[NUM_SKILL_MODES]; // Name graphics of each skill mode.
-#endif
-#if __JDOOM__
-extern patchid_t* pEpisodeNames; // Name graphics of each episode.
-#endif
+
 #if __JHERETIC__ || __JHEXEN__
 extern patchid_t pInvItemBox;
 extern patchid_t pInvSelectBox;

@@ -55,6 +55,7 @@
 #include "p_tick.h"
 #include "am_map.h"
 #include "fi_lib.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -106,13 +107,6 @@ fontid_t fonts[NUM_GAME_FONTS];
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
 patchid_t* pMapNames = NULL;
-// Name graphics of each skill mode.
-patchid_t pSkillModeNames[NUM_SKILL_MODES];
-#endif
-
-#if __JDOOM__
-// Name graphics of each episode.
-patchid_t* pEpisodeNames = NULL;
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -206,27 +200,6 @@ static short translatePatchToTextDrawFlags(short in)
 void Hu_LoadData(void)
 {
 #if __JDOOM__ || __JDOOM64__
-    static const char*  skillModePatchNames[] =
-    {
-        "M_JKILL",
-        "M_ROUGH",
-        "M_HURT",
-        "M_ULTRA",
-# if __JDOOM__
-        "M_NMARE"
-# endif
-    };
-#endif
-#if __JDOOM__
-    static const char*  episodePatchNames[] =
-    {
-        "M_EPI1",
-        "M_EPI2",
-        "M_EPI3",
-        "M_EPI4"
-    };
-#endif
-#if __JDOOM__ || __JDOOM64__
     char name[9];
 #endif
     int i;
@@ -272,11 +245,6 @@ void Hu_LoadData(void)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    for(i = 0; i < NUM_SKILL_MODES; ++i)
-    {
-        pSkillModeNames[i] = R_PrecachePatch(skillModePatchNames[i], NULL);
-    }
-
     // Load the map name patches.
 # if __JDOOM64__
     {
@@ -314,10 +282,6 @@ void Hu_LoadData(void)
                 pMapNames[(i* 9) + j] = R_PrecachePatch(name, NULL);
             }
         }
-
-        pEpisodeNames = Z_Malloc(sizeof(patchid_t) * 4, PU_GAMESTATIC, 0);
-        for(i = 0; i < 4; ++i)
-            pEpisodeNames[i] = R_PrecachePatch(episodePatchNames[i], NULL);
     }
 # endif
 #endif
@@ -351,12 +315,6 @@ void Hu_UnloadData(void)
     if(pMapNames)
         Z_Free(pMapNames);
     pMapNames = 0;
-#endif
-
-#if __JDOOM__
-    if(pEpisodeNames)
-        Z_Free(pEpisodeNames);
-    pEpisodeNames = 0;
 #endif
 
     if(!Get(DD_NOVIDEO))

@@ -29,8 +29,9 @@
 #ifndef LIBCOMMON_M_DEFS_H
 #define LIBCOMMON_M_DEFS_H
 
-#include "r_common.h"
 #include "hu_stuff.h"
+
+struct mn_object_s;
 
 typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.

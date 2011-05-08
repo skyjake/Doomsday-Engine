@@ -335,6 +335,11 @@ static patchid_t pSaveGame;
 static patchid_t pReadThis;
 static patchid_t pQuitGame;
 static patchid_t pOptionsTitle;
+
+static patchid_t pSkillModeNames[NUM_SKILL_MODES];
+#endif
+#if __JDOOM__
+static patchid_t pEpisodeNames[4];
 #endif
 
 #if __JHEXEN__
@@ -1359,6 +1364,29 @@ void Hu_MenuLoadResources(void)
     pReadThis = R_PrecachePatch("M_RDTHIS", NULL);
     pQuitGame = R_PrecachePatch("M_QUITG", NULL);
     pOptionsTitle = R_PrecachePatch("M_OPTTTL", NULL);
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    pSkillModeNames[SM_BABY]      = R_PrecachePatch("M_JKILL", NULL);
+    pSkillModeNames[SM_EASY]      = R_PrecachePatch("M_ROUGH", NULL);
+    pSkillModeNames[SM_MEDIUM]    = R_PrecachePatch("M_HURT", NULL);
+    pSkillModeNames[SM_HARD]      = R_PrecachePatch("M_ULTRA", NULL);
+#  if __JDOOM__
+    pSkillModeNames[SM_NIGHTMARE] = R_PrecachePatch("M_NMARE", NULL);
+#  endif
+#endif
+
+#if __JDOOM__
+    if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM|GM_DOOM_ULTIMATE))
+    {
+        pEpisodeNames[0] = R_PrecachePatch("M_EPI1", NULL);
+        pEpisodeNames[1] = R_PrecachePatch("M_EPI2", NULL);
+        pEpisodeNames[2] = R_PrecachePatch("M_EPI3", NULL);
+    }
+    if(gameModeBits & GM_DOOM_ULTIMATE)
+    {
+        pEpisodeNames[3] = R_PrecachePatch("M_EPI4", NULL);
+    }
 #endif
 
 #if __JHERETIC__
