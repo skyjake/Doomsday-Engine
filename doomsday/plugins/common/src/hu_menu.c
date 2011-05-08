@@ -2161,7 +2161,20 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
         if(showFocusCursor && (obj->flags & MNF_FOCUS))
         {
-            drawFocusCursor(pos[VX], pos[VY], cursorAnimFrame, height, cursorAngle, alpha);
+            /// \kludge
+            int cursorY = pos[VY], cursorItemHeight = height;
+            if(MN_LIST == obj->type && (obj->flags & MNF_ACTIVE))
+            {
+                mndata_list_t* list = (mndata_list_t*) obj->typedata;
+                if(list->selection >= list->first && list->selection < list->first + list->numvis)
+                {
+                    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->pageFontIdx)));
+                    cursorItemHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+                    cursorY += (list->selection - list->first) * cursorItemHeight;
+                }
+            }
+            /// kludge end.
+            drawFocusCursor(pos[VX], cursorY, cursorAnimFrame, cursorItemHeight, cursorAngle, alpha);
         }
 
         pos[VY] += height * (1.08f); // Leading.
@@ -3424,38 +3437,88 @@ void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int*
 
 void MNList_Drawer(mn_object_t* obj, int x, int y)
 {
+    assert(NULL != obj);
+    {
     const mndata_list_t* list = (const mndata_list_t*) obj->typedata;
-    gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
-    int i;
+    const boolean flashSelection = ((obj->flags & MNF_ACTIVE) && list->selection >= list->first &&
+                                    list->selection < list->first + list->numvis);
+    const gamefontid_t fontIdx = rs.textFonts[obj->pageFontIdx];
+    const float* color = rs.textColors[obj->pageColorIdx];
+    float dimColor[4], flashColor[4];
+
+    if(flashSelection)
+    {
+        float t = (flashCounter <= 50? flashCounter / 50.0f : (100 - flashCounter) / 50.0f);
+        flashColor[CR] = color[CR] * t + cfg.menuTextFlashColor[CR] * (1 - t);
+        flashColor[CG] = color[CG] * t + cfg.menuTextFlashColor[CG] * (1 - t);
+        flashColor[CB] = color[CB] * t + cfg.menuTextFlashColor[CB] * (1 - t);
+        flashColor[CA] = color[CA];
+    }
+
+    dimColor[CR] = color[CR] * MNDATA_LIST_NONSELECTION_LIGHT;
+    dimColor[CG] = color[CG] * MNDATA_LIST_NONSELECTION_LIGHT;
+    dimColor[CB] = color[CB] * MNDATA_LIST_NONSELECTION_LIGHT;
+    dimColor[CA] = color[CA];
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(rs.textColors[obj->pageColorIdx]);
+
+    { int i;
     for(i = list->first; i < list->count && i < list->first + list->numvis; ++i)
     {
         const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
+
+        if(list->selection == i)
+        {
+            if(flashSelection)
+                DGL_Color4fv(flashColor);
+            else
+                DGL_Color4fv(color);
+        }
+        else
+        {
+            DGL_Color4fv(dimColor);
+        }
+
         M_DrawMenuText2(item->text, x, y, fontIdx);
         FR_SetFont(FID(fontIdx));
         y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
-    }
+    }}
+
     DGL_Disable(DGL_TEXTURE_2D);
+    }
 }
 
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
+    {
+    mndata_list_t* list = (mndata_list_t*) obj->typedata;
     switch(cmd)
     {
     case MCMD_NAV_DOWN:
-        if(obj->flags & MNF_ACTIVE)
-        {
-            S_LocalSound(SFX_MENU_NAV_DOWN, NULL);
-            return true;
-        }
-        break;
     case MCMD_NAV_UP:
         if(obj->flags & MNF_ACTIVE)
         {
-            S_LocalSound(SFX_MENU_NAV_UP, NULL);
+            int oldSelection = list->selection;
+            if(MCMD_NAV_DOWN == cmd)
+            {
+                if(list->selection < list->count - 1)
+                    ++list->selection;
+            }
+            else
+            {
+                if(list->selection > 0)
+                    --list->selection;
+            }
+
+            if(list->selection != oldSelection)
+            {
+                S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
+                if(MNObject_HasAction(obj, MNA_MODIFIED))
+                {
+                    MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
+                }
+            }
             return true;
         }
         break;
@@ -3468,14 +3531,6 @@ int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             {
                 MNObject_ExecAction(obj, MNA_CLOSE, NULL);
             }
-            return true;
-        }
-        break;
-    case MCMD_NAV_PAGEUP:
-    case MCMD_NAV_PAGEDOWN:
-        if(obj->flags & MNF_ACTIVE)
-        {
-            S_LocalSound(SFX_MENU_CANCEL, NULL);
             return true;
         }
         break;
@@ -3503,6 +3558,7 @@ int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         break;
     }
     return false; // Not eaten.
+    }
 }
 
 int MNList_FindItem(const mn_object_t* obj, int dataValue)
@@ -4903,16 +4959,16 @@ int Hu_MenuSelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* param
 {
     assert(NULL != obj);
     {
-    mndata_list_t* lil = (mndata_list_t*) obj->typedata;
+    mndata_list_t* list = (mndata_list_t*) obj->typedata;
     mndata_mobjpreview_t* mop;
 
     if(MNA_MODIFIED != action) return 1;
-    if(lil->selection < 0) return 0;
+    if(list->selection < 0) return 0;
 
     /// \fixme Find the object by id.
     mop = &mop_player_preview;
-    mop->mobjType = PCLASS_INFO(lil->selection)->mobjType;
-    mop->plrClass = lil->selection;
+    mop->mobjType = PCLASS_INFO(list->selection)->mobjType;
+    mop->plrClass = list->selection;
     return 0;
     }
 }
@@ -4922,15 +4978,15 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
 {
     assert(NULL != obj);
     {
-    mndata_list_t* lil = (mndata_list_t*) obj->typedata;
+    mndata_list_t* list = (mndata_list_t*) obj->typedata;
     mndata_mobjpreview_t* mop;
 
     if(MNA_MODIFIED != action) return 1;
-    if(lil->selection < 0) return 0;
+    if(list->selection < 0) return 0;
 
     /// \fixme Find the object by id.
     mop = &mop_player_preview;
-    mop->tMap = lil->selection;
+    mop->tMap = list->selection;
     return 0;
     }
 }

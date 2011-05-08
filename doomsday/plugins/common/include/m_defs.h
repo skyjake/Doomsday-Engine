@@ -360,7 +360,9 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string);
 /**
  * List selection.
  */
-#define MNDATA_LIST_LEADING     .5f
+#define MNDATA_LIST_LEADING     .5f /// Inter-item leading factor (does not apply to MNList_InlineDrawer).
+#define MNDATA_LIST_NONSELECTION_LIGHT  .7f /// Light value multiplier for non-selected items (does not apply to MNList_InlineDrawer).
+
 #define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
 typedef struct {
