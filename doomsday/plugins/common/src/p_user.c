@@ -56,7 +56,7 @@
 #include "g_common.h"
 #include "am_map.h"
 #include "hu_log.h"
-#include "hu_Stuff.h"
+#include "hu_stuff.h"
 #include "r_common.h"
 
 #if __JHERETIC__ || __JHEXEN__
