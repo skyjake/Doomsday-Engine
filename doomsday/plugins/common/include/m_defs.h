@@ -32,6 +32,7 @@
 #include "hu_stuff.h"
 
 struct mn_object_s;
+struct mn_page_s;
 
 typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.
