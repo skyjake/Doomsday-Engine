@@ -740,7 +740,7 @@ void Hu_InventoryTicker(void)
         player_t*           plr = &players[i];
         hud_inventory_t*    inv = &hudInventories[i];
 
-        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        if(!plr->plr->inGame)
             continue;
 
         if(inv->flags & HIF_IS_DIRTY)
