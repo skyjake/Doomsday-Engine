@@ -214,20 +214,78 @@ static void drawMessage(void)
 }
 
 /**
+ * Decide our scaling strategy by comparing the aspect ratio of the current
+ * window to those of original fixed-size game resolution.
+ *
+ * @return @c true if decided to stretch, else scale to fit.
+ */
+static boolean chooseScaleStrategy(int winWidth, int winHeight)
+{
+    float a = (float)winWidth/winHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+
+    if(INRANGE_OF(a, b, .001f))
+        return true; // The same, so stretch.
+    if(cfg.menuNoStretch || !INRANGE_OF(a, b, .38f))
+        return false; // No stretch; translate and scale to fit.
+    // Otherwise stretch.
+    return true;
+}
+
+/**
  * Draw any active message.
  */
 void Hu_MsgDrawer(void)
 {
+    int winWidth, winHeight;
+
     if(!messageToPrint)
         return;
+
+    winWidth  = Get(DD_WINDOW_WIDTH);
+    winHeight = Get(DD_WINDOW_HEIGHT);
+
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+
+    if(chooseScaleStrategy(winWidth, winHeight))
+    {
+        // Use an orthographic projection in a fixed 320x200 space.
+        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
+    }
+    else
+    {
+        /**
+         * Use an orthographic projection in native screenspace. Then
+         * translate and scale the projection to produce an aspect
+         * corrected coordinate space of 320x200 and centered on the
+         * larger of the horizontal and vertical axes.
+         */
+        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
+
+        if(winWidth >= winHeight)
+        {
+            DGL_Translatef((float)winWidth/2, 0, 0);
+            DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
+            DGL_Scalef((float)winHeight/SCREENHEIGHT, (float)winHeight/SCREENHEIGHT, 1);
+            DGL_Translatef(-(SCREENWIDTH/2), 0, 0);
+        }
+        else
+        {
+            DGL_Translatef(0, (float)winHeight/2, 0);
+            DGL_Scalef(1, 1.2f, 1); // Aspect correction.
+            DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
+            DGL_Translatef(0, -(SCREENHEIGHT/2), 0);
+        }
+    }
 
     // Scale by the hudScale.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
+
     DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
-
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     // Draw the message.
@@ -237,6 +295,8 @@ void Hu_MsgDrawer(void)
 
     // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 }
 
