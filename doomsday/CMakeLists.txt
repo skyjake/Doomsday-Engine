@@ -464,7 +464,8 @@ ENDIF (UNIX)
 ################################################################################
 ######################## The Doomsday Engine  ##################################
 
-ADD_DEFINITIONS (-D__DOOMSDAY__ )
+ADD_DEFINITIONS ( -D__DOOMSDAY__ )
+ADD_DEFINITIONS ( -DDOOMSDAY_BUILD_TEXT=\"${DOOMSDAY_BUILD_TEXT}\" )
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
