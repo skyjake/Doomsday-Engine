@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_draw.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,5 +41,14 @@ void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int
 void GL_SetFilter(boolean enable);
 void GL_SetFilterColor(float r, float g, float b, float a);
 int GL_DrawFilter(void);
+
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
+    float stretchEpsilon);
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 
 #endif

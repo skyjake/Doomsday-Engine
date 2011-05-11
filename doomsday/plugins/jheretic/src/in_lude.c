@@ -158,7 +158,19 @@ static yahpt_t YAHspot[3][9] = {
      }
 };
 
+static cvartemplate_t cvars[] = {
+    { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
+    { NULL }
+};
+
 // CODE --------------------------------------------------------------------
+
+void WI_Register(void)
+{
+    int i;
+    for(i = 0; cvars[i].name; ++i)
+        Con_AddVariable(cvars + i);
+}
 
 void IN_DrawTime(int x, int y, int h, int m, int s, int fontIdx, int tracking, float r, float g, float b, float a)
 {
@@ -548,7 +560,8 @@ void IN_CheckForSkip(void)
 
 void IN_Drawer(void)
 {
-    static int          oldInterState;
+    static int oldInterState;
+    borderedprojectionstate_t bp;
 
     if(!intermission || interState > 3)
     {
@@ -566,6 +579,9 @@ void IN_Drawer(void)
 
     if(interState != -1)
         oldInterState = interState;
+
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+    GL_BeginBorderedProjection(&bp);
 
     switch(interState)
     {
@@ -629,6 +645,8 @@ void IN_Drawer(void)
         Con_Error("IN_lude:  Intermission state out of range.\n");
         break;
     }
+
+    GL_EndBorderedProjection(&bp);
 }
 
 void IN_DrawStatBack(void)

@@ -108,7 +108,19 @@ static int hubCount;
 static patchinfo_t dpTallyTop;
 static patchinfo_t dpTallyLeft;
 
+static cvartemplate_t cvars[] = {
+    { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
+    { NULL }
+};
+
 // CODE --------------------------------------------------------------------
+
+void WI_Register(void)
+{
+    int i;
+    for(i = 0; cvars[i].name; ++i)
+        Con_AddVariable(cvars + i);
+}
 
 void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
 {
@@ -332,12 +344,17 @@ static void CheckForSkip(void)
 
 void IN_Drawer(void)
 {
+    borderedprojectionstate_t bp;
     lumpnum_t lumpNum;
 
     if(!intermission || interState)
         return;
 
-    if(-1 != (lumpNum = W_GetLumpNumForName("INTERPIC")))
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+    GL_BeginBorderedProjection(&bp);
+
+    lumpNum = W_GetLumpNumForName("INTERPIC");
+    if(-1 != lumpNum)
     {
         DGL_Color4f(1, 1, 1, 1);
         DGL_DrawRawScreen(lumpNum, 0, 0);
@@ -347,6 +364,8 @@ void IN_Drawer(void)
     {
         drawDeathTally();
     }
+
+    GL_EndBorderedProjection(&bp);
 }
 
 static void drawDeathTally(void)

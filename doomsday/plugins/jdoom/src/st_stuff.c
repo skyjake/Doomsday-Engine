@@ -1387,6 +1387,7 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
 #undef ORIGINX
 }
 
+/*
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
 {
     float a = (float)viewportWidth/viewportHeight;
@@ -1394,13 +1395,13 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 
     if(INRANGE_OF(a, b, .001f))
         return true; // The same, so stretch.
-    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .38f))
+    if(Con_GetByte("rend-hud-stretch") || !INRANGE_OF(a, b, .38f))
         return false; // No stretch; translate and scale to fit.
     // Otherwise stretch.
     return true;
 }
 
-static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
+static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];
     int needWidth;
@@ -1434,6 +1435,7 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
+*/
 
 void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     float scale, float alpha, boolean flip, int* drawnWidth, int* drawnHeight)

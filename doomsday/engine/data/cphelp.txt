@@ -585,6 +585,9 @@ desc = 1=Text in the console has a shadow (might be slow with some fonts).
 [con-var-silent]
 desc = 1=Don't show the value of a cvar when setting it.
 
+[rend-finale-stretch]
+desc = Fixed aspect ratio finale stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
+
 [ui-panel-help]
 desc = 1=Enable help window in Control Panel.
 
@@ -843,8 +846,8 @@ desc = Speed of model spinning, 1=normal.
 [rend-model-shiny-multitex]
 desc = 1=Enable multitexturing with shiny model skins.
 
-[rend-hud-nostretch]
-desc = If the window dimension aspect ratio is not equal to but close to that of the original game, the HUD will be stretched 1= disabled.
+[rend-hud-stretch]
+desc = Fixed aspect ratio HUD stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
 
 [rend-hud-offset-scale]
 desc = Scaling of player weapon (x,y) offset.

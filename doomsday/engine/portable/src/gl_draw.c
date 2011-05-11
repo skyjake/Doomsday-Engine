@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -255,4 +256,139 @@ int GL_DrawFilter(void)
     glEnd();
 
     return 1;
+}
+
+/// \note Part of the Doomsday public API.
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
+    float stretchEpsilon)
+{
+    if(bp == NULL)
+        Con_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
+
+    bp->flags  = flags;
+    bp->width  = width;
+    bp->height = height;
+    bp->availWidth  = availWidth;
+    bp->availHeight = availHeight;
+
+    bp->scaleMode = R_ChooseScaleMode2(bp->width, bp->height, bp->availWidth,
+        bp->availHeight, overrideMode, stretchEpsilon);
+    bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
+        bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
+
+    memset(bp->scissorState, 0, sizeof(bp->scissorState));
+}
+
+/// \note Part of the Doomsday public API.
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
+{
+    GL_ConfigureBorderedProjection2(bp, flags, width, height, availWidth,
+        availHeight, overrideMode, DEFAULT_SCALEMODE_STRETCH_EPSILON);
+}
+
+/// \note Part of the Doomsday public API.
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+{
+    if(NULL == bp)
+        Con_Error("GL_BeginBorderedProjection: Invalid 'bp' argument.");
+
+    if(SCALEMODE_STRETCH == bp->scaleMode)
+        return;
+
+    /**
+     * Use an orthographic projection in screenspace, translating and
+     * scaling the coordinate space using the modelview matrix producing
+     * an aspect-corrected space of 320x200 and centered on the larger
+     * of the horizontal and vertical axes.
+     */
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    DGL_Ortho(0, 0, bp->availWidth, bp->availHeight, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    if(bp->alignHorizontal)
+    {
+        // "Pillarbox":
+        if(bp->flags & BPF_OVERDRAW_CLIP)
+        {
+            int w = (bp->availWidth - bp->width * bp->scaleFactor) / 2;
+            DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
+            DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
+            DGL_Scissor(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
+            DGL_Enable(DGL_SCISSOR_TEST);
+        }
+
+        glTranslatef((float)bp->availWidth/2, 0, 0);
+        //glScalef(1/1.2f, 1, 1); // Aspect correction.
+        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
+        glTranslatef(-bp->width/2, 0, 0);
+    }
+    else
+    {
+        // "Letterbox":
+        if(bp->flags & BPF_OVERDRAW_CLIP)
+        {
+            int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
+            DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
+            DGL_Scissor(0, h, bp->availWidth, bp->height * bp->scaleFactor);
+            DGL_Enable(DGL_SCISSOR_TEST);
+        }
+
+        glTranslatef(0, (float)bp->availHeight/2, 0);
+        //glScalef(1, 1.2f, 1); // Aspect correction.
+        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
+        glTranslatef(0, -bp->height/2, 0);
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+{
+    if(NULL == bp)
+        Con_Error("GL_EndBorderedProjection: Invalid 'bp' argument.");
+ 
+    if(SCALEMODE_STRETCH == bp->scaleMode)
+        return;
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    if(bp->flags & BPF_OVERDRAW_CLIP)
+    {
+        if(!bp->scissorState[0])
+            DGL_Disable(DGL_SCISSOR_TEST);
+        DGL_Scissor(bp->scissorState[1], bp->scissorState[2], bp->scissorState[3], bp->scissorState[4]);
+    }
+
+    if(bp->flags & BPF_OVERDRAW_MASK)
+    {
+        // It shouldn't be necessary to bind the "not-texture" but the game
+        // may have left whatever GL texture state it was using on. As this
+        // isn't cleaned up until drawing control returns to the engine we
+        // must explicitly disable it here.
+        GL_SetNoTexture();
+
+        if(bp->alignHorizontal)
+        {
+            // "Pillarbox":
+            int w = (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
+            GL_DrawRect(0, 0, w, bp->availHeight, 0, 0, 0, 1);
+            GL_DrawRect(bp->availWidth - w, 0, w, bp->availHeight, 0, 0, 0, 1);
+        }
+        else
+        {
+            // "Letterbox":
+            int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            GL_DrawRect(0, 0, bp->availWidth, h, 0, 0, 0, 1);
+            GL_DrawRect(0, bp->availHeight - h, bp->availWidth, h, 0, 0, 0, 1);
+        }
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }

@@ -187,7 +187,6 @@ void H_PreInit(void)
     cfg.menuScale = .9f;
     cfg.menuTextGlitter = 0;
     cfg.menuShadow = 0;
-    cfg.menuNoStretch = false;
   //cfg.menuQuitSound = true;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;

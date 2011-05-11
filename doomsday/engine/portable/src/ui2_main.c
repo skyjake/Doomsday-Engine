@@ -827,8 +827,8 @@ void UI2_Drawer(void)
     /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
     if(bordered)
     {   // Draw using the special bordered projection.
-        R_ConfigureBorderedProjection(&borderedProjection);
-        R_BeginBorderedProjection(&borderedProjection);
+        GL_ConfigureBorderedProjection(&borderedProjection);
+        GL_BeginBorderedProjection(&borderedProjection);
     }*/
 
     {uint i;
@@ -839,7 +839,7 @@ void UI2_Drawer(void)
     }}
 
     //if(bordered)
-    //    R_EndBorderedProjection(&borderedProjection);
+    //    GL_EndBorderedProjection(&borderedProjection);
 }
 
 void FIData_PicThink(fi_object_t* obj)

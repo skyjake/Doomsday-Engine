@@ -159,13 +159,15 @@ typedef struct {
 
     byte            menuSlam;
     byte            menuShortcutsEnabled;
-    byte            menuNoStretch;
+    byte            menuScaleMode;
     byte            menuGameSaveSuggestName;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
     float           menuTextFlashColor[3];
     int             menuTextFlashSpeed;
     float           menuTextGlitter;
+
+    byte            inludeScaleMode;
 
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode; // Unused in Hexen.

@@ -203,7 +203,7 @@ extern float    pspOffset[2], pspLightLevelMultiplier;
 extern int      alwaysAlign;
 extern float    weaponOffsetScale, weaponFOVShift;
 extern int      weaponOffsetScaleY;
-extern byte     weaponNoStretch;
+extern byte     weaponScaleMode; // cvar
 extern float    modelSpinSpeed;
 extern int      maxModelDistance, noSpriteZWrite;
 extern int      useSRVO, useSRVOAngle;

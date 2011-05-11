@@ -87,20 +87,4 @@ void            R_NewSharpWorld(void);
 boolean         R_SetViewGrid(int numCols, int numRows);
 void            R_SetViewWindow(int x, int y, int w, int h);
 
-enum {
-    STRETCH = 0,
-    PILLARBOX,
-    LETTERBOX,
-};
-
-typedef struct {
-    int winWidth, winHeight;
-    float scale;
-    int displayMode;
-    int scissorState[5];
-} borderedprojectionstate_t;
-
-void R_ConfigureBorderedProjection(borderedprojectionstate_t* s);
-void R_BeginBorderedProjection(borderedprojectionstate_t* s);
-void R_EndBorderedProjection(borderedprojectionstate_t* s);
 #endif

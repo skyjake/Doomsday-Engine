@@ -1477,18 +1477,17 @@ static void drawFogEffect(void)
 
 void Hu_Drawer(void)
 {
-    boolean menuOrMessageVisible = (Hu_MenuIsActive() || Hu_MenuAlpha() > 0) || Hu_IsMessageActive();
+    boolean menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
     boolean pauseGraphicVisible = paused && !FI_StackActive();
-    int winWidth, winHeight;
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;
 
-    winWidth = Get(DD_WINDOW_WIDTH);
-    winHeight = Get(DD_WINDOW_HEIGHT);
-
     if(pauseGraphicVisible)
     {
+        const int winWidth  = Get(DD_WINDOW_WIDTH);
+        const int winHeight = Get(DD_WINDOW_HEIGHT);
+
         /**
          * Use an orthographic projection in native screenspace. Then
          * translate and scale the projection to produce an aspect

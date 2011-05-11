@@ -185,7 +185,6 @@ void D_PreInit(void)
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
     cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
-    cfg.menuNoStretch = false;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;
     cfg.menuTextFlashColor[2] = 1;

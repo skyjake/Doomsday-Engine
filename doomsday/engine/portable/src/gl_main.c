@@ -132,7 +132,7 @@ void GL_Register(void)
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
                 0, 0);
     C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
-    C_VAR_BYTE("rend-hud-nostretch", &weaponNoStretch, 0, 0, 1);
+    C_VAR_BYTE("rend-hud-stretch", &weaponScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
 
     // * Render-Mobj
     C_VAR_INT("rend-mobj-smooth-move", &useSRVO, 0, 0, 2);
@@ -691,36 +691,19 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     GL_ProjectionMatrix();
 }
 
-static boolean __inline pickScalingStrategy(int viewportWidth, int viewportHeight)
-{
-    float a = (float)viewportWidth/viewportHeight;
-    float b = (float)SCREENWIDTH/SCREENHEIGHT;
-
-    if(INRANGE_OF(a, b, .001f))
-        return true; // The same, so stretch.
-    if(weaponNoStretch || !INRANGE_OF(a, b, .38f))
-        return false; // No stretch; translate and scale to fit.
-    // Otherwise stretch.
-    return true;
-}
-
 void GL_Restore2DState(int step, viewport_t* port)
 {
     switch(step)
     {
-    case 1: // After Restore Step 1 normal player sprites are rendered.
-        {
+    case 1: { // After Restore Step 1 normal player sprites are rendered.
         int height = (float)(port->width * viewheight / viewwidth) / port->height * SCREENHEIGHT;
+        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT, port->width, port->height, weaponScaleMode);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
-        if(pickScalingStrategy(port->width, port->height))
+        if(SCALEMODE_STRETCH == sm)
         {
-            /**
-             * Use an orthographic projection in a fixed 320x200 space
-             * with the height scaled to the viewport height.
-             */
             glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
         }
         else
@@ -758,7 +741,7 @@ void GL_Restore2DState(int step, viewport_t* port)
         // on top of psprite 0 (Doom plasma rifle fire).
         glDisable(GL_DEPTH_TEST);
         break;
-        }
+      }
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
         glViewport(currentView.x, FLIP(currentView.y + currentView.height - 1),
                    currentView.width, currentView.height);

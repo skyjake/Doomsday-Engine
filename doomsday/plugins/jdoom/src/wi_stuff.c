@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "jdoom.h"
 
@@ -222,6 +223,18 @@ static patchid_t pFaceDead;
 static patchid_t pTeamBackgrounds[NUM_TEAMS];
 static patchid_t pTeamIcons[NUM_TEAMS];
 
+static cvartemplate_t cvars[] = {
+    { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
+    { NULL }
+};
+
+void WI_Register(void)
+{
+    int i;
+    for(i = 0; cvars[i].name; ++i)
+        Con_AddVariable(cvars + i);
+}
+
 static void drawBackground(void)
 {
     DGL_Enable(DGL_TEXTURE_2D);
@@ -247,9 +260,10 @@ static void drawBackground(void)
 
 static void drawFinishedTitle(void)
 {
-    int y = WI_TITLEY, mapNum;
+    int x = SCREENWIDTH/2, y = WI_TITLEY;
     patchinfo_t info;
     char* mapName;
+    int mapNum;
 
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapNum = wbs->currentMap;
@@ -269,19 +283,18 @@ static void drawFinishedTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
     // Draw <MapName>
-    WI_DrawPatch3(pMapNames[mapNum], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
+    WI_DrawPatch3(pMapNames[mapNum], x, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
 
     // Draw "Finished!"
     if(R_GetPatchInfo(pMapNames[mapNum], &info))
         y += (5 * info.height) / 4;
-    WI_DrawPatch3(pFinished, SCREENWIDTH / 2, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
+    WI_DrawPatch3(pFinished, x, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-/// Draws which map you are entering...
 static void drawEnteringTitle(void)
 {
-    int y = WI_TITLEY;
+    int x = SCREENWIDTH/2, y = WI_TITLEY;
     char* mapName = NULL;
     ddmapinfo_t minfo;
     char lumpName[9];
@@ -312,12 +325,12 @@ static void drawEnteringTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
     // Draw "Entering"
-    WI_DrawPatch3(pEntering, SCREENWIDTH / 2, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
+    WI_DrawPatch3(pEntering, x, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
 
     // Draw map.
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4;
-    WI_DrawPatch3(pMapNames[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
+    WI_DrawPatch3(pMapNames[(wbs->episode * 8) + wbs->nextMap], x, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -448,7 +461,7 @@ static void drawTime(int x, int y, int t)
         char buf[20];
 
         x -= 22;
-        
+
         DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
         FR_SetFont(FID(GF_SMALL));
         FR_DrawChar(':', x, y);
@@ -487,7 +500,8 @@ static void initNoState(void)
 
 static void tickNoState(void)
 {
-    if(!--stateCounter)
+    --stateCounter;
+    if(0 == stateCounter)
     {
         if(IS_CLIENT)
             return;
@@ -507,10 +521,14 @@ static void initShowNextMap(void)
 
 static void tickShowNextMap(void)
 {
-    if(!--stateCounter || advanceState)
+    --stateCounter;
+    if(0 == stateCounter || advanceState)
+    {
         initNoState();
-    else
-        drawYouAreHere = (stateCounter & 31) < 20;
+        return;
+    }
+
+    drawYouAreHere = (stateCounter & 31) < 20;
 }
 
 static void drawLocationMarks(void)
@@ -1216,8 +1234,12 @@ static void loadData(void)
         pBackground = R_PrecachePatch(name, NULL);
     }
 
-    if(gameModeBits & GM_ANY_DOOM)
+    if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
     {
+        const wianimdef_t* def;
+        wianimstate_t* state;
+        int j, i;
+
         pYouAreHereRight = R_PrecachePatch("WIURH0", 0);
         pYouAreHereLeft  = R_PrecachePatch("WIURH1", 0);
         pSplat = R_PrecachePatch("WISPLAT", 0);
@@ -1229,19 +1251,13 @@ static void loadData(void)
                 (unsigned long) (sizeof(*animStates) * animCounts[wbs->episode]));
         memset(animStates, 0, sizeof(*animStates) * animCounts[wbs->episode]);
 
-        if(wbs->episode < 3)
+        for(j = 0; j < animCounts[wbs->episode]; ++j)
         {
-            const wianimdef_t* def;
-            wianimstate_t* state;
-            int j, i;
-            for(j = 0; j < animCounts[wbs->episode]; ++j)
+            def = &animDefs[wbs->episode][j];
+            state = &animStates[j];
+            for(i = 0; i < def->numFrames; ++i)
             {
-                def = &animDefs[wbs->episode][j];
-                state = &animStates[j];
-                for(i = 0; i < def->numFrames; ++i)
-                {
-                    state->patches[i] = R_PrecachePatch(def->patchNames[i], NULL);
-                }
+                state->patches[i] = R_PrecachePatch(def->patchNames[i], NULL);
             }
         }
     }
@@ -1275,12 +1291,18 @@ static void loadData(void)
 
 void WI_Drawer(void)
 {
-    /// dj: seems like a kludge.
+    borderedprojectionstate_t bp;
+
+    /// \kludge dj: Clearly a kludge but why?
     if(ILS_NONE == inState)
     {
         drawYouAreHere = true;
     }
-    /// questionable end.
+    /// kludge end.
+
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP,
+        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+    GL_BeginBorderedProjection(&bp);
 
     drawBackground();
 
@@ -1294,6 +1316,8 @@ void WI_Drawer(void)
         drawFinishedTitle();
         drawStats();
     }
+
+    GL_EndBorderedProjection(&bp);
 }
 
 static void initVariables(wbstartstruct_t* wbstartstruct)

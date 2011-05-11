@@ -194,9 +194,6 @@ desc = 1=Disable exit buttons during map rotation.
 [server-game-cheat]
 desc = 1=Allow cheating in multiplayer games (god, noclip, give).
 
-[finale-nostretch]
-desc = If the window dimension aspect ratio is not equal to but close to that of the original game, fixed-aspect finale animations will be stretched 1= disabled.
-
 [menu-flash-r]
 desc = Menu selection flash color, red component.
 
@@ -242,8 +239,8 @@ desc = Menu fog mode: 0=off, 1=shimmer, 2=black smoke, 3=blue vertical, 4=grey s
 [menu-hotkeys]
 desc = 1=Enable hotkey navigation in the menu.
 
-[menu-nostretch]
-desc = If the window dimension aspect ratio is not equal to but close to that of the original game, the menu will be stretched 1= disabled.
+[menu-stretch]
+desc = Menu stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
 
 [menu-patch-replacement]
 desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
@@ -907,3 +904,6 @@ desc = 1=Unhide the HUD when player collects an inventory item.
 
 [rend-dev-freeze-map]
 desc = 1=Stop updating the automap rendering lists.
+
+[inlude-stretch]
+desc = Intermission stretch-scaling strategy 0=Smart, 1=Never, 2=Always.

@@ -1,10 +1,10 @@
-/**\file
+/**\file r_util.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -533,4 +533,72 @@ sector_t* R_GetSectorForOrigin(const void* ddMobjBase)
         }
     }
     return NULL;
+}
+
+/// \note Part of the Doomsday public API.
+boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
+    int availWidth, int availHeight, scalemode_t scaleMode)
+{
+    if(SCALEMODE_STRETCH == scaleMode)
+    {
+        if(NULL != scale)
+            *scale = 1;
+        return true;
+    }
+    else
+    {
+        const float availRatio = (float)availWidth / availHeight;
+        const float origRatio  = (float)width  / height;
+        float sWidth, sHeight; // Scaled dimensions.
+
+        if(availWidth >= availHeight)
+        {
+            sWidth  = availWidth;
+            sHeight = sWidth  / availRatio;
+        }
+        else
+        {
+            sHeight = availHeight;
+            sWidth  = sHeight * availRatio;
+        }
+
+        if(origRatio > availRatio)
+        {
+            if(NULL != scale)
+                *scale = sWidth / width;
+            return false;
+        }
+        else
+        {
+            if(NULL != scale)
+                *scale = sHeight / height;
+            return true;
+        }
+    }
+}
+
+/// \note Part of the Doomsday public API.
+scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+    scalemode_t overrideMode, float stretchEpsilon)
+{
+    const float availRatio = (float)availWidth / availHeight;
+    const float origRatio  = (float)width / height;
+
+    // Considered identical?
+    if(INRANGE_OF(availRatio, origRatio, .001f))
+        return SCALEMODE_STRETCH;
+
+    if(SCALEMODE_STRETCH == overrideMode || SCALEMODE_NO_STRETCH  == overrideMode)
+        return overrideMode;
+
+    // Within tolerable stretch range?
+    return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
+}
+
+/// \note Part of the Doomsday public API.
+scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+    scalemode_t overrideMode)
+{
+    return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
+        DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }

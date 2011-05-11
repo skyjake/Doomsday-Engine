@@ -81,6 +81,9 @@ typedef enum {
     ILS_SHOW_NEXTMAP
 } interludestate_t;
 
+/// To be called to register the console commands and variables of this module.
+void WI_Register(void);
+
 /**
  * Perform setup for an intermission.
  */

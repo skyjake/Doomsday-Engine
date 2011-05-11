@@ -1224,6 +1224,7 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
     }
 }
 
+/*
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
 {
     float a = (float)viewportWidth/viewportHeight;
@@ -1231,13 +1232,12 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 
     if(INRANGE_OF(a, b, .001f))
         return true; // The same, so stretch.
-    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .38f))
+    if(Con_GetByte("rend-hud-stretch") || !INRANGE_OF(a, b, .38f))
         return false; // No stretch; translate and scale to fit.
     // Otherwise stretch.
     return true;
 }
 
-/*
 static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];

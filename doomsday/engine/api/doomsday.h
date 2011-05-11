@@ -451,13 +451,20 @@ void Con_SetString(const char* name, const char* text);
 //------------------------------------------------------------------------
 
     int             DD_GetFrameRate(void);
+
     void            R_SetupMap(int mode, int flags);
     void            R_PrecacheMobjNum(int mobjtypeNum);
     patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
     void            R_PrecacheSkinsForState(int stateIndex);
+
     void            R_RenderPlayerView(int num);
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
+
+boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
+scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+
     void            R_SetBorderGfx(const dduri_t* paths[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
     boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
@@ -491,6 +498,11 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
     byte*           GL_GrabScreen(void);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
+
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 
 uint GL_TextureIndexForUri(const dduri_t* uri);
 uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);

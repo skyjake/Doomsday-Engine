@@ -229,7 +229,6 @@ void X_PreInit(void)
     cfg.menuTextColors[2][2] = defFontRGB3[2];
     cfg.menuEffectFlags = MEF_TEXT_SHADOW;
     cfg.menuShortcutsEnabled = true;
-    cfg.menuNoStretch = false;
     cfg.confirmQuickGameSave = true;
     cfg.hudFog = 5;
     cfg.menuSlam = true;

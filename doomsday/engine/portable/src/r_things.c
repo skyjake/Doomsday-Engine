@@ -107,7 +107,7 @@ typedef struct spriterecord_s {
 float weaponOffsetScale = 0.3183f; // 1/Pi
 int weaponOffsetScaleY = 1000;
 float weaponFOVShift = 45;
-byte weaponNoStretch = false;
+byte weaponScaleMode = SCALEMODE_SMART_STRETCH;
 float modelSpinSpeed = 1;
 int alwaysAlign = 0;
 int noSpriteZWrite = false;

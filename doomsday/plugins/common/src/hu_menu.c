@@ -1222,7 +1222,7 @@ static mn_page_t ColorWidgetMenu = {
 // Cvars for the menu:
 cvartemplate_t menuCVars[] = {
     { "menu-scale",     0,  CVT_FLOAT,  &cfg.menuScale, .1f, 1 },
-    { "menu-nostretch", 0,  CVT_BYTE,   &cfg.menuNoStretch, 0, 1 },
+    { "menu-stretch",   0,  CVT_BYTE,   &cfg.menuScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
     { "menu-flash-r",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CR], 0, 1 },
     { "menu-flash-g",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CG], 0, 1 },
     { "menu-flash-b",   0,  CVT_FLOAT,  &cfg.menuTextFlashColor[CB], 0, 1 },
@@ -2213,71 +2213,20 @@ static void endOverlayDraw(void)
     DGL_PopMatrix();
 }
 
-/**
- * Decide our scaling strategy by comparing the aspect ratio of the current
- * window to those of original fixed-size game resolution.
- *
- * @return @c true if decided to stretch, else scale to fit.
- */
-static boolean chooseScaleStrategy(int winWidth, int winHeight)
-{
-    float a = (float)winWidth/winHeight;
-    float b = (float)SCREENWIDTH/SCREENHEIGHT;
-
-    if(INRANGE_OF(a, b, .001f))
-        return true; // The same, so stretch.
-    if(cfg.menuNoStretch || !INRANGE_OF(a, b, .38f))
-        return false; // No stretch; translate and scale to fit.
-    // Otherwise stretch.
-    return true;
-}
-
 void Hu_MenuDrawer(void)
 {
 #define OVERLAY_DARKEN          .7f
 
-    int winWidth, winHeight;
+    const int winWidth  = Get(DD_WINDOW_WIDTH);
+    const int winHeight = Get(DD_WINDOW_HEIGHT);
+    borderedprojectionstate_t bp;
     boolean showFocusCursor = true;
     mn_object_t* focusObj;
 
     if(!Hu_MenuIsVisible()) return;
 
-    winWidth  = Get(DD_WINDOW_WIDTH);
-    winHeight = Get(DD_WINDOW_HEIGHT);
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-
-    if(chooseScaleStrategy(winWidth, winHeight))
-    {
-        // Use an orthographic projection in a fixed 320x200 space.
-        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
-    }
-    else
-    {
-        /**
-         * Use an orthographic projection in native screenspace. Then
-         * translate and scale the projection to produce an aspect
-         * corrected coordinate space of 320x200 and centered on the
-         * larger of the horizontal and vertical axes.
-         */
-        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
-
-        if(winWidth >= winHeight)
-        {
-            DGL_Translatef((float)winWidth/2, 0, 0);
-            DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
-            DGL_Scalef((float)winHeight/SCREENHEIGHT, (float)winHeight/SCREENHEIGHT, 1);
-            DGL_Translatef(-(SCREENWIDTH/2), 0, 0);
-        }
-        else
-        {
-            DGL_Translatef(0, (float)winHeight/2, 0);
-            DGL_Scalef(1, 1.2f, 1); // Aspect correction.
-            DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
-            DGL_Translatef(0, -(SCREENHEIGHT/2), 0);
-        }
-    }
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, winWidth, winHeight, cfg.menuScaleMode);
+    GL_BeginBorderedProjection(&bp);
 
     // First determine whether the focus cursor should be visible.
     focusObj = MNPage_FocusObject(Hu_MenuActivePage());
@@ -2296,7 +2245,6 @@ void Hu_MenuDrawer(void)
     DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    // Draw the active menu page.
     MN_DrawPage(Hu_MenuActivePage(), mnAlpha, showFocusCursor);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2323,8 +2271,7 @@ void Hu_MenuDrawer(void)
         }
     }
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    GL_EndBorderedProjection(&bp);
 
 #undef OVERLAY_DARKEN
 }

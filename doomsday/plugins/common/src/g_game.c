@@ -491,6 +491,7 @@ void G_CommonPreInit(void)
     Chat_Register();
     Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
+    WI_Register();              // For the interlude/intermission.
     X_Register();               // For the crosshair.
     FI_StackRegister();         // For the InFine lib.
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__

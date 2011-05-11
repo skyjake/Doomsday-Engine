@@ -103,13 +103,15 @@ typedef struct jdoom64_config_s {
     int             menuQuitSound;
     byte            menuSlam;
     byte            menuShortcutsEnabled;
-    byte            menuNoStretch;
+    byte            menuScaleMode;
     byte            menuGameSaveSuggestName;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
     float           menuTextFlashColor[3];
     int             menuTextFlashSpeed;
     float           menuTextGlitter;
+
+    byte            inludeScaleMode;
 
     byte            confirmQuickGameSave;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.

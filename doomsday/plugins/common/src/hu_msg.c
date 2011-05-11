@@ -201,6 +201,8 @@ static void drawMessage(void)
         Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
     }
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     FR_SetFont(FID(GF_FONTA));
     FR_DrawText(msgText, x, y, FID(GF_FONTA), DTF_ALIGN_TOP, LEADING, 0, cfg.msgColor[CR], cfg.msgColor[CG], cfg.msgColor[CB], 1, 0, 0, false);
     y += FR_TextHeight(msgText, FID(GF_FONTA));
@@ -209,27 +211,9 @@ static void drawMessage(void)
 
     FR_SetFont(FID(GF_FONTA));
     FR_DrawTextFragment2(questionString, x, y, DTF_ALIGN_TOP);
+    DGL_Disable(DGL_TEXTURE_2D);
 
 #undef LEADING
-}
-
-/**
- * Decide our scaling strategy by comparing the aspect ratio of the current
- * window to those of original fixed-size game resolution.
- *
- * @return @c true if decided to stretch, else scale to fit.
- */
-static boolean chooseScaleStrategy(int winWidth, int winHeight)
-{
-    float a = (float)winWidth/winHeight;
-    float b = (float)SCREENWIDTH/SCREENHEIGHT;
-
-    if(INRANGE_OF(a, b, .001f))
-        return true; // The same, so stretch.
-    if(cfg.menuNoStretch || !INRANGE_OF(a, b, .38f))
-        return false; // No stretch; translate and scale to fit.
-    // Otherwise stretch.
-    return true;
 }
 
 /**
@@ -237,67 +221,64 @@ static boolean chooseScaleStrategy(int winWidth, int winHeight)
  */
 void Hu_MsgDrawer(void)
 {
-    int winWidth, winHeight;
+    const int winWidth  = Get(DD_WINDOW_WIDTH);
+    const int winHeight = Get(DD_WINDOW_HEIGHT);
+    borderedprojectionstate_t bp;
 
-    if(!messageToPrint)
-        return;
+    if(!messageToPrint) return;
 
-    winWidth  = Get(DD_WINDOW_WIDTH);
-    winHeight = Get(DD_WINDOW_HEIGHT);
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, winWidth, winHeight, cfg.menuScaleMode);
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-
-    if(chooseScaleStrategy(winWidth, winHeight))
-    {
-        // Use an orthographic projection in a fixed 320x200 space.
-        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
-    }
-    else
+    if(SCALEMODE_NO_STRETCH == bp.scaleMode)
     {
         /**
-         * Use an orthographic projection in native screenspace. Then
-         * translate and scale the projection to produce an aspect
-         * corrected coordinate space of 320x200 and centered on the
-         * larger of the horizontal and vertical axes.
+         * Use an orthographic projection in screenspace, translating and
+         * scaling the coordinate space using the modelview matrix producing
+         * an aspect-corrected space of 320x200 and centered on the larger
+         * of the horizontal and vertical axes.
          */
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
         DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
 
-        if(winWidth >= winHeight)
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        if(bp.alignHorizontal)
         {
             DGL_Translatef((float)winWidth/2, 0, 0);
-            DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
-            DGL_Scalef((float)winHeight/SCREENHEIGHT, (float)winHeight/SCREENHEIGHT, 1);
-            DGL_Translatef(-(SCREENWIDTH/2), 0, 0);
+            //DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
+            DGL_Scalef(bp.scaleFactor, bp.scaleFactor, 1);
+            DGL_Translatef(-SCREENWIDTH/2, 0, 0);
         }
-        else
+        else // Vertical
         {
             DGL_Translatef(0, (float)winHeight/2, 0);
-            DGL_Scalef(1, 1.2f, 1); // Aspect correction.
-            DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
-            DGL_Translatef(0, -(SCREENHEIGHT/2), 0);
+            //DGL_Scalef(1, 1.2f, 1); // Aspect correction.
+            DGL_Scalef(bp.scaleFactor, bp.scaleFactor, 1);
+            DGL_Translatef(0, -SCREENHEIGHT/2, 0);
         }
     }
 
     // Scale by the hudScale.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-
     DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    // Draw the message.
-    DGL_Enable(DGL_TEXTURE_2D);
     drawMessage();
-    DGL_Disable(DGL_TEXTURE_2D);
 
-    // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+
+    if(SCALEMODE_NO_STRETCH == bp.scaleMode)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
+    }
 }
 
 /**

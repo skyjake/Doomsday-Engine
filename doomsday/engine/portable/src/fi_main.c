@@ -81,14 +81,13 @@ static boolean inited = false;
 static uint finalesSize;
 static finale_t* finales;
 
-/// Allow stretching to fill the screen at near 4:3 aspect ratios?
-static byte noStretch = false;
+static byte scaleMode = SCALEMODE_SMART_STRETCH;
 
 // CODE --------------------------------------------------------------------
 
 void FI_Register(void)
 {
-    C_VAR_BYTE("finale-nostretch",  &noStretch, 0, 0, 1);
+    C_VAR_BYTE("rend-finale-stretch",  &scaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
 }
 
 static finale_t* finalesById(finaleid_t id)

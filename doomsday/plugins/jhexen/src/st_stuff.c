@@ -1874,19 +1874,6 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     }
 }
 
-static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
-{
-    float a = (float)viewportWidth/viewportHeight;
-    float b = (float)SCREENWIDTH/SCREENHEIGHT;
-
-    if(INRANGE_OF(a, b, .001f))
-        return true; // The same, so stretch.
-    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .38f))
-        return false; // No stretch; translate and scale to fit.
-    // Otherwise stretch.
-    return true;
-}
-
 void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
@@ -2276,6 +2263,19 @@ static int __inline toGroupName(int player, int group)
 }
 
 /*
+static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
+{
+    float a = (float)viewportWidth/viewportHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+
+    if(INRANGE_OF(a, b, .001f))
+        return true; // The same, so stretch.
+    if(Con_GetByte("rend-hud-stretch") || !INRANGE_OF(a, b, .38f))
+        return false; // No stretch; translate and scale to fit.
+    // Otherwise stretch.
+    return true;
+}
+
 static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];

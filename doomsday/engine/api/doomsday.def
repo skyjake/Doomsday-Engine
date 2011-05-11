@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 503 <--
+; Highest ordinal is currently: --> 510 <--
 ; Other free ordinals: 90 133 247
 
 NAME                            "DOOMSDAY"
@@ -384,8 +384,12 @@ EXPORTS
     R_GetColorPaletteRGBf       @423 NONAME
     R_GetColorPaletteRGBubv     @436 NONAME
 
+    R_ChooseAlignModeAndScaleFactor @504 NONAME
+    R_ChooseScaleMode2          @505 NONAME
+    R_ChooseScaleMode           @506 NONAME
+
 ; DGL.
-    DGL_SetMaterialUI             @117 NONAME
+    DGL_SetMaterialUI           @117 NONAME
     DGL_SetNoMaterial           @115 NONAME
     DGL_SetPSprite              @114 NONAME
     DGL_SetPSprite2             @334 NONAME
@@ -442,7 +446,7 @@ EXPORTS
     DGL_DrawCutRectTiled        @130 NONAME
     DGL_NewTextureWithParams    @329 NONAME
 
-; Depreciated:
+    ; Deprecated:
     DGL_DrawRawScreen           @126 NONAME
 
 ; Renderer.
@@ -476,6 +480,11 @@ EXPORTS
     GL_SetFilterColor           @441 NONAME
     GL_TextureIndexForUri       @438 NONAME
     GL_TextureIndexForUri2      @501 NONAME
+
+    GL_ConfigureBorderedProjection @507 NONAME
+    GL_ConfigureBorderedProjection2 @508 NONAME
+    GL_BeginBorderedProjection  @509 NONAME
+    GL_EndBorderedProjection    @510 NONAME
 
 ; Graphics: Text
     FR_FontIdForName			@106 NONAME
