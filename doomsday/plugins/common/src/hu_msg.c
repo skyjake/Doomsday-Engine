@@ -221,44 +221,12 @@ static void drawMessage(void)
  */
 void Hu_MsgDrawer(void)
 {
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     borderedprojectionstate_t bp;
 
     if(!messageToPrint) return;
 
-    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, winWidth, winHeight, cfg.menuScaleMode);
-
-    if(SCALEMODE_NO_STRETCH == bp.scaleMode)
-    {
-        /**
-         * Use an orthographic projection in screenspace, translating and
-         * scaling the coordinate space using the modelview matrix producing
-         * an aspect-corrected space of 320x200 and centered on the larger
-         * of the horizontal and vertical axes.
-         */
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PushMatrix();
-        DGL_LoadIdentity();
-        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        if(bp.alignHorizontal)
-        {
-            DGL_Translatef((float)winWidth/2, 0, 0);
-            //DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
-            DGL_Scalef(bp.scaleFactor, bp.scaleFactor, 1);
-            DGL_Translatef(-SCREENWIDTH/2, 0, 0);
-        }
-        else // Vertical
-        {
-            DGL_Translatef(0, (float)winHeight/2, 0);
-            //DGL_Scalef(1, 1.2f, 1); // Aspect correction.
-            DGL_Scalef(bp.scaleFactor, bp.scaleFactor, 1);
-            DGL_Translatef(0, -SCREENHEIGHT/2, 0);
-        }
-    }
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
+    GL_BeginBorderedProjection(&bp);
 
     // Scale by the hudScale.
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -272,13 +240,7 @@ void Hu_MsgDrawer(void)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    if(SCALEMODE_NO_STRETCH == bp.scaleMode)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
-    }
+    GL_EndBorderedProjection(&bp);
 }
 
 /**
