@@ -76,7 +76,7 @@ int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 int useVSync = 0;
 float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
-int viewAngle = 0;
+angle_t viewAngle = 0;
 boolean setSizeNeeded;
 
 // Precalculated math tables.
@@ -187,7 +187,7 @@ void R_ViewPortPlacement(viewport_t* port, int x, int y)
  */
 boolean R_SetViewGrid(int numCols, int numRows)
 {
-    int x, y, p;
+    int x, y, p, console;
 
     if(numCols > 0 && numRows > 0)
     {
@@ -212,9 +212,16 @@ boolean R_SetViewGrid(int numCols, int numRows)
         {
             R_ViewPortPlacement(&viewports[p], x, y);
 
-            // The console number is -1 if the viewport belongs to no
-            // one.
-            viewports[p].console = displayPlayer; //clients[P_LocalToConsole(p)].viewConsole;
+            // The console number is -1 if the viewport belongs to no one.
+            console = P_LocalToConsole(p);
+            if(-1 != console)
+            {
+                viewports[p].console = clients[console].viewConsole;
+            }
+            else
+            {
+                viewports[p].console = -1;
+            }
         }
     }
 
@@ -389,21 +396,16 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
 void R_GetSharpView(viewer_t* view, player_t* player)
 {
     ddplayer_t* ddpl;
+    viewdata_t* vd = &viewData[player - ddPlayers];
 
     if(!player || !player->shared.mo)
     {
         return;
     }
 
+    memcpy(view, &vd->sharp, sizeof(viewer_t));
+
     ddpl = &player->shared;
-
-    view->pos[VX] = viewX;
-    view->pos[VY] = viewY;
-    view->pos[VZ] = viewZ;
-    /* $unifiedangles */
-    view->angle = viewAngle;
-    view->pitch = viewPitch;
-
     if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
     {
         /* STUB
@@ -688,31 +690,31 @@ void R_SetupFrame(player_t* player)
     }
 
     // Update viewer.
-    tableAngle = viewData->current.angle >> ANGLETOFINESHIFT;
-    viewData->viewSin = FIX2FLT(finesine[tableAngle]);
-    viewData->viewCos = FIX2FLT(fineCosine[tableAngle]);
+    tableAngle = vd->current.angle >> ANGLETOFINESHIFT;
+    vd->viewSin = FIX2FLT(finesine[tableAngle]);
+    vd->viewCos = FIX2FLT(fineCosine[tableAngle]);
 
     // Calculate the front, up and side unit vectors.
     // The vectors are in the DGL coordinate system, which is a left-handed
     // one (same as in the game, but Y and Z have been swapped). Anyone
     // who uses these must note that it might be necessary to fix the aspect
     // ratio of the Y axis by dividing the Y coordinate by 1.2.
-    yawRad = ((viewData->current.angle / (float) ANGLE_MAX) *2) * PI;
+    yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
 
-    pitchRad = viewData->current.pitch * 85 / 110.f / 180 * PI;
+    pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
-    viewData->frontVec[VX] = cos(yawRad) * cos(pitchRad);
-    viewData->frontVec[VZ] = sin(yawRad) * cos(pitchRad);
-    viewData->frontVec[VY] = sin(pitchRad);
+    vd->frontVec[VX] = cos(yawRad) * cos(pitchRad);
+    vd->frontVec[VZ] = sin(yawRad) * cos(pitchRad);
+    vd->frontVec[VY] = sin(pitchRad);
 
     // The up vector.
-    viewData->upVec[VX] = -cos(yawRad) * sin(pitchRad);
-    viewData->upVec[VZ] = -sin(yawRad) * sin(pitchRad);
-    viewData->upVec[VY] = cos(pitchRad);
+    vd->upVec[VX] = -cos(yawRad) * sin(pitchRad);
+    vd->upVec[VZ] = -sin(yawRad) * sin(pitchRad);
+    vd->upVec[VY] = cos(pitchRad);
 
     // The side vector is the cross product of the front and up vectors.
-    M_CrossProduct(viewData->frontVec, viewData->upVec, viewData->sideVec);
+    M_CrossProduct(vd->frontVec, vd->upVec, vd->sideVec);
 
     if(showFrameTimePos)
     {
@@ -793,8 +795,9 @@ void R_RenderPlayerView(int num)
     extern boolean      firstFrameAfterLoad;
     extern int          psp3d, modelTriCount;
 
-    int                 oldFlags = 0;
-    player_t*           player;
+    int oldFlags = 0;
+    player_t* player;
+    viewdata_t* vd;
 
     if(num < 0 || num >= DDMAXPLAYERS)
         return; // Huh?
@@ -811,6 +814,15 @@ void R_RenderPlayerView(int num)
         firstFrameAfterLoad = false;
         DD_ResetTimer();
     }
+
+    // Update the new sharp position.
+    vd = &viewData[num];
+    vd->sharp.pos[VX] = viewX;
+    vd->sharp.pos[VY] = viewY;
+    vd->sharp.pos[VZ] = viewZ;
+    /* $unifiedangles */
+    vd->sharp.angle = viewAngle;
+    vd->sharp.pitch = viewPitch;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);

@@ -188,6 +188,7 @@ void Net_Init(void)
     {
         memset(clients + i, 0, sizeof(clients[i]));
         clients[i].runTime = -1;
+        clients[i].viewConsole = -1;
     }}
 
     memset(&netBuffer, 0, sizeof(netBuffer));
@@ -671,6 +672,7 @@ void Net_StopGame(void)
         plr->shared.inGame = false;
         cl->ready = cl->connected = false;
         cl->nodeID = 0;
+        cl->viewConsole = -1;
         plr->shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
@@ -1315,6 +1317,7 @@ D_CMD(MakeCamera)
     clients[cp].connected = true;
     clients[cp].ready = true;
     clients[cp].updateCount = UPDATECOUNT;
+    clients[cp].viewConsole = cp;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
     Net_AllocClientBuffers(cp);
     Sv_InitPoolForClient(cp);

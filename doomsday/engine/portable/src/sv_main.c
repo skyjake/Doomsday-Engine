@@ -937,7 +937,7 @@ void Sv_StartNetGame(void)
         client->lastTransmit = -1;
         client->updateCount = UPDATECOUNT;
         client->fov = 90;
-        client->viewConsole = i;
+        client->viewConsole = -1;
         memset(client->name, 0, sizeof(client->name));
         client->bandwidthRating = BWR_DEFAULT;
         client->bwrAdjustTime = 0;
@@ -963,6 +963,7 @@ void Sv_StartNetGame(void)
         ddpl->inGame = true;
         cl->connected = true;
         cl->ready = true;
+        cl->viewConsole = 0;
         strcpy(cl->name, playerName);
     }
 }

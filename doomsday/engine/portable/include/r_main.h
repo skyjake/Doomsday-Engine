@@ -41,7 +41,8 @@ typedef struct viewer_s {
 } viewer_t;
 
 typedef struct viewdata_s {
-    viewer_t        current; // Current view paramaters.
+    viewer_t        sharp;
+    viewer_t        current;
     viewer_t        lastSharp[2]; // For smoothing.
     float           frontVec[3], upVec[3], sideVec[3];
     float           viewCos, viewSin;
@@ -52,7 +53,7 @@ typedef struct viewdata_s {
 } viewdata_t;
 
 extern float    viewX, viewY, viewZ, viewPitch;
-extern int      viewAngle;
+extern angle_t  viewAngle;
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern int      loadInStartupMode;
