@@ -966,7 +966,7 @@ void Def_Read(void)
     Def_GenerateAutoMaterials();
 
     // Read all definitions files and lumps.
-    Con_Message("Parsing definition files:\n");
+    Con_Message("Parsing definition files%s\n", verbose >= 1? ":" : "...");
     readAllDefinitions();
 
     // Any definition hooks?

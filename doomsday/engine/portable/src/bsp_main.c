@@ -306,9 +306,7 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     BSP_CutListDestroy(cutList);
 
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("BuildNodes: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - buildStartTime) / 1000.0f));
+    VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
     BSP_SuperBlockDestroy(hEdgeList);
@@ -329,10 +327,10 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
         else
             rHeight = lHeight = 0;
 
-        Con_Printf("BSP built: %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n"
+        VERBOSE( Con_Printf("BSP built: %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n"
                    "  Balance %+ld (l%ld - r%ld).\n",
                    map->numNodes, map->numSSectors, map->numSegs, map->numVertexes,
-                   lHeight - rHeight, lHeight, rHeight);
+                   lHeight - rHeight, lHeight, rHeight) )
     }
 
     // We are finished with the BSP build data.
@@ -349,8 +347,7 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     BSP_ShutdownSuperBlockAllocator();
 
     // How much time did we spend?
-    VERBOSE(Con_Message("  Done in %.2f seconds.\n",
-                        (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 
     return builtOK;
 }

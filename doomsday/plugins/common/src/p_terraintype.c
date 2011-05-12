@@ -207,8 +207,8 @@ void P_InitTerrainTypes(void)
             material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(matTTypeDefs[i].matPath));
             if(mat)
             {
-                Con_Message("P_InitTerrainTypes: Material \"%s\" linked to terrain type '%s'.\n",
-                            matTTypeDefs[i].matPath, matTTypeDefs[i].ttName);
+                VERBOSE( Con_Message("P_InitTerrainTypes: Material \"%s\" linked to terrain type '%s'.\n",
+                            matTTypeDefs[i].matPath, matTTypeDefs[i].ttName) )
                 getMaterialTerrainType(mat, idx);
             }
         }

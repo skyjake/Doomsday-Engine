@@ -619,13 +619,11 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
 {
     assert(info && VALID_RESOURCE_CLASS(rclass) && searchPath);
     {
-    //resourcenamespaceid_t rni;
+    resourcerecord_t* const* records = GameInfo_Resources(info, rclass, 0);
+    if(NULL != records)
+    {
+        Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-    //if((rni = F_ParseResourceNamespace(searchPath)) == 0)
-    //    rni = F_DefaultResourceNamespaceForClass(rclass);
-
-    {resourcerecord_t* const* records;
-    if((records = GameInfo_Resources(info, rclass, 0)))
         do
         {
             switch(ResourceRecord_ResourceClass(*records))
@@ -864,7 +862,6 @@ static int DD_ChangeGameWorker(void* paramaters)
      * \note duplicate processing of the same file is automatically guarded against by
      * the virtual file system layer.
      */
-    Con_Message("Loading game resources:\n");
     startTime = Sys_GetRealTime();
 
     /**

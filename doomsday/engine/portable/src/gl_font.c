@@ -179,7 +179,7 @@ static bitmapfont_t* loadFont(const char* name, const char* path)
     bitmapfont_t* font;   
     if(0 != (font = addFont(BitmapFont_Construct(getNewFontId(), name, path))))
     {
-        VERBOSE( Con_Printf("New font '%s'.\n", Str_Text(BitmapFont_Name(font))) );
+        VERBOSE( Con_Message("New font '%s'.\n", Str_Text(BitmapFont_Name(font))) );
     }
     return font;
     }
@@ -278,7 +278,7 @@ fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
         return 0; // Error.
     }
 
-    VERBOSE2( Con_Printf("Preparing font \"%s\"...\n", F_PrettyPath(searchPath)) );
+    VERBOSE2( Con_Message("Preparing font \"%s\"...\n", F_PrettyPath(searchPath)) );
     if(0 == (font = loadFont(name, searchPath)))
     {   // Error.
         Con_Message("Warning: Unknown format for %s\n", searchPath);
@@ -374,7 +374,7 @@ int FR_GetFontIdx(fontid_t id)
     if(!inited)
         Con_Error("FR_GetFontIdx: Font renderer has not yet been initialized.");
     if(-1 == (idx = findFontIdxForId(id)))
-        Con_Printf("FR_GetFontIdx: Unknown ID %u.\n", id);
+        Con_Message("Warning:FR_GetFontIdx: Unknown ID %u.\n", id);
     return idx;
 }
 
@@ -1077,7 +1077,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
                     continue;
                 }
 
-                Con_Message("parseParamaterBlock: Warning, unknown font '%s'.\n", (*strPtr));
+                Con_Message("Warning:parseParamaterBlock: Unknown font '%s'.\n", (*strPtr));
                 (*strPtr) = M_FindWhite((*strPtr));
                 continue;
             }
