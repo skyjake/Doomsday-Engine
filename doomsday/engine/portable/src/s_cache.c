@@ -596,12 +596,8 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         // Try loading from the lump.
         if(info->lumpNum < 0)
         {
-            if(verbose)
-            {
-                Con_Message("Sfx_Cache: Sound '%s' has a missing lump \"%s\".\n", info->id, info->lumpName);
-                Con_Message("  Verifying... The lump number is %i.\n", W_CheckLumpNumForName(info->lumpName));
-            }
-
+            Con_Message("Warning:Sfx_Cache: Failed to locate lump resource '%s' for sound '%s'.\n",
+                info->lumpName, info->id);
             return NULL;
         }
 
@@ -623,7 +619,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
             if(NULL == data)
             {
                 // Abort...
-                Con_Message("Sfx_Cache: WAV data in lump \"%s\" is bad.\n", info->lumpName);
+                Con_Message("Warning:Sfx_Cache: Unknown WAV format in lump '%s', aborting.\n", info->lumpName);
                 return NULL;
             }
 

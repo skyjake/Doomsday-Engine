@@ -1108,7 +1108,7 @@ void Def_Read(void)
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckLumpNumForName(snd->lumpName) : -1);
+        si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckLumpNumForName2(snd->lumpName, true) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
         si->link = (k >= 0 ? sounds + k : 0);
