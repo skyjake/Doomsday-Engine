@@ -29,8 +29,8 @@
 #ifndef LIBDENG_REFRESH_DRAW_H
 #define LIBDENG_REFRESH_DRAW_H
 
-void R_InitViewBorder(void);
-void R_ShutdownViewBorder(void);
+void R_InitViewWindow(void);
+void R_ShutdownViewWindow(void);
 
 void R_SetBorderGfx(const dduri_t* paths[9]);
 void R_DrawViewBorder(void);

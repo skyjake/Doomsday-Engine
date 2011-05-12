@@ -234,7 +234,6 @@ extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
 extern nodepile_t* mobjNodes, *lineNodes;
 
-extern int viewwidth, viewheight;
 extern int levelFullBright;
 extern byte rendInfoRPolys;
 extern byte precacheSprites, precacheSkins;

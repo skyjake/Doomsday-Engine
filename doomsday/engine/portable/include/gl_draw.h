@@ -38,9 +38,10 @@ void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
 void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 // Filters:
+boolean GL_FilterIsVisible(void);
 void GL_SetFilter(boolean enable);
 void GL_SetFilterColor(float r, float g, float b, float a);
-int GL_DrawFilter(void);
+void GL_DrawFilter(void);
 
 void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,

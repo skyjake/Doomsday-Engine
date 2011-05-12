@@ -665,7 +665,7 @@ void GL_Init2DState(void)
     glFogfv(GL_FOG_COLOR, fogColor);
 }
 
-void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
+void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData)
 {
     if(push_state)
     {
@@ -681,22 +681,22 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
 
     memcpy(&currentView, port, sizeof(currentView));
 
-    viewpx = port->x + MIN_OF(viewwindowx, port->width);
-    viewpy = port->y + MIN_OF(viewwindowy, port->height);
-    viewpw = MIN_OF(port->width, viewwidth);
-    viewph = MIN_OF(port->height, viewheight);
+    viewpx = port->x + MIN_OF(viewData->windowX, port->width);
+    viewpy = port->y + MIN_OF(viewData->windowY, port->height);
+    viewpw = MIN_OF(port->width, viewData->windowWidth);
+    viewph = MIN_OF(port->height, viewData->windowHeight);
     glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
 }
 
-void GL_Restore2DState(int step, viewport_t* port)
+void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData)
 {
     switch(step)
     {
     case 1: { // After Restore Step 1 normal player sprites are rendered.
-        int height = (float)(port->width * viewheight / viewwidth) / port->height * SCREENHEIGHT;
+        int height = (float)(port->width * viewData->windowHeight / viewData->windowWidth) / port->height * SCREENHEIGHT;
         scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT, port->width, port->height, weaponScaleMode);
 
         glMatrixMode(GL_PROJECTION);

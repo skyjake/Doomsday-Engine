@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_draw.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include "sys_opengl.h"
 
@@ -225,6 +226,11 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     glEnd();
 }
 
+boolean GL_FilterIsVisible(void)
+{
+    return (0 != drawFilter && filterColor[CA] > 0);
+}
+
 void GL_SetFilter(boolean enabled)
 {
     drawFilter = enabled;
@@ -241,21 +247,17 @@ void GL_SetFilterColor(float r, float g, float b, float a)
 /**
  * @return              Non-zero if the filter was drawn.
  */
-int GL_DrawFilter(void)
+void GL_DrawFilter(void)
 {
-    if(!drawFilter)
-        return 0; // No filter needed.
-
+    const viewdata_t* vd = R_ViewData(displayPlayer);
+    assert(NULL != vd);
     glColor4fv(filterColor);
-
     glBegin(GL_QUADS);
-        glVertex2f(viewwindowx, viewwindowy);
-        glVertex2f(viewwindowx + viewwidth, viewwindowy);
-        glVertex2f(viewwindowx + viewwidth, viewwindowy + viewheight);
-        glVertex2f(viewwindowx, viewwindowy + viewheight);
+        glVertex2f(vd->windowX, vd->windowY);
+        glVertex2f(vd->windowX + vd->windowWidth, vd->windowY);
+        glVertex2f(vd->windowX + vd->windowWidth, vd->windowY + vd->windowHeight);
+        glVertex2f(vd->windowX, vd->windowY + vd->windowHeight);
     glEnd();
-
-    return 1;
 }
 
 /// \note Part of the Doomsday public API.
@@ -300,8 +302,8 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
     /**
      * Use an orthographic projection in screenspace, translating and
      * scaling the coordinate space using the modelview matrix producing
-     * an aspect-corrected space of 320x200 and centered on the larger
-     * of the horizontal and vertical axes.
+     * an aspect-corrected space of availWidth x availHeight and centered
+     * on the larger of the horizontal and vertical axes.
      */
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

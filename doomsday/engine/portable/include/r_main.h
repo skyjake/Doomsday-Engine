@@ -41,24 +41,21 @@ typedef struct viewer_s {
 } viewer_t;
 
 typedef struct viewdata_s {
-    viewer_t        sharp;
-    viewer_t        current;
-    viewer_t        lastSharp[2]; // For smoothing.
-    float           frontVec[3], upVec[3], sideVec[3];
-    float           viewCos, viewSin;
-
-    // These are used when camera smoothing is disabled.
-    angle_t         frozenAngle;
-    float           frozenPitch;
+    viewer_t sharp;
+    viewer_t current;
+    viewer_t lastSharp[2]; // For smoothing.
+    float frontVec[3], upVec[3], sideVec[3];
+    float viewCos, viewSin;
+    int windowX, windowY, windowWidth, windowHeight;
 } viewdata_t;
 
-extern float    viewX, viewY, viewZ, viewPitch;
-extern angle_t  viewAngle;
+extern float viewX, viewY, viewZ, viewPitch;
+extern angle_t viewAngle;
+extern int viewWindowX, viewWindowY, viewWindowWidth, viewWindowHeight;
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern int      loadInStartupMode;
 extern int      validCount;
-extern int      viewwidth, viewheight, viewwindowx, viewwindowy;
 extern int      frameCount;
 extern int      extraLight;
 extern float    extraLightDelta;
@@ -82,10 +79,9 @@ const viewport_t* R_CurrentViewPort(void);
 const viewdata_t* R_ViewData(int localPlayerNum);
 void            R_ResetViewer(void);
 
-void            R_SetViewWindow(int x, int y, int w, int h);
 void            R_NewSharpWorld(void);
 
 boolean         R_SetViewGrid(int numCols, int numRows);
-void            R_SetViewWindow(int x, int y, int w, int h);
+void            R_SetViewWindow(int x, int y, int width, int height);
 
 #endif

@@ -75,8 +75,11 @@ int validCount = 1; // Increment every time a check is made.
 int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 int useVSync = 0;
+
 float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
 angle_t viewAngle = 0;
+int viewWindowX = 0, viewWindowY = 0, viewWindowWidth = SCREENWIDTH, viewWindowHeight = SCREENHEIGHT;
+
 boolean setSizeNeeded;
 
 // Precalculated math tables.
@@ -139,10 +142,10 @@ boolean R_IsSkySurface(const surface_t* suf)
  */
 void R_SetViewWindow(int x, int y, int w, int h)
 {
-    viewwindowx = x;
-    viewwindowy = y;
-    viewwidth = w;
-    viewheight = h;
+    viewWindowX = x;
+    viewWindowY = y;
+    viewWindowWidth = w;
+    viewWindowHeight = h;
 }
 
 /**
@@ -237,8 +240,7 @@ void R_Init(void)
     R_InitTranslationTables();
     R_InitRawTexs();
     R_InitVectorGraphics();
-    R_InitViewBorder();
-    R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
+    R_InitViewWindow();
     R_SkyInit();
     Rend_Init();
     frameCount = 0;
@@ -332,7 +334,7 @@ void R_Shutdown(void)
 {
     R_ShutdownModels();
     R_ShutdownVectorGraphics();
-    R_ShutdownViewBorder();
+    R_ShutdownViewWindow();
 }
 
 void R_ResetViewer(void)
@@ -478,11 +480,6 @@ void R_NewSharpWorld(void)
         }
 
         R_GetSharpView(&sharpView, plr);
-
-        // Update the camera angles that will be used when the camera is
-        // not smoothed.
-        vd->frozenAngle = sharpView.angle;
-        vd->frozenPitch = sharpView.pitch;
 
         // The game tic has changed, which means we have an updated sharp
         // camera position.  However, the position is at the beginning of
@@ -823,6 +820,10 @@ void R_RenderPlayerView(int num)
     /* $unifiedangles */
     vd->sharp.angle = viewAngle;
     vd->sharp.pitch = viewPitch;
+    vd->windowX = viewWindowX;
+    vd->windowY = viewWindowY;
+    vd->windowWidth = viewWindowWidth;
+    vd->windowHeight = viewWindowHeight;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -842,12 +843,12 @@ void R_RenderPlayerView(int num)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // GL is in 3D transformation state only during the frame.
-    GL_SwitchTo3DState(true, currentPort);
+    GL_SwitchTo3DState(true, currentPort, vd);
 
     Rend_RenderMap();
 
     // Orthogonal projection to the view window.
-    GL_Restore2DState(1, currentPort);
+    GL_Restore2DState(1, currentPort, vd);
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
@@ -859,19 +860,22 @@ void R_RenderPlayerView(int num)
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
-        GL_SwitchTo3DState(false, currentPort);
+        GL_SwitchTo3DState(false, currentPort, vd);
         Rend_Draw3DPlayerSprites();
     }
 
     // Restore fullscreen viewport, original matrices and state: back to normal 2D.
-    GL_Restore2DState(2, currentPort);
+    GL_Restore2DState(2, currentPort, vd);
 
     // Back from wireframe mode?
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // The colored filter.
-    GL_DrawFilter();
+    if(GL_FilterIsVisible())
+    {
+        GL_DrawFilter();
+    }
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))
