@@ -771,9 +771,14 @@ static void readAllDefinitions(void)
     // Start with engine's own top-level definition file, it is always read first.
     { ddstring_t foundPath; Str_Init(&foundPath);
     if(F_FindResource2(RC_DEFINITION, "doomsday.ded", &foundPath) != 0)
+    {
+        VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(&foundPath))) )
         readDefinitionFile(Str_Text(&foundPath));
+    }
     else
+    {
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
+    }
     Str_Free(&foundPath);
     }
 
@@ -795,6 +800,7 @@ static void readAllDefinitions(void)
                     // Unreachable.
                     Str_Delete(searchPaths);
                 }
+                VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(resolvedPath))) )
                 readDefinitionFile(Str_Text(resolvedPath));
             } while(*(++records));
     }
@@ -841,7 +847,7 @@ static void readAllDefinitions(void)
     // Read DD_DEFNS definition lumps.
     Def_ReadLumpDefs();
 
-    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 void Def_GenerateAutoMaterials(void)

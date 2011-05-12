@@ -1433,7 +1433,7 @@ typedef struct {
 
     numTexDefs = LONG(*maptex1);
 
-    VERBOSE( Con_Message("R_ReadTextureDefs: Processing lump \"%s\"...\n", W_LumpName(lumpNum)) )
+    VERBOSE( Con_Message("  Processing lump \"%s\"...\n", W_LumpName(lumpNum)) )
 
     validTexDefs = (byte*) calloc(1, numTexDefs * sizeof(*validTexDefs));
     if(NULL == validTexDefs)
@@ -1686,7 +1686,7 @@ typedef struct {
         }
     }
 
-    VERBOSE( Con_Message("  Loaded %i of %i definitions.\n", numValidTexDefs, numTexDefs) )
+    VERBOSE2( Con_Message("  Loaded %i of %i definitions.\n", numValidTexDefs, numTexDefs) )
 
     // Free all temporary storage.
     free(validTexDefs);
