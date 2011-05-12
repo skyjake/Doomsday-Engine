@@ -432,9 +432,6 @@ desc = Ping the server (or a player if you're the server).
 desc = Play a demo.
 inf = Params: playdemo (fileName)\nFor example, 'playdemo demo1.dmo'.
 
-[printinfo]
-desc = Print extended information for the named object.
-
 [playmusic]
 desc = Play a music track, music lump, external file or a CD track.
 

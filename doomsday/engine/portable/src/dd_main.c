@@ -163,20 +163,23 @@ static gameinfo_t* findGameInfoForId(gameid_t gameId)
 {
     if(gameId > 0 && gameId <= gameInfoCount)
         return gameInfo[gameId-1];
-    return 0; // Not found.
+    return NULL; // Not found.
 }
 
 static gameinfo_t* findGameInfoForIdentityKey(const char* identityKey)
 {
-    assert(identityKey && identityKey[0]);
-    { int i;
-    for(i = 0; i < gameInfoCount; ++i)
+    assert(NULL != identityKey);
+    if(identityKey[0])
     {
-        gameinfo_t* info = gameInfo[i];
-        if(!stricmp(Str_Text(GameInfo_IdentityKey(info)), identityKey))
-            return info;
-    }}
-    return 0; // Not found.
+        int i;
+        for(i = 0; i < gameInfoCount; ++i)
+        {
+            gameinfo_t* info = gameInfo[i];
+            if(!stricmp(Str_Text(GameInfo_IdentityKey(info)), identityKey))
+                return info;
+        }
+    }
+    return NULL; // Not found.
 }
 
 static gameinfo_t* findGameInfoForCmdlineFlag(const char* cmdlineFlag)
@@ -267,6 +270,13 @@ gameinfo_t* DD_GameInfoByIndex(int idx)
 {
     if(idx > 0 && idx <= gameInfoCount)
         return gameInfo[idx-1];
+    return NULL;
+}
+
+gameinfo_t* DD_GameInfoByIdentityKey(const char* identityKey)
+{
+    if(NULL != identityKey)
+        return findGameInfoForIdentityKey(identityKey);
     return NULL;
 }
 
@@ -680,12 +690,11 @@ static void printGameInfoResources(gameinfo_t* info, boolean printStatus, int rf
     }
 }
 
-static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printStartupResources, boolean printOtherResources, boolean printStatus)
+void DD_PrintGameInfo(gameinfo_t* info, int flags)
 {
     assert(info);
-
     if(DD_IsNullGameInfo(info))
-        printBanner = false;
+        flags &= ~PGIF_BANNER;
 
 #if _DEBUG
     Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info),
@@ -693,31 +702,31 @@ static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printSt
                F_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
-    if(printBanner)
+    if(flags & PGIF_BANNER)
         printGameInfoBanner(info);
 
-    if(!printBanner)
+    if(!(flags & PGIF_BANNER))
         Con_Printf("Game: %s - ", Str_Text(GameInfo_Title(info)));
     else
         Con_Printf("Author: ");
     Con_Printf("%s\n", Str_Text(GameInfo_Author(info)));
     Con_Printf("IdentityKey: %s\n", Str_Text(GameInfo_IdentityKey(info)));
 
-    if(printStartupResources)
+    if(flags & PGIF_LIST_STARTUP_RESOURCES)
     {
         Con_Printf("Startup resources:\n");
-        printGameInfoResources(info, printStatus, RF_STARTUP);
+        printGameInfoResources(info, (flags & PGIF_STATUS) != 0, RF_STARTUP);
     }
 
-    if(printOtherResources)
+    if(flags & PGIF_LIST_OTHER_RESOURCES)
     {
         Con_Printf("Other resources:\n");
         /*@todo dj: we need a resource flag for "located"*/
         Con_Printf("   ");
-        printGameInfoResources(info, /*printStatus*/false, 0);
+        printGameInfoResources(info, /*(flags & PGIF_STATUS) != 0*/false, 0);
     }
 
-    if(printStatus)
+    if(flags & PGIF_STATUS)
         Con_Printf("Status: %s\n",       DD_GameInfo() == info? "Loaded" :
                                    allGameResourcesFound(info)? "Complete/Playable" :
                                                                 "Incomplete/Not playable");
@@ -1434,7 +1443,7 @@ int DD_Main(void)
             continue;
         VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(GameInfo_Title(info))) );
         locateGameResources(info);
-        VERBOSE( printGameInfo(info, false, true, false, true) );
+        VERBOSE( DD_PrintGameInfo(info, PGIF_LIST_STARTUP_RESOURCES|PGIF_STATUS) );
     }}
 
     // Attempt automatic game selection.
@@ -2341,18 +2350,6 @@ D_CMD(Unload)
 D_CMD(Reset)
 {
     DD_ChangeGame2(DD_GameInfo(), true);
-    return true;
-}
-
-D_CMD(PrintInfo)
-{
-    { gameinfo_t* info;
-    if((info = findGameInfoForIdentityKey(argv[1])))
-    {
-        printGameInfo(info, true, true, true, true);
-        return true;
-    }}
-    Con_Message("There is no extended info for \"%s\".\n", argv[1]);
     return true;
 }
 

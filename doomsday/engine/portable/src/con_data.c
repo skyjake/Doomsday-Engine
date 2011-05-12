@@ -1347,10 +1347,20 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Maybe an alias?
     {
-        calias_t* calias;
-        if((calias = Con_FindAlias(argv[1])) != 0)
+        calias_t* calias = Con_FindAlias(argv[1]);
+        if(NULL != calias)
         {
             Con_Printf("An alias for:\n%s\n", calias->command);
+            found = true;
+        }
+    }
+
+    if(found == 0) // Perhaps a game?
+    {
+        gameinfo_t* info = DD_GameInfoByIdentityKey(argv[1]);
+        if(NULL != info)
+        {
+            DD_PrintGameInfo(info, PGIF_EVERYTHING);
             found = true;
         }
     }

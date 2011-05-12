@@ -100,15 +100,39 @@ gameinfo_t* DD_GameInfo(void);
 int DD_GameInfoCount(void);
 
 /**
- * @return  Ptr the GameInfo with the specified index else @c NULL if invalid.
+ * @return  GameInfo for index @a idx else @c NULL.
  */
 gameinfo_t* DD_GameInfoByIndex(int idx);
+
+/**
+ * @return  GameInfo associated with @a identityKey else @c NULL.
+ */
+gameinfo_t* DD_GameInfoByIdentityKey(const char* identityKey);
 
 /**
  * Is this the special "null-game" object (not a real playable game).
  * \todo Implement a proper null-gameinfo object for this.
  */
 boolean DD_IsNullGameInfo(gameinfo_t* info);
+
+/**
+ * @defgroup printGameInfoFlags  Print Game Info Flags.
+ * @{
+ */
+#define PGIF_BANNER                 0x1
+#define PGIF_STATUS                 0x2
+#define PGIF_LIST_STARTUP_RESOURCES 0x4
+#define PGIF_LIST_OTHER_RESOURCES   0x8
+
+#define PGIF_EVERYTHING             (PGIF_BANNER|PGIF_STATUS|PGIF_LIST_STARTUP_RESOURCES|PGIF_LIST_OTHER_RESOURCES)
+/**@}*/
+
+/**
+ * Print extended information about game @a info.
+ * @param info  GameInfo record to be printed.
+ * @param flags  &see printGameInfoFlags
+ */
+void DD_PrintGameInfo(gameinfo_t* info, int flags);
 
 /**
  * Frees the info structures for all registered games.
@@ -118,7 +142,6 @@ void DD_DestroyGameInfo(void);
 D_CMD(Load);
 D_CMD(Unload);
 D_CMD(Reset);
-D_CMD(PrintInfo);
 D_CMD(ListGames);
 
 #endif /* LIBDENG_MAIN_H */
