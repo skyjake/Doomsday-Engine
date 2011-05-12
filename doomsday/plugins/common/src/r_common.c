@@ -65,10 +65,10 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // View window current position.
-static float windowX = 0, oldWindowX = 0;
-static float windowY = 0, oldWindowY = 0;
-static float windowWidth = SCREENWIDTH, oldWindowWidth = SCREENWIDTH;
-static float windowHeight = SCREENHEIGHT, oldWindowHeight = SCREENHEIGHT;
+static int windowX = 0, oldWindowX = 0;
+static int windowY = 0, oldWindowY = 0;
+static int windowWidth = SCREENWIDTH, oldWindowWidth = SCREENWIDTH;
+static int windowHeight = SCREENHEIGHT, oldWindowHeight = SCREENHEIGHT;
 static int targetX = -1, targetY = -1, targetWidth = -1, targetHeight = -1;
 static float windowPos = 0;
 
@@ -232,15 +232,19 @@ void R_ViewWindowTicker(timespan_t ticLength)
     else
     {
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
-        windowX = LERP(oldWindowX, targetX, windowPos);
-        windowY = LERP(oldWindowY, targetY, windowPos);
-        windowWidth = LERP(oldWindowWidth, targetWidth, windowPos);
-        windowHeight = LERP(oldWindowHeight, targetHeight, windowPos);
+        const float x = LERP(oldWindowX, targetX, windowPos);
+        const float y = LERP(oldWindowY, targetY, windowPos);
+        const float w = LERP(oldWindowWidth, targetWidth, windowPos);
+        const float h = LERP(oldWindowHeight, targetHeight, windowPos);
+        windowX = ROUND(x);
+        windowY = ROUND(y);
+        windowWidth  = ROUND(w);
+        windowHeight = ROUND(h);
 #undef LERP
     }
 }
 
-void R_GetViewWindow(float* x, float* y, float* w, float* h)
+void R_GetViewWindow(int* x, int* y, int* w, int* h)
 {
     if(x) *x = windowX;
     if(y) *y = windowY;
@@ -250,8 +254,7 @@ void R_GetViewWindow(float* x, float* y, float* w, float* h)
 
 boolean R_IsFullScreenViewWindow(void)
 {
-    return (windowWidth >= 320 && windowHeight >= 200 && windowX <= 0 &&
-            windowY <= 0);
+    return (windowWidth >= 320 && windowHeight >= 200 && windowX <= 0 && windowY <= 0);
 }
 
 /**

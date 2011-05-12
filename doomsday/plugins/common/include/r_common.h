@@ -1,10 +1,10 @@
-/**\file
+/**\file r_common.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * r_common.h : Common routines for refresh.
+ * Common routines for refresh.
  */
 
-#ifndef __GAME_COMMON_REFRESH_H__
-#define __GAME_COMMON_REFRESH_H__
+#ifndef LIBCOMMON_REFRESH_H
+#define LIBCOMMON_REFRESH_H
 
 // Translate between fixed screen dimensions to actual, current.
 #define FIXXTOSCREENX(x) (scrwidth * ((x) / (float) SCREENWIDTH))
@@ -40,7 +40,7 @@
 void            R_ViewWindowTicker(timespan_t ticLength);
 void            R_UpdateViewWindow(boolean force);
 void            R_SetViewWindowTarget(int x, int y, int w, int h);
-void            R_GetViewWindow(float* x, float* y, float* w, float* h);
+void            R_GetViewWindow(int* x, int* y, int* w, int* h);
 
 boolean         R_IsFullScreenViewWindow(void);
 boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
@@ -50,4 +50,4 @@ void            R_PrecachePSprites(void);
 void            R_GetGammaMessageStrings(void);
 void            R_CycleGammaLevel(void);
 
-#endif
+#endif /* LIBCOMMON_REFRESH_H */

@@ -246,10 +246,10 @@ static void rendHUD(int player, int viewW, int viewH)
  */
 void D_Display(int layer)
 {
+    int vpWidth, vpHeight, winX, winY, winW, winH, vX, vY, vW, vH;
     int player = DISPLAYPLAYER;
-    int vpWidth, vpHeight;
     player_t* plr = &players[player];
-    float x, y, w, h, xScale, yScale;
+    float xScale, yScale;
 
     R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
 
@@ -259,35 +259,39 @@ void D_Display(int layer)
         return;
     }
 
-    xScale = (float)vpWidth/SCREENWIDTH;
-    yScale = (float)vpHeight/SCREENHEIGHT;
-
     if(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
        !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam: can be set on every frame.
     {
-        R_GetViewWindow(&x, &y, &w, &h);
+        R_GetViewWindow(&winX, &winY, &winW, &winH);
     }
     else
     {   // Full screen.
-        x = 0;
-        y = 0;
-        w = SCREENWIDTH;
-        h = SCREENHEIGHT;
+        winX = 0;
+        winY = 0;
+        winW = SCREENWIDTH;
+        winH = SCREENHEIGHT;
     }
 
-    R_SetViewWindow((int) (x * xScale), (int) (y * yScale), (int) (w * xScale), (int) (h * yScale));
+    // Scale from fixed to screenspace.
+    xScale = (float)vpWidth  / SCREENWIDTH;
+    yScale = (float)vpHeight / SCREENHEIGHT;
+    vX = ROUND(winX * xScale);
+    vY = ROUND(winY * yScale);
+    vW = ROUND(winW * xScale);
+    vH = ROUND(winH * yScale);
+    R_SetViewWindow(vX, vY, vW, vH);
 
     switch(G_GetGameState())
     {
     case GS_MAP:
-        if(!R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
+        if(!R_MapObscures(player, winX, winY, winW, winH))
         {
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
 
             rendPlayerView(player);
 
-            drawSpecialFilter(player, (int) (x * xScale), (int) (y * yScale), (int) (w * xScale), (int) (h * yScale));
+            drawSpecialFilter(player, vX, vY, vW, vH);
 
             // Crosshair.
             if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam

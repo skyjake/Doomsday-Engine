@@ -174,14 +174,10 @@ int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
  */
 void R_ViewPortPlacement(viewport_t* port, int x, int y)
 {
-    float               w = theWindow->width / (float) gridCols;
-    float               h = theWindow->height / (float) gridRows;
-
-    port->x = x * w;
-    port->y = y * h;
-
-    port->width = (x + 1) * w - port->x;
-    port->height = (y + 1) * h - port->y;
+    port->x = x * theWindow->width  / gridCols;
+    port->y = y * theWindow->height / gridRows;
+    port->width  = (x+1) * theWindow->width  / gridCols - port->x;
+    port->height = (y+1) * theWindow->height / gridRows - port->y;
 }
 
 /**
