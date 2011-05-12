@@ -312,8 +312,5 @@ void R_InitSectorShadows(void)
             }
     }
 
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_InitSectorShadows: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("R_InitSectorShadows: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }

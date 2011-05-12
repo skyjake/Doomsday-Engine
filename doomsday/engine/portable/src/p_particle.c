@@ -270,10 +270,7 @@ void P_PtcInitForMap(void)
     P_SpawnTypeParticleGens();
     P_SpawnMapParticleGens(mapID);
 
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("P_PtcInitForMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("P_PtcInitForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
 
 void P_MapSpawnPlaneParticleGens(void)

@@ -274,7 +274,7 @@ typedef struct subsecmap_s {
             {
                 if(x < 0 || y < 0 || x >= subMapWidth || y >= subMapHeight)
                 {
-                    Con_Printf("sub%i: outside block x=%i, y=%i\n", i, x, y);
+                    Con_Printf("Warning: Subsector %i outside block [%i, %i]\n", i, x, y);
                     continue;
                 }
 
@@ -332,10 +332,7 @@ typedef struct subsecmap_s {
     // Free the temporary link map.
     M_Free(bmap);
 
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("P_BuildSubsectorBlockMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("P_BuildSubsectorBlockMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 
 #undef BLOCK_WIDTH
 #undef BLOCK_HEIGHT

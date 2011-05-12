@@ -562,7 +562,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
             { uint startTime = Sys_GetRealTime();
             R_InitSkyFix();
-            VERBOSE( Con_Message("R_InitSkyFix: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+            VERBOSE2( Con_Message("R_InitSkyFix: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
             }
         }
     }

@@ -118,9 +118,9 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
     // Find maximal vertexes.
     findMapLimits(map, mapBounds);
 
-    VERBOSE(Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
+    VERBOSE2( Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
                         mapBounds[BOXLEFT], mapBounds[BOXBOTTOM],
-                        mapBounds[BOXRIGHT], mapBounds[BOXTOP]));
+                        mapBounds[BOXRIGHT], mapBounds[BOXTOP]) )
 
     block = BSP_SuperBlockCreate();
 
@@ -153,7 +153,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                    M_Length(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX],
                             line->v[0]->buildData.pos[VY] - line->v[1]->buildData.pos[VY]))
                 {
-                    Con_Message("Linedef #%d is VERY long, it may cause problems\n",
+                    Con_Message("Warning: Linedef #%d is VERY long, it may cause problems\n",
                                 line->buildData.index);
                 }
             }
@@ -162,27 +162,22 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
             {
                 sidedef_t     *side = line->sideDefs[FRONT];
 
-                // Check for a bad sidedef.
                 if(!side->sector)
-                    Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
-                                line->buildData.index);
+                    Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 front = HEdge_Create(line, line, line->v[0], line->v[1],
                                      side->sector, false);
                 BSP_AddHEdgeToSuperBlock(block, front);
             }
             else
-                Con_Message("Linedef #%d has no front sidedef!\n",
-                            line->buildData.index);
+                Con_Message("Warning: Linedef #%d has no front sidedef!\n", line->buildData.index);
 
             if(line->sideDefs[BACK])
             {
                 sidedef_t     *side = line->sideDefs[BACK];
 
-                // Check for a bad sidedef.
                 if(!side->sector)
-                    Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
-                                line->buildData.index);
+                    Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 back = HEdge_Create(line, line, line->v[1], line->v[0],
                                     side->sector, true);
@@ -201,8 +196,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
             {
                 if(line->buildData.mlFlags & MLF_TWOSIDED)
                 {
-                    Con_Message("Linedef #%d is 2s but has no back sidedef\n",
-                                line->buildData.index);
+                    Con_Message("Warning: Linedef #%d is 2s but has no back sidedef\n", line->buildData.index);
                     line->buildData.mlFlags &= ~MLF_TWOSIDED;
                 }
 
@@ -238,9 +232,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
     }
 
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("createInitialHEdges: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("createInitialHEdges: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 
     return block;
 }

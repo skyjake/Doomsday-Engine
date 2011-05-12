@@ -261,7 +261,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
 
     boolean     generateBMap = (createBMap == 2)? true : false;
 
-    VERBOSE( Con_Message("WadMapConverter::loadBlockmap: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadBlockmap: Processing...\n") )
 
     // Do we have a lump to process?
     if(maplump->lumpNum == -1 || maplump->length == 0)
@@ -274,7 +274,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
         // new data (we will have already announced it if the lump
         // was missing).
         if(maplump->lumpNum != -1)
-            VERBOSE2( Con_Message("loadBlockMap: Generating NEW blockmap...\n") )
+            VERBOSE( Con_Message("loadBlockMap: Generating NEW blockmap...\n") )
     }
     else
     {   // No, the existing data is valid - so load it in.
@@ -286,7 +286,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
         long       *lineListOffsets, i, n, numBlocks, blockIdx;
         short      *blockmapLump;
 
-        VERBOSE(
+        VERBOSE2(
         Con_Message("loadBlockMap: Converting existing blockmap...\n"));
 
         startTime = Sys_GetRealTime();
@@ -392,7 +392,7 @@ if(idx < 0 || idx >= (long) map->numLines)
         map->blockMap = blockmap;
 
         // How much time did we spend?
-        VERBOSE(Con_Message
+        VERBOSE2(Con_Message
                 ("loadBlockMap: Done in %.2f seconds.\n",
                  (Sys_GetRealTime() - startTime) / 1000.0f));
     }
@@ -859,7 +859,7 @@ static void findPolyobjs(void)
 {
     uint i;
 
-    VERBOSE( Con_Message("WadMapConverter::findPolyobjs: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::findPolyobjs: Processing...\n") )
 
     for(i = 0; i < map->numThings; ++i)
     {
@@ -1044,7 +1044,7 @@ static boolean loadVertexes(const char* buf, size_t len)
     size_t elmSize;
     const char* ptr;
 
-    VERBOSE( Con_Message("WadMapConverter::loadVertexes: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadVertexes: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
     num = len / elmSize;
@@ -1140,7 +1140,7 @@ static boolean loadLinedefs(const char* buf, size_t len)
     size_t elmSize;
     const char* ptr;
 
-    VERBOSE( Con_Message("WadMapConverter::loadLinedefs: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadLinedefs: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
         map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
@@ -1274,7 +1274,7 @@ static boolean loadSidedefs(const char* buf, size_t len)
     size_t elmSize;
     const char* ptr;
 
-    VERBOSE( Con_Message("WadMapConverter::loadSidedefs: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadSidedefs: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
     num = len / elmSize;
@@ -1340,7 +1340,7 @@ static boolean loadSectors(const char* buf, size_t len)
     size_t elmSize;
     const char* ptr;
 
-    VERBOSE( Con_Message("WadMapConverter::loadSectors: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadSectors: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
     num = len / elmSize;
@@ -1407,7 +1407,7 @@ static boolean loadThings(const char* buf, size_t len)
     size_t elmSize;
     const char* ptr;
 
-    VERBOSE( Con_Message("WadMapConverter::loadThings: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadThings: Processing...\n") )
 
     elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
         map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
@@ -1631,7 +1631,7 @@ static boolean loadLights(const char* buf, size_t len)
     size_t elmSize;
     const char* ptr;
 
-    VERBOSE( Con_Message("WadMapConverter::loadLights: Processing...\n") )
+    VERBOSE2( Con_Message("WadMapConverter::loadLights: Processing...\n") )
 
     elmSize = SIZEOF_LIGHT;
     num = len / elmSize;
@@ -1749,15 +1749,15 @@ boolean TransferMap(void)
     uint                i;
     boolean             result;
 
-    VERBOSE(Con_Message("WadMapConverter::TransferMap...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::TransferMap...\n"));
 
     MPE_Begin(map->name);
 
     // Create all the data structures.
-    VERBOSE(Con_Message("WadMapConverter::Transfering vertexes...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::Transfering vertexes...\n"));
     MPE_VertexCreatev(map->numVertexes, map->vertexes, NULL);
 
-    VERBOSE(Con_Message("WadMapConverter::Transfering sectors...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::Transfering sectors...\n"));
     for(i = 0; i < map->numSectors; ++i)
     {
         msector_t*          sec = &map->sectors[i];
@@ -1787,7 +1787,7 @@ boolean TransferMap(void)
         }
     }
 
-    VERBOSE(Con_Message("WadMapConverter::Transfering linedefs...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::Transfering linedefs...\n"));
     for(i = 0; i < map->numLines; ++i)
     {
         mline_t*            l = &map->lines[i];
@@ -1853,7 +1853,7 @@ boolean TransferMap(void)
         }
     }
 
-    VERBOSE(Con_Message("WadMapConverter::Transfering lights...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::Transfering lights...\n"));
     for(i = 0; i < map->numLights; ++i)
     {
         surfacetint_t*           l = &map->lights[i];
@@ -1866,7 +1866,7 @@ boolean TransferMap(void)
         MPE_GameObjProperty("Light", i, "XX2", DDVT_BYTE, &l->xx[2]);
     }
 
-    VERBOSE(Con_Message("WadMapConverter::Transfering polyobjs...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::Transfering polyobjs...\n"));
     for(i = 0; i < map->numPolyobjs; ++i)
     {
         mpolyobj_t*         po = map->polyobjs[i];
@@ -1881,7 +1881,7 @@ boolean TransferMap(void)
         free(lineList);
     }
 
-    VERBOSE(Con_Message("WadMapConverter::Transfering things...\n"));
+    VERBOSE2(Con_Message("WadMapConverter::Transfering things...\n"));
     for(i = 0; i < map->numThings; ++i)
     {
         mthing_t*           th = &map->things[i];
@@ -1917,7 +1917,7 @@ boolean TransferMap(void)
     // Let Doomsday know that we've finished with this map.
     result = MPE_End();
 
-    VERBOSE(
+    VERBOSE2(
     Con_Message("WadMapConverter::TransferMap: Done in %.2f seconds.\n",
                 (Sys_GetRealTime() - startTime) / 1000.0f));
 

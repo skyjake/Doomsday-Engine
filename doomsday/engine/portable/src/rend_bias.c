@@ -463,9 +463,7 @@ void SB_InitForMap(const char* uniqueID)
     }
     }
 
-    // How much time did we spend?
-    VERBOSE(Con_Message("SB_InitForMap: Done in %.2f seconds.\n",
-                        (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
 
 void SB_SetColor(float* dest, float* src)

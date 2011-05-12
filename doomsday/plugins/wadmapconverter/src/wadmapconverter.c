@@ -54,25 +54,22 @@ int ConvertMapHook(int hookType, int param, void *data)
 
     verbose = ArgExists("-verbose");
 
-    VERBOSE2( Con_Message("Attempting map conversion using WadMapConverter...\n") );
     memset(map, 0, sizeof(*map));
 
     if(!IsSupportedFormat(lumpList, param))
     {
         Con_Message("WadMapConverter: Unknown map format, aborting.\n");
-        return false; // Cannot convert.
+        return false;
     }
 
-    // A supported format.
     VERBOSE( Con_Message("WadMapConverter: Recognised a %s format map.\n",
                          (map->format == MF_DOOM64? "DOOM64" :
-                          map->format == MF_HEXEN?  "Hexen"  : "DOOM") ));
+                          map->format == MF_HEXEN?  "Hexen"  : "DOOM")) )
 
-    // Load it in.
     if(!LoadMap(lumpList, param))
     {
         Con_Message("WadMapConverter: Internal error, load failed.\n");
-        return false; // Something went horribly wrong...
+        return false;
     }
 
     AnalyzeMap();

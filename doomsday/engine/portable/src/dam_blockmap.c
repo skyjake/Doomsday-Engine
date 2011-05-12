@@ -404,10 +404,8 @@ blockmap_t* DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
     M_Free(blockcount);
     M_Free(blockdone);
 
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("DAM_BuildBlockMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("DAM_BuildBlockMap: Done in %.2f seconds.\n",
+        (Sys_GetRealTime() - startTime) / 1000.0f) )
 
     return blockmap;
 }
