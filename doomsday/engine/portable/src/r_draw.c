@@ -212,8 +212,8 @@ void R_DrawViewBorder(void)
     assert(NULL != port);
     assert(NULL != vd);
 
-    if(vd->windowWidth == port->width && vd->windowHeight == port->height)
-        return;
+    if(0 == vd->windowWidth || 0 == vd->windowHeight) return;
+    if(vd->windowWidth == port->width && vd->windowHeight == port->height) return;
 
     glEnable(GL_TEXTURE_2D);
 
