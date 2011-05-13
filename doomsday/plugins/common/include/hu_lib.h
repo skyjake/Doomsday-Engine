@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_lib.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -78,41 +78,5 @@ void            GUI_GroupSetFlags(int name, short flags);
 /*@}*/
 
 void            GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth, int availHeight, float alpha, int* drawnWidth, int* drawnHeight);
-
-/**
- * Here follows legacy UI stuff to be replaced.
- */
-
-#define HU_MAXLINELENGTH    (160)
-
-// Text Line widget, (parent of Scrolling Text and Input Text widgets).
-typedef struct {
-    int             x, y; // Left-justified position of scrolling text window.
-    char            l[HU_MAXLINELENGTH + 1]; // Line of text.
-    int             len; // Current line length.
-    int             needsupdate; // Whether this line needs to be udpated.
-} hu_textline_t;
-
-// Input Text Line widget (child of Text Line widget).
-typedef struct {
-    hu_textline_t   l; // Text line to input on.
-    int             lm; // Left margin past which I am not to delete characters.
-    boolean*        on; // Whether to update window.
-    boolean         laston; // Last value of *->on.
-} hu_text_t;
-
-void            HUlib_clearTextLine(hu_textline_t* t);
-void            HUlib_initTextLine(hu_textline_t* t, int x, int y);
-boolean         HUlib_addCharToTextLine(hu_textline_t* t, char ch);
-boolean         HUlib_delCharFromTextLine(hu_textline_t* t);
-void            HUlib_eraseTextLine(hu_textline_t* l);
-
-void            HUlib_initText(hu_text_t* it, int x, int y, boolean* on);
-void            HUlib_delCharFromText(hu_text_t* it);
-void            HUlib_eraseLineFromText(hu_text_t* it);
-void            HUlib_resetText(hu_text_t* it);
-void            HUlib_addPrefixToText(hu_text_t* it, char* str);
-boolean         HUlib_keyInText(hu_text_t* it, unsigned char ch);
-void            HUlib_eraseText(hu_text_t* it);
 
 #endif /* LIBCOMMON_UI_LIBRARY_H */

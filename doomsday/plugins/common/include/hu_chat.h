@@ -24,7 +24,7 @@
  */
 
 /**
- * Player chat UI widget:
+ * Player chat widget.
  */
 
 #ifndef LIBCOMMON_HUD_CHAT_H
@@ -40,13 +40,89 @@
 #  include "jhexen.h"
 #endif
 
-void            Chat_Register(void);
-void            Chat_Init(void);
+#define UICHAT_INPUTBUFFER_MAXLENGTH    (160)
 
-void            Chat_Start(void);
-void            Chat_Open(int player, boolean open);
-boolean         Chat_IsActive(int player);
-int             Chat_Responder(event_t* ev);
+typedef struct {
+    char text[UICHAT_INPUTBUFFER_MAXLENGTH+1];
+    int length; /// Current length of text.
+    boolean shiftDown;
+} uidata_chat_inputbuffer_t;
 
-void            Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
+/**
+ * @defgroup uiChatFlags  UIChat Flags.
+ * @{
+ */
+#define UICF_ACTIVE             0x1
+/**@}*/
+
+/**
+ * UIChat. UI widget for composing player/team chat messages.
+ *
+ * Terminology:
+ *   "Destination":
+ *      @c 0= All players (i.e., a "global" message).
+ *      @c 1...NUMTEAMS= Any players on team number (n+1).
+ */
+typedef struct {
+    int flags; /// @see uiChatFlags
+    int destination;
+    uidata_chat_inputbuffer_t buffer;
+} uidata_chat_t;
+
+/**
+ * Change the "active" state of this. When activating the message target destination
+ * is initialized for "global" messaging and the input buffer is cleared.
+ *
+ * @return  @c true if the active state changed.
+ */
+boolean UIChat_Activate(uidata_chat_t* chat, boolean yes);
+boolean UIChat_IsActive(uidata_chat_t* chat);
+
+int UIChat_Destination(uidata_chat_t* chat);
+void UIChat_SetDestination(uidata_chat_t* chat, int destination);
+
+/// @return  @c true if the shift modifier state changed.
+boolean UIChat_SetShiftModifier(uidata_chat_t* chat, boolean on);
+
+boolean UIChat_AppendCharacter(uidata_chat_t* chat, char ch);
+void UIChat_DeleteLastCharacter(uidata_chat_t* chat);
+void UIChat_Clear(uidata_chat_t* chat);
+
+/// @return  A pointer to an immutable copy of the current contents of the input buffer.
+const char* UIChat_Text(uidata_chat_t* chat);
+
+/// @return  Current length of the input buffer in characters including terminating '\0'. 
+size_t UIChat_TextLength(uidata_chat_t* chat);
+
+/// @return  @c true= Current input buffer is empty.
+boolean UIChat_TextIsEmpty(uidata_chat_t* chat);
+
+/// Register the console variables and commands of this module.
+void Chat_Register(void);
+
+/// Initialize this module.
+void Chat_Init(void);
+
+/// Shutdown this module.
+void Chat_Shutdown(void);
+
+/// Load resources for this module (chat macro strings etc...).
+void Chat_LoadResources(void);
+
+/// To be called when the player enters the game to complete initialization
+/// of that player's chat widget(s).
+void Chat_Start(int player);
+
+void Chat_Open(int player, boolean open);
+
+boolean Chat_IsActive(int player);
+
+int Chat_Responder(int player, event_t* ev);
+
+void Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
+
+D_CMD(ChatOpen);
+D_CMD(ChatAction);
+D_CMD(ChatSendMacro);
+
 #endif /* LIBCOMMON_HUD_CHAT_H */

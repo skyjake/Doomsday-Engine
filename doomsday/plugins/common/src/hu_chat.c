@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_chat.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,15 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * hu_chat.c: HUD chat widget.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
-#include <ctype.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -45,270 +37,187 @@
 #  include "jhexen.h"
 #endif
 
-#include "hu_stuff.h"
-#include "hu_log.h"
-#include "hu_lib.h"
-#include "p_tick.h" // for P_IsPaused()
-#include "g_common.h"
-#include "g_controls.h"
+#include "p_tick.h"
 #include "d_net.h"
+#include "g_common.h"
 
 #include "hu_chat.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-#if __JHEXEN__
-enum {
-    CT_PLR_BLUE = 1,
-    CT_PLR_RED,
-    CT_PLR_YELLOW,
-    CT_PLR_GREEN,
-    CT_PLR_PLAYER5,
-    CT_PLR_PLAYER6,
-    CT_PLR_PLAYER7,
-    CT_PLR_PLAYER8
-};
-#endif
-
-typedef struct {
-    boolean active;
-    boolean shiftDown;
-    int to; // 0=all, 1=player 0, etc.
-    hu_text_t buffer;
-} uiwidget_chat_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-D_CMD(MsgAction);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void     closeChat(void);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-
-char* player_names[4];
-int player_names_idx[] = {
-    TXT_HUSTR_PLRGREEN,
-    TXT_HUSTR_PLRINDIGO,
-    TXT_HUSTR_PLRBROWN,
-    TXT_HUSTR_PLRRED
-};
-
-#else
-
-char* player_names[8];
-int player_names_idx[] = {
-    CT_PLR_BLUE,
-    CT_PLR_RED,
-    CT_PLR_YELLOW,
-    CT_PLR_GREEN,
-    CT_PLR_PLAYER5,
-    CT_PLR_PLAYER6,
-    CT_PLR_PLAYER7,
-    CT_PLR_PLAYER8
-};
-#endif
-
 cvartemplate_t chatCVars[] = {
-    // Chat macros
-    {"chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0},
-    {"chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0},
-    {"chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0},
-    {"chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0},
-    {"chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0},
-    {"chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0},
-    {"chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0},
-    {"chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0},
-    {"chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0},
-    {"chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0},
-    {"chat-beep", 0, CVT_BYTE, &cfg.chatBeep, 0, 1},
-    {NULL}
+    { "chat-macro0", 0, CVT_CHARPTR, &cfg.chatMacros[0], 0, 0 },
+    { "chat-macro1", 0, CVT_CHARPTR, &cfg.chatMacros[1], 0, 0 },
+    { "chat-macro2", 0, CVT_CHARPTR, &cfg.chatMacros[2], 0, 0 },
+    { "chat-macro3", 0, CVT_CHARPTR, &cfg.chatMacros[3], 0, 0 },
+    { "chat-macro4", 0, CVT_CHARPTR, &cfg.chatMacros[4], 0, 0 },
+    { "chat-macro5", 0, CVT_CHARPTR, &cfg.chatMacros[5], 0, 0 },
+    { "chat-macro6", 0, CVT_CHARPTR, &cfg.chatMacros[6], 0, 0 },
+    { "chat-macro7", 0, CVT_CHARPTR, &cfg.chatMacros[7], 0, 0 },
+    { "chat-macro8", 0, CVT_CHARPTR, &cfg.chatMacros[8], 0, 0 },
+    { "chat-macro9", 0, CVT_CHARPTR, &cfg.chatMacros[9], 0, 0 },
+    { "chat-beep",   0, CVT_BYTE,    &cfg.chatBeep, 0, 1 },
+    { NULL }
 };
 
-// Console commands for the chat widget and message log.
 ccmdtemplate_t chatCCmds[] = {
-    {"chatcancel",      "",     CCmdMsgAction},
-    {"chatcomplete",    "",     CCmdMsgAction},
-    {"chatdelete",      "",     CCmdMsgAction},
-    {"chatsendmacro",   NULL,   CCmdMsgAction},
-    {"beginchat",       NULL,   CCmdMsgAction},
-    {NULL}
+    { "beginchat",       NULL,   CCmdChatOpen },
+    { "chatcancel",      "",     CCmdChatAction },
+    { "chatcomplete",    "",     CCmdChatAction },
+    { "chatdelete",      "",     CCmdChatAction },
+    { "chatsendmacro",   NULL,   CCmdChatSendMacro },
+    { NULL }
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+static uidata_chat_t chatWidgets[DDMAXPLAYERS];
 
-uiwidget_chat_t chatWidgets[DDMAXPLAYERS];
+/// @return  UIChat widget associated to local @a player else fatal error.
+static uidata_chat_t* widgetForLocalPlayer(int player)
+{
+    if(player >= 0 && player < DDMAXPLAYERS)
+        return chatWidgets + player;
+    Con_Error("widgetForLocalPlayer: Invalid player #%i.", player);
+    exit(1); // Unreachable.
+}
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Called during the PreInit of each game during start up.
- * Register Cvars and CCmds for the opperation/look of the (message) log.
- */
 void Chat_Register(void)
 {
     int i;
-
     for(i = 0; chatCVars[i].name; ++i)
         Con_AddVariable(chatCVars + i);
-
     for(i = 0; chatCCmds[i].name; ++i)
         Con_AddCommand(chatCCmds + i);
 }
 
-/**
- * Called by HU_init().
- */
-void Chat_Init(void)
+static void clearInputBuffer(uidata_chat_t* chat)
 {
-    int i;
+    assert(NULL != chat);
+    chat->buffer.length = 0;
+    chat->buffer.text[0] = '\0';
+}
 
-    // Setup strings.
-    for(i = 0; i < 10; ++i)
+boolean UIChat_IsActive(uidata_chat_t* chat)
+{
+    assert(NULL != chat);
+    return (0 != (chat->flags & UICF_ACTIVE));
+}
+
+boolean UIChat_Activate(uidata_chat_t* chat, boolean yes)
+{
+    assert(NULL != chat);
     {
-        if(!cfg.chatMacros[i]) // Don't overwrite if already set.
-            cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+    boolean oldActive = (chat->flags & UICF_ACTIVE) != 0;
+    if(chat->flags & UICF_ACTIVE)
+    {
+        if(!yes)
+        {
+            chat->flags &= ~UICF_ACTIVE;
+        }
+    }
+    else if(yes)
+    {
+        chat->flags |= UICF_ACTIVE;
+        // Default destinition is "global".
+        UIChat_SetDestination(chat, 0);
+        UIChat_Clear(chat);
+    }
+    return oldActive != ((chat->flags & UICF_ACTIVE) != 0);
     }
 }
 
-/**
- * Called by HU_Start().
- */
-void Chat_Start(void)
+int UIChat_Destination(uidata_chat_t* chat)
 {
-    int i;
+    assert(NULL != chat);
+    return chat->destination;
+}
 
-    // Create the chat widgets.
-    for(i = 0; i < MAXPLAYERS; ++i)
+void UIChat_SetDestination(uidata_chat_t* chat, int destination)
+{
+    assert(NULL != chat);
+    if(destination < 0 || destination > NUMTEAMS) return;
+    chat->destination = destination;
+}
+
+boolean UIChat_SetShiftModifier(uidata_chat_t* chat, boolean on)
+{
+    assert(NULL != chat);
     {
-        Chat_Open(i, false);
-
-        // Create the input buffers.
-        HUlib_initText(&chatWidgets[i].buffer, 0, 0, &chatWidgets[i].active);
+    boolean oldShiftDown = chat->buffer.shiftDown;
+    chat->buffer.shiftDown = on;
+    return oldShiftDown != chat->buffer.shiftDown;
     }
 }
 
-void Chat_Open(int player, boolean open)
+boolean UIChat_AppendCharacter(uidata_chat_t* chat, char ch)
 {
-    assert(player >= 0 && player < DDMAXPLAYERS);
-    {
-    uiwidget_chat_t* chat = &chatWidgets[player];
-    if(open)
-    {
-        chat->active = true;
-        chat->to = player;
+    assert(NULL != chat);
 
-        HUlib_resetText(&chat->buffer);
-        // Enable the chat binding class
-        DD_Execute(true, "activatebcontext chat");
-        return;
+    if(chat->buffer.length == UICHAT_INPUTBUFFER_MAXLENGTH)
+    {
+        return false;
     }
 
-    if(chat->active)
+    if(chat->buffer.shiftDown)
     {
-        chat->active = false;
-        // Disable the chat binding class
-        DD_Execute(true, "deactivatebcontext chat");
+        ch = shiftXForm[ch];
     }
-    }
+
+    if(ch < ' ' || ch > 'z')
+        return false;
+
+    chat->buffer.text[chat->buffer.length++] = ch;
+    chat->buffer.text[chat->buffer.length] = '\0';
+    return true;
 }
 
-int Chat_Responder(event_t* ev)
+void UIChat_DeleteLastCharacter(uidata_chat_t* chat)
 {
-    int player = CONSOLEPLAYER;
-    uiwidget_chat_t* chat = &chatWidgets[player];
-    boolean eatkey = false;
-    unsigned char c;
-
-    if(!chat->active)
-        return false;
-
-    if(ev->type != EV_KEY)
-        return false;
-
-    if(ev->data1 == DDKEY_RSHIFT)
-    {
-        chat->shiftDown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
-        return false;
-    }
-
-    if(ev->state != EVS_DOWN)
-        return false;
-
-    c = (unsigned char) ev->data1;
-
-    if(chat->shiftDown)
-        c = shiftXForm[c];
-
-    eatkey = HUlib_keyInText(&chat->buffer, c);
-
-    return eatkey;
+    assert(NULL != chat);
+    if(0 == chat->buffer.length) return;
+    chat->buffer.text[--chat->buffer.length] = 0;
 }
 
-void Chat_Drawer(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void UIChat_Clear(uidata_chat_t* chat)
 {
-    assert(player >= 0 && player < DDMAXPLAYERS);
-    {
-    uiwidget_chat_t* chat = &chatWidgets[player];
-    hu_textline_t* l = &chat->buffer.l;
-    char buf[HU_MAXLINELENGTH+1];
-    const char* str;
-    int xOffset = 0;
-    byte textFlags;
+    clearInputBuffer(chat);
+}
 
-    if(!*chat->buffer.on)
-        return;
+const char* UIChat_Text(uidata_chat_t* chat)
+{
+    assert(NULL != chat);
+    return chat->buffer.text;
+}
 
-    FR_SetFont(FID(GF_FONTA));
-    if(actualMapTime & 12)
-    {
-        dd_snprintf(buf, HU_MAXLINELENGTH+1, "%s_", chat->buffer.l.l);
-        str = buf;
-        if(cfg.msgAlign == 1)
-            xOffset = FR_CharWidth('_')/2;
-    }
+size_t UIChat_TextLength(uidata_chat_t* chat)
+{
+    assert(NULL != chat);
+    return chat->buffer.length;
+}
+
+boolean UIChat_TextIsEmpty(uidata_chat_t* chat)
+{
+    return (0 == UIChat_TextLength(chat));
+}
+
+static void playMessageSentSound(void)
+{
+#if __JDOOM__
+    if(gameModeBits & GM_ANY_DOOM2)
+        S_LocalSound(SFX_RADIO, 0);
     else
-    {
-        str = chat->buffer.l.l;
-        if(cfg.msgAlign == 2)
-            xOffset = -FR_CharWidth('_');
-    }
-    textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_DrawText(str, xOffset, 0, FID(GF_FONTA), textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnWidth = FR_TextWidth(chat->buffer.l.l, FID(GF_FONTA)) + FR_CharWidth('_');
-    *drawnHeight = MAX_OF(FR_TextHeight(chat->buffer.l.l, FID(GF_FONTA)), FR_CharHeight('_'));
-    }
+        S_LocalSound(SFX_TINK, 0);
+#elif __JDOOM64__
+    S_LocalSound(SFX_RADIO, 0);
+#endif
 }
 
-/**
- * Sends a string to other player(s) as a chat message.
- */
-static void sendMessage(int player, const char* msg)
+static void sendMessage(int player, int destination, const char* msg)
 {
-    uiwidget_chat_t* chat = &chatWidgets[player];
     char buff[256];
-    int i;
 
-    if(chat->to == 0)
+    if(destination == 0)
     {   // Send the message to the other players explicitly,
         if(!IS_NETGAME)
         {   // Send it locally.
+            int i;
             for(i = 0; i < MAXPLAYERS; ++i)
             {
                 D_NetMessageNoSound(i, msg);
@@ -322,11 +231,12 @@ static void sendMessage(int player, const char* msg)
         }
     }
     else
-    {   // Send to all of the destination color.
-        chat->to -= 1;
+    {   // Send to all on the same team (team = color).
+        int i;
+        destination -= 1;
 
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->inGame && cfg.playerColor[i] == chat->to)
+            if(players[i].plr->inGame && cfg.playerColor[i] == destination)
             {
                 if(!IS_NETGAME)
                 {   // Send it locally.
@@ -340,131 +250,237 @@ static void sendMessage(int player, const char* msg)
                 }
             }
     }
+    playMessageSentSound();
+}
 
-#if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
-        S_LocalSound(SFX_RADIO, 0);
+static int parseDestination(const char* str)
+{
+    if(str && str[0])
+    {
+        int dest = atoi(str);
+        if(dest >= 0 && dest <= NUMTEAMS)
+        {
+            return dest;
+        }
+    }
+    return -1;
+}
+
+static int parseMacroId(const char* str)
+{
+    if(str && str[0])
+    {
+        int id = atoi(str);
+        if(id >= 0 && id < 9)
+        {
+            return id;
+        }
+    }
+    return -1;
+}
+
+void Chat_Init(void)
+{
+    Chat_LoadResources();
+}
+
+void Chat_Shutdown(void)
+{
+    // Stub.
+}
+
+void Chat_LoadResources(void)
+{
+    // Retrieve the chat macro strings if not already set.
+    int i;
+    for(i = 0; i < 10; ++i)
+    {
+        if(cfg.chatMacros[i]) continue;
+        cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+    }
+}
+
+void Chat_Open(int player, boolean open)
+{
+    uidata_chat_t* chat = widgetForLocalPlayer(player);
+    if(UIChat_Activate(chat, open))
+    {
+        DD_Executef(true, "%s chat", UIChat_IsActive(chat)? "activatebcontext" : "deactivatebcontext");
+    }
+}
+
+void Chat_Start(int player)
+{
+    // Stub.
+}
+
+int Chat_Responder(int player, event_t* ev)
+{
+    uidata_chat_t* chat = widgetForLocalPlayer(player);
+
+    if(!UIChat_IsActive(chat))
+        return false;
+
+    if(ev->type != EV_KEY)
+        return false;
+
+    if(ev->data1 == DDKEY_RSHIFT)
+    {
+        UIChat_SetShiftModifier(chat, (ev->state == EVS_DOWN || ev->state == EVS_REPEAT));
+        return false; // Never eaten.
+    }
+
+    if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+        return false;
+
+    if(ev->data1 == DDKEY_BACKSPACE)
+    {
+        UIChat_DeleteLastCharacter(chat);
+        return true;
+    }
+
+    return UIChat_AppendCharacter(chat, (char)ev->data1);
+}
+
+static void drawWidget(uidata_chat_t* chat, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    assert(NULL != chat);
+    {
+    const char* str, *text = UIChat_Text(chat);
+    char buf[UICHAT_INPUTBUFFER_MAXLENGTH+1];
+    short textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS;
+    int xOffset = 0;
+
+    FR_SetFont(FID(GF_FONTA));
+    if(actualMapTime & 12)
+    {
+        dd_snprintf(buf, UICHAT_INPUTBUFFER_MAXLENGTH+1, "%s_", text);
+        str = buf;
+        if(cfg.msgAlign == 1)
+            xOffset = FR_CharWidth('_')/2;
+    }
     else
-        S_LocalSound(SFX_TINK, 0);
-#elif __JDOOM64__
-    S_LocalSound(SFX_RADIO, 0);
-#endif
+    {
+        str = text;
+        if(cfg.msgAlign == 2)
+            xOffset = -FR_CharWidth('_');
+    }
+    textFlags |= ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_DrawText(str, xOffset, 0, FID(GF_FONTA), textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    if(NULL != drawnWidth)
+        *drawnWidth = FR_TextWidth(text, FID(GF_FONTA)) + FR_CharWidth('_');
+    if(NULL != drawnHeight)
+        *drawnHeight = MAX_OF(FR_TextHeight(text, FID(GF_FONTA)), FR_CharHeight('_'));
+    }
+}
+
+void Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight)
+{
+    uidata_chat_t* chat = widgetForLocalPlayer(player);
+
+    if(NULL != drawnWidth)  *drawnWidth  = 0;
+    if(NULL != drawnHeight) *drawnHeight = 0;
+
+    if(!UIChat_IsActive(chat))
+        return;
+
+    drawWidget(chat, textAlpha, iconAlpha, drawnWidth, drawnHeight);
 }
 
 boolean Chat_IsActive(int player)
 {
-    assert(player >= 0 && player < DDMAXPLAYERS);
-    {
-    uiwidget_chat_t* chat = &chatWidgets[player];
-    return chat->active;
-    }
+    return UIChat_IsActive(widgetForLocalPlayer(player));
 }
 
-/**
- * Sets the chat buffer to a chat macro string.
- */
-static boolean sendMacro(int player, int num)
+D_CMD(ChatOpen)
 {
-    if(num >= 0 && num < 9)
-    {   // Leave chat mode and notify that it was sent.
-        if(chatWidgets[player].active)
-            Chat_Open(player, false);
-
-        sendMessage(player, cfg.chatMacros[num]);
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * Handles controls (console commands) for the chat widget.
- */
-D_CMD(MsgAction)
-{
-    int player = CONSOLEPLAYER;
-    uiwidget_chat_t* chat = &chatWidgets[player];
-    int toPlayer;
+    int player = CONSOLEPLAYER, destination = 0;
 
     if(G_GetGameAction() == GA_QUIT)
         return false;
 
-    if(chat->active)
+    Chat_Open(player, true);
+
+    if(argc == 2)
     {
-        if(!stricmp(argv[0], "chatcomplete"))  // send the message
+        destination = parseDestination(argv[1]);
+        if(destination < 0)
         {
-            Chat_Open(player, false);
-            if(chat->buffer.l.len)
-            {
-                sendMessage(player, chat->buffer.l.l);
-            }
-        }
-        else if(!stricmp(argv[0], "chatcancel"))  // close chat
-        {
-            Chat_Open(player, false);
-        }
-        else if(!stricmp(argv[0], "chatdelete"))
-        {
-            HUlib_delCharFromText(&chat->buffer);
-        }
-    }
-
-    if(!stricmp(argv[0], "chatsendmacro"))  // send a chat macro
-    {
-        int macroNum;
-
-        if(argc < 2 || argc > 3)
-        {
-            Con_Message("Usage: %s (player) (macro number)\n", argv[0]);
-            Con_Message("Send a chat macro to other player(s).\n"
-                        "If (player) is omitted, the message will be sent to all players.\n");
-            return true;
-        }
-
-        if(argc == 3)
-        {
-            toPlayer = atoi(argv[1]);
-            if(toPlayer < 0 || toPlayer > 3)
-            {
-                // Bad destination.
-                Con_Message("Invalid player number \"%i\". Should be 0-3\n", toPlayer);
-                return false;
-            }
-
-            toPlayer = toPlayer + 1;
-        }
-        else
-            toPlayer = 0;
-
-        macroNum = atoi(((argc == 3)? argv[2] : argv[1]));
-        if(!sendMacro(player, macroNum))
-        {
-            Con_Message("Invalid macro number\n");
+            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
             return false;
         }
     }
-    else if(!stricmp(argv[0], "beginchat")) // begin chat mode
+    UIChat_SetDestination(widgetForLocalPlayer(player), destination);
+
+    return true;
+}
+
+D_CMD(ChatSendMacro)
+{
+    int player = CONSOLEPLAYER, macroId, destination = 0;
+
+    if(G_GetGameAction() == GA_QUIT)
+        return false;
+
+    if(argc < 2 || argc > 3)
     {
-        if(chat->active)
-            return false;
-
-        if(argc == 2)
-        {
-            toPlayer = atoi(argv[1]);
-            if(toPlayer < 0 || toPlayer > 3)
-            {
-                // Bad destination.
-                Con_Message("Invalid player number \"%i\". Should be 0-3\n", toPlayer);
-                return false;
-            }
-
-            toPlayer = toPlayer + 1;
-        }
-        else
-            toPlayer = 0;
-
-        Chat_Open(toPlayer, true);
+        Con_Message("Usage: %s (team) (macro number)\n", argv[0]);
+        Con_Message("Send a chat macro to other player(s).\n"
+                    "If (team) is omitted, the message will be sent to all players.\n");
+        return true;
     }
 
+    if(argc == 3)
+    {
+        destination = parseDestination(argv[1]);
+        if(destination < 0)
+        {
+            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            return false;
+        }
+    }
+
+    macroId = parseMacroId(argc == 3? argv[2] : argv[1]);
+    if(-1 == macroId)
+    {
+        Con_Message("Invalid macro id\n");
+        return false;
+    }
+
+    sendMessage(player, destination, cfg.chatMacros[macroId]);
+    Chat_Open(player, false);
+    return true;
+}
+
+D_CMD(ChatAction)
+{
+    int player = CONSOLEPLAYER;
+    const char* cmd = argv[0] + 4;
+
+    if(G_GetGameAction() == GA_QUIT) return false;
+    if(!Chat_IsActive(player)) return false;
+
+    if(!stricmp(cmd, "complete")) // Send the message.
+    {
+        uidata_chat_t* chat = widgetForLocalPlayer(player);
+        if(!UIChat_TextIsEmpty(chat))
+        {
+            sendMessage(player, UIChat_Destination(chat), UIChat_Text(chat));
+        }
+        Chat_Open(player, false);
+    }
+    else if(!stricmp(cmd, "cancel")) // Close chat.
+    {
+        Chat_Open(player, false);
+    }
+    else if(!stricmp(cmd, "delete"))
+    {
+        UIChat_DeleteLastCharacter(widgetForLocalPlayer(player));
+    }
     return true;
 }

@@ -1,4 +1,4 @@
-/**\file
+/**\file hu_lib.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * hu_lib.c: Heads-up text and input code.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 
 #if __JDOOM__
@@ -43,140 +37,12 @@
 
 #include "hu_lib.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean inited = false;
 static uiwidgetid_t numWidgets;
 static uiwidget_t* widgets;
 
 static int numWidgetGroups;
 static uiwidgetgroup_t* widgetGroups;
-
-// CODE --------------------------------------------------------------------
-
-void HUlib_clearTextLine(hu_textline_t *t)
-{
-    t->len = 0;
-    t->l[0] = 0;
-    t->needsupdate = true;
-}
-
-void HUlib_initTextLine(hu_textline_t *t, int x, int y)
-{
-    t->x = x;
-    t->y = y;
-    HUlib_clearTextLine(t);
-}
-
-boolean HUlib_addCharToTextLine(hu_textline_t* t, char ch)
-{
-    if(t->len == HU_MAXLINELENGTH)
-        return false;
-
-    t->l[t->len++] = ch;
-    t->l[t->len] = 0;
-    t->needsupdate = 4;
-    return true;
-}
-
-boolean HUlib_delCharFromTextLine(hu_textline_t* t)
-{
-    if(!t->len)
-        return false;
-
-    t->l[--t->len] = 0;
-    t->needsupdate = 4;
-    return true;
-}
-
-/**
- * Sorta called by HU_Erase and just better darn get things straight.
- */
-void HUlib_eraseTextLine(hu_textline_t* l)
-{
-    if(l->needsupdate)
-        l->needsupdate--;
-}
-
-void HUlib_initText(hu_text_t* it, int x, int y, boolean* on)
-{
-    it->lm = 0; // Default left margin is start of text.
-    it->on = on;
-    it->laston = true;
-
-    HUlib_initTextLine(&it->l, x, y);
-}
-
-/**
- * Adheres to the left margin restriction
- */
-void HUlib_delCharFromText(hu_text_t* it)
-{
-    if(it->l.len != it->lm)
-        HUlib_delCharFromTextLine(&it->l);
-}
-
-void HUlib_eraseLineFromText(hu_text_t* it)
-{
-    while(it->lm != it->l.len)
-        HUlib_delCharFromTextLine(&it->l);
-}
-
-/**
- * Resets left margin as well.
- */
-void HUlib_resetText(hu_text_t* it)
-{
-    it->lm = 0;
-    HUlib_clearTextLine(&it->l);
-}
-
-void HUlib_addPrefixToText(hu_text_t* it, char* str)
-{
-    while(*str)
-        HUlib_addCharToTextLine(&it->l, *(str++));
-
-    it->lm = it->l.len;
-}
-
-/**
- * Wrapper function for handling general keyed input.
- *
- * @return              @c true, if it ate the key.
- */
-boolean HUlib_keyInText(hu_text_t* it, unsigned char ch)
-{
-    if(ch >= ' ' && ch <= 'z')
-    {
-        HUlib_addCharToTextLine(&it->l, (char) ch);
-        return true;
-    }
-
-    return false;
-}
-
-void HUlib_eraseText(hu_text_t* it)
-{
-    if(it->laston && !*it->on)
-        it->l.needsupdate = 4;
-
-    HUlib_eraseTextLine(&it->l);
-    it->laston = *it->on;
-}
 
 static __inline uiwidget_t* toWidget(uiwidgetid_t id)
 {

@@ -65,6 +65,7 @@
 #include "p_mapspec.h"
 #include "dmu_lib.h"
 #include "hu_stuff.h"
+#include "hu_chat.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -557,10 +558,10 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    // Wake up the status bar.
+    // Wake up HUD widgets.
     ST_Start(p - players);
-    // Wake up the heads up text.
     HU_Start(p - players);
+    Chat_Start(p - players);
 
 #if __JHEXEN__
     cfg.playerClass[plrNum] = pClass;

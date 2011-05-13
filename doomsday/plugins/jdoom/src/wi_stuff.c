@@ -34,8 +34,6 @@
 #include "d_net.h"
 #include "p_start.h"
 
-#define NUM_TEAMS               (4) // Color = team.
-
 #define MAX_ANIM_FRAMES         (3)
 #define NUMMAPS                 (9)
 
@@ -76,7 +74,7 @@ typedef struct wianimstate_s {
 
 typedef struct teaminfo_s {
     int playerCount; /// @c 0= team not present.
-    int frags[NUM_TEAMS];
+    int frags[NUMTEAMS];
     int totalFrags; /// Kills minus suicides.
     int items;
     int kills;
@@ -167,7 +165,7 @@ static wianimdef_t* animDefs[] = {
 
 static wianimstate_t* animStates = NULL;
 
-static teaminfo_t teamInfo[NUM_TEAMS];
+static teaminfo_t teamInfo[NUMTEAMS];
 
 // Used to accelerate or skip a stage.
 static boolean advanceState;
@@ -178,8 +176,8 @@ static int spState, dmState, ngState;
 
 static interludestate_t inState;
 
-static int dmFrags[NUM_TEAMS][NUM_TEAMS];
-static int dmTotals[NUM_TEAMS];
+static int dmFrags[NUMTEAMS][NUMTEAMS];
+static int dmTotals[NUMTEAMS];
 
 static int doFrags;
 
@@ -189,10 +187,10 @@ static int inPlayerTeam;
 static int stateCounter;
 static int backgroundAnimCounter;
 
-static int cntKills[NUM_TEAMS];
-static int cntItems[NUM_TEAMS];
-static int cntSecret[NUM_TEAMS];
-static int cntFrags[NUM_TEAMS];
+static int cntKills[NUMTEAMS];
+static int cntItems[NUMTEAMS];
+static int cntSecret[NUMTEAMS];
+static int cntFrags[NUMTEAMS];
 static int cntTime;
 static int cntPar;
 static int cntPause;
@@ -220,8 +218,8 @@ static patchid_t pVictims;
 static patchid_t pTotal;
 static patchid_t pFaceAlive;
 static patchid_t pFaceDead;
-static patchid_t pTeamBackgrounds[NUM_TEAMS];
-static patchid_t pTeamIcons[NUM_TEAMS];
+static patchid_t pTeamBackgrounds[NUMTEAMS];
+static patchid_t pTeamIcons[NUMTEAMS];
 
 static cvartemplate_t cvars[] = {
     { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
@@ -574,7 +572,7 @@ static void initDeathmatchStats(void)
 
     // Clear the on-screen counters.
     memset(dmTotals, 0, sizeof(dmTotals));
-    for(i = 0; i < NUM_TEAMS; ++i)
+    for(i = 0; i < NUMTEAMS; ++i)
         memset(dmFrags[i], 0, sizeof(dmFrags[i]));
 }
 
@@ -586,9 +584,9 @@ static void updateDeathmatchStats(void)
     if(advanceState && dmState != 4)
     {
         advanceState = false;
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
-            for(j = 0; j < NUM_TEAMS; ++j)
+            for(j = 0; j < NUMTEAMS; ++j)
             {
                 dmFrags[i][j] = teamInfo[i].frags[j];
             }
@@ -606,9 +604,9 @@ static void updateDeathmatchStats(void)
             S_LocalSound(SFX_PISTOL, 0);
 
         stillTicking = false;
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
-            for(j = 0; j < NUM_TEAMS; ++j)
+            for(j = 0; j < NUMTEAMS; ++j)
             {
                 if(dmFrags[i][j] != teamInfo[i].frags[j])
                 {
@@ -679,7 +677,7 @@ static void drawDeathmatchStats(void)
     x = DM_MATRIXX + DM_SPACINGX;
     y = DM_MATRIXY;
 
-    for(i = 0; i < NUM_TEAMS; ++i)
+    for(i = 0; i < NUMTEAMS; ++i)
     {
         if(teamInfo[i].playerCount > 0)
         {
@@ -728,13 +726,13 @@ static void drawDeathmatchStats(void)
     FR_SetFont(FID(GF_SMALL));
     w = FR_CharWidth('0');
 
-    for(i = 0; i < NUM_TEAMS; ++i)
+    for(i = 0; i < NUMTEAMS; ++i)
     {
         x = DM_MATRIXX + DM_SPACINGX;
         if(teamInfo[i].playerCount > 0)
         {
             char buf[20];
-            for(j = 0; j < NUM_TEAMS; ++j)
+            for(j = 0; j < NUMTEAMS; ++j)
             {
                 if(teamInfo[j].playerCount > 0)
                 {
@@ -768,7 +766,7 @@ static void initNetgameStats(void)
     memset(cntFrags, 0, sizeof(cntFrags));
     doFrags = 0;
 
-    for(i = 0; i < NUM_TEAMS; ++i)
+    for(i = 0; i < NUMTEAMS; ++i)
     {
         doFrags += teamInfo[i].totalFrags;
     }
@@ -783,7 +781,7 @@ static void updateNetgameStats(void)
     if(advanceState && ngState != 10)
     {
         advanceState = false;
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
             cntKills[i] = (teamInfo[i].kills * 100) / wbs->maxKills;
             cntItems[i] = (teamInfo[i].items * 100) / wbs->maxItems;
@@ -803,7 +801,7 @@ static void updateNetgameStats(void)
             S_LocalSound(SFX_PISTOL, 0);
         stillTicking = false;
 
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
             cntKills[i] += 2;
 
@@ -825,7 +823,7 @@ static void updateNetgameStats(void)
             S_LocalSound(SFX_PISTOL, 0);
         stillTicking = false;
 
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
             cntItems[i] += 2;
             if(cntItems[i] >= (teamInfo[i].items * 100) / wbs->maxItems)
@@ -847,7 +845,7 @@ static void updateNetgameStats(void)
 
         stillTicking = false;
 
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
             cntSecret[i] += 2;
 
@@ -870,7 +868,7 @@ static void updateNetgameStats(void)
 
         stillTicking = false;
 
-        for(i = 0; i < NUM_TEAMS; ++i)
+        for(i = 0; i < NUMTEAMS; ++i)
         {
             cntFrags[i] += 1;
 
@@ -939,7 +937,7 @@ static void drawNetgameStats(void)
     }
 
     // Draw stats.
-    for(i = 0; i < NUM_TEAMS; ++i)
+    for(i = 0; i < NUMTEAMS; ++i)
     {
         patchinfo_t info;
 
@@ -1279,7 +1277,7 @@ static void loadData(void)
     pFaceDead   = R_PrecachePatch("STFDEAD0", NULL);
 
     { int i;
-    for(i = 0; i < NUM_TEAMS; ++i)
+    for(i = 0; i < NUMTEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
         pTeamBackgrounds[i] = R_PrecachePatch(name, NULL);
@@ -1348,7 +1346,7 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
 
     // Calculate team stats.
     memset(teamInfo, 0, sizeof(teamInfo));
-    for(i = 0, tin = teamInfo; i < NUM_TEAMS; ++i, tin++)
+    for(i = 0, tin = teamInfo; i < NUMTEAMS; ++i, tin++)
     {
         for(j = 0; j < MAXPLAYERS; ++j)
         {
@@ -1372,7 +1370,7 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
         }
 
         // Calculate team's total frags.
-        for(j = 0; j < NUM_TEAMS; ++j)
+        for(j = 0; j < NUMTEAMS; ++j)
         {
             if(j == i) // Suicides are negative frags.
                 tin->totalFrags -= tin->frags[j];

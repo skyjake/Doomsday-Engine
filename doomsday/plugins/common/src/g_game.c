@@ -917,6 +917,7 @@ void G_CommonShutdown(void)
     ST_Shutdown();
     GUI_Shutdown();
     FI_StackShutdown();
+    Chat_Shutdown();
 }
 
 /**
@@ -1262,7 +1263,7 @@ int G_Responder(event_t* ev)
     // With the menu active, none of these should respond to input events.
     if(G_GetGameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
-        if(Chat_Responder(ev))
+        if(Chat_Responder(CONSOLEPLAYER, ev))
             return true;
 
         if(G_EventSequenceResponder(ev))

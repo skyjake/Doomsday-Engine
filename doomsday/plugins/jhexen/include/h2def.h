@@ -109,6 +109,8 @@ typedef enum {
 #define MAXPLAYERS          8
 #define NUMPLAYERCOLORS     8
 
+#define NUMTEAMS            8 // Color = team.
+
 // Playsim, core timing rate in cycles per second.
 #define TICRATE             35
 #define TICSPERSEC          35

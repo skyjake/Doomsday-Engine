@@ -339,7 +339,6 @@ void HU_Start(int player)
     assert(player >= 0 && player < MAXPLAYERS);
     {
     hudstate_t* hud = &hudStates[player];
-    Chat_Start();
     Hu_LogStart(player);
 
     hud = &hudStates[player];

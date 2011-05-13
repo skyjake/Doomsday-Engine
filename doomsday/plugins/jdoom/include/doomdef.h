@@ -94,6 +94,8 @@ typedef enum {
 #define MAXPLAYERS          16
 #define NUMPLAYERCOLORS     4
 
+#define NUMTEAMS            4 // Color = team.
+
 // State updates, number of tics / second.
 #define TICRATE             35
 
