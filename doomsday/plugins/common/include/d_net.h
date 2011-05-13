@@ -1,10 +1,10 @@
-/**\file
+/**\file d_net.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,14 +22,20 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_net.h:
- */
-
-#ifndef __GAME_NETWORK_DEF_H__
-#define __GAME_NETWORK_DEF_H__
+#ifndef LIBCOMMON_NETWORK_DEF_H
+#define LIBCOMMON_NETWORK_DEF_H
 
 #include "dd_share.h"
+
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#endif
 
 #define NETBUFFER_MAXMESSAGE 255
 
@@ -202,4 +208,4 @@ extern float    netJumpPower;
 #include "d_netsv.h"
 #include "d_netcl.h"
 
-#endif
+#endif /* LIBCOMMON_NETWORK_DEF_H */

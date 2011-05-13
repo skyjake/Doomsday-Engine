@@ -30,15 +30,7 @@
 #ifndef LIBCOMMON_HUD_CHAT_H
 #define LIBCOMMON_HUD_CHAT_H
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-# include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "doomsday.h"
 
 #define UICHAT_INPUTBUFFER_MAXLENGTH    (160)
 
