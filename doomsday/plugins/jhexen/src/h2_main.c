@@ -186,7 +186,7 @@ void X_PreInit(void)
     cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
-    cfg.hudShown[HUD_CURRENTITEM] = true;
+    cfg.hudShown[HUD_READYITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
     { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.

@@ -342,54 +342,69 @@ int Chat_Responder(int player, event_t* ev)
     return UIChat_AppendCharacter(chat, (char)ev->data1);
 }
 
-static void drawWidget(uidata_chat_t* chat, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+static void drawWidget(uidata_chat_t* chat, float textAlpha, float iconAlpha)
 {
     assert(NULL != chat);
     {
-    const char* str, *text = UIChat_Text(chat);
+    const char* text = UIChat_Text(chat);
     char buf[UICHAT_INPUTBUFFER_MAXLENGTH+1];
-    short textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS;
-    int xOffset = 0;
+    short textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
+    int xOffset, textWidth, cursorWidth;
 
     FR_SetFont(FID(GF_FONTA));
-    if(actualMapTime & 12)
-    {
-        dd_snprintf(buf, UICHAT_INPUTBUFFER_MAXLENGTH+1, "%s_", text);
-        str = buf;
-        if(cfg.msgAlign == 1)
-            xOffset = FR_CharWidth('_')/2;
-    }
-    else
-    {
-        str = text;
-        if(cfg.msgAlign == 2)
-            xOffset = -FR_CharWidth('_');
-    }
-    textFlags |= ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
+    textWidth = FR_TextWidth(text, FID(GF_FONTA));
+    cursorWidth = FR_CharWidth('_');
+
+    if(cfg.msgAlign == 0)
+        xOffset = 0;
+    else if(cfg.msgAlign == 1)
+        xOffset = -(textWidth + cursorWidth)/2;
+    else if(cfg.msgAlign == 2)
+        xOffset = -(textWidth + cursorWidth);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText(str, xOffset, 0, FID(GF_FONTA), textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+    FR_DrawText(text, xOffset, 0, FID(GF_FONTA), textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+    if(actualMapTime & 12)
+    {
+        DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
+        FR_DrawChar('_', xOffset + textWidth, 0);
+    }
     DGL_Disable(DGL_TEXTURE_2D);
-
-    if(NULL != drawnWidth)
-        *drawnWidth = FR_TextWidth(text, FID(GF_FONTA)) + FR_CharWidth('_');
-    if(NULL != drawnHeight)
-        *drawnHeight = MAX_OF(FR_TextHeight(text, FID(GF_FONTA)), FR_CharHeight('_'));
     }
 }
 
-void Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight)
+static void calcWidgetDimensions(uidata_chat_t* chat, int* width, int* height)
+{
+    assert(NULL != chat);
+    {
+    const char* text = UIChat_Text(chat);
+    FR_SetFont(FID(GF_FONTA));
+    if(NULL != width)  *width  = FR_TextWidth(text, FID(GF_FONTA)) + FR_CharWidth('_');
+    if(NULL != height) *height = MAX_OF(FR_TextHeight(text, FID(GF_FONTA)), FR_CharHeight('_'));
+    }
+}
+
+void Chat_Drawer(int player, float textAlpha, float iconAlpha)
 {
     uidata_chat_t* chat = widgetForLocalPlayer(player);
-
-    if(NULL != drawnWidth)  *drawnWidth  = 0;
-    if(NULL != drawnHeight) *drawnHeight = 0;
 
     if(!UIChat_IsActive(chat))
         return;
 
-    drawWidget(chat, textAlpha, iconAlpha, drawnWidth, drawnHeight);
+    drawWidget(chat, textAlpha, iconAlpha);
+}
+
+void Chat_Dimensions(int player, int* width, int* height)
+{
+    uidata_chat_t* chat = widgetForLocalPlayer(player);
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!UIChat_IsActive(chat))
+        return;
+
+    calcWidgetDimensions(chat, width, height);
 }
 
 boolean Chat_IsActive(int player)

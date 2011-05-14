@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,5 +59,6 @@ void ST_HUDUnHide(int player, hueevent_t ev);
 
 void ST_doPaletteStuff(int player);
 void ST_FlashCurrentItem(int player);
+void ST_UpdateLogAlignment(void);
 
 #endif /* LIBHEXEN_STUFF_H */

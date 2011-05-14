@@ -293,7 +293,7 @@ int P_GetPlayerNum(player_t *player)
  *
  * @return              Cheats active for the given player in a bitfield.
  */
-int P_GetPlayerCheats(player_t *player)
+int P_GetPlayerCheats(const player_t* player)
 {
     if(!player)
     {

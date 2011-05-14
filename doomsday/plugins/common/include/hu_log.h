@@ -100,7 +100,9 @@ void Hu_LogEmpty(int player);
  * @param player  Local player number whose message log to draw.
  * @param alpha  Opacity of the log where @c 1= opaque and @c 0= transparent.
  */
-void Hu_LogDrawer(int player, float alpha, int* drawnWidth, int* drawnHeight);
+void Hu_LogDrawer(int player, float alpha);
+
+void Hu_LogDimensions(int player, int* width, int* height);
 
 /**
  * Process gametic for all players with an active message log.

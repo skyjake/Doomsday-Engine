@@ -58,5 +58,6 @@ void ST_Stop(int player);
 
 /// Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t event);
+void ST_UpdateLogAlignment(void);
 
 #endif /* LIBDOOM64_STUFF_H */

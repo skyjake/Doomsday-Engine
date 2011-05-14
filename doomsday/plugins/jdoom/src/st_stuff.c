@@ -168,31 +168,41 @@ enum {
 };
 
 typedef struct {
-    boolean         inited;
-    boolean         stopped;
-    int             hideTics;
-    float           hideAmount;
-    float           alpha; // Fullscreen hud alpha value.
+    boolean inited;
+    boolean stopped;
+    int hideTics;
+    float hideAmount;
+    float alpha; // Fullscreen hud alpha value.
+    float showBar; // Slide statusbar amount 1.0 is fully open.
+    boolean statusbarActive; // Whether the statusbar is active.
 
-    float           showBar; // Slide statusbar amount 1.0 is fully open.
+    int widgetGroupNames[NUM_UIWIDGET_GROUPS];
 
-    boolean         statusbarActive; // Whether the statusbar is active.
-    int             currentFragsCount; // Number of frags so far in deathmatch.
-    int             readyAmmo;
-    int             health;
-    int             armor;
-    int             numAmmo[NUM_AMMO_TYPES];
-    int             maxAmmo[NUM_AMMO_TYPES];
+    // Statusbar:
+    guidata_health_t sbarHealth;
+    guidata_readyammo_t sbarReadyammo;
+    guidata_ammo_t sbarAmmos[NUM_AMMO_TYPES];
+    guidata_ammo_t sbarMaxammos[NUM_AMMO_TYPES];
+    guidata_weaponslot_t sbarWeaponslots[6];
+    guidata_armor_t sbarArmor;
+    guidata_frags_t sbarFrags;
+    guidata_keyslot_t sbarKeyslots[3];
+    guidata_face_t sbarFace;
 
-    // For status face:
-    int             oldHealth; // Used to use appopriately pained face.
-    boolean         oldWeaponsOwned[NUM_WEAPON_TYPES]; // Used for evil grin.
-    int             faceCount; // Count until face changes.
-    int             faceIndex; // Current face index, used by wFaces.
-    int             lastAttackDown;
-    int             priority;
+    // Fullscreen:
+    guidata_health_t health;
+    guidata_armoricon_t armoricon;
+    guidata_keys_t keys;
+    guidata_armor_t armor;
+    guidata_readyammoicon_t readyammoicon;
+    guidata_readyammo_t readyammo;
+    guidata_face_t face;
+    guidata_frags_t frags;
 
-    int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
+    // Other:
+    guidata_secrets_t secrets;
+    guidata_items_t items;
+    guidata_kills_t kills;
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -213,22 +223,22 @@ void unhideHUD(void);
 static hudstate_t hudStates[MAXPLAYERS];
 
 // Main bar left.
-static patchinfo_t statusbar;
+static patchinfo_t pStatusbar;
 
 // 3 key-cards, 3 skulls.
-static patchinfo_t keys[NUM_KEY_TYPES];
+static patchinfo_t pKeys[NUM_KEY_TYPES];
 
 // Face status patches.
-static patchinfo_t faces[ST_NUMFACES];
+static patchinfo_t pFaces[ST_NUMFACES];
 
 // Face background.
-static patchinfo_t faceBackground[4];
+static patchinfo_t pFaceBackground[4];
 
  // Main bar right.
-static patchinfo_t armsBackground;
+static patchinfo_t pArmsBackground;
 
 // Weapon ownership patches.
-static patchinfo_t arms[6][2];
+static patchinfo_t pArms[6][2];
 
 // CVARs for the HUD/Statusbar:
 cvartemplate_t sthudCVars[] =
@@ -291,28 +301,39 @@ void ST_Register(void)
         Con_AddVariable(sthudCVars + i);
 }
 
-void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+static int fullscreenMode(void)
+{
+    return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+}
+
+void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
 {
 #define WIDTH       (ST_WIDTH)
 #define HEIGHT      (ST_HEIGHT)
 #define ORIGINX     ((int)(-WIDTH/2))
 #define ORIGINY     ((int)(-HEIGHT * hud->showBar))
 
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const hudstate_t* hud = &hudStates[obj->player];
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
-    float armsBGX = ST_ARMSBGX + armsBackground.offset;
+    float armsBGX = ST_ARMSBGX + pArmsBackground.offset;
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     float cw, cw2, ch;
 
-    if(!hud->statusbarActive)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(xOffset, yOffset, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
+
+    DGL_SetPatch(pStatusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
@@ -352,12 +373,12 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
         if(IS_NETGAME)
         {
             // Fill in any gap left before the faceback due to small ARMS.
-            if(armsBGX + armsBackground.width < ST_FX)
+            if(armsBGX + pArmsBackground.width < ST_FX)
             {
-                int sectionWidth = armsBGX + armsBackground.width;
+                int sectionWidth = armsBGX + pArmsBackground.width;
                 x = ORIGINX + sectionWidth;
                 y = ORIGINY;
-                w = ST_FX - armsBGX - armsBackground.width;
+                w = ST_FX - armsBGX - pArmsBackground.width;
                 h = HEIGHT;
                 cw = (float)sectionWidth / WIDTH;
                 cw2 = (sectionWidth + w) / WIDTH;
@@ -421,7 +442,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
         else
         {
             // Including area behind the face status indicator.
-            int sectionWidth = armsBGX + armsBackground.width;
+            int sectionWidth = armsBGX + pArmsBackground.width;
             x = ORIGINX + sectionWidth;
             y = ORIGINY;
             w = WIDTH - sectionWidth;
@@ -443,12 +464,12 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
 
     if(!deathmatch)
     {   // Draw the ARMS background.
-        DGL_SetPatch(armsBackground.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(pArmsBackground.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = ORIGINX + armsBGX;
-        y = ORIGINY + armsBackground.topOffset;
-        w = armsBackground.width;
-        h = armsBackground.height;
+        y = ORIGINY + pArmsBackground.topOffset;
+        w = pArmsBackground.width;
+        h = pArmsBackground.height;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
@@ -465,7 +486,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     // Faceback?
     if(IS_NETGAME)
     {
-        const patchinfo_t* patch = &faceBackground[cfg.playerColor[player%MAXPLAYERS]%4];
+        const patchinfo_t* patch = &pFaceBackground[cfg.playerColor[obj->player%MAXPLAYERS]%4];
 
         DGL_SetPatch(patch->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -490,14 +511,35 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnWidth = WIDTH;
-    *drawnHeight = HEIGHT;
-
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 #undef WIDTH
 #undef HEIGHT
 #undef ORIGINX
 #undef ORIGINY
+}
+
+void SBarBackground_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeight)
+{
+#define WIDTH       (ST_WIDTH)
+#define HEIGHT      (ST_HEIGHT)
+
+    assert(NULL != obj);
+
+    if(NULL != drawnWidth)  *drawnWidth  = 0;
+    if(NULL != drawnHeight) *drawnHeight = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    if(NULL != drawnWidth)  *drawnWidth  = WIDTH  * cfg.statusbarScale;
+    if(NULL != drawnHeight) *drawnHeight = HEIGHT * cfg.statusbarScale;
+
+#undef WIDTH
+#undef HEIGHT
 }
 
 /**
@@ -524,12 +566,11 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     }
 }
 
-static int calcPainOffset(hudstate_t* hud)
+static int calcPainOffset(int player)
 {
-    player_t*           plr = &players[hud - hudStates];
-    int                 health = (plr->health > 100 ? 100 : plr->health);
-
-    return  ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
+    player_t* plr = &players[player];
+    int health = (plr->health > 100 ? 100 : plr->health);
+    return ST_FACESTRIDE * (((100 - health) * ST_NUMPAINFACES) / 101);
 }
 
 /**
@@ -538,26 +579,27 @@ static int calcPainOffset(hudstate_t* hud)
  *
  * dead > evil grin > turned head > straight ahead
  */
-void ST_updateFaceWidget(int player)
+void Face_Ticker(uiwidget_t* obj)
 {
-    int                 i;
-    angle_t             badGuyAngle;
-    angle_t             diffAng;
-    boolean             doEvilGrin;
-    player_t*           plr = &players[player];
-    hudstate_t*         hud = &hudStates[player];
+    assert(NULL != obj);
+    {
+    guidata_face_t* face = (guidata_face_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    angle_t badGuyAngle, diffAng;
+    boolean doEvilGrin;
+    int i;
 
-    if(hud->priority < 10)
+    if(face->priority < 10)
     {   // Player is dead.
         if(!plr->health)
         {
-            hud->priority = 9;
-            hud->faceIndex = ST_DEADFACE;
-            hud->faceCount = 1;
+            face->priority = 9;
+            face->faceIndex = ST_DEADFACE;
+            face->faceCount = 1;
         }
     }
 
-    if(hud->priority < 9)
+    if(face->priority < 9)
     {
         if(plr->bonusCount)
         {   // Picking up a bonus.
@@ -565,28 +607,28 @@ void ST_updateFaceWidget(int player)
 
             for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                if(hud->oldWeaponsOwned[i] != plr->weapons[i].owned)
+                if(face->oldWeaponsOwned[i] != plr->weapons[i].owned)
                 {
                     doEvilGrin = true;
-                    hud->oldWeaponsOwned[i] = plr->weapons[i].owned;
+                    face->oldWeaponsOwned[i] = plr->weapons[i].owned;
                 }
             }
 
             if(doEvilGrin)
             {   // Evil grin if just picked up weapon.
-                hud->priority = 8;
-                hud->faceCount = ST_EVILGRINCOUNT;
-                hud->faceIndex = calcPainOffset(hud) + ST_EVILGRINOFFSET;
+                face->priority = 8;
+                face->faceCount = ST_EVILGRINCOUNT;
+                face->faceIndex = calcPainOffset(obj->player) + ST_EVILGRINOFFSET;
             }
         }
     }
 
-    if(hud->priority < 8)
+    if(face->priority < 8)
     {
         if(plr->damageCount && plr->attacker &&
            plr->attacker != plr->plr->mo)
         {   // Being attacked.
-            hud->priority = 7;
+            face->priority = 7;
 
             // DOOM BUG
             // This test was inversed, thereby the OUCH face was NEVER used
@@ -597,13 +639,13 @@ void ST_updateFaceWidget(int player)
             // if(plr->health - oldHealth > ST_MUCHPAIN)
 
             if((cfg.fixOuchFace?
-               (hud->oldHealth - plr->health) :
-               (plr->health - hud->oldHealth)) > ST_MUCHPAIN)
+               (face->oldHealth - plr->health) :
+               (plr->health - face->oldHealth)) > ST_MUCHPAIN)
             {
-                hud->faceCount = ST_TURNCOUNT;
-                hud->faceIndex = calcPainOffset(hud) + ST_OUCHOFFSET;
+                face->faceCount = ST_TURNCOUNT;
+                face->faceIndex = calcPainOffset(obj->player) + ST_OUCHOFFSET;
                 if(cfg.fixOuchFace)
-                    hud->priority = 8; // Added to fix 1 tic issue.
+                    face->priority = 8; // Added to fix 1 tic issue.
             }
             else
             {
@@ -624,26 +666,26 @@ void ST_updateFaceWidget(int player)
                     i = diffAng <= ANG180;
                 }
 
-                hud->faceCount = ST_TURNCOUNT;
-                hud->faceIndex = calcPainOffset(hud);
+                face->faceCount = ST_TURNCOUNT;
+                face->faceIndex = calcPainOffset(obj->player);
 
                 if(diffAng < ANG45)
                 {   // Head-on.
-                    hud->faceIndex += ST_RAMPAGEOFFSET;
+                    face->faceIndex += ST_RAMPAGEOFFSET;
                 }
                 else if(i)
                 {   // Turn face right.
-                    hud->faceIndex += ST_TURNOFFSET;
+                    face->faceIndex += ST_TURNOFFSET;
                 }
                 else
                 {   // Turn face left.
-                    hud->faceIndex += ST_TURNOFFSET + 1;
+                    face->faceIndex += ST_TURNOFFSET + 1;
                 }
             }
         }
     }
 
-    if(hud->priority < 7)
+    if(face->priority < 7)
     {   // Getting hurt because of your own damn stupidity.
         if(plr->damageCount)
         {
@@ -654,108 +696,78 @@ void ST_updateFaceWidget(int player)
             // if(plr->health - oldHealth > ST_MUCHPAIN)
 
             if((cfg.fixOuchFace?
-               (hud->oldHealth - plr->health) :
-               (plr->health - hud->oldHealth)) > ST_MUCHPAIN)
+               (face->oldHealth - plr->health) :
+               (plr->health - face->oldHealth)) > ST_MUCHPAIN)
             {
-                hud->priority = 7;
-                hud->faceCount = ST_TURNCOUNT;
-                hud->faceIndex = calcPainOffset(hud) + ST_OUCHOFFSET;
+                face->priority = 7;
+                face->faceCount = ST_TURNCOUNT;
+                face->faceIndex = calcPainOffset(obj->player) + ST_OUCHOFFSET;
             }
             else
             {
-                hud->priority = 6;
-                hud->faceCount = ST_TURNCOUNT;
-                hud->faceIndex = calcPainOffset(hud) + ST_RAMPAGEOFFSET;
+                face->priority = 6;
+                face->faceCount = ST_TURNCOUNT;
+                face->faceIndex = calcPainOffset(obj->player) + ST_RAMPAGEOFFSET;
             }
         }
     }
 
-    if(hud->priority < 6)
+    if(face->priority < 6)
     {   // Rapid firing.
         if(plr->attackDown)
         {
-            if(hud->lastAttackDown == -1)
+            if(face->lastAttackDown == -1)
             {
-                hud->lastAttackDown = ST_RAMPAGEDELAY;
+                face->lastAttackDown = ST_RAMPAGEDELAY;
             }
-            else if(!--hud->lastAttackDown)
+            else if(!--face->lastAttackDown)
             {
-                hud->priority = 5;
-                hud->faceIndex = calcPainOffset(hud) + ST_RAMPAGEOFFSET;
-                hud->faceCount = 1;
-                hud->lastAttackDown = 1;
+                face->priority = 5;
+                face->faceIndex = calcPainOffset(obj->player) + ST_RAMPAGEOFFSET;
+                face->faceCount = 1;
+                face->lastAttackDown = 1;
             }
         }
         else
         {
-            hud->lastAttackDown = -1;
+            face->lastAttackDown = -1;
         }
     }
 
-    if(hud->priority < 5)
+    if(face->priority < 5)
     {   // Invulnerability.
-        if((P_GetPlayerCheats(plr) & CF_GODMODE) ||
-           plr->powers[PT_INVULNERABILITY])
+        if((P_GetPlayerCheats(plr) & CF_GODMODE) || plr->powers[PT_INVULNERABILITY])
         {
-            hud->priority = 4;
+            face->priority = 4;
 
-            hud->faceIndex = ST_GODFACE;
-            hud->faceCount = 1;
+            face->faceIndex = ST_GODFACE;
+            face->faceCount = 1;
         }
     }
 
     // Look left or look right if the facecount has timed out.
-    if(!hud->faceCount)
+    if(!face->faceCount)
     {
-        hud->faceIndex = calcPainOffset(hud) + (M_Random() % 3);
-        hud->faceCount = ST_STRAIGHTFACECOUNT;
-        hud->priority = 0;
+        face->faceIndex = calcPainOffset(obj->player) + (M_Random() % 3);
+        face->faceCount = ST_STRAIGHTFACECOUNT;
+        face->priority = 0;
     }
+    face->oldHealth = plr->health;
 
-    hud->faceCount--;
+    --face->faceCount;
+    }
 }
 
 void ST_updateWidgets(int player)
 {
     hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
-    ammotype_t ammoType;
-    boolean found;
-    int i;
-
-    // Must redirect the pointer if the ready weapon has changed.
-    found = false;
-    for(ammoType=0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
+    if(hud->inited)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
-            continue; // Weapon does not use this type of ammo.
-
-        //// \todo Only supports one type of ammo per weapon
-        hud->readyAmmo = plr->ammo[ammoType].owned;
-        found = true;
-    }
-    if(!found) // Weapon takes no ammo at all.
-    {
-        hud->readyAmmo = 1994; // Means "n/a".
-    }
-
-    // Refresh everything if this is him coming back to life.
-    ST_updateFaceWidget(player);
-
-    // Used by the frags widgets.
-    hud->currentFragsCount = 0;
-    for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].plr->inGame)
-            hud->currentFragsCount += plr->frags[i] * (i != player ? 1 : -1);
-
-    hud->health = plr->health;
-    hud->armor = plr->armorPoints;
-
-    // Ammo count and max (all four kinds).
-    for(i = 0; i < NUM_AMMO_TYPES; ++i)
-    {
-        hud->numAmmo[i] = plr->ammo[i].owned;
-        hud->maxAmmo[i] = plr->ammo[i].max;
+        int i;
+        for(i = 0; i < NUM_UIWIDGET_GROUPS; ++i)
+        {
+            GUI_TickWidgets(GUI_FindGroupForName(hud->widgetGroupNames[i]));
+        }
     }
 }
 
@@ -828,7 +840,6 @@ void ST_Ticker(timespan_t ticLength)
                 }
 
                 ST_updateWidgets(i);
-                hud->oldHealth = plr->health;
             }
         }
     }
@@ -880,31 +891,62 @@ void ST_doPaletteStuff(int player)
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
-void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void ReadyAmmo_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
+    int player = obj->player;
+    player_t* plr = &players[player];
+    ammotype_t ammoType;
+    boolean found;
+
+    // Must redirect the pointer if the ready weapon has changed.
+    found = false;
+    for(ammoType=0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
+    {
+        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+            continue; // Weapon does not use this type of ammo.
+        ammo->value = plr->ammo[ammoType].owned;
+        found = true;
+    }
+    if(!found) // Weapon takes no ammo at all.
+    {
+        ammo->value = 1994; // Means "n/a".
+    }
+    }
+}
+
+void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
 #define X                   (ORIGINX+ST_READYAMMOX)
 #define Y                   (ORIGINY+ST_READYAMMOY)
-#define MAXDIGITS           (ST_READYAMMOWIDTH)
 
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
-    if(!hud->statusbarActive)
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
-        return;
-    if(hud->readyAmmo == 1994)
+    if(ammo->value == 1994)
         return;
 
-    dd_snprintf(buf, 20, "%i", hud->readyAmmo);
+    dd_snprintf(buf, 20, "%i", ammo->value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -917,20 +959,48 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnWidth = FR_TextFragmentWidth(buf);
-    *drawnHeight = FR_TextFragmentHeight(buf);
-
-#undef MAXDIGITS
+    DGL_PopMatrix();
+    }
 #undef Y
 #undef X
 #undef ORIGINY
 #undef ORIGINX
 }
 
-void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void SBarReadyAmmo_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeight)
+{
+    assert(NULL != obj && NULL != drawnWidth && NULL != drawnHeight);
+    {
+    const guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != drawnWidth)  *drawnWidth  = 0;
+    if(NULL != drawnHeight) *drawnHeight = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(ammo->value == 1994)
+        return;
+
+    dd_snprintf(buf, 20, "%i", ammo->value);
+    if(NULL != drawnWidth)  *drawnWidth  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
+    if(NULL != drawnHeight) *drawnHeight = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
+    }
+}
+
+void Ammo_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    ammo->value = plr->ammo[ammo->ammotype].owned;
+    }
+}
+
+void Ammo_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -939,56 +1009,80 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     typedef struct {
         float x, y;
     } loc_t;
+
+    assert(NULL != obj);
+    {
     static const loc_t ammoPos[NUM_AMMO_TYPES] = {
         {ST_AMMOX, ST_AMMOY},
         {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 1)},
         {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 3)},
         {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 2)}
     };
-
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    const guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
+    const loc_t* loc = &ammoPos[ammo->ammotype];
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int i;
-    if(!hud->statusbarActive)
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    char buf[20];
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(ammo->value == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", ammo->value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_INDEX));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    for(i = 0; i < 4; ++i)
-    {
-        if(hud->numAmmo[i] != 1994)
-        {
-            char buf[20];
-            dd_snprintf(buf, 20, "%i", hud->numAmmo[i]);
-            FR_DrawTextFragment2(buf, ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
-        }
-    }
+    FR_DrawTextFragment2(buf, ORIGINX+loc->x, ORIGINY+loc->y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnWidth = FR_CharWidth('0') * 3;
-    *drawnHeight = (FR_CharHeight('0') + 10) * 4;
-
+    DGL_PopMatrix();
+    }
 #undef MAXDIGITS
 #undef ORIGINY
 #undef ORIGINX
 }
 
-void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Ammo_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    FR_SetFont(FID(GF_INDEX));
+    if(NULL != width)  *width  = (FR_CharWidth('0') * 3) * cfg.statusbarScale;
+    if(NULL != height) *height = FR_CharHeight('0') * cfg.statusbarScale;
+}
+
+void MaxAmmo_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    ammo->value = plr->ammo[ammo->ammotype].max;
+    }
+}
+
+void MaxAmmo_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -997,79 +1091,109 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     typedef struct {
         float x, y;
     } loc_t;
+
+    assert(NULL != obj);
+    {
     static const loc_t ammoMaxPos[NUM_AMMO_TYPES] = {
         {ST_MAXAMMOX, ST_MAXAMMOY},
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 1)},
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 3)},
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2)}
     };
-
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    const guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
+    const loc_t* loc = &ammoMaxPos[ammo->ammotype];
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int i;
-    if(!hud->statusbarActive)
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    char buf[20];
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(ammo->value == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", ammo->value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_INDEX));
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    for(i = 0; i < 4; ++i)
-    {
-        if(hud->maxAmmo[i] != 1994)
-        {
-            char buf[20];
-            dd_snprintf(buf, 20, "%i", hud->maxAmmo[i]);
-            FR_DrawTextFragment2(buf, ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
-        }
-    }
+    FR_DrawTextFragment2(buf, ORIGINX+loc->x, ORIGINY+loc->y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnWidth = FR_CharWidth('0') * 3;
-    *drawnHeight = (FR_CharHeight('0') + 10) * 4;
-
+    DGL_PopMatrix();
+    }
 #undef MAXDIGITS
 #undef ORIGINY
 #undef ORIGINX
 }
 
-void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void MaxAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    FR_SetFont(FID(GF_INDEX));
+    if(NULL != width)  *width  = (FR_CharWidth('0') * 3) * cfg.statusbarScale;
+    if(NULL != height) *height = FR_CharHeight('0') * cfg.statusbarScale;
+}
+
+void SBarHealth_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_health_t* hlth = (guidata_health_t*) obj->typedata;
+    const player_t* plr = &players[obj->player];
+    hlth->value = plr->health;
+    }
+}
+
+void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
 #define X                   (ORIGINX+ST_HEALTHX)
 #define Y                   (ORIGINY+ST_HEALTHY)
-#define MAXDIGITS           (ST_HEALTHWIDTH)
 
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
-    if(!hud->statusbarActive)
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
-        return;
-    if(hud->health == 1994)
+    if(hlth->value == 1994)
         return;
 
-    dd_snprintf(buf, 20, "%i", hud->health);
+    dd_snprintf(buf, 20, "%i", hlth->value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1083,20 +1207,48 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnWidth = FR_TextFragmentWidth(buf) + FR_CharWidth('%');
-    *drawnHeight = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%'));
-
-#undef MAXDIGITS
+    DGL_PopMatrix();
+    }
 #undef Y
 #undef X
 #undef ORIGINY
 #undef ORIGINX
 }
 
-void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void SBarHealth_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeight)
+{
+    assert(NULL != obj);
+    {
+    const guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != drawnWidth)  *drawnWidth  = 0;    
+    if(NULL != drawnHeight) *drawnHeight = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(hlth->value == 1994)
+        return;
+
+    dd_snprintf(buf, 20, "%i", hlth->value);
+    if(NULL != drawnWidth)  *drawnWidth  = (FR_TextFragmentWidth(buf) + FR_CharWidth('%')) * cfg.statusbarScale;
+    if(NULL != drawnHeight) *drawnHeight = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale;
+    }
+}
+
+void Armor_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    armor->value = plr->armorPoints;
+    }
+}
+
+void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -1104,24 +1256,30 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 #define Y                   (ORIGINY+ST_ARMORY)
 #define MAXDIGITS           (ST_ARMORWIDTH)
 
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
-    if(!hud->statusbarActive)
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
-        return;
-    if(hud->armor == 1994)
+    if(armor->value == 1994)
         return;
 
-    dd_snprintf(buf, 20, "%i", hud->armor);
+    dd_snprintf(buf, 20, "%i", armor->value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
@@ -1131,13 +1289,9 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     FR_DrawChar('%', X, Y);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnWidth = FR_TextFragmentWidth(buf) + FR_CharWidth('%');
-    *drawnHeight = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%'));
-
+    DGL_PopMatrix();
+    }
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1145,33 +1299,76 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 #undef ORIGINX
 }
 
-void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void SBarArmor_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    const guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(armor->value == 1994)
+        return;
+
+    dd_snprintf(buf, 20, "%i", armor->value);
+    if(NULL != width)  *width  = (FR_TextFragmentWidth(buf) + FR_CharWidth('%')) * cfg.statusbarScale;
+    if(NULL != height) *height = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale;
+    }
+}
+
+void SBarFrags_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    int i;
+    frags->value = 0;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            frags->value += plr->frags[i] * (i != obj->player ? 1 : -1);
+    }
+}
+
+void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
 #define X                   (ORIGINX+ST_FRAGSX)
 #define Y                   (ORIGINY+ST_FRAGSY)
-#define MAXDIGITS           (ST_FRAGSWIDTH)
 
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
-    if(!hud->statusbarActive || !deathmatch)
+
+    if(!deathmatch)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(hud->currentFragsCount == 1994)
+    if(frags->value == 1994)
         return;
 
-    dd_snprintf(buf, 20, "%i", hud->currentFragsCount);
+    dd_snprintf(buf, 20, "%i", frags->value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_STATUS));
@@ -1180,64 +1377,125 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnWidth = FR_TextFragmentWidth(buf);
-    *drawnHeight = FR_TextFragmentHeight(buf);
-
-#undef MAXDIGITS
+    DGL_PopMatrix();
+    }
 #undef Y
 #undef X
 #undef ORIGINY
 #undef ORIGINX
 }
 
-void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void SBarFrags_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    const guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!deathmatch)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(frags->value == 1994)
+        return;
+
+    dd_snprintf(buf, 20, "%i", frags->value);
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
+    }
+}
+
+void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
+    int fullscreen = fullscreenMode();
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
-    if(!hud->statusbarActive)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    if(hud->faceIndex >= 0)
+    if(face->faceIndex >= 0)
     {
         DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Translatef(x, y, 0);
+        DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
         DGL_Translatef(0, yOffset, 0);
-
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(faces[hud->faceIndex].id, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(pFaces[face->faceIndex].id, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
-
         DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(0, -yOffset, 0);
+        DGL_PopMatrix();
     }
-
-    {
-    const patchinfo_t* facePatch = &faces[hud->faceIndex%ST_NUMFACES];
-    *drawnWidth = facePatch->width;
-    *drawnHeight = facePatch->height;
     }
-
 #undef ORIGINY
 #undef ORIGINX
 }
 
-void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void SBarFace_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
+    const patchinfo_t* facePatch;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    facePatch = &pFaces[face->faceIndex%ST_NUMFACES];
+    if(NULL != width)  *width  = facePatch->width  * cfg.statusbarScale;
+    if(NULL != height) *height = facePatch->height * cfg.statusbarScale;
+    }
+}
+
+void KeySlot_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    if(plr->keys[kslt->keytypeA] || plr->keys[kslt->keytypeB])
+    {
+        kslt->patchId = pKeys[plr->keys[kslt->keytypeB]? kslt->keytypeB : kslt->keytypeA].id;
+    }
+    else
+    {
+        kslt->patchId = 0;
+    }
+    if(!cfg.hudKeysCombine && plr->keys[kslt->keytypeA] && plr->keys[kslt->keytypeB])
+    {
+        kslt->patchId2 = pKeys[kslt->keytypeA].id;
+    }
+    else
+    {
+        kslt->patchId2 = 0;
+    }
+    }
+}
+
+void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -1245,85 +1503,129 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     typedef struct {
         int x, y;
     } loc_t;
+
+    assert(NULL != obj);
+    {
     static const loc_t elements[] = {
         { ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y },
         { ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y },
         { ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y }
     };
-
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
-    int i, numDrawnKeys = 0;
+    guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
+    const loc_t* loc = &elements[kslt->slot];
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
+    int fullscreen = fullscreenMode();
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    int offset = (kslt->patchId2 != 0? -1 : 0);
 
-    if(!hud->statusbarActive)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(kslt->patchId == 0 && kslt->patchId2 == 0)
         return;
-
-    *drawnWidth = 0;
-    *drawnHeight = 0;
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
-    for(i = 0; i < 3; ++i)
+    WI_DrawPatch4(kslt->patchId, loc->x + offset, loc->y + offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+    if(kslt->patchId2 != 0)
     {
-        const loc_t* element = &elements[i];
-        const patchinfo_t* patch;
-        int offset = ((!cfg.hudKeysCombine && plr->keys[i] && plr->keys[i+3])? -1 : 0);
-
-        if(plr->keys[i+3] || (cfg.hudKeysCombine && plr->keys[i]))
-        {
-            patch = &keys[i+3];
-            WI_DrawPatch4(patch->id, element->x + offset, element->y + offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
-            if(patch->width > *drawnWidth)
-                *drawnWidth = patch->width;
-            *drawnHeight += patch->height;
-        }
-
-        if(!cfg.hudKeysCombine && plr->keys[i])
-        {
-            patch = &keys[i];
-            WI_DrawPatch4(patch->id, element->x - offset, element->y - offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
-            if(patch->width + 2 > *drawnWidth)
-                *drawnWidth = patch->width + 2;
-            if(patch->height + 2 > *drawnHeight)
-                *drawnHeight = patch->height + 2;
-        }
+        WI_DrawPatch4(kslt->patchId2, loc->x - offset, loc->y - offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
-    *drawnHeight += (numDrawnKeys-1) * 10;
-
+    DGL_PopMatrix();
+    }
 #undef ORIGINY
 #undef ORIGINX
 }
 
+void KeySlot_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
+    patchinfo_t info;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(kslt->patchId == 0 && kslt->patchId2 == 0)
+        return;
+    if(!R_GetPatchInfo(kslt->patchId, &info))
+        return;
+
+    if(NULL != width)  *width  = info.width;
+    if(NULL != height) *height = info.height;
+
+    if(kslt->patchId2 != 0)
+    {
+        if(R_GetPatchInfo(kslt->patchId, &info))
+        {
+            if(NULL != width && info.width > *width)
+                *width = info.width;
+            if(NULL != height && info.height > *height)
+                *height = info.height;
+        }
+        *width  += 2;
+        *height += 2;
+    }
+
+    if(NULL != width)  *width  = *width  * cfg.statusbarScale;
+    if(NULL != height) *height = *height * cfg.statusbarScale;
+    }
+}
+
 typedef struct {
-    hudstate_t*     hud;
-    int             numOwned;
+    int player;
+    int numOwned;
 } countownedweaponsinslot_params_t;
 
 int countOwnedWeaponsInSlot(weapontype_t type, void* context)
 {
     countownedweaponsinslot_params_t* params = (countownedweaponsinslot_params_t*) context;
-    const player_t* plr = &players[params->hud - hudStates];
+    const player_t* plr = &players[params->player];
     if(plr->weapons[type].owned)
-        params->numOwned++;
+        ++params->numOwned;
     return 1; // Continue iteration.
 }
 
-void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void WeaponSlot_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_weaponslot_t* wpn = (guidata_weaponslot_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    boolean used = false;
+
+    if(cfg.fixStatusbarOwnedWeapons)
+    {   // Does the player own any weapon bound to this slot?
+        countownedweaponsinslot_params_t params;
+        params.player = obj->player;
+        params.numOwned = 0;
+        P_IterateWeaponsInSlot(wpn->slot, false, countOwnedWeaponsInSlot, &params);
+        used = params.numOwned > 0;
+    }
+    else
+    {   // Does the player own the originally hardwired weapon to this slot?
+        used = plr->weapons[wpn->slot].owned;
+    }
+    wpn->patchId = pArms[wpn->slot-1][used?1:0].id;
+    }
+}
+
+void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -1331,6 +1633,9 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
     typedef struct {
         int x, y;
     } loc_t;
+
+    assert(NULL != obj);
+    {
     static const loc_t elements[] = {
         { ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY },
         { ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY },
@@ -1339,52 +1644,60 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
         { ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY + ST_ARMSYSPACE },
         { ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE },
     };
-
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    guidata_weaponslot_t* wpns = (guidata_weaponslot_t*)obj->typedata;
+    const loc_t* element = &elements[wpns->slot-1];
+    const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int i;
+    int fullscreen = fullscreenMode();
+    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
-    if(!hud->statusbarActive || deathmatch)
+    if(deathmatch)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
-
     DGL_Enable(DGL_TEXTURE_2D);
 
-    for(i = 0; i < 6; ++i)
-    {
-        const loc_t* element = &elements[i];
-        boolean usedSlot = false;
-
-        if(cfg.fixStatusbarOwnedWeapons)
-        {   // Does the player own any weapon bound to this slot?
-            countownedweaponsinslot_params_t params;
-            params.hud = hud;
-            params.numOwned = 0;
-            P_IterateWeaponsInSlot(i+1, false, countOwnedWeaponsInSlot, &params);
-            usedSlot = params.numOwned > 0;
-        }
-        else
-        {   // Does the player own the originally hardwired weapon to this slot?
-            usedSlot = plr->weapons[i+1].owned;
-        }
-
-        WI_DrawPatch4(arms[i][usedSlot?1:0].id, element->x, element->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, textAlpha);
-    }
+    WI_DrawPatch4(wpns->patchId, element->x, element->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, textAlpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
-
+    DGL_PopMatrix();
+    }
 #undef ORIGINY
 #undef ORIGINX
+}
+
+void WeaponSlot_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    guidata_weaponslot_t* wpns = (guidata_weaponslot_t*)obj->typedata;
+    patchinfo_t info;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(deathmatch)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(!R_GetPatchInfo(wpns->patchId, &info))
+        return;
+
+    if(NULL != width)  *width  = info.width  * cfg.statusbarScale;
+    if(NULL != height) *height = info.height * cfg.statusbarScale;
+    }
 }
 
 /*
@@ -1488,187 +1801,505 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     if(drawnHeight) *drawnHeight = info.height * scale;
 }
 
-void drawFragsWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void ST_HUDSpriteDimensions(int sprite, float scale, int* width, int* height)
 {
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    spriteinfo_t info;
+    R_GetSpriteInfo(sprite, 0, &info);
+    if(NULL != width)  *width  = info.width  * scale;
+    if(NULL != height) *height = info.height * scale;
+}
+
+void Frags_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    int i;
+    frags->value = 0;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            frags->value += plr->frags[i] * (i != obj->player ? 1 : -1);
+    }
+}
+
+void Frags_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    const guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
-    if(hud->statusbarActive || !deathmatch)
+    if(!deathmatch)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
+    sprintf(buf, "FRAGS:%i", frags->value);
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnWidth = FR_TextFragmentWidth(buf);
-    *drawnHeight = FR_TextFragmentHeight(buf);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 }
 
-void drawHealthWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Frags_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    const guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     char buf[20];
-    int w, h;
-    if(hud->statusbarActive)
-        return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
-        return;
-    ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false, &w, &h);
-    sprintf(buf, "%i%%", plr->health);
 
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!deathmatch)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    sprintf(buf, "FRAGS:%i", frags->value);
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    }
+}
+
+void Health_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    char buf[20];
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    sprintf(buf, "%i%%", hlth->value);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
-    FR_DrawTextFragment2(buf, w + 2, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnWidth = w + 2 + FR_TextFragmentWidth(buf);
-    *drawnHeight = MAX_OF(h, FR_TextFragmentHeight(buf));
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 }
 
-void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Health_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
+    assert(NULL != obj);
+    {
+    guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != width)  *width = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    sprintf(buf, "%i%%", hlth->value);
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    }
+}
+
+void HealthIcon_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+
+    ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false, NULL, NULL);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void HealthIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    int w, h;
+
+    if(NULL != width)  *width = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    ST_HUDSpriteDimensions(SPR_STIM, 1, &w, &h);
+    if(NULL != width)  *width  = w * cfg.hudScale;
+    if(NULL != height) *height = h * cfg.hudScale;
+    }
+}
+
+void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    char buf[20];
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(ammo->value == 1994)
+        return;
+
+    sprintf(buf, "%i", ammo->value);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTB));
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void ReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != width)  *width = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(ammo->value == 1994)
+        return;
+
+    sprintf(buf, "%i", ammo->value);
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    }
+}
+
+void ReadyAmmoIcon_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
     static const int ammoSprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_ROCK
     };
-    player_t* plr = &players[player];
-    hudstate_t* hud = &hudStates[player];
+    guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
     ammotype_t ammoType;
-    char buf[20];
-    float scale;
 
-    if(hud->statusbarActive)
-        return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    *drawnWidth = 0;
-    *drawnHeight = 0;
 
-    /// \todo Only supports one type of ammo per weapon.
-    /// for each type of ammo this weapon takes.
+    icon->sprite = -1;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
     {
-        int spr, w, h;
-
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
             continue;
-
-        spr = ammoSprite[ammoType];
-        scale = (spr == SPR_ROCK? .72f : 1);
-
-        ST_drawHUDSprite(spr, 0, 0, HOT_BLEFT, scale, iconAlpha, false, &w, &h);
-        sprintf(buf, "%i", plr->ammo[ammoType].owned);
-
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        FR_SetFont(FID(GF_FONTB));
-        DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
-        FR_DrawTextFragment2(buf, w+2, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
-
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        *drawnWidth += w+2+FR_TextFragmentWidth(buf);
-        *drawnHeight += MAX_OF(h, FR_TextFragmentHeight(buf));
+        icon->sprite = ammoSprite[ammoType];
         break;
+    }
     }
 }
 
-void drawFaceWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void ReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
 {
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
-    const patchinfo_t* facePatch = &faces[hud->faceIndex];
-    const patchinfo_t* bgPatch = &faceBackground[cfg.playerColor[player]];
-    int x = -(bgPatch->width/2);
-    if(hud->statusbarActive)
+    assert(NULL != obj);
+    {
+    guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    float scale;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(icon->sprite < 0)
         return;
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+
+    scale = (icon->sprite == SPR_ROCK? .72f : 1);
+    ST_drawHUDSprite(icon->sprite, 0, 0, HOT_BLEFT, scale, iconAlpha, false, NULL, NULL);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void ReadyAmmoIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
+    float scale;
+    int w, h;
+
+    if(NULL != width)  *width = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(icon->sprite < 0)
+        return;
+
+    scale = (icon->sprite == SPR_ROCK? .72f : 1);
+    ST_HUDSpriteDimensions(icon->sprite, scale, &w, &h);
+    if(NULL != width)  *width  = w * cfg.hudScale;
+    if(NULL != height) *height = h * cfg.hudScale;
+    }
+}
+
+void Face_Drawer(uiwidget_t* obj, int x, int y)
+{
+#define EXTRA_SCALE         .7f
+    assert(NULL != obj);
+    {
+    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
+    const patchinfo_t* facePatch = &pFaces[face->faceIndex];
+    const patchinfo_t* bgPatch = &pFaceBackground[cfg.playerColor[obj->player]];
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(EXTRA_SCALE * cfg.hudScale, EXTRA_SCALE * cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, iconAlpha);
 
+    x = -(bgPatch->width/2);
+    DGL_Color4f(1, 1, 1, iconAlpha);
     if(IS_NETGAME)
         GL_DrawPatch(bgPatch->id, x, -bgPatch->height + 1);
     GL_DrawPatch(facePatch->id, x, -bgPatch->height);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnWidth = bgPatch->width;
-    *drawnHeight = bgPatch->height;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+#undef EXTRA_SCALE
 }
 
-void drawArmorWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Face_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
-    player_t* plr = &players[player];
-    hudstate_t* hud = &hudStates[player];
-    int armorOffset, spr, w, h;
+#define EXTRA_SCALE         .7f
+    assert(NULL != obj);
+    {
+    const patchinfo_t* bgPatch = &pFaceBackground[cfg.playerColor[obj->player]];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    if(NULL != width)  *width  = bgPatch->width  * EXTRA_SCALE * cfg.hudScale;
+    if(NULL != height) *height = bgPatch->height * EXTRA_SCALE * cfg.hudScale;
+    }
+#undef EXTRA_SCALE
+}
+
+void Armor_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
-    if(hud->statusbarActive)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(armor->value == 1994)
         return;
 
+    dd_snprintf(buf, 20, "%i%%", armor->value);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
-    { int maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
-    maxArmor = MAX_OF(maxArmor, armorPoints[2]);
-    dd_snprintf(buf, 20, "%i%%", maxArmor);
-    armorOffset = FR_TextFragmentWidth(buf);
-    }
-    dd_snprintf(buf, 20, "%i%%", plr->armorPoints);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
-    ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false, &w, &h);
-
-    FR_SetFont(FID(GF_FONTB));
-    *drawnWidth = armorOffset + w + 2;
-    *drawnHeight = MAX_OF(h, FR_TextFragmentHeight(buf));
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 }
 
-void drawKeysWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Armor_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
+    assert(NULL != obj);
+    {
+    guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
+    char buf[20];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(armor->value == 1994)
+        return;
+
+    dd_snprintf(buf, 20, "%i%%", armor->value);
+
+    FR_SetFont(FID(GF_FONTB));
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    }
+}
+
+void ArmorIcon_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    icon->sprite = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
+    }
+}
+
+void ArmorIcon_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(icon->sprite < 0)
+        return;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+
+    ST_drawHUDSprite(icon->sprite, 0, 0, HOT_BRIGHT, 1, iconAlpha, false, NULL, NULL);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void ArmorIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
+    int w, h;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    ST_HUDSpriteDimensions(icon->sprite, 1, &w, &h);
+    if(NULL != width)  *width  = w * cfg.hudScale;
+    if(NULL != height) *height = h * cfg.hudScale;
+    }
+}
+
+void Keys_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    int i;
+    for(i = 0; i < NUM_KEY_TYPES; ++i)
+        keys->keyBoxes[i] = plr->keys[i];
+    }
+}
+
+void Keys_Drawer(uiwidget_t* obj, int x, int y)
+{
+#define EXTRA_SCALE     .75f
+    assert(NULL != obj);
+    {
     static int keyPairs[3][2] = {
         {KT_REDCARD, KT_REDSKULL},
         {KT_YELLOWCARD, KT_YELLOWSKULL},
@@ -1682,25 +2313,27 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
         SPR_YSKU,
         SPR_RSKU
     };
-    player_t* plr = &players[player];
-    hudstate_t* hud = &hudStates[player];
-    int i, numDrawnKeys = 0, x = 0;
+    guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    int i, numDrawnKeys = 0;
 
-    if(hud->statusbarActive)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    *drawnWidth = 0;
-    *drawnHeight = 0;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(EXTRA_SCALE * cfg.hudScale, EXTRA_SCALE * cfg.hudScale, 1);
 
+    x = 0;
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         boolean shown = true;
 
-        if(!plr->keys[i])
+        if(!keys->keyBoxes[i])
             continue;
 
         if(cfg.hudKeysCombine)
@@ -1708,7 +2341,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
             int j;
 
             for(j = 0; j < 3; ++j)
-                if(keyPairs[j][0] == i && plr->keys[keyPairs[j][0]] && plr->keys[keyPairs[j][1]])
+                if(keyPairs[j][0] == i && keys->keyBoxes[keyPairs[j][0]] && keys->keyBoxes[keyPairs[j][1]])
                 {
                     shown = false;
                     break;
@@ -1719,158 +2352,451 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
         {
             int w, h, spr = keyIcons[i];
             ST_drawHUDSprite(spr, x, 0, HOT_BRIGHT, 1, iconAlpha, false, &w, &h);
-            *drawnWidth += w;
-            if(h > *drawnHeight)
-                *drawnHeight = h;
             x -= w + 2;
             numDrawnKeys++;
         }
     }
 
-    *drawnWidth += (numDrawnKeys-1) * 2;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+#undef EXTRA_SCALE
 }
 
-void drawKillsWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Keys_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
-    player_t* plr = &players[player];
+#define EXTRA_SCALE     .75f
+    assert(NULL != obj);
+    {
+    static int keyPairs[3][2] = {
+        {KT_REDCARD, KT_REDSKULL},
+        {KT_YELLOWCARD, KT_YELLOWSKULL},
+        {KT_BLUECARD, KT_BLUESKULL}
+    };
+    static int keyIcons[NUM_KEY_TYPES] = {
+        SPR_BKEY,
+        SPR_YKEY,
+        SPR_RKEY,
+        SPR_BSKU,
+        SPR_YSKU,
+        SPR_RSKU
+    };
+    guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
+    int i, numDrawnKeys = 0;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+
+    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    {
+        boolean shown = true;
+
+        if(!keys->keyBoxes[i])
+            continue;
+
+        if(cfg.hudKeysCombine)
+        {
+            int j;
+
+            for(j = 0; j < 3; ++j)
+                if(keyPairs[j][0] == i && keys->keyBoxes[keyPairs[j][0]] && keys->keyBoxes[keyPairs[j][1]])
+                {
+                    shown = false;
+                    break;
+                }
+        }
+
+        if(shown)
+        {
+            int w, h, spr = keyIcons[i];
+            ST_HUDSpriteDimensions(spr, 1, &w, &h);
+            if(NULL != width) *width += w;
+            if(NULL != height && h > *height)
+                *height = h;
+            numDrawnKeys++;
+        }
+    }
+    if(NULL != width) *width += (numDrawnKeys-1) * 2;
+
+    if(NULL != width)  *width  = *width  * EXTRA_SCALE * cfg.hudScale;
+    if(NULL != height) *height = *height * EXTRA_SCALE * cfg.hudScale;
+    }
+#undef EXTRA_SCALE
+}
+
+void Kills_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    kills->value = plr->killCount;
+    }
+}
+
+void Kills_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
     char buf[40], tmp[20];
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
 
     if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT)))
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(kills->value == 1994)
         return;
 
     strcpy(buf, "Kills: ");
     if(cfg.hudShownCheatCounters & CCH_KILLS)
     {
-        sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
+        sprintf(tmp, "%i/%i ", kills->value, totalKills);
         strcat(buf, tmp);
     }
     if(cfg.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
         sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""),
-                totalKills ? plr->killCount * 100 / totalKills : 100,
+                totalKills ? kills->value * 100 / totalKills : 100,
                 (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
         strcat(buf, tmp);
     }
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnHeight = FR_TextFragmentHeight(buf);
-    *drawnWidth  = FR_TextFragmentWidth(buf);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 }
 
-void drawItemsWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Kills_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
+    char buf[40], tmp[20];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(kills->value == 1994)
+        return;
+
+    strcpy(buf, "Kills: ");
+    if(cfg.hudShownCheatCounters & CCH_KILLS)
+    {
+        sprintf(tmp, "%i/%i ", kills->value, totalKills);
+        strcat(buf, tmp);
+    }
+    if(cfg.hudShownCheatCounters & CCH_KILLS_PRCNT)
+    {
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""),
+                totalKills ? kills->value * 100 / totalKills : 100,
+                (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
+        strcat(buf, tmp);
+    }
+
+    FR_SetFont(FID(GF_FONTA));
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
+    }
+}
+
+void Items_Ticker(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    guidata_items_t* items = (guidata_items_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    items->value = plr->itemCount;
+    }
+}
+
+void Items_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_items_t* items = (guidata_items_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[40], tmp[20];
 
     if(!(cfg.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(items->value == 1994)
+        return;
+
     strcpy(buf, "Items: ");
     if(cfg.hudShownCheatCounters & CCH_ITEMS)
     {
-        sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
+        sprintf(tmp, "%i/%i ", items->value, totalItems);
         strcat(buf, tmp);
     }
     if(cfg.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
         sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""),
-                totalItems ? plr->itemCount * 100 / totalItems : 100,
+                totalItems ? items->value * 100 / totalItems : 100,
                 (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
         strcat(buf, tmp);
     }
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnHeight = FR_TextFragmentHeight(buf);
-    *drawnWidth  = FR_TextFragmentWidth(buf);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 }
 
-void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Items_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
-    player_t* plr = &players[player];
+    assert(NULL != obj);
+    {
+    guidata_items_t* items = (guidata_items_t*)obj->typedata;
+    char buf[40], tmp[20];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!(cfg.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(items->value == 1994)
+        return;
+
+    strcpy(buf, "Items: ");
+    if(cfg.hudShownCheatCounters & CCH_ITEMS)
+    {
+        sprintf(tmp, "%i/%i ", items->value, totalItems);
+        strcat(buf, tmp);
+    }
+    if(cfg.hudShownCheatCounters & CCH_ITEMS_PRCNT)
+    {
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""),
+                totalItems ? items->value * 100 / totalItems : 100,
+                (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
+        strcat(buf, tmp);
+    }
+
+    FR_SetFont(FID(GF_FONTA));
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
+    }
+}
+
+void Secrets_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[40], tmp[20];
 
     if(!(cfg.hudShownCheatCounters & (CCH_SECRETS | CCH_SECRETS_PRCNT)))
         return;
-    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
         return;
-    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(scrt->value == 1994)
         return;
 
     strcpy(buf, "Secret: ");
     if(cfg.hudShownCheatCounters & CCH_SECRETS)
     {
-        sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
+        sprintf(tmp, "%i/%i ", scrt->value, totalSecret);
         strcat(buf, tmp);
     }
     if(cfg.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
         sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""),
-                totalSecret ? plr->secretCount * 100 / totalSecret : 100,
+                totalSecret ? scrt->value * 100 / totalSecret : 100,
                 (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
         strcat(buf, tmp);
     }
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    *drawnHeight = FR_TextFragmentHeight(buf);
-    *drawnWidth  = FR_TextFragmentWidth(buf);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
 }
 
-void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
+void Secrets_Ticker(uiwidget_t* obj)
 {
-    if(NULL != drawnWidth)  *drawnWidth = 0;
-    if(NULL != drawnHeight) *drawnHeight = 0;
+    assert(NULL != obj);
+    {
+    guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    scrt->value = plr->secretCount;
+    }
+}
+
+void Secrets_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    {
+    guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
+    char buf[40], tmp[20];
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!(cfg.hudShownCheatCounters & (CCH_SECRETS | CCH_SECRETS_PRCNT)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(obj->player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
+        return;
+    if(scrt->value == 1994)
+        return;
+
+    strcpy(buf, "Secret: ");
+    if(cfg.hudShownCheatCounters & CCH_SECRETS)
+    {
+        sprintf(tmp, "%i/%i ", scrt->value, totalSecret);
+        strcat(buf, tmp);
+    }
+    if(cfg.hudShownCheatCounters & CCH_SECRETS_PRCNT)
+    {
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""),
+                totalSecret ? scrt->value * 100 / totalSecret : 100,
+                (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
+        strcat(buf, tmp);
+    }
+
+    FR_SetFont(FID(GF_FONTA));
+    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
+    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
+    }
+}
+
+void Log_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
     /// \kludge Do not draw message logs while the map title is being displayed.
     if(cfg.mapTitle && actualMapTime < 6 * 35)
         return;
     /// kludge end.
 
-    Hu_LogDrawer(player, textAlpha, drawnWidth, drawnHeight);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+
+    Hu_LogDrawer(obj->player, textAlpha);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void Log_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    /// \kludge Do not draw message logs while the map title is being displayed.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
+        return;
+    /// kludge end.
+
+    Hu_LogDimensions(obj->player, width, height);
+
+    if(NULL != width)  *width  = *width  * cfg.msgScale;
+    if(NULL != height) *height = *height * cfg.msgScale;
+}
+
+void Chat_Drawer2(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj);
+    {
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+
+    Chat_Drawer(obj->player, textAlpha, iconAlpha);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void Chat_Dimensions2(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj);
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    Chat_Dimensions(obj->player, width, height);
+
+    if(NULL != width)  *width  = *width  * cfg.msgScale;
+    if(NULL != height) *height = *height * cfg.msgScale;
 }
 
 typedef struct {
+    guiwidgettype_t type;
     int group;
-    int id;
-    float* scale;
-    float extraScale;
-    void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
-    float* textAlpha;
-    float *iconAlpha;
+    int hideId;
+    void (*dimensions) (uiwidget_t* obj, int* width, int* height);
+    void (*drawer) (uiwidget_t* obj, int x, int y);
+    void (*ticker) (uiwidget_t* obj);
+    void* typedata;
 } uiwidgetdef_t;
 
 typedef struct {
@@ -1888,8 +2814,8 @@ void ST_Drawer(int player)
 {
     hudstate_t* hud;
     player_t* plr;
-    int fullscreenMode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
-    boolean blended = (fullscreenMode!=0);
+    int fullscreen = fullscreenMode();
+    boolean blended = (fullscreen!=0);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1904,61 +2830,78 @@ void ST_Drawer(int player)
 #define PADDING 2 // In fixed 320x200 units.
 
         const uiwidgetgroupdef_t widgetGroupDefs[] = {
-            { UWG_STATUSBAR, UWGF_ALIGN_BOTTOM, 0 },
-            { UWG_BOTTOMLEFT, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFT2RIGHT, PADDING },
-            { UWG_BOTTOMLEFT2, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFT2RIGHT, PADDING },
-            { UWG_BOTTOMRIGHT, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_RIGHT|UWGF_RIGHT2LEFT, PADDING },
-            { UWG_BOTTOM, UWGF_ALIGN_BOTTOM|UWGF_BOTTOM2TOP, PADDING },
-            { UWG_TOP, UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_TOP2BOTTOM, PADDING },
-            { UWG_COUNTERS, UWGF_ALIGN_LEFT|UWGF_BOTTOM2TOP, PADDING }
+            { UWG_STATUSBAR,    UWGF_ALIGN_BOTTOM },
+            { UWG_BOTTOMLEFT,   UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFTTORIGHT, PADDING },
+            { UWG_BOTTOMLEFT2,  UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFTTORIGHT, PADDING },
+            { UWG_BOTTOMRIGHT,  UWGF_ALIGN_BOTTOM|UWGF_ALIGN_RIGHT|UWGF_RIGHTTOLEFT, PADDING },
+            { UWG_BOTTOM,       UWGF_ALIGN_BOTTOM|UWGF_BOTTOMTOTOP, PADDING },
+            { UWG_TOP,          UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_TOPTOBOTTOM, PADDING },
+            { UWG_COUNTERS,     UWGF_ALIGN_LEFT|UWGF_BOTTOMTOTOP, PADDING }
         };
         const uiwidgetdef_t widgetDefs[] = {
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawOwnedWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarFaceWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawOwnedAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawMaxAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-            { UWG_BOTTOMLEFT, HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_BOTTOMLEFT, HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_BOTTOMLEFT2, HUD_FRAGS, &cfg.hudScale, 1, drawFragsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_BOTTOMRIGHT, HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_BOTTOMRIGHT, HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_BOTTOM, HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_TOP, -1, &cfg.msgScale, 1, drawMessageLogWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_TOP, -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-            { UWG_COUNTERS, -1, &cfg.hudCheatCounterScale, 1, drawKillsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { GUI_BOX,      UWG_STATUSBAR,      -1,         SBarBackground_Dimensions, SBarBackground_Drawer },
+            { GUI_READYAMMO, UWG_STATUSBAR,     -1,         SBarReadyAmmo_Dimensions, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
+            { GUI_HEALTH,   UWG_STATUSBAR,      -1,         SBarHealth_Dimensions, SBarHealth_Drawer, SBarHealth_Ticker, &hud->sbarHealth },
+            { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         WeaponSlot_Dimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[0] },
+            { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         WeaponSlot_Dimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[1] },
+            { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         WeaponSlot_Dimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[2] },
+            { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         WeaponSlot_Dimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[3] },
+            { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         WeaponSlot_Dimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[4] },
+            { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         WeaponSlot_Dimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[5] },
+            { GUI_FRAGS,    UWG_STATUSBAR,      -1,         SBarFrags_Dimensions, SBarFrags_Drawer, SBarFrags_Ticker, &hud->sbarFrags },
+            { GUI_FACE,     UWG_STATUSBAR,      -1,         SBarFace_Dimensions, SBarFace_Drawer, Face_Ticker, &hud->sbarFace },
+            { GUI_ARMOR,    UWG_STATUSBAR,      -1,         SBarArmor_Dimensions, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
+            { GUI_KEYSLOT,  UWG_STATUSBAR,      -1,         KeySlot_Dimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
+            { GUI_KEYSLOT,  UWG_STATUSBAR,      -1,         KeySlot_Dimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
+            { GUI_KEYSLOT,  UWG_STATUSBAR,      -1,         KeySlot_Dimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         Ammo_Dimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CLIP] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         Ammo_Dimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_SHELL] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         Ammo_Dimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CELL] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         Ammo_Dimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_MISSILE] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         MaxAmmo_Dimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CLIP] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         MaxAmmo_Dimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         MaxAmmo_Dimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
+            { GUI_AMMO,     UWG_STATUSBAR,      -1,         MaxAmmo_Dimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
+            { GUI_BOX,      UWG_BOTTOMLEFT,     HUD_HEALTH, HealthIcon_Dimensions, HealthIcon_Drawer },
+            { GUI_HEALTH,   UWG_BOTTOMLEFT,     HUD_HEALTH, Health_Dimensions, Health_Drawer, SBarHealth_Ticker, &hud->health },
+            { GUI_READYAMMOICON, UWG_BOTTOMLEFT, HUD_AMMO,  ReadyAmmoIcon_Dimensions, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
+            { GUI_READYAMMO, UWG_BOTTOMLEFT,    HUD_AMMO,   ReadyAmmo_Dimensions, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
+            { GUI_FRAGS,    UWG_BOTTOMLEFT2,    HUD_FRAGS,  Frags_Dimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
+            { GUI_ARMOR,    UWG_BOTTOMRIGHT,    HUD_ARMOR,  Armor_Dimensions, Armor_Drawer, Armor_Ticker, &hud->armor },
+            { GUI_ARMORICON, UWG_BOTTOMRIGHT,   HUD_ARMOR,  ArmorIcon_Dimensions, ArmorIcon_Drawer, ArmorIcon_Ticker, &hud->armoricon },
+            { GUI_KEYS,     UWG_BOTTOMRIGHT,    HUD_KEYS,   Keys_Dimensions, Keys_Drawer, Keys_Ticker, &hud->keys },
+            { GUI_FACE,     UWG_BOTTOM,         HUD_FACE,   Face_Dimensions, Face_Drawer, Face_Ticker, &hud->face },
+            { GUI_LOG,      UWG_TOP,            -1,         Log_Dimensions, Log_Drawer },
+            { GUI_CHAT,     UWG_TOP,            -1,         Chat_Dimensions2, Chat_Drawer2 },
+            { GUI_SECRETS,  UWG_COUNTERS,       -1,         Secrets_Dimensions, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
+            { GUI_ITEMS,    UWG_COUNTERS,       -1,         Items_Dimensions, Items_Drawer, Items_Ticker, &hud->items },
+            { GUI_KILLS,    UWG_COUNTERS,       -1,         Kills_Dimensions, Kills_Drawer, Kills_Ticker, &hud->kills },
+            { GUI_NONE }
         };
         size_t i;
 
         for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
         {
             const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-            hud->widgetGroupNames[i] = GUI_CreateWidgetGroup(toGroupName(player, def->group), def->flags, def->padding);
+            hud->widgetGroupNames[i] = GUI_CreateGroup(toGroupName(player, def->group), def->flags, def->padding);
         }
 
-        for(i = 0; i < sizeof(widgetDefs)/sizeof(widgetDefs[0]); ++i)
+        for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
         {
             const uiwidgetdef_t* def = &widgetDefs[i];
-            uiwidgetid_t id = GUI_CreateWidget(player, def->id, def->scale, def->extraScale, def->draw, def->textAlpha, def->iconAlpha);
-            GUI_GroupAddWidget(toGroupName(player, def->group), id);
+            uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, def->dimensions, def->drawer, def->ticker, def->typedata);
+            GUI_GroupAddWidget(GUI_FindGroupForName(toGroupName(player, def->group)), id);
         }
 
         // Initialize widgets according to player preferences.
         {
-        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_TOP]);
+        short flags = GUI_GroupFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]));
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
-        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_TOP], flags);
+        GUI_GroupSetFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]), flags);
         }
 
         hud->inited = true;
@@ -1966,16 +2909,15 @@ void ST_Drawer(int player)
 #undef PADDING
     }
 
-    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (fullscreen < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
     ST_doPaletteStuff(player);
 
-    if(hud->statusbarActive || (fullscreenMode < 3 || hud->alpha > 0))
+    if(hud->statusbarActive || (fullscreen < 3 || hud->alpha > 0))
     {
         int viewW, viewH, x, y, width, height;
-        float alpha = (hud->statusbarActive? (blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
-        float scale;
+        float alpha, scale;
 
         R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
 
@@ -1985,7 +2927,7 @@ void ST_Drawer(int player)
             scale = (float)viewW/SCREENWIDTH;
 
         x = y = 0;
-        width = viewW / scale;
+        width  = viewW / scale;
         height = viewH / scale;
 
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2001,12 +2943,16 @@ void ST_Drawer(int player)
 
         int availHeight, drawnWidth, drawnHeight;
 
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha * hud->showBar, &drawnWidth, &drawnHeight);
+        if(hud->statusbarActive)
+        {
+            alpha = (1 - hud->hideAmount) * hud->showBar;
+            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_STATUSBAR]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        }
 
         /**
          * Wide offset scaling.
-         * Used with ultra-wide/tall resolutions to move the uiwidgets into
-         * the viewer's primary field of vision (without this, uiwidgets
+         * Used with ultra-wide/tall resolutions to move the widgets into
+         * the viewer's primary field of vision (without this, widgets
          * would be positioned at the very edges of the view window and
          * likely into the viewer's peripheral vision range).
          *
@@ -2018,7 +2964,7 @@ void ST_Drawer(int player)
         {
             if(viewW > viewH)
             {
-                x = (viewW/2/scale - SCREENWIDTH/2) * (1-cfg.hudWideOffset);
+                x = (viewW/2/scale -  SCREENWIDTH/2) * (1-cfg.hudWideOffset);
                 width -= x*2;
             }
             else
@@ -2028,20 +2974,24 @@ void ST_Drawer(int player)
             }
         }
 
+        alpha = hud->alpha * (1-hud->hideAmount);
         x += PADDING;
         y += PADDING;
-        width -= PADDING*2;
+        width  -= PADDING*2;
         height -= PADDING*2;
 
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOP], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        if(!hud->statusbarActive)
+        {
+            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOMLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
-        availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT2], 0, x, y, width, availHeight, alpha, &drawnWidth, &drawnHeight);
+            availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
+            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOMLEFT2]), x, y, width, availHeight, alpha, &drawnWidth, &drawnHeight);
 
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOM], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        GUI_DrawWidgets(hud->widgetGroupNames[UWG_COUNTERS], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOM]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOMRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        }
+        GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_COUNTERS]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
 #undef PADDING
         }
@@ -2060,33 +3010,33 @@ void ST_loadGraphics(void)
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         sprintf(nameBuf, "STKEYS%d", i);
-        R_PrecachePatch(nameBuf, &keys[i]);
+        R_PrecachePatch(nameBuf, &pKeys[i]);
     }
 
     // Arms background.
-    R_PrecachePatch("STARMS", &armsBackground);
+    R_PrecachePatch("STARMS", &pArmsBackground);
 
     // Arms ownership icons:
     for(i = 0; i < 6; ++i)
     {
         // gray
         sprintf(nameBuf, "STGNUM%d", i + 2);
-        R_PrecachePatch(nameBuf, &arms[i][0]);
+        R_PrecachePatch(nameBuf, &pArms[i][0]);
 
         // yellow
         sprintf(nameBuf, "STYSNUM%d", i + 2);
-        R_PrecachePatch(nameBuf, &arms[i][1]);
+        R_PrecachePatch(nameBuf, &pArms[i][1]);
     }
 
     // Face backgrounds for different color players.
     for(i = 0; i < 4; ++i)
     {
         sprintf(nameBuf, "STFB%d", i);
-        R_PrecachePatch(nameBuf, &faceBackground[i]);
+        R_PrecachePatch(nameBuf, &pFaceBackground[i]);
     }
 
     // Status bar background bits.
-    R_PrecachePatch("STBAR", &statusbar);
+    R_PrecachePatch("STBAR", &pStatusbar);
 
     // Face states:
     faceNum = 0;
@@ -2095,21 +3045,21 @@ void ST_loadGraphics(void)
         for(j = 0; j < ST_NUMSTRAIGHTFACES; ++j)
         {
             sprintf(nameBuf, "STFST%d%d", i, j);
-            R_PrecachePatch(nameBuf, &faces[faceNum++]);
+            R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
         }
         sprintf(nameBuf, "STFTR%d0", i); // Turn right.
-        R_PrecachePatch(nameBuf, &faces[faceNum++]);
+        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
         sprintf(nameBuf, "STFTL%d0", i); // Turn left.
-        R_PrecachePatch(nameBuf, &faces[faceNum++]);
+        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
         sprintf(nameBuf, "STFOUCH%d", i); // Ouch.
-        R_PrecachePatch(nameBuf, &faces[faceNum++]);
+        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
         sprintf(nameBuf, "STFEVL%d", i); // Evil grin.
-        R_PrecachePatch(nameBuf, &faces[faceNum++]);
+        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
         sprintf(nameBuf, "STFKILL%d", i); // Pissed off.
-        R_PrecachePatch(nameBuf, &faces[faceNum++]);
+        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
     }
-    R_PrecachePatch("STFGOD0", &faces[faceNum++]);
-    R_PrecachePatch("STFDEAD0", &faces[faceNum++]);
+    R_PrecachePatch("STFGOD0", &pFaces[faceNum++]);
+    R_PrecachePatch("STFDEAD0", &pFaces[faceNum++]);
 }
 
 void ST_loadData(void)
@@ -2124,26 +3074,68 @@ static void initData(hudstate_t* hud)
 
     hud->statusbarActive = true;
     hud->stopped = true;
-    hud->faceIndex = 0;
-    hud->oldHealth = -1;
-    hud->priority = 0;
-    hud->lastAttackDown = -1;
     hud->showBar = 1;
 
-    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        hud->oldWeaponsOwned[i] = plr->weapons[i].owned;
-    }
-
-    hud->health = 1994;
-    hud->readyAmmo = 1994;
-    hud->armor = 1994;
-    hud->currentFragsCount = 1994;
+    // Statusbar:
+    hud->sbarHealth.value = 1994;
+    hud->sbarReadyammo.value = 1994;
+    hud->sbarArmor.value = 1994;
+    hud->sbarFrags.value = 1994;
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        hud->numAmmo[i] = 1994;
-        hud->maxAmmo[i] = 1994;
+        hud->sbarAmmos[i].ammotype = (ammotype_t)i;
+        hud->sbarAmmos[i].value = 1994;
+
+        hud->sbarMaxammos[i].ammotype = (ammotype_t)i;
+        hud->sbarMaxammos[i].value = 1994;
     }
+    for(i = 0; i < 6/*num weapon slots*/; ++i)
+    {
+        hud->sbarWeaponslots[i].slot = i+1;
+        hud->sbarWeaponslots[i].patchId = 0;
+    }
+    for(i = 0; i < 3/*num key slots*/; ++i)
+    {
+        hud->sbarKeyslots[i].slot = i;
+        hud->sbarKeyslots[i].keytypeA = (keytype_t)i;
+        hud->sbarKeyslots[i].keytypeB = (keytype_t)(i+3);
+        hud->sbarKeyslots[i].patchId = hud->sbarKeyslots[i].patchId2 = 0;
+    }
+    hud->sbarFace.faceCount = 0;
+    hud->sbarFace.faceIndex = 0;
+    hud->sbarFace.lastAttackDown = -1;
+    hud->sbarFace.oldHealth = -1;
+    hud->sbarFace.priority = 0;
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
+        hud->sbarFace.oldWeaponsOwned[i] = plr->weapons[i].owned;
+    }
+
+    // Fullscreen:
+    hud->health.value = 1994;
+    hud->armoricon.sprite = -1;
+    hud->armor.value = 1994;
+    hud->readyammoicon.sprite = -1;
+    hud->readyammo.value = 1994;
+    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    {
+        hud->keys.keyBoxes[i] = 0;
+    }
+    hud->frags.value = 1994;
+    hud->face.faceCount = 0;
+    hud->face.faceIndex = 0;
+    hud->face.lastAttackDown = -1;
+    hud->face.oldHealth = -1;
+    hud->face.priority = 0;
+    for(i = 0; i < NUM_WEAPON_TYPES; ++i)
+    {
+        hud->face.oldWeaponsOwned[i] = plr->weapons[i].owned;
+    }
+
+    // Other:
+    hud->secrets.value = 1994;
+    hud->items.value = 1994;
+    hud->kills.value = 1994;
 
     ST_HUDUnHide(player, HUE_FORCE);
 }
@@ -2191,6 +3183,25 @@ void ST_Shutdown(void)
     {
         hudstate_t* hud = &hudStates[i];
         hud->inited = false;
+    }
+}
+
+void ST_UpdateLogAlignment(void)
+{
+    short flags;
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hudstate_t* hud = &hudStates[i];
+        if(!hud->inited) continue;
+
+        flags = GUI_GroupFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]));
+        flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
+        if(cfg.msgAlign == 0)
+            flags |= UWGF_ALIGN_LEFT;
+        else if(cfg.msgAlign == 2)
+            flags |= UWGF_ALIGN_RIGHT;
+        GUI_GroupSetFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]), flags);
     }
 }
 

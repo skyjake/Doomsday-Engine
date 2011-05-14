@@ -393,7 +393,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                 {
                     char buf[20];
                     FR_SetFont(FID(GF_SMALLIN));
-                    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], slot == selected? textAlpha : textAlpha / 2);
+                    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], slot == selected? textAlpha : textAlpha / 2);
                     dd_snprintf(buf, 20, "%i", count);
                     FR_DrawTextFragment3(buf, posX + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }
@@ -488,7 +488,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
                 {
                     char buf[20];
                     FR_SetFont(FID(GF_SMALLIN));
-                    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
+                    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], alpha);
                     dd_snprintf(buf, 20, "%i", count);
                     FR_DrawTextFragment3(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }

@@ -844,7 +844,7 @@ desc = Speed of model spinning, 1=normal.
 desc = 1=Enable multitexturing with shiny model skins.
 
 [rend-hud-stretch]
-desc = Fixed aspect ratio HUD stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
+desc = Fixed aspect ratio player weapon stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
 
 [rend-hud-offset-scale]
 desc = Scaling of player weapon (x,y) offset.

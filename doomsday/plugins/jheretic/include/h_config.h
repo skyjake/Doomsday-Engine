@@ -43,7 +43,7 @@ enum {
     HUD_ARMOR,
     HUD_KEYS,
     HUD_HEALTH,
-    HUD_CURRENTITEM,
+    HUD_READYITEM,
     HUD_LOG,
     NUMHUDDISPLAYS
 };

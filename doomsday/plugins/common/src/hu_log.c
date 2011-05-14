@@ -73,7 +73,7 @@ cvartemplate_t msgLogCVars[] = {
     { "msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60 },
 
     // Display
-    { "msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2 },
+    { "msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2, ST_UpdateLogAlignment },
     { "msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0 },
     { "msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1 },
     { "msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1 },
@@ -305,12 +305,12 @@ static void logTicker(log_t* log)
     }
 }
 
-static void logDrawer(log_t* log, float alpha, int* drawnWidth, int* drawnHeight)
+static void logDrawer(log_t* log, float alpha)
 {
     assert(NULL != log);
     {
     const short textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
-    int lineHeight, lineWidth;
+    int lineHeight;
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float y, yOffset, scrollFactor, col[4];
@@ -429,27 +429,104 @@ static void logDrawer(log_t* log, float alpha, int* drawnWidth, int* drawnHeight
 
         ++drawnMsgCount;
         y += lineHeight;
-
-        if(NULL != drawnWidth)
-        {
-            FR_TextDimensions(&lineWidth, NULL, msg->text, FID(GF_FONTA));
-            if(lineWidth > *drawnWidth)
-            {
-                *drawnWidth = lineWidth;
-            }
-        }
-    }
-
-    if(NULL != drawnHeight && 0 != drawnMsgCount)
-    {
-        *drawnHeight = /*first line*/ lineHeight * (1.f - scrollFactor) +
-                       /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, -yOffset, 0);
+    }
+}
+
+static void logDimensions(log_t* log, int* width, int* height)
+{
+    assert(NULL != log);
+    {
+    int lineHeight, lineWidth;
+    int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+    int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
+    float scrollFactor;
+    message_t* msg;
+
+    if(0 == pvisMsgCount) return;
+
+    firstMsg = firstPVisMsg = logFirstPVisMessageIdx(log);
+    if(!cfg.hudShown[HUD_LOG])
+    {
+        // Advance to the first non-hidden message.
+        i = 0;
+        while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            firstMsg = logNextMessageIdx(log, firstMsg);
+        }
+
+        // Nothing visible?
+        if(i == pvisMsgCount) return;
+
+        // There is possibly fewer potentially-visible messages now.
+        pvisMsgCount -= firstMsg - firstPVisMsg;
+    } 
+
+    lastMsg = firstMsg + pvisMsgCount-1;
+    if(lastMsg > LOG_MAX_MESSAGES-1)
+        lastMsg -= LOG_MAX_MESSAGES; // Wrap around.
+
+    if(!cfg.hudShown[HUD_LOG])
+    {
+        // Rewind to the last non-hidden message.
+        i = 0;
+        while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
+        {
+            lastMsg = logPrevMessageIdx(log, lastMsg);
+        }
+    }
+
+    FR_SetFont(FID(GF_FONTA));
+    /// \fixme Query line height from the font.
+    lineHeight = FR_CharHeight('Q')+1;
+
+    // Scroll offset is calculated using the timeout of the first visible message.
+    msg = &log->_msgs[firstMsg];
+    if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
+    {
+        int viewW, viewH;
+        float scale;
+        R_GetViewPort(logLocalPlayer(log), NULL, NULL, &viewW, &viewH);
+        scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
+
+        scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
+    }
+    else
+    {
+        scrollFactor = 0;
+    }
+
+    n = firstMsg;
+    drawnMsgCount = 0;
+
+    for(i = 0; i < pvisMsgCount; ++i, n = logNextMessageIdx(log, n))
+    {
+        msg = &log->_msgs[n];
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE))
+            continue;
+
+        ++drawnMsgCount;
+
+        if(NULL != width)
+        {
+            FR_TextDimensions(&lineWidth, NULL, msg->text, FID(GF_FONTA));
+            if(lineWidth > *width)
+            {
+                *width = lineWidth;
+            }
+        }
+    }
+
+    if(NULL != height && 0 != drawnMsgCount)
+    {
+        *height = /*first line*/ lineHeight * (1.f - scrollFactor) +
+                  /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
+    }
     }
 }
 
@@ -511,14 +588,22 @@ void Hu_LogTicker(void)
     }
 }
 
-void Hu_LogDrawer(int player, float alpha, int* drawnWidth, int* drawnHeight)
+void Hu_LogDrawer(int player, float alpha)
 {
     log_t* log = findLogForLocalPlayer(player);
-    if(NULL != drawnWidth)  *drawnWidth  = 0;
-    if(NULL != drawnHeight) *drawnHeight = 0;
     if(NULL == log) return;
 
-    logDrawer(log, alpha, drawnWidth, drawnHeight);
+    logDrawer(log, alpha);
+}
+
+void Hu_LogDimensions(int player, int* width, int* height)
+{
+    log_t* log = findLogForLocalPlayer(player);
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+    if(NULL == log) return;
+
+    logDimensions(log, width, height);
 }
 
 void Hu_LogPost(int player, byte flags, const char* msg)

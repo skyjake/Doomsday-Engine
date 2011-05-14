@@ -35,7 +35,7 @@
 enum {
     HUD_MANA,
     HUD_HEALTH,
-    HUD_CURRENTITEM,
+    HUD_READYITEM,
     HUD_LOG,
     NUMHUDDISPLAYS
 };

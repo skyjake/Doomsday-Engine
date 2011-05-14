@@ -197,7 +197,7 @@ void H_PreInit(void)
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_HEALTH] = true;
-    cfg.hudShown[HUD_CURRENTITEM] = true;
+    cfg.hudShown[HUD_READYITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
     { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.

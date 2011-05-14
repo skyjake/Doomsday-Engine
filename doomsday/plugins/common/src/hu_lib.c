@@ -4,8 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +23,7 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -44,10 +44,15 @@ static uiwidget_t* widgets;
 static int numWidgetGroups;
 static uiwidgetgroup_t* widgetGroups;
 
-static __inline uiwidget_t* toWidget(uiwidgetid_t id)
+static ui_rendstate_t rs;
+const ui_rendstate_t* uiRendState = &rs;
+
+static uiwidget_t* toWidget(uiwidgetid_t id)
 {
-    assert(id < numWidgets);
-    return &widgets[id];
+    if(id >= 0 && id < numWidgets)
+        return &widgets[id];
+    Con_Error("toWidget: Failed to locate widget for id %i.", id);
+    exit(1); // Unreachable.
 }
 
 static uiwidgetgroup_t* groupForName(int name, boolean canCreate)
@@ -61,198 +66,173 @@ static uiwidgetgroup_t* groupForName(int name, boolean canCreate)
             return group;
     }
     if(!canCreate)
-        return 0;
+        return NULL;
     // Must allocate a new group.
     {
     uiwidgetgroup_t* group;
     widgetGroups = (uiwidgetgroup_t*) realloc(widgetGroups, sizeof(uiwidgetgroup_t) * ++numWidgetGroups);
     group = &widgetGroups[numWidgetGroups-1];
     group->name = name;
-    group->num = 0;
-    group->widgetIds = 0;
+    group->widgetIdCount = 0;
+    group->widgetIds = NULL;
     return group;
     }
 }
 
-static void drawWidget(const uiwidget_t* w, short flags, float alpha,
-    float* drawnWidth, float* drawnHeight)
+static void drawWidget(uiwidget_t* obj, float alpha, float* drawnWidth, float* drawnHeight)
 {
-    float textAlpha = (flags & UWF_OVERRIDE_ALPHA)? alpha : w->textAlpha? alpha * *w->textAlpha : alpha;
-    float iconAlpha = (flags & UWF_OVERRIDE_ALPHA)? alpha : w->iconAlpha? alpha * *w->iconAlpha : alpha;
-    int width, height;
-    float scale = 1;
-    boolean scaled = false;
-
-    if(w->scale || w->extraScale != 1)
+    int width = 0, height = 0;
+    if(NULL != obj->drawer && alpha > 0)
     {
-        scale = (w->scale? *w->scale : 1) * w->extraScale;
-        if(scale != 1)
-        {
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PushMatrix();
-            DGL_Scalef(scale, scale, 1);
-            scaled = true;
-        }
+        rs.pageAlpha = alpha;
+        obj->drawer(obj, 0, 0);
     }
-
-    w->draw(w->player, textAlpha, iconAlpha, &width, &height);
-    *drawnWidth = width;
+    obj->dimensions(obj, &width, &height);
+    *drawnWidth  = width;
     *drawnHeight = height;
-
-    if(scaled)
-    {
-        *drawnWidth *= scale;
-        *drawnHeight *= scale;
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-    }
 }
 
 static void clearWidgetGroups(void)
 {
-    if(numWidgetGroups)
+    if(0 == numWidgetGroups) return;
+    { int i;
+    for(i = 0; i < numWidgetGroups; ++i)
     {
-        int i;
-        for(i = 0; i < numWidgetGroups; ++i)
-        {
-            uiwidgetgroup_t* grp = &widgetGroups[i];
-            free(grp->widgetIds);
-        }
-        free(widgetGroups);
-    }
-    widgetGroups = 0;
+        uiwidgetgroup_t* grp = &widgetGroups[i];
+        free(grp->widgetIds);
+    }}
+    free(widgetGroups);
+    widgetGroups = NULL;
     numWidgetGroups = 0;
 }
 
 static void clearWidgets(void)
 {
-    if(numWidgets)
-    {
-        free(widgets);
-    }
-    widgets = 0;
+    if(0 == numWidgets) return;
+
+    free(widgets);
+    widgets = NULL;
     numWidgets = 0;
 }
 
 void GUI_Init(void)
 {
-    if(inited)
-        return;
+    if(inited) return;
     numWidgets = 0;
-    widgets = 0;
+    widgets = NULL;
     numWidgetGroups = 0;
-    widgetGroups = 0;
+    widgetGroups = NULL;
     inited = true;
 }
 
 void GUI_Shutdown(void)
 {
-    if(!inited)
-        return;
+    if(!inited) return;
     clearWidgetGroups();
     clearWidgets();
     inited = false;
 }
 
-uiwidgetid_t GUI_CreateWidget(int player, int id, float* scale, float extraScale,
-    void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight),
-    float* textAlpha, float *iconAlpha)
-{
-    uiwidget_t* w;
-    assert(inited);
-    widgets = realloc(widgets, sizeof(uiwidget_t) * ++numWidgets);
-    w = &widgets[numWidgets-1];
-    w->player = player;
-    w->id = id;
-    w->scale = scale;
-    w->extraScale = extraScale;
-    w->draw = draw;
-    w->textAlpha = textAlpha;
-    w->iconAlpha = iconAlpha;
-    return numWidgets-1;
-}
-
-int GUI_CreateWidgetGroup(int name, short flags, int padding)
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId,
+    void (*dimensions) (uiwidget_t* obj, int* width, int* height),
+    void (*drawer) (uiwidget_t* obj, int x, int y),
+    void (*ticker) (uiwidget_t* obj), void* typedata)
 {
     assert(inited);
     {
-    uiwidgetgroup_t* group = groupForName(name, true);
-    group->flags = flags;
-    group->padding = padding;
+    uiwidget_t* obj;
+
+    widgets = (uiwidget_t*) realloc(widgets, sizeof(uiwidget_t) * ++numWidgets);
+    if(NULL == widgets)
+        Con_Error("GUI_CreateWidget: Failed on allocation of %lu bytes for new widget.",
+            (unsigned long) (sizeof(uiwidget_t) * numWidgets));
+
+    obj = &widgets[numWidgets-1];
+    obj->type = type;
+    obj->player = player;
+    obj->hideId = hideId;
+    obj->dimensions = dimensions;
+    obj->drawer = drawer;
+    obj->ticker = ticker;
+    obj->typedata = typedata;
+    return numWidgets-1;
+    }
+}
+
+uiwidgetgroup_t* GUI_FindGroupForName(int name)
+{
+    assert(inited);
+    return groupForName(name, false);
+}
+
+int GUI_CreateGroup(int name, short flags, int padding)
+{
+    assert(inited);
+    {
+    uiwidgetgroup_t* grp = groupForName(name, true);
+    grp->flags = flags;
+    grp->padding = padding;
     return name;
     }
 }
 
-void GUI_GroupAddWidget(int name, uiwidgetid_t id)
+void GUI_GroupAddWidget(uiwidgetgroup_t* grp, uiwidgetid_t id)
 {
-    assert(inited);
+    assert(NULL != grp);
     {
-    uiwidgetgroup_t* group;
-    uiwidget_t* w = toWidget(id);
-    uiwidgetid_t i;
+    uiwidget_t* obj = toWidget(id);
+    int i;
+    assert(obj);
 
-    // Ensure this is a known widget id.
-    assert(w);
-    // Ensure this is a known group name.
-    group = groupForName(name, false);
-    if(!group)
-    {
-        Con_Message("GUI_GroupAddWidget: Failed adding widget %u, group %i unknown.\n", id, name);
-        return;
-    }
-
-    // Ensure widget is not already in this group.
-    for(i = 0; i < group->num; ++i)
-        if(group->widgetIds[i] == id)
+    // Ensure widget is not already in this grp.
+    for(i = 0; i < grp->widgetIdCount; ++i)
+        if(grp->widgetIds[i] == id)
             return; // Already present. Ignore.
 
-    // Must add to this group.
-    group->widgetIds = (uiwidgetid_t*) realloc(group->widgetIds, sizeof(uiwidgetid_t) * ++group->num);
-    group->widgetIds[group->num-1] = id;
+    // Must add to this grp.
+    grp->widgetIds = (uiwidgetid_t*) realloc(grp->widgetIds, sizeof(*grp->widgetIds) * ++grp->widgetIdCount);
+    if(NULL == grp->widgetIds)
+        Con_Error("GUI_GroupAddWidget: Failed on (re)allocation of %lu bytes for widget id list.",
+            (unsigned long) (sizeof(*grp->widgetIds) * grp->widgetIdCount));
+
+    grp->widgetIds[grp->widgetIdCount-1] = id;
     }
 }
 
-short GUI_GroupFlags(int name)
+int GUI_GroupName(uiwidgetgroup_t* grp)
 {
-    assert(inited);
-    {
-    const uiwidgetgroup_t* group = groupForName(name, false);
-    // Ensure this is a known group name.
-    assert(group);
-    return group->flags;
-    }
+    assert(NULL != grp);
+    return grp->name;
 }
 
-void GUI_GroupSetFlags(int name, short flags)
+short GUI_GroupFlags(uiwidgetgroup_t* grp)
 {
-    assert(inited);
-    {
-    uiwidgetgroup_t* group = groupForName(name, false);
-    // Ensure this is a known group name.
-    assert(group);
-    group->flags = flags;
-    }
+    assert(NULL != grp);
+    return grp->flags;
 }
 
-void GUI_DrawWidgets(int group, byte flags, int inX, int inY, int availWidth,
+void GUI_GroupSetFlags(uiwidgetgroup_t* grp, short flags)
+{
+    assert(NULL != grp);
+    grp->flags = flags;
+}
+
+void GUI_DrawWidgets(uiwidgetgroup_t* grp, int inX, int inY, int availWidth,
     int availHeight, float alpha, int* rDrawnWidth, int* rDrawnHeight)
 {
-    assert(inited);
+    assert(NULL != grp);
     {
-    const uiwidgetgroup_t* grp;
     float x = inX, y = inY, drawnWidth = 0, drawnHeight = 0;
-    size_t i, numDrawnWidgets = 0;
+    int i, numDrawnWidgets = 0;
 
     if(rDrawnWidth)
         *rDrawnWidth = 0;
     if(rDrawnHeight)
         *rDrawnHeight = 0;
 
-    if(!(alpha > 0) || availWidth == 0 || availHeight == 0)
+    if(availWidth == 0 || availHeight == 0)
         return;
-    grp = groupForName(group, false);
-    if(!grp || !grp->num)
+    if(!grp->widgetIdCount)
         return;
 
     if(grp->flags & UWGF_ALIGN_RIGHT)
@@ -268,47 +248,47 @@ void GUI_DrawWidgets(int group, byte flags, int inX, int inY, int availWidth,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    for(i = 0; i < grp->num; ++i)
+    for(i = 0; i < grp->widgetIdCount; ++i)
     {
-        const uiwidget_t* w = toWidget(grp->widgetIds[i]);
+        uiwidget_t* obj = toWidget(grp->widgetIds[i]);
         float wDrawnWidth = 0, wDrawnHeight = 0;
 
-        if(w->id != -1)
+        if(obj->hideId != -1)
         {
-            assert(w->id >= 0 && w->id < NUMHUDDISPLAYS);
+            assert(obj->hideId >= 0 && obj->hideId < NUMHUDDISPLAYS);
 
-            if(!cfg.hudShown[w->id])
+            if(!cfg.hudShown[obj->hideId])
                 continue;
         }
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
 
-        drawWidget(w, flags, alpha, &wDrawnWidth, &wDrawnHeight);
+        drawWidget(obj, alpha, &wDrawnWidth, &wDrawnHeight);
     
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
 
         if(wDrawnWidth > 0 || wDrawnHeight > 0)
         {
-            numDrawnWidgets++;
+            ++numDrawnWidgets;
 
-            if(grp->flags & UWGF_RIGHT2LEFT)
+            if(grp->flags & UWGF_RIGHTTOLEFT)
                 x -= wDrawnWidth + grp->padding;
-            else if(grp->flags & UWGF_LEFT2RIGHT)
+            else if(grp->flags & UWGF_LEFTTORIGHT)
                 x += wDrawnWidth + grp->padding;
 
-            if(grp->flags & UWGF_BOTTOM2TOP)
+            if(grp->flags & UWGF_BOTTOMTOTOP)
                 y -= wDrawnHeight + grp->padding;
-            else if(grp->flags & UWGF_TOP2BOTTOM)
+            else if(grp->flags & UWGF_TOPTOBOTTOM)
                 y += wDrawnHeight + grp->padding;
 
-            if(grp->flags & (UWGF_LEFT2RIGHT|UWGF_RIGHT2LEFT))
+            if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
                 drawnWidth += wDrawnWidth;
             else if(wDrawnWidth > drawnWidth)
                 drawnWidth = wDrawnWidth;
 
-            if(grp->flags & (UWGF_TOP2BOTTOM|UWGF_BOTTOM2TOP))
+            if(grp->flags & (UWGF_TOPTOBOTTOM|UWGF_BOTTOMTOTOP))
                 drawnHeight += wDrawnHeight;
             else if(wDrawnHeight > drawnHeight)
                 drawnHeight = wDrawnHeight;
@@ -318,18 +298,31 @@ void GUI_DrawWidgets(int group, byte flags, int inX, int inY, int availWidth,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    if(numDrawnWidgets)
+    if(0 != numDrawnWidgets)
     {
-        if(grp->flags & (UWGF_LEFT2RIGHT|UWGF_RIGHT2LEFT))
+        if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
             drawnWidth += (numDrawnWidgets-1) * grp->padding;
 
-        if(grp->flags & (UWGF_TOP2BOTTOM|UWGF_BOTTOM2TOP))
+        if(grp->flags & (UWGF_TOPTOBOTTOM|UWGF_BOTTOMTOTOP))
             drawnHeight += (numDrawnWidgets-1) * grp->padding;
     }
 
-    if(rDrawnWidth)
-        *rDrawnWidth = drawnWidth;
-    if(rDrawnHeight)
-        *rDrawnHeight = drawnHeight;
+    if(NULL != rDrawnWidth)  *rDrawnWidth  = drawnWidth;
+    if(NULL != rDrawnHeight) *rDrawnHeight = drawnHeight;
     }
+}
+
+void GUI_TickWidgets(uiwidgetgroup_t* grp)
+{
+    assert(NULL != grp);
+    if(!grp->widgetIdCount) return;
+    { int i;
+    for(i = 0; i < grp->widgetIdCount; ++i)
+    {
+        uiwidget_t* obj = toWidget(grp->widgetIds[i]);
+        if(NULL != obj->ticker)
+        {
+            obj->ticker(obj);
+        }
+    }}
 }

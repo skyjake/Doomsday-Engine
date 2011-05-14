@@ -111,7 +111,9 @@ boolean Chat_IsActive(int player);
 
 int Chat_Responder(int player, event_t* ev);
 
-void Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
+void Chat_Drawer(int player, float textAlpha, float iconAlpha);
+
+void Chat_Dimensions(int player, int* width, int* height);
 
 D_CMD(ChatOpen);
 D_CMD(ChatAction);

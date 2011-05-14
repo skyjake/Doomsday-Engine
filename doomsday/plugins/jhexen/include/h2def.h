@@ -133,7 +133,8 @@ typedef enum {
  * Armor types.
  */
 typedef enum {
-    ARMOR_ARMOR,
+    ARMOR_FIRST,
+    ARMOR_ARMOR = ARMOR_FIRST,
     ARMOR_SHIELD,
     ARMOR_HELMET,
     ARMOR_AMULET,

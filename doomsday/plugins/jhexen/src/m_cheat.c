@@ -64,6 +64,7 @@ int Cht_GodFunc(const int* args, int player);
 int Cht_NoClipFunc(const int* args, int player);
 int Cht_WeaponsFunc(const int* args, int player);
 int Cht_HealthFunc(const int* args, int player);
+int Cht_ArmorFunc(const int* args, int player);
 int Cht_GiveKeysFunc(const int* args, int player);
 int Cht_SoundFunc(const int* args, int player);
 int Cht_InventoryFunc(const int* args, int player);
@@ -272,7 +273,6 @@ int Cht_GodFunc(const int* args, int player)
 static void giveArmor(player_t* plr)
 {
     int i;
-
     plr->update |= PSF_ARMOR_POINTS;
     for(i = 0; i < NUMARMOR; ++i)
         plr->armorPoints[i] = PCLASS_INFO(plr->class)->armorIncrement[i];
@@ -281,18 +281,17 @@ static void giveArmor(player_t* plr)
 static void giveWeapons(player_t* plr)
 {
     int i;
-
-    plr->update |= PSF_OWNED_WEAPONS;
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         plr->weapons[i].owned = true;
     }
+    plr->pieces = WPIECE1|WPIECE2|WPIECE3;
+    plr->update |= PSF_OWNED_WEAPONS;
 }
 
 static void giveAmmo(player_t* plr)
 {
     int i;
-
     plr->update |= PSF_AMMO;
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
@@ -314,6 +313,26 @@ int Cht_GiveKeysFunc(const int* args, int player)
     plr->update |= PSF_KEYS;
     plr->keys = 2047;
     P_SetMessage(plr, TXT_CHEATKEYS, false);
+    S_LocalSound(SFX_PLATFORM_STOP, NULL);
+    return true;
+}
+
+int Cht_GiveArmorFunc(const int* args, int player)
+{
+    player_t* plr = &players[player];
+    int i;
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    for(i = (int)ARMOR_FIRST; i < (int)NUMARMOR; ++i)
+    {
+        P_GiveArmor(plr, (armortype_t)i, PCLASS_INFO(plr->class)->armorIncrement[i]);
+    }
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -1046,10 +1065,11 @@ D_CMD(CheatGive)
         Con_Printf("Stuff consists of one or more of (type:id). "
                    "If no id; give all of type:\n");
         Con_Printf(" a - ammo\n");
-        Con_Printf(" i - items\n");
         Con_Printf(" h - health\n");
+        Con_Printf(" i - items\n");
         Con_Printf(" k - keys\n");
         Con_Printf(" p - puzzle\n");
+        Con_Printf(" r - armor\n");
         Con_Printf(" w - weapons\n");
         Con_Printf("Example: 'give ikw' gives items, keys and weapons.\n");
         Con_Printf("Example: 'give w2k1' gives weapon two and key one.\n");
@@ -1112,12 +1132,12 @@ D_CMD(CheatGive)
             }
             break;
 
-        case 'i':
-            Cht_InventoryFunc(NULL, player);
-            break;
-
         case 'h':
             Cht_HealthFunc(NULL, player);
+            break;
+
+        case 'i':
+            Cht_InventoryFunc(NULL, player);
             break;
 
         case 'k':
@@ -1150,6 +1170,33 @@ D_CMD(CheatGive)
 
         case 'p':
             Cht_PuzzleFunc(NULL, player);
+            break;
+
+        case 'r':
+            if(i < stuffLen)
+            {
+                char* end;
+                long idx;
+                errno = 0;
+                idx = strtol(&buf[i+1], &end, 0);
+                if(end != &buf[i+1] && errno != ERANGE)
+                {
+                    i += end - &buf[i+1];
+                    if(idx < ARMOR_FIRST || idx >= NUMARMOR)
+                    {
+                        Con_Printf("Unknown armor #%d (valid range %d-%d).\n",
+                                   (int)idx, ARMOR_FIRST, NUMARMOR-1);
+                        break;
+                    }
+
+                    // Give one specific armor.
+                    P_GiveArmor(plr, (armortype_t)idx, PCLASS_INFO(plr->class)->armorIncrement[idx]);
+                    break;
+                }
+            }
+
+            // Give all armors.
+            Cht_GiveArmorFunc(NULL, player);
             break;
 
         case 'w':
