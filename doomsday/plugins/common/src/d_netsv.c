@@ -1067,7 +1067,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #if __JHERETIC__ || __JHEXEN__
     if(flags & PSF_INVENTORY)
     {
-        uint                i, count = 0;
+        uint i, count = 0;
 
         for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
             count += (P_InventoryCount(srcPlrNum, IIT_FIRST + i)? 1 : 0);
@@ -1078,7 +1078,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
             for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
             {
                 inventoryitemtype_t type = IIT_FIRST + i;
-                uint                num = P_InventoryCount(srcPlrNum, type);
+                uint num = P_InventoryCount(srcPlrNum, type);
 
                 if(num)
                 {
@@ -1411,7 +1411,7 @@ void NetSv_DoAction(int player, const char *data)
     float       pos[3];
     angle_t     angle = 0;
     float       lookDir = 0;
-    int         readyWeapon = 0;
+    int         actionParam = 0;
     player_t   *pl = &players[player];
 
     type = LONG(*ptr++);
@@ -1420,13 +1420,13 @@ void NetSv_DoAction(int player, const char *data)
     pos[VZ] = FIX2FLT(LONG(*ptr++));
     angle = LONG(*ptr++);
     lookDir = FIX2FLT( LONG(*ptr++) );
-    readyWeapon = LONG(*ptr++);
+    actionParam = LONG(*ptr++);
 
 #ifdef _DEBUG
     Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
                 "angle=%x lookDir=%g weapon=%i\n",
                 player, type, pos[VX], pos[VY], pos[VZ],
-                angle, lookDir, readyWeapon);
+                angle, lookDir, actionParam);
 #endif
 
     if(G_GetGameState() != GS_MAP)
@@ -1478,7 +1478,13 @@ void NetSv_DoAction(int player, const char *data)
         break;
 
     case GPA_CHANGE_WEAPON:
-        pl->brain.changeWeapon = readyWeapon;
+        pl->brain.changeWeapon = actionParam;
+        break;
+
+    case GPA_USE_FROM_INVENTORY:
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+        P_InventoryUse(player, actionParam, true);
+#endif
         break;
     }
 }

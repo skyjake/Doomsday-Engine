@@ -105,7 +105,8 @@ typedef struct {
 enum {
     GPA_FIRE = 1,
     GPA_USE = 2,
-    GPA_CHANGE_WEAPON = 3
+    GPA_CHANGE_WEAPON = 3,
+    GPA_USE_FROM_INVENTORY = 4
 };
 
 // Game state flags.

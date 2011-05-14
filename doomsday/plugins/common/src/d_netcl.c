@@ -437,7 +437,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
         {
             inventoryitemtype_t type = IIT_FIRST + i;
-            uint            j, count = P_InventoryCount(plrNum, type);
+            uint j, count = P_InventoryCount(plrNum, type);
 
             for(j = 0; j < count; ++j)
                 P_InventoryTake(plrNum, type, true);
@@ -989,8 +989,8 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
 {
 #define MSG_SIZE        (28)
 
-    char                msg[MSG_SIZE];
-    int                *ptr = (int*) msg;
+    char msg[MSG_SIZE];
+    int* ptr = (int*) msg;
 
     if(!IS_CLIENT)
         return;
@@ -1021,13 +1021,13 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
         for(i = 0; i < 5; ++i) *ptr++ = 0;
     }
 
-    // Currently active weapon.
-    if(actionType == GPA_CHANGE_WEAPON)
+    if(actionType == GPA_CHANGE_WEAPON || actionType == GPA_USE_FROM_INVENTORY)
     {
         *ptr++ = LONG(actionParam);
     }
     else
     {
+        // Currently active weapon.
         *ptr++ = LONG(player->readyWeapon);
     }
 

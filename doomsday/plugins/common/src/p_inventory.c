@@ -579,39 +579,49 @@ int P_InventoryUse(int player, inventoryitemtype_t type, int silent)
         return false;
     inv = &inventories[player];
 
-    if(type != NUM_INVENTORYITEM_TYPES)
-    {
-        if(tryUseItem(inv, type, false))
-            lastUsed = type;
-    }
-    else
-    {   // Panic! Use one of each item that is usable when panicked.
-        inventoryitemtype_t i;
-
-        for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
-            if(tryUseItem(inv, i, true))
-                lastUsed = i;
-    }
-
-    if(lastUsed == IIT_NONE)
-    {   // Failed to use an item.
-        // Set current to the next available?
-#if __JHERETIC__ || __JHEXEN__
-        if(type != NUM_INVENTORYITEM_TYPES && cfg.inventoryUseNext)
-        {
-# if __JHEXEN__
-            if(lastUsed < IIT_FIRSTPUZZITEM)
-# endif
-                Hu_InventoryMove(player, -1, false, true);
-        }
+#ifdef _DEBUG
+    Con_Message("P_InventoryUse: Player %i using item %i\n", player, type);
 #endif
 
-        return false;
+    if(IS_CLIENT)
+    {
+        // Clients will send a request to use the item, nothing else.
+        NetCl_PlayerActionRequest(&players[player], GPA_USE_FROM_INVENTORY, type);
     }
+    else
+    {
+        if(type != NUM_INVENTORYITEM_TYPES)
+        {
+            if(tryUseItem(inv, type, false))
+                lastUsed = type;
+        }
+        else
+        {   // Panic! Use one of each item that is usable when panicked.
+            inventoryitemtype_t i;
 
+            for(i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
+                if(tryUseItem(inv, i, true))
+                    lastUsed = i;
+        }
+
+        if(lastUsed == IIT_NONE)
+        {   // Failed to use an item.
+            // Set current to the next available?
+#if __JHERETIC__ || __JHEXEN__
+            if(type != NUM_INVENTORYITEM_TYPES && cfg.inventoryUseNext)
+            {
+# if __JHEXEN__
+                if(lastUsed < IIT_FIRSTPUZZITEM)
+# endif
+                    Hu_InventoryMove(player, -1, false, true);
+            }
+#endif
+            return false;
+        }
+    }
     if(!silent)
     {
-        invitem_t*          item = &invItems[lastUsed-1];
+        invitem_t* item = &invItems[lastUsed-1];
 
         S_ConsoleSound(item->useSnd, NULL, player);
 #if __JHERETIC__ || __JHEXEN__
