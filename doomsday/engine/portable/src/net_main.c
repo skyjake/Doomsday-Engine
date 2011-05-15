@@ -493,10 +493,11 @@ static void Net_DoUpdate(void)
         {
             Msg_WriteLong(FLT2FIX(mo->pos[VZ]));
         }
-        // Also include momentum.
+        // Also include momentum and angle.
         Msg_WriteShort((short) (mo->mom[VX] * 256));
         Msg_WriteShort((short) (mo->mom[VY] * 256));
         Msg_WriteShort((short) (mo->mom[VZ] * 256));
+        Msg_WriteShort(mo->angle >> 16);
         Net_SendBuffer(0, 0);
     }
 }

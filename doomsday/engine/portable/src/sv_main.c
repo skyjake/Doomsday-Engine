@@ -1189,6 +1189,7 @@ void Sv_ClientCoords(int plrNum)
     int                 clz;
     float               clientPos[3];
     float               clientMom[3];
+    angle_t             clientAngle;
     boolean             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
@@ -1213,6 +1214,17 @@ void Sv_ClientCoords(int plrNum)
     clientMom[VX] = ((float) Msg_ReadShort()) / 256;
     clientMom[VY] = ((float) Msg_ReadShort()) / 256;
     clientMom[VZ] = ((float) Msg_ReadShort()) / 256;
+
+    // The angle.
+    clientAngle = ((angle_t) Msg_ReadShort()) << 16;
+
+    if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
+    {
+#ifdef _DEBUG
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angle for player %i: %x\n", plrNum, clientAngle) );
+#endif
+        mo->angle = clientAngle;
+    }
 
     if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
     {
