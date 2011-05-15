@@ -465,22 +465,27 @@ ENDIF (UNIX)
 ######################## The Doomsday Engine  ##################################
 
 ADD_DEFINITIONS ( -D__DOOMSDAY__ )
-ADD_DEFINITIONS ( -DDOOMSDAY_BUILD_TEXT=\"${DOOMSDAY_BUILD_TEXT}\" )
+IF(DEFINED DOOMSDAY_BUILD_TEXT)
+    MESSAGE(STATUS "Doomsday Build: ${DOOMSDAY_BUILD_TEXT}")
+    ADD_DEFINITIONS ( -DDOOMSDAY_BUILD_TEXT=\"${DOOMSDAY_BUILD_TEXT}\" )
+ELSE()
+    MESSAGE(STATUS "Doomsday build text not defined.")
+ENDIF()
 
-INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
-FILE (GLOB DENG_PORTABLE_SOURCES
+FILE(GLOB DENG_PORTABLE_SOURCES
     ${CMAKE_SOURCE_DIR}/engine/portable/src/*.c
     ${CMAKE_SOURCE_DIR}/engine/portable/include/*.h
     ${CMAKE_SOURCE_DIR}/engine/api/*.h )
 
-SET ( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
+SET( DENG_PORTABLE_SOURCES ${DENG_PORTABLE_SOURCES} ${CMAKE_SOURCE_DIR}/plugins/common/src/m_fixed.c )
 
-IF (UNIX)
+IF(UNIX)
     INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/engine/unix/include )
     FILE (GLOB DENG_ARCH_SPECIFIC_SOURCES ${CMAKE_SOURCE_DIR}/engine/unix/src/*.c ${CMAKE_SOURCE_DIR}/engine/unix/include/*.h )
     SET (DENG_ARCH_SPECIFIC_SOURCES ${DENG_ARCH_SPECIFIC_SOURCES} ${LZSS_SOURCES})
-ENDIF (UNIX)
+ENDIF()
 
 ## .m is Obj-C
 IF (APPLE)

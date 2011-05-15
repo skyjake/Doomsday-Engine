@@ -1902,6 +1902,10 @@ void C_DECL A_Egg(mobj_t* mo)
     if(!mo->player)
         return;
 
+#ifdef _DEBUG
+    Con_Message("A_Egg: Spawning EGGFXs.\n");
+#endif
+
 #if __JHEXEN__
     P_SpawnPlayerMissile(MT_EGGFX, mo);
     P_SPMAngle(MT_EGGFX, mo, mo->angle - (ANG45 / 6));
