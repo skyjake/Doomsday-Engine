@@ -309,6 +309,36 @@ int P_GetPlayerCheats(player_t *player)
 }
 
 /**
+ * Determines whether the player's state is one of the walking states.
+ *
+ * @param pl  Player whose state to check.
+ *
+ * @return  @c true, if the player is walking.
+ */
+boolean P_PlayerInWalkState(player_t* pl)
+{
+    if(!pl->plr->mo) return false;
+
+    /// @todo  Implementation restricts possibilities for modifying behavior solely with state definitions.
+
+#if __JDOOM__
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+#endif
+
+#if __JHERETIC__
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+#endif
+
+#if __JHEXEN__
+    return ((unsigned) ((pl->plr->mo->state - STATES) - PCLASS_INFO(pl->class_)->runState) < 4);
+#endif
+
+#if __JDOOM64__
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+#endif
+}
+
+/**
  * Subtract the appropriate amount of ammo from the player for firing
  * the current ready weapon.
  *
