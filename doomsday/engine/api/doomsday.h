@@ -266,7 +266,6 @@ extern          "C" {
 #include "dd_world.h"
 
     // Play: Misc.
-    void            P_MergeCommand(ticcmd_t* dest, ticcmd_t* src); // temporary.
     void            P_SpawnDamageParticleGen(struct mobj_s* mo,
                                              struct mobj_s* inflictor,
                                              int amount);

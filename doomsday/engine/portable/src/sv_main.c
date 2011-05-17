@@ -1218,6 +1218,10 @@ void Sv_ClientCoords(int plrNum)
     // The angle.
     clientAngle = ((angle_t) Msg_ReadShort()) << 16;
 
+    // Movement intent.
+    ddpl->forwardMove = FIX2FLT(((char) Msg_ReadByte()) << 13);
+    ddpl->sideMove = FIX2FLT(((char) Msg_ReadByte()) << 13);
+
     if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
 #ifdef _DEBUG

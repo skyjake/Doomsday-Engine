@@ -350,13 +350,29 @@ void P_CheckPlayerJump(player_t *player)
 
 void P_MovePlayer(player_t *player)
 {
-    ddplayer_t *dp = player->plr;
-    mobj_t     *plrmo = player->plr->mo;
-    //ticcmd_t   *cmd = &player->plr->cmd;
+    ddplayer_t* dp = player->plr;
+    mobj_t* plrmo = player->plr->mo;
     playerbrain_t *brain = &player->brain;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class_);
-    int         speed;
-    float       forwardMove, sideMove;
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
+    int speed;
+    float forwardMove;
+    float sideMove;
+
+    if(IS_NETGAME && IS_SERVER)
+    {
+        // Server just starts the walking animation for remote players.
+        if((dp->forwardMove != 0 || dp->sideMove != 0) &&
+           plrmo->state == &STATES[pClassInfo->normalState])
+        {
+            P_MobjChangeState(plrmo, pClassInfo->runState);
+        }
+        else if(P_PlayerInWalkState(player) && !dp->forwardMove && !dp->sideMove)
+        {
+            // If in a walking frame, stop moving.
+            P_MobjChangeState(plrmo, pClassInfo->normalState);
+        }
+        return;
+    }
 
     // Change the angle if possible.
     /* $unifiedangles */
@@ -445,9 +461,9 @@ void P_MovePlayer(player_t *player)
         }
 
         if((forwardMove != 0 || sideMove != 0) &&
-           player->plr->mo->state == &STATES[pClassInfo->normalState])
+           plrmo->state == &STATES[pClassInfo->normalState])
         {
-            P_MobjChangeState(player->plr->mo, pClassInfo->runState);
+            P_MobjChangeState(plrmo, pClassInfo->runState);
         }
 
         //P_CheckPlayerJump(player); // done in a different place
@@ -463,10 +479,8 @@ void P_MovePlayer(player_t *player)
        } */
 
     // 110 corresponds 85 degrees.
-    if(player->plr->lookDir > 110)
-        player->plr->lookDir = 110;
-    if(player->plr->lookDir < -110)
-        player->plr->lookDir = -110;
+    if(dp->lookDir > 110) dp->lookDir = 110;
+    if(dp->lookDir < -110) dp->lookDir = -110;
 #endif
 }
 
@@ -1589,6 +1603,7 @@ void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
 void P_PlayerThinkUpdateControls(player_t* player)
 {
     int                 playerNum = player - players;
+    ddplayer_t         *dp = player->plr;
     float               vel, off, offsetSensitivity = 100;
     int                 i;
     boolean             strafe = false;
@@ -1616,6 +1631,10 @@ void P_PlayerThinkUpdateControls(player_t* player)
     // Saturate sidestep.
     vel = (vel > 0? 1 : vel < 0? -1 : 0);
     brain->sideMove = off * offsetSensitivity + vel;
+
+    // Let the engine know these.
+    dp->forwardMove = brain->forwardMove;
+    dp->sideMove = brain->sideMove;
 
     // Flight.
     P_GetControlState(playerNum, CTL_ZFLY, &vel, &off);

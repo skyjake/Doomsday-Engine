@@ -31,7 +31,6 @@
 
 #include "d_net.h"
 
-void*           NetCl_WriteCommands(ticcmd_t* cmd, int count);
 void            NetCl_UpdateGameState(byte* data);
 void            NetCl_PlayerSpawnPosition(byte* data);
 void            NetCl_CheatRequest(const char* command);

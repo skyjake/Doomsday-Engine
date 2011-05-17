@@ -29,11 +29,15 @@
 #ifndef __DOOMSDAY_PLAY_TIC_CMD_H__
 #define __DOOMSDAY_PLAY_TIC_CMD_H__
 
+#if 0
+
 // Ticcmd
 #define TICCMD_SIZE     gx.ticcmdSize
 #define TICCMD_IDX(i)   ((i)*TICCMD_SIZE)
 
 void    P_BuildCommand(ticcmd_t *cmd, int playerNumber);
 void    P_MergeCommand(ticcmd_t *dest, ticcmd_t *src);
+
+#endif
 
 #endif

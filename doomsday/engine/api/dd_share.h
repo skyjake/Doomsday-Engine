@@ -1133,6 +1133,7 @@ enum {
     //
     //------------------------------------------------------------------------
 
+#if 0
 /**
  * Tick Commands. Usually only a part of this data is transferred over
  * the network. In addition to tick commands, clients will sent 'impulses'
@@ -1147,6 +1148,7 @@ typedef struct ticcmd_s {
     short       pitch; // View pitch.
     short       actions; // On/off action flags.
 } ticcmd_t;
+#endif
 
     // Network Player Events
     enum {
@@ -1335,7 +1337,8 @@ typedef struct ticcmd_s {
     } fixcounters_t;
 
     typedef struct ddplayer_s {
-        ticcmd_t        cmd;
+        float           forwardMove; // Copied from player brain (read only).
+        float           sideMove; // Copied from player brain (read only).
         struct mobj_s*  mo; // Pointer to a (game specific) mobj.
         float           lookDir; // For mouse look.
         int             fixedColorMap; // Can be set to REDCOLORMAP, etc.

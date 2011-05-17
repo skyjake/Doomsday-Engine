@@ -44,6 +44,7 @@ NAME            "DOOMSDAY"
 ; 319 formerly P_Swap
 ; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
+; 333 formerly P_MergeCommand
 ; 349 formerly R_MaterialIsCustom
 ; 375 formerly DGL_MultiTexCoord2f
 ; 376 formerly DGL_MultiTexCoord2fv
@@ -285,7 +286,6 @@ EXPORTS
     P_GetGMOFloat               @420 NONAME
 
 ; Play: Misc.
-    P_MergeCommand              @333 NONAME
     P_RegisterMapObj            @411 NONAME
     P_RegisterMapObjProperty    @412 NONAME
 

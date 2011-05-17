@@ -678,15 +678,14 @@ explode:
     }
 
     // Stop player walking animation.
-    if((!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove))) &&
+    if((!player || (!(player->plr->forwardMove || player->plr->sideMove))) &&
        INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
        INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {   // If in a walking frame, stop moving
         if(player)
         {
             if((unsigned)
-               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class_)->runState) <
-               4)
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class_)->runState) < 4)
             {
                 P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
             }

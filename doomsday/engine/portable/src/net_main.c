@@ -498,7 +498,10 @@ static void Net_DoUpdate(void)
         Msg_WriteShort((short) (mo->mom[VY] * 256));
         Msg_WriteShort((short) (mo->mom[VZ] * 256));
         Msg_WriteShort(mo->angle >> 16);
-        Net_SendBuffer(0, 0);
+        // Control state.
+        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
+        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
+        Net_SendBuffer(0, 0);       
     }
 }
 
