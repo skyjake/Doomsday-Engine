@@ -1779,7 +1779,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -1814,7 +1814,7 @@ void SBarFrags_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", frags->value);
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -1867,7 +1867,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
@@ -1905,7 +1905,7 @@ void SBarHealth_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", hlth->value);
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.statusbarScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -1964,7 +1964,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
@@ -2002,7 +2002,7 @@ void SBarArmor_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", armor->value);
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.statusbarScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -2054,7 +2054,7 @@ void SBarBlueMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_SMALLIN));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -2089,7 +2089,7 @@ void SBarBlueMana_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", mana->value);
-    FR_SetFont(FID(GF_SMALLIN));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -2140,7 +2140,7 @@ void SBarGreenMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_SMALLIN));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -2175,7 +2175,7 @@ void SBarGreenMana_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", mana->value);
-    FR_SetFont(FID(GF_SMALLIN));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -2264,7 +2264,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         if(count > 1)
         {
             char buf[20];
-            FR_SetFont(FID(GF_SMALLIN));
+            FR_SetFont(FID(obj->fontId));
             DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextFragment2(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -2758,7 +2758,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_FONTB));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment3(buf, -1, -1, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -2791,7 +2791,7 @@ void Health_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", value);
-    FR_SetFont(FID(GF_FONTB));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -2873,7 +2873,7 @@ void BlueMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment3(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -2904,7 +2904,7 @@ void BlueMana_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", mana->value);
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -2984,7 +2984,7 @@ void GreenMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment3(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -3016,7 +3016,7 @@ void GreenMana_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", mana->value);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -3051,7 +3051,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment3(buf, 0, -13, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
 
@@ -3085,7 +3085,7 @@ void Frags_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", frags->value);
-    FR_SetFont(FID(GF_STATUS));
+    FR_SetFont(FID(obj->fontId));
     if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -3145,7 +3145,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
         if(count > 1)
         {
             char buf[20];
-            FR_SetFont(FID(GF_SMALLIN));
+            FR_SetFont(FID(obj->fontId));
             DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextFragment2(buf, -2, -7, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -3267,7 +3267,7 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     if(!AM_IsActive(AM_MapForPlayer(obj->player)))
         return;
 
-    FR_SetFont(FID(GF_FONTA));
+    FR_SetFont(FID(obj->fontId));
     FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextFragmentWidth(" : ");
 
@@ -3343,7 +3343,7 @@ void WorldTimer_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(!AM_IsActive(AM_MapForPlayer(obj->player)))
         return;
 
-    FR_SetFont(FID(GF_FONTA));
+    FR_SetFont(FID(obj->fontId));
     FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextFragmentWidth(" : ");
 
@@ -3460,6 +3460,7 @@ typedef struct {
     guiwidgettype_t type;
     int group;
     int hideId;
+    gamefontid_t fontId;
     void (*dimensions) (uiwidget_t* obj, int* width, int* height);
     void (*drawer) (uiwidget_t* obj, int x, int y);
     void (*ticker) (uiwidget_t* obj);
@@ -3559,37 +3560,37 @@ void ST_Drawer(int player)
             { UWG_TOPRIGHT2,    UWGF_ALIGN_TOP|UWGF_ALIGN_RIGHT|UWGF_TOPTOBOTTOM, PADDING }
         };
         const uiwidgetdef_t widgetDefs[] = {
-            { GUI_BOX,          UWG_STATUSBAR,    -1,         SBarBackground_Dimensions, SBarBackground_Drawer },
-            { GUI_WEAPONPIECES, UWG_STATUSBAR,    -1,         SBarWeaponPieces_Dimensions, SBarWeaponPieces_Drawer, WeaponPieces_Ticker, &hud->sbarWeaponpieces },
-            { GUI_CHAIN,        UWG_STATUSBAR,    -1,         SBarChain_Dimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-            { GUI_INVENTORY,    UWG_STATUSBAR,    -1,         SBarInventory_Dimensions, SBarInventory_Drawer },
-            { GUI_KEYS,         UWG_STATUSBAR,    -1,         SBarKeys_Dimensions, SBarKeys_Drawer, Keys_Ticker, &hud->sbarKeys },
-            { GUI_ARMORICONS,   UWG_STATUSBAR,    -1,         SBarArmorIcons_Dimensions, SBarArmorIcons_Drawer, ArmorIcons_Ticker, &hud->sbarArmoricons },
-            { GUI_FRAGS,        UWG_STATUSBAR,    -1,         SBarFrags_Dimensions, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
-            { GUI_HEALTH,       UWG_STATUSBAR,    -1,         SBarHealth_Dimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
-            { GUI_ARMOR,        UWG_STATUSBAR,    -1,         SBarArmor_Dimensions, SBarArmor_Drawer, SBarArmor_Ticker, &hud->sbarArmor },
-            { GUI_READYITEM,    UWG_STATUSBAR,    -1,         SBarReadyItem_Dimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
-            { GUI_BLUEMANAICON, UWG_STATUSBAR,    -1,         SBarBlueManaIcon_Dimensions, SBarBlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->sbarBluemanaicon },
-            { GUI_BLUEMANA,     UWG_STATUSBAR,    -1,         SBarBlueMana_Dimensions, SBarBlueMana_Drawer, BlueMana_Ticker, &hud->sbarBluemana },
-            { GUI_BLUEMANAVIAL, UWG_STATUSBAR,    -1,         SBarBlueManaVial_Dimensions, SBarBlueManaVial_Drawer, BlueManaVial_Ticker, &hud->sbarBluemanavial },
-            { GUI_GREENMANAICON, UWG_STATUSBAR,   -1,         SBarGreenManaIcon_Dimensions, SBarGreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->sbarGreenmanaicon },
-            { GUI_GREENMANA,    UWG_STATUSBAR,    -1,         SBarGreenMana_Dimensions, SBarGreenMana_Drawer, GreenMana_Ticker, &hud->sbarGreenmana },
-            { GUI_GREENMANAVIAL, UWG_STATUSBAR,   -1,         SBarGreenManaVial_Dimensions, SBarGreenManaVial_Drawer, GreenManaVial_Ticker, &hud->sbarGreenmanavial },
-            { GUI_BLUEMANAICON, UWG_TOPLEFT,      HUD_MANA,   BlueManaIcon_Dimensions, BlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->bluemanaicon },
-            { GUI_BLUEMANA,     UWG_TOPLEFT,      HUD_MANA,   BlueMana_Dimensions, BlueMana_Drawer, BlueMana_Ticker, &hud->bluemana },
-            { GUI_GREENMANAICON, UWG_TOPLEFT2,    HUD_MANA,   GreenManaIcon_Dimensions, GreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->greenmanaicon },
-            { GUI_GREENMANA,    UWG_TOPLEFT2,     HUD_MANA,   GreenMana_Dimensions, GreenMana_Drawer, GreenMana_Ticker, &hud->greenmana },
-            { GUI_FLIGHT,       UWG_TOPLEFT3,     -1,         Flight_Dimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
-            { GUI_BOOTS,        UWG_TOPLEFT3,     -1,         Boots_Dimensions, Boots_Drawer, Boots_Ticker, &hud->boots },
-            { GUI_SERVANT,      UWG_TOPRIGHT,     -1,         Servant_Dimensions, Servant_Drawer, Servant_Ticker, &hud->servant },
-            { GUI_DEFENSE,      UWG_TOPRIGHT,     -1,         Defense_Dimensions, Defense_Drawer, Defense_Ticker, &hud->defense },
-            { GUI_WORLDTIMER,   UWG_TOPRIGHT2,    -1,         WorldTimer_Dimensions, WorldTimer_Drawer, WorldTimer_Ticker, &hud->worldtimer },
-            { GUI_HEALTH,       UWG_BOTTOMLEFT,   HUD_HEALTH, Health_Dimensions, Health_Drawer, Health_Ticker, &hud->health },
-            { GUI_FRAGS,        UWG_BOTTOMLEFT,   -1,         Frags_Dimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
-            { GUI_READYITEM,    UWG_BOTTOMRIGHT,  HUD_READYITEM, ReadyItem_Dimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
-            { GUI_INVENTORY,    UWG_BOTTOM,       -1,         Inventory_Dimensions, Inventory_Drawer },
-            { GUI_LOG,          UWG_TOP,          -1,         Log_Dimensions2, Log_Drawer2 },
-            { GUI_CHAT,         UWG_TOP,          -1,         Chat_Dimensions2, Chat_Drawer2 }
+            { GUI_BOX,          UWG_STATUSBAR,    -1,         0,            SBarBackground_Dimensions, SBarBackground_Drawer },
+            { GUI_WEAPONPIECES, UWG_STATUSBAR,    -1,         0,            SBarWeaponPieces_Dimensions, SBarWeaponPieces_Drawer, WeaponPieces_Ticker, &hud->sbarWeaponpieces },
+            { GUI_CHAIN,        UWG_STATUSBAR,    -1,         0,            SBarChain_Dimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
+            { GUI_INVENTORY,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarInventory_Dimensions, SBarInventory_Drawer },
+            { GUI_KEYS,         UWG_STATUSBAR,    -1,         0,            SBarKeys_Dimensions, SBarKeys_Drawer, Keys_Ticker, &hud->sbarKeys },
+            { GUI_ARMORICONS,   UWG_STATUSBAR,    -1,         0,            SBarArmorIcons_Dimensions, SBarArmorIcons_Drawer, ArmorIcons_Ticker, &hud->sbarArmoricons },
+            { GUI_FRAGS,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarFrags_Dimensions, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
+            { GUI_HEALTH,       UWG_STATUSBAR,    -1,         GF_STATUS,    SBarHealth_Dimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
+            { GUI_ARMOR,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarArmor_Dimensions, SBarArmor_Drawer, SBarArmor_Ticker, &hud->sbarArmor },
+            { GUI_READYITEM,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarReadyItem_Dimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
+            { GUI_BLUEMANAICON, UWG_STATUSBAR,    -1,         0,            SBarBlueManaIcon_Dimensions, SBarBlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->sbarBluemanaicon },
+            { GUI_BLUEMANA,     UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarBlueMana_Dimensions, SBarBlueMana_Drawer, BlueMana_Ticker, &hud->sbarBluemana },
+            { GUI_BLUEMANAVIAL, UWG_STATUSBAR,    -1,         0,            SBarBlueManaVial_Dimensions, SBarBlueManaVial_Drawer, BlueManaVial_Ticker, &hud->sbarBluemanavial },
+            { GUI_GREENMANAICON, UWG_STATUSBAR,   -1,         0,            SBarGreenManaIcon_Dimensions, SBarGreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->sbarGreenmanaicon },
+            { GUI_GREENMANA,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarGreenMana_Dimensions, SBarGreenMana_Drawer, GreenMana_Ticker, &hud->sbarGreenmana },
+            { GUI_GREENMANAVIAL, UWG_STATUSBAR,   -1,         0,            SBarGreenManaVial_Dimensions, SBarGreenManaVial_Drawer, GreenManaVial_Ticker, &hud->sbarGreenmanavial },
+            { GUI_BLUEMANAICON, UWG_TOPLEFT,      HUD_MANA,   0,            BlueManaIcon_Dimensions, BlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->bluemanaicon },
+            { GUI_BLUEMANA,     UWG_TOPLEFT,      HUD_MANA,   GF_STATUS,    BlueMana_Dimensions, BlueMana_Drawer, BlueMana_Ticker, &hud->bluemana },
+            { GUI_GREENMANAICON, UWG_TOPLEFT2,    HUD_MANA,   0,            GreenManaIcon_Dimensions, GreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->greenmanaicon },
+            { GUI_GREENMANA,    UWG_TOPLEFT2,     HUD_MANA,   GF_STATUS,    GreenMana_Dimensions, GreenMana_Drawer, GreenMana_Ticker, &hud->greenmana },
+            { GUI_FLIGHT,       UWG_TOPLEFT3,     -1,         0,            Flight_Dimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
+            { GUI_BOOTS,        UWG_TOPLEFT3,     -1,         0,            Boots_Dimensions, Boots_Drawer, Boots_Ticker, &hud->boots },
+            { GUI_SERVANT,      UWG_TOPRIGHT,     -1,         0,            Servant_Dimensions, Servant_Drawer, Servant_Ticker, &hud->servant },
+            { GUI_DEFENSE,      UWG_TOPRIGHT,     -1,         0,            Defense_Dimensions, Defense_Drawer, Defense_Ticker, &hud->defense },
+            { GUI_WORLDTIMER,   UWG_TOPRIGHT2,    -1,         GF_FONTA,     WorldTimer_Dimensions, WorldTimer_Drawer, WorldTimer_Ticker, &hud->worldtimer },
+            { GUI_HEALTH,       UWG_BOTTOMLEFT,   HUD_HEALTH, GF_FONTB,     Health_Dimensions, Health_Drawer, Health_Ticker, &hud->health },
+            { GUI_FRAGS,        UWG_BOTTOMLEFT,   -1,         GF_STATUS,    Frags_Dimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
+            { GUI_READYITEM,    UWG_BOTTOMRIGHT,  HUD_READYITEM, GF_SMALLIN,ReadyItem_Dimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
+            { GUI_INVENTORY,    UWG_BOTTOM,       -1,         GF_SMALLIN,   Inventory_Dimensions, Inventory_Drawer },
+            { GUI_LOG,          UWG_TOP,          -1,         GF_FONTA,     Log_Dimensions2, Log_Drawer2 },
+            { GUI_CHAT,         UWG_TOP,          -1,         GF_FONTA,     Chat_Dimensions2, Chat_Drawer2 }
         };
         size_t i;
 
@@ -3602,7 +3603,7 @@ void ST_Drawer(int player)
         for(i = 0; i < sizeof(widgetDefs)/sizeof(widgetDefs[0]); ++i)
         {
             const uiwidgetdef_t* def = &widgetDefs[i];
-            uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, def->dimensions, def->drawer, def->ticker, def->typedata);
+            uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, def->fontId, def->dimensions, def->drawer, def->ticker, def->typedata);
             GUI_GroupAddWidget(GUI_FindGroupForName(toGroupName(player, def->group)), id);
         }
 

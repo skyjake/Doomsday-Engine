@@ -133,7 +133,7 @@ void GUI_Shutdown(void)
     inited = false;
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata)
@@ -151,6 +151,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId,
     obj->type = type;
     obj->player = player;
     obj->hideId = hideId;
+    obj->fontId = fontId;
     obj->dimensions = dimensions;
     obj->drawer = drawer;
     obj->ticker = ticker;

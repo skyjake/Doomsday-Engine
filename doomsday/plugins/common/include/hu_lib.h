@@ -244,6 +244,7 @@ typedef struct uiwidget_s {
     guiwidgettype_t type;
     int player; /// \todo refactor away.
     int hideId;
+    gamefontid_t fontId;
     void (*dimensions) (struct uiwidget_s* obj, int* width, int* height);
     void (*drawer) (struct uiwidget_s* obj, int x, int y);
     void (*ticker) (struct uiwidget_s* obj);
@@ -252,7 +253,7 @@ typedef struct uiwidget_s {
 
 typedef int uiwidgetid_t;
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata);
