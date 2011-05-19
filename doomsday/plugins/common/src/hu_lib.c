@@ -260,36 +260,46 @@ void GUI_DrawWidgets(guidata_group_t* grp, int inX, int inY, int availWidth,
             ++numDrawnWidgets;
 
             if(grp->flags & UWGF_RIGHTTOLEFT)
-                x -= wDrawnWidth + grp->padding;
+            {
+                if(!(grp->flags & UWGF_VERTICAL))
+                    x -= wDrawnWidth  + grp->padding;
+                else
+                    y -= wDrawnHeight + grp->padding;
+            }
             else if(grp->flags & UWGF_LEFTTORIGHT)
-                x += wDrawnWidth + grp->padding;
-
-            if(grp->flags & UWGF_BOTTOMTOTOP)
-                y -= wDrawnHeight + grp->padding;
-            else if(grp->flags & UWGF_TOPTOBOTTOM)
-                y += wDrawnHeight + grp->padding;
+            {
+                if(!(grp->flags & UWGF_VERTICAL))
+                    x += wDrawnWidth  + grp->padding;
+                else
+                    y += wDrawnHeight + grp->padding;
+            }
 
             if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
-                drawnWidth += wDrawnWidth;
-            else if(wDrawnWidth > drawnWidth)
-                drawnWidth = wDrawnWidth;
+            {
+                if(!(grp->flags & UWGF_VERTICAL))
+                    drawnWidth  += wDrawnWidth;
+                else
+                    drawnHeight += wDrawnHeight;
+            }
+            else
+            {
+                if(wDrawnWidth  > drawnWidth)
+                    drawnWidth  = wDrawnWidth;
 
-            if(grp->flags & (UWGF_TOPTOBOTTOM|UWGF_BOTTOMTOTOP))
-                drawnHeight += wDrawnHeight;
-            else if(wDrawnHeight > drawnHeight)
-                drawnHeight = wDrawnHeight;
+                if(wDrawnHeight > drawnHeight)
+                    drawnHeight = wDrawnHeight;
+            }
         }
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    if(0 != numDrawnWidgets)
+    if(0 != numDrawnWidgets && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
     {
-        if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
-            drawnWidth += (numDrawnWidgets-1) * grp->padding;
-
-        if(grp->flags & (UWGF_TOPTOBOTTOM|UWGF_BOTTOMTOTOP))
+        if(!(grp->flags & UWGF_VERTICAL))
+            drawnWidth  += (numDrawnWidgets-1) * grp->padding;
+        else
             drawnHeight += (numDrawnWidgets-1) * grp->padding;
     }
 

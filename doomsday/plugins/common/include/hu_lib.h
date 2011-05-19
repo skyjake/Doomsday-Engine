@@ -271,8 +271,7 @@ int GUI_CreateGroup(int name, short flags, int padding);
 #define UWGF_ALIGN_BOTTOM       0x0008
 #define UWGF_LEFTTORIGHT        0x0010
 #define UWGF_RIGHTTOLEFT        0x0020
-#define UWGF_TOPTOBOTTOM        0x0040
-#define UWGF_BOTTOMTOTOP        0x0080
+#define UWGF_VERTICAL           0x0040
 /*@}*/
 
 typedef struct {
