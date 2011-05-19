@@ -42,7 +42,7 @@ static uiwidgetid_t numWidgets;
 static uiwidget_t* widgets;
 
 static int numWidgetGroups;
-static uiwidgetgroup_t* widgetGroups;
+static guidata_group_t* widgetGroups;
 
 static ui_rendstate_t rs;
 const ui_rendstate_t* uiRendState = &rs;
@@ -55,28 +55,16 @@ static uiwidget_t* toWidget(uiwidgetid_t id)
     exit(1); // Unreachable.
 }
 
-static uiwidgetgroup_t* groupForName(int name, boolean canCreate)
+static guidata_group_t* allocateGroup(void)
 {
-    int i;
-    // Widget group names are unique.
-    for(i = 0; i < numWidgetGroups; ++i)
-    {
-        uiwidgetgroup_t* group = &widgetGroups[i];
-        if(group->name == name)
-            return group;
-    }
-    if(!canCreate)
-        return NULL;
-    // Must allocate a new group.
-    {
-    uiwidgetgroup_t* group;
-    widgetGroups = (uiwidgetgroup_t*) realloc(widgetGroups, sizeof(uiwidgetgroup_t) * ++numWidgetGroups);
+    guidata_group_t* group;
+    widgetGroups = (guidata_group_t*) realloc(widgetGroups, sizeof(guidata_group_t) * ++numWidgetGroups);
     group = &widgetGroups[numWidgetGroups-1];
-    group->name = name;
+    group->flags = 0;
+    group->padding = 0;
     group->widgetIdCount = 0;
     group->widgetIds = NULL;
     return group;
-    }
 }
 
 static void drawWidget(uiwidget_t* obj, float alpha, float* drawnWidth, float* drawnHeight)
@@ -98,7 +86,7 @@ static void clearWidgetGroups(void)
     { int i;
     for(i = 0; i < numWidgetGroups; ++i)
     {
-        uiwidgetgroup_t* grp = &widgetGroups[i];
+        guidata_group_t* grp = &widgetGroups[i];
         free(grp->widgetIds);
     }}
     free(widgetGroups);
@@ -133,7 +121,7 @@ void GUI_Shutdown(void)
     inited = false;
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
+int GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata)
@@ -148,6 +136,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, game
             (unsigned long) (sizeof(uiwidget_t) * numWidgets));
 
     obj = &widgets[numWidgets-1];
+    obj->id = (uiwidgetid_t)numWidgets-1;
     obj->type = type;
     obj->player = player;
     obj->hideId = hideId;
@@ -160,24 +149,26 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, game
     }
 }
 
-uiwidgetgroup_t* GUI_FindGroupForName(int name)
+guidata_group_t* GUI_GroupByIndex(int idx)
 {
     assert(inited);
-    return groupForName(name, false);
+    if(idx < 0 || idx >= numWidgetGroups)
+        Con_Error("GUI_GroupByIndex: Index #%i invalid.", idx);
+    return widgetGroups + idx;
 }
 
 int GUI_CreateGroup(int name, short flags, int padding)
 {
     assert(inited);
     {
-    uiwidgetgroup_t* grp = groupForName(name, true);
+    guidata_group_t* grp = allocateGroup();
     grp->flags = flags;
     grp->padding = padding;
-    return name;
+    return numWidgetGroups-1;
     }
 }
 
-void GUI_GroupAddWidget(uiwidgetgroup_t* grp, uiwidgetid_t id)
+void GUI_GroupAddWidget(guidata_group_t* grp, uiwidgetid_t id)
 {
     assert(NULL != grp);
     {
@@ -200,25 +191,19 @@ void GUI_GroupAddWidget(uiwidgetgroup_t* grp, uiwidgetid_t id)
     }
 }
 
-int GUI_GroupName(uiwidgetgroup_t* grp)
-{
-    assert(NULL != grp);
-    return grp->name;
-}
-
-short GUI_GroupFlags(uiwidgetgroup_t* grp)
+short GUI_GroupFlags(guidata_group_t* grp)
 {
     assert(NULL != grp);
     return grp->flags;
 }
 
-void GUI_GroupSetFlags(uiwidgetgroup_t* grp, short flags)
+void GUI_GroupSetFlags(guidata_group_t* grp, short flags)
 {
     assert(NULL != grp);
     grp->flags = flags;
 }
 
-void GUI_DrawWidgets(uiwidgetgroup_t* grp, int inX, int inY, int availWidth,
+void GUI_DrawWidgets(guidata_group_t* grp, int inX, int inY, int availWidth,
     int availHeight, float alpha, int* rDrawnWidth, int* rDrawnHeight)
 {
     assert(NULL != grp);
@@ -313,7 +298,7 @@ void GUI_DrawWidgets(uiwidgetgroup_t* grp, int inX, int inY, int availWidth,
     }
 }
 
-void GUI_TickWidgets(uiwidgetgroup_t* grp)
+void GUI_TickWidgets(guidata_group_t* grp)
 {
     assert(NULL != grp);
     if(!grp->widgetIdCount) return;

@@ -240,7 +240,10 @@ typedef struct {
 void GUI_Init(void);
 void GUI_Shutdown(void);
 
+typedef int uiwidgetid_t;
+
 typedef struct uiwidget_s {
+    uiwidgetid_t id;
     guiwidgettype_t type;
     int player; /// \todo refactor away.
     int hideId;
@@ -251,9 +254,7 @@ typedef struct uiwidget_s {
     void* typedata;
 } uiwidget_t;
 
-typedef int uiwidgetid_t;
-
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
+int GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata);
@@ -275,25 +276,22 @@ int GUI_CreateGroup(int name, short flags, int padding);
 /*@}*/
 
 typedef struct {
-    int name; // Name of the group.
     short flags;
     int padding;
     int widgetIdCount;
     uiwidgetid_t* widgetIds;
-} uiwidgetgroup_t;
+} guidata_group_t;
 
-int GUI_GroupName(uiwidgetgroup_t* group);
+void GUI_GroupAddWidget(guidata_group_t* group, uiwidgetid_t id);
+short GUI_GroupFlags(guidata_group_t* group);
+void GUI_GroupSetFlags(guidata_group_t* group, short flags);
 
-void GUI_GroupAddWidget(uiwidgetgroup_t* group, uiwidgetid_t id);
-short GUI_GroupFlags(uiwidgetgroup_t* group);
-void GUI_GroupSetFlags(uiwidgetgroup_t* group, short flags);
-
-void GUI_DrawWidgets(uiwidgetgroup_t* group, int x, int y, int availWidth, int availHeight,
+void GUI_DrawWidgets(guidata_group_t* group, int x, int y, int availWidth, int availHeight,
     float alpha, int* drawnWidth, int* drawnHeight);
 
-void GUI_TickWidgets(uiwidgetgroup_t* group);
+void GUI_TickWidgets(guidata_group_t* group);
 
-uiwidgetgroup_t* GUI_FindGroupForName(int name);
+guidata_group_t* GUI_GroupByIndex(int name);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;

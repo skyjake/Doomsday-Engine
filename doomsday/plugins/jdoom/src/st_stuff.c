@@ -176,7 +176,7 @@ typedef struct {
     float showBar; // Slide statusbar amount 1.0 is fully open.
     boolean statusbarActive; // Whether the statusbar is active.
 
-    int widgetGroupNames[NUM_UIWIDGET_GROUPS];
+    int widgetGroupIndices[NUM_UIWIDGET_GROUPS];
 
     // Statusbar:
     guidata_health_t sbarHealth;
@@ -766,7 +766,7 @@ void ST_updateWidgets(int player)
         int i;
         for(i = 0; i < NUM_UIWIDGET_GROUPS; ++i)
         {
-            GUI_TickWidgets(GUI_FindGroupForName(hud->widgetGroupNames[i]));
+            GUI_TickWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[i]));
         }
     }
 }
@@ -2890,25 +2890,25 @@ void ST_Drawer(int player)
         for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
         {
             const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-            hud->widgetGroupNames[i] = GUI_CreateGroup(toGroupName(player, def->group), def->flags, def->padding);
+            hud->widgetGroupIndices[i] = GUI_CreateGroup(toGroupName(player, def->group), def->flags, def->padding);
         }
 
         for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
         {
             const uiwidgetdef_t* def = &widgetDefs[i];
             uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, def->fontId, def->dimensions, def->drawer, def->ticker, def->typedata);
-            GUI_GroupAddWidget(GUI_FindGroupForName(toGroupName(player, def->group)), id);
+            GUI_GroupAddWidget(GUI_GroupByIndex(toGroupName(player, def->group)), id);
         }
 
         // Initialize widgets according to player preferences.
         {
-        short flags = GUI_GroupFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]));
+        short flags = GUI_GroupFlags(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_TOP]));
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
-        GUI_GroupSetFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]), flags);
+        GUI_GroupSetFlags(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_TOP]), flags);
         }
 
         hud->inited = true;
@@ -2953,7 +2953,7 @@ void ST_Drawer(int player)
         if(hud->statusbarActive)
         {
             alpha = (1 - hud->hideAmount) * hud->showBar;
-            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_STATUSBAR]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_STATUSBAR]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
 
         /**
@@ -2987,18 +2987,18 @@ void ST_Drawer(int player)
         width  -= PADDING*2;
         height -= PADDING*2;
 
-        GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_TOP]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         if(!hud->statusbarActive)
         {
-            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOMLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_BOTTOMLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
             availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
-            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOMLEFT2]), x, y, width, availHeight, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_BOTTOMLEFT2]), x, y, width, availHeight, alpha, &drawnWidth, &drawnHeight);
 
-            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOM]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-            GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_BOTTOMRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_BOTTOM]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_BOTTOMRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
-        GUI_DrawWidgets(GUI_FindGroupForName(hud->widgetGroupNames[UWG_COUNTERS]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_COUNTERS]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
 #undef PADDING
         }
@@ -3202,13 +3202,13 @@ void ST_UpdateLogAlignment(void)
         hudstate_t* hud = &hudStates[i];
         if(!hud->inited) continue;
 
-        flags = GUI_GroupFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]));
+        flags = GUI_GroupFlags(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_TOP]));
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
-        GUI_GroupSetFlags(GUI_FindGroupForName(hud->widgetGroupNames[UWG_TOP]), flags);
+        GUI_GroupSetFlags(GUI_GroupByIndex(hud->widgetGroupIndices[UWG_TOP]), flags);
     }
 }
 
