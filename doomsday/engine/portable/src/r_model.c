@@ -948,29 +948,28 @@ static modeldef_t *R_GetModelDef(int state, float interMark, int select)
  * State that has a model will have a pointer to the one with the
  * smallest intermark (start of a chain).
  */
-static void setupModel(ded_model_t *def)
+static void setupModel(ded_model_t* def)
 {
-    modeldef_t         *modef;
-    int                 modelScopeFlags = def->flags | defs.modelFlags;
-    ded_submodel_t     *subdef;
-    submodeldef_t      *sub;
-    int                 i, k, statenum = Def_GetStateNum(def->state);
-    float               min[3], max[3];
+    modeldef_t* modef;
+    int modelScopeFlags = def->flags | defs.modelFlags;
+    ded_submodel_t* subdef;
+    submodeldef_t* sub;
+    int i, k, statenum = Def_GetStateNum(def->state);
+    float min[3], max[3];
 
     // Is this an ID'd model?
-    if((modef = R_GetIDModelDef(def->id)) == NULL)
+    modef = R_GetIDModelDef(def->id);
+    if(NULL == modef)
     {
         // No, normal State-model.
         if(statenum < 0)
         {
-            Con_Message("R_SetupModel: Undefined state '%s'.\n", def->state);
+            //Con_Message("R_SetupModel: Undefined state '%s'.\n", def->state);
             return;
         }
 
-        modef =
-            R_GetModelDef(statenum + def->off, def->interMark, def->selector);
-
-        if(!modef)
+        modef = R_GetModelDef(statenum + def->off, def->interMark, def->selector);
+        if(NULL == modef)
             return; // Can't get a modef, quit!
     }
 
