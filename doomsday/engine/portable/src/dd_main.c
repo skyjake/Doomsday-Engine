@@ -2279,23 +2279,47 @@ const char* value_Str(int val)
 D_CMD(Load)
 {
     boolean didLoadGame = false, didLoadResource = false;
-    ddstring_t foundPath;
+    ddstring_t foundPath, searchPath;
     int arg = 1;
 
-    { gameinfo_t* info;
-    if((info = findGameInfoForIdentityKey(argv[arg])))
+    Str_Init(&searchPath);
+    Str_Set(&searchPath, argv[arg]);
+    Str_Strip(&searchPath);
+    if(Str_IsEmpty(&searchPath))
+    {
+        Str_Free(&searchPath);
+        return false;
+    }
+
+    // Ignore attempts to load directories.
+    if(Str_RAt(&searchPath, 0) == DIR_SEP_CHAR || Str_RAt(&searchPath, 0) == DIR_WRONG_SEP_CHAR)
+    {
+        Con_Message("Directories cannot be \"loaded\" (only files and/or known games).\n");
+        Str_Free(&searchPath);
+        return true;
+    }
+
+    // Are we loading a game?
+    { gameinfo_t* info = findGameInfoForIdentityKey(Str_Text(&searchPath));
+    if(NULL != info)
     {
         if(!DD_ChangeGame(info))
+        {
+            Str_Free(&searchPath);
             return false;
+        }
         didLoadGame = true;
         ++arg;
     }}
 
+    // Try the resource locator.
     Str_Init(&foundPath);
     for(; arg < argc; ++arg)
     {
-        // Try the resource locator.
-        if(F_FindResource2(RC_PACKAGE, argv[arg], &foundPath) != 0 &&
+        Str_Set(&searchPath, argv[arg]);
+        Str_Strip(&searchPath);
+
+        if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
            W_AddFile(Str_Text(&foundPath), false))
             didLoadResource = true;
     }
@@ -2304,12 +2328,13 @@ D_CMD(Load)
     if(didLoadResource)
         DD_UpdateEngineState();
 
+    Str_Free(&searchPath);
     return (didLoadGame || didLoadResource);
 }
 
 D_CMD(Unload)
 {
-    ddstring_t foundPath;
+    ddstring_t foundPath, searchPath;
     int result = 0;
 
     // No arguments; unload the current game if loaded.
@@ -2318,20 +2343,38 @@ D_CMD(Unload)
         if(DD_IsNullGameInfo(DD_GameInfo()))
         {
             Con_Message("There is no game currently loaded.\n");
-            return false;
+            return true;
         }
         return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
     }
 
+    Str_Init(&searchPath);
+    Str_Set(&searchPath, argv[1]);
+    Str_Strip(&searchPath);
+    if(Str_IsEmpty(&searchPath))
+    {
+        Str_Free(&searchPath);
+        return false;
+    }
+
+    // Ignore attempts to unload directories.
+    if(Str_RAt(&searchPath, 0) == DIR_SEP_CHAR || Str_RAt(&searchPath, 0) == DIR_WRONG_SEP_CHAR)
+    {
+        Con_Message("Directories cannot be \"unloaded\" (only files and/or known games).\n");
+        Str_Free(&searchPath);
+        return true;
+    }
+
     // Unload the current game if specified.
     { gameinfo_t* info;
-    if(argc == 2 && (info = findGameInfoForIdentityKey(argv[1])) != 0)
+    if(argc == 2 && (info = findGameInfoForIdentityKey(Str_Text(&searchPath))) != 0)
     {
+        Str_Free(&searchPath);
         if(!DD_IsNullGameInfo(DD_GameInfo()))
             return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
 
         Con_Message("%s is not currently loaded.\n", Str_Text(GameInfo_IdentityKey(info)));
-        return false;
+        return true;
     }}
 
     /// Try the resource locator.
@@ -2339,11 +2382,15 @@ D_CMD(Unload)
     { int i;
     for(i = 1; i < argc; ++i)
     {
-        if(F_FindResource2(RC_UNKNOWN, argv[i], &foundPath) != 0 &&
+        Str_Set(&searchPath, argv[i]);
+        Str_Strip(&searchPath);
+
+        if(F_FindResource2(RC_UNKNOWN, Str_Text(&searchPath), &foundPath) != 0 &&
            W_RemoveFile(Str_Text(&foundPath)))
             result = 1;
     }}
     Str_Free(&foundPath);
+    Str_Free(&searchPath);
     return result != 0;
 }
 
