@@ -25,11 +25,20 @@
 #ifndef LIBCOMMON_GUI_LIBRARY_H
 #define LIBCOMMON_GUI_LIBRARY_H
 
-#include "dd_types.h"
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#endif
 
 typedef enum {
     GUI_NONE,
     GUI_BOX,
+    GUI_GROUP,
     GUI_HEALTH,
     GUI_ARMOR,
     GUI_KEYS,
@@ -74,6 +83,49 @@ typedef enum {
     GUI_FLIGHT,
 #endif
 } guiwidgettype_t;
+
+typedef int uiwidgetid_t;
+
+typedef struct uiwidget_s {
+    uiwidgetid_t id;
+    guiwidgettype_t type;
+    int player; /// \todo refactor away.
+    int hideId;
+    gamefontid_t fontId;
+    void (*dimensions) (struct uiwidget_s* obj, int* width, int* height);
+    void (*drawer) (struct uiwidget_s* obj, int x, int y);
+    void (*ticker) (struct uiwidget_s* obj);
+    void* typedata;
+} uiwidget_t;
+
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth, int availHeight,
+    float alpha, int* drawnWidth, int* drawnHeight);
+
+void GUI_TickWidget(uiwidget_t* obj);
+
+/**
+ * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
+ */
+/*@{*/
+#define UWGF_ALIGN_LEFT         0x0001
+#define UWGF_ALIGN_RIGHT        0x0002
+#define UWGF_ALIGN_TOP          0x0004
+#define UWGF_ALIGN_BOTTOM       0x0008
+#define UWGF_LEFTTORIGHT        0x0010
+#define UWGF_RIGHTTOLEFT        0x0020
+#define UWGF_VERTICAL           0x0040
+/*@}*/
+
+typedef struct {
+    short flags;
+    int padding;
+    int widgetIdCount;
+    uiwidgetid_t* widgetIds;
+} guidata_group_t;
+
+void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other);
+short UIGroup_Flags(uiwidget_t* obj);
+void UIGroup_SetFlags(uiwidget_t* obj, short flags);
 
 typedef struct {
     int value;
@@ -240,57 +292,17 @@ typedef struct {
 void GUI_Init(void);
 void GUI_Shutdown(void);
 
-typedef int uiwidgetid_t;
+uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 
-typedef struct uiwidget_s {
-    uiwidgetid_t id;
-    guiwidgettype_t type;
-    int player; /// \todo refactor away.
-    int hideId;
-    gamefontid_t fontId;
-    void (*dimensions) (struct uiwidget_s* obj, int* width, int* height);
-    void (*drawer) (struct uiwidget_s* obj, int x, int y);
-    void (*ticker) (struct uiwidget_s* obj);
-    void* typedata;
-} uiwidget_t;
+/// Identical to GUI_FindObjectById except results in a fatal error if not found.
+uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
-int GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata);
 
-int GUI_CreateGroup(int name, short flags, int padding);
-
-/**
- * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
- */
-/*@{*/
-#define UWGF_ALIGN_LEFT         0x0001
-#define UWGF_ALIGN_RIGHT        0x0002
-#define UWGF_ALIGN_TOP          0x0004
-#define UWGF_ALIGN_BOTTOM       0x0008
-#define UWGF_LEFTTORIGHT        0x0010
-#define UWGF_RIGHTTOLEFT        0x0020
-#define UWGF_VERTICAL           0x0040
-/*@}*/
-
-typedef struct {
-    short flags;
-    int padding;
-    int widgetIdCount;
-    uiwidgetid_t* widgetIds;
-} guidata_group_t;
-
-void GUI_GroupAddWidget(guidata_group_t* group, uiwidgetid_t id);
-short GUI_GroupFlags(guidata_group_t* group);
-void GUI_GroupSetFlags(guidata_group_t* group, short flags);
-
-void GUI_DrawWidgets(guidata_group_t* group, int x, int y, int availWidth, int availHeight,
-    float alpha, int* drawnWidth, int* drawnHeight);
-
-void GUI_TickWidgets(guidata_group_t* group);
-
-guidata_group_t* GUI_GroupByIndex(int name);
+uiwidgetid_t GUI_CreateGroup(int player, short flags, int padding);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;

@@ -652,13 +652,13 @@ void ST_UpdateLogAlignment(void)
         hudstate_t* hud = &hudStates[i];
         if(!hud->inited) continue;
 
-        flags = GUI_GroupFlags(GUI_GroupByIndex(hud->widgetGroupNames[UWG_TOP]));
+        flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]));
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
-        GUI_GroupSetFlags(GUI_GroupByIndex(hud->widgetGroupNames[UWG_TOP]), flags);
+        UIGroup_SetFlags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]), flags);
     }
 #endif
 }
