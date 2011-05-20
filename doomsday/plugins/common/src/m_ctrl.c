@@ -80,7 +80,7 @@ typedef struct bindingdrawerdata_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void M_DrawControlsMenu(mn_page_t* page, int x, int y);
+void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -102,7 +102,7 @@ mn_page_t ControlsMenu = {
     { 32, 21 },
 #endif
     { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
-    M_DrawControlsMenu, NULL,
+    Hu_MenuDrawControlsPage, NULL,
     &OptionsMenu,
 #if __JDOOM__ || __JDOOM64__
     //0, 17, { 17, 40 }
@@ -310,11 +310,11 @@ int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* pa
     return 0;
 }
 
-void M_InitControlsMenu(void)
+void Hu_MenuInitControlsPage(void)
 {
     int i, n, count, configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
 
-    VERBOSE( Con_Message("M_InitControlsMenu: Creating controls items.\n") );
+    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") );
 
     count = 0;
     for(i = 0; i < configCount; ++i)
@@ -368,6 +368,7 @@ void M_InitControlsMenu(void)
             visObj->privilegedResponder = MNBindings_PrivilegedResponder;
             visObj->dimensions = MNBindings_Dimensions;
             visObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            visObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
             visObj->typedata = binds;
 
             if(!ControlsMenu.focus)
@@ -644,9 +645,9 @@ void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, 
 }
 
 /**
- * M_DrawControlsMenu
+ * Hu_MenuDrawControlsPage
  */
-void M_DrawControlsMenu(mn_page_t* page, int x, int y)
+void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 {
 #if __JDOOM__ || __JDOOM64__
     char buf[1024];
@@ -655,34 +656,34 @@ void M_DrawControlsMenu(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
+    MN_DrawText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
+    MN_DrawText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (mnTime & 8)], 312 - x, y - 12);
+    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, y - 12);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - x, y - 12);
 #endif*/
 
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
+    MN_DrawText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void M_ControlGrabDrawer(const char* niceName, float alpha)
+void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
-    M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_ONLY_SHADOW);
+    MN_DrawText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_ONLY_SHADOW);
 
     DGL_Color4f(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
-    M_DrawMenuText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
+    MN_DrawText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

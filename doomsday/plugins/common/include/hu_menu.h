@@ -137,6 +137,8 @@ boolean Hu_MenuIsVisible(void);
  */
 void Hu_MenuDrawer(void);
 
+void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
+
 /// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuPrivilegedResponder(event_t* ev);
 
@@ -186,6 +188,8 @@ void Hu_MenuInitNewGame(boolean confirmed);
 
 void Hu_MenuUpdateGameSaveWidgets(void);
 
+int Hu_MenuDefaultFocusAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+
 int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int Hu_MenuCvarSlider(mn_object_t* obj, mn_actionid_t action, void* paramaters);
@@ -195,13 +199,8 @@ int Hu_MenuCvarColorBox(mn_object_t* obj, mn_actionid_t action, void* paramaters
 int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int Hu_MenuBindings(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
+int Hu_MenuActivateColorWidget(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-
-void M_DrawMenuText(const char* string, int x, int y);
-void M_DrawMenuText2(const char* string, int x, int y, int fontIdx);
-void M_DrawMenuText3(const char* string, int x, int y, int fontIdx, short flags);
-void M_DrawMenuText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
-void M_DrawMenuText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
 
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);

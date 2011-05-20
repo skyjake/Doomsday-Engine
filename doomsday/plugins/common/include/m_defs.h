@@ -267,6 +267,8 @@ typedef struct mn_page_s {
     int focus; // Index of the focus object.
 } mn_page_t;
 
+void MNPage_Initialize(mn_page_t* page);
+
 /// @return  Currently focused object else @c NULL
 mn_object_t* MNPage_FocusObject(mn_page_t* page);
 
@@ -586,6 +588,16 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
 int MN_CountObjects(mn_object_t* list);
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
+
+void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
+
+void MN_LoadResources(void);
+
+void MN_DrawText(const char* string, int x, int y);
+void MN_DrawText2(const char* string, int x, int y, int fontIdx);
+void MN_DrawText3(const char* string, int x, int y, int fontIdx, short flags);
+void MN_DrawText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
+void MN_DrawText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
 
 /**
  * Execute a menu navigation/action command.
