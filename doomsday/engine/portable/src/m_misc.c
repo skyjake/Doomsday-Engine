@@ -840,11 +840,10 @@ static size_t FileReader(const char* name, char** buffer)
     }
 
     length = fileinfo.st_size;
-    // Use c library memory allocation
-    buf = M_Malloc(length);
+    buf = Z_Malloc(length, PU_APPSTATIC, 0);
     if(buf == NULL)
     {
-        Con_Error("FileReader: Failed on allocation of %lu bytes for file %s.\n",
+        Con_Error("FileReader: Failed on allocation of %lu bytes for file \"%s\".\n",
                   (unsigned long) length, name);
     }
 
@@ -852,7 +851,7 @@ static size_t FileReader(const char* name, char** buffer)
     close(handle);
     if(bytesRead < length)
     {
-        Con_Error("FileReader: Couldn't read file %s\n", name);
+        Con_Error("FileReader: Couldn't read file \"%s\".\n", name);
     }}
     *buffer = buf;
 
