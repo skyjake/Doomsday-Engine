@@ -4907,6 +4907,12 @@ static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* 
 # endif
 #endif
 
+    // Ensure we have a non-empty name.
+    if(found && Str_IsEmpty(name))
+    {
+        Str_Set(name, "UNNAMED");
+    }
+
     return found;
     }
 }
