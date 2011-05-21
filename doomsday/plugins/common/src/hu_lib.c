@@ -27,6 +27,16 @@
 #include <string.h>
 #include <ctype.h>
 
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#endif
+
 #include "hu_lib.h"
 
 // @todo Remove external dependencies

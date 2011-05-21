@@ -30,7 +30,7 @@
 #endif
 
 #include "h2def.h"
-#include "m_defs.h"
+#include "hu_lib.h"
 
 enum {
     HUD_MANA,

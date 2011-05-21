@@ -26,6 +26,7 @@
 #ifndef LIBCOMMON_HU_STUFF_H
 #define LIBCOMMON_HU_STUFF_H
 
+#include "doomsday.h"
 #include "gl_drawpatch.h"
 
 // The fonts.
