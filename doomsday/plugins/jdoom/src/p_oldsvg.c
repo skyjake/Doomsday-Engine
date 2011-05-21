@@ -326,6 +326,7 @@ static void SV_ReadMobj(void)
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
 
+    mo->info = info;
     SV_UpdateReadMobjFlags(mo, 0);
 
     mo->state = &STATES[(int) mo->state];
@@ -341,11 +342,8 @@ static void SV_ReadMobj(void)
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
     P_MobjSetPosition(mo);
-    mo->info = info;
-    mo->floorZ =
-        P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ =
-        P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->floorZ   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
 
 void P_v19_UnArchivePlayers(void)

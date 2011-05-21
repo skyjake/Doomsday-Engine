@@ -346,6 +346,7 @@ static void SV_v13_ReadMobj(void)
     mo->spawnSpot.flags = spawnFlags;
     }
 
+    mo->info = info;
     SV_UpdateReadMobjFlags(mo, 0);
 
     mo->state = &STATES[(int) mo->state];
@@ -357,7 +358,6 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
     P_MobjSetPosition(mo);
-    mo->info = info;
     mo->floorZ = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
