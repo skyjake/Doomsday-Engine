@@ -641,14 +641,26 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
                 }
                 else
                 {
-                    if(count + 1 == maxCount)
-                        shadowMul *= .75f;
-                    else if(count + 2 == maxCount)
-                        shadowMul *= .5f;
-                    else if(count + 3 == maxCount)
+                    if(count == maxCount)
+                    {
+                        shadowMul = 0;
+                    }
+                    else if(count + 1 == maxCount)
+                    {
                         shadowMul *= .25f;
+                    }
+                    else if(count + 2 == maxCount)
+                    {
+                        shadowMul *= .5f;
+                    }
+                    else if(count + 3 == maxCount)
+                    {
+                        shadowMul *= .75f;
+                    }
                     else if(count > maxCount)
+                    {
                         break;
+                    }
                 }
             }
             count++;
