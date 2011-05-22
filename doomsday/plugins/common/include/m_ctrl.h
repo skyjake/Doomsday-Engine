@@ -1,0 +1,58 @@
+/**\file m_ctrl.h
+ *\section License
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * Controls menu page and associated widgets.
+ */
+
+#ifndef LIBCOMMON_MENU_CONTROLS
+#define LIBCOMMON_MENU_CONTROLS
+
+#include "hu_lib.h"
+
+extern mn_page_t ControlsMenu;
+
+void Hu_MenuInitControlsPage(void);
+void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y);
+void Hu_MenuControlGrabDrawer(const char* niceName, float alpha);
+
+/**
+ * Bindings visualizer widget.
+ */
+typedef struct mndata_bindings_s {
+    const char* text;
+    const char* bindContext;
+    const char* controlName;
+    const char* command;
+    int flags;
+} mndata_bindings_t;
+
+const char* MNBindings_ControlName(mn_object_t* obj);
+
+void MNBindings_Drawer(mn_object_t* obj, int x, int y);
+int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
+int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
+void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
+
+#endif /* LIBCOMMON_MENU_CONTROLS */
