@@ -39,7 +39,7 @@
 #include "fi_lib.h"
 #include "g_common.h"
 #include "g_update.h"
-#include "m_defs.h"
+#include "hu_menu.h"
 #include "p_mapsetup.h"
 
 #define GID(v)          (toGameId(v))

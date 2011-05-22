@@ -884,6 +884,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\m_ctrl.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\p_actor.h"
 				>
 			</File>

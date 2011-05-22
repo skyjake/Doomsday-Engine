@@ -1713,31 +1713,46 @@ mndata_colorbox_t cbox_map_background_color = {
     "map-background-r", "map-background-g", "map-background-b"
 };
 
+mndata_text_t txt_map_opacity = { "Opacity" };
+mndata_text_t txt_map_line_opacity = { "Line Opacity" };
+mndata_text_t txt_map_hud_display = { "HUD Display" };
+mndata_text_t txt_map_door_colors = { "Door Colors" };
+mndata_text_t txt_map_door_glow = { "Door Glow" };
+mndata_text_t txt_map_use_custom_colors = { "Use Custom Colors" };
+mndata_text_t txt_map_color_wall = { "Wall" };
+mndata_text_t txt_map_color_floor_height_change = { "Floor Height Change" };
+mndata_text_t txt_map_color_ceiling_height_change = { "Ceiling Height Change" };
+mndata_text_t txt_map_color_unseen = { "Unseen" };
+mndata_text_t txt_map_color_thing = { "Thing" };
+mndata_text_t txt_map_color_background = { "Background" };
+
+mndata_button_t btn_map_door_colors = { true, "map-door-colors" };
+
 mn_object_t AutomapMenuObjects[] = {
-    { MN_TEXT,      0,  0,  "Opacity",  0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_opacity },
     { MN_SLIDER,    0,  0,  "",         'o', MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_opacity },
-    { MN_TEXT,      0,  0,  "Line Opacity", 0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_SLIDER,    0,  0,  "",             'l', MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
-    { MN_TEXT,      0,  0,  "HUD Display", 0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_LIST,      0,  0,  "",            'h', MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_statusbar },
-    { MN_TEXT,      0,  0,  "Door Colors",     0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_BUTTON2,   0,  0,  "map-door-colors", 'c', MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder },
-    { MN_TEXT,      0,  0,  "Door Glow", 0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_SLIDER,    0,  0,  "",          'g', MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_doorglow },
-    { MN_TEXT,      0,  0,  "Use Custom Colors", 0, MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_LIST,      0,  0,  "",                  0, MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
-    { MN_TEXT,      0,  0,  "Wall",     0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_opacity },
+    { MN_SLIDER,    0,  0,  "",         'l', MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_hud_display },
+    { MN_LIST,      0,  0,  "",         'h', MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_statusbar },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_colors },
+    { MN_BUTTON2,   0,  0,  "",         'c', MENU_FONT1, MENU_COLOR3, 0, MNButton_Dimensions, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_map_door_colors },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_glow },
+    { MN_SLIDER,    0,  0,  "",         'g', MENU_FONT1, MENU_COLOR1, 0, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_doorglow },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_use_custom_colors },
+    { MN_LIST,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR3, 0, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_wall },
     { MN_COLORBOX,  0,  0,  "",         'w', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
-    { MN_TEXT,      0,  0,  "Floor Height Change", 0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",                    'f', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
-    { MN_TEXT,      0,  0,  "Ceiling Height Change", 0, MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",                      0, MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
-    { MN_TEXT,      0,  0,  "Unseen",   0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_floor_height_change },
+    { MN_COLORBOX,  0,  0,  "",         'f', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_ceiling_height_change },
+    { MN_COLORBOX,  0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_unseen },
     { MN_COLORBOX,  0,  0,  "",         'u', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
-    { MN_TEXT,      0,  0,  "Thing",    0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_thing },
     { MN_COLORBOX,  0,  0,  "",         't', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
-    { MN_TEXT,      0,  0,  "Background", 0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer },
-    { MN_COLORBOX,  0,  0,  "",           'b', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
+    { MN_TEXT,      0,  0,  "",         0,   MENU_FONT1, MENU_COLOR1, 0, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_background },
+    { MN_COLORBOX,  0,  0,  "",         'b', MENU_FONT1, MENU_COLOR1, 0, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
     { MN_NONE }
 };
 

@@ -44,11 +44,9 @@
 #endif
 
 #include "hu_menu.h"
-#include "hu_stuff.h"
+#include "m_ctrl.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define NUM_CONTROLS_ITEMS      0
 
 // Control config flags.
 #define CCF_NON_INVERSE         0x1
@@ -80,17 +78,12 @@ typedef struct bindingdrawerdata_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-void MN_IterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* paramaters,
-    void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void* paramaters));
-
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-static mn_object_t* ControlsItems;
+static mn_object_t* ControlsMenuItems;
+static mndata_text_t* ControlsMenuTexts;
 
 mn_page_t ControlsMenu = {
     NULL,
@@ -312,73 +305,97 @@ int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* pa
 
 void Hu_MenuInitControlsPage(void)
 {
-    int i, n, count, configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
+    int i, textCount, bindingsCount, totalItems;
+    int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
+    size_t objectIdx, textIdx;
 
     VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") );
 
-    count = 0;
+    textCount = 0;
+    bindingsCount = 0;
     for(i = 0; i < configCount; ++i)
     {
         mndata_bindings_t* binds = &controlConfig[i];
         if(!binds->command && !binds->controlName)
-            count+=1;
+        {
+            ++textCount;
+        }
         else
-            count+=2;
+        {
+            ++textCount;
+            ++bindingsCount;
+        }
     }
-    count += 1; // For the terminator.
 
     // Allocate the menu items array.
-    ControlsItems = Z_Calloc(sizeof(mn_object_t) * count, PU_GAMESTATIC, 0);
+    totalItems = textCount + bindingsCount + 1/*terminator*/;
+    ControlsMenuItems = (mn_object_t*)Z_Calloc(sizeof(*ControlsMenuItems) * totalItems, PU_GAMESTATIC, 0);
+    if(NULL == ControlsMenuItems)
+        Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for items array.",
+            (unsigned long) (sizeof(*ControlsMenuItems) * totalItems));
 
-    for(i = 0, n = 0; i < configCount; ++i)
+    ControlsMenuTexts = (mndata_text_t*)Z_Calloc(sizeof(*ControlsMenuTexts) * textCount, PU_GAMESTATIC, 0);
+    if(NULL == ControlsMenuTexts)
+        Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for texts array.",
+            (unsigned long) (sizeof(*ControlsMenuTexts) * textCount));
+
+    objectIdx = 0;
+    textIdx = 0;
+    for(i = 0; i < configCount; ++i)
     {
         mndata_bindings_t* binds = &controlConfig[i];
 
         if(!binds->command && !binds->controlName)
         {   // Inert.
-            mn_object_t* obj = &ControlsItems[n++];
-            obj->type = MN_TEXT;
-            obj->text = (char*) binds->text;
-            obj->pageFontIdx = MENU_FONT1;
+            mn_object_t* obj   = &ControlsMenuItems[objectIdx++];
+            mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
+
+            obj->_type = MN_TEXT;
+            txt->text = (char*) binds->text;
+            obj->_typedata = txt;
+            obj->_pageFontIdx = MENU_FONT1;
+            obj->_pageColorIdx = MENU_COLOR2; 
             obj->drawer = MNText_Drawer;
             obj->dimensions = MNText_Dimensions;
-            obj->pageColorIdx = MENU_COLOR2; 
         }
         else 
         {
-            mn_object_t* labelObj = &ControlsItems[n++];
-            mn_object_t* visObj   = &ControlsItems[n++];
+            mn_object_t* labelObj    = &ControlsMenuItems[objectIdx++];
+            mn_object_t* bindingsObj = &ControlsMenuItems[objectIdx++];
+            mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
 
-            labelObj->type = MN_TEXT;
+            labelObj->_type = MN_TEXT;
             if(binds->text && ((unsigned int) binds->text < NUMTEXT))
             {
-                labelObj->text = GET_TXT((unsigned int)binds->text);
+                txt->text = GET_TXT((unsigned int)binds->text);
             }
             else
             {
-                labelObj->text = (char*) binds->text;
+                txt->text = (char*)binds->text;
             }
+            labelObj->_typedata = txt;
             labelObj->drawer = MNText_Drawer;
             labelObj->dimensions = MNText_Dimensions;
-            labelObj->pageFontIdx = MENU_FONT1;
+            labelObj->_pageFontIdx = MENU_FONT1;
+            labelObj->_pageColorIdx = MENU_COLOR1; 
 
-            visObj->type = MN_BINDINGS;
-            visObj->drawer = MNBindings_Drawer;
-            visObj->cmdResponder = MNBindings_CommandResponder;
-            visObj->privilegedResponder = MNBindings_PrivilegedResponder;
-            visObj->dimensions = MNBindings_Dimensions;
-            visObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            visObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
-            visObj->typedata = binds;
+            bindingsObj->_type = MN_BINDINGS;
+            bindingsObj->drawer = MNBindings_Drawer;
+            bindingsObj->cmdResponder = MNBindings_CommandResponder;
+            bindingsObj->privilegedResponder = MNBindings_PrivilegedResponder;
+            bindingsObj->dimensions = MNBindings_Dimensions;
+            bindingsObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+            bindingsObj->_typedata = binds;
 
             if(!ControlsMenu.focus)
-                ControlsMenu.focus = visObj - ControlsItems;
+                ControlsMenu.focus = bindingsObj - ControlsMenuItems;
         }
     }
-    ControlsItems[count-1].type = MN_NONE; // Terminate.
+    ControlsMenuItems[objectIdx]._type = MN_NONE; // Terminate.
 
-    ControlsMenu.objects = ControlsItems;
-    ControlsMenu.objectsCount = count;
+    ControlsMenu.objects = ControlsMenuItems;
+    ControlsMenu.objectsCount = totalItems;
 }
 
 static void drawSmallText(const char* string, int x, int y, float alpha)
@@ -472,7 +489,7 @@ static const char* findInString(const char* str, const char* token, int n)
     return NULL;
 }
 
-void MN_IterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* data,
+static void iterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* data,
     void (*callback)(bindingitertype_t type, int bid, const char* ev, boolean isInverse, void *data))
 {
     assert(NULL != binds);
@@ -577,7 +594,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
 {
     assert(NULL != obj);
     {
-    mndata_bindings_t* binds = (mndata_bindings_t*) obj->typedata;
+    mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
     bindingdrawerdata_t draw;
     char buf[1024];
 
@@ -592,7 +609,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
     draw.x = x;
     draw.y = y;
     draw.alpha = mnRendState->pageAlpha;
-    MN_IterateBindings((mndata_bindings_t*)obj->typedata, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+    iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
     }
 }
 
@@ -600,7 +617,7 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj);
     {
-    mndata_bindings_t* binds = (mndata_bindings_t*)obj->typedata;
+    mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -616,12 +633,12 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             B_BindingsForCommand(binds->command, buf, sizeof(buf));
         }
 
-        MN_IterateBindings(binds, buf, 0, NULL, deleteBinding);
+        iterateBindings(binds, buf, 0, NULL, deleteBinding);
         return true;
       }
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
-        obj->flags |= MNF_ACTIVE;
+        obj->_flags |= MNF_ACTIVE;
         if(MNObject_HasAction(obj, MNA_ACTIVE))
         {
             MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
@@ -688,13 +705,22 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
+const char* MNBindings_ControlName(mn_object_t* obj)
+{
+    assert(NULL != obj);
+    {
+    mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
+    return binds->text;
+    }
+}
+
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 {
     assert(NULL != obj && NULL != ev);
     // We're interested in key or button down events.
-    if((obj->flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
+    if((obj->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
-        mndata_bindings_t* binds = (mndata_bindings_t*) obj->typedata;
+        mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
         const char* bindContext = "game";
         const char* symbol = 0;
         char cmd[512];
@@ -823,7 +849,7 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
          */
 
         // We've finished the grab.
-        obj->flags &= ~MNF_ACTIVE;
+        obj->_flags &= ~MNF_ACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;

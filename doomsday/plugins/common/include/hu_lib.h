@@ -60,8 +60,7 @@ typedef enum {
     MN_NONE,
     MN_TEXT,
     MN_BUTTON,
-    MN_BUTTON2, // Staydown/2-state button.
-    MN_BUTTON2EX, // Staydown/2-state with additional data.
+    MN_BUTTON2, // Staydown/2-state.
     MN_EDIT,
     MN_LIST,
     MN_SLIDER,
@@ -97,6 +96,12 @@ typedef enum {
 #define MNF_ID1                 0x40000000
 #define MNF_ID0                 0x80000000
 /*@}*/
+
+typedef enum {
+    FO_CLEAR,
+    FO_SET,
+    FO_TOGGLE
+} flagop_t;
 
 /**
  * Logical Menu (object) Action identifiers. Associated with/to events which
@@ -143,31 +148,29 @@ typedef struct {
  */
 typedef struct mn_object_s {
     /// Type of the object.
-    mn_obtype_e type;
+    mn_obtype_e _type;
 
     /// Object group identifier.
-    int group;
+    int _group;
 
     /// @see menuObjectFlags.
-    int flags;
+    int _flags;
 
     /// Used in various ways depending on the context.
-    /// \todo Does not belong here, move it out.
-    const char* text;
+    const char* _text;
 
     /// DDKEY shortcut used to switch focus to this object directly.
     /// @c 0= no shortcut defined.
-    int shortcut;
+    int _shortcut;
 
     /// Index of the predefined page font to use when drawing this.
-    int pageFontIdx;
+    int _pageFontIdx;
 
     /// Index of the predefined page color to use when drawing this.
-    int pageColorIdx;
+    int _pageColorIdx;
 
     /// Patch to be used when drawing this.
-    /// \todo Does not belong here, move it out.
-    patchid_t* patch;
+    patchid_t* _patch;
 
     /// Calculate dimensions for this when visible on the specified page.
     void (*dimensions) (const struct mn_object_s* obj, struct mn_page_s* page, int* width, int* height);
@@ -191,12 +194,31 @@ typedef struct mn_object_s {
     /// @return  @c true if the event is eaten.
     int (*privilegedResponder) (struct mn_object_s* obj, event_t* ev);
 
-    void* typedata; // Type-specific extra data.
+    void* _typedata; // Type-specific extra data.
 
     // Extra property values.
     void* data1;
     int data2;
 } mn_object_t;
+
+mn_obtype_e MNObject_Type(const mn_object_t* obj);
+
+int MNObject_Flags(const mn_object_t* obj);
+
+/// @return  Flags value post operation for caller convenience.
+int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);
+
+int MNObject_Shortcut(mn_object_t* obj);
+
+void MNObject_SetShortcut(mn_object_t* obj, int ddkey);
+
+/// @return  Index of the font used from the owning/active page.
+int MNObject_Font(mn_object_t* obj);
+
+/// @return  Index of the color used from the owning/active page.
+int MNObject_Color(mn_object_t* obj);
+
+boolean MNObject_IsGroupMember(const mn_object_t* obj, int group);
 
 int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e command);
 
@@ -317,14 +339,26 @@ int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 /**
  * Text objects.
  */
+typedef struct mndata_text_s {
+    /// Used in various ways depending on the context.
+    const char* text;
+
+    /// Patch to be used when drawing this.
+    patchid_t* patch;
+} mndata_text_t;
+
 void MNText_Drawer(mn_object_t* obj, int x, int y);
 void MNText_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
 /**
- * Two-state button.
+ * Buttons.
  */
 typedef struct mndata_button_s {
+    boolean staydownMode; /// @c true= this is operating in two-state "staydown" mode.
     void* data;
+    const char* text;
+    /// Patch to be used when drawing this instead of text.
+    patchid_t* patch;
     const char* yes, *no;
 } mndata_button_t;
 
@@ -335,7 +369,26 @@ void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, in
 /**
  * Edit field.
  */
-#define MNDATA_EDIT_TEXT_MAX_LENGTH 24
+#define MNDATA_EDIT_TEXT_MAX_LENGTH             (24)
+#if __JDOOM__ || __JDOOM64__
+#  define MNDATA_EDIT_TEXT_COLORIDX             (0)
+#  define MNDATA_EDIT_OFFSET_X                  (0)
+#  define MNDATA_EDIT_OFFSET_Y                  (0)
+#  define MNDATA_EDIT_BACKGROUND_OFFSET_X       (-11)
+#  define MNDATA_EDIT_BACKGROUND_OFFSET_Y       (-4)
+#  define MNDATA_EDIT_BACKGROUND_PATCH_LEFT     ("M_LSLEFT")
+#  define MNDATA_EDIT_BACKGROUND_PATCH_RIGHT    ("M_LSRGHT")
+#  define MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE   ("M_LSCNTR")
+#elif __JHERETIC__ || __JHEXEN__
+#  define MNDATA_EDIT_TEXT_COLORIDX             (2)
+#  define MNDATA_EDIT_OFFSET_X                  (13)
+#  define MNDATA_EDIT_OFFSET_Y                  (5)
+#  define MNDATA_EDIT_BACKGROUND_OFFSET_X       (-13)
+#  define MNDATA_EDIT_BACKGROUND_OFFSET_Y       (-5)
+//#  define MNDATA_EDIT_BACKGROUND_PATCH_LEFT   ("")
+//#  define MNDATA_EDIT_BACKGROUND_PATCH_RIGHT  ("")
+#  define MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE   ("M_FSLOT")
+#endif
 
 typedef struct mndata_edit_s {
     char text[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
@@ -356,7 +409,11 @@ void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int*
  * @{
  */
 #define MNEDIT_STF_NO_ACTION            0x1 /// Do not call any linked action function.
+#define MNEDIT_STF_REPLACEOLD           0x2 /// Replace the "old" copy (used for canceled edits).
 /**@}*/
+
+/// @return  A pointer to an immutable copy of the current contents of the edit field.
+const char* MNEdit_Text(mn_object_t* obj);
 
 /**
  * Change the current contents of the edit field.
@@ -397,6 +454,13 @@ int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e command);
 void MNList_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 void MNList_InlineDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
+/// @return  Index of the currently selected item else -1.
+int MNList_Selection(mn_object_t* obj);
+
+/// @return  @c true if the currently selected item is presently visible.
+boolean MNList_SelectionIsVisible(mn_object_t* obj);
+
+/// @return  Index of the found item associated with @a dataValue else -1.
 int MNList_FindItem(const mn_object_t* obj, int dataValue);
 
 /**
@@ -446,6 +510,22 @@ void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 
+/// @return  @c true if this colorbox is operating in RGBA mode.
+boolean MNColorBox_RGBAMode(mn_object_t* obj);
+
+/// @return  Current red color component.
+float MNColorBox_Redf(const mn_object_t* obj);
+
+/// @return  Current green color component.
+float MNColorBox_Greenf(const mn_object_t* obj);
+
+/// @return  Current blue color component.
+float MNColorBox_Bluef(const mn_object_t* obj);
+
+/// @return  Current alpha value or @c 1 if this colorbox is not
+///     operating in "rgba mode".
+float MNColorBox_Alphaf(const mn_object_t* obj);
+
 /**
  * @defgroup mncolorboxSetColorFlags  MNColorBox Set Color Flags.
  * @{
@@ -491,12 +571,26 @@ boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* oth
 /**
  * Graphical slider.
  */
-#define MNDATA_SLIDER_SLOTS     10
-#define MNDATA_SLIDER_SCALE     .75f
+#define MNDATA_SLIDER_SLOTS             (10)
+#define MNDATA_SLIDER_SCALE             (.75f)
 #if __JDOOM__ || __JDOOM64__
-#  define MNDATA_SLIDER_PADDING_Y   2
-#else
-#  define MNDATA_SLIDER_PADDING_Y   0
+#  define MNDATA_SLIDER_OFFSET_X        (0)
+#  define MNDATA_SLIDER_OFFSET_Y        (0)
+#  define MNDATA_SLIDER_PADDING_X       (0)
+#  define MNDATA_SLIDER_PADDING_Y       (2)
+#  define MNDATA_SLIDER_PATCH_LEFT      ("M_THERML")
+#  define MNDATA_SLIDER_PATCH_RIGHT     ("M_THERMR")
+#  define MNDATA_SLIDER_PATCH_MIDDLE    ("M_THERM2")
+#  define MNDATA_SLIDER_PATCH_HANDLE    ("M_THERMO")
+#elif __JHERETIC__ || __JHEXEN__
+#  define MNDATA_SLIDER_OFFSET_X        (0)
+#  define MNDATA_SLIDER_OFFSET_Y        (1)
+#  define MNDATA_SLIDER_PADDING_X       (0)
+#  define MNDATA_SLIDER_PADDING_Y       (0)
+#  define MNDATA_SLIDER_PATCH_LEFT      ("M_SLDLT")
+#  define MNDATA_SLIDER_PATCH_RIGHT     ("M_SLDRT")
+#  define MNDATA_SLIDER_PATCH_MIDDLE    ("M_SLDMD1")
+#  define MNDATA_SLIDER_PATCH_HANDLE    ("M_SLDKB")
 #endif
 
 typedef struct mndata_slider_s {
@@ -519,6 +613,9 @@ void MNSlider_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, in
 void MNSlider_TextualValueDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
 int MNSlider_ThumbPos(const mn_object_t* obj);
 
+/// @return  Current value represented by the slider.
+float MNSlider_Value(const mn_object_t* obj);
+
 /**
  * @defgroup mnsliderSetValueFlags  MNSlider Set Value Flags
  * @{
@@ -534,35 +631,22 @@ int MNSlider_ThumbPos(const mn_object_t* obj);
 void MNSlider_SetValue(mn_object_t* obj, int flags, float value);
 
 /**
- * Bindings visualizer.
- */
-typedef struct mndata_bindings_s {
-    const char* text;
-    const char* bindContext;
-    const char* controlName;
-    const char* command;
-    int flags;
-} mndata_bindings_t;
-
-void MNBindings_Drawer(mn_object_t* obj, int x, int y);
-int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
-void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);
-
-/**
  * Mobj preview visual.
  */
 #define MNDATA_MOBJPREVIEW_WIDTH    38
 #define MNDATA_MOBJPREVIEW_HEIGHT   52
 
 typedef struct mndata_mobjpreview_s {
-    mobjtype_t mobjType;
+    int mobjType;
     /// Color translation class and map.
     int tClass, tMap;
-#if __JHEXEN__
     int plrClass; /// Player class identifier.
-#endif
 } mndata_mobjpreview_t;
+
+void MNMobjPreview_SetMobjType(mn_object_t* obj, int mobjType);
+void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass);
+void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass);
+void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap);
 
 void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
 void MNMobjPreview_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height);

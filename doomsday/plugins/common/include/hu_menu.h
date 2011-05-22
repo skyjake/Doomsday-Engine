@@ -31,7 +31,7 @@
 #define LIBCOMMON_HU_MENU_H
 
 #include "dd_types.h"
-#include "m_defs.h"
+#include "hu_lib.h"
 
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
@@ -102,7 +102,6 @@ extern mn_page_t PlayerSetupMenu;
 extern mn_page_t InventoryMenu;
 #endif
 extern mn_page_t WeaponMenu;
-extern mn_page_t ControlsMenu;
 
 extern boolean menuNominatingQuickSaveSlot;
 
@@ -204,6 +203,5 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* 
 
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);
-D_CMD(Shortcut);
 
 #endif /* LIBCOMMON_HU_MENU_H */
