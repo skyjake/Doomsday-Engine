@@ -60,7 +60,6 @@ typedef enum {
     MN_NONE,
     MN_TEXT,
     MN_BUTTON,
-    MN_BUTTON2, // Staydown/2-state.
     MN_EDIT,
     MN_LIST,
     MN_SLIDER,
@@ -156,9 +155,6 @@ typedef struct mn_object_s {
     /// @see menuObjectFlags.
     int _flags;
 
-    /// Used in various ways depending on the context.
-    const char* _text;
-
     /// DDKEY shortcut used to switch focus to this object directly.
     /// @c 0= no shortcut defined.
     int _shortcut;
@@ -168,9 +164,6 @@ typedef struct mn_object_s {
 
     /// Index of the predefined page color to use when drawing this.
     int _pageColorIdx;
-
-    /// Patch to be used when drawing this.
-    patchid_t* _patch;
 
     /// Calculate dimensions for this when visible on the specified page.
     void (*dimensions) (const struct mn_object_s* obj, struct mn_page_s* page, int* width, int* height);
@@ -340,10 +333,9 @@ int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
  * Text objects.
  */
 typedef struct mndata_text_s {
-    /// Used in various ways depending on the context.
     const char* text;
 
-    /// Patch to be used when drawing this.
+    /// Patch to be used when drawing this instead of text if Patch Replacement is in use.
     patchid_t* patch;
 } mndata_text_t;
 

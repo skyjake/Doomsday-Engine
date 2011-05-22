@@ -569,8 +569,7 @@ void MNPage_Initialize(mn_page_t* page)
         case MN_MOBJPREVIEW:
             MNObject_SetFlags(obj, FO_SET, MNF_NO_FOCUS);
             break;
-        case MN_BUTTON:
-        case MN_BUTTON2: {
+        case MN_BUTTON: {
             mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
             if(NULL != btn->text && ((unsigned int)btn->text < NUMTEXT))
             {
@@ -578,9 +577,8 @@ void MNPage_Initialize(mn_page_t* page)
                 MNObject_SetShortcut(obj, btn->text[0]);
             }
 
-            if(MNObject_Type(obj) == MN_BUTTON2)
+            if(btn->staydownMode)
             {
-                // Stay-down button state.
                 const boolean activate = (*(char*) obj->data1);
                 MNObject_SetFlags(obj, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
@@ -1620,14 +1618,16 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
 
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
-    assert(NULL != obj);
+    assert(NULL != obj && obj->_type == MN_BUTTON);
+    {
+    mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     if(MCMD_SELECT == cmd)
     {
         boolean justActivated = false;
         if(!(obj->_flags & MNF_ACTIVE))
         {
             justActivated = true;
-            if(obj->_type != MN_BUTTON)
+            if(btn->staydownMode)
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
 
             obj->_flags |= MNF_ACTIVE;
@@ -1637,7 +1637,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             }
         }
 
-        if(obj->_type == MN_BUTTON)
+        if(!btn->staydownMode)
         {
             // We are not going to receive an "up event" so action that now.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
@@ -1678,6 +1678,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         return true;
     }
     return false; // Not eaten.
+    }
 }
 
 void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
