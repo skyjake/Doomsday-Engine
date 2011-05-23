@@ -454,6 +454,124 @@ mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags)
     return obj;
 }
 
+short MN_MergeMenuEffectWithDrawTextFlags(short f)
+{
+    return ((~(cfg.menuEffectFlags << DTFTOMEF_SHIFT) & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
+}
+
+void MN_DrawText5(const char* string, int x, int y, int fontIdx, short flags,
+    float glitterStrength, float shadowStrength)
+{
+    if(NULL == string || !string[0]) return;
+
+    FR_SetFont(FID(fontIdx));
+    flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
+    FR_DrawTextFragment7(string, x, y, flags, 0, 0, glitterStrength, shadowStrength, 0, 0);
+}
+
+void MN_DrawText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength)
+{
+    MN_DrawText5(string, x, y, fontIdx, flags, glitterStrength, rs.textShadow);
+}
+
+void MN_DrawText3(const char* string, int x, int y, int fontIdx, short flags)
+{
+    MN_DrawText4(string, x, y, fontIdx, flags, rs.textGlitter);
+}
+
+void MN_DrawText2(const char* string, int x, int y, int fontIdx)
+{
+    MN_DrawText3(string, x, y, fontIdx, DTF_ALIGN_TOPLEFT);
+}
+
+void MN_DrawText(const char* string, int x, int y)
+{
+    MN_DrawText2(string, x, y, GF_FONTA);
+}
+
+void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
+{
+    assert(NULL != page);
+    {
+    int pos[2] = { 0, 0 };
+    int i;
+
+    if(!(alpha > .0001f)) return;
+
+    // Configure default render state:
+    rs.pageAlpha = alpha;
+    rs.textGlitter = cfg.menuTextGlitter;
+    rs.textShadow = cfg.menuShadow;
+    for(i = 0; i < MENU_FONT_COUNT; ++i)
+    {
+        rs.textFonts[i] = MNPage_PredefinedFont(page, i);
+    }
+    for(i = 0; i < MENU_COLOR_COUNT; ++i)
+    {
+        MNPage_PredefinedColor(page, i, rs.textColors[i]);
+        rs.textColors[i][CA] = alpha; // For convenience.
+    }
+
+    /*if(page->unscaled.numVisObjects)
+    {
+        page->numVisObjects = page->unscaled.numVisObjects / cfg.menuScale;
+        page->offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - page->unscaled.y) / cfg.menuScale;
+    }*/
+
+    if(NULL != page->drawer)
+    {
+        page->drawer(page, page->offset[VX], page->offset[VY]);
+    }
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(page->offset[VX], page->offset[VY], 0);
+
+    for(i = 0/*page->firstObject*/;
+        i < page->objectsCount /*&& i < page->firstObject + page->numVisObjects*/; ++i)
+    {
+        mn_object_t* obj = &page->objects[i];
+        int height = 0;
+
+        if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
+            continue;
+
+        obj->drawer(obj, pos[VX], pos[VY]);
+
+        if(obj->dimensions)
+        {
+            obj->dimensions(obj, page, NULL, &height);
+        }
+
+        /// \kludge
+        if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
+        {
+            int cursorY = pos[VY], cursorItemHeight = height;
+            if(MN_LIST == MNObject_Type(obj) && (MNObject_Flags(obj) & MNF_ACTIVE) &&
+               MNList_SelectionIsVisible(obj))
+            {
+                const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+                FR_SetFont(FID(MNPage_PredefinedFont(page, MNObject_Font(obj))));
+                cursorItemHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+                cursorY += (list->selection - list->first) * cursorItemHeight;
+            }
+            Hu_MenuDrawFocusCursor(pos[VX], cursorY, cursorItemHeight, alpha);
+        }
+        /// kludge end.
+
+        pos[VY] += height * (1.08f); // Leading.
+    }
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(-page->offset[VX], -page->offset[VY], 0);
+    }
+}
+
+static boolean MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
+{
+    assert(NULL != info);
+    return (NULL != info->callback);
+}
+
 mn_object_t* MNPage_FocusObject(mn_page_t* page)
 {
     assert(NULL != page);
@@ -688,80 +806,46 @@ void MNPage_Initialize(mn_page_t* page)
     }
 }
 
-void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
+int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
+{
+    assert(NULL != page);
+    if(!VALID_MNPAGE_FONTID(id))
+    {
+#if _DEBUG
+        Con_Error("MNPage::PredefinedFont: Invalid font id '%i'.", (int)id);
+        exit(1); // Unreachable.
+#endif
+        return 0; // Not a valid font id.
+    }
+    return (int)page->fonts[id];
+}
+
+void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
 {
     assert(NULL != page);
     {
-    int pos[2] = { 0, 0 };
-    int i;
-
-    if(!(alpha > .0001f)) return;
-
-    // Configure default render state:
-    rs.pageAlpha = alpha;
-    rs.textGlitter = cfg.menuTextGlitter;
-    rs.textShadow = cfg.menuShadow;
-    for(i = 0; i < MENU_FONT_COUNT; ++i)
+    uint colorIndex;
+    if(NULL == rgb)
     {
-        rs.textFonts[i] = MNPage_PredefinedFont(page, i);
+#if _DEBUG
+        Con_Error("MNPage::PredefinedColor: Invalid 'rgb' reference.");
+        exit(1); // Unreachable.
+#endif
+        return;
     }
-    for(i = 0; i < MENU_COLOR_COUNT; ++i)
+    if(!VALID_MNPAGE_COLORID(id))
     {
-        MNPage_PredefinedColor(page, i, rs.textColors[i]);
-        rs.textColors[i][CA] = alpha; // For convenience.
+#if _DEBUG
+        Con_Error("MNPage::PredefinedColor: Invalid color id '%i'.", (int)id);
+        exit(1); // Unreachable.
+#endif
+        rgb[CR] = rgb[CG] = rgb[CB] = 1;
+        return;
     }
-
-    /*if(page->unscaled.numVisObjects)
-    {
-        page->numVisObjects = page->unscaled.numVisObjects / cfg.menuScale;
-        page->offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - page->unscaled.y) / cfg.menuScale;
-    }*/
-
-    if(NULL != page->drawer)
-    {
-        page->drawer(page, page->offset[VX], page->offset[VY]);
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(page->offset[VX], page->offset[VY], 0);
-
-    for(i = 0/*page->firstObject*/;
-        i < page->objectsCount /*&& i < page->firstObject + page->numVisObjects*/; ++i)
-    {
-        mn_object_t* obj = &page->objects[i];
-        int height = 0;
-
-        if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
-            continue;
-
-        obj->drawer(obj, pos[VX], pos[VY]);
-
-        if(obj->dimensions)
-        {
-            obj->dimensions(obj, page, NULL, &height);
-        }
-
-        /// \kludge
-        if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
-        {
-            int cursorY = pos[VY], cursorItemHeight = height;
-            if(MN_LIST == MNObject_Type(obj) && (MNObject_Flags(obj) & MNF_ACTIVE) &&
-               MNList_SelectionIsVisible(obj))
-            {
-                const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-                FR_SetFont(FID(MNPage_PredefinedFont(page, MNObject_Font(obj))));
-                cursorItemHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
-                cursorY += (list->selection - list->first) * cursorItemHeight;
-            }
-            Hu_MenuDrawFocusCursor(pos[VX], cursorY, cursorItemHeight, alpha);
-        }
-        /// kludge end.
-
-        pos[VY] += height * (1.08f); // Leading.
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-page->offset[VX], -page->offset[VY], 0);
+    colorIndex = page->colors[id];
+    rgb[CR] = cfg.menuTextColors[colorIndex][CR];
+    rgb[CG] = cfg.menuTextColors[colorIndex][CG];
+    rgb[CB] = cfg.menuTextColors[colorIndex][CB];
     }
 }
 
@@ -850,12 +934,6 @@ int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-static boolean MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
-{
-    assert(NULL != info);
-    return (NULL != info->callback);
-}
-
 static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* obj, mn_actionid_t id)
 {
     assert(NULL != obj);
@@ -889,84 +967,6 @@ int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t id, void* paramaters)
 #endif
     /// \fixme Need an error handling mechanic.
     return -1; // NOP
-}
-
-short MN_MergeMenuEffectWithDrawTextFlags(short f)
-{
-    return ((~(cfg.menuEffectFlags << DTFTOMEF_SHIFT) & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
-}
-
-void MN_DrawText5(const char* string, int x, int y, int fontIdx, short flags,
-    float glitterStrength, float shadowStrength)
-{
-    if(NULL == string || !string[0]) return;
-
-    FR_SetFont(FID(fontIdx));
-    flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment7(string, x, y, flags, 0, 0, glitterStrength, shadowStrength, 0, 0);
-}
-
-void MN_DrawText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength)
-{
-    MN_DrawText5(string, x, y, fontIdx, flags, glitterStrength, rs.textShadow);
-}
-
-void MN_DrawText3(const char* string, int x, int y, int fontIdx, short flags)
-{
-    MN_DrawText4(string, x, y, fontIdx, flags, rs.textGlitter);
-}
-
-void MN_DrawText2(const char* string, int x, int y, int fontIdx)
-{
-    MN_DrawText3(string, x, y, fontIdx, DTF_ALIGN_TOPLEFT);
-}
-
-void MN_DrawText(const char* string, int x, int y)
-{
-    MN_DrawText2(string, x, y, GF_FONTA);
-}
-
-int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
-{
-    assert(NULL != page);
-    if(!VALID_MNPAGE_FONTID(id))
-    {
-#if _DEBUG
-        Con_Error("MNPage::PredefinedFont: Invalid font id '%i'.", (int)id);
-        exit(1); // Unreachable.
-#endif
-        return 0; // Not a valid font id.
-    }
-    return (int)page->fonts[id];
-}
-
-void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
-{
-    assert(NULL != page);
-    {
-    uint colorIndex;
-    if(NULL == rgb)
-    {
-#if _DEBUG
-        Con_Error("MNPage::PredefinedColor: Invalid 'rgb' reference.");
-        exit(1); // Unreachable.
-#endif
-        return;
-    }
-    if(!VALID_MNPAGE_COLORID(id))
-    {
-#if _DEBUG
-        Con_Error("MNPage::PredefinedColor: Invalid color id '%i'.", (int)id);
-        exit(1); // Unreachable.
-#endif
-        rgb[CR] = rgb[CG] = rgb[CB] = 1;
-        return;
-    }
-    colorIndex = page->colors[id];
-    rgb[CR] = cfg.menuTextColors[colorIndex][CR];
-    rgb[CG] = cfg.menuTextColors[colorIndex][CG];
-    rgb[CB] = cfg.menuTextColors[colorIndex][CB];
-    }
 }
 
 void MNText_Drawer(mn_object_t* obj, int x, int y)
