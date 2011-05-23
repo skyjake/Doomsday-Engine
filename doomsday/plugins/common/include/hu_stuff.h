@@ -152,9 +152,9 @@ const char* Hu_ChoosePatchReplacement(patchId);
  * @param y  Y-offset to the draw origin.
  * @param flags  @see drawPatchFlags
  * @param fontId  Used with patch replacement; default font.
- * @param r  Used with patch replacement; default text color red color compontent.
- * @param g  Used with patch replacement; default text color green color compontent.
- * @param b  Used with patch replacement; default text color blue color compontent.
+ * @param r  Used with patch replacement; default text color red color component.
+ * @param g  Used with patch replacement; default text color green color component.
+ * @param b  Used with patch replacement; default text color blue color component.
  * @param a  Patch alpha OR default text alpha when used with patch replacement.
  * @param glitter  Used with patch replacement; default text glitter strength.
  * @param shadow  Used with patch replacement; default text shadow strength.
