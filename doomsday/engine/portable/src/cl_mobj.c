@@ -534,7 +534,7 @@ void ClMobj_Destroy(mobj_t *mo)
     clmoinfo_t* info = 0;
 
 #ifdef _DEBUG
-    Con_Message("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id);
+    VERBOSE2( Con_Message("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id) );
 #endif
 
     CL_ASSERT_CLMOBJ(mo);
