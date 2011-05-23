@@ -987,10 +987,15 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
         color[CR] += cfg.menuTextFlashColor[CR] * (1 - t); color[CG] += cfg.menuTextFlashColor[CG] * (1 - t); color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
-    if(txt->patch != 0)
+    if(txt->patch != NULL)
     {
+        const char* replacement = NULL;
+        if(!(obj->_flags & MNF_NO_ALTTEXT))
+        {
+            replacement = Hu_ChoosePatchReplacement2(*txt->patch, txt->text, true);
+        }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*txt->patch, x, y, (obj->_flags & MNF_NO_ALTTEXT)? NULL : txt->text, fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch5(*txt->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, FID(fontIdx), color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -1601,8 +1606,13 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
 
     if(btn->patch)
     {
+        const char* replacement = NULL;
+        if(!(obj->_flags & MNF_NO_ALTTEXT))
+        {
+            replacement = Hu_ChoosePatchReplacement2(*btn->patch, btn->text, true);
+        }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*btn->patch, x, y, (obj->_flags & MNF_NO_ALTTEXT)? NULL : btn->text, fontIdx, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch5(*btn->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, FID(fontIdx), color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }

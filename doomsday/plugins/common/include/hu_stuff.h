@@ -111,12 +111,59 @@ void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);
 void            M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g, float b, float a);
 
-// Implements patch replacement.
-void            WI_DrawPatch(patchid_t id, int x, int y);
-void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin);
-void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags);
-void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags, float r, float g, float b, float a);
-void            WI_DrawPatch5(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags, float r, float g, float b, float a, float glitter, float shadow);
+/**
+ * @defgroup patchReplacementFlags  Patch Replacement Flags.
+ * @{
+ */
+#define PRF_NO_IWAD             0x1 /// Allow if resource does not originate from an IWAD.
+#define PRF_NO_PWAD             0x2 /// Allow if resource does not originate from a PWAD/external source.
+/**@}*/
+
+/**
+ * Given a unique patch identifier (@a id) lookup a patch replacement string
+ * associated with this.
+ * @param patchId  Unique patch identifier.
+ * @param flags  @see patchReplacementFlags
+ * @return  Patch replacement string if defined/found else @c NULL.
+ */
+const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
+
+/**
+ * Determine whether a string-replacement for the specified patch is allowed
+ * according the current user and/or game configuration.
+ *
+ * \note If the patch does not originate from an IWAD it will not be replaced.
+ *
+ * @param altString  A predetermined string to use if appropriate.
+ * @param builtin  @c true= @a altString is a built-in replacement (i.e., it
+ *      does not originate from an external replacement definition).
+ */
+const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
+    boolean builtin);
+const char* Hu_ChoosePatchReplacement(patchId);
+
+/**
+ * Implements patch replacement.
+ *
+ * @param patchId  Unique identifier of the patch to be drawn if no replacement.
+ * @param replacement  Patch replacement string. Will be drawn instead of the
+ *      patch if not @c NULL.
+ * @param x  X-offset to the draw origin.
+ * @param y  Y-offset to the draw origin.
+ * @param flags  @see drawPatchFlags
+ * @param fontId  Used with patch replacement; default font.
+ * @param r  Used with patch replacement; default text color red color compontent.
+ * @param g  Used with patch replacement; default text color green color compontent.
+ * @param b  Used with patch replacement; default text color blue color compontent.
+ * @param a  Patch alpha OR default text alpha when used with patch replacement.
+ * @param glitter  Used with patch replacement; default text glitter strength.
+ * @param shadow  Used with patch replacement; default text shadow strength.
+ */
+void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, short flags, fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow);
+void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, short flags, fontid_t fontId, float r, float g, float b, float a);
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, short flags, fontid_t fontId);
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, short flags);
+void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y);
 
 /**
  * Misc specialised elements:

@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_drawpatch.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,9 @@ void GL_DrawPatch2(patchid_t id, int posX, int posY, short flags)
 {
     float x = (float) posX, y = (float) posY, w, h;
     patchinfo_t info;
+
+    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
+        return;
 
     if(id == 0 || !R_GetPatchInfo(id, &info))
         return;

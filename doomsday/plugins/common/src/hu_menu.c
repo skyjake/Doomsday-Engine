@@ -2712,7 +2712,7 @@ void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y)
 #elif __JHERETIC__
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch5(pMainTitle, x - 22, y - 56, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pMainTitle, Hu_ChoosePatchReplacement(pMainTitle), x - 22, y - 56, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     GL_DrawPatch(pRotatingSkull[17 - frame], x - 70, y - 46);
     GL_DrawPatch(pRotatingSkull[frame], x + 122, y - 46);
@@ -2720,7 +2720,7 @@ void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y)
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch5(pMainTitle, x - 3, y - 62, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pMainTitle, Hu_ChoosePatchReplacement(pMainTitle), x - 3, y - 62, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 }
@@ -2829,7 +2829,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
     }
     // kludge end.
 #else // __JDOOM__
-    WI_DrawPatch5(pEpisode, x + 7, y - 25, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pEpisode, Hu_ChoosePatchReplacement2(pEpisode, "{case}Which Episode{scaley=1.25,y=-3}?", true), x + 7, y - 25, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2841,8 +2841,8 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
 #if __JDOOM__ || __JDOOM64__
-    WI_DrawPatch5(pNewGame, x + 48, y - 49, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
-    WI_DrawPatch5(pSkill, x + 6, y - 25, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pNewGame, Hu_ChoosePatchReplacement2(pNewGame, "{case}NEW GAME", true), x + 48, y - 49, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pSkill, Hu_ChoosePatchReplacement2(pSkill, "{case}Choose Skill Level:", true), x + 6, y - 25, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #elif __JHEXEN__
     DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
     MN_DrawText3("Choose Skill Level:", x - 46, y - 28, GF_FONTB, DTF_ALIGN_TOPLEFT);
@@ -3112,7 +3112,7 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
     MN_DrawText3("Load Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #else
-    WI_DrawPatch5(pLoadGame, x - 8, y - 26, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pLoadGame, Hu_ChoosePatchReplacement2(pLoadGame, "{case}Load game", true), x - 8, y - 26, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3126,7 +3126,7 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
     MN_DrawText3("Save Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #else
-    WI_DrawPatch5(pSaveGame, x - 8, y - 26, "{case}Save game", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
+    WI_DrawPatch5(pSaveGame, Hu_ChoosePatchReplacement2(pSaveGame, "{case}Save game", true), x - 8, y - 26, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3149,11 +3149,7 @@ void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
     MN_DrawText3("OPTIONS", x + 42, y - 38, GF_FONTB, DTF_ALIGN_TOP);
 #else
-#  if __JDOOM64__
-    WI_DrawPatch5(pOptionsTitle, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
-#  else
-    WI_DrawPatch5(pOptionsTitle, x + 42, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
-#  endif
+    WI_DrawPatch5(pOptionsTitle, Hu_ChoosePatchReplacement2(pOptionsTitle, "{case}OPTIONS", true), x + 42, y - 20, DPF_ALIGN_TOP, FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);

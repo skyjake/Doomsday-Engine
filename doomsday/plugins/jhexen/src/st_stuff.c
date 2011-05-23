@@ -2367,6 +2367,8 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
+        patchid_t patchId = pManaAIcons[icon->iconIdx].id;
+
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -2374,7 +2376,7 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Translatef(0, yOffset, 0);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(pManaAIcons[icon->iconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2470,6 +2472,8 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
+        patchid_t patchId = pManaBIcons[icon->iconIdx].id;
+
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -2477,7 +2481,7 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Translatef(0, yOffset, 0);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(pManaBIcons[icon->iconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2571,8 +2575,9 @@ void SBarBlueManaVial_Drawer(uiwidget_t* obj, int x, int y)
 
     if(vial->iconIdx >= 0)
     {
+        patchid_t patchId = pManaAVials[vial->iconIdx].id;
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(pManaAVials[vial->iconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2669,8 +2674,9 @@ void SBarGreenManaVial_Drawer(uiwidget_t* obj, int x, int y)
 
     if(vial->iconIdx >= 0)
     {
+        patchid_t patchId = pManaBVials[vial->iconIdx].id;
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(pManaBVials[vial->iconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2813,13 +2819,14 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
+        patchid_t patchId = pManaAIcons[icon->iconIdx].id;
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
         DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(pManaAIcons[icon->iconIdx].id, 0, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), 0, 0, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2925,13 +2932,15 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
+        patchid_t patchId = pManaBIcons[icon->iconIdx].id;
+
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
         DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(pManaBIcons[icon->iconIdx].id, 0, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), 0, 0, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);

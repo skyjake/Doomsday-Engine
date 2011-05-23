@@ -1189,88 +1189,82 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-/**
- * This routine tests for a string-replacement for the patch.
- * If one is found, it's used instead of the original graphic.
- *
- * "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
- *
- * If the patch is not in an IWAD, it won't be replaced!
- *
- * @param altstring     String to use instead of the patch if appropriate.
- * @param built-in      (True) if the altstring is a built-in replacement
- *                      (ie it does not originate from a DED definition).
- */
-void WI_DrawPatch5(patchid_t patch, int x, int y, const char* altstring,
-    int fontIdx, boolean builtin, short flags, float r, float g, float b, float a,
-    float glitter, float shadow)
+const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
+    boolean builtin)
 {
-    const char* replacement;
-    int posx = x;
+    const char* replacement = NULL; // No replacement possible/wanted.
 
-    if(IS_DEDICATED)
-        return;
-
-    if(patch == 0)
-        return;
-
-    if(altstring && altstring[0] && !builtin)
+    if(altString && altString[0] && !builtin)
     {   // We have already determined a string to replace this with.
         patchinfo_t info;
-        R_GetPatchInfo(patch, &info);
+        R_GetPatchInfo(patchId, &info);
         if(!info.isCustom)
         {
-            FR_DrawText(altstring, x, y, FID(fontIdx), translatePatchToTextDrawFlags(flags), .5f, 0, r, g, b, a, glitter, shadow, false);
-            return;
+            replacement = altString;
         }
     }
     else if(cfg.usePatchReplacement)
     {   // We might be able to replace the patch with a string replacement.
-        patchinfo_t info;
-
         // A user replacement?
-        replacement = Hu_FindPatchReplacementString(patch, PRF_NO_PWAD);
-        if(NULL != replacement)
+        replacement = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
+        if(NULL == replacement)
         {
-            short textFlags = translatePatchToTextDrawFlags(flags);
-            FR_DrawText(replacement, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
-            return;
-        }
-
-        // A built-in replacement?
-        if(cfg.usePatchReplacement == 2 && altstring && altstring[0] &&
-           R_GetPatchInfo(patch, &info) && !info.isCustom)
-        {
-            short textFlags = translatePatchToTextDrawFlags(flags);
-            FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
-            return;
+            // Perhaps a built-in replacement?
+            patchinfo_t info;
+            if(cfg.usePatchReplacement == 2 && altString && altString[0] &&
+               R_GetPatchInfo(patchId, &info) && !info.isCustom)
+            {
+                replacement = altString;
+            }
         }
     }
 
-    // No replacement possible/wanted - use the original patch.
+    return replacement;
+}
+
+const char* Hu_ChoosePatchReplacement(patchid_t patchId)
+{
+    return Hu_ChoosePatchReplacement2(patchId, NULL, false);
+}
+
+void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, short flags,
+    fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow)
+{
+    if(patchId == 0)
+        return;
+
+    if(NULL != replacement && replacement[0])
+    {
+        // Use the replacement string.
+        short textFlags = translatePatchToTextDrawFlags(flags);
+        FR_DrawText(replacement, x, y, fontId, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
+        return;
+    }
+
+    // Use the original patch.
     DGL_Color4f(1, 1, 1, a);
-    GL_DrawPatch2(patch, posx, y, flags);
+    GL_DrawPatch2(patchId, x, y, flags);
 }
 
-void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
-    int fontIdx, boolean builtin, short flags, float r, float g, float b, float a)
+void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, short flags,
+    fontid_t fontId, float r, float g, float b, float a)
 {
-    WI_DrawPatch5(patch, x, y, altstring, fontIdx, builtin, flags, r, g, b, a, 0, 0);
+    WI_DrawPatch5(patchId, replacement, x, y, flags, fontId, r, g, b, a, 0, 0);
 }
 
-void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, int fontIdx, boolean builtin, short flags)
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, short flags, fontid_t fontId)
 {
-    WI_DrawPatch4(id, x, y, altstring, fontIdx, builtin, flags, 1, 1, 1, 1);
+    WI_DrawPatch4(patchId, replacement, x, y, flags, fontId, 1, 1, 1, 1);
 }
 
-void WI_DrawPatch2(patchid_t patch, int x, int y, const char* altstring, int fontIdx, boolean builtin)
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, short flags)
 {
-    WI_DrawPatch3(patch, x, y, altstring, fontIdx, builtin, DPF_ALIGN_TOPLEFT);
+    WI_DrawPatch3(patchId, replacement, x, y, flags, FID(GF_FONTB));
 }
 
-void WI_DrawPatch(patchid_t patch, int x, int y)
+void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y)
 {
-    WI_DrawPatch2(patch, x, y, NULL, GF_FONTB, false);
+    WI_DrawPatch2(patchId, replacement, x, y, DPF_ALIGN_TOPLEFT);
 }
 
 /**
@@ -1539,7 +1533,7 @@ void Hu_Drawer(void)
 
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch3(m_pause, 0, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOP|DPF_NO_OFFSET);
+        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, DPF_ALIGN_TOP|DPF_NO_OFFSET, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1604,7 +1598,7 @@ static void drawMapTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(pMapNames[mapnum], 0, 0, lname, GF_FONTB, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
+    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, DPF_ALIGN_TOP, FID(GF_FONTB), 1, 1, 1, alpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
 

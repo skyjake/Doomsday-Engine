@@ -1434,6 +1434,7 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
 
     if(face->faceIndex >= 0)
     {
+        patchid_t patchId = pFaces[face->faceIndex].id;
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -1441,7 +1442,7 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Translatef(0, yOffset, 0);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(pFaces[face->faceIndex].id, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1536,10 +1537,10 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(kslt->patchId, loc->x + offset, loc->y + offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+    WI_DrawPatch4(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x + offset, loc->y + offset, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
     if(kslt->patchId2 != 0)
     {
-        WI_DrawPatch4(kslt->patchId2, loc->x - offset, loc->y - offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(kslt->patchId2, Hu_ChoosePatchReplacement(kslt->patchId2), loc->x - offset, loc->y - offset, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1669,7 +1670,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(wpns->patchId, element->x, element->y, NULL, 0, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, textAlpha);
+    WI_DrawPatch4(wpns->patchId, Hu_ChoosePatchReplacement(wpns->patchId), element->x, element->y, DPF_ALIGN_TOPLEFT, 0, 1, 1, 1, textAlpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
