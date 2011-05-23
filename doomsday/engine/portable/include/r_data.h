@@ -482,7 +482,17 @@ patchid_t       R_RegisterPatch(const char* name);
 
 patchtex_t*     R_PatchTextureByIndex(patchid_t id);
 void            R_ClearPatchTexs(void);
-boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
+
+/**
+ * Retrieve extended info for the patch associated with @a id.
+ * @param id  Unique identifier of the patch to lookup.
+ * @param info  Extend info will be written here if found.
+ * @return  @c true= Extended info for this patch was found.
+ */
+boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
+
+/// @return  Name of the patch associated with @a id.
+const ddstring_t* R_GetPatchName(patchid_t id);
 
 void R_InitRawTexs(void);
 void R_UpdateRawTexs(void);

@@ -1145,28 +1145,45 @@ patchid_t R_RegisterPatch(const char* name)
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 {
+    const patchtex_t* patch;
     if(!info)
         Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
-    {
-    const patchtex_t* p;
+
     memset(info, 0, sizeof(*info));
-    if(NULL != (p = getPatchTex(id)))
+    patch = getPatchTex(id);
+    if(NULL != patch)
     {
-        texture_t* tex = GL_ToTexture(p->texId);
+        texture_t* tex = GL_ToTexture(patch->texId);
         assert(NULL != tex);
         info->id = id;
         info->width = Texture_Width(tex);
         info->height = Texture_Height(tex);
-        info->offset = p->offX;
-        info->topOffset = p->offY;
-        info->isCustom = p->isCustom;
+        info->offset = patch->offX;
+        info->topOffset = patch->offY;
+        info->isCustom = patch->isCustom;
         /// \kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (p->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
+        info->extraOffset[0] = info->extraOffset[1] = (patch->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
     }
-    VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));
-    return false;
+    if(id != 0)
+    {
+        VERBOSE( Con_Message("Warning:R_GetPatchInfo Invalid Patch id #%u.\n", (uint)id) )
     }
+    return false;
+}
+
+const ddstring_t* R_GetPatchName(patchid_t id)
+{
+    const patchtex_t* patch = getPatchTex(id);
+    if(NULL != patch)
+    {
+        return &patch->name;
+    }
+    if(id != 0)
+    {
+        VERBOSE( Con_Message("Warning:R_GetPatchName: Invalid Patch id #%u.\n", (uint)id) )
+    }
+    return NULL;
 }
 
 patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)

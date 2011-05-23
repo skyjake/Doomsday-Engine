@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 510 <--
-; Other free ordinals: 90 133 247
+; Other free ordinals: 90 133
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -375,6 +375,7 @@ EXPORTS
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
+    R_GetPatchName              @247 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_HSVToRGB                  @439 NONAME

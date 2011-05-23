@@ -467,7 +467,8 @@ scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHe
 
     void            R_SetBorderGfx(const dduri_t* paths[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
-    boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
+boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
+const ddstring_t* R_GetPatchName(patchid_t id);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
