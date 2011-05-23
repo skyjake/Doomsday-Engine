@@ -1149,6 +1149,46 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int fontIdx, s
     FR_DrawTextFragment3(string, x, y, flags, tracking);
 }
 
+const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
+{
+    const ddstring_t* name = R_GetPatchName(patchId);
+    ddstring_t valueStr;
+    char* replacement;
+    int result;
+
+    if(name == NULL) // Invalid id?
+    {
+        return NULL;
+    }
+
+    Str_Init(&valueStr); 
+    Str_Appendf(&valueStr, "Patch Replacement|%s", Str_Text(name));
+    result = Def_Get(DD_DEF_VALUE, Str_Text(&valueStr), (void*)&replacement);
+    Str_Free(&valueStr);
+    if(result == 0) // Not found.
+    {
+        return NULL;
+    }
+
+    if(flags & (PRF_NO_IWAD|PRF_NO_PWAD))
+    {
+        patchinfo_t info;
+        R_GetPatchInfo(patchId, &info);
+        if(!info.isCustom)
+        {
+            if(flags & PRF_NO_IWAD)
+                return NULL;
+        }
+        else
+        {
+            if(flags & PRF_NO_PWAD)
+                return NULL;
+        }
+    }
+
+    return replacement;
+}
+
 /**
  * This routine tests for a string-replacement for the patch.
  * If one is found, it's used instead of the original graphic.
@@ -1165,8 +1205,8 @@ void WI_DrawPatch5(patchid_t patch, int x, int y, const char* altstring,
     int fontIdx, boolean builtin, short flags, float r, float g, float b, float a,
     float glitter, float shadow)
 {
-    int patchString = 0, posx = x;
-    char def[80], *string;
+    const char* replacement;
+    int posx = x;
 
     if(IS_DEDICATED)
         return;
@@ -1185,32 +1225,25 @@ void WI_DrawPatch5(patchid_t patch, int x, int y, const char* altstring,
         }
     }
     else if(cfg.usePatchReplacement)
-    {   // We might be able to replace the patch with a string.
+    {   // We might be able to replace the patch with a string replacement.
         patchinfo_t info;
-        R_GetPatchInfo(patch, &info);
 
-        strcpy(def, "Patch Replacement|");
-        strcat(def, W_LumpName(patch));
-
-        patchString = Def_Get(DD_DEF_VALUE, def, &string);
-
-        if(!info.isCustom)
+        // A user replacement?
+        replacement = Hu_FindPatchReplacementString(patch, PRF_NO_PWAD);
+        if(NULL != replacement)
         {
-            // A user replacement?
-            if(patchString)
-            {
-                short textFlags = translatePatchToTextDrawFlags(flags);
-                FR_DrawText(string, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
-                return;
-            }
+            short textFlags = translatePatchToTextDrawFlags(flags);
+            FR_DrawText(replacement, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
+            return;
+        }
 
-            // A built-in replacement?
-            if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
-            {
-                short textFlags = translatePatchToTextDrawFlags(flags);
-                FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
-                return;
-            }
+        // A built-in replacement?
+        if(cfg.usePatchReplacement == 2 && altstring && altstring[0] &&
+           R_GetPatchInfo(patch, &info) && !info.isCustom)
+        {
+            short textFlags = translatePatchToTextDrawFlags(flags);
+            FR_DrawText(altstring, x, y, FID(fontIdx), textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
+            return;
         }
     }
 
