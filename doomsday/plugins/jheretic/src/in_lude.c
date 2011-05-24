@@ -170,12 +170,11 @@ void WI_Register(void)
         Con_AddVariable(cvars + i);
 }
 
-void IN_DrawTime(int x, int y, int h, int m, int s, int fontIdx, int tracking, float r, float g, float b, float a)
+void IN_DrawTime(int x, int y, int h, int m, int s, int tracking, float r, float g, float b, float a)
 {
     char buf[20];
 
     dd_snprintf(buf, 20, "%02d", s);
-    FR_SetFont(FID(fontIdx));
     M_DrawTextFragmentShadowed(buf, x, y, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
     x -= FR_TextFragmentWidth2(buf, tracking) + tracking * 3;
     M_DrawTextFragmentShadowed(":", x, y, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
@@ -846,7 +845,7 @@ void IN_DrawSingleStats(void)
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         FR_DrawTextFragment("TIME", 85, 160);
 
-        IN_DrawTime(284, 160, hours, minutes, seconds, GF_FONTB, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        IN_DrawTime(284, 160, hours, minutes, seconds, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
