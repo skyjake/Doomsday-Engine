@@ -368,8 +368,8 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
     DGL_End();
 }
 
-void HU_DrawText(const char* str, int fontIdx, float x, float y,
-    float scale, float r, float g, float b, float a, short flags)
+void HU_DrawText(const char* str, float x, float y, float scale,
+    float r, float g, float b, float a, short flags)
 {
     if(!str || !str[0])
         return;
@@ -381,7 +381,6 @@ void HU_DrawText(const char* str, int fontIdx, float x, float y,
     DGL_Scalef(scale, scale, 1);
     DGL_Translatef(-x, -y, 0);
 
-    FR_SetFont(FID(fontIdx));
     DGL_Color4f(r, g, b, a);
     FR_DrawTextFragment2(str, x, y, flags);
 
@@ -622,8 +621,9 @@ static void drawTable(float x, float ly, float width, float height,
         else
             cX += CELL_PADDING;
 
-        HU_DrawText(columns[n].label, GF_FONTA, cX, cY,
-            fontScale, 1.f, 1.f, 1.f, alpha, DTF_ALIGN_TOP|DTF_ONLY_SHADOW|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
+        FR_SetFont(FID(GF_FONTA));
+        HU_DrawText(columns[n].label, cX, cY, fontScale, 1.f, 1.f, 1.f, alpha,
+            DTF_ALIGN_TOP|DTF_ONLY_SHADOW|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
     }
     ly += lineHeight;
     DGL_Disable(DGL_TEXTURE_2D);
@@ -722,21 +722,24 @@ DGL_Enable(DGL_TEXTURE_2D);
                 }
 
             case 1: // Name.
-                HU_DrawText(name, GF_FONTA, cX, cY + fontOffsetY, fontScale,
+                FR_SetFont(FID(GF_FONTA));
+                HU_DrawText(name, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
-                HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
+                FR_SetFont(FID(GF_FONTA));
+                HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
-                HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
+                FR_SetFont(FID(GF_FONTA));
+                HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
                 break;
