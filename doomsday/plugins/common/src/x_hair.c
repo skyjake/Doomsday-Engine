@@ -94,10 +94,22 @@ void X_Drawer(int player)
     float alpha, scale, oldLineWidth;
     player_t* plr = &players[player];
 
-    alpha = MINMAX_OF(0, cfg.xhairColor[3], 1);
-
     // Is there a crosshair to draw?
-    if(xhair == 0 || !(alpha > 0))
+    if(xhair == 0) return;
+
+    alpha = MINMAX_OF(0, cfg.xhairColor[3], 1);
+    // Dead players are incapable of aiming.
+    if(plr->plr->flags & DDPF_DEAD)
+    {
+        if(plr->rebornWait == 0) return;
+        // Make use of the reborn timer to fade out on death.
+        if(plr->rebornWait < PLAYER_REBORN_TICS)
+        {
+            alpha *= (float)plr->rebornWait / PLAYER_REBORN_TICS;
+        }
+    }
+
+    if(!(alpha > 0))
         return;
 
     centerX = Get(DD_VIEWWINDOW_X) + (Get(DD_VIEWWINDOW_WIDTH) / 2);
