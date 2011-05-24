@@ -697,21 +697,27 @@ void P_MorphThink(player_t *player)
         player->chickenPeck -= 3;
     }
 
-    if(IS_CLIENT || player->morphTics & 15)
+    if(/*IS_CLIENT || */ player->morphTics & 15)
         return;
 
     pmo = player->plr->mo;
-    //// \fixme: Replace equality to zero checks with mom in-range.
-    if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 160)
-    {   // Twitch view angle
-        pmo->angle += (P_Random() - P_Random()) << 19;
-    }
 
-    if(pmo->pos[VZ] <= pmo->floorZ && (P_Random() < 32))
-    {   // Jump and noise
-        pmo->mom[MZ] += 1;
-        P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
-        return;
+    if(!IS_NETGAME || IS_CLIENT)
+    {
+        //// \fixme: Replace equality to zero checks with mom in-range.
+        if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 160)
+        {   // Twitch view angle
+            pmo->angle += (P_Random() - P_Random()) << 19;
+        }
+/*    }
+    if(!IS_NETGAME || !IS_CLIENT)
+    {*/
+        if(pmo->pos[VZ] <= pmo->floorZ && (P_Random() < 32))
+        {   // Jump and noise
+            pmo->mom[MZ] += 1;
+            P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
+            return;
+        }
     }
 
     if(P_Random() < 48)
@@ -733,6 +739,8 @@ boolean P_UndoPlayerMorph(player_t *player)
     int                 playerNum;
     weapontype_t        weapon;
     int                 oldFlags, oldFlags2, oldBeast;
+
+    if(IS_CLIENT) return false;
 
 # if __JHEXEN__
     player->update |= PSF_MORPH_TIME | PSF_POWERS | PSF_HEALTH;
@@ -1840,11 +1848,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(P_PlayerThinkDeath(player))
         return; // I'm dead!
 
-    if(!IS_CLIENT) // Locally only.
-    {
-        P_PlayerThinkMorph(player);
-    }
-
+    P_PlayerThinkMorph(player);
     P_PlayerThinkAttackLunge(player);
     P_PlayerThinkMove(player);
     P_PlayerThinkFly(player);

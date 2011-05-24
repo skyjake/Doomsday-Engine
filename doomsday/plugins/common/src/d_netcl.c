@@ -90,6 +90,12 @@ short NetCl_ReadShort(void)
     return SHORT( *(short*) (readbuffer - 2) );
 }
 
+unsigned short NetCl_ReadUShort(void)
+{
+    readbuffer += 2;
+    return SHORT( *(unsigned short*) (readbuffer - 2) );
+}
+
 int NetCl_ReadLong(void)
 {
     readbuffer += 4;
@@ -357,16 +363,16 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 
 void NetCl_UpdatePlayerState(byte *data, int plrNum)
 {
-    int         i;
-    player_t   *pl = &players[plrNum];
-    byte        b;
-    unsigned short flags, s;
+    int i;
+    player_t* pl = &players[plrNum];
+    byte b;
+    int flags, s;
 
     if(!Get(DD_GAME_READY))
         return;
 
     NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadShort();
+    flags = NetCl_ReadUShort();
 
 #ifdef _DEBUG
     Con_Message("NetCl_UpdatePlayerState: fl=%x\n", flags);
@@ -605,10 +611,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         pl->viewHeight = (float) NetCl_ReadByte();
     }
 
-#if __JHERETIC || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_MORPH_TIME)
     {
         pl->morphTics = NetCl_ReadByte() * 35;
+#ifdef _DEBUG
+        Con_Message("NetCl_UpdatePlayerState: Player %i morphtics = %i\n", plrNum, pl->morphTics);
+#endif
     }
 #endif
 

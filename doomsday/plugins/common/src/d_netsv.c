@@ -1207,6 +1207,9 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_MORPH_TIME)
     {
+#ifdef _DEBUG
+        Con_Message("NetSv_SendPlayerState: Player %i, sending morph tics as %i seconds.\n", srcPlrNum, (pl->morphTics + 34) / 35);
+#endif
         // Send as seconds.
         *ptr++ = (pl->morphTics + 34) / 35;
     }
@@ -1221,8 +1224,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 #endif
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType, buffer,
-                   ptr - buffer);
+    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType, buffer, ptr - buffer);
 }
 
 void NetSv_SendPlayerInfo(int whose, int to_whom)

@@ -990,6 +990,10 @@ boolean P_MorphPlayer(player_t* player)
     angle_t             angle;
     int                 oldFlags2;
 
+#ifdef _DEBUG
+    Con_Message("P_MorphPlayer: Player %i.\n", player - players);
+#endif
+
     if(player->morphTics)
     {
         if((player->morphTics < CHICKENTICS - TICSPERSEC) &&
@@ -1034,8 +1038,7 @@ boolean P_MorphPlayer(player_t* player)
 
     player->morphTics = CHICKENTICS;
     player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
-    player->update |=
-        PSF_MORPH_TIME | PSF_HEALTH | PSF_POWERS | PSF_ARMOR_POINTS;
+    player->update |= PSF_MORPH_TIME | PSF_HEALTH | PSF_POWERS | PSF_ARMOR_POINTS;
 
     P_ActivateMorphWeapon(player);
     return true;
