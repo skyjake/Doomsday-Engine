@@ -772,7 +772,7 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-static void drawMapMetaData(float x, float y, int fontIdx, float alpha)
+static void drawMapMetaData(float x, float y, fontid_t fontId, float alpha)
 {
     static const char*  unnamed = "unnamed";
     const char* lname = P_GetMapNiceName();
@@ -780,7 +780,7 @@ static void drawMapMetaData(float x, float y, int fontIdx, float alpha)
     if(!lname)
         lname = unnamed;
 
-    FR_SetFont(FID(fontIdx));
+    FR_SetFont(fontId);
     DGL_Color4f(1, 1, 1, alpha);
 
     // Map name:
@@ -857,7 +857,7 @@ void HU_DrawScoreBoard(int player)
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
     FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
-    drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
+    drawMapMetaData(x, y + 16, FID(GF_FONTA), hud->scoreAlpha);
 
     drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, hud->scoreAlpha, player);
 
