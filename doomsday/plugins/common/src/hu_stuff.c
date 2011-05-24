@@ -1139,9 +1139,8 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_DrawTextFragmentShadowed(const char* string, int x, int y, int fontIdx, short flags, int tracking, float r, float g, float b, float a)
+void M_DrawTextFragmentShadowed(const char* string, int x, int y, short flags, int tracking, float r, float g, float b, float a)
 {
-    FR_SetFont(FID(fontIdx));
     DGL_Color4f(0, 0, 0, a * .4f);
     FR_DrawTextFragment3(string, x+2, y+2, flags, tracking);
 
