@@ -1781,7 +1781,8 @@ void M_DrawAutomapMenu(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    MN_DrawText3("Automap OPTIONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
+    FR_SetFont(FID(GF_FONTB));
+    MN_DrawText2("Automap OPTIONS", SCREENWIDTH/2, y-26, DTF_ALIGN_TOP);
 
 /*#if __JHERETIC__ || __JHEXEN__
     // Draw the page arrows.

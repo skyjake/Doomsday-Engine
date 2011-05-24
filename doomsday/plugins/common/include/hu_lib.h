@@ -676,10 +676,9 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
 void MN_LoadResources(void);
 
 void MN_DrawText(const char* string, int x, int y);
-void MN_DrawText2(const char* string, int x, int y, int fontIdx);
-void MN_DrawText3(const char* string, int x, int y, int fontIdx, short flags);
-void MN_DrawText4(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength);
-void MN_DrawText5(const char* string, int x, int y, int fontIdx, short flags, float glitterStrength, float shadowStrength);
+void MN_DrawText2(const char* string, int x, int y, short flags);
+void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength);
+void MN_DrawText4(const char* string, int x, int y, short flags, float glitterStrength, float shadowStrength);
 
 /**
  * Execute a menu navigation/action command.
