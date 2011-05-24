@@ -62,7 +62,6 @@ typedef struct reg_mobj_s {
     struct reg_mobj_s*  next, *prev;
 
     // The tic when the mobj state was last sent.
-    int                 lastTimeStateSent;
     dt_mobj_t           mo; // The state of the mobj.
 } reg_mobj_t;
 
@@ -602,8 +601,7 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
         df |= MDFC_TYPE;
 
     // Mobj state sent periodically, if it keeps changing.
-    if((!(s->ddFlags & DDMF_MISSILE) && regMo &&
-        Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) && r->state != s->state) ||
+    if((!(s->ddFlags & DDMF_MISSILE) && regMo && r->state != s->state) ||
        !Def_SameStateSequence(r->state, s->state))
     {
         df |= MDF_STATE;
@@ -613,14 +611,6 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
             // No valid comparison can be generated because the mobj is gone.
             return false;
         }
-
-#ifdef _DEBUG
-VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
-    Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
-                s->thinker.id) );
-#endif
-
-        if(regMo) regMo->lastTimeStateSent = Sys_GetTime();
     }
 
     if(r->radius != s->radius)

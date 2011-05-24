@@ -604,6 +604,9 @@ void P_FireWeapon(player_t *player)
     NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
+#ifdef _DEBUG
+    Con_Message("P_FireWeapon: Setting player %i to attack state.\n", player - players);
+#endif
 
     if(player->refire)
         attackState = weaponInfo[player->readyWeapon][player->class_].mode[lvl].states[WSN_ATTACK_HOLD];
