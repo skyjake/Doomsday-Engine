@@ -273,7 +273,7 @@ typedef enum {
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
     int offset[2];
-    gamefontid_t fonts[MENU_FONT_COUNT];
+    fontid_t fonts[MENU_FONT_COUNT];
     uint colors[MENU_COLOR_COUNT];
     void (*drawer) (struct mn_page_s* page, int x, int y);
     int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
@@ -327,7 +327,7 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
  * @param id  Unique identifier of the predefined font being retrieved.
  * @return  Identifier of the found font else @c 0
  */
-int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
+fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 
 /**
  * Text objects.
@@ -649,7 +649,7 @@ typedef struct mn_rendstate_s {
     float textGlitter;
     float textShadow;
     float textColors[MENU_COLOR_COUNT][4];
-    gamefontid_t textFonts[MENU_FONT_COUNT];
+    fontid_t textFonts[MENU_FONT_COUNT];
 } mn_rendstate_t;
 extern const mn_rendstate_t* mnRendState;
 
@@ -741,7 +741,7 @@ typedef struct uiwidget_s {
     guiwidgettype_t type;
     int player; /// \todo refactor away.
     int hideId;
-    gamefontid_t fontId;
+    fontid_t fontId;
     void (*dimensions) (struct uiwidget_s* obj, int* width, int* height);
     void (*drawer) (struct uiwidget_s* obj, int x, int y);
     void (*ticker) (struct uiwidget_s* obj);
@@ -947,7 +947,7 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 /// Identical to GUI_FindObjectById except results in a fatal error if not found.
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata);

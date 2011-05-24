@@ -123,7 +123,7 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, void* t
     return obj;
 }
 
-static uiwidget_t* createWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
+static uiwidget_t* createWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata)
@@ -190,7 +190,7 @@ void GUI_Shutdown(void)
     inited = false;
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, gamefontid_t fontId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj), void* typedata)
@@ -544,7 +544,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
                MNList_SelectionIsVisible(obj))
             {
                 const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-                FR_SetFont(FID(MNPage_PredefinedFont(page, MNObject_Font(obj))));
+                FR_SetFont(MNPage_PredefinedFont(page, MNObject_Font(obj)));
                 cursorItemHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
                 cursorY += (list->selection - list->first) * cursorItemHeight;
             }
@@ -800,7 +800,7 @@ void MNPage_Initialize(mn_page_t* page)
     }
 }
 
-int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
+fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
 {
     assert(NULL != page);
     if(!VALID_MNPAGE_FONTID(id))
@@ -811,7 +811,7 @@ int MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
 #endif
         return 0; // Not a valid font id.
     }
-    return (int)page->fonts[id];
+    return page->fonts[id];
 }
 
 void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
@@ -968,7 +968,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     assert(NULL != obj && obj->_type == MN_TEXT);
     {
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
-    gamefontid_t fontIdx = rs.textFonts[obj->_pageFontIdx];
+    fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     float color[4];
 
     memcpy(color, rs.textColors[obj->_pageColorIdx], sizeof(color));
@@ -989,14 +989,14 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*txt->patch, txt->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*txt->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, FID(fontIdx), color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch5(*txt->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
-    FR_SetFont(FID(fontIdx));
+    FR_SetFont(fontId);
 
     MN_DrawText(txt->text, x, y);
 
@@ -1018,7 +1018,7 @@ void MNText_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int*
         if(height)  *height = info.height;
         return;
     }
-    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->_pageFontIdx)));
+    FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     FR_TextFragmentDimensions(width, height, txt->text);
     }
 }
@@ -1055,7 +1055,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
     assert(NULL != obj && obj->_type == MN_EDIT);
     {
     const mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-    gamefontid_t fontIdx = rs.textFonts[obj->_pageFontIdx];
+    fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
     float light = 1, textAlpha = rs.pageAlpha;
     const char* string;
@@ -1090,7 +1090,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(fontIdx));
+    FR_SetFont(fontId);
     { int width, numVisCharacters;
     if(edit->maxVisibleChars > 0)
         numVisCharacters = MIN_OF(edit->maxVisibleChars, MNDATA_EDIT_TEXT_MAX_LENGTH);
@@ -1126,7 +1126,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CB] *= light;
 
         DGL_Color4fv(color);
-        FR_SetFont(FID(fontIdx));
+        FR_SetFont(fontId);
         MN_DrawText2(string, x, y, DTF_ALIGN_TOPLEFT);
     }
 
@@ -1287,7 +1287,7 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
     {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     const boolean flashSelection = ((obj->_flags & MNF_ACTIVE) && MNList_SelectionIsVisible(obj));
-    const gamefontid_t fontIdx = rs.textFonts[obj->_pageFontIdx];
+    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     const float* color = rs.textColors[obj->_pageColorIdx];
     float dimColor[4], flashColor[4];
 
@@ -1324,7 +1324,7 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
             DGL_Color4fv(dimColor);
         }
 
-        FR_SetFont(FID(fontIdx));
+        FR_SetFont(fontId);
         MN_DrawText(item->text, x, y);
         y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
     }}
@@ -1480,7 +1480,7 @@ void MNList_InlineDrawer(mn_object_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(rs.textColors[obj->_pageColorIdx]);
-    FR_SetFont(FID(rs.textFonts[obj->_pageFontIdx]));
+    FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
 
     MN_DrawText(item->text, x, y);
 
@@ -1547,7 +1547,7 @@ void MNList_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int*
         *width = 0;
     if(height)
         *height = 0;
-    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->_pageFontIdx)));
+    FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     for(i = 0; i < list->count; ++i)
     {
         const mndata_listitem_t* item = &((const mndata_listitem_t*)list->items)[i];
@@ -1571,7 +1571,7 @@ void MNList_InlineDimensions(const mn_object_t* obj, mn_page_t* page, int* width
     {
     const mndata_list_t* list = (const mndata_list_t*)obj->_typedata;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
-    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->_pageFontIdx)));
+    FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     if(width)
         *width = FR_TextFragmentWidth(item->text);
     if(height)
@@ -1588,7 +1588,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     int act   = (obj->_flags & MNF_ACTIVE)   != 0;
     int click = (obj->_flags & MNF_CLICKED)  != 0;
     boolean down = act || click;
-    const gamefontid_t fontIdx = rs.textFonts[obj->_pageFontIdx];
+    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     float color[4];
 
     memcpy(color, rs.textColors[obj->_pageColorIdx], sizeof(color));
@@ -1609,14 +1609,14 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*btn->patch, btn->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*btn->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, FID(fontIdx), color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch5(*btn->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
-    FR_SetFont(FID(fontIdx));
+    FR_SetFont(fontId);
 
     MN_DrawText(btn->text, x, y);
 
@@ -1709,7 +1709,7 @@ void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, in
         return;
     }
 
-    FR_SetFont(FID(MNPage_PredefinedFont(page, obj->_pageFontIdx)));
+    FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     FR_TextFragmentDimensions(width, height, btn->text);
     }
 }
@@ -2217,7 +2217,7 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     {
     const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
     const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
-    const gamefontid_t fontIdx = rs.textFonts[obj->_pageFontIdx];
+    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     char textualValue[41];
     const char* str = composeValueString(value, 0, sldr->floatMode, 0, 
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
@@ -2225,7 +2225,7 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     DGL_Translatef(x, y, 0);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(rs.textColors[obj->_pageColorIdx]);
-    FR_SetFont(FID(fontIdx));
+    FR_SetFont(fontId);
 
     MN_DrawText(str, 0, 0);
 
@@ -2241,13 +2241,13 @@ void MNSlider_TextualValueDimensions(const mn_object_t* obj, mn_page_t* page, in
     const mndata_slider_t* sldr = (const mndata_slider_t*)obj->_typedata;
     if(NULL != width || NULL != height)
     {
-        const gamefontid_t fontIdx = MNPage_PredefinedFont(page, obj->_pageFontIdx);
+        const fontid_t fontId = MNPage_PredefinedFont(page, obj->_pageFontIdx);
         const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
         char textualValue[41];
         const char* str = composeValueString(value, 0, sldr->floatMode, 0,
             sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
-        FR_SetFont(FID(fontIdx));
+        FR_SetFont(fontId);
         FR_TextFragmentDimensions(width, height, str);
     }
     }

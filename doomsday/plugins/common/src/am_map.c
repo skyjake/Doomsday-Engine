@@ -1763,7 +1763,7 @@ mn_page_t AutomapMenu = {
 #else
     { 70, 40 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     M_DrawAutomapMenu, NULL,
     &OptionsMenu,
 #if __JHERETIC__ || __JHEXEN__

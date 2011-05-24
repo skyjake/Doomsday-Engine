@@ -951,7 +951,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -985,7 +985,7 @@ void SBarReadyAmmo_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeight
         return;
 
     dd_snprintf(buf, 20, "%i", ammo->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != drawnWidth)  *drawnWidth  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
     if(NULL != drawnHeight) *drawnHeight = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -1043,7 +1043,7 @@ void Ammo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     FR_DrawTextFragment2(buf, ORIGINX+loc->x, ORIGINY+loc->y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -1068,7 +1068,7 @@ void Ammo_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = (FR_CharWidth('0') * 3) * cfg.statusbarScale;
     if(NULL != height) *height = FR_CharHeight('0') * cfg.statusbarScale;
 }
@@ -1125,7 +1125,7 @@ void MaxAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     FR_DrawTextFragment2(buf, ORIGINX+loc->x, ORIGINY+loc->y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -1150,7 +1150,7 @@ void MaxAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = (FR_CharWidth('0') * 3) * cfg.statusbarScale;
     if(NULL != height) *height = FR_CharHeight('0') * cfg.statusbarScale;
 }
@@ -1199,7 +1199,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -1234,7 +1234,7 @@ void SBarHealth_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeight)
         return;
 
     dd_snprintf(buf, 20, "%i", hlth->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != drawnWidth)  *drawnWidth  = (FR_TextFragmentWidth(buf) + FR_CharWidth('%')) * cfg.statusbarScale;
     if(NULL != drawnHeight) *drawnHeight = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale;
     }
@@ -1283,7 +1283,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -1318,7 +1318,7 @@ void SBarArmor_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", armor->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = (FR_TextFragmentWidth(buf) + FR_CharWidth('%')) * cfg.statusbarScale;
     if(NULL != height) *height = MAX_OF(FR_TextFragmentHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale;
     }
@@ -1373,7 +1373,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -1408,7 +1408,7 @@ void SBarFrags_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     dd_snprintf(buf, 20, "%i", frags->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
     }
@@ -1852,7 +1852,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
@@ -1880,7 +1880,7 @@ void Frags_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     sprintf(buf, "FRAGS:%i", frags->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -1907,7 +1907,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
@@ -1933,7 +1933,7 @@ void Health_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     sprintf(buf, "%i%%", hlth->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -2005,7 +2005,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
@@ -2033,7 +2033,7 @@ void ReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     sprintf(buf, "%i", ammo->value);
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -2200,7 +2200,7 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
 
@@ -2229,7 +2229,7 @@ void Armor_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i%%", armor->value);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
     }
@@ -2487,7 +2487,7 @@ void Kills_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
@@ -2530,7 +2530,7 @@ void Kills_Dimensions(uiwidget_t* obj, int* width, int* height)
         strcat(buf, tmp);
     }
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
     }
@@ -2583,7 +2583,7 @@ void Items_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
@@ -2626,7 +2626,7 @@ void Items_Dimensions(uiwidget_t* obj, int* width, int* height)
         strcat(buf, tmp);
     }
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
     }
@@ -2669,7 +2669,7 @@ void Secrets_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
@@ -2722,7 +2722,7 @@ void Secrets_Dimensions(uiwidget_t* obj, int* width, int* height)
         strcat(buf, tmp);
     }
 
-    FR_SetFont(FID(obj->fontId));
+    FR_SetFont(obj->fontId);
     if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
     if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
     }
@@ -2804,7 +2804,7 @@ typedef struct {
     guiwidgettype_t type;
     int group;
     int hideId;
-    gamefontid_t fontId;
+    gamefontid_t fontIdx;
     void (*dimensions) (uiwidget_t* obj, int* width, int* height);
     void (*drawer) (uiwidget_t* obj, int x, int y);
     void (*ticker) (uiwidget_t* obj);
@@ -2896,7 +2896,7 @@ void ST_Drawer(int player)
         for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
         {
             const uiwidgetdef_t* def = &widgetDefs[i];
-            uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, def->fontId, def->dimensions, def->drawer, def->ticker, def->typedata);
+            uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->dimensions, def->drawer, def->ticker, def->typedata);
             UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
         }
 

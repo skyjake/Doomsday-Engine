@@ -383,7 +383,7 @@ mn_page_t MainMenu = {
 #else
     {  97, 64 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawMainPage,
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
     //0, 0,
@@ -410,7 +410,7 @@ mn_page_t GameTypeMenu = {
 #else
     { 104, 65 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawGameTypePage, NULL,
     &MainMenu,
     //0, 2
@@ -423,7 +423,7 @@ mn_object_t* PlayerClassMenuObjects;
 mndata_button_t* PlayerClassMenuButtons;
 
 mn_page_t PlayerClassMenu = {
-    0, { 66, 66 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    0, { 66, 66 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawPlayerClassPage, NULL,
     &GameTypeMenu,
     //0, 0
@@ -441,7 +441,7 @@ mn_page_t EpisodeMenu = {
 # else
     { 80, 50 },
 # endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawEpisodePage, NULL,
     &GameTypeMenu,
     //0, 0
@@ -476,7 +476,7 @@ static mn_object_t SkillMenuObjects[] = {
 
 mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 120, 44 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 120, 44 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &PlayerClassMenu,
     //0, 5
@@ -493,7 +493,7 @@ static mn_object_t SkillMenuObjects[] = {
 
 mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 38, 30 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 38, 30 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &EpisodeMenu,
     //0, 5
@@ -508,7 +508,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 static mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 48, 63 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &GameTypeMenu,
     //0, 4
@@ -525,7 +525,7 @@ static mn_object_t SkillMenuObjects[] = {
 
 mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 48, 63 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 48, 63 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &EpisodeMenu,
     //0, 5
@@ -544,7 +544,7 @@ static mn_object_t FilesMenuObjects[] = {
 
 mn_page_t FilesMenu = {
     FilesMenuObjects,
-    { 110, 60 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 110, 60 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     NULL, NULL,
     &MainMenu,
     //0, 2
@@ -585,7 +585,7 @@ mn_page_t LoadMenu = {
 #else
     { 70, 30 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawLoadGamePage, NULL,
     &MainMenu,
     //0, NUMSAVESLOTS
@@ -612,7 +612,7 @@ mn_page_t SaveMenu = {
 #else
     { 64, 10 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSaveGamePage, NULL,
     &MainMenu,
     //0, 1+NUMSAVESLOTS
@@ -656,7 +656,7 @@ mn_page_t OptionsMenu = {
 #else
     { 110, 63 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawOptionsPage, NULL,
     &MainMenu,
     //0,
@@ -693,7 +693,7 @@ mn_page_t SoundMenu = {
 #elif __JDOOM__ || __JDOOM64__
     { 97, 40 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSoundPage, NULL,
     &OptionsMenu,
     //0, 5
@@ -994,7 +994,7 @@ mn_page_t HudMenu = {
 #else
     { 97, 28 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawHUDPage, NULL,
     &OptionsMenu,
 #if __JHEXEN__
@@ -1049,7 +1049,7 @@ static mn_object_t InventoryMenuObjects[] = {
 
 mn_page_t InventoryMenu = {
     InventoryMenuObjects,
-    { 78, 48 }, { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { 78, 48 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawInventoryPage, NULL,
     &OptionsMenu,
     //0, 12, { 12, 48 }
@@ -1163,7 +1163,7 @@ mn_page_t WeaponMenu = {
 #elif __JHEXEN__
     { 78, 38 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawWeaponsPage, NULL,
     &OptionsMenu,
     //0, 12, { 12, 38 }
@@ -1295,7 +1295,7 @@ mn_page_t GameplayMenu = {
 #else
     { 30, 40 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawGameplayPage, NULL,
     &OptionsMenu,
 #if __JHEXEN__
@@ -1325,7 +1325,7 @@ mn_page_t MultiplayerMenu = {
 #else
     { 97, 65 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawMultiplayerPage, NULL,
     &GameTypeMenu,
     //0, 2
@@ -1402,7 +1402,7 @@ mn_page_t PlayerSetupMenu = {
 #else
     { 70, 54 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawPlayerSetupPage, NULL,
     &MultiplayerMenu,
 #if __JHEXEN__
@@ -1454,7 +1454,7 @@ static mn_page_t ColorWidgetMenu = {
 #else
     { 98, 60 },
 #endif
-    { GF_FONTA, GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     NULL, Hu_MenuColorWidgetCmdResponder,
     &OptionsMenu,
     //0, 8
@@ -1923,7 +1923,7 @@ void Hu_MenuInit(void)
         mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
         btn->text = text;
         MNObject_SetShortcut(obj, text[0]);
-        FR_SetFont(FID(MNPage_PredefinedFont(&SkillMenu, MNObject_Font(obj))));
+        FR_SetFont(MNPage_PredefinedFont(&SkillMenu, MNObject_Font(obj)));
         w = FR_TextFragmentWidth(text);
         if(w > maxw)
             maxw = w;
@@ -2335,13 +2335,19 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
     }
 }
 
-static void initObjects(mn_page_t* page)
+static void initPage(mn_page_t* page)
 {
     assert(NULL != page);
-    {
-    mn_object_t* obj;
     page->focus = -1; /// \fixme Make this a page flag.
     page->objectsCount = MN_CountObjects(page->objects);
+    { int i;
+    for(i = 0; i < (int)MENU_FONT_COUNT; ++i)
+    {
+        if(0 == (gamefontid_t)page->fonts[i]) continue;
+        page->fonts[i] = FID((gamefontid_t)page->fonts[i]);
+    }}
+    // Init objects.
+    { mn_object_t* obj;
     for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
     {
         MNObject_SetFlags(obj, FO_CLEAR, MNF_FOCUS);
@@ -2351,9 +2357,8 @@ static void initObjects(mn_page_t* page)
             obj->_shortcut = 0; // Clear invalid defaults.
             MNObject_SetShortcut(obj, shortcut);
         }
-    }
+    }}
     updateObjectsLinkedWithCvars(page->objects);
-    }
 }
 
 static void initAllObjectsOnAllPages(void)
@@ -2368,33 +2373,33 @@ static void initAllObjectsOnAllPages(void)
             cvb->no = "No";
     }}
 
-    initObjects(&MainMenu);
-    initObjects(&GameTypeMenu);
+    initPage(&MainMenu);
+    initPage(&GameTypeMenu);
 #if __JHEXEN__
-    initObjects(&PlayerClassMenu);
+    initPage(&PlayerClassMenu);
 #endif
 #if __JDOOM__ || __JHERETIC__
-    initObjects(&EpisodeMenu);
+    initPage(&EpisodeMenu);
 #endif
-    initObjects(&SkillMenu);
-    initObjects(&MultiplayerMenu);
-    initObjects(&PlayerSetupMenu);
+    initPage(&SkillMenu);
+    initPage(&MultiplayerMenu);
+    initPage(&PlayerSetupMenu);
 #if __JHERETIC__ || __JHEXEN__
-    initObjects(&FilesMenu);
+    initPage(&FilesMenu);
 #endif
-    initObjects(&LoadMenu);
-    initObjects(&SaveMenu);
-    initObjects(&OptionsMenu);
-    initObjects(&ControlsMenu);
-    initObjects(&GameplayMenu);
-    initObjects(&HudMenu);
-    initObjects(&AutomapMenu);
-    initObjects(&WeaponMenu);
+    initPage(&LoadMenu);
+    initPage(&SaveMenu);
+    initPage(&OptionsMenu);
+    initPage(&ControlsMenu);
+    initPage(&GameplayMenu);
+    initPage(&HudMenu);
+    initPage(&AutomapMenu);
+    initPage(&WeaponMenu);
 #if __JHERETIC__ || __JHEXEN__
-    initObjects(&InventoryMenu);
+    initPage(&InventoryMenu);
 #endif
-    initObjects(&SoundMenu);
-    initObjects(&ColorWidgetMenu);
+    initPage(&SoundMenu);
+    initPage(&ColorWidgetMenu);
 }
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd)
