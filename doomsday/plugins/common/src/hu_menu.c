@@ -1695,8 +1695,6 @@ void Hu_MenuLoadResources(void)
 #endif
         pCursors[i] = R_PrecachePatch(buffer, NULL);
     }}
-
-    MN_LoadResources();
 }
 
 static int compareWeaponPriority(const void* _a, const void* _b)
@@ -2567,7 +2565,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
             menuActive = false;
 
-            // Disable the menu binding class
+            // Disable the menu binding context.
             DD_Execute(true, "deactivatebcontext menu");
         }
         return;
@@ -2583,9 +2581,12 @@ void Hu_MenuCommand(menucommand_e cmd)
     {
         if(MCMD_OPEN == cmd)
         {
-            if(Chat_IsActive(CONSOLEPLAYER))
+            // If anyone is currently chatting; the menu cannot be opened.
+            int i;
+            for(i = 0; i < MAXPLAYERS; ++i)
             {
-                return;
+                if(ST_ChatIsActive(i))
+                    return;
             }
 
             S_LocalSound(SFX_MENU_OPEN, NULL);

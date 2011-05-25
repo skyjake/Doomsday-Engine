@@ -31,9 +31,24 @@
 #define LIBCOMMON_HUD_CHAT_H
 
 #include "doomsday.h"
+#include "hu_lib.h"
+
+/// Register the console variables and commands of this module.
+void UIChat_Register(void);
+
+/// Load resources for this module (chat macro strings etc...).
+void UIChat_LoadResources(void);
 
 #define UICHAT_INPUTBUFFER_MAXLENGTH    (160)
 
+/**
+ * UIChat. UI widget for composing player/team chat messages.
+ *
+ * Terminology:
+ *   "Destination":
+ *      @c 0= All players (i.e., a "global" message).
+ *      @c 1...NUMTEAMS= Any players on team number (n+1).
+ */
 typedef struct {
     char text[UICHAT_INPUTBUFFER_MAXLENGTH+1];
     int length; /// Current length of text.
@@ -47,76 +62,85 @@ typedef struct {
 #define UICF_ACTIVE             0x1
 /**@}*/
 
-/**
- * UIChat. UI widget for composing player/team chat messages.
- *
- * Terminology:
- *   "Destination":
- *      @c 0= All players (i.e., a "global" message).
- *      @c 1...NUMTEAMS= Any players on team number (n+1).
- */
 typedef struct {
     int flags; /// @see uiChatFlags
     int destination;
     uidata_chat_inputbuffer_t buffer;
-} uidata_chat_t;
+} guidata_chat_t;
 
 /**
- * Change the "active" state of this. When activating the message target destination
- * is initialized for "global" messaging and the input buffer is cleared.
+ * Possibly respond to input event @a ev.
+ * @return  Non-zero if the event was eaten.
+ */
+int UIChat_Responder(uiwidget_t* obj, event_t* ev);
+
+/**
+ * Possible respond to menu command @a cmd.
+ * @return  Non-zero if the command was eaten.
+ */
+int UIChat_CommandResponder(uiwidget_t* obj, menucommand_e cmd);
+
+/// Draw this widget.
+void UIChat_Drawer(uiwidget_t* obj, int x, int y);
+
+/// Retrieve the "physical" dimensions of this widget in fixed-pixels.
+void UIChat_Dimensions(uiwidget_t* obj, int* width, int* height);
+
+/**
+ * Change the "active" state of this. When activating the message target
+ * destination is initialized for "global" messaging and the input buffer
+ * is cleared.
+ *
+ * \post: The "chat" binding context is (de)activated as necessary.
  *
  * @return  @c true if the active state changed.
  */
-boolean UIChat_Activate(uidata_chat_t* chat, boolean yes);
-boolean UIChat_IsActive(uidata_chat_t* chat);
+boolean UIChat_Activate(uiwidget_t* obj, boolean yes);
 
-int UIChat_Destination(uidata_chat_t* chat);
-void UIChat_SetDestination(uidata_chat_t* chat, int destination);
+boolean UIChat_IsActive(uiwidget_t* obj);
+
+/// @return  Current chat destination number.
+int UIChat_Destination(uiwidget_t* obj);
+
+/// Change the current chat @a destination.
+void UIChat_SetDestination(uiwidget_t* obj, int destination);
 
 /// @return  @c true if the shift modifier state changed.
-boolean UIChat_SetShiftModifier(uidata_chat_t* chat, boolean on);
+boolean UIChat_SetShiftModifier(uiwidget_t* obj, boolean on);
 
-boolean UIChat_AppendCharacter(uidata_chat_t* chat, char ch);
-void UIChat_DeleteLastCharacter(uidata_chat_t* chat);
-void UIChat_Clear(uidata_chat_t* chat);
+boolean UIChat_AppendCharacter(uiwidget_t* obj, char ch);
+
+void UIChat_DeleteLastCharacter(uiwidget_t* obj);
+
+/// Clear the chat input buffer.
+void UIChat_Clear(uiwidget_t* obj);
 
 /// @return  A pointer to an immutable copy of the current contents of the input buffer.
-const char* UIChat_Text(uidata_chat_t* chat);
+const char* UIChat_Text(uiwidget_t* obj);
 
 /// @return  Current length of the input buffer in characters including terminating '\0'. 
-size_t UIChat_TextLength(uidata_chat_t* chat);
+size_t UIChat_TextLength(uiwidget_t* obj);
 
 /// @return  @c true= Current input buffer is empty.
-boolean UIChat_TextIsEmpty(uidata_chat_t* chat);
+boolean UIChat_TextIsEmpty(uiwidget_t* obj);
 
-/// Register the console variables and commands of this module.
-void Chat_Register(void);
+/**
+ * Given a macro identifier load the associated macro replacing the current contents
+ * of the input buffer.
+ * @return  @c true= success.
+ */
+boolean UIChat_LoadMacro(uiwidget_t* obj, int macroId);
 
-/// Initialize this module.
-void Chat_Init(void);
+/**
+ * Given a macro identifier lookup the associated macro string.
+ * @return  Pointer to the macro string if found else @c NULL.
+ */
+const char* UIChat_FindMacro(uiwidget_t* obj, int macroId);
 
-/// Shutdown this module.
-void Chat_Shutdown(void);
+/// @return  Parsed chat destination number from @a str or @c -1 if invalid.
+int UIChat_ParseDestination(const char* str);
 
-/// Load resources for this module (chat macro strings etc...).
-void Chat_LoadResources(void);
-
-/// To be called when the player enters the game to complete initialization
-/// of that player's chat widget(s).
-void Chat_Start(int player);
-
-void Chat_Open(int player, boolean open);
-
-boolean Chat_IsActive(int player);
-
-int Chat_Responder(int player, event_t* ev);
-
-void Chat_Drawer(int player, float textAlpha, float iconAlpha);
-
-void Chat_Dimensions(int player, int* width, int* height);
-
-D_CMD(ChatOpen);
-D_CMD(ChatAction);
-D_CMD(ChatSendMacro);
+/// @return  Parsed chat macro identifier from @a str or @c -1 if invalid.
+int UIChat_ParseMacroId(const char* str);
 
 #endif /* LIBCOMMON_HUD_CHAT_H */

@@ -36,6 +36,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "hu_chat.h"
+
 // Size of statusbar, now sensitive for scaling.
 #define ST_HEIGHT           (42 * SCREEN_MUL)
 #define ST_WIDTH            (SCREENWIDTH)
@@ -46,6 +48,7 @@ void ST_Register(void);
 void ST_Init(void);
 void ST_Shutdown(void);
 
+int ST_Responder(event_t* ev);
 void ST_Ticker(timespan_t ticLength);
 void ST_Drawer(int player);
 
@@ -54,10 +57,16 @@ void ST_Stop(int player);
 
 void ST_doPaletteStuff(int player);
 
+boolean ST_ChatIsActive(int player);
+
 /// Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t ev);
 
 void ST_FlashCurrentItem(int player);
 void ST_UpdateLogAlignment(void);
+
+D_CMD(ChatOpen);
+D_CMD(ChatAction);
+D_CMD(ChatSendMacro);
 
 #endif /* LIBHERETIC_STUFF_H */

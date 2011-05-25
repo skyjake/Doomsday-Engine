@@ -488,7 +488,7 @@ void G_CommonPreInit(void)
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     Hu_LogRegister();           // For the player message logs.
-    Chat_Register();
+    GUI_Register();             // For the UI library.
     Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
     WI_Register();              // For the interlude/intermission.
@@ -840,9 +840,6 @@ void R_InitHud(void)
 {
     Hu_LoadData();
 
-    VERBOSE2( Con_Message("Initializing player chat...\n") )
-    Chat_Init();
-
 #if __JHERETIC__ || __JHEXEN__
     VERBOSE( Con_Message("Initializing inventory...\n") )
     Hu_InventoryInit();
@@ -917,7 +914,6 @@ void G_CommonShutdown(void)
     ST_Shutdown();
     GUI_Shutdown();
     FI_StackShutdown();
-    Chat_Shutdown();
 }
 
 /**
@@ -1263,7 +1259,7 @@ int G_Responder(event_t* ev)
     // With the menu active, none of these should respond to input events.
     if(G_GetGameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
-        if(Chat_Responder(CONSOLEPLAYER, ev))
+        if(ST_Responder(ev))
             return true;
 
         if(G_EventSequenceResponder(ev))

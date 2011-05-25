@@ -65,6 +65,8 @@ static patchid_t pEditLeft;
 static patchid_t pEditRight;
 static patchid_t pEditMiddle;
 
+static void MNSlider_LoadResources(void);
+static void MNEdit_LoadResources(void);
 static void MNPage_CalcNumVisObjects(mn_page_t* page);
 
 static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* obj, mn_actionid_t id);
@@ -157,13 +159,16 @@ static void clearWidgets(void)
 uiwidget_t* GUI_FindObjectById(uiwidgetid_t id)
 {
     errorIfNotInited("GUI_FindObjectById");
-    { int i;
-    for(i = 0; i < numWidgets; ++i)
+    if(id >= 0)
     {
-        uiwidget_t* obj = &widgets[i];
-        if(obj->id == id)
-            return obj;
-    }}
+        int i;
+        for(i = 0; i < numWidgets; ++i)
+        {
+            uiwidget_t* obj = &widgets[i];
+            if(obj->id == id)
+                return obj;
+        }
+    }
     return NULL;
 }
 
@@ -175,12 +180,18 @@ uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id)
     return obj;
 }
 
+void GUI_Register(void)
+{
+    UIChat_Register();
+}
+
 void GUI_Init(void)
 {
     if(inited) return;
     numWidgets = 0;
     widgets = NULL;
     inited = true;
+    GUI_LoadResources();
 }
 
 void GUI_Shutdown(void)
@@ -188,6 +199,13 @@ void GUI_Shutdown(void)
     if(!inited) return;
     clearWidgets();
     inited = false;
+}
+
+void GUI_LoadResources(void)
+{
+    MNSlider_LoadResources();
+    MNEdit_LoadResources();
+    UIChat_LoadResources();
 }
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
@@ -419,13 +437,22 @@ void GUI_TickWidget(uiwidget_t* obj)
     }
 }
 
-void MN_LoadResources(void)
+int UIWidget_Player(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    return obj->player;
+}
+
+static void MNSlider_LoadResources(void)
 {
     pSliderLeft   = R_PrecachePatch(MNDATA_SLIDER_PATCH_LEFT,   NULL);
     pSliderRight  = R_PrecachePatch(MNDATA_SLIDER_PATCH_RIGHT,  NULL);
     pSliderMiddle = R_PrecachePatch(MNDATA_SLIDER_PATCH_MIDDLE, NULL);
     pSliderHandle = R_PrecachePatch(MNDATA_SLIDER_PATCH_HANDLE, NULL);
+}
 
+static void MNEdit_LoadResources(void)
+{
 #if defined(MNDATA_EDIT_BACKGROUND_PATCH_LEFT)
     pEditLeft   = R_PrecachePatch(MNDATA_EDIT_BACKGROUND_PATCH_LEFT, NULL);
 #else

@@ -37,6 +37,7 @@
 
 #include "x_player.h"
 #include "x_config.h"
+#include "hu_chat.h"
 
 // Size of statusbar.
 #define ST_HEIGHT           (38*SCREEN_MUL)
@@ -48,11 +49,14 @@ void ST_Register(void);
 void ST_Init(void);
 void ST_Shutdown(void);
 
+int ST_Responder(event_t* ev);
 void ST_Ticker(timespan_t ticLength);
 void ST_Drawer(int player);
 
 void ST_Start(int player);
 void ST_Stop(int player);
+
+boolean ST_ChatIsActive(int player);
 
 // Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t ev);
@@ -60,5 +64,9 @@ void ST_HUDUnHide(int player, hueevent_t ev);
 void ST_doPaletteStuff(int player);
 void ST_FlashCurrentItem(int player);
 void ST_UpdateLogAlignment(void);
+
+D_CMD(ChatOpen);
+D_CMD(ChatAction);
+D_CMD(ChatSendMacro);
 
 #endif /* LIBHEXEN_STUFF_H */

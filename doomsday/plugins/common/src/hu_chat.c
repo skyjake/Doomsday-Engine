@@ -39,7 +39,6 @@
 
 #include "p_tick.h"
 #include "d_net.h"
-#include "g_common.h"
 
 #include "hu_chat.h"
 
@@ -58,143 +57,32 @@ cvartemplate_t chatCVars[] = {
     { NULL }
 };
 
-ccmdtemplate_t chatCCmds[] = {
-    { "beginchat",       NULL,   CCmdChatOpen },
-    { "chatcancel",      "",     CCmdChatAction },
-    { "chatcomplete",    "",     CCmdChatAction },
-    { "chatdelete",      "",     CCmdChatAction },
-    { "chatsendmacro",   NULL,   CCmdChatSendMacro },
-    { NULL }
-};
-
-static uidata_chat_t chatWidgets[DDMAXPLAYERS];
-
-/// @return  UIChat widget associated to local @a player else fatal error.
-static uidata_chat_t* widgetForLocalPlayer(int player)
-{
-    if(player >= 0 && player < DDMAXPLAYERS)
-        return chatWidgets + player;
-    Con_Error("widgetForLocalPlayer: Invalid player #%i.", player);
-    exit(1); // Unreachable.
-}
-
-void Chat_Register(void)
+void UIChat_Register(void)
 {
     int i;
     for(i = 0; chatCVars[i].name; ++i)
         Con_AddVariable(chatCVars + i);
-    for(i = 0; chatCCmds[i].name; ++i)
-        Con_AddCommand(chatCCmds + i);
 }
 
-static void clearInputBuffer(uidata_chat_t* chat)
+void UIChat_LoadResources(void)
 {
-    assert(NULL != chat);
+    // Retrieve the chat macro strings if not already set.
+    int i;
+    for(i = 0; i < 10; ++i)
+    {
+        if(cfg.chatMacros[i]) continue;
+        cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+    }
+}
+
+static void clearInputBuffer(uiwidget_t* obj)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
     chat->buffer.length = 0;
     chat->buffer.text[0] = '\0';
-}
-
-boolean UIChat_IsActive(uidata_chat_t* chat)
-{
-    assert(NULL != chat);
-    return (0 != (chat->flags & UICF_ACTIVE));
-}
-
-boolean UIChat_Activate(uidata_chat_t* chat, boolean yes)
-{
-    assert(NULL != chat);
-    {
-    boolean oldActive = (chat->flags & UICF_ACTIVE) != 0;
-    if(chat->flags & UICF_ACTIVE)
-    {
-        if(!yes)
-        {
-            chat->flags &= ~UICF_ACTIVE;
-        }
     }
-    else if(yes)
-    {
-        chat->flags |= UICF_ACTIVE;
-        // Default destinition is "global".
-        UIChat_SetDestination(chat, 0);
-        UIChat_Clear(chat);
-    }
-    return oldActive != ((chat->flags & UICF_ACTIVE) != 0);
-    }
-}
-
-int UIChat_Destination(uidata_chat_t* chat)
-{
-    assert(NULL != chat);
-    return chat->destination;
-}
-
-void UIChat_SetDestination(uidata_chat_t* chat, int destination)
-{
-    assert(NULL != chat);
-    if(destination < 0 || destination > NUMTEAMS) return;
-    chat->destination = destination;
-}
-
-boolean UIChat_SetShiftModifier(uidata_chat_t* chat, boolean on)
-{
-    assert(NULL != chat);
-    {
-    boolean oldShiftDown = chat->buffer.shiftDown;
-    chat->buffer.shiftDown = on;
-    return oldShiftDown != chat->buffer.shiftDown;
-    }
-}
-
-boolean UIChat_AppendCharacter(uidata_chat_t* chat, char ch)
-{
-    assert(NULL != chat);
-
-    if(chat->buffer.length == UICHAT_INPUTBUFFER_MAXLENGTH)
-    {
-        return false;
-    }
-
-    if(chat->buffer.shiftDown)
-    {
-        ch = shiftXForm[ch];
-    }
-
-    if(ch < ' ' || ch > 'z')
-        return false;
-
-    chat->buffer.text[chat->buffer.length++] = ch;
-    chat->buffer.text[chat->buffer.length] = '\0';
-    return true;
-}
-
-void UIChat_DeleteLastCharacter(uidata_chat_t* chat)
-{
-    assert(NULL != chat);
-    if(0 == chat->buffer.length) return;
-    chat->buffer.text[--chat->buffer.length] = 0;
-}
-
-void UIChat_Clear(uidata_chat_t* chat)
-{
-    clearInputBuffer(chat);
-}
-
-const char* UIChat_Text(uidata_chat_t* chat)
-{
-    assert(NULL != chat);
-    return chat->buffer.text;
-}
-
-size_t UIChat_TextLength(uidata_chat_t* chat)
-{
-    assert(NULL != chat);
-    return chat->buffer.length;
-}
-
-boolean UIChat_TextIsEmpty(uidata_chat_t* chat)
-{
-    return (0 == UIChat_TextLength(chat));
 }
 
 static void playMessageSentSound(void)
@@ -212,6 +100,9 @@ static void playMessageSentSound(void)
 static void sendMessage(int player, int destination, const char* msg)
 {
     char buff[256];
+
+    if(NULL == msg || !msg[0])
+        return;
 
     if(destination == 0)
     {   // Send the message to the other players explicitly,
@@ -253,7 +144,276 @@ static void sendMessage(int player, int destination, const char* msg)
     playMessageSentSound();
 }
 
-static int parseDestination(const char* str)
+boolean UIChat_IsActive(uiwidget_t* obj)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    return (0 != (chat->flags & UICF_ACTIVE));
+    }
+}
+
+boolean UIChat_Activate(uiwidget_t* obj, boolean yes)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    boolean oldActive = (chat->flags & UICF_ACTIVE) != 0;
+    if(chat->flags & UICF_ACTIVE)
+    {
+        if(!yes)
+        {
+            chat->flags &= ~UICF_ACTIVE;
+        }
+    }
+    else if(yes)
+    {
+        chat->flags |= UICF_ACTIVE;
+        // Default destinition is "global".
+        UIChat_SetDestination(obj, 0);
+        UIChat_Clear(obj);
+    }
+    if(oldActive != ((chat->flags & UICF_ACTIVE) != 0))
+    {
+        DD_Executef(true, "%s chat", UIChat_IsActive(obj)? "activatebcontext" : "deactivatebcontext");
+        return true;
+    }
+    return false;
+    }
+}
+
+int UIChat_Destination(uiwidget_t* obj)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    return chat->destination;
+    }
+}
+
+void UIChat_SetDestination(uiwidget_t* obj, int destination)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    if(destination < 0 || destination > NUMTEAMS) return;
+    chat->destination = destination;
+    }
+}
+
+boolean UIChat_SetShiftModifier(uiwidget_t* obj, boolean on)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    boolean oldShiftDown = chat->buffer.shiftDown;
+    chat->buffer.shiftDown = on;
+    return oldShiftDown != chat->buffer.shiftDown;
+    }
+}
+
+boolean UIChat_AppendCharacter(uiwidget_t* obj, char ch)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+
+    if(chat->buffer.length == UICHAT_INPUTBUFFER_MAXLENGTH)
+    {
+        return false;
+    }
+
+    if(ch < ' ' || ch > 'z')
+        return false;
+
+    if(chat->buffer.shiftDown)
+    {
+        ch = shiftXForm[ch];
+    }
+
+    chat->buffer.text[chat->buffer.length++] = ch;
+    chat->buffer.text[chat->buffer.length] = '\0';
+    return true;
+    }
+}
+
+void UIChat_DeleteLastCharacter(uiwidget_t* obj)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    if(0 == chat->buffer.length) return;
+    chat->buffer.text[--chat->buffer.length] = 0;
+    }
+}
+
+void UIChat_Clear(uiwidget_t* obj)
+{
+    clearInputBuffer(obj);
+}
+
+const char* UIChat_Text(uiwidget_t* obj)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    return chat->buffer.text;
+    }
+}
+
+size_t UIChat_TextLength(uiwidget_t* obj)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    return chat->buffer.length;
+    }
+}
+
+boolean UIChat_TextIsEmpty(uiwidget_t* obj)
+{
+    return (0 == UIChat_TextLength(obj));
+}
+
+const char* UIChat_FindMacro(uiwidget_t* obj, int macroId)
+{
+    if(macroId < 0 || macroId >= 10) return NULL;
+    return cfg.chatMacros[macroId];
+}
+
+boolean UIChat_LoadMacro(uiwidget_t* obj, int macroId)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    const char* macro = UIChat_FindMacro(obj, macroId);
+    if(NULL != macro)
+    {
+        strncpy(chat->buffer.text, macro, UICHAT_INPUTBUFFER_MAXLENGTH);
+        chat->buffer.text[UICHAT_INPUTBUFFER_MAXLENGTH] = '\0';
+        chat->buffer.length = strlen(chat->buffer.text);
+    }
+    return false;
+    }
+}
+
+int UIChat_Responder(uiwidget_t* obj, event_t* ev)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+
+    if(!UIChat_IsActive(obj))
+        return false;
+
+    if(ev->type != EV_KEY)
+        return false;
+
+    if(ev->data1 == DDKEY_RSHIFT)
+    {
+        UIChat_SetShiftModifier(obj, (ev->state == EVS_DOWN || ev->state == EVS_REPEAT));
+        return false; // Never eaten.
+    }
+
+    if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
+        return false;
+
+    if(ev->data1 == DDKEY_BACKSPACE)
+    {
+        UIChat_DeleteLastCharacter(obj);
+        return true;
+    }
+
+    return UIChat_AppendCharacter(obj, (char)ev->data1);
+}
+
+int UIChat_CommandResponder(uiwidget_t* obj, menucommand_e cmd)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    if(!UIChat_IsActive(obj)) return false;
+
+    switch(cmd)
+    {
+    case MCMD_SELECT:  // Send the message.
+        if(!UIChat_TextIsEmpty(obj))
+        {
+            sendMessage(UIWidget_Player(obj), UIChat_Destination(obj), UIChat_Text(obj));
+        }
+        UIChat_Activate(obj, false);
+        return true;
+    case MCMD_CLOSE:
+    case MCMD_NAV_OUT: // Close chat.
+        UIChat_Activate(obj, false);
+        return true;
+    case MCMD_DELETE:
+        UIChat_DeleteLastCharacter(obj);
+        return true;
+    default:
+        return false;
+    }
+}
+
+void UIChat_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    const char* text = UIChat_Text(obj);
+    char buf[UICHAT_INPUTBUFFER_MAXLENGTH+1];
+    short textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
+    int xOffset, textWidth, cursorWidth;
+
+    if(!UIChat_IsActive(obj))
+        return;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+
+    FR_SetFont(obj->fontId);
+    textWidth = FR_TextWidth(text, obj->fontId);
+    cursorWidth = FR_CharWidth('_');
+
+    if(cfg.msgAlign == 0)
+        xOffset = 0;
+    else if(cfg.msgAlign == 1)
+        xOffset = -(textWidth + cursorWidth)/2;
+    else if(cfg.msgAlign == 2)
+        xOffset = -(textWidth + cursorWidth);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_DrawText(text, xOffset, 0, obj->fontId, textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+    if(actualMapTime & 12)
+    {
+        DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
+        FR_DrawChar('_', xOffset + textWidth, 0);
+    }
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void UIChat_Dimensions(uiwidget_t* obj, int* width, int* height)
+{
+    assert(NULL != obj && obj->type == GUI_CHAT);
+    {
+    const char* text = UIChat_Text(obj);
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(!UIChat_IsActive(obj))
+        return;
+
+    FR_SetFont(obj->fontId);
+    if(NULL != width)  *width  = cfg.msgScale * (FR_TextWidth(text, obj->fontId) + FR_CharWidth('_'));
+    if(NULL != height) *height = cfg.msgScale * (MAX_OF(FR_TextHeight(text, obj->fontId), FR_CharHeight('_')));
+    }
+}
+
+int UIChat_ParseDestination(const char* str)
 {
     if(str && str[0])
     {
@@ -266,236 +426,15 @@ static int parseDestination(const char* str)
     return -1;
 }
 
-static int parseMacroId(const char* str)
+int UIChat_ParseMacroId(const char* str)
 {
     if(str && str[0])
     {
         int id = atoi(str);
-        if(id >= 0 && id < 9)
+        if(id >= 0 && id <= 9)
         {
             return id;
         }
     }
     return -1;
-}
-
-void Chat_Init(void)
-{
-    Chat_LoadResources();
-}
-
-void Chat_Shutdown(void)
-{
-    // Stub.
-}
-
-void Chat_LoadResources(void)
-{
-    // Retrieve the chat macro strings if not already set.
-    int i;
-    for(i = 0; i < 10; ++i)
-    {
-        if(cfg.chatMacros[i]) continue;
-        cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
-    }
-}
-
-void Chat_Open(int player, boolean open)
-{
-    uidata_chat_t* chat = widgetForLocalPlayer(player);
-    if(UIChat_Activate(chat, open))
-    {
-        DD_Executef(true, "%s chat", UIChat_IsActive(chat)? "activatebcontext" : "deactivatebcontext");
-    }
-}
-
-void Chat_Start(int player)
-{
-    // Stub.
-}
-
-int Chat_Responder(int player, event_t* ev)
-{
-    uidata_chat_t* chat = widgetForLocalPlayer(player);
-
-    if(!UIChat_IsActive(chat))
-        return false;
-
-    if(ev->type != EV_KEY)
-        return false;
-
-    if(ev->data1 == DDKEY_RSHIFT)
-    {
-        UIChat_SetShiftModifier(chat, (ev->state == EVS_DOWN || ev->state == EVS_REPEAT));
-        return false; // Never eaten.
-    }
-
-    if(!(ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
-        return false;
-
-    if(ev->data1 == DDKEY_BACKSPACE)
-    {
-        UIChat_DeleteLastCharacter(chat);
-        return true;
-    }
-
-    return UIChat_AppendCharacter(chat, (char)ev->data1);
-}
-
-static void drawWidget(uidata_chat_t* chat, float textAlpha, float iconAlpha)
-{
-    assert(NULL != chat);
-    {
-    const char* text = UIChat_Text(chat);
-    char buf[UICHAT_INPUTBUFFER_MAXLENGTH+1];
-    short textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
-    int xOffset, textWidth, cursorWidth;
-
-    FR_SetFont(FID(GF_FONTA));
-    textWidth = FR_TextWidth(text, FID(GF_FONTA));
-    cursorWidth = FR_CharWidth('_');
-
-    if(cfg.msgAlign == 0)
-        xOffset = 0;
-    else if(cfg.msgAlign == 1)
-        xOffset = -(textWidth + cursorWidth)/2;
-    else if(cfg.msgAlign == 2)
-        xOffset = -(textWidth + cursorWidth);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText(text, xOffset, 0, FID(GF_FONTA), textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
-    if(actualMapTime & 12)
-    {
-        DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
-        FR_DrawChar('_', xOffset + textWidth, 0);
-    }
-    DGL_Disable(DGL_TEXTURE_2D);
-    }
-}
-
-static void calcWidgetDimensions(uidata_chat_t* chat, int* width, int* height)
-{
-    assert(NULL != chat);
-    {
-    const char* text = UIChat_Text(chat);
-    FR_SetFont(FID(GF_FONTA));
-    if(NULL != width)  *width  = FR_TextWidth(text, FID(GF_FONTA)) + FR_CharWidth('_');
-    if(NULL != height) *height = MAX_OF(FR_TextHeight(text, FID(GF_FONTA)), FR_CharHeight('_'));
-    }
-}
-
-void Chat_Drawer(int player, float textAlpha, float iconAlpha)
-{
-    uidata_chat_t* chat = widgetForLocalPlayer(player);
-
-    if(!UIChat_IsActive(chat))
-        return;
-
-    drawWidget(chat, textAlpha, iconAlpha);
-}
-
-void Chat_Dimensions(int player, int* width, int* height)
-{
-    uidata_chat_t* chat = widgetForLocalPlayer(player);
-
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
-
-    if(!UIChat_IsActive(chat))
-        return;
-
-    calcWidgetDimensions(chat, width, height);
-}
-
-boolean Chat_IsActive(int player)
-{
-    return UIChat_IsActive(widgetForLocalPlayer(player));
-}
-
-D_CMD(ChatOpen)
-{
-    int player = CONSOLEPLAYER, destination = 0;
-
-    if(G_GetGameAction() == GA_QUIT)
-        return false;
-
-    Chat_Open(player, true);
-
-    if(argc == 2)
-    {
-        destination = parseDestination(argv[1]);
-        if(destination < 0)
-        {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
-            return false;
-        }
-    }
-    UIChat_SetDestination(widgetForLocalPlayer(player), destination);
-
-    return true;
-}
-
-D_CMD(ChatSendMacro)
-{
-    int player = CONSOLEPLAYER, macroId, destination = 0;
-
-    if(G_GetGameAction() == GA_QUIT)
-        return false;
-
-    if(argc < 2 || argc > 3)
-    {
-        Con_Message("Usage: %s (team) (macro number)\n", argv[0]);
-        Con_Message("Send a chat macro to other player(s).\n"
-                    "If (team) is omitted, the message will be sent to all players.\n");
-        return true;
-    }
-
-    if(argc == 3)
-    {
-        destination = parseDestination(argv[1]);
-        if(destination < 0)
-        {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
-            return false;
-        }
-    }
-
-    macroId = parseMacroId(argc == 3? argv[2] : argv[1]);
-    if(-1 == macroId)
-    {
-        Con_Message("Invalid macro id\n");
-        return false;
-    }
-
-    sendMessage(player, destination, cfg.chatMacros[macroId]);
-    Chat_Open(player, false);
-    return true;
-}
-
-D_CMD(ChatAction)
-{
-    int player = CONSOLEPLAYER;
-    const char* cmd = argv[0] + 4;
-
-    if(G_GetGameAction() == GA_QUIT) return false;
-    if(!Chat_IsActive(player)) return false;
-
-    if(!stricmp(cmd, "complete")) // Send the message.
-    {
-        uidata_chat_t* chat = widgetForLocalPlayer(player);
-        if(!UIChat_TextIsEmpty(chat))
-        {
-            sendMessage(player, UIChat_Destination(chat), UIChat_Text(chat));
-        }
-        Chat_Open(player, false);
-    }
-    else if(!stricmp(cmd, "cancel")) // Close chat.
-    {
-        Chat_Open(player, false);
-    }
-    else if(!stricmp(cmd, "delete"))
-    {
-        UIChat_DeleteLastCharacter(widgetForLocalPlayer(player));
-    }
-    return true;
 }

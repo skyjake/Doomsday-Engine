@@ -37,6 +37,8 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "hu_chat.h"
+
 #define ST_HEIGHT           (32 * SCREEN_MUL)
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
@@ -45,6 +47,7 @@ void ST_Register(void);
 void ST_Init(void);
 void ST_Shutdown(void);
 
+int ST_Responder(event_t* ev);
 void ST_Ticker(timespan_t ticLength);
 void ST_Drawer(int player);
 
@@ -52,8 +55,14 @@ void ST_Drawer(int player);
 void ST_Start(int player);
 void ST_Stop(int player);
 
+boolean ST_ChatIsActive(int player);
+
 /// Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t event);
 void ST_UpdateLogAlignment(void);
+
+D_CMD(ChatOpen);
+D_CMD(ChatAction);
+D_CMD(ChatSendMacro);
 
 #endif /* LIBDOOM_STUFF_H */

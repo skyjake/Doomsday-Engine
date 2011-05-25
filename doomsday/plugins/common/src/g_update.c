@@ -178,7 +178,7 @@ void G_UpdateState(int step)
 
     case DD_RENDER_RESTART_POST:
         Hu_LoadData();
-        Chat_LoadResources();
+        GUI_LoadResources();
         Rend_AutomapLoadData();
         break;
     }

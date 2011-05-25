@@ -561,7 +561,6 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Wake up HUD widgets.
     ST_Start(p - players);
     HU_Start(p - players);
-    Chat_Start(p - players);
 
 #if __JHEXEN__
     cfg.playerClass[plrNum] = pClass;

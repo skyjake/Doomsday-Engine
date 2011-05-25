@@ -673,8 +673,6 @@ mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
 
-void MN_LoadResources(void);
-
 void MN_DrawText(const char* string, int x, int y);
 void MN_DrawText2(const char* string, int x, int y, short flags);
 void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength);
@@ -752,6 +750,9 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth, int availHeig
     float alpha, int* drawnWidth, int* drawnHeight);
 
 void GUI_TickWidget(uiwidget_t* obj);
+
+/// @return  Local player number of the owner of this widget.
+int UIWidget_Player(uiwidget_t* obj);
 
 /**
  * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
@@ -939,8 +940,11 @@ typedef struct {
 } guidata_flight_t;
 #endif
 
+void GUI_Register(void);
+
 void GUI_Init(void);
 void GUI_Shutdown(void);
+void GUI_LoadResources(void);
 
 uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 
