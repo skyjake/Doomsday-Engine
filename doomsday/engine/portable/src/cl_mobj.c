@@ -331,7 +331,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     {
         localMobj->angle = remoteClientMobj->angle;
 #ifdef _DEBUG
-        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x\n", localMobj, localMobj->angle) );
+        VERBOSE2( Con_Message("Cl_UpdateRealPlayerMobj: localMobj=%p angle=%x\n", localMobj, localMobj->angle) );
 #endif
     }
     localMobj->sprite = remoteClientMobj->sprite;

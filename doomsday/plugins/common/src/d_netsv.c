@@ -343,23 +343,6 @@ void NetSv_Ticker(void)
         }
     }
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    // Keep track of player class changes (fighter, cleric, mage, pig).
-    // Notify clients accordingly. This is mostly just FYI (it'll update
-    // pl->class_ on the clientside).
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame)
-            continue;
-
-        if(oldClasses[i] != players[i].class_)
-        {
-            oldClasses[i] = players[i].class_;
-            NetSv_SendPlayerClass(i, players[i].class_);
-        }
-    }
-#endif
-
     // Inform clients about jumping?
     power = (cfg.jumpEnabled ? cfg.jumpPower : 0);
     if(power != netJumpPower)
@@ -377,33 +360,49 @@ void NetSv_Ticker(void)
     {
         player_t* plr = &players[i];
 
+        /*
         // Don't send on every tic. Also, don't send to all
         // players at the same time.
         if(((int) GAMETIC + i) % 10)
             continue;
+        */
 
-        if(!plr->plr->inGame || !plr->update)
+        if(!plr->plr->inGame)
             continue;
 
-        // Owned weapons and player state will be sent in a new kind of
-        // packet.
-        if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
+        if(plr->update)
         {
-            int                 flags =
-                (plr->update & PSF_OWNED_WEAPONS ? PSF2_OWNED_WEAPONS : 0) |
-                (plr->update & PSF_STATE ? PSF2_STATE : 0);
+            // Owned weapons and player state will be sent in a new kind of
+            // packet.
+            if(plr->update & (PSF_OWNED_WEAPONS | PSF_STATE))
+            {
+                int flags =
+                    (plr->update & PSF_OWNED_WEAPONS ? PSF2_OWNED_WEAPONS : 0) |
+                    (plr->update & PSF_STATE ? PSF2_STATE : 0);
 
-            NetSv_SendPlayerState2(i, i, flags, true);
+                NetSv_SendPlayerState2(i, i, flags, true);
 
-            plr->update &= ~(PSF_OWNED_WEAPONS | PSF_STATE);
-            // That was all?
-            if(!plr->update)
-                continue;
+                plr->update &= ~(PSF_OWNED_WEAPONS | PSF_STATE);
+                // That was all?
+                if(!plr->update)
+                    continue;
+            }
+
+            // The delivery of the state packet will be confirmed.
+            NetSv_SendPlayerState(i, i, plr->update, true);
+            plr->update = 0;
         }
 
-        // The delivery of the state packet will be confirmed.
-        NetSv_SendPlayerState(i, i, plr->update, true);
-        plr->update = 0;
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+        // Keep track of player class changes (fighter, cleric, mage, pig).
+        // Notify clients accordingly. This is mostly just FYI (it'll update
+        // pl->class_ on the clientside).
+        if(oldClasses[i] != plr->class_)
+        {
+            oldClasses[i] = plr->class_;
+            NetSv_SendPlayerClass(i, plr->class_);
+        }
+#endif
     }
 }
 
@@ -1360,9 +1359,12 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 #endif
 }
 
-void NetSv_SendPlayerClass(int pnum, char cls)
+void NetSv_SendPlayerClass(int plrNum, char cls)
 {
-    Net_SendPacket(pnum | DDSP_CONFIRM, GPT_CLASS, &cls, 1);
+#ifdef _DEBUG
+    Con_Message("NetSv_SendPlayerClass: Player %i has class %i.\n", plrNum, cls);
+#endif
+    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, &cls, 1);
 }
 
 /**

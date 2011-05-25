@@ -488,8 +488,36 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
-        players[CONSOLEPLAYER].class_ = bData[0];
+    {
+        player_t* plr = &players[CONSOLEPLAYER];
+        int newClass = bData[0];
+        int oldClass = plr->class_;
+        plr->class_ = newClass;
+#ifdef _DEBUG
+        Con_Message("D_HandlePacket: Player %i class set to %i.\n", CONSOLEPLAYER, plr->class_);
+#endif
+#if __JHERETIC__
+        if(oldClass != newClass)
+        {
+            if(newClass == PCLASS_CHICKEN)
+            {
+#ifdef _DEBUG
+                Con_Message("D_HandlePacket: Player %i activating morph..\n", CONSOLEPLAYER);
+#endif
+                P_ActivateMorphWeapon(plr);
+            }
+            else if(oldClass == PCLASS_CHICKEN)
+            {
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState: Player %i post-morph weapon %i.\n", CONSOLEPLAYER, plr->readyWeapon);
+#endif
+                // The morph has ended.
+                P_PostMorphWeapon(plr, plr->readyWeapon);
+            }
+        }
+#endif
         break;
+    }
 #endif
 
     case GPT_SAVE:
@@ -605,7 +633,7 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         // A client is trying to do damage.
 #if _DEBUG
-Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
+        Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
 #endif
         //// \todo Damage requests have not been fully implemented yet.
         return false;
@@ -614,13 +642,13 @@ Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
     else if(IS_CLIENT && source->player - players == CONSOLEPLAYER)
     {
 #if _DEBUG
-Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
+        Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
 #endif
         return true;
     }
 
 #if _DEBUG
-Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
+    Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
 #endif
     // Process as normal damage.
     return false;

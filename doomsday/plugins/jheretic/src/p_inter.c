@@ -1027,6 +1027,7 @@ boolean P_MorphPlayer(player_t* player)
     chicken->player = player;
     chicken->dPlayer = player->plr;
 
+    player->class_ = PCLASS_CHICKEN;
     player->health = chicken->health = MAXCHICKENHEALTH;
     player->plr->mo = chicken;
     player->armorPoints = player->armorType = 0;
