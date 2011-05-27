@@ -39,8 +39,8 @@
 #include "p_inventory.h"
 #include "hu_lib.h"
 #include "hu_chat.h"
-#include "hu_inventory.h"
 #include "hu_log.h"
+#include "hu_inventory.h"
 #include "hu_stuff.h"
 #include "r_common.h"
 #include "gl_drawpatch.h"
@@ -128,6 +128,7 @@ typedef struct {
 
     int widgetGroupIds[NUM_UIWIDGET_GROUPS];
     int chatWidgetId;
+    int logWidgetId;
 
     // Statusbar:
     guidata_health_t sbarHealth;
@@ -156,6 +157,7 @@ typedef struct {
 
     // Other:
     guidata_chat_t chat;
+    guidata_log_t log;
     guidata_flight_t flight;
     guidata_boots_t boots;
     guidata_servant_t servant;
@@ -172,6 +174,9 @@ void updateViewWindow(void);
 void unhideHUD(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+uiwidget_t* ST_UIChatForPlayer(int player);
+uiwidget_t* ST_UILogForPlayer(int player);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1248,6 +1253,11 @@ static void initData(hudstate_t* hud)
     hud->defense.patchId = 0;
     hud->worldtimer.days = hud->worldtimer.hours = hud->worldtimer.minutes = hud->worldtimer.seconds = 0;
 
+    hud->log._msgCount = 0;
+    hud->log._nextUsedMsg = 0;
+    hud->log._pvisMsgCount = 0;
+    memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
+
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
@@ -1290,6 +1300,7 @@ void ST_Init(void)
         hudstate_t* hud = &hudStates[i];
         memset(hud->widgetGroupIds, -1, sizeof(hud->widgetGroupIds));
         hud->chatWidgetId = -1;
+        hud->logWidgetId = -1;
     }
 
     ST_loadData();
@@ -1316,24 +1327,78 @@ uiwidget_t* ST_UIChatForPlayer(int player)
     exit(1); // Unreachable.
 }
 
+uiwidget_t* ST_UILogForPlayer(int player)
+{
+    if(player >= 0 && player < MAXPLAYERS)
+    {
+        hudstate_t* hud = &hudStates[player];
+        return GUI_FindObjectById(hud->logWidgetId);
+    }
+    Con_Error("ST_UILogForPlayer: Invalid player #%i.", player);
+    exit(1); // Unreachable.
+}
+
 int ST_ChatResponder(int player, event_t* ev)
 {
     uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
-    {
-        return UIChat_Responder(obj, ev);
-    }
-    return false;
+    if(NULL == obj) return false;
+    return UIChat_Responder(obj, ev);
 }
 
 boolean ST_ChatIsActive(int player)
 {    
     uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
+    if(NULL == obj) return false;
+    return UIChat_IsActive(obj);
+}
+
+void ST_LogPost(int player, byte flags, const char* msg)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+    UILog_Post(obj, flags, msg);
+}
+
+void ST_LogRefresh(int player)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+    UILog_Refresh(obj);
+}
+
+void ST_LogEmpty(int player)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+    UILog_Empty(obj);
+}
+
+void ST_LogPostVisibilityChangeNotification(void)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        return UIChat_IsActive(obj);
+        ST_LogPost(i, LMF_NOHIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
     }
-    return false;
+}
+
+void ST_LogUpdateAlignment(void)
+{
+    short flags;
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hudstate_t* hud = &hudStates[i];
+        if(!hud->inited) continue;
+
+        flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]));
+        flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
+        if(cfg.msgAlign == 0)
+            flags |= UWGF_ALIGN_LEFT;
+        else if(cfg.msgAlign == 2)
+            flags |= UWGF_ALIGN_RIGHT;
+        UIGroup_SetFlags(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), flags);
+    }
 }
 
 void ST_FlashCurrentItem(int player)
@@ -3452,47 +3517,6 @@ void WorldTimer_Dimensions(uiwidget_t* obj, int* width, int* height)
 #undef ORIGINX
 }
 
-void Log_Drawer2(uiwidget_t* obj, int x, int y)
-{
-    assert(NULL != obj);
-    {
-    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
-
-    /// \kludge Do not draw message logs while the map title is being displayed.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
-        return;
-    /// kludge end.
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
-
-    Hu_LogDrawer(obj->player, textAlpha);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-    }
-}
-
-void Log_Dimensions2(uiwidget_t* obj, int* width, int* height)
-{
-    assert(NULL != obj);
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
-
-    /// \kludge Do not draw message logs while the map title is being displayed.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
-        return;
-    /// kludge end.
-
-    Hu_LogDimensions(obj->player, width, height);
-
-    if(NULL != width)  *width  = *width  * cfg.msgScale;
-    if(NULL != height) *height = *height * cfg.msgScale;
-}
-
 typedef struct {
     guiwidgettype_t type;
     int group;
@@ -3621,7 +3645,6 @@ void ST_Drawer(int player)
             { GUI_FRAGS,        UWG_BOTTOMLEFT,   -1,         GF_STATUS,    Frags_Dimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
             { GUI_READYITEM,    UWG_BOTTOMRIGHT,  HUD_READYITEM, GF_SMALLIN,ReadyItem_Dimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
             { GUI_INVENTORY,    UWG_BOTTOM,       -1,         GF_SMALLIN,   Inventory_Dimensions, Inventory_Drawer },
-            { GUI_LOG,          UWG_TOP,          -1,         GF_FONTA,     Log_Dimensions2, Log_Drawer2 },
             { GUI_NONE }
         };
         size_t i;
@@ -3638,6 +3661,9 @@ void ST_Drawer(int player)
             uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->dimensions, def->drawer, def->ticker, def->typedata);
             UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
         }
+
+        hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, -1, FID(GF_FONTA), UILog_Dimensions, UILog_Drawer, UILog_Ticker, &hud->log);
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
         hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_Dimensions, UIChat_Drawer, NULL, &hud->chat);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
@@ -3766,25 +3792,6 @@ void ST_Drawer(int player)
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
-    }
-}
-
-void ST_UpdateLogAlignment(void)
-{
-    short flags;
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        hudstate_t* hud = &hudStates[i];
-        if(!hud->inited) continue;
-
-        flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]));
-        flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
-        if(cfg.msgAlign == 0)
-            flags |= UWGF_ALIGN_LEFT;
-        else if(cfg.msgAlign == 2)
-            flags |= UWGF_ALIGN_RIGHT;
-        UIGroup_SetFlags(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), flags);
     }
 }
 

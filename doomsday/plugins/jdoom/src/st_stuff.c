@@ -42,12 +42,12 @@
 #include "d_net.h"
 #include "hu_stuff.h"
 #include "hu_lib.h"
+#include "hu_chat.h"
+#include "hu_log.h"
 #include "p_tick.h" // for P_IsPaused
 #include "p_player.h"
 #include "am_map.h"
 #include "p_user.h"
-#include "hu_chat.h"
-#include "hu_log.h"
 #include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
@@ -178,6 +178,7 @@ typedef struct {
 
     int widgetGroupIds[NUM_UIWIDGET_GROUPS];
     int chatWidgetId;
+    int logWidgetId;
 
     // Statusbar:
     guidata_health_t sbarHealth;
@@ -202,6 +203,7 @@ typedef struct {
 
     // Other:
     guidata_chat_t chat;
+    guidata_log_t log;
     guidata_secrets_t secrets;
     guidata_items_t items;
     guidata_kills_t kills;
@@ -215,6 +217,9 @@ void updateViewWindow(void);
 void unhideHUD(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+uiwidget_t* ST_UIChatForPlayer(int player);
+uiwidget_t* ST_UILogForPlayer(int player);
 
 int ST_ChatResponder(int player, event_t* ev);
 
@@ -523,10 +528,10 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
     }
-#undef WIDTH
-#undef HEIGHT
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
+#undef HEIGHT
+#undef WIDTH
 }
 
 void SBarBackground_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeight)
@@ -547,8 +552,8 @@ void SBarBackground_Dimensions(uiwidget_t* obj, int* drawnWidth, int* drawnHeigh
     if(NULL != drawnWidth)  *drawnWidth  = WIDTH  * cfg.statusbarScale;
     if(NULL != drawnHeight) *drawnHeight = HEIGHT * cfg.statusbarScale;
 
-#undef WIDTH
 #undef HEIGHT
+#undef WIDTH
 }
 
 /**
@@ -2749,47 +2754,6 @@ void Secrets_Dimensions(uiwidget_t* obj, int* width, int* height)
     }
 }
 
-void Log_Drawer(uiwidget_t* obj, int x, int y)
-{
-    assert(NULL != obj);
-    {
-    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
-
-    /// \kludge Do not draw message logs while the map title is being displayed.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
-        return;
-    /// kludge end.
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
-
-    Hu_LogDrawer(obj->player, textAlpha);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-    }
-}
-
-void Log_Dimensions(uiwidget_t* obj, int* width, int* height)
-{
-    assert(NULL != obj);
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
-
-    /// \kludge Do not draw message logs while the map title is being displayed.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
-        return;
-    /// kludge end.
-
-    Hu_LogDimensions(obj->player, width, height);
-
-    if(NULL != width)  *width  = *width  * cfg.msgScale;
-    if(NULL != height) *height = *height * cfg.msgScale;
-}
-
 typedef struct {
     guiwidgettype_t type;
     int group;
@@ -2868,7 +2832,6 @@ void ST_Drawer(int player)
             { GUI_ARMORICON, UWG_BOTTOMRIGHT,   HUD_ARMOR,  0,          ArmorIcon_Dimensions, ArmorIcon_Drawer, ArmorIcon_Ticker, &hud->armoricon },
             { GUI_KEYS,     UWG_BOTTOMRIGHT,    HUD_KEYS,   0,          Keys_Dimensions, Keys_Drawer, Keys_Ticker, &hud->keys },
             { GUI_FACE,     UWG_BOTTOM,         HUD_FACE,   0,          Face_Dimensions, Face_Drawer, Face_Ticker, &hud->face },
-            { GUI_LOG,      UWG_TOP,            -1,         GF_FONTA,   Log_Dimensions, Log_Drawer },
             { GUI_SECRETS,  UWG_COUNTERS,       -1,         GF_FONTA,   Secrets_Dimensions, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
             { GUI_ITEMS,    UWG_COUNTERS,       -1,         GF_FONTA,   Items_Dimensions, Items_Drawer, Items_Ticker, &hud->items },
             { GUI_KILLS,    UWG_COUNTERS,       -1,         GF_FONTA,   Kills_Dimensions, Kills_Drawer, Kills_Ticker, &hud->kills },
@@ -2888,6 +2851,9 @@ void ST_Drawer(int player)
             uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->dimensions, def->drawer, def->ticker, def->typedata);
             UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
         }
+
+        hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, -1, FID(GF_FONTA), UILog_Dimensions, UILog_Drawer, UILog_Ticker, &hud->log);
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
         hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_Dimensions, UIChat_Drawer, NULL, &hud->chat);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
@@ -3136,6 +3102,11 @@ static void initData(hudstate_t* hud)
     hud->items.value = 1994;
     hud->kills.value = 1994;
 
+    hud->log._msgCount = 0;
+    hud->log._nextUsedMsg = 0;
+    hud->log._pvisMsgCount = 0;
+    memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
+
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
@@ -3178,6 +3149,7 @@ void ST_Init(void)
         hudstate_t* hud = &hudStates[i];
         memset(hud->widgetGroupIds, -1, sizeof(hud->widgetGroupIds));
         hud->chatWidgetId = -1;
+        hud->logWidgetId = -1;
     }
 
     ST_loadData();
@@ -3204,6 +3176,17 @@ uiwidget_t* ST_UIChatForPlayer(int player)
     exit(1); // Unreachable.
 }
 
+uiwidget_t* ST_UILogForPlayer(int player)
+{
+    if(player >= 0 && player < MAXPLAYERS)
+    {
+        hudstate_t* hud = &hudStates[player];
+        return GUI_FindObjectById(hud->logWidgetId);
+    }
+    Con_Error("ST_UILogForPlayer: Invalid player #%i.", player);
+    exit(1); // Unreachable.
+}
+
 int ST_ChatResponder(int player, event_t* ev)
 {
     uiwidget_t* obj = ST_UIChatForPlayer(player);
@@ -3224,7 +3207,40 @@ boolean ST_ChatIsActive(int player)
     return false;
 }
 
-void ST_UpdateLogAlignment(void)
+void ST_LogPost(int player, byte flags, const char* msg)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+
+    UILog_Post(obj, flags, msg);
+}
+
+void ST_LogPostVisibilityChangeNotification(void)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        ST_LogPost(i, LMF_NOHIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
+    }
+}
+
+void ST_LogRefresh(int player)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+
+    UILog_Refresh(obj);
+}
+
+void ST_LogEmpty(int player)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+
+    UILog_Empty(obj);
+}
+
+void ST_LogUpdateAlignment(void)
 {
     short flags;
     int i;

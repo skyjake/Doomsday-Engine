@@ -39,8 +39,6 @@ void UIChat_Register(void);
 /// Load resources for this module (chat macro strings etc...).
 void UIChat_LoadResources(void);
 
-#define UICHAT_INPUTBUFFER_MAXLENGTH    (160)
-
 /**
  * UIChat. UI widget for composing player/team chat messages.
  *
@@ -49,11 +47,13 @@ void UIChat_LoadResources(void);
  *      @c 0= All players (i.e., a "global" message).
  *      @c 1...NUMTEAMS= Any players on team number (n+1).
  */
+#define UICHAT_INPUTBUFFER_MAXLENGTH    (160)
+
 typedef struct {
     char text[UICHAT_INPUTBUFFER_MAXLENGTH+1];
     int length; /// Current length of text.
     boolean shiftDown;
-} uidata_chat_inputbuffer_t;
+} guidata_chat_inputbuffer_t;
 
 /**
  * @defgroup uiChatFlags  UIChat Flags.
@@ -65,7 +65,7 @@ typedef struct {
 typedef struct {
     int flags; /// @see uiChatFlags
     int destination;
-    uidata_chat_inputbuffer_t buffer;
+    guidata_chat_inputbuffer_t buffer;
 } guidata_chat_t;
 
 /**

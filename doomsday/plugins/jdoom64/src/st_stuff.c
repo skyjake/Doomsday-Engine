@@ -41,6 +41,9 @@
 
 #include "d_net.h"
 #include "hu_stuff.h"
+#include "hu_lib.h"
+#include "hu_chat.h"
+#include "hu_log.h"
 #include "am_map.h"
 #include "p_tick.h" // for P_IsPaused
 #include "p_inventory.h"
@@ -65,12 +68,14 @@ typedef struct {
     float           alpha; // Fullscreen hud alpha value.
 
     int chatWidgetId;
+    int logWidgetId;
 
     boolean         firstTime;  // ST_Start() has just been called.
     boolean         statusbarActive; // Whether the HUD is on.
     int             currentFragsCount; // Number of frags so far in deathmatch.
 
     guidata_chat_t chat;
+    guidata_log_t log;
 } hudstate_t;
 
 typedef enum hotloc_e {
@@ -85,6 +90,9 @@ typedef enum hotloc_e {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+uiwidget_t* ST_UIChatForPlayer(int player);
+uiwidget_t* ST_UILogForPlayer(int player);
 
 int ST_ChatResponder(int player, event_t* ev);
 void unhideHUD(void);
@@ -619,6 +627,11 @@ static void initData(hudstate_t* hud)
     hud->stopped = true;
     hud->alpha = 0.f;
 
+    hud->log._msgCount = 0;
+    hud->log._nextUsedMsg = 0;
+    hud->log._pvisMsgCount = 0;
+    memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
+
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
@@ -661,6 +674,7 @@ void ST_Init(void)
         hudstate_t* hud = &hudStates[i];
         //memset(hud->widgetGroupIds, -1, sizeof(hud->widgetGroupIds));
         hud->chatWidgetId = -1;
+        hud->logWidgetId = -1;
     }
 
     ST_loadData();
@@ -687,14 +701,15 @@ uiwidget_t* ST_UIChatForPlayer(int player)
     exit(1); // Unreachable.
 }
 
-int ST_ChatResponder(int player, event_t* ev)
+uiwidget_t* ST_UILogForPlayer(int player)
 {
-    uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
+    if(player >= 0 && player < MAXPLAYERS)
     {
-        return UIChat_Responder(obj, ev);
+        hudstate_t* hud = &hudStates[player];
+        return GUI_FindObjectById(hud->logWidgetId);
     }
-    return false;
+    Con_Error("ST_UILogForPlayer: Invalid player #%i.", player);
+    exit(1); // Unreachable.
 }
 
 boolean ST_ChatIsActive(int player)
@@ -707,7 +722,48 @@ boolean ST_ChatIsActive(int player)
     return false;
 }
 
-void ST_UpdateLogAlignment(void)
+int ST_ChatResponder(int player, event_t* ev)
+{
+    uiwidget_t* obj = ST_UIChatForPlayer(player);
+    if(NULL != obj)
+    {
+        return UIChat_Responder(obj, ev);
+    }
+    return false;
+}
+
+void ST_LogPost(int player, byte flags, const char* msg)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+
+    UILog_Post(obj, flags, msg);
+}
+
+void ST_LogRefresh(int player)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+    UILog_Refresh(obj);
+}
+
+void ST_LogEmpty(int player)
+{
+    uiwidget_t* obj = ST_UILogForPlayer(player);
+    if(NULL == obj) return;
+    UILog_Empty(obj);
+}
+
+void ST_LogPostVisibilityChangeNotification(void)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        ST_LogPost(i, LMF_NOHIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
+    }
+}
+
+void ST_LogUpdateAlignment(void)
 {
     // Stub.
 #if 0

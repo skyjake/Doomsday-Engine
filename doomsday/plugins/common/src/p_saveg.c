@@ -6038,7 +6038,7 @@ void SV_MapTeleport(uint map, uint position)
         }
         P_InventorySetReadyItem(i, readyItem[i]);
 
-        Hu_LogEmpty(i);
+        ST_LogEmpty(i);
         players[i].attacker = NULL;
         players[i].poisoner = NULL;
 

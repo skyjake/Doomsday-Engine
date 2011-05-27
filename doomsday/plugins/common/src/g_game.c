@@ -904,7 +904,6 @@ void G_CommonShutdown(void)
 
     Hu_MsgShutdown();
     Hu_UnloadData();
-    Hu_LogShutdown();
 
     SV_Shutdown();
     P_Shutdown();
@@ -1038,7 +1037,7 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         // Clear the message queue for all local players.
-        Hu_LogEmpty(i);
+        ST_LogEmpty(i);
 
         // Close the automap for all local players.
         AM_Open(AM_MapForPlayer(i), false, true);
@@ -1749,7 +1748,7 @@ void G_PlayerLeaveMap(int player)
     p->poisonCount = 0;
 #endif
 
-    Hu_LogEmpty(p - players);
+    ST_LogEmpty(p - players);
 }
 
 /**

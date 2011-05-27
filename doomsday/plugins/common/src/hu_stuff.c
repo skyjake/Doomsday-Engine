@@ -339,7 +339,6 @@ void HU_Start(int player)
     assert(player >= 0 && player < MAXPLAYERS);
     {
     hudstate_t* hud = &hudStates[player];
-    Hu_LogStart(player);
 
     hud = &hudStates[player];
     if(hud->active)
@@ -870,13 +869,6 @@ void HU_DrawScoreBoard(int player)
 void Hu_Ticker(void)
 {
     int i;
-
-    // Do not tick the message logs if the game is paused.
-    if(!P_IsPaused())
-    {
-        Hu_LogTicker();
-    }
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         hudstate_t* hud = &hudStates[i];

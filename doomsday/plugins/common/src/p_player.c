@@ -745,7 +745,7 @@ void P_SetMessage(player_t* pl, const char* msg, boolean noHide)
 
     if(NULL == msg || !msg[0]) return;
 
-    Hu_LogPost(pl - players, flags, msg);
+    ST_LogPost(pl - players, flags, msg);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -779,7 +779,7 @@ void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
     Str_Set(&buf, YELLOW_FMT);
     Str_Appendf(&buf, "%s", msg);
 
-    Hu_LogPost(pl - players, flags, Str_Text(&buf));
+    ST_LogPost(pl - players, flags, Str_Text(&buf));
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);

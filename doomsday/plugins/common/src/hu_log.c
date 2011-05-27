@@ -29,6 +29,17 @@
 #include "doomsday.h"
 #include "dd_api.h"
 
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JDOOM64__
+# include "jdoom64.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#endif
+
+#include "p_tick.h"
 #include "hu_stuff.h"
 #include "hu_log.h"
 
@@ -43,67 +54,34 @@
 /// Mask for clearing non-public flags @see logMessageFlags
 #define LOG_INTERNAL_MESSAGEFLAGMASK    0xfe
 
-typedef struct logmsg_s {
-    uint ticsRemain, tics;
-    int textMaxLen;
-    char* text;
-    byte flags;
-} message_t;
-
-typedef struct msglog_s {
-    /// Log message list.
-    message_t _msgs[LOG_MAX_MESSAGES];
-
-    /// Number of used messages.
-    int _msgCount;
-
-    /// Number of potentially visible messages.
-    int _pvisMsgCount;
-
-    /// Index of the next slot to be used in msgs.
-    int _nextUsedMsg;
-} log_t;
-
-void Hu_LogPostVisibilityChangeNotification(void);
-
-static log_t msgLogs[MAXPLAYERS];
-
-cvartemplate_t msgLogCVars[] = {
-    // Behavior
-    { "msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60 },
-
-    // Display
-    { "msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2, ST_UpdateLogAlignment },
-    { "msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0 },
-    { "msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1 },
-    { "msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1 },
-    { "msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1 },
-    { "msg-count",  0, CVT_INT, &cfg.msgCount, 1, 8 },
-    { "msg-scale", 0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1 },
-    { "msg-show",  0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1, Hu_LogPostVisibilityChangeNotification },
-    { NULL }
-};
-
 void Hu_LogRegister(void)
 {
-    int i;
-    for(i = 0; msgLogCVars[i].name; ++i)
-        Con_AddVariable(msgLogCVars + i);
-}
+    cvartemplate_t cvars[] = {
+        // Behavior
+        { "msg-uptime",  0, CVT_FLOAT, &cfg.msgUptime, 1, 60 },
 
-static void logInit(log_t* log)
-{
-    assert(NULL != log);
-    log->_msgCount = 0;
-    log->_nextUsedMsg = 0;
-    log->_pvisMsgCount = 0;
-    memset(log->_msgs, 0, sizeof(log->_msgs));
+        // Display
+        { "msg-align",   0, CVT_INT, &cfg.msgAlign, 0, 2, ST_LogUpdateAlignment },
+        { "msg-blink",   CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0 },
+        { "msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1 },
+        { "msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1 },
+        { "msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1 },
+        { "msg-count",   0, CVT_INT, &cfg.msgCount, 1, 8 },
+        { "msg-scale",   0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1 },
+        { "msg-show",    0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1, ST_LogPostVisibilityChangeNotification },
+        { NULL }
+    };
+    int i;
+    for(i = 0; cvars[i].name; ++i)
+        Con_AddVariable(cvars + i);
 }
 
 /// @return  Index of the first (i.e., earliest) message that is potentially visible.
-static __inline int logFirstPVisMessageIdx(const log_t* log)
+static __inline int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
+    {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     if(0 != log->_pvisMsgCount)
     {
         int n = log->_nextUsedMsg - MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
@@ -111,12 +89,15 @@ static __inline int logFirstPVisMessageIdx(const log_t* log)
         return n;
     }
     return -1;
+    }
 }
 
 /// @return  Index of the first (i.e., earliest) message.
-static __inline int logFirstMessageIdx(const log_t* log)
+static __inline int UILog_FirstMessageIdx(const uiwidget_t* obj)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
+    {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     if(0 != log->_pvisMsgCount)
     {
         int n = log->_nextUsedMsg - log->_pvisMsgCount;
@@ -124,30 +105,23 @@ static __inline int logFirstMessageIdx(const log_t* log)
         return n;
     }
     return -1;
+    }
 }
 
 /// @return  Index of the next (possibly already used) message.
-static __inline int logNextMessageIdx(const log_t* log, int current)
+static __inline int UILog_NextMessageIdx(const uiwidget_t* obj, int current)
 {
-    assert(NULL != log);
     if(current < LOG_MAX_MESSAGES - 1)
         return current + 1;
     return 0; // Wrap around.
 }
 
 /// @return  Index of the previous (possibly already used) message.
-static __inline int logPrevMessageIdx(const log_t* log, int current)
+static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
 {
-    assert(NULL != log);
     if(current > 0)
         return current - 1;
     return LOG_MAX_MESSAGES - 1; // Wrap around.
-}
-
-/// @return  Local player number of the owner of this log.
-static int logLocalPlayer(const log_t* log)
-{
-    return (int) (log - msgLogs);
 }
 
 /**
@@ -157,11 +131,12 @@ static int logLocalPlayer(const log_t* log)
  * @param text  Message to be added.
  * @param tics  Length of time the message should be visible.
  */
-static message_t* logPush(log_t* log, int flags, const char* text, int tics)
+static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char* text, int tics)
 {
-    assert(NULL != log && NULL != text);
+    assert(NULL != obj && obj->type == GUI_LOG && NULL != text );
     {
-    message_t* msg;
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    guidata_log_message_t* msg;
     int len = (int)strlen(text);
     if(0 == len)
     {
@@ -170,11 +145,11 @@ static message_t* logPush(log_t* log, int flags, const char* text, int tics)
     }
 
     msg = &log->_msgs[log->_nextUsedMsg];
-    log->_nextUsedMsg = logNextMessageIdx(log, log->_nextUsedMsg);
+    log->_nextUsedMsg = UILog_NextMessageIdx(obj, log->_nextUsedMsg);
     if(len >= msg->textMaxLen)
     {
         msg->textMaxLen = len+1;
-        msg->text = (char*) realloc(msg->text, msg->textMaxLen);
+        msg->text = (char*) Z_Realloc(msg->text, msg->textMaxLen, PU_GAMESTATIC);
         if(NULL == msg->text)
             Con_Error("Log::Push: Failed on (re)allocation of %lu bytes for log message.",
                 (unsigned long) msg->textMaxLen);
@@ -193,12 +168,13 @@ static message_t* logPush(log_t* log, int flags, const char* text, int tics)
 }
 
 /// Remove the oldest message from the log.
-static message_t* logPop(log_t* log)
+static guidata_log_message_t* UILog_Pop(uiwidget_t* obj)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
     {
-    message_t* msg;
-    int oldest = logFirstMessageIdx(log);
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    guidata_log_message_t* msg;
+    int oldest = UILog_FirstMessageIdx(obj);
     if(0 > oldest) return NULL;
 
     msg = &log->_msgs[oldest];
@@ -210,22 +186,25 @@ static message_t* logPop(log_t* log)
     }
 }
 
-static void logEmpty(log_t* log)
+void UILog_Empty(uiwidget_t* obj)
 {
-    while(logPop(log)) {}
+    while(UILog_Pop(obj)) {}
 }
 
-static void logPost(log_t* log, byte flags, const char* text)
+void UILog_Post(uiwidget_t* obj, byte flags, const char* text)
 {
 #define SMALLBUF_MAXLEN 128
 
-    assert(NULL != log && NULL != text);
+    assert(NULL != obj && obj->type == GUI_LOG && NULL != text);
     {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     char smallBuf[SMALLBUF_MAXLEN+1];
     char* bigBuf = NULL, *p;
     size_t requiredLen = strlen(text);
 
     if(0 == requiredLen) return;
+
+    flags &= ~LOG_INTERNAL_MESSAGEFLAGMASK;
 
     if(requiredLen <= SMALLBUF_MAXLEN)
     {
@@ -242,7 +221,7 @@ static void logPost(log_t* log, byte flags, const char* text)
     p[requiredLen] = '\0';
     sprintf(p, "%s", text);
 
-    logPush(log, flags, p, cfg.msgUptime * TICSPERSEC);
+    UILog_Push(obj, flags, p, cfg.msgUptime * TICSPERSEC);
     if(NULL != bigBuf)
         free(bigBuf);
     }
@@ -250,20 +229,21 @@ static void logPost(log_t* log, byte flags, const char* text)
 #undef SMALLBUF_MAXLEN
 }
 
-static void logRefresh(log_t* log)
+void UILog_Refresh(uiwidget_t* obj)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
     {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     int n;
 
     log->_pvisMsgCount = MIN_OF(log->_msgCount, MAX_OF(0, cfg.msgCount));
-    n = logFirstMessageIdx(log);
+    n = UILog_FirstMessageIdx(obj);
     if(0 > n) return;
 
     { int i;
-    for(i = 0; i < log->_pvisMsgCount; ++i, n = logNextMessageIdx(log, n))
+    for(i = 0; i < log->_pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
-        message_t* msg = &log->_msgs[n];
+        guidata_log_message_t* msg = &log->_msgs[n];
 
         // Change the tics remaining to that at post time plus a small bonus
         // so that they do not all disappear at once.
@@ -277,55 +257,69 @@ static void logRefresh(log_t* log)
  * Process gametic. Jobs include ticking messages and adjusting values
  * used when drawing the buffer for animation.
  */
-static void logTicker(log_t* log)
+void UILog_Ticker(uiwidget_t* obj)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
     {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     int oldest;
 
     // All messags tic away.
     { int i;
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
-        message_t* msg = &log->_msgs[i];
+        guidata_log_message_t* msg = &log->_msgs[i];
         if(0 == msg->ticsRemain) continue;
         --msg->ticsRemain;
     }}
 
     // Is it time to pop?
-    oldest = logFirstMessageIdx(log);
+    oldest = UILog_FirstMessageIdx(obj);
     if(oldest >= 0)
     {
-        message_t* msg = &log->_msgs[oldest];
+        guidata_log_message_t* msg = &log->_msgs[oldest];
         if(0 == msg->ticsRemain)
         {
-            logPop(log);
+            UILog_Pop(obj);
         }
     }
     }
 }
 
-static void logDrawer(log_t* log, float alpha)
+void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
     {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     const short textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
+    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     int lineHeight;
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float y, yOffset, scrollFactor, col[4];
-    message_t* msg;
+    guidata_log_message_t* msg;
+
+    /// \kludge Do not draw message logs while the map title is being displayed.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
+        return;
+    /// kludge end.
 
     if(0 == pvisMsgCount) return;
 
-    firstMsg = firstPVisMsg = logFirstPVisMessageIdx(log);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(xOrigin, yOrigin, 0);
+    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+
+    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
     if(!cfg.hudShown[HUD_LOG])
     {
         // Advance to the first non-hidden message.
         i = 0;
         while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
         {
-            firstMsg = logNextMessageIdx(log, firstMsg);
+            firstMsg = UILog_NextMessageIdx(obj, firstMsg);
         }
 
         // Nothing visible?
@@ -345,11 +339,11 @@ static void logDrawer(log_t* log, float alpha)
         i = 0;
         while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
         {
-            lastMsg = logPrevMessageIdx(log, lastMsg);
+            lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
         }
     }
 
-    FR_SetFont(FID(GF_FONTA));
+    FR_SetFont(obj->fontId);
     /// \fixme Query line height from the font.
     lineHeight = FR_CharHeight('Q')+1;
 
@@ -359,7 +353,7 @@ static void logDrawer(log_t* log, float alpha)
     {
         int viewW, viewH;
         float scale;
-        R_GetViewPort(logLocalPlayer(log), NULL, NULL, &viewW, &viewH);
+        R_GetViewPort(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
         scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
@@ -379,7 +373,7 @@ static void logDrawer(log_t* log, float alpha)
     n = firstMsg;
     drawnMsgCount = 0;
 
-    for(i = 0; i < pvisMsgCount; ++i, n = logNextMessageIdx(log, n))
+    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
         msg = &log->_msgs[n];
         if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE))
@@ -391,12 +385,12 @@ static void logDrawer(log_t* log, float alpha)
         col[CB] = cfg.msgColor[CB];
         if(n != firstMsg)
         {
-            col[CA] = alpha;
+            col[CA] = textAlpha;
         }
         else
         {
             // Fade out.
-            col[CA] = alpha * 1.f - scrollFactor * (4/3.f);
+            col[CA] = textAlpha * 1.f - scrollFactor * (4/3.f);
             col[CA] = MINMAX_OF(0, col[CA], 1);
         }
 
@@ -424,7 +418,7 @@ static void logDrawer(log_t* log, float alpha)
             }
         }
 
-        FR_DrawText(msg->text, 0, y, FID(GF_FONTA), textFlags, .5f, 0,
+        FR_DrawText(msg->text, 0, y, obj->fontId, textFlags, .5f, 0,
             col[CR], col[CG], col[CB], col[CA], 0, 0, false);
 
         ++drawnMsgCount;
@@ -435,29 +429,36 @@ static void logDrawer(log_t* log, float alpha)
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, -yOffset, 0);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
     }
 }
 
-static void logDimensions(log_t* log, int* width, int* height)
+void UILog_Dimensions(uiwidget_t* obj, int* width, int* height)
 {
-    assert(NULL != log);
+    assert(NULL != obj && obj->type == GUI_LOG);
     {
+    guidata_log_t* log = (guidata_log_t*)obj->typedata;
     int lineHeight, lineWidth;
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float scrollFactor;
-    message_t* msg;
+    guidata_log_message_t* msg;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
 
     if(0 == pvisMsgCount) return;
 
-    firstMsg = firstPVisMsg = logFirstPVisMessageIdx(log);
+    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
     if(!cfg.hudShown[HUD_LOG])
     {
         // Advance to the first non-hidden message.
         i = 0;
         while(0 == (log->_msgs[firstMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
         {
-            firstMsg = logNextMessageIdx(log, firstMsg);
+            firstMsg = UILog_NextMessageIdx(obj, firstMsg);
         }
 
         // Nothing visible?
@@ -477,7 +478,7 @@ static void logDimensions(log_t* log, int* width, int* height)
         i = 0;
         while(0 == (log->_msgs[lastMsg].flags & LMF_NOHIDE) && ++i < pvisMsgCount)
         {
-            lastMsg = logPrevMessageIdx(log, lastMsg);
+            lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
         }
     }
 
@@ -491,7 +492,7 @@ static void logDimensions(log_t* log, int* width, int* height)
     {
         int viewW, viewH;
         float scale;
-        R_GetViewPort(logLocalPlayer(log), NULL, NULL, &viewW, &viewH);
+        R_GetViewPort(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
         scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
@@ -504,7 +505,7 @@ static void logDimensions(log_t* log, int* width, int* height)
     n = firstMsg;
     drawnMsgCount = 0;
 
-    for(i = 0; i < pvisMsgCount; ++i, n = logNextMessageIdx(log, n))
+    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
         msg = &log->_msgs[n];
         if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE))
@@ -527,110 +528,8 @@ static void logDimensions(log_t* log, int* width, int* height)
         *height = /*first line*/ lineHeight * (1.f - scrollFactor) +
                   /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
     }
+
+    if(NULL != width)  *width  = *width  * cfg.msgScale;
+    if(NULL != height) *height = *height * cfg.msgScale;
     }
-}
-
-static log_t* findLogForLocalPlayer(int player)
-{
-    if(player >= 0 && player < MAXPLAYERS)
-    {
-        player_t* plr = &players[player];
-        if((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame)
-            return &msgLogs[player];
-    }
-    return NULL;
-}
-
-static void logShutdown(log_t* log)
-{
-    assert(NULL != log);
-    {
-    int i;
-    for(i = 0; i < LOG_MAX_MESSAGES; ++i)
-    {
-        message_t* msg = &log->_msgs[i];
-        if(msg->text)
-        {
-            free(msg->text);
-            msg->text = NULL;
-        }
-        msg->textMaxLen = 0;
-    }
-    log->_msgCount = 0;
-    log->_nextUsedMsg = 0;
-    log->_pvisMsgCount = 0;
-    }
-}
-
-void Hu_LogStart(int player)
-{
-    log_t* log = findLogForLocalPlayer(player);
-    if(NULL == log) return;
-
-    logInit(log);
-}
-
-void Hu_LogShutdown(void)
-{
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        logShutdown(msgLogs + i);
-    }
-}
-
-void Hu_LogTicker(void)
-{
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        logTicker(msgLogs + i);
-    }
-}
-
-void Hu_LogDrawer(int player, float alpha)
-{
-    log_t* log = findLogForLocalPlayer(player);
-    if(NULL == log) return;
-
-    logDrawer(log, alpha);
-}
-
-void Hu_LogDimensions(int player, int* width, int* height)
-{
-    log_t* log = findLogForLocalPlayer(player);
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
-    if(NULL == log) return;
-
-    logDimensions(log, width, height);
-}
-
-void Hu_LogPost(int player, byte flags, const char* msg)
-{
-    log_t* log = findLogForLocalPlayer(player);
-    if(NULL == log) return;
-
-    logPost(log, flags & ~LOG_INTERNAL_MESSAGEFLAGMASK, msg);
-}
-
-void Hu_LogPostVisibilityChangeNotification(void)
-{
-    Hu_LogPost(CONSOLEPLAYER, LMF_NOHIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
-}
-
-void Hu_LogRefresh(int player)
-{
-    log_t* log = findLogForLocalPlayer(player);
-    if(NULL == log) return;
-
-    logRefresh(log);
-}
-
-void Hu_LogEmpty(int player)
-{
-    log_t* log = findLogForLocalPlayer(player);
-    if(NULL == log) return;
-
-    logEmpty(log);
 }

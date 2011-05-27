@@ -30,15 +30,7 @@
 #ifndef LIBCOMMON_HUD_LOG_H
 #define LIBCOMMON_HUD_LOG_H
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-# include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "hu_lib.h"
 
 /// Maximum number of messages each log will buffer.
 #define LOG_MAX_MESSAGES            (8)
@@ -53,6 +45,13 @@
 /// each message to animate from visible to non-visible.
 #define LOG_MESSAGE_SCROLLTICS      (10)
 
+/// To be called to register the console commands and variables of this module.
+void Hu_LogRegister(void);
+
+/**
+ * UILog. UI widget for player game message logging.
+ */
+
 /**
  * @defgroup logMessageFlags  Log Message Flags.
  * @{
@@ -60,53 +59,53 @@
 #define LMF_NOHIDE          0x1 /// Always displayed (cannot be hidden by the user).
 /**@}*/
 
-/// To be called to register the console commands and variables of this module.
-void Hu_LogRegister(void);
+typedef struct {
+    uint ticsRemain, tics;
+    int textMaxLen;
+    char* text;
+    byte flags;  /// @see logMessageFlags
+} guidata_log_message_t;
 
-/// To be called to initialize this module for use by local @a player
-void Hu_LogStart(int player);
+typedef struct {
+    /// Log message list.
+    guidata_log_message_t _msgs[LOG_MAX_MESSAGES];
 
-/// To be called to shutdown this module. All logs for all players will be destroyed.
-void Hu_LogShutdown(void);
+    /// Number of used messages.
+    int _msgCount;
+
+    /// Number of potentially visible messages.
+    int _pvisMsgCount;
+
+    /// Index of the next slot to be used in msgs.
+    int _nextUsedMsg;
+} guidata_log_t;
+
+/// Process gametic for this message log.
+void UILog_Ticker(uiwidget_t* obj);
+
+/// Draw this message log widget.
+void UILog_Drawer(uiwidget_t* obj, int x, int y);
+
+/// Retrieve the "physical" dimensions of this widget.
+void UILog_Dimensions(uiwidget_t* obj, int* width, int* height);
 
 /**
- * Post a message to the specified player's log.
+ * Empty the message log clearing all messages.
+ */
+void UILog_Empty(uiwidget_t* obj);
+
+/**
+ * Post a message to this log.
  *
- * @param player  Player (local) number whose log to post to.
  * @param flags  @see logMessageFlags
  * @param text  Message Text to be posted. Messages may use the same
  *      paramater control blocks as with the engine's Text rendering API.
  */
-void Hu_LogPost(int player, byte flags, const char* text);
+void UILog_Post(uiwidget_t* obj, byte flags, const char* text);
 
 /**
- * Rewind the message log of the specified player, making the last few messages
- * visible once again.
- *
- * @param player  Local player number whose message log to refresh.
+ * Rewind the message log, making the last few messages visible once again.
  */
-void Hu_LogRefresh(int player);
-
-/**
- * Empty the message log of the specified player.
- *
- * @param player  Local player number whose message log to empty.
- */
-void Hu_LogEmpty(int player);
-
-/**
- * Draw the message log of the specified player.
- *
- * @param player  Local player number whose message log to draw.
- * @param alpha  Opacity of the log where @c 1= opaque and @c 0= transparent.
- */
-void Hu_LogDrawer(int player, float alpha);
-
-void Hu_LogDimensions(int player, int* width, int* height);
-
-/**
- * Process gametic for all players with an active message log.
- */
-void Hu_LogTicker(void);
+void UILog_Refresh(uiwidget_t* obj);
 
 #endif /* LIBCOMMON_HUD_LOG_H */

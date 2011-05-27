@@ -284,7 +284,7 @@ static void drawWidget(uiwidget_t* obj, int x, int y, float alpha, int* drawnWid
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
-    
+
         obj->drawer(obj, 0, 0);
 
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -333,7 +333,7 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
         }
 
         GUI_DrawWidget(child, x, y, availWidth, availHeight, alpha, &width, &height);
-    
+
         if(width > 0 || height > 0)
         {
             ++numDrawnWidgets;
@@ -940,14 +940,14 @@ int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
         {
             obj->_flags |= MNF_ACTIVE;
             if(MNObject_HasAction(obj, MNA_ACTIVE))
-            {           
+            {
                 MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
             }
         }
 
         obj->_flags &= ~MNF_ACTIVE;
         if(MNObject_HasAction(obj, MNA_ACTIVEOUT))
-        {           
+        {
             MNObject_ExecAction(obj, MNA_ACTIVEOUT, NULL);
         }
         return true;
@@ -1941,7 +1941,7 @@ boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float gree
     if(MNColorBox_SetAlphaf(obj, setCompFlags, alpha)) setComps |= 0x8;
 
     if(0 == setComps) return false;
-    
+
     if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && MNObject_HasAction(obj, MNA_MODIFIED))
     {
         MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
@@ -2178,7 +2178,7 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
         suffix = "";
     }
 
-    // Are we substituting the textual value into a template? 
+    // Are we substituting the textual value into a template?
     if(haveTemplateString)
     {
         size_t textualValueLen = strlen(textualValue);
@@ -2246,7 +2246,7 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
     const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     char textualValue[41];
-    const char* str = composeValueString(value, 0, sldr->floatMode, 0, 
+    const char* str = composeValueString(value, 0, sldr->floatMode, 0,
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
     DGL_Translatef(x, y, 0);

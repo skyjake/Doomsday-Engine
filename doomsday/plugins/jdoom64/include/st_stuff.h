@@ -61,9 +61,39 @@ void ST_Stop(int player);
 
 boolean ST_ChatIsActive(int player);
 
+/**
+ * Post a message to the specified player's log.
+ *
+ * @param player  Player (local) number whose log to post to.
+ * @param flags  @see logMessageFlags
+ * @param text  Message Text to be posted. Messages may use the same
+ *      paramater control blocks as with the engine's Text rendering API.
+ */
+void ST_LogPost(int player, byte flags, const char* text);
+
+/**
+ * Rewind the message log of the specified player, making the last few messages
+ * visible once again.
+ *
+ * @param player  Local player number whose message log to refresh.
+ */
+void ST_LogRefresh(int player);
+
+/**
+ * Empty the message log of the specified player.
+ *
+ * @param player  Local player number whose message log to empty.
+ */
+void ST_LogEmpty(int player);
+
+/// To be called to initialize this module for use by local @a player
+void ST_LogStart(int player);
+
+void ST_LogUpdateAlignment(void);
+void ST_LogPostVisibilityChangeNotification(void);
+
 /// Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t event);
-void ST_UpdateLogAlignment(void);
 
 D_CMD(ChatOpen);
 D_CMD(ChatAction);
