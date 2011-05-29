@@ -79,6 +79,17 @@ def find_newest_build():
     if newest is None:
         return {'tag': None, 'time': time.time()}
     return {'tag': newest[1], 'time': newest[0]}
+
+
+def find_old_builds(atLeastSecs):
+    result = []
+    now = time.time()
+    for fn in os.listdir(EVENT_DIR):
+        if fn[:5] != 'build': continue
+        bt = build_timestamp(fn)
+        if now - bt >= atLeastSecs:
+            result.append({'time':bt, 'tag':fn})
+    return result
     
     
 def builds_by_time():
@@ -434,6 +445,23 @@ def rebuild_apt_repository():
     os.remove("Release.gpg")
     os.system("gpg --output Release.gpg -ba Release")
     os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(EVENT_DIR, 'apt')))
+    
+
+def purge_apt_repository():
+    pass
+    
+    
+def purge_obsolete():
+    # Also purge the apt repository if one has been specified.
+    if APT_REPO_DIR:
+        purge_apt_repository()
+    
+    # Purge the old events.
+    print 'Deleting build events older than 12 weeks...'
+    for bld in find_old_builds(3600 * 24 * 7 * 12):
+        print bld['tag']
+        shutil.rmtree(os.path.join(EVENT_DIR, bld['tag']))  
+    print 'Purge done.'
 
 
 if sys.argv[1] == 'create':
@@ -450,6 +478,9 @@ elif sys.argv[1] == 'apt':
     
 elif sys.argv[1] == 'changes':
     update_changes()
+    
+elif sys.argv[1] == 'purge':
+    purge_obsolete()
     
 else:
     print 'Unknown command:', sys.argv[1]
