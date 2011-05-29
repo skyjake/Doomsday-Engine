@@ -448,8 +448,16 @@ def rebuild_apt_repository():
     
 
 def purge_apt_repository():
-    pass
-    
+    aptDir = os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-')
+    dirs = ['i386', 'amd64']
+    for d in dirs:
+        binDir = aptDir + d
+        print 'Pruning binary apt directory', binDir
+        # Find the old files.
+        for fn in os.listdir(binDir + '/*.deb'):
+            ct = os.stat(fn).st_ctime
+            print fn, ct
+            
     
 def purge_obsolete():
     # Also purge the apt repository if one has been specified.
