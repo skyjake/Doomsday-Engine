@@ -84,6 +84,7 @@ def find_newest_build():
 def find_old_builds(atLeastSecs):
     result = []
     now = time.time()
+    if not os.path.exists(EVENT_DIR): return result
     for fn in os.listdir(EVENT_DIR):
         if fn[:5] != 'build': continue
         bt = build_timestamp(fn)
@@ -447,26 +448,32 @@ def rebuild_apt_repository():
     os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(EVENT_DIR, 'apt')))
     
 
-def purge_apt_repository():
+def purge_apt_repository(atLeastSeconds):
     aptDir = os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-')
     dirs = ['i386', 'amd64']
     for d in dirs:
         binDir = aptDir + d
         print 'Pruning binary apt directory', binDir
         # Find the old files.
-        for fn in os.listdir(binDir + '/*.deb'):
-            ct = os.stat(fn).st_ctime
-            print fn, ct
-            
-    
+        for fn in os.listdir(binDir):
+            if fn[-4:] != '.deb': continue
+            debPath = os.path.join(binDir, fn)
+            ct = os.stat(debPath).st_ctime
+            if time.time() - ct >= atLeastSeconds:
+                print 'Deleting', debPath
+                os.remove(debPath)
+
+
 def purge_obsolete():
+    threshold = 3600 * 24 * 7 * 12
+
     # Also purge the apt repository if one has been specified.
     if APT_REPO_DIR:
-        purge_apt_repository()
+        purge_apt_repository(threshold)
     
     # Purge the old events.
     print 'Deleting build events older than 12 weeks...'
-    for bld in find_old_builds(3600 * 24 * 7 * 12):
+    for bld in find_old_builds(threshold):
         print bld['tag']
         shutil.rmtree(os.path.join(EVENT_DIR, bld['tag']))  
     print 'Purge done.'
