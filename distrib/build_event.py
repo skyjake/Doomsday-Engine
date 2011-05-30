@@ -92,6 +92,24 @@ def find_old_builds(atLeastSecs):
             result.append({'time':bt, 'tag':fn})
     return result
     
+
+def find_empty_events(baseDir=None):
+    result = []
+    if not baseDir: baseDir = EVENT_DIR
+    print 'Finding empty subdirs in', baseDir
+    for fn in os.listdir(baseDir):
+        path = os.path.join(baseDir, fn)
+        if os.path.isdir(path):
+            # Is this an empty directory?
+            empty = True
+            for c in os.listdir(path):
+                if c != '.' and c != '..':
+                    empty = False
+                    break
+            if empty:
+                result.append(path)
+    return result
+    
     
 def builds_by_time():
     builds = []
@@ -449,10 +467,8 @@ def rebuild_apt_repository():
     
 
 def purge_apt_repository(atLeastSeconds):
-    aptDir = os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-')
-    dirs = ['i386', 'amd64']
-    for d in dirs:
-        binDir = aptDir + d
+    for d in ['i386', 'amd64']:
+        binDir = os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-') + d
         print 'Pruning binary apt directory', binDir
         # Find the old files.
         for fn in os.listdir(binDir):
@@ -476,7 +492,17 @@ def purge_obsolete():
     for bld in find_old_builds(threshold):
         print bld['tag']
         shutil.rmtree(os.path.join(EVENT_DIR, bld['tag']))  
+        
     print 'Purge done.'
+
+
+def dir_cleanup():
+    print 'Event directory cleanup starting...'
+    # Purge empty event directories.
+    for bp in find_empty_events():
+        print 'Deleting', bp
+        os.rmdir(bp)
+    print 'Cleanup done.'
 
 
 if sys.argv[1] == 'create':
@@ -496,6 +522,9 @@ elif sys.argv[1] == 'changes':
     
 elif sys.argv[1] == 'purge':
     purge_obsolete()
+    
+elif sys.argv[1] == 'cleanup':
+    dir_cleanup()
     
 else:
     print 'Unknown command:', sys.argv[1]
