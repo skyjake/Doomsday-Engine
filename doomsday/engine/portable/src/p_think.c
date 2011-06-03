@@ -95,6 +95,34 @@ void P_SetMobjID(thid_t id, boolean state)
         idtable[c] &= ~bit;
 }
 
+typedef struct mobjidlookup_s {
+    thid_t id;
+    mobj_t* result;
+} mobjidlookup_t;
+
+static boolean mobjIdLookup(thinker_t* thinker, void* context)
+{
+    mobjidlookup_t* lookup = (mobjidlookup_t*) context;
+    if(thinker->id == lookup->id)
+    {
+        lookup->result = (mobj_t*) thinker;
+        return false;
+    }
+    return true; // Keep looking.
+}
+
+/**
+ * Locates a mobj based on the identifier.
+ * @todo  A hash table wouldn't hurt (see client's mobj id table).
+ */
+struct mobj_s* P_MobjForID(int id)
+{
+    mobjidlookup_t lookup;
+    lookup.id = id;
+    DD_IterateThinkers(gx.MobjThinker, mobjIdLookup, &lookup);
+    return lookup.result;
+}
+
 static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
 {
     // Link the thinker to the thinker list.

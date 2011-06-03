@@ -277,6 +277,7 @@ extern          "C" {
     void            P_MobjSetState(struct mobj_s* mo, int statenum);
     void            P_MobjLink(struct mobj_s* mo, byte flags);
     int             P_MobjUnlink(struct mobj_s* mo);
+    struct mobj_s*  P_MobjForID(int id);
     boolean         ClMobj_IsValid(struct mobj_s* mo);
 
     // Mobj linked object iterators.
