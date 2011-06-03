@@ -1044,3 +1044,38 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
 
 #undef MSG_SIZE
 }
+
+void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
+{
+#define MSG_SIZE 16
+    char msg[MSG_SIZE];
+    int* ptr = (int*) msg;
+
+    if(!IS_CLIENT || !target) return;
+
+#ifdef _DEBUG
+    Con_Message("NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i.\n",
+                damage, target->thinker.id, inflictor? inflictor->thinker.id : 0,
+                source? source->thinker.id : 0);
+#endif
+
+    // Amount of damage.
+    *ptr++ = LONG(damage);
+
+    // Mobjs.
+    *ptr++ = LONG(target->thinker.id);
+
+    if(inflictor)
+        *ptr++ = LONG(inflictor->thinker.id);
+    else
+        *ptr++ = 0;
+
+    if(source)
+        *ptr++ = LONG(source->thinker.id);
+    else
+        *ptr++ = 0;
+
+    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE, msg, MSG_SIZE);
+
+#undef MSG_SIZE
+}

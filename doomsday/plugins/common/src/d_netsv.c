@@ -1493,6 +1493,28 @@ void NetSv_DoAction(int player, const char *data)
     }
 }
 
+void NetSv_DoDamage(int player, const char *data)
+{
+    const int *ptr = (const int*) data;
+    int damage = 0;
+    int target = 0;
+    int inflictor = 0;
+    int source = 0;
+
+    damage = LONG(*ptr++);
+    target = LONG(*ptr++);
+    inflictor = LONG(*ptr++);
+    source = LONG(*ptr++);
+
+#ifdef _DEBUG
+    Con_Message("NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i.\n",
+                player, damage, target, inflictor, source);
+#endif
+
+    P_DamageMobj2(P_MobjForID(target), P_MobjForID(inflictor), P_MobjForID(source), damage,
+                  false /*not stomping*/, true /*just do it*/);
+}
+
 void NetSv_SaveGame(unsigned int game_id)
 {
     if(!IS_SERVER || !IS_NETGAME)

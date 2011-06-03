@@ -72,7 +72,8 @@ enum {
     GPT_CHEAT_REQUEST,
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
-    GPT_PLAYER_SPAWN_POSITION
+    GPT_PLAYER_SPAWN_POSITION,
+    GPT_DAMAGE                     // Client requests damage on a target.
 };
 
 #if 0

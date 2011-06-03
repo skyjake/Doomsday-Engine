@@ -415,6 +415,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         case GPT_ACTION_REQUEST:
             NetSv_DoAction(fromplayer, data);
             break;
+
+        case GPT_DAMAGE:
+            NetSv_DoDamage(fromplayer, data);
+            break;
         }
         return;
     }
@@ -624,6 +628,8 @@ void D_NetMessageNoSound(int player, const char* msg)
 boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                         int damage)
 {
+    return false;
+#if 0
     if(!source || !source->player)
     {
         return false;
@@ -631,27 +637,27 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     if(IS_SERVER && source->player - players > 0)
     {
-        // A client is trying to do damage.
-#if _DEBUG
-        Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
-#endif
-        //// \todo Damage requests have not been fully implemented yet.
+        /*
+         * A client is trying to do damage. However, it is not guaranteed
+         * that the server is 100% accurately aware of the gameplay situation
+         * in which the damage is being inflicted (due to network latency),
+         * so instead of applying the damage now we will wait for the client
+         * to request it separately.
+         */
         return false;
-        //return true;
     }
     else if(IS_CLIENT && source->player - players == CONSOLEPLAYER)
     {
-#if _DEBUG
-        Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
-#endif
+        NetCl_DamageRequest(target, inflictor, source, damage);
         return true;
     }
 
 #if _DEBUG
-    Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
+    Con_Message("D_NetDamageMobj: Allowing normal damage in netgame.\n");
 #endif
     // Process as normal damage.
     return false;
+#endif
 }
 
 /**
