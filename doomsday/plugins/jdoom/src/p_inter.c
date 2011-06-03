@@ -993,6 +993,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         mo->flags |= MF_DROPPED; // Special versions of items.
 }
 
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
+}
+
 /**
  * Damages both enemies and players.
  *
@@ -1001,10 +1007,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
  * @param source        Mobj to target after taking damage. Can be @c NULL
  *                      for barrel explosions and other environmental stuff.
  *                      Source and inflictor are the same for melee attacks.
+ * @param skipNetworkCheck  Allow the damage to be done regardless of netgame status.
+ *
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                  int damageP, boolean stomping, boolean skipNetworkCheck)
 {
     angle_t             angle;
     int                 saved, originalHealth;
@@ -1020,15 +1028,16 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // non-player mobj).
     damage = damageP;
 
-    if(IS_NETGAME && !stomping &&
-       D_NetDamageMobj(target, inflictor, source, damage))
-    {   // We're done here.
-        return 0;
+    if(!skipNetworkCheck)
+    {
+        if(IS_NETGAME && !stomping && D_NetDamageMobj(target, inflictor, source, damage))
+        {   // We're done here.
+            return 0;
+        }
+        // Clients can't harm anybody.
+        if(IS_CLIENT)
+            return 0;
     }
-
-    // Clients can't harm anybody.
-    if(IS_CLIENT)
-        return 0;
 
     if(!(target->flags & MF_SHOOTABLE))
         return 0; // Shouldn't happen...

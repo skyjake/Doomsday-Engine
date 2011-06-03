@@ -1160,6 +1160,12 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
+}
+
 /**
  * Damages both enemies and players.
  *
@@ -1170,8 +1176,8 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
  *                      Source and inflictor are the same for melee attacks.
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                  int damageP, boolean stomping, boolean skipNetworkCheck)
 {
     angle_t             angle;
     int                 saved, originalHealth;
@@ -1187,18 +1193,28 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // non-player mobj).
     damage = damageP;
 
-    if(IS_NETGAME && !stomping &&
-       D_NetDamageMobj(target, inflictor, source, damage))
-    {   // We're done here.
-        return 0;
+    if(!skipNetworkCheck)
+    {
+        if(IS_NETGAME && !stomping && D_NetDamageMobj(target, inflictor, source, damage))
+        {   // We're done here.
+            return 0;
+        }
+        // Clients can't harm anybody.
+        if(IS_CLIENT)
+            return 0;
     }
 
-    // Clients can't harm anybody.
-    if(IS_CLIENT)
-        return 0;
+#ifdef _DEBUG
+    Con_Message("P_DamageMobj2: Damaging %i with %i points.\n", target->thinker.id, damage);
+#endif
 
     if(!(target->flags & MF_SHOOTABLE))
+    {
+#ifdef _DEBUG
+        Con_Message("P_DamageMobj2: Target %i is not shootable!\n", target->thinker.id);
+#endif
         return 0; // Shouldn't happen...
+    }
 
     if(target->health <= 0)
         return 0;

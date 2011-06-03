@@ -41,4 +41,5 @@ boolean         P_GiveBody(player_t *plr, int num);
 void            P_GiveBackpack(player_t *plr);
 boolean         P_GiveWeapon(player_t *plr, weapontype_t weapon, boolean dropped);
 boolean         P_GiveArmorType(player_t* plr, int type, int points);
+
 #endif

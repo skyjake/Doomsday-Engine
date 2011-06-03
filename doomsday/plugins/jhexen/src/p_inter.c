@@ -1820,6 +1820,12 @@ void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
         player->poisonCount = 100;
 }
 
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
+}
+
 /**
  * Damages both enemies and players
  * \note 'source' and 'inflictor' are the same for melee attacks.
@@ -1831,8 +1837,8 @@ void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
  * @param source            Is the mobj to target after taking damage
  *                          creature or @c NULL.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                  int damageP, boolean stomping, boolean skipNetworkCheck)
 {
     uint            an;
     angle_t         angle;
@@ -1851,15 +1857,16 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // non-player mobj).
     damage = damageP;
 
-    if(IS_NETGAME && !stomping &&
-       D_NetDamageMobj(target, inflictor, source, damage))
-    {   // We're done here.
-        return 0;
+    if(!skipNetworkCheck)
+    {
+        if(IS_NETGAME && !stomping && D_NetDamageMobj(target, inflictor, source, damage))
+        {   // We're done here.
+            return 0;
+        }
+        // Clients can't harm anybody.
+        if(IS_CLIENT)
+            return 0;
     }
-
-    // Clients can't harm anybody.
-    if(IS_CLIENT)
-        return 0;
 
     if(!(target->flags & MF_SHOOTABLE))
         return 0; // Shouldn't happen.

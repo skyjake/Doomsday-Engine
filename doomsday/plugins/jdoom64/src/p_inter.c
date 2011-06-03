@@ -998,6 +998,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     }
 }
 
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
+}
+
 /**
  * Damages both enemies and players
  * Source and inflictor are the same for melee attacks.
@@ -1010,8 +1016,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
  *
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                  int damageP, boolean stomping, boolean skipNetworkCheck)
 {
 // Follow a player exlusively for 3 seconds.
 #define BASETHRESHOLD           (100)
@@ -1033,9 +1039,12 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
     originalHealth = target->health;
 
-    // Clients can't harm anybody.
-    if(IS_CLIENT)
-        return 0;
+    if(!skipNetworkCheck)
+    {
+        // Clients can't harm anybody.
+        if(IS_CLIENT)
+            return 0;
+    }
 
     if(!(target->flags & MF_SHOOTABLE))
         return 0; // Shouldn't happen...
