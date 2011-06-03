@@ -598,6 +598,10 @@ void P_FireWeapon(player_t *player)
     statenum_t          attackState;
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
+#ifdef _DEBUG
+    Con_Message("P_FireWeapon: player %i\n", player - players);
+#endif
+
     if(!P_CheckAmmo(player))
         return;
 
@@ -715,8 +719,10 @@ void P_UpdateBeak(player_t *player, pspdef_t *psp)
 void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 {
     if(player->brain.attack)
-    {   // Chicken beak attack.
+    {
+        // Chicken beak attack.
         player->attackDown = true;
+        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
         P_MobjChangeState(player->plr->mo, S_CHICPLAY_ATK1);
         if(player->powers[PT_WEAPONLEVEL2])
         {
