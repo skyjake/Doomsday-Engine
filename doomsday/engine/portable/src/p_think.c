@@ -119,6 +119,7 @@ struct mobj_s* P_MobjForID(int id)
 {
     mobjidlookup_t lookup;
     lookup.id = id;
+    lookup.result = 0;
     DD_IterateThinkers(gx.MobjThinker, mobjIdLookup, &lookup);
     return lookup.result;
 }
