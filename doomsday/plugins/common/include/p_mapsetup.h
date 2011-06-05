@@ -51,6 +51,7 @@ void P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
 
 boolean P_IsMapFromIWAD(uint episode, uint map);
 const char* P_GetMapNiceName(void);
+patchid_t P_FindMapTitlePatch(uint episode, uint map);
 const char* P_GetMapAuthor(boolean supressGameAuthor);
 
 #endif /* LIBCOMMON_PLAYSETUP_H */

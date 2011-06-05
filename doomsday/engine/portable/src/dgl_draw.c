@@ -481,16 +481,20 @@ void DGL_DeleteLists(DGLuint list, int range)
     GL_DeleteLists(list, range);
 }
 
-void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
-                  float b, float a)
+void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a)
 {
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
-void DGL_DrawRect(float x, float y, float w, float h, float r, float g,
-                  float b, float a)
+void DGL_DrawRect(float x, float y, float w, float h)
 {
-    GL_DrawRect(x, y, w, h, r, g, b, a);
+    GL_DrawRect(x, y, w, h);
+}
+
+void DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a)
+{
+    glColor4f(r, g, b, a);
+    GL_DrawRect(x, y, w, h);
 }
 
 void DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)

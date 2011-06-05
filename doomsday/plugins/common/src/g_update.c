@@ -40,7 +40,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#  include "m_cheat.h"
 #endif
 
 #include "hu_chat.h"
@@ -48,9 +47,12 @@
 #include "hu_menu.h"
 #include "hu_pspr.h"
 #include "hu_stuff.h"
-#include "rend_automap.h"
+#include "hu_automap.h"
 #include "p_inventory.h"
 #include "p_start.h"
+#if __JHEXEN__
+#  include "m_cheat.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -156,10 +158,6 @@ void G_UpdateState(int step)
         P_InitInventory();
 #endif
 
-#if __JHERETIC__ || __JHEXEN__
-        ST_Init();
-#endif
-
         Hu_MenuInit();
 
 #if __JHEXEN__
@@ -173,13 +171,12 @@ void G_UpdateState(int step)
 
     case DD_RENDER_RESTART_PRE:
         Hu_UnloadData();
-        Rend_AutomapUnloadData();
+        GUI_ReleaseResources();
         break;
 
     case DD_RENDER_RESTART_POST:
         Hu_LoadData();
         GUI_LoadResources();
-        Rend_AutomapLoadData();
         break;
     }
 }

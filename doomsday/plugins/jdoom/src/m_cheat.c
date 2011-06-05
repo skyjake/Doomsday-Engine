@@ -345,19 +345,14 @@ int Cht_WarpFunc(const int* args, int player)
 int Cht_Reveal(const int* args, int player)
 {
     player_t* plr = &players[player];
-    automapid_t map;
-
     if(IS_NETGAME && deathmatch)
         return false;
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
-
-    map = AM_MapForPlayer(plr - players);
-    if(AM_IsActive(map))
+    if(ST_AutomapIsActive(player))
     {
-        AM_IncMapCheatLevel(map);
+        ST_CycleAutomapCheatLevel(player);
     }
-
     return true;
 }
 
@@ -713,24 +708,24 @@ D_CMD(CheatWarp)
 
 D_CMD(CheatReveal)
 {
-    int option;
-    automapid_t map;
+    int option, i;
 
     if(!cheatsEnabled())
         return false;
-
-    map = AM_MapForPlayer(CONSOLEPLAYER);
-    AM_SetCheatLevel(map, 0);
-    AM_RevealMap(map, false);
 
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
-    if(option == 1)
-        AM_RevealMap(map, true);
-    else if(option != 0)
-        AM_SetCheatLevel(map, option -1);
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        ST_SetAutomapCheatLevel(i, 0);
+        ST_RevealAutomap(i, false);
+        if(option == 1)
+            ST_RevealAutomap(i, true);
+        else if(option != 0)
+            ST_SetAutomapCheatLevel(i, option -1);
+    }
 
     return true;
 }

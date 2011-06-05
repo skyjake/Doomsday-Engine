@@ -36,8 +36,7 @@
 /// Register the console variables and commands of this module.
 void UIChat_Register(void);
 
-/// Load resources for this module (chat macro strings etc...).
-void UIChat_LoadResources(void);
+void UIChat_LoadMacros(void);
 
 /**
  * UIChat. UI widget for composing player/team chat messages.

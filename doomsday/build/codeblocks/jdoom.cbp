@@ -104,6 +104,7 @@
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
 		<Unit filename="..\..\plugins\common\include\gl_drawpatch.h" />
+		<Unit filename="..\..\plugins\common\include\hu_automap.h" />
 		<Unit filename="..\..\plugins\common\include\hu_chat.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_log.h" />
@@ -114,7 +115,6 @@
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
 		<Unit filename="..\..\plugins\common\include\m_ctrl.h" />
 		<Unit filename="..\..\plugins\common\include\p_actor.h" />
-		<Unit filename="..\..\plugins\common\include\p_automap.h" />
 		<Unit filename="..\..\plugins\common\include\p_ceiling.h" />
 		<Unit filename="..\..\plugins\common\include\p_door.h" />
 		<Unit filename="..\..\plugins\common\include\p_floor.h" />
@@ -137,7 +137,6 @@
 		<Unit filename="..\..\plugins\common\include\p_xgline.h" />
 		<Unit filename="..\..\plugins\common\include\p_xgsec.h" />
 		<Unit filename="..\..\plugins\common\include\r_common.h" />
-		<Unit filename="..\..\plugins\common\include\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
 		<Unit filename="..\..\plugins\common\include\xgclass.h" />
 		<Unit filename="..\..\plugins\common\src\am_map.c">
@@ -168,6 +167,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\gl_patch.c" />
+		<Unit filename="..\..\plugins\common\src\hu_automap.c" />
 		<Unit filename="..\..\plugins\common\src\hu_chat.c" />
 		<Unit filename="..\..\plugins\common\src\hu_lib.c">
 			<Option compilerVar="CC" />
@@ -193,7 +193,6 @@
 		<Unit filename="..\..\plugins\common\src\p_actor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\p_automap.c" />
 		<Unit filename="..\..\plugins\common\src\p_ceiling.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -261,7 +260,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\r_common.c" />
-		<Unit filename="..\..\plugins\common\src\rend_automap.c" />
 		<Unit filename="..\..\plugins\common\src\x_hair.c" />
 		<Unit filename="..\..\plugins\jdoom\include\acfnlink.h" />
 		<Unit filename="..\..\plugins\jdoom\include\d_api.h" />

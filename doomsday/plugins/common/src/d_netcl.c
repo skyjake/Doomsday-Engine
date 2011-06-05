@@ -586,7 +586,7 @@ void NetCl_Intermission(byte* data)
         // Close any HUDs left open at the end of the previous map.
         for(i = 0; i < MAXPLAYERS; ++i)
         {
-            AM_Open(AM_MapForPlayer(i), false, true);
+            ST_AutomapOpen(i, false, true);
 #if __JHERETIC__ || __JHEXEN__
             Hu_InventoryOpen(i, false);
 #endif

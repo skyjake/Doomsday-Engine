@@ -54,7 +54,7 @@
 /// Mask for clearing non-public flags @see logMessageFlags
 #define LOG_INTERNAL_MESSAGEFLAGMASK    0xfe
 
-void Hu_LogRegister(void)
+void UILog_Register(void)
 {
     cvartemplate_t cvars[] = {
         // Behavior
@@ -257,12 +257,15 @@ void UILog_Refresh(uiwidget_t* obj)
  * Process gametic. Jobs include ticking messages and adjusting values
  * used when drawing the buffer for animation.
  */
-void UILog_Ticker(uiwidget_t* obj)
+void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     assert(NULL != obj && obj->type == GUI_LOG);
     {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
     int oldest;
+
+    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
+        return;
 
     // All messags tic away.
     { int i;

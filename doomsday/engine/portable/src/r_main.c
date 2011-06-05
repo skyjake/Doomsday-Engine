@@ -136,12 +136,24 @@ boolean R_IsSkySurface(const surface_t* suf)
     return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }
 
+int R_GetViewWindow(int player, int* x, int* y, int* w, int* h)
+{
+    const viewdata_t* vd = R_ViewData(P_ConsoleToLocal(player));
+    if(NULL == vd) return false;
+    if(x) *x = vd->windowX;
+    if(y) *y = vd->windowY;
+    if(w) *w = vd->windowWidth;
+    if(h) *h = vd->windowHeight;
+    return true;
+}
+
 /**
  * Don't really change anything here, because i might be in the middle of
- * a refresh.  The change will take effect next refresh.
+ * a refresh. The change will take effect next refresh.
  */
-void R_SetViewWindow(int x, int y, int w, int h)
+void R_SetViewWindow(int player, int x, int y, int w, int h)
 {
+    // int p = P_ConsoleToLocal(player);
     viewWindowX = x;
     viewWindowY = y;
     viewWindowWidth = w;
@@ -153,19 +165,16 @@ void R_SetViewWindow(int x, int y, int w, int h)
  */
 int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
 {
-    int                 p = P_ConsoleToLocal(player);
-
+    int p = P_ConsoleToLocal(player);
     if(p != -1)
     {
         if(x) *x = viewports[p].x;
         if(y) *y = viewports[p].y;
         if(w) *w = viewports[p].width;
         if(h) *h = viewports[p].height;
-
-        return p;
+        return true;
     }
-
-    return -1;
+    return false;
 }
 
 /**

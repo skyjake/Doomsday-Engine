@@ -237,9 +237,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define SFXVOLUME           (Get(DD_SFX_VOLUME) / 17)
 #define MUSICVOLUME         (Get(DD_MUSIC_VOLUME) / 17)
 
-#define VIEWWINDOWX         (Get(DD_VIEWWINDOW_X))
-#define VIEWWINDOWY         (Get(DD_VIEWWINDOW_Y))
-
 // Player taking events, and displaying.
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))

@@ -1113,7 +1113,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         R_InitVectorGraphics();
 
         R_InitViewWindow();
-        R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
 
         W_Reset();
     }
@@ -1820,10 +1819,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&isServer, 0},                         // An *open* server?
     {&isClient, 0},
     {&allowFrames, &allowFrames},
-    {&viewWindowX, &viewWindowX},
-    {&viewWindowY, &viewWindowY},
-    {&viewWindowWidth, &viewWindowWidth},
-    {&viewWindowHeight, &viewWindowHeight},
     {&consolePlayer, &consolePlayer},
     {&displayPlayer, &displayPlayer},
     {&mipmapping, 0},

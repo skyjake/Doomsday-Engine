@@ -1,10 +1,10 @@
-/**\file
+/**\file r_common.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_common.c : Common routines for refresh.
+ * Common routines for refresh.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -244,7 +244,7 @@ void R_ViewWindowTicker(timespan_t ticLength)
     }
 }
 
-void R_GetViewWindow(int* x, int* y, int* w, int* h)
+void R_GetSmoothedViewWindow(int* x, int* y, int* w, int* h)
 {
     if(x) *x = windowX;
     if(y) *y = windowY;
@@ -252,59 +252,9 @@ void R_GetViewWindow(int* x, int* y, int* w, int* h)
     if(h) *h = windowHeight;
 }
 
-boolean R_IsFullScreenViewWindow(void)
+boolean R_ViewWindowFillsPort(void)
 {
     return (windowWidth >= 320 && windowHeight >= 200 && windowX <= 0 && windowY <= 0);
-}
-
-/**
- * Does the given display player's automap obscure the window completely?
- * \note: Window dimensions are in fixed scale {x} 0 - 320, {y} 0 - 200.
- *
- * @param playerid      Index of the player whose map to check.
- * @param x             Top left X coordinate.
- * @param y             Top left Y coordinate.
- * @param w             Width.
- * @param h             Height.
- *
- * @return              @true if there is no point within the given window
- *                      which is even partially visible.
- */
-boolean R_MapObscures(int playerid, int x, int y, int w, int h)
-{
-    boolean             retVal = false;
-    automapid_t         map = AM_MapForPlayer(DISPLAYPLAYER);
-
-    if(AM_IsActive(map))
-    {
-        float   alpha;
-
-        AM_GetColorAndAlpha(map, AMO_BACKGROUND, NULL, NULL, NULL, &alpha);
-        if(!(alpha < 1) && !(AM_GlobalAlpha(map) < 1))
-        {
-            if(AM_IsMapWindowInFullScreenMode(map))
-            {
-                retVal = true;
-            }
-            else
-            {
-                // We'll have to compare the dimensions.
-                float       scrwidth = Get(DD_WINDOW_WIDTH);
-                float       scrheight = Get(DD_WINDOW_HEIGHT);
-                float       fx = FIXXTOSCREENX(x);
-                float       fy = FIXYTOSCREENY(x);
-                float       fw = FIXXTOSCREENX(w);
-                float       fh = FIXYTOSCREENY(h);
-                float       mx, my, mw, mh;
-
-                AM_GetWindow(map, &mx, &my, &mw, &mh);
-                if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
-                    retVal = true;
-            }
-        }
-    }
-
-    return retVal;
 }
 
 #ifndef __JHEXEN__

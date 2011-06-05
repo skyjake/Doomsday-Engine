@@ -241,7 +241,8 @@ void            DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
 void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
 
 void            DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
-void            DGL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a);
+void            DGL_DrawRect(float x, float y, float w, float h);
+void            DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
 void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
 void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 

@@ -61,9 +61,8 @@ static float filterColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
-void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a)
+void GL_DrawRect(float x, float y, float w, float h)
 {
-    glColor4f(r, g, b, a);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex2f(x, y);
@@ -76,7 +75,13 @@ void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, 
     glEnd();
 }
 
-void GL_DrawRect2(float x, float y, float width, float height, DGLuint tex,
+void GL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a)
+{
+    glColor4f(r, g, b, a);
+    GL_DrawRect(x, y, w, h);
+}
+
+void GL_DrawRectTextureColor(float x, float y, float width, float height, DGLuint tex,
     int texW, int texH, const float topColor[3], float topAlpha,
     const float bottomColor[3], float bottomAlpha)
 {
@@ -374,20 +379,21 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
         // isn't cleaned up until drawing control returns to the engine we
         // must explicitly disable it here.
         GL_SetNoTexture();
+        glColor4f(0, 0, 0, 1);
 
         if(bp->alignHorizontal)
         {
             // "Pillarbox":
             int w = (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
-            GL_DrawRect(0, 0, w, bp->availHeight, 0, 0, 0, 1);
-            GL_DrawRect(bp->availWidth - w, 0, w, bp->availHeight, 0, 0, 0, 1);
+            GL_DrawRect(0, 0, w, bp->availHeight);
+            GL_DrawRect(bp->availWidth - w, 0, w, bp->availHeight);
         }
         else
         {
             // "Letterbox":
             int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
-            GL_DrawRect(0, 0, bp->availWidth, h, 0, 0, 0, 1);
-            GL_DrawRect(0, bp->availHeight - h, bp->availWidth, h, 0, 0, 0, 1);
+            GL_DrawRect(0, 0, bp->availWidth, h);
+            GL_DrawRect(0, bp->availHeight - h, bp->availWidth, h);
         }
     }
 

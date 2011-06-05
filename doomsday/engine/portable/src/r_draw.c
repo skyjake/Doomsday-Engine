@@ -129,9 +129,15 @@ void R_SetBorderGfx(const dduri_t* paths[9])
 
 void R_InitViewWindow(void)
 {
+    int i;
+    /// \fixme Do not assume native game resolution.
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        R_SetViewWindow(i, 0, 0, SCREENWIDTH, SCREENHEIGHT);
+    }
+
     if(inited)
     {
-        uint i;
         for(i = 0; i < 9; ++i)
             if(borderGraphicsNames[i])
                 Uri_Destruct(borderGraphicsNames[i]);
@@ -169,7 +175,7 @@ void R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets)
         y += p->offY;
     }
 
-    GL_DrawRect(x, y, w, h, 1, 1, 1, 1);
+    GL_DrawRectColor(x, y, w, h, 1, 1, 1, 1);
 }
 
 void R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h)

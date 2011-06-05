@@ -485,9 +485,7 @@ void G_CommonPreInit(void)
     G_Register();               // Read-only game status cvars (for playsim).
     G_ControlRegister();        // For controls/input.
     SV_Register();              // Game-save system.
-    AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
-    Hu_LogRegister();           // For the player message logs.
     GUI_Register();             // For the UI library.
     Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
@@ -845,9 +843,6 @@ void R_InitHud(void)
     Hu_InventoryInit();
 #endif
 
-    VERBOSE2( Con_Message("Initializing automap...\n") )
-    AM_Init();
-
     VERBOSE2( Con_Message("Initializing statusbar...\n") )
     ST_Init();
 
@@ -909,7 +904,6 @@ void G_CommonShutdown(void)
     P_Shutdown();
     G_ShutdownEventSequences();
 
-    AM_Shutdown();
     ST_Shutdown();
     GUI_Shutdown();
     FI_StackShutdown();
@@ -1040,7 +1034,7 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
         ST_LogEmpty(i);
 
         // Close the automap for all local players.
-        AM_Open(AM_MapForPlayer(i), false, true);
+        ST_AutomapOpen(i, false, true);
 
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(i, false);
@@ -1580,7 +1574,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     if(G_GetGameState() == GS_MAP && !IS_DEDICATED)
     {
         ST_Ticker(ticLength);
-        AM_Ticker(ticLength);
     }
 
     // Update view window size.
@@ -2087,7 +2080,7 @@ void G_DoMapCompleted(void)
     {
         if(players[i].plr->inGame)
         {
-            AM_Open(AM_MapForPlayer(i), false, true);
+            ST_AutomapOpen(i, false, true);
 
 #if __JHERETIC__ || __JHEXEN__
             Hu_InventoryOpen(i, false);
@@ -2497,7 +2490,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     {
         if(!players[i].plr->inGame)
             continue;
-        AM_Open(AM_MapForPlayer(i), false, true);
+        ST_AutomapOpen(i, false, true);
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(i, false);
 #endif
@@ -3155,7 +3148,7 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
     {int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        AM_Open(AM_MapForPlayer(i), false, true);
+        ST_AutomapOpen(i, false, true);
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(i, false);
 #endif

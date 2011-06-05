@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 510 <--
-; Other free ordinals: 90 133
+; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -369,7 +369,8 @@ EXPORTS
     R_PrecacheMobjNum           @427 NONAME
     R_PrecacheSkinsForState     @240 NONAME
     R_PrecachePatch             @335 NONAME
-    R_RenderPlayerView          @91 NONAME
+    R_RenderPlayerView          @90 NONAME
+    R_GetViewWindow             @91 NONAME
     R_SetViewWindow             @92 NONAME
     R_GetViewPort               @430 NONAME
     R_SetBorderGfx              @93 NONAME
@@ -442,7 +443,8 @@ EXPORTS
     DGL_Vertices3ftv            @382 NONAME
     DGL_Vertices3fctv           @383 NONAME
     DGL_DrawLine                @127 NONAME
-    DGL_DrawRect                @128 NONAME
+    DGL_DrawRect                @133 NONAME
+    DGL_DrawRectColor           @128 NONAME
     DGL_DrawRectTiled           @129 NONAME
     DGL_DrawCutRectTiled        @130 NONAME
     DGL_NewTextureWithParams    @329 NONAME

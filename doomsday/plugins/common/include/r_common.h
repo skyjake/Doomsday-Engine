@@ -37,17 +37,16 @@
 
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-void            R_ViewWindowTicker(timespan_t ticLength);
-void            R_UpdateViewWindow(boolean force);
-void            R_SetViewWindowTarget(int x, int y, int w, int h);
-void            R_GetViewWindow(int* x, int* y, int* w, int* h);
+void R_ViewWindowTicker(timespan_t ticLength);
+void R_UpdateViewWindow(boolean force);
+void R_GetSmoothedViewWindow(int* x, int* y, int* w, int* h);
+void R_SetViewWindowTarget(int x, int y, int w, int h);
 
-boolean         R_IsFullScreenViewWindow(void);
-boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
+boolean R_ViewWindowFillsPort(void);
 
-void            R_PrecachePSprites(void);
+void R_PrecachePSprites(void);
 
-void            R_GetGammaMessageStrings(void);
-void            R_CycleGammaLevel(void);
+void R_GetGammaMessageStrings(void);
+void R_CycleGammaLevel(void);
 
 #endif /* LIBCOMMON_REFRESH_H */

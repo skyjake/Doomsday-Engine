@@ -2227,7 +2227,7 @@ void UI_DrawLogo(int x, int y, int w, int h)
 {
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
     glEnable(GL_TEXTURE_2D);
-    GL_DrawRect(x, y, w, h, 1, 1, 1, uiAlpha);
+    GL_DrawRectColor(x, y, w, h, 1, 1, 1, uiAlpha);
     glDisable(GL_TEXTURE_2D);
 }
 

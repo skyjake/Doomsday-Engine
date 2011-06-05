@@ -742,10 +742,10 @@ static void drawConsole(float consoleAlpha)
         // Dimensions of the current character.
         width = FR_CharWidth(cmdLine[cmdCursor] == '\0'? ' ' : cmdLine[cmdCursor]);
 
+        glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
+                  consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         GL_DrawRect(XORIGIN + PADDING + (int)xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
-                    (int)width, MAX_OF(1, (int)(height / scale[1])),
-                    CcolYellow[0], CcolYellow[1], CcolYellow[2],
-                    consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
+                    (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
 
     // Restore the original matrices.

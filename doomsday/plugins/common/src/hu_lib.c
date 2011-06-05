@@ -38,6 +38,8 @@
 #endif
 
 #include "hu_lib.h"
+#include "hu_log.h"
+#include "hu_automap.h"
 
 // @todo Remove external dependencies
 #include "hu_menu.h" // For the menu sound ids.
@@ -46,6 +48,9 @@ extern int menuFlashCounter;
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
 static boolean inited = false;
+
+static trigger_t gameTicTrigger = {1.0 / TICSPERSEC};
+static boolean sharpTic = true;
 
 static int numWidgets;
 static uiwidget_t* widgets;
@@ -128,7 +133,7 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, void* t
 static uiwidget_t* createWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
-    void (*ticker) (uiwidget_t* obj), void* typedata)
+    void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), typedata);
     obj->player = player;
@@ -182,7 +187,9 @@ uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id)
 
 void GUI_Register(void)
 {
+    UIAutomap_Register();
     UIChat_Register();
+    UILog_Register();
 }
 
 void GUI_Init(void)
@@ -190,7 +197,10 @@ void GUI_Init(void)
     if(inited) return;
     numWidgets = 0;
     widgets = NULL;
+    UIChat_LoadMacros();
+
     inited = true;
+
     GUI_LoadResources();
 }
 
@@ -203,15 +213,24 @@ void GUI_Shutdown(void)
 
 void GUI_LoadResources(void)
 {
-    MNSlider_LoadResources();
+    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO))
+        return;
+    UIAutomap_LoadResources();
     MNEdit_LoadResources();
-    UIChat_LoadResources();
+    MNSlider_LoadResources();
+}
+
+void GUI_ReleaseResources(void)
+{
+    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO))
+        return;
+    UIAutomap_ReleaseResources();
 }
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
-    void (*ticker) (uiwidget_t* obj), void* typedata)
+    void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
@@ -273,6 +292,16 @@ void UIGroup_SetFlags(uiwidget_t* obj, short flags)
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
     grp->flags = flags;
     }
+}
+
+boolean GUI_RunGameTicTrigger(timespan_t ticLength)
+{
+    return (sharpTic = M_RunTrigger(&gameTicTrigger, ticLength));
+}
+
+boolean GUI_GameTicTriggerIsSharp(void)
+{
+    return sharpTic;
 }
 
 static void drawWidget(uiwidget_t* obj, int x, int y, float alpha, int* drawnWidth, int* drawnHeight)
@@ -413,7 +442,7 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth,
     }
 }
 
-void GUI_TickWidget(uiwidget_t* obj)
+void UIWidget_RunTic(uiwidget_t* obj, timespan_t tickLength)
 {
     assert(NULL != obj);
     switch(obj->type)
@@ -424,14 +453,14 @@ void GUI_TickWidget(uiwidget_t* obj)
         int i;
         for(i = 0; i < grp->widgetIdCount; ++i)
         {
-            GUI_TickWidget(GUI_MustFindObjectById(grp->widgetIds[i]));
+            UIWidget_RunTic(GUI_MustFindObjectById(grp->widgetIds[i]), tickLength);
         }
         // Fallthrough:
       }
     default:
         if(NULL != obj->ticker)
         {
-            obj->ticker(obj);
+            obj->ticker(obj, tickLength);
         }
         break;
     }
@@ -1055,24 +1084,25 @@ static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, 
     patchinfo_t leftInfo, rightInfo, middleInfo;
     int leftOffset = 0, rightOffset = 0;
 
-    if(0 != pEditLeft && R_GetPatchInfo(pEditLeft, &leftInfo))
+    DGL_Color4f(1, 1, 1, alpha);
+
+    if(R_GetPatchInfo(pEditLeft, &leftInfo))
     {
         DGL_SetPatch(pEditLeft, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x, y, leftInfo.width, leftInfo.height, 1, 1, 1, alpha);
+        DGL_DrawRect(x, y, leftInfo.width, leftInfo.height);
         leftOffset = leftInfo.width;
     }
 
-    if(0 != pEditRight && R_GetPatchInfo(pEditRight, &rightInfo))
+    if(R_GetPatchInfo(pEditRight, &rightInfo))
     {
         DGL_SetPatch(pEditRight, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + width - rightInfo.width, y, rightInfo.width, rightInfo.height, 1, 1, 1, alpha);
+        DGL_DrawRect(x + width - rightInfo.width, y, rightInfo.width, rightInfo.height);
         rightOffset = rightInfo.width;
     }
 
-    if(0 != pEditMiddle && R_GetPatchInfo(pEditMiddle, &middleInfo))
+    if(R_GetPatchInfo(pEditMiddle, &middleInfo))
     {
         DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
-        DGL_Color4f(1, 1, 1, alpha);
         DGL_DrawRectTiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.height, middleInfo.width, middleInfo.height);
     }
 }
@@ -1755,7 +1785,7 @@ void MNColorBox_Drawer(mn_object_t* obj, int x, int y)
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRect(x, y, cbox->width, cbox->height, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
+    DGL_DrawRectColor(x, y, cbox->width, cbox->height, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
     }
 }
 

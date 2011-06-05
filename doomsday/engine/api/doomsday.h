@@ -458,8 +458,11 @@ void Con_SetString(const char* name, const char* text);
     void            R_PrecacheSkinsForState(int stateIndex);
 
     void            R_RenderPlayerView(int num);
-    void            R_SetViewWindow(int x, int y, int w, int h);
-    int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
+
+int R_GetViewWindow(int player, int* x, int* y, int* w, int* h);
+void R_SetViewWindow(int player, int x, int y, int w, int h);
+
+int R_GetViewPort(int player, int* x, int* y, int* w, int* h);
 
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);

@@ -1429,30 +1429,33 @@ void P_PlayerThinkHUD(player_t* player)
 
 void P_PlayerThinkMap(player_t* player)
 {
-    uint                plnum = player - players;
-    playerbrain_t*      brain = &player->brain;
-    automapid_t         map = AM_MapForPlayer(plnum);
+    uint playerIdx = player - players;
+    playerbrain_t* brain = &player->brain;
 
     if(brain->mapToggle)
-        AM_Open(map, !AM_IsActive(map), false);
+        ST_AutomapOpen(playerIdx, !ST_AutomapIsActive(playerIdx), false);
 
     if(brain->mapFollow)
-        AM_ToggleFollow(map);
+        ST_ToggleAutomapPanMode(playerIdx);
 
     if(brain->mapRotate)
-        AM_SetViewRotate(map, 2); // 2 = toggle.
+    {
+        cfg.automapRotate = !cfg.automapRotate;
+        ST_SetAutomapCameraRotation(playerIdx, cfg.automapRotate);
+        P_SetMessage(player, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), false);
+    }
 
     if(brain->mapZoomMax)
-        AM_ToggleZoomMax(map);
+        ST_ToggleAutomapMaxZoom(playerIdx);
 
     if(brain->mapMarkAdd)
     {
-        mobj_t*         pmo = player->plr->mo;
-        AM_AddMark(map, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
+        mobj_t* pmo = player->plr->mo;
+        ST_AutomapAddPoint(playerIdx, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
     }
 
     if(brain->mapMarkClearAll)
-        AM_ClearMarks(map);
+        ST_AutomapClearPoints(playerIdx);
 }
 
 void P_PlayerThinkPowers(player_t* player)

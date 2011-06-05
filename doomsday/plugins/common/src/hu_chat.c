@@ -64,7 +64,7 @@ void UIChat_Register(void)
         Con_AddVariable(chatCVars + i);
 }
 
-void UIChat_LoadResources(void)
+void UIChat_LoadMacros(void)
 {
     // Retrieve the chat macro strings if not already set.
     int i;

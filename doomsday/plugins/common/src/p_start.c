@@ -536,25 +536,6 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     else
         p->pendingWeapon = p->readyWeapon;
 
-    // Initialize the automap.
-    { automapid_t automap = AM_MapForPlayer(plrNum);
-
-    if(IS_NETGAME)
-    {
-        AM_SetCheatLevel(automap, 0);
-        AM_RevealMap(automap, false);
-    }
-
-    // Add all immediately visible lines.
-    { uint i;
-    for(i = 0; i < numlines; ++i)
-    {
-        xline_t* xline = &xlines[i];
-        if(xline->flags & ML_MAPPED)
-            AM_UpdateLinedef(automap, i, true);
-    }}
-    }
-
     // Setup gun psprite.
     P_SetupPsprites(p);
 

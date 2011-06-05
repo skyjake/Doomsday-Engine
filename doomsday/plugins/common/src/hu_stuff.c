@@ -643,7 +643,7 @@ static void drawTable(float x, float ly, float width, float height,
             else
                 val = .8f;
 
-            DGL_DrawRect(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
+            DGL_DrawRectColor(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
         }
 
         // Now draw the fields:
@@ -659,7 +659,7 @@ static void drawTable(float x, float ly, float width, float height,
 
 /*#if _DEBUG
 DGL_Disable(DGL_TEXTURE_2D);
-GL_DrawRect(cX + CELL_PADDING, cY + CELL_PADDING,
+GL_DrawRectColor(cX + CELL_PADDING, cY + CELL_PADDING,
             colW[n] - CELL_PADDING * 2,
             lineHeight - CELL_PADDING * 2,
             1, 1, 1, .1f * alpha);
@@ -847,7 +847,7 @@ void HU_DrawScoreBoard(int player)
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.
-    DGL_DrawRect(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
+    DGL_DrawRectColor(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1187,30 +1187,40 @@ const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
     boolean builtin)
 {
     const char* replacement = NULL; // No replacement possible/wanted.
-
-    if(altString && altString[0] && !builtin)
-    {   // We have already determined a string to replace this with.
-        patchinfo_t info;
-        R_GetPatchInfo(patchId, &info);
-        if(!info.isCustom)
-        {
-            replacement = altString;
-        }
+    boolean isCustom = false;
+    patchinfo_t info;
+    
+    if(patchId != 0 && R_GetPatchInfo(patchId, &info))
+    {
+        isCustom = info.isCustom;
     }
-    else if(cfg.usePatchReplacement)
-    {   // We might be able to replace the patch with a string replacement.
-        // A user replacement?
-        replacement = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
-        if(NULL == replacement)
-        {
-            // Perhaps a built-in replacement?
-            patchinfo_t info;
-            if(cfg.usePatchReplacement == 2 && altString && altString[0] &&
-               R_GetPatchInfo(patchId, &info) && !info.isCustom)
+
+    if(patchId != 0)
+    {
+        if(altString && altString[0] && !builtin)
+        {   // We have already determined a string to replace this with.
+            if(!isCustom)
             {
                 replacement = altString;
             }
         }
+        else if(cfg.usePatchReplacement)
+        {   // We might be able to replace the patch with a string replacement.
+            // A user replacement?
+            replacement = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
+            if(NULL == replacement)
+            {
+                // Perhaps a built-in replacement?
+                if(cfg.usePatchReplacement == 2 && altString && altString[0] && !isCustom)
+                {
+                    replacement = altString;
+                }
+            }
+        }
+    }
+    else if(!builtin)
+    {
+        replacement = altString;
     }
 
     return replacement;
@@ -1224,9 +1234,6 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId)
 void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, short flags,
     fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow)
 {
-    if(patchId == 0)
-        return;
-
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
@@ -1234,6 +1241,9 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, sho
         FR_DrawText(replacement, x, y, fontId, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
         return;
     }
+
+    if(patchId == 0)
+        return;
 
     // Use the original patch.
     DGL_Color4f(1, 1, 1, a);
@@ -1327,16 +1337,16 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 
         // Top Left
         DGL_SetPatch(tl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - tl->width, y - tl->height, tl->width, tl->height, red, green, blue, alpha);
+        DGL_DrawRect(x - tl->width, y - tl->height, tl->width, tl->height);
         // Top Right
         DGL_SetPatch(tr->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height, red, green, blue, alpha);
+        DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height);
         // Bottom Right
         DGL_SetPatch(br->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y + h, br->width, br->height, red, green, blue, alpha);
+        DGL_DrawRect(x + w, y + h, br->width, br->height);
         // Bottom Left
         DGL_SetPatch(bl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height, red, green, blue, alpha);
+        DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height);
     }
 }
 
@@ -1372,7 +1382,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     if(effectID == 4)
     {
         DGL_SetNoMaterial();
-        DGL_DrawRect(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
+        DGL_DrawRectColor(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
         return;
     }
 

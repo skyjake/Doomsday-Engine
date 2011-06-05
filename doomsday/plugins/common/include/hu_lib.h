@@ -730,6 +730,8 @@ typedef enum {
     GUI_READYITEM,
     GUI_FLIGHT,
 #endif
+    GUI_AUTOMAP,
+    GUI_MAPNAME
 } guiwidgettype_t;
 
 typedef int uiwidgetid_t;
@@ -742,14 +744,18 @@ typedef struct uiwidget_s {
     fontid_t fontId;
     void (*dimensions) (struct uiwidget_s* obj, int* width, int* height);
     void (*drawer) (struct uiwidget_s* obj, int x, int y);
-    void (*ticker) (struct uiwidget_s* obj);
+    void (*ticker) (struct uiwidget_s* obj, timespan_t ticLength);
     void* typedata;
 } uiwidget_t;
+
+/// @return  @c true= the current tic is 'sharp' once ran for @a ticLength
+boolean GUI_RunGameTicTrigger(timespan_t ticLength);
+boolean GUI_GameTicTriggerIsSharp(void);
 
 void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth, int availHeight,
     float alpha, int* drawnWidth, int* drawnHeight);
 
-void GUI_TickWidget(uiwidget_t* obj);
+void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
 
 /// @return  Local player number of the owner of this widget.
 int UIWidget_Player(uiwidget_t* obj);
@@ -945,6 +951,7 @@ void GUI_Register(void);
 void GUI_Init(void);
 void GUI_Shutdown(void);
 void GUI_LoadResources(void);
+void GUI_ReleaseResources(void);
 
 uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 
@@ -954,7 +961,7 @@ uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
     void (*dimensions) (uiwidget_t* obj, int* width, int* height),
     void (*drawer) (uiwidget_t* obj, int x, int y),
-    void (*ticker) (uiwidget_t* obj), void* typedata);
+    void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
 uiwidgetid_t GUI_CreateGroup(int player, short flags, int padding);
 

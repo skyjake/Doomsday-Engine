@@ -46,7 +46,7 @@
 #define LOG_MESSAGE_SCROLLTICS      (10)
 
 /// To be called to register the console commands and variables of this module.
-void Hu_LogRegister(void);
+void UILog_Register(void);
 
 /**
  * UILog. UI widget for player game message logging.
@@ -81,7 +81,7 @@ typedef struct {
 } guidata_log_t;
 
 /// Process gametic for this message log.
-void UILog_Ticker(uiwidget_t* obj);
+void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength);
 
 /// Draw this message log widget.
 void UILog_Drawer(uiwidget_t* obj, int x, int y);

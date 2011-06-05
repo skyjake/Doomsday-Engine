@@ -542,7 +542,7 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     }
     V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
     V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
-    GL_DrawRect2(x, y, width, height, tex, 64, 64, topColor, p->_bg.topColor[3].value * alpha, bottomColor, p->_bg.bottomColor[3].value * alpha);
+    GL_DrawRectTextureColor(x, y, width, height, tex, 64, 64, topColor, p->_bg.topColor[3].value * alpha, bottomColor, p->_bg.bottomColor[3].value * alpha);
 }
 
 void FIPage_Drawer(fi_page_t* p)
@@ -617,7 +617,7 @@ void FIPage_Drawer(fi_page_t* p)
     // Filter on top of everything. Only draw if necessary.
     if(p->_filter[3].value > 0)
     {
-        GL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_filter[0].value, p->_filter[1].value, p->_filter[2].value, p->_filter[3].value);
+        GL_DrawRectColor(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_filter[0].value, p->_filter[1].value, p->_filter[2].value, p->_filter[3].value);
     }
 
     GL_SetMultisample(false);

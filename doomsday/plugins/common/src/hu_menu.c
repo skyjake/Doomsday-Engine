@@ -134,6 +134,7 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y);
 void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y);
 void Hu_MenuDrawMultiplayerPage(mn_page_t* page, int x, int y);
 void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawAutomapPage(mn_page_t* page, int x, int y);
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd);
 
@@ -1169,6 +1170,113 @@ mn_page_t WeaponMenu = {
     //0, 12, { 12, 38 }
 };
 
+mndata_slider_t sld_map_opacity = { 0, 1, 0, 0.1f, true, "map-opacity" };
+mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-alpha-lines" };
+mndata_slider_t sld_map_doorglow = { 0, 200, 0, 5, true, "map-door-glow" };
+
+mndata_listitem_t lstit_map_statusbar[] = {
+    { "NONE", 0 },
+    { "CURRENT", 1 },
+    { "STATUSBAR", 2 }
+};
+mndata_list_t lst_map_statusbar = {
+    lstit_map_statusbar, NUMLISTITEMS(lstit_map_statusbar), "map-huddisplay"
+};
+
+mndata_listitem_t lstit_map_customcolors[] = {
+    { "NEVER", 0 },
+    { "AUTO", 1 },
+    { "ALWAYS", 2 }
+};
+mndata_list_t lst_map_customcolors = {
+    lstit_map_customcolors, NUMLISTITEMS(lstit_map_customcolors), "map-customcolors"
+};
+
+mndata_colorbox_t cbox_map_line_unseen_color = { 
+    0, 0, 0, 0, 0, 0, false,
+    "map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"
+};
+mndata_colorbox_t cbox_map_line_solid_color = {
+    0, 0, 0, 0, 0, 0, false,
+    "map-wall-r", "map-wall-g", "map-wall-b"
+};
+mndata_colorbox_t cbox_map_line_floor_color = {
+    0, 0, 0, 0, 0, 0, false,
+    "map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"
+};
+mndata_colorbox_t cbox_map_line_ceiling_color = {
+    0, 0, 0, 0, 0, 0, false,
+    "map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"
+};
+mndata_colorbox_t cbox_map_mobj_color = {
+    0, 0, 0, 0, 0, 0, false,
+    "map-mobj-r", "map-mobj-g", "map-mobj-b"
+};
+mndata_colorbox_t cbox_map_background_color = {
+    0, 0, 0, 0, 0, 0, false,
+    "map-background-r", "map-background-g", "map-background-b"
+};
+
+mndata_text_t txt_map_opacity = { "Background Opacity" };
+mndata_text_t txt_map_line_opacity = { "Line Opacity" };
+mndata_text_t txt_map_hud_display = { "HUD Display" };
+mndata_text_t txt_map_door_colors = { "Door Colors" };
+mndata_text_t txt_map_door_glow = { "Door Glow" };
+mndata_text_t txt_map_use_custom_colors = { "Use Custom Colors" };
+mndata_text_t txt_map_color_wall = { "Wall" };
+mndata_text_t txt_map_color_floor_height_change = { "Floor Height Change" };
+mndata_text_t txt_map_color_ceiling_height_change = { "Ceiling Height Change" };
+mndata_text_t txt_map_color_unseen = { "Unseen" };
+mndata_text_t txt_map_color_thing = { "Thing" };
+mndata_text_t txt_map_color_background = { "Background" };
+
+mndata_button_t btn_map_door_colors = { true, "map-door-colors" };
+
+mn_object_t AutomapMenuObjects[] = {
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_opacity },
+    { MN_SLIDER,    0,  0,  'o', MENU_FONT1, MENU_COLOR1, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_opacity },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_opacity },
+    { MN_SLIDER,    0,  0,  'l', MENU_FONT1, MENU_COLOR1, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_hud_display },
+    { MN_LIST,      0,  0,  'h', MENU_FONT1, MENU_COLOR3, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_statusbar },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_colors },
+    { MN_BUTTON,    0,  0,  'c', MENU_FONT1, MENU_COLOR3, MNButton_Dimensions, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_map_door_colors },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_glow },
+    { MN_SLIDER,    0,  0,  'g', MENU_FONT1, MENU_COLOR1, MNSlider_Dimensions, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_doorglow },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_use_custom_colors },
+    { MN_LIST,      0,  0,  0,   MENU_FONT1, MENU_COLOR3, MNList_InlineDimensions, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_wall },
+    { MN_COLORBOX,  0,  0,  'w', MENU_FONT1, MENU_COLOR1, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_floor_height_change },
+    { MN_COLORBOX,  0,  0,  'f', MENU_FONT1, MENU_COLOR1, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_floor_color },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_ceiling_height_change },
+    { MN_COLORBOX,  0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_ceiling_color },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_unseen },
+    { MN_COLORBOX,  0,  0,  'u', MENU_FONT1, MENU_COLOR1, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_unseen_color },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_thing },
+    { MN_COLORBOX,  0,  0,  't', MENU_FONT1, MENU_COLOR1, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_mobj_color },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_Dimensions, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_background },
+    { MN_COLORBOX,  0,  0,  'b', MENU_FONT1, MENU_COLOR1, MNColorBox_Dimensions, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_background_color },
+    { MN_NONE }
+};
+
+mn_page_t AutomapMenu = {
+    AutomapMenuObjects,
+#if __JHERETIC__ || __JHEXEN__
+    { 64, 28 },
+#else
+    { 70, 40 },
+#endif
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
+    Hu_MenuDrawAutomapPage, NULL,
+    &OptionsMenu,
+#if __JHERETIC__ || __JHEXEN__
+    //0, 11, { 11, 28 }
+#else
+    //0, 13, { 13, 40 }
+#endif
+};
+
 mndata_text_t txt_gameplay_always_run = { "Always Run" };
 mndata_text_t txt_gameplay_use_lookspring = { "Use LookSpring" };
 mndata_text_t txt_gameplay_use_autoaim = { "Use AutoAim" };
@@ -2116,7 +2224,7 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
 static void drawOverlayBackground(float darken)
 {
     DGL_SetNoMaterial();
-    DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
+    DGL_DrawRectColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
 }
 
 static void beginOverlayDraw(void)
@@ -3742,6 +3850,27 @@ int Hu_MenuSelectControlPanelLink(mn_object_t* obj, mn_actionid_t action, void* 
     return 0;
 
 #undef NUM_PANEL_NAMES
+}
+
+/**
+ * Draws the automap options menu
+ */
+void Hu_MenuDrawAutomapPage(mn_page_t* page, int x, int y)
+{
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
+    FR_SetFont(FID(GF_FONTB));
+    MN_DrawText2("Automap OPTIONS", SCREENWIDTH/2, y-26, DTF_ALIGN_TOP);
+
+/*#if __JHERETIC__ || __JHEXEN__
+    // Draw the page arrows.
+    DGL_Color4f(1, 1, 1, mnRendState->page_alpha);
+    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, y - 22);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (menuTime & 8)], 312 - x, y - 22);
+#endif*/
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 D_CMD(MenuOpen)

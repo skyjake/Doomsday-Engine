@@ -112,6 +112,25 @@ xline_t* P_ToXLine(linedef_t* line)
     }
 }
 
+xline_t* P_GetXLine(uint idx)
+{
+    if(idx >= numlines) return NULL;
+    return &xlines[idx];
+}
+
+void P_SetLinedefAutomapVisibility(int player, uint lineIdx, boolean visible)
+{
+    linedef_t* line = P_ToPtr(DMU_LINEDEF, lineIdx);
+    xline_t* xline;
+    if(NULL == line || P_IsDummy(line)) return;
+
+    // Will we need to rebuild one or more display lists?
+    xline = P_ToXLine(line);
+    if(xline->mapped[player] != visible)
+        ST_RebuildAutomap(player);
+    xline->mapped[player] = visible;
+}
+
 /**
  * Converts a sector to an xsector.
  */
@@ -154,32 +173,6 @@ xsector_t* P_ToXSectorOfSubsector(subsector_t* sub)
     }
 }
 
-/**
- * Given the index of an xline, return it.
- *
- * \note: This routine cannot be used with dummy lines!
- *
- * @param               Index of the xline to return.
- *
- * @return              Ptr to xline_t.
- */
-xline_t* P_GetXLine(uint index)
-{
-    if(index >= numlines)
-        return NULL;
-
-    return &xlines[index];
-}
-
-/**
- * Given the index of an xsector, return it.
- *
- * \note: This routine cannot be used with dummy sectors!
- *
- * @param               Index of the xsector to return.
- *
- * @return              Ptr to xsector_t.
- */
 xsector_t* P_GetXSector(uint index)
 {
     if(index >= numsectors)
@@ -831,8 +824,6 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Loading map...", P_SetupMapWorker, &param);
 
-    AM_InitForMap();
-
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
 
 #if __JHEXEN__
@@ -993,6 +984,18 @@ const char* P_GetMapNiceName(void)
     }
 
     return lname;
+}
+
+patchid_t P_FindMapTitlePatch(uint episode, uint map)
+{
+#if __JDOOM__ || __JDOOM64__
+#  if __JDOOM__
+    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
+        map = (episode * 9) + map;
+#  endif
+    return pMapNames[map];
+#endif
+    return 0;
 }
 
 boolean P_IsMapFromIWAD(uint episode, uint map)
