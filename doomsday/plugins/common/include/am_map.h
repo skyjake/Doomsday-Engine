@@ -29,18 +29,18 @@
 
 #if __JDOOM__ || __JDOOM64__
 #define BLACK           (0)
-#define BROWNS          (4*16)
 #define WHITE           (256-47)
-#define GRAYS           (6*16)
 #define REDS            (256-5*16)
 #define GREENS          (7*16)
 #define YELLOWS         (256-32+7)
+#define GRAYS           (6*16)
+#define BROWNS          (4*16)
 
 #define WALLCOLORS      REDS
 #define TSWALLCOLORS    GRAYS
 #define CDWALLCOLORS    YELLOWS
-#define THINGCOLORS     GREENS
 #define FDWALLCOLORS    BROWNS
+#define THINGCOLORS     GREENS
 #define BACKGROUND      BLACK
 
 // Keys for Baby Mode
@@ -58,64 +58,21 @@
 #endif
 
 #ifdef __JHERETIC__
+#define BLACK           (0)
+#define WHITE           (4*8)
+#define REDS            (12*8)
+#define GREENS          (33*8)
+#define YELLOWS         (10*8)
+#define GRAYS           (5*8)
+#define BROWNS          (14*8)
+#define PARCH           (13*8-1)
 
-// For use if I do walls with outsides/insides
-#define REDS        12*8
-#define REDRANGE    1              //16
-#define BLUES       (256-4*16+8)
-#define BLUERANGE   1              //8
-#define GREENS      (33*8)
-#define GREENRANGE  1              //16
-#define GRAYS       (5*8)
-#define GRAYSRANGE  1              //16
-#define BROWNS      (14*8)
-#define BROWNRANGE  1              //16
-#define YELLOWS     10*8
-#define YELLOWRANGE 1
-#define BLACK       0
-#define WHITE       4*8
-#define PARCH       13*8-1
 #define WALLCOLORS      REDS
-#define FDWALLCOLORS        BROWNS
-#define CDWALLCOLORS        YELLOWS
-#define YOURCOLORS      WHITE
-#define YOURRANGE       0
-#define WALLRANGE       REDRANGE
-#define TSWALLCOLORS        GRAYS
-#define TSWALLRANGE     GRAYSRANGE
-#define FDWALLRANGE     BROWNRANGE
-#define CDWALLRANGE     YELLOWRANGE
-#define THINGCOLORS     GREENS
-#define THINGRANGE      GREENRANGE
-#define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS      (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE       0
-#define XHAIRCOLORS     GRAYS
-
-#define BLOODRED  150
-
-// Automap colors
-#define BACKGROUND  PARCH
-#define YOURCOLORS  WHITE
-#define YOURRANGE   0
-
-#define WALLRANGE   REDRANGE
 #define TSWALLCOLORS    GRAYS
-#define TSWALLRANGE GRAYSRANGE
-
-#define FDWALLRANGE BROWNRANGE
-
-#define CDWALLRANGE YELLOWRANGE
-#define THINGCOLORS GREENS
-#define THINGRANGE  GREENRANGE
-#define SECRETWALLCOLORS WALLCOLORS
-#define SECRETWALLRANGE WALLRANGE
-#define GRIDCOLORS  (GRAYS + GRAYSRANGE/2)
-#define GRIDRANGE   0
-#define XHAIRCOLORS GRAYS
-
-#define BORDEROFFSET 4
+#define CDWALLCOLORS    YELLOWS
+#define FDWALLCOLORS    BROWNS
+#define THINGCOLORS     GREENS
+#define BACKGROUND      PARCH
 
 // Keys for Baby Mode
 #define KEY1_COLOR      (144) // Green Key
@@ -126,7 +83,6 @@
 #define AM_PLR2_COLOR   (197)
 #define AM_PLR3_COLOR   (150)
 #define AM_PLR4_COLOR   (144)
-
 #endif
 
 

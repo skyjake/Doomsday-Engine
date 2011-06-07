@@ -442,7 +442,7 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth,
     }
 }
 
-void UIWidget_RunTic(uiwidget_t* obj, timespan_t tickLength)
+void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength)
 {
     assert(NULL != obj);
     switch(obj->type)
@@ -453,14 +453,14 @@ void UIWidget_RunTic(uiwidget_t* obj, timespan_t tickLength)
         int i;
         for(i = 0; i < grp->widgetIdCount; ++i)
         {
-            UIWidget_RunTic(GUI_MustFindObjectById(grp->widgetIds[i]), tickLength);
+            UIWidget_RunTic(GUI_MustFindObjectById(grp->widgetIds[i]), ticLength);
         }
         // Fallthrough:
       }
     default:
         if(NULL != obj->ticker)
         {
-            obj->ticker(obj, tickLength);
+            obj->ticker(obj, ticLength);
         }
         break;
     }

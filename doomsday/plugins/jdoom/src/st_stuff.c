@@ -2874,7 +2874,7 @@ void ST_Drawer(int player)
     // Do palette shifts.
     ST_doPaletteStuff(player);
 
-    GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), 0, 0, 320, 200, ST_AutomapOpacity(player), NULL, NULL);
+    GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), 0, 0, SCREENWIDTH, SCREENHEIGHT, ST_AutomapOpacity(player), NULL, NULL);
 
     if(hud->statusbarActive || (fullscreen < 3 || hud->alpha > 0))
     {
@@ -3178,6 +3178,8 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     float lowX, hiX, lowY, hiY;
     automapcfg_t* mcfg;
 
+    UIAutomap_Reset(obj);
+
     findMapBounds(&lowX, &hiX, &lowY, &hiY);
     UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
     UIAutomap_SetWorldBounds(obj, lowX, hiX, lowY, hiY);
@@ -3262,7 +3264,8 @@ void ST_Start(int player)
     initAutomapForCurrentMap(obj);
     UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
-    UIAutomap_SetWindowDimensions(obj, 0, 0, winWidth, winHeight);
+    UIAutomap_SetWindowOrigin(obj, 0, 0);
+    UIAutomap_SetWindowDimensions(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }
@@ -3283,11 +3286,9 @@ void ST_Stop(int player)
 
 void ST_BuildWidgets(int player)
 {
-    assert(player >= 0 && player < MAXPLAYERS);
-    {
 #define PADDING 2 // In fixed 320x200 units.
 
-    hudstate_t* hud = &hudStates[player];
+    hudstate_t* hud = hudStates + player;
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
         { UWG_STATUSBAR,    UWGF_ALIGN_BOTTOM },
         { UWG_MAPNAME,      UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT },
@@ -3340,6 +3341,12 @@ void ST_BuildWidgets(int player)
     };
     size_t i;
 
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+        Con_Error("ST_BuildWidgets: Invalid player #%i.", player);
+        exit(1); // Unreachable.
+    }
+
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
@@ -3359,11 +3366,10 @@ void ST_BuildWidgets(int player)
     hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_Dimensions, UIChat_Drawer, NULL, &hud->chat);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, -1, FID(GF_FONTB), UIAutomap_Dimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, -1, FID(GF_FONTA), UIAutomap_Dimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING
-    }
 }
 
 void ST_Init(void)
@@ -3508,13 +3514,6 @@ boolean ST_AutomapIsActive(int player)
     return UIAutomap_Active(obj);
 }
 
-void ST_AutomapWindowOrigin(int player, float* x, float* y)
-{
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
-    UIAutomap_WindowOrigin(obj, x, y);
-}
-
 boolean ST_AutomapWindowObscures(int player, int x, int y, int w, int h)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
@@ -3538,34 +3537,14 @@ boolean ST_AutomapWindowObscures(int player, int x, int y, int w, int h)
                 float fh = FIXYTOSCREENY(h);
                 float mx, my, mw, mh;
 
-                ST_AutomapWindowDimensions(player, &mx, &my, &mw, &mh);
+                UIAutomap_WindowOrigin(obj, &mx, &my);
+                UIAutomap_WindowDimensions(obj, &mw, &mh);
                 if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
                     return true;
             }
         }
     }
     return false;
-}
-
-void ST_ToggleAutomapWindowFullscreen(int player)
-{
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
-    UIAutomap_SetFullscreen(obj, !UIAutomap_Fullscreen(obj));
-}
-
-boolean ST_AutomapWindowFullscreen(int player)
-{
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return false;
-    return UIAutomap_Fullscreen(obj);
-}
-
-void ST_AutomapWindowDimensions(int player, float* x, float* y, float* w, float* h)
-{
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
-    UIAutomap_WindowDimensions(obj, x, y, w, h);
 }
 
 void ST_AutomapClearPoints(int player)

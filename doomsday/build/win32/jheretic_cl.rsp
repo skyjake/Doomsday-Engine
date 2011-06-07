@@ -26,11 +26,10 @@
  .\..\..\plugins\common\src\p_door.c
  .\..\..\plugins\common\src\p_ceiling.c
  .\..\..\plugins\common\src\p_actor.c
- .\..\..\plugins\common\src\p_automap.c
  .\..\..\plugins\common\src\p_player.c
  .\..\..\plugins\common\src\x_hair.c
  .\..\..\plugins\common\src\r_common.c
- .\..\..\plugins\common\src\rend_automap.c
+ .\..\..\plugins\common\src\hu_automap.c
  .\..\..\plugins\common\src\m_ctrl.c
  .\..\..\plugins\common\src\m_fixed.c
  .\..\..\plugins\common\src\hu_pspr.c

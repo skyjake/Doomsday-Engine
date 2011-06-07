@@ -47,6 +47,7 @@
 #if __JDOOM64__
 #  include "p_inventory.h"
 #endif
+#include "g_common.h"
 #include "hu_stuff.h"
 
 #define LERP(start, end, pos)   (end * pos + start * (1 - pos))
@@ -1158,7 +1159,8 @@ static void setupGLStateForMap(uiwidget_t* obj)
     float wx, wy, ww, wh, angle, plx, ply, bgColor[3];
     int player = UIWidget_Player(obj);
 
-    UIAutomap_WindowDimensions(obj, &wx, &wy, &ww, &wh);
+    UIAutomap_WindowOrigin(obj, &wx, &wy);
+    UIAutomap_WindowDimensions(obj, &ww, &wh);
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
 
@@ -1410,7 +1412,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     player_t* plr = &players[UIWidget_Player(obj)];
-    float wx, wy, ww, wh, vx, vy, angle, oldLineWidth, mtof;
+    float wx, wy, ww, wh, vx, vy, angle, oldLineWidth;
     uint i;
 
     if(!plr->plr->inGame)
@@ -1418,9 +1420,9 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
 
     // Configure render state:
     rs.plr = plr;
-    UIAutomap_WindowDimensions(obj, &wx, &wy, &ww, &wh);
+    UIAutomap_WindowOrigin(obj, &wx, &wy);
+    UIAutomap_WindowDimensions(obj, &ww, &wh);
     UIAutomap_CameraOrigin(obj, &vx, &vy);
-    mtof = UIAutomap_MapToFrameMultiplier(obj);
     angle = UIAutomap_CameraAngle(obj);
 
     // Freeze the lists if the map is fading out from being open, or for debug.
@@ -1436,7 +1438,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(wx + ww / 2, wy + wh / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
-    DGL_Scalef(mtof, mtof, 1);
+    DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
     DGL_Translatef(-vx, -vy, 0);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
@@ -1478,7 +1480,7 @@ DGL_End();
         DGL_Scalef(1.f / (ww-am->border*2), 1.f / (wh-am->border*2), 1);
         DGL_Translatef(ww / 2, wh / 2, 0);
         DGL_Rotatef(-angle, 0, 0, 1);
-        DGL_Scalef(mtof, mtof, 1);
+        DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
         DGL_Translatef(-vx, -vy, 0);
     }
 
@@ -1910,19 +1912,7 @@ void UIAutomap_WindowOrigin(uiwidget_t* obj, float* x, float* y)
     }
 }
 
-void UIAutomap_WindowDimensions(uiwidget_t* obj, float* x, float* y, float* w, float* h)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    if(x) *x = am->window.x;
-    if(y) *y = am->window.y;
-    if(w) *w = am->window.width;
-    if(h) *h = am->window.height;
-    }
-}
-
-void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int x, int y, int w, int h)
+void UIAutomap_SetWindowOrigin(uiwidget_t* obj, int x, int y)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
@@ -1937,19 +1927,52 @@ void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int x, int y, int w, int h)
     win = &am->window;
 
     // Already at this target?
-    if(x == win->targetX && y == win->targetY &&
-       w == win->targetWidth && h == win->targetHeight)
+    if(x == win->targetX && y == win->targetY)
         return;
 
     win->oldX = win->x;
     win->oldY = win->y;
-    win->oldWidth = win->width;
-    win->oldHeight = win->height;
     // Restart the timer.
     win->posTimer = 0;
 
     win->targetX = (float) x;
     win->targetY = (float) y;
+    }
+}
+
+void UIAutomap_WindowDimensions(uiwidget_t* obj, float* w, float* h)
+{
+    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    {
+    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    if(w) *w = am->window.width;
+    if(h) *h = am->window.height;
+    }
+}
+
+void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int w, int h)
+{
+    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    {
+    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    automapwindow_t* win;
+
+    // Are we in fullscreen mode?
+    // If so, setting the window size is not allowed.
+    if(am->fullscreen)
+        return;
+
+    win = &am->window;
+
+    // Already at this target?
+    if(w == win->targetWidth && h == win->targetHeight)
+        return;
+
+    win->oldWidth = win->width;
+    win->oldHeight = win->height;
+    // Restart the timer.
+    win->posTimer = 0;
+
     win->targetWidth = (float) w;
     win->targetHeight = (float) h;
     }
@@ -2075,15 +2098,6 @@ boolean UIAutomap_SetScale(uiwidget_t* obj, float scale)
 
     am->targetViewScale = scale;
     return true;
-    }
-}
-
-float UIAutomap_MapToFrameMultiplier(uiwidget_t* obj)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    return am->scaleMTOF;
     }
 }
 
@@ -2449,7 +2463,7 @@ void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale)
     }
 }
 
-void UIAutomap_SetCameraLocationMaxDelta(uiwidget_t* obj, float max)
+void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, float max)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {

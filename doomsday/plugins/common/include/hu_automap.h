@@ -1,9 +1,9 @@
-/**\file
+/**\file hu_automap.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -190,8 +190,10 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale);
 
 void UIAutomap_WindowOrigin(uiwidget_t* obj, float* x, float* y);
-void UIAutomap_WindowDimensions(uiwidget_t* obj, float* x, float* y, float* w, float* h);
-void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int x, int y, int w, int h);
+void UIAutomap_SetWindowOrigin(uiwidget_t* obj, int x, int y);
+
+void UIAutomap_WindowDimensions(uiwidget_t* obj, float* w, float* h);
+void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int w, int h);
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y);
 boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y);
@@ -200,7 +202,7 @@ boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y);
 /**
  * @param max  Maximum view position delta in world units.
  */
-void UIAutomap_SetCameraLocationMaxDelta(uiwidget_t* obj, float max);
+void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, float max);
 
 float UIAutomap_CameraAngle(uiwidget_t* obj);
 boolean UIAutomap_SetCameraAngle(uiwidget_t* obj, float angle);
@@ -210,19 +212,15 @@ boolean UIAutomap_SetScale(uiwidget_t* obj, float scale);
 float UIAutomap_Opacity(const uiwidget_t* obj);
 boolean UIAutomap_SetOpacity(uiwidget_t* obj, float alpha);
 
-// Conversion helpers:
-
 /**
- * Scale from automap window to map coordinates.
+ * Conversion helpers:
  */
+
+/// Scale from automap window to map coordinates.
 float UIAutomap_FrameToMap(uiwidget_t* obj, float val);
 
-/**
- * Scale from map to automap window coordinates.
- */
+/// Scale from map to automap window coordinates.
 float UIAutomap_MapToFrame(uiwidget_t* obj, float val);
-
-float UIAutomap_MapToFrameMultiplier(uiwidget_t* obj);
 
 void UIAutomap_VisibleBounds(const uiwidget_t* obj, float topLeft[2], float bottomRight[2], float topRight[2], float bottomLeft[2]);
 void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, float* lowX, float* hiX, float* lowY, float* hiY);

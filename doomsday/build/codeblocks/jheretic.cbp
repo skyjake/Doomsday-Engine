@@ -99,6 +99,7 @@
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
 		<Unit filename="..\..\plugins\common\include\gl_drawpatch.h" />
+		<Unit filename="..\..\plugins\common\include\hu_automap.h" />
 		<Unit filename="..\..\plugins\common\include\hu_chat.h" />
 		<Unit filename="..\..\plugins\common\include\hu_inventory.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
@@ -110,7 +111,6 @@
 		<Unit filename="..\..\plugins\common\include\m_argv.h" />
 		<Unit filename="..\..\plugins\common\include\m_ctrl.h" />
 		<Unit filename="..\..\plugins\common\include\p_actor.h" />
-		<Unit filename="..\..\plugins\common\include\p_automap.h" />
 		<Unit filename="..\..\plugins\common\include\p_ceiling.h" />
 		<Unit filename="..\..\plugins\common\include\p_door.h" />
 		<Unit filename="..\..\plugins\common\include\p_floor.h" />
@@ -133,7 +133,6 @@
 		<Unit filename="..\..\plugins\common\include\p_xgline.h" />
 		<Unit filename="..\..\plugins\common\include\p_xgsec.h" />
 		<Unit filename="..\..\plugins\common\include\r_common.h" />
-		<Unit filename="..\..\plugins\common\include\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
 		<Unit filename="..\..\plugins\common\include\xgclass.h" />
 		<Unit filename="..\..\plugins\common\src\am_map.c" />
@@ -148,6 +147,7 @@
 		<Unit filename="..\..\plugins\common\src\g_game.c" />
 		<Unit filename="..\..\plugins\common\src\g_update.c" />
 		<Unit filename="..\..\plugins\common\src\gl_drawpatch.c" />
+		<Unit filename="..\..\plugins\common\src\hu_automap.c" />
 		<Unit filename="..\..\plugins\common\src\hu_chat.c" />
 		<Unit filename="..\..\plugins\common\src\hu_inventory.c" />
 		<Unit filename="..\..\plugins\common\src\hu_lib.c" />
@@ -158,7 +158,6 @@
 		<Unit filename="..\..\plugins\common\src\hu_stuff.c" />
 		<Unit filename="..\..\plugins\common\src\m_fixed.c" />
 		<Unit filename="..\..\plugins\common\src\p_actor.c" />
-		<Unit filename="..\..\plugins\common\src\p_automap.c" />
 		<Unit filename="..\..\plugins\common\src\p_ceiling.c" />
 		<Unit filename="..\..\plugins\common\src\p_door.c" />
 		<Unit filename="..\..\plugins\common\src\p_floor.c" />
@@ -182,7 +181,6 @@
 		<Unit filename="..\..\plugins\common\src\p_xgsave.c" />
 		<Unit filename="..\..\plugins\common\src\p_xgsec.c" />
 		<Unit filename="..\..\plugins\common\src\r_common.c" />
-		<Unit filename="..\..\plugins\common\src\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\src\x_hair.c" />
 		<Unit filename="..\..\plugins\jheretic\include\acfnlink.h" />
 		<Unit filename="..\..\plugins\jheretic\include\doomdata.h" />

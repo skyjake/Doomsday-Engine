@@ -40,9 +40,6 @@
 #include "doomdata.h"
 #include "h_player.h"
 
-#define viewwindowx         Get(DD_VIEWWINDOW_X)
-#define viewwindowy         Get(DD_VIEWWINDOW_Y)
-
 // Player taking events, and displaying.
 #define CONSOLEPLAYER       Get(DD_CONSOLEPLAYER)
 #define DISPLAYPLAYER       Get(DD_DISPLAYPLAYER)

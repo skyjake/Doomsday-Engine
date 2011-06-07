@@ -96,18 +96,11 @@ void ST_LogPostVisibilityChangeNotification(void);
  */
 void ST_AutomapOpen(int player, boolean yes, boolean fast);
 
-/// @return @c true= The player's automap is currently active.
 boolean ST_AutomapIsActive(int player);
 
-void ST_AutomapWindowOrigin(int player, float* x, float* y);
-void ST_AutomapWindowDimensions(int player, float* x, float* y, float* w, float* h);
-boolean ST_AutomapWindowFullscreen(int player);
-void ST_ToggleAutomapWindowFullscreen(int player);
-
 void ST_ToggleAutomapPanMode(int player);
-
 void ST_ToggleAutomapMaxZoom(int player);
-/// @return  Current alpha level of the automap.
+
 float ST_AutomapOpacity(int player);
 
 /**

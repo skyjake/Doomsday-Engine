@@ -144,7 +144,7 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->powers[PT_INVISIBILITY] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_ALLMAP] = (SV_v13_ReadLong()? true : false);
     if(pl->powers[PT_ALLMAP])
-        AM_RevealMap(AM_MapForPlayer(pl - players), true);
+        ST_RevealAutomap(pl - players, true);
     pl->powers[PT_INFRARED] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_WEAPONLEVEL2] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_FLIGHT] = (SV_v13_ReadLong()? true : false);

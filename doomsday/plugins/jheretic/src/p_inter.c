@@ -323,7 +323,7 @@ boolean P_GivePower(player_t* player, powertype_t power)
     if(retval)
     {
         if(power == PT_ALLMAP)
-            AM_RevealMap(AM_MapForPlayer(player - players), true);
+            ST_RevealAutomap(player - players, true);
     }
 
     return retval;
@@ -970,7 +970,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(target->player - players, false);
 #endif
