@@ -37,7 +37,8 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "hu_chat.h"
+#include "hu_lib.h"
+#include "d_config.h"
 
 #define ST_HEIGHT                   (32 * SCREEN_MUL)
 #define ST_WIDTH                    (SCREENWIDTH)
