@@ -35,14 +35,15 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "x_player.h"
+#include "hu_lib.h"
 #include "x_config.h"
-#include "hu_chat.h"
 
 // Size of statusbar.
-#define ST_HEIGHT           (38*SCREEN_MUL)
-#define ST_WIDTH            (SCREENWIDTH)
-#define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
+#define ST_HEIGHT                   (38*SCREEN_MUL)
+#define ST_WIDTH                    (SCREENWIDTH)
+#define ST_Y                        (SCREENHEIGHT - ST_HEIGHT)
+
+#define ST_AUTOMAP_OBSCURE_TOLERANCE (.9999f)
 
 // Called by startup code.
 void ST_Register(void);
@@ -55,6 +56,10 @@ void ST_Drawer(int player);
 
 void ST_Start(int player);
 void ST_Stop(int player);
+
+uiwidget_t* ST_UIChatForPlayer(int player);
+uiwidget_t* ST_UILogForPlayer(int player);
+uiwidget_t* ST_UIAutomapForPlayer(int player);
 
 boolean ST_ChatIsActive(int player);
 
@@ -85,6 +90,47 @@ void ST_LogEmpty(int player);
 
 void ST_LogUpdateAlignment(void);
 void ST_LogPostVisibilityChangeNotification(void);
+
+/**
+ * Start the automap.
+ */
+void ST_AutomapOpen(int player, boolean yes, boolean fast);
+
+boolean ST_AutomapIsActive(int player);
+
+void ST_ToggleAutomapPanMode(int player);
+void ST_ToggleAutomapMaxZoom(int player);
+
+float ST_AutomapOpacity(int player);
+
+/**
+ * Does the player's automap obscure this region completely?
+ * \assume: Window dimensions are in a fixed coordinate space {x} 0 - 320, {y} 0 - 200.
+ *
+ * @param playerid  Index of the player whose map to check.
+ * @param x  Top left X coordinate.
+ * @param y  Top left Y coordinate.
+ * @param w  Width.
+ * @param h  Height.
+ *
+ * @return  @true= there is no point even partially visible.
+ */
+boolean ST_AutomapWindowObscures(int player, int x, int y, int w, int h);
+
+int ST_AutomapAddPoint(int player, float x, float y, float z);
+void ST_AutomapClearPoints(int player);
+boolean ST_AutomapPointOrigin(int player, int point, float* x, float* y, float* z);
+
+void ST_SetAutomapCameraRotation(int player, boolean on);
+
+int ST_AutomapCheatLevel(int player);
+void ST_SetAutomapCheatLevel(int player, int level);
+void ST_CycleAutomapCheatLevel(int player);
+
+void ST_RevealAutomap(int player, boolean on);
+boolean ST_AutomapHasReveal(int player);
+
+void ST_RebuildAutomap(int player);
 
 // Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t ev);

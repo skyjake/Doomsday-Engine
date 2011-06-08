@@ -1464,7 +1464,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
 #if __JHERETIC__ || __JHEXEN__
         Hu_InventoryOpen(target->player - players, false);
 #endif
