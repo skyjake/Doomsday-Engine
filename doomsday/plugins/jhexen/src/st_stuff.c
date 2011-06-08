@@ -3070,10 +3070,9 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     {
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const char* text = P_GetMapNiceName();
 
-    if(NULL == text && 0 == patch)
+    if(NULL == text)
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -3082,7 +3081,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(scale, scale, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch4(patch, text, 0, 0, DPF_ALIGN_BOTTOMLEFT, obj->fontId, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_DrawText(text, 0, 0, obj->fontId, DTF_ALIGN_BOTTOMLEFT, .5f, 0, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha, 0, 0, false);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -3094,28 +3093,18 @@ void MapName_Dimensions(uiwidget_t* obj, int* width, int *height)
 {
     assert(NULL != obj && obj->type == GUI_MAPNAME);
     {
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const char* text = P_GetMapNiceName();
     const float scale = .75f;
-    patchinfo_t info;
 
     if(NULL != width)  *width  = 0;
     if(NULL != height) *height = 0;
 
-    if(NULL == text && 0 == patch)
+    if(NULL == text)
         return;
 
-    if(NULL != text)
-    {
-        FR_TextDimensions(width, height, text, obj->fontId);
-        if(NULL != width)  *width  = *width  * scale;
-        if(NULL != height) *height = *height * scale;
-        return;    
-    }
-
-    R_GetPatchInfo(patch, &info);
-    if(NULL != width)  *width  = info.width  * scale;
-    if(NULL != height) *height = info.height * scale;
+    FR_TextDimensions(width, height, text, obj->fontId);
+    if(NULL != width)  *width  = *width  * scale;
+    if(NULL != height) *height = *height * scale;
     }
 }
 
