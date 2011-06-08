@@ -36,7 +36,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "hu_chat.h"
+#include "hu_lib.h"
+#include "h_config.h"
 
 // Size of statusbar, now sensitive for scaling.
 #define ST_HEIGHT                   (42 * SCREEN_MUL)

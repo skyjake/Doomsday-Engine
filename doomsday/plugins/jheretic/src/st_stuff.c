@@ -2655,10 +2655,9 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     {
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const char* text = P_GetMapNiceName();
 
-    if(NULL == text && 0 == patch)
+    if(NULL == text)
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2667,7 +2666,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(scale, scale, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch4(patch, text, 0, 0, DPF_ALIGN_BOTTOMLEFT, obj->fontId, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_DrawText(text, 0, 0, obj->fontId, DTF_ALIGN_BOTTOMLEFT, .5f, 0, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha, 0, 0, false);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2679,28 +2678,18 @@ void MapName_Dimensions(uiwidget_t* obj, int* width, int *height)
 {
     assert(NULL != obj && obj->type == GUI_MAPNAME);
     {
-    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const char* text = P_GetMapNiceName();
     const float scale = .75f;
-    patchinfo_t info;
 
     if(NULL != width)  *width  = 0;
     if(NULL != height) *height = 0;
 
-    if(NULL == text && 0 == patch)
+    if(NULL == text)
         return;
 
-    if(NULL != text)
-    {
-        FR_TextDimensions(width, height, text, obj->fontId);
-        if(NULL != width)  *width  = *width  * scale;
-        if(NULL != height) *height = *height * scale;
-        return;    
-    }
-
-    R_GetPatchInfo(patch, &info);
-    if(NULL != width)  *width  = info.width  * scale;
-    if(NULL != height) *height = info.height * scale;
+    FR_TextDimensions(width, height, text, obj->fontId);
+    if(NULL != width)  *width  = *width  * scale;
+    if(NULL != height) *height = *height * scale;
     }
 }
 
@@ -2741,7 +2730,7 @@ void ST_Drawer(int player)
     // Do palette shifts
     ST_doPaletteStuff(player);
 
-    GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), 0, 0, SCREENWIDTH, SCREENHEIGHT, 1, NULL, NULL);
+    GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), 0, 0, SCREENWIDTH, SCREENHEIGHT, ST_AutomapOpacity(player), NULL, NULL);
 
     if(hud->statusbarActive || (fullscreen < 3 || hud->alpha > 0))
     {
@@ -2771,7 +2760,7 @@ void ST_Drawer(int player)
         {
 #define PADDING 2 // In fixed 320x200 units.
 
-        int posX, posY, availWidth, availHeight, drawnWidth, drawnHeight;
+        int posX, posY, availWidth, availHeight, drawnWidth = 0, drawnHeight = 0;
 
         if(hud->statusbarActive)
         {
@@ -2810,23 +2799,6 @@ void ST_Drawer(int player)
         width -= PADDING*2;
         height -= PADDING*2;
 
-        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        if(!hud->statusbarActive)
-        {
-            GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        }
-        else
-        {
-            drawnWidth = 0;
-        }
-
-        posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
-        posY = y;
-        availWidth = width - (drawnWidth > 0 ? drawnWidth + PADDING : 0);
-        availHeight = height;
-        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT2]), posX, posY, availWidth, availHeight, alpha, &drawnWidth, &drawnHeight);
-
-        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         if(!hud->statusbarActive)
         {
             GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
@@ -2840,6 +2812,24 @@ void ST_Drawer(int player)
             GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
             GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
+        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_MAPNAME]), x, y, width, height, ST_AutomapOpacity(player), NULL, NULL);
+
+        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        if(!hud->statusbarActive)
+        {
+            GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        }
+        else
+        {
+            drawnWidth = 0;
+        }
+        posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
+        posY = y;
+        availWidth = width - (drawnWidth > 0 ? drawnWidth + PADDING : 0);
+        availHeight = height;
+        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT2]), posX, posY, availWidth, availHeight, alpha, &drawnWidth, &drawnHeight);
+
+        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
         GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_COUNTERS]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 #undef PADDING
@@ -3190,6 +3180,7 @@ void ST_BuildWidgets(int player)
         { GUI_READYAMMOICON, UWG_STATUSBAR,   -1,         0,            SBarReadyAmmoIcon_Dimensions, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
         { GUI_READYITEM,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarReadyItem_Dimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
         { GUI_CHAIN,        UWG_STATUSBAR,    -1,         0,            SBarChain_Dimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
+        { GUI_MAPNAME,      UWG_MAPNAME,      -1,         GF_FONTB,     MapName_Dimensions, MapName_Drawer },
         { GUI_READYAMMOICON, UWG_TOPLEFT,     HUD_AMMO,   0,            ReadyAmmoIcon_Dimensions, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
         { GUI_READYAMMO,    UWG_TOPLEFT,      HUD_AMMO,   GF_STATUS,    ReadyAmmo_Dimensions, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
         { GUI_FLIGHT,       UWG_TOPLEFT2,     -1,         0,            Flight_Dimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
