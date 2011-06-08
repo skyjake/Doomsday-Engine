@@ -124,7 +124,7 @@ desc = Quicksave the game.
 
 [reveal]
 desc = Map cheat.
-inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors
+inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things
 
 [savegame]
 desc = Create a new game-save or open the save menu.
