@@ -37,6 +37,7 @@
 #  include "jhexen.h"
 #endif
 
+#include "hu_chat.h"
 #include "hu_lib.h"
 #include "hu_log.h"
 #include "hu_automap.h"
