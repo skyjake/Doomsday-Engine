@@ -82,8 +82,8 @@ int UIChat_CommandResponder(uiwidget_t* obj, menucommand_e cmd);
 /// Draw this widget.
 void UIChat_Drawer(uiwidget_t* obj, int x, int y);
 
-/// Retrieve the "physical" dimensions of this widget in fixed-pixels.
-void UIChat_Dimensions(uiwidget_t* obj, int* width, int* height);
+/// Calculate the "physical" dimensions of this widget in fixed-pixels.
+void UIChat_UpdateDimensions(uiwidget_t* obj);
 
 /**
  * Change the "active" state of this. When activating the message target

@@ -103,7 +103,7 @@ static uiwidgetid_t nextUnusedId(void)
     return (uiwidgetid_t)(numWidgets);
 }
 
-static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, void* typedata)
+static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int player, void* typedata)
 {
     uiwidget_t* obj;
     widgets = (uiwidget_t*) realloc(widgets, sizeof(*widgets) * ++numWidgets);
@@ -114,6 +114,7 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, void* t
     memset(obj, 0, sizeof(*obj));
     obj->type = type;
     obj->id = id;
+    obj->player = player;
     switch(obj->type)
     {
     case GUI_GROUP: {
@@ -124,23 +125,42 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, void* t
         obj->typedata = grp;
         break;
       }
+
     default:
         obj->typedata = typedata;
         break;
+    }
+    switch(obj->type)
+    {
+    case GUI_AUTOMAP: {
+        guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+        const int winWidth  = Get(DD_WINDOW_WIDTH);
+        const int winHeight = Get(DD_WINDOW_HEIGHT);
+        am->mcfg = ST_AutomapConfig();
+        am->followPlayer = player;
+        am->oldViewScale = 1;
+        am->maxViewPositionDelta = 128;
+        am->alpha = am->targetAlpha = am->oldAlpha = 0;
+        obj->dimensions.x = 0;
+        obj->dimensions.y = 0;
+        obj->dimensions.width  = winWidth;
+        obj->dimensions.height = winHeight;
+        break;
+      }
+    default: break;
     }
     return obj;
 }
 
 static uiwidget_t* createWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
-    void (*dimensions) (uiwidget_t* obj, int* width, int* height),
+    void (*updateDimensions) (uiwidget_t* obj),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
-    uiwidget_t* obj = allocateWidget(type, nextUnusedId(), typedata);
-    obj->player = player;
+    uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
     obj->hideId = hideId;
     obj->fontId = fontId;
-    obj->dimensions = dimensions;
+    obj->updateDimensions = updateDimensions;
     obj->drawer = drawer;
     obj->ticker = ticker;
     return obj;
@@ -229,13 +249,12 @@ void GUI_ReleaseResources(void)
 }
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
-    void (*dimensions) (uiwidget_t* obj, int* width, int* height),
-    void (*drawer) (uiwidget_t* obj, int x, int y),
+    void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
-    obj = createWidget(type, player, hideId, fontId, dimensions, drawer, ticker, typedata);
+    obj = createWidget(type, player, hideId, fontId, updateDimensions, drawer, ticker, typedata);
     return obj->id;
 }
 
@@ -307,7 +326,7 @@ boolean GUI_GameTicTriggerIsSharp(void)
 
 static void drawWidget(uiwidget_t* obj, int x, int y, float alpha, int* drawnWidth, int* drawnHeight)
 {
-    int width = 0, height = 0;
+    assert(NULL != obj);
     if(NULL != obj->drawer && alpha > 0)
     {
         uiRS.pageAlpha = alpha;
@@ -320,12 +339,12 @@ static void drawWidget(uiwidget_t* obj, int x, int y, float alpha, int* drawnWid
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
     }
-    if(NULL != obj->dimensions)
+    if(NULL != obj->updateDimensions)
     {
-        obj->dimensions(obj, &width, &height);
+        obj->updateDimensions(obj);
     }
-    *drawnWidth  = width;
-    *drawnHeight = height;
+    *drawnWidth  = obj->dimensions.width;
+    *drawnHeight = obj->dimensions.height;
 }
 
 static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
@@ -386,9 +405,17 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
             if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
             {
                 if(!(grp->flags & UWGF_VERTICAL))
+                {
                     *drawnWidth  += width;
+                    if(height > *drawnHeight)
+                        *drawnHeight = height;
+                }
                 else
+                {
+                    if(width  > *drawnWidth)
+                        *drawnWidth  = width;
                     *drawnHeight += height;
+                }
             }
             else
             {
@@ -430,7 +457,7 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth,
     if(obj->type == GUI_GROUP)
     {
         // Now our children.
-        int cWidth, cHeight;
+        int cWidth = 0, cHeight = 0;
         drawChildWidgets(obj, x, y, availWidth, availHeight, alpha, &cWidth, &cHeight);
         if(cWidth  > width)
             width = cWidth;
@@ -471,6 +498,19 @@ int UIWidget_Player(uiwidget_t* obj)
 {
     assert(NULL != obj);
     return obj->player;
+}
+
+void UIWidget_Origin(uiwidget_t* obj, int* x, int* y)
+{
+    assert(NULL != obj);
+    if(NULL != x) *x = obj->dimensions.x;
+    if(NULL != y) *y = obj->dimensions.y;
+}
+
+const rectanglei_t* UIWidget_Dimensions(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    return &obj->dimensions;
 }
 
 static void MNSlider_LoadResources(void)
@@ -581,22 +621,20 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         i < page->objectsCount /*&& i < page->firstObject + page->numVisObjects*/; ++i)
     {
         mn_object_t* obj = &page->objects[i];
-        int height = 0;
 
         if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
             continue;
 
         obj->drawer(obj, pos[VX], pos[VY]);
-
-        if(obj->dimensions)
+        if(NULL != obj->updateDimensions)
         {
-            obj->dimensions(obj, page, NULL, &height);
+            obj->updateDimensions(obj, page);
         }
 
         /// \kludge
         if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
         {
-            int cursorY = pos[VY], cursorItemHeight = height;
+            int cursorY = pos[VY], cursorItemHeight = MNObject_Dimensions(obj)->height;
             if(MN_LIST == MNObject_Type(obj) && (MNObject_Flags(obj) & MNF_ACTIVE) &&
                MNList_SelectionIsVisible(obj))
             {
@@ -609,7 +647,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         }
         /// kludge end.
 
-        pos[VY] += height * (1.08f); // Leading.
+        pos[VY] += MNObject_Dimensions(obj)->height * (1.08f); // Leading.
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -912,6 +950,12 @@ int MNObject_Flags(const mn_object_t* obj)
     return obj->_flags;
 }
 
+const rectanglei_t* MNObject_Dimensions(const mn_object_t* obj)
+{
+    assert(NULL != obj);
+    return &obj->_dimensions;
+}
+
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
 {
     assert(NULL != obj);
@@ -1061,7 +1105,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     }
 }
 
-void MNText_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     assert(NULL != obj && obj->_type == MN_TEXT);
     {
@@ -1071,12 +1115,12 @@ void MNText_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int*
     {
         patchinfo_t info;
         R_GetPatchInfo(*txt->patch, &info);
-        if(width)   *width  = info.width;
-        if(height)  *height = info.height;
+        obj->_dimensions.width  = info.width;
+        obj->_dimensions.height = info.height;
         return;
     }
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextFragmentDimensions(width, height, txt->text);
+    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, txt->text);
     }
 }
 
@@ -1332,11 +1376,12 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
     }
 }
 
-void MNEdit_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNEdit_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly.
-    if(width)   *width  = 170;
-    if(height)  *height = 14;
+    assert(NULL != obj);
+    obj->_dimensions.width  = 170;
+    obj->_dimensions.height = 14;
 }
 
 void MNList_Drawer(mn_object_t* obj, int x, int y)
@@ -1593,47 +1638,37 @@ int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNList_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNList_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     assert(NULL != obj && obj->_type == MN_LIST);
     {
-    const mndata_list_t* list = (const mndata_list_t*)obj->_typedata;
+    mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int i;
-    if(!width && !height)
-        return;
-    if(width)
-        *width = 0;
-    if(height)
-        *height = 0;
+    obj->_dimensions.width  = 0;
+    obj->_dimensions.height = 0;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     for(i = 0; i < list->count; ++i)
     {
-        const mndata_listitem_t* item = &((const mndata_listitem_t*)list->items)[i];
-        int w;
-        if(width && (w = FR_TextFragmentWidth(item->text)) > *width)
-            *width = w;
-        if(height)
-        {
-            int h = FR_TextFragmentHeight(item->text);
-            *height += h;
-            if(i != list->count-1)
-                *height += h * MNDATA_LIST_LEADING;
-        }
+        mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
+        int w, h;
+        FR_TextFragmentDimensions(&w, &h, item->text);
+        if(w > obj->_dimensions.width)
+            obj->_dimensions.width = w;
+        obj->_dimensions.height += h;
+        if(i != list->count-1)
+            obj->_dimensions.height += h * MNDATA_LIST_LEADING;
     }
     }
 }
 
-void MNList_InlineDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNList_InlineUpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     assert(NULL != obj && obj->_type == MN_LIST);
     {
-    const mndata_list_t* list = (const mndata_list_t*)obj->_typedata;
-    const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
+    mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+    mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    if(width)
-        *width = FR_TextFragmentWidth(item->text);
-    if(height)
-        *height = FR_TextFragmentHeight(item->text);
+    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, item->text);
     }
 }
 
@@ -1747,7 +1782,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     assert(NULL != obj);
     {
@@ -1762,13 +1797,13 @@ void MNButton_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, in
     {
         patchinfo_t info;
         R_GetPatchInfo(*btn->patch, &info);
-        if(NULL != width)  *width  = info.width;
-        if(NULL != height) *height = info.height;
+        obj->_dimensions.width  = info.width;
+        obj->_dimensions.height = info.height;
         return;
     }
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextFragmentDimensions(width, height, btn->text);
+    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, btn->text);
     }
 }
 
@@ -1824,13 +1859,13 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNColorBox_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNColorBox_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     assert(NULL != obj && obj->_type == MN_COLORBOX);
     {
-    const mndata_colorbox_t* cbox = (const mndata_colorbox_t*)obj->_typedata;
-    if(width)  *width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
-    if(height) *height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
+    mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    obj->_dimensions.width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
+    obj->_dimensions.height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
     }
 }
 
@@ -2251,22 +2286,19 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
     }
 }
 
-void MNSlider_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNSlider_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     patchinfo_t info;
+    int max;
     if(!R_GetPatchInfo(pSliderMiddle, &info))
         return;
-    if(width)
-        *width = (int) (info.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE + .5f);
-    if(height)
-    {
-        int max = info.height;
-        if(R_GetPatchInfo(pSliderLeft, &info))
-            max = MAX_OF(max, info.height);
-        if(R_GetPatchInfo(pSliderRight, &info))
-            max = MAX_OF(max, info.height);
-        *height = (int) ((max + MNDATA_SLIDER_PADDING_Y * 2) * MNDATA_SLIDER_SCALE + .5f);
-    }
+    obj->_dimensions.width = (int) (info.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE + .5f);
+    max = info.height;
+    if(R_GetPatchInfo(pSliderLeft, &info))
+        max = MAX_OF(max, info.height);
+    if(R_GetPatchInfo(pSliderRight, &info))
+        max = MAX_OF(max, info.height);
+    obj->_dimensions.height = (int) ((max + MNDATA_SLIDER_PADDING_Y * 2) * MNDATA_SLIDER_SCALE + .5f);
 }
 
 void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
@@ -2292,22 +2324,19 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     }
 }
 
-void MNSlider_TextualValueDimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     assert(NULL != obj);
     {
-    const mndata_slider_t* sldr = (const mndata_slider_t*)obj->_typedata;
-    if(NULL != width || NULL != height)
-    {
-        const fontid_t fontId = MNPage_PredefinedFont(page, obj->_pageFontIdx);
-        const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
-        char textualValue[41];
-        const char* str = composeValueString(value, 0, sldr->floatMode, 0,
-            sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
+    mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
+    const fontid_t fontId = MNPage_PredefinedFont(page, obj->_pageFontIdx);
+    const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
+    char textualValue[41];
+    const char* str = composeValueString(value, 0, sldr->floatMode, 0,
+        sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
-        FR_SetFont(fontId);
-        FR_TextFragmentDimensions(width, height, str);
-    }
+    FR_SetFont(fontId);
+    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
     }
 }
 
@@ -2361,7 +2390,7 @@ void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap)
 /// \todo We can do better - the engine should be able to render this visual for us.
 void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
 {
-    assert(NULL != obj);
+    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
     {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
     float x = inX, y = inY, w, h, s, t, scale;
@@ -2419,11 +2448,10 @@ void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
     }
 }
 
-void MNMobjPreview_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNMobjPreview_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
-    if(width)
-        *width = MNDATA_MOBJPREVIEW_WIDTH;
-    if(height)
-        *height = MNDATA_MOBJPREVIEW_HEIGHT;
+    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
+    obj->_dimensions.width  = MNDATA_MOBJPREVIEW_WIDTH;
+    obj->_dimensions.height = MNDATA_MOBJPREVIEW_HEIGHT;
 }

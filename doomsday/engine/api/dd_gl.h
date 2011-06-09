@@ -180,6 +180,14 @@ typedef struct {
     float           color[4];
 } dgl_fc3vertex_t;
 
+typedef struct rectanglei_s {
+    int x, y, width, height;
+} rectanglei_t;
+
+typedef struct rectangled_s {
+    double x, y, width, height;
+} rectangled_t;
+
 int             DGL_Enable(int cap);
 void            DGL_Disable(int cap);
 
@@ -241,9 +249,13 @@ void            DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
 void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
 
 void            DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
+
+void            DGL_DrawRectd(const rectangled_t* rect);
+void            DGL_DrawRecti(const rectanglei_t* rect);
 void            DGL_DrawRect(float x, float y, float w, float h);
 void            DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
 void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
+
 void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 void            DGL_DrawRawScreen(lumpnum_t lumpNum, int x, int y);

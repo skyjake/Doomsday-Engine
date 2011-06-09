@@ -61,6 +61,36 @@ static float filterColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
+void GL_DrawRectd(const rectangled_t* rect)
+{
+    assert(NULL != rect);
+    glBegin(GL_QUADS);
+        glTexCoord2d(0, 0);
+        glVertex2d(rect->x, rect->y);
+        glTexCoord2d(1, 0);
+        glVertex2d(rect->x + rect->width, rect->y);
+        glTexCoord2d(1, 1);
+        glVertex2d(rect->x + rect->width, rect->y + rect->height);
+        glTexCoord2d(0, 1);
+        glVertex2d(rect->x, rect->y + rect->height);
+    glEnd();
+}
+
+void GL_DrawRecti(const rectanglei_t* rect)
+{
+    assert(NULL != rect);
+    glBegin(GL_QUADS);
+        glTexCoord2i(0, 0);
+        glVertex2i(rect->x, rect->y);
+        glTexCoord2i(1, 0);
+        glVertex2i(rect->x + rect->width, rect->y);
+        glTexCoord2i(1, 1);
+        glVertex2i(rect->x + rect->width, rect->y + rect->height);
+        glTexCoord2i(0, 1);
+        glVertex2i(rect->x, rect->y + rect->height);
+    glEnd();
+}
+
 void GL_DrawRect(float x, float y, float w, float h)
 {
     glBegin(GL_QUADS);

@@ -446,12 +446,12 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
 #undef ORIGINY
 }
 
-void SBarChain_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarChain_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -459,8 +459,8 @@ void SBarChain_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     /// \fixme Calculate dimensions properly.
-    if(NULL != width)  *width  = (ST_WIDTH - 21 - 28) * cfg.statusbarScale;
-    if(NULL != height) *height = 8 * cfg.statusbarScale;
+    obj->dimensions.width  = (ST_WIDTH - 21 - 28) * cfg.statusbarScale;
+    obj->dimensions.height = 8 * cfg.statusbarScale;
 }
 
 /**
@@ -582,26 +582,26 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINY
 }
 
-void SBarBackground_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarBackground_UpdateDimensions(uiwidget_t* obj)
 {
 #define WIDTH       (ST_WIDTH)
 #define HEIGHT      (ST_HEIGHT)
 
     assert(NULL != obj);
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    if(NULL != width)  *width  = WIDTH  * cfg.statusbarScale;
-    if(NULL != height) *height = HEIGHT * cfg.statusbarScale;
+    obj->dimensions.width  = WIDTH  * cfg.statusbarScale;
+    obj->dimensions.height = HEIGHT * cfg.statusbarScale;
 
-#undef WIDTH
 #undef HEIGHT
+#undef WIDTH
 }
 
 void ST_updateWidgets(int player)
@@ -770,12 +770,12 @@ void SBarInventory_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void SBarInventory_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarInventory_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!Hu_InventoryIsOpen(obj->player))
         return;
@@ -785,8 +785,8 @@ void SBarInventory_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     // \fixme calculate dimensions properly!
-    if(NULL != width)  *width  = (ST_WIDTH-(43*2)) * cfg.statusbarScale;
-    if(NULL != height) *height = 41 * cfg.statusbarScale;
+    obj->dimensions.width  = (ST_WIDTH-(43*2)) * cfg.statusbarScale;
+    obj->dimensions.height = 41 * cfg.statusbarScale;
 }
 
 void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -855,15 +855,15 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINX
 }
 
-void SBarFrags_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarFrags_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!deathmatch || Hu_InventoryIsOpen(obj->player))
         return;
@@ -876,8 +876,9 @@ void SBarFrags_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", frags->value);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.statusbarScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
+    obj->dimensions.width  *= cfg.statusbarScale;
+    obj->dimensions.height *= cfg.statusbarScale;
     }
 }
 
@@ -945,7 +946,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINX
 }
 
-void SBarHealth_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarHealth_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING            (1)
 
@@ -954,8 +955,8 @@ void SBarHealth_Dimensions(uiwidget_t* obj, int* width, int* height)
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(deathmatch || Hu_InventoryIsOpen(obj->player))
         return;
@@ -968,8 +969,9 @@ void SBarHealth_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", hlth->value);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.statusbarScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.statusbarScale;
+    obj->dimensions.height *= cfg.statusbarScale;
     }
 #undef TRACKING
 }
@@ -1039,7 +1041,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINX
 }
 
-void SBarArmor_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarArmor_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING            (1)
 
@@ -1048,8 +1050,8 @@ void SBarArmor_Dimensions(uiwidget_t* obj, int* width, int* height)
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(Hu_InventoryIsOpen(obj->player))
         return;
@@ -1062,8 +1064,9 @@ void SBarArmor_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", armor->value);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.statusbarScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.statusbarScale;
+    obj->dimensions.height *= cfg.statusbarScale;
     }
 #undef TRACKING
 }
@@ -1128,15 +1131,15 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINX
 }
 
-void KeySlot_Dimensions(uiwidget_t* obj, int* width, int* height)
+void KeySlot_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
     patchinfo_t info;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(Hu_InventoryIsOpen(obj->player))
         return;
@@ -1147,8 +1150,8 @@ void KeySlot_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(kslt->patchId == 0 || !R_GetPatchInfo(kslt->patchId, &info))
         return;
 
-    if(NULL != width)  *width  = info.width  * cfg.statusbarScale;
-    if(NULL != height) *height = info.height * cfg.statusbarScale;
+    obj->dimensions.width  = info.width  * cfg.statusbarScale;
+    obj->dimensions.height = info.height * cfg.statusbarScale;
     }
 }
 
@@ -1228,7 +1231,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINX
 }
 
-void SBarReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarReadyAmmo_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING            (1)
 
@@ -1237,8 +1240,8 @@ void SBarReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
     guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(Hu_InventoryIsOpen(obj->player))
         return;
@@ -1251,8 +1254,9 @@ void SBarReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", ammo->value);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.statusbarScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.statusbarScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.statusbarScale;
+    obj->dimensions.height *= cfg.statusbarScale;
     }
 #undef TRACKING
 }
@@ -1324,15 +1328,15 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
 #undef ORIGINX
 }
 
-void SBarReadyAmmoIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarReadyAmmoIcon_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
     patchinfo_t info;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(Hu_InventoryIsOpen(obj->player))
         return;
@@ -1345,8 +1349,8 @@ void SBarReadyAmmoIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(!R_GetPatchInfo(icon->patchId, &info))
         return;
 
-    if(NULL != width)  *width  = info.width  * cfg.statusbarScale;
-    if(NULL != height) *height = info.height * cfg.statusbarScale;
+    obj->dimensions.width  = info.width  * cfg.statusbarScale;
+    obj->dimensions.height = info.height * cfg.statusbarScale;
     }
 }
 
@@ -1447,12 +1451,15 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
 #undef ORIGINX
 }
 
-void SBarReadyItem_Dimensions(uiwidget_t* obj, int* width, int* height)
+void SBarReadyItem_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
+    {
+    guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
+    patchinfo_t info;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(Hu_InventoryIsOpen(obj->player))
         return;
@@ -1460,10 +1467,14 @@ void SBarReadyItem_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
-
-    // \fixme Calculate dimensions!
-    //if(NULL != width)  *width  = ? * cfg.statusbarScale;
-    //if(NULL != height) *height = ? * cfg.statusbarScale;
+    if(item->patchId == 0)
+        return;
+    if(!R_GetPatchInfo(item->patchId, &info))
+        return;
+    // \fixme Calculate dimensions properly!
+    obj->dimensions.width  = info.width  * cfg.statusbarScale;
+    obj->dimensions.height = info.height * cfg.statusbarScale;
+    }
 }
 
 void ST_FlashCurrentItem(int player)
@@ -1577,14 +1588,14 @@ void Flight_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void Flight_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Flight_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -1594,8 +1605,8 @@ void Flight_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     /// \fixme Calculate dimensions properly!
-    if(NULL != width)  *width  = 32 * cfg.hudScale;
-    if(NULL != height) *height = 32 * cfg.hudScale;
+    obj->dimensions.width  = 32 * cfg.hudScale;
+    obj->dimensions.height = 32 * cfg.hudScale;
     }
 }
 
@@ -1700,14 +1711,14 @@ void Tome_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void Tome_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Tome_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_tomeofpower_t* tome = (guidata_tomeofpower_t*)obj->typedata;
 
-    if(NULL != width)  *width = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -1719,8 +1730,8 @@ void Tome_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(tome->patchId != 0)
     {
         // \fixme Determine the actual center point of the animation at widget creation time.
-        if(NULL != width)  *width  += 25;
-        if(NULL != height) *height += 25;
+        obj->dimensions.width  += 25;
+        obj->dimensions.height += 25;
     }
 
     if(tome->countdownSeconds != 0)
@@ -1732,16 +1743,15 @@ void Tome_Dimensions(uiwidget_t* obj, int* width, int* height)
         dd_snprintf(buf, 20, "%i", tome->countdownSeconds);
         FR_SetFont(obj->fontId);
         w = FR_TextFragmentWidth2(buf, TRACKING);
-        if(NULL != width && w > *width)
-            *width += w;
-        if(NULL != height)
-            *height += FR_TextFragmentHeight(buf) + 2;
+        if(w > obj->dimensions.width)
+            obj->dimensions.width += w;
+        obj->dimensions.height += FR_TextFragmentHeight(buf) + 2;
 
 #undef TRACKING
     }
 
-    if(NULL != width)  *width  = *width  * cfg.hudScale;
-    if(NULL != height) *height = *height * cfg.hudScale;
+    obj->dimensions.width  *= cfg.hudScale;
+    obj->dimensions.height *= cfg.hudScale;
     }
 }
 
@@ -1824,15 +1834,15 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void ReadyAmmoIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
+void ReadyAmmoIcon_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
     patchinfo_t info;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -1843,8 +1853,8 @@ void ReadyAmmoIcon_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(!R_GetPatchInfo(icon->patchId, &info))
         return;
 
-    if(NULL != width) *width   = info.width  * cfg.hudScale;
-    if(NULL != height) *height = info.height * cfg.hudScale;
+    obj->dimensions.width  = info.width  * cfg.hudScale;
+    obj->dimensions.height = info.height * cfg.hudScale;
     }
 }
 
@@ -1884,7 +1894,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 #undef TRACKING
 }
 
-void ReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
+void ReadyAmmo_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING                (1)
 
@@ -1893,8 +1903,8 @@ void ReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
     guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -1905,8 +1915,9 @@ void ReadyAmmo_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", ammo->value);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.hudScale;
+    obj->dimensions.height *= cfg.hudScale;
     }
 #undef TRACKING
 }
@@ -1950,7 +1961,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
 #undef TRACKING
 }
 
-void Health_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Health_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING                (1)
 
@@ -1960,8 +1971,8 @@ void Health_Dimensions(uiwidget_t* obj, int* width, int* height)
     int health = MAX_OF(hlth->value, 0);
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -1970,8 +1981,9 @@ void Health_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 5, "%i", health);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.hudScale;
+    obj->dimensions.height *= cfg.hudScale;
     }
 #undef TRACKING
 }
@@ -2012,7 +2024,7 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
 #undef TRACKING
 }
 
-void Armor_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Armor_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING                (1)
 
@@ -2021,8 +2033,8 @@ void Armor_Dimensions(uiwidget_t* obj, int* width, int* height)
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -2033,8 +2045,9 @@ void Armor_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     dd_snprintf(buf, 20, "%i", armor->value);
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.hudScale;
+    obj->dimensions.height *= cfg.hudScale;
     }
 #undef TRACKING
 }
@@ -2106,15 +2119,15 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void Keys_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Keys_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     int x = 0, numVisible = 0; 
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
@@ -2124,37 +2137,33 @@ void Keys_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(keys->keyBoxes[KT_YELLOW])
     {
         x += pKeys[0].width + 1;
-        if(NULL != width)
-            *width += pKeys[0].width;
-        if(NULL != height && pKeys[0].height > *height)
-            *height = pKeys[0].height;
+        obj->dimensions.width += pKeys[0].width;
+        if(pKeys[0].height > obj->dimensions.height)
+            obj->dimensions.height = pKeys[0].height;
         ++numVisible;
     }
 
     if(keys->keyBoxes[KT_GREEN])
     {
         x += pKeys[1].width + 1;
-        if(NULL != width)
-            *width += pKeys[1].width;
-        if(NULL != height && pKeys[1].height > *height)
-            *height = pKeys[1].height;
+        obj->dimensions.width += pKeys[1].width;
+        if(pKeys[1].height > obj->dimensions.height)
+            obj->dimensions.height = pKeys[1].height;
         ++numVisible;
     }
 
     if(keys->keyBoxes[KT_BLUE])
     {
         x += pKeys[2].width;
-        if(NULL != width)
-            *width += pKeys[1].width;
-        if(NULL != height && pKeys[2].height > *height)
-            *height = pKeys[2].height;
+        obj->dimensions.width += pKeys[1].width;
+        if(pKeys[2].height > obj->dimensions.height)
+            obj->dimensions.height = pKeys[2].height;
         ++numVisible;
     }
-    if(NULL != width)
-        *width += (numVisible-1) * 1;
+    obj->dimensions.width += (numVisible-1) * 1;
 
-    if(NULL != width)  *width  = *width  * cfg.hudScale;
-    if(NULL != height) *height = *height * cfg.hudScale;
+    obj->dimensions.width  *= cfg.hudScale;
+    obj->dimensions.height *= cfg.hudScale;
     }
 }
 
@@ -2196,7 +2205,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
 #undef TRACKING
 }
 
-void Frags_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Frags_UpdateDimensions(uiwidget_t* obj)
 {
 #define TRACKING                (1)
 
@@ -2205,8 +2214,8 @@ void Frags_Dimensions(uiwidget_t* obj, int* width, int* height)
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     char buf[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!deathmatch)
         return;
@@ -2220,8 +2229,9 @@ void Frags_Dimensions(uiwidget_t* obj, int* width, int* height)
     dd_snprintf(buf, 20, "%i", frags->value);
 
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth2(buf, TRACKING) * cfg.hudScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudScale;
+    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    obj->dimensions.width  *= cfg.hudScale;
+    obj->dimensions.height *= cfg.hudScale;
     }
 #undef TRACKING
 }
@@ -2288,14 +2298,14 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void ReadyItem_Dimensions(uiwidget_t* obj, int* width, int* height)
+void ReadyItem_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     patchinfo_t boxInfo;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(Hu_InventoryIsOpen(obj->player))
         return;
@@ -2306,8 +2316,8 @@ void ReadyItem_Dimensions(uiwidget_t* obj, int* width, int* height)
     if(!R_GetPatchInfo(pInvItemBox, &boxInfo))
         return;
 
-    if(NULL != width)  *width  = boxInfo.width  * cfg.hudScale;
-    if(NULL != height) *height = boxInfo.height * cfg.hudScale;
+    obj->dimensions.width  = boxInfo.width  * cfg.hudScale;
+    obj->dimensions.height = boxInfo.height * cfg.hudScale;
     }
 }
 
@@ -2342,15 +2352,15 @@ void Inventory_Drawer(uiwidget_t* obj, int x, int y)
 #undef INVENTORY_HEIGHT
 }
 
-void Inventory_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Inventory_UpdateDimensions(uiwidget_t* obj)
 {
 #define INVENTORY_HEIGHT    29
 #define EXTRA_SCALE         .75f
 
     assert(NULL != obj);
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!Hu_InventoryIsOpen(obj->player))
         return;
@@ -2360,8 +2370,8 @@ void Inventory_Dimensions(uiwidget_t* obj, int* width, int* height)
         return;
 
     /// \fixme Calculate the visual dimensions properly!
-    if(NULL != width)  *width  = (31*7+16*2) * EXTRA_SCALE * cfg.hudScale;
-    if(NULL != height) *height = INVENTORY_HEIGHT * EXTRA_SCALE * cfg.hudScale;
+    obj->dimensions.width  = (31*7+16*2) * EXTRA_SCALE * cfg.hudScale;
+    obj->dimensions.height = INVENTORY_HEIGHT * EXTRA_SCALE * cfg.hudScale;
 
 #undef EXTRA_SCALE
 #undef INVENTORY_HEIGHT
@@ -2424,15 +2434,15 @@ void Kills_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void Kills_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Kills_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
     char buf[40], tmp[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT)))
         return;
@@ -2456,8 +2466,9 @@ void Kills_Dimensions(uiwidget_t* obj, int* width, int* height)
     }
 
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
+    obj->dimensions.width  *= cfg.hudCheatCounterScale;
+    obj->dimensions.height *= cfg.hudCheatCounterScale;
     }
 }
 
@@ -2518,15 +2529,15 @@ void Items_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void Items_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Items_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_items_t* items = (guidata_items_t*)obj->typedata;
     char buf[40], tmp[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!(cfg.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
         return;
@@ -2550,8 +2561,9 @@ void Items_Dimensions(uiwidget_t* obj, int* width, int* height)
     }
 
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
+    obj->dimensions.width  *= cfg.hudCheatCounterScale;
+    obj->dimensions.height *= cfg.hudCheatCounterScale;
     }
 }
 
@@ -2612,15 +2624,15 @@ void Secrets_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void Secrets_Dimensions(uiwidget_t* obj, int* width, int* height)
+void Secrets_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
     guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
     char buf[40], tmp[20];
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(!(cfg.hudShownCheatCounters & (CCH_SECRETS | CCH_SECRETS_PRCNT)))
         return;
@@ -2644,8 +2656,9 @@ void Secrets_Dimensions(uiwidget_t* obj, int* width, int* height)
     }
 
     FR_SetFont(obj->fontId);
-    if(NULL != width)  *width  = FR_TextFragmentWidth(buf)  * cfg.hudCheatCounterScale;
-    if(NULL != height) *height = FR_TextFragmentHeight(buf) * cfg.hudCheatCounterScale;
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
+    obj->dimensions.width  *= cfg.hudCheatCounterScale;
+    obj->dimensions.height *= cfg.hudCheatCounterScale;
     }
 }
 
@@ -2674,22 +2687,22 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void MapName_Dimensions(uiwidget_t* obj, int* width, int *height)
+void MapName_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_MAPNAME);
     {
     const char* text = P_GetMapNiceName();
     const float scale = .75f;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(NULL == text)
         return;
 
-    FR_TextDimensions(width, height, text, obj->fontId);
-    if(NULL != width)  *width  = *width  * scale;
-    if(NULL != height) *height = *height * scale;
+    FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, text, obj->fontId);
+    obj->dimensions.width  *= scale;
+    obj->dimensions.height *= scale;
     }
 }
 
@@ -2698,7 +2711,7 @@ typedef struct {
     int group;
     int hideId;
     gamefontid_t fontIdx;
-    void (*dimensions) (uiwidget_t* obj, int* width, int* height); 
+    void (*updateDimensions) (uiwidget_t* obj); 
     void (*drawer) (uiwidget_t* obj, int x, int y);
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
     void* typedata;
@@ -2801,18 +2814,26 @@ void ST_Drawer(int player)
 
         if(!hud->statusbarActive)
         {
+            int h = 0;
             GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-
-            posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
-            posY = y;
-            availWidth = width - (drawnWidth > 0 ? drawnWidth + PADDING : 0);
-            availHeight = height;
-            GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]), posX, posY, availWidth, availHeight, alpha, &drawnWidth, &drawnHeight);
-
+            if(drawnHeight > h) h = drawnHeight;
             GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            if(drawnHeight > h) h = drawnHeight;
             GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+            if(drawnHeight > h) h = drawnHeight;
+            drawnHeight = h;
         }
-        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_MAPNAME]), x, y, width, height, ST_AutomapOpacity(player), NULL, NULL);
+
+        if(!hud->statusbarActive)
+        {
+            int h = drawnHeight;
+            availHeight = height - (drawnHeight > 0 ? drawnHeight : 0);
+            GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]), x, y, width, availHeight, alpha, &drawnWidth, &drawnHeight);
+            drawnHeight += h;
+        }
+
+        availHeight = height - (drawnHeight > 0 ? drawnHeight : 0);
+        GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_MAPNAME]), x, y, width, availHeight, ST_AutomapOpacity(player), NULL, NULL);
 
         GUI_DrawWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         if(!hud->statusbarActive)
@@ -2917,8 +2938,6 @@ void ST_loadData(void)
 
 static void initData(hudstate_t* hud)
 {
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     int player = hud - hudStates;
     player_t* plr = &players[player];
 
@@ -2971,18 +2990,6 @@ static void initData(hudstate_t* hud)
     hud->log._nextUsedMsg = 0;
     hud->log._pvisMsgCount = 0;
     memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
-
-    memset(&hud->automap, 0, sizeof(hud->automap));
-    hud->automap.mcfg = ST_AutomapConfig();
-    hud->automap.followPlayer = player;
-    hud->automap.oldViewScale = 1;
-    hud->automap.maxViewPositionDelta = 128;
-    hud->automap.window.oldX = hud->automap.window.x = 0;
-    hud->automap.window.oldY = hud->automap.window.y = 0;
-    hud->automap.window.oldWidth = hud->automap.window.width = winWidth;
-    hud->automap.window.oldHeight = hud->automap.window.height = winHeight;
-    hud->automap.alpha = hud->automap.targetAlpha = hud->automap.oldAlpha = 0;
-    hud->automap.fullscreen = true;
 
     ST_HUDUnHide(player, HUE_FORCE);
 }
@@ -3128,8 +3135,8 @@ void ST_Start(int player)
     initAutomapForCurrentMap(obj);
     UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
-    UIAutomap_SetWindowOrigin(obj, 0, 0);
-    UIAutomap_SetWindowDimensions(obj, winWidth, winHeight);
+    UIAutomap_SetOrigin(obj, 0, 0);
+    UIAutomap_SetDimensions(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }
@@ -3168,32 +3175,32 @@ void ST_BuildWidgets(int player)
         { UWG_AUTOMAP,      UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
-        { GUI_BOX,          UWG_STATUSBAR,    -1,         0,            SBarBackground_Dimensions, SBarBackground_Drawer },
-        { GUI_INVENTORY,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarInventory_Dimensions, SBarInventory_Drawer },
-        { GUI_FRAGS,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarFrags_Dimensions, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
-        { GUI_HEALTH,       UWG_STATUSBAR,    -1,         GF_STATUS,    SBarHealth_Dimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
-        { GUI_ARMOR,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarArmor_Dimensions, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
-        { GUI_KEYSLOT,      UWG_STATUSBAR,    -1,         0,            KeySlot_Dimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
-        { GUI_KEYSLOT,      UWG_STATUSBAR,    -1,         0,            KeySlot_Dimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
-        { GUI_KEYSLOT,      UWG_STATUSBAR,    -1,         0,            KeySlot_Dimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
-        { GUI_READYAMMO,    UWG_STATUSBAR,    -1,         GF_STATUS,    SBarReadyAmmo_Dimensions, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
-        { GUI_READYAMMOICON, UWG_STATUSBAR,   -1,         0,            SBarReadyAmmoIcon_Dimensions, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
-        { GUI_READYITEM,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarReadyItem_Dimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
-        { GUI_CHAIN,        UWG_STATUSBAR,    -1,         0,            SBarChain_Dimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-        { GUI_MAPNAME,      UWG_MAPNAME,      -1,         GF_FONTB,     MapName_Dimensions, MapName_Drawer },
-        { GUI_READYAMMOICON, UWG_TOPLEFT,     HUD_AMMO,   0,            ReadyAmmoIcon_Dimensions, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
-        { GUI_READYAMMO,    UWG_TOPLEFT,      HUD_AMMO,   GF_STATUS,    ReadyAmmo_Dimensions, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
-        { GUI_FLIGHT,       UWG_TOPLEFT2,     -1,         0,            Flight_Dimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
-        { GUI_TOME,         UWG_TOPRIGHT,     -1,         GF_SMALLIN,   Tome_Dimensions, Tome_Drawer, Tome_Ticker, &hud->tome },
-        { GUI_HEALTH,       UWG_BOTTOMLEFT,   HUD_HEALTH, GF_FONTB,     Health_Dimensions, Health_Drawer, Health_Ticker, &hud->health },
-        { GUI_KEYS,         UWG_BOTTOMLEFT,   HUD_KEYS,   0,            Keys_Dimensions, Keys_Drawer, Keys_Ticker, &hud->keys },
-        { GUI_ARMOR,        UWG_BOTTOMLEFT,   HUD_ARMOR,  GF_STATUS,    Armor_Dimensions, Armor_Drawer, Armor_Ticker, &hud->armor },
-        { GUI_FRAGS,        UWG_BOTTOMLEFT2,  -1,         GF_STATUS,    Frags_Dimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
-        { GUI_READYITEM,    UWG_BOTTOMRIGHT,  HUD_READYITEM, GF_SMALLIN,ReadyItem_Dimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
-        { GUI_INVENTORY,    UWG_BOTTOM,       -1,         GF_SMALLIN,   Inventory_Dimensions, Inventory_Drawer },
-        { GUI_SECRETS,      UWG_COUNTERS,     -1,         GF_FONTA,     Secrets_Dimensions, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
-        { GUI_ITEMS,        UWG_COUNTERS,     -1,         GF_FONTA,     Items_Dimensions, Items_Drawer, Items_Ticker, &hud->items },
-        { GUI_KILLS,        UWG_COUNTERS,     -1,         GF_FONTA,     Kills_Dimensions, Kills_Drawer, Kills_Ticker, &hud->kills },
+        { GUI_BOX,          UWG_STATUSBAR,    -1,         0,            SBarBackground_UpdateDimensions, SBarBackground_Drawer },
+        { GUI_INVENTORY,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarInventory_UpdateDimensions, SBarInventory_Drawer },
+        { GUI_FRAGS,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarFrags_UpdateDimensions, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
+        { GUI_HEALTH,       UWG_STATUSBAR,    -1,         GF_STATUS,    SBarHealth_UpdateDimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
+        { GUI_ARMOR,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarArmor_UpdateDimensions, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
+        { GUI_KEYSLOT,      UWG_STATUSBAR,    -1,         0,            KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
+        { GUI_KEYSLOT,      UWG_STATUSBAR,    -1,         0,            KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
+        { GUI_KEYSLOT,      UWG_STATUSBAR,    -1,         0,            KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
+        { GUI_READYAMMO,    UWG_STATUSBAR,    -1,         GF_STATUS,    SBarReadyAmmo_UpdateDimensions, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
+        { GUI_READYAMMOICON, UWG_STATUSBAR,   -1,         0,            SBarReadyAmmoIcon_UpdateDimensions, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
+        { GUI_READYITEM,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarReadyItem_UpdateDimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
+        { GUI_CHAIN,        UWG_STATUSBAR,    -1,         0,            SBarChain_UpdateDimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
+        { GUI_MAPNAME,      UWG_MAPNAME,      -1,         GF_FONTB,     MapName_UpdateDimensions, MapName_Drawer },
+        { GUI_READYAMMOICON, UWG_TOPLEFT,     HUD_AMMO,   0,            ReadyAmmoIcon_UpdateDimensions, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
+        { GUI_READYAMMO,    UWG_TOPLEFT,      HUD_AMMO,   GF_STATUS,    ReadyAmmo_UpdateDimensions, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
+        { GUI_FLIGHT,       UWG_TOPLEFT2,     -1,         0,            Flight_UpdateDimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
+        { GUI_TOME,         UWG_TOPRIGHT,     -1,         GF_SMALLIN,   Tome_UpdateDimensions, Tome_Drawer, Tome_Ticker, &hud->tome },
+        { GUI_HEALTH,       UWG_BOTTOMLEFT,   HUD_HEALTH, GF_FONTB,     Health_UpdateDimensions, Health_Drawer, Health_Ticker, &hud->health },
+        { GUI_KEYS,         UWG_BOTTOMLEFT,   HUD_KEYS,   0,            Keys_UpdateDimensions, Keys_Drawer, Keys_Ticker, &hud->keys },
+        { GUI_ARMOR,        UWG_BOTTOMLEFT,   HUD_ARMOR,  GF_STATUS,    Armor_UpdateDimensions, Armor_Drawer, Armor_Ticker, &hud->armor },
+        { GUI_FRAGS,        UWG_BOTTOMLEFT2,  -1,         GF_STATUS,    Frags_UpdateDimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
+        { GUI_READYITEM,    UWG_BOTTOMRIGHT,  HUD_READYITEM, GF_SMALLIN,ReadyItem_UpdateDimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
+        { GUI_INVENTORY,    UWG_BOTTOM,       -1,         GF_SMALLIN,   Inventory_UpdateDimensions, Inventory_Drawer },
+        { GUI_SECRETS,      UWG_COUNTERS,     -1,         GF_FONTA,     Secrets_UpdateDimensions, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
+        { GUI_ITEMS,        UWG_COUNTERS,     -1,         GF_FONTA,     Items_UpdateDimensions, Items_Drawer, Items_Ticker, &hud->items },
+        { GUI_KILLS,        UWG_COUNTERS,     -1,         GF_FONTA,     Kills_UpdateDimensions, Kills_Drawer, Kills_Ticker, &hud->kills },
         { GUI_NONE }
     };
     size_t i;
@@ -3213,17 +3220,17 @@ void ST_BuildWidgets(int player)
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
     {
         const uiwidgetdef_t* def = &widgetDefs[i];
-        uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->dimensions, def->drawer, def->ticker, def->typedata);
+        uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->updateDimensions, def->drawer, def->ticker, def->typedata);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
     }
 
-    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, -1, FID(GF_FONTA), UILog_Dimensions, UILog_Drawer, UILog_Ticker, &hud->log);
+    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, -1, FID(GF_FONTA), UILog_UpdateDimensions, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
-    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_Dimensions, UIChat_Drawer, NULL, &hud->chat);
+    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_UpdateDimensions, UIChat_Drawer, NULL, &hud->chat);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, -1, FID(GF_FONTA), UIAutomap_Dimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, -1, FID(GF_FONTA), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING
@@ -3365,7 +3372,7 @@ boolean ST_AutomapIsActive(int player)
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapWindowObscures(int player, int x, int y, int w, int h)
+boolean ST_AutomapWindowObscures2(int player, const rectanglei_t* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(NULL == obj) return false;
@@ -3373,29 +3380,37 @@ boolean ST_AutomapWindowObscures(int player, int x, int y, int w, int h)
     {
         if(cfg.automapOpacity * ST_AutomapOpacity(player) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
         {
-            if(UIAutomap_Fullscreen(obj))
-            {
+            /*if(UIAutomap_Fullscreen(obj))
+            {*/
                 return true;
-            }
+            /*}
             else
             {
                 // We'll have to compare the dimensions.
-                float scrwidth  = Get(DD_WINDOW_WIDTH);
-                float scrheight = Get(DD_WINDOW_HEIGHT);
-                float fx = FIXXTOSCREENX(x);
-                float fy = FIXYTOSCREENY(x);
-                float fw = FIXXTOSCREENX(w);
-                float fh = FIXYTOSCREENY(h);
-                float mx, my, mw, mh;
+                const int scrwidth  = Get(DD_WINDOW_WIDTH);
+                const int scrheight = Get(DD_WINDOW_HEIGHT);
+                const rectanglei_t* dims = UIWidget_Dimensions(obj);
+                float fx = FIXXTOSCREENX(region->x);
+                float fy = FIXYTOSCREENY(region->y);
+                float fw = FIXXTOSCREENX(region->width);
+                float fh = FIXYTOSCREENY(region->height);
 
-                UIAutomap_WindowOrigin(obj, &mx, &my);
-                UIAutomap_WindowDimensions(obj, &mw, &mh);
-                if(mx >= fx && my >= fy && mw >= fw && mh >= fh)
+                if(dims->x >= fx && dims->y >= fy && dims->width >= fw && dims->height >= fh)
                     return true;
-            }
+            }*/
         }
     }
     return false;
+}
+
+boolean ST_AutomapWindowObscures(int player, int x, int y, int width, int height)
+{
+    rectanglei_t rect;
+    rect.x = x;
+    rect.y = y;
+    rect.width  = width;
+    rect.height = height;
+    return ST_AutomapWindowObscures2(player, &rect);
 }
 
 void ST_AutomapClearPoints(int player)

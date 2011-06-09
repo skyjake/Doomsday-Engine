@@ -160,11 +160,11 @@ static void calcViewScaleFactors(uiwidget_t* obj)
     if(dist < 0)
         dist = -dist;
 
-    a = am->window.width  / dist;
-    b = am->window.height / dist;
+    a = UIWidget_Dimensions(obj)->width  / dist;
+    b = UIWidget_Dimensions(obj)->height / dist;
 
     am->minScaleMTOF = (a < b ? a : b);
-    am->maxScaleMTOF = am->window.height / am->minScale;
+    am->maxScaleMTOF = UIWidget_Dimensions(obj)->height / am->minScale;
 
     am->updateViewScale = false;
     }
@@ -1156,11 +1156,9 @@ static void setupGLStateForMap(uiwidget_t* obj)
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
-    float wx, wy, ww, wh, angle, plx, ply, bgColor[3];
     int player = UIWidget_Player(obj);
+    float angle, plx, ply, bgColor[3];
 
-    UIAutomap_WindowOrigin(obj, &wx, &wy);
-    UIAutomap_WindowDimensions(obj, &ww, &wh);
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
 
@@ -1202,26 +1200,17 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapBack[CA] * alpha);
 
-        DGL_Translatef(wx, wy, 0);
+        DGL_Translatef(UIWidget_Dimensions(obj)->x, UIWidget_Dimensions(obj)->y, 0);
 
         // Apply the parallax scrolling, map rotation and counteract the
         // aspect of the quad (sized to map window dimensions).
         DGL_Translatef(UIAutomap_MapToFrame(obj, plx) + .5f,
                        UIAutomap_MapToFrame(obj, ply) + .5f, 0);
         DGL_Rotatef(angle, 0, 0, 1);
-        DGL_Scalef(1, wh / ww, 1);
+        DGL_Scalef(1, UIWidget_Dimensions(obj)->height / UIWidget_Dimensions(obj)->width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
 
-        DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 0, 1);
-            DGL_Vertex2f(wx, wy);
-            DGL_TexCoord2f(0, 1, 1);
-            DGL_Vertex2f(wx + ww, wy);
-            DGL_TexCoord2f(0, 1, 0);
-            DGL_Vertex2f(wx + ww, wy + wh);
-            DGL_TexCoord2f(0, 0, 0);
-            DGL_Vertex2f(wx, wy + wh);
-        DGL_End();
+        DGL_DrawRecti(UIWidget_Dimensions(obj));
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
@@ -1233,7 +1222,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // Nope just a solid color.
         DGL_SetNoMaterial();
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapBack[CA] * alpha);
-        DGL_DrawRect(wx, wy, ww, wh);
+        DGL_DrawRecti(UIWidget_Dimensions(obj));
     }
 
 #if __JDOOM64__
@@ -1262,7 +1251,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
 
             iconAlpha = MINMAX_OF(.0f, alpha, .5f);
 
-            spacing = wh / num;
+            spacing = UIWidget_Dimensions(obj)->height / num;
             y = 0;
 
             for(i = 0; i < 3; ++i)
@@ -1273,8 +1262,8 @@ static void setupGLStateForMap(uiwidget_t* obj)
                     DGL_SetPSprite(sprInfo.material);
                     DGL_Enable(DGL_TEXTURE_2D);
 
-                    scale = wh / (sprInfo.height * num);
-                    x = ww - sprInfo.width * scale;
+                    scale = UIWidget_Dimensions(obj)->height / (sprInfo.height * num);
+                    x = UIWidget_Dimensions(obj)->width - sprInfo.width * scale;
                     w = sprInfo.width;
                     h = sprInfo.height;
 
@@ -1307,7 +1296,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     {
     int viewX, viewY;
     R_GetViewPort(player, &viewX, &viewY, NULL, NULL);
-    DGL_Scissor(viewX+wx+am->border, viewY+wy+am->border, ww-am->border*2, wh-am->border*2);
+    DGL_Scissor(viewX+UIWidget_Dimensions(obj)->x+am->border, viewY+UIWidget_Dimensions(obj)->y+am->border, UIWidget_Dimensions(obj)->width-am->border*2, UIWidget_Dimensions(obj)->height-am->border*2);
     DGL_Enable(DGL_SCISSOR_TEST);
     }
     }
@@ -1412,16 +1401,13 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     player_t* plr = &players[UIWidget_Player(obj)];
-    float wx, wy, ww, wh, vx, vy, angle, oldLineWidth;
-    uint i;
+    float vx, vy, angle, oldLineWidth;
 
     if(!plr->plr->inGame)
         return;
 
     // Configure render state:
     rs.plr = plr;
-    UIAutomap_WindowOrigin(obj, &wx, &wy);
-    UIAutomap_WindowDimensions(obj, &ww, &wh);
     UIAutomap_CameraOrigin(obj, &vx, &vy);
     angle = UIAutomap_CameraAngle(obj);
 
@@ -1435,7 +1421,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
     setupGLStateForMap(obj);
 
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_Translatef(wx + ww / 2, wy + wh / 2, 0);
+    DGL_Translatef(UIWidget_Dimensions(obj)->x + UIWidget_Dimensions(obj)->width / 2, UIWidget_Dimensions(obj)->y + UIWidget_Dimensions(obj)->height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
     DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
@@ -1477,14 +1463,15 @@ DGL_End();
         DGL_LoadIdentity();
 
         DGL_PushMatrix();
-        DGL_Scalef(1.f / (ww-am->border*2), 1.f / (wh-am->border*2), 1);
-        DGL_Translatef(ww / 2, wh / 2, 0);
+        DGL_Scalef(1.f / (UIWidget_Dimensions(obj)->width-am->border*2), 1.f / (UIWidget_Dimensions(obj)->height-am->border*2), 1);
+        DGL_Translatef(UIWidget_Dimensions(obj)->width / 2, UIWidget_Dimensions(obj)->height / 2, 0);
         DGL_Rotatef(-angle, 0, 0, 1);
         DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
         DGL_Translatef(-vx, -vy, 0);
     }
 
     // Draw static map geometry.
+    { int i;
     for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
     {
         if(am->lists[i])
@@ -1498,7 +1485,7 @@ DGL_End();
             // Draw.
             DGL_CallList(am->lists[i]);
         }
-    }
+    }}
 
     // Draw dynamic map geometry.
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -1551,14 +1538,6 @@ DGL_End();
     // Return to the normal GL state.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
-}
-
-void UIAutomap_Dimensions(uiwidget_t* obj, int* width, int* height)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* map = (guidata_automap_t*)obj->typedata;
     }
 }
 
@@ -1636,7 +1615,6 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[player];
     const mobj_t* mo = UIAutomap_FollowMobj(obj);
     float panX[2], panY[2], zoomVel, zoomSpeed, width, height, scale;
-    int winX, winY, winW, winH;
 
     // Check the state of the controls. Done here so that offsets don't accumulate
     // unnecessarily, as they would, if left unread.
@@ -1701,35 +1679,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
         UIAutomap_SetCameraAngle(obj, angle);
     }
 
-    // Determine whether the available space has changed and thus whether
-    // the position and/or size of the automap must therefore change too.
-    R_GetViewWindow(UIWidget_Player(obj), &winX, &winY, &winW, &winH);
-    UIAutomap_UpdateWindow(obj, winX, winY, winW, winH);
-
     if(am->updateViewScale)
         calcViewScaleFactors(obj);
-
-    // Window position and dimensions.
-    if(!am->fullscreen)
-    {
-        automapwindow_t* win = &am->window;
-
-        win->posTimer += (float)(.4 * ticLength * TICRATE);
-        if(win->posTimer >= 1)
-        {
-            win->x = win->targetX;
-            win->y = win->targetY;
-            win->width = win->targetWidth;
-            win->height = win->targetHeight;
-        }
-        else
-        {
-            win->x = LERP(win->oldX, win->targetX, win->posTimer);
-            win->y = LERP(win->oldY, win->targetY, win->posTimer);
-            win->width = LERP(win->oldWidth, win->targetWidth, win->posTimer);
-            win->height = LERP(win->oldHeight, win->targetHeight, win->posTimer);
-        }
-    }
 
     // Map viewer location.
     am->viewTimer += (float)(.4 * ticLength * TICRATE);
@@ -1809,8 +1760,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     float viewPoint[2], rads, viewWidth, viewHeight;
 
     // Determine the dimensions of the view window in am coordinates.
-    viewWidth  = UIAutomap_FrameToMap(obj, am->window.width  - (am->border*2));
-    viewHeight = UIAutomap_FrameToMap(obj, am->window.height - (am->border*2));
+    viewWidth  = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->width  - (am->border*2));
+    viewHeight = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->height - (am->border*2));
     am->topLeft[0]     = am->bottomLeft[0] = -viewWidth/2;
     am->topLeft[1]     = am->topRight[1]   =  viewHeight/2;
     am->bottomRight[0] = am->topRight[0]   =  viewWidth/2;
@@ -1831,8 +1782,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->topRight[0]    += viewPoint[0]; am->topRight[1]    += viewPoint[1];
     }
 
-    width = UIAutomap_FrameToMap(obj, am->window.width);
-    height = UIAutomap_FrameToMap(obj, am->window.height);
+    width  = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->width);
+    height = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->height);
 
     // Calculate the in-view, AABB.
     {   // Rotation-aware.
@@ -1902,79 +1853,54 @@ float UIAutomap_FrameToMap(uiwidget_t* obj, float val)
     }
 }
 
-void UIAutomap_WindowOrigin(uiwidget_t* obj, float* x, float* y)
+void UIAutomap_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    if(NULL != x) *x = am->window.x;
-    if(NULL != y) *y = am->window.y;
+    int newX, newY, newWidth, newHeight;
+
+    // Determine whether the available space has changed and thus whether
+    // the position and/or size of the automap must therefore change too.
+    R_GetViewWindow(UIWidget_Player(obj), &newX, &newY, &newWidth, &newHeight);
+
+    if(newX != obj->dimensions.x || newY != obj->dimensions.y ||
+       newWidth != obj->dimensions.width || newHeight != obj->dimensions.height)
+    {
+        obj->dimensions.x = newX;
+        obj->dimensions.y = newY;
+        obj->dimensions.width  = newWidth;
+        obj->dimensions.height = newHeight;
+        // Now the screen dimensions have changed we have to update scaling
+        // factors accordingly.
+        am->updateViewScale = true;
+    }
     }
 }
 
-void UIAutomap_SetWindowOrigin(uiwidget_t* obj, int x, int y)
+void UIAutomap_SetOrigin(uiwidget_t* obj, int x, int y)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    automapwindow_t* win;
-
-    // Are we in fullscreen mode?
-    // If so, setting the window size is not allowed.
-    if(am->fullscreen)
-        return;
-
-    win = &am->window;
-
     // Already at this target?
-    if(x == win->targetX && y == win->targetY)
+    if(x == obj->dimensions.x && y == obj->dimensions.y)
         return;
-
-    win->oldX = win->x;
-    win->oldY = win->y;
-    // Restart the timer.
-    win->posTimer = 0;
-
-    win->targetX = (float) x;
-    win->targetY = (float) y;
+    obj->dimensions.x = x;
+    obj->dimensions.y = y;
     }
 }
 
-void UIAutomap_WindowDimensions(uiwidget_t* obj, float* w, float* h)
+void UIAutomap_SetDimensions(uiwidget_t* obj, int w, int h)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    if(w) *w = am->window.width;
-    if(h) *h = am->window.height;
-    }
-}
-
-void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int w, int h)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    automapwindow_t* win;
-
-    // Are we in fullscreen mode?
-    // If so, setting the window size is not allowed.
-    if(am->fullscreen)
-        return;
-
-    win = &am->window;
-
     // Already at this target?
-    if(w == win->targetWidth && h == win->targetHeight)
+    if(w == obj->dimensions.width && h == obj->dimensions.height)
         return;
-
-    win->oldWidth = win->width;
-    win->oldHeight = win->height;
-    // Restart the timer.
-    win->posTimer = 0;
-
-    win->targetWidth = (float) w;
-    win->targetHeight = (float) h;
+    obj->dimensions.width  = w;
+    obj->dimensions.height = h;
     }
 }
 
@@ -2329,26 +2255,6 @@ boolean UIAutomap_SetCameraRotation(uiwidget_t* obj, boolean on)
     }
 }
 
-boolean UIAutomap_Fullscreen(uiwidget_t* obj)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    return am->fullscreen;
-    }
-}
-
-boolean UIAutomap_SetFullscreen(uiwidget_t* obj, boolean on)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean oldFullscreen = am->fullscreen;
-    am->fullscreen = on;
-    return (oldFullscreen != am->fullscreen);
-    }
-}
-
 float UIAutomap_Opacity(const uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
@@ -2395,48 +2301,6 @@ void UIAutomap_SetFlags(uiwidget_t* obj, int flags)
     am->flags = flags;
     // We will need to rebuild one or more display lists.
     UIAutomap_Rebuild(obj);
-    }
-}
-
-void UIAutomap_UpdateWindow(uiwidget_t* obj, float newX, float newY,
-    float newWidth, float newHeight)
-{
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    automapwindow_t* win;
-
-    win = &am->window;
-
-    if(newX != win->x || newY != win->y ||
-       newWidth != win->width || newHeight != win->height)
-    {
-        if(am->fullscreen)
-        {
-            // In fullscreen mode we always snap straight to the
-            // new dimensions.
-            win->x = win->oldX = win->targetX = newX;
-            win->y = win->oldY = win->targetY = newY;
-            win->width = win->oldWidth = win->targetWidth = newWidth;
-            win->height = win->oldHeight = win->targetHeight = newHeight;
-        }
-        else
-        {
-            // Snap dimensions if new scale is smaller.
-            if(newX > win->x)
-                win->x = win->oldX = win->targetX = newX;
-            if(newY > win->y)
-                win->y = win->oldY = win->targetY = newY;
-            if(newWidth < win->width)
-                win->width = win->oldWidth = win->targetWidth = newWidth;
-            if(newHeight < win->height)
-                win->height = win->oldHeight = win->targetHeight = newHeight;
-        }
-
-        // Now the screen dimensions have changed we have to update scaling
-        // factors accordingly.
-        am->updateViewScale = true;
-    }
     }
 }
 

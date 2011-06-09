@@ -86,8 +86,8 @@ void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength);
 /// Draw this message log widget.
 void UILog_Drawer(uiwidget_t* obj, int x, int y);
 
-/// Retrieve the "physical" dimensions of this widget.
-void UILog_Dimensions(uiwidget_t* obj, int* width, int* height);
+/// Calculate the "physical" dimensions of this widget.
+void UILog_UpdateDimensions(uiwidget_t* obj);
 
 /**
  * Empty the message log clearing all messages.

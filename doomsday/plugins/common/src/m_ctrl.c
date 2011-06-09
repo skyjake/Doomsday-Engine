@@ -356,7 +356,7 @@ void Hu_MenuInitControlsPage(void)
             obj->_pageFontIdx = MENU_FONT1;
             obj->_pageColorIdx = MENU_COLOR2; 
             obj->drawer = MNText_Drawer;
-            obj->dimensions = MNText_Dimensions;
+            obj->updateDimensions = MNText_UpdateDimensions;
         }
         else 
         {
@@ -375,7 +375,7 @@ void Hu_MenuInitControlsPage(void)
             }
             labelObj->_typedata = txt;
             labelObj->drawer = MNText_Drawer;
-            labelObj->dimensions = MNText_Dimensions;
+            labelObj->updateDimensions = MNText_UpdateDimensions;
             labelObj->_pageFontIdx = MENU_FONT1;
             labelObj->_pageColorIdx = MENU_COLOR1; 
 
@@ -383,7 +383,7 @@ void Hu_MenuInitControlsPage(void)
             bindingsObj->drawer = MNBindings_Drawer;
             bindingsObj->cmdResponder = MNBindings_CommandResponder;
             bindingsObj->privilegedResponder = MNBindings_PrivilegedResponder;
-            bindingsObj->dimensions = MNBindings_Dimensions;
+            bindingsObj->updateDimensions = MNBindings_UpdateDimensions;
             bindingsObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
             bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
             bindingsObj->_typedata = binds;
@@ -652,13 +652,12 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNBindings_Dimensions(const mn_object_t* obj, mn_page_t* page, int* width, int* height)
+void MNBindings_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
-    if(width)
-        *width = 60;
-    if(height)
-        *height = 10 * SMALL_SCALE;
+    assert(NULL != obj);
+    obj->_dimensions.width  = 60;
+    obj->_dimensions.height = 10 * SMALL_SCALE;
 }
 
 /**

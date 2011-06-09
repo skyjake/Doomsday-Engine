@@ -105,17 +105,15 @@ float ST_AutomapOpacity(int player);
 
 /**
  * Does the player's automap obscure this region completely?
- * \assume: Window dimensions are in a fixed coordinate space {x} 0 - 320, {y} 0 - 200.
+ * \assume: Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
  *
- * @param playerid  Index of the player whose map to check.
- * @param x  Top left X coordinate.
- * @param y  Top left Y coordinate.
- * @param w  Width.
- * @param h  Height.
+ * @param player  Local player number whose automap to check.
+ * @param region  Window region.
  *
  * @return  @true= there is no point even partially visible.
  */
-boolean ST_AutomapWindowObscures(int player, int x, int y, int w, int h);
+boolean ST_AutomapWindowObscures2(int player, const rectanglei_t* region);
+boolean ST_AutomapWindowObscures(int player, int x, int y, int width, int height);
 
 int ST_AutomapAddPoint(int player, float x, float y, float z);
 void ST_AutomapClearPoints(int player);

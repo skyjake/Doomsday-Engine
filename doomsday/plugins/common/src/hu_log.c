@@ -438,7 +438,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     }
 }
 
-void UILog_Dimensions(uiwidget_t* obj, int* width, int* height)
+void UILog_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_LOG);
     {
@@ -449,8 +449,8 @@ void UILog_Dimensions(uiwidget_t* obj, int* width, int* height)
     float scrollFactor;
     guidata_log_message_t* msg;
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->dimensions.width  = 0;
+    obj->dimensions.height = 0;
 
     if(0 == pvisMsgCount) return;
 
@@ -516,23 +516,20 @@ void UILog_Dimensions(uiwidget_t* obj, int* width, int* height)
 
         ++drawnMsgCount;
 
-        if(NULL != width)
+        FR_TextDimensions(&lineWidth, NULL, msg->text, FID(GF_FONTA));
+        if(lineWidth > obj->dimensions.width)
         {
-            FR_TextDimensions(&lineWidth, NULL, msg->text, FID(GF_FONTA));
-            if(lineWidth > *width)
-            {
-                *width = lineWidth;
-            }
+            obj->dimensions.width = lineWidth;
         }
     }
 
-    if(NULL != height && 0 != drawnMsgCount)
+    if(0 != drawnMsgCount)
     {
-        *height = /*first line*/ lineHeight * (1.f - scrollFactor) +
-                  /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
+        obj->dimensions.height = /*first line*/ lineHeight * (1.f - scrollFactor) +
+                                /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
     }
 
-    if(NULL != width)  *width  = *width  * cfg.msgScale;
-    if(NULL != height) *height = *height * cfg.msgScale;
+    obj->dimensions.width  *= cfg.msgScale;
+    obj->dimensions.height *= cfg.msgScale;
     }
 }

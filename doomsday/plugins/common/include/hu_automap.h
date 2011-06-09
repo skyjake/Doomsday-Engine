@@ -52,17 +52,6 @@ extern boolean freezeMapRLs;
 #define AMF_REND_VERTEXES       0x10
 #define AMF_REND_LINE_NORMALS   0x20
 
-typedef struct automapwindow_s {
-    // Where the window currently is on screen and the dimensions.
-    float x, y, width, height;
-
-    // Where the window should be on screen and the dimensions.
-    float targetX, targetY, targetWidth, targetHeight;
-    float oldX, oldY, oldWidth, oldHeight;
-
-    float posTimer;
-} automapwindow_t;
-
 // Mapped point of interest.
 typedef struct {
     float pos[3];
@@ -80,8 +69,6 @@ typedef struct {
     int flags;
     boolean active;
     boolean reveal;
-
-    boolean fullscreen; // If the map is currently in fullscreen mode.
     boolean pan; // If the map viewer location is currently in free pan mode.
     boolean rotate;
 
@@ -103,8 +90,7 @@ typedef struct {
     float alpha, targetAlpha, oldAlpha;
     float alphaTimer;
 
-// Automap window (screen space):
-    automapwindow_t window;
+// Automap window border (in screen space):
     float border;
 
 // Viewer location on the map:
@@ -161,11 +147,11 @@ void UIAutomap_ClearLists(uiwidget_t* obj);
 void UIAutomap_Reset(uiwidget_t* obj);
 
 void UIAutomap_Drawer(uiwidget_t* obj, int x, int y);
-void UIAutomap_Dimensions(uiwidget_t* obj, int* width, int* height);
 
 boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast);
 void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength);
-void UIAutomap_UpdateWindow(uiwidget_t* obj, float newX, float newY, float newWidth, float newHeight);
+
+void UIAutomap_UpdateDimensions(uiwidget_t* obj);
 
 boolean UIAutomap_Active(uiwidget_t* obj);
 boolean UIAutomap_Reveal(uiwidget_t* obj);
@@ -189,11 +175,8 @@ void UIAutomap_SetFlags(uiwidget_t* obj, int flags);
 void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY, float hiY);
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale);
 
-void UIAutomap_WindowOrigin(uiwidget_t* obj, float* x, float* y);
-void UIAutomap_SetWindowOrigin(uiwidget_t* obj, int x, int y);
-
-void UIAutomap_WindowDimensions(uiwidget_t* obj, float* w, float* h);
-void UIAutomap_SetWindowDimensions(uiwidget_t* obj, int w, int h);
+void UIAutomap_SetOrigin(uiwidget_t* obj, int x, int y);
+void UIAutomap_SetDimensions(uiwidget_t* obj, int w, int h);
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y);
 boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y);
@@ -224,9 +207,6 @@ float UIAutomap_MapToFrame(uiwidget_t* obj, float val);
 
 void UIAutomap_VisibleBounds(const uiwidget_t* obj, float topLeft[2], float bottomRight[2], float topRight[2], float bottomLeft[2]);
 void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, float* lowX, float* hiX, float* lowY, float* hiY);
-
-boolean UIAutomap_Fullscreen(uiwidget_t* obj);
-boolean UIAutomap_SetFullscreen(uiwidget_t* obj, boolean on);
 
 boolean UIAutomap_CameraRotation(uiwidget_t* obj);
 boolean UIAutomap_SetCameraRotation(uiwidget_t* obj, boolean on);

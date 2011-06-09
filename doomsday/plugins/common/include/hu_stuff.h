@@ -140,7 +140,7 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  */
 const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
     boolean builtin);
-const char* Hu_ChoosePatchReplacement(patchId);
+const char* Hu_ChoosePatchReplacement(patchid_t patchId);
 
 /**
  * Implements patch replacement.
