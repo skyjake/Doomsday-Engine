@@ -237,7 +237,7 @@ static void drawBackground(void)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatch2(pBackground, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+    GL_DrawPatch2(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     if(!(gameModeBits & GM_ANY_DOOM2) && wbs->episode < 3)
     {
@@ -285,12 +285,12 @@ static void drawFinishedTitle(void)
     DGL_Enable(DGL_TEXTURE_2D);
     // Draw <MapName>
     patchId = pMapNames[mapNum];
-    WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, DPF_ALIGN_TOP, FID(GF_FONTB));
+    WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, FID(GF_FONTB));
 
     // Draw "Finished!"
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.height) / 4;
-    WI_DrawPatch3(pFinished, Hu_ChoosePatchReplacement(pFinished), x, y, DPF_ALIGN_TOP, FID(GF_FONTB));
+    WI_DrawPatch3(pFinished, Hu_ChoosePatchReplacement(pFinished), x, y, ALIGN_TOP, 0, FID(GF_FONTB));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -328,13 +328,13 @@ static void drawEnteringTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
     // Draw "Entering"
-    WI_DrawPatch3(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, DPF_ALIGN_TOP, FID(GF_FONTB));
+    WI_DrawPatch3(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, ALIGN_TOP, 0, FID(GF_FONTB));
 
     // Draw map.
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4;
     patchId = pMapNames[(wbs->episode * 8) + wbs->nextMap];
-    WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, DPF_ALIGN_TOP, FID(GF_FONTB));
+    WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, FID(GF_FONTB));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -484,7 +484,7 @@ static void drawTime(int x, int y, int t)
     patchinfo_t info;
     if(!R_GetPatchInfo(pSucks, &info))
         return;
-    WI_DrawPatch4(pSucks, Hu_ChoosePatchReplacement(pSucks), x - info.width, y, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, FID(GF_SMALL), defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+    WI_DrawPatch4(pSucks, Hu_ChoosePatchReplacement(pSucks), x - info.width, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS, FID(GF_SMALL), defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     }
 }
 

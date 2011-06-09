@@ -22,33 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
-
 #include "doomsday.h"
-
 #include "gl_drawpatch.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-void GL_DrawPatch2(patchid_t id, int posX, int posY, short flags)
+void GL_DrawPatch2(patchid_t id, int posX, int posY, int alignFlags, int patchFlags)
 {
     float x = (float) posX, y = (float) posY, w, h;
     patchinfo_t info;
@@ -61,22 +39,22 @@ void GL_DrawPatch2(patchid_t id, int posX, int posY, short flags)
 
     DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
-    if(flags & DPF_ALIGN_RIGHT)
+    if(alignFlags & ALIGN_RIGHT)
         x -= info.width;
-    else if(!(flags & DPF_ALIGN_LEFT))
+    else if(!(alignFlags & ALIGN_LEFT))
         x -= info.width /2;
 
-    if(flags & DPF_ALIGN_BOTTOM)
+    if(alignFlags & ALIGN_BOTTOM)
         y -= info.height;
-    else if(!(flags & DPF_ALIGN_TOP))
+    else if(!(alignFlags & ALIGN_TOP))
         y -= info.height/2;
 
     w = (float) info.width;
     h = (float) info.height;
 
-    if(!(flags & DPF_NO_OFFSETX))
+    if(!(patchFlags & DPF_NO_OFFSETX))
         x += (float) info.offset;
-    if(!(flags & DPF_NO_OFFSETY))
+    if(!(patchFlags & DPF_NO_OFFSETY))
         y += (float) info.topOffset;
 
     if(info.extraOffset[0])
@@ -104,5 +82,5 @@ void GL_DrawPatch2(patchid_t id, int posX, int posY, short flags)
 
 void GL_DrawPatch(patchid_t id, int x, int y)
 {
-    GL_DrawPatch2(id, x, y, DPF_ALIGN_TOPLEFT);
+    GL_DrawPatch2(id, x, y, ALIGN_TOPLEFT, 0);
 }

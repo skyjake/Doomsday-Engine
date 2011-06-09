@@ -172,27 +172,6 @@ static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
 
-static short translatePatchToTextDrawFlags(short in)
-{
-    short out = 0;
-    if(in & DPF_ALIGN_LEFT)
-        out |= DTF_ALIGN_LEFT;
-    if(in & DPF_ALIGN_RIGHT)
-        out |= DTF_ALIGN_RIGHT;
-    if(in & DPF_ALIGN_BOTTOM)
-        out |= DTF_ALIGN_BOTTOM;
-    if(in & DPF_ALIGN_TOP)
-        out |= DTF_ALIGN_TOP;
-    /**
-     * \kludge
-     * Correct behavior is no-merge but due to the way the state for this is
-     * managed it means the menu strings do not have text effects applied
-     * when they should. This should be addressed by redesigning the API for
-     * patch replacement.
-     */
-    return MN_MergeMenuEffectWithDrawTextFlags(out);
-}
-
 /**
  * Loads the font patches and inits various strings
  * JHEXEN Note: Don't bother with the yellow font, we'll colour the white version
@@ -1231,13 +1210,22 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId)
     return Hu_ChoosePatchReplacement2(patchId, NULL, false);
 }
 
-void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, short flags,
-    fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow)
+void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags, fontid_t fontId, float r, float g, float b, float a, float glitter,
+    float shadow)
 {
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
-        short textFlags = translatePatchToTextDrawFlags(flags);
+        short textFlags = alignFlags;
+        /**
+         * \kludge
+         * Correct behavior is no-merge but due to the way the state for this is
+         * managed it means the menu strings do not have text effects applied
+         * when they should. This should be addressed by redesigning the API for
+         * patch replacement.
+         */
+        MN_MergeMenuEffectWithDrawTextFlags(textFlags);
         FR_DrawText(replacement, x, y, fontId, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
         return;
     }
@@ -1247,28 +1235,30 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, sho
 
     // Use the original patch.
     DGL_Color4f(1, 1, 1, a);
-    GL_DrawPatch2(patchId, x, y, flags);
+    GL_DrawPatch2(patchId, x, y, alignFlags, patchFlags);
 }
 
-void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, short flags,
-    fontid_t fontId, float r, float g, float b, float a)
+void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags, fontid_t fontId, float r, float g, float b, float a)
 {
-    WI_DrawPatch5(patchId, replacement, x, y, flags, fontId, r, g, b, a, 0, 0);
+    WI_DrawPatch5(patchId, replacement, x, y, alignFlags, patchFlags, fontId, r, g, b, a, 0, 0);
 }
 
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, short flags, fontid_t fontId)
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags, fontid_t fontId)
 {
-    WI_DrawPatch4(patchId, replacement, x, y, flags, fontId, 1, 1, 1, 1);
+    WI_DrawPatch4(patchId, replacement, x, y, alignFlags, patchFlags, fontId, 1, 1, 1, 1);
 }
 
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, short flags)
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags)
 {
-    WI_DrawPatch3(patchId, replacement, x, y, flags, FID(GF_FONTB));
+    WI_DrawPatch3(patchId, replacement, x, y, alignFlags, patchFlags, FID(GF_FONTB));
 }
 
 void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y)
 {
-    WI_DrawPatch2(patchId, replacement, x, y, DPF_ALIGN_TOPLEFT);
+    WI_DrawPatch2(patchId, replacement, x, y, ALIGN_TOPLEFT, 0);
 }
 
 /**
@@ -1537,7 +1527,7 @@ void Hu_Drawer(void)
 
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, DPF_ALIGN_TOP|DPF_NO_OFFSET, FID(GF_FONTB));
+        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1602,7 +1592,7 @@ static void drawMapTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, DPF_ALIGN_TOP, FID(GF_FONTB), 1, 1, 1, alpha);
+    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, FID(GF_FONTB), 1, 1, 1, alpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1646,24 +1636,24 @@ void Hu_DrawMapTitle(int x, int y, float scale)
     DGL_PopMatrix();
 }
 
-void M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g,
-    float b, float a)
+void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags,
+    float r, float g, float b, float a)
 {
     if(id < 0)
         return;
     DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawPatch2(id, x+2, y+2, flags);
+    GL_DrawPatch2(id, x+2, y+2, alignFlags, patchFlags);
 
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch2(id, x, y, flags);
+    GL_DrawPatch2(id, x, y, alignFlags, patchFlags);
 }
 
-void M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags)
+void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags)
 {
-    M_DrawShadowedPatch3(id, x, y, flags, 1, 1, 1, 1);
+    M_DrawShadowedPatch3(id, x, y, alignFlags, patchFlags, 1, 1, 1, 1);
 }
 
 void M_DrawShadowedPatch(patchid_t id, int x, int y)
 {
-    M_DrawShadowedPatch2(id, x, y, DPF_ALIGN_TOPLEFT);
+    M_DrawShadowedPatch2(id, x, y, ALIGN_TOPLEFT, 0);
 }

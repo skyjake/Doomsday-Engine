@@ -1094,7 +1094,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*txt->patch, txt->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*txt->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch5(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -1706,7 +1706,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*btn->patch, btn->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*btn->patch, replacement, x, y, DPF_ALIGN_TOPLEFT, fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch5(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -2126,14 +2126,14 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
 
-    GL_DrawPatch2(pSliderLeft, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP|DPF_NO_OFFSETX);
+    GL_DrawPatch2(pSliderLeft, 0, 0, ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
     GL_DrawPatch(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(0, middleInfo.topOffset, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.width, middleInfo.height);
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
-    GL_DrawPatch2(pSliderHandle, MNSlider_ThumbPos(obj), 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
+    GL_DrawPatch2(pSliderHandle, MNSlider_ThumbPos(obj), 1, ALIGN_TOP, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 

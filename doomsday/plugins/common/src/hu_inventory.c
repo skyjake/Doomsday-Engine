@@ -416,7 +416,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         if(cfg.inventoryWrap || first != 0)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch2(pInvPageLeft[!(mapTime & 4)? 1 : 0], x - ARROW_RELXOFF, y + ARROW_YOFFSET, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP);
+            GL_DrawPatch2(pInvPageLeft[!(mapTime & 4)? 1 : 0], x - ARROW_RELXOFF, y + ARROW_YOFFSET, ALIGN_TOPRIGHT, 0);
         }
 
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)

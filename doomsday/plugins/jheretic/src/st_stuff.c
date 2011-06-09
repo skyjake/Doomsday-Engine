@@ -1121,7 +1121,7 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x, loc->y, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+    WI_DrawPatch4(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x, loc->y, ALIGN_TOPLEFT, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1316,7 +1316,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(icon->patchId, Hu_ChoosePatchReplacement(icon->patchId), X, Y, DPF_ALIGN_TOPLEFT, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+    WI_DrawPatch4(icon->patchId, Hu_ChoosePatchReplacement(icon->patchId), X, Y, ALIGN_TOPLEFT, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1828,7 +1828,7 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch2(icon->patchId, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+    GL_DrawPatch2(icon->patchId, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2092,7 +2092,7 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch2(pKeys[0].id, x, -pKeys[0].height, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+        GL_DrawPatch2(pKeys[0].id, x, -pKeys[0].height, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         x += pKeys[0].width + 1;
@@ -2102,7 +2102,7 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch2(pKeys[1].id, x, -pKeys[1].height, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+        GL_DrawPatch2(pKeys[1].id, x, -pKeys[1].height, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         x += pKeys[1].width + 1;
@@ -2112,7 +2112,7 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch2(pKeys[2].id, x, -pKeys[2].height, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+        GL_DrawPatch2(pKeys[2].id, x, -pKeys[2].height, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2293,7 +2293,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        GL_DrawPatch2(pInvItemBox, 0, 0, DPF_ALIGN_BOTTOMRIGHT|DPF_NO_OFFSET);
+        GL_DrawPatch2(pInvItemBox, 0, 0, ALIGN_BOTTOMRIGHT, DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(item->patchId, -boxInfo.width + xOffset, -boxInfo.height + yOffset);
         DGL_Disable(DGL_TEXTURE_2D);
