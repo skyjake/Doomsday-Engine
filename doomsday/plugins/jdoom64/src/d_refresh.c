@@ -38,7 +38,7 @@
 #include "hu_pspr.h"
 #include "hu_msg.h"
 #include "hu_log.h"
-#include "am_map.h"
+#include "hu_automap.h"
 #include "g_common.h"
 #include "r_common.h"
 #include "d_net.h"
@@ -47,7 +47,6 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "p_actor.h"
-#include "rend_automap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -101,7 +100,7 @@ static void drawSpecialFilter(int pnum, int x, int y, int w, int h)
     g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
     b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
 
-    DGL_DrawRect(x, y, w, h, r, g, b, 1);
+    DGL_DrawRectColor(x, y, w, h, r, g, b, 1);
 
     // Restore the normal rendering state.
     DGL_BlendMode(BM_NORMAL);
@@ -207,7 +206,6 @@ static void rendHUD(int player, int viewW, int viewH)
     if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
         return; // The engine advises not to draw any HUD displays.
 
-    AM_Drawer(player);
     ST_Drawer(player);
     HU_DrawScoreBoard(player);
 
@@ -262,7 +260,7 @@ void D_Display(int layer)
     if(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
        !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam: can be set on every frame.
     {
-        R_GetViewWindow(&winX, &winY, &winW, &winH);
+        R_GetSmoothedViewWindow(&winX, &winY, &winW, &winH);
     }
     else
     {   // Full screen.
@@ -279,12 +277,12 @@ void D_Display(int layer)
     vY = ROUND(winY * yScale);
     vW = ROUND(winW * xScale);
     vH = ROUND(winH * yScale);
-    R_SetViewWindow(vX, vY, vW, vH);
+    R_SetViewWindow(player, vX, vY, vW, vH);
 
     switch(G_GetGameState())
     {
     case GS_MAP:
-        if(!R_MapObscures(player, winX, winY, winW, winH))
+        if(!ST_AutomapWindowObscures(player, winX, winY, winW, winH))
         {
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
@@ -299,7 +297,7 @@ void D_Display(int layer)
         }
         break;
     case GS_STARTUP:
-        DGL_DrawRect(0, 0, vpWidth, vpHeight, 0, 0, 0, 1);
+        DGL_DrawRectColor(0, 0, vpWidth, vpHeight, 0, 0, 0, 1);
         break;
     default:
         break;
@@ -318,7 +316,7 @@ void D_Display2(void)
 
     if(G_GetGameAction() == GA_QUIT)
     {
-        DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+        DGL_DrawRectColor(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
     }
 }
 

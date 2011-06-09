@@ -44,9 +44,13 @@
 #include "hu_lib.h"
 #include "hu_chat.h"
 #include "hu_log.h"
-#include "am_map.h"
+#include "hu_automap.h"
+#include "p_mapsetup.h"
 #include "p_tick.h" // for P_IsPaused
 #include "p_inventory.h"
+#include "p_player.h"
+#include "am_map.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -60,20 +64,36 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
-    boolean         inited;
-    boolean         stopped;
-    int             hideTics;
-    float           hideAmount;
-    float           alpha; // Fullscreen hud alpha value.
+enum {
+    UWG_MAPNAME = 0,
+    UWG_BOTTOMLEFT,
+    UWG_BOTTOMRIGHT,
+    UWG_BOTTOM,
+    UWG_TOP,
+    UWG_COUNTERS,
+    UWG_AUTOMAP,
+    NUM_UIWIDGET_GROUPS
+};
 
+typedef struct {
+    boolean inited;
+    boolean stopped;
+    int hideTics;
+    float hideAmount;
+    float alpha; // Fullscreen hud alpha value.
+    boolean statusbarActive; // Whether the HUD is on.
+    int automapCheatLevel; /// \todo Belongs in player state?
+
+    int widgetGroupIds[NUM_UIWIDGET_GROUPS];
+    int automapWidgetId;
     int chatWidgetId;
     int logWidgetId;
 
-    boolean         firstTime;  // ST_Start() has just been called.
-    boolean         statusbarActive; // Whether the HUD is on.
-    int             currentFragsCount; // Number of frags so far in deathmatch.
+    boolean firstTime;  // ST_Start() has just been called.
+    int currentFragsCount; // Number of frags so far in deathmatch.
 
+    // Other:
+    guidata_automap_t automap;
     guidata_chat_t chat;
     guidata_log_t log;
 } hudstate_t;
@@ -90,9 +110,6 @@ typedef enum hotloc_e {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-uiwidget_t* ST_UIChatForPlayer(int player);
-uiwidget_t* ST_UILogForPlayer(int player);
 
 int ST_ChatResponder(int player, event_t* ev);
 void unhideHUD(void);
@@ -217,17 +234,16 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    static trigger_t fixed = {1.0 / TICSPERSEC};
-
-    boolean runFixedTic = M_RunTrigger(&fixed, ticLength);
+    /// \kludge 
+    boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
+    /// kludge end.
     int i;
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* plr = &players[i];
         hudstate_t* hud = &hudStates[i];
 
-        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        if(!plr->plr->inGame)
             continue;
 
         // Fade in/out the fullscreen HUD.
@@ -256,23 +272,30 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(runFixedTic)
+        if(runGameTic && !P_IsPaused())
         {
-            if(!P_IsPaused())
+            if(cfg.hudTimer == 0)
             {
-                if(cfg.hudTimer == 0)
-                {
-                    hud->hideTics = hud->hideAmount = 0;
-                }
-                else
-                {
-                    if(hud->hideTics > 0)
-                        hud->hideTics--;
-                    if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
-                        hud->hideAmount += 0.1f;
-                }
+                hud->hideTics = hud->hideAmount = 0;
+            }
+            else
+            {
+                if(hud->hideTics > 0)
+                    hud->hideTics--;
+                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                    hud->hideAmount += 0.1f;
+            }
 
-                ST_updateWidgets(i);
+            /// \todo Refactor me away.
+            ST_updateWidgets(i);
+        }
+
+        if(hud->inited)
+        {
+            int j;
+            for(j = 0; j < NUM_UIWIDGET_GROUPS; ++j)
+            {
+                UIWidget_RunTic(GUI_MustFindObjectById(hud->widgetGroupIds[j]), ticLength);
             }
         }
     }
@@ -587,6 +610,78 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
+void MapName_Drawer(uiwidget_t* obj, int x, int y)
+{
+    assert(NULL != obj && obj->type == GUI_MAPNAME);
+    {
+    const float scale = .75f;
+    const float textAlpha = uiRendState->pageAlpha;
+    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
+    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+
+    if(NULL == text && 0 == patch)
+        return;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(scale, scale, 1);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    WI_DrawPatch4(patch, text, 0, 0, DPF_ALIGN_BOTTOMLEFT, obj->fontId, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+    }
+}
+
+void MapName_Dimensions(uiwidget_t* obj, int* width, int *height)
+{
+    assert(NULL != obj && obj->type == GUI_MAPNAME);
+    {
+    const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
+    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const float scale = .75f;
+    patchinfo_t info;
+
+    if(NULL != width)  *width  = 0;
+    if(NULL != height) *height = 0;
+
+    if(NULL == text && 0 == patch)
+        return;
+
+    if(NULL != text)
+    {
+        FR_TextDimensions(width, height, text, obj->fontId);
+        if(NULL != width)  *width  = *width  * scale;
+        if(NULL != height) *height = *height * scale;
+        return;    
+    }
+
+    R_GetPatchInfo(patch, &info);
+    if(NULL != width)  *width  = info.width  * scale;
+    if(NULL != height) *height = info.height * scale;
+    }
+}
+
+typedef struct {
+    guiwidgettype_t type;
+    int group;
+    gamefontid_t fontIdx;
+    void (*updateDimensions) (uiwidget_t* obj);
+    void (*drawer) (uiwidget_t* obj, int x, int y);
+    void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
+    void* typedata;
+} uiwidgetdef_t;
+
+typedef struct {
+    int group;
+    int alignFlags;
+    int groupFlags;
+    int padding; // In fixed 320x200 pixels.
+} uiwidgetgroupdef_t;
+
 void ST_Drawer(int player)
 {
     hudstate_t* hud;
@@ -603,9 +698,7 @@ void ST_Drawer(int player)
     hud = &hudStates[player];
 
     hud->firstTime = hud->firstTime;
-    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
-    if(!hud->inited)
-        hud->inited = true;
+    hud->statusbarActive = (fullscreenMode < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
     ST_doPaletteStuff(player);
@@ -635,19 +728,150 @@ static void initData(hudstate_t* hud)
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
+static void findMapBounds(float* lowX, float* hiX, float* lowY, float* hiY)
+{
+    assert(NULL != lowX && NULL != hiX && NULL != lowY && NULL != hiY);
+    {
+    float pos[2];
+    uint i;
+
+    *lowX = *lowY =  DDMAXFLOAT;
+    *hiX  = *hiY  = -DDMAXFLOAT;
+
+    for(i = 0; i < numvertexes; ++i)
+    {
+        P_GetFloatv(DMU_VERTEX, i, DMU_XY, pos);
+
+        if(pos[VX] < *lowX)
+            *lowX = pos[VX];
+        if(pos[VX] > *hiX)
+            *hiX  = pos[VX];
+
+        if(pos[VY] < *lowY)
+            *lowY = pos[VY];
+        if(pos[VY] > *hiY)
+            *hiY  = pos[VY];
+    }
+    }
+}
+
+static void setAutomapCheatLevel(uiwidget_t* obj, int level)
+{
+    assert(NULL != obj);
+    {
+    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
+    int flags;
+
+    hud->automapCheatLevel = level;
+
+    flags = UIAutomap_Flags(obj) & ~(AMF_REND_ALLLINES|AMF_REND_THINGS|AMF_REND_SPECIALLINES|AMF_REND_VERTEXES|AMF_REND_LINE_NORMALS);
+    if(hud->automapCheatLevel >= 1)
+        flags |= AMF_REND_ALLLINES;
+    if(hud->automapCheatLevel == 2)
+        flags |= AMF_REND_THINGS | AMF_REND_SPECIALLINES;
+    if(hud->automapCheatLevel > 2)
+        flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
+    UIAutomap_SetFlags(obj, flags);
+    }
+}
+
+static void initAutomapForCurrentMap(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    {
+    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
+    float lowX, hiX, lowY, hiY;
+    automapcfg_t* mcfg;
+
+    UIAutomap_Reset(obj);
+
+    findMapBounds(&lowX, &hiX, &lowY, &hiY);
+    UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
+    UIAutomap_SetWorldBounds(obj, lowX, hiX, lowY, hiY);
+
+    mcfg = UIAutomap_Config(obj);
+
+    // Determine the obj view scale factors.
+    UIAutomap_SetScale(obj, UIAutomap_ZoomMax(obj)? 0 : .45f);
+    UIAutomap_ClearPoints(obj);
+
+#if !__JHEXEN__
+    if(gameSkill == SM_BABY && cfg.automapBabyKeys)
+    {
+        int flags = UIAutomap_Flags(obj);
+        UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
+    }
+
+    if(!IS_NETGAME && hud->automapCheatLevel)
+        AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_CHEATARROW);
+#endif
+
+    // Are we re-centering on a followed mobj?
+    { mobj_t* mo = UIAutomap_FollowMobj(obj);
+    if(NULL != mo)
+    {
+        UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
+    }}
+
+    if(IS_NETGAME)
+    {
+        setAutomapCheatLevel(obj, 0);
+    }
+
+    UIAutomap_SetReveal(obj, false);
+
+    // Add all immediately visible lines.
+    { uint i;
+    for(i = 0; i < numlines; ++i)
+    {
+        xline_t* xline = &xlines[i];
+        if(!(xline->flags & ML_MAPPED)) continue;
+        P_SetLinedefAutomapVisibility(UIWidget_Player(obj), i, true);
+    }}
+    }
+}
+
 void ST_Start(int player)
 {
+    const int winWidth  = Get(DD_WINDOW_WIDTH);
+    const int winHeight = Get(DD_WINDOW_HEIGHT);
+    uiwidget_t* obj;
     hudstate_t* hud;
+    int flags;
 
     if(player < 0 || player >= MAXPLAYERS)
-        return;
-
+    {
+        Con_Error("ST_Start: Invalid player #%i.", player);
+        exit(1); // Unreachable.
+    }
     hud = &hudStates[player];
 
     if(!hud->stopped)
         ST_Stop(player);
 
     initData(hud);
+    // If the automap has been left open; close it.
+    ST_AutomapOpen(player, false, true);
+
+    /**
+     * Initialize widgets according to player preferences.
+     */
+
+    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
+    flags = UIWidget_Alignment(obj);
+    flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
+    if(cfg.msgAlign == 0)
+        flags |= ALIGN_LEFT;
+    else if(cfg.msgAlign == 2)
+        flags |= ALIGN_RIGHT;
+    UIWidget_SetAlignment(obj, flags);
+
+    obj = GUI_MustFindObjectById(hud->automapWidgetId);
+    initAutomapForCurrentMap(obj);
+    UIAutomap_SetScale(obj, 1);
+    UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
+    UIAutomap_SetOrigin(obj, 0, 0);
+    UIAutomap_SetDimensions(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }
@@ -666,17 +890,42 @@ void ST_Stop(int player)
     hud->stopped = true;
 }
 
+void ST_BuildWidgets(int player)
+{
+    assert(player >= 0 && player < MAXPLAYERS);
+    {
+#define PADDING 2 // In fixed 320x200 units.
+
+    hudstate_t* hud = &hudStates[player];
+    const uiwidgetgroupdef_t widgetGroupDefs[] = {
+        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
+        { UWG_AUTOMAP,      ALIGN_TOPLEFT }
+    };
+    size_t i;
+
+    for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
+    {
+        const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(player, def->groupFlags, def->alignFlags, def->padding);
+    }
+
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTB), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
+
+#undef PADDING
+    }
+}
+
 void ST_Init(void)
 {
     int i;
+    ST_InitAutomapConfig();
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         hudstate_t* hud = &hudStates[i];
-        //memset(hud->widgetGroupIds, -1, sizeof(hud->widgetGroupIds));
-        hud->chatWidgetId = -1;
-        hud->logWidgetId = -1;
+        ST_BuildWidgets(i);
+        hud->inited = true;
     }
-
     ST_loadData();
 }
 
@@ -712,14 +961,15 @@ uiwidget_t* ST_UILogForPlayer(int player)
     exit(1); // Unreachable.
 }
 
-boolean ST_ChatIsActive(int player)
-{    
-    uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
+uiwidget_t* ST_UIAutomapForPlayer(int player)
+{
+    if(player >= 0 && player < MAXPLAYERS)
     {
-        return UIChat_IsActive(obj);
+        hudstate_t* hud = &hudStates[player];
+        return GUI_FindObjectById(hud->automapWidgetId);
     }
-    return false;
+    Con_Error("ST_UIAutomapForPlayer: Invalid player #%i.", player);
+    exit(1); // Unreachable.
 }
 
 int ST_ChatResponder(int player, event_t* ev)
@@ -728,6 +978,16 @@ int ST_ChatResponder(int player, event_t* ev)
     if(NULL != obj)
     {
         return UIChat_Responder(obj, ev);
+    }
+    return false;
+}
+
+boolean ST_ChatIsActive(int player)
+{    
+    uiwidget_t* obj = ST_UIChatForPlayer(player);
+    if(NULL != obj)
+    {
+        return UIChat_IsActive(obj);
     }
     return false;
 }
@@ -783,6 +1043,173 @@ void ST_LogUpdateAlignment(void)
         UIGroup_SetFlags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]), flags);
     }
 #endif
+}
+
+void ST_AutomapOpen(int player, boolean yes, boolean fast)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    UIAutomap_Open(obj, yes, fast);
+}
+
+boolean ST_AutomapIsActive(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return false;
+    return UIAutomap_Active(obj);
+}
+
+boolean ST_AutomapWindowObscures2(int player, const rectanglei_t* region)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return false;
+    if(UIAutomap_Active(obj))
+    {
+        if(cfg.automapOpacity * ST_AutomapOpacity(player) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
+        {
+            /*if(UIAutomap_Fullscreen(obj))
+            {*/
+                return true;
+            /*}
+            else
+            {
+                // We'll have to compare the dimensions.
+                const int scrwidth  = Get(DD_WINDOW_WIDTH);
+                const int scrheight = Get(DD_WINDOW_HEIGHT);
+                const rectanglei_t* dims = UIWidget_Dimensions(obj);
+                float fx = FIXXTOSCREENX(region->x);
+                float fy = FIXYTOSCREENY(region->y);
+                float fw = FIXXTOSCREENX(region->width);
+                float fh = FIXYTOSCREENY(region->height);
+
+                if(dims->x >= fx && dims->y >= fy && dims->width >= fw && dims->height >= fh)
+                    return true;
+            }*/
+        }
+    }
+    return false;
+}
+
+boolean ST_AutomapWindowObscures(int player, int x, int y, int width, int height)
+{
+    rectanglei_t rect;
+    rect.x = x;
+    rect.y = y;
+    rect.width  = width;
+    rect.height = height;
+    return ST_AutomapWindowObscures2(player, &rect);
+}
+
+void ST_AutomapClearPoints(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    UIAutomap_ClearPoints(obj);
+}
+
+/**
+ * Adds a marker at the specified X/Y location.
+ */
+int ST_AutomapAddPoint(int player, float x, float y, float z)
+{
+    static char buffer[20];
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    int newPoint;
+    if(NULL == obj) return - 1;
+
+    if(UIAutomap_PointCount(obj) == MAX_MAP_POINTS)
+        return -1;
+
+    newPoint = UIAutomap_AddPoint(obj, x, y, z);
+    sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, newPoint);
+    P_SetMessage(&players[player], buffer, false);
+
+    return newPoint;
+}
+
+boolean ST_AutomapPointOrigin(int player, int point, float* x, float* y, float* z)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return false;
+    return UIAutomap_PointOrigin(obj, point, x, y, z);
+}
+
+void ST_ToggleAutomapMaxZoom(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
+    {
+        Con_Printf("Maximum zoom %s in automap.\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
+    }
+}
+
+float ST_AutomapOpacity(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return 0;
+    return UIAutomap_Opacity(obj);
+}
+
+void ST_SetAutomapCameraRotation(int player, boolean on)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    UIAutomap_SetCameraRotation(obj, on);
+}
+
+void ST_ToggleAutomapPanMode(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    if(UIAutomap_SetPanMode(obj, !UIAutomap_PanMode(obj)))
+    {
+        P_SetMessage(&players[player], (UIAutomap_PanMode(obj)? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), true);
+    }
+}
+
+void ST_CycleAutomapCheatLevel(int player)
+{
+    if(player >= 0 && player < MAXPLAYERS)
+    {
+        hudstate_t* hud = &hudStates[player];
+        ST_SetAutomapCheatLevel(player, (hud->automapCheatLevel + 1) % 3);
+    }
+}
+
+void ST_SetAutomapCheatLevel(int player, int level)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    setAutomapCheatLevel(obj, level);
+}
+
+void ST_RevealAutomap(int player, boolean on)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    UIAutomap_SetReveal(obj, on);
+}
+
+boolean ST_AutomapHasReveal(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return false;
+    return UIAutomap_Reveal(obj);
+}
+
+void ST_RebuildAutomap(int player)
+{
+    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
+    if(NULL == obj) return;
+    UIAutomap_Rebuild(obj);
+}
+
+int ST_AutomapCheatLevel(int player)
+{
+    if(player >=0 && player < MAXPLAYERS)
+        return hudStates[player].automapCheatLevel;
+    return 0;
 }
 
 /**

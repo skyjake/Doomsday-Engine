@@ -405,24 +405,24 @@ D_CMD(CheatWarp)
 
 D_CMD(CheatReveal)
 {
-    int option;
-    automapid_t map;
+    int option, i;
 
     if(!cheatsEnabled())
         return false;
-
-    map = AM_MapForPlayer(CONSOLEPLAYER);
-    AM_SetCheatLevel(map, 0);
-    AM_RevealMap(map, false);
 
     option = atoi(argv[1]);
     if(option < 0 || option > 3)
         return false;
 
-    if(option == 1)
-        AM_RevealMap(map, true);
-    else if(option != 0)
-        AM_SetCheatLevel(map, option -1);
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        ST_SetAutomapCheatLevel(i, 0);
+        ST_RevealAutomap(i, false);
+        if(option == 1)
+            ST_RevealAutomap(i, true);
+        else if(option != 0)
+            ST_SetAutomapCheatLevel(i, option -1);
+    }
 
     return true;
 }

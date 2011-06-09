@@ -20,7 +20,6 @@
  .\..\..\plugins\common\src\m_ctrl.c
  .\..\..\plugins\common\src\m_fixed.c
  .\..\..\plugins\common\src\p_actor.c
- .\..\..\plugins\common\src\p_automap.c
  .\..\..\plugins\common\src\p_ceiling.c
  .\..\..\plugins\common\src\p_door.c
  .\..\..\plugins\common\src\p_floor.c
@@ -44,7 +43,7 @@
  .\..\..\plugins\common\src\p_xgsave.c
  .\..\..\plugins\common\src\p_xgsec.c
  .\..\..\plugins\common\src\r_common.c
- .\..\..\plugins\common\src\rend_automap.c
+ .\..\..\plugins\common\src\hu_automap.c
  .\..\..\plugins\common\src\x_hair.c
  .\..\..\plugins\jdoom64\src\acfnlink.c
  .\..\..\plugins\jdoom64\src\d_api.c
