@@ -152,13 +152,12 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
     return obj;
 }
 
-static uiwidget_t* createWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
+static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
     void (*updateDimensions) (uiwidget_t* obj),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
-    obj->hideId = hideId;
     obj->fontId = fontId;
     obj->updateDimensions = updateDimensions;
     obj->drawer = drawer;
@@ -248,13 +247,13 @@ void GUI_ReleaseResources(void)
     UIAutomap_ReleaseResources();
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
     void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
-    obj = createWidget(type, player, hideId, fontId, updateDimensions, drawer, ticker, typedata);
+    obj = createWidget(type, player, fontId, updateDimensions, drawer, ticker, typedata);
     return obj->id;
 }
 
@@ -263,7 +262,7 @@ uiwidgetid_t GUI_CreateGroup(int player, short flags, int padding)
     uiwidget_t* obj;
     guidata_group_t* grp;
     errorIfNotInited("GUI_CreateGroup");
-    obj = createWidget(GUI_GROUP, player, -1, 0, NULL, NULL, NULL, NULL);
+    obj = createWidget(GUI_GROUP, player, 0, NULL, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = flags;
     grp->padding = padding;
@@ -372,14 +371,6 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
     {
         uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
         int width = 0, height = 0;
-
-        if(child->hideId != -1)
-        {
-            assert(child->hideId >= 0 && child->hideId < NUMHUDDISPLAYS);
-
-            if(!cfg.hudShown[child->hideId])
-                continue;
-        }
 
         GUI_DrawWidget(child, x, y, availWidth, availHeight, alpha, &width, &height);
 

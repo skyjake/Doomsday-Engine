@@ -746,7 +746,6 @@ typedef struct uiwidget_s {
     guiwidgettype_t type;
     rectanglei_t dimensions;
     int player; /// \todo refactor away.
-    int hideId;
     fontid_t fontId;
     void (*updateDimensions) (struct uiwidget_s* obj);
     void (*drawer) (struct uiwidget_s* obj, int x, int y);
@@ -967,7 +966,7 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 /// Identical to GUI_FindObjectById except results in a fatal error if not found.
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int hideId, fontid_t fontId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
     void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 

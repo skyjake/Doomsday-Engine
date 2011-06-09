@@ -2423,6 +2423,8 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_HEALTH])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2463,6 +2465,8 @@ void Health_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_HEALTH])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2487,6 +2491,8 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
     guidata_bluemanaicon_t* icon = (guidata_bluemanaicon_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2519,6 +2525,8 @@ void BlueManaIcon_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2540,6 +2548,8 @@ void BlueMana_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2578,6 +2588,8 @@ void BlueMana_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2601,6 +2613,8 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
     guidata_greenmanaicon_t* icon = (guidata_greenmanaicon_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2634,6 +2648,8 @@ void GreenManaIcon_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2654,6 +2670,8 @@ void GreenMana_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2692,6 +2710,8 @@ void GreenMana_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_MANA])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2791,6 +2811,8 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
     int xOffset, yOffset;
     patchinfo_t boxInfo;
 
+    if(!cfg.hudShown[HUD_READYITEM])
+        return;
     if(Hu_InventoryIsOpen(obj->player))
         return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -2854,6 +2876,8 @@ void ReadyItem_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_READYITEM])
+        return;
     if(Hu_InventoryIsOpen(obj->player))
         return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -3505,7 +3529,6 @@ void ST_Stop(int player)
 typedef struct {
     guiwidgettype_t type;
     int group;
-    int hideId;
     gamefontid_t fontIdx;
     void (*updateDimensions) (uiwidget_t* obj);
     void (*drawer) (uiwidget_t* obj, int x, int y);
@@ -3539,36 +3562,36 @@ void ST_BuildWidgets(int player)
         { UWG_AUTOMAP,      UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
-        { GUI_BOX,          UWG_STATUSBAR,    -1,         0,            SBarBackground_UpdateDimensions, SBarBackground_Drawer },
-        { GUI_WEAPONPIECES, UWG_STATUSBAR,    -1,         0,            SBarWeaponPieces_UpdateDimensions, SBarWeaponPieces_Drawer, WeaponPieces_Ticker, &hud->sbarWeaponpieces },
-        { GUI_CHAIN,        UWG_STATUSBAR,    -1,         0,            SBarChain_UpdateDimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-        { GUI_INVENTORY,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarInventory_UpdateDimensions, SBarInventory_Drawer },
-        { GUI_KEYS,         UWG_STATUSBAR,    -1,         0,            SBarKeys_UpdateDimensions, SBarKeys_Drawer, Keys_Ticker, &hud->sbarKeys },
-        { GUI_ARMORICONS,   UWG_STATUSBAR,    -1,         0,            SBarArmorIcons_UpdateDimensions, SBarArmorIcons_Drawer, ArmorIcons_Ticker, &hud->sbarArmoricons },
-        { GUI_FRAGS,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarFrags_UpdateDimensions, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
-        { GUI_HEALTH,       UWG_STATUSBAR,    -1,         GF_STATUS,    SBarHealth_UpdateDimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
-        { GUI_ARMOR,        UWG_STATUSBAR,    -1,         GF_STATUS,    SBarArmor_UpdateDimensions, SBarArmor_Drawer, SBarArmor_Ticker, &hud->sbarArmor },
-        { GUI_READYITEM,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarReadyItem_UpdateDimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
-        { GUI_BLUEMANAICON, UWG_STATUSBAR,    -1,         0,            SBarBlueManaIcon_UpdateDimensions, SBarBlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->sbarBluemanaicon },
-        { GUI_BLUEMANA,     UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarBlueMana_UpdateDimensions, SBarBlueMana_Drawer, BlueMana_Ticker, &hud->sbarBluemana },
-        { GUI_BLUEMANAVIAL, UWG_STATUSBAR,    -1,         0,            SBarBlueManaVial_UpdateDimensions, SBarBlueManaVial_Drawer, BlueManaVial_Ticker, &hud->sbarBluemanavial },
-        { GUI_GREENMANAICON, UWG_STATUSBAR,   -1,         0,            SBarGreenManaIcon_UpdateDimensions, SBarGreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->sbarGreenmanaicon },
-        { GUI_GREENMANA,    UWG_STATUSBAR,    -1,         GF_SMALLIN,   SBarGreenMana_UpdateDimensions, SBarGreenMana_Drawer, GreenMana_Ticker, &hud->sbarGreenmana },
-        { GUI_GREENMANAVIAL, UWG_STATUSBAR,   -1,         0,            SBarGreenManaVial_UpdateDimensions, SBarGreenManaVial_Drawer, GreenManaVial_Ticker, &hud->sbarGreenmanavial },
-        { GUI_MAPNAME,      UWG_MAPNAME,      -1,         GF_FONTB,     MapName_UpdateDimensions, MapName_Drawer },
-        { GUI_BLUEMANAICON, UWG_TOPLEFT,      HUD_MANA,   0,            BlueManaIcon_UpdateDimensions, BlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->bluemanaicon },
-        { GUI_BLUEMANA,     UWG_TOPLEFT,      HUD_MANA,   GF_STATUS,    BlueMana_UpdateDimensions, BlueMana_Drawer, BlueMana_Ticker, &hud->bluemana },
-        { GUI_GREENMANAICON, UWG_TOPLEFT2,    HUD_MANA,   0,            GreenManaIcon_UpdateDimensions, GreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->greenmanaicon },
-        { GUI_GREENMANA,    UWG_TOPLEFT2,     HUD_MANA,   GF_STATUS,    GreenMana_UpdateDimensions, GreenMana_Drawer, GreenMana_Ticker, &hud->greenmana },
-        { GUI_FLIGHT,       UWG_TOPLEFT3,     -1,         0,            Flight_UpdateDimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
-        { GUI_BOOTS,        UWG_TOPLEFT3,     -1,         0,            Boots_UpdateDimensions, Boots_Drawer, Boots_Ticker, &hud->boots },
-        { GUI_SERVANT,      UWG_TOPRIGHT,     -1,         0,            Servant_UpdateDimensions, Servant_Drawer, Servant_Ticker, &hud->servant },
-        { GUI_DEFENSE,      UWG_TOPRIGHT,     -1,         0,            Defense_UpdateDimensions, Defense_Drawer, Defense_Ticker, &hud->defense },
-        { GUI_WORLDTIMER,   UWG_TOPRIGHT2,    -1,         GF_FONTA,     WorldTimer_UpdateDimensions, WorldTimer_Drawer, WorldTimer_Ticker, &hud->worldtimer },
-        { GUI_HEALTH,       UWG_BOTTOMLEFT,   HUD_HEALTH, GF_FONTB,     Health_UpdateDimensions, Health_Drawer, Health_Ticker, &hud->health },
-        { GUI_FRAGS,        UWG_BOTTOMLEFT,   -1,         GF_STATUS,    Frags_UpdateDimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
-        { GUI_READYITEM,    UWG_BOTTOMRIGHT,  HUD_READYITEM, GF_SMALLIN,ReadyItem_UpdateDimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
-        { GUI_INVENTORY,    UWG_BOTTOM,       -1,         GF_SMALLIN,   Inventory_UpdateDimensions, Inventory_Drawer },
+        { GUI_BOX,          UWG_STATUSBAR,    0,            SBarBackground_UpdateDimensions, SBarBackground_Drawer },
+        { GUI_WEAPONPIECES, UWG_STATUSBAR,    0,            SBarWeaponPieces_UpdateDimensions, SBarWeaponPieces_Drawer, WeaponPieces_Ticker, &hud->sbarWeaponpieces },
+        { GUI_CHAIN,        UWG_STATUSBAR,    0,            SBarChain_UpdateDimensions, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
+        { GUI_INVENTORY,    UWG_STATUSBAR,    GF_SMALLIN,   SBarInventory_UpdateDimensions, SBarInventory_Drawer },
+        { GUI_KEYS,         UWG_STATUSBAR,    0,            SBarKeys_UpdateDimensions, SBarKeys_Drawer, Keys_Ticker, &hud->sbarKeys },
+        { GUI_ARMORICONS,   UWG_STATUSBAR,    0,            SBarArmorIcons_UpdateDimensions, SBarArmorIcons_Drawer, ArmorIcons_Ticker, &hud->sbarArmoricons },
+        { GUI_FRAGS,        UWG_STATUSBAR,    GF_STATUS,    SBarFrags_UpdateDimensions, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
+        { GUI_HEALTH,       UWG_STATUSBAR,    GF_STATUS,    SBarHealth_UpdateDimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
+        { GUI_ARMOR,        UWG_STATUSBAR,    GF_STATUS,    SBarArmor_UpdateDimensions, SBarArmor_Drawer, SBarArmor_Ticker, &hud->sbarArmor },
+        { GUI_READYITEM,    UWG_STATUSBAR,    GF_SMALLIN,   SBarReadyItem_UpdateDimensions, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
+        { GUI_BLUEMANAICON, UWG_STATUSBAR,    0,            SBarBlueManaIcon_UpdateDimensions, SBarBlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->sbarBluemanaicon },
+        { GUI_BLUEMANA,     UWG_STATUSBAR,    GF_SMALLIN,   SBarBlueMana_UpdateDimensions, SBarBlueMana_Drawer, BlueMana_Ticker, &hud->sbarBluemana },
+        { GUI_BLUEMANAVIAL, UWG_STATUSBAR,    0,            SBarBlueManaVial_UpdateDimensions, SBarBlueManaVial_Drawer, BlueManaVial_Ticker, &hud->sbarBluemanavial },
+        { GUI_GREENMANAICON, UWG_STATUSBAR,   0,            SBarGreenManaIcon_UpdateDimensions, SBarGreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->sbarGreenmanaicon },
+        { GUI_GREENMANA,    UWG_STATUSBAR,    GF_SMALLIN,   SBarGreenMana_UpdateDimensions, SBarGreenMana_Drawer, GreenMana_Ticker, &hud->sbarGreenmana },
+        { GUI_GREENMANAVIAL, UWG_STATUSBAR,   0,            SBarGreenManaVial_UpdateDimensions, SBarGreenManaVial_Drawer, GreenManaVial_Ticker, &hud->sbarGreenmanavial },
+        { GUI_MAPNAME,      UWG_MAPNAME,      GF_FONTB,     MapName_UpdateDimensions, MapName_Drawer },
+        { GUI_BLUEMANAICON, UWG_TOPLEFT,      0,            BlueManaIcon_UpdateDimensions, BlueManaIcon_Drawer, BlueManaIcon_Ticker, &hud->bluemanaicon },
+        { GUI_BLUEMANA,     UWG_TOPLEFT,      GF_STATUS,    BlueMana_UpdateDimensions, BlueMana_Drawer, BlueMana_Ticker, &hud->bluemana },
+        { GUI_GREENMANAICON, UWG_TOPLEFT2,    0,            GreenManaIcon_UpdateDimensions, GreenManaIcon_Drawer, GreenManaIcon_Ticker, &hud->greenmanaicon },
+        { GUI_GREENMANA,    UWG_TOPLEFT2,     GF_STATUS,    GreenMana_UpdateDimensions, GreenMana_Drawer, GreenMana_Ticker, &hud->greenmana },
+        { GUI_FLIGHT,       UWG_TOPLEFT3,     0,            Flight_UpdateDimensions, Flight_Drawer, Flight_Ticker, &hud->flight },
+        { GUI_BOOTS,        UWG_TOPLEFT3,     0,            Boots_UpdateDimensions, Boots_Drawer, Boots_Ticker, &hud->boots },
+        { GUI_SERVANT,      UWG_TOPRIGHT,     0,            Servant_UpdateDimensions, Servant_Drawer, Servant_Ticker, &hud->servant },
+        { GUI_DEFENSE,      UWG_TOPRIGHT,     0,            Defense_UpdateDimensions, Defense_Drawer, Defense_Ticker, &hud->defense },
+        { GUI_WORLDTIMER,   UWG_TOPRIGHT2,    GF_FONTA,     WorldTimer_UpdateDimensions, WorldTimer_Drawer, WorldTimer_Ticker, &hud->worldtimer },
+        { GUI_HEALTH,       UWG_BOTTOMLEFT,   GF_FONTB,     Health_UpdateDimensions, Health_Drawer, Health_Ticker, &hud->health },
+        { GUI_FRAGS,        UWG_BOTTOMLEFT,   GF_STATUS,    Frags_UpdateDimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
+        { GUI_READYITEM,    UWG_BOTTOMRIGHT,  GF_SMALLIN,   ReadyItem_UpdateDimensions, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
+        { GUI_INVENTORY,    UWG_BOTTOM,       GF_SMALLIN,   Inventory_UpdateDimensions, Inventory_Drawer },
         { GUI_NONE }
     };
     size_t i;
@@ -3588,17 +3611,17 @@ void ST_BuildWidgets(int player)
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
     {
         const uiwidgetdef_t* def = &widgetDefs[i];
-        uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->updateDimensions, def->drawer, def->ticker, def->typedata);
+        uiwidgetid_t id = GUI_CreateWidget(def->type, player, FID(def->fontIdx), def->updateDimensions, def->drawer, def->ticker, def->typedata);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
     }
 
-    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, -1, FID(GF_FONTA), UILog_UpdateDimensions, UILog_Drawer, UILog_Ticker, &hud->log);
+    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, FID(GF_FONTA), UILog_UpdateDimensions, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
-    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_UpdateDimensions, UIChat_Drawer, NULL, &hud->chat);
+    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, FID(GF_FONTA), UIChat_UpdateDimensions, UIChat_Drawer, NULL, &hud->chat);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, -1, FID(GF_FONTA), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTA), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING

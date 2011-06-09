@@ -1882,6 +1882,8 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_FRAGS])
+        return;
     if(!deathmatch)
         return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -1917,6 +1919,8 @@ void Frags_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_FRAGS])
+        return;
     if(!deathmatch)
         return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -1940,6 +1944,8 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_HEALTH])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -1973,6 +1979,8 @@ void Health_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_HEALTH])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -1992,6 +2000,8 @@ void HealthIcon_Drawer(uiwidget_t* obj, int x, int y)
     {
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
+    if(!cfg.hudShown[HUD_HEALTH])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2016,6 +2026,8 @@ void HealthIcon_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_HEALTH])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2035,6 +2047,8 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_AMMO])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2070,6 +2084,8 @@ void ReadyAmmo_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_AMMO])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2124,6 +2140,8 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     float scale;
 
+    if(!cfg.hudShown[HUD_AMMO])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2154,6 +2172,8 @@ void ReadyAmmoIcon_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_AMMO])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2178,6 +2198,8 @@ void Face_Drawer(uiwidget_t* obj, int x, int y)
     const patchinfo_t* bgPatch = &pFaceBackground[cfg.playerColor[obj->player]];
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
+    if(!cfg.hudShown[HUD_FACE])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2212,6 +2234,8 @@ void Face_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_FACE])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2231,6 +2255,8 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     char buf[20];
 
+    if(!cfg.hudShown[HUD_ARMOR])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2266,6 +2292,8 @@ void Armor_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_ARMOR])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2301,6 +2329,8 @@ void ArmorIcon_Drawer(uiwidget_t* obj, int x, int y)
     guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
+    if(!cfg.hudShown[HUD_ARMOR])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2329,6 +2359,8 @@ void ArmorIcon_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_ARMOR])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2379,6 +2411,8 @@ void Keys_Drawer(uiwidget_t* obj, int x, int y)
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     int i, numDrawnKeys = 0;
 
+    if(!cfg.hudShown[HUD_KEYS])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2448,6 +2482,8 @@ void Keys_UpdateDimensions(uiwidget_t* obj)
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
+    if(!cfg.hudShown[HUD_KEYS])
+        return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
@@ -2845,7 +2881,6 @@ void MapName_UpdateDimensions(uiwidget_t* obj)
 typedef struct {
     guiwidgettype_t type;
     int group;
-    int hideId;
     gamefontid_t fontIdx;
     void (*updateDimensions) (uiwidget_t* obj);
     void (*drawer) (uiwidget_t* obj, int x, int y);
@@ -3303,42 +3338,42 @@ void ST_BuildWidgets(int player)
         { UWG_AUTOMAP,      UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT, 0 }
     };
     const uiwidgetdef_t widgetDefs[] = {
-        { GUI_BOX,      UWG_STATUSBAR,      -1,         0,          SBarBackground_UpdateDimensions, SBarBackground_Drawer },
-        { GUI_READYAMMO, UWG_STATUSBAR,     -1,         GF_STATUS,  SBarReadyAmmo_UpdateDimensions, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
-        { GUI_HEALTH,   UWG_STATUSBAR,      -1,         GF_STATUS,  SBarHealth_UpdateDimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[0] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[1] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[2] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[3] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[4] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    -1,         0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[5] },
-        { GUI_FRAGS,    UWG_STATUSBAR,      -1,         GF_STATUS,  SBarFrags_UpdateDimensions, SBarFrags_Drawer, SBarFrags_Ticker, &hud->sbarFrags },
-        { GUI_FACE,     UWG_STATUSBAR,      -1,         0,          SBarFace_UpdateDimensions, SBarFace_Drawer, Face_Ticker, &hud->sbarFace },
-        { GUI_ARMOR,    UWG_STATUSBAR,      -1,         GF_STATUS,  SBarArmor_UpdateDimensions, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
-        { GUI_KEYSLOT,  UWG_STATUSBAR,      -1,         0,          KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
-        { GUI_KEYSLOT,  UWG_STATUSBAR,      -1,         0,          KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
-        { GUI_KEYSLOT,  UWG_STATUSBAR,      -1,         0,          KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CLIP] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_SHELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_MISSILE] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CLIP] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      -1,         GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
-        { GUI_MAPNAME,  UWG_MAPNAME,        -1,         GF_FONTB,   MapName_UpdateDimensions, MapName_Drawer },
-        { GUI_BOX,      UWG_BOTTOMLEFT,     HUD_HEALTH, 0,          HealthIcon_UpdateDimensions, HealthIcon_Drawer },
-        { GUI_HEALTH,   UWG_BOTTOMLEFT,     HUD_HEALTH, GF_FONTB,   Health_UpdateDimensions, Health_Drawer, Health_Ticker, &hud->health },
-        { GUI_READYAMMOICON, UWG_BOTTOMLEFT, HUD_AMMO,  0,          ReadyAmmoIcon_UpdateDimensions, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
-        { GUI_READYAMMO, UWG_BOTTOMLEFT,    HUD_AMMO,   GF_FONTB,   ReadyAmmo_UpdateDimensions, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
-        { GUI_FRAGS,    UWG_BOTTOMLEFT2,    HUD_FRAGS,  GF_FONTA,   Frags_UpdateDimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
-        { GUI_ARMOR,    UWG_BOTTOMRIGHT,    HUD_ARMOR,  GF_FONTB,   Armor_UpdateDimensions, Armor_Drawer, Armor_Ticker, &hud->armor },
-        { GUI_ARMORICON, UWG_BOTTOMRIGHT,   HUD_ARMOR,  0,          ArmorIcon_UpdateDimensions, ArmorIcon_Drawer, ArmorIcon_Ticker, &hud->armoricon },
-        { GUI_KEYS,     UWG_BOTTOMRIGHT,    HUD_KEYS,   0,          Keys_UpdateDimensions, Keys_Drawer, Keys_Ticker, &hud->keys },
-        { GUI_FACE,     UWG_BOTTOM,         HUD_FACE,   0,          Face_UpdateDimensions, Face_Drawer, Face_Ticker, &hud->face },
-        { GUI_SECRETS,  UWG_COUNTERS,       -1,         GF_FONTA,   Secrets_UpdateDimensions, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
-        { GUI_ITEMS,    UWG_COUNTERS,       -1,         GF_FONTA,   Items_UpdateDimensions, Items_Drawer, Items_Ticker, &hud->items },
-        { GUI_KILLS,    UWG_COUNTERS,       -1,         GF_FONTA,   Kills_UpdateDimensions, Kills_Drawer, Kills_Ticker, &hud->kills },
+        { GUI_BOX,      UWG_STATUSBAR,      0,          SBarBackground_UpdateDimensions, SBarBackground_Drawer },
+        { GUI_READYAMMO, UWG_STATUSBAR,     GF_STATUS,  SBarReadyAmmo_UpdateDimensions, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
+        { GUI_HEALTH,   UWG_STATUSBAR,      GF_STATUS,  SBarHealth_UpdateDimensions, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
+        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[0] },
+        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[1] },
+        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[2] },
+        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[3] },
+        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[4] },
+        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateDimensions, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[5] },
+        { GUI_FRAGS,    UWG_STATUSBAR,      GF_STATUS,  SBarFrags_UpdateDimensions, SBarFrags_Drawer, SBarFrags_Ticker, &hud->sbarFrags },
+        { GUI_FACE,     UWG_STATUSBAR,      0,          SBarFace_UpdateDimensions, SBarFace_Drawer, Face_Ticker, &hud->sbarFace },
+        { GUI_ARMOR,    UWG_STATUSBAR,      GF_STATUS,  SBarArmor_UpdateDimensions, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
+        { GUI_KEYSLOT,  UWG_STATUSBAR,      0,          KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
+        { GUI_KEYSLOT,  UWG_STATUSBAR,      0,          KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
+        { GUI_KEYSLOT,  UWG_STATUSBAR,      0,          KeySlot_UpdateDimensions, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CLIP] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_SHELL] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CELL] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateDimensions, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_MISSILE] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CLIP] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
+        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateDimensions, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
+        { GUI_MAPNAME,  UWG_MAPNAME,        GF_FONTB,   MapName_UpdateDimensions, MapName_Drawer },
+        { GUI_BOX,      UWG_BOTTOMLEFT,     0,          HealthIcon_UpdateDimensions, HealthIcon_Drawer },
+        { GUI_HEALTH,   UWG_BOTTOMLEFT,     GF_FONTB,   Health_UpdateDimensions, Health_Drawer, Health_Ticker, &hud->health },
+        { GUI_READYAMMOICON, UWG_BOTTOMLEFT,0,          ReadyAmmoIcon_UpdateDimensions, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
+        { GUI_READYAMMO, UWG_BOTTOMLEFT,    GF_FONTB,   ReadyAmmo_UpdateDimensions, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
+        { GUI_FRAGS,    UWG_BOTTOMLEFT2,    GF_FONTA,   Frags_UpdateDimensions, Frags_Drawer, Frags_Ticker, &hud->frags },
+        { GUI_ARMOR,    UWG_BOTTOMRIGHT,    GF_FONTB,   Armor_UpdateDimensions, Armor_Drawer, Armor_Ticker, &hud->armor },
+        { GUI_ARMORICON, UWG_BOTTOMRIGHT,   0,          ArmorIcon_UpdateDimensions, ArmorIcon_Drawer, ArmorIcon_Ticker, &hud->armoricon },
+        { GUI_KEYS,     UWG_BOTTOMRIGHT,    0,          Keys_UpdateDimensions, Keys_Drawer, Keys_Ticker, &hud->keys },
+        { GUI_FACE,     UWG_BOTTOM,         0,          Face_UpdateDimensions, Face_Drawer, Face_Ticker, &hud->face },
+        { GUI_SECRETS,  UWG_COUNTERS,       GF_FONTA,   Secrets_UpdateDimensions, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
+        { GUI_ITEMS,    UWG_COUNTERS,       GF_FONTA,   Items_UpdateDimensions, Items_Drawer, Items_Ticker, &hud->items },
+        { GUI_KILLS,    UWG_COUNTERS,       GF_FONTA,   Kills_UpdateDimensions, Kills_Drawer, Kills_Ticker, &hud->kills },
         { GUI_NONE }
     };
     size_t i;
@@ -3358,17 +3393,17 @@ void ST_BuildWidgets(int player)
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
     {
         const uiwidgetdef_t* def = &widgetDefs[i];
-        uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->hideId, FID(def->fontIdx), def->updateDimensions, def->drawer, def->ticker, def->typedata);
+        uiwidgetid_t id = GUI_CreateWidget(def->type, player, FID(def->fontIdx), def->updateDimensions, def->drawer, def->ticker, def->typedata);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
     }
 
-    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, -1, FID(GF_FONTA), UILog_UpdateDimensions, UILog_Drawer, UILog_Ticker, &hud->log);
+    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, FID(GF_FONTA), UILog_UpdateDimensions, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
-    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, -1, FID(GF_FONTA), UIChat_UpdateDimensions, UIChat_Drawer, NULL, &hud->chat);
+    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, FID(GF_FONTA), UIChat_UpdateDimensions, UIChat_Drawer, NULL, &hud->chat);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, -1, FID(GF_FONTA), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTA), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING
