@@ -153,12 +153,13 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
 }
 
 static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
-    void (*updateDimensions) (uiwidget_t* obj),
+    int alignFlags, void (*updateDimensions) (uiwidget_t* obj),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
     obj->fontId = fontId;
+    obj->alignFlags = alignFlags;
     obj->updateDimensions = updateDimensions;
     obj->drawer = drawer;
     obj->ticker = ticker;
@@ -253,18 +254,18 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
-    obj = createWidget(type, player, fontId, updateDimensions, drawer, ticker, typedata);
+    obj = createWidget(type, player, fontId, 0, updateDimensions, drawer, ticker, typedata);
     return obj->id;
 }
 
-uiwidgetid_t GUI_CreateGroup(int player, short flags, int padding)
+uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding)
 {
     uiwidget_t* obj;
     guidata_group_t* grp;
     errorIfNotInited("GUI_CreateGroup");
-    obj = createWidget(GUI_GROUP, player, 0, NULL, NULL, NULL, NULL);
+    obj = createWidget(GUI_GROUP, player, 0, alignFlags, NULL, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
-    grp->flags = flags;
+    grp->flags = groupFlags;
     grp->padding = padding;
     return obj->id;
 }
@@ -295,7 +296,7 @@ void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other)
     }
 }
 
-short UIGroup_Flags(uiwidget_t* obj)
+int UIGroup_Flags(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_GROUP);
     {
@@ -304,7 +305,7 @@ short UIGroup_Flags(uiwidget_t* obj)
     }
 }
 
-void UIGroup_SetFlags(uiwidget_t* obj, short flags)
+void UIGroup_SetFlags(uiwidget_t* obj, int flags)
 {
     assert(NULL != obj && obj->type == GUI_GROUP);
     {
@@ -357,14 +358,14 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
     if(!grp->widgetIdCount)
         return;
 
-    if(grp->flags & UWGF_ALIGN_RIGHT)
+    if(obj->alignFlags & ALIGN_RIGHT)
         x += availWidth;
-    else if(!(grp->flags & UWGF_ALIGN_LEFT))
+    else if(!(obj->alignFlags & ALIGN_LEFT))
         x += availWidth/2;
 
-    if(grp->flags & UWGF_ALIGN_BOTTOM)
+    if(obj->alignFlags & ALIGN_BOTTOM)
         y += availHeight;
-    else if(!(grp->flags & UWGF_ALIGN_TOP))
+    else if(!(obj->alignFlags & ALIGN_TOP))
         y += availHeight/2;
 
     for(i = 0; i < grp->widgetIdCount; ++i)
@@ -502,6 +503,18 @@ const rectanglei_t* UIWidget_Dimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     return &obj->dimensions;
+}
+
+int UIWidget_Alignment(uiwidget_t* obj)
+{
+    assert(NULL != obj);
+    return obj->alignFlags;
+}
+
+void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags)
+{
+    assert(NULL != obj);
+    obj->alignFlags = alignFlags;
 }
 
 static void MNSlider_LoadResources(void)

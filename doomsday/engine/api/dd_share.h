@@ -895,6 +895,23 @@ enum { MX, MY, MZ }; // Momentum axis indices.
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
 
+/**
+ * @defgroup alignmentFlags  Alignment Flags.
+ */
+/*@{*/
+#define ALIGN_LEFT          (0x1)
+#define ALIGN_RIGHT         (0x2)
+#define ALIGN_TOP           (0x4)
+#define ALIGN_BOTTOM        (0x8)
+
+#define ALIGN_TOPLEFT       (ALIGN_TOP|ALIGN_LEFT)
+#define ALIGN_TOPRIGHT      (ALIGN_TOP|ALIGN_RIGHT)
+#define ALIGN_BOTTOMLEFT    (ALIGN_BOTTOM|ALIGN_LEFT)
+#define ALIGN_BOTTOMRIGHT   (ALIGN_BOTTOM|ALIGN_RIGHT)
+
+#define ALL_ALIGN_FLAGS     (ALIGN_LEFT|ALIGN_RIGHT|ALIGN_TOP|ALIGN_BOTTOM)
+/*@}*/
+
 typedef enum {
     SCALEMODE_FIRST = 0,
     SCALEMODE_SMART_STRETCH = SCALEMODE_FIRST,

@@ -3494,13 +3494,13 @@ void ST_Start(int player)
      */
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
-    flags = UIGroup_Flags(obj);
-    flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
+    flags = UIWidget_Alignment(obj);
+    flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
     if(cfg.msgAlign == 0)
-        flags |= UWGF_ALIGN_LEFT;
+        flags |= ALIGN_LEFT;
     else if(cfg.msgAlign == 2)
-        flags |= UWGF_ALIGN_RIGHT;
-    UIGroup_SetFlags(obj, flags);
+        flags |= ALIGN_RIGHT;
+    UIWidget_SetAlignment(obj, flags);
 
     obj = GUI_MustFindObjectById(hud->automapWidgetId);
     initAutomapForCurrentMap(obj);
@@ -3538,7 +3538,8 @@ typedef struct {
 
 typedef struct {
     int group;
-    short flags;
+    int alignFlags;
+    int groupFlags;
     int padding; // In fixed 320x200 pixels.
 } uiwidgetgroupdef_t;
 
@@ -3548,18 +3549,18 @@ void ST_BuildWidgets(int player)
 
     hudstate_t* hud = hudStates + player;
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
-        { UWG_STATUSBAR,    UWGF_ALIGN_BOTTOM },
-        { UWG_MAPNAME,      UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT },
-        { UWG_BOTTOMLEFT,   UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_BOTTOMRIGHT,  UWGF_ALIGN_BOTTOM|UWGF_ALIGN_RIGHT|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       UWGF_ALIGN_BOTTOM|UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_TOP,          UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT,      UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT2,     UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT3,     UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPRIGHT,     UWGF_ALIGN_TOP|UWGF_ALIGN_RIGHT|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_TOPRIGHT2,    UWGF_ALIGN_TOP|UWGF_ALIGN_RIGHT|UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_AUTOMAP,      UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT }
+        { UWG_STATUSBAR,    ALIGN_BOTTOM },
+        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
+        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
+        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
+        { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
+        { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
+        { UWG_TOPLEFT3,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
+        { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_TOPRIGHT2,    ALIGN_TOPRIGHT,    UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
+        { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
         { GUI_BOX,          UWG_STATUSBAR,    0,            SBarBackground_UpdateDimensions, SBarBackground_Drawer },
@@ -3605,7 +3606,7 @@ void ST_BuildWidgets(int player)
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(player, def->flags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(player, def->groupFlags, def->alignFlags, def->padding);
     }
 
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
@@ -3729,20 +3730,21 @@ void ST_LogPostVisibilityChangeNotification(void)
 
 void ST_LogUpdateAlignment(void)
 {
-    short flags;
-    int i;
+    int i, flags;
+    uiwidget_t* obj;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         hudstate_t* hud = &hudStates[i];
         if(!hud->inited) continue;
 
-        flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]));
-        flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
+        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
+        flags = UIWidget_Alignment(obj);
+        flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
-            flags |= UWGF_ALIGN_LEFT;
+            flags |= ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
-            flags |= UWGF_ALIGN_RIGHT;
-        UIGroup_SetFlags(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), flags);
+            flags |= ALIGN_RIGHT;
+        UIWidget_SetAlignment(obj, flags);
     }
 }
 

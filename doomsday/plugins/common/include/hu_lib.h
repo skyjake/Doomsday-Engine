@@ -742,6 +742,7 @@ typedef enum {
 typedef int uiwidgetid_t;
 
 typedef struct uiwidget_s {
+    int alignFlags; /// @see alignmentFlags
     uiwidgetid_t id;
     guiwidgettype_t type;
     rectanglei_t dimensions;
@@ -760,6 +761,14 @@ boolean GUI_GameTicTriggerIsSharp(void);
 void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth, int availHeight,
     float alpha, int* drawnWidth, int* drawnHeight);
 
+/// @return  @see alignmentFlags
+int UIWidget_Alignment(uiwidget_t* obj);
+
+/**
+ * @param alignFlags  @see alignmentFlags
+ */
+void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags);
+
 void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
 
 /// @return  Local player number of the owner of this widget.
@@ -772,25 +781,21 @@ const rectanglei_t* UIWidget_Dimensions(uiwidget_t* obj);
  * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
  */
 /*@{*/
-#define UWGF_ALIGN_LEFT         0x0001
-#define UWGF_ALIGN_RIGHT        0x0002
-#define UWGF_ALIGN_TOP          0x0004
-#define UWGF_ALIGN_BOTTOM       0x0008
-#define UWGF_LEFTTORIGHT        0x0010
-#define UWGF_RIGHTTOLEFT        0x0020
-#define UWGF_VERTICAL           0x0040
+#define UWGF_LEFTTORIGHT        0x0001
+#define UWGF_RIGHTTOLEFT        0x0002
+#define UWGF_VERTICAL           0x0004
 /*@}*/
 
 typedef struct {
-    short flags;
+    int flags;
     int padding;
     int widgetIdCount;
     uiwidgetid_t* widgetIds;
 } guidata_group_t;
 
 void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other);
-short UIGroup_Flags(uiwidget_t* obj);
-void UIGroup_SetFlags(uiwidget_t* obj, short flags);
+int UIGroup_Flags(uiwidget_t* obj);
+void UIGroup_SetFlags(uiwidget_t* obj, int flags);
 
 typedef struct {
     int value;
@@ -970,7 +975,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
     void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
-uiwidgetid_t GUI_CreateGroup(int player, short flags, int padding);
+uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;
