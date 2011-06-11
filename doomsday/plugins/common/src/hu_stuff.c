@@ -541,7 +541,6 @@ static void drawTable(float x, float ly, float width, float height,
     colX = calloc(1, sizeof(*colX) * numCols);
     colW = calloc(1, sizeof(*colW) * numCols);
 
-    FR_SetFont(FID(GF_FONTA));
     lineHeight = height / (MAXPLAYERS + 1);
     fontHeight = FR_CharHeight('A');
     fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
@@ -599,7 +598,6 @@ static void drawTable(float x, float ly, float width, float height,
         else
             cX += CELL_PADDING;
 
-        FR_SetFont(FID(GF_FONTA));
         HU_DrawText(columns[n].label, cX, cY, fontScale, 1.f, 1.f, 1.f, alpha,
             DTF_ALIGN_TOP|DTF_ONLY_SHADOW|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
     }
@@ -700,7 +698,6 @@ DGL_Enable(DGL_TEXTURE_2D);
                 }
 
             case 1: // Name.
-                FR_SetFont(FID(GF_FONTA));
                 HU_DrawText(name, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
@@ -708,7 +705,6 @@ DGL_Enable(DGL_TEXTURE_2D);
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
-                FR_SetFont(FID(GF_FONTA));
                 HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
@@ -716,7 +712,6 @@ DGL_Enable(DGL_TEXTURE_2D);
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
-                FR_SetFont(FID(GF_FONTA));
                 HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
                             alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
@@ -750,7 +745,7 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-static void drawMapMetaData(float x, float y, fontid_t fontId, float alpha)
+static void drawMapMetaData(float x, float y, float alpha)
 {
     static const char*  unnamed = "unnamed";
     const char* lname = P_GetMapNiceName();
@@ -758,7 +753,6 @@ static void drawMapMetaData(float x, float y, fontid_t fontId, float alpha)
     if(!lname)
         lname = unnamed;
 
-    FR_SetFont(fontId);
     DGL_Color4f(1, 1, 1, alpha);
 
     // Map name:
@@ -830,13 +824,13 @@ void HU_DrawScoreBoard(int player)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    // Title:
-    FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetTracking(0);
     FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
-    drawMapMetaData(x, y + 16, FID(GF_FONTA), hud->scoreAlpha);
-
+    FR_SetFont(FID(GF_FONTA));
+    drawMapMetaData(x, y + 16, hud->scoreAlpha);
     drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, hud->scoreAlpha, player);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1113,13 +1107,13 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_DrawTextFragmentShadowed(const char* string, int x, int y, short flags, int tracking, float r, float g, float b, float a)
+void M_DrawTextFragmentShadowed(const char* string, int x, int y, short flags, float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    FR_DrawTextFragment3(string, x+2, y+2, flags, tracking);
+    FR_DrawTextFragment2(string, x+2, y+2, flags);
 
     DGL_Color4f(r, g, b, a);
-    FR_DrawTextFragment3(string, x, y, flags, tracking);
+    FR_DrawTextFragment2(string, x, y, flags);
 }
 
 const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
@@ -1591,6 +1585,8 @@ static void drawMapTitle(void)
 # endif
 
     DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetTracking(0);
 
     WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, FID(GF_FONTB), 1, 1, 1, alpha);
 

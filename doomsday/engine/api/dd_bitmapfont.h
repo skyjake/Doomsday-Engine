@@ -74,15 +74,16 @@ void FR_ResetTypeInTimer(void);
 #define DTF_ONLY_SHADOW         (DTF_NO_TYPEIN|DTF_NO_GLITTER)
 /*@}*/
 
-/**
- * Change the current font.
- */
+/// Change the current font.
 void FR_SetFont(fontid_t font);
 
-/**
- * @return  Unique identifier associated with the current font.
- */
+void FR_SetTracking(int tracking);
+
+/// @return  Unique identifier associated with the current font.
 fontid_t FR_GetCurrentId(void);
+
+/// Current tracking.
+int FR_Tracking(void);
 
 /**
  * Text: A block of possibly formatted and/or multi-line text.
@@ -99,18 +100,15 @@ int FR_TextHeight(const char* string, fontid_t defFont);
  */
 void FR_DrawTextFragment(const char* string, int x, int y);
 void FR_DrawTextFragment2(const char* string, int x, int y, short flags);
-void FR_DrawTextFragment3(const char* string, int x, int y, short flags, int tracking);
-void FR_DrawTextFragment4(const char* string, int x, int y, short flags, int tracking, int initialCount);
-void FR_DrawTextFragment5(const char* string, int x, int y, short flags, int tracking, int initialCount, float glitterStrength);
-void FR_DrawTextFragment6(const char* string, int x, int y, short flags, int tracking, int initialCount, float glitterStrength, float shadowStrength);
-void FR_DrawTextFragment7(const char* string, int x, int y, short flags, int tracking, int initialCount, float glitterStrength, float shadowStrength, int shadowOffsetX, int shadowOffsetY);
+void FR_DrawTextFragment3(const char* string, int x, int y, short flags, int initialCount);
+void FR_DrawTextFragment4(const char* string, int x, int y, short flags, int initialCount, float glitterStrength);
+void FR_DrawTextFragment5(const char* string, int x, int y, short flags, int initialCount, float glitterStrength, float shadowStrength);
+void FR_DrawTextFragment6(const char* string, int x, int y, short flags, int initialCount, float glitterStrength, float shadowStrength, int shadowOffsetX, int shadowOffsetY);
 
 // Utility routines:
 void FR_TextFragmentDimensions(int* width, int* height, const char* string);
-void FR_TextFragmentDimensions2(int* width, int* height, const char* string, int tracking);
 
 int FR_TextFragmentWidth(const char* string);
-int FR_TextFragmentWidth2(const char* string, int tracking);
 int FR_TextFragmentHeight(const char* string);
 
 /**

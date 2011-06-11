@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 512 <--
-; Other free ordinals: none
+; Other free ordinals: 200
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -496,6 +496,8 @@ EXPORTS
     FR_SafeFontIdForName        @107 NONAME
     FR_GetCurrentId             @97 NONAME
     FR_SetFont                  @65 NONAME
+    FR_Tracking                 @198 NONAME
+    FR_SetTracking              @125 NONAME
     FR_ResetTypeInTimer         @131 NONAME
 
 	FR_TextDimensions           @112 NONAME
@@ -505,10 +507,8 @@ EXPORTS
     FR_DrawText                 @108 NONAME
 
 	FR_TextFragmentDimensions   @197 NONAME
-	FR_TextFragmentDimensions2  @198 NONAME
 
 	FR_TextFragmentWidth        @199 NONAME
-	FR_TextFragmentWidth2       @200 NONAME
 	FR_TextFragmentHeight       @201 NONAME
 
 	FR_DrawTextFragment         @118 NONAME
@@ -517,7 +517,6 @@ EXPORTS
 	FR_DrawTextFragment4        @122 NONAME
 	FR_DrawTextFragment5        @123 NONAME
 	FR_DrawTextFragment6        @124 NONAME
-	FR_DrawTextFragment7        @125 NONAME
 
 	FR_DrawChar                 @202 NONAME
 	FR_DrawChar2                @203 NONAME

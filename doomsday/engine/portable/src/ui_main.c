@@ -891,6 +891,7 @@ void UIText_Drawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetTracking(0);
     UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -899,6 +900,7 @@ void UIText_BrightDrawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetTracking(0);
     UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -994,6 +996,7 @@ void UIButton_Drawer(ui_object_t* ob)
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetTracking(0);
     UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, DTF_ONLY_SHADOW| ((ob->flags & UIF_LEFT_ALIGN)? DTF_ALIGN_LEFT : 0));
     glDisable(GL_TEXTURE_2D);
 }
@@ -1099,6 +1102,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
     // Draw text.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetTracking(0);
     memset(buf, 0, sizeof(buf));
 
     // Does all of it fit in the box?
@@ -1312,6 +1316,7 @@ void UIList_Drawer(ui_object_t* ob)
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetTracking(0);
     UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, UI_Color(UIC_TEXT), alpha);
     glDisable(GL_TEXTURE_2D);
 
@@ -1607,6 +1612,7 @@ void UISlider_Drawer(ui_object_t* ob)
         strcpy(buf, dat->zerotext);
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetTracking(0);
     UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -1624,6 +1630,9 @@ void UI_InitColumns(ui_object_t* ob)
     int width[UI_MAX_COLUMNS];
     int numcols = 1;
 
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetTracking(0);
+
     memset(dat->column, 0, sizeof(dat->column));
     memset(width, 0, sizeof(width));
     for(i = 0; i < dat->count; ++i)
@@ -1639,7 +1648,6 @@ void UI_InitColumns(ui_object_t* ob)
                 strncpy(temp, ptr, endptr - ptr);
             else
                 strcpy(temp, ptr);
-            FR_SetFont(glFontVariable[GLFS_LIGHT]);
             w = FR_TextFragmentWidth(temp);
             if(w > width[c])
                 width[c] = w;
@@ -1861,7 +1869,7 @@ void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alph
     alpha *= uiAlpha;
     if(alpha <= 0) return;
     UI_SetColorA(color, alpha);
-    FR_DrawTextFragment7(text, x, y, flags, DEFAULT_TRACKING, DEFAULT_INITIALCOUNT,
+    FR_DrawTextFragment6(text, x, y, flags, DEFAULT_INITIALCOUNT,
         DEFAULT_GLITTER_STRENGTH, .6f, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
 }
 
@@ -2200,6 +2208,7 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char* text)
     {
         bor = 2 * UI_BORDER / 3;
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        FR_SetTracking(0);
         UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor, h - 4 * bor, UI_Color(UIC_TEXT), alpha);
     }
     glDisable(GL_TEXTURE_2D);

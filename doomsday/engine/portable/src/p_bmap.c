@@ -1152,6 +1152,7 @@ static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
     sprintf(buf, "Block: %li [%u, %u] Lines: #%i Mobjs: #%i Polyobjs: #%i",
             blockIdx, blockX, blockY, lineCount, moCount, poCount);
     FR_SetFont(glFontFixed);
+    FR_SetTracking(0);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_TextFragmentHeight(buf) + 16;
     x -= w / 2;
@@ -1169,6 +1170,7 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     char buf[80];
 
     FR_SetFont(glFontFixed);
+    FR_SetTracking(0);
     w = 16 + FR_TextFragmentWidth("(+000.0,+000.0)(+000.0,+000.0)");
     th = FR_TextFragmentHeight("a");
     h = th * 4 + 16;

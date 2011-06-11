@@ -1404,6 +1404,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
 #define X                   (ORIGINX+ST_FRAGSX)
 #define Y                   (ORIGINY+ST_FRAGSY)
 #define MAXDIGITS           (ST_FRAGSWIDTH)
+#define TRACKING            (1)
 
     assert(NULL != obj);
     {
@@ -1434,6 +1435,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
@@ -1441,6 +1443,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
     }
+#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1450,6 +1453,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarFrags_UpdateDimensions(uiwidget_t* obj)
 {
+#define TRACKING            (1)
     assert(NULL != obj);
     {
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
@@ -1469,10 +1473,12 @@ void SBarFrags_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", frags->value);
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
     }
+#undef TRACKING
 }
 
 void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1525,8 +1531,9 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1563,7 +1570,8 @@ void SBarHealth_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", hlth->value);
     FR_SetFont(obj->fontId);
-    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    FR_SetTracking(TRACKING);
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
     }
@@ -1624,8 +1632,9 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextFragment3(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment2(buf, X, Y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1662,7 +1671,8 @@ void SBarArmor_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", armor->value);
     FR_SetFont(obj->fontId);
-    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    FR_SetTracking(TRACKING);
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
     }
@@ -1752,6 +1762,7 @@ void SBarBlueMana_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->fontId);
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
@@ -1841,6 +1852,7 @@ void SBarGreenMana_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->fontId);
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
@@ -2441,8 +2453,9 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextFragment3(buf, -1, -1, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment2(buf, -1, -1, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2476,7 +2489,8 @@ void Health_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", value);
     FR_SetFont(obj->fontId);
-    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    FR_SetTracking(TRACKING);
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
     }
@@ -2566,8 +2580,9 @@ void BlueMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextFragment3(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2599,7 +2614,8 @@ void BlueMana_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->fontId);
-    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    FR_SetTracking(TRACKING);
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
     }
@@ -2688,8 +2704,9 @@ void GreenMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextFragment3(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment2(buf, 0, 0, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2722,7 +2739,8 @@ void GreenMana_UpdateDimensions(uiwidget_t* obj)
     dd_snprintf(buf, 20, "%i", mana->value);
 
     FR_SetFont(obj->fontId);
-    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    FR_SetTracking(TRACKING);
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
     }
@@ -2758,8 +2776,9 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(TRACKING);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextFragment3(buf, 0, -13, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+    FR_DrawTextFragment2(buf, 0, -13, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2792,7 +2811,8 @@ void Frags_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", frags->value);
     FR_SetFont(obj->fontId);
-    FR_TextFragmentDimensions2(&obj->dimensions.width, &obj->dimensions.height, buf, TRACKING);
+    FR_SetTracking(TRACKING);
+    FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
     }
@@ -2855,6 +2875,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
         {
             char buf[20];
             FR_SetFont(obj->fontId);
+            FR_SetTracking(0);
             DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextFragment2(buf, -2, -7, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -2981,6 +3002,7 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         return;
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextFragmentWidth(" : ");
 
@@ -3057,6 +3079,7 @@ void WorldTimer_UpdateDimensions(uiwidget_t* obj)
         return;
 
     FR_SetFont(obj->fontId);
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextFragmentWidth(" : ");
 

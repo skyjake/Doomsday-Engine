@@ -44,6 +44,13 @@
 #include "m_misc.h"
 
 typedef struct {
+    int fontIdx;
+    int tracking;
+} fr_state_t;
+static fr_state_t fr;
+fr_state_t* frState = &fr;
+
+typedef struct {
     fontid_t font;
     float scaleX, scaleY;
     float offX, offY;
@@ -68,7 +75,6 @@ static int inited = false;
 
 static int numFonts = 0;
 static bitmapfont_t** fonts = 0; // The list of fonts.
-static int currentFontIdx; // Index of the current font.
 
 static int typeInTime;
 
@@ -146,8 +152,8 @@ static void destroyFontIdx(int idx)
     --numFonts;
     fonts = realloc(fonts, sizeof(*fonts) * numFonts);
 
-    if(currentFontIdx == idx)
-        currentFontIdx = -1;
+    if(fr.fontIdx == idx)
+        fr.fontIdx = -1;
 }
 
 static void destroyFonts(void)
@@ -157,7 +163,7 @@ static void destroyFonts(void)
     while(numFonts)
         destroyFontIdx(0);
     fonts = 0;
-    currentFontIdx = -1;
+    fr.fontIdx = -1;
     }
 }
 
@@ -211,7 +217,8 @@ int FR_Init(void)
 
     numFonts = 0;
     fonts = 0; // No fonts!
-    currentFontIdx = -1;
+    fr.fontIdx = -1;
+    fr.tracking = DEFAULT_TRACKING;
     typeInTime = 0;
 
     inited = true;
@@ -286,7 +293,7 @@ fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
     }
 
     // Make this the current font.
-    currentFontIdx = numFonts-1;
+    fr.fontIdx = numFonts-1;
 
     return BitmapFont_Id(font);
     }
@@ -300,8 +307,8 @@ void FR_DestroyFont(fontid_t id)
     if(-1 != (idx = findFontIdxForId(id)))
     {
         destroyFontIdx(idx);
-        if(currentFontIdx == idx)
-            currentFontIdx = -1;
+        if(fr.fontIdx == idx)
+            fr.fontIdx = -1;
     }
 }
 
@@ -386,31 +393,45 @@ void FR_SetFont(fontid_t id)
     idx = FR_GetFontIdx(id);
     if(idx == -1)
         return; // No such font.
-    currentFontIdx = idx;
+    fr.fontIdx = idx;
+}
+
+void FR_SetTracking(int tracking)
+{
+    if(!inited)
+        Con_Error("FR_SetTracking: Font renderer has not yet been initialized.");
+    fr.tracking = tracking;
 }
 
 fontid_t FR_GetCurrentId(void)
 {
     if(!inited)
         Con_Error("FR_GetCurrentId: Font renderer has not yet been initialized.");
-    if(currentFontIdx != -1)
-        return BitmapFont_Id(fonts[currentFontIdx]);
+    if(fr.fontIdx != -1)
+        return BitmapFont_Id(fonts[fr.fontIdx]);
     return 0;
+}
+
+int FR_Tracking(void)
+{
+    if(!inited)
+        Con_Error("FR_Tracking: Font renderer has not yet been initialized.");
+    return fr.tracking;
 }
 
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
 {
     if(!inited)
         Con_Error("FR_CharDimensions: Font renderer has not yet been initialized.");
-    BitmapFont_CharDimensions(fonts[currentFontIdx], width, height, ch);
+    BitmapFont_CharDimensions(fonts[fr.fontIdx], width, height, ch);
 }
 
 int FR_CharWidth(unsigned char ch)
 {
     if(!inited)
         Con_Error("FR_CharWidth: Font renderer has not yet been initialized.");
-    if(currentFontIdx != -1)
-        return BitmapFont_CharWidth(fonts[currentFontIdx],ch);
+    if(fr.fontIdx != -1)
+        return BitmapFont_CharWidth(fonts[fr.fontIdx],ch);
     return 0;
 }
 
@@ -418,30 +439,24 @@ int FR_CharHeight(unsigned char ch)
 {
     if(!inited)
         Con_Error("FR_CharHeight: Font renderer has not yet been initialized.");
-    if(currentFontIdx != -1)
-        return BitmapFont_CharHeight(fonts[currentFontIdx], ch);
+    if(fr.fontIdx != -1)
+        return BitmapFont_CharHeight(fonts[fr.fontIdx], ch);
     return 0;
 }
 
-void FR_TextFragmentDimensions2(int* width, int* height, const char* text,
-    int tracking)
+void FR_TextFragmentDimensions(int* width, int* height, const char* text)
 {
     if(!inited)
         Con_Error("FR_TextFragmentDimensions: Font renderer has not yet been initialized.");
     if(!width && !height)
         return;
     if(width)
-        *width = FR_TextFragmentWidth2(text, tracking);
+        *width = FR_TextFragmentWidth(text);
     if(height)
         *height = FR_TextFragmentHeight(text);
 }
 
-void FR_TextFragmentDimensions(int* width, int* height, const char* string)
-{
-    FR_TextFragmentDimensions2(width, height, string, DEFAULT_TRACKING);
-}
-
-int FR_TextFragmentWidth2(const char* text, int tracking)
+int FR_TextFragmentWidth(const char* text)
 {
     size_t i, len;
     int width = 0;
@@ -451,7 +466,7 @@ int FR_TextFragmentWidth2(const char* text, int tracking)
     if(!inited)
         Con_Error("FR_TextFragmentWidth: Font renderer has not yet been initialized.");
 
-    if(currentFontIdx == -1 || !text)
+    if(fr.fontIdx == -1 || !text)
         return 0;
 
     // Just add them together.
@@ -461,12 +476,7 @@ int FR_TextFragmentWidth2(const char* text, int tracking)
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
         width += FR_CharWidth(c);
 
-    return (int) (width + tracking * (len-1));
-}
-
-int FR_TextFragmentWidth(const char* text)
-{
-    return FR_TextFragmentWidth2(text, DEFAULT_TRACKING);
+    return (int) (width + fr.tracking * (len-1));
 }
 
 int FR_TextFragmentHeight(const char* text)
@@ -480,7 +490,7 @@ int FR_TextFragmentHeight(const char* text)
     if(!inited)
         Con_Error("FR_TextFragmentHeight: Font renderer has not yet been initialized.");
  
-    if(currentFontIdx == -1 || !text)
+    if(fr.fontIdx == -1 || !text)
         return 0;
 
     // Find the greatest height.
@@ -493,20 +503,20 @@ int FR_TextFragmentHeight(const char* text)
         height = MAX_OF(height, FR_CharHeight(c));
     }
 
-    return topToAscent(fonts[currentFontIdx]) + height;
+    return topToAscent(fonts[fr.fontIdx]) + height;
 }
 
 int FR_SingleLineHeight(const char* text)
 {
     if(!inited)
         Con_Error("FR_SingleLineHeight: Font renderer has not yet been initialized.");
-    if(currentFontIdx == -1 || !text)
+    if(fr.fontIdx == -1 || !text)
         return 0;
-    { int ascent = BitmapFont_Ascent(fonts[currentFontIdx]);
+    { int ascent = BitmapFont_Ascent(fonts[fr.fontIdx]);
     if(ascent != 0)
         return ascent;
     }
-    return BitmapFont_CharHeight(fonts[currentFontIdx], (unsigned char)text[0]);
+    return BitmapFont_CharHeight(fonts[fr.fontIdx], (unsigned char)text[0]);
 }
 
 int FR_GlyphTopToAscent(const char* text)
@@ -514,21 +524,21 @@ int FR_GlyphTopToAscent(const char* text)
     int lineHeight;
     if(!inited)
         Con_Error("FR_GlyphTopToAscent: Font renderer has not yet been initialized.");
-    if(currentFontIdx == -1 || !text)
+    if(fr.fontIdx == -1 || !text)
         return 0;
-    lineHeight = BitmapFont_Leading(fonts[currentFontIdx]);
+    lineHeight = BitmapFont_Leading(fonts[fr.fontIdx]);
     if(lineHeight == 0)
         return 0;
-    return lineHeight - BitmapFont_Ascent(fonts[currentFontIdx]);
+    return lineHeight - BitmapFont_Ascent(fonts[fr.fontIdx]);
 }
 
 static void drawTextFragment(const char* string, int x, int y, short flags,
-    int tracking, int initialCount, float glitterStrength, float shadowStrength,
+    int initialCount, float glitterStrength, float shadowStrength,
     int shadowOffsetX, int shadowOffsetY)
 {
-    assert(inited && string && string[0] && currentFontIdx != -1);
+    assert(inited && string && string[0] && fr.fontIdx != -1);
     {
-    bitmapfont_t* cf = fonts[currentFontIdx];
+    bitmapfont_t* cf = fonts[fr.fontIdx];
     boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (glitterStrength <= 0 || (flags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (shadowStrength  <= 0 || (flags & DTF_NO_SHADOW)  != 0 ||
@@ -541,9 +551,9 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     const char* ch;
 
     if(flags & DTF_ALIGN_RIGHT)
-        x -= FR_TextFragmentWidth2(string, tracking);
+        x -= FR_TextFragmentWidth(string);
     else if(!(flags & DTF_ALIGN_LEFT))
-        x -= FR_TextFragmentWidth2(string, tracking)/2;
+        x -= FR_TextFragmentWidth(string)/2;
 
     if(flags & DTF_ALIGN_BOTTOM)
         y -= FR_TextFragmentHeight(string);
@@ -693,7 +703,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
                 }
             }
 
-            cx += w + tracking;
+            cx += w + fr.tracking;
         }
     }}
 
@@ -708,8 +718,8 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     }
 }
 
-void FR_DrawTextFragment7(const char* string, int x, int y, short flags,
-    int tracking, int initialCount, float glitterStrength, float shadowStrength,
+void FR_DrawTextFragment6(const char* string, int x, int y, short flags,
+    int initialCount, float glitterStrength, float shadowStrength,
     int shadowOffsetX, int shadowOffsetY)
 {
     if(!inited)
@@ -721,46 +731,41 @@ void FR_DrawTextFragment7(const char* string, int x, int y, short flags,
 #endif*/
         return;
     }
-    if(currentFontIdx == -1)
+    if(fr.fontIdx == -1)
     {
 #if _DEBUG
         Con_Message("Warning: Attempt drawTextFragment without a current font.\n");
 #endif
         return;
     }
-    drawTextFragment(string, x, y, flags, tracking, initialCount, glitterStrength,
+    drawTextFragment(string, x, y, flags, initialCount, glitterStrength,
         shadowStrength, shadowOffsetX, shadowOffsetY);
 }
 
-void FR_DrawTextFragment6(const char* string, int x, int y, short flags,
-    int tracking, int initialCount, float glitterStrength, float shadowStrength)
+void FR_DrawTextFragment5(const char* string, int x, int y, short flags,
+    int initialCount, float glitterStrength, float shadowStrength)
 {
-    FR_DrawTextFragment7(string, x, y, flags, tracking, initialCount, glitterStrength,
+    FR_DrawTextFragment6(string, x, y, flags, initialCount, glitterStrength,
         shadowStrength, DEFAULT_SHADOW_XOFFSET, DEFAULT_SHADOW_YOFFSET);
 }
 
-void FR_DrawTextFragment5(const char* string, int x, int y, short flags,
-    int tracking, int initialCount, float glitterStrength)
+void FR_DrawTextFragment4(const char* string, int x, int y, short flags,
+    int initialCount, float glitterStrength)
 {
-    FR_DrawTextFragment6(string, x, y, flags, tracking, initialCount, glitterStrength,
+    FR_DrawTextFragment5(string, x, y, flags, initialCount, glitterStrength,
         DEFAULT_SHADOW_STRENGTH);
 }
 
-void FR_DrawTextFragment4(const char* string, int x, int y, short flags,
-    int tracking, int initialCount)
+void FR_DrawTextFragment3(const char* string, int x, int y, short flags,
+    int initialCount)
 {
-    FR_DrawTextFragment5(string, x, y, flags, tracking, initialCount,
+    FR_DrawTextFragment4(string, x, y, flags, initialCount,
         DEFAULT_GLITTER_STRENGTH);
-}
-
-void FR_DrawTextFragment3(const char* string, int x, int y, short flags, int tracking)
-{
-    FR_DrawTextFragment4(string, x, y, flags, tracking, DEFAULT_INITIALCOUNT);
 }
 
 void FR_DrawTextFragment2(const char* string, int x, int y, short flags)
 {
-    FR_DrawTextFragment3(string, x, y, flags, DEFAULT_TRACKING);
+    FR_DrawTextFragment3(string, x, y, flags, DEFAULT_INITIALCOUNT);
 }
 
 void FR_DrawTextFragment(const char* string, int x, int y)
@@ -771,9 +776,9 @@ void FR_DrawTextFragment(const char* string, int x, int y)
 void FR_DrawChar2(unsigned char ch, int x, int y, short flags)
 {
     bitmapfont_t* cf;
-    if(currentFontIdx == -1)
+    if(fr.fontIdx == -1)
         return;
-    cf = fonts[currentFontIdx];
+    cf = fonts[fr.fontIdx];
     if(0 != BitmapFont_GLTextureName(cf))
     {
         glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(cf));
@@ -1075,6 +1080,11 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
             (*strPtr) += 6;
             state->shadow = parseFloat(&(*strPtr));
         }
+        else if(!strnicmp((*strPtr), "tracking", 8))
+        {
+            (*strPtr) += 8;
+            state->tracking = parseFloat(&(*strPtr));
+        }
         else
         {
             // Perhaps a font name?
@@ -1107,14 +1117,14 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
 
 static void initDrawTextState(drawtextstate_t* state)
 {
-    state->font = FR_GetCurrentId();
+    state->font = BitmapFont_Id(fonts[fr.fontIdx]);
+    state->tracking = fr.tracking;
     state->scaleX = state->scaleY = 1;
     state->offX = state->offY = 0;
     state->angle = 0;
     state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
     state->glitter = DEFAULT_GLITTER_STRENGTH;
     state->shadow = DEFAULT_SHADOW_STRENGTH;
-    state->tracking = DEFAULT_TRACKING;
     state->leading = DEFAULT_LEADING;
     state->typeIn = true;
     state->caseScale = false;
@@ -1142,6 +1152,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     int curCase = -1, lastLineHeight;
     size_t len;
     fontid_t oldFont = FR_GetCurrentId();
+    int oldTracking = FR_Tracking();
 
     if(!inString || !inString[0])
         return;
@@ -1178,6 +1189,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     state.caseScale = defCase;
 
     FR_SetFont(state.font);
+    FR_SetTracking(state.tracking);
     lastLineHeight = FR_CharHeight('A') * state.scaleY;
 
     string = str;
@@ -1187,7 +1199,8 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
         if(*string == '{') // Parameters included?
         {
             fontid_t lastFont = state.font;
-            float oldLeading = state.leading;
+            int lastTracking = state.tracking;
+            float lastLeading = state.leading;
             int numBreaks = 0;
 
             parseParamaterBlock(&string, &state, &numBreaks);
@@ -1197,12 +1210,14 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
                 do
                 {
                     cx = (float) x;
-                    cy += lastLineHeight * (1+oldLeading);
+                    cy += lastLineHeight * (1+lastLeading);
                 } while(--numBreaks > 0);
             }
 
             if(state.font != lastFont)
                 FR_SetFont(state.font);
+            if(state.tracking != lastTracking)
+                FR_SetTracking(state.tracking);
         }
 
         for(end = string; *end && *end != '{';)
@@ -1255,7 +1270,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
                 // We'll take care of horizontal positioning of the fragment so align left.
                 fragmentFlags = (flags & ~(DTF_ALIGN_RIGHT)) | DTF_ALIGN_LEFT;
                 if(flags & DTF_ALIGN_RIGHT)
-                    alignx = -FR_TextFragmentWidth2(temp, state.tracking) * state.scaleX;
+                    alignx = -FR_TextFragmentWidth(temp) * state.scaleX;
             }
 
             // Setup the scaling.
@@ -1281,13 +1296,13 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
 
             // Draw it.
             glColor4fv(state.color);
-            FR_DrawTextFragment6(temp, 0, 0, fragmentFlags, state.tracking, state.typeIn ? (int) charCount : 0, state.glitter, state.shadow);
+            FR_DrawTextFragment5(temp, 0, 0, fragmentFlags, state.typeIn ? (int) charCount : 0, state.glitter, state.shadow);
             charCount += strlen(temp);
 
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) FR_TextFragmentWidth2(temp, state.tracking) * state.scaleX;
+                cx += (float) FR_TextFragmentWidth(temp) * state.scaleX;
             }
             else
             {
@@ -1309,6 +1324,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
 
     // Restore original state.
     FR_SetFont(oldFont);
+    FR_SetTracking(oldTracking);
 
 #undef MAX_FRAGMENTLENGTH
 #undef SMALLBUFF_SIZE

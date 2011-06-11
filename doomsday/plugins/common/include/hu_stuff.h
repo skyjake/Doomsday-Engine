@@ -105,7 +105,7 @@ void            Hu_DrawMapTitle(int x, int y, float scale);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
-void            M_DrawTextFragmentShadowed(const char* string, int x, int y, short flags, int tracking, float r, float g, float b, float a);
+void            M_DrawTextFragmentShadowed(const char* string, int x, int y, short flags, float r, float g, float b, float a);
 
 void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags);

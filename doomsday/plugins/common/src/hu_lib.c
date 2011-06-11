@@ -566,7 +566,7 @@ void MN_DrawText4(const char* string, int x, int y, short flags, float glitterSt
     if(NULL == string || !string[0]) return;
 
     flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment7(string, x, y, flags, 0, 0, glitterStrength, shadowStrength, 0, 0);
+    FR_DrawTextFragment6(string, x, y, flags, 0, glitterStrength, shadowStrength, 0, 0);
 }
 
 void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength)
@@ -597,6 +597,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     rs.pageAlpha = alpha;
     rs.textGlitter = cfg.menuTextGlitter;
     rs.textShadow = cfg.menuShadow;
+    rs.textTracking = 0;
     for(i = 0; i < MENU_FONT_COUNT; ++i)
     {
         rs.textFonts[i] = MNPage_PredefinedFont(page, i);
@@ -606,6 +607,8 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         MNPage_PredefinedColor(page, i, rs.textColors[i]);
         rs.textColors[i][CA] = alpha; // For convenience.
     }
+    FR_SetFont(rs.textFonts[0]);
+    FR_SetTracking(rs.textTracking);
 
     /*if(page->unscaled.numVisObjects)
     {
@@ -616,6 +619,10 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     if(NULL != page->drawer)
     {
         page->drawer(page, page->offset[VX], page->offset[VY]);
+
+        // Ensure to restore the assumed default state.
+        FR_SetFont(rs.textFonts[0]);
+        FR_SetTracking(rs.textTracking);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -652,6 +659,10 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         /// kludge end.
 
         pos[VY] += MNObject_Dimensions(obj)->height * (1.08f); // Leading.
+
+        // Ensure to restore the assumed default state.
+        FR_SetFont(rs.textFonts[0]);
+        FR_SetTracking(rs.textTracking);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1086,6 +1097,8 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
         color[CR] += cfg.menuTextFlashColor[CR] * (1 - t); color[CG] += cfg.menuTextFlashColor[CG] * (1 - t); color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
+    FR_SetFont(fontId);
+
     if(txt->patch != NULL)
     {
         const char* replacement = NULL;
@@ -1101,10 +1114,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
-    FR_SetFont(fontId);
-
     MN_DrawText(txt->text, x, y);
-
     DGL_Disable(DGL_TEXTURE_2D);
     }
 }
@@ -1124,6 +1134,7 @@ void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
         return;
     }
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, txt->text);
     }
 }
@@ -1196,7 +1207,6 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(fontId);
     { int width, numVisCharacters;
     if(edit->maxVisibleChars > 0)
         numVisCharacters = MIN_OF(edit->maxVisibleChars, MNDATA_EDIT_TEXT_MAX_LENGTH);
@@ -1394,7 +1404,6 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
     {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     const boolean flashSelection = ((obj->_flags & MNF_ACTIVE) && MNList_SelectionIsVisible(obj));
-    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     const float* color = rs.textColors[obj->_pageColorIdx];
     float dimColor[4], flashColor[4];
 
@@ -1412,31 +1421,35 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
     dimColor[CB] = color[CB] * MNDATA_LIST_NONSELECTION_LIGHT;
     dimColor[CA] = color[CA];
 
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    { int i;
-    for(i = list->first; i < list->count && i < list->first + list->numvis; ++i)
+    if(list->first < list->count && list->numvis > 0)
     {
-        const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
+        int i = list->first;
 
-        if(list->selection == i)
+        DGL_Enable(DGL_TEXTURE_2D);
+        FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
+
+        do
         {
-            if(flashSelection)
-                DGL_Color4fv(flashColor);
+            const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
+
+            if(list->selection == i)
+            {
+                if(flashSelection)
+                    DGL_Color4fv(flashColor);
+                else
+                    DGL_Color4fv(color);
+            }
             else
-                DGL_Color4fv(color);
-        }
-        else
-        {
-            DGL_Color4fv(dimColor);
-        }
+            {
+                DGL_Color4fv(dimColor);
+            }
 
-        FR_SetFont(fontId);
-        MN_DrawText(item->text, x, y);
-        y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
-    }}
+            MN_DrawText(item->text, x, y);
+            y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
+        } while(++i < list->count && i < list->first + list->numvis);
 
-    DGL_Disable(DGL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
+    }
     }
 }
 
@@ -1588,7 +1601,6 @@ void MNList_InlineDrawer(mn_object_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(rs.textColors[obj->_pageColorIdx]);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
-
     MN_DrawText(item->text, x, y);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1651,6 +1663,7 @@ void MNList_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     obj->_dimensions.width  = 0;
     obj->_dimensions.height = 0;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
+    FR_SetTracking(0);
     for(i = 0; i < list->count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
@@ -1672,6 +1685,7 @@ void MNList_InlineUpdateDimensions(mn_object_t* obj, mn_page_t* page)
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, item->text);
     }
 }
@@ -1795,19 +1809,31 @@ void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     int act = (obj->_flags & MNF_ACTIVE)   != 0;
     //int click = (obj->_flags & MNF_CLICKED) != 0;
     boolean down = act /*|| click*/;
+    const char* text = btn->text;
 
     // @fixme What if patch replacement is disabled?
     if(btn->patch)
     {
-        patchinfo_t info;
-        R_GetPatchInfo(*btn->patch, &info);
-        obj->_dimensions.width  = info.width;
-        obj->_dimensions.height = info.height;
-        return;
+        if(!(obj->_flags & MNF_NO_ALTTEXT))
+        {
+            // Use the replacement string?
+            text = Hu_ChoosePatchReplacement2(*btn->patch, btn->text, true);
+        }
+
+        if(NULL == text || text[0])
+        {
+            // Use the original patch.
+            patchinfo_t info;
+            R_GetPatchInfo(*btn->patch, &info);
+            obj->_dimensions.width  = info.width;
+            obj->_dimensions.height = info.height;
+            return;
+        }
     }
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, btn->text);
+    FR_SetTracking(0);
+    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, text);
     }
 }
 
@@ -2311,7 +2337,6 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     {
     const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
     const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
-    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
     char textualValue[41];
     const char* str = composeValueString(value, 0, sldr->floatMode, 0,
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
@@ -2319,8 +2344,7 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     DGL_Translatef(x, y, 0);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(rs.textColors[obj->_pageColorIdx]);
-    FR_SetFont(fontId);
-
+    FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
     MN_DrawText(str, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2340,6 +2364,7 @@ void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
     FR_SetFont(fontId);
+    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
     }
 }

@@ -402,7 +402,6 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
 {
     int height;
 
-    FR_SetFont(FID(GF_FONTA));
     height = FR_TextFragmentHeight(string);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -438,6 +437,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
     if(type == MIBT_KEY)
     {
         FR_SetFont(FID(GF_FONTA));
+        FR_SetTracking(0);
         width = FR_TextFragmentWidth(name);
         height = FR_TextFragmentHeight(name);
 
@@ -457,6 +457,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
 
         FR_SetFont(FID(GF_FONTA));
+        FR_SetTracking(0);
         width = FR_TextFragmentWidth(temp);
         height = FR_TextFragmentHeight(temp);
 
@@ -700,6 +701,7 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
 
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
     FR_SetFont(FID(GF_FONTA));
+    FR_SetTracking(0);
     MN_DrawText2("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, DTF_ALIGN_BOTTOM|DTF_ONLY_SHADOW);
 
     DGL_Color4f(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);

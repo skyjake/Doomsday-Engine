@@ -1221,6 +1221,7 @@ void Sfx_DebugInfo(void)
     glColor3f(1, 1, 0);
 
     FR_SetFont(glFontFixed);
+    FR_SetTracking(0);
     lh = FR_TextFragmentHeight("W") - 3;
     if(!sfxAvail)
     {

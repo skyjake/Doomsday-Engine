@@ -422,6 +422,7 @@ void Rend_ConsoleFPS(int x, int y)
 
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
     FR_SetFont(glFontFixed);
+    FR_SetTracking(0);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_SingleLineHeight(buf)  + 16;
 
@@ -460,6 +461,7 @@ static void drawConsoleTitleBar(float alpha)
     UI_Gradient(0, height, theWindow->width, border*2, UI_Color(UIC_BG_DARK),
                 UI_Color(UIC_SHADOW), .2f * alpha, 0);
     FR_SetFont(glFontVariable[GLFS_BOLD]);
+    FR_SetTracking(0);
     UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     if(secondaryTitleText[0])
     {
@@ -544,6 +546,7 @@ static void drawSideText(const char* text, int line, float alpha)
     int ssw;
 
     FR_SetFont(Con_Font());
+    FR_SetTracking(0);
     Con_FontScale(&scale[0], &scale[1]);
     fontScaledY = FR_SingleLineHeight("Con") * scale[1];
     y = ConsoleY * gtosMulY - fontScaledY * (1 + line);
@@ -596,6 +599,7 @@ static void drawConsole(float consoleAlpha)
     uint reqLines;
 
     FR_SetFont(Con_Font());
+    FR_SetTracking(0);
     cfont = FR_Font(FR_GetCurrentId());
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);

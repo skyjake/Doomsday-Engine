@@ -406,6 +406,9 @@ static void drawDeathTally(void)
     }
     y = yPos >> FRACBITS;
 
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetTracking(0);
+
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         xPos = xStart;
@@ -426,7 +429,6 @@ static void drawDeathTally(void)
             }
             else
             {
-                FR_SetFont(FID(GF_FONTA));
                 if(bold)
                 {
                     DGL_Color4f(1, 0.7f, 0.3f, 1);
@@ -462,7 +464,6 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(1, 1, 1, 1);
     FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }
@@ -476,7 +477,6 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(1, 0.7f, 0.3f, 1);
     FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }
