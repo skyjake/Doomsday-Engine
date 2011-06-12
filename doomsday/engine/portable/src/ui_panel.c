@@ -831,6 +831,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx2(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), alpha, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -864,6 +865,7 @@ void CP_VideoModeInfo(ui_object_t *ob)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx2(buf, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -1054,6 +1056,7 @@ void CP_Drawer(ui_page_t *page)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx2(DENGPROJECT_HOMEURL,
                   UI_ScreenW(1000) - UI_BORDER,
                   UI_ScreenY(25), UI_Color(UIC_TEXT), 0.2f, DTF_ALIGN_RIGHT|DTF_ONLY_SHADOW);

@@ -565,18 +565,12 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
     return ((~(cfg.menuEffectFlags << DTFTOMEF_SHIFT) & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void MN_DrawText4(const char* string, int x, int y, short flags, float glitterStrength,
-    float shadowStrength)
+void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength)
 {
     if(NULL == string || !string[0]) return;
 
     flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment5(string, x, y, flags, 0, glitterStrength, shadowStrength);
-}
-
-void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength)
-{
-    MN_DrawText4(string, x, y, flags, glitterStrength, rs.textShadow);
+    FR_DrawTextFragment4(string, x, y, flags, 0, glitterStrength);
 }
 
 void MN_DrawText2(const char* string, int x, int y, short flags)
@@ -615,6 +609,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     FR_SetFont(rs.textFonts[0]);
     FR_LoadDefaultAttrib();
     FR_SetTracking(rs.textTracking);
+    FR_SetShadowStrength(rs.textShadow);
 
     /*if(page->unscaled.numVisObjects)
     {

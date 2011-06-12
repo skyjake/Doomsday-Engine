@@ -907,6 +907,7 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
             FR_SetFont(glFontFixed);
             FR_LoadDefaultAttrib();
             FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+            FR_SetShadowStrength(UI_SHADOW_STRENGTH);
             UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
             glDisable(GL_TEXTURE_2D);
 

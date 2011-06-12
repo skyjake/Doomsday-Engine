@@ -92,6 +92,8 @@ void FR_SetTracking(int tracking);
 
 void FR_SetShadowOffset(int offsetX, int offsetY);
 
+void FR_SetShadowStrength(float value);
+
 /// @return  Unique identifier associated with the current font.
 fontid_t FR_GetCurrentId(void);
 
@@ -115,7 +117,6 @@ void FR_DrawTextFragment(const char* string, int x, int y);
 void FR_DrawTextFragment2(const char* string, int x, int y, short flags);
 void FR_DrawTextFragment3(const char* string, int x, int y, short flags, int initialCount);
 void FR_DrawTextFragment4(const char* string, int x, int y, short flags, int initialCount, float glitterStrength);
-void FR_DrawTextFragment5(const char* string, int x, int y, short flags, int initialCount, float glitterStrength, float shadowStrength);
 
 // Utility routines:
 void FR_TextFragmentDimensions(int* width, int* height, const char* string);

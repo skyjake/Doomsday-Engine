@@ -692,6 +692,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 
     FR_SetFont(glFontFixed);
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
@@ -755,6 +756,7 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     off = FR_TextFragmentWidth("000");
 
     glBegin(GL_LINES);
@@ -831,6 +833,7 @@ void SBE_DrawHUD(void)
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_TextFragmentHeight(buf) + 16;
     y = theWindow->height - 10 - h;
@@ -923,6 +926,7 @@ static void SBE_DrawIndex(source_t *src)
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);

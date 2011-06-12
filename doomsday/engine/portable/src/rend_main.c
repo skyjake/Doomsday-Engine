@@ -4356,6 +4356,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
     sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
 

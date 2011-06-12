@@ -424,6 +424,7 @@ void Rend_ConsoleFPS(int x, int y)
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_SingleLineHeight(buf)  + 16;
 
@@ -463,6 +464,7 @@ static void drawConsoleTitleBar(float alpha)
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     if(secondaryTitleText[0])
     {

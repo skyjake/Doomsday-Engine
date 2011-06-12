@@ -50,6 +50,7 @@ typedef enum {
 #define UI_HEIGHT           (1000.0f)
 #define UI_BORDER           (UI_WIDTH/120) /// All borders are this wide.
 #define UI_SHADOW_OFFSET    (MIN_OF(3, UI_WIDTH/320))
+#define UI_SHADOW_STRENGTH  (.6f)
 #define UI_BUTTON_BORDER    (UI_BORDER)
 #define UI_BAR_WDH          (UI_BORDER * 3)
 #define UI_BAR_BORDER       (UI_BORDER / 2)

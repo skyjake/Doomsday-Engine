@@ -1154,6 +1154,7 @@ static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_TextFragmentHeight(buf) + 16;
     x -= w / 2;
@@ -1173,6 +1174,7 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     w = 16 + FR_TextFragmentWidth("(+000.0,+000.0)(+000.0,+000.0)");
     th = FR_TextFragmentHeight("a");
     h = th * 4 + 16;
