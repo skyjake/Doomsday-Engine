@@ -45,7 +45,7 @@ enum {
 };
 
 #include "dd_animator.h"
-#include "dd_bitmapfont.h"
+#include "dd_fontrenderer.h"
 #include "dd_vectorgraphic.h"
 
 typedef ident_t fi_objectid_t;

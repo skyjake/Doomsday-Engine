@@ -3815,7 +3815,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_bitmapfont.h"
+				RelativePath="..\..\..\engine\api\dd_fontrenderer.h"
 				>
 			</File>
 			<File

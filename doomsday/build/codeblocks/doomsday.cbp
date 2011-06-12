@@ -142,7 +142,7 @@
 		<Unit filename="..\..\engine\api\Doomsday.def" />
 		<Unit filename="..\..\engine\api\dd_api.h" />
 		<Unit filename="..\..\engine\api\dd_animator.h" />
-		<Unit filename="..\..\engine\api\dd_bitmapfont.h" />
+		<Unit filename="..\..\engine\api\dd_fontrenderer.h" />
 		<Unit filename="..\..\engine\api\dd_gl.h" />
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
