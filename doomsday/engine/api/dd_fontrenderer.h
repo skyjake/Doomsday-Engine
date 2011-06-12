@@ -97,10 +97,15 @@ float FR_GlitterStrength(void);
 
 void FR_SetGlitterStrength(float value);
 
+/// @return  Current case scale.
+boolean FR_CaseScale(void);
+
+void FR_SetCaseScale(boolean value);
+
 /**
  * Text: A block of possibly formatted and/or multi-line text.
  */
-void FR_DrawText(const char* string, int x, int y, int defAlignFlags, short defFlags, boolean defCase);
+void FR_DrawText(const char* string, int x, int y, int alignFlags, short flags);
 
 // Utility routines:
 void FR_TextDimensions(int* width, int* height, const char* string);

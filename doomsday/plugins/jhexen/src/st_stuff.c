@@ -3133,7 +3133,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_SetFont(obj->fontId);
-    FR_DrawText(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS, false);
+    FR_DrawText(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

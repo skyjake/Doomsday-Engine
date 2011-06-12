@@ -1218,7 +1218,7 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
         FR_SetTracking(0);
         FR_SetGlitterStrength(glitter);
         FR_SetShadowStrength(shadow);
-        FR_DrawText(replacement, x, y, alignFlags, textFlags, false);
+        FR_DrawText(replacement, x, y, alignFlags, textFlags);
         return;
     }
 

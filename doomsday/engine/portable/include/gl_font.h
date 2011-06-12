@@ -38,6 +38,7 @@
 #define DEFAULT_SHADOW_STRENGTH     (.5)
 #define DEFAULT_SHADOW_XOFFSET      (2)
 #define DEFAULT_SHADOW_YOFFSET      (2)
+#define DEFAULT_CASE_SCALE          (false)
 
 #define DEFAULT_ALIGNFLAGS          (ALIGN_TOPLEFT)
 #define DEFAULT_DRAWFLAGS           (DTF_NO_EFFECTS)

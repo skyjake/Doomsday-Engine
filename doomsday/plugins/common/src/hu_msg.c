@@ -210,7 +210,7 @@ static void drawMessage(void)
     FR_SetShadowStrength(cfg.menuTextGlitter);
     FR_SetGlitterStrength(cfg.menuShadow);
 
-    FR_DrawText(msgText, x, y, ALIGN_TOP, textFlags, false);
+    FR_DrawText(msgText, x, y, ALIGN_TOP, textFlags);
     y += FR_TextHeight(msgText);
     // An additional blank line between the message and response prompt.
     y += FR_CharHeight('A') * (1+LEADING);

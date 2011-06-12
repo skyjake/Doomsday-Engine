@@ -49,6 +49,7 @@ typedef struct fr_state_attributes_s {
     int shadowOffsetX, shadowOffsetY;
     float shadowStrength;
     float glitterStrength;
+    boolean caseScale;
 } fr_state_attributes_t;
 
 typedef struct {
@@ -424,6 +425,7 @@ void FR_LoadDefaultAttrib(void)
     sat->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
     sat->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
     sat->glitterStrength = DEFAULT_GLITTER_STRENGTH;
+    sat->caseScale = DEFAULT_CASE_SCALE;
 }
 
 void FR_PushAttrib(void)
@@ -531,6 +533,22 @@ void FR_SetGlitterStrength(float value)
     if(!inited)
         Con_Error("FR_SetGlitterStrength: Font renderer has not yet been initialized.");
     sat->glitterStrength = MINMAX_OF(0, value, 1);
+}
+
+boolean FR_CaseScale(void)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_CaseScale: Font renderer has not yet been initialized.");
+    return sat->caseScale;
+}
+
+void FR_SetCaseScale(boolean value)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_SetCaseScale: Font renderer has not yet been initialized.");
+    sat->caseScale = value;
 }
 
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
@@ -1212,12 +1230,12 @@ static void initDrawTextState(drawtextstate_t* state)
     state->shadowOffsetX = sat->shadowOffsetX;
     state->shadowOffsetY = sat->shadowOffsetY;
     state->leading = sat->leading;
+    state->caseScale = sat->caseScale;
 
     state->scaleX = state->scaleY = 1;
     state->offX = state->offY = 0;
     state->angle = 0;
     state->typeIn = true;
-    state->caseScale = false;
     state->caseMod[0].scale = 1;
     state->caseMod[0].offset = 3;
     state->caseMod[1].scale = 1.25f;
@@ -1227,8 +1245,7 @@ static void initDrawTextState(drawtextstate_t* state)
 /**
  * Draw a string of text controlled by parameter blocks.
  */
-void FR_DrawText(const char* inString, int x, int y, int alignFlags,
-    short textFlags, boolean defCase)
+void FR_DrawText(const char* inString, int x, int y, int alignFlags, short textFlags)
 {
 #define SMALLBUFF_SIZE          (80)
 #define MAX_FRAGMENTLENGTH      (256)
@@ -1267,7 +1284,6 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags,
     memcpy(origColor, state.color, sizeof(origColor));
     // Apply defaults:
     state.typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
-    state.caseScale = defCase;
 
     FR_PushAttrib();
 
@@ -1283,6 +1299,7 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags,
             float lastLeading = state.leading;
             float lastShadowStrength = state.shadowStrength;
             float lastGlitterStrength = state.glitterStrength;
+            boolean lastCaseScale = state.caseScale;
             int numBreaks = 0;
 
             parseParamaterBlock(&string, &state, &numBreaks);
@@ -1306,6 +1323,8 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags,
                 FR_SetShadowStrength(state.shadowStrength);
             if(state.glitterStrength != lastGlitterStrength)
                 FR_SetGlitterStrength(state.glitterStrength);
+            if(state.caseScale != lastCaseScale)
+                FR_SetCaseScale(state.caseScale);
         }
 
         for(end = string; *end && *end != '{';)
@@ -1315,7 +1334,7 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags,
             float alignx = 0;
 
             // Find the end of the next fragment.
-            if(state.caseScale)
+            if(FR_CaseScale())
             {
                 curCase = -1;
                 // Select a substring with characters of the same case (or whitespace).
@@ -1378,8 +1397,8 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags,
                 glTranslatef(-(float)x, -(float)y, 0);
             }
 
-            glTranslatef(cx + state.offX + alignx, cy + state.offY + (state.caseScale ? state.caseMod[curCase].offset : 0), 0);
-            extraScale = (state.caseScale ? state.caseMod[curCase].scale : 1);
+            glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
+            extraScale = (FR_CaseScale() ? state.caseMod[curCase].scale : 1);
             glScalef(state.scaleX, state.scaleY * extraScale, 1);
 
             // Draw it.

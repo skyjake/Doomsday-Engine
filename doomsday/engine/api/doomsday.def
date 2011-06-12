@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 518 <--
+; Highest ordinal is currently: --> 520 <--
 ; Other free ordinals: 65
 
 NAME                            "DOOMSDAY"
@@ -512,26 +512,28 @@ EXPORTS
     FR_SetShadowStrength        @131 NONAME
     FR_GlitterStrength          @197 NONAME
     FR_SetGlitterStrength       @198 NONAME
+    FR_CaseScale                @199 NONAME
+    FR_SetCaseScale             @200 NONAME
 
-	FR_TextDimensions           @199 NONAME
-	FR_TextWidth                @200 NONAME
-	FR_TextHeight               @201 NONAME
+	FR_TextDimensions           @201 NONAME
+	FR_TextWidth                @202 NONAME
+	FR_TextHeight               @203 NONAME
 
-    FR_DrawText                 @202 NONAME
+    FR_DrawText                 @204 NONAME
 
-	FR_TextFragmentDimensions   @203 NONAME
-	FR_TextFragmentWidth        @204 NONAME
-	FR_TextFragmentHeight       @205 NONAME
+	FR_TextFragmentDimensions   @205 NONAME
+	FR_TextFragmentWidth        @206 NONAME
+	FR_TextFragmentHeight       @513 NONAME
 
-	FR_DrawTextFragment         @206 NONAME
-	FR_DrawTextFragment2        @513 NONAME
+	FR_DrawTextFragment         @514 NONAME
+	FR_DrawTextFragment2        @515 NONAME
 
-	FR_DrawChar                 @514 NONAME
-	FR_DrawChar2                @515 NONAME
+	FR_DrawChar                 @516 NONAME
+	FR_DrawChar2                @517 NONAME
 
-	FR_CharDimensions           @516 NONAME
-	FR_CharWidth                @517 NONAME
-	FR_CharHeight               @518 NONAME
+	FR_CharDimensions           @518 NONAME
+	FR_CharWidth                @519 NONAME
+	FR_CharHeight               @520 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME
