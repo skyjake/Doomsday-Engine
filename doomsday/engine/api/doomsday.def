@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 515 <--
-; Other free ordinals: 106
+; Highest ordinal is currently: --> 518 <--
+; Other free ordinals: 65
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -492,43 +492,46 @@ EXPORTS
     GL_EndBorderedProjection    @510 NONAME
 
 ; Graphics: Text
-    FR_FindFontForName          @107 NONAME
+    FR_FindFontForName          @97 NONAME
 
-    FR_Font                     @97 NONAME
-    FR_SetFont                  @65 NONAME
-    FR_PushAttrib               @513 NONAME
-    FR_PopAttrib                @514 NONAME
-    FR_LoadDefaultAttrib        @515 NONAME
+    FR_Font                     @106 NONAME
+    FR_SetFont                  @107 NONAME
+    FR_PushAttrib               @108 NONAME
+    FR_PopAttrib                @112 NONAME
+    FR_LoadDefaultAttrib        @113 NONAME
 
-    FR_Leading                  @121 NONAME
-    FR_SetLeading               @122 NONAME
-    FR_Tracking                 @123 NONAME
-    FR_SetTracking              @124 NONAME
-    FR_SetShadowOffset          @125 NONAME
+    FR_ResetTypeInTimer         @116 NONAME
+
+    FR_Leading                  @118 NONAME
+    FR_SetLeading               @120 NONAME
+    FR_Tracking                 @121 NONAME
+    FR_SetTracking              @122 NONAME
+    FR_ShadowOffset             @123 NONAME
+    FR_SetShadowOffset          @124 NONAME
+    FR_ShadowStrength           @125 NONAME
     FR_SetShadowStrength        @131 NONAME
+    FR_GlitterStrength          @197 NONAME
     FR_SetGlitterStrength       @198 NONAME
 
-    FR_ResetTypeInTimer         @200 NONAME
+	FR_TextDimensions           @199 NONAME
+	FR_TextWidth                @200 NONAME
+	FR_TextHeight               @201 NONAME
 
-	FR_TextDimensions           @112 NONAME
-	FR_TextWidth                @113 NONAME
-	FR_TextHeight               @116 NONAME
+    FR_DrawText                 @202 NONAME
 
-    FR_DrawText                 @108 NONAME
+	FR_TextFragmentDimensions   @203 NONAME
+	FR_TextFragmentWidth        @204 NONAME
+	FR_TextFragmentHeight       @205 NONAME
 
-	FR_TextFragmentDimensions   @197 NONAME
-	FR_TextFragmentWidth        @199 NONAME
-	FR_TextFragmentHeight       @201 NONAME
+	FR_DrawTextFragment         @206 NONAME
+	FR_DrawTextFragment2        @513 NONAME
 
-	FR_DrawTextFragment         @118 NONAME
-	FR_DrawTextFragment2        @120 NONAME
+	FR_DrawChar                 @514 NONAME
+	FR_DrawChar2                @515 NONAME
 
-	FR_DrawChar                 @202 NONAME
-	FR_DrawChar2                @203 NONAME
-
-	FR_CharDimensions           @204 NONAME
-	FR_CharWidth                @205 NONAME
-	FR_CharHeight               @206 NONAME
+	FR_CharDimensions           @516 NONAME
+	FR_CharWidth                @517 NONAME
+	FR_CharHeight               @518 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

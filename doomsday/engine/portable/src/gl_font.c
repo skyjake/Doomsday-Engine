@@ -483,6 +483,15 @@ void FR_SetTracking(int value)
     sat->tracking = value;
 }
 
+void FR_ShadowOffset(int* offsetX, int* offsetY)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_ShadowOffset: Font renderer has not yet been initialized.");
+    if(NULL != offsetX) *offsetX = sat->shadowOffsetX;
+    if(NULL != offsetY) *offsetY = sat->shadowOffsetY;
+}
+
 void FR_SetShadowOffset(int offsetX, int offsetY)
 {
     fr_state_attributes_t* sat = currentAttributes();
@@ -492,12 +501,28 @@ void FR_SetShadowOffset(int offsetX, int offsetY)
     sat->shadowOffsetY = offsetY;
 }
 
+float FR_ShadowStrength(void)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_ShadowStrength: Font renderer has not yet been initialized.");
+    return sat->shadowStrength;
+}
+
 void FR_SetShadowStrength(float value)
 {
     fr_state_attributes_t* sat = currentAttributes();
     if(!inited)
         Con_Error("FR_SetShadowStrength: Font renderer has not yet been initialized.");
     sat->shadowStrength = MINMAX_OF(0, value, 1);
+}
+
+float FR_GlitterStrength(void)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_GlitterStrength: Font renderer has not yet been initialized.");
+    return sat->glitterStrength;
 }
 
 void FR_SetGlitterStrength(float value)

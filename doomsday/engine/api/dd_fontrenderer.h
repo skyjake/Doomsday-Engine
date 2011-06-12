@@ -72,18 +72,29 @@ void FR_PopAttrib(void);
 /// Load the default attributes at the current stack depth.
 void FR_LoadDefaultAttrib(void);
 
-/// Current leading.
+/// @return  Current leading.
 float FR_Leading(void);
 
 void FR_SetLeading(float value);
 
-/// Current tracking.
+/// @return  Current tracking.
 int FR_Tracking(void);
 
 void FR_SetTracking(int value);
 
+/// Retrieve the current shadow offset.
+void FR_ShadowOffset(int* offsetX, int* offsetY);
+
 void FR_SetShadowOffset(int offsetX, int offsetY);
+
+/// @return  Current shadow strength.
+float FR_ShadowStrength(void);
+
 void FR_SetShadowStrength(float value);
+
+/// @return  Current glitter strength.
+float FR_GlitterStrength(void);
+
 void FR_SetGlitterStrength(float value);
 
 /**
