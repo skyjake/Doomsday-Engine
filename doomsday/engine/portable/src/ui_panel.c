@@ -829,7 +829,8 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     else
         sprintf(buf, "%i", key);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_TextOutEx2(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), alpha, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -861,7 +862,8 @@ void CP_VideoModeInfo(ui_object_t *ob)
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_TextOutEx2(buf, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
@@ -1030,7 +1032,8 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h, float alph
     int ind;
 
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_SetColorA(UI_Color(UIC_TEXT), .5f * alpha * UI_Alpha());
     FR_DrawTextFragment(label, x, y);
     ind = FR_TextFragmentWidth(label);
@@ -1049,7 +1052,8 @@ void CP_Drawer(ui_page_t *page)
     // Project home.
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_TextOutEx2(DENGPROJECT_HOMEURL,
                   UI_ScreenW(1000) - UI_BORDER,
                   UI_ScreenY(25), UI_Color(UIC_TEXT), 0.2f, DTF_ALIGN_RIGHT|DTF_ONLY_SHADOW);
@@ -1077,7 +1081,6 @@ void CP_Drawer(ui_page_t *page)
 
     // The title (with shadow).
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    FR_SetTracking(0);
     lineHeight = FR_SingleLineHeight("Help");
     verticalSpacing = lineHeight / 4;
     y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, UI_Color(UIC_TITLE), alpha)
@@ -1097,7 +1100,6 @@ void CP_Drawer(ui_page_t *page)
     if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
     {
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        FR_SetTracking(0);
         UI_TextOutWrapEx(str, x, y, w, h, UI_Color(UIC_TEXT), alpha);
     }
     glDisable(GL_TEXTURE_2D);

@@ -1398,6 +1398,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT*hud->showBar)
+#define TRACKING (2)
 
     assert(NULL != obj);
     {
@@ -1449,7 +1450,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
                 dd_snprintf(buf, 20, "%i", count);
 
                 FR_SetFont(obj->fontId);
-                FR_SetTracking(2);
+                FR_SetTracking(TRACKING);
                 DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
                 FR_DrawTextFragment2(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
             }
@@ -1460,6 +1461,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_PopMatrix();
     }
     }
+#undef TRACKING
 #undef ORIGINY
 #undef ORIGINX
 }
@@ -2281,6 +2283,7 @@ void Frags_UpdateDimensions(uiwidget_t* obj)
 
 void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
 {
+#define TRACKING                (2)
     assert(NULL != obj);
     {
     guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
@@ -2331,7 +2334,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
             char buf[20];
             DGL_Enable(DGL_TEXTURE_2D);
             FR_SetFont(obj->fontId);
-            FR_SetTracking(2);
+            FR_SetTracking(TRACKING);
             DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextFragment2(buf, -1, -7, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -2342,6 +2345,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
     }
+#undef TRACKING
 }
 
 void ReadyItem_UpdateDimensions(uiwidget_t* obj)
@@ -2514,7 +2518,6 @@ void Kills_UpdateDimensions(uiwidget_t* obj)
     }
 
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudCheatCounterScale;
     obj->dimensions.height *= cfg.hudCheatCounterScale;
@@ -2610,7 +2613,6 @@ void Items_UpdateDimensions(uiwidget_t* obj)
     }
 
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudCheatCounterScale;
     obj->dimensions.height *= cfg.hudCheatCounterScale;
@@ -2706,7 +2708,6 @@ void Secrets_UpdateDimensions(uiwidget_t* obj)
     }
 
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudCheatCounterScale;
     obj->dimensions.height *= cfg.hudCheatCounterScale;

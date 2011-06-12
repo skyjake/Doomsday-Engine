@@ -43,9 +43,15 @@
 #include "m_args.h"
 #include "m_misc.h"
 
+typedef struct fr_state_attributes_s {
+    int tracking;
+    int shadowOffsetX, shadowOffsetY;
+} fr_state_attributes_t;
+
 typedef struct {
     int fontIdx;
-    int tracking;
+    int attribStackDepth;
+    fr_state_attributes_t attribStack[FR_MAX_ATTRIB_STACK_DEPTH];
 } fr_state_t;
 static fr_state_t fr;
 fr_state_t* frState = &fr;
@@ -57,6 +63,7 @@ typedef struct {
     float angle;
     float color[4];
     float glitter, shadow;
+    int shadowOffsetX, shadowOffsetY;
     int tracking;
     float leading;
     boolean typeIn;
@@ -66,6 +73,7 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
+static __inline fr_state_attributes_t* currentAttributes(void);
 static int topToAscent(bitmapfont_t* font);
 static int lineHeight(bitmapfont_t* font, unsigned char ch);
 static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, short flags);
@@ -210,18 +218,23 @@ static int lineHeight(bitmapfont_t* font, unsigned char ch)
     return BitmapFont_CharHeight(font, ch);
 }
 
+static __inline fr_state_attributes_t* currentAttributes(void)
+{
+    return fr.attribStack + fr.attribStackDepth;
+}
+
 int FR_Init(void)
 {
     if(inited)
         return -1; // No reinitializations...
 
+    inited = true;
     numFonts = 0;
     fonts = 0; // No fonts!
     fr.fontIdx = -1;
-    fr.tracking = DEFAULT_TRACKING;
+    FR_LoadDefaultAttrib();
     typeInTime = 0;
 
-    inited = true;
     return 0;
 }
 
@@ -396,13 +409,6 @@ void FR_SetFont(fontid_t id)
     fr.fontIdx = idx;
 }
 
-void FR_SetTracking(int tracking)
-{
-    if(!inited)
-        Con_Error("FR_SetTracking: Font renderer has not yet been initialized.");
-    fr.tracking = tracking;
-}
-
 fontid_t FR_GetCurrentId(void)
 {
     if(!inited)
@@ -412,11 +418,64 @@ fontid_t FR_GetCurrentId(void)
     return 0;
 }
 
-int FR_Tracking(void)
+void FR_LoadDefaultAttrib(void)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_LoadDefaultAttrib: Font renderer has not yet been initialized.");
+    sat->tracking = DEFAULT_TRACKING;
+    sat->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
+    sat->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
+}
+
+void FR_PushAttrib(void)
 {
     if(!inited)
+        Con_Error("FR_PushAttrib: Font renderer has not yet been initialized.");
+    if(fr.attribStackDepth == FR_MAX_ATTRIB_STACK_DEPTH)
+    {
+        Con_Error("FR_PushAttrib: STACK_OVERFLOW.");
+        exit(1); // Unreachable.
+    }
+    memcpy(fr.attribStack + fr.attribStackDepth + 1, fr.attribStack + fr.attribStackDepth, sizeof(fr.attribStack[0]));
+    ++fr.attribStackDepth;
+}
+
+void FR_PopAttrib(void)
+{
+    if(!inited)
+        Con_Error("FR_PopAttrib: Font renderer has not yet been initialized.");
+    if(fr.attribStackDepth == 0)
+    {
+        Con_Error("FR_PopAttrib: STACK_UNDERFLOW.");
+        exit(1); // Unreachable.
+    }
+    --fr.attribStackDepth;
+}
+
+int FR_Tracking(void)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
         Con_Error("FR_Tracking: Font renderer has not yet been initialized.");
-    return fr.tracking;
+    return sat->tracking;
+}
+
+void FR_SetTracking(int tracking)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_SetTracking: Font renderer has not yet been initialized.");
+    sat->tracking = tracking;
+}
+
+void FR_SetShadowOffset(int offsetX, int offsetY)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_SetTracking: Font renderer has not yet been initialized.");
+    sat->shadowOffsetX = offsetX;
+    sat->shadowOffsetY = offsetY;
 }
 
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
@@ -476,7 +535,7 @@ int FR_TextFragmentWidth(const char* text)
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
         width += FR_CharWidth(c);
 
-    return (int) (width + fr.tracking * (len-1));
+    return (int) (width + currentAttributes()->tracking * (len-1));
 }
 
 int FR_TextFragmentHeight(const char* text)
@@ -533,12 +592,12 @@ int FR_GlyphTopToAscent(const char* text)
 }
 
 static void drawTextFragment(const char* string, int x, int y, short flags,
-    int initialCount, float glitterStrength, float shadowStrength,
-    int shadowOffsetX, int shadowOffsetY)
+    int initialCount, float glitterStrength, float shadowStrength)
 {
     assert(inited && string && string[0] && fr.fontIdx != -1);
     {
     bitmapfont_t* cf = fonts[fr.fontIdx];
+    fr_state_attributes_t* sat = currentAttributes();
     boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (glitterStrength <= 0 || (flags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (shadowStrength  <= 0 || (flags & DTF_NO_SHADOW)  != 0 ||
@@ -585,8 +644,8 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     {
         count = initialCount;
         ch = string;
-        cx = x + (pass == 0? shadowOffsetX : 0);
-        cy = y + (pass == 0? shadowOffsetY : 0);
+        cx = x + (pass == 0? sat->shadowOffsetX : 0);
+        cy = y + (pass == 0? sat->shadowOffsetY : 0);
 
         for(;;)
         {
@@ -703,7 +762,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
                 }
             }
 
-            cx += w + fr.tracking;
+            cx += w + sat->tracking;
         }
     }}
 
@@ -718,9 +777,8 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     }
 }
 
-void FR_DrawTextFragment6(const char* string, int x, int y, short flags,
-    int initialCount, float glitterStrength, float shadowStrength,
-    int shadowOffsetX, int shadowOffsetY)
+void FR_DrawTextFragment5(const char* string, int x, int y, short flags,
+    int initialCount, float glitterStrength, float shadowStrength)
 {
     if(!inited)
         Con_Error("Bitmap font system not yet initialized.");
@@ -738,15 +796,7 @@ void FR_DrawTextFragment6(const char* string, int x, int y, short flags,
 #endif
         return;
     }
-    drawTextFragment(string, x, y, flags, initialCount, glitterStrength,
-        shadowStrength, shadowOffsetX, shadowOffsetY);
-}
-
-void FR_DrawTextFragment5(const char* string, int x, int y, short flags,
-    int initialCount, float glitterStrength, float shadowStrength)
-{
-    FR_DrawTextFragment6(string, x, y, flags, initialCount, glitterStrength,
-        shadowStrength, DEFAULT_SHADOW_XOFFSET, DEFAULT_SHADOW_YOFFSET);
+    drawTextFragment(string, x, y, flags, initialCount, glitterStrength, shadowStrength);
 }
 
 void FR_DrawTextFragment4(const char* string, int x, int y, short flags,
@@ -1117,14 +1167,17 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
 
 static void initDrawTextState(drawtextstate_t* state)
 {
+    fr_state_attributes_t* sat = currentAttributes();
     state->font = BitmapFont_Id(fonts[fr.fontIdx]);
-    state->tracking = fr.tracking;
+    state->tracking = DEFAULT_TRACKING;
     state->scaleX = state->scaleY = 1;
     state->offX = state->offY = 0;
     state->angle = 0;
     state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
     state->glitter = DEFAULT_GLITTER_STRENGTH;
     state->shadow = DEFAULT_SHADOW_STRENGTH;
+    state->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
+    state->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
     state->leading = DEFAULT_LEADING;
     state->typeIn = true;
     state->caseScale = false;
@@ -1152,7 +1205,6 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     int curCase = -1, lastLineHeight;
     size_t len;
     fontid_t oldFont = FR_GetCurrentId();
-    int oldTracking = FR_Tracking();
 
     if(!inString || !inString[0])
         return;
@@ -1189,7 +1241,10 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     state.caseScale = defCase;
 
     FR_SetFont(state.font);
+    FR_PushAttrib();
+    FR_LoadDefaultAttrib();
     FR_SetTracking(state.tracking);
+    FR_SetShadowOffset(state.shadowOffsetX, state.shadowOffsetY);
     lastLineHeight = FR_CharHeight('A') * state.scaleY;
 
     string = str;
@@ -1322,9 +1377,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     if(bigBuff)
         free(bigBuff);
 
-    // Restore original state.
-    FR_SetFont(oldFont);
-    FR_SetTracking(oldTracking);
+    FR_PopAttrib();
 
 #undef MAX_FRAGMENTLENGTH
 #undef SMALLBUFF_SIZE

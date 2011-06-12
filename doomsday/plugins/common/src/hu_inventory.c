@@ -473,7 +473,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_SMALLIN));
-    FR_SetTracking(0);
+    FR_SetTracking(TRACKING);
 
     for(i = from; i < to; ++i)
     {

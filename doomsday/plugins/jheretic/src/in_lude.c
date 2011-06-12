@@ -659,7 +659,7 @@ void IN_DrawOldLevel(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
@@ -710,7 +710,7 @@ void IN_DrawYAH(void)
     uint i;
 
     FR_SetFont(FID(GF_FONTA));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
     FR_DrawTextFragment2("NOW ENTERING:", 160, 10, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
@@ -745,7 +745,7 @@ void IN_DrawSingleStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     FR_DrawTextFragment("KILLS", 50, 65);
@@ -775,7 +775,7 @@ void IN_DrawSingleStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].killCount);
-    FR_SetFont(GF_FONTB);
+    FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
     M_DrawTextFragmentShadowed(buf, 236, 65, DTF_ALIGN_TOPRIGHT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
@@ -798,7 +798,7 @@ void IN_DrawSingleStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].itemCount);
-    FR_SetFont(GF_FONTB);
+    FR_SetFont(FID(GF_FONTB));
     M_DrawTextFragmentShadowed(buf, 236, 90, DTF_ALIGN_TOPRIGHT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     M_DrawTextFragmentShadowed("/", 241, 90, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -820,7 +820,7 @@ void IN_DrawSingleStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].secretCount);
-    FR_SetFont(GF_FONTB);
+    FR_SetFont(FID(GF_FONTB));
     M_DrawTextFragmentShadowed(buf, 236, 115, DTF_ALIGN_TOPRIGHT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     M_DrawTextFragmentShadowed("/", 241, 115, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -884,7 +884,7 @@ void IN_DrawCoopStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     FR_DrawTextFragment("KILLS", 95, 35);
@@ -896,7 +896,7 @@ void IN_DrawCoopStats(void)
     DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
     FR_DrawTextFragment2("FINISHED", SCREENWIDTH/2, 25, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
-    FR_SetFont(GF_FONTB);
+    FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
 
     ypos = 50;
@@ -956,7 +956,7 @@ void IN_DrawDMStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     FR_DrawTextFragment("TOTAL", 265, 30);
 
@@ -1022,7 +1022,7 @@ void IN_DrawDMStats(void)
                 GL_DrawPatch(dpFaceDead[i].id, xpos, 18);
             }
 
-            FR_SetFont(GF_FONTB);
+            FR_SetFont(FID(GF_FONTB));
             FR_SetTracking(TRACKING);
             kpos = 122;
             for(j = 0; j < NUMTEAMS; ++j)

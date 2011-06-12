@@ -1900,7 +1900,7 @@ void Hu_MenuInitEpisodeMenu(void)
         obj->data2 = i;
         obj->_pageFontIdx = MENU_FONT2;
         FR_SetFont(FID(MNPage_PredefinedFont(&EpisodeMenu, obj->_pageFontIdx)));
-        FR_SetTracking(0);
+        FR_LoadDefaultAttrib();
         w = FR_TextFragmentWidth(text);
         if(w > maxw)
             maxw = w;
@@ -2031,7 +2031,7 @@ void Hu_MenuInit(void)
         btn->text = text;
         MNObject_SetShortcut(obj, text[0]);
         FR_SetFont(MNPage_PredefinedFont(&SkillMenu, MNObject_Font(obj)));
-        FR_SetTracking(0);
+        FR_LoadDefaultAttrib();
         w = FR_TextFragmentWidth(text);
         if(w > maxw)
             maxw = w;

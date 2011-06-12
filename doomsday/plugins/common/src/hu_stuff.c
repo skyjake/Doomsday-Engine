@@ -826,7 +826,7 @@ void HU_DrawScoreBoard(int player)
 
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
@@ -1586,7 +1586,7 @@ static void drawMapTitle(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
 
     WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, FID(GF_FONTB), 1, 1, 1, alpha);
 

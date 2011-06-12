@@ -666,6 +666,8 @@ static void drawDeathmatchStats(void)
 {
     int i, j, x, y, w, lh = WI_SPACINGY; // Line height.
 
+    FR_LoadDefaultAttrib();
+
     // Draw stat titles (top line).
     DGL_Enable(DGL_TEXTURE_2D);
     { patchinfo_t info;
@@ -921,6 +923,8 @@ static void drawNetgameStats(void)
     patchinfo_t info;
 
     FR_SetFont(FID(GF_SMALL));
+    FR_LoadDefaultAttrib();
+
     pwidth = FR_CharWidth('%');
     R_GetPatchInfo(pFaceAlive, &info);
     starWidth = info.width;
@@ -962,7 +966,6 @@ static void drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].playerCount);
             FR_SetFont(FID(GF_FONTA));
-            FR_SetTracking(0);
             DGL_Color4f(1, 1, 1, 1);
             FR_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
         }
@@ -972,7 +975,6 @@ static void drawNetgameStats(void)
         x += NG_SPACINGX;
 
         FR_SetFont(FID(GF_SMALL));
-        FR_SetTracking(0);
         drawPercent(x - pwidth, y + 10, cntKills[i]);
         x += NG_SPACINGX;
 
@@ -1001,6 +1003,8 @@ static void drawSinglePlayerStats(void)
 {
     int lh;
     lh = (3 * FR_CharHeight('0')) / 2; // Line height.
+
+    FR_LoadDefaultAttrib();
 
     DGL_Enable(DGL_TEXTURE_2D);
     WI_DrawPatch(pKills, Hu_ChoosePatchReplacement(pKills), SP_STATSX, SP_STATSY);

@@ -443,6 +443,9 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth,
     if(availWidth == 0 || availHeight == 0)
         return;
 
+    FR_PushAttrib();
+    FR_LoadDefaultAttrib();
+
     // First we draw ourself.
     drawWidget(obj, x, y, alpha, &width, &height);
 
@@ -459,6 +462,8 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth,
 
     if(NULL != drawnWidth)  *drawnWidth  = width;
     if(NULL != drawnHeight) *drawnHeight = height;
+
+    FR_PopAttrib();
     }
 }
 
@@ -566,7 +571,7 @@ void MN_DrawText4(const char* string, int x, int y, short flags, float glitterSt
     if(NULL == string || !string[0]) return;
 
     flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment6(string, x, y, flags, 0, glitterStrength, shadowStrength, 0, 0);
+    FR_DrawTextFragment5(string, x, y, flags, 0, glitterStrength, shadowStrength);
 }
 
 void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength)
@@ -608,6 +613,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         rs.textColors[i][CA] = alpha; // For convenience.
     }
     FR_SetFont(rs.textFonts[0]);
+    FR_LoadDefaultAttrib();
     FR_SetTracking(rs.textTracking);
 
     /*if(page->unscaled.numVisObjects)
@@ -618,11 +624,9 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
     if(NULL != page->drawer)
     {
+        FR_PushAttrib();
         page->drawer(page, page->offset[VX], page->offset[VY]);
-
-        // Ensure to restore the assumed default state.
-        FR_SetFont(rs.textFonts[0]);
-        FR_SetTracking(rs.textTracking);
+        FR_PopAttrib();
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -636,6 +640,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
             continue;
 
+        FR_PushAttrib();
         obj->drawer(obj, pos[VX], pos[VY]);
         if(NULL != obj->updateDimensions)
         {
@@ -660,9 +665,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
         pos[VY] += MNObject_Dimensions(obj)->height * (1.08f); // Leading.
 
-        // Ensure to restore the assumed default state.
-        FR_SetFont(rs.textFonts[0]);
-        FR_SetTracking(rs.textTracking);
+        FR_PopAttrib();
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1134,7 +1137,6 @@ void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
         return;
     }
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, txt->text);
     }
 }
@@ -1663,7 +1665,6 @@ void MNList_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     obj->_dimensions.width  = 0;
     obj->_dimensions.height = 0;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_SetTracking(0);
     for(i = 0; i < list->count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
@@ -1685,7 +1686,6 @@ void MNList_InlineUpdateDimensions(mn_object_t* obj, mn_page_t* page)
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, item->text);
     }
 }
@@ -1832,7 +1832,6 @@ void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     }
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, text);
     }
 }
@@ -2364,7 +2363,6 @@ void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
     FR_SetFont(fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
     }
 }

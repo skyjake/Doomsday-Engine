@@ -74,10 +74,23 @@ void FR_ResetTypeInTimer(void);
 #define DTF_ONLY_SHADOW         (DTF_NO_TYPEIN|DTF_NO_GLITTER)
 /*@}*/
 
+#define FR_MAX_ATTRIB_STACK_DEPTH   (4)
+
 /// Change the current font.
 void FR_SetFont(fontid_t font);
 
+/// Push the attribute stack.
+void FR_PushAttrib(void);
+
+/// Pop the attribute stack.
+void FR_PopAttrib(void);
+
+/// Load the default attributes at the current stack depth.
+void FR_LoadDefaultAttrib(void);
+
 void FR_SetTracking(int tracking);
+
+void FR_SetShadowOffset(int offsetX, int offsetY);
 
 /// @return  Unique identifier associated with the current font.
 fontid_t FR_GetCurrentId(void);
@@ -103,7 +116,6 @@ void FR_DrawTextFragment2(const char* string, int x, int y, short flags);
 void FR_DrawTextFragment3(const char* string, int x, int y, short flags, int initialCount);
 void FR_DrawTextFragment4(const char* string, int x, int y, short flags, int initialCount, float glitterStrength);
 void FR_DrawTextFragment5(const char* string, int x, int y, short flags, int initialCount, float glitterStrength, float shadowStrength);
-void FR_DrawTextFragment6(const char* string, int x, int y, short flags, int initialCount, float glitterStrength, float shadowStrength, int shadowOffsetX, int shadowOffsetY);
 
 // Utility routines:
 void FR_TextFragmentDimensions(int* width, int* height, const char* string);

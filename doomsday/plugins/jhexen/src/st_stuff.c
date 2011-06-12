@@ -1762,7 +1762,6 @@ void SBarBlueMana_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
@@ -1852,7 +1851,6 @@ void SBarGreenMana_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
@@ -2875,7 +2873,6 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
         {
             char buf[20];
             FR_SetFont(obj->fontId);
-            FR_SetTracking(0);
             DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextFragment2(buf, -2, -7, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
@@ -3002,7 +2999,6 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         return;
 
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextFragmentWidth(" : ");
 
@@ -3079,7 +3075,6 @@ void WorldTimer_UpdateDimensions(uiwidget_t* obj)
         return;
 
     FR_SetFont(obj->fontId);
-    FR_SetTracking(0);
     FR_TextFragmentDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextFragmentWidth(" : ");
 

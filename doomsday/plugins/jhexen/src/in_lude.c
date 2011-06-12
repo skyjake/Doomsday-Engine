@@ -407,7 +407,7 @@ static void drawDeathTally(void)
     y = yPos >> FRACBITS;
 
     FR_SetFont(FID(GF_FONTA));
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {

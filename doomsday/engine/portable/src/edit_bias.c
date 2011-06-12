@@ -663,7 +663,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     float eye[3];
 
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     w = 16 + FR_TextFragmentWidth("R:0.000 G:0.000 B:0.000");
     th = FR_TextFragmentHeight("Info");
     h = 16 + th * 6;
@@ -691,7 +691,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     // - color
 
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     y += th;
 
@@ -753,7 +753,8 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
         maxLevel = sector->lightLevel;
 
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     off = FR_TextFragmentWidth("000");
 
     glBegin(GL_LINES);
@@ -828,7 +829,8 @@ void SBE_DrawHUD(void)
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS, MAX_BIAS_LIGHTS - numSources);
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_TextFragmentHeight(buf) + 16;
     y = theWindow->height - 10 - h;
@@ -849,7 +851,6 @@ void SBE_DrawHUD(void)
     {
         int x;
         FR_SetFont(glFontFixed);
-        FR_SetTracking(0);
         x = FR_TextFragmentWidth("0") * 26;
         SBE_InfoBox(s, x, "Grabbed", alpha);
     }
@@ -920,7 +921,8 @@ static void SBE_DrawIndex(source_t *src)
     // Show the index number of the source.
     sprintf(buf, "%i", SB_ToIndex(src));
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);

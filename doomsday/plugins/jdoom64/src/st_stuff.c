@@ -362,7 +362,7 @@ static void drawWidgets(hudstate_t* hud)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_STATUS));
-        FR_SetTracking(0);
+        FR_LoadDefaultAttrib();
 
         DGL_Color4f(1, 1, 1, hud->alpha);
 
@@ -461,7 +461,7 @@ void ST_doFullscreenStuff(int player)
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
 
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
 
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
     {

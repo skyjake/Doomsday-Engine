@@ -505,7 +505,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     if(busyTaskName)
     {
         FR_SetFont(busyFont);
-        FR_SetTracking(0);
+        FR_LoadDefaultAttrib();
         glColor4f(1.f, 1.f, 1.f, .66f);
         FR_DrawTextFragment2(busyTaskName, x+radius, y, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     }
@@ -619,7 +619,7 @@ void Con_BusyDrawConsoleOutput(void)
     }
 
     FR_SetFont(busyFont);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
 
     for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
     {

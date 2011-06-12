@@ -901,7 +901,7 @@ void Net_DrawDemoOverlay(void)
     glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     glColor3f(1, 1, 1);
     FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 

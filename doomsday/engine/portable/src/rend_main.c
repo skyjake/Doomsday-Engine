@@ -4353,6 +4353,12 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 {
     char buf[80];
 
+    FR_SetFont(glFontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+
+    sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(vtx->V_pos[VX], z, vtx->V_pos[VY]);
@@ -4362,9 +4368,6 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 
     glEnable(GL_TEXTURE_2D);
 
-    sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
-    FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
     UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
 
     glDisable(GL_TEXTURE_2D);

@@ -422,7 +422,8 @@ void Rend_ConsoleFPS(int x, int y)
 
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
     FR_SetFont(glFontFixed);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     w = FR_TextFragmentWidth(buf) + 16;
     h = FR_SingleLineHeight(buf)  + 16;
 
@@ -440,12 +441,11 @@ static void drawConsoleTitleBar(float alpha)
 {
     assert(inited);
     {
-    int width = 0, height, oldFont, border;
+    int width = 0, height, border;
 
     if(alpha < .0001f)
         return;
 
-    oldFont = FR_GetCurrentId();
     border = theWindow->width / 120;
 
     glMatrixMode(GL_PROJECTION);
@@ -461,7 +461,8 @@ static void drawConsoleTitleBar(float alpha)
     UI_Gradient(0, height, theWindow->width, border*2, UI_Color(UIC_BG_DARK),
                 UI_Color(UIC_SHADOW), .2f * alpha, 0);
     FR_SetFont(glFontVariable[GLFS_BOLD]);
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
     if(secondaryTitleText[0])
     {
@@ -481,8 +482,6 @@ static void drawConsoleTitleBar(float alpha)
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
-    FR_SetFont(oldFont);
     }
 }
 
@@ -546,7 +545,7 @@ static void drawSideText(const char* text, int line, float alpha)
     int ssw;
 
     FR_SetFont(Con_Font());
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     Con_FontScale(&scale[0], &scale[1]);
     fontScaledY = FR_SingleLineHeight("Con") * scale[1];
     y = ConsoleY * gtosMulY - fontScaledY * (1 + line);
@@ -599,7 +598,7 @@ static void drawConsole(float consoleAlpha)
     uint reqLines;
 
     FR_SetFont(Con_Font());
-    FR_SetTracking(0);
+    FR_LoadDefaultAttrib();
     cfont = FR_Font(FR_GetCurrentId());
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);
