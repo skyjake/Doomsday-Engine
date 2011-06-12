@@ -361,7 +361,7 @@ void FR_ResetTypeInTimer(void)
     typeInTime = 0;
 }
 
-bitmapfont_t* FR_Font(fontid_t id)
+bitmapfont_t* FR_BitmapFontForId(fontid_t id)
 {
     assert(inited);
     { int idx;
@@ -412,10 +412,10 @@ void FR_SetFont(fontid_t id)
     fr.fontIdx = idx;
 }
 
-fontid_t FR_GetCurrentId(void)
+fontid_t FR_Font(void)
 {
     if(!inited)
-        Con_Error("FR_GetCurrentId: Font renderer has not yet been initialized.");
+        Con_Error("FR_Font: Font renderer has not yet been initialized.");
     if(fr.fontIdx != -1)
         return BitmapFont_Id(fonts[fr.fontIdx]);
     return 0;
@@ -1163,7 +1163,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
                 (*strPtr) += 4;
                 if((fontId = FR_SafeFontIdForName(*strPtr)))
                 {
-                    (*strPtr) += Str_Length(BitmapFont_Name(FR_Font(fontId)));
+                    (*strPtr) += Str_Length(BitmapFont_Name(FR_BitmapFontForId(fontId)));
                     state->font = fontId;
                     continue;
                 }
@@ -1219,7 +1219,7 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags,
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char temp[MAX_FRAGMENTLENGTH+1], *str, *string, *end;
-    fontid_t origFont = FR_GetCurrentId();
+    fontid_t origFont = FR_Font();
     float origColor[4];
     drawtextstate_t state;
     size_t charCount = 0;
@@ -1417,7 +1417,7 @@ void FR_TextDimensions(int* width, int* height, const char* string)
  */
 int FR_TextWidth(const char* string)
 {
-    fontid_t oldFontId = FR_GetCurrentId();
+    fontid_t oldFontId = FR_Font();
     int w, maxWidth = -1;
     boolean skip = false;
     const char* ch;
@@ -1466,7 +1466,7 @@ int FR_TextWidth(const char* string)
  */
 int FR_TextHeight(const char* string)
 {
-    fontid_t oldFontId = FR_GetCurrentId();
+    fontid_t oldFontId = FR_Font();
     int h, currentLineHeight;
     boolean skip = false;
     const char* ch;

@@ -68,7 +68,7 @@ void FR_ResetTypeInTimer(void);
 #define FR_MAX_ATTRIB_STACK_DEPTH   (4)
 
 /// @return  Unique identifier associated with the current font.
-fontid_t FR_GetCurrentId(void);
+fontid_t FR_Font(void);
 
 /// Change the current font.
 void FR_SetFont(fontid_t font);

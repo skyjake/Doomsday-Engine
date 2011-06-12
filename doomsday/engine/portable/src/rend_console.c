@@ -105,7 +105,7 @@ static float calcConsoleTitleBarHeight(void)
     assert(inited);
     {
     int border = theWindow->width / 120, height;
-    int oldFont = FR_GetCurrentId();
+    int oldFont = FR_Font();
 
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = FR_SingleLineHeight("Con") + border;
@@ -601,7 +601,7 @@ static void drawConsole(float consoleAlpha)
 
     FR_SetFont(Con_Font());
     FR_LoadDefaultAttrib();
-    cfont = FR_Font(FR_GetCurrentId());
+    cfont = FR_BitmapFontForId(FR_Font());
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);
     fontScaledY = lineHeight * scale[1];

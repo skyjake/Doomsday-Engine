@@ -2348,7 +2348,7 @@ D_CMD(Font)
         if(0 != newFont)
         {
             Con_SetFont(newFont);
-            if(0 == BitmapFont_TextureWidth(FR_Font(newFont)))
+            if(0 == BitmapFont_TextureWidth(FR_BitmapFontForId(newFont)))
             {
                 Con_SetFontScale(1.5f, 2);
             }

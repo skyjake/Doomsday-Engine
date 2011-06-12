@@ -66,7 +66,7 @@ fontid_t FR_CreateFontFromDef(ded_compositefont_t* def);
 /**
  * @return  Ptr to the font associated with the specified id.
  */
-bitmapfont_t* FR_Font(fontid_t id);
+bitmapfont_t* FR_BitmapFontForId(fontid_t id);
 void FR_DestroyFont(fontid_t id);
 
 // Utility routines:

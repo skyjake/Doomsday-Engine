@@ -494,7 +494,7 @@ EXPORTS
 ; Graphics: Text
     FR_FontIdForName			@106 NONAME
     FR_SafeFontIdForName        @107 NONAME
-    FR_GetCurrentId             @97 NONAME
+    FR_Font             @97 NONAME
     FR_SetFont                  @65 NONAME
 
     FR_PushAttrib               @513 NONAME
