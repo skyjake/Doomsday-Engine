@@ -67,6 +67,9 @@ void FR_ResetTypeInTimer(void);
 
 #define FR_MAX_ATTRIB_STACK_DEPTH   (4)
 
+/// @return  Unique identifier associated with the current font.
+fontid_t FR_GetCurrentId(void);
+
 /// Change the current font.
 void FR_SetFont(fontid_t font);
 
@@ -79,19 +82,19 @@ void FR_PopAttrib(void);
 /// Load the default attributes at the current stack depth.
 void FR_LoadDefaultAttrib(void);
 
-void FR_SetTracking(int tracking);
+/// Current leading.
+float FR_Leading(void);
 
-void FR_SetShadowOffset(int offsetX, int offsetY);
-
-void FR_SetShadowStrength(float value);
-
-void FR_SetGlitterStrength(float value);
-
-/// @return  Unique identifier associated with the current font.
-fontid_t FR_GetCurrentId(void);
+void FR_SetLeading(float value);
 
 /// Current tracking.
 int FR_Tracking(void);
+
+void FR_SetTracking(int value);
+
+void FR_SetShadowOffset(int offsetX, int offsetY);
+void FR_SetShadowStrength(float value);
+void FR_SetGlitterStrength(float value);
 
 /**
  * Text: A block of possibly formatted and/or multi-line text.

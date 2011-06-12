@@ -45,6 +45,7 @@
 
 typedef struct fr_state_attributes_s {
     int tracking;
+    float leading;
     int shadowOffsetX, shadowOffsetY;
     float shadowStrength;
     float glitterStrength;
@@ -425,6 +426,7 @@ void FR_LoadDefaultAttrib(void)
     fr_state_attributes_t* sat = currentAttributes();
     if(!inited)
         Con_Error("FR_LoadDefaultAttrib: Font renderer has not yet been initialized.");
+    sat->leading = DEFAULT_LEADING;
     sat->tracking = DEFAULT_TRACKING;
     sat->shadowStrength = DEFAULT_SHADOW_STRENGTH;
     sat->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
@@ -457,6 +459,22 @@ void FR_PopAttrib(void)
     --fr.attribStackDepth;
 }
 
+float FR_Leading(void)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_Leading: Font renderer has not yet been initialized.");
+    return sat->leading;
+}
+
+void FR_SetLeading(float value)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_SetLeading: Font renderer has not yet been initialized.");
+    sat->leading = value;
+}
+
 int FR_Tracking(void)
 {
     fr_state_attributes_t* sat = currentAttributes();
@@ -465,12 +483,12 @@ int FR_Tracking(void)
     return sat->tracking;
 }
 
-void FR_SetTracking(int tracking)
+void FR_SetTracking(int value)
 {
     fr_state_attributes_t* sat = currentAttributes();
     if(!inited)
         Con_Error("FR_SetTracking: Font renderer has not yet been initialized.");
-    sat->tracking = tracking;
+    sat->tracking = value;
 }
 
 void FR_SetShadowOffset(int offsetX, int offsetY)
@@ -1245,6 +1263,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
     FR_PushAttrib();
     FR_LoadDefaultAttrib();
     FR_SetTracking(state.tracking);
+    FR_SetLeading(state.leading);
     FR_SetShadowOffset(state.shadowOffsetX, state.shadowOffsetY);
     FR_SetShadowStrength(state.shadowStrength);
     FR_SetGlitterStrength(state.glitterStrength);
@@ -1278,6 +1297,8 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
                 FR_SetFont(state.font);
             if(state.tracking != lastTracking)
                 FR_SetTracking(state.tracking);
+            if(state.leading != lastLeading)
+                FR_SetLeading(state.leading);
             if(state.shadowStrength != lastShadowStrength)
                 FR_SetShadowStrength(state.shadowStrength);
             if(state.glitterStrength != lastGlitterStrength)
@@ -1374,7 +1395,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
                     lastLineHeight = FR_TextFragmentHeight(temp);
 
                 cx = (float) x;
-                cy += (float) lastLineHeight * (1+state.leading);
+                cy += (float) lastLineHeight * (1+FR_Leading());
             }
 
             glMatrixMode(GL_MODELVIEW);

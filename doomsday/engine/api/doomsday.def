@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 515 <--
-; Other free ordinals: 121 200
+; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -501,12 +501,15 @@ EXPORTS
     FR_PopAttrib                @514 NONAME
     FR_LoadDefaultAttrib        @515 NONAME
 
-    FR_Tracking                 @122 NONAME
-    FR_SetTracking              @123 NONAME
-    FR_SetShadowOffset          @124 NONAME
-    FR_SetShadowStrength        @125 NONAME
-    FR_SetGlitterStrength       @131 NONAME
-    FR_ResetTypeInTimer         @198 NONAME
+    FR_Leading                  @121 NONAME
+    FR_SetLeading               @122 NONAME
+    FR_Tracking                 @123 NONAME
+    FR_SetTracking              @124 NONAME
+    FR_SetShadowOffset          @125 NONAME
+    FR_SetShadowStrength        @131 NONAME
+    FR_SetGlitterStrength       @198 NONAME
+
+    FR_ResetTypeInTimer         @200 NONAME
 
 	FR_TextDimensions           @112 NONAME
 	FR_TextWidth                @113 NONAME
