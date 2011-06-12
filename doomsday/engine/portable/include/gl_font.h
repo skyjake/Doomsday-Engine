@@ -39,7 +39,8 @@
 #define DEFAULT_SHADOW_XOFFSET      (2)
 #define DEFAULT_SHADOW_YOFFSET      (2)
 
-#define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
+#define DEFAULT_ALIGNFLAGS          (ALIGN_TOPLEFT)
+#define DEFAULT_DRAWFLAGS           (DTF_NO_EFFECTS)
 
 /**
  * Initialize the font renderer.

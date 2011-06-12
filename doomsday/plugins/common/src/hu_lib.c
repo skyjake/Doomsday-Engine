@@ -562,20 +562,18 @@ mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags)
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f)
 {
-    return ((~(cfg.menuEffectFlags << DTFTOMEF_SHIFT) & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
+    return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void MN_DrawText2(const char* string, int x, int y, short flags)
+void MN_DrawText2(const char* string, int x, int y, int alignFlags, short textFlags)
 {
     if(NULL == string || !string[0]) return;
-
-    flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment2(string, x, y, flags);
+    FR_DrawTextFragment2(string, x, y, alignFlags, MN_MergeMenuEffectWithDrawTextFlags(textFlags));
 }
 
 void MN_DrawText(const char* string, int x, int y)
 {
-    MN_DrawText2(string, x, y, DTF_ALIGN_TOPLEFT);
+    MN_DrawText2(string, x, y, ALIGN_TOPLEFT, 0);
 }
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
@@ -1236,7 +1234,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CB] *= light;
 
         DGL_Color4fv(color);
-        MN_DrawText2(string, x, y, DTF_ALIGN_TOPLEFT);
+        MN_DrawText2(string, x, y, ALIGN_TOPLEFT, 0);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

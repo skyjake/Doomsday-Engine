@@ -253,6 +253,7 @@ void FIData_PicClearAnimation(struct fi_object_s* pic);
 typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
     animatorvector4_t color;
+    int alignFlags; /// @see alignmentFlags
     short textFlags; /// @see drawTextFlags
     int scrollWait, scrollTimer; /// Automatic scrolling upwards.
     size_t cursorPos;

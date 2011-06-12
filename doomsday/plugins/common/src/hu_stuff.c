@@ -347,7 +347,7 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
 }
 
 void HU_DrawText(const char* str, float x, float y, float scale,
-    float r, float g, float b, float a, short flags)
+    float r, float g, float b, float a, int alignFlags, short textFlags)
 {
     if(!str || !str[0])
         return;
@@ -360,7 +360,7 @@ void HU_DrawText(const char* str, float x, float y, float scale,
     DGL_Translatef(-x, -y, 0);
 
     DGL_Color4f(r, g, b, a);
-    FR_DrawTextFragment2(str, x, y, flags);
+    FR_DrawTextFragment2(str, x, y, alignFlags, textFlags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -599,7 +599,7 @@ static void drawTable(float x, float ly, float width, float height,
             cX += CELL_PADDING;
 
         HU_DrawText(columns[n].label, cX, cY, fontScale, 1.f, 1.f, 1.f, alpha,
-            DTF_ALIGN_TOP|DTF_ONLY_SHADOW|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
+            ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : 0), DTF_ONLY_SHADOW);
     }
     ly += lineHeight;
     DGL_Disable(DGL_TEXTURE_2D);
@@ -700,21 +700,21 @@ DGL_Enable(DGL_TEXTURE_2D);
             case 1: // Name.
                 HU_DrawText(name, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
+                            alpha, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
                 HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
+                            alpha, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
                 HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW);
+                            alpha, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
                 break;
             }
         }
@@ -827,7 +827,7 @@ void HU_DrawScoreBoard(int player)
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
+    FR_DrawTextFragment2("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     drawMapMetaData(x, y + 16, hud->scoreAlpha);
@@ -1107,13 +1107,14 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_DrawTextFragmentShadowed(const char* string, int x, int y, short flags, float r, float g, float b, float a)
+void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags,
+    short textFlags, float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    FR_DrawTextFragment2(string, x+2, y+2, flags);
+    FR_DrawTextFragment2(string, x+2, y+2, alignFlags, textFlags);
 
     DGL_Color4f(r, g, b, a);
-    FR_DrawTextFragment2(string, x, y, flags);
+    FR_DrawTextFragment2(string, x, y, alignFlags, textFlags);
 }
 
 const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
@@ -1211,7 +1212,7 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
-        short textFlags = alignFlags;
+        short textFlags = 0;
         /**
          * \kludge
          * Correct behavior is no-merge but due to the way the state for this is
@@ -1220,7 +1221,7 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
          * patch replacement.
          */
         MN_MergeMenuEffectWithDrawTextFlags(textFlags);
-        FR_DrawText(replacement, x, y, fontId, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
+        FR_DrawText(replacement, x, y, fontId, alignFlags, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
         return;
     }
 
@@ -1600,7 +1601,7 @@ static void drawMapTitle(void)
 
         FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
-        FR_DrawTextFragment2(lname, 0, 0, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
+        FR_DrawTextFragment2(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
         y += 20;
@@ -1613,7 +1614,7 @@ static void drawMapTitle(void)
 
         FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(.5f, .5f, .5f, alpha);
-        FR_DrawTextFragment2(lauthor, 0, y, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
+        FR_DrawTextFragment2(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }

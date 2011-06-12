@@ -444,7 +444,7 @@ static void drawPercent(int x, int y, int p)
     dd_snprintf(buf, 20, "%i", p);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     FR_DrawChar('%', x, y);
-    FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 }
 
 /**
@@ -467,7 +467,7 @@ static void drawTime(int x, int y, int t)
         if(minutes > 0)
         {
             dd_snprintf(buf, 20, "%d", minutes);
-            FR_DrawTextFragment2(buf, x, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
         dd_snprintf(buf, 20, "%02d", seconds);
         FR_DrawTextFragment(buf, x+FR_CharWidth(':'), y);
@@ -746,12 +746,12 @@ static void drawDeathmatchStats(void)
                 if(teamInfo[j].playerCount > 0)
                 {
                     dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
-                    FR_DrawTextFragment2(buf, x + w, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+                    FR_DrawTextFragment2(buf, x + w, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
                 }
                 x += DM_SPACINGX;
             }
             dd_snprintf(buf, 20, "%i", dmTotals[i]);
-            FR_DrawTextFragment2(buf, DM_TOTALSX + w, y, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, DM_TOTALSX + w, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -988,7 +988,7 @@ static void drawNetgameStats(void)
         {
             char buf[20];
             dd_snprintf(buf, 20, "%i", cntFrags[i]);
-            FR_DrawTextFragment2(buf, x, y + 10, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            FR_DrawTextFragment2(buf, x, y + 10, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;

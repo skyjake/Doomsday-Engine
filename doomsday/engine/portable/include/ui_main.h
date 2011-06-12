@@ -350,7 +350,7 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha, ui_color_t*
 
 /// Draw shadowed text.
 void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha);
-void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha, short flags);
+void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha, int alignFlags, short textFlags);
 int UI_TextOutWrap(const char* text, int x, int y, int w, int h);
 
 /**

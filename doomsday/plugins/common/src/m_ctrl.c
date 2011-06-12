@@ -412,7 +412,7 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
     DGL_Translatef(-x, -y - height/2, 0);
 
     DGL_Color4f(1, 1, 1, alpha);
-    FR_DrawTextFragment2(string, x, y, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    FR_DrawTextFragment2(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -672,13 +672,13 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     DGL_Color4f(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
-    MN_DrawText2("CONTROLS", SCREENWIDTH/2, y-28, DTF_ALIGN_TOP);
+    MN_DrawText2("CONTROLS", SCREENWIDTH/2, y-28, ALIGN_TOP, 0);
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTA));
-    MN_DrawText2(buf, SCREENWIDTH/2, y - 12, DTF_ALIGN_TOP);
+    MN_DrawText2(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, 0);
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -688,7 +688,7 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTA));
-    MN_DrawText2("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), DTF_ALIGN_BOTTOM);
+    MN_DrawText2("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -700,11 +700,11 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     DGL_Color4f(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
-    MN_DrawText2("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, DTF_ALIGN_BOTTOM|DTF_ONLY_SHADOW);
+    MN_DrawText2("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, DTF_ONLY_SHADOW);
 
     DGL_Color4f(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
     FR_SetFont(FID(GF_FONTB));
-    MN_DrawText2(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, DTF_ALIGN_TOP|DTF_ONLY_SHADOW);
+    MN_DrawText2(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

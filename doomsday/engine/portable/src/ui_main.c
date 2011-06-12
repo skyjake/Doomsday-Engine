@@ -894,7 +894,7 @@ void UIText_Drawer(ui_object_t* ob)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -905,7 +905,7 @@ void UIText_BrightDrawer(ui_object_t* ob)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1003,7 +1003,7 @@ void UIButton_Drawer(ui_object_t* ob)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, DTF_ONLY_SHADOW| ((ob->flags & UIF_LEFT_ALIGN)? DTF_ALIGN_LEFT : 0));
+    UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, ((ob->flags & UIF_LEFT_ALIGN)? ALIGN_LEFT : 0), DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1135,7 +1135,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     {   // It fits!
         strcpy(buf, ob->text);
     }
-    UI_TextOutEx2(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), dis ? .2f : 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), dis ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     if(act && ob->timer & 4)
     {
         // Draw cursor.
@@ -1381,7 +1381,7 @@ void UIList_Drawer(ui_object_t* ob)
                 strcpy(tmp, ptr);
             memset(buf, 0, sizeof(buf));
             strCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
-            UI_TextOutEx2(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+            UI_TextOutEx2(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
             if(!endptr)
                 break;
             ptr = endptr + 1;
@@ -1625,7 +1625,7 @@ void UISlider_Drawer(ui_object_t* ob)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1876,17 +1876,17 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t* start, ui_color_t* end,
 }
 
 void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha,
-    short flags)
+    int alignFlags, short textFlags)
 {
     alpha *= uiAlpha;
     if(alpha <= 0) return;
     UI_SetColorA(color, alpha);
-    FR_DrawTextFragment2(text, x, y, flags);
+    FR_DrawTextFragment2(text, x, y, alignFlags, textFlags);
 }
 
 void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha)
 {
-    UI_TextOutEx2(text, x, y, color, alpha, DEFAULT_DRAWFLAGS);
+    UI_TextOutEx2(text, x, y, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
 int UI_TextOutWrap(const char* text, int x, int y, int w, int h)

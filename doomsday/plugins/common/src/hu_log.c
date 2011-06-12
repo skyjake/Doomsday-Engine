@@ -294,7 +294,8 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     assert(NULL != obj && obj->type == GUI_LOG);
     {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    const short textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
+    const int alignFlags = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
+    const short textFlags = DTF_NO_EFFECTS;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     int lineHeight;
@@ -421,7 +422,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
             }
         }
 
-        FR_DrawText(msg->text, 0, y, obj->fontId, textFlags, .5f, 0,
+        FR_DrawText(msg->text, 0, y, obj->fontId, alignFlags, textFlags, .5f, 0,
             col[CR], col[CG], col[CB], col[CA], 0, 0, false);
 
         ++drawnMsgCount;

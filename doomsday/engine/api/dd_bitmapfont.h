@@ -57,18 +57,9 @@ void FR_ResetTypeInTimer(void);
  * @defGroup drawTextFlags Draw Text Flags
  */
 /*@{*/
-#define DTF_ALIGN_LEFT          0x0001
-#define DTF_ALIGN_RIGHT         0x0002
-#define DTF_ALIGN_TOP           0x0004
-#define DTF_ALIGN_BOTTOM        0x0008
-#define DTF_NO_TYPEIN           0x0010
-#define DTF_NO_SHADOW           0x0020
-#define DTF_NO_GLITTER          0x0040
-
-#define DTF_ALIGN_TOPLEFT       (DTF_ALIGN_TOP|DTF_ALIGN_LEFT)
-#define DTF_ALIGN_BOTTOMLEFT    (DTF_ALIGN_BOTTOM|DTF_ALIGN_LEFT)
-#define DTF_ALIGN_TOPRIGHT      (DTF_ALIGN_TOP|DTF_ALIGN_RIGHT)
-#define DTF_ALIGN_BOTTOMRIGHT   (DTF_ALIGN_BOTTOM|DTF_ALIGN_RIGHT)
+#define DTF_NO_TYPEIN           0x0001
+#define DTF_NO_SHADOW           0x0002
+#define DTF_NO_GLITTER          0x0004
 
 #define DTF_NO_EFFECTS          (DTF_NO_TYPEIN|DTF_NO_SHADOW|DTF_NO_GLITTER)
 #define DTF_ONLY_SHADOW         (DTF_NO_TYPEIN|DTF_NO_GLITTER)
@@ -105,7 +96,7 @@ int FR_Tracking(void);
 /**
  * Text: A block of possibly formatted and/or multi-line text.
  */
-void FR_DrawText(const char* string, int x, int y, fontid_t defFont, short defFlags, float defLeading, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase);
+void FR_DrawText(const char* string, int x, int y, fontid_t defFont, int defAlignFlags, short defFlags, float defLeading, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase);
 
 // Utility routines:
 void FR_TextDimensions(int* width, int* height, const char* string, fontid_t defFont);
@@ -116,7 +107,7 @@ int FR_TextHeight(const char* string, fontid_t defFont);
  * Text fragments: A single line of unformatted text.
  */
 void FR_DrawTextFragment(const char* string, int x, int y);
-void FR_DrawTextFragment2(const char* string, int x, int y, short flags);
+void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags, short flags);
 
 // Utility routines:
 void FR_TextFragmentDimensions(int* width, int* height, const char* string);
@@ -127,7 +118,7 @@ int FR_TextFragmentHeight(const char* string);
  * Single character.
  */
 void FR_DrawChar(unsigned char ch, int x, int y);
-void FR_DrawChar2(unsigned char ch, int x, int y, short flags);
+void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short flags);
 
 // Utility routines:
 void FR_CharDimensions(int* width, int* height, unsigned char ch);

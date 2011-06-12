@@ -2004,13 +2004,13 @@ DEFFC(TextOffY)
 DEFFC(TextCenter)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->textFlags &= ~(DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT);
+    ((fidata_text_t*)obj)->alignFlags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->textFlags |= DTF_ALIGN_LEFT;
+    ((fidata_text_t*)obj)->alignFlags |= ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)

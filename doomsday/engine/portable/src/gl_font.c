@@ -78,7 +78,7 @@ typedef struct {
 static __inline fr_state_attributes_t* currentAttributes(void);
 static int topToAscent(bitmapfont_t* font);
 static int lineHeight(bitmapfont_t* font, unsigned char ch);
-static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, short flags);
+static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, int alignFlags, short textFlags);
 static void drawFlash(int x, int y, int w, int h, int bright);
 
 static int inited = false;
@@ -611,16 +611,16 @@ int FR_GlyphTopToAscent(const char* text)
     return lineHeight - BitmapFont_Ascent(fonts[fr.fontIdx]);
 }
 
-static void drawTextFragment(const char* string, int x, int y, short flags,
-    int initialCount)
+static void drawTextFragment(const char* string, int x, int y, int alignFlags,
+    short textFlags, int initialCount)
 {
     assert(inited && string && string[0] && fr.fontIdx != -1);
     {
     bitmapfont_t* cf = fonts[fr.fontIdx];
     fr_state_attributes_t* sat = currentAttributes();
-    boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
-    boolean noGlitter = (sat->glitterStrength <= 0 || (flags & DTF_NO_GLITTER) != 0);
-    boolean noShadow  = (sat->shadowStrength  <= 0 || (flags & DTF_NO_SHADOW)  != 0 ||
+    boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
+    boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
+    boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
                          (BitmapFont_Flags(cf) & BFF_HAS_EMBEDDEDSHADOW)  != 0);
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
@@ -629,14 +629,14 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     unsigned char c;
     const char* ch;
 
-    if(flags & DTF_ALIGN_RIGHT)
+    if(alignFlags & ALIGN_RIGHT)
         x -= FR_TextFragmentWidth(string);
-    else if(!(flags & DTF_ALIGN_LEFT))
+    else if(!(alignFlags & ALIGN_LEFT))
         x -= FR_TextFragmentWidth(string)/2;
 
-    if(flags & DTF_ALIGN_BOTTOM)
+    if(alignFlags & ALIGN_BOTTOM)
         y -= FR_TextFragmentHeight(string);
-    else if(!(flags & DTF_ALIGN_TOP))
+    else if(!(alignFlags & ALIGN_TOP))
         y -= FR_TextFragmentHeight(string)/2;
 
     if(!(noTypein && noShadow && noGlitter))
@@ -767,7 +767,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
                 if(pass)
                 {
                     // The character itself.
-                    drawChar(c, cx, cy + yoff, cf, DEFAULT_DRAWFLAGS);
+                    drawChar(c, cx, cy + yoff, cf, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
                     if(!noGlitter && glitter > 0)
                     {   // Do something flashy.
@@ -797,7 +797,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     }
 }
 
-void FR_DrawTextFragment2(const char* string, int x, int y, short flags)
+void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags, short textFlags)
 {
     if(!inited)
         Con_Error("Bitmap font system not yet initialized.");
@@ -815,15 +815,15 @@ void FR_DrawTextFragment2(const char* string, int x, int y, short flags)
 #endif
         return;
     }
-    drawTextFragment(string, x, y, flags, DEFAULT_INITIALCOUNT);
+    drawTextFragment(string, x, y, alignFlags, textFlags, DEFAULT_INITIALCOUNT);
 }
 
 void FR_DrawTextFragment(const char* string, int x, int y)
 {
-    FR_DrawTextFragment2(string, x, y, DEFAULT_DRAWFLAGS);
+    FR_DrawTextFragment2(string, x, y, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
-void FR_DrawChar2(unsigned char ch, int x, int y, short flags)
+void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
     bitmapfont_t* cf;
     if(fr.fontIdx == -1)
@@ -838,7 +838,7 @@ void FR_DrawChar2(unsigned char ch, int x, int y, short flags)
         glScalef(1.f / BitmapFont_TextureWidth(cf),
                  1.f / BitmapFont_TextureHeight(cf), 1.f);
     }
-    drawChar(ch, x, y, cf, flags);
+    drawChar(ch, x, y, cf, alignFlags, textFlags);
     if(0 != BitmapFont_GLTextureName(cf))
     {
         glMatrixMode(GL_TEXTURE);
@@ -848,22 +848,23 @@ void FR_DrawChar2(unsigned char ch, int x, int y, short flags)
 
 void FR_DrawChar(unsigned char ch, int x, int y)
 {
-    FR_DrawChar2(ch, x, y, DEFAULT_DRAWFLAGS);
+    FR_DrawChar2(ch, x, y, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
-static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, short flags)
+static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font,
+    int alignFlags, short textFlags)
 {
     float x = (float) posX, y = (float) posY;
     DGLuint tex;
 
-    if(flags & DTF_ALIGN_RIGHT)
+    if(alignFlags & ALIGN_RIGHT)
         x -= BitmapFont_CharWidth(font, ch);
-    else if(!(flags & DTF_ALIGN_LEFT))
+    else if(!(alignFlags & ALIGN_LEFT))
         x -= BitmapFont_CharWidth(font, ch) / 2;
 
-    if(flags & DTF_ALIGN_BOTTOM)
+    if(alignFlags & ALIGN_BOTTOM)
         y -= topToAscent(font) + lineHeight(font, ch);
-    else if(!(flags & DTF_ALIGN_TOP))
+    else if(!(alignFlags & ALIGN_TOP))
         y -= (topToAscent(font) + lineHeight(font, ch))/2;
 
     if(renderWireframe)
@@ -1190,9 +1191,9 @@ static void initDrawTextState(drawtextstate_t* state)
 /**
  * Draw a string of text controlled by parameter blocks.
  */
-void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
-    short flags, float defLeading, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha,
-    float defGlitter, float defShadow, boolean defCase)
+void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int alignFlags,
+    short textFlags, float defLeading, int defTracking, float defRed, float defGreen,
+    float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase)
 {
 #define SMALLBUFF_SIZE          (80)
 #define MAX_FRAGMENTLENGTH      (256)
@@ -1229,7 +1230,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     initDrawTextState(&state);
     // Apply defaults:
     state.font = defFont;
-    state.typeIn = (flags & DTF_NO_TYPEIN) == 0;
+    state.typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
     state.color[CR] = defRed;
     state.color[CG] = defGreen;
     state.color[CB] = defBlue;
@@ -1286,7 +1287,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
         for(end = string; *end && *end != '{';)
         {
             boolean newline = false;
-            short fragmentFlags;
+            int fragmentAlignFlags;
             float alignx = 0;
 
             // Find the end of the next fragment.
@@ -1324,15 +1325,15 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
             // Continue from here.
             string = end;
 
-            if(!(flags & (DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT)))
+            if(!(alignFlags & (ALIGN_LEFT|ALIGN_RIGHT)))
             {
-                fragmentFlags = flags;
+                fragmentAlignFlags = alignFlags;
             }
             else
             {
                 // We'll take care of horizontal positioning of the fragment so align left.
-                fragmentFlags = (flags & ~(DTF_ALIGN_RIGHT)) | DTF_ALIGN_LEFT;
-                if(flags & DTF_ALIGN_RIGHT)
+                fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
+                if(alignFlags & ALIGN_RIGHT)
                     alignx = -FR_TextFragmentWidth(temp) * state.scaleX;
             }
 
@@ -1359,7 +1360,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
 
             // Draw it.
             glColor4fv(state.color);
-            drawTextFragment(temp, 0, 0, fragmentFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
+            drawTextFragment(temp, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
             charCount += strlen(temp);
 
             // Advance the current position?

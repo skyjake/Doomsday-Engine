@@ -663,11 +663,9 @@ extern const mn_rendstate_t* mnRendState;
  * @defgroup menuEffectFlags  Menu Effect Flags
  * @{
  */
-#define DTFTOMEF_SHIFT              (4) // 0x10000 to 0x1
-
-#define MEF_TEXT_TYPEIN             (DTF_NO_TYPEIN  >> DTFTOMEF_SHIFT)
-#define MEF_TEXT_SHADOW             (DTF_NO_SHADOW  >> DTFTOMEF_SHIFT)
-#define MEF_TEXT_GLITTER            (DTF_NO_GLITTER >> DTFTOMEF_SHIFT)
+#define MEF_TEXT_TYPEIN             (DTF_NO_TYPEIN)
+#define MEF_TEXT_SHADOW             (DTF_NO_SHADOW)
+#define MEF_TEXT_GLITTER            (DTF_NO_GLITTER)
 
 #define MEF_EVERYTHING              (MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER)
 /**@}*/
@@ -680,7 +678,7 @@ mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
 
 void MN_DrawText(const char* string, int x, int y);
-void MN_DrawText2(const char* string, int x, int y, short flags);
+void MN_DrawText2(const char* string, int x, int y, int alignFlags, short textFlags);
 
 /**
  * Execute a menu navigation/action command.

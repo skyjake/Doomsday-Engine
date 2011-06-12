@@ -1161,12 +1161,11 @@ static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
     UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
     UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx2(buf, x + 8, y + h / 2, UI_Color(UIC_TITLE), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, x + 8, y + h / 2, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 }
 
 static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
-                         float blockWidth, float blockHeight,
-                         uint width, uint height)
+    float blockWidth, float blockHeight, uint width, uint height)
 {
     int th, w, h, x, y;
     char buf[80];
@@ -1182,28 +1181,25 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     x = theWindow->width  - 10 - w;
     y = theWindow->height - 10 - h;
 
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
-                  UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
 
     x += 8;
     y += 8 + th/2;
 
-    UI_TextOutEx2("Blockmap", x, y, UI_Color(UIC_TITLE), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2("Blockmap", x, y, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     y += th;
 
-    sprintf(buf, "Dimensions:[%u,%u] #%li", width, height,
-            width * (long) height);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    sprintf(buf, "Dimensions:[%u,%u] #%li", width, height, width * (long) height);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     y += th;
 
     sprintf(buf, "Blksize:[%.2f,%.2f]", blockWidth, blockHeight);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     y += th;
 
-    sprintf(buf, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)",
-            minX, minY, maxX, maxY);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, DTF_ALIGN_LEFT|DTF_ONLY_SHADOW);
+    sprintf(buf, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)", minX, minY, maxX, maxY);
+    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     y += th;
 }
 

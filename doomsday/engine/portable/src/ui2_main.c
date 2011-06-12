@@ -409,7 +409,8 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font)
     t->id = id;
     t->flags.looping = false;
     t->animComplete = true;
-    t->textFlags = DTF_ALIGN_TOPLEFT|DTF_ONLY_SHADOW;
+    t->alignFlags = ALIGN_TOPLEFT;
+    t->textFlags = DTF_ONLY_SHADOW;
     objectSetName((fi_object_t*)t, name);
     AnimatorVector4_Init(t->color, 1, 1, 1, 1);
     AnimatorVector3_Init(t->scale, 1, 1, 1);
@@ -1319,7 +1320,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
         if(t->scale[1].value * y + t->pos[1].value >= -t->scale[1].value * t->lineHeight &&
            t->scale[1].value * y + t->pos[1].value < SCREENHEIGHT)
         {
-            FR_DrawChar(ch, (t->textFlags & DTF_ALIGN_LEFT) ? x : x - linew / 2, y);
+            FR_DrawChar(ch, (t->alignFlags & ALIGN_LEFT) ? x : x - linew / 2, y);
             x += FR_CharWidth(ch);
         }
 

@@ -205,12 +205,12 @@ static void drawMessage(void)
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
 
-    FR_DrawText(msgText, x, y, FID(GF_FONTA), DTF_ALIGN_TOP, LEADING, 0, cfg.msgColor[CR], cfg.msgColor[CG], cfg.msgColor[CB], 1, 0, 0, false);
+    FR_DrawText(msgText, x, y, FID(GF_FONTA), ALIGN_TOP, 0, LEADING, 0, cfg.msgColor[CR], cfg.msgColor[CG], cfg.msgColor[CB], 1, 0, 0, false);
     y += FR_TextHeight(msgText, FID(GF_FONTA));
     // An additional blank line between the message and response prompt.
     y += FR_CharHeight('A') * (1+LEADING);
 
-    FR_DrawTextFragment2(questionString, x, y, DTF_ALIGN_TOP);
+    FR_DrawTextFragment2(questionString, x, y, ALIGN_TOP, 0);
     DGL_Disable(DGL_TEXTURE_2D);
 
 #undef LEADING
