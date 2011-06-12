@@ -501,11 +501,12 @@ EXPORTS
     FR_PopAttrib                @514 NONAME
     FR_LoadDefaultAttrib        @515 NONAME
 
-    FR_Tracking                 @123 NONAME
-    FR_SetTracking              @124 NONAME
-    FR_SetShadowOffset          @125 NONAME
-    FR_SetShadowStrength        @198 NONAME
-    FR_ResetTypeInTimer         @131 NONAME
+    FR_Tracking                 @122 NONAME
+    FR_SetTracking              @123 NONAME
+    FR_SetShadowOffset          @124 NONAME
+    FR_SetShadowStrength        @125 NONAME
+    FR_SetGlitterStrength       @131 NONAME
+    FR_ResetTypeInTimer         @198 NONAME
 
 	FR_TextDimensions           @112 NONAME
 	FR_TextWidth                @113 NONAME
@@ -521,7 +522,6 @@ EXPORTS
 	FR_DrawTextFragment         @118 NONAME
 	FR_DrawTextFragment2        @120 NONAME
 	FR_DrawTextFragment3        @121 NONAME
-	FR_DrawTextFragment4        @122 NONAME
 
 	FR_DrawChar                 @202 NONAME
 	FR_DrawChar2                @203 NONAME

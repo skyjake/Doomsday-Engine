@@ -565,17 +565,12 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
     return ((~(cfg.menuEffectFlags << DTFTOMEF_SHIFT) & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void MN_DrawText3(const char* string, int x, int y, short flags, float glitterStrength)
+void MN_DrawText2(const char* string, int x, int y, short flags)
 {
     if(NULL == string || !string[0]) return;
 
     flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment4(string, x, y, flags, 0, glitterStrength);
-}
-
-void MN_DrawText2(const char* string, int x, int y, short flags)
-{
-    MN_DrawText3(string, x, y, flags, rs.textGlitter);
+    FR_DrawTextFragment3(string, x, y, flags, 0);
 }
 
 void MN_DrawText(const char* string, int x, int y)
@@ -610,6 +605,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     FR_LoadDefaultAttrib();
     FR_SetTracking(rs.textTracking);
     FR_SetShadowStrength(rs.textShadow);
+    FR_SetGlitterStrength(rs.textGlitter);
 
     /*if(page->unscaled.numVisObjects)
     {
@@ -1203,6 +1199,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(fontId);
 
     { int width, numVisCharacters;
     if(edit->maxVisibleChars > 0)
@@ -1239,7 +1236,6 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CB] *= light;
 
         DGL_Color4fv(color);
-        FR_SetFont(fontId);
         MN_DrawText2(string, x, y, DTF_ALIGN_TOPLEFT);
     }
 

@@ -1881,7 +1881,7 @@ void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alph
     alpha *= uiAlpha;
     if(alpha <= 0) return;
     UI_SetColorA(color, alpha);
-    FR_DrawTextFragment4(text, x, y, flags, DEFAULT_INITIALCOUNT, DEFAULT_GLITTER_STRENGTH);
+    FR_DrawTextFragment3(text, x, y, flags, DEFAULT_INITIALCOUNT);
 }
 
 void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha)

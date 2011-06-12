@@ -47,6 +47,7 @@ typedef struct fr_state_attributes_s {
     int tracking;
     int shadowOffsetX, shadowOffsetY;
     float shadowStrength;
+    float glitterStrength;
 } fr_state_attributes_t;
 
 typedef struct {
@@ -63,7 +64,7 @@ typedef struct {
     float offX, offY;
     float angle;
     float color[4];
-    float glitter, shadowStrength;
+    float glitterStrength, shadowStrength;
     int shadowOffsetX, shadowOffsetY;
     int tracking;
     float leading;
@@ -428,6 +429,7 @@ void FR_LoadDefaultAttrib(void)
     sat->shadowStrength = DEFAULT_SHADOW_STRENGTH;
     sat->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
     sat->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
+    sat->glitterStrength = DEFAULT_GLITTER_STRENGTH;
 }
 
 void FR_PushAttrib(void)
@@ -486,6 +488,14 @@ void FR_SetShadowStrength(float value)
     if(!inited)
         Con_Error("FR_SetShadowStrength: Font renderer has not yet been initialized.");
     sat->shadowStrength = MINMAX_OF(0, value, 1);
+}
+
+void FR_SetGlitterStrength(float value)
+{
+    fr_state_attributes_t* sat = currentAttributes();
+    if(!inited)
+        Con_Error("FR_SetGlitterStrength: Font renderer has not yet been initialized.");
+    sat->glitterStrength = MINMAX_OF(0, value, 1);
 }
 
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
@@ -602,17 +612,17 @@ int FR_GlyphTopToAscent(const char* text)
 }
 
 static void drawTextFragment(const char* string, int x, int y, short flags,
-    int initialCount, float glitterStrength)
+    int initialCount)
 {
     assert(inited && string && string[0] && fr.fontIdx != -1);
     {
     bitmapfont_t* cf = fonts[fr.fontIdx];
     fr_state_attributes_t* sat = currentAttributes();
     boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
-    boolean noGlitter = (glitterStrength <= 0 || (flags & DTF_NO_GLITTER) != 0);
+    boolean noGlitter = (sat->glitterStrength <= 0 || (flags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (sat->shadowStrength  <= 0 || (flags & DTF_NO_SHADOW)  != 0 ||
                          (BitmapFont_Flags(cf) & BFF_HAS_EMBEDDEDSHADOW)  != 0);
-    float glitter = (noGlitter? 0 : MIN_OF(glitterStrength, 1)), glitterMul;
+    float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
     int w, h, cx, cy, count, yoff;
     float origColor[4], flashColor[3];
@@ -662,7 +672,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
             c = *ch++;
             yoff = 0;
 
-            glitter = (noGlitter? 0 : glitterStrength);
+            glitter = (noGlitter? 0 : sat->glitterStrength);
             glitterMul = 0;
 
             shadow = (noShadow? 0 : sat->shadowStrength);
@@ -787,8 +797,8 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     }
 }
 
-void FR_DrawTextFragment4(const char* string, int x, int y, short flags,
-    int initialCount, float glitterStrength)
+void FR_DrawTextFragment3(const char* string, int x, int y, short flags,
+    int initialCount)
 {
     if(!inited)
         Con_Error("Bitmap font system not yet initialized.");
@@ -806,13 +816,7 @@ void FR_DrawTextFragment4(const char* string, int x, int y, short flags,
 #endif
         return;
     }
-    drawTextFragment(string, x, y, flags, initialCount, glitterStrength);
-}
-
-void FR_DrawTextFragment3(const char* string, int x, int y, short flags,
-    int initialCount)
-{
-    FR_DrawTextFragment4(string, x, y, flags, initialCount, DEFAULT_GLITTER_STRENGTH);
+    drawTextFragment(string, x, y, flags, initialCount);
 }
 
 void FR_DrawTextFragment2(const char* string, int x, int y, short flags)
@@ -1125,7 +1129,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
         else if(!strnicmp((*strPtr), "glitter", 7))
         {
             (*strPtr) += 7;
-            state->glitter = parseFloat(&(*strPtr));
+            state->glitterStrength = parseFloat(&(*strPtr));
         }
         else if(!strnicmp((*strPtr), "shadow", 6))
         {
@@ -1176,7 +1180,7 @@ static void initDrawTextState(drawtextstate_t* state)
     state->offX = state->offY = 0;
     state->angle = 0;
     state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
-    state->glitter = DEFAULT_GLITTER_STRENGTH;
+    state->glitterStrength = DEFAULT_GLITTER_STRENGTH;
     state->shadowStrength = DEFAULT_SHADOW_STRENGTH;
     state->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
     state->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
@@ -1236,7 +1240,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     state.color[CG] = defGreen;
     state.color[CB] = defBlue;
     state.color[CA] = defAlpha;
-    state.glitter = defGlitter;
+    state.glitterStrength = defGlitter;
     state.shadowStrength = defShadow;
     state.tracking = defTracking;
     state.leading = defLeading;
@@ -1248,6 +1252,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
     FR_SetTracking(state.tracking);
     FR_SetShadowOffset(state.shadowOffsetX, state.shadowOffsetY);
     FR_SetShadowStrength(state.shadowStrength);
+    FR_SetGlitterStrength(state.glitterStrength);
     lastLineHeight = FR_CharHeight('A') * state.scaleY;
 
     string = str;
@@ -1260,6 +1265,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
             int lastTracking = state.tracking;
             float lastLeading = state.leading;
             float lastShadowStrength = state.shadowStrength;
+            float lastGlitterStrength = state.glitterStrength;
             int numBreaks = 0;
 
             parseParamaterBlock(&string, &state, &numBreaks);
@@ -1279,6 +1285,8 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
                 FR_SetTracking(state.tracking);
             if(state.shadowStrength != lastShadowStrength)
                 FR_SetShadowStrength(state.shadowStrength);
+            if(state.glitterStrength != lastGlitterStrength)
+                FR_SetGlitterStrength(state.glitterStrength);
         }
 
         for(end = string; *end && *end != '{';)
@@ -1357,7 +1365,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
 
             // Draw it.
             glColor4fv(state.color);
-            FR_DrawTextFragment4(temp, 0, 0, fragmentFlags, state.typeIn ? (int) charCount : 0, state.glitter);
+            FR_DrawTextFragment3(temp, 0, 0, fragmentFlags, state.typeIn ? (int) charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position?
