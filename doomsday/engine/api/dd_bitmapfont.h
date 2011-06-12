@@ -99,12 +99,12 @@ void FR_SetGlitterStrength(float value);
 /**
  * Text: A block of possibly formatted and/or multi-line text.
  */
-void FR_DrawText(const char* string, int x, int y, fontid_t defFont, int defAlignFlags, short defFlags, float defLeading, int defTracking, float defGlitter, float defShadow, boolean defCase);
+void FR_DrawText(const char* string, int x, int y, int defAlignFlags, short defFlags, boolean defCase);
 
 // Utility routines:
-void FR_TextDimensions(int* width, int* height, const char* string, fontid_t defFont);
-int FR_TextWidth(const char* string, fontid_t defFont);
-int FR_TextHeight(const char* string, fontid_t defFont);
+void FR_TextDimensions(int* width, int* height, const char* string);
+int FR_TextWidth(const char* string);
+int FR_TextHeight(const char* string);
 
 /**
  * Text fragments: A single line of unformatted text.

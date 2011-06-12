@@ -653,7 +653,6 @@ typedef struct mn_rendstate_s {
     float pageAlpha;
     float textGlitter;
     float textShadow;
-    int textTracking;
     float textColors[MENU_COLOR_COUNT][4];
     fontid_t textFonts[MENU_FONT_COUNT];
 } mn_rendstate_t;

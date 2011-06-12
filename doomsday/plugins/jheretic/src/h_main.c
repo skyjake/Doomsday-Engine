@@ -248,6 +248,9 @@ void H_PreInit(void)
     cfg.menuTextColors[2][0] = defFontRGB3[0];
     cfg.menuTextColors[2][1] = defFontRGB3[1];
     cfg.menuTextColors[2][2] = defFontRGB3[2];
+    cfg.menuTextColors[3][0] = defFontRGB3[0];
+    cfg.menuTextColors[3][1] = defFontRGB3[1];
+    cfg.menuTextColors[3][2] = defFontRGB3[2];
     cfg.menuSlam = true;
     cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestName = true;

@@ -3132,7 +3132,8 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText(text, 0, 0, obj->fontId, ALIGN_BOTTOMLEFT, 0, .5f, 0, 0, 0, false);
+    FR_SetFont(obj->fontId);
+    FR_DrawText(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS, false);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -3153,7 +3154,8 @@ void MapName_UpdateDimensions(uiwidget_t* obj)
     if(NULL == text)
         return;
 
-    FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, text, obj->fontId);
+    FR_SetFont(obj->fontId);
+    FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, text);
     obj->dimensions.width  *= scale;
     obj->dimensions.height *= scale;
     }

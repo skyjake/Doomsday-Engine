@@ -589,7 +589,6 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     rs.pageAlpha = alpha;
     rs.textGlitter = cfg.menuTextGlitter;
     rs.textShadow = cfg.menuShadow;
-    rs.textTracking = 0;
     for(i = 0; i < MENU_FONT_COUNT; ++i)
     {
         rs.textFonts[i] = MNPage_PredefinedFont(page, i);
@@ -601,7 +600,6 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     }
     FR_SetFont(rs.textFonts[0]);
     FR_LoadDefaultAttrib();
-    FR_SetTracking(rs.textTracking);
     FR_SetShadowStrength(rs.textShadow);
     FR_SetGlitterStrength(rs.textGlitter);
 

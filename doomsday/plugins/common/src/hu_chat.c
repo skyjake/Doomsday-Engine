@@ -373,7 +373,7 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     FR_SetFont(obj->fontId);
-    textWidth = FR_TextWidth(text, obj->fontId);
+    textWidth = FR_TextWidth(text);
     cursorWidth = FR_CharWidth('_');
 
     if(cfg.msgAlign == 0)
@@ -385,7 +385,7 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
-    FR_DrawText(text, xOffset, 0, obj->fontId, alignFlags, textFlags, .5f, 0, 0, 0, false);
+    FR_DrawText(text, xOffset, 0, alignFlags, textFlags, false);
     if(actualMapTime & 12)
     {
         FR_DrawChar('_', xOffset + textWidth, 0);
@@ -409,8 +409,8 @@ void UIChat_UpdateDimensions(uiwidget_t* obj)
         return;
 
     FR_SetFont(obj->fontId);
-    obj->dimensions.width  = cfg.msgScale * (FR_TextWidth(text, obj->fontId) + FR_CharWidth('_'));
-    obj->dimensions.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text, obj->fontId), FR_CharHeight('_')));
+    obj->dimensions.width  = cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_'));
+    obj->dimensions.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_')));
     }
 }
 

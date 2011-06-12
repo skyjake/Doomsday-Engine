@@ -423,7 +423,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
         }
 
         DGL_Color4f(col[CR], col[CG], col[CB], col[CA]);
-        FR_DrawText(msg->text, 0, y, obj->fontId, alignFlags, textFlags, .5f, 0, 0, 0, false);
+        FR_DrawText(msg->text, 0, y, alignFlags, textFlags, false);
 
         ++drawnMsgCount;
         y += lineHeight;
@@ -517,7 +517,7 @@ void UILog_UpdateDimensions(uiwidget_t* obj)
 
         ++drawnMsgCount;
 
-        FR_TextDimensions(&lineWidth, NULL, msg->text, FID(GF_FONTA));
+        FR_TextDimensions(&lineWidth, NULL, msg->text);
         if(lineWidth > obj->dimensions.width)
         {
             obj->dimensions.width = lineWidth;

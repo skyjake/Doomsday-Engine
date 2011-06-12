@@ -34,7 +34,7 @@
 #define DEFAULT_LEADING             (.5)
 #define DEFAULT_TRACKING            (0)
 #define DEFAULT_INITIALCOUNT        (0) /// Used for animating type-in effects.
-#define DEFAULT_GLITTER_STRENGTH    (0)
+#define DEFAULT_GLITTER_STRENGTH    (.5)
 #define DEFAULT_SHADOW_STRENGTH     (.5)
 #define DEFAULT_SHADOW_XOFFSET      (2)
 #define DEFAULT_SHADOW_YOFFSET      (2)

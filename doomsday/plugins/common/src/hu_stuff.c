@@ -1213,7 +1213,12 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
     {
         // Use the replacement string.
         DGL_Color4f(r, g, b, a);
-        FR_DrawText(replacement, x, y, fontId, alignFlags, textFlags, .5f, 0, glitter, shadow, false);
+        FR_SetFont(fontId);
+        FR_SetLeading(.5f);
+        FR_SetTracking(0);
+        FR_SetGlitterStrength(glitter);
+        FR_SetShadowStrength(shadow);
+        FR_DrawText(replacement, x, y, alignFlags, textFlags, false);
         return;
     }
 
@@ -1581,7 +1586,7 @@ static void drawMapTitle(void)
 
     FR_LoadDefaultAttrib();
 
-    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, 0, FID(GF_FONTB), 1, 1, 1, alpha);
+    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW, FID(GF_FONTB), 1, 1, 1, alpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
 

@@ -1189,15 +1189,16 @@ static void initDrawTextState(drawtextstate_t* state)
     fr_state_attributes_t* sat = currentAttributes();
     state->font = BitmapFont_Id(fonts[fr.fontIdx]);
     glGetFloatv(GL_CURRENT_COLOR, state->color);
-    state->tracking = DEFAULT_TRACKING;
+    state->tracking = sat->tracking;
+    state->glitterStrength = sat->glitterStrength;
+    state->shadowStrength = sat->shadowStrength;
+    state->shadowOffsetX = sat->shadowOffsetX;
+    state->shadowOffsetY = sat->shadowOffsetY;
+    state->leading = sat->leading;
+
     state->scaleX = state->scaleY = 1;
     state->offX = state->offY = 0;
     state->angle = 0;
-    state->glitterStrength = DEFAULT_GLITTER_STRENGTH;
-    state->shadowStrength = DEFAULT_SHADOW_STRENGTH;
-    state->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
-    state->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
-    state->leading = DEFAULT_LEADING;
     state->typeIn = true;
     state->caseScale = false;
     state->caseMod[0].scale = 1;
@@ -1209,8 +1210,8 @@ static void initDrawTextState(drawtextstate_t* state)
 /**
  * Draw a string of text controlled by parameter blocks.
  */
-void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int alignFlags,
-    short textFlags, float defLeading, int defTracking, float defGlitter, float defShadow, boolean defCase)
+void FR_DrawText(const char* inString, int x, int y, int alignFlags,
+    short textFlags, boolean defCase)
 {
 #define SMALLBUFF_SIZE          (80)
 #define MAX_FRAGMENTLENGTH      (256)
@@ -1218,12 +1219,12 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char temp[MAX_FRAGMENTLENGTH+1], *str, *string, *end;
+    fontid_t origFont = FR_GetCurrentId();
     float origColor[4];
     drawtextstate_t state;
     size_t charCount = 0;
     int curCase = -1, lastLineHeight;
     size_t len;
-    fontid_t oldFont = FR_GetCurrentId();
 
     if(!inString || !inString[0])
         return;
@@ -1248,24 +1249,12 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
     initDrawTextState(&state);
     memcpy(origColor, state.color, sizeof(origColor));
     // Apply defaults:
-    state.font = defFont;
     state.typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
-    state.glitterStrength = defGlitter;
-    state.shadowStrength = defShadow;
-    state.tracking = defTracking;
-    state.leading = defLeading;
     state.caseScale = defCase;
 
-    FR_SetFont(state.font);
     FR_PushAttrib();
-    FR_LoadDefaultAttrib();
-    FR_SetTracking(state.tracking);
-    FR_SetLeading(state.leading);
-    FR_SetShadowOffset(state.shadowOffsetX, state.shadowOffsetY);
-    FR_SetShadowStrength(state.shadowStrength);
-    FR_SetGlitterStrength(state.glitterStrength);
-    lastLineHeight = FR_CharHeight('A') * state.scaleY;
 
+    lastLineHeight = FR_CharHeight('A') * state.scaleY;
     string = str;
     while(*string)
     {
@@ -1405,27 +1394,28 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
         free(bigBuff);
 
     FR_PopAttrib();
+    FR_SetFont(origFont);
     glColor4fv(origColor);
 
 #undef MAX_FRAGMENTLENGTH
 #undef SMALLBUFF_SIZE
 }
 
-void FR_TextDimensions(int* width, int* height, const char* string, fontid_t fontId)
+void FR_TextDimensions(int* width, int* height, const char* string)
 {
     if(!width && !height)
         return;
     if(width)
-        *width = FR_TextWidth(string, fontId);
+        *width = FR_TextWidth(string);
     if(height)
-        *height = FR_TextHeight(string, fontId);
+        *height = FR_TextHeight(string);
 }
 
 /**
  * Find the visible width of the whole formatted text block.
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
-int FR_TextWidth(const char* string, fontid_t fontId)
+int FR_TextWidth(const char* string)
 {
     fontid_t oldFontId = FR_GetCurrentId();
     int w, maxWidth = -1;
@@ -1436,7 +1426,6 @@ int FR_TextWidth(const char* string, fontid_t fontId)
     if(!string || !string[0])
         return 0;
 
-    FR_SetFont(fontId);
     w = 0;
     len = strlen(string);
     ch = string;
@@ -1475,7 +1464,7 @@ int FR_TextWidth(const char* string, fontid_t fontId)
  * Find the visible height of the whole formatted text block.
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
-int FR_TextHeight(const char* string, fontid_t fontId)
+int FR_TextHeight(const char* string)
 {
     fontid_t oldFontId = FR_GetCurrentId();
     int h, currentLineHeight;
@@ -1486,7 +1475,6 @@ int FR_TextHeight(const char* string, fontid_t fontId)
     if(!string || !string[0])
         return 0;
     
-    FR_SetFont(fontId);
     currentLineHeight = 0;
     len = strlen(string);
     h = 0;

@@ -190,6 +190,7 @@ static void drawMessage(void)
 {
 #define LEADING             (0)
 
+    short textFlags = MN_MergeMenuEffectWithDrawTextFlags(0);
     int x = SCREENWIDTH/2, y = SCREENHEIGHT/2;
     const char* questionString;
 
@@ -202,16 +203,19 @@ static void drawMessage(void)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
+    FR_SetLeading(LEADING);
+    FR_SetShadowStrength(cfg.menuTextGlitter);
+    FR_SetGlitterStrength(cfg.menuShadow);
 
-    DGL_Color4f(cfg.msgColor[CR], cfg.msgColor[CG], cfg.msgColor[CB], 1);
-    FR_DrawText(msgText, x, y, FID(GF_FONTA), ALIGN_TOP, 0, LEADING, 0, 0, 0, false);
-    y += FR_TextHeight(msgText, FID(GF_FONTA));
+    FR_DrawText(msgText, x, y, ALIGN_TOP, textFlags, false);
+    y += FR_TextHeight(msgText);
     // An additional blank line between the message and response prompt.
     y += FR_CharHeight('A') * (1+LEADING);
 
-    FR_DrawTextFragment2(questionString, x, y, ALIGN_TOP, 0);
+    FR_DrawTextFragment2(questionString, x, y, ALIGN_TOP, textFlags);
     DGL_Disable(DGL_TEXTURE_2D);
 
 #undef LEADING
@@ -229,11 +233,10 @@ void Hu_MsgDrawer(void)
     GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
     GL_BeginBorderedProjection(&bp);
 
-    // Scale by the hudScale.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     drawMessage();
