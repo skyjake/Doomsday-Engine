@@ -31,21 +31,14 @@
 
 #include "bitmapfont.h"
 
-#define DEFAULT_LEADING             (.5)
-#define DEFAULT_TRACKING            (0)
 #define DEFAULT_INITIALCOUNT        (0) /// Used for animating type-in effects.
-#define DEFAULT_GLITTER_STRENGTH    (.5)
-#define DEFAULT_SHADOW_STRENGTH     (.5)
-#define DEFAULT_SHADOW_XOFFSET      (2)
-#define DEFAULT_SHADOW_YOFFSET      (2)
-#define DEFAULT_CASE_SCALE          (false)
 
 #define DEFAULT_ALIGNFLAGS          (ALIGN_TOPLEFT)
 #define DEFAULT_DRAWFLAGS           (DTF_NO_EFFECTS)
 
 /**
  * Initialize the font renderer.
- * @return  @c 0, iff there are no errors.
+ * @return  @c 0 iff there are no errors.
  */
 int FR_Init(void);
 void FR_Shutdown(void);

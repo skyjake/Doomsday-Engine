@@ -29,9 +29,40 @@
 #ifndef LIBDENG_API_FONT_RENDERER_H
 #define LIBDENG_API_FONT_RENDERER_H
 
-#include "dd_uri.h"
-
+/**
+ * Unique identifier allocated by this subsystem and associated to each
+ * known font. Used as a logical public reference/handle to a font.
+ */
 typedef uint32_t fontid_t;
+
+/**
+ * Font attributes are managed as a finite stack of attribute sets.
+ * This value defines the maximum allowed depth of the attribute stack.
+ */
+#define FR_MAX_ATTRIB_STACK_DEPTH       (4)
+
+/**
+ * Font attribute defaults. Used with FR_LoadDefaultAttrib.
+ */
+#define FR_DEF_ATTRIB_LEADING           (.5)
+#define FR_DEF_ATTRIB_TRACKING          (0)
+#define FR_DEF_ATTRIB_GLITTER_STRENGTH  (.5)
+#define FR_DEF_ATTRIB_SHADOW_STRENGTH   (.5)
+#define FR_DEF_ATTRIB_SHADOW_XOFFSET    (2)
+#define FR_DEF_ATTRIB_SHADOW_YOFFSET    (2)
+#define FR_DEF_ATTRIB_CASE_SCALE        (false)
+
+/**
+ * @defGroup drawTextFlags  Draw Text Flags
+ */
+/*@{*/
+#define DTF_NO_TYPEIN                   (0x0001)
+#define DTF_NO_SHADOW                   (0x0002)
+#define DTF_NO_GLITTER                  (0x0004)
+
+#define DTF_NO_EFFECTS                  (DTF_NO_TYPEIN|DTF_NO_SHADOW|DTF_NO_GLITTER)
+#define DTF_ONLY_SHADOW                 (DTF_NO_TYPEIN|DTF_NO_GLITTER)
+/*@}*/
 
 /**
  * Find the associated font for @a name.
@@ -40,22 +71,6 @@ typedef uint32_t fontid_t;
  * @return  Unique id of the found font.
  */
 fontid_t FR_FindFontForName(const char* name);
-
-void FR_ResetTypeInTimer(void);
-
-/**
- * @defGroup drawTextFlags Draw Text Flags
- */
-/*@{*/
-#define DTF_NO_TYPEIN           0x0001
-#define DTF_NO_SHADOW           0x0002
-#define DTF_NO_GLITTER          0x0004
-
-#define DTF_NO_EFFECTS          (DTF_NO_TYPEIN|DTF_NO_SHADOW|DTF_NO_GLITTER)
-#define DTF_ONLY_SHADOW         (DTF_NO_TYPEIN|DTF_NO_GLITTER)
-/*@}*/
-
-#define FR_MAX_ATTRIB_STACK_DEPTH   (4)
 
 /// @return  Unique identifier associated with the current font.
 fontid_t FR_Font(void);
@@ -72,32 +87,32 @@ void FR_PopAttrib(void);
 /// Load the default attributes at the current stack depth.
 void FR_LoadDefaultAttrib(void);
 
-/// @return  Current leading.
+/// @return  Current leading (attribute).
 float FR_Leading(void);
 
 void FR_SetLeading(float value);
 
-/// @return  Current tracking.
+/// @return  Current tracking (attribute).
 int FR_Tracking(void);
 
 void FR_SetTracking(int value);
 
-/// Retrieve the current shadow offset.
+/// Retrieve the current shadow offset (attribute).
 void FR_ShadowOffset(int* offsetX, int* offsetY);
 
 void FR_SetShadowOffset(int offsetX, int offsetY);
 
-/// @return  Current shadow strength.
+/// @return  Current shadow strength (attribute).
 float FR_ShadowStrength(void);
 
 void FR_SetShadowStrength(float value);
 
-/// @return  Current glitter strength.
+/// @return  Current glitter strength (attribute).
 float FR_GlitterStrength(void);
 
 void FR_SetGlitterStrength(float value);
 
-/// @return  Current case scale.
+/// @return  Current case scale (attribute).
 boolean FR_CaseScale(void);
 
 void FR_SetCaseScale(boolean value);
@@ -133,5 +148,8 @@ void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short flags);
 void FR_CharDimensions(int* width, int* height, unsigned char ch);
 int FR_CharWidth(unsigned char ch);
 int FR_CharHeight(unsigned char ch);
+
+/// \deprecated Will be replaced with per-text-object animations.
+void FR_ResetTypeInTimer(void);
 
 #endif /* LIBDENG_API_FONT_RENDERER_H */

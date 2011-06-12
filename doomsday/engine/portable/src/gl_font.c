@@ -419,13 +419,13 @@ void FR_LoadDefaultAttrib(void)
     fr_state_attributes_t* sat = currentAttributes();
     if(!inited)
         Con_Error("FR_LoadDefaultAttrib: Font renderer has not yet been initialized.");
-    sat->leading = DEFAULT_LEADING;
-    sat->tracking = DEFAULT_TRACKING;
-    sat->shadowStrength = DEFAULT_SHADOW_STRENGTH;
-    sat->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
-    sat->shadowOffsetY = DEFAULT_SHADOW_YOFFSET;
-    sat->glitterStrength = DEFAULT_GLITTER_STRENGTH;
-    sat->caseScale = DEFAULT_CASE_SCALE;
+    sat->leading         = FR_DEF_ATTRIB_LEADING;
+    sat->tracking        = FR_DEF_ATTRIB_TRACKING;
+    sat->shadowStrength  = FR_DEF_ATTRIB_SHADOW_STRENGTH;
+    sat->shadowOffsetX   = FR_DEF_ATTRIB_SHADOW_XOFFSET;
+    sat->shadowOffsetY   = FR_DEF_ATTRIB_SHADOW_YOFFSET;
+    sat->glitterStrength = FR_DEF_ATTRIB_GLITTER_STRENGTH;
+    sat->caseScale       = FR_DEF_ATTRIB_CASE_SCALE;
 }
 
 void FR_PushAttrib(void)
