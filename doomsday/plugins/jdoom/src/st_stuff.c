@@ -1481,7 +1481,7 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Translatef(0, yOffset, 0);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1578,10 +1578,10 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x + offset, loc->y + offset, ALIGN_TOPLEFT, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+    WI_DrawPatch4(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x + offset, loc->y + offset, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
     if(kslt->patchId2 != 0)
     {
-        WI_DrawPatch4(kslt->patchId2, Hu_ChoosePatchReplacement(kslt->patchId2), loc->x - offset, loc->y - offset, ALIGN_TOPLEFT, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        WI_DrawPatch4(kslt->patchId2, Hu_ChoosePatchReplacement(kslt->patchId2), loc->x - offset, loc->y - offset, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1714,7 +1714,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    WI_DrawPatch4(wpns->patchId, Hu_ChoosePatchReplacement(wpns->patchId), element->x, element->y, ALIGN_TOPLEFT, 0, 0, 1, 1, 1, textAlpha);
+    WI_DrawPatch4(wpns->patchId, Hu_ChoosePatchReplacement(wpns->patchId), element->x, element->y, ALIGN_TOPLEFT, 0, 0, 0, 1, 1, 1, textAlpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2842,7 +2842,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(scale, scale, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch4(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, obj->fontId, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    WI_DrawPatch4(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, 0, obj->fontId, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

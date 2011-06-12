@@ -152,6 +152,7 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId);
  * @param y  Y-offset to the draw origin.
  * @param alignFlags  @see alignmentFlags
  * @param patchFlags  @see drawPatchFlags
+ * @param textFlags  @see drawTextFlags
  * @param fontId  Used with patch replacement; default font.
  * @param r  Used with patch replacement; default text color red color component.
  * @param g  Used with patch replacement; default text color green color component.
@@ -160,10 +161,10 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId);
  * @param glitter  Used with patch replacement; default text glitter strength.
  * @param shadow  Used with patch replacement; default text shadow strength.
  */
-void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow);
-void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, fontid_t fontId, float r, float g, float b, float a);
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, fontid_t fontId);
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags);
+void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow);
+void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a);
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId);
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
 void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y);
 
 /**

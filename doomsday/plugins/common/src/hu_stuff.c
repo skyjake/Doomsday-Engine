@@ -1206,21 +1206,12 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId)
 }
 
 void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, fontid_t fontId, float r, float g, float b, float a, float glitter,
-    float shadow)
+    int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a,
+    float glitter, float shadow)
 {
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
-        short textFlags = 0;
-        /**
-         * \kludge
-         * Correct behavior is no-merge but due to the way the state for this is
-         * managed it means the menu strings do not have text effects applied
-         * when they should. This should be addressed by redesigning the API for
-         * patch replacement.
-         */
-        MN_MergeMenuEffectWithDrawTextFlags(textFlags);
         FR_DrawText(replacement, x, y, fontId, alignFlags, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
         return;
     }
@@ -1234,26 +1225,26 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
 }
 
 void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, fontid_t fontId, float r, float g, float b, float a)
+    int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a)
 {
-    WI_DrawPatch5(patchId, replacement, x, y, alignFlags, patchFlags, fontId, r, g, b, a, 0, 0);
+    WI_DrawPatch5(patchId, replacement, x, y, alignFlags, patchFlags, textFlags, fontId, r, g, b, a, 0, 0);
 }
 
 void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, fontid_t fontId)
+    int patchFlags, short textFlags, fontid_t fontId)
 {
-    WI_DrawPatch4(patchId, replacement, x, y, alignFlags, patchFlags, fontId, 1, 1, 1, 1);
+    WI_DrawPatch4(patchId, replacement, x, y, alignFlags, patchFlags, textFlags, fontId, 1, 1, 1, 1);
 }
 
 void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags)
+    int patchFlags, short textFlags)
 {
-    WI_DrawPatch3(patchId, replacement, x, y, alignFlags, patchFlags, FID(GF_FONTB));
+    WI_DrawPatch3(patchId, replacement, x, y, alignFlags, patchFlags, textFlags, FID(GF_FONTB));
 }
 
 void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y)
 {
-    WI_DrawPatch2(patchId, replacement, x, y, ALIGN_TOPLEFT, 0);
+    WI_DrawPatch2(patchId, replacement, x, y, ALIGN_TOPLEFT, 0, 0);
 }
 
 /**
@@ -1522,7 +1513,7 @@ void Hu_Drawer(void)
 
         DGL_Enable(DGL_TEXTURE_2D);
 
-        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, FID(GF_FONTB));
+        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1589,7 +1580,7 @@ static void drawMapTitle(void)
 
     FR_LoadDefaultAttrib();
 
-    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, FID(GF_FONTB), 1, 1, 1, alpha);
+    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, 0, FID(GF_FONTB), 1, 1, 1, alpha);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
