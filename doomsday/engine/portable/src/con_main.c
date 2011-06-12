@@ -2333,7 +2333,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "default"))
     {
-        fontid_t newFont = FR_SafeFontIdForName(GL_ChooseFixedFont());
+        fontid_t newFont = FR_FindFontForName(GL_ChooseFixedFont());
         if(0 != newFont)
         {
             Con_SetFont(newFont);
@@ -2344,7 +2344,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "name") && argc == 3)
     {
-        fontid_t newFont = FR_SafeFontIdForName(argv[2]);
+        fontid_t newFont = FR_FindFontForName(argv[2]);
         if(0 != newFont)
         {
             Con_SetFont(newFont);

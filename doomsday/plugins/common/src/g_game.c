@@ -797,6 +797,18 @@ void R_LoadVectorGraphics(void)
     R_NewVectorGraphic(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
 }
 
+/**
+ * @param name  Name of the font to lookup.
+ * @return  Unique id of the found font.
+ */
+fontid_t R_MustFindFontForName(const char* name)
+{
+    fontid_t id = FR_FindFontForName(name);
+    if(id == 0)
+        Con_Error("Failed loading font \"%s\".", name);
+    return id;
+}
+
 void R_InitRefresh(void)
 {
     VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
@@ -816,17 +828,17 @@ void R_InitRefresh(void)
     }
 
     // Locate our fonts.
-    fonts[GF_FONTA]   = FR_FontIdForName("a");
-    fonts[GF_FONTB]   = FR_FontIdForName("b");
-    fonts[GF_STATUS]  = FR_FontIdForName("status");
+    fonts[GF_FONTA]   = R_MustFindFontForName("a");
+    fonts[GF_FONTB]   = R_MustFindFontForName("b");
+    fonts[GF_STATUS]  = R_MustFindFontForName("status");
 #if __JDOOM__
-    fonts[GF_INDEX]   = FR_FontIdForName("index");
+    fonts[GF_INDEX]   = R_MustFindFontForName("index");
 #endif
 #if __JDOOM__ || __JDOOM64__
-    fonts[GF_SMALL]   = FR_FontIdForName("small");
+    fonts[GF_SMALL]   = R_MustFindFontForName("small");
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    fonts[GF_SMALLIN] = FR_FontIdForName("smallin");
+    fonts[GF_SMALLIN] = R_MustFindFontForName("smallin");
 #endif
 
     { float mul = 1.4f;

@@ -34,22 +34,12 @@
 typedef uint32_t fontid_t;
 
 /**
- * Find the associated id for a font named @a name, if it cannot be found
- * a fatal error is produced.
+ * Find the associated font for @a name.
  *
- * @param name          Name of the font to look up.
+ * @param name  Name of the font to lookup.
  * @return  Unique id of the found font.
  */
-fontid_t FR_FontIdForName(const char* name);
-
-/**
- * Same as FR_SafeFontIdForName except does not produce a fatal error if the
- * specified font is not found.
- *
- * @param name          Name of the font to look up.
- * @return  Unique id of the font if found else @c 0
- */
-fontid_t FR_SafeFontIdForName(const char* name);
+fontid_t FR_FindFontForName(const char* name);
 
 void FR_ResetTypeInTimer(void);
 

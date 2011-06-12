@@ -259,7 +259,7 @@ fontid_t FR_CreateFontFromDef(ded_compositefont_t* def)
         Con_Error("FR_CreateFontFromDef: A valid name is required (not NULL or zero-length).");
 
     // Already a font by this name?
-    if(0 != (id = FR_SafeFontIdForName(def->id)))
+    if(0 != (id = FR_FindFontForName(def->id)))
     {
         Con_Error("FR_CreateFontFromDef: Failed to create font '%s', name already in use.");
         return 0; // Unreachable.
@@ -371,7 +371,7 @@ bitmapfont_t* FR_BitmapFontForId(fontid_t id)
     return 0;
 }
 
-fontid_t FR_SafeFontIdForName(const char* name)
+fontid_t FR_FindFontForName(const char* name)
 {
     if(!inited)
     {
@@ -381,14 +381,6 @@ fontid_t FR_SafeFontIdForName(const char* name)
         return 0;
     }
     return findFontIdForName(name);
-}
-
-fontid_t FR_FontIdForName(const char* name)
-{
-    fontid_t id = FR_SafeFontIdForName(name);
-    if(id == 0)
-        Con_Error("Failed loading font \"%s\".", name);
-    return id;
 }
 
 int FR_GetFontIdx(fontid_t id)
@@ -1161,7 +1153,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
             if(!strnicmp((*strPtr), "font", 4))
             {
                 (*strPtr) += 4;
-                if((fontId = FR_SafeFontIdForName(*strPtr)))
+                if((fontId = FR_FindFontForName(*strPtr)))
                 {
                     (*strPtr) += Str_Length(BitmapFont_Name(FR_BitmapFontForId(fontId)));
                     state->font = fontId;

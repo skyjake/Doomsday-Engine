@@ -982,7 +982,7 @@ void Def_Read(void)
     for(i = defs.count.compositeFonts.num; i-- > 0; )
     {
         ded_compositefont_t* cfont = defs.compositeFonts + i;
-        if(0 != FR_SafeFontIdForName(cfont->id))
+        if(0 != FR_FindFontForName(cfont->id))
             continue;
         FR_CreateFontFromDef(cfont);
     }
