@@ -23,11 +23,11 @@
  */
 
 /**
- * Font Renderer.
+ * Font Management.
  */
 
-#ifndef LIBDENG_GL_FONT_RENDERER_H
-#define LIBDENG_GL_FONT_RENDERER_H
+#ifndef LIBDENG_GL_FONT_H
+#define LIBDENG_GL_FONT_H
 
 #include "bitmapfont.h"
 
@@ -75,4 +75,4 @@ int FR_GlyphTopToAscent(const char* text);
 
 ddstring_t** FR_CollectFontNames(int* count);
 
-#endif /* LIBDENG_GL_FONT_RENDERER_H */
+#endif /* LIBDENG_GL_FONT_H */

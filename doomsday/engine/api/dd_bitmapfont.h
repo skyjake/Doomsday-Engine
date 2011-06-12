@@ -23,11 +23,11 @@
  */
 
 /**
- * Bitmap Fonts.
+ * Font Renderer.
  */
 
-#ifndef LIBDENG_API_BITMAPFONT_H
-#define LIBDENG_API_BITMAPFONT_H
+#ifndef LIBDENG_API_FONT_RENDERER_H
+#define LIBDENG_API_FONT_RENDERER_H
 
 #include "dd_uri.h"
 
@@ -128,4 +128,4 @@ void FR_CharDimensions(int* width, int* height, unsigned char ch);
 int FR_CharWidth(unsigned char ch);
 int FR_CharHeight(unsigned char ch);
 
-#endif /* LIBDENG_API_BITMAPFONT_H */
+#endif /* LIBDENG_API_FONT_RENDERER_H */
