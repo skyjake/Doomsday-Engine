@@ -797,8 +797,7 @@ static void drawTextFragment(const char* string, int x, int y, short flags,
     }
 }
 
-void FR_DrawTextFragment3(const char* string, int x, int y, short flags,
-    int initialCount)
+void FR_DrawTextFragment2(const char* string, int x, int y, short flags)
 {
     if(!inited)
         Con_Error("Bitmap font system not yet initialized.");
@@ -816,12 +815,7 @@ void FR_DrawTextFragment3(const char* string, int x, int y, short flags,
 #endif
         return;
     }
-    drawTextFragment(string, x, y, flags, initialCount);
-}
-
-void FR_DrawTextFragment2(const char* string, int x, int y, short flags)
-{
-    FR_DrawTextFragment3(string, x, y, flags, DEFAULT_INITIALCOUNT);
+    drawTextFragment(string, x, y, flags, DEFAULT_INITIALCOUNT);
 }
 
 void FR_DrawTextFragment(const char* string, int x, int y)
@@ -1365,7 +1359,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont,
 
             // Draw it.
             glColor4fv(state.color);
-            FR_DrawTextFragment3(temp, 0, 0, fragmentFlags, state.typeIn ? (int) charCount : 0);
+            drawTextFragment(temp, 0, 0, fragmentFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
             charCount += strlen(temp);
 
             // Advance the current position?

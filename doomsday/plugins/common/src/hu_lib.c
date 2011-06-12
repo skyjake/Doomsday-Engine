@@ -570,7 +570,7 @@ void MN_DrawText2(const char* string, int x, int y, short flags)
     if(NULL == string || !string[0]) return;
 
     flags = MN_MergeMenuEffectWithDrawTextFlags(flags);
-    FR_DrawTextFragment3(string, x, y, flags, 0);
+    FR_DrawTextFragment2(string, x, y, flags);
 }
 
 void MN_DrawText(const char* string, int x, int y)
