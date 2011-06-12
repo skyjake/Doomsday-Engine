@@ -59,8 +59,8 @@ void FR_ResetTypeInTimer(void);
 /*@{*/
 #define DTF_ALIGN_LEFT          0x0001
 #define DTF_ALIGN_RIGHT         0x0002
-#define DTF_ALIGN_BOTTOM        0x0004
-#define DTF_ALIGN_TOP           0x0008
+#define DTF_ALIGN_TOP           0x0004
+#define DTF_ALIGN_BOTTOM        0x0008
 #define DTF_NO_TYPEIN           0x0010
 #define DTF_NO_SHADOW           0x0020
 #define DTF_NO_GLITTER          0x0040
