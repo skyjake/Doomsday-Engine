@@ -422,8 +422,8 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
             }
         }
 
-        FR_DrawText(msg->text, 0, y, obj->fontId, alignFlags, textFlags, .5f, 0,
-            col[CR], col[CG], col[CB], col[CA], 0, 0, false);
+        DGL_Color4f(col[CR], col[CG], col[CB], col[CA]);
+        FR_DrawText(msg->text, 0, y, obj->fontId, alignFlags, textFlags, .5f, 0, 0, 0, false);
 
         ++drawnMsgCount;
         y += lineHeight;

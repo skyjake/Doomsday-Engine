@@ -1212,7 +1212,8 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
-        FR_DrawText(replacement, x, y, fontId, alignFlags, textFlags, .5f, 0, r, g, b, a, glitter, shadow, false);
+        DGL_Color4f(r, g, b, a);
+        FR_DrawText(replacement, x, y, fontId, alignFlags, textFlags, .5f, 0, glitter, shadow, false);
         return;
     }
 

@@ -1188,11 +1188,11 @@ static void initDrawTextState(drawtextstate_t* state)
 {
     fr_state_attributes_t* sat = currentAttributes();
     state->font = BitmapFont_Id(fonts[fr.fontIdx]);
+    glGetFloatv(GL_CURRENT_COLOR, state->color);
     state->tracking = DEFAULT_TRACKING;
     state->scaleX = state->scaleY = 1;
     state->offX = state->offY = 0;
     state->angle = 0;
-    state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
     state->glitterStrength = DEFAULT_GLITTER_STRENGTH;
     state->shadowStrength = DEFAULT_SHADOW_STRENGTH;
     state->shadowOffsetX = DEFAULT_SHADOW_XOFFSET;
@@ -1210,8 +1210,7 @@ static void initDrawTextState(drawtextstate_t* state)
  * Draw a string of text controlled by parameter blocks.
  */
 void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int alignFlags,
-    short textFlags, float defLeading, int defTracking, float defRed, float defGreen,
-    float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase)
+    short textFlags, float defLeading, int defTracking, float defGlitter, float defShadow, boolean defCase)
 {
 #define SMALLBUFF_SIZE          (80)
 #define MAX_FRAGMENTLENGTH      (256)
@@ -1219,6 +1218,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char temp[MAX_FRAGMENTLENGTH+1], *str, *string, *end;
+    float origColor[4];
     drawtextstate_t state;
     size_t charCount = 0;
     int curCase = -1, lastLineHeight;
@@ -1246,13 +1246,10 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
     }
 
     initDrawTextState(&state);
+    memcpy(origColor, state.color, sizeof(origColor));
     // Apply defaults:
     state.font = defFont;
     state.typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
-    state.color[CR] = defRed;
-    state.color[CG] = defGreen;
-    state.color[CB] = defBlue;
-    state.color[CA] = defAlpha;
     state.glitterStrength = defGlitter;
     state.shadowStrength = defShadow;
     state.tracking = defTracking;
@@ -1408,6 +1405,7 @@ void FR_DrawText(const char* inString, int x, int y, fontid_t defFont, int align
         free(bigBuff);
 
     FR_PopAttrib();
+    glColor4fv(origColor);
 
 #undef MAX_FRAGMENTLENGTH
 #undef SMALLBUFF_SIZE

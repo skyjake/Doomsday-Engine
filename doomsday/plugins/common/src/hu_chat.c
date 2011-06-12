@@ -384,10 +384,10 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
         xOffset = -(textWidth + cursorWidth);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText(text, xOffset, 0, obj->fontId, alignFlags, textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+    DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
+    FR_DrawText(text, xOffset, 0, obj->fontId, alignFlags, textFlags, .5f, 0, 0, 0, false);
     if(actualMapTime & 12)
     {
-        DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
         FR_DrawChar('_', xOffset + textWidth, 0);
     }
     DGL_Disable(DGL_TEXTURE_2D);
