@@ -118,31 +118,61 @@ boolean FR_CaseScale(void);
 void FR_SetCaseScale(boolean value);
 
 /**
- * Text: A block of possibly formatted and/or multi-line text.
+ * Text blocks (possibly formatted and/or multi-line text):
  */
-void FR_DrawText(const char* string, int x, int y, int alignFlags, short flags);
-
-// Utility routines:
-void FR_TextDimensions(int* width, int* height, const char* string);
-int FR_TextWidth(const char* string);
-int FR_TextHeight(const char* string);
 
 /**
- * Text fragments: A single line of unformatted text.
+ * Draw a text block.
+ *
+ * @param text  Block of text to be drawn.
+ * @param x  X origin/offset at which to begin drawing.
+ * @param y  Y origin/offset at which to begin drawing.
+ * @param alignFlags  @see alignmentFlags
+ * @param flags  @see drawTextFlags
  */
-void FR_DrawTextFragment(const char* string, int x, int y);
-void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags, short flags);
+void FR_DrawText(const char* text, int x, int y, int alignFlags, short flags);
 
 // Utility routines:
-void FR_TextFragmentDimensions(int* width, int* height, const char* string);
-int FR_TextFragmentWidth(const char* string);
-int FR_TextFragmentHeight(const char* string);
+void FR_TextDimensions(int* width, int* height, const char* text);
+int FR_TextWidth(const char* text);
+int FR_TextHeight(const char* text);
 
 /**
- * Single character.
+ * Text fragments (a single line of unformatted text):
  */
-void FR_DrawChar(unsigned char ch, int x, int y);
+
+/**
+ * Draw a text fragment.
+ *
+ * @param fragment  Fragment of text to be drawn.
+ * @param x  X origin/offset at which to begin drawing.
+ * @param y  Y origin/offset at which to begin drawing.
+ * @param alignFlags  @see alignmentFlags
+ * @param flags  @see drawTextFlags
+ */
+void FR_DrawTextFragment2(const char* fragment, int x, int y, int alignFlags, short flags);
+void FR_DrawTextFragment(const char* fragment, int x, int y);
+
+// Utility routines:
+void FR_TextFragmentDimensions(int* width, int* height, const char* fragment);
+int FR_TextFragmentWidth(const char* fragment);
+int FR_TextFragmentHeight(const char* fragment);
+
+/**
+ * Single characters:
+ */
+
+/**
+ * Draw a character.
+ *
+ * @param ch  Character to be drawn.
+ * @param x  X origin/offset at which to begin drawing.
+ * @param y  Y origin/offset at which to begin drawing.
+ * @param alignFlags  @see alignmentFlags
+ * @param flags  @see drawTextFlags
+ */
 void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short flags);
+void FR_DrawChar(unsigned char ch, int x, int y);
 
 // Utility routines:
 void FR_CharDimensions(int* width, int* height, unsigned char ch);
