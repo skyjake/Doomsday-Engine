@@ -85,6 +85,10 @@ static void drawFlash(int x, int y, int w, int h, int bright);
 
 static int inited = false;
 
+static char smallTextBuffer[FR_SMALL_TEXT_BUFFER_SIZE+1];
+static char* largeTextBuffer = NULL;
+static size_t largeTextBufferSize = 0;
+
 static int numFonts = 0;
 static bitmapfont_t** fonts = 0; // The list of fonts.
 
@@ -1251,40 +1255,44 @@ static void initDrawTextState(drawtextstate_t* state)
     state->caseMod[1].offset = 0;
 }
 
-void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short textFlags)
+static char* enlargeTextBuffer(size_t lengthMinusTerminator)
 {
-#define SMALLBUFF_SIZE          (80)
-#define MAX_FRAGMENTLENGTH      (256)
+    if(lengthMinusTerminator <= FR_SMALL_TEXT_BUFFER_SIZE)
+    {
+        return smallTextBuffer;
+    }
+    if(largeTextBuffer == NULL || lengthMinusTerminator > largeTextBufferSize)
+    {
+        largeTextBufferSize = lengthMinusTerminator;
+        largeTextBuffer = (char*)realloc(largeTextBuffer, largeTextBufferSize+1);
+        if(largeTextBuffer == NULL)
+            Con_Error("FR_EnlargeTextBuffer: Failed on reallocation of %lu bytes.",
+                (unsigned long)(lengthMinusTerminator+1));
+    }
+    return largeTextBuffer;
+}
 
+static void freeTextBuffer(void)
+{
+    if(largeTextBuffer == NULL)
+        return;
+    free(largeTextBuffer); largeTextBuffer = 0;
+    largeTextBufferSize = 0;
+}
+
+void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlags)
+{
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
-    char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
-    char temp[MAX_FRAGMENTLENGTH+1], *str, *string, *end;
+    const char* fragment;
+    char* str, *end;
     fontid_t origFont = FR_Font();
     float origColor[4];
     drawtextstate_t state;
     size_t charCount = 0;
     int curCase = -1, lastLineHeight;
-    size_t len;
 
-    if(!inString || !inString[0])
+    if(!text || !text[0])
         return;
-
-    len = strlen(inString);
-    if(len < SMALLBUFF_SIZE)
-    {
-        memcpy(smallBuff, inString, len);
-        smallBuff[len] = '\0';
-
-        str = smallBuff;
-    }
-    else
-    {
-        bigBuff = malloc(len+1);
-        memcpy(bigBuff, inString, len);
-        bigBuff[len] = '\0';
-
-        str = bigBuff;
-    }
 
     initDrawTextState(&state);
     memcpy(origColor, state.color, sizeof(origColor));
@@ -1294,11 +1302,10 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
     FR_PushAttrib();
 
     lastLineHeight = FR_CharHeight('A') * state.scaleY;
-    string = str;
-    while(*string)
+    str = (char*)text;
+    while(*str)
     {
-        // Parse and draw the replacement string.
-        if(*string == '{') // Parameters included?
+        if(*str == '{') // Paramaters included?
         {
             fontid_t lastFont = state.font;
             int lastTracking = state.tracking;
@@ -1308,7 +1315,7 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
             boolean lastCaseScale = state.caseScale;
             int numBreaks = 0;
 
-            parseParamaterBlock(&string, &state, &numBreaks);
+            parseParamaterBlock(&str, &state, &numBreaks);
 
             if(numBreaks != 0)
             {
@@ -1333,7 +1340,7 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
                 FR_SetCaseScale(state.caseScale);
         }
 
-        for(end = string; *end && *end != '{';)
+        for(end = str; *end && *end != '{';)
         {
             boolean newline = false;
             int fragmentAlignFlags;
@@ -1346,7 +1353,7 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
                 // Select a substring with characters of the same case (or whitespace).
                 for(; *end && *end != '{' && *end != '\n'; end++)
                 {
-                    // We can other skip whitespace.
+                    // We can skip whitespace.
                     if(isspace(*end))
                         continue;
 
@@ -1362,8 +1369,11 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
                 for(; *end && *end != '{' && *end != '\n'; end++);
             }
 
-            strncpy(temp, string, MIN_OF(MAX_FRAGMENTLENGTH, end - string));
-            temp[MIN_OF(MAX_FRAGMENTLENGTH, end - string)] = '\0';
+            { char* buffer = enlargeTextBuffer(end - str);
+            memcpy(buffer, str, end - str);
+            buffer[end - str] = '\0';
+            fragment = buffer;
+            }
 
             if(end && *end == '\n')
             {
@@ -1372,7 +1382,7 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
             }
 
             // Continue from here.
-            string = end;
+            str = end;
 
             if(!(alignFlags & (ALIGN_LEFT|ALIGN_RIGHT)))
             {
@@ -1383,7 +1393,7 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
                 // We'll take care of horizontal positioning of the fragment so align left.
                 fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
                 if(alignFlags & ALIGN_RIGHT)
-                    alignx = -FR_TextFragmentWidth(temp) * state.scaleX;
+                    alignx = -FR_TextFragmentWidth(fragment) * state.scaleX;
             }
 
             // Setup the scaling.
@@ -1394,8 +1404,9 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
             if(state.angle != 0)
             {
                 // The origin is the specified (x,y) for the patch.
-                // We'll undo the VGA aspect ratio (otherwise the result would
-                // be skewed).
+                // We'll undo the aspect ratio (otherwise the result would be skewed).
+                /// \fixme Do not assume the aspect ratio and therefore whether
+                // correction is even needed.
                 glTranslatef((float)x, (float)y, 0);
                 glScalef(1, 200.0f / 240.0f, 1);
                 glRotatef(state.angle, 0, 0, 1);
@@ -1409,18 +1420,18 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
 
             // Draw it.
             glColor4fv(state.color);
-            drawTextFragment(temp, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
-            charCount += strlen(temp);
+            drawTextFragment(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
+            charCount += strlen(fragment);
 
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) FR_TextFragmentWidth(temp) * state.scaleX;
+                cx += (float) FR_TextFragmentWidth(fragment) * state.scaleX;
             }
             else
             {
-                if(strlen(temp) > 0)
-                    lastLineHeight = FR_TextFragmentHeight(temp);
+                if(strlen(fragment) > 0)
+                    lastLineHeight = FR_TextFragmentHeight(fragment);
 
                 cx = (float) x;
                 cy += (float) lastLineHeight * (1+FR_Leading());
@@ -1431,16 +1442,11 @@ void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short text
         }
     }
 
-    // Free temporary storage.
-    if(bigBuff)
-        free(bigBuff);
+    freeTextBuffer();
 
     FR_PopAttrib();
     FR_SetFont(origFont);
     glColor4fv(origColor);
-
-#undef MAX_FRAGMENTLENGTH
-#undef SMALLBUFF_SIZE
 }
 
 void FR_DrawText2(const char* text, int x, int y, int alignFlags)

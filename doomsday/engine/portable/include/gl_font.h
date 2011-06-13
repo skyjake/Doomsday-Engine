@@ -37,6 +37,18 @@
 #define DEFAULT_DRAWFLAGS           (DTF_NO_EFFECTS)
 
 /**
+ * Rendering formatted text requires a temporary working buffer in order
+ * to split up the larger blocks into individual text fragments.
+ *
+ * A "small text" buffer is reserved from the application's data segment
+ * for the express purpose of manipulating shortish text strings without
+ * incurring any dynamic allocation overhead. This value defines the size
+ * of this fixed-size working buffer as the number of characters it may
+ * potentially hold.
+ */
+#define FR_SMALL_TEXT_BUFFER_SIZE   (160)
+
+/**
  * Initialize the font renderer.
  * @return  @c 0 iff there are no errors.
  */
