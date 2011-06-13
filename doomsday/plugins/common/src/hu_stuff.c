@@ -360,7 +360,7 @@ void HU_DrawText(const char* str, float x, float y, float scale,
     DGL_Translatef(-x, -y, 0);
 
     DGL_Color4f(r, g, b, a);
-    FR_DrawTextFragment3(str, x, y, alignFlags, textFlags);
+    FR_DrawText3(str, x, y, alignFlags, textFlags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -559,7 +559,7 @@ static void drawTable(float x, float ly, float width, float height,
 
         if(columns[n].flags & CF_FIXEDWIDTH)
         {
-            colW[n] = FR_TextFragmentWidth(columns[n].label) + CELL_PADDING * 2;
+            colW[n] = FR_TextWidth(columns[n].label) + CELL_PADDING * 2;
             fixedWidth += colW[n];
         }
     }
@@ -756,14 +756,14 @@ static void drawMapMetaData(float x, float y, float alpha)
     DGL_Color4f(1, 1, 1, alpha);
 
     // Map name:
-    FR_DrawTextFragment("map: ", x, y + 16);
-    FR_DrawTextFragment(lname, x += FR_TextFragmentWidth("map: "), y + 16);
+    FR_DrawText("map: ", x, y + 16);
+    FR_DrawText(lname, x += FR_TextWidth("map: "), y + 16);
 
     x += 8;
 
     // Game mode:
-    FR_DrawTextFragment("gamemode: ", x += FR_TextFragmentWidth(lname), y + 16);
-    FR_DrawTextFragment(P_GetGameModeName(), x += FR_TextFragmentWidth("gamemode: "), y + 16);
+    FR_DrawText("gamemode: ", x += FR_TextWidth(lname), y + 16);
+    FR_DrawText(P_GetGameModeName(), x += FR_TextWidth("gamemode: "), y + 16);
 }
 
 /**
@@ -827,7 +827,7 @@ void HU_DrawScoreBoard(int player)
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    FR_DrawTextFragment3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawText3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     drawMapMetaData(x, y + 16, hud->scoreAlpha);
@@ -1111,10 +1111,10 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
     short textFlags, float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    FR_DrawTextFragment3(string, x+2, y+2, alignFlags, textFlags);
+    FR_DrawText3(string, x+2, y+2, alignFlags, textFlags);
 
     DGL_Color4f(r, g, b, a);
-    FR_DrawTextFragment3(string, x, y, alignFlags, textFlags);
+    FR_DrawText3(string, x, y, alignFlags, textFlags);
 }
 
 const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
@@ -1598,7 +1598,7 @@ static void drawMapTitle(void)
 
         FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
-        FR_DrawTextFragment3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawText3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
         y += 20;
@@ -1611,7 +1611,7 @@ static void drawMapTitle(void)
 
         FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(.5f, .5f, .5f, alpha);
-        FR_DrawTextFragment3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawText3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }

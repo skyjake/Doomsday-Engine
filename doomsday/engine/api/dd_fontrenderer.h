@@ -160,28 +160,6 @@ int FR_TextWidth(const char* text);
 int FR_TextHeight(const char* text);
 
 /**
- * Text fragments (a single line of unformatted text):
- */
-
-/**
- * Draw a text fragment.
- *
- * @param fragment  Fragment of text to be drawn.
- * @param x  X origin/offset at which to begin drawing.
- * @param y  Y origin/offset at which to begin drawing.
- * @param alignFlags  @see alignmentFlags
- * @param flags  @see drawTextFlags
- */
-void FR_DrawTextFragment3(const char* fragment, int x, int y, int alignFlags, short flags);
-void FR_DrawTextFragment2(const char* fragment, int x, int y, int alignFlags);
-void FR_DrawTextFragment(const char* fragment, int x, int y);
-
-// Utility routines:
-void FR_TextFragmentDimensions(int* width, int* height, const char* fragment);
-int FR_TextFragmentWidth(const char* fragment);
-int FR_TextFragmentHeight(const char* fragment);
-
-/**
  * Single characters:
  */
 

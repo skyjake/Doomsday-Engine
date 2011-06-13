@@ -580,68 +580,6 @@ int FR_CharHeight(unsigned char ch)
     return 0;
 }
 
-void FR_TextFragmentDimensions(int* width, int* height, const char* text)
-{
-    if(!inited)
-        Con_Error("FR_TextFragmentDimensions: Font renderer has not yet been initialized.");
-    if(!width && !height)
-        return;
-    if(width)
-        *width = FR_TextFragmentWidth(text);
-    if(height)
-        *height = FR_TextFragmentHeight(text);
-}
-
-int FR_TextFragmentWidth(const char* text)
-{
-    size_t i, len;
-    int width = 0;
-    const char* ch;
-    unsigned char c;
-
-    if(!inited)
-        Con_Error("FR_TextFragmentWidth: Font renderer has not yet been initialized.");
-
-    if(fr.fontIdx == -1 || !text)
-        return 0;
-
-    // Just add them together.
-    len = strlen(text);
-    i = 0;
-    ch = text;
-    while(i++ < len && (c = *ch++) != 0 && c != '\n')
-        width += FR_CharWidth(c);
-
-    return (int) (width + currentAttributes()->tracking * (len-1));
-}
-
-int FR_TextFragmentHeight(const char* text)
-{
-    const char* ch;
-    unsigned char c;
-    int height = 0;
-    size_t len;
-    uint i;
-
-    if(!inited)
-        Con_Error("FR_TextFragmentHeight: Font renderer has not yet been initialized.");
- 
-    if(fr.fontIdx == -1 || !text)
-        return 0;
-
-    // Find the greatest height.
-    i = 0;
-    height = 0;
-    len = strlen(text);
-    ch = text;
-    while(i++ < len && (c = *ch++) != 0 && c != '\n')
-    {
-        height = MAX_OF(height, FR_CharHeight(c));
-    }
-
-    return topToAscent(fonts[fr.fontIdx]) + height;
-}
-
 int FR_SingleLineHeight(const char* text)
 {
     if(!inited)
@@ -687,14 +625,14 @@ static void drawTextFragment(const char* string, int x, int y, int alignFlags,
     const char* ch;
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= FR_TextFragmentWidth(string);
+        x -= FR_TextWidth(string);
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= FR_TextFragmentWidth(string)/2;
+        x -= FR_TextWidth(string)/2;
 
     if(alignFlags & ALIGN_BOTTOM)
-        y -= FR_TextFragmentHeight(string);
+        y -= FR_TextHeight(string);
     else if(!(alignFlags & ALIGN_TOP))
-        y -= FR_TextFragmentHeight(string)/2;
+        y -= FR_TextHeight(string)/2;
 
     if(!(noTypein && noShadow && noGlitter))
         glGetFloatv(GL_CURRENT_COLOR, origColor);
@@ -852,37 +790,6 @@ static void drawTextFragment(const char* string, int x, int y, int alignFlags,
     if(!(noTypein && noGlitter && noShadow))
         glColor4fv(origColor);
     }
-}
-
-void FR_DrawTextFragment3(const char* string, int x, int y, int alignFlags, short textFlags)
-{
-    if(!inited)
-        Con_Error("Bitmap font system not yet initialized.");
-    if(!string || !string[0])
-    {
-/*#if _DEBUG
-        Con_Message("Warning: Attempt drawTextFragment with invalid/empty string.\n");
-#endif*/
-        return;
-    }
-    if(fr.fontIdx == -1)
-    {
-#if _DEBUG
-        Con_Message("Warning: Attempt drawTextFragment without a current font.\n");
-#endif
-        return;
-    }
-    drawTextFragment(string, x, y, alignFlags, textFlags, DEFAULT_INITIALCOUNT);
-}
-
-void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags)
-{
-    FR_DrawTextFragment3(string, x, y, alignFlags, DEFAULT_DRAWFLAGS);
-}
-
-void FR_DrawTextFragment(const char* string, int x, int y)
-{
-    FR_DrawTextFragment2(string, x, y, DEFAULT_ALIGNFLAGS);
 }
 
 void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
@@ -1393,7 +1300,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
                 // We'll take care of horizontal positioning of the fragment so align left.
                 fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
                 if(alignFlags & ALIGN_RIGHT)
-                    alignx = -FR_TextFragmentWidth(fragment) * state.scaleX;
+                    alignx = -FR_TextWidth(fragment) * state.scaleX;
             }
 
             // Setup the scaling.
@@ -1426,12 +1333,12 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) FR_TextFragmentWidth(fragment) * state.scaleX;
+                cx += (float) FR_TextWidth(fragment) * state.scaleX;
             }
             else
             {
                 if(strlen(fragment) > 0)
-                    lastLineHeight = FR_TextFragmentHeight(fragment);
+                    lastLineHeight = FR_TextHeight(fragment);
 
                 cx = (float) x;
                 cy += (float) lastLineHeight * (1+FR_Leading());

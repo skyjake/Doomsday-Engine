@@ -281,7 +281,7 @@ static void Con_BusyLoadTextures(void)
         if(0 != (busyFont = FR_LoadSystemFont(fonts[fontIdx].name, fonts[fontIdx].path)))
         {
             FR_SetFont(busyFont);
-            busyFontHgt = FR_TextFragmentHeight("A");
+            busyFontHgt = FR_TextHeight("A");
         }
     }
 }
@@ -507,7 +507,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         FR_SetFont(busyFont);
         FR_LoadDefaultAttrib();
         glColor4f(1.f, 1.f, 1.f, .66f);
-        FR_DrawTextFragment3(busyTaskName, x+radius, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
+        FR_DrawText3(busyTaskName, x+radius, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -636,7 +636,7 @@ void Con_BusyDrawConsoleOutput(void)
             color = 1 - (color - LINE_COUNT);
 
         glColor4f(1.f, 1.f, 1.f, color);
-        FR_DrawTextFragment3(line->text, theWindow->width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawText3(line->text, theWindow->width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);

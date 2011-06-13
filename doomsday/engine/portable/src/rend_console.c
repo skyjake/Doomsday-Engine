@@ -425,7 +425,7 @@ void Rend_ConsoleFPS(int x, int y)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = FR_TextFragmentWidth(buf) + 16;
+    w = FR_TextWidth(buf) + 16;
     h = FR_SingleLineHeight(buf)  + 16;
 
     glEnable(GL_TEXTURE_2D);
@@ -468,7 +468,7 @@ static void drawConsoleTitleBar(float alpha)
     UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     if(secondaryTitleText[0])
     {
-        width = FR_TextFragmentWidth(consoleTitle) + FR_TextFragmentWidth("  ");
+        width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx2(secondaryTitleText, border + width, height / 2, UI_Color(UIC_TEXT), .33f * alpha,
                       ALIGN_LEFT, DTF_ONLY_SHADOW);
@@ -567,7 +567,7 @@ static void drawSideText(const char* text, int line, float alpha)
         }
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
-        FR_DrawTextFragment3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
+        FR_DrawText3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
     }
 }
@@ -691,7 +691,7 @@ static void drawConsole(float consoleAlpha)
                     // Set the color.
                     if(BitmapFont_Flags(cfont) & BFF_IS_MONOCHROME)
                         consoleSetColor(line->flags, consoleAlpha);
-                    FR_DrawTextFragment3(buff, XORIGIN + PADDING + xOffset,
+                    FR_DrawText3(buff, XORIGIN + PADDING + xOffset,
                                                YORIGIN + y / scale[1], alignFlags, textFlags);
                 }
 
@@ -719,7 +719,7 @@ static void drawConsole(float consoleAlpha)
     else
         glColor4f(1, 1, 1, consoleAlpha);
 
-    FR_DrawTextFragment3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
+    FR_DrawText3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
 
     glDisable(GL_TEXTURE_2D);
 
@@ -733,7 +733,7 @@ static void drawConsole(float consoleAlpha)
         // Where is the cursor?
         memset(temp, 0, sizeof(temp));
         strncpy(temp, buff, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ -1/*vis clamp*/, cmdCursor+1));
-        xOffset = FR_TextFragmentWidth(temp);
+        xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
         {
             height  = fontScaledY;

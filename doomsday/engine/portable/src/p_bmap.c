@@ -1155,8 +1155,8 @@ static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = FR_TextFragmentWidth(buf) + 16;
-    h = FR_TextFragmentHeight(buf) + 16;
+    w = FR_TextWidth(buf) + 16;
+    h = FR_TextHeight(buf) + 16;
     x -= w / 2;
     UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
@@ -1174,8 +1174,8 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = 16 + FR_TextFragmentWidth("(+000.0,+000.0)(+000.0,+000.0)");
-    th = FR_TextFragmentHeight("a");
+    w = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
+    th = FR_TextHeight("a");
     h = th * 4 + 16;
 
     x = theWindow->width  - 10 - w;

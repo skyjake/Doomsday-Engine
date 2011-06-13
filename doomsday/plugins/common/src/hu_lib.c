@@ -568,7 +568,7 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
 void MN_DrawText2(const char* string, int x, int y, int alignFlags, short textFlags)
 {
     if(NULL == string || !string[0]) return;
-    FR_DrawTextFragment3(string, x, y, alignFlags, MN_MergeMenuEffectWithDrawTextFlags(textFlags));
+    FR_DrawText3(string, x, y, alignFlags, MN_MergeMenuEffectWithDrawTextFlags(textFlags));
 }
 
 void MN_DrawText(const char* string, int x, int y)
@@ -1124,7 +1124,7 @@ void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
         return;
     }
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, txt->text);
+    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, txt->text);
     }
 }
 
@@ -1434,7 +1434,7 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
             }
 
             MN_DrawText(item->text, x, y);
-            y += FR_TextFragmentHeight(item->text) * (1+MNDATA_LIST_LEADING);
+            y += FR_TextHeight(item->text) * (1+MNDATA_LIST_LEADING);
         } while(++i < list->count && i < list->first + list->numvis);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -1656,7 +1656,7 @@ void MNList_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
         int w, h;
-        FR_TextFragmentDimensions(&w, &h, item->text);
+        FR_TextDimensions(&w, &h, item->text);
         if(w > obj->_dimensions.width)
             obj->_dimensions.width = w;
         obj->_dimensions.height += h;
@@ -1673,7 +1673,7 @@ void MNList_InlineUpdateDimensions(mn_object_t* obj, mn_page_t* page)
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, item->text);
+    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, item->text);
     }
 }
 
@@ -1819,7 +1819,7 @@ void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     }
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, text);
+    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, text);
     }
 }
 
@@ -2350,7 +2350,7 @@ void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
     FR_SetFont(fontId);
-    FR_TextFragmentDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
+    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
     }
 }
 

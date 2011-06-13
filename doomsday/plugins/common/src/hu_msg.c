@@ -215,7 +215,7 @@ static void drawMessage(void)
     // An additional blank line between the message and response prompt.
     y += FR_CharHeight('A') * (1+LEADING);
 
-    FR_DrawTextFragment3(questionString, x, y, ALIGN_TOP, textFlags);
+    FR_DrawText3(questionString, x, y, ALIGN_TOP, textFlags);
     DGL_Disable(DGL_TEXTURE_2D);
 
 #undef LEADING

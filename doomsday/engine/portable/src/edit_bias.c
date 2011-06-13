@@ -664,8 +664,8 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
-    w = 16 + FR_TextFragmentWidth("R:0.000 G:0.000 B:0.000");
-    th = FR_TextFragmentHeight("Info");
+    w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
+    th = FR_TextHeight("Info");
     h = 16 + th * 6;
 
     x = theWindow->width  - 10 - w - rightX;
@@ -757,7 +757,7 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    off = FR_TextFragmentWidth("000");
+    off = FR_TextWidth("000");
 
     glBegin(GL_LINES);
     glColor4f(1, 1, 1, .5f);
@@ -834,8 +834,8 @@ void SBE_DrawHUD(void)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = FR_TextFragmentWidth(buf) + 16;
-    h = FR_TextFragmentHeight(buf) + 16;
+    w = FR_TextWidth(buf) + 16;
+    h = FR_TextHeight(buf) + 16;
     y = theWindow->height - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx2(buf, 18, y + h / 2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
@@ -854,7 +854,7 @@ void SBE_DrawHUD(void)
     {
         int x;
         FR_SetFont(glFontFixed);
-        x = FR_TextFragmentWidth("0") * 26;
+        x = FR_TextWidth("0") * 26;
         SBE_InfoBox(s, x, "Grabbed", alpha);
     }
 

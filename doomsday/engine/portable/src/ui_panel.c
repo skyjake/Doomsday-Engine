@@ -1037,8 +1037,8 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h, float alph
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     UI_SetColorA(UI_Color(UIC_TEXT), .5f * alpha * UI_Alpha());
-    FR_DrawTextFragment(label, x, y);
-    ind = FR_TextFragmentWidth(label);
+    FR_DrawText(label, x, y);
+    ind = FR_TextWidth(label);
     return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, UI_Color(UIC_TEXT), alpha);
 }
 

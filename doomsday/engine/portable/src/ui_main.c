@@ -160,7 +160,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
 
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    uiFontHgt = FR_TextFragmentHeight("W");
+    uiFontHgt = FR_TextHeight("W");
 
     // Should the mouse cursor be visible?
     uiShowMouse = !ArgExists("-nomouse");
@@ -1114,7 +1114,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     memset(buf, 0, sizeof(buf));
 
     // Does all of it fit in the box?
-    textWidth = FR_TextFragmentWidth(ob->text);
+    textWidth = FR_TextWidth(ob->text);
     if(textWidth > 0 && (unsigned) textWidth > maxw)
     {   // No, it doesn't fit.
         if(!act)
@@ -1625,7 +1625,7 @@ void UISlider_Drawer(ui_object_t* ob)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextFragmentWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1660,7 +1660,7 @@ void UI_InitColumns(ui_object_t* ob)
                 strncpy(temp, ptr, endptr - ptr);
             else
                 strcpy(temp, ptr);
-            w = FR_TextFragmentWidth(temp);
+            w = FR_TextWidth(temp);
             if(w > width[c])
                 width[c] = w;
             if(!endptr)
@@ -1881,7 +1881,7 @@ void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alph
     alpha *= uiAlpha;
     if(alpha <= 0) return;
     UI_SetColorA(color, alpha);
-    FR_DrawTextFragment3(text, x, y, alignFlags, textFlags);
+    FR_DrawText3(text, x, y, alignFlags, textFlags);
 }
 
 void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha)
@@ -1915,7 +1915,7 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
                 *wp++ = c; // Hyphens should be included in the word.
             // Time to print the word.
             *wp = 0;
-            len = FR_TextFragmentWidth(word);
+            len = FR_TextWidth(word);
             if(tx + len > x + w) // Doesn't fit?
             {
                 tx = x;
@@ -1924,7 +1924,7 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
             // Can't print any more? (always print the 1st line)
             if(ty + linehgt > y + h && ty != y)
                 return ty;
-            FR_DrawTextFragment(word, tx, ty);
+            FR_DrawText(word, tx, ty);
             tx += len;
             wp = word;
             // React to delimiter.
@@ -1934,7 +1934,7 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
                 return ty; // All of the text has been printed.
 
             case ' ':
-                tx += FR_TextFragmentWidth(" ");
+                tx += FR_TextWidth(" ");
                 break;
 
             case '\n':

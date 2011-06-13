@@ -197,7 +197,7 @@ static void drawPercent(int x, int y, int p)
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     FR_DrawChar('%', x, y);
-    FR_DrawTextFragment3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 }
 
 /**
@@ -220,10 +220,10 @@ static void drawTime(int x, int y, int t)
         if(minutes > 0)
         {
             dd_snprintf(buf, 20, "%d", minutes);
-            FR_DrawTextFragment3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
         dd_snprintf(buf, 20, "%02d", seconds);
-        FR_DrawTextFragment(buf, x+FR_CharWidth(':'), y);
+        FR_DrawText(buf, x+FR_CharWidth(':'), y);
         return;
     }
 
@@ -406,8 +406,8 @@ static void drawDeathmatchStats(void)
 
                 FR_SetFont(FID(GF_FONTA));
                 DGL_Color4f(1, 1, 1, 1);
-                FR_DrawTextFragment(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
-                FR_DrawTextFragment(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
+                FR_DrawText(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
+                FR_DrawText(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
             }
         }
         else
@@ -440,12 +440,12 @@ static void drawDeathmatchStats(void)
                 if(teamInfo[j].playerCount > 0)
                 {
                     dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
-                    FR_DrawTextFragment3(buf, x + w, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+                    FR_DrawText3(buf, x + w, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
                 }
                 x += DM_SPACINGX;
             }
             dd_snprintf(buf, 20, "%i", dmTotals[i]);
-            FR_DrawTextFragment3(buf, DM_TOTALSX + w, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawText3(buf, DM_TOTALSX + w, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -657,7 +657,7 @@ static void drawNetgameStats(void)
             sprintf(tmp, "%i", teamInfo[i].playerCount);
             FR_SetFont(FID(GF_FONTA));
             DGL_Color4f(1, 1, 1, 1);
-            FR_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
+            FR_DrawText(tmp, x - info.width + 1, y + info.height - 8);
         }
 
         //if(i == inPlayerTeam)
@@ -678,7 +678,7 @@ static void drawNetgameStats(void)
         {
             char buf[20];
             dd_snprintf(buf, 20, "%i", cntFrags[i]);
-            FR_DrawTextFragment3(buf, x, y + 10, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawText3(buf, x, y + 10, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;

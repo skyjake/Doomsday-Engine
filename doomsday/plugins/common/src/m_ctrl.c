@@ -402,7 +402,7 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
 {
     int height;
 
-    height = FR_TextFragmentHeight(string);
+    height = FR_TextHeight(string);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -412,7 +412,7 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
     DGL_Translatef(-x, -y - height/2, 0);
 
     DGL_Color4f(1, 1, 1, alpha);
-    FR_DrawTextFragment3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawText3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -438,8 +438,8 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
 
     if(type == MIBT_KEY)
     {
-        width = FR_TextFragmentWidth(name);
-        height = FR_TextFragmentHeight(name);
+        width = FR_TextWidth(name);
+        height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
         DGL_DrawRectColor(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
@@ -456,8 +456,8 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
 
         sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
 
-        width = FR_TextFragmentWidth(temp);
-        height = FR_TextFragmentHeight(temp);
+        width = FR_TextWidth(temp);
+        height = FR_TextHeight(temp);
 
         DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(temp, d->x, d->y, d->alpha);

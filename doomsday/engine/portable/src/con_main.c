@@ -231,7 +231,7 @@ static void resizeHistoryBuffer(void)
     FR_SetFont(consoleFont);
     FR_LoadDefaultAttrib();
     // Do we need to update the console history buffer max line length?
-    if(0 != (cw = FR_TextFragmentWidth("A")))
+    if(0 != (cw = FR_TextWidth("A")))
     {
         maxLength = MIN_OF(theWindow->width / cw - 2, 250);
     }
