@@ -119,6 +119,26 @@ void FR_SetCaseScale(boolean value);
 
 /**
  * Text blocks (possibly formatted and/or multi-line text):
+ *
+ * Formatting of text blocks is initially determined by the current font
+ * renderer state at draw time (i.e., the attribute stack and draw paramaters).
+ *
+ ** Paramater blocks:
+ *
+ * A single text block may also embed attribute and draw paramater changes
+ * within the text string itself. Paramater blocks are defined within the curly
+ * bracketed escape sequence {<whitespace>} A single paramater block may
+ * contain any number of attribute and draw paramaters delimited by semicolons.
+ *
+ * A text block may contain any number of paramater blocks. The scope for which
+ * extends until the last character has been drawn or another block overrides
+ * the same attribute.
+ *
+ * Examples:
+ *
+ *   "{r = 1.0; g = 0.0; b = 0.0; case}This is red text with a case-scaled first character"
+ *   "This is text with an {y = -14}offset{y = 0} internal fragment."
+ *   "{fontb; r=0.5; g=1; b=0; x=2; y=-2}This is good!"
  */
 
 /**
@@ -130,7 +150,9 @@ void FR_SetCaseScale(boolean value);
  * @param alignFlags  @see alignmentFlags
  * @param flags  @see drawTextFlags
  */
-void FR_DrawText(const char* text, int x, int y, int alignFlags, short flags);
+void FR_DrawText3(const char* text, int x, int y, int alignFlags, short flags);
+void FR_DrawText2(const char* text, int x, int y, int alignFlags);
+void FR_DrawText(const char* text, int x, int y);
 
 // Utility routines:
 void FR_TextDimensions(int* width, int* height, const char* text);
@@ -150,7 +172,8 @@ int FR_TextHeight(const char* text);
  * @param alignFlags  @see alignmentFlags
  * @param flags  @see drawTextFlags
  */
-void FR_DrawTextFragment2(const char* fragment, int x, int y, int alignFlags, short flags);
+void FR_DrawTextFragment3(const char* fragment, int x, int y, int alignFlags, short flags);
+void FR_DrawTextFragment2(const char* fragment, int x, int y, int alignFlags);
 void FR_DrawTextFragment(const char* fragment, int x, int y);
 
 // Utility routines:
@@ -171,7 +194,8 @@ int FR_TextFragmentHeight(const char* fragment);
  * @param alignFlags  @see alignmentFlags
  * @param flags  @see drawTextFlags
  */
-void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short flags);
+void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short flags);
+void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags);
 void FR_DrawChar(unsigned char ch, int x, int y);
 
 // Utility routines:

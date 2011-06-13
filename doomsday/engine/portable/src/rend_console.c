@@ -567,7 +567,7 @@ static void drawSideText(const char* text, int line, float alpha)
         }
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
-        FR_DrawTextFragment2(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
+        FR_DrawTextFragment3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
     }
 }
@@ -691,7 +691,7 @@ static void drawConsole(float consoleAlpha)
                     // Set the color.
                     if(BitmapFont_Flags(cfont) & BFF_IS_MONOCHROME)
                         consoleSetColor(line->flags, consoleAlpha);
-                    FR_DrawTextFragment2(buff, XORIGIN + PADDING + xOffset,
+                    FR_DrawTextFragment3(buff, XORIGIN + PADDING + xOffset,
                                                YORIGIN + y / scale[1], alignFlags, textFlags);
                 }
 
@@ -719,7 +719,7 @@ static void drawConsole(float consoleAlpha)
     else
         glColor4f(1, 1, 1, consoleAlpha);
 
-    FR_DrawTextFragment2(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
+    FR_DrawTextFragment3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
 
     glDisable(GL_TEXTURE_2D);
 

@@ -662,11 +662,11 @@ void IN_DrawOldLevel(void)
     FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2], 1);
-    FR_DrawTextFragment2("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     if(wbs->currentMap == 8)
     {
@@ -712,11 +712,11 @@ void IN_DrawYAH(void)
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-    FR_DrawTextFragment2("NOW ENTERING:", 160, 10, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3("NOW ENTERING:", 160, 10, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
@@ -751,12 +751,12 @@ void IN_DrawSingleStats(void)
     FR_DrawTextFragment("KILLS", 50, 65);
     FR_DrawTextFragment("ITEMS", 50, 90);
     FR_DrawTextFragment("SECRETS", 50, 115);
-    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
 
-    FR_DrawTextFragment2("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -859,11 +859,11 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTA));
         DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-        FR_DrawTextFragment2("NOW ENTERING:", SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextFragment3("NOW ENTERING:", SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         FR_SetFont(FID(GF_FONTB));
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -890,11 +890,11 @@ void IN_DrawCoopStats(void)
     FR_DrawTextFragment("KILLS", 95, 35);
     FR_DrawTextFragment("BONUS", 155, 35);
     FR_DrawTextFragment("SECRET", 232, 35);
-    FR_DrawTextFragment2(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-    FR_DrawTextFragment2("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextFragment3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);

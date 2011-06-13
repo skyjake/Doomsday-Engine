@@ -412,7 +412,7 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
     DGL_Translatef(-x, -y - height/2, 0);
 
     DGL_Color4f(1, 1, 1, alpha);
-    FR_DrawTextFragment2(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextFragment3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

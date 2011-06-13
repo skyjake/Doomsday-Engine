@@ -850,7 +850,7 @@ static void drawTextFragment(const char* string, int x, int y, int alignFlags,
     }
 }
 
-void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags, short textFlags)
+void FR_DrawTextFragment3(const char* string, int x, int y, int alignFlags, short textFlags)
 {
     if(!inited)
         Con_Error("Bitmap font system not yet initialized.");
@@ -871,12 +871,17 @@ void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags, shor
     drawTextFragment(string, x, y, alignFlags, textFlags, DEFAULT_INITIALCOUNT);
 }
 
-void FR_DrawTextFragment(const char* string, int x, int y)
+void FR_DrawTextFragment2(const char* string, int x, int y, int alignFlags)
 {
-    FR_DrawTextFragment2(string, x, y, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
+    FR_DrawTextFragment3(string, x, y, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
-void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short textFlags)
+void FR_DrawTextFragment(const char* string, int x, int y)
+{
+    FR_DrawTextFragment2(string, x, y, DEFAULT_ALIGNFLAGS);
+}
+
+void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
     bitmapfont_t* cf;
     if(fr.fontIdx == -1)
@@ -899,9 +904,14 @@ void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags, short textFlag
     }
 }
 
+void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags)
+{
+    FR_DrawChar3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+}
+
 void FR_DrawChar(unsigned char ch, int x, int y)
 {
-    FR_DrawChar2(ch, x, y, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
+    FR_DrawChar2(ch, x, y, DEFAULT_ALIGNFLAGS);
 }
 
 static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font,
@@ -1075,8 +1085,7 @@ static float parseFloat(char** str)
     return value;
 }
 
-static void parseParamaterBlock(char** strPtr, drawtextstate_t* state,
-    int* numBreaks)
+static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numBreaks)
 {
     (*strPtr)++;
     while(*(*strPtr) && *(*strPtr) != '}')
@@ -1242,10 +1251,7 @@ static void initDrawTextState(drawtextstate_t* state)
     state->caseMod[1].offset = 0;
 }
 
-/**
- * Draw a string of text controlled by parameter blocks.
- */
-void FR_DrawText(const char* inString, int x, int y, int alignFlags, short textFlags)
+void FR_DrawText3(const char* inString, int x, int y, int alignFlags, short textFlags)
 {
 #define SMALLBUFF_SIZE          (80)
 #define MAX_FRAGMENTLENGTH      (256)
@@ -1435,6 +1441,16 @@ void FR_DrawText(const char* inString, int x, int y, int alignFlags, short textF
 
 #undef MAX_FRAGMENTLENGTH
 #undef SMALLBUFF_SIZE
+}
+
+void FR_DrawText2(const char* text, int x, int y, int alignFlags)
+{
+    FR_DrawText3(text, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+}
+
+void FR_DrawText(const char* text, int x, int y)
+{
+    FR_DrawText2(text, x, y, DEFAULT_ALIGNFLAGS);
 }
 
 void FR_TextDimensions(int* width, int* height, const char* string)

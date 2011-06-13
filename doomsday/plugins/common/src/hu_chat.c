@@ -360,8 +360,6 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     const char* text = UIChat_Text(obj);
     char buf[UICHAT_INPUTBUFFER_MAXLENGTH+1];
-    const int alignFlags = ALIGN_TOPLEFT;
-    const short textFlags = DTF_NO_EFFECTS;
     int xOffset, textWidth, cursorWidth;
 
     if(!UIChat_IsActive(obj))
@@ -385,7 +383,7 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
-    FR_DrawText(text, xOffset, 0, alignFlags, textFlags);
+    FR_DrawText(text, xOffset, 0);
     if(actualMapTime & 12)
     {
         FR_DrawChar('_', xOffset + textWidth, 0);

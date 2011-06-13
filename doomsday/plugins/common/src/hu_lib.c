@@ -568,7 +568,7 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
 void MN_DrawText2(const char* string, int x, int y, int alignFlags, short textFlags)
 {
     if(NULL == string || !string[0]) return;
-    FR_DrawTextFragment2(string, x, y, alignFlags, MN_MergeMenuEffectWithDrawTextFlags(textFlags));
+    FR_DrawTextFragment3(string, x, y, alignFlags, MN_MergeMenuEffectWithDrawTextFlags(textFlags));
 }
 
 void MN_DrawText(const char* string, int x, int y)
