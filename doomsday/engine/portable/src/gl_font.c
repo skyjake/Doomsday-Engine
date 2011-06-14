@@ -52,6 +52,17 @@ typedef struct fr_state_attributes_s {
     boolean caseScale;
 } fr_state_attributes_t;
 
+// Used with FR_LoadDefaultAttribs
+static fr_state_attributes_t defaultAttribs = {
+    FR_DEF_ATTRIB_TRACKING,
+    FR_DEF_ATTRIB_LEADING,
+    FR_DEF_ATTRIB_SHADOW_XOFFSET,
+    FR_DEF_ATTRIB_SHADOW_YOFFSET,
+    FR_DEF_ATTRIB_SHADOW_STRENGTH,
+    FR_DEF_ATTRIB_GLITTER_STRENGTH,
+    FR_DEF_ATTRIB_CASE_SCALE
+};
+
 typedef struct {
     int fontIdx;
     int attribStackDepth;
@@ -77,7 +88,7 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-static __inline fr_state_attributes_t* currentAttributes(void);
+static __inline fr_state_attributes_t* currentAttribs(void);
 static int topToAscent(bitmapfont_t* font);
 static int lineHeight(bitmapfont_t* font, unsigned char ch);
 static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, int alignFlags, short textFlags);
@@ -94,10 +105,16 @@ static bitmapfont_t** fonts = 0; // The list of fonts.
 
 static int typeInTime;
 
+static void errorIfNotInited(const char* callerName)
+{
+    if(inited) return;
+    Con_Error("%s: font renderer module is not presently initialized.", callerName);
+    // Unreachable. Prevents static analysers from getting rather confused, poor things.
+    exit(1);
+}
+
 static fontid_t getNewFontId(void)
 {
-    assert(inited);
-    {
     int i;
     fontid_t max = 0;
     for(i = 0; i < numFonts; ++i)
@@ -107,12 +124,10 @@ static fontid_t getNewFontId(void)
             max = BitmapFont_Id(font);
     }
     return max + 1;
-    }
 }
 
 static fontid_t findFontIdForName(const char* name)
 {
-    assert(inited);
     if(name && name[0])
     {
         int i;
@@ -128,7 +143,6 @@ static fontid_t findFontIdForName(const char* name)
 
 static int findFontIdxForName(const char* name)
 {
-    assert(inited);
     if(name && name[0])
     {
         int i;
@@ -144,7 +158,6 @@ static int findFontIdxForName(const char* name)
 
 static int findFontIdxForId(fontid_t id)
 {
-    assert(inited);
     if(id != 0)
     {
         int i;
@@ -160,8 +173,6 @@ static int findFontIdxForId(fontid_t id)
 
 static void destroyFontIdx(int idx)
 {
-    assert(inited);
-
     BitmapFont_Destruct(fonts[idx]);
 
     memmove(&fonts[idx], &fonts[idx + 1], sizeof(*fonts) * (numFonts - idx - 1));
@@ -174,19 +185,17 @@ static void destroyFontIdx(int idx)
 
 static void destroyFonts(void)
 {
-    assert(inited);
-    {
-    while(numFonts)
-        destroyFontIdx(0);
+    while(numFonts) { destroyFontIdx(0); }
     fonts = 0;
     fr.fontIdx = -1;
-    }
 }
 
 static bitmapfont_t* addFont(bitmapfont_t* font)
 {
-    assert(inited && font);
-    fonts = realloc(fonts, sizeof(*fonts) * ++numFonts);
+    assert(NULL != font);
+    fonts = (bitmapfont_t**)realloc(fonts, sizeof(*fonts) * ++numFonts);
+    if(NULL == fonts)
+        Con_Error("addFont: Failed on (re)allocation of %lu bytes.", (unsigned long)(sizeof(*fonts) * numFonts));
     fonts[numFonts-1] = font;
     return font;
 }
@@ -196,26 +205,20 @@ static bitmapfont_t* addFont(bitmapfont_t* font)
  */
 static bitmapfont_t* loadFont(const char* name, const char* path)
 {
-    assert(inited);
+    bitmapfont_t* font = addFont(BitmapFont_Construct(getNewFontId(), name, path));
+    if(NULL != font)
     {
-    bitmapfont_t* font;   
-    if(0 != (font = addFont(BitmapFont_Construct(getNewFontId(), name, path))))
-    {
-        VERBOSE( Con_Message("New font '%s'.\n", Str_Text(BitmapFont_Name(font))) );
+        VERBOSE( Con_Message("New font '%s'.\n", Str_Text(BitmapFont_Name(font))) )
     }
     return font;
-    }
 }
 
 static int topToAscent(bitmapfont_t* font)
 {
-    assert(font);
-    {
     int lineHeight = BitmapFont_Leading(font);
     if(lineHeight == 0)
         return 0;
     return lineHeight - BitmapFont_Ascent(font);
-    }
 }
 
 static int lineHeight(bitmapfont_t* font, unsigned char ch)
@@ -226,7 +229,7 @@ static int lineHeight(bitmapfont_t* font, unsigned char ch)
     return BitmapFont_CharHeight(font, ch);
 }
 
-static __inline fr_state_attributes_t* currentAttributes(void)
+static __inline fr_state_attributes_t* currentAttribs(void)
 {
     return fr.attribStack + fr.attribStackDepth;
 }
@@ -293,13 +296,7 @@ fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
     {
     bitmapfont_t* font;
 
-    if(!inited)
-    {
-#if _DEBUG
-        Con_Message("Warning: Font renderer has not yet been initialized.");
-#endif
-        return 0;
-    }
+    errorIfNotInited("FR_LoadSystemFont");
 
     if(0 != findFontIdForName(name) || 0 == F_Access(searchPath))
     {   
@@ -307,10 +304,11 @@ fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
     }
 
     VERBOSE2( Con_Message("Preparing font \"%s\"...\n", F_PrettyPath(searchPath)) );
-    if(0 == (font = loadFont(name, searchPath)))
-    {   // Error.
+    font = loadFont(name, searchPath);
+    if(NULL == font)
+    {
         Con_Message("Warning: Unknown format for %s\n", searchPath);
-        return 0;
+        return 0; // Error.
     }
 
     // Make this the current font.
@@ -323,20 +321,18 @@ fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
 void FR_DestroyFont(fontid_t id)
 {
     int idx;
-    if(!inited)
-        Con_Error("FR_DestroyFont: Font renderer has not yet been initialized.");
-    if(-1 != (idx = findFontIdxForId(id)))
-    {
-        destroyFontIdx(idx);
-        if(fr.fontIdx == idx)
-            fr.fontIdx = -1;
-    }
+    errorIfNotInited("FR_DestroyFont");
+    idx = findFontIdxForId(id);
+    if(idx == -1) return;
+
+    destroyFontIdx(idx);
+    if(fr.fontIdx == idx)
+        fr.fontIdx = -1;
 }
 
 void FR_Update(void)
 {
-    assert(inited);
-    if(novideo || isDedicated)
+    if(!inited || novideo || isDedicated)
         return;
     { int i;
     for(i = 0; i < numFonts; ++i)
@@ -359,10 +355,10 @@ void FR_Ticker(timespan_t ticLength)
     ++typeInTime;
 }
 
-void FR_ResetTypeInTimer(void)
+/// \note Member of the Doomsday public API.
+void FR_ResetTypeinTimer(void)
 {
-    if(!inited)
-        return;
+    errorIfNotInited("FR_ResetTypeinTimer");
     typeInTime = 0;
 }
 
@@ -376,66 +372,56 @@ bitmapfont_t* FR_BitmapFontForId(fontid_t id)
     return 0;
 }
 
+/// \note Member of the Doomsday public API.
 fontid_t FR_FindFontForName(const char* name)
 {
-    if(!inited)
-    {
-#if _DEBUG
-        Con_Message("Warning: Font renderer has not yet been initialized.");
-#endif
-        return 0;
-    }
+    errorIfNotInited("FR_FindFontForName");
     return findFontIdForName(name);
 }
 
 int FR_GetFontIdx(fontid_t id)
 {
     int idx;
-    if(!inited)
-        Con_Error("FR_GetFontIdx: Font renderer has not yet been initialized.");
-    if(-1 == (idx = findFontIdxForId(id)))
+    errorIfNotInited("FR_GetFontIdx");
+    idx = findFontIdxForId(id);
+    if(idx == -1)
+    {
         Con_Message("Warning:FR_GetFontIdx: Unknown ID %u.\n", id);
+    }
     return idx;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetFont(fontid_t id)
 {
     int idx;
-    if(!inited)
-        Con_Error("FR_SetFont: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_SetFont");
     idx = FR_GetFontIdx(id);
     if(idx == -1)
         return; // No such font.
     fr.fontIdx = idx;
 }
 
+/// \note Member of the Doomsday public API.
 fontid_t FR_Font(void)
 {
-    if(!inited)
-        Con_Error("FR_Font: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_Font");
     if(fr.fontIdx != -1)
         return BitmapFont_Id(fonts[fr.fontIdx]);
     return 0;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_LoadDefaultAttrib(void)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_LoadDefaultAttrib: Font renderer has not yet been initialized.");
-    sat->leading         = FR_DEF_ATTRIB_LEADING;
-    sat->tracking        = FR_DEF_ATTRIB_TRACKING;
-    sat->shadowStrength  = FR_DEF_ATTRIB_SHADOW_STRENGTH;
-    sat->shadowOffsetX   = FR_DEF_ATTRIB_SHADOW_XOFFSET;
-    sat->shadowOffsetY   = FR_DEF_ATTRIB_SHADOW_YOFFSET;
-    sat->glitterStrength = FR_DEF_ATTRIB_GLITTER_STRENGTH;
-    sat->caseScale       = FR_DEF_ATTRIB_CASE_SCALE;
+    errorIfNotInited("FR_LoadDefaultAttrib");
+    memcpy(currentAttribs(), &defaultAttribs, sizeof(defaultAttribs));
 }
 
+/// \note Member of the Doomsday public API.
 void FR_PushAttrib(void)
 {
-    if(!inited)
-        Con_Error("FR_PushAttrib: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_PushAttrib");
     if(fr.attribStackDepth == FR_MAX_ATTRIB_STACK_DEPTH)
     {
         Con_Error("FR_PushAttrib: STACK_OVERFLOW.");
@@ -445,10 +431,10 @@ void FR_PushAttrib(void)
     ++fr.attribStackDepth;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_PopAttrib(void)
 {
-    if(!inited)
-        Con_Error("FR_PopAttrib: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_PopAttrib");
     if(fr.attribStackDepth == 0)
     {
         Con_Error("FR_PopAttrib: STACK_UNDERFLOW.");
@@ -457,124 +443,114 @@ void FR_PopAttrib(void)
     --fr.attribStackDepth;
 }
 
+/// \note Member of the Doomsday public API.
 float FR_Leading(void)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_Leading: Font renderer has not yet been initialized.");
-    return sat->leading;
+    errorIfNotInited("FR_Leading");
+    return currentAttribs()->leading;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetLeading(float value)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_SetLeading: Font renderer has not yet been initialized.");
-    sat->leading = value;
+    errorIfNotInited("FR_SetLeading");
+    currentAttribs()->leading = value;
 }
 
+/// \note Member of the Doomsday public API.
 int FR_Tracking(void)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_Tracking: Font renderer has not yet been initialized.");
-    return sat->tracking;
+    errorIfNotInited("FR_Tracking");
+    return currentAttribs()->tracking;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetTracking(int value)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_SetTracking: Font renderer has not yet been initialized.");
-    sat->tracking = value;
+    errorIfNotInited("FR_SetTracking");
+    currentAttribs()->tracking = value;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_ShadowOffset(int* offsetX, int* offsetY)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_ShadowOffset: Font renderer has not yet been initialized.");
+    fr_state_attributes_t* sat = currentAttribs();
+    errorIfNotInited("FR_ShadowOffset");
     if(NULL != offsetX) *offsetX = sat->shadowOffsetX;
     if(NULL != offsetY) *offsetY = sat->shadowOffsetY;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetShadowOffset(int offsetX, int offsetY)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_SetShadowOffset: Font renderer has not yet been initialized.");
+    fr_state_attributes_t* sat = currentAttribs();
+    errorIfNotInited("FR_SetShadowOffset");
     sat->shadowOffsetX = offsetX;
     sat->shadowOffsetY = offsetY;
 }
 
+/// \note Member of the Doomsday public API.
 float FR_ShadowStrength(void)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_ShadowStrength: Font renderer has not yet been initialized.");
-    return sat->shadowStrength;
+    errorIfNotInited("FR_ShadowStrength");
+    return currentAttribs()->shadowStrength;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetShadowStrength(float value)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_SetShadowStrength: Font renderer has not yet been initialized.");
-    sat->shadowStrength = MINMAX_OF(0, value, 1);
+    errorIfNotInited("FR_SetShadowStrength");
+    currentAttribs()->shadowStrength = MINMAX_OF(0, value, 1);
 }
 
+/// \note Member of the Doomsday public API.
 float FR_GlitterStrength(void)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_GlitterStrength: Font renderer has not yet been initialized.");
-    return sat->glitterStrength;
+    errorIfNotInited("FR_GlitterStrength");
+    return currentAttribs()->glitterStrength;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetGlitterStrength(float value)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_SetGlitterStrength: Font renderer has not yet been initialized.");
-    sat->glitterStrength = MINMAX_OF(0, value, 1);
+    errorIfNotInited("FR_SetGlitterStrength");
+    currentAttribs()->glitterStrength = MINMAX_OF(0, value, 1);
 }
 
+/// \note Member of the Doomsday public API.
 boolean FR_CaseScale(void)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_CaseScale: Font renderer has not yet been initialized.");
-    return sat->caseScale;
+    errorIfNotInited("FR_CaseScale");
+    return currentAttribs()->caseScale;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_SetCaseScale(boolean value)
 {
-    fr_state_attributes_t* sat = currentAttributes();
-    if(!inited)
-        Con_Error("FR_SetCaseScale: Font renderer has not yet been initialized.");
-    sat->caseScale = value;
+    errorIfNotInited("FR_SetCaseScale");
+    currentAttribs()->caseScale = value;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
 {
-    if(!inited)
-        Con_Error("FR_CharDimensions: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_CharDimensions");
     BitmapFont_CharDimensions(fonts[fr.fontIdx], width, height, ch);
 }
 
+/// \note Member of the Doomsday public API.
 int FR_CharWidth(unsigned char ch)
 {
-    if(!inited)
-        Con_Error("FR_CharWidth: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_CharWidth");
     if(fr.fontIdx != -1)
         return BitmapFont_CharWidth(fonts[fr.fontIdx],ch);
     return 0;
 }
 
+/// \note Member of the Doomsday public API.
 int FR_CharHeight(unsigned char ch)
 {
-    if(!inited)
-        Con_Error("FR_CharHeight: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_CharHeight");
     if(fr.fontIdx != -1)
         return BitmapFont_CharHeight(fonts[fr.fontIdx], ch);
     return 0;
@@ -582,8 +558,7 @@ int FR_CharHeight(unsigned char ch)
 
 int FR_SingleLineHeight(const char* text)
 {
-    if(!inited)
-        Con_Error("FR_SingleLineHeight: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontIdx == -1 || !text)
         return 0;
     { int ascent = BitmapFont_Ascent(fonts[fr.fontIdx]);
@@ -596,8 +571,7 @@ int FR_SingleLineHeight(const char* text)
 int FR_GlyphTopToAscent(const char* text)
 {
     int lineHeight;
-    if(!inited)
-        Con_Error("FR_GlyphTopToAscent: Font renderer has not yet been initialized.");
+    errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontIdx == -1 || !text)
         return 0;
     lineHeight = BitmapFont_Leading(fonts[fr.fontIdx]);
@@ -606,13 +580,75 @@ int FR_GlyphTopToAscent(const char* text)
     return lineHeight - BitmapFont_Ascent(fonts[fr.fontIdx]);
 }
 
-static void drawTextFragment(const char* string, int x, int y, int alignFlags,
+static int textFragmentWidth(const char* fragment)
+{
+    assert(NULL != fragment);
+    {
+    size_t i, len;
+    int width = 0;
+    const char* ch;
+    unsigned char c;
+
+    if(fr.fontIdx == -1)
+    {
+        Con_Error("textFragmentHeight: Cannot determine height without a current font.");
+        exit(1);
+    }
+
+    // Just add them together.
+    len = strlen(fragment);
+    i = 0;
+    ch = fragment;
+    while(i++ < len && (c = *ch++) != 0 && c != '\n')
+        width += FR_CharWidth(c);
+
+    return (int) (width + currentAttribs()->tracking * (len-1));
+    }
+}
+
+static int textFragmentHeight(const char* fragment)
+{
+    assert(NULL != fragment);
+    {
+    const char* ch;
+    unsigned char c;
+    int height = 0;
+    size_t len;
+    uint i;
+ 
+    if(fr.fontIdx == -1)
+    {
+        Con_Error("textFragmentHeight: Cannot determine height without a current font.");
+        exit(1);
+    }
+
+    // Find the greatest height.
+    i = 0;
+    height = 0;
+    len = strlen(fragment);
+    ch = fragment;
+    while(i++ < len && (c = *ch++) != 0 && c != '\n')
+    {
+        height = MAX_OF(height, FR_CharHeight(c));
+    }
+
+    return topToAscent(fonts[fr.fontIdx]) + height;
+    }
+}
+
+static void textFragmentDimensions(int* width, int* height, const char* fragment)
+{
+    if(NULL != width)  *width  = textFragmentWidth(fragment);
+    if(NULL != height) *height = textFragmentHeight(fragment);
+}
+
+static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
     short textFlags, int initialCount)
 {
-    assert(inited && string && string[0] && fr.fontIdx != -1);
+    assert(fragment && fragment[0] && fr.fontIdx != -1);
     {
     bitmapfont_t* cf = fonts[fr.fontIdx];
-    fr_state_attributes_t* sat = currentAttributes();
+    fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
@@ -625,14 +661,14 @@ static void drawTextFragment(const char* string, int x, int y, int alignFlags,
     const char* ch;
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= FR_TextWidth(string);
+        x -= textFragmentWidth(fragment);
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= FR_TextWidth(string)/2;
+        x -= textFragmentWidth(fragment)/2;
 
     if(alignFlags & ALIGN_BOTTOM)
-        y -= FR_TextHeight(string);
+        y -= textFragmentHeight(fragment);
     else if(!(alignFlags & ALIGN_TOP))
-        y -= FR_TextHeight(string)/2;
+        y -= textFragmentHeight(fragment)/2;
 
     if(!(noTypein && noShadow && noGlitter))
         glGetFloatv(GL_CURRENT_COLOR, origColor);
@@ -658,7 +694,7 @@ static void drawTextFragment(const char* string, int x, int y, int alignFlags,
     for(pass = (noShadow? 1 : 0); pass < 2; ++pass)
     {
         count = initialCount;
-        ch = string;
+        ch = fragment;
         cx = x + (pass == 0? sat->shadowOffsetX : 0);
         cy = y + (pass == 0? sat->shadowOffsetY : 0);
 
@@ -792,6 +828,7 @@ static void drawTextFragment(const char* string, int x, int y, int alignFlags,
     }
 }
 
+/// \note Member of the Doomsday public API.
 void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
     bitmapfont_t* cf;
@@ -815,11 +852,13 @@ void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlag
     }
 }
 
+/// \note Member of the Doomsday public API.
 void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags)
 {
     FR_DrawChar3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
+/// \note Member of the Doomsday public API.
 void FR_DrawChar(unsigned char ch, int x, int y)
 {
     FR_DrawChar2(ch, x, y, DEFAULT_ALIGNFLAGS);
@@ -957,7 +996,7 @@ static int C_DECL compareFontName(const void* a, const void* b)
 
 ddstring_t** FR_CollectFontNames(int* count)
 {
-    assert(inited);
+    errorIfNotInited("FR_CollectFontNames");
     if(numFonts != 0)
     {
         ddstring_t** list = malloc(sizeof(*list) * (numFonts+1));
@@ -1141,7 +1180,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
 
 static void initDrawTextState(drawtextstate_t* state)
 {
-    fr_state_attributes_t* sat = currentAttributes();
+    fr_state_attributes_t* sat = currentAttribs();
     state->font = BitmapFont_Id(fonts[fr.fontIdx]);
     glGetFloatv(GL_CURRENT_COLOR, state->color);
     state->tracking = sat->tracking;
@@ -1187,6 +1226,7 @@ static void freeTextBuffer(void)
     largeTextBufferSize = 0;
 }
 
+/// \note Member of the Doomsday public API.
 void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlags)
 {
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
@@ -1197,6 +1237,8 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
     drawtextstate_t state;
     size_t charCount = 0;
     int curCase = -1, lastLineHeight;
+
+    errorIfNotInited("FR_DrawText");
 
     if(!text || !text[0])
         return;
@@ -1300,7 +1342,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
                 // We'll take care of horizontal positioning of the fragment so align left.
                 fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
                 if(alignFlags & ALIGN_RIGHT)
-                    alignx = -FR_TextWidth(fragment) * state.scaleX;
+                    alignx = -textFragmentWidth(fragment) * state.scaleX;
             }
 
             // Setup the scaling.
@@ -1327,18 +1369,18 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
 
             // Draw it.
             glColor4fv(state.color);
-            drawTextFragment(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
+            textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
             charCount += strlen(fragment);
 
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) FR_TextWidth(fragment) * state.scaleX;
+                cx += (float) textFragmentWidth(fragment) * state.scaleX;
             }
             else
             {
                 if(strlen(fragment) > 0)
-                    lastLineHeight = FR_TextHeight(fragment);
+                    lastLineHeight = textFragmentHeight(fragment);
 
                 cx = (float) x;
                 cy += (float) lastLineHeight * (1+FR_Leading());
@@ -1356,37 +1398,34 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
     glColor4fv(origColor);
 }
 
+/// \note Member of the Doomsday public API.
 void FR_DrawText2(const char* text, int x, int y, int alignFlags)
 {
     FR_DrawText3(text, x, y, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
+/// \note Member of the Doomsday public API.
 void FR_DrawText(const char* text, int x, int y)
 {
     FR_DrawText2(text, x, y, DEFAULT_ALIGNFLAGS);
 }
 
-void FR_TextDimensions(int* width, int* height, const char* string)
+/// \note Member of the Doomsday public API.
+void FR_TextDimensions(int* width, int* height, const char* text)
 {
-    if(!width && !height)
-        return;
-    if(width)
-        *width = FR_TextWidth(string);
-    if(height)
-        *height = FR_TextHeight(string);
+    if(NULL != width)  *width  = FR_TextWidth(text);
+    if(NULL != height) *height = FR_TextHeight(text);
 }
 
-/**
- * Find the visible width of the whole formatted text block.
- * Skips parameter blocks eg "{param}Text" = 4 chars
- */
+/// \note Member of the Doomsday public API.
 int FR_TextWidth(const char* string)
 {
-    fontid_t oldFontId = FR_Font();
     int w, maxWidth = -1;
     boolean skip = false;
     const char* ch;
     size_t i, len;
+
+    errorIfNotInited("FR_TextWidth");
 
     if(!string || !string[0])
         return 0;
@@ -1421,17 +1460,12 @@ int FR_TextWidth(const char* string)
         }
     }
 
-    FR_SetFont(oldFontId);
     return maxWidth;
 }
 
-/**
- * Find the visible height of the whole formatted text block.
- * Skips parameter blocks eg "{param}Text" = 4 chars
- */
+/// \note Member of the Doomsday public API.
 int FR_TextHeight(const char* string)
 {
-    fontid_t oldFontId = FR_Font();
     int h, currentLineHeight;
     boolean skip = false;
     const char* ch;
@@ -1439,7 +1473,9 @@ int FR_TextHeight(const char* string)
 
     if(!string || !string[0])
         return 0;
-    
+
+    errorIfNotInited("FR_TextHeight");
+
     currentLineHeight = 0;
     len = strlen(string);
     h = 0;
@@ -1469,6 +1505,5 @@ int FR_TextHeight(const char* string)
     }
     h += currentLineHeight;
 
-    FR_SetFont(oldFontId);
     return h;
 }

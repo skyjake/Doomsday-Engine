@@ -310,7 +310,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* cont
     if(msgType == MSG_YESNO)
         composeYesNoMessage();
 
-    FR_ResetTypeInTimer();
+    FR_ResetTypeinTimer();
 
     // If the console is open, close it. This message must be noticed!
     Con_Open(false);

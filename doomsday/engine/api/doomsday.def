@@ -500,7 +500,7 @@ EXPORTS
     FR_PopAttrib                @112 NONAME
     FR_LoadDefaultAttrib        @113 NONAME
 
-    FR_ResetTypeInTimer         @116 NONAME
+    FR_ResetTypeinTimer         @116 NONAME
 
     FR_Leading                  @118 NONAME
     FR_SetLeading               @120 NONAME
