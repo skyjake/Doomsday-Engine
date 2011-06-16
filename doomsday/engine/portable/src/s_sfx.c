@@ -1218,10 +1218,11 @@ void Sfx_DebugInfo(void)
     uint cachesize, ccnt;
 
     glEnable(GL_TEXTURE_2D);
-    glColor3f(1, 1, 0);
 
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 1, 0, 1);
+
     lh = FR_TextHeight("W") - 3;
     if(!sfxAvail)
     {
@@ -1236,16 +1237,20 @@ void Sfx_DebugInfo(void)
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
-    glColor3f(1, 1, 1);
+    FR_SetColor(1, 1, 1);
     FR_DrawText3(buf, 10, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
     {
         if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING))
-            glColor3f(1, 1, 1);
+        {
+            FR_SetColor(1, 1, 1);
+        }
         else
-            glColor3f(1, 1, 0);
+        {
+            FR_SetColor(1, 1, 0);
+        }
 
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u", i,
                 !(ch->flags & SFXCF_NO_ORIGIN) ? 'O' : '.',

@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 518 <--
+; Highest ordinal is currently: --> 531 <--
 ; Other free ordinals: 65
 
 NAME                            "DOOMSDAY"
@@ -506,30 +506,43 @@ EXPORTS
     FR_SetLeading               @120 NONAME
     FR_Tracking                 @121 NONAME
     FR_SetTracking              @122 NONAME
-    FR_ShadowOffset             @123 NONAME
-    FR_SetShadowOffset          @124 NONAME
-    FR_ShadowStrength           @125 NONAME
-    FR_SetShadowStrength        @131 NONAME
-    FR_GlitterStrength          @197 NONAME
-    FR_SetGlitterStrength       @198 NONAME
-    FR_CaseScale                @199 NONAME
-    FR_SetCaseScale             @200 NONAME
+    FR_SetColor                 @123 NONAME
+    FR_SetColorv                @124 NONAME
+    FR_ColorAndAlpha            @125 NONAME
+    FR_SetColorAndAlpha         @131 NONAME
+    FR_SetColorAndAlphav        @197 NONAME
+    FR_ColorRed                 @198 NONAME
+    FR_SetColorRed              @199 NONAME
+    FR_ColorGreen               @200 NONAME
+    FR_SetColorGreen            @201 NONAME
+    FR_ColorBlue                @202 NONAME
+    FR_SetColorBlue             @203 NONAME
+    FR_Alpha                    @204 NONAME
+    FR_SetAlpha                 @205 NONAME
+    FR_ShadowOffset             @206 NONAME
+    FR_SetShadowOffset          @513 NONAME
+    FR_ShadowStrength           @514 NONAME
+    FR_SetShadowStrength        @515 NONAME
+    FR_GlitterStrength          @516 NONAME
+    FR_SetGlitterStrength       @517 NONAME
+    FR_CaseScale                @518 NONAME
+    FR_SetCaseScale             @519 NONAME
 
-    FR_TextDimensions           @201 NONAME
-    FR_TextWidth                @202 NONAME
-    FR_TextHeight               @203 NONAME
+    FR_TextDimensions           @520 NONAME
+    FR_TextWidth                @521 NONAME
+    FR_TextHeight               @522 NONAME
 
-    FR_DrawText                 @204 NONAME
-    FR_DrawText2                @205 NONAME
-    FR_DrawText3                @206 NONAME
+    FR_DrawText                 @523 NONAME
+    FR_DrawText2                @524 NONAME
+    FR_DrawText3                @525 NONAME
 
-    FR_DrawChar                 @513 NONAME
-    FR_DrawChar2                @514 NONAME
-    FR_DrawChar3                @515 NONAME
+    FR_DrawChar                 @526 NONAME
+    FR_DrawChar2                @527 NONAME
+    FR_DrawChar3                @528 NONAME
 
-    FR_CharDimensions           @516 NONAME
-    FR_CharWidth                @517 NONAME
-    FR_CharHeight               @518 NONAME
+    FR_CharDimensions           @529 NONAME
+    FR_CharWidth                @530 NONAME
+    FR_CharHeight               @531 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

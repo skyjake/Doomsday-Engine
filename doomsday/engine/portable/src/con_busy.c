@@ -506,7 +506,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     {
         FR_SetFont(busyFont);
         FR_LoadDefaultAttrib();
-        glColor4f(1.f, 1.f, 1.f, .66f);
+        FR_SetColorAndAlpha(1.f, 1.f, 1.f, .66f);
         FR_DrawText3(busyTaskName, x+radius, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
 
@@ -620,22 +620,23 @@ void Con_BusyDrawConsoleOutput(void)
 
     FR_SetFont(busyFont);
     FR_LoadDefaultAttrib();
+    FR_SetColor(1.f, 1.f, 1.f);
 
     for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
     {
-        float color = 1;//lineAlpha[i];
         const cbline_t* line = visibleBusyLines[i];
+        float alpha = 1;
 
         if(!line)
             continue;
 
-        color = ((y - topY) / busyFontHgt) - (LINE_COUNT - 1);
-        if(color < LINE_COUNT)
-            color = MINMAX_OF(0, color/2, 1);
+        alpha = ((y - topY) / busyFontHgt) - (LINE_COUNT - 1);
+        if(alpha < LINE_COUNT)
+            alpha = MINMAX_OF(0, alpha/2, 1);
         else
-            color = 1 - (color - LINE_COUNT);
+            alpha = 1 - (alpha - LINE_COUNT);
 
-        glColor4f(1.f, 1.f, 1.f, color);
+        FR_SetAlpha(alpha);
         FR_DrawText3(line->text, theWindow->width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 

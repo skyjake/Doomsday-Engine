@@ -203,12 +203,12 @@ static void drawMessage(void)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetLeading(LEADING);
     FR_SetShadowStrength(cfg.menuTextGlitter);
     FR_SetGlitterStrength(cfg.menuShadow);
+    FR_SetColorAndAlpha(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
 
     FR_DrawText3(msgText, x, y, ALIGN_TOP, textFlags);
     y += FR_TextHeight(msgText);

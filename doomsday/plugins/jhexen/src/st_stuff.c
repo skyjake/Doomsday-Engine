@@ -1436,7 +1436,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1532,7 +1532,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1633,7 +1633,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1727,7 +1727,7 @@ void SBarBlueMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1816,7 +1816,7 @@ void SBarGreenMana_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1943,7 +1943,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         {
             char buf[20];
             FR_SetFont(obj->fontId);
-            DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+            FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawText3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
@@ -2452,7 +2452,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, -1, -1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2579,7 +2579,7 @@ void BlueMana_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2703,7 +2703,7 @@ void GreenMana_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2775,7 +2775,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->fontId);
     FR_SetTracking(TRACKING);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, 0, -13, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2873,7 +2873,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
         {
             char buf[20];
             FR_SetFont(obj->fontId);
-            DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+            FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawText3(buf, -2, -7, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
@@ -2999,6 +2999,7 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         return;
 
     FR_SetFont(obj->fontId);
+    FR_SetColorAndAlpha(1, 1, 1, textAlpha);
     FR_TextDimensions(&counterWidth, &lineHeight, "00");
     spacerWidth = FR_TextWidth(" : ");
 
@@ -3007,7 +3008,6 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     DGL_Translatef(xOffset, yOffset, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
-    DGL_Color4f(1, 1, 1, textAlpha);
     DGL_Enable(DGL_TEXTURE_2D);
 
     x = ORIGINX;
@@ -3129,13 +3129,13 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_PushMatrix();
     DGL_Translatef(x, y, 0);
     DGL_Scalef(scale, scale, 1);
-
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_SetFont(obj->fontId);
-    FR_DrawText3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
-    DGL_Disable(DGL_TEXTURE_2D);
 
+    FR_SetFont(obj->fontId);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_DrawText3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
     }

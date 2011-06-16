@@ -1254,7 +1254,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 
     // Draw it.
     // Set the normal color.
-    useColor(t->color, 4);
+    FR_SetColorAndAlpha(t->color[CR].value, t->color[CG].value, t->color[CB].value, t->color[CA].value);
     FR_SetFont(t->font);
     for(cnt = 0, ptr = t->text; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
     {
@@ -1282,7 +1282,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
                     finale_t* f = finalesById(stackTop());
                     color = &f->_interpreter->_pages[PAGE_TEXT]->_preColor[colorIdx-1];
                 }
-                glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, t->color[3].value);
+                FR_SetColorAndAlpha((*color)[0].value, (*color)[1].value, (*color)[2].value, t->color[3].value);
                 */
                 continue;
             }

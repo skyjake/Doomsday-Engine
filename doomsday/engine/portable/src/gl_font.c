@@ -40,12 +40,12 @@
 #include "de_render.h"
 
 #include "bitmapfont.h"
-#include "m_args.h"
 #include "m_misc.h"
 
 typedef struct fr_state_attributes_s {
     int tracking;
     float leading;
+    float rgba[4];
     int shadowOffsetX, shadowOffsetY;
     float shadowStrength;
     float glitterStrength;
@@ -56,6 +56,7 @@ typedef struct fr_state_attributes_s {
 static fr_state_attributes_t defaultAttribs = {
     FR_DEF_ATTRIB_TRACKING,
     FR_DEF_ATTRIB_LEADING,
+    { FR_DEF_ATTRIB_COLOR_RED, FR_DEF_ATTRIB_COLOR_GREEN, FR_DEF_ATTRIB_COLOR_BLUE, FR_DEF_ATTRIB_ALPHA },
     FR_DEF_ATTRIB_SHADOW_XOFFSET,
     FR_DEF_ATTRIB_SHADOW_YOFFSET,
     FR_DEF_ATTRIB_SHADOW_STRENGTH,
@@ -76,7 +77,7 @@ typedef struct {
     float scaleX, scaleY;
     float offX, offY;
     float angle;
-    float color[4];
+    float rgba[4];
     float glitterStrength, shadowStrength;
     int shadowOffsetX, shadowOffsetY;
     int tracking;
@@ -472,6 +473,111 @@ void FR_SetTracking(int value)
 }
 
 /// \note Member of the Doomsday public API.
+void FR_ColorAndAlpha(float rgba[4])
+{
+    errorIfNotInited("FR_ColorAndAlpha");
+    memcpy(rgba, currentAttribs()->rgba, sizeof(rgba));
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColor(float red, float green, float blue)
+{
+    fr_state_attributes_t* sat = currentAttribs();
+    errorIfNotInited("FR_SetColor");
+    sat->rgba[CR] = red;
+    sat->rgba[CG] = green;
+    sat->rgba[CB] = blue;
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColorv(const float rgba[3])
+{
+    fr_state_attributes_t* sat = currentAttribs();
+    errorIfNotInited("FR_SetColorv");
+    sat->rgba[CR] = rgba[CR];
+    sat->rgba[CG] = rgba[CG];
+    sat->rgba[CB] = rgba[CB];
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColorAndAlpha(float red, float green, float blue, float alpha)
+{
+    fr_state_attributes_t* sat = currentAttribs();
+    errorIfNotInited("FR_SetColorAndAlpha");
+    sat->rgba[CR] = red;
+    sat->rgba[CG] = green;
+    sat->rgba[CB] = blue;
+    sat->rgba[CA] = alpha;
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColorAndAlphav(const float rgba[4])
+{
+    fr_state_attributes_t* sat = currentAttribs();
+    errorIfNotInited("FR_SetColorAndAlphav");
+    sat->rgba[CR] = rgba[CR];
+    sat->rgba[CG] = rgba[CG];
+    sat->rgba[CB] = rgba[CB];
+    sat->rgba[CA] = rgba[CA];
+}
+
+/// \note Member of the Doomsday public API.
+float FR_ColorRed(void)
+{
+    errorIfNotInited("FR_ColorRed");
+    return currentAttribs()->rgba[CR];
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColorRed(float value)
+{
+    errorIfNotInited("FR_SetColorRed");
+    currentAttribs()->rgba[CR] = value;
+}
+
+/// \note Member of the Doomsday public API.
+float FR_ColorGreen(void)
+{
+    errorIfNotInited("FR_ColorGreen");
+    return currentAttribs()->rgba[CG];
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColorGreen(float value)
+{
+    errorIfNotInited("FR_SetColorGreen");
+    currentAttribs()->rgba[CG] = value;
+}
+
+/// \note Member of the Doomsday public API.
+float FR_ColorBlue(void)
+{
+    errorIfNotInited("FR_ColorBlue");
+    return currentAttribs()->rgba[CB];
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetColorBlue(float value)
+{
+    errorIfNotInited("FR_SetColorBlue");
+    currentAttribs()->rgba[CB] = value;
+}
+
+/// \note Member of the Doomsday public API.
+float FR_Alpha(void)
+{
+    errorIfNotInited("FR_Alpha");
+    return currentAttribs()->rgba[CA];
+}
+
+/// \note Member of the Doomsday public API.
+void FR_SetAlpha(float value)
+{
+    errorIfNotInited("FR_SetAlpha");
+    currentAttribs()->rgba[CA] = value;
+}
+
+/// \note Member of the Doomsday public API.
 void FR_ShadowOffset(int* offsetX, int* offsetY)
 {
     fr_state_attributes_t* sat = currentAttribs();
@@ -656,7 +762,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
     int w, h, cx, cy, count, yoff;
-    float origColor[4], flashColor[3];
+    float flashColor[3];
     unsigned char c;
     const char* ch;
 
@@ -670,14 +776,11 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     else if(!(alignFlags & ALIGN_TOP))
         y -= textFragmentHeight(fragment)/2;
 
-    if(!(noTypein && noShadow && noGlitter))
-        glGetFloatv(GL_CURRENT_COLOR, origColor);
-
     if(!(noTypein && noGlitter))
     {
-        flashColor[CR] = (1 + 2 * origColor[0]) / 3;
-        flashColor[CG] = (1 + 2 * origColor[1]) / 3;
-        flashColor[CB] = (1 + 2 * origColor[2]) / 3;
+        flashColor[CR] = (1 + 2 * sat->rgba[CR]) / 3;
+        flashColor[CG] = (1 + 2 * sat->rgba[CG]) / 3;
+        flashColor[CB] = (1 + 2 * sat->rgba[CB]) / 3;
     }
 
     if(0 != BitmapFont_GLTextureName(cf))
@@ -707,10 +810,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             glitterMul = 0;
 
             shadow = (noShadow? 0 : sat->shadowStrength);
-            shadowMul = (noShadow? 0 : origColor[3]);
-
-            if(!(noTypein && noShadow && noGlitter))
-                glColor4fv(origColor);
+            shadowMul = (noShadow? 0 : sat->rgba[CA]);
 
             // Do the type-in effect?
             if(!noTypein && (pass || (!noShadow && !pass)))
@@ -724,30 +824,30 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                         if(count == maxCount)
                         {
                             glitterMul = 1;
-                            flashColor[CR] = origColor[0];
-                            flashColor[CG] = origColor[1];
-                            flashColor[CB] = origColor[2];
+                            flashColor[CR] = sat->rgba[CR];
+                            flashColor[CG] = sat->rgba[CG];
+                            flashColor[CB] = sat->rgba[CB];
                         }
                         else if(count + 1 == maxCount)
                         {
                             glitterMul = 0.88f;
-                            flashColor[CR] = (1 + origColor[0]) / 2;
-                            flashColor[CG] = (1 + origColor[1]) / 2;
-                            flashColor[CB] = (1 + origColor[2]) / 2;
+                            flashColor[CR] = (1 + sat->rgba[CR]) / 2;
+                            flashColor[CG] = (1 + sat->rgba[CG]) / 2;
+                            flashColor[CB] = (1 + sat->rgba[CB]) / 2;
                         }
                         else if(count + 2 == maxCount)
                         {
                             glitterMul = 0.75f;
-                            flashColor[CR] = origColor[0];
-                            flashColor[CG] = origColor[1];
-                            flashColor[CB] = origColor[2];
+                            flashColor[CR] = sat->rgba[CR];
+                            flashColor[CG] = sat->rgba[CG];
+                            flashColor[CB] = sat->rgba[CB];
                         }
                         else if(count + 3 == maxCount)
                         {
                             glitterMul = 0.5f;
-                            flashColor[CR] = origColor[0];
-                            flashColor[CG] = origColor[1];
-                            flashColor[CB] = origColor[2];
+                            flashColor[CR] = sat->rgba[CR];
+                            flashColor[CG] = sat->rgba[CG];
+                            flashColor[CB] = sat->rgba[CB];
                         }
                         else if(count > maxCount)
                         {
@@ -798,6 +898,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                 if(pass)
                 {
                     // The character itself.
+                    glColor4fv(sat->rgba);
                     drawChar(c, cx, cy + yoff, cf, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
                     if(!noGlitter && glitter > 0)
@@ -823,33 +924,14 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
     }
-    if(!(noTypein && noGlitter && noShadow))
-        glColor4fv(origColor);
     }
 }
 
 /// \note Member of the Doomsday public API.
 void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
-    bitmapfont_t* cf;
-    if(fr.fontIdx == -1)
-        return;
-    cf = fonts[fr.fontIdx];
-    if(0 != BitmapFont_GLTextureName(cf))
-    {
-        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(cf));
-        glMatrixMode(GL_TEXTURE);
-        glPushMatrix();
-        glLoadIdentity();
-        glScalef(1.f / BitmapFont_TextureWidth(cf),
-                 1.f / BitmapFont_TextureHeight(cf), 1.f);
-    }
-    drawChar(ch, x, y, cf, alignFlags, textFlags);
-    if(0 != BitmapFont_GLTextureName(cf))
-    {
-        glMatrixMode(GL_TEXTURE);
-        glPopMatrix();
-    }
+    char str[2] = { ch, '\0' };
+    FR_DrawText(str, x, y, alignFlags, textFlags);
 }
 
 /// \note Member of the Doomsday public API.
@@ -1091,17 +1173,17 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         else if(!strnicmp((*strPtr), "r", 1))
         {
             (*strPtr)++;
-            state->color[CR] = parseFloat(&(*strPtr));
+            state->rgba[CR] = parseFloat(&(*strPtr));
         }
         else if(!strnicmp((*strPtr), "g", 1))
         {
             (*strPtr)++;
-            state->color[CG] = parseFloat(&(*strPtr));
+            state->rgba[CG] = parseFloat(&(*strPtr));
         }
         else if(!strnicmp((*strPtr), "b", 1))
         {
             (*strPtr)++;
-            state->color[CB] = parseFloat(&(*strPtr));
+            state->rgba[CB] = parseFloat(&(*strPtr));
         }
         else if(!strnicmp((*strPtr), "x", 1))
         {
@@ -1182,7 +1264,7 @@ static void initDrawTextState(drawtextstate_t* state)
 {
     fr_state_attributes_t* sat = currentAttribs();
     state->font = BitmapFont_Id(fonts[fr.fontIdx]);
-    glGetFloatv(GL_CURRENT_COLOR, state->color);
+    memcpy(state->rgba, sat->rgba, sizeof(state->rgba));
     state->tracking = sat->tracking;
     state->glitterStrength = sat->glitterStrength;
     state->shadowStrength = sat->shadowStrength;
@@ -1243,8 +1325,10 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
     if(!text || !text[0])
         return;
 
+    // We need to change the current color, so remember for restore.
+    glGetFloatv(GL_CURRENT_COLOR, origColor);
+
     initDrawTextState(&state);
-    memcpy(origColor, state.color, sizeof(origColor));
     // Apply defaults:
     state.typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
 
@@ -1262,7 +1346,13 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             float lastShadowStrength = state.shadowStrength;
             float lastGlitterStrength = state.glitterStrength;
             boolean lastCaseScale = state.caseScale;
+            float lastRGBA[4];
             int numBreaks = 0;
+            
+            lastRGBA[CR] = state.rgba[CR];
+            lastRGBA[CG] = state.rgba[CG];
+            lastRGBA[CB] = state.rgba[CB];
+            lastRGBA[CA] = state.rgba[CA];
 
             parseParamaterBlock(&str, &state, &numBreaks);
 
@@ -1281,6 +1371,8 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
                 FR_SetTracking(state.tracking);
             if(state.leading != lastLeading)
                 FR_SetLeading(state.leading);
+            if(state.rgba[CR] != lastRGBA[CR] || state.rgba[CG] != lastRGBA[CG] || state.rgba[CB] != lastRGBA[CB] || state.rgba[CA] != lastRGBA[CA])
+                FR_SetColorAndAlphav(state.rgba);
             if(state.shadowStrength != lastShadowStrength)
                 FR_SetShadowStrength(state.shadowStrength);
             if(state.glitterStrength != lastGlitterStrength)
@@ -1368,7 +1460,6 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             glScalef(state.scaleX, state.scaleY * extraScale, 1);
 
             // Draw it.
-            glColor4fv(state.color);
             textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
             charCount += strlen(fragment);
 

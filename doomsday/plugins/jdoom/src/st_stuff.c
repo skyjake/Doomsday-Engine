@@ -978,9 +978,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1074,7 +1072,7 @@ void Ammo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     FR_DrawText3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1158,7 +1156,7 @@ void MaxAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     FR_DrawText3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1234,7 +1232,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     FR_DrawChar('%', X, Y);
@@ -1320,7 +1318,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     FR_DrawChar('%', X, Y);
@@ -1412,7 +1410,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1901,7 +1899,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1961,7 +1959,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2066,7 +2064,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2274,7 +2272,7 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2577,7 +2575,7 @@ void Kills_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2676,7 +2674,7 @@ void Items_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2763,7 +2761,7 @@ void Secrets_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->fontId);
-    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);

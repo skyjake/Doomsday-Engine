@@ -1880,7 +1880,7 @@ void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alph
 {
     alpha *= uiAlpha;
     if(alpha <= 0) return;
-    UI_SetColorA(color, alpha);
+    FR_SetColorAndAlpha(color->red, color->green, color->blue, alpha);
     FR_DrawText3(text, x, y, alignFlags, textFlags);
 }
 
@@ -1904,7 +1904,8 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
 
     alpha *= uiAlpha;
 
-    UI_SetColorA(color, alpha);
+    FR_SetColorAndAlpha(color->red, color->green, color->blue, alpha);
+
     for(;; text++)
     {
         c = *text;

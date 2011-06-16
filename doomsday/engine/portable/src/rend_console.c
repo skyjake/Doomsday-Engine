@@ -157,73 +157,72 @@ void Rend_ConsoleCursorResetBlink(void)
     ConsoleBlink = 0;
 }
 
-static void consoleSetColor(int fl, float alpha)
+// Calculate the average of the given colors.
+static void calcAvgColor(int fl, float rgb[3])
 {
-    assert(inited);
+    assert(inited && NULL != rgb);
     {
-    float r = 0, g = 0, b = 0;
     int count = 0;
+    rgb[CR] = rgb[CG] = rgb[CB] = 0;
 
-    // Calculate the average of the given colors.
     if(fl & CBLF_BLACK)
     {
         ++count;
     }
     if(fl & CBLF_BLUE)
     {
-        b += 1;
+        rgb[CB] += 1;
         ++count;
     }
     if(fl & CBLF_GREEN)
     {
-        g += 1;
+        rgb[CG] += 1;
         ++count;
     }
     if(fl & CBLF_CYAN)
     {
-        g += 1;
-        b += 1;
+        rgb[CG] += 1;
+        rgb[CB] += 1;
         ++count;
     }
     if(fl & CBLF_RED)
     {
-        r += 1;
+        rgb[CR] += 1;
         ++count;
     }
     if(fl & CBLF_MAGENTA)
     {
-        r += 1;
-        b += 1;
+        rgb[CR] += 1;
+        rgb[CB] += 1;
         ++count;
     }
     if(fl & CBLF_YELLOW)
     {
-        r += CcolYellow[0];
-        g += CcolYellow[1];
-        b += CcolYellow[2];
+        rgb[CR] += CcolYellow[0];
+        rgb[CG] += CcolYellow[1];
+        rgb[CB] += CcolYellow[2];
         ++count;
     }
     if(fl & CBLF_WHITE)
     {
-        r += 1;
-        g += 1;
-        b += 1;
+        rgb[CR] += 1;
+        rgb[CG] += 1;
+        rgb[CB] += 1;
         ++count;
     }
     // Calculate the average.
     if(count > 1)
     {
-        r /= count;
-        g /= count;
-        b /= count;
+        rgb[CR] /= count;
+        rgb[CG] /= count;
+        rgb[CB] /= count;
     }
     if(fl & CBLF_LIGHT)
     {
-        r += (1 - r) / 2;
-        g += (1 - g) / 2;
-        b += (1 - b) / 2;
+        rgb[CR] += (1 - rgb[CR]) / 2;
+        rgb[CG] += (1 - rgb[CG]) / 2;
+        rgb[CB] += (1 - rgb[CB]) / 2;
     }
-    glColor4f(r, g, b, alpha);
     }
 }
 
@@ -566,7 +565,7 @@ static void drawSideText(const char* text, int line, float alpha)
             text = buf;
         }
 
-        glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
+        FR_SetColorAndAlpha(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
         FR_DrawText3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
     }
@@ -601,6 +600,8 @@ static void drawConsole(float consoleAlpha)
 
     FR_SetFont(Con_Font());
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
+
     cfont = FR_BitmapFontForId(FR_Font());
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);
@@ -626,8 +627,6 @@ static void drawConsole(float consoleAlpha)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glScalef(scale[0], scale[1], 1);
-
-    glColor4f(1, 1, 1, consoleAlpha);
 
     // The console history log is drawn from bottom to top.
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
@@ -690,9 +689,12 @@ static void drawConsole(float consoleAlpha)
 
                     // Set the color.
                     if(BitmapFont_Flags(cfont) & BFF_IS_MONOCHROME)
-                        consoleSetColor(line->flags, consoleAlpha);
-                    FR_DrawText3(buff, XORIGIN + PADDING + xOffset,
-                                               YORIGIN + y / scale[1], alignFlags, textFlags);
+                    {
+                        float rgb[3];
+                        calcAvgColor(line->flags, rgb);
+                        FR_SetColorv(rgb);
+                    }
+                    FR_DrawText3(buff, XORIGIN + PADDING + xOffset, YORIGIN + y / scale[1], alignFlags, textFlags);
                 }
 
                 // Move up.
@@ -713,14 +715,15 @@ static void drawConsole(float consoleAlpha)
         printFilter(buff);
 
     glEnable(GL_TEXTURE_2D);
-
     if(BitmapFont_Flags(cfont) & BFF_IS_MONOCHROME)
-        glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], consoleAlpha);
+    {
+        FR_SetColorAndAlpha(CcolYellow[0], CcolYellow[1], CcolYellow[2], consoleAlpha);
+    }
     else
-        glColor4f(1, 1, 1, consoleAlpha);
-
+    {
+        FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
+    }
     FR_DrawText3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
-
     glDisable(GL_TEXTURE_2D);
 
     // Draw the cursor in the appropriate place.

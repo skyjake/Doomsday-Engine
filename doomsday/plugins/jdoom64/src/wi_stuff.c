@@ -190,12 +190,9 @@ static void drawEnteringTitle(void)
 static void drawPercent(int x, int y, int p)
 {
     char buf[20];
-
     if(p < 0)
         return;
     dd_snprintf(buf, 20, "%i", p);
-    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-
     FR_DrawChar('%', x, y);
     FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 }
@@ -215,7 +212,6 @@ static void drawTime(int x, int y, int t)
 
         x -= 22;
 
-        DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
         FR_DrawChar(':', x, y);
         if(minutes > 0)
         {
@@ -405,7 +401,7 @@ static void drawDeathmatchStats(void)
                 sprintf(tmp, "%i", teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
-                DGL_Color4f(1, 1, 1, 1);
+                FR_SetColorAndAlpha(1, 1, 1, 1);
                 FR_DrawText(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
                 FR_DrawText(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
             }
@@ -427,6 +423,7 @@ static void drawDeathmatchStats(void)
     // Draw stats.
     y = DM_MATRIXY + 10;
     FR_SetFont(FID(GF_SMALL));
+    FR_SetColorAndAlpha(1, 1, 1, 1);
     w = FR_CharWidth('0');
 
     for(i = 0; i < NUMTEAMS; ++i)
@@ -615,6 +612,8 @@ static void drawNetgameStats(void)
 
     FR_SetFont(FID(GF_SMALL));
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+
     pwidth = FR_CharWidth('%');
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -656,8 +655,9 @@ static void drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].playerCount);
             FR_SetFont(FID(GF_FONTA));
-            DGL_Color4f(1, 1, 1, 1);
+            FR_SetColorAndAlpha(1, 1, 1, 1);
             FR_DrawText(tmp, x - info.width + 1, y + info.height - 8);
+            FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
         }
 
         //if(i == inPlayerTeam)
@@ -695,32 +695,27 @@ static void drawSinglePlayerStats(void)
 
     FR_SetFont(FID(GF_SMALL));
     FR_LoadDefaultAttrib();
+    FR_SetTracking(0);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+
     lh = (3 * FR_CharHeight('0')) / 2; // Line height.
 
     DGL_Enable(DGL_TEXTURE_2D);
 
     WI_DrawPatch(pKills, Hu_ChoosePatchReplacement(pKills), SP_STATSX, SP_STATSY);
 
-    FR_SetFont(FID(GF_SMALL));
-    FR_SetTracking(0);    
     drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
 
     WI_DrawPatch(pItems, Hu_ChoosePatchReplacement(pItems), SP_STATSX, SP_STATSY + lh);
-    FR_SetFont(FID(GF_SMALL));
-    FR_SetTracking(0);
     drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
 
     WI_DrawPatch(pSecretSP, Hu_ChoosePatchReplacement(pSecretSP), SP_STATSX, SP_STATSY + 2 * lh);
-    FR_SetFont(FID(GF_SMALL));
-    FR_SetTracking(0);
     drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
 
     WI_DrawPatch(pTime, Hu_ChoosePatchReplacement(pTime), SP_TIMEX, SP_TIMEY);
 
     if(cntTime >= 0)
     {
-        FR_SetFont(FID(GF_SMALL));
-        FR_SetTracking(0);
         drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime / TICRATE);
     }
 
@@ -729,8 +724,6 @@ static void drawSinglePlayerStats(void)
         WI_DrawPatch(pPar, Hu_ChoosePatchReplacement(pPar), SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY);
         if(cntPar >= 0)
         {
-            FR_SetFont(FID(GF_SMALL));
-            FR_SetTracking(0);
             drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
         }
     }

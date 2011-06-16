@@ -1103,7 +1103,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(color);
+    FR_SetColorAndAlphav(color);
     MN_DrawText(txt->text, x, y);
     DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1231,7 +1231,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CG] *= light;
         color[CB] *= light;
 
-        DGL_Color4fv(color);
+        FR_SetColorAndAlphav(color);
         MN_DrawText2(string, x, y, ALIGN_TOPLEFT, 0);
     }
 
@@ -1424,13 +1424,13 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
             if(list->selection == i)
             {
                 if(flashSelection)
-                    DGL_Color4fv(flashColor);
+                    FR_SetColorAndAlphav(flashColor);
                 else
-                    DGL_Color4fv(color);
+                    FR_SetColorAndAlphav(color);
             }
             else
             {
-                DGL_Color4fv(dimColor);
+                FR_SetColorAndAlphav(dimColor);
             }
 
             MN_DrawText(item->text, x, y);
@@ -1588,8 +1588,8 @@ void MNList_InlineDrawer(mn_object_t* obj, int x, int y)
     const mndata_listitem_t* item = ((const mndata_listitem_t*)list->items) + list->selection;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(rs.textColors[obj->_pageColorIdx]);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
+    FR_SetColorAndAlphav(rs.textColors[obj->_pageColorIdx]);
     MN_DrawText(item->text, x, y);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1713,8 +1713,8 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(color);
     FR_SetFont(fontId);
+    FR_SetColorAndAlphav(color);
 
     MN_DrawText(btn->text, x, y);
 
@@ -2329,8 +2329,8 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
 
     DGL_Translatef(x, y, 0);
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4fv(rs.textColors[obj->_pageColorIdx]);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
+    FR_SetColorAndAlphav(rs.textColors[obj->_pageColorIdx]);
     MN_DrawText(str, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);

@@ -902,7 +902,7 @@ void Net_DrawDemoOverlay(void)
 
     FR_SetFont(glFontFixed);
     FR_LoadDefaultAttrib();
-    glColor3f(1, 1, 1);
+    FR_SetColorAndAlpha(1, 1, 1, 1);
     FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     glDisable(GL_TEXTURE_2D);

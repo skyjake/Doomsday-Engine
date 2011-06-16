@@ -660,12 +660,12 @@ void IN_DrawOldLevel(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2], 1);
+    FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
     FR_DrawText3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     if(wbs->currentMap == 8)
@@ -711,11 +711,11 @@ void IN_DrawYAH(void)
 
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
-    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
+    FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
     FR_DrawText3("NOW ENTERING:", 160, 10, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
-    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
     FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
@@ -746,7 +746,7 @@ void IN_DrawSingleStats(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     FR_DrawText("KILLS", 50, 65);
     FR_DrawText("ITEMS", 50, 90);
@@ -754,7 +754,7 @@ void IN_DrawSingleStats(void)
     FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
+    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
 
     FR_DrawText3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
@@ -846,7 +846,7 @@ void IN_DrawSingleStats(void)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTB));
-        DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         FR_DrawText("TIME", 85, 160);
 
         IN_DrawTime(284, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -858,11 +858,11 @@ void IN_DrawSingleStats(void)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
-        DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
+        FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
         FR_DrawText3("NOW ENTERING:", SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         FR_SetFont(FID(GF_FONTB));
-        DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -885,7 +885,7 @@ void IN_DrawCoopStats(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     FR_DrawText("KILLS", 95, 35);
     FR_DrawText("BONUS", 155, 35);
@@ -893,7 +893,7 @@ void IN_DrawCoopStats(void)
     FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
+    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
     FR_DrawText3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
@@ -957,11 +957,11 @@ void IN_DrawDMStats(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     FR_DrawText("TOTAL", 265, 30);
 
     FR_SetFont(FID(GF_FONTA));
-    DGL_Color4f(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
+    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
     FR_DrawText("VICTIMS", 140, 8);
 
     for(i = 0; i < 7; ++i)

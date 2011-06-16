@@ -359,7 +359,7 @@ void HU_DrawText(const char* str, float x, float y, float scale,
     DGL_Scalef(scale, scale, 1);
     DGL_Translatef(-x, -y, 0);
 
-    DGL_Color4f(r, g, b, a);
+    FR_SetColorAndAlpha(r, g, b, a);
     FR_DrawText3(str, x, y, alignFlags, textFlags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -753,7 +753,7 @@ static void drawMapMetaData(float x, float y, float alpha)
     if(!lname)
         lname = unnamed;
 
-    DGL_Color4f(1, 1, 1, alpha);
+    FR_SetColorAndAlpha(1, 1, 1, alpha);
 
     // Map name:
     FR_DrawText("map: ", x, y + 16);
@@ -824,9 +824,9 @@ void HU_DrawScoreBoard(int player)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    DGL_Color4f(1, 0, 0, hud->scoreAlpha);
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 0, 0, hud->scoreAlpha);
     FR_DrawText3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
@@ -1110,10 +1110,10 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
 void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags,
     short textFlags, float r, float g, float b, float a)
 {
-    DGL_Color4f(0, 0, 0, a * .4f);
+    FR_SetColorAndAlpha(0, 0, 0, a * .4f);
     FR_DrawText3(string, x+2, y+2, alignFlags, textFlags);
 
-    DGL_Color4f(r, g, b, a);
+    FR_SetColorAndAlpha(r, g, b, a);
     FR_DrawText3(string, x, y, alignFlags, textFlags);
 }
 
@@ -1212,12 +1212,12 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
-        DGL_Color4f(r, g, b, a);
         FR_SetFont(fontId);
         FR_SetLeading(.5f);
         FR_SetTracking(0);
         FR_SetGlitterStrength(glitter);
         FR_SetShadowStrength(shadow);
+        FR_SetColorAndAlpha(r, g, b, a);
         FR_DrawText3(replacement, x, y, alignFlags, textFlags);
         return;
     }
@@ -1597,7 +1597,7 @@ static void drawMapTitle(void)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTB));
-        DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
+        FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
         FR_DrawText3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -1610,7 +1610,7 @@ static void drawMapTitle(void)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
-        DGL_Color4f(.5f, .5f, .5f, alpha);
+        FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
         FR_DrawText3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);

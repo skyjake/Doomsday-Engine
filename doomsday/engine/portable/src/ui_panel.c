@@ -1031,15 +1031,17 @@ void CP_Ticker(ui_page_t* page)
 
 int CP_LabelText(char *label, char *text, int x, int y, int w, int h, float alpha)
 {
+    ui_color_t* color = UI_Color(UIC_TEXT);
     int ind;
 
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
-    UI_SetColorA(UI_Color(UIC_TEXT), .5f * alpha * UI_Alpha());
+    FR_SetColorAndAlpha(color->red, color->green, color->blue, .5f * alpha * UI_Alpha());
+
     FR_DrawText(label, x, y);
     ind = FR_TextWidth(label);
-    return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, UI_Color(UIC_TEXT), alpha);
+    return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, color, alpha);
 }
 
 void CP_Drawer(ui_page_t *page)

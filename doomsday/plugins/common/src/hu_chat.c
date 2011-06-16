@@ -371,6 +371,8 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     FR_SetFont(obj->fontId);
+    FR_SetColorAndAlpha(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
+
     textWidth = FR_TextWidth(text);
     cursorWidth = FR_CharWidth('_');
 
@@ -382,7 +384,6 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
         xOffset = -(textWidth + cursorWidth);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
     FR_DrawText(text, xOffset, 0);
     if(actualMapTime & 12)
     {

@@ -46,6 +46,10 @@ typedef uint32_t fontid_t;
  */
 #define FR_DEF_ATTRIB_LEADING           (.5)
 #define FR_DEF_ATTRIB_TRACKING          (0)
+#define FR_DEF_ATTRIB_COLOR_RED         (1)
+#define FR_DEF_ATTRIB_COLOR_GREEN       (1)
+#define FR_DEF_ATTRIB_COLOR_BLUE        (1)
+#define FR_DEF_ATTRIB_ALPHA             (1)
 #define FR_DEF_ATTRIB_GLITTER_STRENGTH  (.5)
 #define FR_DEF_ATTRIB_SHADOW_STRENGTH   (.5)
 #define FR_DEF_ATTRIB_SHADOW_XOFFSET    (2)
@@ -96,6 +100,35 @@ void FR_SetLeading(float value);
 int FR_Tracking(void);
 
 void FR_SetTracking(int value);
+
+/// Retrieve the current color and alpha factors.
+void FR_ColorAndAlpha(float rgba[4]);
+
+void FR_SetColor(float red, float green, float blue);
+void FR_SetColorv(const float rgb[3]);
+
+void FR_SetColorAndAlpha(float red, float green, float blue, float alpha);
+void FR_SetColorAndAlphav(const float rgba[4]);
+
+/// @return  Current red color factor.
+float FR_ColorRed(void);
+
+void FR_SetColorRed(float value);
+
+/// @return  Current green color factor.
+float FR_ColorGreen(void);
+
+void FR_SetColorGreen(float value);
+
+/// @return  Current blue color factor.
+float FR_ColorBlue(void);
+
+void FR_SetColorBlue(float value);
+
+/// @return  Current alpha factor.
+float FR_Alpha(void);
+
+void FR_SetAlpha(float value);
 
 /// Retrieve the current shadow offset (attribute).
 void FR_ShadowOffset(int* offsetX, int* offsetY);

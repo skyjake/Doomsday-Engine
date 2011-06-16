@@ -431,12 +431,12 @@ static void drawDeathTally(void)
             {
                 if(bold)
                 {
-                    DGL_Color4f(1, 0.7f, 0.3f, 1);
+                    FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
                     FR_DrawText3("--", x, y, ALIGN_TOP, DTF_NO_EFFECTS);
                 }
                 else
                 {
-                    DGL_Color4f(1, 1, 1, 1);
+                    FR_SetColorAndAlpha(1, 1, 1, 1);
                     FR_DrawText("--", x, y);
                 }
             }
@@ -464,7 +464,7 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    DGL_Color4f(1, 1, 1, 1);
+    FR_SetColorAndAlpha(1, 1, 1, 1);
     FR_DrawText3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
 }
 
@@ -477,6 +477,6 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    DGL_Color4f(1, 0.7f, 0.3f, 1);
+    FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
     FR_DrawText3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
 }

@@ -363,8 +363,7 @@ static void drawWidgets(hudstate_t* hud)
 
         FR_SetFont(FID(GF_STATUS));
         FR_LoadDefaultAttrib();
-
-        DGL_Color4f(1, 1, 1, hud->alpha);
+        FR_SetColorAndAlpha(1, 1, 1, hud->alpha);
 
         FR_DrawText3(buf, ST_FRAGSX, ST_FRAGSY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -476,7 +475,7 @@ void ST_doFullscreenStuff(int player)
 
         DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(FID(GF_FONTA));
-        DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 
         FR_DrawText3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
@@ -497,7 +496,7 @@ void ST_doFullscreenStuff(int player)
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTA));
-        DGL_Color4f(1, 1, 1, iconalpha);
+        FR_SetColorAndAlpha(1, 1, 1, iconalpha);
 
         pos = FR_TextWidth(buf)/2;
         FR_DrawText3(buf, HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOM, DTF_NO_EFFECTS);
@@ -505,7 +504,7 @@ void ST_doFullscreenStuff(int player)
         sprintf(buf, "%i", plr->health);
 
         FR_SetFont(FID(GF_FONTB));
-        DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         FR_DrawText3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -582,7 +581,7 @@ Draw_EndZoom();
             DGL_Enable(DGL_TEXTURE_2D);
 
             FR_SetFont(FID(GF_FONTB));
-            DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+            FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             FR_DrawText3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -597,13 +596,13 @@ Draw_EndZoom();
 
         DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(FID(GF_FONTA));
-        DGL_Color4f(1, 1, 1, iconalpha);
+        FR_SetColorAndAlpha(1, 1, 1, iconalpha);
         w = FR_TextWidth(buf);
         FR_DrawText3(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         sprintf(buf, "%i", plr->armorPoints);
         FR_SetFont(FID(GF_FONTB));
-        DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         FR_DrawText3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
