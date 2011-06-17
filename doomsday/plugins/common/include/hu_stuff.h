@@ -158,10 +158,7 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId);
  * @param g  Used with patch replacement; default text color green color component.
  * @param b  Used with patch replacement; default text color blue color component.
  * @param a  Patch alpha OR default text alpha when used with patch replacement.
- * @param glitter  Used with patch replacement; default text glitter strength.
- * @param shadow  Used with patch replacement; default text shadow strength.
  */
-void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a, float glitter, float shadow);
 void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a);
 void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId);
 void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);

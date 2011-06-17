@@ -1086,7 +1086,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*txt->patch, txt->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch4(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId, color[CR], color[CG], color[CB], color[CA]);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
@@ -1696,7 +1696,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*btn->patch, btn->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch5(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId, color[CR], color[CG], color[CB], color[CA], rs.textGlitter, rs.textShadow);
+        WI_DrawPatch4(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId, color[CR], color[CG], color[CB], color[CA]);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }

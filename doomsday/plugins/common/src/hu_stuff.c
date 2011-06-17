@@ -1205,9 +1205,8 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId)
     return Hu_ChoosePatchReplacement2(patchId, NULL, false);
 }
 
-void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a,
-    float glitter, float shadow)
+void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a)
 {
     if(NULL != replacement && replacement[0])
     {
@@ -1215,8 +1214,6 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
         FR_SetFont(fontId);
         FR_SetLeading(.5f);
         FR_SetTracking(0);
-        FR_SetGlitterStrength(glitter);
-        FR_SetShadowStrength(shadow);
         FR_SetColorAndAlpha(r, g, b, a);
         FR_DrawText3(replacement, x, y, alignFlags, textFlags);
         return;
@@ -1228,12 +1225,6 @@ void WI_DrawPatch5(patchid_t patchId, const char* replacement, int x, int y, int
     // Use the original patch.
     DGL_Color4f(1, 1, 1, a);
     GL_DrawPatch2(patchId, x, y, alignFlags, patchFlags);
-}
-
-void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a)
-{
-    WI_DrawPatch5(patchId, replacement, x, y, alignFlags, patchFlags, textFlags, fontId, r, g, b, a, 0, 0);
 }
 
 void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
