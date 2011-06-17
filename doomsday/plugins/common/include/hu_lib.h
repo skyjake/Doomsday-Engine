@@ -676,9 +676,6 @@ mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
 
-void MN_DrawText(const char* string, int x, int y);
-void MN_DrawText2(const char* string, int x, int y, int alignFlags, short textFlags);
-
 /**
  * Execute a menu navigation/action command.
  */

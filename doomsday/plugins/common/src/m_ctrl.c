@@ -672,13 +672,13 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    MN_DrawText2("CONTROLS", SCREENWIDTH/2, y-28, ALIGN_TOP, 0);
+    FR_DrawText3("CONTROLS", SCREENWIDTH/2, y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    MN_DrawText2(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, 0);
+    FR_DrawText3(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -688,7 +688,7 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    MN_DrawText2("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, 0);
+    FR_DrawText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -700,11 +700,11 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
-    MN_DrawText2("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, DTF_ONLY_SHADOW);
+    FR_DrawText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
-    MN_DrawText2(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

@@ -565,17 +565,6 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
     return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void MN_DrawText2(const char* string, int x, int y, int alignFlags, short textFlags)
-{
-    if(NULL == string || !string[0]) return;
-    FR_DrawText3(string, x, y, alignFlags, MN_MergeMenuEffectWithDrawTextFlags(textFlags));
-}
-
-void MN_DrawText(const char* string, int x, int y)
-{
-    MN_DrawText2(string, x, y, ALIGN_TOPLEFT, 0);
-}
-
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 {
     assert(NULL != page);
@@ -1104,7 +1093,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetColorAndAlphav(color);
-    MN_DrawText(txt->text, x, y);
+    FR_DrawText3(txt->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
     }
 }
@@ -1232,7 +1221,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CB] *= light;
 
         FR_SetColorAndAlphav(color);
-        MN_DrawText2(string, x, y, ALIGN_TOPLEFT, 0);
+        FR_DrawText3(string, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1433,7 +1422,7 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
                 FR_SetColorAndAlphav(dimColor);
             }
 
-            MN_DrawText(item->text, x, y);
+            FR_DrawText3(item->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
             y += FR_TextHeight(item->text) * (1+MNDATA_LIST_LEADING);
         } while(++i < list->count && i < list->first + list->numvis);
 
@@ -1590,7 +1579,7 @@ void MNList_InlineDrawer(mn_object_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
     FR_SetColorAndAlphav(rs.textColors[obj->_pageColorIdx]);
-    MN_DrawText(item->text, x, y);
+    FR_DrawText3(item->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1716,7 +1705,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     FR_SetFont(fontId);
     FR_SetColorAndAlphav(color);
 
-    MN_DrawText(btn->text, x, y);
+    FR_DrawText3(btn->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -2331,7 +2320,7 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
     FR_SetColorAndAlphav(rs.textColors[obj->_pageColorIdx]);
-    MN_DrawText(str, 0, 0);
+    FR_DrawText3(str, 0, 0, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_Translatef(-x, -y, 0);

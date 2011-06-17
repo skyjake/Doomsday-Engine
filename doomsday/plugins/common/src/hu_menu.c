@@ -2859,7 +2859,7 @@ void Hu_MenuDrawGameTypePage(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2(GET_TXT(TXT_PICKGAMETYPE), x + TITLEOFFSET_X, y - 25, ALIGN_TOP, 0);
+    FR_DrawText3(GET_TXT(TXT_PICKGAMETYPE), x + TITLEOFFSET_X, y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2912,7 +2912,7 @@ void Hu_MenuDrawPlayerClassPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    MN_DrawText("Choose class:", x - 32, y - 42);
+    FR_DrawText3("Choose class:", x - 32, y - 42, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     obj = MNPage_FocusObject(page);
     assert(NULL != obj);
@@ -2950,7 +2950,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-        MN_DrawText2(str, SCREENWIDTH/2, SCREENHEIGHT - 2, ALIGN_BOTTOM, 0);
+        FR_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
     }
     // kludge end.
 #else // __JDOOM__
@@ -2971,7 +2971,7 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y)
 #elif __JHEXEN__
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("Choose Skill Level:", x - 46, y - 28, ALIGN_TOPLEFT, 0);
+    FR_DrawText3("Choose Skill Level:", x - 46, y - 28, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3237,7 +3237,7 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("Load Game", SCREENWIDTH/2, y-20, ALIGN_TOP, 0);
+    FR_DrawText3("Load Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch5(pLoadGame, Hu_ChoosePatchReplacement2(pLoadGame, "{case}Load game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
@@ -3252,7 +3252,7 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("Save Game", SCREENWIDTH/2, y-20, ALIGN_TOP, 0);
+    FR_DrawText3("Save Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch5(pSaveGame, Hu_ChoosePatchReplacement2(pSaveGame, "{case}Save game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
@@ -3276,7 +3276,7 @@ void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("OPTIONS", x + 42, y - 38, ALIGN_TOP, 0);
+    FR_DrawText3("OPTIONS", x + 42, y - 38, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch5(pOptionsTitle, Hu_ChoosePatchReplacement2(pOptionsTitle, "{case}OPTIONS", true), x + 42, y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0), FID(GF_FONTB), cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha, mnRendState->textGlitter, mnRendState->textShadow);
 #endif
@@ -3290,7 +3290,7 @@ void Hu_MenuDrawSoundPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("SOUND OPTIONS", SCREENWIDTH/2, y-20, ALIGN_TOP, 0);
+    FR_DrawText3("SOUND OPTIONS", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3301,7 +3301,7 @@ void Hu_MenuDrawGameplayPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("GAMEPLAY", SCREENWIDTH/2, y-20, ALIGN_TOP, 0);
+    FR_DrawText3("GAMEPLAY", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3317,13 +3317,13 @@ void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("WEAPONS", SCREENWIDTH/2, y-26, ALIGN_TOP, 0);
+    FR_DrawText3("WEAPONS", SCREENWIDTH/2, y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    MN_DrawText2(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, 0);
+    FR_DrawText3(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #elif __JHERETIC__
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3338,7 +3338,7 @@ void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y)
         const char* str = "Use left/right to move weapon up/down";
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-        MN_DrawText2(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), ALIGN_BOTTOM, 0);
+        FR_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
     }}*/
     // kludge end.
 
@@ -3352,7 +3352,7 @@ void Hu_MenuDrawInventoryPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    MN_DrawText2("Inventory Options", SCREENWIDTH/2, y-28, ALIGN_TOP, 0);
+    FR_DrawText3("Inventory Options", SCREENWIDTH/2, y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3368,13 +3368,13 @@ void Hu_MenuDrawHUDPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    MN_DrawText2("HUD options", SCREENWIDTH/2, y - 20, ALIGN_TOP, 0);
+    FR_DrawText3("HUD options", SCREENWIDTH/2, y - 20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(1, .7f, .3f, mnRendState->pageAlpha);
-    MN_DrawText2(buf, x + SCREENWIDTH/2, y + -12, ALIGN_TOP, 0);
+    FR_DrawText3(buf, x + SCREENWIDTH/2, y + -12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3391,7 +3391,7 @@ void Hu_MenuDrawMultiplayerPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
 
-    MN_DrawText2(GET_TXT(TXT_MULTIPLAYER), x + 60, y - 25, ALIGN_TOP, 0);
+    FR_DrawText3(GET_TXT(TXT_MULTIPLAYER), x + 60, y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3402,7 +3402,7 @@ void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
 
-    MN_DrawText2(GET_TXT(TXT_PLAYERSETUP), x + 90, y - 25, ALIGN_TOP, 0);
+    FR_DrawText3(GET_TXT(TXT_PLAYERSETUP), x + 90, y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3870,7 +3870,7 @@ void Hu_MenuDrawAutomapPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    MN_DrawText2("Automap OPTIONS", SCREENWIDTH/2, y-26, ALIGN_TOP, 0);
+    FR_DrawText3("Automap OPTIONS", SCREENWIDTH/2, y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JHERETIC__ || __JHEXEN__
     // Draw the page arrows.
