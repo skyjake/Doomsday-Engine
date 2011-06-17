@@ -1566,6 +1566,8 @@ void G_PlayerReborn(int player)
 #endif
 #if __JHEXEN__
     p->class_ = cfg.playerClass[player];
+#else
+    p->class_ = PCLASS_PLAYER;
 #endif
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
@@ -1612,7 +1614,7 @@ void G_PlayerReborn(int player)
     p->update |=
         PSF_STATE | PSF_HEALTH | PSF_ARMOR_TYPE | PSF_ARMOR_POINTS |
         PSF_INVENTORY | PSF_POWERS | PSF_KEYS | PSF_OWNED_WEAPONS | PSF_AMMO |
-        PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+        PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON | PSF_MORPH_TIME;
 #else
     p->update |= PSF_REBORN;
 #endif
