@@ -931,7 +931,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
     char str[2] = { ch, '\0' };
-    FR_DrawText(str, x, y, alignFlags, textFlags);
+    FR_DrawText3(str, x, y, alignFlags, textFlags);
 }
 
 /// \note Member of the Doomsday public API.
