@@ -1015,8 +1015,8 @@ static void landedOnThing(mobj_t* mo)
 
 void P_MobjThinker(mobj_t* mobj)
 {
-    if(mobj->ddFlags & DDMF_REMOTE) // Remote mobjs are handled separately.
-        return;
+    if(IS_CLIENT && !ClMobj_IsValid(mobj))
+        return; // We should not touch this right now.
 
     if(mobj->type == MT_MWAND_MISSILE || mobj->type == MT_CFLAME_MISSILE)
     {
