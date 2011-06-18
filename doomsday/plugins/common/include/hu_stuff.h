@@ -154,7 +154,8 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId);
  * @param patchFlags  @see drawPatchFlags
  * @param textFlags  @see drawTextFlags
  */
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags);
 void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y);
 
 /**

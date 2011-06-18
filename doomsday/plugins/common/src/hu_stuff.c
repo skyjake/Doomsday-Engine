@@ -1205,7 +1205,7 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId)
     return Hu_ChoosePatchReplacement2(patchId, NULL, false);
 }
 
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
     int patchFlags, short textFlags)
 {
     if(NULL != replacement && replacement[0])
@@ -1224,9 +1224,14 @@ void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int
     GL_DrawPatch2(patchId, x, y, alignFlags, patchFlags);
 }
 
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags)
+{
+    WI_DrawPatch3(patchId, replacement, x, y, alignFlags, 0, 0);
+}
+
 void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y)
 {
-    WI_DrawPatch2(patchId, replacement, x, y, ALIGN_TOPLEFT, 0, 0);
+    WI_DrawPatch2(patchId, replacement, x, y, ALIGN_TOPLEFT);
 }
 
 /**
@@ -1498,7 +1503,7 @@ void Hu_Drawer(void)
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(1, 1, 1, 1);
 
-        WI_DrawPatch2(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
+        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1567,7 +1572,7 @@ static void drawMapTitle(void)
 # else // __JDOOM64__
     mapnum = gameMap;
 # endif
-    WI_DrawPatch2(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     y += 14;
 #elif __JHERETIC__ || __JHEXEN__

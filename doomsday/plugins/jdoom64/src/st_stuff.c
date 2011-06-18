@@ -635,7 +635,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->fontId);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    WI_DrawPatch2(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
+    WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
