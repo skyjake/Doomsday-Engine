@@ -783,6 +783,11 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         flashColor[CB] = (1 + 2 * sat->rgba[CB]) / 3;
     }
 
+    if(renderWireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDisable(GL_TEXTURE_2D);
+    }
     if(0 != BitmapFont_GLTextureName(cf))
     {
         glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(cf));
@@ -919,6 +924,12 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }}
 
     // Restore previous GL-state.
+    if(renderWireframe)
+    {
+        /// \fixme do not assume previous state.
+        glEnable(GL_TEXTURE_2D);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
     if(0 != BitmapFont_GLTextureName(cf))
     {
         glMatrixMode(GL_TEXTURE);
@@ -962,12 +973,7 @@ static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font,
     else if(!(alignFlags & ALIGN_TOP))
         y -= (topToAscent(font) + lineHeight(font, ch))/2;
 
-    if(renderWireframe)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDisable(GL_TEXTURE_2D);
-    }
-    else if(0 != (tex = BitmapFont_GLTextureName(font)))
+    if(0 != (tex = BitmapFont_GLTextureName(font)))
     {
         GL_BindTexture(tex, GL_NEAREST);
     }
@@ -1028,13 +1034,6 @@ static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font,
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(-x, -y, 0);
-
-    if(renderWireframe)
-    {
-        /// \fixme do not assume previous state.
-        glEnable(GL_TEXTURE_2D);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
 }
 
 static void drawFlash(int x, int y, int w, int h, int bright)
