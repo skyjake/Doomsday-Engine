@@ -901,3 +901,6 @@ desc = 1=Stop updating the automap rendering lists.
 
 [inlude-stretch]
 desc = Intermission stretch-scaling strategy 0=Smart, 1=Never, 2=Always.
+
+[inlude-patch-replacement]
+desc = Intermission Patch Replacement strings. 1=Enable external, 2=Enable built-in.

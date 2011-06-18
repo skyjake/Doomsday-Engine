@@ -156,18 +156,16 @@ static yahpt_t YAHspot[3][9] = {
      }
 };
 
-static cvartemplate_t cvars[] = {
-    { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
-    { NULL }
-};
-
 // CODE --------------------------------------------------------------------
 
 void WI_Register(void)
 {
-    int i;
-    for(i = 0; cvars[i].name; ++i)
-        Con_AddVariable(cvars + i);
+    cvartemplate_t cvars[] = {
+        { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
+        { "inlude-patch-replacement", 0, CVT_INT, &cfg.inludePatchReplaceMode, PRM_FIRST, PRM_LAST },
+        { NULL }
+    };
+    Con_AddVariableList(cvars);
 }
 
 void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)

@@ -104,6 +104,7 @@ typedef struct jdoom64_config_s {
     byte            menuSlam;
     byte            menuShortcutsEnabled;
     byte            menuScaleMode;
+    int             menuPatchReplaceMode;
     byte            menuGameSaveSuggestName;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
@@ -112,6 +113,7 @@ typedef struct jdoom64_config_s {
     float           menuTextGlitter;
 
     byte            inludeScaleMode;
+    int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
@@ -121,7 +123,6 @@ typedef struct jdoom64_config_s {
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // When the hud unhides.
-    int             usePatchReplacement;
     byte            moveCheckZ; // If true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;

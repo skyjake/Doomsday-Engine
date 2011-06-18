@@ -1087,7 +1087,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
         const char* replacement = NULL;
         if(!(obj->_flags & MNF_NO_ALTTEXT))
         {
-            replacement = Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, *txt->patch, txt->text, true);
+            replacement = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *txt->patch, txt->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch3(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
@@ -1700,7 +1700,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
         const char* replacement = NULL;
         if(!(obj->_flags & MNF_NO_ALTTEXT))
         {
-            replacement = Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, *btn->patch, btn->text, true);
+            replacement = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch3(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
@@ -1796,7 +1796,7 @@ void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
         if(!(obj->_flags & MNF_NO_ALTTEXT))
         {
             // Use the replacement string?
-            text = Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, *btn->patch, btn->text, true);
+            text = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text, true);
         }
 
         if(NULL == text || text[0])

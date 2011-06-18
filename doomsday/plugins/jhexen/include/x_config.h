@@ -76,7 +76,6 @@ typedef struct {
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    int             usePatchReplacement;
     int             showFPS, lookSpring;
     int             mlookInverseY;
     int             echoMsg;
@@ -160,6 +159,7 @@ typedef struct {
     byte            menuSlam;
     byte            menuShortcutsEnabled;
     byte            menuScaleMode;
+    int             menuPatchReplaceMode;
     byte            menuGameSaveSuggestName;
     byte            menuCursorRotate;
     float           menuTextColors[MENU_COLOR_COUNT][3];
@@ -168,6 +168,7 @@ typedef struct {
     float           menuTextGlitter;
 
     byte            inludeScaleMode;
+    int             inludePatchReplaceMode;
 
     byte            netMap, netClass, netColor, netSkill;
     byte            netEpisode; // Unused in Hexen.

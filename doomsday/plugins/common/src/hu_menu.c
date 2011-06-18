@@ -1593,7 +1593,7 @@ cvartemplate_t menuCVars[] = {
     { "menu-glitter",   0,  CVT_FLOAT,  &cfg.menuTextGlitter, 0, 1 },
     { "menu-fog",       0,  CVT_INT,    &cfg.hudFog, 0, 5 },
     { "menu-shadow",    0,  CVT_FLOAT,  &cfg.menuShadow, 0, 1 },
-    { "menu-patch-replacement", 0, CVT_INT, &cfg.usePatchReplacement, PRM_FIRST, PRM_LAST },
+    { "menu-patch-replacement", 0, CVT_INT, &cfg.menuPatchReplaceMode, PRM_FIRST, PRM_LAST },
     { "menu-slam",      0,  CVT_BYTE,   &cfg.menuSlam,  0, 1 },
     { "menu-quick-ask", 0,  CVT_BYTE,   &cfg.confirmQuickGameSave, 0, 1 },
     { "menu-hotkeys",   0,  CVT_BYTE,   &cfg.menuShortcutsEnabled, 0, 1 },
@@ -2837,7 +2837,7 @@ void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, mnRendState->pageAlpha);
 
-    WI_DrawPatch3(pMainTitle, Hu_ChoosePatchReplacement(cfg.usePatchReplacement, pMainTitle), x + TITLEOFFSET_X, y + TITLEOFFSET_Y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pMainTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pMainTitle), x + TITLEOFFSET_X, y + TITLEOFFSET_Y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #if __JHEXEN__
     GL_DrawPatch(pBullWithFire[(frame + 2) % 7], x - 73, y + 24);
     GL_DrawPatch(pBullWithFire[frame], x + 168, y + 24);
@@ -2962,7 +2962,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    WI_DrawPatch3(pEpisode, Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pEpisode, "{case}Which Episode{scaley=1.25,y=-3}?", true), x + 7, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pEpisode, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pEpisode, "{case}Which Episode{scaley=1.25,y=-3}?", true), x + 7, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2977,8 +2977,8 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JDOOM__ || __JDOOM64__
-    WI_DrawPatch3(pNewGame, Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pNewGame, "{case}NEW GAME", true), x + 48, y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-    WI_DrawPatch3(pSkill, Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pSkill, "{case}Choose Skill Level:", true), x + 6, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pNewGame, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pNewGame, "{case}NEW GAME", true), x + 48, y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pSkill, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pSkill, "{case}Choose Skill Level:", true), x + 6, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #elif __JHEXEN__
     FR_DrawText3("Choose Skill Level:", x - 46, y - 28, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
@@ -3249,7 +3249,7 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawText3("Load Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pLoadGame, Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pLoadGame, "{case}Load game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pLoadGame, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pLoadGame, "{case}Load game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3265,7 +3265,7 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawText3("Save Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pSaveGame, Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pSaveGame, "{case}Save game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pSaveGame, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pSaveGame, "{case}Save game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3290,7 +3290,7 @@ void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawText3("OPTIONS", x + 42, y - 38, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pOptionsTitle, Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pOptionsTitle, "{case}OPTIONS", true), x + 42, y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pOptionsTitle, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pOptionsTitle, "{case}OPTIONS", true), x + 42, y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
