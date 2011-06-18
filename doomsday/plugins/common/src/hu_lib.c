@@ -1078,9 +1078,9 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
         color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
+    DGL_Color4f(1, 1, 1, color[CA]);
     FR_SetFont(fontId);
     FR_SetColorAndAlphav(color);
-    DGL_Color4f(1, 1, 1, color[CA]);
 
     if(txt->patch != NULL)
     {

@@ -247,7 +247,6 @@ static void drawBackground(void)
 
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
-        FR_SetColorAndAlpha(1, 1, 1, 1);
 
         for(i = 0; i < animCounts[wbs->episode]; ++i)
         {
@@ -291,7 +290,7 @@ static void drawFinishedTitle(void)
     DGL_Color4f(1, 1, 1, 1);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_LoadDefaultAttrib();
 
     // Draw <MapName>
     patchId = pMapNames[mapNum];
@@ -340,7 +339,7 @@ static void drawEnteringTitle(void)
     DGL_Color4f(1, 1, 1, 1);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_LoadDefaultAttrib();
 
     // Draw "Entering"
     WI_DrawPatch3(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
@@ -548,7 +547,7 @@ static void drawLocationMarks(void)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, 1);
         FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(1, 1, 1, 1);
+        FR_LoadDefaultAttrib();
 
         // Draw a splat on taken cities.
         { int i, last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
@@ -686,7 +685,6 @@ static void drawDeathmatchStats(void)
     DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    FR_SetColorAndAlpha(1, 1, 1, 1);
 
     // Draw stat titles (top line).
     { patchinfo_t info;

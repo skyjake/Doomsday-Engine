@@ -1211,14 +1211,9 @@ void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int
     if(NULL != replacement && replacement[0])
     {
         // Use the replacement string.
-        FR_SetLeading(.5f);
-        FR_SetTracking(0);
         FR_DrawText3(replacement, x, y, alignFlags, textFlags);
         return;
     }
-
-    if(patchId == 0)
-        return;
 
     // Use the original patch.
     GL_DrawPatch3(patchId, x, y, alignFlags, patchFlags);
@@ -1501,7 +1496,7 @@ void Hu_Drawer(void)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, 1);
         FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(1, 1, 1, 1);
+        FR_LoadDefaultAttrib();
 
         WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
 

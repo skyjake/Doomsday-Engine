@@ -140,7 +140,7 @@ static void drawFinishedTitle(void)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_LoadDefaultAttrib();
 
     // Draw <MapName>
     patchId = pMapNames[mapNum];
@@ -183,7 +183,7 @@ static void drawEnteringTitle(void)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_LoadDefaultAttrib();
 
     // Draw "Entering"
     WI_DrawPatch2(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, ALIGN_TOP);
@@ -373,8 +373,8 @@ static void drawDeathmatchStats(void)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     // Draw stat titles (top line).
     { patchinfo_t info;
