@@ -2055,8 +2055,11 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
         DGL_Translatef(0, yOffset, 0);
         DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2161,8 +2164,11 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
         DGL_Translatef(0, yOffset, 0);
         DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2259,7 +2265,10 @@ void SBarBlueManaVial_Drawer(uiwidget_t* obj, int x, int y)
     {
         patchid_t patchId = pManaAVials[vial->iconIdx].id;
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
+        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2360,7 +2369,10 @@ void SBarGreenManaVial_Drawer(uiwidget_t* obj, int x, int y)
     {
         patchid_t patchId = pManaBVials[vial->iconIdx].id;
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
+        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2518,8 +2530,11 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Translatef(x, y, 0);
         DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
         DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), 0, 0, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(patchId), 0, 0, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2643,8 +2658,11 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Translatef(x, y, 0);
         DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
         DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-        WI_DrawPatch4(patchId, Hu_ChoosePatchReplacement(patchId), 0, 0, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+        WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement(patchId), 0, 0, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);

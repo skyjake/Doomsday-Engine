@@ -631,9 +631,13 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(scale, scale, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    WI_DrawPatch4(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS, obj->fontId, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, textAlpha);
+    FR_SetFont(obj->fontId);
+    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
+    WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS, obj->fontId);
+
+    DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
     }

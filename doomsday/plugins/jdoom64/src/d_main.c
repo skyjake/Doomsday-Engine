@@ -72,6 +72,7 @@ gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colours.
+const float defFontRGB[]  = { 1, 1, 1 };
 const float defFontRGB2[] = { .85f, 0, 0 };
 
 // The patches used in drawing the view border.

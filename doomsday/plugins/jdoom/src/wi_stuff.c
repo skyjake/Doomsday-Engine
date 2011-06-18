@@ -244,6 +244,11 @@ static void drawBackground(void)
         const wianimdef_t* def;
         wianimstate_t* state;
         int i;
+
+        FR_SetFont(FID(GF_FONTB));
+        FR_LoadDefaultAttrib();
+        FR_SetColorAndAlpha(1, 1, 1, 1);
+
         for(i = 0; i < animCounts[wbs->episode]; ++i)
         {
             patchid_t patchId;
@@ -283,6 +288,11 @@ static void drawFinishedTitle(void)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
+
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetColorAndAlpha(1, 1, 1, 1);
+
     // Draw <MapName>
     patchId = pMapNames[mapNum];
     WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN, FID(GF_FONTB));
@@ -327,6 +337,11 @@ static void drawEnteringTitle(void)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
+
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetColorAndAlpha(1, 1, 1, 1);
+
     // Draw "Entering"
     WI_DrawPatch3(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN, FID(GF_FONTB));
 
@@ -366,9 +381,7 @@ static void drawPatchIfFits(patchid_t patchId, const point_t* node)
     assert(NULL != node);
     if(patchFits(patchId, node->x, node->y))
     {
-        DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement(patchId), node->x, node->y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 
@@ -477,7 +490,7 @@ static void drawTime(int x, int y, int t)
     patchinfo_t info;
     if(!R_GetPatchInfo(pSucks, &info))
         return;
-    WI_DrawPatch4(pSucks, Hu_ChoosePatchReplacement(pSucks), x - info.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN, FID(GF_SMALL), defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+    WI_DrawPatch3(pSucks, Hu_ChoosePatchReplacement(pSucks), x - info.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN, FID(GF_SMALL));
     }
 }
 
@@ -532,6 +545,11 @@ static void drawLocationMarks(void)
 {
     if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, 1);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, 1);
+
         // Draw a splat on taken cities.
         { int i, last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
         for(i = 0; i <= last; ++i)
@@ -551,11 +569,11 @@ static void drawLocationMarks(void)
             patchid_t patchId = chooseYouAreHerePatch(node);
             if(0 != patchId)
             {
-                DGL_Enable(DGL_TEXTURE_2D);
                 WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement(patchId), node->x, node->y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-                DGL_Disable(DGL_TEXTURE_2D);
             }
         }
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 
@@ -664,10 +682,13 @@ static void drawDeathmatchStats(void)
 {
     int i, j, x, y, w, lh = WI_SPACINGY; // Line height.
 
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
+    FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 1, 1, 1);
 
     // Draw stat titles (top line).
-    DGL_Enable(DGL_TEXTURE_2D);
     { patchinfo_t info;
     if(R_GetPatchInfo(pTotal, &info))
         WI_DrawPatch2(pTotal, Hu_ChoosePatchReplacement(pTotal), DM_TOTALSX - info.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN); }
@@ -701,13 +722,9 @@ static void drawDeathmatchStats(void)
             if(1 != teamInfo[i].playerCount)
             {
                 char tmp[20];
-
                 sprintf(tmp, "%i", teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
-                FR_SetTracking(0);
-                FR_SetColorAndAlpha(1, 1, 1, 1);
-
                 FR_DrawText3(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
                 FR_DrawText3(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
             }
@@ -729,9 +746,6 @@ static void drawDeathmatchStats(void)
     // Draw stats.
     y = DM_MATRIXY + 10;
     FR_SetFont(FID(GF_SMALL));
-    FR_SetTracking(0);
-    FR_SetColorAndAlpha(1, 1, 1, 1);
-
     w = FR_CharWidth('0');
 
     for(i = 0; i < NUMTEAMS; ++i)
@@ -921,15 +935,16 @@ static void drawNetgameStats(void)
     int i, x, y, starWidth, pwidth;
     patchinfo_t info;
 
-    FR_LoadDefaultAttrib();
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_SMALL));
+    FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     pwidth = FR_CharWidth('%');
     R_GetPatchInfo(pFaceAlive, &info);
     starWidth = info.width;
 
-    DGL_Enable(DGL_TEXTURE_2D);
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
     WI_DrawPatch2(pKills, Hu_ChoosePatchReplacement(pKills), ORIGINX + NG_SPACINGX - info.width, NG_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
@@ -1005,22 +1020,19 @@ static void drawSinglePlayerStats(void)
     int lh;
     lh = (3 * FR_CharHeight('0')) / 2; // Line height.
 
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_SMALL));
     FR_LoadDefaultAttrib();
-    FR_SetTracking(0);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    DGL_Enable(DGL_TEXTURE_2D);
     WI_DrawPatch2(pKills, Hu_ChoosePatchReplacement(pKills), SP_STATSX, SP_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-
     drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
 
     WI_DrawPatch2(pItems, Hu_ChoosePatchReplacement(pItems), SP_STATSX, SP_STATSY + lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-
     drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
 
     WI_DrawPatch2(pSecretSP, Hu_ChoosePatchReplacement(pSecretSP), SP_STATSX, SP_STATSY + 2 * lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-
     drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
 
     WI_DrawPatch2(pTime, Hu_ChoosePatchReplacement(pTime), SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
@@ -1038,6 +1050,7 @@ static void drawSinglePlayerStats(void)
             drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
         }
     }
+
     DGL_Disable(DGL_TEXTURE_2D);
 }
 

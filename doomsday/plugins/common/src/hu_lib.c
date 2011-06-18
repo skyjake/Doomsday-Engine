@@ -1073,10 +1073,14 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     {
         float t = (menuFlashCounter <= 50? menuFlashCounter / 50.0f : (100 - menuFlashCounter) / 50.0f);
         color[CR] *= t; color[CG] *= t; color[CB] *= t;
-        color[CR] += cfg.menuTextFlashColor[CR] * (1 - t); color[CG] += cfg.menuTextFlashColor[CG] * (1 - t); color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
+        color[CR] += cfg.menuTextFlashColor[CR] * (1 - t);
+        color[CG] += cfg.menuTextFlashColor[CG] * (1 - t);
+        color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
     FR_SetFont(fontId);
+    FR_SetColorAndAlphav(color);
+    DGL_Color4f(1, 1, 1, color[CA]);
 
     if(txt->patch != NULL)
     {
@@ -1086,13 +1090,12 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*txt->patch, txt->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId, color[CR], color[CG], color[CB], color[CA]);
+        WI_DrawPatch3(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetColorAndAlphav(color);
     FR_DrawText3(txt->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1688,6 +1691,10 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
         color[CR] += cfg.menuTextFlashColor[CR] * (1 - t); color[CG] += cfg.menuTextFlashColor[CG] * (1 - t); color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
+    FR_SetFont(fontId);
+    FR_SetColorAndAlphav(color);
+    DGL_Color4f(1, 1, 1, color[CA]);
+
     if(btn->patch)
     {
         const char* replacement = NULL;
@@ -1696,17 +1703,13 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(*btn->patch, btn->text, true);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch4(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId, color[CR], color[CG], color[CB], color[CA]);
+        WI_DrawPatch3(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0), fontId);
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(fontId);
-    FR_SetColorAndAlphav(color);
-
     FR_DrawText3(btn->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
-
     DGL_Disable(DGL_TEXTURE_2D);
     }
 }

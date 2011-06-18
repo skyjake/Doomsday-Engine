@@ -1205,8 +1205,8 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId)
     return Hu_ChoosePatchReplacement2(patchId, NULL, false);
 }
 
-void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, short textFlags, fontid_t fontId, float r, float g, float b, float a)
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags, short textFlags, fontid_t fontId)
 {
     if(NULL != replacement && replacement[0])
     {
@@ -1214,7 +1214,6 @@ void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int
         FR_SetFont(fontId);
         FR_SetLeading(.5f);
         FR_SetTracking(0);
-        FR_SetColorAndAlpha(r, g, b, a);
         FR_DrawText3(replacement, x, y, alignFlags, textFlags);
         return;
     }
@@ -1223,14 +1222,7 @@ void WI_DrawPatch4(patchid_t patchId, const char* replacement, int x, int y, int
         return;
 
     // Use the original patch.
-    DGL_Color4f(1, 1, 1, a);
     GL_DrawPatch2(patchId, x, y, alignFlags, patchFlags);
-}
-
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, short textFlags, fontid_t fontId)
-{
-    WI_DrawPatch4(patchId, replacement, x, y, alignFlags, patchFlags, textFlags, fontId, 1, 1, 1, 1);
 }
 
 void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
@@ -1509,6 +1501,9 @@ void Hu_Drawer(void)
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
 
         DGL_Enable(DGL_TEXTURE_2D);
+        DGL_Color4f(1, 1, 1, 1);
+        FR_SetFont(FID(GF_FONTB));
+        FR_SetColorAndAlpha(1, 1, 1, 1);
 
         WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0, FID(GF_FONTB));
 
@@ -1562,6 +1557,13 @@ static void drawMapTitle(void)
         lname = P_GetMapName(gameMap);
 #endif
 
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, alpha);
+
+    FR_SetFont(FID(GF_FONTB));
+    FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
+
 #if __JDOOM__ || __JDOOM64__
     // Compose the mapnumber used to check the map name patches array.
 # if __JDOOM__
@@ -1572,40 +1574,25 @@ static void drawMapTitle(void)
 # else // __JDOOM64__
     mapnum = gameMap;
 # endif
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_LoadDefaultAttrib();
-
-    WI_DrawPatch4(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW, FID(GF_FONTB), 1, 1, 1, alpha);
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW, FID(GF_FONTB));
 
     y += 14;
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
         FR_DrawText3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
-
-        DGL_Disable(DGL_TEXTURE_2D);
         y += 20;
     }
 #endif
 
     if(lauthor)
     {
-        DGL_Enable(DGL_TEXTURE_2D);
-
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
         FR_DrawText3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
-
-        DGL_Disable(DGL_TEXTURE_2D);
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void Hu_DrawMapTitle(int x, int y, float scale)

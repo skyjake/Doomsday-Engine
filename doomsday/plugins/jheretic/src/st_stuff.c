@@ -1130,8 +1130,11 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, iconAlpha);
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-    WI_DrawPatch4(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x, loc->y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+    WI_DrawPatch3(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x, loc->y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1327,8 +1330,11 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, iconAlpha);
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-    WI_DrawPatch4(icon->patchId, Hu_ChoosePatchReplacement(icon->patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB), 1, 1, 1, iconAlpha);
+    WI_DrawPatch3(icon->patchId, Hu_ChoosePatchReplacement(icon->patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
