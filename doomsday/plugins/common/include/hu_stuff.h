@@ -153,9 +153,7 @@ const char* Hu_ChoosePatchReplacement(patchid_t patchId);
  * @param alignFlags  @see alignmentFlags
  * @param patchFlags  @see drawPatchFlags
  * @param textFlags  @see drawTextFlags
- * @param fontId  Used with patch replacement; default font.
  */
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags, fontid_t fontId);
 void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
 void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y);
 

@@ -144,11 +144,11 @@ static void drawFinishedTitle(void)
 
     // Draw <MapName>
     patchId = pMapNames[mapNum];
-    WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, 0, FID(GF_FONTB));
+    WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, 0);
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.height) / 4;
     // Draw "Finished!"
-    WI_DrawPatch3(pFinished, Hu_ChoosePatchReplacement(pFinished), x, y, ALIGN_TOP, 0, 0, FID(GF_FONTB));
+    WI_DrawPatch2(pFinished, Hu_ChoosePatchReplacement(pFinished), x, y, ALIGN_TOP, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -186,13 +186,13 @@ static void drawEnteringTitle(void)
     FR_SetColorAndAlpha(1, 1, 1, 1);
 
     // Draw "Entering"
-    WI_DrawPatch3(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, ALIGN_TOP, 0, 0, FID(GF_FONTB));
+    WI_DrawPatch2(pEntering, Hu_ChoosePatchReplacement(pEntering), x, y, ALIGN_TOP, 0, 0);
 
     // Draw map.
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4;
     patchId = pMapNames[(wbs->episode * 8) + wbs->nextMap];
-    WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, 0, FID(GF_FONTB));
+    WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement2(patchId, mapName, false), x, y, ALIGN_TOP, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -238,7 +238,7 @@ static void drawTime(int x, int y, int t)
     patchinfo_t info;
     if(!R_GetPatchInfo(pSucks, &info))
         return;
-    WI_DrawPatch3(pSucks, Hu_ChoosePatchReplacement(pSucks), x - info.width, y, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS, FID(GF_SMALL));
+    WI_DrawPatch2(pSucks, Hu_ChoosePatchReplacement(pSucks), x - info.width, y, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
     }
 }
 

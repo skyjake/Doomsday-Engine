@@ -1134,7 +1134,7 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-    WI_DrawPatch3(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x, loc->y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
+    WI_DrawPatch2(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x, loc->y, ALIGN_TOPLEFT, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1334,7 +1334,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-    WI_DrawPatch3(icon->patchId, Hu_ChoosePatchReplacement(icon->patchId), X, Y, ALIGN_TOPLEFT, 0, 0, FID(GF_FONTB));
+    WI_DrawPatch2(icon->patchId, Hu_ChoosePatchReplacement(icon->patchId), X, Y, ALIGN_TOPLEFT, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
