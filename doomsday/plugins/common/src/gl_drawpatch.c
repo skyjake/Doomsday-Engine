@@ -26,7 +26,7 @@
 #include "doomsday.h"
 #include "gl_drawpatch.h"
 
-void GL_DrawPatch2(patchid_t id, int posX, int posY, int alignFlags, int patchFlags)
+void GL_DrawPatch3(patchid_t id, int posX, int posY, int alignFlags, int patchFlags)
 {
     float x = (float) posX, y = (float) posY, w, h;
     patchinfo_t info;
@@ -80,7 +80,12 @@ void GL_DrawPatch2(patchid_t id, int posX, int posY, int alignFlags, int patchFl
     DGL_End();
 }
 
+void GL_DrawPatch2(patchid_t id, int x, int y, int alignFlags)
+{
+    GL_DrawPatch3(id, x, y, alignFlags, 0);
+}
+
 void GL_DrawPatch(patchid_t id, int x, int y)
 {
-    GL_DrawPatch2(id, x, y, ALIGN_TOPLEFT, 0);
+    GL_DrawPatch2(id, x, y, ALIGN_TOPLEFT);
 }

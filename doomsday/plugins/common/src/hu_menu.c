@@ -2215,7 +2215,7 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
 
-    GL_DrawPatch2(pCursor, 0, 0, 0, DPF_NO_OFFSET);
+    GL_DrawPatch3(pCursor, 0, 0, 0, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 

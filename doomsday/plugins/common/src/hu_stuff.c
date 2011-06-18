@@ -1221,7 +1221,7 @@ void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int
         return;
 
     // Use the original patch.
-    GL_DrawPatch2(patchId, x, y, alignFlags, patchFlags);
+    GL_DrawPatch3(patchId, x, y, alignFlags, patchFlags);
 }
 
 void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags)
@@ -1612,10 +1612,10 @@ void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchF
     if(id < 0)
         return;
     DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawPatch2(id, x+2, y+2, alignFlags, patchFlags);
+    GL_DrawPatch3(id, x+2, y+2, alignFlags, patchFlags);
 
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch2(id, x, y, alignFlags, patchFlags);
+    GL_DrawPatch3(id, x, y, alignFlags, patchFlags);
 }
 
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags)

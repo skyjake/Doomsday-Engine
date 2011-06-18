@@ -237,7 +237,7 @@ static void drawBackground(void)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatch2(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     if(!(gameModeBits & GM_ANY_DOOM2) && wbs->episode < 3)
     {

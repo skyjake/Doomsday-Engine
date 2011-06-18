@@ -41,10 +41,14 @@
 /*@}*/
 
 /**
+ * @param patchId  Unique identifier of the patch to be drawn.
+ * @param x  X-offset to the draw origin.
+ * @param y  Y-offset to the draw origin.
  * @param alignFlags  @see alignmentFlags
  * @param patchFlags  @see drawPatchFlags
  */
-void GL_DrawPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags);
+void GL_DrawPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags);
+void GL_DrawPatch2(patchid_t id, int x, int y, int alignFlags);
 void GL_DrawPatch(patchid_t id, int x, int y);
 
 #endif /* LIBCOMMON_GRAPHICS_DRAW_PATCH_H */
