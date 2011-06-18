@@ -120,7 +120,7 @@ typedef struct jdoom_config_s {
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            usePatchReplacement;
+    int             usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;

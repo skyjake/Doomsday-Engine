@@ -76,7 +76,7 @@ typedef struct {
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            usePatchReplacement;
+    int             usePatchReplacement;
     int             showFPS, lookSpring;
     int             mlookInverseY;
     int             echoMsg;

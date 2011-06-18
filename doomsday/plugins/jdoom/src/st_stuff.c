@@ -1484,7 +1484,7 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-        WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement(patchId), ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT);
+        WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement(cfg.usePatchReplacement, patchId), ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1585,10 +1585,10 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, iconAlpha);
 
-    WI_DrawPatch(kslt->patchId, Hu_ChoosePatchReplacement(kslt->patchId), loc->x + offset, loc->y + offset);
+    WI_DrawPatch(kslt->patchId, Hu_ChoosePatchReplacement(cfg.usePatchReplacement, kslt->patchId), loc->x + offset, loc->y + offset);
     if(kslt->patchId2 != 0)
     {
-        WI_DrawPatch(kslt->patchId2, Hu_ChoosePatchReplacement(kslt->patchId2), loc->x - offset, loc->y - offset);
+        WI_DrawPatch(kslt->patchId2, Hu_ChoosePatchReplacement(cfg.usePatchReplacement, kslt->patchId2), loc->x - offset, loc->y - offset);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1725,7 +1725,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, textAlpha);
 
-    WI_DrawPatch(wpns->patchId, Hu_ChoosePatchReplacement(wpns->patchId), element->x, element->y);
+    WI_DrawPatch(wpns->patchId, Hu_ChoosePatchReplacement(cfg.usePatchReplacement, wpns->patchId), element->x, element->y);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2842,7 +2842,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const char* text = Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, patch, P_GetMapNiceName(), false);
 
     if(NULL == text && 0 == patch)
         return;
@@ -2870,7 +2870,7 @@ void MapName_UpdateDimensions(uiwidget_t* obj)
     assert(NULL != obj && obj->type == GUI_MAPNAME);
     {
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
-    const char* text = Hu_ChoosePatchReplacement2(patch, P_GetMapNiceName(), false);
+    const char* text = Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, patch, P_GetMapNiceName(), false);
     const float scale = .75f;
     patchinfo_t info;
 

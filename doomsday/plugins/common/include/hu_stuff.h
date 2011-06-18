@@ -111,6 +111,16 @@ void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags);
 void            M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags, float r, float g, float b, float a);
 
+typedef enum {
+    PRM_NONE                    = 0, /// No replacement.
+    PRM_ONLY_CUSTOM,                 /// Use external replacement if found.
+    PRM_CUSTOM_OR_BUILTIN            /// Use external replacement if found else built-in if specified.
+} patchreplacemode_t;
+
+#define PRM_FIRST               (PRM_NONE)
+#define PRM_LAST                (PRM_CUSTOM_OR_BUILTIN)
+
+
 /**
  * @defgroup patchReplacementFlags  Patch Replacement Flags.
  * @{
@@ -134,13 +144,15 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  *
  * \note If the patch does not originate from an IWAD it will not be replaced.
  *
+ * @param replaceMode  Replacement mode.
+ * @param patchId  Unique identifier of the patch to choose a replacement for.
  * @param altString  A predetermined string to use if appropriate.
  * @param builtin  @c true= @a altString is a built-in replacement (i.e., it
  *      does not originate from an external replacement definition).
  */
-const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
-    boolean builtin);
-const char* Hu_ChoosePatchReplacement(patchid_t patchId);
+const char* Hu_ChoosePatchReplacement2(patchreplacemode_t replaceMode, patchid_t patchId,
+    const char* altString, boolean builtin);
+const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId);
 
 /**
  * Implements patch replacement.

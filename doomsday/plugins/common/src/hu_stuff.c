@@ -1157,8 +1157,8 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
-    boolean builtin)
+const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchId, 
+    const char* altString, boolean builtin)
 {
     const char* replacement = NULL; // No replacement possible/wanted.
     boolean isCustom = false;
@@ -1178,14 +1178,14 @@ const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
                 replacement = altString;
             }
         }
-        else if(cfg.usePatchReplacement)
+        else if(mode != PRM_NONE)
         {   // We might be able to replace the patch with a string replacement.
             // A user replacement?
             replacement = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
             if(NULL == replacement)
             {
                 // Perhaps a built-in replacement?
-                if(cfg.usePatchReplacement == 2 && altString && altString[0] && !isCustom)
+                if(mode == PRM_CUSTOM_OR_BUILTIN && altString && altString[0] && !isCustom)
                 {
                     replacement = altString;
                 }
@@ -1200,9 +1200,9 @@ const char* Hu_ChoosePatchReplacement2(patchid_t patchId, const char* altString,
     return replacement;
 }
 
-const char* Hu_ChoosePatchReplacement(patchid_t patchId)
+const char* Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId)
 {
-    return Hu_ChoosePatchReplacement2(patchId, NULL, false);
+    return Hu_ChoosePatchReplacement2(mode, patchId, NULL, false);
 }
 
 void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
@@ -1498,7 +1498,7 @@ void Hu_Drawer(void)
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
+        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(cfg.usePatchReplacement, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1567,7 +1567,7 @@ static void drawMapTitle(void)
 # else // __JDOOM64__
     mapnum = gameMap;
 # endif
-    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(cfg.usePatchReplacement, pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     y += 14;
 #elif __JHERETIC__ || __JHEXEN__
