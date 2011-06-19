@@ -78,9 +78,6 @@ int useVSync = 0;
 
 float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
 angle_t viewAngle = 0;
-int viewWindowX = 0, viewWindowY = 0, viewWindowWidth = SCREENWIDTH, viewWindowHeight = SCREENHEIGHT;
-
-boolean setSizeNeeded;
 
 // Precalculated math tables.
 fixed_t* fineCosine = &finesine[FINEANGLES / 4];
@@ -105,7 +102,7 @@ static byte showViewAngleDeltas = false;
 static byte showViewPosDeltas = false;
 
 static int gridCols, gridRows;
-static viewport_t viewports[DDMAXPLAYERS], *currentPort;
+static viewport_t viewports[DDMAXPLAYERS], *currentViewport;
 
 // CODE --------------------------------------------------------------------
 
@@ -136,42 +133,112 @@ boolean R_IsSkySurface(const surface_t* suf)
     return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }
 
-int R_GetViewWindow(int player, int* x, int* y, int* w, int* h)
+void R_ViewWindowTicker(int player, timespan_t ticLength)
 {
-    const viewdata_t* vd = R_ViewData(P_ConsoleToLocal(player));
-    if(NULL == vd) return false;
-    if(x) *x = vd->windowX;
-    if(y) *y = vd->windowY;
-    if(w) *w = vd->windowWidth;
-    if(h) *h = vd->windowHeight;
-    return true;
+#define LERP(start, end, pos) (end * pos + start * (1 - pos))
+
+    int p = P_ConsoleToLocal(player);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+
+        vd->windowInter += (float)(.4 * ticLength * TICRATE);
+        if(vd->windowInter >= 1)
+        {
+            memcpy(&vd->window, &vd->windowTarget, sizeof(vd->window));
+        }
+        else
+        {
+            const float x = LERP(vd->windowOld.x, vd->windowTarget.x, vd->windowInter);
+            const float y = LERP(vd->windowOld.y, vd->windowTarget.y, vd->windowInter);
+            const float w = LERP(vd->windowOld.width,  vd->windowTarget.width,  vd->windowInter);
+            const float h = LERP(vd->windowOld.height, vd->windowTarget.height, vd->windowInter);
+            vd->window.x = ROUND(x);
+            vd->window.y = ROUND(y);
+            vd->window.width  = ROUND(w);
+            vd->window.height = ROUND(h);
+        }
+    }
+
+#undef LERP
+}
+
+int R_ViewWindowDimensions(int player, int* x, int* y, int* w, int* h)
+{
+    int p = P_ConsoleToLocal(player);
+    if(p != -1)
+    {
+        const viewdata_t* vd = &viewData[p];
+        if(x) *x = vd->window.x;
+        if(y) *y = vd->window.y;
+        if(w) *w = vd->window.width;
+        if(h) *h = vd->window.height;
+        return true;
+    }
+    return false;
 }
 
 /**
- * Don't really change anything here, because i might be in the middle of
- * a refresh. The change will take effect next refresh.
+ * \note Do not change values used during refresh here because we might be
+ * partway through rendering a frame. Changes should take effect on next
+ * refresh only.
  */
-void R_SetViewWindow(int player, int x, int y, int w, int h)
+void R_SetViewWindowDimensions(int player, int x, int y, int w, int h,
+    boolean interpolate)
 {
-    // int p = P_ConsoleToLocal(player);
-    viewWindowX = x;
-    viewWindowY = y;
-    viewWindowWidth = w;
-    viewWindowHeight = h;
+    int p = P_ConsoleToLocal(player);
+    if(p != -1)
+    {
+        const viewport_t* vp = &viewports[p];
+        viewdata_t* vd = &viewData[p];
+
+        // Clamp to valid range.
+        x = MINMAX_OF(0, x, vp->dimensions.width);
+        y = MINMAX_OF(0, y, vp->dimensions.height);
+        w = abs(w);
+        h = abs(h);
+        if(x + w > vp->dimensions.width)
+            w = vp->dimensions.width  - x;
+        if(y + h > vp->dimensions.height)
+            h = vp->dimensions.height - y;
+
+        // Already at this target?
+        if(vd->window.x == x && vd->window.y == y && vd->window.width == w && vd->window.height == h)
+            return;
+
+        // Record the new target.
+        vd->windowTarget.x = x;
+        vd->windowTarget.y = y;
+        vd->windowTarget.width  = w;
+        vd->windowTarget.height = h;
+
+        // Restart or advance the interpolation timer?
+        if(interpolate)
+        {
+            vd->windowInter = 0;
+            memcpy(&vd->windowOld, &vd->window, sizeof(vd->windowOld));
+        }
+        else
+        {
+            vd->windowInter = 1; // Update on next frame.
+            memcpy(&vd->windowOld, &vd->windowTarget, sizeof(vd->windowOld));
+        }
+    }
 }
 
 /**
  * Retrieve the dimensions of the specified viewport by console player num.
  */
-int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
+int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h)
 {
     int p = P_ConsoleToLocal(player);
     if(p != -1)
     {
-        if(x) *x = viewports[p].x;
-        if(y) *y = viewports[p].y;
-        if(w) *w = viewports[p].width;
-        if(h) *h = viewports[p].height;
+        const rectanglei_t* dims = &viewports[p].dimensions;
+        if(x) *x = dims->x;
+        if(y) *y = dims->y;
+        if(w) *w = dims->width;
+        if(h) *h = dims->height;
         return true;
     }
     return false;
@@ -181,12 +248,16 @@ int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
  * Calculate the placement and dimensions of a specific viewport.
  * Assumes that the grid has already been configured.
  */
-void R_ViewPortPlacement(viewport_t* port, int x, int y)
+void R_UpdateViewPortDimensions(viewport_t* port, int x, int y)
 {
-    port->x = x * theWindow->width  / gridCols;
-    port->y = y * theWindow->height / gridRows;
-    port->width  = (x+1) * theWindow->width  / gridCols - port->x;
-    port->height = (y+1) * theWindow->height / gridRows - port->y;
+    assert(NULL != port);
+    {
+    rectanglei_t* dims = &port->dimensions;
+    dims->x = x * theWindow->width  / gridCols;
+    dims->y = y * theWindow->height / gridRows;
+    dims->width  = (x+1) * theWindow->width  / gridCols - dims->x;
+    dims->height = (y+1) * theWindow->height / gridRows - dims->y;
+    }
 }
 
 /**
@@ -218,7 +289,7 @@ boolean R_SetViewGrid(int numCols, int numRows)
     {
         for(x = 0; x < gridCols; ++x, ++p)
         {
-            R_ViewPortPlacement(&viewports[p], x, y);
+            R_UpdateViewPortDimensions(&viewports[p], x, y);
 
             // The console number is -1 if the viewport belongs to no one.
             console = P_LocalToConsole(p);
@@ -340,6 +411,15 @@ void R_Shutdown(void)
     R_ShutdownModels();
     R_ShutdownVectorGraphics();
     R_ShutdownViewWindow();
+}
+
+void R_Ticker(timespan_t time)
+{
+    int i;
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        R_ViewWindowTicker(i, time);
+    }
 }
 
 void R_ResetViewer(void)
@@ -465,7 +545,22 @@ void R_NewSharpWorld(void)
          * reset the viewer data.
          * \fixme A bit of a kludge?
          */
-        memset(viewData, 0, sizeof(viewData));
+        int i;
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            int p = P_ConsoleToLocal(i);
+            if(p != -1)
+            {
+                viewdata_t* vd = &viewData[p];
+                memset(&vd->sharp,    0, sizeof(vd->sharp));
+                memset(&vd->current,  0, sizeof(vd->current));
+                memset(vd->lastSharp, 0, sizeof(vd->lastSharp));
+                vd->frontVec[0] = vd->frontVec[1] = vd->frontVec[2] = 0;
+                vd->sideVec[0]  = vd->sideVec[1]  = vd->sideVec[2]  = 0;
+                vd->upVec[0]    = vd->upVec[1]    = vd->upVec[2]    = 0;
+                vd->viewCos = vd->viewSin = 0;
+            }
+        }
         return;
     }
 
@@ -759,26 +854,23 @@ void R_RenderPlayerViewBorder(void)
 /**
  * Set the GL viewport.
  */
-void R_UseViewPort(viewport_t* port)
+void R_UseViewPort(viewport_t* vp)
 {
-    if(!port)
+    if(NULL == vp)
     {
-        currentPort = NULL;
+        currentViewport = NULL;
         glViewport(0, FLIP(0 + theWindow->height - 1), theWindow->width, theWindow->height);
     }
     else
     {
-        currentPort = port;
-        glViewport(port->x, FLIP(port->y + port->height - 1), port->width, port->height);
+        currentViewport = vp;
+        glViewport(vp->dimensions.x, FLIP(vp->dimensions.y + vp->dimensions.height - 1), vp->dimensions.width, vp->dimensions.height);
     }
 }
 
-/**
- * @return                  The current viewport else @c NULL.
- */
 const viewport_t* R_CurrentViewPort(void)
 {
-    return currentPort;
+    return currentViewport;
 }
 
 /**
@@ -822,13 +914,8 @@ void R_RenderPlayerView(int num)
     vd->sharp.pos[VX] = viewX;
     vd->sharp.pos[VY] = viewY;
     vd->sharp.pos[VZ] = viewZ;
-    /* $unifiedangles */
-    vd->sharp.angle = viewAngle;
+    vd->sharp.angle = viewAngle; /* $unifiedangles */
     vd->sharp.pitch = viewPitch;
-    vd->windowX = viewWindowX;
-    vd->windowY = viewWindowY;
-    vd->windowWidth = viewWindowWidth;
-    vd->windowHeight = viewWindowHeight;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
@@ -848,12 +935,12 @@ void R_RenderPlayerView(int num)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // GL is in 3D transformation state only during the frame.
-    GL_SwitchTo3DState(true, currentPort, vd);
+    GL_SwitchTo3DState(true, currentViewport, vd);
 
     Rend_RenderMap();
 
     // Orthogonal projection to the view window.
-    GL_Restore2DState(1, currentPort, vd);
+    GL_Restore2DState(1, currentViewport, vd);
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
@@ -865,12 +952,12 @@ void R_RenderPlayerView(int num)
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
-        GL_SwitchTo3DState(false, currentPort, vd);
+        GL_SwitchTo3DState(false, currentViewport, vd);
         Rend_Draw3DPlayerSprites();
     }
 
     // Restore fullscreen viewport, original matrices and state: back to normal 2D.
-    GL_Restore2DState(2, currentPort, vd);
+    GL_Restore2DState(2, currentViewport, vd);
 
     // Back from wireframe mode?
     if(renderWireframe)
@@ -981,7 +1068,7 @@ void R_RenderViewPorts(void)
              * translate and scale the projection to produce an aspect
              * corrected coordinate space at 4:3.
              */
-            glOrtho(0, vp->width, vp->height, 0, -1, 1);
+            glOrtho(0, vp->dimensions.width, vp->dimensions.height, 0, -1, 1);
 
             // Draw in-window game graphics (layer 0).
             gx.G_Drawer(0);

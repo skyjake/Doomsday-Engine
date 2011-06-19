@@ -43,6 +43,7 @@
 #endif
 
 #include "am_map.h"
+#include "p_actor.h"
 #include "p_player.h"
 #include "g_common.h"
 
@@ -63,14 +64,6 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// View window current position.
-static int windowX = 0, oldWindowX = 0;
-static int windowY = 0, oldWindowY = 0;
-static int windowWidth = SCREENWIDTH, oldWindowWidth = SCREENWIDTH;
-static int windowHeight = SCREENHEIGHT, oldWindowHeight = SCREENHEIGHT;
-static int targetX = -1, targetY = -1, targetWidth = -1, targetHeight = -1;
-static float windowPos = 0;
 
 static int gammaLevel;
 #ifndef __JHEXEN__
@@ -102,159 +95,118 @@ void R_PrecachePSprites(void)
     }
 }
 
-void R_SetViewWindowTarget(int x, int y, int w, int h)
-{
-    if(targetX == -1)
-    {   // First call.
-        windowX = oldWindowX = targetX = x;
-        windowY = oldWindowY = targetY = y;
-        windowWidth = oldWindowWidth = targetWidth = w;
-        windowHeight = oldWindowHeight = targetHeight = h;
-        return;
-    }
-
-    if(x == targetX && y == targetY && w == targetWidth && h == targetHeight)
-    {
-        return;
-    }
-
-    oldWindowX = windowX;
-    oldWindowY = windowY;
-    oldWindowWidth = windowWidth;
-    oldWindowHeight = windowHeight;
-
-    // Restart the timer.
-    windowPos = 0;
-
-    targetX = x;
-    targetY = y;
-    targetWidth = w;
-    targetHeight = h;
-}
-
 void R_UpdateViewWindow(boolean force)
 {
-    int destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
-    boolean instantChange = force;
-    int x = 0, y = 0, w = SCREENWIDTH, h = SCREENHEIGHT;
+    struct {
+        rectanglei_t dimensions;
+        boolean maximized;
+    } static oldState[MAXPLAYERS];
+    int i, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
+    boolean interpolate = true;
 
-    if(!force && cfg.screenBlocks == cfg.setBlocks)
-        return;
-
-    if(cfg.screenBlocks >= 10 && destBlocks != 13)
-    {   // When going fullscreen, force a hud show event (to reset the timer).
-        int i;
-        for(i = 0; i < MAXPLAYERS; ++i)
-            ST_HUDUnHide(i, HUE_FORCE);
-    }
-    if((cfg.screenBlocks == 11 && destBlocks == 10) ||
-       (cfg.screenBlocks == 10 && destBlocks == 11))
-    {   // When going to/from statusbar span, do an instant change.
-        instantChange = true;
-    }
-
-    if(destBlocks > cfg.screenBlocks)
-        cfg.screenBlocks++;
-    else if(destBlocks < cfg.screenBlocks)
-        cfg.screenBlocks--;
-
-    if(cfg.screenBlocks <= 10)
+    if(cfg.screenBlocks != destBlocks)
     {
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        float fscale = cfg.statusbarScale;
-        int statusBarHeight, needWidth, viewW, viewH;
+        int delta = (destBlocks > cfg.screenBlocks? 1 : -1);
 
-        R_GetViewPort(0, NULL, NULL, &viewW, &viewH);
-
-        needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
-        if(needWidth > viewW)
-            fscale *= (float)viewW/needWidth;
-        statusBarHeight = floor(ST_HEIGHT * fscale);
-#endif
-
-        if(cfg.screenBlocks != 10)
-        {
-            w = cfg.screenBlocks * SCREENWIDTH/10;
-            x = SCREENWIDTH/2 - w/2;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            h = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
-            y = (SCREENHEIGHT - statusBarHeight - h) / 2;
-#else
-            h = cfg.screenBlocks * SCREENHEIGHT/10;
-            y = (SCREENHEIGHT - h) / 2;
-#endif
+        if(cfg.screenBlocks >= 10 && destBlocks != 13)
+        {   // When going fullscreen, force a hud show event (to reset the timer).
+            for(i = 0; i < MAXPLAYERS; ++i)
+                ST_HUDUnHide(i, HUE_FORCE);
         }
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+
+        if((cfg.screenBlocks == 11 && destBlocks == 10) ||
+           (cfg.screenBlocks == 10 && destBlocks == 11))
+        {   // When going to/from statusbar span, do an instant change.
+            interpolate = false;
+        }
+
+        cfg.screenBlocks += delta;
+        force = true;
+    }
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        const int player = i;
+        player_t* plr = &players[player];
+        rectanglei_t dims, *oldDims = &oldState[player].dimensions;
+        boolean* oldMaximized = &oldState[player].maximized;
+        boolean maximized = false;
+
+        if(!R_ViewportDimensions(player, &dims.x, &dims.y, &dims.width, &dims.height))
+        {
+            // Player is not local or does not have a viewport.
+            continue;
+        }
+
+        if(!(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
+             !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))) // $democam: can be set on every game tic.
+        {
+            // Override @c cfg.screenBlocks and force a maximized window.
+            maximized = true;
+        }
+
+        /**
+         * \kludge \fixme Doomsday does not notify us when viewport dimensions
+         * have changed so we must track them here.
+         */
+        if(force || maximized != *oldMaximized || dims.x != oldDims->x || dims.y != oldDims->y ||
+           dims.width != oldDims->width || dims.height != oldDims->height)
+        {
+            oldDims->x = dims.x;
+            oldDims->y = dims.y;
+            oldDims->width  = dims.width;
+            oldDims->height = dims.height;
+            *oldMaximized = maximized;
+        }
         else
         {
-            h -= statusBarHeight;
+            continue;
         }
+
+        if(!maximized && cfg.screenBlocks <= 10)
+        {
+            const float xScale = (float)dims.width  / SCREENWIDTH;
+            const float yScale = (float)dims.height / SCREENHEIGHT;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            float fscale = cfg.statusbarScale;
+            int statusBarHeight, needWidth;
+
+            needWidth = yScale * ST_WIDTH;
+            if(needWidth > dims.width)
+                fscale *= (float)dims.width/needWidth;
+            statusBarHeight = floor(ST_HEIGHT * fscale);
 #endif
+
+            if(cfg.screenBlocks != 10)
+            {
+                dims.width = cfg.screenBlocks * SCREENWIDTH/10;
+                dims.x = SCREENWIDTH/2 - dims.width/2;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+                dims.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
+                dims.y = (SCREENHEIGHT - statusBarHeight - dims.height) / 2;
+#else
+                dims.height = cfg.screenBlocks * SCREENHEIGHT/10;
+                dims.y = (SCREENHEIGHT - dims.height) / 2;
+#endif
+            }
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            else
+            {
+                dims.x = 0;
+                dims.y = 0;
+                dims.width  = SCREENWIDTH;
+                dims.height = SCREENHEIGHT - statusBarHeight;
+            }
+#endif
+            // Scale from fixed to viewport coordinates.
+            dims.x = ROUND(dims.x * xScale);
+            dims.y = ROUND(dims.y * yScale);
+            dims.width  = ROUND(dims.width  * xScale);
+            dims.height = ROUND(dims.height * yScale);
+        }
+
+        R_SetViewWindowDimensions(player, dims.x, dims.y, dims.width, dims.height, interpolate);
     }
-
-    R_SetViewWindowTarget(x, y, w, h);
-    if(instantChange)
-        windowPos = 1;
-}
-
-/**
- * Animates the game view window towards the target values.
- */
-void R_ViewWindowTicker(timespan_t ticLength)
-{
-    static int oldViewW = -1, oldViewH = -1;
-
-    int destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
-    int viewW, viewH;
-
-    /**
-     * \kludge \fixme Doomsday does not notify us when viewport dimensions change
-     * so we must track them here.
-     */
-    R_GetViewPort(0, NULL, NULL, &viewW, &viewH);
-
-    R_UpdateViewWindow(viewW != oldViewW || viewH != oldViewH);
-
-    oldViewW = viewW;
-    oldViewH = viewH;
-
-    if(targetX == -1)
-        return; // Nothing to do.
-
-    windowPos += (float)(.4 * ticLength * TICRATE);
-    if(windowPos >= 1)
-    {
-        windowX = targetX;
-        windowY = targetY;
-        windowWidth = targetWidth;
-        windowHeight = targetHeight;
-    }
-    else
-    {
-#define LERP(start, end, pos) (end * pos + start * (1 - pos))
-        const float x = LERP(oldWindowX, targetX, windowPos);
-        const float y = LERP(oldWindowY, targetY, windowPos);
-        const float w = LERP(oldWindowWidth, targetWidth, windowPos);
-        const float h = LERP(oldWindowHeight, targetHeight, windowPos);
-        windowX = ROUND(x);
-        windowY = ROUND(y);
-        windowWidth  = ROUND(w);
-        windowHeight = ROUND(h);
-#undef LERP
-    }
-}
-
-void R_GetSmoothedViewWindow(int* x, int* y, int* w, int* h)
-{
-    if(x) *x = windowX;
-    if(y) *y = windowY;
-    if(w) *w = windowWidth;
-    if(h) *h = windowHeight;
-}
-
-boolean R_ViewWindowFillsPort(void)
-{
-    return (windowWidth >= 320 && windowHeight >= 200 && windowX <= 0 && windowY <= 0);
 }
 
 #ifndef __JHEXEN__

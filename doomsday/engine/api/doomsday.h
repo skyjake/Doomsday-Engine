@@ -459,10 +459,10 @@ void Con_SetString(const char* name, const char* text);
 
     void            R_RenderPlayerView(int num);
 
-int R_GetViewWindow(int player, int* x, int* y, int* w, int* h);
-void R_SetViewWindow(int player, int x, int y, int w, int h);
+int R_ViewWindowDimensions(int player, int* x, int* y, int* w, int* h);
+void R_SetViewWindowDimensions(int player, int x, int y, int w, int h, boolean interpolate);
 
-int R_GetViewPort(int player, int* x, int* y, int* w, int* h);
+int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h);
 
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);

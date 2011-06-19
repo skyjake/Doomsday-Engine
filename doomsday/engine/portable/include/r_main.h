@@ -30,14 +30,14 @@
 #define LIBDENG_REFRESH_MAIN_H
 
 typedef struct viewport_s {
-    int             console;
-    int             x, y, width, height;
+    int console;
+    rectanglei_t dimensions;
 } viewport_t;
 
 typedef struct viewer_s {
-    float       pos[3];
-    angle_t     angle;
-    float       pitch;
+    float pos[3];
+    angle_t angle;
+    float pitch;
 } viewer_t;
 
 typedef struct viewdata_s {
@@ -46,12 +46,12 @@ typedef struct viewdata_s {
     viewer_t lastSharp[2]; // For smoothing.
     float frontVec[3], upVec[3], sideVec[3];
     float viewCos, viewSin;
-    int windowX, windowY, windowWidth, windowHeight;
+    rectanglei_t window, windowTarget, windowOld;
+    float windowInter;
 } viewdata_t;
 
 extern float viewX, viewY, viewZ, viewPitch;
 extern angle_t viewAngle;
-extern int viewWindowX, viewWindowY, viewWindowWidth, viewWindowHeight;
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern int      loadInStartupMode;
@@ -67,6 +67,7 @@ void            R_Register(void);
 void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
+void            R_Ticker(timespan_t time);
 void            R_BeginWorldFrame(void);
 void            R_EndWorldFrame(void);
 void            R_RenderPlayerView(int num);
@@ -74,6 +75,7 @@ void            R_RenderPlayerViewBorder(void);
 void            R_RenderBlankView(void);
 void            R_RenderViewPorts(void);
 
+/// @return  Current viewport else @c NULL.
 const viewport_t* R_CurrentViewPort(void);
 
 const viewdata_t* R_ViewData(int localPlayerNum);
@@ -83,7 +85,12 @@ void            R_NewSharpWorld(void);
 
 boolean R_SetViewGrid(int numCols, int numRows);
 
-int R_GetViewWindow(int player, int* x, int* y, int* width, int* height);
-void R_SetViewWindow(int player, int x, int y, int width, int height);
+int R_ViewWindowDimensions(int player, int* x, int* y, int* width, int* height);
+void R_SetViewWindowDimensions(int player, int x, int y, int width, int height, boolean interpolate);
+
+/**
+ * Animates the view window towards the target values.
+ */
+void R_ViewWindowTicker(int player, timespan_t ticLength);
 
 #endif /* LIBDENG_REFRESH_MAIN_H */

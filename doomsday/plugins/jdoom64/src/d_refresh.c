@@ -74,7 +74,7 @@ float quitDarkenOpacity = 0;
  * Draws a special filter over the screen (eg the inversing filter used
  * when in god mode).
  */
-static void drawSpecialFilter(int pnum, int x, int y, int w, int h)
+static void rendSpecialFilter(int pnum, int x, int y, int w, int h)
 {
 #define T (player->powers[PT_INVULNERABILITY])
 
@@ -244,61 +244,42 @@ static void rendHUD(int player, int viewW, int viewH)
  */
 void D_Display(int layer)
 {
-    int vpWidth, vpHeight, winX, winY, winW, winH, vX, vY, vW, vH;
-    int player = DISPLAYPLAYER;
-    player_t* plr = &players[player];
-    float xScale, yScale;
-
-    R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
+    const int player = DISPLAYPLAYER;
+    player_t* plr = players + player;
 
     if(layer != 0)
     {
-        rendHUD(player, vpWidth, vpHeight);
+        rectanglei_t vp;
+        R_ViewportDimensions(player, &vp.x, &vp.y, &vp.width, &vp.height);
+        rendHUD(player, vp.width, vp.height);
         return;
-    }
-
-    if(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
-       !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam: can be set on every frame.
-    {
-        R_GetSmoothedViewWindow(&winX, &winY, &winW, &winH);
-    }
-    else
-    {   // Full screen.
-        winX = 0;
-        winY = 0;
-        winW = SCREENWIDTH;
-        winH = SCREENHEIGHT;
-    }
-
-    // Scale from fixed to screenspace.
-    xScale = (float)vpWidth  / SCREENWIDTH;
-    yScale = (float)vpHeight / SCREENHEIGHT;
-    vX = ROUND(winX * xScale);
-    vY = ROUND(winY * yScale);
-    vW = ROUND(winW * xScale);
-    vH = ROUND(winH * yScale);
-    R_SetViewWindow(player, vX, vY, vW, vH);
+    }   
 
     switch(G_GetGameState())
     {
-    case GS_MAP:
-        if(!ST_AutomapWindowObscures(player, winX, winY, winW, winH))
+    case GS_MAP: {
+        rectanglei_t vw;
+        R_ViewWindowDimensions(player, &vw.x, &vw.y, &vw.width, &vw.height);
+        if(!ST_AutomapWindowObscures(player, vw.x, vw.y, vw.width, vw.height))
         {
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
 
             rendPlayerView(player);
-
-            drawSpecialFilter(player, vX, vY, vW, vH);
+            rendSpecialFilter(player, vw.x, vw.y, vw.width, vw.height);
 
             // Crosshair.
             if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
                 X_Drawer(player);
         }
         break;
-    case GS_STARTUP:
-        DGL_DrawRectColor(0, 0, vpWidth, vpHeight, 0, 0, 0, 1);
+      }
+    case GS_STARTUP: {
+        rectanglei_t vp;
+        R_ViewportDimensions(player, &vp.x, &vp.y, &vp.width, &vp.height);
+        DGL_DrawRectColor(0, 0, vp.width, vp.height, 0, 0, 0, 1);
         break;
+      }
     default:
         break;
     }

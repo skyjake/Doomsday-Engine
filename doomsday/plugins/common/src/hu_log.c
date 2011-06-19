@@ -357,7 +357,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     {
         int viewW, viewH;
         float scale;
-        R_GetViewPort(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
+        R_ViewportDimensions(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
         scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
@@ -496,7 +496,7 @@ void UILog_UpdateDimensions(uiwidget_t* obj)
     {
         int viewW, viewH;
         float scale;
-        R_GetViewPort(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
+        R_ViewportDimensions(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
         scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);

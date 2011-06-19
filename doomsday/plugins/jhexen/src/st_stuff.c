@@ -4142,7 +4142,7 @@ void ST_Drawer(int player)
         float alpha;
         float scale;
 
-        R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
+        R_ViewportDimensions(player, NULL, NULL, &viewW, &viewH);
 
         if(viewW >= viewH)
             scale = (float)viewH/SCREENHEIGHT;
@@ -4257,7 +4257,7 @@ void ST_Drawer(int player)
 void updateViewWindow(void)
 {
     int i;
-    R_UpdateViewWindow(true);
+    R_UpdateViewWindow(true/*forced*/);
     for(i = 0; i < MAXPLAYERS; ++i)
         ST_HUDUnHide(i, HUE_FORCE); // So the user can see the change.
 }

@@ -325,6 +325,7 @@ void DD_Ticker(timespan_t time)
         Demo_Ticker(time);
         P_ControlTicker(time);
         P_Ticker(time);
+        R_Ticker(time);
 
         if(tickFrame || netGame)
         {

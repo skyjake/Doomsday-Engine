@@ -113,7 +113,7 @@ void X_Drawer(int player)
     if(!(alpha > 0))
         return;
 
-    R_GetViewWindow(player, &winX, &winY, &winW, &winH);
+    R_ViewWindowDimensions(player, &winX, &winY, &winW, &winH);
     centerX = winX + (winW / 2);
     centerY = winY + (winH / 2);
     scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * winH * ((float)80/SCREENHEIGHT);

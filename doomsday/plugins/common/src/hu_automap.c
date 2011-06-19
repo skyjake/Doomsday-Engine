@@ -1107,7 +1107,7 @@ static void drawMarkedPoints(uiwidget_t* obj)
     if(!pointCount)
         return;
 
-    R_GetViewPort(UIWidget_Player(obj), NULL, NULL, &scrwidth, &scrheight);
+    R_ViewportDimensions(UIWidget_Player(obj), NULL, NULL, &scrwidth, &scrheight);
     stom = UIAutomap_FrameToMap(obj, (scrwidth >= scrheight? FIXYTOSCREENY(1) : FIXXTOSCREENX(1)));
 
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
@@ -1295,7 +1295,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     // Setup the scissor clipper.
     {
     int viewX, viewY;
-    R_GetViewPort(player, &viewX, &viewY, NULL, NULL);
+    R_ViewportDimensions(player, &viewX, &viewY, NULL, NULL);
     DGL_Scissor(viewX+UIWidget_Dimensions(obj)->x+am->border, viewY+UIWidget_Dimensions(obj)->y+am->border, UIWidget_Dimensions(obj)->width-am->border*2, UIWidget_Dimensions(obj)->height-am->border*2);
     DGL_Enable(DGL_SCISSOR_TEST);
     }
@@ -1657,7 +1657,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
         int scrwidth, scrheight;
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        R_GetViewPort(player, NULL, NULL, &scrwidth, &scrheight); 
+        R_ViewportDimensions(player, NULL, NULL, &scrwidth, &scrheight); 
         panUnitsPerTic = (UIAutomap_FrameToMap(obj, scrwidth >= scrheight? FIXYTOSCREENY(140):FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
         if(panUnitsPerTic < 8)
             panUnitsPerTic = 8;
@@ -1862,7 +1862,7 @@ void UIAutomap_UpdateDimensions(uiwidget_t* obj)
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.
-    R_GetViewWindow(UIWidget_Player(obj), &newX, &newY, &newWidth, &newHeight);
+    R_ViewWindowDimensions(UIWidget_Player(obj), &newX, &newY, &newWidth, &newHeight);
 
     if(newX != obj->dimensions.x || newY != obj->dimensions.y ||
        newWidth != obj->dimensions.width || newHeight != obj->dimensions.height)

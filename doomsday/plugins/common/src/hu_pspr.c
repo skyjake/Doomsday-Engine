@@ -91,8 +91,8 @@ float HU_PSpriteYOffset(player_t* pl)
     int winH, portH;
     float offy = (cfg.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
 
-    R_GetViewWindow(pl - players, NULL, NULL, NULL, &winH);
-    R_GetViewPort(pl - players, NULL, NULL, NULL, &portH);
+    R_ViewWindowDimensions(pl - players, NULL, NULL, NULL, &winH);
+    R_ViewportDimensions(pl - players, NULL, NULL, NULL, &portH);
 
 #if __JHERETIC__ 
     if(winH == portH)

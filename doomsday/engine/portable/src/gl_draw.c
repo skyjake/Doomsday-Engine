@@ -288,10 +288,10 @@ void GL_DrawFilter(void)
     assert(NULL != vd);
     glColor4fv(filterColor);
     glBegin(GL_QUADS);
-        glVertex2f(vd->windowX, vd->windowY);
-        glVertex2f(vd->windowX + vd->windowWidth, vd->windowY);
-        glVertex2f(vd->windowX + vd->windowWidth, vd->windowY + vd->windowHeight);
-        glVertex2f(vd->windowX, vd->windowY + vd->windowHeight);
+        glVertex2f(vd->window.x, vd->window.y);
+        glVertex2f(vd->window.x + vd->window.width, vd->window.y);
+        glVertex2f(vd->window.x + vd->window.width, vd->window.y + vd->window.height);
+        glVertex2f(vd->window.x, vd->window.y + vd->window.height);
     glEnd();
 }
 

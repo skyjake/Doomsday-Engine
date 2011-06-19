@@ -35,14 +35,7 @@
 #define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
 #define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
 
-#define LERP(start, end, pos) (end * pos + start * (1 - pos))
-
-void R_ViewWindowTicker(timespan_t ticLength);
 void R_UpdateViewWindow(boolean force);
-void R_GetSmoothedViewWindow(int* x, int* y, int* w, int* h);
-void R_SetViewWindowTarget(int x, int y, int w, int h);
-
-boolean R_ViewWindowFillsPort(void);
 
 void R_PrecachePSprites(void);
 

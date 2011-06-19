@@ -370,9 +370,9 @@ EXPORTS
     R_PrecacheSkinsForState     @240 NONAME
     R_PrecachePatch             @335 NONAME
     R_RenderPlayerView          @90 NONAME
-    R_GetViewWindow             @91 NONAME
-    R_SetViewWindow             @92 NONAME
-    R_GetViewPort               @430 NONAME
+    R_ViewWindowDimensions      @91 NONAME
+    R_SetViewWindowDimensions   @92 NONAME
+    R_ViewportDimensions        @430 NONAME
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME

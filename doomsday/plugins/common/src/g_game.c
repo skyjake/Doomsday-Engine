@@ -1588,8 +1588,8 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         ST_Ticker(ticLength);
     }
 
-    // Update view window size.
-    R_ViewWindowTicker(ticLength);
+    // Track view window changes.
+    R_UpdateViewWindow(false/*not forced*/);
 
     // The following is restricted to fixed 35 Hz ticks.
     if(M_RunTrigger(&fixed, ticLength))
