@@ -85,16 +85,17 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
     state_t*            st;
 
     if(state == S_NULL)
-    {   // Remove mobj.
+    {
+        // Remove mobj.
         mobj->state = (state_t *) S_NULL;
         P_MobjRemove(mobj, false);
         return false;
     }
 
-    st = &STATES[state];
     P_MobjSetState(mobj, state);
-
     mobj->turnTime = false; // $visangle-facetarget.
+
+    st = &STATES[state];
     if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
     {
         if(st->action) st->action(mobj); // Call action function.
