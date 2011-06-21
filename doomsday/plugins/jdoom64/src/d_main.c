@@ -180,7 +180,7 @@ void D_PreInit(void)
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
-    cfg.menuPatchReplaceMode = PRM_CUSTOM_OR_BUILTIN;
+    cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.menuScale = .9f;
     cfg.menuTextGlitter = .5f;
     cfg.menuShadow = 0.33f;
@@ -192,7 +192,7 @@ void D_PreInit(void)
     cfg.menuTextFlashSpeed = 4;
     cfg.menuCursorRotate = false;
 
-    cfg.inludePatchReplaceMode = PRM_CUSTOM_OR_BUILTIN;
+    cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;

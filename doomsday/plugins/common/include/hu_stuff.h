@@ -113,12 +113,11 @@ void            M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags,
 
 typedef enum {
     PRM_NONE                    = 0, /// No replacement.
-    PRM_ONLY_CUSTOM,                 /// Use external replacement if found.
-    PRM_CUSTOM_OR_BUILTIN            /// Use external replacement if found else built-in if specified.
+    PRM_ALLOW_TEXT,                  /// Use a text replacement if found.
 } patchreplacemode_t;
 
 #define PRM_FIRST               (PRM_NONE)
-#define PRM_LAST                (PRM_CUSTOM_OR_BUILTIN)
+#define PRM_LAST                (PRM_ALLOW_TEXT)
 
 
 /**
@@ -146,12 +145,9 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  *
  * @param replaceMode  Replacement mode.
  * @param patchId  Unique identifier of the patch to choose a replacement for.
- * @param altString  A predetermined string to use if appropriate.
- * @param builtin  @c true= @a altString is a built-in replacement (i.e., it
- *      does not originate from an external replacement definition).
+ * @param text  A prechoosen string replacement to be used if appropriate.
  */
-const char* Hu_ChoosePatchReplacement2(patchreplacemode_t replaceMode, patchid_t patchId,
-    const char* altString, boolean builtin);
+const char* Hu_ChoosePatchReplacement2(patchreplacemode_t replaceMode, patchid_t patchId, const char* text);
 const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId);
 
 /**

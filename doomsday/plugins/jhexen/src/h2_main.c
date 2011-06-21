@@ -217,7 +217,7 @@ void X_PreInit(void)
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuPatchReplaceMode = PRM_CUSTOM_OR_BUILTIN;
+    cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.menuScale = .75f;
     cfg.menuTextColors[0][0] = defFontRGB[0];
     cfg.menuTextColors[0][1] = defFontRGB[1];
@@ -234,7 +234,7 @@ void X_PreInit(void)
     cfg.menuEffectFlags = MEF_TEXT_SHADOW;
     cfg.menuShortcutsEnabled = true;
 
-    cfg.inludePatchReplaceMode = PRM_CUSTOM_OR_BUILTIN;
+    cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.confirmQuickGameSave = true;
     cfg.hudFog = 5;

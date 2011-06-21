@@ -333,18 +333,18 @@ static patchid_t pRotatingSkull[18];
 static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
 #if __JDOOM__
-mndata_button_t btn_main_new_game  = { false, NULL, "{case}New Game", &pNGame };
-mndata_button_t btn_main_options   = { false, NULL, "{case}Options", &pOptions };
-mndata_button_t btn_main_load_game = { false, NULL, "{case}Load game", &pLoadGame };
-mndata_button_t btn_main_save_game = { false, NULL, "{case}Save game", &pSaveGame };
-mndata_button_t btn_main_help      = { false, NULL, "{case}Read This!", &pReadThis };
-mndata_button_t btn_main_quit_game = { false, NULL, "{case}Quit Game", &pQuitGame };
+mndata_button_t btn_main_new_game  = { false, NULL, NULL, &pNGame };
+mndata_button_t btn_main_options   = { false, NULL, NULL, &pOptions };
+mndata_button_t btn_main_load_game = { false, NULL, NULL, &pLoadGame };
+mndata_button_t btn_main_save_game = { false, NULL, NULL, &pSaveGame };
+mndata_button_t btn_main_help      = { false, NULL, NULL, &pReadThis };
+mndata_button_t btn_main_quit_game = { false, NULL, NULL, &pQuitGame };
 #elif __JDOOM64__
-mndata_button_t btn_main_new_game  = { false, NULL, "{case}New Game" };
-mndata_button_t btn_main_options   = { false, NULL, "{case}Options" };
-mndata_button_t btn_main_load_game = { false, NULL, "{case}Load Game" };
-mndata_button_t btn_main_save_game = { false, NULL, "{case}Save Game" };
-mndata_button_t btn_main_quit_game = { false, NULL, "{case}Quit Game" };
+mndata_button_t btn_main_new_game  = { false, NULL, "New Game" };
+mndata_button_t btn_main_options   = { false, NULL, "Options" };
+mndata_button_t btn_main_load_game = { false, NULL, "Load Game" };
+mndata_button_t btn_main_save_game = { false, NULL, "Save Game" };
+mndata_button_t btn_main_quit_game = { false, NULL, "Quit Game" };
 #else
 mndata_button_t btn_main_new_game   = { false, NULL, "New Game" };
 mndata_button_t btn_main_options    = { false, NULL, "Options" };
@@ -450,12 +450,12 @@ mn_page_t EpisodeMenu = {
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-mndata_button_t btn_skill_baby      = { false, NULL, "", &pSkillModeNames[0] };
-mndata_button_t btn_skill_easy      = { false, NULL, "", &pSkillModeNames[1] };
-mndata_button_t btn_skill_medium    = { false, NULL, "", &pSkillModeNames[2] };
-mndata_button_t btn_skill_hard      = { false, NULL, "", &pSkillModeNames[3] };
+mndata_button_t btn_skill_baby      = { false, NULL, NULL, &pSkillModeNames[0] };
+mndata_button_t btn_skill_easy      = { false, NULL, NULL, &pSkillModeNames[1] };
+mndata_button_t btn_skill_medium    = { false, NULL, NULL, &pSkillModeNames[2] };
+mndata_button_t btn_skill_hard      = { false, NULL, NULL, &pSkillModeNames[3] };
 #  if !__JDOOM64__
-mndata_button_t btn_skill_nightmare = { false, NULL, "", &pSkillModeNames[4] };
+mndata_button_t btn_skill_nightmare = { false, NULL, NULL, &pSkillModeNames[4] };
 #  endif
 #else
 mndata_button_t btn_skill_baby;
@@ -1808,6 +1808,21 @@ void Hu_MenuLoadResources(void)
     }}
 }
 
+void Hu_MenuInitSkillMenu(void)
+{
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    int i;
+    for(i = 0; i < NUM_SKILL_MODES; ++i)
+    {
+        /// \fixme Find objects by id.
+        mn_object_t* obj = &SkillMenu.objects[i];
+        mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
+        btn->text = GET_TXT(TXT_SKILL1 + i);
+        MNObject_SetShortcut(obj, btn->text[0]);
+    }
+#endif
+}
+
 static int compareWeaponPriority(const void* _a, const void* _b)
 {
     const mndata_listitem_t* a = (const mndata_listitem_t*)_a;
@@ -1839,7 +1854,7 @@ void Hu_MenuInitWeaponsMenu(void)
  */
 void Hu_MenuInitEpisodeMenu(void)
 {
-    int i, maxw, w, numEpisodes;
+    int i, numEpisodes;
     mn_object_t* obj;
     mndata_button_t* btn;
 
@@ -1862,21 +1877,19 @@ void Hu_MenuInitEpisodeMenu(void)
     EpisodeMenuButtons = Z_Calloc(sizeof(mndata_button_t) * (numEpisodes), PU_GAMESTATIC, 0);
     obj = EpisodeMenuObjects;
     btn = EpisodeMenuButtons;
-    for(i = 0, maxw = 0; i < numEpisodes; ++i)
+    for(i = 0; i < numEpisodes; ++i)
     {
-        const char* text = GET_TXT(TXT_EPISODE1 + i);
-
         obj->_type = MN_BUTTON;
-        btn->text = text;
-# if __JDOOM__
+        btn->text = GET_TXT(TXT_EPISODE1 + i);
+        if(isalnum(btn->text[0]))
+            obj->_shortcut = tolower(btn->text[0]);
+#if __JDOOM__
         btn->patch = &pEpisodeNames[i];
-# endif
+#endif
         obj->_typedata = btn;
         obj->drawer = MNButton_Drawer;
         obj->cmdResponder = MNButton_CommandResponder;
         obj->updateDimensions = MNButton_UpdateDimensions;
-        if(isalnum(text[0]))
-            obj->_shortcut = tolower(text[0]);
 
 #if __JHERETIC__
         if(gameMode == heretic_shareware && i != 0)
@@ -1902,11 +1915,6 @@ void Hu_MenuInitEpisodeMenu(void)
         obj->actions[MNA_FOCUS].callback = Hu_MenuFocusEpisode;
         obj->data2 = i;
         obj->_pageFontIdx = MENU_FONT2;
-        FR_SetFont(FID(MNPage_PredefinedFont(&EpisodeMenu, obj->_pageFontIdx)));
-        FR_LoadDefaultAttrib();
-        w = FR_TextWidth(text);
-        if(w > maxw)
-            maxw = w;
         obj++;
         btn++;
     }
@@ -1914,7 +1922,6 @@ void Hu_MenuInitEpisodeMenu(void)
 
     // Finalize setup.
     EpisodeMenu.objects = EpisodeMenuObjects;
-    EpisodeMenu.offset[VX] = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
 }
 #endif
 
@@ -2010,6 +2017,9 @@ void Hu_MenuInit(void)
 
     DD_Execute(true, "deactivatebcontext menu");
 
+    Hu_MenuLoadResources();
+
+    Hu_MenuInitSkillMenu();
 #if __JDOOM__ || __JHERETIC__
     Hu_MenuInitEpisodeMenu();
 #endif
@@ -2020,28 +2030,6 @@ void Hu_MenuInit(void)
     Hu_MenuInitWeaponsMenu();
 
     initAllObjectsOnAllPages();
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    // Skill name init and auto-centering.
-    /// \fixme Do this (optionally) during page initialization.
-    { int i, w, maxw;
-    for(i = 0, maxw = 0; i < NUM_SKILL_MODES; ++i)
-    {
-        /// \fixme Find objects by id.
-        const char* text = GET_TXT(TXT_SKILL1 + i);
-        mn_object_t* obj = &SkillMenu.objects[i];
-        mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-        btn->text = text;
-        MNObject_SetShortcut(obj, text[0]);
-        FR_SetFont(MNPage_PredefinedFont(&SkillMenu, MNObject_Font(obj)));
-        FR_LoadDefaultAttrib();
-        w = FR_TextWidth(text);
-        if(w > maxw)
-            maxw = w;
-    }
-    SkillMenu.offset[VX] = SCREENWIDTH/2 - maxw / 2 + 14;
-    }
-#endif
 
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
@@ -2055,8 +2043,6 @@ void Hu_MenuInit(void)
         SkillMenu.previous = &GameTypeMenu;
     }
 #endif
-
-    Hu_MenuLoadResources();
 }
 
 boolean Hu_MenuIsActive(void)
@@ -2962,7 +2948,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    WI_DrawPatch3(pEpisode, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pEpisode, "{case}Which Episode{scaley=1.25,y=-3}?", true), x + 7, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pEpisode, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pEpisode), x + 7, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2977,8 +2963,8 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JDOOM__ || __JDOOM64__
-    WI_DrawPatch3(pNewGame, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pNewGame, "{case}NEW GAME", true), x + 48, y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-    WI_DrawPatch3(pSkill, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pSkill, "{case}Choose Skill Level:", true), x + 6, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pNewGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pNewGame), x + 48, y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pSkill, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSkill), x + 6, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #elif __JHEXEN__
     FR_DrawText3("Choose Skill Level:", x - 46, y - 28, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
@@ -3249,7 +3235,7 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawText3("Load Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pLoadGame, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pLoadGame, "{case}Load game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pLoadGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pLoadGame), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3265,7 +3251,7 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawText3("Save Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pSaveGame, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pSaveGame, "{case}Save game", true), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pSaveGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSaveGame), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3290,7 +3276,7 @@ void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawText3("OPTIONS", x + 42, y - 38, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pOptionsTitle, Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, pOptionsTitle, "{case}OPTIONS", true), x + 42, y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatch3(pOptionsTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pOptionsTitle), x + 42, y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);

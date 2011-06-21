@@ -142,7 +142,7 @@ static void drawFinishedTitle(void)
 
     // Draw <MapName>
     patchId = pMapNames[mapNum];
-    WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName, false), x, y, ALIGN_TOP);
+    WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP);
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.height) / 4;
     // Draw "Finished!"
@@ -190,7 +190,7 @@ static void drawEnteringTitle(void)
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4;
     patchId = pMapNames[(wbs->episode * 8) + wbs->nextMap];
-    WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName, false), x, y, ALIGN_TOP);
+    WI_DrawPatch2(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

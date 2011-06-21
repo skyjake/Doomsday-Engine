@@ -1157,57 +1157,38 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchId, 
-    const char* altString, boolean builtin)
+const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchId, const char* text)
 {
     const char* replacement = NULL; // No replacement possible/wanted.
-    boolean isCustom = false;
-    patchinfo_t info;
-
-    if(mode == PRM_NONE)
+    if(mode != PRM_NONE)
     {
-        return NULL;
-    }
-
-    if(patchId != 0)
-    {
-        if(R_GetPatchInfo(patchId, &info))
+        // We might be able to replace the patch with a string replacement.
+        if(patchId != 0)
         {
-            isCustom = info.isCustom;
-        }
-
-        if(altString && altString[0] && !builtin)
-        {   // We have already determined a string to replace this with.
-            if(!isCustom)
+            patchinfo_t info;
+            R_GetPatchInfo(patchId, &info);
+            if(!info.isCustom)
             {
-                replacement = altString;
+                if(NULL == text || !text[0])
+                {
+                    // Look for a user replacement.
+                    text = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
+                }
+
+                replacement = text;
             }
         }
         else
-        {   // We might be able to replace the patch with a string replacement.
-            // A user replacement?
-            replacement = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
-            if(NULL == replacement)
-            {
-                // Perhaps a built-in replacement?
-                if(mode == PRM_CUSTOM_OR_BUILTIN && altString && altString[0] && !isCustom)
-                {
-                    replacement = altString;
-                }
-            }
+        {
+            replacement = text;
         }
     }
-    else if(!builtin)
-    {
-        replacement = altString;
-    }
-
     return replacement;
 }
 
 const char* Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId)
 {
-    return Hu_ChoosePatchReplacement2(mode, patchId, NULL, false);
+    return Hu_ChoosePatchReplacement2(mode, patchId, NULL);
 }
 
 void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
@@ -1503,7 +1484,7 @@ void Hu_Drawer(void)
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(PRM_ONLY_CUSTOM, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
+        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1572,7 +1553,7 @@ static void drawMapTitle(void)
 # else // __JDOOM64__
     mapnum = gameMap;
 # endif
-    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(PRM_CUSTOM_OR_BUILTIN, pMapNames[mapnum], lname, false), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, pMapNames[mapnum], lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     y += 14;
 #elif __JHERETIC__ || __JHEXEN__
