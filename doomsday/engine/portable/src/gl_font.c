@@ -1465,7 +1465,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) textFragmentWidth(fragment) * state.scaleX;
+                cx += ((float) textFragmentWidth(fragment) + currentAttribs()->tracking) * state.scaleX;
             }
             else
             {
