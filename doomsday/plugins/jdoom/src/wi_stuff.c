@@ -289,6 +289,7 @@ static void drawFinishedTitle(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
     // Draw <MapName>
     patchId = pMapNames[mapNum];
@@ -297,7 +298,9 @@ static void drawFinishedTitle(void)
     // Draw "Finished!"
     if(R_GetPatchInfo(patchId, &info))
         y += (5 * info.height) / 4;
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     WI_DrawPatch3(pFinished, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFinished), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -338,6 +341,7 @@ static void drawEnteringTitle(void)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     // Draw "Entering"
     WI_DrawPatch3(pEntering, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pEntering), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
@@ -346,7 +350,10 @@ static void drawEnteringTitle(void)
     if(R_GetPatchInfo(pMapNames[wbs->nextMap], &info))
         y += (5 * info.height) / 4;
     patchId = pMapNames[(wbs->episode * 8) + wbs->nextMap];
+
+    FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
     WI_DrawPatch3(patchId, Hu_ChoosePatchReplacement2(cfg.inludePatchReplaceMode, patchId, mapName), x, y, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -681,8 +688,10 @@ static void drawDeathmatchStats(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
+
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     // Draw stat titles (top line).
     { patchinfo_t info;
@@ -703,6 +712,8 @@ static void drawDeathmatchStats(void)
             const char* replacement;
             patchinfo_t info;
 
+            FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+
             R_GetPatchInfo(patchId, &info);
             replacement = Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId);
             WI_DrawPatch3(patchId, replacement, x - info.width / 2, DM_MATRIXY - WI_SPACINGY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
@@ -715,7 +726,7 @@ static void drawDeathmatchStats(void)
             }
 
             // If more than 1 member, show the member count.
-            if(1 != teamInfo[i].playerCount)
+            if(1 > teamInfo[i].playerCount)
             {
                 char tmp[20];
                 sprintf(tmp, "%i", teamInfo[i].playerCount);
@@ -730,9 +741,12 @@ static void drawDeathmatchStats(void)
             patchid_t patchId = pTeamIcons[i];
             const char* replacement = Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, patchId);
             patchinfo_t info;
+
+            FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
+
             R_GetPatchInfo(patchId, &info);
-            WI_DrawPatch3(patchId, replacement, x - info.width / 2, DM_MATRIXY - WI_SPACINGY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-            WI_DrawPatch3(patchId, replacement, DM_MATRIXX - info.width / 2, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch3(patchId, replacement, x - info.width / 2, DM_MATRIXY - WI_SPACINGY + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch3(patchId, replacement, DM_MATRIXX - info.width / 2, y + 10, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
 
         x += DM_SPACINGX;
@@ -742,6 +756,7 @@ static void drawDeathmatchStats(void)
     // Draw stats.
     y = DM_MATRIXY + 10;
     FR_SetFont(FID(GF_SMALL));
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     w = FR_CharWidth('0');
 
     for(i = 0; i < NUMTEAMS; ++i)
@@ -933,7 +948,8 @@ static void drawNetgameStats(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
-    FR_SetFont(FID(GF_SMALL));
+
+    FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
@@ -943,19 +959,14 @@ static void drawNetgameStats(void)
 
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
-    WI_DrawPatch3(pKills, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pKills), ORIGINX + NG_SPACINGX - info.width, NG_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch3(pKills, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pKills), ORIGINX + NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     y = NG_STATSY + info.height;
 
-    R_GetPatchInfo(pItems, &info);
-    WI_DrawPatch3(pItems, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pItems), ORIGINX + 2 * NG_SPACINGX - info.width, NG_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-
-    R_GetPatchInfo(pSecret, &info);
-    WI_DrawPatch3(pSecret, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pSecret), ORIGINX + 3 * NG_SPACINGX - info.width, NG_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-
+    WI_DrawPatch3(pItems, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pItems), ORIGINX + 2 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch3(pSecret, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pSecret), ORIGINX + 3 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     if(doFrags)
     {
-        R_GetPatchInfo(pFrags, &info);
-        WI_DrawPatch3(pFrags, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFrags), ORIGINX + 4 * NG_SPACINGX - info.width, NG_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        WI_DrawPatch3(pFrags, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFrags), ORIGINX + 4 * NG_SPACINGX, NG_STATSY, ALIGN_TOPRIGHT, 0, DTF_NO_TYPEIN);
     }
 
     // Draw stats.
@@ -965,6 +976,9 @@ static void drawNetgameStats(void)
 
         if(0 == teamInfo[i].playerCount)
             continue;
+
+        FR_SetFont(FID(GF_FONTA));
+        FR_SetColorAndAlpha(1, 1, 1, 1);
 
         x = ORIGINX;
         R_GetPatchInfo(pTeamBackgrounds[i], &info);
@@ -976,11 +990,10 @@ static void drawNetgameStats(void)
             char tmp[40];
 
             sprintf(tmp, "%i", teamInfo[i].playerCount);
-            FR_SetFont(FID(GF_FONTA));
-            FR_SetColorAndAlpha(1, 1, 1, 1);
             FR_DrawText3(tmp, x - info.width + 1, y + info.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-            FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
         }
+
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
         if(i == inPlayerTeam)
             WI_DrawPatch3(pFaceAlive, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pFaceAlive), x - info.width, y, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
@@ -1018,33 +1031,33 @@ static void drawSinglePlayerStats(void)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
-    FR_SetFont(FID(GF_SMALL));
+
+    FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
     WI_DrawPatch3(pKills, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pKills), SP_STATSX, SP_STATSY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
-
     WI_DrawPatch3(pItems, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pItems), SP_STATSX, SP_STATSY + lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
-
     WI_DrawPatch3(pSecretSP, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pSecretSP), SP_STATSX, SP_STATSY + 2 * lh, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
-
     WI_DrawPatch3(pTime, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pTime), SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    if(wbs->parTime != -1)
+    {
+        WI_DrawPatch3(pPar, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pPar), SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    }
+
+    FR_SetFont(FID(GF_SMALL));
+    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
+    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
+    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
 
     if(cntTime >= 0)
     {
         drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime / TICRATE);
     }
 
-    if(wbs->parTime != -1)
+    if(wbs->parTime != -1 && cntPar >= 0)
     {
-        WI_DrawPatch3(pPar, Hu_ChoosePatchReplacement(cfg.inludePatchReplaceMode, pPar), SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-        if(cntPar >= 0)
-        {
-            drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
-        }
+        drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
