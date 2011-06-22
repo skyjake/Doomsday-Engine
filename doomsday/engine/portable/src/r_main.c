@@ -213,7 +213,8 @@ void R_SetViewWindowDimensions(int player, int x, int y, int w, int h,
         vd->windowTarget.height = h;
 
         // Restart or advance the interpolation timer?
-        if(interpolate)
+        // If dimensions have not yet been set - do not interpolate.
+        if(interpolate && !(vd->window.width == 0 && vd->window.height == 0))
         {
             vd->windowInter = 0;
             memcpy(&vd->windowOld, &vd->window, sizeof(vd->windowOld));
