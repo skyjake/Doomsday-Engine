@@ -149,6 +149,8 @@ static void rendPlayerView(int player)
     float viewPos[3], viewPitch, pspriteOffsetY;
     angle_t viewAngle;
 
+    if(!plr->plr->mo) return;
+
     if(IS_CLIENT)
     {
         // Server updates mobj flags in NetSv_Ticker.
