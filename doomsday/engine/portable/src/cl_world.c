@@ -331,7 +331,7 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         else
         {
             // Adjust to speed.
-            dist = FIX2FLT(poly->angleSpeed);
+            dist = FIX2FLT((int)poly->angleSpeed);
         }
 
         P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), FLT2FIX(dist));
@@ -850,6 +850,10 @@ void Cl_ReadPolyDelta2(boolean skip)
         destAngle = Msg_ReadShort() << 16;
     if(df & PODF_ANGSPEED)
         angleSpeed = Msg_ReadShort() << 16;
+
+/*#ifdef _DEBUG
+    Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f\n", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));
+#endif*/
 
     if(skip)
         return;
