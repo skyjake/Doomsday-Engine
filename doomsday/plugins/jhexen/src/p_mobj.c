@@ -975,7 +975,7 @@ void P_MobjMoveZ(mobj_t *mo)
 
 static void landedOnThing(mobj_t* mo)
 {
-    if(mo->player)
+    if(!mo || !mo->player)
         return; // We are only interested in players.
 
     mo->player->viewHeightDelta = mo->mom[MZ] / 8;
