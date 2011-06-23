@@ -245,7 +245,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
                 dest, speed);
 #endif
 
-    if(speed == 0 || sectornum >= numSectors)
+    if(sectornum >= numSectors)
         return;
 
     // Remove any existing movers for the same plane.

@@ -614,6 +614,12 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
     boolean         buttonSuccess;
     xline_t        *xline = P_ToXLine(line);
 
+    if(IS_CLIENT)
+    {
+        // Clients do not activate lines.
+        return false;
+    }
+
     lineActivation = GET_SPAC(xline->flags);
     if(lineActivation != activationType)
         return false;

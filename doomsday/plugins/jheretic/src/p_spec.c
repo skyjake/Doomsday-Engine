@@ -432,6 +432,12 @@ void P_InitPicAnims(void)
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
 {
+    if(IS_CLIENT)
+    {
+        // Clients do not activate lines.
+        return false;
+    }
+
     switch(actType)
     {
     case SPAC_CROSS:

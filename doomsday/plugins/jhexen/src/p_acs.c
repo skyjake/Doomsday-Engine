@@ -359,6 +359,13 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
     acs_t*              script;
     aste_t*             statePtr;
 
+#ifdef _DEBUG
+    if(IS_CLIENT)
+    {
+        Con_Message("P_StartACS: Client is attempting to start a script!\n");
+    }
+#endif
+
     NewScript = NULL;
     if(map && map-1 != gameMap)
     {   // Script is not for the current map.
