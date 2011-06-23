@@ -1129,10 +1129,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 
     tmThing = thing;
 
-#if !__JHEXEN__
     thing->onMobj = NULL;
     thing->wallHit = false;
 
+#if !__JHEXEN__
     tmHitLine = NULL;
     tmHeight = thing->height;
 #endif
@@ -1195,8 +1195,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 
 #if _DEBUG
         if(thing->onMobj)
-            Con_Message("thing->onMobj = %p (solid:%i)\n", thing->onMobj,
-                        (thing->onMobj->flags & MF_SOLID)!=0);
+            Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]\n", thing->onMobj,
+                        thing->onMobj->thinker.id,
+                        (thing->onMobj->flags & MF_SOLID)!=0,
+                        thing, thing->thinker.id);
 #endif
     }
 
