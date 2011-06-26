@@ -977,6 +977,10 @@ void P_SpawnPlayers(void)
 
                 spawnPlayer(i, pClass, pos[VX], pos[VY], pos[VZ], angle,
                             spawnFlags, makeCamera, false, true);
+
+#ifdef _DEBUG
+                Con_Message("P_SpawnPlayers: Player %i at %f, %f, %f\n", i, pos[VX], pos[VY], pos[VZ]);
+#endif
             }
     }
 

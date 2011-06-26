@@ -327,6 +327,7 @@ extern          "C" {
     void            R_RenderPlayerView(int num);
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
+    void            R_SetViewPortPlayer(int consoleNum, int viewPlayer);
     void            R_SetBorderGfx(char* lumps[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t* sprinfo);

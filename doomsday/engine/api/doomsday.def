@@ -337,6 +337,7 @@ EXPORTS
     R_RenderPlayerView          @91 NONAME
     R_SetViewWindow             @92 NONAME
     R_GetViewPort               @430 NONAME
+    R_SetViewPortPlayer         @450 NONAME
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME

@@ -685,6 +685,9 @@ void Net_StopGame(void)
             ddPlayers[consolePlayer].shared.lookDir;
     }
 
+#ifdef _DEBUG
+    Con_Message("Net_StopGame: Reseting console & view player to zero.\n");
+#endif
     consolePlayer = displayPlayer = 0;
     ddPlayers[0].shared.inGame = true;
     clients[0].ready = true;

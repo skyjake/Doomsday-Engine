@@ -174,6 +174,21 @@ int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
 }
 
 /**
+ * Sets the view player for a console.
+ *
+ * @param consoleNum  Player whose view to set.
+ * @param viewPlayer  Player that will be viewed by player @a consoleNum.
+ */
+void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewports[p].console = viewPlayer;
+    }
+}
+
+/**
  * Calculate the placement and dimensions of a specific viewport.
  * Assumes that the grid has already been configured.
  */

@@ -149,7 +149,11 @@ static void rendPlayerView(int player)
     float viewPos[3], viewPitch, pspriteOffsetY;
     angle_t viewAngle;
 
-    if(!plr->plr->mo) return;
+    if(!plr->plr->mo)
+    {
+        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!\n", player);
+        return;
+    }
 
     if(IS_CLIENT)
     {

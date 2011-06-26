@@ -859,7 +859,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&viewwidth, &viewwidth},
     {&viewheight, &viewheight},
     {&consolePlayer, &consolePlayer},
-    {&displayPlayer, &displayPlayer},
+    {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
     {&mipmapping, 0},
     {&linearRaw, 0},
     {&defResX, &defResX},

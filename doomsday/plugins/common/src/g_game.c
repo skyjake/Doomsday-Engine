@@ -915,7 +915,7 @@ void G_DoLoadMap(void)
     }
 
     P_SetupMap(gameEpisode, gameMap, 0, gameSkill);
-    Set(DD_DISPLAYPLAYER, CONSOLEPLAYER); // View the guy you are playing.
+    R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     G_SetGameAction(GA_NONE);
     nextMap = 0;
 
