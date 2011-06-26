@@ -4257,7 +4257,7 @@ void ST_Drawer(int player)
 void updateViewWindow(void)
 {
     int i;
-    R_UpdateViewWindow(true/*forced*/);
+    R_ResizeViewWindow(RWF_FORCE);
     for(i = 0; i < MAXPLAYERS; ++i)
         ST_HUDUnHide(i, HUE_FORCE); // So the user can see the change.
 }

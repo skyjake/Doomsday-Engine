@@ -41,6 +41,7 @@
 #include "g_update.h"
 #include "hu_menu.h"
 #include "p_mapsetup.h"
+#include "r_common.h"
 
 #define GID(v)          (toGameId(v))
 
@@ -173,4 +174,5 @@ game_export_t* GetGameAPI(game_import_t* imports)
 void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
+    Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }

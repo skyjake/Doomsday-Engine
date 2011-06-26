@@ -1304,7 +1304,7 @@ D_CMD(MakeCamera)
        displayPlayer = cp; */
 
     // Create a new local player.
-    int                 cp;
+    int cp;
 
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= DDMAXPLAYERS)
@@ -1324,6 +1324,7 @@ D_CMD(MakeCamera)
     Net_AllocClientBuffers(cp);
     Sv_InitPoolForClient(cp);
 
+    R_SetupDefaultViewWindow(cp);
     // Update the viewports.
     R_SetViewGrid(0, 0);
 
@@ -1332,7 +1333,7 @@ D_CMD(MakeCamera)
 
 D_CMD(SetConsole)
 {
-    int                 cp;
+    int cp;
 
     cp = atoi(argv[1]);
     if(ddPlayers[cp].shared.inGame)

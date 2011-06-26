@@ -817,6 +817,7 @@ void R_InitRefresh(void)
     R_LoadVectorGraphics();
  
     // Setup the view border.
+    cfg.screenBlocks = cfg.setBlocks;
     { dduri_t* paths[9];
     uint i;
     for(i = 0; i < 9; ++i)
@@ -826,6 +827,7 @@ void R_InitRefresh(void)
         if(paths[i])
             Uri_Destruct(paths[i]);
     }
+    R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 
     // Locate our fonts.
     fonts[GF_FONTA]   = R_MustFindFontForName("a");
@@ -1250,6 +1252,7 @@ void G_DoLoadMap(void)
     {
         G_ChangeGameState(GS_MAP);
         S_PauseMusic(false);
+        R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
     }
 }
 
@@ -1589,7 +1592,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     }
 
     // Track view window changes.
-    R_UpdateViewWindow(false/*not forced*/);
+    R_ResizeViewWindow(0);
 
     // The following is restricted to fixed 35 Hz ticks.
     if(M_RunTrigger(&fixed, ticLength))

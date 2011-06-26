@@ -88,6 +88,8 @@ boolean R_SetViewGrid(int numCols, int numRows);
 int R_ViewWindowDimensions(int player, int* x, int* y, int* width, int* height);
 void R_SetViewWindowDimensions(int player, int x, int y, int width, int height, boolean interpolate);
 
+void R_SetupDefaultViewWindow(int player);
+
 /**
  * Animates the view window towards the target values.
  */

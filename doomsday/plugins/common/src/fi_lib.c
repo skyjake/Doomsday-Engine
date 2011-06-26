@@ -46,6 +46,7 @@
 #include "hu_log.h"
 #include "am_map.h"
 #include "g_common.h"
+#include "r_common.h"
 
 #include "fi_lib.h"
 
@@ -354,6 +355,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
         // Enter the map, this was a briefing.
         G_ChangeGameState(GS_MAP);
         S_MapMusic(gameEpisode, gameMap);
+        R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
         mapStartTic = (int) GAMETIC;
         mapTime = actualMapTime = 0;
     }

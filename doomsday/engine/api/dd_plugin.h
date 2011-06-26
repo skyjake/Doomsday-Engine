@@ -50,6 +50,7 @@ enum {
     HOOK_FINALE_SCRIPT_STOP = 7,    // Called as a script stops.
     HOOK_FINALE_SCRIPT_TICKER = 8,  // Called each time a script 'thinks'.
     HOOK_FINALE_EVAL_IF = 9,        // Called to evaluate an IF conditional statement.
+    HOOK_VIEWPORT_RESHAPE = 10,     // Called when viewport dimensions change.
     NUM_HOOK_TYPES
 };
 
@@ -67,6 +68,12 @@ typedef struct {
     boolean runTick;
     boolean canSkip;
 } ddhook_finale_script_ticker_paramaters_t;
+
+// Paramaters for HOOK_VIEWPORT_RESHAPE
+typedef struct {
+    rectanglei_t dimensions; // New/Current dimensions.
+    rectanglei_t oldDimensions; // Previous dimensions.
+} ddhook_viewport_reshape_t;
 
 /**
  * This routine is called by plugins who want to register hooks.

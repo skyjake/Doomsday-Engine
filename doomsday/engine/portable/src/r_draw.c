@@ -130,17 +130,19 @@ void R_SetBorderGfx(const dduri_t* paths[9])
 void R_InitViewWindow(void)
 {
     int i;
-    /// \fixme Do not assume native game resolution.
+
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        R_SetViewWindowDimensions(i, 0, 0, SCREENWIDTH, SCREENHEIGHT, false/*no lerp*/);
+        R_SetupDefaultViewWindow(i);
     }
 
     if(inited)
     {
         for(i = 0; i < 9; ++i)
+        {
             if(borderGraphicsNames[i])
                 Uri_Destruct(borderGraphicsNames[i]);
+        }
     }
     memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
     memset(borderPatches, 0, sizeof(borderPatches));

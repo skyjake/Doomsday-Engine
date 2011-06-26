@@ -133,6 +133,20 @@ boolean R_IsSkySurface(const surface_t* suf)
     return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }
 
+void R_SetupDefaultViewWindow(int player)
+{
+    int p = P_ConsoleToLocal(player);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        vd->window.x = vd->windowOld.x = vd->windowTarget.x = 0;
+        vd->window.y = vd->windowOld.y = vd->windowTarget.y = 0;
+        vd->window.width  = vd->windowOld.width  = vd->windowTarget.width  = theWindow->width;
+        vd->window.height = vd->windowOld.height = vd->windowTarget.height = theWindow->height;
+        vd->windowInter = 1;
+    }
+}
+
 void R_ViewWindowTicker(int player, timespan_t ticLength)
 {
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
@@ -249,15 +263,37 @@ int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h)
  * Calculate the placement and dimensions of a specific viewport.
  * Assumes that the grid has already been configured.
  */
-void R_UpdateViewPortDimensions(viewport_t* port, int x, int y)
+void R_UpdateViewPortDimensions(viewport_t* port, int col, int row)
 {
     assert(NULL != port);
     {
     rectanglei_t* dims = &port->dimensions;
-    dims->x = x * theWindow->width  / gridCols;
-    dims->y = y * theWindow->height / gridRows;
-    dims->width  = (x+1) * theWindow->width  / gridCols - dims->x;
-    dims->height = (y+1) * theWindow->height / gridRows - dims->y;
+    const int x = col * theWindow->width  / gridCols;
+    const int y = row * theWindow->height / gridRows;
+    const int width  = (col+1) * theWindow->width  / gridCols - x;
+    const int height = (row+1) * theWindow->height / gridRows - y;
+    ddhook_viewport_reshape_t p;
+    boolean doReshape = false;
+
+    if(dims->x == x && dims->y == y && dims->width == width && dims->height == height)
+        return;
+
+    if(port->console != -1 && Plug_CheckForHook(HOOK_VIEWPORT_RESHAPE))
+    {
+        memcpy(&p.oldDimensions, dims, sizeof(p.oldDimensions));
+        doReshape = true;
+    }
+
+    dims->x = x;
+    dims->y = y;
+    dims->width  = width;
+    dims->height = height;
+
+    if(doReshape)
+    {
+        memcpy(&p.dimensions, dims, sizeof(p.dimensions));
+        DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void*)&p);
+    }
     }
 }
 
@@ -283,25 +319,26 @@ boolean R_SetViewGrid(int numCols, int numRows)
         gridRows = numRows;
     }
 
-    // Reset all viewports to zero.
-    memset(viewports, 0, sizeof(viewports));
-
-    for(p = 0, y = 0; y < gridRows; ++y)
+    p = 0;
+    for(y = 0; y < gridRows; ++y)
     {
-        for(x = 0; x < gridCols; ++x, ++p)
+        for(x = 0; x < gridCols; ++x)
         {
-            R_UpdateViewPortDimensions(&viewports[p], x, y);
-
             // The console number is -1 if the viewport belongs to no one.
+            viewport_t* vp = viewports + p;
+
             console = P_LocalToConsole(p);
             if(-1 != console)
             {
-                viewports[p].console = clients[console].viewConsole;
+                vp->console = clients[console].viewConsole;
             }
             else
             {
-                viewports[p].console = -1;
+                vp->console = -1;
             }
+
+            R_UpdateViewPortDimensions(vp, x, y);
+            ++p;
         }
     }
 

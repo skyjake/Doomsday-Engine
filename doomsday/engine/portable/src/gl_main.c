@@ -568,6 +568,7 @@ void GL_Init(void)
     GL_SetGamma();
 
     // Initialize one viewport.
+    R_SetupDefaultViewWindow(0);
     R_SetViewGrid(1, 1);
 
     GL_LoadSystemFonts();

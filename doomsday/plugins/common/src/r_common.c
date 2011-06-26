@@ -28,6 +28,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <assert.h>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -95,19 +96,107 @@ void R_PrecachePSprites(void)
     }
 }
 
-void R_UpdateViewWindow(boolean force)
+/// @return  @c true= maximized view window is in effect.
+static boolean maximizedViewWindow(int player)
 {
-    struct {
-        rectanglei_t dimensions;
-        boolean maximized;
-    } static oldState[MAXPLAYERS];
-    int i, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
-    boolean interpolate = true;
-
-    if(cfg.screenBlocks != destBlocks)
+    player_t* plr = players + player;
+    if(player < 0 || player >= MAXPLAYERS)
     {
-        int delta = (destBlocks > cfg.screenBlocks? 1 : -1);
+        Con_Error("maximizedViewWindow: Invalid player #%i.", player);
+        exit(1);
+    }
+    return (!(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
+              !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
+}
 
+static void resizeViewWindow(int player, const rectanglei_t* newDimensions,
+    const rectanglei_t* oldDimensions, boolean interpolate)
+{
+    assert(newDimensions != NULL);
+    {
+    player_t* plr = players + player;
+    rectanglei_t dims;
+
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+        Con_Error("resizeViewWindow: Invalid player #%i.", player);
+        exit(1);
+    }
+
+    memcpy(&dims, newDimensions, sizeof(dims));
+    dims.x = dims.y = 0;
+
+    // Override @c cfg.screenBlocks and force a maximized window?
+    if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
+    {
+        const float xScale = (float)dims.width  / SCREENWIDTH;
+        const float yScale = (float)dims.height / SCREENHEIGHT;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+        float fscale = cfg.statusbarScale;
+        int statusBarHeight, needWidth;
+
+        needWidth = yScale * ST_WIDTH;
+        if(needWidth > dims.width)
+            fscale *= (float)dims.width/needWidth;
+        statusBarHeight = floor(ST_HEIGHT * fscale);
+#endif
+
+        if(cfg.screenBlocks != 10)
+        {
+            dims.width = cfg.screenBlocks * SCREENWIDTH/10;
+            dims.x = SCREENWIDTH/2 - dims.width/2;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            dims.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
+            dims.y = (SCREENHEIGHT - statusBarHeight - dims.height) / 2;
+#else
+            dims.height = cfg.screenBlocks * SCREENHEIGHT/10;
+            dims.y = (SCREENHEIGHT - dims.height) / 2;
+#endif
+        }
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+        else
+        {
+            dims.x = 0;
+            dims.y = 0;
+            dims.width  = SCREENWIDTH;
+            dims.height = SCREENHEIGHT - statusBarHeight;
+        }
+#endif
+        // Scale from fixed to viewport coordinates.
+        dims.x = ROUND(dims.x * xScale);
+        dims.y = ROUND(dims.y * yScale);
+        dims.width  = ROUND(dims.width  * xScale);
+        dims.height = ROUND(dims.height * yScale);
+    }
+
+    R_SetViewWindowDimensions(player, dims.x, dims.y, dims.width, dims.height, interpolate);
+    }
+}
+
+void R_ResizeViewWindow(int flags)
+{
+    static boolean oldMaximized;
+    int i, delta, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
+    boolean maximized;
+    rectanglei_t dims;
+
+    // Override @c cfg.screenBlocks and force a maximized window?
+    maximized = maximizedViewWindow(DISPLAYPLAYER);
+    if(maximized != oldMaximized)
+    {
+        oldMaximized = maximized;
+        flags |= RWF_FORCE;
+    }
+
+    if(!(flags & RWF_FORCE))
+    {
+        if(cfg.screenBlocks == destBlocks)
+            return;
+    }
+
+    delta = MINMAX_OF(-1, destBlocks - cfg.screenBlocks, 1);
+    if(delta != 0)
+    {
         if(cfg.screenBlocks >= 10 && destBlocks != 13)
         {   // When going fullscreen, force a hud show event (to reset the timer).
             for(i = 0; i < MAXPLAYERS; ++i)
@@ -117,96 +206,35 @@ void R_UpdateViewWindow(boolean force)
         if((cfg.screenBlocks == 11 && destBlocks == 10) ||
            (cfg.screenBlocks == 10 && destBlocks == 11))
         {   // When going to/from statusbar span, do an instant change.
-            interpolate = false;
+            flags |= RWF_NO_LERP;
         }
 
         cfg.screenBlocks += delta;
-        force = true;
+        flags |= RWF_FORCE;
+    }
+
+    if(!(flags & RWF_FORCE))
+    {
+        // No update necessary.
+        return;
     }
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        const int player = i;
-        player_t* plr = &players[player];
-        rectanglei_t dims, *oldDims = &oldState[player].dimensions;
-        boolean* oldMaximized = &oldState[player].maximized;
-        boolean maximized = false;
-
-        if(!R_ViewportDimensions(player, &dims.x, &dims.y, &dims.width, &dims.height))
+        if(!R_ViewportDimensions(i, &dims.x, &dims.y, &dims.width, &dims.height))
         {
             // Player is not local or does not have a viewport.
             continue;
         }
-
-        if(!(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
-             !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))) // $democam: can be set on every game tic.
-        {
-            // Override @c cfg.screenBlocks and force a maximized window.
-            maximized = true;
-        }
-
-        /**
-         * \kludge \fixme Doomsday does not notify us when viewport dimensions
-         * have changed so we must track them here.
-         */
-        if(force || maximized != *oldMaximized || dims.x != oldDims->x || dims.y != oldDims->y ||
-           dims.width != oldDims->width || dims.height != oldDims->height)
-        {
-            oldDims->x = dims.x;
-            oldDims->y = dims.y;
-            oldDims->width  = dims.width;
-            oldDims->height = dims.height;
-            *oldMaximized = maximized;
-        }
-        else
-        {
-            continue;
-        }
-
-        if(!maximized && cfg.screenBlocks <= 10)
-        {
-            const float xScale = (float)dims.width  / SCREENWIDTH;
-            const float yScale = (float)dims.height / SCREENHEIGHT;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            float fscale = cfg.statusbarScale;
-            int statusBarHeight, needWidth;
-
-            needWidth = yScale * ST_WIDTH;
-            if(needWidth > dims.width)
-                fscale *= (float)dims.width/needWidth;
-            statusBarHeight = floor(ST_HEIGHT * fscale);
-#endif
-
-            if(cfg.screenBlocks != 10)
-            {
-                dims.width = cfg.screenBlocks * SCREENWIDTH/10;
-                dims.x = SCREENWIDTH/2 - dims.width/2;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-                dims.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
-                dims.y = (SCREENHEIGHT - statusBarHeight - dims.height) / 2;
-#else
-                dims.height = cfg.screenBlocks * SCREENHEIGHT/10;
-                dims.y = (SCREENHEIGHT - dims.height) / 2;
-#endif
-            }
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            else
-            {
-                dims.x = 0;
-                dims.y = 0;
-                dims.width  = SCREENWIDTH;
-                dims.height = SCREENHEIGHT - statusBarHeight;
-            }
-#endif
-            // Scale from fixed to viewport coordinates.
-            dims.x = ROUND(dims.x * xScale);
-            dims.y = ROUND(dims.y * yScale);
-            dims.width  = ROUND(dims.width  * xScale);
-            dims.height = ROUND(dims.height * yScale);
-        }
-
-        R_SetViewWindowDimensions(player, dims.x, dims.y, dims.width, dims.height, interpolate);
+        resizeViewWindow(i, &dims, &dims, (flags & RWF_NO_LERP)==0);
     }
+}
+
+int R_UpdateViewport(int hookType, int param, void* data)
+{
+    const ddhook_viewport_reshape_t* p = (ddhook_viewport_reshape_t*)data;
+    resizeViewWindow(param, &p->dimensions, &p->oldDimensions, false);
+    return true;
 }
 
 #ifndef __JHEXEN__

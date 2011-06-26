@@ -35,7 +35,20 @@
 #define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
 #define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
 
-void R_UpdateViewWindow(boolean force);
+/**
+ * @defgroup resizeViewWindowFlags  Resize ViewWindow Flags.
+ * @{
+ */
+#define RWF_FORCE               0x1 /// Update regardless of tracked state.
+#define RWF_NO_LERP             0x2 /// Do not interpolate.
+/**@}*/
+
+/**
+ * @param flags  @see resizeViewWindowFlags
+ */
+void R_ResizeViewWindow(int flags);
+
+int R_UpdateViewport(int hookType, int param, void* data);
 
 void R_PrecachePSprites(void);
 
