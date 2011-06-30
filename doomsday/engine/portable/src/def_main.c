@@ -40,6 +40,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 #include "de_graphics.h"
+#include "de_ui.h"
+
 #include "r_data.h"
 
 #include "texture.h"
@@ -982,9 +984,9 @@ void Def_Read(void)
     for(i = defs.count.compositeFonts.num; i-- > 0; )
     {
         ded_compositefont_t* cfont = defs.compositeFonts + i;
-        if(0 != FR_FindFontForName(cfont->id))
+        if(0 != Fonts_IdForName(cfont->id))
             continue;
-        FR_CreateFontFromDef(cfont);
+        Fonts_CreateFromDef(cfont);
     }
 
     // Sprite names.

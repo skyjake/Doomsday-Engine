@@ -2318,7 +2318,7 @@ D_CMD(Font)
         Con_Printf("Usage: %s (cmd) (args)\n", argv[0]);
         Con_Printf("Commands: default, name, size, xsize, ysize.\n");
         Con_Printf("Names: ");
-        list = FR_CollectFontNames(&listCount);
+        list = Fonts_CollectNames(&listCount);
         for(i = 0; i < listCount-1; ++i)
         {
             Con_Printf("%s, ", Str_Text(list[i]));
@@ -2333,7 +2333,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "default"))
     {
-        fontid_t newFont = FR_FindFontForName(GL_ChooseFixedFont());
+        fontid_t newFont = Fonts_IdForName(GL_ChooseFixedFont());
         if(0 != newFont)
         {
             Con_SetFont(newFont);
@@ -2344,11 +2344,11 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "name") && argc == 3)
     {
-        fontid_t newFont = FR_FindFontForName(argv[2]);
+        fontid_t newFont = Fonts_IdForName(argv[2]);
         if(0 != newFont)
         {
             Con_SetFont(newFont);
-            if(0 == BitmapFont_TextureWidth(FR_BitmapFontForId(newFont)))
+            if(0 == BitmapFont_TextureWidth(Fonts_FontForId(newFont)))
             {
                 Con_SetFontScale(1.5f, 2);
             }

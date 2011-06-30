@@ -30,12 +30,6 @@
 #define LIBDENG_API_FONT_RENDERER_H
 
 /**
- * Unique identifier allocated by this subsystem and associated to each
- * known font. Used as a logical public reference/handle to a font.
- */
-typedef uint32_t fontid_t;
-
-/**
  * Font attributes are managed as a finite stack of attribute sets.
  * This value defines the maximum allowed depth of the attribute stack.
  */
@@ -67,14 +61,6 @@ typedef uint32_t fontid_t;
 #define DTF_NO_EFFECTS                  (DTF_NO_TYPEIN|DTF_NO_SHADOW|DTF_NO_GLITTER)
 #define DTF_ONLY_SHADOW                 (DTF_NO_TYPEIN|DTF_NO_GLITTER)
 /*@}*/
-
-/**
- * Find the associated font for @a name.
- *
- * @param name  Name of the font to lookup.
- * @return  Unique id of the found font.
- */
-fontid_t FR_FindFontForName(const char* name);
 
 /// @return  Unique identifier associated with the current font.
 fontid_t FR_Font(void);

@@ -1390,6 +1390,7 @@ int DD_Main(void)
     }
 
     Sys_Init();
+    Fonts_Init();
     FR_Init();
 
     // Enter busy mode until startup complete.

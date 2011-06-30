@@ -38,6 +38,7 @@
 #include "de_system.h"
 #include "de_refresh.h"
 #include "de_render.h"
+#include "de_ui.h"
 
 #include "bitmapfont.h"
 #include "m_misc.h"
@@ -89,8 +90,6 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-D_CMD(ListFonts);
-
 static __inline fr_state_attributes_t* currentAttribs(void);
 static int topToAscent(bitmapfont_t* font);
 static int lineHeight(bitmapfont_t* font, unsigned char ch);
@@ -103,15 +102,7 @@ static char smallTextBuffer[FR_SMALL_TEXT_BUFFER_SIZE+1];
 static char* largeTextBuffer = NULL;
 static size_t largeTextBufferSize = 0;
 
-static int numFonts = 0;
-static bitmapfont_t** fonts = 0; // The list of fonts.
-
 static int typeInTime;
-
-void FR_Register(void)
-{
-    C_CMD("listfonts", NULL, ListFonts)
-}
 
 static void errorIfNotInited(const char* callerName)
 {
@@ -119,111 +110,6 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: font renderer module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
-}
-
-static fontid_t getNewFontId(void)
-{
-    int i;
-    fontid_t max = 0;
-    for(i = 0; i < numFonts; ++i)
-    {
-        const bitmapfont_t* font = fonts[i];
-        if(BitmapFont_Id(font) > max)
-            max = BitmapFont_Id(font);
-    }
-    return max + 1;
-}
-
-static fontid_t findFontIdForName(const char* name)
-{
-    if(name && name[0])
-    {
-        int i;
-        for(i = 0; i < numFonts; ++i)
-        {
-            const bitmapfont_t* font = fonts[i];
-            if(!Str_CompareIgnoreCase(BitmapFont_Name(font), name))
-                return BitmapFont_Id(font);
-        }
-    }
-    return 0; // Not found.
-}
-
-static int findFontIdxForName(const char* name)
-{
-    if(name && name[0])
-    {
-        int i;
-        for(i = 0; i < numFonts; ++i)
-        {
-            const bitmapfont_t* font = fonts[i];
-            if(!Str_CompareIgnoreCase(BitmapFont_Name(font), name))
-                return i;
-        }
-    }
-    return -1;
-}
-
-static int compareFontByName(const void* e1, const void* e2)
-{
-    return Str_CompareIgnoreCase(BitmapFont_Name(*(const bitmapfont_t**)e1), Str_Text(BitmapFont_Name(*(const bitmapfont_t**)e2)));
-}
-
-static int findFontIdxForId(fontid_t id)
-{
-    if(id != 0)
-    {
-        int i;
-        for(i = 0; i < numFonts; ++i)
-        {
-            const bitmapfont_t* font = fonts[i];
-            if(BitmapFont_Id(font) == id)
-                return i;
-        }
-    }
-    return -1;
-}
-
-static void destroyFontIdx(int idx)
-{
-    BitmapFont_Destruct(fonts[idx]);
-
-    memmove(&fonts[idx], &fonts[idx + 1], sizeof(*fonts) * (numFonts - idx - 1));
-    --numFonts;
-    fonts = realloc(fonts, sizeof(*fonts) * numFonts);
-
-    if(fr.fontIdx == idx)
-        fr.fontIdx = -1;
-}
-
-static void destroyFonts(void)
-{
-    while(numFonts) { destroyFontIdx(0); }
-    fonts = 0;
-    fr.fontIdx = -1;
-}
-
-static bitmapfont_t* addFont(bitmapfont_t* font)
-{
-    assert(NULL != font);
-    fonts = (bitmapfont_t**)realloc(fonts, sizeof(*fonts) * ++numFonts);
-    if(NULL == fonts)
-        Con_Error("addFont: Failed on (re)allocation of %lu bytes.", (unsigned long)(sizeof(*fonts) * numFonts));
-    fonts[numFonts-1] = font;
-    return font;
-}
-
-/**
- * Creates a new font record for a file and attempts to prepare it.
- */
-static bitmapfont_t* loadFont(const char* name, const char* path)
-{
-    bitmapfont_t* font = addFont(BitmapFont_Construct(getNewFontId(), name, path));
-    if(NULL != font)
-    {
-        VERBOSE( Con_Message("New font '%s'.\n", Str_Text(BitmapFont_Name(font))) )
-    }
-    return font;
 }
 
 static int topToAscent(bitmapfont_t* font)
@@ -253,8 +139,6 @@ int FR_Init(void)
         return -1; // No reinitializations...
 
     inited = true;
-    numFonts = 0;
-    fonts = 0; // No fonts!
     fr.fontIdx = -1;
     FR_LoadDefaultAttrib();
     typeInTime = 0;
@@ -266,93 +150,7 @@ void FR_Shutdown(void)
 {
     if(!inited)
         return;
-    destroyFonts();
     inited = false;
-}
-
-fontid_t FR_CreateFontFromDef(ded_compositefont_t* def)
-{
-    bitmapfont_t* font;
-    fontid_t id;
-
-    // Valid name?
-    if(!def->id[0])
-        Con_Error("FR_CreateFontFromDef: A valid name is required (not NULL or zero-length).");
-
-    // Already a font by this name?
-    if(0 != (id = FR_FindFontForName(def->id)))
-    {
-        Con_Error("FR_CreateFontFromDef: Failed to create font '%s', name already in use.");
-        return 0; // Unreachable.
-    }
-
-    // A new font.
-    font = addFont(BitmapFont_Construct(getNewFontId(), def->id, 0));
-    { int i;
-    for(i = 0; i < def->charMapCount.num; ++i)
-    {
-        ddstring_t* path;
-        if(!def->charMap[i].path)
-            continue;
-        if(0 != (path = Uri_Resolved(def->charMap[i].path)))
-        {
-            BitmapFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
-            Str_Delete(path);
-        }
-    }}
-    return BitmapFont_Id(font);
-}
-
-fontid_t FR_LoadSystemFont(const char* name, const char* searchPath)
-{
-    assert(name && searchPath && searchPath[0]);
-    {
-    bitmapfont_t* font;
-
-    errorIfNotInited("FR_LoadSystemFont");
-
-    if(0 != findFontIdForName(name) || 0 == F_Access(searchPath))
-    {   
-        return 0; // Error.
-    }
-
-    VERBOSE2( Con_Message("Preparing font \"%s\"...\n", F_PrettyPath(searchPath)) );
-    font = loadFont(name, searchPath);
-    if(NULL == font)
-    {
-        Con_Message("Warning: Unknown format for %s\n", searchPath);
-        return 0; // Error.
-    }
-
-    // Make this the current font.
-    fr.fontIdx = numFonts-1;
-
-    return BitmapFont_Id(font);
-    }
-}
-
-void FR_DestroyFont(fontid_t id)
-{
-    int idx;
-    errorIfNotInited("FR_DestroyFont");
-    idx = findFontIdxForId(id);
-    if(idx == -1) return;
-
-    destroyFontIdx(idx);
-    if(fr.fontIdx == idx)
-        fr.fontIdx = -1;
-}
-
-void FR_Update(void)
-{
-    if(!inited || novideo || isDedicated)
-        return;
-    { int i;
-    for(i = 0; i < numFonts; ++i)
-    {
-        BitmapFont_DeleteGLTextures(fonts[i]);
-        BitmapFont_DeleteGLDisplayLists(fonts[i]);
-    }}
 }
 
 void FR_Ticker(timespan_t ticLength)
@@ -375,44 +173,21 @@ void FR_ResetTypeinTimer(void)
     typeInTime = 0;
 }
 
-bitmapfont_t* FR_BitmapFontForId(fontid_t id)
-{
-    assert(inited);
-    { int idx;
-    if(-1 != (idx = findFontIdxForId(id)))
-        return fonts[idx];
-    }
-    return 0;
-}
-
-/// \note Member of the Doomsday public API.
-fontid_t FR_FindFontForName(const char* name)
-{
-    errorIfNotInited("FR_FindFontForName");
-    return findFontIdForName(name);
-}
-
-int FR_GetFontIdx(fontid_t id)
-{
-    int idx;
-    errorIfNotInited("FR_GetFontIdx");
-    idx = findFontIdxForId(id);
-    if(idx == -1)
-    {
-        Con_Message("Warning:FR_GetFontIdx: Unknown ID %u.\n", id);
-    }
-    return idx;
-}
-
 /// \note Member of the Doomsday public API.
 void FR_SetFont(fontid_t id)
 {
     int idx;
     errorIfNotInited("FR_SetFont");
-    idx = FR_GetFontIdx(id);
+    idx = Fonts_ToIndex(id);
     if(idx == -1)
         return; // No such font.
     fr.fontIdx = idx;
+}
+
+void FR_SetNoFont(void)
+{
+    errorIfNotInited("FR_SetNoFont");
+    fr.fontIdx = -1;
 }
 
 /// \note Member of the Doomsday public API.
@@ -420,7 +195,7 @@ fontid_t FR_Font(void)
 {
     errorIfNotInited("FR_Font");
     if(fr.fontIdx != -1)
-        return BitmapFont_Id(fonts[fr.fontIdx]);
+        return BitmapFont_Id(Fonts_FontForIndex(fr.fontIdx));
     return 0;
 }
 
@@ -653,7 +428,7 @@ void FR_SetCaseScale(boolean value)
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
 {
     errorIfNotInited("FR_CharDimensions");
-    BitmapFont_CharDimensions(fonts[fr.fontIdx], width, height, ch);
+    BitmapFont_CharDimensions(Fonts_FontForIndex(fr.fontIdx), width, height, ch);
 }
 
 /// \note Member of the Doomsday public API.
@@ -661,7 +436,7 @@ int FR_CharWidth(unsigned char ch)
 {
     errorIfNotInited("FR_CharWidth");
     if(fr.fontIdx != -1)
-        return BitmapFont_CharWidth(fonts[fr.fontIdx],ch);
+        return BitmapFont_CharWidth(Fonts_FontForIndex(fr.fontIdx), ch);
     return 0;
 }
 
@@ -670,7 +445,7 @@ int FR_CharHeight(unsigned char ch)
 {
     errorIfNotInited("FR_CharHeight");
     if(fr.fontIdx != -1)
-        return BitmapFont_CharHeight(fonts[fr.fontIdx], ch);
+        return BitmapFont_CharHeight(Fonts_FontForIndex(fr.fontIdx), ch);
     return 0;
 }
 
@@ -679,11 +454,11 @@ int FR_SingleLineHeight(const char* text)
     errorIfNotInited("FR_SingleLineHeight");
     if(fr.fontIdx == -1 || !text)
         return 0;
-    { int ascent = BitmapFont_Ascent(fonts[fr.fontIdx]);
+    { int ascent = BitmapFont_Ascent(Fonts_FontForIndex(fr.fontIdx));
     if(ascent != 0)
         return ascent;
     }
-    return BitmapFont_CharHeight(fonts[fr.fontIdx], (unsigned char)text[0]);
+    return BitmapFont_CharHeight(Fonts_FontForIndex(fr.fontIdx), (unsigned char)text[0]);
 }
 
 int FR_GlyphTopToAscent(const char* text)
@@ -692,10 +467,10 @@ int FR_GlyphTopToAscent(const char* text)
     errorIfNotInited("FR_GlyphTopToAscent");
     if(fr.fontIdx == -1 || !text)
         return 0;
-    lineHeight = BitmapFont_Leading(fonts[fr.fontIdx]);
+    lineHeight = BitmapFont_Leading(Fonts_FontForIndex(fr.fontIdx));
     if(lineHeight == 0)
         return 0;
-    return lineHeight - BitmapFont_Ascent(fonts[fr.fontIdx]);
+    return lineHeight - BitmapFont_Ascent(Fonts_FontForIndex(fr.fontIdx));
 }
 
 static int textFragmentWidth(const char* fragment)
@@ -750,7 +525,7 @@ static int textFragmentHeight(const char* fragment)
         height = MAX_OF(height, FR_CharHeight(c));
     }
 
-    return topToAscent(fonts[fr.fontIdx]) + height;
+    return topToAscent(Fonts_FontForIndex(fr.fontIdx)) + height;
     }
 }
 
@@ -765,7 +540,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 {
     assert(fragment && fragment[0] && fr.fontIdx != -1);
     {
-    bitmapfont_t* cf = fonts[fr.fontIdx];
+    bitmapfont_t* cf = Fonts_FontForIndex(fr.fontIdx);
     fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
@@ -1082,34 +857,6 @@ static void drawFlash(int x, int y, int w, int h, int bright)
     GL_BlendMode(BM_NORMAL);
 }
 
-static int C_DECL compareFontName(const void* a, const void* b)
-{
-    return Str_CompareIgnoreCase(*((const ddstring_t**)a), Str_Text(*((const ddstring_t**)b)));
-}
-
-ddstring_t** FR_CollectFontNames(int* count)
-{
-    errorIfNotInited("FR_CollectFontNames");
-    if(numFonts != 0)
-    {
-        ddstring_t** list = malloc(sizeof(*list) * (numFonts+1));
-        int i;
-        for(i = 0; i < numFonts; ++i)
-        {
-            list[i] = Str_New();
-            Str_Copy(list[i], BitmapFont_Name(fonts[i]));
-        }
-        list[i] = 0; // Terminate.
-        qsort(list, numFonts, sizeof(*list), compareFontName);
-        if(count)
-            *count = numFonts;
-        return list;
-    }
-    if(count)
-        *count = 0;
-    return 0;
-}
-
 /**
  * Expected: <whitespace> = <whitespace> <float>
  */
@@ -1248,9 +995,9 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
             if(!strnicmp((*strPtr), "font", 4))
             {
                 (*strPtr) += 4;
-                if((fontId = FR_FindFontForName(*strPtr)))
+                if((fontId = Fonts_IdForName(*strPtr)))
                 {
-                    (*strPtr) += Str_Length(BitmapFont_Name(FR_BitmapFontForId(fontId)));
+                    (*strPtr) += Str_Length(BitmapFont_Name(Fonts_FontForId(fontId)));
                     state->font = fontId;
                     continue;
                 }
@@ -1274,7 +1021,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
 static void initDrawTextState(drawtextstate_t* state)
 {
     fr_state_attributes_t* sat = currentAttribs();
-    state->font = BitmapFont_Id(fonts[fr.fontIdx]);
+    state->font = BitmapFont_Id(Fonts_FontForIndex(fr.fontIdx));
     memcpy(state->rgba, sat->rgba, sizeof(state->rgba));
     state->tracking = sat->tracking;
     state->glitterStrength = sat->glitterStrength;
@@ -1608,89 +1355,4 @@ int FR_TextHeight(const char* string)
     h += currentLineHeight;
 
     return h;
-}
-
-static void printFontInfo(const bitmapfont_t* font)
-{
-    int numDigits = M_NumDigits(numFonts);
-    Con_Printf(" %*u: \"system:%s\" ", numDigits, (unsigned int) BitmapFont_Id(font), Str_Text(BitmapFont_Name(font)));
-    if(BitmapFont_GLTextureName(font))
-    {
-        Con_Printf("bitmap (texWidth:%i, texHeight:%i)", BitmapFont_TextureWidth(font), BitmapFont_TextureHeight(font));
-    }
-    else
-    {
-       Con_Printf("bitmap_composite"); 
-    }
-    Con_Printf("\n");
-}
-
-static bitmapfont_t** collectFonts(const char* like, size_t* count, bitmapfont_t** storage)
-{
-    size_t n = 0;
-    int i;
-
-    for(i = 0; i < numFonts; ++i)
-    {
-        bitmapfont_t* font = fonts[i];
-        if(like && like[0] && strnicmp(Str_Text(BitmapFont_Name(font)), like, strlen(like)))
-            continue;
-        if(storage)
-            storage[n++] = font;
-        else
-            ++n;
-    }
-
-    if(storage)
-    {
-        storage[n] = 0; // Terminate.
-        if(count)
-            *count = n;
-        return storage;
-    }
-
-    if(n == 0)
-    {
-        if(count)
-            *count = 0;
-        return 0;
-    }
-
-    storage = malloc(sizeof(bitmapfont_t*) * (n+1));
-    return collectFonts(like, count, storage);
-}
-
-static size_t printFonts(const char* like)
-{
-    size_t count = 0;
-    bitmapfont_t** foundFonts = collectFonts(like, &count, 0);
-
-    Con_FPrintf(CBLF_YELLOW, "Known Fonts:\n");
-
-    if(!foundFonts)
-    {
-        Con_Printf(" None found.\n");
-        return 0;
-    }
-
-    // Print the result index key.
-    Con_Printf(" uid: \"(namespace:)name\" font-type\n");
-    Con_FPrintf(CBLF_RULER, "");
-
-    // Sort and print the index.
-    qsort(foundFonts, count, sizeof(*foundFonts), compareFontByName);
-
-    { bitmapfont_t* const* ptr;
-    for(ptr = foundFonts; *ptr; ++ptr)
-        printFontInfo(*ptr);
-    }
-
-    free(foundFonts);
-    return count;
-}
-
-D_CMD(ListFonts)
-{
-    printFonts(argc > 1? argv[1] : NULL);
-    return true;
 }

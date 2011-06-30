@@ -245,10 +245,10 @@
 		<Unit filename="..\..\engine\portable\include\fi_main.h" />
 		<Unit filename="..\..\engine\portable\include\filedirectory.h" />
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
+		<Unit filename="..\..\engine\portable\include\fonts.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
-		<Unit filename="..\..\engine\portable\include\gl_font.h" />
 		<Unit filename="..\..\engine\portable\include\gl_hq2x.h" />
 		<Unit filename="..\..\engine\portable\include\gl_main.h" />
 		<Unit filename="..\..\engine\portable\include\gl_model.h" />
@@ -323,6 +323,7 @@
 		<Unit filename="..\..\engine\portable\include\rend_decor.h" />
 		<Unit filename="..\..\engine\portable\include\rend_dyn.h" />
 		<Unit filename="..\..\engine\portable\include\rend_fakeradio.h" />
+		<Unit filename="..\..\engine\portable\include\rend_font.h" />
 		<Unit filename="..\..\engine\portable\include\rend_halo.h" />
 		<Unit filename="..\..\engine\portable\include\rend_list.h" />
 		<Unit filename="..\..\engine\portable\include\rend_main.h" />
@@ -519,13 +520,11 @@
 		<Unit filename="..\..\engine\portable\src\fi_main.c" />
 		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
+		<Unit filename="..\..\engine\portable\src\fonts.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />
 		<Unit filename="..\..\engine\portable\src\gl_drawvectorgraphic.c" />
-		<Unit filename="..\..\engine\portable\src\gl_font.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\engine\portable\src\gl_hq2x.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -734,6 +733,7 @@
 		<Unit filename="..\..\engine\portable\src\rend_fakeradio.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\rend_font.c" />
 		<Unit filename="..\..\engine\portable\src\rend_halo.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -122,6 +122,12 @@ typedef unsigned short  nodeindex_t;
 typedef unsigned short  thid_t;
 typedef double          timespan_t;
 
+/**
+ * Unique identifier allocated by this subsystem and associated to each
+ * known font. Used as a logical public reference/handle to a font.
+ */
+typedef uint32_t        fontid_t;
+
 #define LUMPNAME_T_MAXLEN 9
 #define LUMPNAME_T_LASTINDEX 8
 typedef signed char     lumpname_t[LUMPNAME_T_MAXLEN];

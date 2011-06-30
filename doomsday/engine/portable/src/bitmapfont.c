@@ -541,7 +541,7 @@ int BitmapFont_Leading(bitmapfont_t* font)
     return font->_leading;
 }
 
-DGLuint BitmapFont_GLTextureName(bitmapfont_t* font)
+DGLuint BitmapFont_GLTextureName(const bitmapfont_t* font)
 {
     assert(font);
     return font->_tex;

@@ -32,6 +32,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
+#include "de_render.h"
 #include "de_ui.h"
 
 #include "math.h"
@@ -602,7 +603,7 @@ static void drawConsole(float consoleAlpha)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
 
-    cfont = FR_BitmapFontForId(FR_Font());
+    cfont = Fonts_FontForId(FR_Font());
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);
     fontScaledY = lineHeight * scale[1];

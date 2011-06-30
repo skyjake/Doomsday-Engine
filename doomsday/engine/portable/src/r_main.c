@@ -126,7 +126,6 @@ void R_Register(void)
     C_CMD("viewgrid", "ii", ViewGrid);
 
     P_MaterialsRegister();
-    FR_Register();
 }
 
 boolean R_IsSkySurface(const surface_t* suf)

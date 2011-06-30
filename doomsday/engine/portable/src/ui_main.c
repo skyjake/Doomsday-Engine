@@ -37,6 +37,7 @@
 #include "de_refresh.h"
 #include "de_system.h"
 #include "de_graphics.h"
+#include "de_render.h"
 #include "de_ui.h"
 #include "de_misc.h"
 
@@ -136,6 +137,7 @@ void UI_Register(void)
     C_CMD_FLAGS("uicolor", "sfff", UIColor, CMDF_NO_DEDICATED);
 
     CP_Register();
+    Fonts_Register();
 }
 
 void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape)

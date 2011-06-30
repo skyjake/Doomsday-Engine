@@ -47,9 +47,9 @@
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_play.h"
+#include "de_ui.h"
 
 #include "def_main.h"
-#include "ui_main.h"
 #include "p_particle.h"
 
 #include "colorpalette.h"
@@ -2986,7 +2986,7 @@ void GL_TexReset(void)
     boolean useBusyMode = !Con_IsBusy();
 
     GL_ClearTextureMemory();
-    FR_Update();
+    Fonts_Update();
     Con_Printf("All DGL textures deleted.\n");
 
     if(useBusyMode)

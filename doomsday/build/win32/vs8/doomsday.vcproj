@@ -1093,6 +1093,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\fonts.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\gameinfo.c"
 				>
 			</File>
@@ -1106,10 +1110,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\gl_drawvectorgraphic.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\gl_font.c"
 				>
 			</File>
 			<File
@@ -1402,6 +1402,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\rend_fakeradio.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\rend_font.c"
 				>
 			</File>
 			<File
@@ -2786,6 +2790,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\fonts.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\gameinfo.h"
 				>
 			</File>
@@ -2795,10 +2803,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\gl_draw.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\gl_font.h"
 				>
 			</File>
 			<File
@@ -3095,6 +3099,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\rend_fakeradio.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\rend_font.h"
 				>
 			</File>
 			<File

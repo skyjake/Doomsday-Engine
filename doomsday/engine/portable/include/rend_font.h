@@ -1,4 +1,4 @@
-/**\file gl_font.h
+/**\file rend_font.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,13 +23,11 @@
  */
 
 /**
- * Font Management.
+ * Font Renderer
  */
 
-#ifndef LIBDENG_GL_FONT_H
-#define LIBDENG_GL_FONT_H
-
-#include "bitmapfont.h"
+#ifndef LIBDENG_FONT_RENDERER
+#define LIBDENG_FONT_RENDERER
 
 #define DEFAULT_INITIALCOUNT        (0) /// Used for animating type-in effects.
 
@@ -48,9 +46,6 @@
  */
 #define FR_SMALL_TEXT_BUFFER_SIZE   (160)
 
-/// Register the console commands, variables, etc..., of this module.
-void FR_Register(void);
-
 /**
  * Initialize the font renderer.
  * @return  @c 0 iff there are no errors.
@@ -60,28 +55,10 @@ void FR_Shutdown(void);
 
 void FR_Ticker(timespan_t ticLength);
 
-/**
- * Mark all fonts as requiring a full update. Called during engine/renderer reset.
- */
-void FR_Update(void);
-
-/**
- * Load the specified font as a "system font".
- */
-fontid_t FR_LoadSystemFont(const char* name, const char* path);
-
-fontid_t FR_CreateFontFromDef(ded_compositefont_t* def);
-
-/**
- * @return  Ptr to the font associated with the specified id.
- */
-bitmapfont_t* FR_BitmapFontForId(fontid_t id);
-void FR_DestroyFont(fontid_t id);
+void FR_SetNoFont(void);
 
 // Utility routines:
 int FR_SingleLineHeight(const char* text);
 int FR_GlyphTopToAscent(const char* text);
 
-ddstring_t** FR_CollectFontNames(int* count);
-
-#endif /* LIBDENG_GL_FONT_H */
+#endif /* LIBDENG_FONT_RENDERER */

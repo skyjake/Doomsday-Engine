@@ -803,7 +803,7 @@ void R_LoadVectorGraphics(void)
  */
 fontid_t R_MustFindFontForName(const char* name)
 {
-    fontid_t id = FR_FindFontForName(name);
+    fontid_t id = Fonts_IdForName(name);
     if(id == 0)
         Con_Error("Failed loading font \"%s\".", name);
     return id;

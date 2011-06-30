@@ -278,7 +278,7 @@ static void Con_BusyLoadTextures(void)
            { "normal18", "}data/fonts/normal18.dfn" }
         };
         int fontIdx = !(theWindow->width > 640)? 0 : 1;
-        if(0 != (busyFont = FR_LoadSystemFont(fonts[fontIdx].name, fonts[fontIdx].path)))
+        if(0 != (busyFont = Fonts_LoadSystemFont(fonts[fontIdx].name, fonts[fontIdx].path)))
         {
             FR_SetFont(busyFont);
             busyFontHgt = FR_TextHeight("A");
@@ -300,7 +300,7 @@ static void Con_BusyDeleteTextures(void)
 
     if(0 != busyFont)
     {
-        FR_DestroyFont(busyFont);
+        Fonts_DestroyFont(busyFont);
         busyFont = 0;
     }
 }

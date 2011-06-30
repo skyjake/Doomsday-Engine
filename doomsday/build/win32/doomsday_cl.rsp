@@ -33,6 +33,7 @@
  .\..\..\engine\portable\src\fi_main.c
  .\..\..\engine\portable\src\filedirectory.c
  .\..\..\engine\portable\src\finaleinterpreter.c
+ .\..\..\engine\portable\src\fonts.c
  .\..\..\engine\portable\src\gameinfo.c
  .\..\..\engine\portable\src\gl_defer.c
  .\..\..\engine\portable\src\gl_texmanager.c
@@ -42,7 +43,6 @@
  .\..\..\engine\portable\src\gl_pcx.c
  .\..\..\engine\portable\src\gl_main.c
  .\..\..\engine\portable\src\gl_hq2x.c
- .\..\..\engine\portable\src\gl_font.c
  .\..\..\engine\portable\src\gl_draw.c
  .\..\..\engine\portable\src\gl_drawvectorgraphic.c
  .\..\..\engine\portable\src\texture.c
@@ -62,6 +62,7 @@
  .\..\..\engine\portable\src\rend_list.c
  .\..\..\engine\portable\src\rend_halo.c
  .\..\..\engine\portable\src\rend_fakeradio.c
+ .\..\..\engine\portable\src\rend_font.c
  .\..\..\engine\portable\src\rend_dyn.c
  .\..\..\engine\portable\src\rend_decor.c
  .\..\..\engine\portable\src\rend_clip.c

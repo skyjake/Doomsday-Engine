@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG2_MATERIALS_H
-#define LIBDENG2_MATERIALS_H
+#ifndef LIBDENG_MATERIALS_H
+#define LIBDENG_MATERIALS_H
 
 #include "gl_texmanager.h"
 #include "def_data.h"
@@ -171,4 +171,4 @@ void Materials_ClearTranslation(struct material_s* mat);
 // @todo Refactor interface, doesn't fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int groupNum);
 
-#endif /* LIBDENG2_MATERIALS_H */
+#endif /* LIBDENG_MATERIALS_H */

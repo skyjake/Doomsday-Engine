@@ -441,7 +441,7 @@ static fontid_t loadSystemFont(const char* name)
     Str_Free(&searchPath);
     searchPath2 = Uri_Resolved(path);
     Uri_Destruct(path);
-    result = FR_LoadSystemFont(name, Str_Text(searchPath2));
+    result = Fonts_LoadSystemFont(name, Str_Text(searchPath2));
     if(searchPath2)
         Str_Delete(searchPath2);
 
@@ -607,7 +607,8 @@ void GL_Shutdown(void)
         return; // Not yet initialized fully.
 
     GL_ShutdownDeferredTask();
-    FR_Shutdown();   
+    Fonts_Shutdown();
+    FR_Shutdown();
     glFontFixed =
         glFontVariable[GLFS_NORMAL] =
         glFontVariable[GLFS_BOLD] =
@@ -836,11 +837,13 @@ void GL_TotalReset(void)
 
     // Delete all textures.
     GL_ResetTextureManager();
-    FR_Shutdown();    
+    Fonts_Shutdown();
+    FR_Shutdown();
     glFontFixed =
         glFontVariable[GLFS_NORMAL] =
         glFontVariable[GLFS_BOLD] =
         glFontVariable[GLFS_LIGHT] = 0;
+    Fonts_Init();
     FR_Init();
     GL_ReleaseReservedNames();
 

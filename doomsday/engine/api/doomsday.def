@@ -492,7 +492,7 @@ EXPORTS
     GL_EndBorderedProjection    @510 NONAME
 
 ; Graphics: Text
-    FR_FindFontForName          @97 NONAME
+    Fonts_IdForName          @97 NONAME
 
     FR_Font                     @106 NONAME
     FR_SetFont                  @107 NONAME
