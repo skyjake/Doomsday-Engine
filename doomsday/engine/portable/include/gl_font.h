@@ -48,6 +48,9 @@
  */
 #define FR_SMALL_TEXT_BUFFER_SIZE   (160)
 
+/// Register the console commands, variables, etc..., of this module.
+void FR_Register(void);
+
 /**
  * Initialize the font renderer.
  * @return  @c 0 iff there are no errors.

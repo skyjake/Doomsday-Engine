@@ -547,13 +547,13 @@ DGLuint BitmapFont_GLTextureName(bitmapfont_t* font)
     return font->_tex;
 }
 
-int BitmapFont_TextureWidth(bitmapfont_t* font)
+int BitmapFont_TextureWidth(const bitmapfont_t* font)
 {
     assert(font);
     return font->_texWidth;
 }
 
-int BitmapFont_TextureHeight(bitmapfont_t* font)
+int BitmapFont_TextureHeight(const bitmapfont_t* font)
 {
     assert(font);
     return font->_texHeight;

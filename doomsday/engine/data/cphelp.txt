@@ -384,6 +384,9 @@ desc = List all console commands.
 [listwadfiles]
 desc = List all loaded WAD data files.
 
+[listfonts]
+desc = List all known fonts.
+
 [listgames]
 desc = List all games.
 
