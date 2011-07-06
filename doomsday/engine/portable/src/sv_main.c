@@ -639,6 +639,7 @@ void Sv_GetPackets(void)
             break;
 #endif
 
+#if 0
         case PCL_ACK_SETS:
             // The client is acknowledging that it has received a number of
             // delta sets.
@@ -659,6 +660,7 @@ void Sv_GetPackets(void)
                 Sv_AckDeltaSet(netBuffer.player, 0, Msg_ReadByte());
             }
             break;
+#endif
 
         case PKT_COORDS:
             Sv_ClientCoords(netBuffer.player);

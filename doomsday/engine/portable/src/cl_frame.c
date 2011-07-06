@@ -34,8 +34,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+#if 0
 #define SET_HISTORY_SIZE    50
 #define RESEND_HISTORY_SIZE 50
+#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -56,10 +58,11 @@ extern int gotFrame;
 // from the wrong map).
 boolean gotFirstFrame;
 
-int     predicted_tics;
+//int     predicted_tics;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+#if 0
 // Ordinal of the latest set received by the client. Used for detecting deltas
 // that arrive out of order. The ordinal is the logical equivalent of the set
 // identifier (which is 0...255).
@@ -80,6 +83,7 @@ static int      historyIdx;
 // to detect duplicate resends.
 static byte     resendHistory[RESEND_HISTORY_SIZE];
 static int      resendHistoryIdx;
+#endif
 
 // CODE --------------------------------------------------------------------
 
@@ -88,8 +92,9 @@ static int      resendHistoryIdx;
  */
 void Cl_InitFrame(void)
 {
-    gotFrame = false;           // Nothing yet...
+    Cl_ResetFrame();
 
+#if 0
     // -1 denotes an invalid entry.
     memset(setHistory, -1, sizeof(setHistory));
     historyIdx = 0;
@@ -102,6 +107,7 @@ void Cl_InitFrame(void)
     latestSet = 0;
     latestSetOrdinal = 0;
     setOrdinalBase = 256;
+#endif
 }
 
 /**
@@ -116,6 +122,7 @@ void Cl_ResetFrame(void)
     gotFirstFrame = false;
 }
 
+#if 0
 /**
  * Add a set number to the history.
  */
@@ -200,6 +207,7 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
     }
     return ordinal;
 }
+#endif
 
 /**
  * Read a PSV_FRAME2/PSV_FIRST_FRAME2 packet.
@@ -207,8 +215,8 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
 void Cl_Frame2Received(int packetType)
 {
     byte        set = Msg_ReadByte(), oldSet, resend, deltaType;
-    byte        resendAcks[300];
-    int         i, numResendAcks = 0;
+    //byte        resendAcks[300];
+    //int         i, numResendAcks = 0;
     boolean     skip = false;
 #ifdef _NETDEBUG
     int         deltaCount = 0;
@@ -239,6 +247,7 @@ void Cl_Frame2Received(int packetType)
     VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
 #endif
 
+#if 0
     if(packetType != PSV_FIRST_FRAME2)
     {
         // If this is not the first frame, it will be ignored if it arrives
@@ -255,13 +264,14 @@ void Cl_Frame2Received(int packetType)
 
         VERBOSE2( Con_Printf("Latest set ordinal is %i.\n", latestSetOrdinal) );
     }
+#endif
 
     // Check for duplicates (might happen if ack doesn't get through
     // or ack arrives too late).
-    if(!Cl_HistoryCheck(set))
+    //if(!Cl_HistoryCheck(set))
     {
         // It isn't yet in the history, so add it there.
-        Cl_HistoryAdd(set);
+        //Cl_HistoryAdd(set);
 
         VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
 
@@ -289,8 +299,9 @@ void Cl_Frame2Received(int packetType)
 #endif
             skip = false;
 
-            VERBOSE2( Con_Printf("Received delta %i.\n",deltaType & ~DT_RESENT) );
+            VERBOSE2( Con_Printf("Received delta %i.\n", deltaType & ~DT_RESENT) );
 
+            /*
             // Is this a resent delta?
             if(deltaType & DT_RESENT)
             {
@@ -327,6 +338,7 @@ void Cl_Frame2Received(int packetType)
             {
                 VERBOSE2( Con_Printf("  Not resent.\n") );
             }
+            */
 
             switch(deltaType)
             {
@@ -390,9 +402,10 @@ void Cl_Frame2Received(int packetType)
         gotFrame = true;
 
         // Reset the predict counter.
-        predicted_tics = 0;
+        //predicted_tics = 0;
     }
 
+    /*
     if(numResendAcks == 0)
     {
         // Acknowledge the set.
@@ -425,4 +438,5 @@ void Cl_Frame2Received(int packetType)
 #endif
     }
     Net_SendBuffer(0, 0);
+    */
 }

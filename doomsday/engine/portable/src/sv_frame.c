@@ -47,7 +47,7 @@
 
 // The minimum frame size is used when bandwidth rating is zero (poorest
 // possible connection).
-#define MINIMUM_FRAME_SIZE  400  // bytes
+#define MINIMUM_FRAME_SIZE  4096 // bytes
 
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).
@@ -725,6 +725,11 @@ if(type >= NUM_DELTA_TYPES)
 }
 #endif
 
+#ifdef _DEBUG
+    // Once sent, the deltas can be discarded and there is no need for resending.
+    assert(delta->state != DELTA_UNACKED);
+#endif
+
     if(delta->state == DELTA_UNACKED)
     {
         // Flag this as Resent.
@@ -839,8 +844,7 @@ writeDeltaLength:
  */
 size_t Sv_GetMaxFrameSize(int playerNumber)
 {
-    size_t              size = MINIMUM_FRAME_SIZE +
-        FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
+    size_t              size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
     if(size > maxDatagramSize)
@@ -992,10 +996,10 @@ if(delta->state == DELTA_UNACKED)
 
     // If the target is local, ack immediately. This effectively removes
     // all the sent deltas from the pool.
-    if(ddPlayers[plrNum].shared.flags & DDPF_LOCAL)
-    {
-        Sv_AckDeltaSet(plrNum, pool->setDealer, 0);
-    }
+    //if(ddPlayers[plrNum].shared.flags & DDPF_LOCAL)
+
+    // Once sent, the delta set can be discarded.
+    Sv_AckDeltaSet(plrNum, pool->setDealer, 0);
 
     // Now a frame has been sent.
     pool->isFirst = false;
