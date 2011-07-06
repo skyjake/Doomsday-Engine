@@ -1630,7 +1630,7 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 
     // Collect and sort in each namespace separately.
     { int i;
-    for(i = MATERIALNAMESPACE_FIRST; i < MATERIALNAMESPACE_LAST; ++i)
+    for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
     {
         if(printMaterials2((materialnamespaceid_t)i, like) != 0)
             Con_FPrintf(CBLF_RULER, "");
