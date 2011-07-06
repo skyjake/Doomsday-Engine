@@ -1066,6 +1066,31 @@ typedef enum {
 #define VALID_TEXTURENAMESPACE(id) (\
     (id) >= TEXTURENAMESPACE_FIRST && (id) <= TEXTURENAMESPACE_LAST)
 
+/**
+ * Font Namespaces
+ */
+
+/**
+ * @defgroup fontNamespaceNames  Font Namespace Names
+ * @{
+ */
+#define FN_SYSTEM_NAME          "System"
+#define FN_GAME_NAME            "Game"
+/**@}*/
+
+typedef enum {
+    FN_ANY = -1,
+    FONTNAMESPACE_FIRST = 3000,
+    FN_SYSTEM = FONTNAMESPACE_FIRST,
+    FN_GAME,
+    FONTNAMESPACE_LAST = FN_GAME
+} fontnamespaceid_t;
+
+#define FONTNAMESPACE_COUNT         (FONTNAMESPACE_LAST + 1 - FONTNAMESPACE_FIRST)
+
+#define VALID_FONTNAMESPACEID(id)   ((id) >= FONTNAMESPACE_FIRST && (id) <= FONTNAMESPACE_LAST)
+
+/// Patch Info
 typedef struct {
     patchid_t id;
     boolean isCustom; // @c true if the patch does not originate from an IWAD.
@@ -1077,6 +1102,7 @@ typedef struct {
     short extraOffset[2]; // Only used with upscaled and sharpened patches.
 } patchinfo_t;
 
+/// Sprite Info
 typedef struct {
     struct material_s* material;
     int flip;

@@ -1621,7 +1621,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             {
                 ded_compositefont_t* cfont;
 
-                idx = DED_AddCompositeFont(ded, "");
+                idx = DED_AddCompositeFont(ded, NULL);
                 cfont = &ded->compositeFonts[idx];
 
                 FINDBEGIN;
@@ -1630,7 +1630,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     READLABEL;
                     if(ISLABEL("ID"))
                     {
-                        READSTR(cfont->id)
+                        READURI(&cfont->id, FN_GAME_NAME)
                         CHECKSC;
                     }
                     else if(M_IsStringValidInt(label))

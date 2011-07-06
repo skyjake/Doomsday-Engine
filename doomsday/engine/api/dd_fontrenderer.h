@@ -63,10 +63,10 @@
 /*@}*/
 
 /// @return  Unique identifier associated with the current font.
-fontid_t FR_Font(void);
+fontnum_t FR_Font(void);
 
 /// Change the current font.
-void FR_SetFont(fontid_t font);
+void FR_SetFont(fontnum_t font);
 
 /// Push the attribute stack.
 void FR_PushAttrib(void);

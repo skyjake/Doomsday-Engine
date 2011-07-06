@@ -40,6 +40,7 @@
 #include "de_render.h"
 #include "de_ui.h"
 
+#include "font.h"
 #include "bitmapfont.h"
 #include "m_misc.h"
 
@@ -66,7 +67,7 @@ static fr_state_attributes_t defaultAttribs = {
 };
 
 typedef struct {
-    int fontIdx;
+    fontnum_t fontNum;
     int attribStackDepth;
     fr_state_attributes_t attribStack[FR_MAX_ATTRIB_STACK_DEPTH];
 } fr_state_t;
@@ -74,7 +75,7 @@ static fr_state_t fr;
 fr_state_t* frState = &fr;
 
 typedef struct {
-    fontid_t font;
+    fontnum_t fontNum;
     float scaleX, scaleY;
     float offX, offY;
     float angle;
@@ -83,6 +84,7 @@ typedef struct {
     int shadowOffsetX, shadowOffsetY;
     int tracking;
     float leading;
+    int lastLineHeight;
     boolean typeIn;
     boolean caseScale;
     struct {
@@ -91,9 +93,9 @@ typedef struct {
 } drawtextstate_t;
 
 static __inline fr_state_attributes_t* currentAttribs(void);
-static int topToAscent(bitmapfont_t* font);
-static int lineHeight(bitmapfont_t* font, unsigned char ch);
-static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font, int alignFlags, short textFlags);
+static int topToAscent(font_t* font);
+static int lineHeight(font_t* font, unsigned char ch);
+static void drawChar(unsigned char ch, int posX, int posY, font_t* font, int alignFlags, short textFlags);
 static void drawFlash(int x, int y, int w, int h, int bright);
 
 static int inited = false;
@@ -112,20 +114,20 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static int topToAscent(bitmapfont_t* font)
+static int topToAscent(font_t* font)
 {
-    int lineHeight = BitmapFont_Leading(font);
+    int lineHeight = Fonts_Leading(font);
     if(lineHeight == 0)
         return 0;
-    return lineHeight - BitmapFont_Ascent(font);
+    return lineHeight - Fonts_Ascent(font);
 }
 
-static int lineHeight(bitmapfont_t* font, unsigned char ch)
+static int lineHeight(font_t* font, unsigned char ch)
 {
-    int ascent = BitmapFont_Ascent(font);
+    int ascent = Fonts_Ascent(font);
     if(ascent != 0)
         return ascent;
-    return BitmapFont_CharHeight(font, ch);
+    return Fonts_CharHeight(font, ch);
 }
 
 static __inline fr_state_attributes_t* currentAttribs(void)
@@ -139,7 +141,7 @@ int FR_Init(void)
         return -1; // No reinitializations...
 
     inited = true;
-    fr.fontIdx = -1;
+    fr.fontNum = 0;
     FR_LoadDefaultAttrib();
     typeInTime = 0;
 
@@ -174,29 +176,25 @@ void FR_ResetTypeinTimer(void)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_SetFont(fontid_t id)
+void FR_SetFont(fontnum_t num)
 {
-    int idx;
     errorIfNotInited("FR_SetFont");
-    idx = Fonts_ToIndex(id);
-    if(idx == -1)
+    if(!Fonts_ToFont(num))
         return; // No such font.
-    fr.fontIdx = idx;
+    fr.fontNum = num;
 }
 
 void FR_SetNoFont(void)
 {
     errorIfNotInited("FR_SetNoFont");
-    fr.fontIdx = -1;
+    fr.fontNum = 0;
 }
 
 /// \note Member of the Doomsday public API.
-fontid_t FR_Font(void)
+fontnum_t FR_Font(void)
 {
     errorIfNotInited("FR_Font");
-    if(fr.fontIdx != -1)
-        return BitmapFont_Id(Fonts_FontForIndex(fr.fontIdx));
-    return 0;
+    return fr.fontNum;
 }
 
 /// \note Member of the Doomsday public API.
@@ -428,15 +426,15 @@ void FR_SetCaseScale(boolean value)
 void FR_CharDimensions(int* width, int* height, unsigned char ch)
 {
     errorIfNotInited("FR_CharDimensions");
-    BitmapFont_CharDimensions(Fonts_FontForIndex(fr.fontIdx), width, height, ch);
+    Fonts_CharDimensions(Fonts_ToFont(fr.fontNum), width, height, ch);
 }
 
 /// \note Member of the Doomsday public API.
 int FR_CharWidth(unsigned char ch)
 {
     errorIfNotInited("FR_CharWidth");
-    if(fr.fontIdx != -1)
-        return BitmapFont_CharWidth(Fonts_FontForIndex(fr.fontIdx), ch);
+    if(fr.fontNum != 0)
+        return Fonts_CharWidth(Fonts_ToFont(fr.fontNum), ch);
     return 0;
 }
 
@@ -444,33 +442,33 @@ int FR_CharWidth(unsigned char ch)
 int FR_CharHeight(unsigned char ch)
 {
     errorIfNotInited("FR_CharHeight");
-    if(fr.fontIdx != -1)
-        return BitmapFont_CharHeight(Fonts_FontForIndex(fr.fontIdx), ch);
+    if(fr.fontNum != 0)
+        return Fonts_CharHeight(Fonts_ToFont(fr.fontNum), ch);
     return 0;
 }
 
 int FR_SingleLineHeight(const char* text)
 {
     errorIfNotInited("FR_SingleLineHeight");
-    if(fr.fontIdx == -1 || !text)
+    if(fr.fontNum == 0 || !text)
         return 0;
-    { int ascent = BitmapFont_Ascent(Fonts_FontForIndex(fr.fontIdx));
+    { int ascent = Fonts_Ascent(Fonts_ToFont(fr.fontNum));
     if(ascent != 0)
         return ascent;
     }
-    return BitmapFont_CharHeight(Fonts_FontForIndex(fr.fontIdx), (unsigned char)text[0]);
+    return Fonts_CharHeight(Fonts_ToFont(fr.fontNum), (unsigned char)text[0]);
 }
 
 int FR_GlyphTopToAscent(const char* text)
 {
     int lineHeight;
     errorIfNotInited("FR_GlyphTopToAscent");
-    if(fr.fontIdx == -1 || !text)
+    if(fr.fontNum == 0 || !text)
         return 0;
-    lineHeight = BitmapFont_Leading(Fonts_FontForIndex(fr.fontIdx));
+    lineHeight = Fonts_Leading(Fonts_ToFont(fr.fontNum));
     if(lineHeight == 0)
         return 0;
-    return lineHeight - BitmapFont_Ascent(Fonts_FontForIndex(fr.fontIdx));
+    return lineHeight - Fonts_Ascent(Fonts_ToFont(fr.fontNum));
 }
 
 static int textFragmentWidth(const char* fragment)
@@ -482,7 +480,7 @@ static int textFragmentWidth(const char* fragment)
     const char* ch;
     unsigned char c;
 
-    if(fr.fontIdx == -1)
+    if(fr.fontNum == 0)
     {
         Con_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
@@ -509,7 +507,7 @@ static int textFragmentHeight(const char* fragment)
     size_t len;
     uint i;
  
-    if(fr.fontIdx == -1)
+    if(fr.fontNum == 0)
     {
         Con_Error("textFragmentHeight: Cannot determine height without a current font.");
         exit(1);
@@ -525,7 +523,7 @@ static int textFragmentHeight(const char* fragment)
         height = MAX_OF(height, FR_CharHeight(c));
     }
 
-    return topToAscent(Fonts_FontForIndex(fr.fontIdx)) + height;
+    return topToAscent(Fonts_ToFont(fr.fontNum)) + height;
     }
 }
 
@@ -538,14 +536,14 @@ static void textFragmentDimensions(int* width, int* height, const char* fragment
 static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
     short textFlags, int initialCount)
 {
-    assert(fragment && fragment[0] && fr.fontIdx != -1);
+    assert(fragment && fragment[0] && fr.fontNum != 0);
     {
-    bitmapfont_t* cf = Fonts_FontForIndex(fr.fontIdx);
+    font_t* font = Fonts_ToFont(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     boolean noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
-                         (BitmapFont_Flags(cf) & BFF_HAS_EMBEDDEDSHADOW)  != 0);
+                         (Font_Flags(font) & FF_SHADOWED) != 0);
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
     int w, h, cx, cy, count, yoff;
@@ -575,14 +573,14 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
-    if(0 != BitmapFont_GLTextureName(cf))
+    if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
-        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(cf));
+        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(font));
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glLoadIdentity();
-        glScalef(1.f / BitmapFont_TextureWidth(cf),
-                 1.f / BitmapFont_TextureHeight(cf), 1.f);
+        glScalef(1.f / BitmapFont_TextureWidth(font),
+                 1.f / BitmapFont_TextureHeight(font), 1.f);
     }
 
     { int pass;
@@ -683,15 +681,14 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             w = FR_CharWidth(c);
             h = FR_CharHeight(c);
 
-            if(' ' != c &&
-               (0 != BitmapFont_GLTextureName(cf) || 0 != BitmapFont_CharPatch(cf, c)))
+            if(' ' != c)
             {
                 // A non-white-space character we have a glyph for.
                 if(pass)
                 {
                     // The character itself.
                     glColor4fv(sat->rgba);
-                    drawChar(c, cx, cy + yoff, cf, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+                    drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
                     if(!noGlitter && glitter > 0)
                     {   // Do something flashy.
@@ -717,7 +714,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         glEnable(GL_TEXTURE_2D);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-    if(0 != BitmapFont_GLTextureName(cf))
+    if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
@@ -744,79 +741,129 @@ void FR_DrawChar(unsigned char ch, int x, int y)
     FR_DrawChar2(ch, x, y, DEFAULT_ALIGNFLAGS);
 }
 
-static void drawChar(unsigned char ch, int posX, int posY, bitmapfont_t* font,
+static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     int alignFlags, short textFlags)
 {
     float x = (float) posX, y = (float) posY;
-    DGLuint tex;
+    DGLuint tex = 0;
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= BitmapFont_CharWidth(font, ch);
+        x -= Fonts_CharWidth(font, ch);
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= BitmapFont_CharWidth(font, ch) / 2;
+        x -= Fonts_CharWidth(font, ch) / 2;
 
     if(alignFlags & ALIGN_BOTTOM)
         y -= topToAscent(font) + lineHeight(font, ch);
     else if(!(alignFlags & ALIGN_TOP))
         y -= (topToAscent(font) + lineHeight(font, ch))/2;
 
-    if(0 != (tex = BitmapFont_GLTextureName(font)))
-    {
-        GL_BindTexture(tex, GL_NEAREST);
-    }
-    else
-    {
-        patchid_t patch = BitmapFont_CharPatch(font, ch);
-        if(patch == 0)
-            return;
-        GL_BindTexture(font->_chars[ch].tex, (filterUI ? GL_LINEAR : GL_NEAREST));
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(x, y, 0);
 
-    if(font->_chars[ch].dlist)
+    switch(Font_Type(font))
     {
-        GL_CallList(font->_chars[ch].dlist);
-    }
-    else
-    {
-        int s[2], t[2], x = 0, y = 0, w, h;
+    case FT_BITMAP: {
+        bitmapfont_t* bf = (bitmapfont_t*)font;
 
-        BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-        w = s[1] - s[0];
-        h = t[1] - t[0];
+        if(0 != BitmapFont_GLTextureName(font))
+            GL_BindTexture(BitmapFont_GLTextureName(font), GL_NEAREST);
 
-        if(!BitmapFont_GLTextureName(font))
-        {           
-            x = font->_chars[ch].x;
-            y = font->_chars[ch].y;
-            w = font->_chars[ch].w;
-            h = font->_chars[ch].h;
+        if(bf->_chars[ch].dlist)
+        {
+            GL_CallList(bf->_chars[ch].dlist);
+        }
+        else
+        {
+            int s[2], t[2], x = 0, y = 0, w, h;
+
+            BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
+            w = s[1] - s[0];
+            h = t[1] - t[0];
+
+            x -= font->_marginWidth;
+            y -= font->_marginHeight;
+
+            glBegin(GL_QUADS);
+                // Upper left.
+                glTexCoord2i(s[0], t[0]);
+                glVertex2f(x, y);
+
+                // Upper Right.
+                glTexCoord2i(s[1], t[0]);
+                glVertex2f(x + w, y);
+
+                // Lower right.
+                glTexCoord2i(s[1], t[1]);
+                glVertex2f(x + w, y + h);
+
+                // Lower left.
+                glTexCoord2i(s[0], t[1]);
+                glVertex2f(x, y + h);
+            glEnd();
+        }
+        break;
+      }
+    case FT_BITMAPCOMPOSITE: {
+        bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+        patchid_t patch = BitmapCompositeFont_CharPatch(font, ch);
+
+        if(patch != 0)
+        {
+            GL_BindTexture(cf->_chars[ch].tex, (filterUI ? GL_LINEAR : GL_NEAREST));
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            GL_SetNoTexture();
         }
 
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
+        if(cf->_chars[ch].dlist)
+        {
+            GL_CallList(cf->_chars[ch].dlist);
+        }
+        else
+        {
+            int s[2], t[2], x = 0, y = 0, w, h;
 
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
+            BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
+         
+            x = cf->_chars[ch].x;
+            y = cf->_chars[ch].y;
+            w = BitmapCompositeFont_CharWidth(font, ch);
+            h = BitmapCompositeFont_CharHeight(font, ch);
+            if(patch != 0)
+            {
+                w += 2;
+                h += 2;
+            }
 
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
+            x -= font->_marginWidth;
+            y -= font->_marginHeight;
 
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
+            glBegin(GL_QUADS);
+                // Upper left.
+                glTexCoord2i(s[0], t[0]);
+                glVertex2f(x, y);
 
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+                // Upper Right.
+                glTexCoord2i(s[1], t[0]);
+                glVertex2f(x + w, y);
+
+                // Lower right.
+                glTexCoord2i(s[1], t[1]);
+                glVertex2f(x + w, y + h);
+
+                // Lower left.
+                glTexCoord2i(s[0], t[1]);
+                glVertex2f(x, y + h);
+            glEnd();
+        }
+        break;
+      }
+    default:
+        Con_Error("FR_DrawChar: Invalid font type %i.", (int) Font_Type(font));
+        exit(1); // Unreachable.
     }
 
     glMatrixMode(GL_MODELVIEW);
@@ -943,6 +990,11 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
             (*strPtr)++;
             state->rgba[CB] = parseFloat(&(*strPtr));
         }
+        else if(!strnicmp((*strPtr), "a", 1))
+        {
+            (*strPtr)++;
+            state->rgba[CA] = parseFloat(&(*strPtr));
+        }
         else if(!strnicmp((*strPtr), "x", 1))
         {
             (*strPtr)++;
@@ -991,14 +1043,14 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         else
         {
             // Perhaps a font name?
-            fontid_t fontId;
+            fontnum_t fontNum;
             if(!strnicmp((*strPtr), "font", 4))
             {
                 (*strPtr) += 4;
-                if((fontId = Fonts_IdForName(*strPtr)))
+                if((fontNum = Fonts_IndexForName(*strPtr)))
                 {
-                    (*strPtr) += Str_Length(BitmapFont_Name(Fonts_FontForId(fontId)));
-                    state->font = fontId;
+                    (*strPtr) += Str_Length(Fonts_GetSymbolicName(Fonts_ToFont(fontNum)));
+                    state->fontNum = fontNum;
                     continue;
                 }
 
@@ -1018,10 +1070,12 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         (*strPtr)++;
 }
 
-static void initDrawTextState(drawtextstate_t* state)
+static void initDrawTextState(drawtextstate_t* state, short textFlags)
 {
     fr_state_attributes_t* sat = currentAttribs();
-    state->font = BitmapFont_Id(Fonts_FontForIndex(fr.fontIdx));
+
+    state->typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
+    state->fontNum = fr.fontNum;
     memcpy(state->rgba, sat->rgba, sizeof(state->rgba));
     state->tracking = sat->tracking;
     state->glitterStrength = sat->glitterStrength;
@@ -1039,6 +1093,9 @@ static void initDrawTextState(drawtextstate_t* state)
     state->caseMod[0].offset = 3;
     state->caseMod[1].scale = 1.25f;
     state->caseMod[1].offset = 0;
+    state->lastLineHeight = FR_CharHeight('A') * state->scaleY * (1+state->leading);
+
+    FR_PushAttrib();
 }
 
 static char* enlargeTextBuffer(size_t lengthMinusTerminator)
@@ -1072,11 +1129,11 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
     const char* fragment;
     char* str, *end;
-    fontid_t origFont = FR_Font();
+    fontnum_t origFont = FR_Font();
     float origColor[4];
     drawtextstate_t state;
     size_t charCount = 0;
-    int curCase = -1, lastLineHeight;
+    int curCase = -1;
 
     errorIfNotInited("FR_DrawText");
 
@@ -1086,19 +1143,15 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
 
-    initDrawTextState(&state);
     // Apply defaults:
-    state.typeIn = (textFlags & DTF_NO_TYPEIN) == 0;
+    initDrawTextState(&state, textFlags);
 
-    FR_PushAttrib();
-
-    lastLineHeight = FR_CharHeight('A') * state.scaleY;
     str = (char*)text;
     while(*str)
     {
         if(*str == '{') // Paramaters included?
         {
-            fontid_t lastFont = state.font;
+            fontnum_t lastFont = state.fontNum;
             int lastTracking = state.tracking;
             float lastLeading = state.leading;
             float lastShadowStrength = state.shadowStrength;
@@ -1119,12 +1172,12 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
                 do
                 {
                     cx = (float) x;
-                    cy += lastLineHeight * (1+lastLeading);
+                    cy += state.lastLineHeight * (1+lastLeading);
                 } while(--numBreaks > 0);
             }
 
-            if(state.font != lastFont)
-                FR_SetFont(state.font);
+            if(state.fontNum != lastFont)
+                FR_SetFont(state.fontNum);
             if(state.tracking != lastTracking)
                 FR_SetTracking(state.tracking);
             if(state.leading != lastLeading)
@@ -1229,10 +1282,10 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             else
             {
                 if(strlen(fragment) > 0)
-                    lastLineHeight = textFragmentHeight(fragment);
+                    state.lastLineHeight = textFragmentHeight(fragment);
 
                 cx = (float) x;
-                cy += (float) lastLineHeight * (1+FR_Leading());
+                cy += (float) state.lastLineHeight * (1+FR_Leading());
             }
 
             glMatrixMode(GL_MODELVIEW);
@@ -1287,9 +1340,15 @@ int FR_TextWidth(const char* string)
         unsigned char c = *ch;
 
         if(c == '{')
+        {
             skip = true;
+        }
         else if(c == '}')
+        {
             skip = false;
+            continue;
+        }
+
         if(skip)
             continue;
 
@@ -1303,7 +1362,11 @@ int FR_TextWidth(const char* string)
 
         w += FR_CharWidth(c);
 
-        if(i == len - 1 && maxWidth == -1)
+        if(i != len - 1)
+        {
+            w += FR_Tracking();
+        }
+        else if(maxWidth == -1)
         {
             maxWidth = w;
         }
@@ -1335,20 +1398,26 @@ int FR_TextHeight(const char* string)
         int charHeight;
 
         if(c == '{')
+        {
             skip = true;
+        }
         else if(c == '}')
+        {
             skip = false;
+            continue;
+        }
+
         if(skip)
             continue;
 
         if(c == '\n')
         {
-            h += currentLineHeight == 0? FR_CharHeight('A') : currentLineHeight;
+            h += currentLineHeight == 0? (FR_CharHeight('A') * (1+FR_Leading())) : currentLineHeight;
             currentLineHeight = 0;
             continue;
         }
 
-        charHeight = FR_CharHeight(c);
+        charHeight = FR_CharHeight(c) * (1+FR_Leading());
         if(charHeight > currentLineHeight)
             currentLineHeight = charHeight;
     }

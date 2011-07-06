@@ -132,7 +132,7 @@ typedef struct fi_page_s {
 
     animatorvector4_t _filter;
     animatorvector3_t _preColor[FIPAGE_NUM_PREDEFINED_COLORS];
-    fontid_t _preFont[FIPAGE_NUM_PREDEFINED_FONTS];
+    fontnum_t _preFont[FIPAGE_NUM_PREDEFINED_FONTS];
 
     uint _timer;
 } fi_page_t;
@@ -195,10 +195,10 @@ void FIPage_SetFilterColorAndAlpha(fi_page_t* page, float red, float green, floa
 void FIPage_SetPredefinedColor(fi_page_t* page, uint idx, float red, float green, float blue, int steps);
 
 /// Sets a predefined font.
-void FIPage_SetPredefinedFont(fi_page_t* page, uint idx, fontid_t font);
+void FIPage_SetPredefinedFont(fi_page_t* page, uint idx, fontnum_t font);
 
 /// @return  Unique identifier of the predefined font.
-fontid_t FIPage_PredefinedFont(fi_page_t* page, uint idx);
+fontnum_t FIPage_PredefinedFont(fi_page_t* page, uint idx);
 
 /**
  * Rectangle/Image sequence object.
@@ -259,14 +259,14 @@ typedef struct fidata_text_s {
     size_t cursorPos;
     int wait, timer;
     float lineHeight;
-    fontid_t font;
+    fontnum_t fontNum;
     char* text;
 } fidata_text_t;
 
 void FIData_TextThink(struct fi_object_s* text);
 void FIData_TextDraw(struct fi_object_s* text, const float offset[3]);
 void FIData_TextCopy(struct fi_object_s* text, const char* str);
-void FIData_TextSetFont(struct fi_object_s* text, fontid_t font);
+void FIData_TextSetFont(struct fi_object_s* text, fontnum_t fontNum);
 
 /**
  * @return Length of the current text as a counter.

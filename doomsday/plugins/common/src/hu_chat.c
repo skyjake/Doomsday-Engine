@@ -370,7 +370,7 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(x, y, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
-    FR_SetFont(obj->fontId);
+    FR_SetFont(obj->fontNum);
     FR_SetColorAndAlpha(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
 
     textWidth = FR_TextWidth(text);
@@ -407,7 +407,7 @@ void UIChat_UpdateDimensions(uiwidget_t* obj)
     if(!UIChat_IsActive(obj))
         return;
 
-    FR_SetFont(obj->fontId);
+    FR_SetFont(obj->fontNum);
     obj->dimensions.width  = cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_'));
     obj->dimensions.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_')));
     }

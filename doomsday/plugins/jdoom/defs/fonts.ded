@@ -3,7 +3,7 @@
 Header { Version = 5; }
 
 Composite BitmapFont {
-  ID = "index";
+  ID = "game:index";
   048 { Texture = "STYSNUM0"; } # 0
   049 { Texture = "STYSNUM1"; } # 1
   050 { Texture = "STYSNUM2"; } # 2
@@ -17,7 +17,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "small";
+  ID = "game:small";
   037 { Texture = "WIPCNT";   } # %
   045 { Texture = "WIMINUS";  } # -
   048 { Texture = "WINUM0";   } # 0
@@ -34,7 +34,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "status";
+  ID = "game:status";
   037 { Texture = "STTPRCNT"; } # %
   045 { Texture = "STTMINUS"; } # -
   048 { Texture = "STTNUM0";  } # 0
@@ -50,7 +50,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "a";
+  ID = "game:a";
   032 { Texture = "STCFN032"; } # ' '
   033 { Texture = "STCFN033"; } # !
   034 { Texture = "STCFN034"; } # "
@@ -145,7 +145,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "b";
+  ID = "game:b";
   032 { Texture = "FONTB032"; } # ' '
   033 { Texture = "FONTB033"; } # !
   034 { Texture = "FONTB034"; } # "

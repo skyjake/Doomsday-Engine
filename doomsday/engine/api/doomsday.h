@@ -219,6 +219,8 @@ void Con_SetString(const char* name, const char* text);
     void            Con_Message(const char* message, ...) PRINTF_F(1,2);
     void            Con_Error(const char* error, ...) PRINTF_F(1,2);
 
+void Con_SetPrintFilter(con_textfilter_t filter);
+
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
 
@@ -450,7 +452,10 @@ void Con_SetString(const char* name, const char* text);
 //
 //------------------------------------------------------------------------
 
-fontid_t Fonts_IdForName(const char* name);
+fontnum_t Fonts_IndexForUri(const dduri_t* uri);
+fontnum_t Fonts_IndexForName(const char* path);
+dduri_t* Fonts_GetUri(struct font_s* font);
+const ddstring_t* Fonts_GetSymbolicName(struct font_s* font);
 
 //------------------------------------------------------------------------
 //

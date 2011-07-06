@@ -1,10 +1,10 @@
-/**\file
+/**\file con_buffer.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,10 @@
  */
 
 /**
- * con_buffer.c: Console history buffer.
- *
- * NOTE: With respect to threading, this code assumes that a cbuffer,
- *       mutex's lock/unlock state has been manipulated by the CALLER of
- *       private functions declared here. Therefore, public functions must
- *       lock before and unlock after calling a private function.
+ * \note With respect to threading, this code assumes that a cbuffer,
+ * mutex's lock/unlock state has been manipulated by the CALLER of
+ * private functions declared here. Therefore, public functions must
+ * lock before and unlock after calling a private function.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -277,17 +275,21 @@ void Con_DestroyBuffer(cbuffer_t* buf)
     }
 }
 
-/**
- * Change the maximum line length for the given console history buffer.
- * Existing lines are unaffected, the change only impacts new lines.
- *
- * @param buf               Ptr to the buffer to be changed.
- * @param length            Length to set the max line length to.
- */
+uint Con_BufferMaxLineLength(cbuffer_t* buf)
+{
+    assert(NULL != buf);
+    {
+    uint max;
+    Sys_Lock(buf->mutex);
+    max = buf->maxLineLen;
+    Sys_Unlock(buf->mutex);
+    return max;
+    }
+}
+
 void Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length)
 {
-    if(!buf)
-        return;
+    assert(NULL != buf);
 
     Sys_Lock(buf->mutex);
     buf->maxLineLen = length;

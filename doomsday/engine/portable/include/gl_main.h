@@ -56,7 +56,7 @@ extern int      defResX, defResY, defBPP, defFullscreen;
 extern int      viewph, viewpw, viewpx, viewpy;
 extern int      r_framecounter;
 extern float    vid_gamma, vid_bright, vid_contrast;
-extern int      glFontFixed, glFontVariable[NUM_GLFS];
+extern fontnum_t glFontFixed, glFontVariable[NUM_GLFS];
 extern int      r_detail;
 
 boolean         GL_IsInited(void);
@@ -79,8 +79,12 @@ void            GL_BlendMode(blendmode_t mode);
 void            GL_InitRefresh(void);
 void            GL_ShutdownRefresh(void);
 void            GL_UseFog(int yes);
-const char*     GL_ChooseFixedFont(void);
-const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
+
+void GL_LoadSystemFonts(void);
+
+const char* GL_ChooseFixedFont(void);
+const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
+
 void            GL_LowRes(void);
 
 void            GL_ModulateTexture(int mode);

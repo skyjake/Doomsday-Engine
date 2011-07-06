@@ -245,6 +245,7 @@
 		<Unit filename="..\..\engine\portable\include\fi_main.h" />
 		<Unit filename="..\..\engine\portable\include\filedirectory.h" />
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
+		<Unit filename="..\..\engine\portable\include\font.h" />
 		<Unit filename="..\..\engine\portable\include\fonts.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />

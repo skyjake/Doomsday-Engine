@@ -347,7 +347,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
         }
     }
 
-    FR_SetFont(obj->fontId);
+    FR_SetFont(obj->fontNum);
     /// \fixme Query line height from the font.
     lineHeight = FR_CharHeight('Q')+1;
 

@@ -3,7 +3,7 @@
 Header { Version = 5; }
 
 Composite BitmapFont {
-  ID = "status";
+  ID = "game:status";
   045 { Texture = "NEGNUM"; } # -
   048 { Texture = "IN0";  } # 0
   049 { Texture = "IN1";  } # 1
@@ -18,7 +18,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "smallin";
+  ID = "game:smallin";
   048 { Texture = "SMALLIN0"; } # 0
   049 { Texture = "SMALLIN1"; } # 1
   050 { Texture = "SMALLIN2"; } # 2
@@ -32,7 +32,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "a";
+  ID = "game:a";
   032 { Texture = "FONTA00";  } # ' '
   033 { Texture = "FONTA01";  } # !
   034 { Texture = "FONTA02";  } # "
@@ -126,7 +126,7 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
-  ID = "b";
+  ID = "game:b";
   032 { Texture = "FONTB00";  } # ' '
   033 { Texture = "FONTB01";  } # !
   034 { Texture = "FONTB02";  } # "

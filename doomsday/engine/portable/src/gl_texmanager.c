@@ -2970,6 +2970,7 @@ static int doTexReset(void* parm)
 
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
+    GL_LoadSystemFonts();
     Rend_ParticleLoadExtraTextures();
     R_SkyUpdate();
 

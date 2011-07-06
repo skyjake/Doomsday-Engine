@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 531 <--
-; Other free ordinals: 65
+; Highest ordinal is currently: --> 536 <--
+; Other free ordinals: 65, 97
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -170,6 +170,7 @@ EXPORTS
     Con_Error                   @42 NONAME
     Con_Busy                    @330 NONAME
     Con_BusyWorkerEnd           @331 NONAME
+    Con_SetPrintFilter          @536 NONAME
 
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME
@@ -492,8 +493,6 @@ EXPORTS
     GL_EndBorderedProjection    @510 NONAME
 
 ; Graphics: Text
-    Fonts_IdForName          @97 NONAME
-
     FR_Font                     @106 NONAME
     FR_SetFont                  @107 NONAME
     FR_PushAttrib               @108 NONAME
@@ -543,6 +542,12 @@ EXPORTS
     FR_CharDimensions           @529 NONAME
     FR_CharWidth                @530 NONAME
     FR_CharHeight               @531 NONAME
+
+; Fonts.
+    Fonts_IndexForUri           @532 NONAME
+    Fonts_IndexForName          @533 NONAME
+    Fonts_GetUri                @534 NONAME
+    Fonts_GetSymbolicName       @535 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

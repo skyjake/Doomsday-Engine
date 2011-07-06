@@ -146,8 +146,6 @@ typedef struct calias_s {
     char* command;
 } calias_t;
 
-typedef void (*con_textfilter_t) (char* text);
-
 // Console commands can set this when they need to return a custom value
 // e.g. for the game library.
 extern int CmdReturnValue;
@@ -185,9 +183,9 @@ char* Con_CommandLine(void);
 
 cbuffer_t* Con_ConsoleBuffer(void);
 
-fontid_t Con_Font(void);
+fontnum_t Con_Font(void);
 
-void Con_SetFont(fontid_t font);
+void Con_SetFont(fontnum_t font);
 
 con_textfilter_t Con_PrintFilter(void);
 
@@ -196,6 +194,14 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 void Con_FontScale(float* scaleX, float* scaleY);
 
 void Con_SetFontScale(float scaleX, float scaleY);
+
+float Con_FontLeading(void);
+
+void Con_SetFontLeading(float value);
+
+int Con_FontTracking(void);
+
+void Con_SetFontTracking(int value);
 
 void Con_AddCommand(const ccmdtemplate_t* cmd);
 void Con_AddCommandList(const ccmdtemplate_t* cmdList);

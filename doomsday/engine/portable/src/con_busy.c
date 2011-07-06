@@ -85,7 +85,7 @@ static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
 static volatile const char* busyError = NULL;
-static fontid_t busyFont = 0;
+static fontnum_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
@@ -274,13 +274,16 @@ static void Con_BusyLoadTextures(void)
             const char* name;
             const char* path;
         } static const fonts[] = {
-           { "normal12", "}data/fonts/normal12.dfn" },
-           { "normal18", "}data/fonts/normal18.dfn" }
+            { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
+            { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
         int fontIdx = !(theWindow->width > 640)? 0 : 1;
-        if(0 != (busyFont = Fonts_LoadSystemFont(fonts[fontIdx].name, fonts[fontIdx].path)))
+        font_t* font = Fonts_LoadExternal(fonts[fontIdx].name, fonts[fontIdx].path);
+        if(NULL != font)
         {
+            busyFont = Fonts_ToIndex(font);
             FR_SetFont(busyFont);
+            FR_LoadDefaultAttrib();
             busyFontHgt = FR_TextHeight("A");
         }
     }
@@ -298,11 +301,7 @@ static void Con_BusyDeleteTextures(void)
     if(!transitionInProgress)
         Con_ReleaseScreenshotTexture();
 
-    if(0 != busyFont)
-    {
-        Fonts_DestroyFont(busyFont);
-        busyFont = 0;
-    }
+    busyFont = 0;
 }
 
 /**

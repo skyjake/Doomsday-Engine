@@ -632,7 +632,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, textAlpha);
-    FR_SetFont(obj->fontId);
+    FR_SetFont(obj->fontNum);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
     WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
@@ -660,7 +660,7 @@ void MapName_Dimensions(uiwidget_t* obj, int* width, int* height)
 
     if(NULL != text)
     {
-        FR_SetFont(obj->fontId);
+        FR_SetFont(obj->fontNum);
         FR_TextDimensions(width, height, text);
         if(NULL != width)  *width  = *width  * scale;
         if(NULL != height) *height = *height * scale;

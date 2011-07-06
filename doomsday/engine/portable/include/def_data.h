@@ -481,7 +481,7 @@ typedef struct {
 } ded_compositefont_mappedcharacter_t;
 
 typedef struct ded_compositefont_s {
-    ded_stringid_t  id;
+    dduri_t*        id;
     ded_count_t     charMapCount;
     ded_compositefont_mappedcharacter_t* charMap;
 } ded_compositefont_t;

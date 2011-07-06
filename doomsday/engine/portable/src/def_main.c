@@ -44,6 +44,8 @@
 
 #include "r_data.h"
 
+#include "font.h"
+#include "bitmapfont.h"
 #include "texture.h"
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
@@ -285,17 +287,6 @@ int Def_GetSoundNum(const char* id)
     return -1;
 }
 
-int Def_GetCompositeFont(const char* id)
-{
-    int i;
-    if(!id || !id[0])
-        return -1;
-    for(i = 0; i < defs.count.compositeFonts.num; ++i)
-        if(!strcmp(defs.compositeFonts[i].id, id))
-            return i;
-    return -1;
-}
-
 /**
  * Looks up a sound using the Name key. If the name is not found, returns
  * the NULL sound index (zero).
@@ -416,6 +407,46 @@ ded_material_t* Def_GetMaterial(const dduri_t* uri)
 
         if(NULL == def)
             def = findMaterialDef(uri);
+    }
+    return def;
+}
+
+static ded_compositefont_t* findCompositeFontDef(const dduri_t* uri)
+{
+    int i;
+    for(i = defs.count.compositeFonts.num - 1; i >= 0; i--)
+    {
+        ded_compositefont_t* def = &defs.compositeFonts[i];
+
+        if(!def->id) continue;
+
+        if(Uri_Equality(def->id, uri))
+            return def;
+    }
+    return NULL;
+}
+
+ded_compositefont_t* Def_GetCompositeFont(const dduri_t* uri)
+{
+    ded_compositefont_t* def = NULL;
+    if(uri && !Str_IsEmpty(Uri_Path(uri)))
+    {
+        if(Str_IsEmpty(Uri_Scheme(uri)))
+        {   // Caller doesn't care which namespace - use a priority search order.
+            dduri_t* temp = Uri_Construct2(Str_Text(Uri_Path(uri)), RC_NULL);
+
+            Uri_SetScheme(temp, FN_GAME_NAME);
+            def = findCompositeFontDef(temp);
+            if(NULL == def)
+            {
+                Uri_SetScheme(temp, FN_SYSTEM_NAME);
+                def = findCompositeFontDef(temp);
+            }
+            Uri_Destruct(temp);
+        }
+
+        if(NULL == def)
+            def = findCompositeFontDef(uri);
     }
     return def;
 }
@@ -961,6 +992,17 @@ void Def_Read(void)
         }}
         /// \todo MaterialBind contains links to definitions; clear them also.
 
+        { uint i, fontCount = Fonts_Count();
+        for(i = 0; i < fontCount; ++i)
+        {
+            font_t* font = Fonts_ToFont(1+i); // 1-based index.
+            if(Font_Type(font) == FT_BITMAPCOMPOSITE)
+            {
+                BitmapCompositeFont_SetDefinition(font, NULL);
+            }
+        }}
+        /// \todo FontBind contains links to definitions; clear them also.
+
         Def_Destroy();
     }
 
@@ -981,12 +1023,17 @@ void Def_Read(void)
     DD_CallHooks(HOOK_DEFS, 0, &defs);
 
     // Composite fonts.
-    for(i = defs.count.compositeFonts.num; i-- > 0; )
+    for(i = 0; i < defs.count.compositeFonts.num; ++i)
     {
-        ded_compositefont_t* cfont = defs.compositeFonts + i;
-        if(0 != Fonts_IdForName(cfont->id))
+        ded_compositefont_t* def = defs.compositeFonts + i;
+        font_t* font = Fonts_ToFont(Fonts_IndexForUri(def->id));
+        if(NULL == font)
+        {   // A new Font.
+            Fonts_CreateBitmapCompositeFromDef(def);
             continue;
-        Fonts_CreateFromDef(cfont);
+        }
+        // Update existing.
+        Fonts_RebuildBitmapComposite(font, def);
     }
 
     // Sprite names.

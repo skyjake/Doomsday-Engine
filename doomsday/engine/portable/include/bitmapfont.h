@@ -25,109 +25,95 @@
 #ifndef LIBDENG_BITMAPFONT_H
 #define LIBDENG_BITMAPFONT_H
 
-#include "dd_types.h"
+#include "font.h"
 
 // Data for a character.
 typedef struct {
     int x, y; /// Upper left corner.
     int w, h; /// Dimensions.
-
-    patchid_t patch;
-    DGLuint tex;
     DGLuint dlist;
 } bitmapfont_char_t;
 
-/**
- * @defgroup bitmapFontFlags  Bitmap Font Flags.
- */
-/*@{*/
-#define BFF_IS_MONOCHROME       0x1 /// Font texture is monochrome and can be colored.
-#define BFF_HAS_EMBEDDEDSHADOW  0x2 /// Font texture has an embedded shadow.
-#define BFF_IS_DIRTY            0x4 /// Font requires a full update.
-/*@}*/
-
-/**
- * Bitmap Font.
- * @ingroup refresh
- */
-#define MAX_CHARS               256 // Normal 256 ANSI characters.
 typedef struct bitmapfont_s {
-    /// Identifier associated with this font.
-    fontid_t _id;
-
-    /// @see bitmapFontFlags.
-    int _flags;
-
-    /// Symbolic name associated with this font.
-    ddstring_t _name;
+    /// Base font.
+    font_t _base;
 
     /// Absolute file path to the archived version of this font (if any).
     ddstring_t _filePath;
-
-    /// Font metrics.
-    int _leading;
-    int _ascent;
-    int _descent;
-
-    /// dj: Do fonts have margins? Is this a pixel border in the composited
-    /// character map texture (perhaps per-glyph)?
-    int _marginWidth, _marginHeight;
-
-    /// Character map.
-    bitmapfont_char_t _chars[MAX_CHARS];
 
     /// GL-texture name.
     DGLuint _tex;
 
     /// Width and height of the texture in pixels.
     int _texWidth, _texHeight;
+
+    /// Character map.
+    bitmapfont_char_t _chars[MAX_CHARS];
 } bitmapfont_t;
 
-bitmapfont_t* BitmapFont_Construct(fontid_t id, const char* name,
-    const char* filePath);
-void BitmapFont_Destruct(bitmapfont_t* font);
+font_t* BitmapFont_Construct(void);
+void BitmapFont_Destruct(font_t* font);
 
-void BitmapFont_DeleteGLDisplayLists(bitmapfont_t* font);
-void BitmapFont_DeleteGLTextures(bitmapfont_t* font);
+void BitmapFont_Prepare(font_t* font);
 
-/**
- * Query the visible dimensions of a character in this font.
- */
-void BitmapFont_CharDimensions(bitmapfont_t* font, int* width,
-    int* height, unsigned char ch);
-int BitmapFont_CharHeight(bitmapfont_t* font, unsigned char ch);
-int BitmapFont_CharWidth(bitmapfont_t* font, unsigned char ch);
+void BitmapFont_SetFilePath(font_t* font, const char* filePath);
+
+/// @return  GL-texture name.
+DGLuint BitmapFont_GLTextureName(const font_t* font);
+int BitmapFont_TextureHeight(const font_t* font);
+int BitmapFont_TextureWidth(const font_t* font);
+
+void BitmapFont_DeleteGLTexture(font_t* font);
+void BitmapFont_DeleteGLDisplayLists(font_t* font);
+
+int BitmapFont_CharWidth(font_t* font, unsigned char ch);
+int BitmapFont_CharHeight(font_t* font, unsigned char ch);
 
 /**
  * Query the texture coordinates of a character in this font.
  */
-void BitmapFont_CharCoords(bitmapfont_t* font, int* s0, int* s1,
-    int* t0, int* t1, unsigned char ch);
+void BitmapFont_CharCoords(font_t* font, int* s0, int* s1, int* t0, int* t1, unsigned char ch);
 
-patchid_t BitmapFont_CharPatch(bitmapfont_t* font, unsigned char ch);
-void BitmapFont_CharSetPatch(bitmapfont_t* font, unsigned char ch, const char* patchName);
+// Data for a character.
+typedef struct {
+    int x, y; /// Upper left corner.
+    int w, h; /// Dimensions.
+    DGLuint dlist;
+    patchid_t patch;
+    DGLuint tex;
+} bitmapcompositefont_char_t;
 
-/// @return  GL-texture name.
-DGLuint BitmapFont_GLTextureName(const bitmapfont_t* font);
+typedef struct bitmapcompositefont_s {
+    /// Base font.
+    font_t _base;
 
-int BitmapFont_TextureHeight(const bitmapfont_t* font);
-int BitmapFont_TextureWidth(const bitmapfont_t* font);
+    /// Definition used to construct this else @c NULL if not applicable.
+    struct ded_compositefont_s* _def;
+
+    /// Character map.
+    bitmapcompositefont_char_t _chars[MAX_CHARS];
+} bitmapcompositefont_t;
+
+font_t* BitmapCompositeFont_Construct(void);
+void BitmapCompositeFont_Destruct(font_t* font);
+
+void BitmapCompositeFont_Prepare(font_t* font);
+
+int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch);
+int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch);
+
+struct ded_compositefont_s* BitmapCompositeFont_Definition(const font_t* font);
+void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s* def);
+
+patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch);
+void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName);
+
+void BitmapCompositeFont_DeleteGLTextures(font_t* font);
+void BitmapCompositeFont_DeleteGLDisplayLists(font_t* font);
 
 /**
- * Accessor methods.
+ * Query the texture coordinates of a character in this font.
  */
-
-/// @return  @see bitmapFontFlags
-int BitmapFont_Flags(const bitmapfont_t* font);
-
-/// @return  Identifier associated with this font.
-fontid_t BitmapFont_Id(const bitmapfont_t* font);
-
-/// @return  Symbolic name associated with this font.
-const ddstring_t* BitmapFont_Name(const bitmapfont_t* font);
-
-int BitmapFont_Ascent(bitmapfont_t* font);
-int BitmapFont_Descent(bitmapfont_t* font);
-int BitmapFont_Leading(bitmapfont_t* font);
+void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1, int* t0, int* t1, unsigned char ch);
 
 #endif /* LIBDENG_BITMAPFONT_H */

@@ -2790,6 +2790,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\font.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\fonts.h"
 				>
 			</File>

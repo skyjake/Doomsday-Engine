@@ -326,6 +326,8 @@ void DED_Clear(ded_t* ded)
         for(i = 0; i < ded->count.compositeFonts.num; ++i)
         {
             ded_compositefont_t* cfont = &ded->compositeFonts[i];
+            if(cfont->id)
+                Uri_Destruct(cfont->id);
             { int j;
             for(j = 0; j < cfont->charMapCount.num; ++j)
             {
@@ -721,24 +723,30 @@ void DED_RemoveTextureEnv(ded_t *ded, int index)
     DED_DelEntry(index, (void**) &ded->textureEnv, &ded->count.textureEnv, sizeof(ded_tenviron_t));
 }
 
-int DED_AddCompositeFont(ded_t* ded, const char* id)
+int DED_AddCompositeFont(ded_t* ded, const char* path)
 {
     ded_compositefont_t* cfont = DED_NewEntry((void **) &ded->compositeFonts,
         &ded->count.compositeFonts, sizeof(ded_compositefont_t));
 
-    strcpy(cfont->id, id);
+    if(NULL != path)
+        cfont->id = Uri_Construct2(path, RC_NULL);
+
     return cfont - ded->compositeFonts;
 }
 
 void DED_RemoveCompositeFont(ded_t* ded, int index)
 {
+    ded_compositefont_t* cfont = ded->compositeFonts + index;
+
+    if(cfont->id)
+        Uri_Destruct(cfont->id);
     { int i;
-    for(i = 0; i < ded->compositeFonts[index].charMapCount.num; ++i)
+    for(i = 0; i < cfont->charMapCount.num; ++i)
     {
-        if(ded->compositeFonts[index].charMap[i].path)
-            Uri_Destruct(ded->compositeFonts[index].charMap[i].path);
+        if(cfont->charMap[i].path)
+            Uri_Destruct(cfont->charMap[i].path);
     }}
-    M_Free(ded->compositeFonts[index].charMap);
+    M_Free(cfont->charMap);
 
     DED_DelEntry(index, (void**) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));
 }

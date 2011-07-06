@@ -594,19 +594,20 @@ static void drawConsole(float consoleAlpha)
     char* cmdLine = Con_CommandLine();
     float scale[2], y, fontScaledY, gtosMulY = theWindow->height / 200.0f;
     char buff[LOCALBUFFSIZE];
-    bitmapfont_t* cfont;
+    font_t* cfont;
     int lineHeight, textOffsetY;
     con_textfilter_t printFilter = Con_PrintFilter();
-    uint reqLines;
+    uint reqLines, maxLineLength;
 
     FR_SetFont(Con_Font());
     FR_LoadDefaultAttrib();
+    FR_SetTracking(Con_FontTracking());
     FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
 
-    cfont = Fonts_FontForId(FR_Font());
+    cfont = Fonts_ToFont(FR_Font());
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);
-    fontScaledY = lineHeight * scale[1];
+    fontScaledY = lineHeight * Con_FontLeading() * scale[1];
     fontSy = fontScaledY / gtosMulY;
     textOffsetY = PADDING + fontScaledY / 4;
 
@@ -630,7 +631,7 @@ static void drawConsole(float consoleAlpha)
     glScalef(scale[0], scale[1], 1);
 
     // The console history log is drawn from bottom to top.
-    y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
+    y = ConsoleY * gtosMulY - (lineHeight * scale[1] + fontScaledY) - textOffsetY;
 
     reqLines = MAX_OF(0, ceil(y / fontScaledY)+1);
     if(reqLines != 0)
@@ -689,7 +690,7 @@ static void drawConsole(float consoleAlpha)
                         printFilter(buff);
 
                     // Set the color.
-                    if(BitmapFont_Flags(cfont) & BFF_IS_MONOCHROME)
+                    if(Font_Flags(cfont) & FF_COLORIZE)
                     {
                         float rgb[3];
                         calcAvgColor(line->flags, rgb);
@@ -707,16 +708,45 @@ static void drawConsole(float consoleAlpha)
     }
 
     // The command line.
-    y = ConsoleY * gtosMulY - fontScaledY - textOffsetY;
+    { boolean abbrevLeft = 0, abbrevRight = 0;
+    int offset = 0;
+    uint cmdLineLength;
 
-    strcpy(buff, ">");
-    strncat(buff, cmdLine, LOCALBUFFSIZE -1/*prompt length*/ -1/*terminator*/);
+    y = ConsoleY * gtosMulY - (lineHeight * scale[1]) - textOffsetY;
+
+    cmdLineLength = strlen(cmdLine);
+    maxLineLength = Con_BufferMaxLineLength(buffer);
+    maxLineLength -= 1; /*prompt length*/
+
+    if(cmdLineLength >= maxLineLength)
+    {
+        maxLineLength -= 5; /*abbrev vis length*/
+
+        if((signed)cmdCursor - (signed)maxLineLength > 0 || cmdCursor > maxLineLength)
+        {
+            abbrevLeft = true;
+            maxLineLength -= 5; /*abbrev vis length*/
+        }
+
+        offset = MAX_OF(0, (signed)cmdCursor - (signed)maxLineLength);
+        abbrevRight = (offset + maxLineLength < cmdLineLength);
+        if(!abbrevRight)
+        {
+            maxLineLength += 5; /*abbrev vis length*/
+            offset = MAX_OF(0, (signed)cmdCursor - (signed)maxLineLength);
+        }
+    }
+
+    dd_snprintf(buff, LOCALBUFFSIZE -1/*terminator*/, ">%s%.*s%s",
+        abbrevLeft?  "{alpha=.5}[...]{alpha=1}" : "",
+        maxLineLength, cmdLine + offset,
+        abbrevRight? "{alpha=.5}[...]" : "");
 
     if(printFilter)
         printFilter(buff);
 
     glEnable(GL_TEXTURE_2D);
-    if(BitmapFont_Flags(cfont) & BFF_IS_MONOCHROME)
+    if(Font_Flags(cfont) & FF_COLORIZE)
     {
         FR_SetColorAndAlpha(CcolYellow[0], CcolYellow[1], CcolYellow[2], consoleAlpha);
     }
@@ -724,29 +754,30 @@ static void drawConsole(float consoleAlpha)
     {
         FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
     }
+
     FR_DrawText3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     glDisable(GL_TEXTURE_2D);
 
     // Draw the cursor in the appropriate place.
     if(Con_IsActive() && !Con_IsLocked())
     {
-        float width, height, halfInterlineHeight = (float)fontScaledY / 8;
+        float width, height, halfInterlineHeight = (lineHeight * scale[1]) / 8.f;
         int xOffset, yOffset;
         char temp[LOCALBUFFSIZE];
 
         // Where is the cursor?
         memset(temp, 0, sizeof(temp));
-        strncpy(temp, buff, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ -1/*vis clamp*/, cmdCursor+1));
+        strncpy(temp, buff, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ -1/*vis clamp*/, cmdCursor-offset + (abbrevLeft? 24/*abbrev length*/:0) + 1));
         xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
         {
-            height  = fontScaledY;
+            height  = (lineHeight * scale[1]);
             yOffset = halfInterlineHeight;
         }
         else
         {
             height  = halfInterlineHeight;
-            yOffset = fontScaledY;
+            yOffset = (lineHeight * scale[1]);
         }
 
         // Dimensions of the current character.
@@ -754,14 +785,14 @@ static void drawConsole(float consoleAlpha)
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
                   consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
-        GL_DrawRect(XORIGIN + PADDING + (int)xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
+        GL_DrawRect(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
                     (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
 
     // Restore the original matrices.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
+    }
     }
 #undef LOCALBUFFSIZE
 #undef PADDING

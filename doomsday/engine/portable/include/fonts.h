@@ -25,48 +25,74 @@
 #ifndef LIBDENG_FONTS_H
 #define LIBDENG_FONTS_H
 
-#include "bitmapfont.h"
+#include "font.h"
 
 struct ded_compositefont_s;
 
 /// Register the console commands, variables, etc..., of this module.
 void Fonts_Register(void);
 
-/**
- * Initialize the font renderer.
- * @return  @c 0 iff there are no errors.
- */
-int Fonts_Init(void);
+/// Initialize this module.
+void Fonts_Init(void);
+
+/// Shutdown this module.
 void Fonts_Shutdown(void);
 
-/**
- * Mark all fonts as requiring a full update. Called during engine/renderer reset.
- */
+/// Mark all fonts as requiring a full update. Called during engine/renderer reset.
 void Fonts_Update(void);
 
-/**
- * Load the specified font as a "system font".
- */
-fontid_t Fonts_LoadSystemFont(const char* name, const char* path);
+/// @return  Number of known font bindings in all namespaces.
+uint Fonts_Count(void);
 
-fontid_t Fonts_CreateFromDef(struct ded_compositefont_s* def);
-
-int Fonts_ToIndex(fontid_t id);
-
-/// @return  Ptr to the font associated with the specified id.
-bitmapfont_t* Fonts_FontForId(fontid_t id);
-bitmapfont_t* Fonts_FontForIndex(int index);
-
-/**
- * Find the associated font for @a name.
- *
- * @param name  Name of the font to lookup.
- * @return  Unique id of the found font.
- */
-fontid_t Fonts_IdForName(const char* name);
-
-void Fonts_DestroyFont(fontid_t id);
-
+/// @return  List of collected font names.
 ddstring_t** Fonts_CollectNames(int* count);
+
+/**
+ * Font reference/handle translators:
+ */
+
+/// @return  Font associated with the specified unique name else @c NULL.
+font_t* Fonts_ToFont(fontnum_t num);
+
+/// @return  Unique name associated with the specified Font.
+fontnum_t Fonts_ToIndex(font_t* font);
+
+/// @return  Unique name associated with the found Font.
+fontnum_t Fonts_IndexForUri(const dduri_t* uri);
+
+/// @return  Unique name associated with the found Font.
+fontnum_t Fonts_IndexForName(const char* path);
+
+/// @return  Symbolic name associated with specified font.
+const ddstring_t* Fonts_GetSymbolicName(font_t* font);
+
+/// @return  New Uri composed for the specified font (release with Uri_Destruct).
+dduri_t* Fonts_GetUri(font_t* font);
+
+/// Load an external font from a local file.
+font_t* Fonts_LoadExternal(const char* name, const char* filepath);
+
+/// Create a bitmap composite font from @a def.
+font_t* Fonts_CreateBitmapCompositeFromDef(struct ded_compositefont_s* def);
+
+/**
+ * Update the Font according to the supplied definition.
+ * To be called after an engine update/reset.
+ *
+ * @parma font  Font to be updated.
+ * @param def  font definition to update using.
+ */
+void Fonts_RebuildBitmapComposite(font_t* font, struct ded_compositefont_s* def);
+
+int Fonts_Ascent(font_t* font);
+int Fonts_Descent(font_t* font);
+int Fonts_Leading(font_t* font);
+
+/**
+ * Query the visible dimensions of a character in this font.
+ */
+void Fonts_CharDimensions(font_t* font, int* width, int* height, unsigned char ch);
+int Fonts_CharHeight(font_t* font, unsigned char ch);
+int Fonts_CharWidth(font_t* font, unsigned char ch);
 
 #endif /* LIBDENG_FONTS_H */

@@ -67,7 +67,19 @@ void Con_DestroyBuffer(cbuffer_t* buf);
 void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt);
 void Con_BufferFlush(cbuffer_t* buf);
 void Con_BufferClear(cbuffer_t* buf);
+
+/// @return  Current maximum line length in characters.
+uint Con_BufferMaxLineLength(cbuffer_t* buf);
+
+/**
+ * Change the maximum line length for the given console history buffer.
+ * Existing lines are unaffected, the change only impacts new lines.
+ *
+ * @param buf  Ptr to the buffer to be changed.
+ * @param length  Length to set the max line length to.
+ */
 void Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length);
+
 uint Con_BufferNumLines(cbuffer_t* buf);
 
 const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);

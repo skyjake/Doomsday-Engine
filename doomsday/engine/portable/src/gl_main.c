@@ -106,7 +106,7 @@ int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
-int     glFontFixed, glFontVariable[NUM_GLFS];
+fontnum_t glFontFixed, glFontVariable[NUM_GLFS];
 
 float   glNearClip;
 
@@ -413,43 +413,47 @@ const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
     {
     default:
         return (resY < SMALL_LIMIT ? "normal12" :
-                resY < MED_LIMIT ? "normal18" :
-                "normal24");
+                resY < MED_LIMIT   ? "normal18" :
+                                     "normal24");
 
     case GLFS_LIGHT:
         return (resY < SMALL_LIMIT ? "normallight12" :
-                resY < MED_LIMIT ? "normallight18" :
-                "normallight24");
+                resY < MED_LIMIT   ? "normallight18" :
+                                     "normallight24");
 
     case GLFS_BOLD:
         return (resY < SMALL_LIMIT ? "normalbold12" :
-                resY < MED_LIMIT ? "normalbold18" :
-                "normalbold24");
+                resY < MED_LIMIT   ? "normalbold18" :
+                                     "normalbold24");
     }
 }
 
-static fontid_t loadSystemFont(const char* name)
+static fontnum_t loadSystemFont(const char* name)
 {
     assert(name);
     {
-    ddstring_t searchPath, *searchPath2;
-    fontid_t result;
+    ddstring_t searchPath, *filepath;
+    font_t* font;
     dduri_t* path;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
     path = Uri_Construct2(Str_Text(&searchPath), RC_NULL);
-    Str_Free(&searchPath);
-    searchPath2 = Uri_Resolved(path);
-    Uri_Destruct(path);
-    result = Fonts_LoadSystemFont(name, Str_Text(searchPath2));
-    if(searchPath2)
-        Str_Delete(searchPath2);
+    Str_Clear(&searchPath);
+    Str_Appendf(&searchPath, FN_SYSTEM_NAME":%s", name);
 
-    if(result == 0)
+    filepath = Uri_Resolved(path);
+    Uri_Destruct(path);
+    font = Fonts_LoadExternal(Str_Text(&searchPath), Str_Text(filepath));
+    Str_Free(&searchPath);
+    if(filepath)
+        Str_Delete(filepath);
+
+    if(font == NULL)
     {
         Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
+        return 0;
     }
-    return result;
+    return Fonts_ToIndex(font);
     }
 }
 
@@ -570,8 +574,6 @@ void GL_Init(void)
     // Initialize one viewport.
     R_SetupDefaultViewWindow(0);
     R_SetViewGrid(1, 1);
-
-    GL_LoadSystemFonts();
 }
 
 /**
@@ -581,6 +583,7 @@ void GL_InitRefresh(void)
 {
     GL_InitTextureManager();
     GL_LoadSystemTextures();
+    GL_LoadSystemFonts();
 }
 
 /**
@@ -607,7 +610,6 @@ void GL_Shutdown(void)
         return; // Not yet initialized fully.
 
     GL_ShutdownDeferredTask();
-    Fonts_Shutdown();
     FR_Shutdown();
     glFontFixed =
         glFontVariable[GLFS_NORMAL] =
@@ -837,14 +839,10 @@ void GL_TotalReset(void)
 
     // Delete all textures.
     GL_ResetTextureManager();
-    Fonts_Shutdown();
-    FR_Shutdown();
     glFontFixed =
         glFontVariable[GLFS_NORMAL] =
         glFontVariable[GLFS_BOLD] =
         glFontVariable[GLFS_LIGHT] = 0;
-    Fonts_Init();
-    FR_Init();
     GL_ReleaseReservedNames();
 
 #if _DEBUG
@@ -862,8 +860,6 @@ void GL_TotalRestore(void)
 
     // Getting back up and running.
     GL_ReserveNames();
-    GL_LoadSystemFonts();
-
     GL_Init2DState();
 
     {

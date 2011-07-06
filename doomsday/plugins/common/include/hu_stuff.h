@@ -67,7 +67,7 @@ enum {
 
 #define FID(idx) (fonts[idx])
 
-extern fontid_t fonts[NUM_GAME_FONTS];
+extern fontnum_t fonts[NUM_GAME_FONTS];
 
 extern patchid_t* pMapNames; // Name graphics of each map.
 

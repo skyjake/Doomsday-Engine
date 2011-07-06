@@ -152,13 +152,13 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
     return obj;
 }
 
-static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
+static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontnum_t fontNum,
     int alignFlags, void (*updateDimensions) (uiwidget_t* obj),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
-    obj->fontId = fontId;
+    obj->fontNum = fontNum;
     obj->alignFlags = alignFlags;
     obj->updateDimensions = updateDimensions;
     obj->drawer = drawer;
@@ -248,13 +248,13 @@ void GUI_ReleaseResources(void)
     UIAutomap_ReleaseResources();
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontnum_t fontNum,
     void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
-    obj = createWidget(type, player, fontId, 0, updateDimensions, drawer, ticker, typedata);
+    obj = createWidget(type, player, fontNum, 0, updateDimensions, drawer, ticker, typedata);
     return obj->id;
 }
 
@@ -889,7 +889,7 @@ void MNPage_Initialize(mn_page_t* page)
     }
 }
 
-fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
+fontnum_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
 {
     assert(NULL != page);
     if(!VALID_MNPAGE_FONTID(id))
@@ -1063,7 +1063,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     assert(NULL != obj && obj->_type == MN_TEXT);
     {
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
-    fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
+    fontnum_t fontNum = rs.textFonts[obj->_pageFontIdx];
     float color[4];
 
     memcpy(color, rs.textColors[obj->_pageColorIdx], sizeof(color));
@@ -1079,7 +1079,7 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     }
 
     DGL_Color4f(1, 1, 1, color[CA]);
-    FR_SetFont(fontId);
+    FR_SetFont(fontNum);
     FR_SetColorAndAlphav(color);
 
     if(txt->patch != NULL)
@@ -1153,7 +1153,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
     assert(NULL != obj && obj->_type == MN_EDIT);
     {
     const mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-    fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
+    fontnum_t fontNum = rs.textFonts[obj->_pageFontIdx];
     char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
     float light = 1, textAlpha = rs.pageAlpha;
     const char* string;
@@ -1187,7 +1187,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(fontId);
+    FR_SetFont(fontNum);
 
     { int width, numVisCharacters;
     if(edit->maxVisibleChars > 0)
@@ -1678,7 +1678,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     int act   = (obj->_flags & MNF_ACTIVE)   != 0;
     int click = (obj->_flags & MNF_CLICKED)  != 0;
     boolean down = act || click;
-    const fontid_t fontId = rs.textFonts[obj->_pageFontIdx];
+    const fontnum_t fontNum = rs.textFonts[obj->_pageFontIdx];
     float color[4];
 
     memcpy(color, rs.textColors[obj->_pageColorIdx], sizeof(color));
@@ -1691,7 +1691,7 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
         color[CR] += cfg.menuTextFlashColor[CR] * (1 - t); color[CG] += cfg.menuTextFlashColor[CG] * (1 - t); color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
-    FR_SetFont(fontId);
+    FR_SetFont(fontNum);
     FR_SetColorAndAlphav(color);
     DGL_Color4f(1, 1, 1, color[CA]);
 
@@ -2335,13 +2335,13 @@ void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
     assert(NULL != obj);
     {
     mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
-    const fontid_t fontId = MNPage_PredefinedFont(page, obj->_pageFontIdx);
+    const fontnum_t fontNum = MNPage_PredefinedFont(page, obj->_pageFontIdx);
     const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
     char textualValue[41];
     const char* str = composeValueString(value, 0, sldr->floatMode, 0,
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
-    FR_SetFont(fontId);
+    FR_SetFont(fontNum);
     FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
     }
 }

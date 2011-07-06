@@ -1966,8 +1966,8 @@ DEFFC(PredefinedColor)
 DEFFC(PredefinedFont)
 {
     const char* fontName = OP_CSTRING(1);
-    fontid_t font;
-    if((font = Fonts_IdForName(fontName)))
+    fontnum_t font = Fonts_IndexForName(fontName);
+    if(font != 0)
     {
         int idx = MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS)-1;
         FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], idx, font);
@@ -2042,8 +2042,8 @@ DEFFC(Font)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     const char* fontName = OP_CSTRING(1);
-    fontid_t font;
-    if((font = Fonts_IdForName(fontName)))
+    fontnum_t font = Fonts_IndexForName(fontName);
+    if(font != 0)
     {
         FIData_TextSetFont(obj, font);
         return;

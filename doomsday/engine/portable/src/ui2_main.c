@@ -43,7 +43,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font);
+fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontnum_t fontNum);
 void P_DestroyText(fidata_text_t* text);
 
 fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name);
@@ -397,7 +397,7 @@ void P_DestroyPic(fidata_pic_t* pic)
     FIObject_Destructor((fi_object_t*)pic);
 }
 
-fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font)
+fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontnum_t fontNum)
 {
 #define LEADING             (11.f/7-1)
 
@@ -416,7 +416,7 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t font)
     AnimatorVector3_Init(t->scale, 1, 1, 1);
 
     t->wait = 3;
-    t->font = font;
+    t->fontNum = fontNum;
     t->lineHeight = LEADING;
 
     return t;
@@ -759,14 +759,14 @@ void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, f
     AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
 }
 
-void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontid_t font)
+void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontnum_t fontNum)
 {
     if(!p) Con_Error("FIPage_SetPredefinedFont: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_SetPredefinedFont: Invalid font id %u.", idx);
-    p->_preFont[idx] = font;
+    p->_preFont[idx] = fontNum;
 }
 
-fontid_t FIPage_PredefinedFont(fi_page_t* p, uint idx)
+fontnum_t FIPage_PredefinedFont(fi_page_t* p, uint idx)
 {
     if(!p) Con_Error("FIPage_PredefinedFont: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_PredefinedFont: Invalid font id %u.", idx);
@@ -1255,7 +1255,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     // Draw it.
     // Set the normal color.
     FR_SetColorAndAlpha(t->color[CR].value, t->color[CG].value, t->color[CB].value, t->color[CA].value);
-    FR_SetFont(t->font);
+    FR_SetFont(t->fontNum);
     for(cnt = 0, ptr = t->text; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
     {
         if(linew < 0)
@@ -1387,11 +1387,10 @@ void FIData_TextCopy(fi_object_t* obj, const char* str)
     }
 }
 
-void FIData_TextSetFont(fi_object_t* obj, fontid_t font)
+void FIData_TextSetFont(fi_object_t* obj, fontnum_t fontNum)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
     if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetFont: Not a FI_TEXT.");
-
-    if(font != 0)
-        t->font = font;
+    if(fontNum != 0)
+        t->fontNum = fontNum;
 }

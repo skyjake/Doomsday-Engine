@@ -36,8 +36,6 @@ extern float quitDarkenOpacity;
 void            H_Display(int layer);
 void            H_Display2(void);
 
-void            R_DrawMapTitle(int x, int y, float alpha, fontid_t font, boolean center);
-
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
 boolean         R_GetFilterColor(float rgba[4], int filter);

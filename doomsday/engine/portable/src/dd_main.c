@@ -479,7 +479,7 @@ void DD_StartTitle(void)
     { const char* font = GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height);
     int i;
     for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
-        Str_Appendf(&setupCmds, "prefont %i %s\n", i, font);
+        Str_Appendf(&setupCmds, "prefont %i "FN_SYSTEM_NAME":%s\n", i, font);
     }
     // Configure the predefined colors.
     { int i;
@@ -1119,12 +1119,14 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
+    Fonts_Shutdown();
     Materials_Shutdown();
 
     VERBOSE( Con_Message("Selecting game '%s'...\n", Str_Text(GameInfo_IdentityKey(info))) )
 
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
+        Fonts_Init();
         Materials_Initialize();
         FI_Init();
         P_PtcInit();
@@ -1136,6 +1138,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     // This is now the current game.
     currentGameInfoIndex = gameInfoIndex(info);
 
+    Fonts_Init();
     Materials_Initialize();
     FI_Init();
     P_PtcInit();
@@ -1390,8 +1393,13 @@ int DD_Main(void)
     }
 
     Sys_Init();
+
+    // Initialize the subsystems and load resources needed for busy mode.
     Fonts_Init();
-    FR_Init();
+    if(!isDedicated)
+    {
+        FR_Init();
+    }
 
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
@@ -1666,6 +1674,7 @@ static int DD_StartupWorker(void* parm)
     // Get the material manager up and running.
     Con_SetProgress(90);
     GL_EarlyInitTextureManager();
+    Fonts_Init();
     Materials_Initialize();
 
     Con_SetProgress(140);
@@ -2190,6 +2199,17 @@ texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
     if(!stricmp(str, TN_FLAREMAPS_NAME))            return TN_FLAREMAPS;
 
     return TEXTURENAMESPACE_COUNT; // Unknown.
+}
+
+materialnamespaceid_t DD_ParseFontNamespace(const char* str)
+{
+    if(!str || 0 == strlen(str))
+        return FN_ANY;
+
+    if(!stricmp(str, FN_GAME_NAME))     return FN_GAME;
+    if(!stricmp(str, FN_SYSTEM_NAME))   return FN_SYSTEM;
+
+    return FONTNAMESPACE_COUNT; // Unknown.
 }
 
 const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
