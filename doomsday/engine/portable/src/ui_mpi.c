@@ -657,7 +657,7 @@ void DD_NetSetup(int serverMode)
     }
 
     sprintf(str_ipport, "%i", (nptIPPort ? nptIPPort : DEFAULT_TCP_PORT));
-    sprintf(str_myudp, "%i", (nptUDPPort ? nptUDPPort : DEFAULT_UDP_PORT));
+    sprintf(str_myudp, "%i", 0); // (nptUDPPort ? nptUDPPort : DEFAULT_UDP_PORT));
     strcpy(str_masterip, masterAddress);
 
     // Prepare Protocol Setup.

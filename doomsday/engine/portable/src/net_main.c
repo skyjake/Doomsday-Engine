@@ -643,7 +643,9 @@ void Net_StopGame(void)
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
         Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+#if 0
         N_FlushOutgoing();
+#endif
     }
     else
     {   // We are a connected client.

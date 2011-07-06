@@ -1138,6 +1138,8 @@ int Sv_GetNumConnected(void)
  */
 boolean Sv_CheckBandwidth(int playerNumber)
 {
+    return true;
+    /*
     client_t           *client = &clients[playerNumber];
     uint                qSize = N_GetSendQueueSize(playerNumber);
     uint                limit = 400;
@@ -1174,6 +1176,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 
     // New messages will not be sent if there's too much already.
     return qSize <= 10 * limit;
+    */
 }
 
 /**
