@@ -1498,6 +1498,8 @@ boolean P_HitFloor(mobj_t *thing)
     int                 smallsplash = false;
     const terraintype_t* tt;
 
+    if(!thing->info) return;
+
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {   // Don't splash if landing on the edge above water/lava/etc....
         return false;
