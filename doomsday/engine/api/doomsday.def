@@ -1,8 +1,8 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 450 <--
-; Other free ordinals:
+; --> 451 <--
+; Free ordinals:
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
 ; 68 formerly P_BlockLinesIterator
@@ -298,6 +298,7 @@ EXPORTS
     P_MobjSectorsIterator       @72 NONAME
     P_MobjForID                 @449 NONAME
     ClMobj_IsValid              @43 NONAME
+    ClPlayer_ClMobj             @451 NONAME
 
 ; Play: Polyobjs.
     P_PolyobjMove               @79 NONAME

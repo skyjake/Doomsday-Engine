@@ -61,7 +61,7 @@ void            ClPlayer_ApplyPendingFixes(int plrNum);
 void            ClPlayer_ReadDelta2(boolean skip);
 clplayerstate_t *ClPlayer_State(int plrNum);
 mobj_t         *ClPlayer_LocalGameMobj(int plrNum);
-mobj_t         *ClPlayer_ClMobj(int plrNum);
+struct mobj_s  *ClPlayer_ClMobj(int plrNum);
 boolean         ClPlayer_IsFreeToMove(int plrnum);
 
 #endif

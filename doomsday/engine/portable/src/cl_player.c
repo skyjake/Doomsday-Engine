@@ -105,9 +105,11 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
 }
 
 /**
+ * @param plrNum  Player number.
+ *
  * @return  The engineside client mobj of a player, representing a remote mobj on the server.
  */
-mobj_t* ClPlayer_ClMobj(int plrNum)
+struct mobj_s* ClPlayer_ClMobj(int plrNum)
 {
     assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
     return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
@@ -461,10 +463,10 @@ void ClPlayer_ReadDelta2(boolean skip)
             */
 
 #if _DEBUG
-            Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%p\n", num, s->clMobjId, old);
+            Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p\n", num, s->clMobjId, old);
             Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", clmo->pos[VX],
                         clmo->pos[VY], clmo->pos[VZ], clmo->floorZ, clmo->ceilingZ);
-            Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n", (skip? -1 : num), s->clMobjId);
+            Con_Message("ClPlr_RdD2: pl=%i => moid=%i\n", (skip? -1 : num), s->clMobjId);
 #endif
         }
     }

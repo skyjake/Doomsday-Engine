@@ -279,6 +279,7 @@ extern          "C" {
     int             P_MobjUnlink(struct mobj_s* mo);
     struct mobj_s*  P_MobjForID(int id);
     boolean         ClMobj_IsValid(struct mobj_s* mo);
+    struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 
     // Mobj linked object iterators.
     boolean         P_MobjLinesIterator(struct mobj_s* mo,
