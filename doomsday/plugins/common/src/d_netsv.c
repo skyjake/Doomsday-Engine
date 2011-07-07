@@ -1235,11 +1235,13 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 
     *ptr++ = whose;
     *ptr++ = cfg.playerColor[whose];
+/*#ifdef _DEBUG
+    Con_Message("NetSv_SendPlayerInfo: To %i, player %i's color is %i.\n", to_whom, whose, cfg.playerColor[whose]);
+#endif*/
 #if __JHERETIC__ || __JHEXEN__
     *ptr++ = cfg.playerClass[whose];
 #endif
-    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO, buffer,
-                   ptr - buffer);
+    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO, buffer, ptr - buffer);
 }
 
 void NetSv_ChangePlayerInfo(int from, byte* data)
@@ -1275,6 +1277,14 @@ void NetSv_ChangePlayerInfo(int from, byte* data)
 
 #if __JHEXEN__
     P_PlayerChangeClass(pl, cfg.playerClass[from]);
+#endif
+
+#ifdef _DEBUG
+    if(pl->plr->mo)
+    {
+        Con_Message("Player %i mo %i translation flags %x\n", from, pl->plr->mo->thinker.id,
+                    (pl->plr->mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
+    }
 #endif
 
     // Re-deal start spots.

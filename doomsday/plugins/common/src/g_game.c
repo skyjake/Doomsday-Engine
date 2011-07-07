@@ -523,7 +523,6 @@ void R_SetTranslation(mobj_t* mo)
     else
     {
         int                 tclass, tmap;
-
         tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 
         if(mo->player)

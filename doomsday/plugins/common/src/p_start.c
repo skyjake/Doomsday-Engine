@@ -447,6 +447,11 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
 #endif
 
+#ifdef _DEBUG
+    Con_Message("P_SpawnPlayer: Player %i spawning with translation %i.\n",
+                plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
+#endif
+
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     p->jumpTics = 0;

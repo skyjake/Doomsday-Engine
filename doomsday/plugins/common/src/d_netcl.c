@@ -774,8 +774,7 @@ void NetCl_Finale(int packetType, byte *data)
 }
 
 /**
- * Clients have other players' info, but it's only "FYI"; they don't
- * really need it.
+ * Clients have other players' info, but it's only "FYI"; they don't really need it.
  */
 void NetCl_UpdatePlayerInfo(byte *data)
 {
@@ -790,11 +789,11 @@ void NetCl_UpdatePlayerInfo(byte *data)
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
-    Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-               cfg.playerColor[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
+                cfg.playerColor[num]);
 #else
-    Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-               cfg.playerColor[num], cfg.playerClass[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
+                cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -803,7 +802,7 @@ void NetCl_UpdatePlayerInfo(byte *data)
  */
 void NetCl_SendPlayerInfo()
 {
-    byte                buffer[10], *ptr = buffer;
+    byte buffer[10], *ptr = buffer;
 
     if(!IS_CLIENT)
         return;

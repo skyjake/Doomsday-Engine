@@ -342,6 +342,8 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     //localMobj->nexttime = clmo->nexttime;
 #define DDMF_KEEP_MASK (DDMF_REMOTE | DDMF_SOLID)
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
+    localMobj->flags = (localMobj->flags & ~0x1c000000) |
+                       (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
     localMobj->radius = remoteClientMobj->radius;
     localMobj->height = remoteClientMobj->height;
     localMobj->floorClip = remoteClientMobj->floorClip;
@@ -820,6 +822,10 @@ void ClMobj_ReadDelta2(boolean skip)
         d->flags = Msg_ReadLong();
         d->flags2 = Msg_ReadLong();
         d->flags3 = Msg_ReadLong();
+
+/*#ifdef _DEBUG
+        Con_Message("ClMobj_ReadDelta2: Mobj%i: Flags %x\n", id, d->flags & 0x1c000000);
+#endif*/
     }
 
     if(df & MDF_HEALTH)
