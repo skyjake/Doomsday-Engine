@@ -65,6 +65,7 @@ OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF
 OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
+OPTION (INSTALLSNOWBERRY "Include Snowberry and associated files in installation." ON)
 
 #MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
@@ -665,37 +666,39 @@ IF (UNIX AND NOT APPLE)
     # Desktop entry.
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/../distrib/linux/doomsday-engine.desktop"
         DESTINATION /usr/share/applications)
-    
-    # Bundle Snowberry.
-    SET (SB_ROOT "${CMAKE_SOURCE_DIR}/../snowberry")
-    SET (SB_DEST share/${PROJECT_NAME}/snowberry)
-    INSTALL(FILES 
-        ${SB_ROOT}/cfparser.py
-        ${SB_ROOT}/events.py
-        ${SB_ROOT}/host.py
-        ${SB_ROOT}/language.py
-        ${SB_ROOT}/logger.py
-        ${SB_ROOT}/paths.py
-        ${SB_ROOT}/plugins.py
-        ${SB_ROOT}/snowberry.py
-        ${SB_ROOT}/ui.py
-        ${SB_ROOT}/widgets.py
-        DESTINATION ${SB_DEST})
-        
-    INSTALL(DIRECTORY ${SB_ROOT}/conf ${SB_ROOT}/graphics ${SB_ROOT}/lang ${SB_ROOT}/plugins
-        ${SB_ROOT}/profiles ${SB_ROOT}/sb 
-        DESTINATION ${SB_DEST}
-        PATTERN "osx-*.conf" EXCLUDE
-        PATTERN "win-*.conf" EXCLUDE
-        PATTERN "doomsday.conf" EXCLUDE
-        PATTERN "appearance.conf" EXCLUDE
-        PATTERN "components.conf" EXCLUDE
-        PATTERN "*example*" EXCLUDE
-        PATTERN ".*ignore" EXCLUDE)     
-        
-    INSTALL(FILES ${CMAKE_BINARY_DIR}/launch-doomsday
-        DESTINATION bin
-        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
+    IF (INSTALLSNOWBERRY)
+        # Bundle Snowberry.
+        SET (SB_ROOT "${CMAKE_SOURCE_DIR}/../snowberry")
+        SET (SB_DEST share/${PROJECT_NAME}/snowberry)
+        INSTALL(FILES
+            ${SB_ROOT}/cfparser.py
+            ${SB_ROOT}/events.py
+            ${SB_ROOT}/host.py
+            ${SB_ROOT}/language.py
+            ${SB_ROOT}/logger.py
+            ${SB_ROOT}/paths.py
+            ${SB_ROOT}/plugins.py
+            ${SB_ROOT}/snowberry.py
+            ${SB_ROOT}/ui.py
+            ${SB_ROOT}/widgets.py
+            DESTINATION ${SB_DEST})
+
+        INSTALL(DIRECTORY ${SB_ROOT}/conf ${SB_ROOT}/graphics ${SB_ROOT}/lang ${SB_ROOT}/plugins
+            ${SB_ROOT}/profiles ${SB_ROOT}/sb
+            DESTINATION ${SB_DEST}
+            PATTERN "osx-*.conf" EXCLUDE
+            PATTERN "win-*.conf" EXCLUDE
+            PATTERN "doomsday.conf" EXCLUDE
+            PATTERN "appearance.conf" EXCLUDE
+            PATTERN "components.conf" EXCLUDE
+            PATTERN "*example*" EXCLUDE
+            PATTERN ".*ignore" EXCLUDE)
+
+        INSTALL(FILES ${CMAKE_BINARY_DIR}/launch-doomsday
+            DESTINATION bin
+            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    ENDIF()
 ENDIF()
 
 IF (BUILDJDOOM)
