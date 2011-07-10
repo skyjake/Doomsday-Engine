@@ -1026,13 +1026,20 @@ static int DD_ChangeGameWorker(void* paramaters)
 boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 {
     assert(info);
-
-    // Ignore attempts to re-load the current game.
-    if(!allowReload && DD_GameInfo() == info)
     {
-        if(!DD_IsNullGameInfo(DD_GameInfo()))
-            Con_Message("%s (%s) - already loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
-        return true;
+    boolean isReload = false;
+
+    // Ignore attempts to re-load the current game?
+    if(DD_GameInfo() == info)
+    {
+        if(!allowReload)
+        {
+            if(!DD_IsNullGameInfo(DD_GameInfo()))
+                Con_Message("%s (%s) - already loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
+            return true;
+        }
+        // We are re-loading.
+        isReload = true;
     }
 
     // Quit netGame if one is in progress.
@@ -1122,7 +1129,16 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     Fonts_Shutdown();
     Materials_Shutdown();
 
-    VERBOSE( Con_Message("Selecting game '%s'...\n", Str_Text(GameInfo_IdentityKey(info))) )
+    VERBOSE(
+        if(!DD_IsNullGameInfo(DD_GameInfo()))
+        {
+            Con_Message("Selecting game '%s'...\n", Str_Text(GameInfo_IdentityKey(info)));
+        }
+        else if(!isReload)
+        {
+            Con_Message("Unloading game...\n");
+        }
+    )
 
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
@@ -1177,6 +1193,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
      */
     DD_ClearEvents();
     return true;
+    }
 }
 
 boolean DD_ChangeGame(gameinfo_t* info)
