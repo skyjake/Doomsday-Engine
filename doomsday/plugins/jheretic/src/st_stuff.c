@@ -645,7 +645,6 @@ void ST_Ticker(timespan_t ticLength)
         {
             if(hud->alpha > 0.0f)
             {
-                hud->statusbarActive = 0;
                 hud->alpha -= 0.1f;
             }
             else if(hud->showBar < 1.0f)
@@ -667,7 +666,6 @@ void ST_Ticker(timespan_t ticLength)
                 if(hud->showBar > 0.0f)
                 {
                     hud->showBar -= 0.1f;
-                    hud->statusbarActive = 1;
                 }
                 else if(hud->alpha < 1.0f)
                 {
