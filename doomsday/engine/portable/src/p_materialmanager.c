@@ -1991,6 +1991,6 @@ D_CMD(ListMaterials)
         Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
         return false;
     }
-    printMaterials(namespaceId, (argc > 2? argv[2] : (argc > 1 && namespaceId == MN_ANY? argv[1] : NULL)));
+    printMaterials(namespaceId, (argc > 2? argv[2] : (argc > 1 && !VALID_MATERIALNAMESPACEID(namespaceId)? argv[1] : NULL)));
     return true;
 }
