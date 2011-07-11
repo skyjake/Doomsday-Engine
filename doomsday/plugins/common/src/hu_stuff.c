@@ -63,9 +63,9 @@
 
 typedef struct {
     boolean         active;
-    int             scoreHideTics;
-    float           scoreAlpha;
-} hudstate_t;
+    int             hideTics;
+    float           alpha;
+} scoreboardstate_t;
 
 // Column flags
 #define CF_HIDE                 0x0001
@@ -164,7 +164,7 @@ const char shiftXForm[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static hudstate_t hudStates[MAXPLAYERS];
+static scoreboardstate_t scoreStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
 static patchinfo_t borderPatches[8];
@@ -198,7 +198,7 @@ void Hu_LoadData(void)
     fogEffectData.layers[1].posAngle = 77;
 
     // Load the background fog texture.
-    if(!fogEffectData.texture && !Get(DD_NOVIDEO))
+    if(!fogEffectData.texture && !(Get(DD_NOVIDEO) || Get(DD_DEDICATED)))
     {
         lumpnum_t lumpNum = W_GetLumpNumForName("menufog");
         if(lumpNum >= 0)
@@ -308,8 +308,8 @@ void HU_Stop(int player)
 {
     assert(player >= 0 && player < MAXPLAYERS);
     {
-    hudstate_t* hud = &hudStates[player];
-    hud->active = false;
+    scoreboardstate_t* ss = &scoreStates[player];
+    ss->active = false;
     }
 }
 
@@ -317,13 +317,13 @@ void HU_Start(int player)
 {
     assert(player >= 0 && player < MAXPLAYERS);
     {
-    hudstate_t* hud = &hudStates[player];
+    scoreboardstate_t* ss = &scoreStates[player];
 
-    hud = &hudStates[player];
-    if(hud->active)
+    ss = &scoreStates[player];
+    if(ss->active)
         HU_Stop(player);
 
-    hud->active = true;
+    ss->active = true;
     }
 }
 
@@ -491,7 +491,7 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 
 void HU_ScoreBoardUnHide(int player)
 {
-    hudstate_t* hud;
+    scoreboardstate_t* ss;
     player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -501,9 +501,9 @@ void HU_ScoreBoardUnHide(int player)
     if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
         return;
 
-    hud = &hudStates[player];
-    hud->scoreAlpha = 1;
-    hud->scoreHideTics = 35;
+    ss = &scoreStates[player];
+    ss->alpha = 1;
+    ss->hideTics = 35;
 }
 
 static void drawTable(float x, float ly, float width, float height,
@@ -783,7 +783,7 @@ void HU_DrawScoreBoard(int player)
 
     scoreinfo_t scoreBoard[MAXPLAYERS];
     int x, y, width, height, inCount;
-    hudstate_t* hud;
+    scoreboardstate_t* ss;
 
     if(!IS_NETGAME)
         return;
@@ -791,9 +791,9 @@ void HU_DrawScoreBoard(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
-    hud = &hudStates[player];
+    ss = &scoreStates[player];
 
-    if(!(hud->scoreAlpha > 0))
+    if(!(ss->alpha > 0))
         return;
 
     // Set up the fixed 320x200 projection.
@@ -820,18 +820,18 @@ void HU_DrawScoreBoard(int player)
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.
-    DGL_DrawRectColor(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
+    DGL_DrawRectColor(x, y, width, height, 0, 0, 0, .4f * ss->alpha);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
-    FR_SetColorAndAlpha(1, 0, 0, hud->scoreAlpha);
+    FR_SetColorAndAlpha(1, 0, 0, ss->alpha);
     FR_DrawText3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    drawMapMetaData(x, y + 16, hud->scoreAlpha);
-    drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, hud->scoreAlpha, player);
+    drawMapMetaData(x, y + 16, ss->alpha);
+    drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, ss->alpha, player);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -844,20 +844,20 @@ void Hu_Ticker(void)
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        hudstate_t* hud = &hudStates[i];
+        scoreboardstate_t* ss = &scoreStates[i];
         player_t* plr = &players[i];
 
         if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
             continue;
 
-        if(hud->scoreHideTics > 0)
+        if(ss->hideTics > 0)
         {
-            hud->scoreHideTics--;
+            --ss->hideTics;
         }
         else
         {
-            if(hud->scoreAlpha > 0)
-                hud->scoreAlpha -= .05f;
+            if(ss->alpha > 0)
+                ss->alpha -= .05f;
         }
     }
 }
