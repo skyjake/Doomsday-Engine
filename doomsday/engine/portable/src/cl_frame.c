@@ -214,7 +214,7 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
  */
 void Cl_Frame2Received(int packetType)
 {
-    byte        set = Msg_ReadByte(), oldSet, resend, deltaType;
+    byte        set = Msg_ReadByte(), deltaType;
     //byte        resendAcks[300];
     //int         i, numResendAcks = 0;
     boolean     skip = false;

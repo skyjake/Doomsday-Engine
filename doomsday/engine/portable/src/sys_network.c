@@ -143,7 +143,7 @@ boolean netServerMode = false;
 static TCPsocket serverSock;
 //static volatile UDPsocket inSock;
 //static Uint16 recvUDPPort;
-static mutex_t mutexInSock;
+//static mutex_t mutexInSock;
 static netnode_t netNodes[MAX_NODES];
 static SDLNet_SocketSet sockSet;
 //static thread_t hTransmitter;

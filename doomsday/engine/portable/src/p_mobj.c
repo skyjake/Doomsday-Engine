@@ -91,17 +91,17 @@ typedef struct {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Slide variables.
-static float bestSlideFrac;
-static float secondSlideFrac;
-static linedef_t *bestSlideLine;
-static linedef_t *secondSlideLine;
+//static float bestSlideFrac;
+//static float secondSlideFrac;
+//static linedef_t *bestSlideLine;
+//static linedef_t *secondSlideLine;
 
-static mobj_t *slideMo;
+//static mobj_t *slideMo;
 
-static boolean noFit;
+//static boolean noFit;
 
-static float tmpDropOffZ;
-static float tmpMom[3];
+//static float tmpDropOffZ;
+//static float tmpMom[3];
 
 static mobj_t *unusedMobjs = NULL;
 

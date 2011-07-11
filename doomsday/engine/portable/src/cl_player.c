@@ -229,9 +229,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
 void ClPlayer_HandleFix(void)
 {
     player_t           *plr = &ddPlayers[consolePlayer];
-    mobj_t             *clmo = ClPlayer_ClMobj(consolePlayer);
+    //mobj_t             *clmo = ClPlayer_ClMobj(consolePlayer);
     ddplayer_t         *ddpl = &plr->shared;
-    mobj_t             *mo = ddpl->mo;
+    //mobj_t             *mo = ddpl->mo;
     int                 fixes = Msg_ReadLong();
     clplayerstate_t    *state = ClPlayer_State(consolePlayer);
 
