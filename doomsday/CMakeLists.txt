@@ -307,8 +307,8 @@ IF (APPLE)
         SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
         SET (CMAKE_OSX_ARCHITECTURES "ppc;i386") # 32-bit
         SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
-        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4 -Wunused-variable" )
-        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4 -Wunused-variable" )
+        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
+        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
     	# 10.4 doesn't appear to have libpng.dylib as a system library.
     	# So we'll use a statically linked one instead.
     	SET (USE_STATIC_PNG "YES")
@@ -318,8 +318,8 @@ IF (APPLE)
         SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
         SET (CMAKE_OSX_ARCHITECTURES "i386")
 	    SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk")
-		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.6 -Wunused-variable" )
-		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6 -Wunused-variable" )
+		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.6" )
+		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6" )
     ENDIF()
 
 	SET (BUILDSYSTEM MACOSX)
