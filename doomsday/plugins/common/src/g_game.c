@@ -1054,6 +1054,7 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
         Hu_InventoryOpen(i, false);
 #endif
     }}
+    G_SetGameAction(GA_NONE);
     FI_StackExecute(script, flags, mode);
     return true;
 }

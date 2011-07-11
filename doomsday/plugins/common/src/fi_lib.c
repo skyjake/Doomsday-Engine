@@ -214,25 +214,16 @@ void FI_StackShutdown(void)
 
 void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 {
+    fi_state_t* s, *prevTopScript;
     gamestate_t prevGamestate;
     ddstring_t setupCmds;
-    fi_state_t* s;
+    finaleid_t finaleId;
     int fontIdx;
 
     if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
 
-    G_SetGameAction(GA_NONE);
     prevGamestate = G_GetGameState();
-    if(mode != FIMODE_OVERLAY)
-    {
-        G_ChangeGameState(GS_INFINE);
-    }
-
-    // Only the top-most script is active.
-    if((s = stackTop()))
-    {
-        FI_ScriptSuspend(s->finaleId);
-    }
+    prevTopScript = stackTop();
 
     // Configure the predefined fonts.
     Str_Init(&setupCmds);
@@ -255,8 +246,23 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
         Str_Appendf(&setupCmds, "\nprecolor %i 1 1 1\n", i);
     }
 
-    s = stackPush(FI_Execute2(scriptSrc, flags, Str_Text(&setupCmds)), mode, prevGamestate);
+    finaleId = FI_Execute2(scriptSrc, flags, Str_Text(&setupCmds));
     Str_Free(&setupCmds);
+    if(finaleId == 0)
+        return;
+
+    if(mode != FIMODE_OVERLAY)
+    {
+        G_ChangeGameState(GS_INFINE);
+    }
+
+    // Only the top-most script can be "active".
+    if(prevTopScript)
+    {
+        FI_ScriptSuspend(prevTopScript->finaleId);
+    }
+
+    s = stackPush(finaleId, mode, prevGamestate);
 
     // Do we need to transmit the state conditions to clients?
     if(IS_SERVER && !(flags & FF_LOCAL))
@@ -522,6 +528,7 @@ D_CMD(StartFinale)
         Con_Printf("Script '%s' is not defined.\n", argv[1]);
         return false;
     }
+    G_SetGameAction(GA_NONE);
     FI_StackExecute(fin.script, FF_LOCAL, FIMODE_OVERLAY);
     return true;
 }
