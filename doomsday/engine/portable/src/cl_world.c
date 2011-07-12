@@ -207,8 +207,6 @@ void Cl_MoverThinker(mover_t *mover)
                 mover->sectornum) );
 #endif
 
-    //P_SectorPlanesChanged(mover->sectornum);
-
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
@@ -218,18 +216,26 @@ void Cl_MoverThinker(mover_t *mover)
 
         // Something was blocking the way! Go back to original height.
         P_SetFloat(DMU_SECTOR, mover->sectornum, mover->property, original);
-
-        //P_SectorPlanesChanged(mover->sectornum);
     }
-    else if(remove)             // Can we remove this thinker?
+    else
     {
-#ifdef _DEBUG
-        Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum);
-#endif
-        // It stops.
-        P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
+        // The move was valid, so let the game know of this.
+        if(gx.SectorHeightChangeNotification)
+        {
+            gx.SectorHeightChangeNotification(mover->sectornum);
+        }
 
-        Cl_RemoveActiveMover(mover);
+        // Can we remove this thinker?
+        if(remove)
+        {
+    #ifdef _DEBUG
+            Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum);
+    #endif
+            // It stops.
+            P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
+
+            Cl_RemoveActiveMover(mover);
+        }
     }
 }
 

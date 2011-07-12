@@ -1151,8 +1151,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
     blockLine = NULL;
-    tmUnstuck =
-        ((thing->dPlayer && thing->dPlayer->mo == thing)? true : false);
+    tmUnstuck = ((thing->dPlayer && thing->dPlayer->mo == thing)? true : false);
 #endif
 
     // The base floor/ceiling is from the subsector that contains the point.
@@ -2760,6 +2759,18 @@ boolean P_ChangeSector(sector_t* sector, boolean crunch)
     P_SectorTouchingMobjsIterator(sector, PIT_ChangeSector, 0);
 
     return noFit;
+}
+
+/**
+ * This is called by the engine when it needs to change sector heights without
+ * consulting game logic first. Most commonly this occurs on clientside, where
+ * the client needs to apply plane height changes as per the deltas.
+ *
+ * @param sectorIdx  Index of the sector to update.
+ */
+void P_HandleSectorHeightChange(int sectorIdx)
+{
+    P_ChangeSector(P_ToPtr(DMU_SECTOR, sectorIdx), false);
 }
 
 /**

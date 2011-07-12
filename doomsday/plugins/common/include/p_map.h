@@ -79,6 +79,7 @@ void            P_SlideMove(mobj_t* mo);
 void            P_UseLines(player_t* player);
 
 boolean         P_ChangeSector(sector_t* sector, boolean crunch);
+void            P_HandleSectorHeightChange(int sectorIdx);
 
 float           P_AimLineAttack(mobj_t* t1, angle_t angle, float distance);
 void            P_LineAttack(mobj_t* t1, angle_t angle, float distance,
