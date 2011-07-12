@@ -580,7 +580,15 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
     if(r->pos[VY] != s->pos[VY])
         df |= MDF_POS_Y;
     if(r->pos[VZ] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
+    {
         df |= MDF_POS_Z;
+        if(!(df & MDFC_CREATE) && s->pos[VZ] <= s->floorZ)
+        {
+            // It is currently on the floor. The client will place it on its
+            // clientside floor and disregard the Z coordinate.
+            df |= MDFC_ON_FLOOR;
+        }
+    }
 
     if(r->mom[MX] != s->mom[MX])
         df |= MDF_MOM_X;

@@ -749,19 +749,33 @@ void ClMobj_ReadDelta2(boolean skip)
     }
     if(df & MDF_POS_Z)
     {
-        d->pos[VZ] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
-        if(info)
+        if(!(moreFlags & MDFE_Z_FLOOR))
         {
-            info->flags |= CLMF_KNOWN_Z;
+            d->pos[VZ] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+            if(info)
+            {
+                info->flags |= CLMF_KNOWN_Z;
 
-            // The mobj won't stick if an explicit coordinate is supplied.
-            info->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
+                // The mobj won't stick if an explicit coordinate is supplied.
+                info->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
+            }
+            d->floorZ = Msg_ReadFloat();
+        }
+        else
+        {
+            // Ignore these.
+            Msg_ReadShort();
+            Msg_ReadByte();
+            Msg_ReadFloat();
+
+            info->flags |= CLMF_KNOWN_Z;
+            d->pos[VZ] = d->floorZ;
         }
 
-        d->floorZ = Msg_ReadFloat();
         d->ceilingZ = Msg_ReadFloat();
     }
 
+    /*
     // When these flags are set, the normal Z coord is not included.
     if(moreFlags & MDFE_Z_FLOOR)
     {
@@ -775,6 +789,7 @@ void ClMobj_ReadDelta2(boolean skip)
         if(info)
             info->flags |= CLMF_KNOWN_Z;
     }
+    */
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
@@ -872,12 +887,14 @@ void ClMobj_ReadDelta2(boolean skip)
         }
     }
 
+    /*
     if(df & (MDF_POS_X | MDF_POS_Y | MDF_POS_Z) ||
        moreFlags & (MDFE_Z_FLOOR | MDFE_Z_CEILING))
     {
         // This'll update floorz and ceilingz.
         ClMobj_CheckPlanes(mo, justCreated);
     }
+    */
 
     // If the clmobj is Hidden (or Nulled), it will not be linked back to
     // the world until it's officially Created. (Otherwise, partially updated

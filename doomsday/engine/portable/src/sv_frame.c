@@ -228,6 +228,13 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         moreFlags |= MDFE_FADETARGET;
     }
 
+    // On the floor?
+    if(df & MDFC_ON_FLOOR)
+    {
+        df |= MDF_MORE_FLAGS;
+        moreFlags |= MDFE_Z_FLOOR;
+    }
+
     // Mobj type?
     if(df & MDFC_TYPE)
     {
@@ -239,6 +246,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
 
+    /*
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
     {
@@ -249,6 +257,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
             moreFlags |= (d->pos[VZ] == DDMINFLOAT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
         }
     }
+    */
 
 #ifdef _DEBUG
     if(df & MDFC_NULL)
