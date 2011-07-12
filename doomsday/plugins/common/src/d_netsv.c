@@ -530,44 +530,37 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                     // than it should be.
 #if __JDOOM64__
                     sprintf(lump, "MAP%u%u", episode =
-                            tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
-                            map =
-                            tmp[1] ==
-                            '*' ? M_Random() % 10 : tmp[1] - '0');
+                            tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
+                            map = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
 #elif __JDOOM__
                     if(gameMode == commercial)
                     {
                         sprintf(lump, "MAP%u%u", episode =
-                                tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
-                                map =
-                                tmp[1] ==
-                                '*' ? M_Random() % 10 : tmp[1] - '0');
+                                tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
+                                map = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
                     }
                     else
                     {
                         sprintf(lump, "E%uM%u", episode =
-                                tmp[0] ==
-                                '*' ? 1 + M_Random() % 4 : tmp[0] - '0',
-                                map =
-                                tmp[1] ==
-                                '*' ? 1 + M_Random() % 9 : tmp[1] - '0');
+                                tmp[0] == '*' ? 1 + RNG_RandByte() % 4 : tmp[0] - '0',
+                                map = tmp[1] == '*' ? 1 + RNG_RandByte() % 9 : tmp[1] - '0');
                     }
 #elif __JSTRIFE__
                     sprintf(lump, "MAP%u%u", episode =
-                            tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
+                            tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
                             map =
                             tmp[1] ==
-                            '*' ? M_Random() % 10 : tmp[1] - '0');
+                            '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
 #elif __JHERETIC__
                     sprintf(lump, "E%uM%u", episode =
-                            tmp[0] == '*' ? 1 + M_Random() % 6 : tmp[0] - '0',
+                            tmp[0] == '*' ? 1 + RNG_RandByte() % 6 : tmp[0] - '0',
                             map =
-                            tmp[1] == '*' ? 1 + M_Random() % 9 : tmp[1] - '0');
+                            tmp[1] == '*' ? 1 + RNG_RandByte() % 9 : tmp[1] - '0');
 #elif __JHEXEN__
                     sprintf(lump, "%u%u", episode =
-                            tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
+                            tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
                             map =
-                            tmp[1] == '*' ? M_Random() % 10 : tmp[1] - '0');
+                            tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
                     m = P_TranslateMap(atoi(lump));
                     if(m < 0)
                         continue;
