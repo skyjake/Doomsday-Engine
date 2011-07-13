@@ -96,7 +96,7 @@ void    P_FireWeapon(player_t *player);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int     NetSv_GetFrags(int pl);
-void    NetSv_CheckCycling(void);
+void    NetSv_MapCycleTicker(void);
 void    NetSv_SendPlayerClass(int pnum, char cls);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -264,7 +264,7 @@ void NetSv_Ticker(void)
     float               power;
 
     // Map rotation checker.
-    NetSv_CheckCycling();
+    NetSv_MapCycleTicker();
 
     // This is done here for servers.
     R_SetAllDoomsdayFlags();
@@ -648,7 +648,7 @@ void NetSv_TellCycleRulesToPlayer(int destPlr)
     NetSv_SendMessage(destPlr, msg);
 }
 
-void NetSv_CheckCycling(void)
+void NetSv_MapCycleTicker(void)
 {
     int         map, i, f;
     maprule_t   rules;
@@ -717,18 +717,6 @@ void NetSv_CheckCycling(void)
             }
         }
         break;
-
-        /*
-    case CYCLE_TELL_RULES:
-        if(cycleCounter <= 0)
-        {
-            NetSv_TellCycleRulesToPlayer(DDSP_ALL_PLAYERS);
-
-            // Start checking.
-            cycleMode = CYCLE_IDLE;
-        }
-        break;
-        */
 
     case CYCLE_COUNTDOWN:
         if(cycleCounter == 30 * TICSPERSEC ||
