@@ -85,7 +85,6 @@ typedef struct maprule_s {
 
 typedef enum cyclemode_s {
     CYCLE_IDLE,
-    CYCLE_TELL_RULES,
     CYCLE_COUNTDOWN
 } cyclemode_t;
 
@@ -120,6 +119,7 @@ char    gameConfigString[128];
 
 static int cycleIndex;
 static int cycleCounter = -1, cycleMode = CYCLE_IDLE;
+static int cycleRulesCounter[MAXPLAYERS];
 static int oldPals[MAXPLAYERS];
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -255,6 +255,9 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 }
 #endif
 
+/**
+ * Sharp ticker, i.e., called at 35 Hz.
+ */
 void NetSv_Ticker(void)
 {
     int                 i;
@@ -408,7 +411,8 @@ void NetSv_Ticker(void)
 
 void NetSv_CycleToMapNum(uint map)
 {
-    char        tmp[3], cmd[80];
+    char tmp[3], cmd[80];
+    int i;
 
     sprintf(tmp, "%02u", map);
 #if __JDOOM64__
@@ -427,8 +431,11 @@ void NetSv_CycleToMapNum(uint map)
     DD_Execute(false, cmd);
 
     // In a couple of seconds, send everyone the rules of this map.
-    cycleMode = CYCLE_TELL_RULES;
-    cycleCounter = 3 * TICSPERSEC;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        cycleRulesCounter[i] = 3 * TICSPERSEC;
+
+    cycleMode = CYCLE_IDLE;
+    cycleCounter = 0;
 }
 
 /**
@@ -588,16 +595,79 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
     return -1;
 }
 
+void NetSv_TellCycleRulesToPlayerAfterTics(int destPlr, int tics)
+{
+    if(destPlr >= 0 && destPlr < MAXPLAYERS)
+    {
+        cycleRulesCounter[destPlr] = tics;
+    }
+    else if(destPlr == DDSP_ALL_PLAYERS)
+    {
+        int i;
+        for(i = 0; i < MAXPLAYERS; ++i)
+            cycleRulesCounter[i] = tics;
+    }
+}
+
+/**
+ * Sends a message about the map cycle rules to a specific player.
+ */
+void NetSv_TellCycleRulesToPlayer(int destPlr)
+{
+    maprule_t rules;
+    char msg[100];
+    char tmp[100];
+
+    if(!cyclingMaps) return;
+
+#ifdef _DEBUG
+    Con_Message("NetSv_TellCycleRulesToPlayer: %i\n", destPlr);
+#endif
+
+    // Get the rules of the current map.
+    NetSv_ScanCycle(cycleIndex, &rules);
+    strcpy(msg, "MAP RULES: ");
+    if(!rules.usetime && !rules.usefrags)
+    {
+        strcat(msg, "NONE");
+    }
+    else
+    {
+        if(rules.usetime)
+        {
+            sprintf(tmp, "%i MINUTES", rules.time);
+            strcat(msg, tmp);
+        }
+        if(rules.usefrags)
+        {
+            sprintf(tmp, "%s%i FRAGS", rules.usetime ? " OR " : "", rules.frags);
+            strcat(msg, tmp);
+        }
+    }
+
+    NetSv_SendMessage(destPlr, msg);
+}
+
 void NetSv_CheckCycling(void)
 {
     int         map, i, f;
     maprule_t   rules;
-    char        msg[100], tmp[50];
+    char        msg[100];
 
-    if(!cyclingMaps)
-        return;
+    if(!cyclingMaps) return;
+
+    // Check rules broadcasting.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!cycleRulesCounter[i] || !players[i].plr->inGame) continue;
+        if(--cycleRulesCounter[i] == 0)
+        {
+            NetSv_TellCycleRulesToPlayer(i);
+        }
+    }
 
     cycleCounter--;
+
     switch(cycleMode)
     {
     case CYCLE_IDLE:
@@ -614,8 +684,7 @@ void NetSv_CheckCycling(void)
                 if(map < 0)
                 {
                     // Hmm?! Abort cycling.
-                    Con_Message
-                        ("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
+                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -637,8 +706,7 @@ void NetSv_CheckCycling(void)
                         continue;
                     if((f = NetSv_GetFrags(i)) >= rules.frags)
                     {
-                        sprintf(msg, "--- %s REACHES %i FRAGS ---",
-                                Net_GetPlayerName(i), f);
+                        sprintf(msg, "--- %s REACHES %i FRAGS ---", Net_GetPlayerName(i), f);
                         NetSv_SendMessage(DDSP_ALL_PLAYERS, msg);
                         S_StartSound(SOUND_VICTORY, NULL);
                         cycleMode = CYCLE_COUNTDOWN;
@@ -650,36 +718,17 @@ void NetSv_CheckCycling(void)
         }
         break;
 
+        /*
     case CYCLE_TELL_RULES:
         if(cycleCounter <= 0)
         {
-            // Get the rules of the current map.
-            NetSv_ScanCycle(cycleIndex, &rules);
-            strcpy(msg, "MAP RULES: ");
-            if(!rules.usetime && !rules.usefrags)
-                strcat(msg, "NONE");
-            else
-            {
-                if(rules.usetime)
-                {
-                    sprintf(tmp, "%i MINUTES", rules.time);
-                    strcat(msg, tmp);
-                }
+            NetSv_TellCycleRulesToPlayer(DDSP_ALL_PLAYERS);
 
-                if(rules.usefrags)
-                {
-                    sprintf(tmp, "%s%i FRAGS", rules.usetime ? " OR " : "",
-                            rules.frags);
-                    strcat(msg, tmp);
-                }
-            }
-
-            // Send it to all players.
-            NetSv_SendMessage(DDSP_ALL_PLAYERS, msg);
             // Start checking.
             cycleMode = CYCLE_IDLE;
         }
         break;
+        */
 
     case CYCLE_COUNTDOWN:
         if(cycleCounter == 30 * TICSPERSEC ||
@@ -705,8 +754,7 @@ void NetSv_CheckCycling(void)
                 if(map < 0)
                 {
                     // Hmm?! Abort cycling.
-                    Con_Message
-                        ("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
+                    Con_Message("NetSv_CheckCycling: All of a sudden MapCycle is invalid!\n");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -724,7 +772,7 @@ void NetSv_CheckCycling(void)
  */
 void NetSv_NewPlayerEnters(int plrNum)
 {
-    player_t*           plr = &players[plrNum];
+    player_t* plr = &players[plrNum];
 
     Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrNum);
 
@@ -765,6 +813,8 @@ void NetSv_NewPlayerEnters(int plrNum)
 
     // Get rid of anybody at the starting spot.
     P_Telefrag(plr->plr->mo);
+
+    NetSv_TellCycleRulesToPlayerAfterTics(plrNum, 5 * TICSPERSEC);
 }
 
 void NetSv_Intermission(int flags, int state, int time)
@@ -1593,7 +1643,8 @@ void P_Telefrag(mobj_t *thing)
  */
 DEFCC(CCmdMapCycle)
 {
-    int         map;
+    int map;
+    int i;
 
     if(!IS_SERVER)
     {
@@ -1610,6 +1661,8 @@ DEFCC(CCmdMapCycle)
             Con_Printf("MapCycle \"%s\" is invalid.\n", mapCycle);
             return false;
         }
+        for(i = 0; i < MAXPLAYERS; ++i)
+            cycleRulesCounter[i] = 0;
         // Warp there.
         NetSv_CycleToMapNum(map);
         cyclingMaps = true;
