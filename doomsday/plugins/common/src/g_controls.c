@@ -492,7 +492,7 @@ DEFCC( CCmdPause )
 
 void G_SetPause(boolean yes)
 {
-    if(Hu_MenuIsActive() || Hu_IsMessageActive())
+    if(Hu_MenuIsActive() || Hu_IsMessageActive() || IS_CLIENT)
         return; // No change.
 
     if(yes)
