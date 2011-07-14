@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 451 <--
+; --> 452 <--
 ; Free ordinals:
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
@@ -462,6 +462,7 @@ EXPORTS
     M_SkipWhite                 @141 NONAME
     M_FindWhite                 @142 NONAME
     M_StrCatQuoted              @248 NONAME
+    RNG_RandByte                @452 NONAME
     M_ClearBox                  @208 NONAME
     M_AddToBox                  @209 NONAME
     M_ScreenShot                @210 NONAME
