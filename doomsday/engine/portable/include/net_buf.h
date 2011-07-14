@@ -37,7 +37,7 @@
 #define SPF_CONFIRM     0x40000000 // Make sure it's received
 #define SPF_ORDERED     0x80000000 // Send in order & confirm
 
-#define NETBUFFER_MAXDATA   32768
+#define NETBUFFER_MAXDATA   0x40000 // 256 KB
 
 // Each network node is identified by a number.
 typedef unsigned int nodeid_t;

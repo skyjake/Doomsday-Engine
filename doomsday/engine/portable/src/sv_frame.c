@@ -49,6 +49,9 @@
 // possible connection).
 #define MINIMUM_FRAME_SIZE  4096 // bytes
 
+// The first frame should contain as much information as possible.
+#define MAX_FIRST_FRAME_SIZE    256000
+
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).
 #define FRAME_SIZE_FACTOR   13
@@ -911,7 +914,7 @@ void Sv_SendFrame(int plrNum)
 
     // Allow more info for the first frame.
     if(pool->isFirst)
-        maxFrameSize = maxDatagramSize;
+        maxFrameSize = MAX_FIRST_FRAME_SIZE;
 
     // If this is the first frame after a map change, use the special
     // first frame packet type.
