@@ -1291,6 +1291,7 @@ typedef struct ticcmd_s {
 #define DDPF_VIEW_FILTER        0x0800 // Cl & Sv: Draw the current view filter.
 #define DDPF_REMOTE_VIEW_FILTER 0x1000 // Client: Draw the view filter (has been set remotely).
 #define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
+#define DDPF_UNDEFINED_POS      0x2000 // Position of the player is undefined (view not drawn).
 
 #define PLAYERNAMELEN       81
 

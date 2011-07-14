@@ -808,7 +808,7 @@ void GL_Restore2DState(int step)
 void GL_ProjectionMatrix(void)
 {
     // We're assuming pixels are squares.
-    float               aspect = viewpw / (float) viewph;
+    float aspect = viewpw / (float) viewph;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();

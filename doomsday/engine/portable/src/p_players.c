@@ -101,7 +101,7 @@ int P_ConsoleToLocal(int playerNum)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         int console = (i + consolePlayer) % DDMAXPLAYERS;
-        player_t*           plr = &ddPlayers[console];
+        player_t* plr = &ddPlayers[console];
 
         if(console == playerNum)
         {

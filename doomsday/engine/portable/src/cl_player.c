@@ -208,6 +208,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         P_MobjSetPos(mo, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
         mo->reactionTime = 18;
 
+        // The position is now known.
+        ddpl->flags &= ~DDPF_UNDEFINED_POS;
+
         ClPlayer_UpdatePos(plrNum);
     }
 

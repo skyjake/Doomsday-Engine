@@ -943,7 +943,7 @@ void R_RenderViewPorts(void)
 
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t*           plr = &ddPlayers[i];
+            player_t* plr = &ddPlayers[i];
 
             if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
                 continue;
@@ -966,7 +966,7 @@ void R_RenderViewPorts(void)
             displayPlayer = viewports[p].console;
             R_UseViewPort(viewports + p);
 
-            if(displayPlayer < 0)
+            if(displayPlayer < 0 || ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS)
             {
                 R_RenderBlankView();
                 continue;

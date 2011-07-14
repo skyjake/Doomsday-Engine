@@ -454,6 +454,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    p->plr->flags &= ~DDPF_UNDEFINED_POS;
     p->jumpTics = 0;
     p->airCounter = 0;
     mo->player = p;
@@ -604,6 +605,10 @@ void P_SpawnClient(int plrNum)
 
     // The server will fix the player's position and angles soon after.
     spawnPlayer(plrNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
+
+    // The mobj was just spawned onto invalid coordinates. The view cannot
+    // be drawn until we receive the right coords.
+    players[plrNum].plr->flags |= DDPF_UNDEFINED_POS;
 }
 
 /**

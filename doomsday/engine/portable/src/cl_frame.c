@@ -398,8 +398,15 @@ void Cl_Frame2Received(int packetType)
 #endif
         }
 
+#ifdef _DEBUG
+        if(!gotFrame)
+        {
+            Con_Message("Cl_Frame2Received: First frame received.\n");
+        }
+#endif
+
         // We have now received a frame.
-        gotFrame = true;
+        gotFrame = true;       
 
         // Reset the predict counter.
         //predicted_tics = 0;
