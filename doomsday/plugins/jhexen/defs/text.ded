@@ -698,6 +698,11 @@ Text {
 }
 
 Text {
+  ID = "DISCONNECT";
+  Text = "Really disconnect?";
+}
+
+Text {
   ID = "RANDOMPLAYERCLASS";
   Text = "Random";
 }

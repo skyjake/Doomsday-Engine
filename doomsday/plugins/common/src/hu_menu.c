@@ -3573,7 +3573,7 @@ int M_QuitResponse(msgresponse_t response, void* context)
 
 void M_QuitDOOM(int option, void* context)
 {
-    const char*         endString;
+    const char* endString;
 
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
@@ -3589,7 +3589,14 @@ int M_EndGameResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        G_StartTitle();
+        if(IS_CLIENT)
+        {
+            DD_Execute(false, "net disconnect");
+        }
+        else
+        {
+            G_StartTitle();
+        }
         return true;
     }
 
@@ -3604,13 +3611,14 @@ void M_EndGame(int option, void* context)
         return;
     }
 
+    /*
     if(IS_NETGAME)
     {
         Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, NULL);
         return;
-    }
+    }*/
 
-    Hu_MsgStart(MSG_YESNO, ENDGAME, M_EndGameResponse, NULL);
+    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, M_EndGameResponse, NULL);
 }
 
 void M_ChangeMessages(int option, void* context)

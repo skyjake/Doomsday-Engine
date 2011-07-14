@@ -905,6 +905,11 @@ Text {
 }
 
 Text {
+  ID = "DISCONNECT";
+  Text = "Really disconnect?";
+}
+
+Text {
   ID = "HUSTR_E1M1";
   Text = "E1M1: The Docks";
 }
