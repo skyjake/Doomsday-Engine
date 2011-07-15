@@ -124,6 +124,8 @@ boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
+    if(!mo->info) return;
+
     if(mo->type == MT_WHIRLWIND)
     {
         if(++mo->special2 < 60)

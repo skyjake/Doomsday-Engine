@@ -585,6 +585,11 @@ boolean ClMobj_IsValid(mobj_t* mo)
         // Should not use this for playsim.
         return false;
     }
+    if(!mo->info)
+    {
+        // We haven't yet received info about the mobj's type?
+        return false;
+    }
     return true;
 }
 
