@@ -1376,7 +1376,7 @@ void GL_ReleaseSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    Materials_DeleteGLTextures(MN_SYSTEM_NAME);
+    Materials_ReleaseGLTextures(MN_SYSTEM_NAME);
     UI_ReleaseTextures();
 
     Rend_ParticleReleaseSystemTextures();

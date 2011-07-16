@@ -35,9 +35,6 @@ struct material_snapshot_s;
 
 void P_MaterialsRegister(void);
 
-/**
- * One time initialization of the materials list.
- */
 void Materials_Initialize(void);
 
 /**
@@ -82,7 +79,7 @@ void Materials_Precache(struct material_s* mat, struct materialvariantspecificat
  * @param mnamespace @c MN_ANY = delete everything, ELSE
  *      Only delete those currently in use by materials in the specified namespace.
  */
-void Materials_DeleteGLTextures(const char* namespaceName);
+void Materials_ReleaseGLTextures(const char* namespaceName);
 
 void Materials_Ticker(timespan_t elapsed);
 

@@ -725,7 +725,7 @@ static void releaseGLTexturesForMaterial(material_t* mat)
     Material_IterateVariants(mat, releaseGLTexturesForMaterialWorker, NULL);
 }
 
-void Materials_DeleteGLTextures(const char* namespaceName)
+void Materials_ReleaseGLTextures(const char* namespaceName)
 {
     materialnamespaceid_t namespaceId = MN_ANY;
 
@@ -735,7 +735,7 @@ void Materials_DeleteGLTextures(const char* namespaceName)
         if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
 #if _DEBUG
-            Con_Message("Warning:Materials_DeleteGLTextures: Attempt to delete in "
+            Con_Message("Warning:Materials_ReleaseGLTextures: Attempt to delete in "
                 "unknown namespace (%s), ignoring.\n", namespaceName);
 #endif
             return;
@@ -749,7 +749,7 @@ void Materials_DeleteGLTextures(const char* namespaceName)
     }
 
     if(!VALID_MATERIALNAMESPACEID(namespaceId))
-        Con_Error("Materials_DeleteGLTextures: Internal error, "
+        Con_Error("Materials_ReleaseGLTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) namespaceId);
 
     if(bindings)
