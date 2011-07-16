@@ -263,6 +263,9 @@ void UI_LoadTextures(void)
     };
     int i;
 
+    if(isDedicated)
+        return;
+
     for(i = 0; i < NUM_UITEXTURES; ++i)
     {
         image_t image;
