@@ -1130,13 +1130,13 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     Materials_Shutdown();
 
     VERBOSE(
-        if(!DD_IsNullGameInfo(DD_GameInfo()))
+        if(!DD_IsNullGameInfo(info))
         {
             Con_Message("Selecting game '%s'...\n", Str_Text(GameInfo_IdentityKey(info)));
         }
         else if(!isReload)
         {
-            Con_Message("Unloading game...\n");
+            Con_Message("Unloaded game.\n");
         }
     )
 
