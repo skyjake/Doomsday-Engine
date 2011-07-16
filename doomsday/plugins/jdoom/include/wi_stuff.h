@@ -89,6 +89,8 @@ void WI_Register(void);
  */
 void WI_Init(wbstartstruct_t* wbstartstruct);
 
+void WI_Shutdown(void);
+
 /**
  * Process game tic for the intermission.
  */

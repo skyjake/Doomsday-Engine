@@ -488,5 +488,6 @@ void D_PostInit(void)
 
 void D_Shutdown(void)
 {
+    WI_Shutdown();
     G_CommonShutdown();
 }

@@ -1438,6 +1438,15 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
     }
 }
 
+void WI_Shutdown(void)
+{
+    if(animStates)
+    {
+        Z_Free(animStates);
+        animStates = NULL;
+    }
+}
+
 void WI_SetState(interludestate_t st)
 {
     switch(st)
