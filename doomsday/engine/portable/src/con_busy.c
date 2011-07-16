@@ -39,6 +39,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
+#include "de_render.h"
 #include "de_refresh.h"
 #include "de_ui.h"
 #include "de_misc.h"
@@ -236,7 +237,7 @@ static void Con_BusyLoadTextures(void)
 {
     image_t             image;
 
-    if(isDedicated)
+    if(isDedicated || novideo)
         return;
 
     if(!(busyMode & BUSYF_STARTUP))
@@ -350,8 +351,8 @@ void Con_ReleaseScreenshotTexture(void)
  */
 static void Con_BusyLoop(void)
 {
-    boolean canDraw = !isDedicated;
-    boolean canUpload = !(isDedicated || (busyMode & BUSYF_NO_UPLOADS));
+    boolean canDraw = !(isDedicated || novideo);
+    boolean canUpload = (canDraw && !(busyMode & BUSYF_NO_UPLOADS));
     timespan_t startTime = Sys_GetRealSeconds();
 
     if(canDraw)
