@@ -226,25 +226,33 @@ void Con_Register(void)
     Con_DataRegister();
 }
 
-static void resizeHistoryBuffer(void)
+void Con_ResizeHistoryBuffer(void)
 {
-    assert(ConsoleInited);
-    {
     int maxLength = 70;
-    float cw;
 
-    FR_SetFont(consoleFont);
-    FR_LoadDefaultAttrib();
-    FR_SetTracking(consoleFontTracking);
-    FR_SetLeading(consoleFontLeading);
-
-    cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
-    if(0 != cw)
+    if(!ConsoleInited)
     {
-        maxLength = MIN_OF(theWindow->width / cw - 2, 250);
+        Con_Error("Con_ResizeHistoryBuffer: Console is not yet initialised.");
+        exit(1); // Unreachable.
     }
-    Con_BufferSetMaxLineLength(Con_ConsoleBuffer(), maxLength);
+
+    if(!novideo && !isDedicated)
+    {
+        float cw;
+
+        FR_SetFont(consoleFont);
+        FR_LoadDefaultAttrib();
+        FR_SetTracking(consoleFontTracking);
+        FR_SetLeading(consoleFontLeading);
+
+        cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
+        if(0 != cw)
+        {
+            maxLength = MIN_OF(theWindow->width / cw - 2, 250);
+        }
     }
+
+    Con_BufferSetMaxLineLength(Con_HistoryBuffer(), maxLength);
 }
 
 static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
@@ -427,12 +435,12 @@ char* Con_CommandLine(void)
     return cmdLine;
 }
 
-cbuffer_t* Con_ConsoleBuffer(void)
+cbuffer_t* Con_HistoryBuffer(void)
 {
     return histBuf;
 }
 
-uint Con_CursorPosition(void)
+uint Con_CommandLineCursorPosition(void)
 {
     return cmdCursor;
 }
@@ -451,7 +459,7 @@ void Con_SetFont(fontnum_t font)
     if(consoleFont == font)
         return;
     consoleFont = font;
-    resizeHistoryBuffer();
+    Con_ResizeHistoryBuffer();
 }
 
 con_textfilter_t Con_PrintFilter(void)
@@ -486,7 +494,7 @@ void Con_SetFontScale(float scaleX, float scaleY)
         consoleFontScale[0] = MAX_OF(.5f, scaleX);
     if(scaleY > 0.0001f)
         consoleFontScale[1] = MAX_OF(.5f, scaleY);
-    resizeHistoryBuffer();
+    Con_ResizeHistoryBuffer();
 }
 
 float Con_FontLeading(void)
@@ -501,7 +509,7 @@ void Con_SetFontLeading(float value)
     if(!ConsoleInited)
         Con_Error("Con_SetFontLeading: Console is not yet initialised.");
     consoleFontLeading = MAX_OF(.1f, value);
-    resizeHistoryBuffer();
+    Con_ResizeHistoryBuffer();
 }
 
 int Con_FontTracking(void)
@@ -516,7 +524,7 @@ void Con_SetFontTracking(int value)
     if(!ConsoleInited)
         Con_Error("Con_SetFontTracking: Console is not yet initialised.");
     consoleFontTracking = MAX_OF(0, value);
-    resizeHistoryBuffer();
+    Con_ResizeHistoryBuffer();
 }
 
 /**

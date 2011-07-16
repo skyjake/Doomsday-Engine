@@ -589,8 +589,8 @@ static void drawConsole(float consoleAlpha)
     static const cbline_t** lines = 0;
     static int bufferSize = 0;
 
-    cbuffer_t* buffer = Con_ConsoleBuffer();
-    uint cmdCursor = Con_CursorPosition();
+    cbuffer_t* buffer = Con_HistoryBuffer();
+    uint cmdCursor = Con_CommandLineCursorPosition();
     char* cmdLine = Con_CommandLine();
     float scale[2], y, fontScaledY, gtosMulY = theWindow->height / 200.0f;
     char buff[LOCALBUFFSIZE];
@@ -714,9 +714,8 @@ static void drawConsole(float consoleAlpha)
 
     y = ConsoleY * gtosMulY - (lineHeight * scale[1]) - textOffsetY;
 
-    cmdLineLength = strlen(cmdLine);
-    maxLineLength = Con_BufferMaxLineLength(buffer);
-    maxLineLength -= 1; /*prompt length*/
+    cmdLineLength = (uint)strlen(cmdLine);
+    maxLineLength = Con_BufferMaxLineLength(buffer) - 1/*prompt length*/;
 
     if(cmdLineLength >= maxLineLength)
     {

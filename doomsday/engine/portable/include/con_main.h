@@ -177,11 +177,13 @@ boolean Con_IsLocked(void);
 
 boolean Con_InputMode(void);
 
-uint Con_CursorPosition(void);
-
 char* Con_CommandLine(void);
 
-cbuffer_t* Con_ConsoleBuffer(void);
+uint Con_CommandLineCursorPosition(void);
+
+cbuffer_t* Con_HistoryBuffer(void);
+
+void Con_ResizeHistoryBuffer(void);
 
 fontnum_t Con_Font(void);
 
