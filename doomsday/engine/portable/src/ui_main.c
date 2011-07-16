@@ -162,7 +162,8 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
 
     // Change font.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    uiFontHgt = FR_TextHeight("W");
+    FR_LoadDefaultAttrib();
+    uiFontHgt = FR_SingleLineHeight("UI");
 
     // Should the mouse cursor be visible?
     uiShowMouse = !ArgExists("-nomouse");
