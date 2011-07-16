@@ -84,6 +84,8 @@ void GL_LoadSystemTextures(void);
 
 void GL_ClearTextureMemory(void);
 
+void GL_PruneTextureVariantSpecifications(void);
+
 /**
  * Runtime textures are not loaded until precached or actually needed.
  * They may be cleared, in which case they will be reloaded when needed.

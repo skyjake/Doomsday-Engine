@@ -532,6 +532,61 @@ static void emptyVariantSpecificationList(variantspecificationlist_t* list)
     }
 }
 
+static int compareTextureVariantWithVariantSpecification(texturevariant_t* tex, void* paramaters)
+{
+    assert(NULL != tex);
+    {
+    texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
+    if(TextureVariant_Spec(tex) == spec)
+        return 1;
+    return 0;
+    }
+}
+
+static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* list)
+{
+    texturevariantspecificationlist_node_t* node = list;
+    int numPruned = 0;
+    while(node)
+    {
+        texturevariantspecificationlist_node_t* next = node->next;
+        int i, result = 0;
+        for(i = 0; i < texturesCount; ++i)
+        {
+            texture_t* tex = textures[i];
+            if(0 != (result = Texture_IterateVariants(tex, compareTextureVariantWithVariantSpecification, (void*)node->spec)))
+                break;
+        }
+        if(result == 0)
+        {
+            destroyVariantSpecification(node->spec);
+            ++numPruned;
+        }
+        node = next;
+    }
+    return numPruned;
+}
+
+static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t specType)
+{
+    assert(texInited);
+    switch(specType)
+    {
+    case TST_GENERAL: return pruneUnusedVariantSpecificationsInList(variantSpecs);
+    case TST_DETAIL:  {
+        int i, numPruned = 0;
+        for(i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
+        {
+            numPruned += pruneUnusedVariantSpecificationsInList(detailVariantSpecs[i]);
+        }
+        return numPruned;
+      }
+    default:
+        Con_Error("Textures::pruneUnusedVariantSpecifications: Invalid variant spec type %i.", (int) specType);
+        exit(1); // Unreachable.
+    }
+}
+
 static void destroyVariantSpecifications(void)
 {
     assert(texInited);
@@ -1332,6 +1387,7 @@ void GL_ResetTextureManager(void)
     if(!texInited)
         return;
     GL_ClearTextureMemory();
+    GL_PruneTextureVariantSpecifications();
 }
 
 int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
@@ -1473,6 +1529,7 @@ void GL_DestroyRuntimeTextures(void)
     destroyTextures(TN_MODELREFLECTIONSKINS);
     destroyTextures(TN_LIGHTMAPS);
     destroyTextures(TN_FLAREMAPS);
+    GL_PruneTextureVariantSpecifications();
 }
 
 void GL_DestroySystemTextures(void)
@@ -1480,6 +1537,7 @@ void GL_DestroySystemTextures(void)
     if(!texInited)
         Con_Error("GL_DestroySystemTextures: Textures collection not yet initialized.");
     destroyTextures(TN_SYSTEM);
+    GL_PruneTextureVariantSpecifications();
 }
 
 void GL_DestroyTextures(void)
@@ -1585,6 +1643,15 @@ void GL_ClearTextureMemory(void)
     if(!texInited)
         return;
     GL_ReleaseRuntimeTextures();
+}
+
+void GL_PruneTextureVariantSpecifications(void)
+{
+    int numPruned = pruneUnusedVariantSpecifications(TST_GENERAL) +
+                    pruneUnusedVariantSpecifications(TST_DETAIL);
+#if _DEBUG
+    Con_Message("Pruned %i unused texture variant %s.", numPruned, numPruned == 1? "specification" : "specifications");
+#endif
 }
 
 void GL_InitImage(image_t* img)
@@ -3143,6 +3210,8 @@ static int doTexReset(void* parm)
     GL_LoadSystemFonts();
     Rend_ParticleLoadExtraTextures();
     R_SkyUpdate();
+
+    GL_PruneTextureVariantSpecifications();
 
     if(usingBusyMode)
     {
