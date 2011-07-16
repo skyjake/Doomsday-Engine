@@ -192,15 +192,10 @@ void Rend_Init(void)
     RL_Init(); // Rendering lists.
 }
 
-/**
- * Used to be called before starting a new map.
- */
+/// World/map renderer reset.
 void Rend_Reset(void)
 {
-    // Textures are deleted (at least skies need this???).
-    GL_ReleaseRuntimeTextures();
     LO_Clear(); // Free lumobj stuff.
-
     if(dlBBox)
         GL_DeleteLists(dlBBox, 1);
     dlBBox = 0;
