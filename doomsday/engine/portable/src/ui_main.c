@@ -290,7 +290,7 @@ void UI_LoadTextures(void)
     }
 }
 
-void UI_ClearTextures(void)
+void UI_ReleaseTextures(void)
 {
     glDeleteTextures(NUM_UITEXTURES, (const GLuint*) uiTextures);
     memset(uiTextures, 0, sizeof(uiTextures));
