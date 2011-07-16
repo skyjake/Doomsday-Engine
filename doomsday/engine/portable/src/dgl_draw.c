@@ -503,6 +503,9 @@ void DGL_Begin(dglprimtype_t mode)
 
 void DGL_End(void)
 {
+    if(isDedicated)
+        return;
+
     if(primLevel > 0)
     {
         primLevel--;
