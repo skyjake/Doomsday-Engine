@@ -2429,6 +2429,17 @@ D_CMD(Unload)
 
 D_CMD(Reset)
 {
+    DD_UpdateEngineState();
+    return true;
+}
+
+D_CMD(ReloadGame)
+{
+    if(DD_IsNullGameInfo(DD_GameInfo()))
+    {
+        Con_Message("No game is presently loaded.");
+        return false;
+    }
     DD_ChangeGame2(DD_GameInfo(), true);
     return true;
 }
