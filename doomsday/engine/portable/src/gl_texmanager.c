@@ -1404,7 +1404,7 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseGLTexturesByNamespace(TN_MODELREFLECTIONSKINS);
     GL_ReleaseGLTexturesByNamespace(TN_LIGHTMAPS);
     GL_ReleaseGLTexturesByNamespace(TN_FLAREMAPS);
-    GL_DeleteRawImages();
+    GL_ReleaseTexturesForRawImages();
 
     Rend_ParticleReleaseExtraTextures();
 }
@@ -3021,7 +3021,7 @@ void GL_DoResetDetailTextures(void)
     GL_ReleaseGLTexturesByNamespace(TN_DETAILS);
 }
 
-void GL_DeleteRawImages(void)
+void GL_ReleaseTexturesForRawImages(void)
 {
     rawtex_t** rawTexs, **ptr;
 
@@ -3583,7 +3583,7 @@ D_CMD(ResetTextures)
     if(argc == 2 && !stricmp(argv[1], "raw"))
     {
         // Reset just raw images.
-        GL_DeleteRawImages();
+        GL_ReleaseTexturesForRawImages();
     }
     else
     {

@@ -102,7 +102,7 @@ void GL_ReleaseSystemTextures(void);
  * used as interlude backgrounds, title screens, etc. Called from
  * DD_SetupLevel.
  */
-void GL_DeleteRawImages(void);
+void GL_ReleaseTexturesForRawImages(void);
 
 /**
  * Called when changing the value of any cvar affecting texture quality which
