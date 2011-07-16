@@ -187,7 +187,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     size_t          len;
     CHAR_INFO       line[LINELEN];
 
-    if(!winManagerInited)
+    if(!winManagerInited || !text)
         return;
 
     win = getWindow(idx - 1);

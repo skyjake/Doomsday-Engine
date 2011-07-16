@@ -136,7 +136,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     char                ch;
     int                 maxPos[2];
 
-    if(!winManagerInited)
+    if(!winManagerInited || !text)
         return;
 
     if(!novideo && idx != 1)
