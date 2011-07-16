@@ -190,8 +190,6 @@ void UI_End(void)
     // Restore full alpha.
     uiAlpha = uiTargetAlpha = 1.0;
 
-    FR_SetFont(glFontFixed);
-
     // Update the secondary title and the game status.
     Rend_ConsoleUpdateTitle();
 
