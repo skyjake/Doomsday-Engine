@@ -387,6 +387,7 @@ void R_Update(void)
 
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.
+    R_SkyUpdate();
 
     { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
