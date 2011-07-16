@@ -198,7 +198,7 @@ void Rend_Init(void)
 void Rend_Reset(void)
 {
     // Textures are deleted (at least skies need this???).
-    GL_ClearRuntimeTextures();
+    GL_ReleaseRuntimeTextures();
     LO_Clear(); // Free lumobj stuff.
 
     if(dlBBox)

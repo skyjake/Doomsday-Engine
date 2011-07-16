@@ -956,7 +956,6 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_InitModels();
 
     UI_LoadTextures();
-    //GL_LoadSystemFonts();
     Rend_ParticleLoadExtraTextures();
 
     Def_PostInit();
@@ -1051,9 +1050,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     S_Reset();
     Demo_StopPlayback();
 
-    GL_ClearRuntimeTextures();
+    GL_ReleaseRuntimeTextures();
     //GL_ShutdownFont();
-    UI_ClearTextures();
+    UI_ReleaseTextures();
 
     // If a game is presently loaded; unload it.
     if(!DD_IsNullGameInfo(DD_GameInfo()))

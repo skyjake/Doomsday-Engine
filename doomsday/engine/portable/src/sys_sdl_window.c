@@ -740,7 +740,7 @@ extern boolean usingFog;
 
             R_UnloadVectorGraphics();
             Rend_ParticleReleaseExtraTextures();
-            GL_ClearSystemTextures();
+            GL_ReleaseSystemTextures();
         }
 
         if(createContext(window->width, window->height, window->normal.bpp,

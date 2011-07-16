@@ -1203,7 +1203,7 @@ extern boolean usingFog;
 
             R_UnloadVectorGraphics();
             Rend_ParticleReleaseExtraTextures();
-            GL_ClearSystemTextures();
+            GL_ReleaseSystemTextures();
 
             wglMakeCurrent(NULL, NULL);
             wglDeleteContext(window->normal.glContext);

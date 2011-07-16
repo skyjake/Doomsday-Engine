@@ -89,13 +89,13 @@ void GL_ClearTextureMemory(void);
  * Runtime textures are not loaded until precached or actually needed.
  * They may be cleared, in which case they will be reloaded when needed.
  */
-void GL_ClearRuntimeTextures(void);
+void GL_ReleaseRuntimeTextures(void);
 
 /**
  * System textures are loaded at startup and remain in memory all the time.
  * After clearing they must be manually reloaded.
  */
-void GL_ClearSystemTextures(void);
+void GL_ReleaseSystemTextures(void);
 
 /**
  * To save texture memory, delete all raw image textures. Raw images are

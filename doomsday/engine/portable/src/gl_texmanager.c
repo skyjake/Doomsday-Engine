@@ -1322,7 +1322,7 @@ void GL_ShutdownTextureManager(void)
     if(!texInited)
         return; // Already been here?
 
-    GL_ClearSystemTextures();
+    GL_ReleaseSystemTextures();
     destroyVariantSpecifications();
     destroyTextures();
     texInited = false;
@@ -1359,7 +1359,7 @@ void GL_LoadSystemTextures(void)
     R_InitSystemTextures();
 }
 
-void GL_ClearSystemTextures(void)
+void GL_ReleaseSystemTextures(void)
 {
     if(!texInited)
         return;
@@ -1383,7 +1383,7 @@ void GL_ClearSystemTextures(void)
     R_DestroySystemTextures();
 }
 
-void GL_ClearRuntimeTextures(void)
+void GL_ReleaseRuntimeTextures(void)
 {
     if(!texInited)
         return;
@@ -1413,8 +1413,7 @@ void GL_ClearTextureMemory(void)
 {
     if(!texInited)
         return;
-    // Delete runtime textures (textures, flats, ...)
-    GL_ClearRuntimeTextures();
+    GL_ReleaseRuntimeTextures();
 }
 
 void GL_InitImage(image_t* img)
