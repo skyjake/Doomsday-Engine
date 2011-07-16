@@ -38,10 +38,9 @@ typedef struct texture_variantlist_node_s {
     texturevariant_t* variant;
 } texture_variantlist_node_t;
 
-texture_t* Texture_Construct(textureid_t id, const char rawName[9],
-    texturenamespaceid_t texNamespace, int index)
+texture_t* Texture_Construct(textureid_t id, const char name[9], int index)
 {
-    assert(rawName && rawName[0] && VALID_TEXTURENAMESPACE(texNamespace));
+    assert(name && name[0]);
     {
     texture_t* tex;
     if(NULL == (tex = (texture_t*) malloc(sizeof(*tex))))
@@ -52,23 +51,19 @@ texture_t* Texture_Construct(textureid_t id, const char rawName[9],
     tex->_width = tex->_height = 0;
     tex->_variants = NULL;
     tex->_index = index;
-    tex->_texNamespace = texNamespace;
+    tex->_texNamespace = TN_ANY;
+    tex->_texNamespaceHashNode = NULL;
+    strncpy(tex->_name, name, sizeof(tex->_name));
     memset(tex->_analyses, 0, sizeof(tex->_analyses));
 
-    // Prepare name for hashing.
-    memset(tex->_name, 0, sizeof(tex->_name));
-    { int i;
-    for(i = 0; *rawName && i < 8; ++i, rawName++)
-        tex->_name[i] = tolower(*rawName);
-    }
     return tex;
     }
 }
 
 texture_t* Texture_Construct2(textureid_t id, const char rawName[9],
-    texturenamespaceid_t texNamespace, int index, int width, int height)
+    int index, int width, int height)
 {
-    texture_t* tex = Texture_Construct(id, rawName, texNamespace, index);
+    texture_t* tex = Texture_Construct(id, rawName, index);
     Texture_SetDimensions(tex, width, height);
     return tex;
 }
@@ -232,6 +227,20 @@ texturenamespaceid_t Texture_Namespace(const texture_t* tex)
 {
     assert(tex);
     return tex->_texNamespace;
+}
+
+struct texturenamespace_hashnode_s* Texture_NamespaceHashNode(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_texNamespaceHashNode;
+}
+
+void Texture_SetNamespace(texture_t* tex, texturenamespaceid_t texNamespace,
+    struct texturenamespace_hashnode_s* texNamespaceHashNode)
+{
+    assert(tex && VALID_TEXTURENAMESPACE(texNamespace) && texNamespaceHashNode);
+    tex->_texNamespace = texNamespace;
+    tex->_texNamespaceHashNode = texNamespaceHashNode;
 }
 
 int Texture_IterateVariants(texture_t* tex,

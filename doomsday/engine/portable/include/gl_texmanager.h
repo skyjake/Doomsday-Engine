@@ -74,7 +74,6 @@ void GL_InitTextureManager(void);
 void GL_ResetTextureManager(void);
 
 void GL_ShutdownTextureManager(void);
-void GL_DestroyTextures(void);
 
 void GL_TexReset(void);
 
@@ -103,6 +102,12 @@ void GL_ReleaseSystemTextures(void);
  * DD_SetupLevel.
  */
 void GL_ReleaseTexturesForRawImages(void);
+
+void GL_DestroyTextures(void);
+
+void GL_DestroyRuntimeTextures(void);
+
+void GL_DestroySystemTextures(void);
 
 /**
  * Called when changing the value of any cvar affecting texture quality which

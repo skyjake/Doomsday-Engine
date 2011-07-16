@@ -79,10 +79,12 @@ typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
 
 typedef struct texturenamespace_hashnode_s {
     struct texturenamespace_hashnode_s* next;
-    uint textureIndex; // 1-based index
+    texture_t* tex;
 } texturenamespace_hashnode_t;
 
 #define TEXTURENAMESPACE_HASH_SIZE (512)
+
+static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
 
 typedef struct texturenamespace_s {
     texturenamespace_hashnode_t* hashTable[TEXTURENAMESPACE_HASH_SIZE];
@@ -91,6 +93,9 @@ typedef struct texturenamespace_s {
 D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
+
+static uint hashForTextureName(const char* name);
+static texturenamespace_hashnode_t* findNamespaceHashNodeForTextureByName(const char* name, uint hash, texturenamespaceid_t texNamespace);
 
 void GL_DoResetDetailTextures(void);
 
@@ -175,6 +180,87 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
+}
+
+static __inline texture_t* getTexture(textureid_t id)
+{
+    if(id > 0 && id <= texturesCount)
+        return textures[id - 1];
+    return NULL;
+}
+
+static textureid_t findTextureId(texture_t* tex)
+{
+    int i;
+    for(i = 0; i < texturesCount; ++i)
+        if(textures[i] == tex)
+            return (textureid_t)(i+1); // 1-based index.
+    return 0; // Not linked.
+}
+
+static texturenamespace_t* textureNamespaceForId(texturenamespaceid_t id)
+{
+    if(!VALID_TEXTURENAMESPACE(id))
+    {
+        Con_Error("textureNamespaceForId: Invalid id %i.", (int) id);
+        exit(1); // Unreachable.
+    }
+    return textureNamespaces + (id-TEXTURENAMESPACE_FIRST);
+}
+
+static texturevariantspecification_t* unlinkVariantSpecification(texturevariantspecification_t* spec)
+{
+    assert(texInited && spec);
+    {
+    variantspecificationlist_t** listHead;
+
+    // Select list head according to variant specification type.
+    switch(spec->type)
+    {
+    case TST_GENERAL:   listHead = &variantSpecs; break;
+    case TST_DETAIL: {
+        int hash = hashDetailVariantSpecification(TS_DETAIL(spec));
+        listHead = &detailVariantSpecs[hash];
+        break;
+      }
+    }
+
+    if(*listHead)
+    {
+        texturevariantspecificationlist_node_t* node = NULL;
+        if((*listHead)->spec == spec)
+        {
+            node = (*listHead);
+            *listHead = (*listHead)->next;
+        }
+        else
+        {
+            // Find the previous node.
+            texturevariantspecificationlist_node_t* prevNode = (*listHead);
+            while(prevNode->next && prevNode->next->spec != spec)
+            {
+                prevNode = prevNode->next;
+            }
+            if(prevNode)
+            {
+                node = prevNode->next;
+                prevNode->next = prevNode->next->next;
+            }
+        }
+        free(node);
+    }
+
+    return spec;
+    }
+}
+
+static void destroyVariantSpecification(texturevariantspecification_t* spec)
+{
+    assert(NULL != spec);
+    unlinkVariantSpecification(spec);
+    if(spec->type == TST_GENERAL && (TS_GENERAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
+        free(TS_GENERAL(spec)->translated);
+    free(spec);
 }
 
 static texturevariantspecification_t* copyVariantSpecification(
@@ -440,11 +526,7 @@ static void emptyVariantSpecificationList(variantspecificationlist_t* list)
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
-        if(node->spec->type == TST_GENERAL &&
-           (TS_GENERAL(node->spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
-            free(TS_GENERAL(node->spec)->translated);
-        free(node->spec);
-        free(node);
+        destroyVariantSpecification(node->spec);
         node = next;
     }
     }
@@ -536,40 +618,121 @@ static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
     return 0; // Continue iteration.
 }
 
-static void destroyTextures(void)
+static void unlinkTextureFromGlobalList(texture_t* tex)
+{
+    if(texturesCount == 0)
+        return; // Not linked.
+
+    if(texturesCount == 1)
+    {
+        if(*textures != tex)
+        {
+            Con_Error("unlinkTextureFromGlobalList: Internal error, mistracked textures!");
+            exit(1); // Unreachable
+        }
+
+        free(textures);
+        textures = NULL;
+        texturesCount = 0;
+    }
+    else
+    {
+        texturenamespace_hashnode_t* node = Texture_NamespaceHashNode(tex);
+        if(NULL == node)
+        {
+            Con_Error("unlinkTextureFromGlobalList: Internal error, mistracked textures!");
+            exit(1); // Unreachable
+        }
+
+        if(node->tex != textures[texturesCount-1])
+        {
+            uint idx = findTextureId(node->tex)-1/*1-based index*/;
+            memmove(textures + idx, textures + idx + 1, sizeof(*textures) * (texturesCount - 1 - idx));
+        }
+
+        textures = (texture_t**) realloc(textures, sizeof(*textures) * (--texturesCount));
+        if(NULL == textures)
+            Con_Error("unlinkTextureFromGlobalList: Failed on reallocation of %lu bytes when resizing list.",
+                (unsigned long) (sizeof(*textures) * texturesCount));
+    }
+}
+
+static void unlinkTextureFromTextureNamespace(texture_t* tex)
+{
+    assert(NULL != tex);
+    {
+    texturenamespace_hashnode_t* node = Texture_NamespaceHashNode(tex);
+    texturenamespace_t* tn;
+    uint hash;
+
+    if(NULL == node)
+        return; // Not currently linked.
+
+    hash = hashForTextureName(Texture_Name(tex));
+    tn = textureNamespaceForId(Texture_Namespace(tex));
+    if(node == tn->hashTable[hash])
+    {
+        tn->hashTable[hash] = node->next;
+    }
+    else
+    {
+        // Find the node previous.
+        texturenamespace_hashnode_t* prevNode;
+        for(prevNode = tn->hashTable[hash]; prevNode->next && prevNode->next != node;
+            prevNode = prevNode->next) {}
+
+        prevNode->next = node->next;
+    }
+    free(node);
+    }
+}
+
+static void unlinkTexture(texture_t* tex)
+{
+    unlinkTextureFromGlobalList(tex);
+    unlinkTextureFromTextureNamespace(tex);
+}
+
+static void destroyTexture(texture_t* tex)
+{
+    GL_ReleaseGLTexturesForTexture(tex);
+    unlinkTexture(tex);
+    Texture_Destruct(tex);
+}
+
+static void destroyTextures(texturenamespaceid_t texNamespace)
 {
     assert(texInited);
-    if(texturesCount)
-    {
-        int i;
-        for(i = 0; i < texturesCount; ++i)
-        {
-            texture_t* tex = textures[i];
-            GL_ReleaseGLTexturesForTexture(tex);
-            Texture_Destruct(tex);
-        }
-        free(textures);
-    }
-    textures = 0;
-    texturesCount = 0;
 
-    { uint i;
-    for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
+    if(texNamespace == TN_ANY)
     {
-        texturenamespace_t* texNamespace = &textureNamespaces[i];
-        uint j;
-        for(j = 0; j < TEXTURENAMESPACE_HASH_SIZE; ++j)
+        while(textures)
         {
-            texturenamespace_hashnode_t* node = texNamespace->hashTable[j];
+            destroyTexture(*textures);
+        }
+        return;
+    }
+    
+    if(VALID_TEXTURENAMESPACE(texNamespace))
+    {
+        texturenamespace_t* tn = textureNamespaceForId(texNamespace);
+        uint i;
+        for(i = 0; i < TEXTURENAMESPACE_HASH_SIZE; ++i)
+        {
+            texturenamespace_hashnode_t* node = tn->hashTable[i];
+            texturenamespace_hashnode_t* next;
             while(node)
             {
-                texturenamespace_hashnode_t* next = node->next;
-                free(node);
+                next = node->next;
+                destroyTexture(node->tex);
                 node = next;
             }
         }
-        memset(texNamespace->hashTable, 0, sizeof(textureNamespaces[i].hashTable));
-    }}
+        return;
+    }
+
+    Con_Error("destroyTextures: Invalid texture namespace %i.", (int) texNamespace);
+    exit(1); // Unreachable.
 }
 
 static void uploadContent(uploadcontentmethod_t uploadMethod, const texturecontent_t* content)
@@ -1062,34 +1225,28 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     }
 }
 
-static __inline texture_t* getTexture(textureid_t id)
-{
-    if(id > 0 && id <= texturesCount)
-        return textures[id - 1];
-    return NULL;
-}
-
 /**
  * This is a hash function. Given a texture name it generates a
  * somewhat-random number between 0 and TEXTURENAMESPACE_HASH_SIZE.
  *
- * @return              The generated hash index.
+ * @return  The generated hash index.
  */
 static uint hashForTextureName(const char* name)
 {
-    ushort              key = 0;
-    int                 i;
+    ushort key = 0;
+    int i;
 
     // Stop when the name ends.
     for(i = 0; *name; ++i, name++)
     {
+        int c = (int)tolower(*name);
         if(i == 0)
-            key ^= (int) (*name);
+            key ^= c;
         else if(i == 1)
-            key *= (int) (*name);
+            key *= c;
         else if(i == 2)
         {
-            key -= (int) (*name);
+            key -= c;
             i = -1;
         }
     }
@@ -1106,39 +1263,29 @@ static uint hashForTextureName(const char* name)
  * @param type  Specific texture data.
  * @return  Ptr to the found texture_t else, @c NULL.
  */
-static texture_t* getTextureByName(const char* name, uint hash,
-    texturenamespaceid_t texNamespace)
+static texturenamespace_hashnode_t* findNamespaceHashNodeForTextureByName(
+    const char* name, uint hash, texturenamespaceid_t texNamespace)
 {
-    assert(VALID_TEXTURENAMESPACE(texNamespace));
+    texturenamespace_t* tn = NULL;
     if(name && name[0])
+        tn = textureNamespaceForId(texNamespace);
+    if(tn != NULL)
     {
-        const texturenamespace_hashnode_t* node;
-        for(node = textureNamespaces[texNamespace-TEXTURENAMESPACE_FIRST].hashTable[hash]; node; node = node->next)
+        texturenamespace_hashnode_t* node;
+        for(node = tn->hashTable[hash]; node; node = node->next)
         {
-            texture_t* tex = textures[node->textureIndex - 1];
-            if(!strncmp(Texture_Name(tex), name, 8))
-                return tex;
+            if(!strnicmp(Texture_Name(node->tex), name, 8))
+                return node;
         }
     }
     return 0; // Not found.
 }
 
-static const texture_t* findTextureByName(const char* rawName,
-    texturenamespaceid_t texNamespace)
+static const texture_t* findTextureByName(const char* name, texturenamespaceid_t texNamespace)
 {
-    char name[9];
-    uint hash;
-    int n;
-
-    if(!rawName || !rawName[0])
-        return NULL;
-
-    // Prepare 'name'.
-    for(n = 0; *rawName && n < 8; ++n, rawName++)
-        name[n] = tolower(*rawName);
-    name[n] = '\0';
-    hash = hashForTextureName(name);
-    return getTextureByName(name, hash, texNamespace);
+    texturenamespace_hashnode_t* node =
+        findNamespaceHashNodeForTextureByName(name, hashForTextureName(name), texNamespace);
+    return ((node != NULL)? node->tex : 0);
 }
 
 void GL_EarlyInitTextureManager(void)
@@ -1311,10 +1458,35 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     return getDetailVariantSpecificationForContext(contrast);
 }
 
+void GL_DestroyRuntimeTextures(void)
+{
+    if(!texInited)
+        Con_Error("GL_DestroyRuntimeTextures: Textures collection not yet initialized.");
+    destroyTextures(TN_FLATS);
+    destroyTextures(TN_TEXTURES);
+    destroyTextures(TN_PATCHES);
+    destroyTextures(TN_SPRITES);
+    destroyTextures(TN_DETAILS);
+    destroyTextures(TN_REFLECTIONS);
+    destroyTextures(TN_MASKS);
+    destroyTextures(TN_MODELSKINS);
+    destroyTextures(TN_MODELREFLECTIONSKINS);
+    destroyTextures(TN_LIGHTMAPS);
+    destroyTextures(TN_FLAREMAPS);
+}
+
+void GL_DestroySystemTextures(void)
+{
+    if(!texInited)
+        Con_Error("GL_DestroySystemTextures: Textures collection not yet initialized.");
+    destroyTextures(TN_SYSTEM);
+}
+
 void GL_DestroyTextures(void)
 {
-    if(!texInited) return;
-    destroyTextures();
+    GL_DestroyRuntimeTextures();
+    GL_DestroySystemTextures();
+    destroyVariantSpecifications();
 }
 
 void GL_ShutdownTextureManager(void)
@@ -1322,9 +1494,8 @@ void GL_ShutdownTextureManager(void)
     if(!texInited)
         return; // Already been here?
 
-    GL_ReleaseSystemTextures();
     destroyVariantSpecifications();
-    destroyTextures();
+    destroyTextures(TN_ANY);
     texInited = false;
 }
 
@@ -3058,12 +3229,13 @@ void GL_SetAllTexturesMinFilter(int minFilter)
         Texture_IterateVariants(textures[i], setGLMinFilter, (void*)&localMinFilter);
 }
 
-const texture_t* GL_CreateTexture2(const char* rawName, uint index,
+const texture_t* GL_CreateTexture2(const char* name, uint index,
     texturenamespaceid_t texNamespace, int width, int height)
 {
     assert(VALID_TEXTURENAMESPACE(texNamespace));
     {
     texturenamespace_hashnode_t* node;
+    texturenamespace_t* tn;
     texture_t* tex;
     uint hash;
 
@@ -3073,24 +3245,27 @@ const texture_t* GL_CreateTexture2(const char* rawName, uint index,
         return existingTex;
     }
 
-    if(!rawName || !rawName[0])
+    if(!name || !name[0])
         Con_Error("GL_CreateTexture: Cannot create texture with NULL name.");
 
     /**
      * A new texture.
      */
 
-    tex = Texture_Construct2(texturesCount+1/*1-based index*/, rawName,
-        texNamespace, index, width, height);
+    tex = Texture_Construct2(texturesCount+1/*1-based index*/, name,
+        index, width, height);
 
-    // We also hash the name for faster searching.
-    hash = hashForTextureName(Texture_Name(tex));
+    // We hash the name for faster searching.
+    hash = hashForTextureName(name);
+    tn = textureNamespaceForId(texNamespace);
+
     if(NULL == (node = (texturenamespace_hashnode_t*) malloc(sizeof(*node))))
         Con_Error("GL_CreateTexture: Failed on allocation of %lu bytes for "
                   "namespace hashnode.", (unsigned long) sizeof(*node));
-    node->textureIndex = texturesCount + 1; // 1-based index.
-    node->next = textureNamespaces[texNamespace-TEXTURENAMESPACE_FIRST].hashTable[hash];
-    textureNamespaces[texNamespace-TEXTURENAMESPACE_FIRST].hashTable[hash] = node;
+    node->tex = tex;
+    node->next = tn->hashTable[hash];
+    tn->hashTable[hash] = node;
+    Texture_SetNamespace(tex, texNamespace, node);
 
     // Link the new texture into the global list of gltextures.
     textures = (texture_t**) realloc(textures, sizeof(texture_t*) * ++texturesCount);
@@ -3474,12 +3649,15 @@ const texture_t* GL_TextureByUri(const dduri_t* uri)
 
 const texture_t* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace)
 {
-    int i;
-    for(i = 0; i < texturesCount; ++i)
+    if(VALID_TEXTURENAMESPACE(texNamespace))
     {
-        texture_t* tex = textures[i];
-        if(Texture_Namespace(tex) == texNamespace && Texture_TypeIndex(tex) == index)
-            return tex;
+        int i;
+        for(i = 0; i < texturesCount; ++i)
+        {
+            texture_t* tex = textures[i];
+            if(Texture_Namespace(tex) == texNamespace && Texture_TypeIndex(tex) == index)
+                return tex;
+        }
     }
     return 0; // Not found.
 }

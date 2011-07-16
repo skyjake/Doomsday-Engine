@@ -1045,14 +1045,13 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     if(netGame)
         Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
 
-    GL_PurgeDeferredTasks();
-    GL_SetFilter(false);
     S_Reset();
     Demo_StopPlayback();
 
-    GL_ReleaseRuntimeTextures();
-    //GL_ShutdownFont();
+    GL_PurgeDeferredTasks();
+    GL_ClearTextureMemory();
     UI_ReleaseTextures();
+    GL_SetFilter(false);
 
     // If a game is presently loaded; unload it.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
@@ -1096,8 +1095,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         R_ClearPatchTexs();
         R_DestroyColorPalettes();
 
-        /// \fixme dj: We do not want to destroy *everything*!
-        GL_DestroyTextures();
+        GL_DestroyRuntimeTextures();
 
         Sfx_InitLogical();
         P_InitThinkerLists(0x1|0x2);
@@ -2230,7 +2228,8 @@ materialnamespaceid_t DD_ParseFontNamespace(const char* str)
 
 const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
 {
-    static const ddstring_t namespaceNames[TEXTURENAMESPACE_COUNT] = {
+    static const ddstring_t namespaceNames[TEXTURENAMESPACE_COUNT+1] = {
+        /* No namespace name */         { "" },
         /* TN_SYSTEM */                 { TN_SYSTEM_NAME },
         /* TN_FLATS */                  { TN_FLATS_NAME  },
         /* TN_TEXTURES */               { TN_TEXTURES_NAME },
@@ -2245,8 +2244,8 @@ const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
         /* TN_FLAREMAPS */              { TN_FLAREMAPS_NAME }
     };
     if(VALID_TEXTURENAMESPACE(id))
-        return &namespaceNames[id - TEXTURENAMESPACE_FIRST];
-    return NULL;
+        return namespaceNames + 1 + (id - TEXTURENAMESPACE_FIRST);
+    return namespaceNames + 0;
 }
 
 materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
