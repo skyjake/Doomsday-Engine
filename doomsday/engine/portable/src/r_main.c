@@ -89,6 +89,8 @@ float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
 
+fontnum_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int rendCameraSmooth = true; // Smoothed by default.
@@ -126,6 +128,78 @@ void R_Register(void)
     C_CMD("viewgrid", "ii", ViewGrid);
 
     P_MaterialsRegister();
+}
+
+const char* R_ChooseFixedFont(void)
+{
+    if(theWindow->width < 300)
+        return "console11";
+    if(theWindow->width > 768)
+        return "console18";
+    return "console14";
+}
+
+const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
+{
+    const int SMALL_LIMIT = 500;
+    const int MED_LIMIT = 800;
+
+    switch(style)
+    {
+    default:
+        return (resY < SMALL_LIMIT ? "normal12" :
+                resY < MED_LIMIT   ? "normal18" :
+                                     "normal24");
+
+    case FS_LIGHT:
+        return (resY < SMALL_LIMIT ? "normallight12" :
+                resY < MED_LIMIT   ? "normallight18" :
+                                     "normallight24");
+
+    case FS_BOLD:
+        return (resY < SMALL_LIMIT ? "normalbold12" :
+                resY < MED_LIMIT   ? "normalbold18" :
+                                     "normalbold24");
+    }
+}
+
+static fontnum_t loadSystemFont(const char* name)
+{
+    assert(name);
+    {
+    ddstring_t searchPath, *filepath;
+    font_t* font;
+    dduri_t* path;
+
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
+    path = Uri_Construct2(Str_Text(&searchPath), RC_NULL);
+    Str_Clear(&searchPath);
+    Str_Appendf(&searchPath, FN_SYSTEM_NAME":%s", name);
+
+    filepath = Uri_Resolved(path);
+    Uri_Destruct(path);
+    font = Fonts_LoadExternal(Str_Text(&searchPath), Str_Text(filepath));
+    Str_Free(&searchPath);
+    if(filepath)
+        Str_Delete(filepath);
+
+    if(font == NULL)
+    {
+        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
+        return 0;
+    }
+    return Fonts_ToIndex(font);
+    }
+}
+
+void R_LoadSystemFonts(void)
+{
+    fontFixed = loadSystemFont(R_ChooseFixedFont());
+    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->width, theWindow->height));
+    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->width, theWindow->height));
+    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  theWindow->width, theWindow->height));
+
+    Con_SetFont(fontFixed);
 }
 
 boolean R_IsSkySurface(const surface_t* suf)
@@ -350,6 +424,7 @@ boolean R_SetViewGrid(int numCols, int numRows)
  */
 void R_Init(void)
 {
+    R_LoadSystemFonts();
     R_InitColorPalettes();
     R_InitTranslationTables();
     R_InitRawTexs();

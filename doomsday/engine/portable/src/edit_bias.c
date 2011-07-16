@@ -662,7 +662,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     char buf[80];
     float eye[3];
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
     th = FR_TextHeight("Info");
@@ -690,7 +690,7 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     // - intensity
     // - color
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
     UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
@@ -753,7 +753,7 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     if(sector->lightLevel > maxLevel)
         maxLevel = sector->lightLevel;
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -830,7 +830,7 @@ void SBE_DrawHUD(void)
 
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS, MAX_BIAS_LIGHTS - numSources);
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -853,7 +853,7 @@ void SBE_DrawHUD(void)
     if((s = SBE_GetGrabbed()) != NULL)
     {
         int x;
-        FR_SetFont(glFontFixed);
+        FR_SetFont(fontFixed);
         x = FR_TextWidth("0") * 26;
         SBE_InfoBox(s, x, "Grabbed", alpha);
     }
@@ -923,7 +923,7 @@ static void SBE_DrawIndex(source_t *src)
 
     // Show the index number of the source.
     sprintf(buf, "%i", SB_ToIndex(src));
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);

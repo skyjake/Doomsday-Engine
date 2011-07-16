@@ -50,6 +50,13 @@ typedef struct viewdata_s {
     float windowInter;
 } viewdata_t;
 
+typedef enum fontstyle_e {
+    FS_NORMAL,
+    FS_BOLD,
+    FS_LIGHT,
+    FONTSTYLE_COUNT
+} fontstyle_t;
+
 extern float viewX, viewY, viewZ, viewPitch;
 extern angle_t viewAngle;
 
@@ -60,6 +67,7 @@ extern int      frameCount;
 extern int      extraLight;
 extern float    extraLightDelta;
 extern int      rendInfoTris;
+extern fontnum_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 extern fixed_t  fineTangent[FINEANGLES / 2];
 
@@ -67,6 +75,7 @@ void            R_Register(void);
 void            R_Init(void);
 void            R_Update(void);
 void            R_Shutdown(void);
+
 void            R_Ticker(timespan_t time);
 void            R_BeginWorldFrame(void);
 void            R_EndWorldFrame(void);
@@ -89,6 +98,11 @@ int R_ViewWindowDimensions(int player, int* x, int* y, int* width, int* height);
 void R_SetViewWindowDimensions(int player, int x, int y, int width, int height, boolean interpolate);
 
 void R_SetupDefaultViewWindow(int player);
+
+void R_LoadSystemFonts(void);
+
+const char* R_ChooseFixedFont(void);
+const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
 
 /**
  * Animates the view window towards the target values.

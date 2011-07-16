@@ -108,7 +108,7 @@ static float calcConsoleTitleBarHeight(void)
     int border = theWindow->width / 120, height;
     int oldFont = FR_Font();
 
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    FR_SetFont(fontVariable[FS_BOLD]);
     height = FR_SingleLineHeight("Con") + border;
     FR_SetFont(oldFont);
     return height;
@@ -421,7 +421,7 @@ void Rend_ConsoleFPS(int x, int y)
         y += 20;
 
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -461,7 +461,7 @@ static void drawConsoleTitleBar(float alpha)
                 UI_Color(UIC_BG_DARK), .6f * alpha, 0);
     UI_Gradient(0, height, theWindow->width, border*2, UI_Color(UIC_BG_DARK),
                 UI_Color(UIC_SHADOW), .2f * alpha, 0);
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    FR_SetFont(fontVariable[FS_BOLD]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -469,13 +469,13 @@ static void drawConsoleTitleBar(float alpha)
     if(secondaryTitleText[0])
     {
         width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        FR_SetFont(fontVariable[FS_LIGHT]);
         UI_TextOutEx2(secondaryTitleText, border + width, height / 2, UI_Color(UIC_TEXT), .33f * alpha,
                       ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
     if(statusText[0])
     {
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        FR_SetFont(fontVariable[FS_LIGHT]);
         UI_TextOutEx2(statusText, theWindow->width - border, height / 2, UI_Color(UIC_TEXT), .75f * alpha,
                       ALIGN_RIGHT, DTF_ONLY_SHADOW);
     }

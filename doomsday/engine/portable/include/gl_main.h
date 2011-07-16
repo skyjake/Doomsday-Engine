@@ -43,20 +43,12 @@ struct material_s;
 #define DEFAULT_FOG_COLOR_GREEN 138.0f/255
 #define DEFAULT_FOG_COLOR_BLUE  138.0f/255
 
-typedef enum glfontstyle_e {
-    GLFS_NORMAL,
-    GLFS_BOLD,
-    GLFS_LIGHT,
-    NUM_GLFS
-} glfontstyle_t;
-
 extern int      numTexUnits;
 extern boolean  envModAdd;
 extern int      defResX, defResY, defBPP, defFullscreen;
 extern int      viewph, viewpw, viewpx, viewpy;
 extern int      r_framecounter;
 extern float    vid_gamma, vid_bright, vid_contrast;
-extern fontnum_t glFontFixed, glFontVariable[NUM_GLFS];
 extern int      r_detail;
 
 boolean         GL_IsInited(void);
@@ -79,11 +71,6 @@ void            GL_BlendMode(blendmode_t mode);
 void            GL_InitRefresh(void);
 void            GL_ShutdownRefresh(void);
 void            GL_UseFog(int yes);
-
-void GL_LoadSystemFonts(void);
-
-const char* GL_ChooseFixedFont(void);
-const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
 
 void            GL_LowRes(void);
 

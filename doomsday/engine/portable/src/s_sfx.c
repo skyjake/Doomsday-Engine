@@ -1219,7 +1219,7 @@ void Sfx_DebugInfo(void)
 
     glEnable(GL_TEXTURE_2D);
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 0, 1);
 

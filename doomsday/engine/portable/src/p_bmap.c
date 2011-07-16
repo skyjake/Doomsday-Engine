@@ -1151,7 +1151,7 @@ static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
 
     sprintf(buf, "Block: %li [%u, %u] Lines: #%i Mobjs: #%i Polyobjs: #%i",
             blockIdx, blockX, blockY, lineCount, moCount, poCount);
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1170,7 +1170,7 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     int th, w, h, x, y;
     char buf[80];
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);

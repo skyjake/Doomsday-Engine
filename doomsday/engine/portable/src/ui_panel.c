@@ -829,7 +829,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
         sprintf(buf, "%c", (char) key);
     else
         sprintf(buf, "%i", key);
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -863,7 +863,7 @@ void CP_VideoModeInfo(ui_object_t *ob)
     }
 
     glEnable(GL_TEXTURE_2D);
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1035,7 +1035,7 @@ int CP_LabelText(char *label, char *text, int x, int y, int w, int h, float alph
     ui_color_t* color = UI_Color(UIC_TEXT);
     int ind;
 
-    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetColorAndAlpha(color->red, color->green, color->blue, .5f * alpha * UI_Alpha());
@@ -1056,7 +1056,7 @@ void CP_Drawer(ui_page_t *page)
 
     // Project home.
     glEnable(GL_TEXTURE_2D);
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1086,7 +1086,7 @@ void CP_Drawer(ui_page_t *page)
     h -= 4 * bor;
 
     // The title (with shadow).
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
+    FR_SetFont(fontVariable[FS_BOLD]);
     lineHeight = FR_SingleLineHeight("Help");
     verticalSpacing = lineHeight / 4;
     y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, UI_Color(UIC_TITLE), alpha)
@@ -1105,7 +1105,7 @@ void CP_Drawer(ui_page_t *page)
     // Information.
     if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
     {
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        FR_SetFont(fontVariable[FS_LIGHT]);
         UI_TextOutWrapEx(str, x, y, w, h, UI_Color(UIC_TEXT), alpha);
     }
     glDisable(GL_TEXTURE_2D);

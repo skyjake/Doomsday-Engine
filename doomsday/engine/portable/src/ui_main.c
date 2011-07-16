@@ -161,7 +161,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     I_SetUIMouseMode(true);
 
     // Change font.
-    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     uiFontHgt = FR_SingleLineHeight("UI");
 
@@ -894,7 +894,7 @@ void UIFrame_Drawer(ui_object_t* ob)
 void UIText_Drawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
-    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -905,7 +905,7 @@ void UIText_Drawer(ui_object_t* ob)
 void UIText_BrightDrawer(ui_object_t* ob)
 {
     glEnable(GL_TEXTURE_2D);
-    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1003,7 +1003,7 @@ void UIButton_Drawer(ui_object_t* ob)
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER, &back, 0, alpha, 0);
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
-    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1111,7 +1111,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
     // Draw text.
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1327,7 +1327,7 @@ void UIList_Drawer(ui_object_t* ob)
     // The borders.
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
-    FR_SetFont(glFontVariable[GLFS_NORMAL]);
+    FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1365,7 +1365,7 @@ void UIList_Drawer(ui_object_t* ob)
             continue;
         UI_Gradient(x + UI_BORDER + dat->column[c] - 2, ob->y + UI_BORDER, 1, maxh, UI_Color(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
     }
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     for(i = dat->first; i < dat->count && i < dat->first + dat->numvis; ++i, y += ihgt)
     {
         // The selection has a white background.
@@ -1625,7 +1625,7 @@ void UISlider_Drawer(ui_object_t* ob)
     if(dat->zerotext && dat->value == dat->min)
         strcpy(buf, dat->zerotext);
     glEnable(GL_TEXTURE_2D);
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -1646,7 +1646,7 @@ void UI_InitColumns(ui_object_t* ob)
     int width[UI_MAX_COLUMNS];
     int numcols = 1;
 
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
 
     memset(dat->column, 0, sizeof(dat->column));
@@ -2223,7 +2223,7 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char* text)
     if(text)
     {
         bor = 2 * UI_BORDER / 3;
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        FR_SetFont(fontVariable[FS_LIGHT]);
         FR_LoadDefaultAttrib();
         UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor, h - 4 * bor, UI_Color(UIC_TEXT), alpha);
     }

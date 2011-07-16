@@ -106,8 +106,6 @@ int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
-fontnum_t glFontFixed, glFontVariable[NUM_GLFS];
-
 float   glNearClip;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -395,80 +393,6 @@ void GL_SetGamma(void)
     GL_SetGammaRamp(myramp);
 }
 
-const char* GL_ChooseFixedFont(void)
-{
-    if(theWindow->width < 300)
-        return "console11";
-    if(theWindow->width > 768)
-        return "console18";
-    return "console14";
-}
-
-const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
-{
-    const int SMALL_LIMIT = 500;
-    const int MED_LIMIT = 800;
-
-    switch(style)
-    {
-    default:
-        return (resY < SMALL_LIMIT ? "normal12" :
-                resY < MED_LIMIT   ? "normal18" :
-                                     "normal24");
-
-    case GLFS_LIGHT:
-        return (resY < SMALL_LIMIT ? "normallight12" :
-                resY < MED_LIMIT   ? "normallight18" :
-                                     "normallight24");
-
-    case GLFS_BOLD:
-        return (resY < SMALL_LIMIT ? "normalbold12" :
-                resY < MED_LIMIT   ? "normalbold18" :
-                                     "normalbold24");
-    }
-}
-
-static fontnum_t loadSystemFont(const char* name)
-{
-    assert(name);
-    {
-    ddstring_t searchPath, *filepath;
-    font_t* font;
-    dduri_t* path;
-
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
-    path = Uri_Construct2(Str_Text(&searchPath), RC_NULL);
-    Str_Clear(&searchPath);
-    Str_Appendf(&searchPath, FN_SYSTEM_NAME":%s", name);
-
-    filepath = Uri_Resolved(path);
-    Uri_Destruct(path);
-    font = Fonts_LoadExternal(Str_Text(&searchPath), Str_Text(filepath));
-    Str_Free(&searchPath);
-    if(filepath)
-        Str_Delete(filepath);
-
-    if(font == NULL)
-    {
-        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
-        return 0;
-    }
-    return Fonts_ToIndex(font);
-    }
-}
-
-void GL_LoadSystemFonts(void)
-{
-    assert(initGLOk);
-
-    glFontFixed = loadSystemFont(GL_ChooseFixedFont());
-    glFontVariable[GLFS_NORMAL] = loadSystemFont(GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_BOLD]   = loadSystemFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_LIGHT]  = loadSystemFont(GL_ChooseVariableFont(GLFS_LIGHT, theWindow->width, theWindow->height));
-
-    Con_SetFont(glFontFixed);
-}
-
 static void printConfiguration(void)
 {
     static const char* available[] = { "not available", "available" };
@@ -491,9 +415,8 @@ static void printConfiguration(void)
 /**
  * One-time initialization of GL and the renderer. This is done very early
  * on during engine startup and is supposed to be fast. All subsystems
- * cannot yet be initialized, such as fonts or texture management, so any
- * rendering occuring before GL_Init() must be done with manually prepared
- * textures.
+ * cannot yet be initialized, such as the texture management, so any rendering
+ * occuring before GL_Init() must be done with manually prepared textures.
  */
 boolean GL_EarlyInit(void)
 {
@@ -611,11 +534,6 @@ void GL_Shutdown(void)
 
     GL_ShutdownDeferredTask();
     FR_Shutdown();
-    glFontFixed =
-        glFontVariable[GLFS_NORMAL] =
-        glFontVariable[GLFS_BOLD] =
-        glFontVariable[GLFS_LIGHT] = 0;
-
     Rend_DestroySkySphere();
     Rend_Reset();
     GL_ShutdownRefresh();
@@ -839,10 +757,6 @@ void GL_TotalReset(void)
 
     // Delete all textures.
     GL_ResetTextureManager();
-    glFontFixed =
-        glFontVariable[GLFS_NORMAL] =
-        glFontVariable[GLFS_BOLD] =
-        glFontVariable[GLFS_LIGHT] = 0;
     GL_ReleaseReservedNames();
 
 #if _DEBUG

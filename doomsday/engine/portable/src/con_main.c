@@ -2381,7 +2381,7 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "default"))
     {
-        fontnum_t newFont = Fonts_IndexForName(GL_ChooseFixedFont());
+        fontnum_t newFont = Fonts_IndexForName(R_ChooseFixedFont());
         if(0 != newFont)
         {
             Con_SetFont(newFont);

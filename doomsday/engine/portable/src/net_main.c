@@ -900,7 +900,7 @@ void Net_DrawDemoOverlay(void)
 
     glEnable(GL_TEXTURE_2D);
 
-    FR_SetFont(glFontFixed);
+    FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 1, 1);
     FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
