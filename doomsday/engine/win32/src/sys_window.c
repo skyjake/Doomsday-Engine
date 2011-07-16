@@ -1202,7 +1202,7 @@ extern boolean usingFog;
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
             R_UnloadVectorGraphics();
-            Rend_ParticleClearExtraTextures();
+            Rend_ParticleReleaseExtraTextures();
             GL_ClearSystemTextures();
 
             wglMakeCurrent(NULL, NULL);

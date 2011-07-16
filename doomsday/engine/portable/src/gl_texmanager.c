@@ -1379,7 +1379,7 @@ void GL_ClearSystemTextures(void)
     Materials_DeleteGLTextures(MN_SYSTEM_NAME);
     UI_ClearTextures();
 
-    Rend_ParticleClearSystemTextures();
+    Rend_ParticleReleaseSystemTextures();
     R_DestroySystemTextures();
 }
 
@@ -1406,7 +1406,7 @@ void GL_ClearRuntimeTextures(void)
     GL_ReleaseGLTexturesByNamespace(TN_FLAREMAPS);
     GL_DeleteRawImages();
 
-    Rend_ParticleClearExtraTextures();
+    Rend_ParticleReleaseExtraTextures();
 }
 
 void GL_ClearTextureMemory(void)

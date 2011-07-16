@@ -40,7 +40,7 @@ void Rend_ParticleRegister(void);
  * for a minimal resource set needed for particle rendering.
  */
 void Rend_ParticleLoadSystemTextures(void);
-void Rend_ParticleClearSystemTextures(void);
+void Rend_ParticleReleaseSystemTextures(void);
 
 /**
  * Load any custom particle textures. They are loaded from the
@@ -48,7 +48,7 @@ void Rend_ParticleClearSystemTextures(void);
  * The first is "Particle00". (based on Leesz' textured particles mod)
  */
 void Rend_ParticleLoadExtraTextures(void);
-void Rend_ParticleClearExtraTextures(void);
+void Rend_ParticleReleaseExtraTextures(void);
 
 void Rend_ParticleInitForNewFrame(void);
 void Rend_ParticleMarkInSectorVisible(sector_t* sector);

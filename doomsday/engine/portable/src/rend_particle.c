@@ -203,13 +203,13 @@ void Rend_ParticleLoadExtraTextures(void)
     }
 }
 
-void Rend_ParticleClearSystemTextures(void)
+void Rend_ParticleReleaseSystemTextures(void)
 {
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
 }
 
-void Rend_ParticleClearExtraTextures(void)
+void Rend_ParticleReleaseExtraTextures(void)
 {
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
