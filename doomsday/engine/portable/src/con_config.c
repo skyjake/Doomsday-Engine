@@ -218,11 +218,21 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
  */
 boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
 {
-    VERBOSE( Con_Printf("Writing state:\"%s\" bindings:\"%s\"...\n", fileName, bindingsFileName) )
+    if(fileName || bindingsFileName)
+    {
+        VERBOSE(
+            Con_Printf("Writing");
+            if(fileName)
+                Con_Printf(" state:\"%s\"", fileName);
+            if(bindingsFileName)
+                Con_Printf(" bindings:\"%s\"", bindingsFileName);
+            Con_Printf("...\n")
+        )
 
-    writeConsoleState(fileName);
-    // Bindings go into a separate file.
-    writeBindingsState(bindingsFileName);
+        writeConsoleState(fileName);
+        // Bindings go into a separate file.
+        writeBindingsState(bindingsFileName);
+    }
     return true;
 }
 
