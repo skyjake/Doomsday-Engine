@@ -108,23 +108,12 @@ static void drawCharacter(unsigned char ch, font_t* font)
     case FT_BITMAP:  {
         bitmapfont_t* bf = (bitmapfont_t*)font;
 
-        if(ch != 0)
-        {
-            x = bf->_chars[ch].x;
-            y = bf->_chars[ch].y;
-        }
-        else
-        {
-            x = y = 0;
-        }
+        s[0] = bf->_chars[ch].x;
+        s[1] = bf->_chars[ch].x + bf->_chars[ch].w;
+        t[0] = bf->_chars[ch].y;
+        t[1] = bf->_chars[ch].y + bf->_chars[ch].h;
 
-        s[0] = x;
-        t[0] = y;
-        s[1] = x + BitmapFont_CharWidth(font, ch);
-        t[1] = y + BitmapFont_CharHeight(font, ch);
-
-        x = 0;
-        y = 0;
+        x = y = 0;
         w = s[1] - s[0];
         h = t[1] - t[0];
         break;
