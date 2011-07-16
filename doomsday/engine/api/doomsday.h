@@ -502,7 +502,6 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
 //
 //------------------------------------------------------------------------
 
-    void            Rend_Reset(void);
     void            Rend_SkyParams(int layer, int param, void* data);
 
 //------------------------------------------------------------------------
