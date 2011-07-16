@@ -1383,26 +1383,24 @@ int DD_Main(void)
     if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
         return -1;
 
-    if(!isDedicated)
+    if(!GL_EarlyInit())
     {
-        if(!GL_EarlyInit())
-        {
-            Sys_CriticalMessage("GL_EarlyInit() failed.");
-            return -1;
-        }
+        Sys_CriticalMessage("GL_EarlyInit() failed.");
+        return -1;
+    }
 
+    novideo = ArgCheck("-novideo") || isDedicated;
+    if(!novideo && !isDedicated)
+    {
         // Render a few black frames before we continue. This will help to
         // stabilize things before we begin drawing for real and to avoid any
         // unwanted video artefacts.
-        if(!novideo)
+        { int i = 0;
+        while(i++ < 3)
         {
-            int i = 0;
-            while(i++ < 3)
-            {
-                glClear(GL_COLOR_BUFFER_BIT);
-                GL_DoUpdate();
-            }
-        }
+            glClear(GL_COLOR_BUFFER_BIT);
+            GL_DoUpdate();
+        }}
     }
 
     Sys_Init();
@@ -1420,11 +1418,8 @@ int DD_Main(void)
             "Starting up...", DD_StartupWorker, 0);
 
     // Engine initialization is complete. Now finish up with the GL.
-    if(!isDedicated)
-    {
-        GL_Init();
-        GL_InitRefresh();
-    }
+    GL_Init();
+    GL_InitRefresh();
 
     // Do deferred uploads.
     Con_InitProgress(200);
@@ -1768,7 +1763,10 @@ static int DD_UpdateEngineStateWorker(void* paramaters)
     {
     ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) paramaters;
 
-    GL_InitRefresh();
+    if(!novideo)
+    {
+        GL_InitRefresh();
+    }
 
     if(p->initiatedBusyMode)
         Con_SetProgress(50);

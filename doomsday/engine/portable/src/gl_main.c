@@ -420,11 +420,11 @@ static void printConfiguration(void)
  */
 boolean GL_EarlyInit(void)
 {
+    if(isDedicated)
+        return true;
+
     if(initGLOk)
         return true; // Already initialized.
-
-    if(novideo)
-        return true;
 
     Con_Message("Initializing Render subsystem...\n");
 
@@ -468,7 +468,6 @@ boolean GL_EarlyInit(void)
     }
 
     renderTextures = !ArgExists("-notex");
-    novideo = ArgCheck("-novideo") || isDedicated;
 
     VERBOSE( printConfiguration() );
 
@@ -486,6 +485,9 @@ boolean GL_EarlyInit(void)
  */
 void GL_Init(void)
 {
+    if(isDedicated)
+        return;
+
     if(!initGLOk)
     {
         Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");

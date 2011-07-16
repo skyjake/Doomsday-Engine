@@ -1361,9 +1361,6 @@ void GL_EarlyInitTextureManager(void)
 
 void GL_InitTextureManager(void)
 {
-    if(novideo)
-        return;
-
     if(texInited)
         return; // Don't init again.
 
@@ -1567,7 +1564,7 @@ static void calcGammaTable(void)
 
 void GL_LoadSystemTextures(void)
 {
-    if(!texInited)
+    if(isDedicated || !texInited)
         return;
 
     UI_LoadTextures();
@@ -2407,7 +2404,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         { "radioOE",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE }
     };
 
-    if(which < 0 || which >= NUM_LIGHTING_TEXTURES)
+    if(isDedicated || which < 0 || which >= NUM_LIGHTING_TEXTURES)
         return 0;
 
     if(!lightingTextures[which].tex)
@@ -2421,7 +2418,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 {
-    if(flare < 0 || flare >= NUM_SYSFLARE_TEXTURES)
+    if(isDedicated || flare < 0 || flare >= NUM_SYSFLARE_TEXTURES)
         return 0;
 
     if(!sysFlareTextures[flare].tex)
@@ -3069,7 +3066,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
 
 DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
-    if(patchTex)
+    if(!isDedicated && patchTex)
     {
         texturevariantspecification_t* texSpec =
             GL_TextureVariantSpecificationForContext(TC_UI,

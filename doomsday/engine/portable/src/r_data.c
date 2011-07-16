@@ -1023,8 +1023,9 @@ void R_DestroySystemTextures(void)
     { int i;
     for(i = 0; i < sysTexturesCount; ++i)
     {
-        Uri_Destruct(sysTextures[i]->external);
-        free(sysTextures[i]);
+        systex_t* rec = sysTextures[i];
+        Uri_Destruct(rec->external);
+        free(rec);
     }}
 
     if(sysTextures)
@@ -1193,9 +1194,6 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     if(info)
         memset(info, 0, sizeof(patchinfo_t));
 
-    if(isDedicated)
-        return 0;
-
     if(NULL == name || !name[0])
     {
         Con_Message("Warning:R_PrecachePatch: Invalid 'name' argument, ignoring.\n");
@@ -1207,7 +1205,9 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     {
         GL_PreparePatch(getPatchTex(patchId));
         if(info)
+        {
             R_GetPatchInfo(patchId, info);
+        }
     }
     return patchId;
 }
