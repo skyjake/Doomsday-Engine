@@ -285,7 +285,7 @@ static void Con_BusyLoadTextures(void)
             busyFont = Fonts_ToIndex(font);
             FR_SetFont(busyFont);
             FR_LoadDefaultAttrib();
-            busyFontHgt = FR_TextHeight("A");
+            busyFontHgt = FR_SingleLineHeight("Busy");
         }
     }
 }
