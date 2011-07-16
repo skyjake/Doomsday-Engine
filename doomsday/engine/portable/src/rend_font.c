@@ -140,6 +140,9 @@ int FR_Init(void)
     if(inited)
         return -1; // No reinitializations...
 
+    if(isDedicated)
+        return -1;
+
     inited = true;
     fr.fontNum = 0;
     FR_LoadDefaultAttrib();

@@ -2143,7 +2143,11 @@ void Hu_MenuSetActivePage(mn_page_t* page)
     if(!menuActive) return;
     if(NULL == page) return;
 
-    FR_ResetTypeinTimer();
+    if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
+    {
+        FR_ResetTypeinTimer();
+    }
+
     menuFlashCounter = 0; // Restart selection flash animation.
     cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
     menuNominatingQuickSaveSlot = false;
