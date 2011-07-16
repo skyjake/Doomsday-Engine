@@ -1050,7 +1050,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
     GL_PurgeDeferredTasks();
     GL_ClearTextureMemory();
-    UI_ReleaseTextures();
     GL_SetFilter(false);
 
     // If a game is presently loaded; unload it.
@@ -1096,6 +1095,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         R_DestroyColorPalettes();
 
         GL_DestroyRuntimeTextures();
+        Fonts_ClearRuntimeFonts();
 
         Sfx_InitLogical();
         P_InitThinkerLists(0x1|0x2);
@@ -1123,7 +1123,8 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
-    Fonts_Shutdown();
+
+    /// \fixme Materials database should not be shutdown during a reload.
     Materials_Shutdown();
 
     VERBOSE(
@@ -1139,7 +1140,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
-        Fonts_Init();
         Materials_Initialize();
         FI_Init();
         P_PtcInit();
@@ -1151,7 +1151,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     // This is now the current game.
     currentGameInfoIndex = gameInfoIndex(info);
 
-    Fonts_Init();
     Materials_Initialize();
     FI_Init();
     P_PtcInit();
@@ -1408,7 +1407,7 @@ int DD_Main(void)
 
     Sys_Init();
 
-    // Initialize the subsystems and load resources needed for busy mode.
+    // Initialize the subsystems needed prior to entering busy mode.
     Fonts_Init();
     if(!isDedicated)
     {
@@ -1688,7 +1687,6 @@ static int DD_StartupWorker(void* parm)
     // Get the material manager up and running.
     Con_SetProgress(90);
     GL_EarlyInitTextureManager();
-    Fonts_Init();
     Materials_Initialize();
 
     Con_SetProgress(140);

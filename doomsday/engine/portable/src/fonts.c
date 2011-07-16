@@ -337,6 +337,8 @@ void Fonts_Init(void)
     if(inited)
         return; // Already been here.
 
+    VERBOSE( Con_Message("Initializing Fonts collection...\n") )
+
     fonts = NULL;
     bindings = NULL;
     bindingsCount = 0;
@@ -357,9 +359,33 @@ void Fonts_Shutdown(void)
     if(!inited)
         return;
 
+    Fonts_ReleaseRuntimeGLResources();
+    Fonts_ReleaseSystemGLResources();
+
     destroyBindings();
     destroyFonts();
     inited = false;
+}
+
+void Fonts_ClearRuntimeFonts(void)
+{
+    errorIfNotInited("Fonts::ClearRuntimeFonts");
+    Fonts_ReleaseRuntimeGLResources();
+    //destroyFonts(FN_GAME);
+#pragma message("!!!Fonts::ClearRuntimeFonts not yet implemented!!!")
+}
+
+void Fonts_ClearSystemFonts(void)
+{
+    errorIfNotInited("Fonts::ClearSystemFonts");
+    Fonts_ReleaseSystemGLResources();
+#pragma message("!!!Fonts::ClearSystemFonts not yet implemented!!!")
+}
+
+void Fonts_Clear(void)
+{
+    Fonts_ClearRuntimeFonts();
+    Fonts_ClearSystemFonts();
 }
 
 uint Fonts_Count(void)
@@ -720,15 +746,77 @@ dduri_t* Fonts_GetUri(font_t* font)
     return uri;
 }
 
-void Fonts_Update(void)
+void Fonts_ReleaseGLTexturesByNamespace(fontnamespaceid_t namespaceId)
 {
-    if(!inited || novideo || isDedicated)
+    errorIfNotInited("Fonts::ReleaseGLTexturesByNamespace");
+
+    if(namespaceId != FN_ANY && !VALID_FONTNAMESPACEID(namespaceId))
+        Con_Error("Fonts::ReleaseGLTexturesByNamespace: Invalid namespace %i.", (int) namespaceId);
+
+    if(novideo || isDedicated)
         return;
 
     { fontlist_node_t* node;
     for(node = fonts; node; node = node->next)
     {
         font_t* font = node->font;
+        
+        if(!(namespaceId == FN_ANY || !Font_BindId(font)))
+        {
+            fontbind_t* fb = bindByIndex(Font_BindId(font));
+            if(fb && FontBind_Namespace(fb) != namespaceId)
+                continue;
+        }
+
+        switch(Font_Type(font))
+        {
+        case FT_BITMAP:
+            BitmapFont_DeleteGLTexture(node->font);
+            break;
+        case FT_BITMAPCOMPOSITE:
+            BitmapCompositeFont_DeleteGLTextures(node->font);
+            break;
+        default:
+            Con_Error("Fonts::ReleaseGLTexturesByNamespace: Invalid font type %i.", (int) Font_Type(font));
+            exit(1); // Unreachable.
+        }
+    }}
+}
+
+void Fonts_ReleaseRuntimeGLTextures(void)
+{
+    errorIfNotInited("Fonts::ReleaseRuntimeGLTextures");
+    Fonts_ReleaseGLTexturesByNamespace(FN_GAME);
+}
+
+void Fonts_ReleaseSystemGLTextures(void)
+{
+    errorIfNotInited("Fonts::ReleaseSystemGLTextures");
+    Fonts_ReleaseGLTexturesByNamespace(FN_SYSTEM);
+}
+
+void Fonts_ReleaseGLResourcesByNamespace(fontnamespaceid_t namespaceId)
+{
+    errorIfNotInited("Fonts::ReleaseGLResourcesByNamespace");
+
+    if(namespaceId != FN_ANY && !VALID_FONTNAMESPACEID(namespaceId))
+        Con_Error("Fonts::ReleaseGLResourcesByNamespace: Invalid namespace %i.", (int) namespaceId);
+
+    if(novideo || isDedicated)
+        return;
+
+    { fontlist_node_t* node;
+    for(node = fonts; node; node = node->next)
+    {
+        font_t* font = node->font;
+        
+        if(!(namespaceId == FN_ANY || !Font_BindId(font)))
+        {
+            fontbind_t* fb = bindByIndex(Font_BindId(font));
+            if(fb && FontBind_Namespace(fb) != namespaceId)
+                continue;
+        }
+
         switch(Font_Type(font))
         {
         case FT_BITMAP:
@@ -740,10 +828,22 @@ void Fonts_Update(void)
             BitmapCompositeFont_DeleteGLDisplayLists(node->font);
             break;
         default:
-            Con_Error("Fonts::Update: Invalid font type %i.", (int) Font_Type(font));
+            Con_Error("Fonts::ReleaseGLResourcesByNamespace: Invalid font type %i.", (int) Font_Type(font));
             exit(1); // Unreachable.
         }
     }}
+}
+
+void Fonts_ReleaseRuntimeGLResources(void)
+{
+    errorIfNotInited("Fonts::ReleaseRuntimeTextures");
+    Fonts_ReleaseGLTexturesByNamespace(FN_GAME);
+}
+
+void Fonts_ReleaseSystemGLResources(void)
+{
+    errorIfNotInited("Fonts::ReleaseSystemTextures");
+    Fonts_ReleaseGLTexturesByNamespace(FN_SYSTEM);
 }
 
 int Fonts_Ascent(font_t* font)
@@ -833,12 +933,19 @@ static void printFontInfo(const fontbind_t* fb, boolean printNamespace)
     if(printNamespace)
         Con_Printf("%s:", Str_Text(nameForFontNamespaceId(FontBind_Namespace(fb))));
     Con_Printf("%s\" %s ", Str_Text(FontBind_Name(fb)), Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
-    Con_Printf("(ascent:%i, descent:%i, leading:%i", Fonts_Ascent(font), Fonts_Descent(font), Fonts_Leading(font));
-    if(Font_Type(font) == FT_BITMAP && BitmapFont_GLTextureName(font))
+    if(Font_IsPrepared(font))
     {
-        Con_Printf(", texWidth:%i, texHeight:%i", BitmapFont_TextureWidth(font), BitmapFont_TextureHeight(font));
+        Con_Printf("(ascent:%i, descent:%i, leading:%i", Fonts_Ascent(font), Fonts_Descent(font), Fonts_Leading(font));
+        if(Font_Type(font) == FT_BITMAP && BitmapFont_GLTextureName(font))
+        {
+            Con_Printf(", texWidth:%i, texHeight:%i", BitmapFont_TextureWidth(font), BitmapFont_TextureHeight(font));
+        }
+        Con_Printf(")\n");
     }
-    Con_Printf(")\n");
+    else
+    {
+        Con_Printf("\n");
+    }
 }
 
 static fontbind_t** collectFontBinds(fontnamespaceid_t namespaceId,
@@ -925,16 +1032,14 @@ static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like)
     }
 
     // Print the result index key.
-    if(VALID_FONTNAMESPACEID(namespaceId))
+    Con_Printf(" uid: \"%s\" font-type", VALID_FONTNAMESPACEID(namespaceId)? "font-name" : "<namespace>:font-name");
+    // Fonts may be prepared only if GL is inited thus if we can't prepare, we can't list property values.
+    if(GL_IsInited())
     {
-        Con_Printf(" uid: \"name\" font-type (<property-name>:<value>, ...)\n");
-        Con_FPrintf(CBLF_RULER, "");
+        Con_Printf(" (<property-name>:<value>, ...)");
     }
-    else
-    {   // Any namespace.
-        Con_Printf(" uid: \"(namespace:)name\" font-type (<property-name>:<value>, ...)\n");
-        Con_FPrintf(CBLF_RULER, "");
-    }
+    Con_Printf("\n");
+    Con_FPrintf(CBLF_RULER, "");
 
     // Sort and print the index.
     qsort(foundFonts, count, sizeof(*foundFonts), compareFontBindByName);
@@ -974,6 +1079,6 @@ D_CMD(ListFonts)
         Con_Printf("Unknown font namespace \"%s\".\n", argv[1]);
         return false;
     }
-    printFonts(namespaceId, (argc > 2? argv[2] : (argc > 1 && namespaceId == FN_ANY? argv[1] : NULL)));
+    printFonts(namespaceId, (argc > 2? argv[2] : (argc > 1 && !VALID_FONTNAMESPACEID(namespaceId)? argv[1] : NULL)));
     return true;
 }

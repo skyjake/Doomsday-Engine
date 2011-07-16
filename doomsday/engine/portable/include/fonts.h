@@ -22,6 +22,14 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * Runtime fonts are not loaded until precached or actually needed.
+ * They may be cleared, in which case they will be reloaded when needed.
+ *
+ * System fonts are loaded at startup and remain in memory all the time.
+ * After clearing they must be manually reloaded.
+ */
+
 #ifndef LIBDENG_FONTS_H
 #define LIBDENG_FONTS_H
 
@@ -38,8 +46,30 @@ void Fonts_Init(void);
 /// Shutdown this module.
 void Fonts_Shutdown(void);
 
-/// Mark all fonts as requiring a full update. Called during engine/renderer reset.
-void Fonts_Update(void);
+void Fonts_Clear(void);
+
+void Fonts_ClearRuntimeFonts(void);
+
+void Fonts_ClearSystemFonts(void);
+
+/**
+ * To be called during engine/gl-subsystem reset to release all resources
+ * acquired from the GL subsystem (v-buffers, d-lists, textures, etc...)
+ * for fonts.
+ * \note Called automatically by this subsystem prior to module shutdown.
+ */
+void Fonts_ReleaseRuntimeGLResources(void);
+void Fonts_ReleaseSystemGLResources(void);
+void Fonts_ReleaseGLResourcesByNamespace(fontnamespaceid_t namespaceId);
+
+/**
+ * To be called during a texture/font-renderer reset to release all texture
+ * memory acquired from the GL subsystem for fonts.
+ * \note Called automatically by this subsystem prior to module shutdown.
+ */
+void Fonts_ReleaseRuntimeGLTextures(void);
+void Fonts_ReleaseSystemGLTextures(void);
+void Fonts_ReleaseGLTexturesByNamespace(fontnamespaceid_t namespaceId);
 
 /// @return  Number of known font bindings in all namespaces.
 uint Fonts_Count(void);

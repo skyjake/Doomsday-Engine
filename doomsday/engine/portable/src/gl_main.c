@@ -506,7 +506,9 @@ void GL_InitRefresh(void)
 {
     GL_InitTextureManager();
     GL_LoadSystemTextures();
-    GL_LoadSystemFonts();
+
+    // Register/create Texture objects for the system textures.
+    R_InitSystemTextures();
 }
 
 /**
@@ -521,6 +523,8 @@ void GL_ShutdownRefresh(void)
     R_DestroyFlareTextures();
     R_DestroyShinyTextures();
     R_DestroyMaskTextures();
+    R_DestroySystemTextures();
+
     R_DestroyColorPalettes();
 }
 
@@ -759,6 +763,9 @@ void GL_TotalReset(void)
     GL_ResetTextureManager();
     GL_ReleaseReservedNames();
 
+    Fonts_ReleaseRuntimeGLResources();
+    Fonts_ReleaseSystemGLResources();
+
 #if _DEBUG
     Z_CheckHeap();
 #endif
@@ -775,6 +782,10 @@ void GL_TotalRestore(void)
     // Getting back up and running.
     GL_ReserveNames();
     GL_Init2DState();
+    
+    // Choose fonts again.
+    R_LoadSystemFonts();
+    Con_ResizeHistoryBuffer();
 
     {
     gamemap_t*          map = P_GetCurrentMap();

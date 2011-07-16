@@ -1585,7 +1585,6 @@ void GL_LoadSystemTextures(void)
     }
 
     Rend_ParticleLoadSystemTextures();
-    R_InitSystemTextures();
 }
 
 void GL_ReleaseSystemTextures(void)
@@ -1607,9 +1606,8 @@ void GL_ReleaseSystemTextures(void)
 
     Materials_ReleaseGLTextures(MN_SYSTEM_NAME);
     UI_ReleaseTextures();
-
     Rend_ParticleReleaseSystemTextures();
-    R_DestroySystemTextures();
+    Fonts_ReleaseSystemGLTextures();
 }
 
 void GL_ReleaseRuntimeTextures(void)
@@ -1636,6 +1634,7 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseTexturesForRawImages();
 
     Rend_ParticleReleaseExtraTextures();
+    Fonts_ReleaseRuntimeGLTextures();
 }
 
 void GL_ClearTextureMemory(void)
@@ -3207,7 +3206,6 @@ static int doTexReset(void* parm)
 
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
-    GL_LoadSystemFonts();
     Rend_ParticleLoadExtraTextures();
     R_SkyUpdate();
 
@@ -3226,7 +3224,6 @@ void GL_TexReset(void)
     boolean useBusyMode = !Con_IsBusy();
 
     GL_ClearTextureMemory();
-    Fonts_Update();
     Con_Printf("All DGL textures deleted.\n");
 
     if(useBusyMode)
