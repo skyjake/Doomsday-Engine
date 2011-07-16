@@ -51,6 +51,12 @@ void Font_Init(font_t* font, fonttype_t type)
     font->_isDirty = true;
 }
 
+boolean Font_IsPrepared(font_t* font)
+{
+    assert(NULL != font);
+    return !font->_isDirty;
+}
+
 fonttype_t Font_Type(const font_t* font)
 {
     assert(NULL != font);

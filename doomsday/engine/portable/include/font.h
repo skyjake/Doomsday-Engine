@@ -85,5 +85,6 @@ void Font_SetBindId(font_t* font, uint bindId);
 int Font_Ascent(font_t* font);
 int Font_Descent(font_t* font);
 int Font_Leading(font_t* font);
+boolean Font_IsPrepared(font_t* font);
 
 #endif /* LIBDENG_FONT_H */
