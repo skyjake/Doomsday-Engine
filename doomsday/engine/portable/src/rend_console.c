@@ -761,7 +761,7 @@ static void drawConsole(float consoleAlpha)
     if(Con_IsActive() && !Con_IsLocked())
     {
         float width, height, halfInterlineHeight = (lineHeight * scale[1]) / 8.f;
-        int xOffset, yOffset;
+        int xOffset, yOffset = 2 * scale[1];
         char temp[LOCALBUFFSIZE];
 
         // Where is the cursor?
@@ -770,13 +770,13 @@ static void drawConsole(float consoleAlpha)
         xOffset = FR_TextWidth(temp);
         if(Con_InputMode())
         {
-            height  = (lineHeight * scale[1]);
-            yOffset = halfInterlineHeight;
+            height  = lineHeight * scale[1];
+            yOffset += halfInterlineHeight;
         }
         else
         {
             height  = halfInterlineHeight;
-            yOffset = (lineHeight * scale[1]);
+            yOffset += lineHeight * scale[1];
         }
 
         // Dimensions of the current character.
