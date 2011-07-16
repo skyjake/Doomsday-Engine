@@ -1394,7 +1394,7 @@ void UIList_Drawer(ui_object_t* ob)
     glDisable(GL_TEXTURE_2D);
 }
 
-int UI_SliderButtonWidth(ui_object_t* ob)
+int UISlider_ButtonWidth(ui_object_t* ob)
 {
     int width = ob->h - UI_BAR_BORDER * 2;
     if(width < UI_BAR_BORDER * 3)
@@ -1402,11 +1402,11 @@ int UI_SliderButtonWidth(ui_object_t* ob)
     return width;
 }
 
-int UI_SliderThumbPos(ui_object_t* ob)
+int UISlider_ThumbPos(ui_object_t* ob)
 {
     uidata_slider_t* dat = ob->data;
     float range = dat->max - dat->min, useval;
-    int butw = UI_SliderButtonWidth(ob);
+    int butw = UISlider_ButtonWidth(ob);
 
     if(!range)
         range = 1; // Should never happen.
@@ -1438,7 +1438,7 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
             if(ev->type == E_AXIS)
             {
                 // Calculate new value from the mouse position.
-                butw = UI_SliderButtonWidth(ob);
+                butw = UISlider_ButtonWidth(ob);
                 inw = ob->w - 2 * UI_BAR_BORDER - 3 * butw;
                 if(inw > 0)
                 {
@@ -1510,7 +1510,7 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
         if(!UI_MouseInside(ob))
             return false;
         used = true;
-        butw = UI_SliderButtonWidth(ob);
+        butw = UISlider_ButtonWidth(ob);
         // Where is the mouse cursor?
         if(UI_MouseInsideBox(ob->x, ob->y, butw + UI_BAR_BORDER, ob->h))
         {
@@ -1526,7 +1526,7 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
             ob->timer = SCROLL_TIME; // Tickes does the scrolling.
             return true;
         }
-        if(UI_MouseInsideBox(UI_SliderThumbPos(ob), ob->y, butw, ob->h))
+        if(UI_MouseInsideBox(UISlider_ThumbPos(ob), ob->y, butw, ob->h))
         {
             // Capture input and start tracking mouse movement.
             dat->button[1] = true;
@@ -1583,7 +1583,7 @@ void UISlider_Drawer(ui_object_t* ob)
     boolean dis = (ob->flags & UIF_DISABLED) != 0;
     int inwidth = ob->w - UI_BAR_BORDER * 2;
     int inheight = ob->h - UI_BAR_BORDER * 2;
-    int butw = UI_SliderButtonWidth(ob);
+    int butw = UISlider_ButtonWidth(ob);
     int butbor = UI_BAR_BUTTON_BORDER;
     int x, y, thumbx;
     float alpha = dis ? .2f : 1;
@@ -1606,7 +1606,7 @@ void UISlider_Drawer(ui_object_t* ob)
     UI_DrawButton(x + inwidth - butw, y, butw, inheight, butbor, alpha * (dat->value == dat->max ? .2f : 1), NULL, dat->button[2], dis, UIBA_RIGHT);
 
     // The thumb.
-    UI_DrawButton(thumbx = UI_SliderThumbPos(ob), y, butw, inheight, butbor, alpha, NULL, dat->button[1], dis, UIBA_NONE);
+    UI_DrawButton(thumbx = UISlider_ThumbPos(ob), y, butw, inheight, butbor, alpha, NULL, dat->button[1], dis, UIBA_NONE);
 
     // The value.
     if(dat->floatmode)
