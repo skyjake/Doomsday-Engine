@@ -483,6 +483,9 @@ void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 
 void DGL_Begin(dglprimtype_t mode)
 {
+    if(novideo)
+        return;
+
     // We enter a Begin/End section.
     primLevel++;
 
@@ -503,7 +506,7 @@ void DGL_Begin(dglprimtype_t mode)
 
 void DGL_End(void)
 {
-    if(isDedicated)
+    if(novideo)
         return;
 
     if(primLevel > 0)
