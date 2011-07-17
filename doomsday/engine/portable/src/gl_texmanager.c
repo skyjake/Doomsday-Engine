@@ -1062,7 +1062,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         { "radioOE", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE }
     };
 
-    if(which < 0 || which >= NUM_LIGHTING_TEXTURES)
+    if(novideo || which < 0 || which >= NUM_LIGHTING_TEXTURES)
         return 0;
 
     if(!lightingTextures[which].tex)
@@ -1080,7 +1080,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 {
-    if(flare >= NUM_SYSFLARE_TEXTURES)
+    if(novideo || flare >= NUM_SYSFLARE_TEXTURES)
         return 0;
 
     if(!sysFlareTextures[flare].tex)
@@ -2389,6 +2389,8 @@ DGLuint GL_PreparePatch2(patchtex_t* p)
  */
 DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
+    if(novideo) return 0;
+
     if(patchTex)
     {
         if(!patchTex->tex)
@@ -2404,6 +2406,8 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
 
 DGLuint GL_PreparePatchOtherPart(patchtex_t* patchTex)
 {
+    if(novideo) return 0;
+
     if(patchTex)
     {
         if(!patchTex->tex)

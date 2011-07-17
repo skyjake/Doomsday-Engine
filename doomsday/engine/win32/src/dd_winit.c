@@ -276,7 +276,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
             isDedicated = true;
-
+        novideo = ArgCheck("-novideo") || isDedicated;
+        
         DD_ComposeMainWindowTitle(buf);
 
         // First we need to locate the game lib name among the command line

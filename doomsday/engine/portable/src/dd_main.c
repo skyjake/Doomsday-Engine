@@ -378,13 +378,10 @@ int DD_Main(void)
                       winFlags, 0))
         return -1;
 
-    if(!isDedicated)
+    if(!GL_EarlyInit())
     {
-        if(!GL_EarlyInit())
-        {
-            Sys_CriticalMessage("GL_EarlyInit() failed.");
-            return -1;
-        }
+        Sys_CriticalMessage("GL_EarlyInit() failed.");
+        return -1;
     }
 
     /**
@@ -401,7 +398,7 @@ int DD_Main(void)
              DD_StartupWorker, NULL);
 
     // Engine initialization is complete. Now finish up with the GL.
-    if(!isDedicated)
+    if(!novideo)
     {
         GL_Init();
         GL_InitRefresh();

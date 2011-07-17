@@ -623,6 +623,8 @@ boolean GL_EarlyInit(void)
  */
 void GL_Init(void)
 {
+    if(novideo) return;
+
     if(!initGLOk)
     {
         Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
@@ -647,6 +649,7 @@ void GL_Init(void)
  */
 void GL_InitRefresh(void)
 {
+    if(novideo) return;
     GL_InitTextureManager();
 }
 
