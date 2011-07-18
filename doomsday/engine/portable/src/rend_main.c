@@ -4265,7 +4265,7 @@ static void Rend_RenderBoundingBoxes(void)
     material_t*         mat;
     material_snapshot_t ms;
 
-    if((!devMobjBBox && !devPolyobjBBox) || netGame)
+    if((!devMobjBBox && !devPolyobjBBox)/* || netGame*/)
         return;
 
     if(!dlBBox)
