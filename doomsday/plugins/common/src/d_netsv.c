@@ -1461,13 +1461,19 @@ void NetSv_DoCheat(int player, const char* data)
     memset(command, 0, sizeof(command));
     strncpy(command, data, sizeof(command) - 1);
 
+    // Killing self is always allowed.
+    if(!strnicmp(command, "suicide", 7))
+    {
+        DD_Executef(false, "suicide %i", player);
+        return;
+    }
+
     // If cheating is not allowed, we ain't doing nuthin'.
     if(!netSvAllowCheats)
         return;
 
     if(!strnicmp(command, "god", 3) ||
        !strnicmp(command, "noclip", 6) ||
-       !strnicmp(command, "suicide", 7) ||
        !strnicmp(command, "give", 4))
     {
         DD_Executef(false, "%s %i", command, player);

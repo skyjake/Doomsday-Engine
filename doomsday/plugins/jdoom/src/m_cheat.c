@@ -608,18 +608,21 @@ DEFCC(CCmdCheatSuicide)
     {
         player_t* plr;
 
+        /*
         if(IS_NETGAME && !netSvAllowCheats)
             return false;
+        */
 
-        if(argc == 2)
+        if(IS_CLIENT || argc != 2)
         {
-            int i = atoi(argv[1]);
-            if(i < 0 || i >= MAXPLAYERS)
-                return false;
-            plr = &players[i];
+            plr = &players[CONSOLEPLAYER];
         }
         else
-            plr = &players[CONSOLEPLAYER];
+        {
+            int i = atoi(argv[1]);
+            if(i < 0 || i >= MAXPLAYERS) return false;
+            plr = &players[i];
+        }
 
         if(!plr->plr->inGame)
             return false;
