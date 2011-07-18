@@ -1650,7 +1650,7 @@ void GL_PruneTextureVariantSpecifications(void)
     int numPruned = pruneUnusedVariantSpecifications(TST_GENERAL) +
                     pruneUnusedVariantSpecifications(TST_DETAIL);
 #if _DEBUG
-    Con_Message("Pruned %i unused texture variant %s.", numPruned, numPruned == 1? "specification" : "specifications");
+    Con_Message("Pruned %i unused texture variant %s.\n", numPruned, numPruned == 1? "specification" : "specifications");
 #endif
 }
 
