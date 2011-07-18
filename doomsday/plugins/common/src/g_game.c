@@ -1705,7 +1705,7 @@ void G_StartNewGame(skillmode_t skill)
  */
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 {
-    if(cyclingMaps && mapCycleNoExit)
+    if(IS_CLIENT || (cyclingMaps && mapCycleNoExit))
         return;
 
 #if __JHEXEN__
