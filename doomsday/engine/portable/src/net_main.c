@@ -116,6 +116,7 @@ byte    netTicSync = true;
 float   netConnectTime;
 //int     netCoordTime = 17;
 float   netConnectTimeout = 10;
+float   netSimulatedLatencySeconds = 0;
 
 // Local packets are stored into this buffer.
 boolean reboundPacket;
@@ -132,6 +133,9 @@ void Net_Register(void)
     // Cvars
     C_VAR_BYTE("net-queue-show", &monitorMsgQueue, 0, 0, 1);
     C_VAR_BYTE("net-dev", &netDev, 0, 0, 1);
+#ifdef _DEBUG
+    C_VAR_FLOAT("net-dev-latency", &netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
+#endif
     C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
     C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
     C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
@@ -180,7 +184,7 @@ void Net_Init(void)
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
     // The game is always started in single-player mode.
-    netGame = false;
+    netGame = false;   
 }
 
 void Net_Shutdown(void)

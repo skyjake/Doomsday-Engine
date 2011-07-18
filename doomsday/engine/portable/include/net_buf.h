@@ -50,6 +50,7 @@ typedef struct netmessage_s {
     size_t          size;
     byte           *data;
     void           *handle;
+    double          receivedAt;     // Time when received (seconds).
 } netmessage_t;
 
 typedef unsigned short msgid_t;

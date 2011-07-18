@@ -150,6 +150,9 @@ void N_PostMessage(netmessage_t *msg)
     // This will be the latest message.
     msg->next = NULL;
 
+    // Set the timestamp for reception.
+    msg->receivedAt = Sys_GetRealSeconds();
+
     if(msgTail)
     {
         // There are previous messages.
@@ -189,18 +192,28 @@ netmessage_t *N_GetMessage(void)
     {
         msg = msgHead;
 
-        // If there are no more messages, the tail pointer must be
-        // cleared, too.
-        if(!msgHead->next)
-            msgTail = NULL;
-
-        // Advance the head pointer.
-        msgHead = msgHead->next;
-
-        if(msg)
+        // Check for simulated latency.
+        if(netSimulatedLatencySeconds > 0 &&
+           (Sys_GetRealSeconds() - msg->receivedAt < netSimulatedLatencySeconds))
         {
-            // One less message available.
-            msgCount--;
+            // This message has not been received yet.
+            msg = NULL;
+        }
+        else
+        {
+            // If there are no more messages, the tail pointer must be
+            // cleared, too.
+            if(!msgHead->next)
+                msgTail = NULL;
+
+            // Advance the head pointer.
+            msgHead = msgHead->next;
+
+            if(msg)
+            {
+                // One less message available.
+                msgCount--;
+            }
         }
     }
     N_LockQueue(false);
