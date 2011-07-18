@@ -228,6 +228,10 @@ boolean EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 {
     mobj_t*             dest;
 
+    // Clients cannot teleport on their own.
+    if(IS_CLIENT)
+        return 0;
+
     if(mo->flags2 & MF2_NOTELEPORT)
         return false;
 
