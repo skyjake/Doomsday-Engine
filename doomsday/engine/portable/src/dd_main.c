@@ -1392,7 +1392,6 @@ int DD_Main(void)
         return -1;
     }
 
-    novideo = ArgCheck("-novideo") || isDedicated;
     if(!novideo && !isDedicated)
     {
         // Render a few black frames before we continue. This will help to
