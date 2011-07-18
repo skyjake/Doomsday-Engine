@@ -806,7 +806,10 @@ static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploa
     const texturecontent_t* content, texturevariant_t* variant)
 {
     assert(content && variant);
-    uploadContent(uploadMethod, content);
+    if(!novideo)
+    {
+        uploadContent(uploadMethod, content);
+    }
     TextureVariant_FlagUploaded(variant, true);
     return uploadMethod;
 }
@@ -815,6 +818,7 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     const texturecontent_t* content)
 {
     assert(content);
+    if(novideo) return;
     if(METHOD_IMMEDIATE == uploadMethod)
     {
 #ifdef _DEBUG
@@ -2404,7 +2408,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         { "radioOE",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE }
     };
 
-    if(isDedicated || which < 0 || which >= NUM_LIGHTING_TEXTURES)
+    if(novideo || which < 0 || which >= NUM_LIGHTING_TEXTURES)
         return 0;
 
     if(!lightingTextures[which].tex)
@@ -2418,7 +2422,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 {
-    if(isDedicated || flare < 0 || flare >= NUM_SYSFLARE_TEXTURES)
+    if(novideo || flare < 0 || flare >= NUM_SYSFLARE_TEXTURES)
         return 0;
 
     if(!sysFlareTextures[flare].tex)
@@ -3066,7 +3070,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
 
 DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
-    if(!isDedicated && patchTex)
+    if(!novideo && patchTex)
     {
         texturevariantspecification_t* texSpec =
             GL_TextureVariantSpecificationForContext(TC_UI,
