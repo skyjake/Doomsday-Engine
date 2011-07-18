@@ -756,6 +756,31 @@ void NetSv_MapCycleTicker(void)
 }
 
 /**
+ * Resets a player's frag count and other players' frag counts toward the player.
+ *
+ * @param plrNum  Player to reset.
+ */
+void NetSv_ResetPlayerFrags(int plrNum)
+{
+    int i;
+    player_t* plr = &players[plrNum];
+
+#ifdef _DEBUG
+    Con_Message("NetSv_ResetPlayerFrags: Player %i.\n", plrNum);
+#endif
+    memset(plr->frags, 0, sizeof(plr->frags));
+
+    // The frag count is dependent on the others' frags.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        players[i].frags[plrNum] = 0;
+
+        // Everybody will get their frags updated.
+        players[i].update |= PSF_FRAGS;
+    }
+}
+
+/**
  * Server calls this when new players enter the game.
  */
 void NetSv_NewPlayerEnters(int plrNum)
@@ -768,6 +793,9 @@ void NetSv_NewPlayerEnters(int plrNum)
 
     // Re-deal player starts.
     P_DealPlayerStarts(0);
+
+    // Reset the player's frags.
+    NetSv_ResetPlayerFrags(plrNum);
 
     // Spawn the player into the world.
     if(deathmatch)

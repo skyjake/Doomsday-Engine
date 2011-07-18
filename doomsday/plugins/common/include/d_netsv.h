@@ -44,8 +44,9 @@ extern char     gameConfigString[];
 
 void            P_Telefrag(mobj_t *thing);
 
-void            NetSv_NewPlayerEnters(int plrnumber);
-void           *NetSv_ReadCommands(byte *msg, uint size);
+void            NetSv_NewPlayerEnters(int plrNum);
+void            NetSv_ResetPlayerFrags(int plrNum);
+//void           *NetSv_ReadCommands(byte *msg, uint size);
 void            NetSv_SendGameState(int flags, int to);
 void            NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle);
 void            NetSv_SendMessage(int plrNum, char *msg);
