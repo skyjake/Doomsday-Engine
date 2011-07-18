@@ -934,11 +934,14 @@ static int DD_ChangeGameWorker(void* paramaters)
     Con_SetProgress(60);
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
-    // Apply default control bindings for this game.
-    B_BindGameDefaults();
+    if(!isDedicated && !DD_IsNullGameInfo(p->info))
+    {
+        // Apply default control bindings for this game.
+        B_BindGameDefaults();
 
-    // Read bindings for this game and merge with the working set.
-    Con_ParseCommands(Str_Text(GameInfo_BindingConfig(p->info)), false);
+        // Read bindings for this game and merge with the working set.
+        Con_ParseCommands(Str_Text(GameInfo_BindingConfig(p->info)), false);
+    }
 
     R_InitPatchComposites();
     R_InitFlatTextures();
