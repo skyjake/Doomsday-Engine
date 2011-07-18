@@ -168,7 +168,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
 
 void Rend_ParticleLoadSystemTextures(void)
 {
-    if(isDedicated)
+    if(novideo)
         return;
     if(pointTex)
         return; // Already been here.
@@ -187,8 +187,7 @@ void Rend_ParticleLoadExtraTextures(void)
 {
     boolean reported = false;
 
-    if(isDedicated)
-        return;
+    if(novideo) return;
 
     // Clear the texture names array.
     memset(ptctexname, 0, sizeof(ptctexname));
@@ -205,12 +204,16 @@ void Rend_ParticleLoadExtraTextures(void)
 
 void Rend_ParticleReleaseSystemTextures(void)
 {
+    if(novideo) return;
+
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
 }
 
 void Rend_ParticleReleaseExtraTextures(void)
 {
+    if(novideo) return;
+
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
