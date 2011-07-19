@@ -1,6 +1,6 @@
 ## Copyright (c) 2006 - 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
 ## Copyright (c) 2007 - 2008 Daniel Swanson <danij@dengine.net>
-## Copyright (c) 2008 - 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+## Copyright (c) 2008 - 2009-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 ##
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
