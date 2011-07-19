@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2006 James Haley <haleyjd@hotmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
