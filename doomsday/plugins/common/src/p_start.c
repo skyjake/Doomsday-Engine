@@ -238,11 +238,11 @@ void P_Update(void)
 void P_Shutdown(void)
 {
     if(spechit)
-        P_DestroyIterList(spechit);
+        IterList_Destruct(spechit);
     spechit = 0;
 
     if(linespecials)
-        P_DestroyIterList(linespecials);
+        IterList_Destruct(linespecials);
     linespecials = 0;
 
     P_DestroyPlayerStarts();

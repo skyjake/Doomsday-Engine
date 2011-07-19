@@ -362,7 +362,6 @@ int D_NetWorldEvent(int type, int parm, void* data)
                                                DMU_SOUND_ORIGIN));
 
         break;
-#endif
 
     case DDWE_DEMO_END:
         // Demo playback has ended. Advance demo sequence.
@@ -382,6 +381,7 @@ int D_NetWorldEvent(int type, int parm, void* data)
         randomClassParm = false;
 #endif
         break;
+#endif
 
     default:
         return false;

@@ -28,6 +28,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
+#include "m_misc.h"
 
 static char* lastErrorMsg = 0; /// \fixme potentially never free'd
 
