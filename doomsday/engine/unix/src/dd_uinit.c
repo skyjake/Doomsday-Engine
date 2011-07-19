@@ -325,8 +325,8 @@ int main(int argc, char** argv)
         }
 
         // First order of business: are we running in dedicated mode?
-        if(ArgCheck("-dedicated"))
-            isDedicated = true;
+        isDedicated = ArgCheck("-dedicated");
+        novideo = ArgCheck("-novideo") || isDedicated;
 
         // Determine our basedir and other global paths.
         determineGlobalPaths(&app);

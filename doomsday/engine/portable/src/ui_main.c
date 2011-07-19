@@ -263,8 +263,7 @@ void UI_LoadTextures(void)
     };
     int i;
 
-    if(isDedicated)
-        return;
+    if(novideo) return;
 
     for(i = 0; i < NUM_UITEXTURES; ++i)
     {
