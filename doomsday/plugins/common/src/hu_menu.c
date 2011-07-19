@@ -5,7 +5,7 @@
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
-  *
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -2061,9 +2061,12 @@ float Hu_MenuAlpha(void)
     return mnAlpha;
 }
 
+/**
+ * Updates on Game Tick.
+ */
 void Hu_MenuTicker(timespan_t ticLength)
 {
-    static trigger_t fixed = { 1 / 35.0 };
+#define MENUALPHA_FADE_STEP (.07f)
 
     // Move towards the target alpha level for the entire menu.
     if(mnAlpha != mnTargetAlpha)
@@ -2112,8 +2115,7 @@ void Hu_MenuTicker(timespan_t ticLength)
     }
 
     // The following is restricted to fixed 35 Hz ticks.
-    if(!M_RunTrigger(&fixed, ticLength))
-        return; // It's too soon.
+    if(!DD_IsSharpTick()) return;
 
     if(menuActive)
     {

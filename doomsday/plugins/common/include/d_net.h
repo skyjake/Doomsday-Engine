@@ -78,6 +78,8 @@ enum {
     GPT_CHEAT_REQUEST,
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
+    GPT_PLAYER_SPAWN_POSITION,
+    GPT_DAMAGE                     // Client requests damage on a target.
 };
 
 #if 0
@@ -109,7 +111,9 @@ typedef struct {
 // Player action requests.
 enum {
     GPA_FIRE = 1,
-    GPA_USE = 2
+    GPA_USE = 2,
+    GPA_CHANGE_WEAPON = 3,
+    GPA_USE_FROM_INVENTORY = 4
 };
 
 // Game state flags.

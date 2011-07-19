@@ -104,7 +104,6 @@ void            P_PostMorphWeapon(player_t* player, weapontype_t weapon);
 void            P_UpdateBeak(player_t* player, pspdef_t* psp);
 void            P_FireWeapon(player_t* player);
 
-void            P_ClientSideThink(void);
 void            P_Thrust(player_t* player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t* player);
 
@@ -140,8 +139,8 @@ extern int maxAmmo[NUM_AMMO_TYPES];
 
 void            P_GiveKey(player_t* player, keytype_t key);
 void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
-int             P_DamageMobj(mobj_t* target, mobj_t* inflictor,
-                             mobj_t* source, int damage, boolean stomping);
+int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
+int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
 boolean         P_GiveAmmo(player_t* player, ammotype_t ammo, int count);
 boolean         P_GiveBody(player_t* player, int num);
 boolean         P_GivePower(player_t* player, powertype_t power);

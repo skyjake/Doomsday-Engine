@@ -318,6 +318,7 @@ void MPE_DetectDuplicateVertices(editmap_t *map)
     M_Free(hits);
 }
 
+#if 0
 static void findEquivalentVertexes(editmap_t *src)
 {
     uint            i, newNum;
@@ -482,6 +483,7 @@ static void pruneUnusedSectors(editmap_t* map)
         map->numSectors = newNum;
     }
 }
+#endif
 
 /**
  * \note Order here is critical!

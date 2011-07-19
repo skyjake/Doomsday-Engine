@@ -293,7 +293,7 @@ const char* const* ArgvPtr(int i)
 {
     if(i < 0 || i >= numArgs)
         Con_Error("ArgvPtr: There is no arg %i.\n", i);
-    return &args[i];
+    return (const char**) &args[i];
 }
 
 const char* ArgNext(void)

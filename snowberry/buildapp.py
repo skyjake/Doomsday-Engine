@@ -38,5 +38,5 @@ opts = dict(py2app = dict(
     includes = includes,
     optimize = 2
     ))
-    
+
 setup( app = ['snowberry.py'], data_files = resources, options = opts )

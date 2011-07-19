@@ -47,7 +47,10 @@
 
 // The minimum frame size is used when bandwidth rating is zero (poorest
 // possible connection).
-#define MINIMUM_FRAME_SIZE  400  // bytes
+#define MINIMUM_FRAME_SIZE  4096 // bytes
+
+// The first frame should contain as much information as possible.
+#define MAX_FIRST_FRAME_SIZE    256000
 
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).
@@ -151,19 +154,25 @@ void Sv_TransmitFrame(void)
         }
         clients[i].lastTransmit = cTime;
 
-        /*#if _DEBUG
-           ST_Message("gt:%i (%i) -> cl%i\n", gametic, ctime, i);
-           #endif */
-
-        if(clients[i].ready && clients[i].updateCount > 0)
+        if(clients[i].ready) // && clients[i].updateCount > 0)
         {
+/*#ifdef _DEBUG
+            Con_Message("Sv_TransmitFrame: Sending at tic %i to plr %i\n", lastTransmitTic, i);
+#endif*/
             // A frame will be sent to this client. If the client
             // doesn't send ticcmds, the updatecount will eventually
             // decrease back to zero.
-            clients[i].updateCount--;
+            //clients[i].updateCount--;
 
             Sv_SendFrame(i);
         }
+#ifdef _DEBUG
+        else
+        {
+            Con_Message("Sv_TransmitFrame: NOT sending at tic %i to plr %i (ready:%i)\n", lastTransmitTic, i,
+                        clients[i].ready);
+        }
+#endif
     }
 }
 
@@ -222,14 +231,25 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         moreFlags |= MDFE_FADETARGET;
     }
 
-    // Do we need the longer floorclip entry?
-    if(d->floorClip > 64)
-        df |= MDF_LONG_FLOORCLIP;
+    // On the floor?
+    if(df & MDFC_ON_FLOOR)
+    {
+        df |= MDF_MORE_FLAGS;
+        moreFlags |= MDFE_Z_FLOOR;
+    }
+
+    // Mobj type?
+    if(df & MDFC_TYPE)
+    {
+        df |= MDF_MORE_FLAGS;
+        moreFlags |= MDFE_TYPE;
+    }
 
     // Flags. What elements are included in the delta?
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
 
+    /*
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
     {
@@ -240,17 +260,17 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
             moreFlags |= (d->pos[VZ] == DDMINFLOAT ? MDFE_Z_FLOOR : MDFE_Z_CEILING);
         }
     }
+    */
 
 #ifdef _DEBUG
-if(df & MDFC_NULL)
-{
-    Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n");
-}
-if((df & 0xffff) == 0)
-{
-    Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n",
-               delta->delta.id, df);
-}
+    if(df & MDFC_NULL)
+    {
+        Con_Error("Sv_WriteMobjDelta: We don't write Null deltas.\n");
+    }
+    if((df & 0xffff) == 0)
+    {
+        Con_Printf("Sv_WriteMobjDelta: This delta id%i [%x] is empty.\n", delta->delta.id, df);
+    }
 #endif
 
     // First the mobj ID number and flags.
@@ -266,14 +286,14 @@ if((df & 0xffff) == 0)
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
     {
-        fixed_t             vx = FLT2FIX(d->pos[VX]);
+        fixed_t vx = FLT2FIX(d->pos[VX]);
 
         Msg_WriteShort(vx >> FRACBITS);
         Msg_WriteByte(vx >> 8);
     }
     if(df & MDF_POS_Y)
     {
-        fixed_t             vy = FLT2FIX(d->pos[VY]);
+        fixed_t vy = FLT2FIX(d->pos[VY]);
 
         Msg_WriteShort(vy >> FRACBITS);
         Msg_WriteByte(vy >> 8);
@@ -281,31 +301,31 @@ if((df & 0xffff) == 0)
 
     if(df & MDF_POS_Z)
     {
-        fixed_t             vz = FLT2FIX(d->pos[VZ]);
+        fixed_t vz = FLT2FIX(d->pos[VZ]);
         Msg_WriteShort(vz >> FRACBITS);
         Msg_WriteByte(vz >> 8);
+
+        Msg_WriteFloat(d->floorZ);
+        Msg_WriteFloat(d->ceilingZ);
     }
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        fixed_t             mx = FLT2FIX(d->mom[MX]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) :
-                       FIXED8_8(mx));
+        fixed_t mx = FLT2FIX(d->mom[MX]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) : FIXED8_8(mx));
     }
 
     if(df & MDF_MOM_Y)
     {
-        fixed_t             my = FLT2FIX(d->mom[MY]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) :
-                       FIXED8_8(my));
+        fixed_t my = FLT2FIX(d->mom[MY]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) : FIXED8_8(my));
     }
 
     if(df & MDF_MOM_Z)
     {
-        fixed_t             mz = FLT2FIX(d->mom[MZ]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) :
-                       FIXED8_8(mz));
+        fixed_t mz = FLT2FIX(d->mom[MZ]);
+        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) : FIXED8_8(mz));
     }
 
     // Angles with 16-bit accuracy.
@@ -317,32 +337,39 @@ if((df & 0xffff) == 0)
     if(df & MDF_SELSPEC)
         Msg_WriteByte(d->selector >> 24);
 
-    if(df & MDF_STATE)
-        Msg_WritePackedShort(d->state - states);
-
-    // Pack flags into a word (3 bytes?).
-    // \fixme Do the packing!
-    if(df & MDF_FLAGS)
-        Msg_WriteLong(d->ddFlags & DDMF_PACK_MASK);
-
-    // Radius, height and floorclip are all bytes.
-    if(df & MDF_RADIUS)
-        Msg_WriteByte((byte) d->radius);
-    if(df & MDF_HEIGHT)
-        Msg_WriteByte((byte) d->height);
-    if(df & MDF_FLOORCLIP)
+    if((df & MDF_STATE) && d->state)
     {
-        if(df & MDF_LONG_FLOORCLIP)
-            Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
-        else
-            Msg_WriteByte(FLT2FIX(d->floorClip) >> 14);
+        Msg_WritePackedShort(d->state - states);
     }
+
+    if(df & MDF_FLAGS)
+    {
+        Msg_WriteLong(d->ddFlags & DDMF_PACK_MASK);
+        Msg_WriteLong(d->flags);
+        Msg_WriteLong(d->flags2);
+        Msg_WriteLong(d->flags3);
+    }
+
+    if(df & MDF_HEALTH)
+        Msg_WriteLong(d->health);
+
+    if(df & MDF_RADIUS)
+        Msg_WriteFloat(d->radius);
+
+    if(df & MDF_HEIGHT)
+        Msg_WriteFloat(d->height);
+
+    if(df & MDF_FLOORCLIP)
+        Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
 
     if(df & MDFC_TRANSLUCENCY)
         Msg_WriteByte(d->translucency);
 
     if(df & MDFC_FADETARGET)
         Msg_WriteByte((byte)(d->visTarget +1));
+
+    if(df & MDFC_TYPE)
+        Msg_WriteLong(d->type);
 }
 
 /**
@@ -687,6 +714,11 @@ if(type >= NUM_DELTA_TYPES)
 }
 #endif
 
+#ifdef _DEBUG
+    // Once sent, the deltas can be discarded and there is no need for resending.
+    assert(delta->state != DELTA_UNACKED);
+#endif
+
     if(delta->state == DELTA_UNACKED)
     {
         // Flag this as Resent.
@@ -801,8 +833,7 @@ writeDeltaLength:
  */
 size_t Sv_GetMaxFrameSize(int playerNumber)
 {
-    size_t              size = MINIMUM_FRAME_SIZE +
-        FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
+    size_t              size = MINIMUM_FRAME_SIZE + FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
     // What about the communications medium?
     if(size > maxDatagramSize)
@@ -860,7 +891,7 @@ void Sv_SendFrame(int plrNum)
 
     // Allow more info for the first frame.
     if(pool->isFirst)
-        maxFrameSize = maxDatagramSize;
+        maxFrameSize = MAX_FIRST_FRAME_SIZE;
 
     // If this is the first frame after a map change, use the special
     // first frame packet type.
@@ -954,10 +985,10 @@ if(delta->state == DELTA_UNACKED)
 
     // If the target is local, ack immediately. This effectively removes
     // all the sent deltas from the pool.
-    if(ddPlayers[plrNum].shared.flags & DDPF_LOCAL)
-    {
-        Sv_AckDeltaSet(plrNum, pool->setDealer, 0);
-    }
+    //if(ddPlayers[plrNum].shared.flags & DDPF_LOCAL)
+
+    // Once sent, the delta set can be discarded.
+    Sv_AckDeltaSet(plrNum, pool->setDealer, 0);
 
     // Now a frame has been sent.
     pool->isFirst = false;

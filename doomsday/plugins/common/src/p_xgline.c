@@ -754,8 +754,9 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
         list = P_GetSectorIterListForTag(tag, false);
         if(list)
         {   // Find the first sector with the tag.
-            P_IterListResetIterator(list, true);
-            while((sec = P_IterListIterator(list)) != NULL)
+            IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+            IterList_RewindIterator(list);
+            while((sec = IterList_MoveIterator(list)) != NULL)
             {
                 xsec = P_ToXSector(sec);
 
@@ -913,8 +914,9 @@ int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
 
         if(list)
         {
-            P_IterListResetIterator(list, true);
-            while((iter = P_IterListIterator(list)) != NULL)
+            IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+            IterList_RewindIterator(list);
+            while((iter = IterList_MoveIterator(list)) != NULL)
             {
                 if(reftype == LREF_TAGGED)
                 {

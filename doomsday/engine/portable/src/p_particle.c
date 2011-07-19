@@ -873,23 +873,24 @@ static void P_NewParticle(ptcgen_t* gen)
 /**
  * Callback for the client mobj iterator, called from P_PtcGenThinker.
  */
-boolean PIT_ClientMobjParticles(clmobj_t* cmo, void* context)
+boolean PIT_ClientMobjParticles(mobj_t* cmo, void* context)
 {
-    ptcgen_t*           gen = (ptcgen_t*) context;
+    ptcgen_t* gen = (ptcgen_t*) context;
+    clmoinfo_t* info = ClMobj_GetInfo(cmo);
 
     // If the clmobj is not valid at the moment, don't do anything.
-    if(cmo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
+    if(info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))
     {
         return true;
     }
 
-    if(cmo->mo.type != gen->type && cmo->mo.type != gen->type2)
+    if(cmo->type != gen->type && cmo->type != gen->type2)
     {
         // Type mismatch.
         return true;
     }
 
-    gen->source = &cmo->mo;
+    gen->source = cmo;
     P_NewParticle(gen);
     return true;
 }
@@ -1395,7 +1396,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
-                    Cl_MobjIterator(PIT_ClientMobjParticles, gen);
+                    ClMobj_Iterator(PIT_ClientMobjParticles, gen);
                 }
 
                 P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public

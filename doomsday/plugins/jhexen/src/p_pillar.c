@@ -85,8 +85,9 @@ int EV_BuildPillar(linedef_t *line, byte *args, boolean crush)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going.
@@ -159,8 +160,9 @@ int EV_OpenPillar(linedef_t *line, byte *args)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going...

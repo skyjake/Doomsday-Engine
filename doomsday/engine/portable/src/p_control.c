@@ -299,6 +299,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         case DBCS_NEGATIVE:
             Str_Append(symbolicName, "control-doubleclick-negative-");
             break;
+
         default:
             break;
         }

@@ -4064,10 +4064,14 @@ void ST_doPaletteStuff(int player)
         return;
 
     plr = &players[player];
+    if(!plr->plr->inGame)
+    {
+        // Not currently present.
+        return;
+    }
 
     if(G_GetGameState() == GS_MAP)
     {
-        plr = &players[CONSOLEPLAYER];
         if(plr->poisonCount)
         {
             palette = 0;

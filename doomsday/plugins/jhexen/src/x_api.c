@@ -151,9 +151,11 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
+    gx.EndFrame = X_EndFrame;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.EndFrame = X_EndFrame;
+    gx.MobjTryMove3f = P_TryMove3f;
+    gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
     gx.UpdateState = G_UpdateState;
     gx.GetInteger = X_GetInteger;
     gx.GetVariable = X_GetVariable;
@@ -165,11 +167,8 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.NetPlayerEvent = D_NetPlayerEvent;
     gx.NetWorldEvent = D_NetWorldEvent;
     gx.HandlePacket = D_HandlePacket;
-    gx.NetWriteCommands = D_NetWriteCommands;
-    gx.NetReadCommands = D_NetReadCommands;
 
     // Data structure sizes.
-    gx.ticcmdSize = sizeof(ticcmd_t);
     gx.mobjSize = sizeof(mobj_t);
     gx.polyobjSize = sizeof(polyobj_t);
 

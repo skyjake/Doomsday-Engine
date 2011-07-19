@@ -124,7 +124,7 @@ void Hu_MenuLoadResources(void);
 /**
  * Updates on Game Tick.
  */
-void Hu_MenuTicker(timespan_t time);
+void Hu_MenuTicker(timespan_t ticLength);
 
 /// @return  @c true if the menu is presently visible.
 boolean Hu_MenuIsVisible(void);

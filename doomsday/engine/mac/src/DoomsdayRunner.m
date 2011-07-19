@@ -21,8 +21,11 @@
  * Boston, MA  02110-1301  USA
  */
 
+
+#ifdef MACOS_10_4
 #include <stdint.h>
 typedef uint64_t      io_user_reference_t; 
+#endif
 
 #import "SDL.h"
 #import "../include/DoomsdayRunner.h"

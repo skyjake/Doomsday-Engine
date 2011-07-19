@@ -7,7 +7,8 @@ REM -- scripts into a self-extracting RAR archive.
 REM ---- Python Interpreter
 SET PYTHON_DIR=C:\Python25
 
-rd/s/q dist
+md dist
+del /f /q dist\*
 
 REM -- Make the executable.
 "%PYTHON_DIR%"\python setup.py py2exe
@@ -18,5 +19,5 @@ ECHO Copying dependencies to ./dist...
 copy %PYTHON_DIR%\lib\site-packages\wx-2.8-msw-ansi\wx\MSVCP71.dll dist
 copy %PYTHON_DIR%\lib\site-packages\wx-2.8-msw-ansi\wx\gdiplus.dll dist
 
-REM copy "%PYTHON_DIR%"\DLLs\MSVCP90.dll dist
-REM copy "%PYTHON_DIR%"\DLLs\MSVCR90.dll dist
+REM copy c:\SDK\MSVCP90.dll dist
+REM copy c:\SDK\MSVCR90.dll dist

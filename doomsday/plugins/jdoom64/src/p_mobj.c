@@ -116,13 +116,6 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
-    if(IS_CLIENT)
-    {
-        // Clients won't explode missiles.
-        P_MobjChangeState(mo, S_NULL);
-        return;
-    }
-
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
     P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
@@ -335,14 +328,14 @@ void P_MobjMoveXY(mobj_t* mo)
     }
 
     // Stop player walking animation.
-    if(player && (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
-                  player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
-       INRANGE_OF(mo->mom[MX], 0, STANDSPEED_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, STANDSPEED_THRESHOLD))
+    if((!player || (!(player->plr->forwardMove || player->plr->sideMove) &&
+        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
+       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {
         // If in a walking frame, stop moving.
-        if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
 
         // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
         if(player && player->plr->mo == mo)

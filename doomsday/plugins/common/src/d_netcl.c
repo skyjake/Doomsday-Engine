@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -86,13 +87,26 @@ byte NetCl_ReadByte(void)
 short NetCl_ReadShort(void)
 {
     readbuffer += 2;
-    return SHORT( *(short *) (readbuffer - 2) );
+    return SHORT( *(short*) (readbuffer - 2) );
+}
+
+unsigned short NetCl_ReadUShort(void)
+{
+    readbuffer += 2;
+    return SHORT( *(unsigned short*) (readbuffer - 2) );
 }
 
 int NetCl_ReadLong(void)
 {
     readbuffer += 4;
-    return LONG( *(int *) (readbuffer - 4) );
+    return LONG( *(int*) (readbuffer - 4) );
+}
+
+float NetCl_ReadFloat(void)
+{
+    int value = LONG( *(int*) readbuffer );
+    readbuffer += 4;
+    return *(float*) &value;
 }
 
 void NetCl_Read(byte *buf, int len)
@@ -227,6 +241,32 @@ void NetCl_UpdateGameState(byte *data)
     Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
 }
 
+void NetCl_PlayerSpawnPosition(byte* data)
+{
+    player_t* p = &players[CONSOLEPLAYER];
+    mobj_t* mo;
+    float x, y, z;
+    int angle;
+
+    NetCl_SetReadBuffer(data);
+
+    x = NetCl_ReadFloat();
+    y = NetCl_ReadFloat();
+    z = NetCl_ReadFloat();
+    angle = NetCl_ReadLong();
+
+#ifdef _DEBUG
+    Con_Message("NetCl_PlayerSpawnPosition: Got spawn position %f, %f, %f facing %x\n",
+                x, y, z, angle);
+#endif
+
+    mo = p->plr->mo;
+    assert(mo != 0);
+
+    P_TryMove3f(mo, x, y, z);
+    mo->angle = angle;
+}
+
 void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
     player_t *pl = &players[plrNum];
@@ -272,8 +312,9 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 #endif
 
 #ifdef _DEBUG
-        Con_Message("NetCl_UpdatePlayerState2: New state = %i\n",
-                    pl->playerState);
+        Con_Message("NetCl_UpdatePlayerState2: New state = %s\n",
+                    pl->playerState == PST_LIVE?  "PST_LIVE" :
+                    pl->playerState == PST_DEAD? "PST_DEAD" : "PST_REBORN");
 #endif
 
         // Set or clear the DEAD flag for this player.
@@ -299,18 +340,20 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 
 void NetCl_UpdatePlayerState(byte *data, int plrNum)
 {
-    int         i;
-    player_t   *pl = &players[plrNum];
-    byte        b;
-    unsigned short flags, s;
+    int i;
+    player_t* pl = &players[plrNum];
+    byte b;
+    int flags, s;
 
     if(!Get(DD_GAME_READY))
         return;
 
     NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadShort();
+    flags = NetCl_ReadUShort();
 
-    //Con_Printf("NetCl_UpdPlrState: fl=%x\n", flags);
+#ifdef _DEBUG
+    Con_Message("NetCl_UpdatePlayerState: fl=%x\n", flags);
+#endif
 
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
@@ -377,7 +420,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
         {
             inventoryitemtype_t type = IIT_FIRST + i;
-            uint            j, count = P_InventoryCount(plrNum, type);
+            uint j, count = P_InventoryCount(plrNum, type);
 
             for(j = 0; j < count; ++j)
                 P_InventoryTake(plrNum, type, true);
@@ -526,12 +569,14 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         if(flags & PSF_PENDING_WEAPON)
         {
             pl->pendingWeapon = b & 0xf;
+#if _DEBUG
+            Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i\n", pl->pendingWeapon);
+#endif
         }
 
         if(flags & PSF_READY_WEAPON)
         {
             pl->readyWeapon = b >> 4;
-
 #if _DEBUG
             Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyWeapon);
 #endif
@@ -543,10 +588,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         pl->viewHeight = (float) NetCl_ReadByte();
     }
 
-#if __JHERETIC || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_MORPH_TIME)
     {
         pl->morphTics = NetCl_ReadByte() * 35;
+#ifdef _DEBUG
+        Con_Message("NetCl_UpdatePlayerState: Player %i morphtics = %i\n", plrNum, pl->morphTics);
+#endif
     }
 #endif
 
@@ -660,8 +708,55 @@ void NetCl_Intermission(byte* data)
 }
 
 /**
- * Clients have other players' info, but it's only "FYI"; they don't
- * really need it.
+ * This is where clients start their InFine interludes.
+ */
+void NetCl_Finale(int packetType, byte *data)
+{
+    int         flags, len, numConds, i;
+    byte       *script = NULL;
+
+    NetCl_SetReadBuffer(data);
+    flags = NetCl_ReadByte();
+    if(flags & FINF_SCRIPT)
+    {
+        // First read the values of the conditions.
+        if(packetType == GPT_FINALE2)
+        {
+            numConds = NetCl_ReadByte();
+            for(i = 0; i < numConds; ++i)
+            {
+                FI_SetCondition(i, NetCl_ReadByte());
+            }
+        }
+
+        // Read the script into map-scope memory. It will be freed
+        // when the next map is loaded.
+        len = strlen((char*)readbuffer);
+        script = Z_Malloc(len + 1, PU_MAP, 0);
+        strcpy((char*)script, (char*)readbuffer);
+    }
+
+    if(flags & FINF_BEGIN && script)
+    {
+        // Start the script.
+        FI_Start((char*)script,
+                 (flags & FINF_AFTER) ? FIMODE_AFTER : (flags & FINF_OVERLAY) ?
+                 FIMODE_OVERLAY : FIMODE_BEFORE);
+    }
+
+    if(flags & FINF_END)
+    {   // Stop InFine.
+        FI_End();
+    }
+
+    if(flags & FINF_SKIP)
+    {
+        FI_SkipRequest();
+    }
+}
+
+/**
+ * Clients have other players' info, but it's only "FYI"; they don't really need it.
  */
 void NetCl_UpdatePlayerInfo(byte* data)
 {
@@ -672,15 +767,15 @@ void NetCl_UpdatePlayerInfo(byte* data)
     cfg.playerColor[num] = NetCl_ReadByte();
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = NetCl_ReadByte();
-    players[num].class = cfg.playerClass[num];
+    players[num].class_ = cfg.playerClass[num];
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__
-    Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
-               cfg.playerColor[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i\n", num,
+                cfg.playerColor[num]);
 #else
-    Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
-               cfg.playerColor[num], cfg.playerClass[num]);
+    Con_Message("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
+                cfg.playerColor[num], cfg.playerClass[num]);
 #endif
 }
 
@@ -689,7 +784,7 @@ void NetCl_UpdatePlayerInfo(byte* data)
  */
 void NetCl_SendPlayerInfo()
 {
-    byte                buffer[10], *ptr = buffer;
+    byte buffer[10], *ptr = buffer;
 
     if(!IS_CLIENT)
         return;
@@ -741,6 +836,7 @@ void NetCl_Paused(boolean setPause)
     DD_SetInteger(DD_CLIENT_PAUSED, paused);
 }
 
+#if 0
 /**
  * \kludge Write a DDPT_COMMANDS (32) packet. Returns a pointer to a static
  * buffer that contains the data (kludge to work around the parameter
@@ -844,6 +940,7 @@ void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
 
     return msg;
 }
+#endif
 
 /**
  * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing
@@ -881,12 +978,12 @@ void NetCl_UpdateJumpPower(void *data)
  * the clients position and angle may not be up to date when a ticcmd
  * arrives.
  */
-void NetCl_PlayerActionRequest(player_t *player, int actionType)
+void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam)
 {
 #define MSG_SIZE        (28)
 
-    char                msg[MSG_SIZE];
-    int                *ptr = (int*) msg;
+    char msg[MSG_SIZE];
+    int* ptr = (int*) msg;
 
     if(!IS_CLIENT)
         return;
@@ -899,18 +996,69 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType)
     *ptr++ = LONG(actionType);
 
     // Position of the action.
-    *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VX]));
-    *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VY]));
-    *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VZ]));
+    if(G_GetGameState() == GS_MAP)
+    {
+        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VX]));
+        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VY]));
+        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VZ]));
 
-    // Which way is the player looking at?
-    *ptr++ = LONG(player->plr->mo->angle);
-    *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
+        // Which way is the player looking at?
+        *ptr++ = LONG(player->plr->mo->angle);
+        *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
+    }
+    else
+    {
+        // Not in a map, so can't provide position/direction.
+        int i;
+        for(i = 0; i < 5; ++i) *ptr++ = 0;
+    }
 
-    // Currently active weapon.
-    *ptr++ = LONG(player->readyWeapon);
+    if(actionType == GPA_CHANGE_WEAPON || actionType == GPA_USE_FROM_INVENTORY)
+    {
+        *ptr++ = LONG(actionParam);
+    }
+    else
+    {
+        // Currently active weapon.
+        *ptr++ = LONG(player->readyWeapon);
+    }
 
     Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
+
+#undef MSG_SIZE
+}
+
+void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
+{
+#define MSG_SIZE 16
+    char msg[MSG_SIZE];
+    int* ptr = (int*) msg;
+
+    if(!IS_CLIENT || !target) return;
+
+#ifdef _DEBUG
+    Con_Message("NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i.\n",
+                damage, target->thinker.id, inflictor? inflictor->thinker.id : 0,
+                source? source->thinker.id : 0);
+#endif
+
+    // Amount of damage.
+    *ptr++ = LONG(damage);
+
+    // Mobjs.
+    *ptr++ = LONG(target->thinker.id);
+
+    if(inflictor)
+        *ptr++ = LONG(inflictor->thinker.id);
+    else
+        *ptr++ = 0;
+
+    if(source)
+        *ptr++ = LONG(source->thinker.id);
+    else
+        *ptr++ = 0;
+
+    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE, msg, MSG_SIZE);
 
 #undef MSG_SIZE
 }

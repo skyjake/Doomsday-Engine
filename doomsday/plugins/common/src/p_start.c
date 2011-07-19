@@ -430,24 +430,28 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
 
+#ifdef _DEBUG
+    Con_Message("P_SpawnPlayer: player %i spawned at (%f,%f,%f) floorz=%f\n",
+                plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
+#endif
+
     p = &players[plrNum];
     if(p->playerState == PST_REBORN)
         G_PlayerReborn(plrNum);
 
     // \fixme Should this not occur before the reborn?
-    p->class = pClass;
+    p->class_ = pClass;
 
-    // With clients all player mobjs are remote, even the CONSOLEPLAYER.
-    if(IS_CLIENT)
+    // On clients, mark the remote players.
+    if(IS_CLIENT && plrNum != CONSOLEPLAYER)
     {
-        mo->flags &= ~MF_SOLID;
-        mo->ddFlags = DDMF_REMOTE | DDMF_DONTDRAW;
+        mo->ddFlags = DDMF_DONTDRAW;
         // The real flags are received from the server later on.
     }
 
     // Set color translations for player sprites.
 #if __JHEXEN__
-    if(p->class == PCLASS_FIGHTER &&
+    if(p->class_ == PCLASS_FIGHTER &&
        (p->colorMap == 0 || p->colorMap == 2))
     {
         // The first type should be blue, and the third should be the
@@ -468,8 +472,14 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         mo->flags |= cfg.playerColor[plrNum] << MF_TRANSSHIFT;
 #endif
 
+#ifdef _DEBUG
+    Con_Message("P_SpawnPlayer: Player %i spawning with translation %i.\n",
+                plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
+#endif
+
     p->plr->lookDir = 0; /* $unifiedangles */
     p->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+    p->plr->flags &= ~DDPF_UNDEFINED_POS;
     p->jumpTics = 0;
     p->airCounter = 0;
     mo->player = p;
@@ -499,6 +509,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     if(p->plr->flags & DDPF_CAMERA)
     {
+        VERBOSE(Con_Message("P_SpawnPlayer: Player %i is a camera.\n", plrNum));
+
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
         p->viewHeight = 0;
     }
@@ -535,6 +547,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         p->readyWeapon = p->pendingWeapon;
     else
         p->pendingWeapon = p->readyWeapon;
+
+    p->brain.changeWeapon = WT_NOCHANGE;
 
     // Setup gun psprite.
     P_SetupPsprites(p);
@@ -600,6 +614,29 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 }
 
 /**
+ * Spawns the client's mobj on clientside.
+ */
+void P_SpawnClient(int plrNum)
+{
+#if __JHEXEN__
+    playerclass_t pClass = cfg.playerClass[plrNum];
+#else
+    playerclass_t pClass = PCLASS_PLAYER;
+#endif
+
+#ifdef _DEBUG
+    Con_Message("P_SpawnClient: Spawning client player mobj (for player %i; console player is %i).\n", plrNum, CONSOLEPLAYER);
+#endif
+
+    // The server will fix the player's position and angles soon after.
+    spawnPlayer(plrNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
+
+    // The mobj was just spawned onto invalid coordinates. The view cannot
+    // be drawn until we receive the right coords.
+    players[plrNum].plr->flags |= DDPF_UNDEFINED_POS;
+}
+
+/**
  * Called by G_DoReborn if playing a net game.
  */
 void P_RebornPlayer(int plrNum)
@@ -614,9 +651,9 @@ void P_RebornPlayer(int plrNum)
 #else
     playerclass_t       pClass = PCLASS_PLAYER;
 #endif
-    float               pos[3];
-    angle_t             angle;
-    int                 spawnFlags;
+    float               pos[3] = { 0, 0, 0 };
+    angle_t             angle = 0;
+    int                 spawnFlags = 0;
     boolean             makeCamera = false;
 
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
@@ -624,7 +661,7 @@ void P_RebornPlayer(int plrNum)
 
     p = &players[plrNum];
 
-    Con_Printf("P_RebornPlayer: %i.\n", plrNum);
+    Con_Message("P_RebornPlayer: %i.\n", plrNum);
 
     if(p->plr->mo)
     {
@@ -634,7 +671,12 @@ void P_RebornPlayer(int plrNum)
     }
 
     if(G_GetGameState() != GS_MAP)
+    {
+#ifdef _DEBUG
+        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GetGameState());
+#endif
         return; // Nothing else to do.
+    }
 
     // Spawn at random spot if in death match.
     if(deathmatch)
@@ -660,11 +702,14 @@ void P_RebornPlayer(int plrNum)
     // Determine the spawn position.
     if(IS_CLIENT)
     {
+        P_SpawnClient(plrNum);
+        return;
+
         // Anywhere will do for now.
-        pos[VX] = pos[VY] = pos[VZ] = 0;
-        angle = 0;
-        spawnFlags = MSF_Z_FLOOR;
-        makeCamera = true; // Clients spawn as spectators.
+        //pos[VX] = pos[VY] = pos[VZ] = 0;
+        //angle = 0;
+        //spawnFlags = MSF_Z_FLOOR;
+        //makeCamera = true; // Clients spawn as spectators.
     }
     else
     {
@@ -697,7 +742,7 @@ void P_RebornPlayer(int plrNum)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         if(!foundSpot)
         {
-            Con_Printf("- force spawning at %i.\n", p->startSpot);
+            Con_Message("- force spawning at %i.\n", p->startSpot);
 
             if(assigned)
             {
@@ -727,6 +772,10 @@ void P_RebornPlayer(int plrNum)
         {
             int                 i;
 
+#ifdef _DEBUG
+            Con_Message("P_RebornPlayer: Trying other spots for %i.\n", plrNum);
+#endif
+
             // Try to spawn at one of the other player start spots.
             for(i = 0; i < MAXPLAYERS; ++i)
             {
@@ -746,14 +795,22 @@ void P_RebornPlayer(int plrNum)
                         spawnFlags = spot->flags;
 
                         foundSpot = true;
+
+#ifdef _DEBUG
+                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", start->pos[VX], start->pos[VY]);
+#endif
                         break;
                     }
+#ifdef _DEBUG
+                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", start->pos[VX], start->pos[VY]);
+#endif
                 }
             }
         }
 
         if(!foundSpot)
-        {   // Player's going to be inside something.
+        {
+            // Player's going to be inside something.
             const playerstart_t* start;
 
             if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
@@ -776,6 +833,10 @@ void P_RebornPlayer(int plrNum)
         }
 #endif
     }
+
+#ifdef _DEBUG
+    Con_Message("P_RebornPlayer: Spawning player at (%f,%f,%f).\n", pos[VX], pos[VY], pos[VZ]);
+#endif
 
     spawnPlayer(plrNum, pClass, pos[VX], pos[VY], pos[VZ], angle,
                 spawnFlags, makeCamera, true, true);
@@ -866,6 +927,17 @@ void P_SpawnPlayers(void)
 {
     int                 i;
 
+    if(IS_CLIENT)
+    {
+        for(i = 0; i < MAXPLAYERS; ++i)
+            if(players[i].plr->inGame)
+            {
+                // Spawn the client anywhere.
+                P_SpawnClient(i);
+            }
+        return;
+    }
+
     // If deathmatch, randomly spawn the active players.
     if(deathmatch)
     {
@@ -939,8 +1011,22 @@ void P_SpawnPlayers(void)
 
                 spawnPlayer(i, pClass, pos[VX], pos[VY], pos[VZ], angle,
                             spawnFlags, makeCamera, false, true);
+
+#ifdef _DEBUG
+                Con_Message("P_SpawnPlayers: Player %i at %f, %f, %f\n", i, pos[VX], pos[VY], pos[VZ]);
+#endif
             }
     }
+
+    // Let clients know
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+        {
+            NetSv_SendPlayerSpawnPosition(i, players[i].plr->mo->pos[VX],
+                                          players[i].plr->mo->pos[VY],
+                                          players[i].plr->mo->pos[VZ],
+                                          players[i].plr->mo->angle);
+        }
 }
 
 /**
@@ -973,7 +1059,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
         if(G_GetGameState() == GS_MAP)
         {
             // Anywhere will do, for now.
-            spawnPlayer(playerNum, pClass, 0, 0, 0, 0, MSF_Z_FLOOR, false,
+            spawnPlayer(playerNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false,
                         false, false);
         }
 

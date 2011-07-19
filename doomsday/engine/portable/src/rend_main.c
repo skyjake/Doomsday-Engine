@@ -4983,7 +4983,7 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
  */
 static void Rend_RenderBoundingBoxes(void)
 {
-    static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
+    //static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
     static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
     static const float  yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
@@ -4992,7 +4992,7 @@ static void Rend_RenderBoundingBoxes(void)
     material_t* mat;
     material_snapshot_t ms;
 
-    if((!devMobjBBox && !devPolyobjBBox) || netGame)
+    if((!devMobjBBox && !devPolyobjBBox)/* || netGame*/)
         return;
 
     if(!dlBBox)

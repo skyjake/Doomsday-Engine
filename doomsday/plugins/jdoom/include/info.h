@@ -1680,6 +1680,7 @@ typedef enum {
     TXT_NOTDESIGNEDFOR,
     TXT_GAMESETUP,
     TXT_PLAYERSETUP,
+    TXT_DISCONNECT,
     NUMTEXT
 } textenum_t;
 

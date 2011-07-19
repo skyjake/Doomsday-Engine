@@ -76,7 +76,7 @@ audiodriver_t audiod_dummy = {
     DS_DummyEvent
 };
 
-audiointerface_sfx_t audiod_dummy_sfx = {
+audiointerface_sfx_t audiod_dummy_sfx = { {
     DS_Dummy_SFX_Init,
     DS_Dummy_SFX_CreateBuffer,
     DS_Dummy_SFX_DestroyBuffer,
@@ -89,7 +89,7 @@ audiointerface_sfx_t audiod_dummy_sfx = {
     DS_Dummy_SFX_Setv,
     DS_Dummy_SFX_Listener,
     DS_Dummy_SFX_Listenerv
-};
+} };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

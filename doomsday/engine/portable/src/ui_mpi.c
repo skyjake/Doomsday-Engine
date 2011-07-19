@@ -94,7 +94,7 @@ char    str_desc[201];
 char    str_masterip[128];
 char    str_ipaddr[128];
 char    str_ipport[128];
-char    str_myudp[51];
+//char    str_myudp[51];
 
 serverstrings_t str_sinfo;
 
@@ -111,7 +111,7 @@ static uidata_edit_t ed_masterip = { str_masterip, 127 };
 static uidata_list_t lst_found = { lstit_found, 0 };
 static uidata_edit_t ed_ipsearch = { str_ipaddr, 127 };
 static uidata_edit_t ed_portsearch = { str_ipport, 127 };
-static uidata_edit_t ed_myudp = { str_myudp, 50 };
+//static uidata_edit_t ed_myudp = { str_myudp, 50 };
 
 static ui_page_t page_server, page_client;
 
@@ -138,8 +138,8 @@ static ui_object_t ob_server[] = {  // Server setup
     {UI_EDIT, 0, 0, 230, 920, 110, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
      0, &ed_portsearch},
     {UI_TEXT, 0, 0, 420, 920, 0, 70, "In/out UDP port", UIText_Drawer},
-    {UI_EDIT, 0, 0, 600, 920, 110, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
-     0, &ed_myudp},
+    /*{UI_EDIT, 0, 0, 600, 920, 110, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
+     0, &ed_myudp},*/
 
     {UI_BUTTON, 0, UIF_DEFAULT, 800, 920, 180, 70, "Start", UIButton_Drawer,
      UIButton_Responder, 0, MPIStartServer},
@@ -199,14 +199,14 @@ static ui_object_t ob_client[] = {
     //{UI_TEXT, 0, 0, 190, 870, 200, 70, "", MPIServerInfoDrawer, 0, 0, 0,
     // str_sinfo.ping},
 
-    {UI_BOX, 0, 0, 0, 910, 1000, 90, "", UIFrame_Drawer},
-    {UI_TEXT, 0, 0, 20, 920, 0, 70, "My UDP port", UIText_Drawer},
-    {UI_EDIT, 0, 0, 170, 920, 110, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
-     0, &ed_myudp},
-    {UI_TEXT, 0, 0, 290, 920, 0, 70,
-     "(must be open for incoming and outgoing traffic)", UIText_Drawer},
+    //{UI_BOX, 0, 0, 0, 910, 1000, 90, "", UIFrame_Drawer},
+    //{UI_TEXT, 0, 0, 20, 920, 0, 70, "My UDP port", UIText_Drawer},
+    /*{UI_EDIT, 0, 0, 170, 920, 110, 70, "", UIEdit_Drawer, UIEdit_Responder, 0,
+     0, &ed_myudp},*/
+    /*{UI_TEXT, 0, 0, 290, 920, 0, 70,
+     "(must be open for incoming and outgoing traffic)", UIText_Drawer},*/
 
-    {UI_BUTTON, UIG_CONNECT, 0, 800, 920, 180, 70, "Connect", UIButton_Drawer,
+    {UI_BUTTON, UIG_CONNECT, 0, 190, 920, 360, 70, "Connect to Server", UIButton_Drawer,
      UIButton_Responder, 0, MPIConnect},
 
     {UI_NONE}
@@ -384,7 +384,6 @@ void MPIStartServer(ui_object_t* ob)
 {
     N_ShutdownService();
     Con_SetInteger2("net-port-control", strtol(str_ipport, 0, 0), SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("net-port-data", strtol(str_myudp, 0, 0), SVF_WRITE_OVERRIDE);
     N_InitService(true);
 
     // Update the variables.
@@ -531,7 +530,7 @@ void MPIUpdateFound(ui_object_t *ob)
     }
 }
 
-void MPIRetrieve(ui_object_t *ob)
+void MPIRetrieveServersFromMaster()
 {
     ui_object_t *list = UI_FindObject(ob_client, 0, UIF_SERVER_LIST);
 
@@ -555,6 +554,12 @@ void MPIRetrieve(ui_object_t *ob)
     // Get the list.
     N_MAPost(MAC_REQUEST);
     N_MAPost(MAC_WAIT);
+
+}
+
+void MPIRetrieve(ui_object_t *ob)
+{
+    MPIRetrieveServersFromMaster();
 }
 
 void MPIConnect(ui_object_t *ob)
@@ -562,10 +567,6 @@ void MPIConnect(ui_object_t *ob)
     char    buf[80];
 
     N_ShutdownService();
-
-    // Update my UDP port.
-    Con_SetInteger2("net-port-data", strtol(str_myudp, 0, 0), SVF_WRITE_OVERRIDE);
-
     N_InitService(false);
 
     sprintf(buf, "net %sconnect %i", searchMode == SEARCH_MASTER ? "m" : "",
@@ -657,7 +658,7 @@ void DD_NetSetup(int serverMode)
     }
 
     sprintf(str_ipport, "%i", (nptIPPort ? nptIPPort : DEFAULT_TCP_PORT));
-    sprintf(str_myudp, "%i", (nptUDPPort ? nptUDPPort : DEFAULT_UDP_PORT));
+    //sprintf(str_myudp, "%i", 0); // (nptUDPPort ? nptUDPPort : DEFAULT_UDP_PORT));
     strcpy(str_masterip, masterAddress);
 
     // Prepare Protocol Setup.
@@ -671,4 +672,10 @@ void DD_NetSetup(int serverMode)
     UI_SetPage(serverMode ? &page_server : &page_client);
 
     CP_InitCvarSliders(ob_server);
+
+    // Automatically look for servers on the master.
+    if(!serverMode && searchMode == SEARCH_MASTER)
+    {
+        MPIRetrieveServersFromMaster();
+    }
 }

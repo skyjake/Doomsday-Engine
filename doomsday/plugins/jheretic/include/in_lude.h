@@ -42,7 +42,7 @@ extern int interTime;
 void WI_Register(void);
 
 void            IN_Init(wbstartstruct_t* wbstartstruct);
-
+void            IN_SkipToNext(void);
 void            IN_Stop(void);
 
 void            IN_Ticker(void);

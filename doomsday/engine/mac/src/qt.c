@@ -30,8 +30,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef MACOS_10_4
 #include <stdint.h>
 typedef uint64_t io_user_reference_t;
+#endif
 
 #include "doomsday.h"
 #include "sys_audiod.h"
@@ -41,7 +43,7 @@ typedef uint64_t io_user_reference_t;
 
 // MACROS ------------------------------------------------------------------
 
-#define BUFFERED_MUSIC_FILE "_dd-qt-buffered-music-file"
+//#define BUFFERED_MUSIC_FILE "_dd-qt-buffered-music-file"
 
 // TYPES -------------------------------------------------------------------
 
@@ -62,8 +64,8 @@ static void DM_Ext_Stop(void);
 
 static boolean qtInited = false;
 static boolean inLoopedMode = false;
-static unsigned songSize = 0;
-static char *song;
+//static unsigned songSize = 0;
+//static char *song;
 static Movie movie = NULL;
 static short movieVolume = kFullVolume;
 
@@ -87,6 +89,7 @@ static void ExtMus_Init(void)
     qtInited = true;
 }
 
+/*
 static void ExtMus_Shutdown(void)
 {
     DM_Ext_Stop();
@@ -103,6 +106,7 @@ static void ExtMus_Shutdown(void)
     movie = NULL;
     qtInited = false;
 }
+*/
 
 static int DM_Ext_Init(void)
 {
@@ -161,6 +165,7 @@ static int DM_Ext_Get(int property, void *value)
     return true;
 }
 
+/*
 static void *DM_Ext_SongBuffer(int length)
 {
     if(!qtInited)
@@ -197,6 +202,7 @@ static int DM_Ext_PlayBuffer(int looped)
 
     return DM_Ext_PlayFile(BUFFERED_MUSIC_FILE, looped);
 }
+*/
 
 static void DM_Ext_Pause(int pause)
 {
@@ -291,6 +297,7 @@ static int DM_Ext_PlayFile(const char *filename, int looped)
     return playFile(filename, looped);
 }
 
+/*
 static int DM_Mus_Init(void)
 {
     ExtMus_Init();
@@ -345,15 +352,16 @@ static int DM_Mus_Play(int looped)
     convertMusToMidi((byte*) song, songSize, fileName);
     return playFile(fileName, looped);
 }
+*/
 
 // The audio driver struct.
-audiointerface_music_t audiodQuickTimeMusic = {
+audiointerface_music_t audiodQuickTimeMusic = { {
     DM_Ext_Init,
     DM_Ext_Update,
     DM_Ext_Set,
     DM_Ext_Get,
     DM_Ext_Pause,
-    DM_Ext_Stop,
+    DM_Ext_Stop },
     NULL,
     NULL,
     DM_Ext_PlayFile,

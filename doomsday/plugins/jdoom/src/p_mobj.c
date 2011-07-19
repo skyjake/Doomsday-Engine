@@ -97,11 +97,13 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
         mobj->turnTime = false; // $visangle-facetarget
 
-        // Modified handling.
-        // Call action functions when the state is set.
-        if(st->action)
-            st->action(mobj);
-
+        if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+        {
+            // Modified handling.
+            // Call action functions when the state is set.
+            if(st->action)
+                st->action(mobj);
+        }
         state = st->nextState;
     } while(!mobj->tics);
 
@@ -110,13 +112,6 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
-    if(IS_CLIENT)
-    {
-        // Clients won't explode missiles.
-        P_MobjChangeState(mo, S_NULL);
-        return;
-    }
-
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
     P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
@@ -329,14 +324,14 @@ void P_MobjMoveXY(mobj_t* mo)
     }
 
     // Stop player walking animation.
-    if(player && (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
-                  player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
-       INRANGE_OF(mo->mom[MX], 0, STANDSPEED_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, STANDSPEED_THRESHOLD))
+    if((!player || (!(player->plr->forwardMove || player->plr->sideMove) &&
+         player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
+       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {
         // If in a walking frame, stop moving.
-        if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
 
         // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
         if(player && player->plr->mo == mo)
@@ -648,8 +643,8 @@ void P_MobjThinker(mobj_t* mo)
     if(!mo)
         return; // Wha?
 
-    if(mo->ddFlags & DDMF_REMOTE)
-        return; // Remote mobjs are handled separately.
+    if(IS_CLIENT && !ClMobj_IsValid(mo))
+        return; // We should not touch this right now.
 
     // Spectres get selector = 1.
     if(mo->type == MT_SHADOWS)
@@ -818,10 +813,6 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
-    // Clients only spawn local objects.
-    if(!(info->flags & MF_LOCAL) && IS_CLIENT)
-        return NULL;
-
     // Not for deathmatch?
     if(deathmatch && (info->flags & MF_NOTDMATCH))
         return NULL;
@@ -881,8 +872,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     mo->flags2 = info->flags2;
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
-    mo->health =
-        info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
 
     // Let the engine know about solid objects.

@@ -73,6 +73,12 @@ static void rendPlayerView(int player)
     float viewPos[3], viewPitch, pspriteOffsetY;
     angle_t viewAngle;
 
+    if(!plr->plr->mo)
+    {
+        Con_Message("rendPlayerView: Rendering view of player %i, who has no mobj!\n", player);
+        return;
+    }
+
     if(IS_CLIENT)
     {
         // Server updates mobj flags in NetSv_Ticker.
@@ -119,8 +125,8 @@ static void rendPlayerView(int player)
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
 
     // $democam
-    GL_SetFilter((plr->plr->flags & DDPF_VIEW_FILTER)? true : false);
-    if(plr->plr->flags & DDPF_VIEW_FILTER)
+    GL_SetFilter((plr->plr->flags & DDPF_USE_VIEW_FILTER)? true : false);
+    if(plr->plr->flags & DDPF_USE_VIEW_FILTER)
     {
         const float* color = plr->plr->filterColor;
         GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);

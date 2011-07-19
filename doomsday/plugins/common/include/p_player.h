@@ -66,6 +66,8 @@ weapontype_t    P_WeaponSlotCycle(weapontype_t type, boolean prev);
 int             P_GetPlayerNum(player_t* plr);
 int             P_GetPlayerCheats(const player_t* plr);
 
+boolean         P_PlayerInWalkState(player_t* plr);
+
 weapontype_t    P_PlayerFindWeapon(player_t* plr, boolean prev);
 weapontype_t    P_MaybeChangeWeapon(player_t* plr, weapontype_t weapon,
                                     ammotype_t ammo, boolean force);

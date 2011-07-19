@@ -344,8 +344,8 @@ void Sv_HandlePacket(void)
     char                buf[17];
 
 #ifdef _DEBUG
-Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
-Con_Message("Sv_HandlePacket: length=%ul\n", (unsigned int) netBuffer.length);
+    Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
+    Con_Message("Sv_HandlePacket: length=%li\n", netBuffer.length);
 #endif
 
     switch(netBuffer.msg.type)
@@ -386,7 +386,7 @@ Con_Message("Sv_HandlePacket: length=%ul\n", (unsigned int) netBuffer.length);
             Msg_Read(buf, 16);
             if(strnicmp(buf, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), 16))
             {
-                Con_Printf("  Bad Game ID: %-.16s\n", buf);
+                Con_Printf("  Bad Game ID: %-.16s (expected %s)\n", buf, (char*)gx.GetVariable(DD_GAME_MODE));
                 N_TerminateClient(from);
                 break;
             }
@@ -579,14 +579,15 @@ void Sv_ExecuteCommand(void)
 void Sv_GetPackets(void)
 {
     int         netconsole;
-    int         start, num, i;
     client_t   *sender;
-    byte       *unpacked;
+    //int         start, num, i;
+    //byte       *unpacked;
 
     while(Net_GetPacket())
     {
         switch(netBuffer.msg.type)
         {
+#if 0
         case PCL_COMMANDS:
             // Determine who sent this packet.
             netconsole = netBuffer.player;
@@ -635,7 +636,9 @@ void Sv_GetPackets(void)
                 unpacked += TICCMD_SIZE;
             }
             break;
+#endif
 
+#if 0
         case PCL_ACK_SETS:
             // The client is acknowledging that it has received a number of
             // delta sets.
@@ -656,6 +659,7 @@ void Sv_GetPackets(void)
                 Sv_AckDeltaSet(netBuffer.player, 0, Msg_ReadByte());
             }
             break;
+#endif
 
         case PKT_COORDS:
             Sv_ClientCoords(netBuffer.player);
@@ -774,7 +778,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
             // shake hands. It'll request this by sending a Hello packet.
             // We'll be waiting...
             cl->handshake = false;
-            cl->updateCount = UPDATECOUNT;
+            //cl->updateCount = UPDATECOUNT;
             return true;
         }
     }
@@ -818,7 +822,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     plr->shared.inGame = false;
     cl->connected = false;
     cl->ready = false;
-    cl->updateCount = 0;
+    //cl->updateCount = 0;
     cl->handshake = false;
     cl->nodeID = 0;
     cl->bandwidthRating = BWR_DEFAULT;
@@ -930,12 +934,12 @@ void Sv_StartNetGame(void)
         client->connected = false;
         client->ready = false;
         client->nodeID = 0;
-        client->numTics = 0;
-        client->firstTic = 0;
+        //client->numTics = 0;
+        //client->firstTic = 0;
         client->enterTime = 0;
         client->runTime = -1;
         client->lastTransmit = -1;
-        client->updateCount = UPDATECOUNT;
+        //client->updateCount = UPDATECOUNT;
         client->fov = 90;
         client->viewConsole = -1;
         memset(client->name, 0, sizeof(client->name));
@@ -1015,6 +1019,7 @@ void Sv_SendPlayerFixes(int plrNum)
         fixes |= 4;
 
     Msg_WriteLong(fixes);
+    Msg_WriteLong(ddpl->mo->thinker.id);
 
     // Increment counters.
     if(ddpl->flags & DDPF_FIXANGLES)
@@ -1071,7 +1076,7 @@ void Sv_Ticker(void)
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t           *plr = &ddPlayers[i];
+        player_t *plr = &ddPlayers[i];
 
         if(!plr->shared.inGame || !plr->shared.mo)
             continue;
@@ -1135,9 +1140,13 @@ int Sv_GetNumConnected(void)
  */
 boolean Sv_CheckBandwidth(int playerNumber)
 {
+    return true;
+    /*
     client_t           *client = &clients[playerNumber];
     uint                qSize = N_GetSendQueueSize(playerNumber);
     uint                limit = 400;
+
+    return true;
 
     // If there are too many messages in the queue, the player's bandwidth
     // is overrated.
@@ -1169,24 +1178,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
 
     // New messages will not be sent if there's too much already.
     return qSize <= 10 * limit;
-}
-
-void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
-{
-    P_CheckPosXYZ(mo, x, y, z);
-
-    P_MobjUnlink(mo);
-    mo->pos[VX] = x;
-    mo->pos[VY] = y;
-    mo->pos[VZ] = z;
-    P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-    mo->floorZ = tmpFloorZ;
-    mo->ceilingZ = tmpCeilingZ;
-
-    if(onFloor)
-    {
-        mo->pos[VZ] = mo->floorZ;
-    }
+    */
 }
 
 /**
@@ -1201,40 +1193,84 @@ void Sv_ClientCoords(int plrNum)
     mobj_t             *mo = ddpl->mo;
     int                 clz;
     float               clientPos[3];
+    float               clientMom[3];
+    angle_t             clientAngle;
     boolean             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !ddpl->inGame || (ddpl->flags & DDPF_DEAD))
         return;
 
-    clientPos[VX] = (float) Msg_ReadShort();
-    clientPos[VY] = (float) Msg_ReadShort();
+    clientPos[VX] = Msg_ReadFloat();
+    clientPos[VY] = Msg_ReadFloat();
 
-    clz = Msg_ReadShort();
-    clientPos[VZ] = (float) clz;
-
-    if((unsigned) (clz << 16) == (DDMININT & 0xffff0000))
+    clz = Msg_ReadLong();
+    if(clz == DDMININT)
     {
         clientPos[VZ] = mo->floorZ;
         onFloor = true;
     }
+    else
+    {
+        clientPos[VZ] = FIX2FLT(clz);
+    }
+
+    // The momentum.
+    clientMom[VX] = ((float) Msg_ReadShort()) / 256;
+    clientMom[VY] = ((float) Msg_ReadShort()) / 256;
+    clientMom[VZ] = ((float) Msg_ReadShort()) / 256;
+
+    // The angle.
+    clientAngle = ((angle_t) Msg_ReadShort()) << 16;
+
+    // Movement intent.
+    ddpl->forwardMove = FIX2FLT(((char) Msg_ReadByte()) << 13);
+    ddpl->sideMove = FIX2FLT(((char) Msg_ReadByte()) << 13);
+
+    if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
+    {
+#ifdef _DEBUG
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angle for player %i: %x\n", plrNum, clientAngle) );
+#endif
+        mo->angle = clientAngle;
+    }
+
+    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
+    {
+#ifdef _DEBUG
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
+                              clientMom[VX], clientMom[VY], clientMom[VZ]) );
+#endif
+        mo->mom[VX] = clientMom[VX];
+        mo->mom[VY] = clientMom[VY];
+        mo->mom[VZ] = clientMom[VZ];
+    }
+
+#ifdef _DEBUG
+    VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f\n", plrNum,
+                          clientPos[VX], clientPos[VY], clientPos[VZ]) );
+#endif
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
-    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos &&
-       P_CheckPosXYZ(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
+    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
     {
-        // Large differences in the coordinates suggest that player position
-        // has been misestimated on serverside.
-
-        // Prevent illegal stepups.
-        if(tmpFloorZ - mo->pos[VZ] <= 24 ||
-           // But also allow warping the position.
-           (fabs(clientPos[VX] - mo->pos[VX]) > WARP_LIMIT ||
-            fabs(clientPos[VY] - mo->pos[VY]) > WARP_LIMIT ||
-            fabs(clientPos[VZ] - mo->pos[VZ]) > WARP_LIMIT))
+#ifdef _DEBUG
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
+                              clientPos[VX], clientPos[VY], clientPos[VZ]) );
+#endif
+        if(!P_MobjSetPos(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
         {
-            Sv_PlaceMobj(mo, clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
+            Con_Message("Sv_ClientCoords: Player %i attempts an illegal move to: %f, %f, %f\n", plrNum,
+                        clientPos[VX], clientPos[VY], clientPos[VZ]);
+
+            // We need to restore the client's old position.
+            //ddpl->flags |= DDPF_FIXPOS;
+        }
+        else // The move was successful.
+        {
+            if(onFloor)
+                mo->pos[VZ] = mo->floorZ;
         }
     }
 }

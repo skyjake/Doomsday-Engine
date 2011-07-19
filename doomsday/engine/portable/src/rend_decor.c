@@ -399,6 +399,9 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         default:
             Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
             break;
+
+        default:
+            break;
         }
         suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;
     }
@@ -605,6 +608,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
     case SEG_MIDDLE:
         suf = &side->SW_middlesurface;
         if(suf->material)
+        {
             if(!line->L_backside)
             {
                 top = frontCeil->visHeight;
@@ -629,6 +633,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
                     visible = true;
                 }
             }
+        }
         break;
 
     case SEG_TOP:

@@ -431,7 +431,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
     if(numSprites)
     {
         spriteframe_t sprTemp[MAX_FRAMES];
-        int maxFrame, n, idx = 0;
+        int maxFrame, n;
 
         sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_APPSTATIC, NULL);
 
@@ -1052,7 +1052,8 @@ void R_ProjectSprite(mobj_t* mo)
         return;
     }
     if(sect->SP_floorvisheight >= sect->SP_ceilvisheight)
-    {   // Never make a vissprite when the mobj's origin sector is of zero height.
+    {
+        // Never make a vissprite when the mobj's origin sector is of zero height.
         return;
     }
 
@@ -1609,11 +1610,13 @@ void R_SortVisSprites(void)
     }
 }
 
+/*
 static void scaleFloatRGB(float* out, const float* in, float mul)
 {
     memset(out, 0, sizeof(float) * 3);
     R_ScaleAmbientRGB(out, in, mul);
 }
+*/
 
 /**
  * Iterator for processing light sources around a vissprite.

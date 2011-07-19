@@ -76,8 +76,6 @@ typedef struct {
     int           (*NetWorldEvent) (int type, int parm, void* data);
     void          (*HandlePacket) (int fromplayer, int type, void* data,
                                    size_t length);
-    void         *(*NetWriteCommands) (int numCommands, void* data);
-    void         *(*NetReadCommands) (size_t pktLength, void* data);
 
     // Tickers.
     void          (*Ticker) (timespan_t ticLength);
@@ -97,9 +95,10 @@ typedef struct {
     // Miscellaneous.
     void          (*MobjThinker) ();
     float         (*MobjFriction) (void* mobj); // Returns a friction factor.
+    boolean       (*MobjTryMove3f) (struct mobj_s* mobj, float x, float y, float z);
+    void          (*SectorHeightChangeNotification)(int sectorIdx); // Applies necessary checks on objects.
 
     // Main structure sizes.
-    size_t          ticcmdSize; // sizeof(ticcmd_t)
     size_t          mobjSize; // sizeof(mobj_t)
     size_t          polyobjSize; // sizeof(polyobj_t)
 

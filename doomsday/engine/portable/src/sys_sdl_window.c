@@ -50,7 +50,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LINELEN                 (80)
+#define LINELEN                 (1024)
 
 // TYPES -------------------------------------------------------------------
 
@@ -81,6 +81,10 @@ static boolean mainWindowInited = false;
 
 static int screenWidth, screenHeight, screenBPP;
 
+#if defined(UNIX)
+static WINDOW* cursesRootWin;
+#endif
+
 // CODE --------------------------------------------------------------------
 
 static __inline ddwindow_t *getWindow(uint idx)
@@ -97,6 +101,9 @@ static __inline ddwindow_t *getWindow(uint idx)
 #if defined(UNIX)
 static void setAttrib(int flags)
 {
+    if(!mainWindowInited)
+        return;
+
     if(flags & (CBLF_YELLOW | CBLF_LIGHT))
         wattrset(mainWindow.console.winText, A_BOLD);
     else
@@ -134,7 +141,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     if(!winManagerInited || !text)
         return;
 
-    if(idx != 1)
+    if(!novideo && idx != 1)
     {
         // We only support one terminal window (this isn't for us).
         return;
@@ -453,7 +460,7 @@ static ddwindow_t* createDDWindow(application_t *app, int w, int h, int bpp,
         int         maxPos[2];
 
         // Initialize curses.
-        if(!initscr())
+        if(!(cursesRootWin = initscr()))
         {
             Sys_CriticalMessage("createDDWindow: Failed creating terminal.");
             return NULL;
@@ -462,6 +469,8 @@ static ddwindow_t* createDDWindow(application_t *app, int w, int h, int bpp,
         cbreak();
         noecho();
         nonl();
+
+        mainWindow.type = type;
 
         // The current size of the screen.
         getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
@@ -552,9 +561,6 @@ uint Sys_CreateWindow(application_t *app, uint parentIDX,
 {
     ddwindow_t *win;
 
-    if(isDedicated)
-        return 1; // No use.
-
     if(!winManagerInited)
         return 0; // Window manager not initialized yet.
 
@@ -590,10 +596,15 @@ boolean Sys_DestroyWindow(uint idx)
         delwin(window->console.winTitle);
         delwin(window->console.winText);
         delwin(window->console.winCommand);
-        endwin();
 
         window->console.winTitle = window->console.winText =
             window->console.winCommand = NULL;
+
+        delwin(cursesRootWin);
+        cursesRootWin = 0;
+
+        endwin();
+        refresh();
 
         Sys_ConInputShutdown();
     }

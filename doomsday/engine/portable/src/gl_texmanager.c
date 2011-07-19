@@ -3066,7 +3066,7 @@ DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
 
 DGLuint GL_PreparePatch(patchtex_t* patchTex)
 {
-    if(!isDedicated && patchTex)
+    if(!novideo && patchTex)
     {
         texturevariantspecification_t* texSpec =
             GL_TextureVariantSpecificationForContext(TC_UI,

@@ -114,8 +114,9 @@ boolean EV_StartFloorWaggle(int tag, int height, int speed, int offset,
     if(!list)
         return retCode;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         if(P_ToXSector(sec)->specialData)
             continue; // Already moving, so keep going...

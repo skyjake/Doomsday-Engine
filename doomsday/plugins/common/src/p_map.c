@@ -320,7 +320,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    P_EmptyIterList(spechit);
+    IterList_Empty(spechit);
 
     box[BOXLEFT]   = tmBBox[BOXLEFT]   - MAXRADIUS;
     box[BOXRIGHT]  = tmBBox[BOXRIGHT]  + MAXRADIUS;
@@ -495,11 +495,22 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
        fabs(thing->pos[VY] - tm[VY]) >= blockdist)
         return true; // Didn't hit thing.
 
+    if(IS_CLIENT)
+    {
+        // On clientside, missiles don't collide with mobjs.
+        if(tmThing->ddFlags & DDMF_MISSILE)
+        {
+            return true;
+        }
+    }
+
+/*
 #if __JHEXEN__
     // Stop here if we are a client.
     if(IS_CLIENT)
         return false;
 #endif
+*/
 
 #if !__JHEXEN__
     if(!tmThing->player && (tmThing->flags2 & MF2_PASSMOBJ))
@@ -850,7 +861,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 if(thing->dPlayer)
                     thing->dPlayer->flags |= DDPF_FIXMOM;
             }
-            P_EmptyIterList(spechit);
+            IterList_Empty(spechit);
             return true;
         }
 
@@ -946,6 +957,16 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
     if(P_BoxOnLineSide(tmBBox, ld) != -1)
         return true;
 
+    /*
+    if(IS_CLIENT)
+    {
+        // On clientside, missiles don't collide with anything.
+        if(tmThing->ddFlags & DDMF_MISSILE)
+        {
+            return true;
+        }
+    }*/
+
     // A line has been hit
     xline = P_ToXLine(ld);
 #if !__JHEXEN__
@@ -995,7 +1016,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
         if(tmThing->flags & MF_MISSILE)
         {   // Missiles can trigger impact specials
             if(xline->special)
-                P_AddObjectToIterList(spechit, ld);
+                IterList_Push(spechit, ld);
         }
         return false;
     }
@@ -1072,7 +1093,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
 
     // If contacted a special line, add it to the list.
     if(P_ToXLine(ld)->special)
-        P_AddObjectToIterList(spechit, ld);
+        IterList_Push(spechit, ld);
 
 #if !__JHEXEN__
     tmThing->wallHit = false;
@@ -1108,10 +1129,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 
     tmThing = thing;
 
-#if !__JHEXEN__
     thing->onMobj = NULL;
     thing->wallHit = false;
 
+#if !__JHEXEN__
     tmHitLine = NULL;
     tmHeight = thing->height;
 #endif
@@ -1130,8 +1151,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
     blockLine = NULL;
-    tmUnstuck =
-        ((thing->dPlayer && thing->dPlayer->mo == thing)? true : false);
+    tmUnstuck = ((thing->dPlayer && thing->dPlayer->mo == thing)? true : false);
 #endif
 
     // The base floor/ceiling is from the subsector that contains the point.
@@ -1142,7 +1162,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmFloorMaterial = P_GetPtrp(newSec, DMU_FLOOR_MATERIAL);
 #endif
 
-    P_EmptyIterList(spechit);
+    IterList_Empty(spechit);
 
 #if __JHEXEN__
     if((tmThing->flags & MF_NOCLIP) && !(tmThing->flags & MF_SKULLFLY))
@@ -1174,8 +1194,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 
 #if _DEBUG
         if(thing->onMobj)
-            Con_Message("thing->onMobj = %p (solid:%i)\n", thing->onMobj,
-                        (thing->onMobj->flags & MF_SOLID)!=0);
+            Con_Message("thing->onMobj = %p/%i (solid:%i) [thing:%p/%i]\n", thing->onMobj,
+                        thing->onMobj->thinker.id,
+                        (thing->onMobj->flags & MF_SOLID)!=0,
+                        thing, thing->thinker.id);
 #endif
     }
 
@@ -1245,9 +1267,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             goto pushline;
         }
 #else
-# if __JHERETIC__
+#  if __JHERETIC__
         CheckMissileImpact(thing);
-# endif
+#  endif
         // Would we hit another thing or a solid wall?
         if(!thing->onMobj || thing->wallHit)
             return false;
@@ -1283,7 +1305,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         floatOk = true;
         if(!(thing->flags & MF_TELEPORT) && !(thing->flags2 & MF2_FLY) &&
            tmCeilingZ - thing->pos[VZ] < thing->height)
+        {
             return ret;
+        }
 
         // Too big a step up.
         if(!(thing->flags & MF_TELEPORT) &&
@@ -1349,6 +1373,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             return false;
         }
 #else
+
         /**
          * Allow certain objects to drop off.
          * Prevent monsters from getting stuck hanging off ledges.
@@ -1365,7 +1390,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             }
             else
             {
-                float                   floorZ = tmFloorZ;
+                float floorZ = tmFloorZ;
 
                 if(thing->onMobj)
                 {
@@ -1377,12 +1402,12 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 
                 if(!dropoff)
                 {
-                   if(thing->floorZ - floorZ > 24 ||
-                      thing->dropOffZ - tmDropoffZ > 24)
-                      return false;
+                    if(thing->floorZ - floorZ > 24 || thing->dropOffZ - tmDropoffZ > 24)
+                        return false;
                 }
                 else
-                {   // Set fellDown if drop > 24.
+                {
+                    // Set fellDown if drop > 24.
                     fellDown = !(thing->flags & MF_NOGRAVITY) &&
                         thing->pos[VZ] - floorZ > 24;
                 }
@@ -1457,7 +1482,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
     // If any special lines were hit, do the effect.
     if(!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
     {
-        while((ld = P_PopIterList(spechit)) != NULL)
+        while((ld = IterList_Pop(spechit)) != NULL)
         {
             // See if the line was crossed.
             if(P_ToXLine(ld)->special)
@@ -1498,8 +1523,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
             P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
         }
 
-        P_IterListResetIterator(spechit, false);
-        while((ld = P_IterListIterator(spechit)) != NULL)
+        IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
+        IterList_RewindIterator(spechit);
+        while((ld = IterList_MoveIterator(spechit)) != NULL)
         {
             // See if the line was crossed.
             side = P_PointOnLinedefSide(thing->pos[VX], thing->pos[VY], ld);
@@ -1536,6 +1562,41 @@ boolean P_TryMove(mobj_t* thing, float x, float y, boolean dropoff,
 
     return res;
 #endif
+}
+
+/**
+ * Attempts to move a mobj to a new 3D position, crossing special lines
+ * and picking up things.
+ *
+ * @note  This function is exported from the game plugin.
+ *
+ * @param thing  Mobj to move.
+ * @param x      New X coordinate.
+ * @param y      New Y coordinate.
+ * @param z      New Z coordinate.
+ *
+ * @return  @c true, if the move was successful. Otherwise, @c false.
+ */
+boolean P_TryMove3f(mobj_t* thing, float x, float y, float z)
+{
+    float oldZ = thing->pos[VZ];
+
+    // Go to the new Z height.
+    thing->pos[VZ] = z;
+
+#ifdef __JHEXEN__
+    if(P_TryMove(thing, x, y))
+#else
+    if(P_TryMove(thing, x, y, false, false))
+#endif
+    {
+        // The move was successful.
+        return true;
+    }
+
+    // The move failed, so restore the original position.
+    thing->pos[VZ] = oldZ;
+    return false;
 }
 
 /**
@@ -1986,9 +2047,9 @@ float P_AimLineAttack(mobj_t* t1, angle_t angle, float distance)
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->class == PCLASS_FIGHTER ||
-       t1->player->class == PCLASS_CLERIC ||
-       t1->player->class == PCLASS_MAGE))
+      (t1->player->class_ == PCLASS_FIGHTER ||
+       t1->player->class_ == PCLASS_CLERIC ||
+       t1->player->class_ == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
@@ -2042,9 +2103,9 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     shootZ = t1->pos[VZ];
 #if __JHEXEN__
     if(t1->player &&
-      (t1->player->class == PCLASS_FIGHTER ||
-       t1->player->class == PCLASS_CLERIC ||
-       t1->player->class == PCLASS_MAGE))
+      (t1->player->class_ == PCLASS_FIGHTER ||
+       t1->player->class_ == PCLASS_CLERIC ||
+       t1->player->class_ == PCLASS_MAGE))
 #else
     if(t1->player && t1->type == MT_PLAYER)
 #endif
@@ -2208,7 +2269,7 @@ boolean PTR_UseTraverse(intercept_t* in)
         if(OPENRANGE <= 0)
         {
             if(useThing->player)
-                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
                              useThing);
 
             return false; // Can't use through a wall.
@@ -2220,7 +2281,7 @@ boolean PTR_UseTraverse(intercept_t* in)
             float       pheight = useThing->pos[VZ] + useThing->height/2;
 
             if((OPENTOP < pheight) || (OPENBOTTOM > pheight))
-                S_StartSound(PCLASS_INFO(useThing->player->class)->failUseSound,
+                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
                              useThing);
         }
 #endif
@@ -2265,7 +2326,7 @@ void P_UseLines(player_t* player)
 #ifdef _DEBUG
         Con_Message("P_UseLines: Sending a use request for player %i.\n", (int) (player - players));
 #endif
-        NetCl_PlayerActionRequest(player, GPA_USE);
+        NetCl_PlayerActionRequest(player, GPA_USE, 0);
         return;
     }
 
@@ -2691,6 +2752,18 @@ boolean P_ChangeSector(sector_t* sector, boolean crunch)
 }
 
 /**
+ * This is called by the engine when it needs to change sector heights without
+ * consulting game logic first. Most commonly this occurs on clientside, where
+ * the client needs to apply plane height changes as per the deltas.
+ *
+ * @param sectorIdx  Index of the sector to update.
+ */
+void P_HandleSectorHeightChange(int sectorIdx)
+{
+    P_ChangeSector(P_ToPtr(DMU_SECTOR, sectorIdx), false);
+}
+
+/**
  * The following routines originate from the Heretic src!
  */
 
@@ -2734,11 +2807,12 @@ static void CheckMissileImpact(mobj_t* mobj)
        !(mobj->flags & MF_MISSILE))
         return;
 
-    if(!(size = P_IterListSize(spechit)))
+    if(!(size = IterList_Size(spechit)))
         return;
 
-    P_IterListResetIterator(spechit, false);
-    while((ld = P_IterListIterator(spechit)) != NULL)
+    IterList_SetIteratorDirection(spechit, ITERLIST_BACKWARD);
+    IterList_RewindIterator(spechit);
+    while((ld = IterList_MoveIterator(spechit)) != NULL)
         P_ActivateLine(ld, mobj->target, 0, SPAC_IMPACT);
 }
 #endif
@@ -2849,7 +2923,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmCeilingZ = P_GetFloatp(newSSec, DMU_CEILING_HEIGHT);
     tmFloorMaterial = P_GetPtrp(newSSec, DMU_FLOOR_MATERIAL);
 
-    P_EmptyIterList(spechit);
+    IterList_Empty(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
         return NULL;
@@ -3077,7 +3151,7 @@ boolean PTR_PuzzleItemTraverse(intercept_t* in)
 
                 if(puzzleItemUser->player)
                 {
-                    switch(puzzleItemUser->player->class)
+                    switch(puzzleItemUser->player->class_)
                     {
                     case PCLASS_FIGHTER:
                         sound = SFX_PUZZLE_FAIL_FIGHTER;

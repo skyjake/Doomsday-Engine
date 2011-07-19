@@ -82,7 +82,7 @@ enum {
     PSV_CONSOLE_TEXT = 11,
     PCL_ACK_SHAKE = 12,
     PSV_SYNC = 13,
-    PSV_FILTER = 14,                // unused?
+    //PSV_FILTER = 14,                // unused?
     PKT_COMMAND = 15,               // obsolete
     PKT_LOGIN = 16,
     PCL_ACK_SETS = 17,
@@ -98,8 +98,8 @@ enum {
     PSV_PLAYER_FIX = 27,            // Fix angles/pos/mom.
     PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
     PKT_COMMAND2 = 29,
-    
-    PCL_COMMANDS = DDPT_COMMANDS,   // 32; ticcmds (handled by game)
+
+    PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
@@ -116,7 +116,7 @@ enum {
 
 #define RESENDCOUNT         10
 #define HANDSHAKECOUNT      17
-#define UPDATECOUNT         20
+//#define UPDATECOUNT         20
 
 // These dd-flags are packed (i.e. included in mobj deltas).
 #define DDMF_PACK_MASK      0x3cfff1ff
@@ -147,26 +147,28 @@ typedef struct {
     ident_t         id;
 
     // Ticcmd buffer. The server uses this when clients send it ticcmds.
-    byte           *ticCmds;
+    //byte           *ticCmds;
 
     // Number of tics in the buffer.
-    int             numTics;
+    //int             numTics;
 
     // Index of the first tic in the buffer.
-    int             firstTic;
+    //int             firstTic;
 
+    /*
     // Last command executed, reused if a new one isn't found.
     ticcmd_t       *lastCmd;
 
     // Clients merge several ticcmds into this one, which is them sent
     // periodically to the server.
     ticcmd_t       *aggregateCmd;
+    */
 
     int             lastTransmit;
 
     // If >0, the server will send the next world frame to the client.
     // This is set when input is received from the client.
-    int             updateCount;
+    //int             updateCount;
 
     // Gametic when the client entered the game.
     int             enterTime;
@@ -252,6 +254,7 @@ extern int      realTics, availableTics;
 extern int      isServer, isClient;
 extern boolean  allowNetTraffic; // Should net traffic be allowed?
 extern byte     netDontSleep, netTicSync;
+extern float    netSimulatedLatencySeconds;
 extern client_t clients[DDMAXPLAYERS];
 
 void            Net_Register(void);

@@ -314,99 +314,13 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     // Play: Setup.
     boolean         P_LoadMap(const char* mapID);
 
-    // Play: Map Data Updates and Information Access.
-    unsigned int    P_ToIndex(const void* ptr);
-    void*           P_ToPtr(int type, uint index);
-    int             P_Callback(int type, uint index, void* context, int (*callback)(void* p, void* ctx));
-    int             P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, void* ctx));
-    int             P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx));
-
-    /* dummy functions */
-    void*           P_AllocDummy(int type, void* extraData);
-    void            P_FreeDummy(void* dummy);
-    int             P_DummyType(void* dummy);
-    boolean         P_IsDummy(void* dummy);
-    void*           P_DummyExtraData(void* dummy);
-
-    /* index-based write functions */
-    void            P_SetBool(int type, uint index, uint prop, boolean param);
-    void            P_SetByte(int type, uint index, uint prop, byte param);
-    void            P_SetInt(int type, uint index, uint prop, int param);
-    void            P_SetFixed(int type, uint index, uint prop, fixed_t param);
-    void            P_SetAngle(int type, uint index, uint prop, angle_t param);
-    void            P_SetFloat(int type, uint index, uint prop, float param);
-    void            P_SetPtr(int type, uint index, uint prop, void* param);
-
-    void            P_SetBoolv(int type, uint index, uint prop, boolean* params);
-    void            P_SetBytev(int type, uint index, uint prop, byte* params);
-    void            P_SetIntv(int type, uint index, uint prop, int* params);
-    void            P_SetFixedv(int type, uint index, uint prop, fixed_t* params);
-    void            P_SetAnglev(int type, uint index, uint prop, angle_t* params);
-    void            P_SetFloatv(int type, uint index, uint prop, float* params);
-    void            P_SetPtrv(int type, uint index, uint prop, void* params);
-
-    /* pointer-based write functions */
-    void            P_SetBoolp(void* ptr, uint prop, boolean param);
-    void            P_SetBytep(void* ptr, uint prop, byte param);
-    void            P_SetIntp(void* ptr, uint prop, int param);
-    void            P_SetFixedp(void* ptr, uint prop, fixed_t param);
-    void            P_SetAnglep(void* ptr, uint prop, angle_t param);
-    void            P_SetFloatp(void* ptr, uint prop, float param);
-    void            P_SetPtrp(void* ptr, uint prop, void* param);
-
-    void            P_SetBoolpv(void* ptr, uint prop, boolean* params);
-    void            P_SetBytepv(void* ptr, uint prop, byte* params);
-    void            P_SetIntpv(void* ptr, uint prop, int* params);
-    void            P_SetFixedpv(void* ptr, uint prop, fixed_t* params);
-    void            P_SetAnglepv(void* ptr, uint prop, angle_t* params);
-    void            P_SetFloatpv(void* ptr, uint prop, float* params);
-    void            P_SetPtrpv(void* ptr, uint prop, void* params);
-
-    /* index-based read functions */
-    boolean         P_GetBool(int type, uint index, uint prop);
-    byte            P_GetByte(int type, uint index, uint prop);
-    int             P_GetInt(int type, uint index, uint prop);
-    fixed_t         P_GetFixed(int type, uint index, uint prop);
-    angle_t         P_GetAngle(int type, uint index, uint prop);
-    float           P_GetFloat(int type, uint index, uint prop);
-    void*           P_GetPtr(int type, uint index, uint prop);
-
-    void            P_GetBoolv(int type, uint index, uint prop, boolean* params);
-    void            P_GetBytev(int type, uint index, uint prop, byte* params);
-    void            P_GetIntv(int type, uint index, uint prop, int* params);
-    void            P_GetFixedv(int type, uint index, uint prop, fixed_t* params);
-    void            P_GetAnglev(int type, uint index, uint prop, angle_t* params);
-    void            P_GetFloatv(int type, uint index, uint prop, float* params);
-    void            P_GetPtrv(int type, uint index, uint prop, void* params);
-
-    /* pointer-based read functions */
-    boolean         P_GetBoolp(void* ptr, uint prop);
-    byte            P_GetBytep(void* ptr, uint prop);
-    int             P_GetIntp(void* ptr, uint prop);
-    fixed_t         P_GetFixedp(void* ptr, uint prop);
-    angle_t         P_GetAnglep(void* ptr, uint prop);
-    float           P_GetFloatp(void* ptr, uint prop);
-    void*           P_GetPtrp(void* ptr, uint prop);
-
-    void            P_GetBoolpv(void* ptr, uint prop, boolean* params);
-    void            P_GetBytepv(void* ptr, uint prop, byte* params);
-    void            P_GetIntpv(void* ptr, uint prop, int* params);
-    void            P_GetFixedpv(void* ptr, uint prop, fixed_t* params);
-    void            P_GetAnglepv(void* ptr, uint prop, angle_t* params);
-    void            P_GetFloatpv(void* ptr, uint prop, float* params);
-    void            P_GetPtrpv(void* ptr, uint prop, void* params);
-
-    uint            P_CountGameMapObjs(int identifier);
-    byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
-    short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
-    int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
-    fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
-    angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
-    float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+    // Play: World data access (Map Data Updates and access to other information).
+#include "dd_world.h"
 
     // Play: Misc.
-    void            P_MergeCommand(ticcmd_t* dest, ticcmd_t* src); // temporary.
-    void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+    void            P_SpawnDamageParticleGen(struct mobj_s* mo,
+                                             struct mobj_s* inflictor,
+                                             int amount);
 
     // Play: Mobjs.
     struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z, angle_t angle, float radius, float height, int ddflags);
@@ -414,6 +328,9 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     void            P_MobjSetState(struct mobj_s* mo, int statenum);
     void            P_MobjLink(struct mobj_s* mo, byte flags);
     int             P_MobjUnlink(struct mobj_s* mo);
+    struct mobj_s*  P_MobjForID(int id);
+    boolean         ClMobj_IsValid(struct mobj_s* mo);
+    struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 
     // Mobj linked object iterators.
     boolean         P_MobjLinesIterator(struct mobj_s* mo, boolean (*func) (struct linedef_s*, void*), void*);
@@ -463,6 +380,7 @@ const ddstring_t* Fonts_GetSymbolicName(struct font_s* font);
 //
 //------------------------------------------------------------------------
 
+    boolean         DD_IsSharpTick(void);
     int             DD_GetFrameRate(void);
 
     void            R_SetupMap(int mode, int flags);
@@ -485,6 +403,10 @@ scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHe
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 const ddstring_t* R_GetPatchName(patchid_t id);
+    void            R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+    int             R_CreateAnimGroup(int flags);
+    void            R_AddToAnimGroup(int groupNum, materialnum_t num,
+                                     int tics, int randomTics);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);

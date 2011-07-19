@@ -1,6 +1,4 @@
 $ My contact info.
-@macro{AUTHOR}{ Jaakko Ker‰nen }
-@macro{EMAIL}{ skyjake@@doomsdayhq.com }
-@macro{LINK}{ http://www.doomsdayhq.com/ }
-@macro{LINK2}{ http://deng.sourceforge.net/ }
-@macro{HTMLHEADER}{ @tag{<!--BEGIN INSERT-->}@apply{@n}{.} }
+@macro{AUTHOR}{ Jaakko Ker√§nen }
+@macro{EMAIL}{ jaakko.keranen@@iki.fi }
+@macro{LINK}{ http://www.dengine.net/ }

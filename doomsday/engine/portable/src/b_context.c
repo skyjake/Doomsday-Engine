@@ -230,7 +230,7 @@ void B_UpdateDeviceStateAssociations(void)
         inputdev_t* dev = I_GetDevice(i, false);
 
         // Keys.
-        for(j = 0; j < dev->numKeys; ++j)
+        for(j = 0; j < (int)dev->numKeys; ++j)
         {
             if(dev->keys[j].assoc.bContext != dev->keys[j].assoc.prevBContext &&
                dev->keys[j].isDown)
@@ -241,7 +241,7 @@ void B_UpdateDeviceStateAssociations(void)
         }
 
         // Axes.
-        for(j = 0; j < dev->numAxes; ++j)
+        for(j = 0; j < (int)dev->numAxes; ++j)
         {
             if(dev->axes[j].assoc.bContext != dev->axes[j].assoc.prevBContext &&
                dev->axes[j].position != 0)
@@ -252,7 +252,7 @@ void B_UpdateDeviceStateAssociations(void)
         }
 
         // Hats.
-        for(j = 0; j < dev->numHats; ++j)
+        for(j = 0; j < (int)dev->numHats; ++j)
         {
             if(dev->hats[j].assoc.bContext != dev->hats[j].assoc.prevBContext &&
                dev->hats[j].pos >= 0)

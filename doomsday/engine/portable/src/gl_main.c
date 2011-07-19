@@ -111,7 +111,6 @@ float   glNearClip;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initGLOk = false;
-
 static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
@@ -485,8 +484,7 @@ boolean GL_EarlyInit(void)
  */
 void GL_Init(void)
 {
-    if(isDedicated)
-        return;
+    if(novideo) return;
 
     if(!initGLOk)
     {
@@ -506,6 +504,7 @@ void GL_Init(void)
  */
 void GL_InitRefresh(void)
 {
+    if(novideo) return;
     GL_InitTextureManager();
     GL_LoadSystemTextures();
 

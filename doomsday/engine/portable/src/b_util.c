@@ -178,7 +178,7 @@ boolean B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
     {
         *type = E_TOGGLE;
         *id = strtoul(desc + 6, NULL, 10) - 1;
-        if(*id < 0 || *id >= I_GetDevice(IDEV_MOUSE, false)->numKeys)
+        if(*id < 0 || (uint)*id >= I_GetDevice(IDEV_MOUSE, false)->numKeys)
         {
             Con_Message("B_ParseMouseTypeAndId: Button %i does not exist.\n", *id);
             return false;
@@ -204,7 +204,7 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     {
         *type = E_TOGGLE;
         *id = strtoul(desc + 6, NULL, 10) - 1;
-        if(*id < 0 || *id >= I_GetDevice(device, false)->numKeys)
+        if(*id < 0 || (uint)*id >= I_GetDevice(device, false)->numKeys)
         {
             Con_Message("B_ParseJoystickTypeAndId: Button %i does not exist in joystick.\n", *id);
             return false;
@@ -214,7 +214,7 @@ boolean B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* t
     {
         *type = E_ANGLE;
         *id = strtoul(desc + 3, NULL, 10) - 1;
-        if(*id < 0 || *id >= I_GetDevice(device, false)->numHats)
+        if(*id < 0 || (uint)*id >= I_GetDevice(device, false)->numHats)
         {
             Con_Message("B_ParseJoystickTypeAndId: Hat %i does not exist in joystick.\n", *id);
             return false;

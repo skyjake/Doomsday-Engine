@@ -95,6 +95,35 @@ void P_SetMobjID(thid_t id, boolean state)
         idtable[c] &= ~bit;
 }
 
+typedef struct mobjidlookup_s {
+    thid_t id;
+    mobj_t* result;
+} mobjidlookup_t;
+
+static boolean mobjIdLookup(thinker_t* thinker, void* context)
+{
+    mobjidlookup_t* lookup = (mobjidlookup_t*) context;
+    if(thinker->id == lookup->id)
+    {
+        lookup->result = (mobj_t*) thinker;
+        return false;
+    }
+    return true; // Keep looking.
+}
+
+/**
+ * Locates a mobj based on the identifier.
+ * @todo  A hash table wouldn't hurt (see client's mobj id table).
+ */
+struct mobj_s* P_MobjForID(int id)
+{
+    mobjidlookup_t lookup;
+    lookup.id = id;
+    lookup.result = 0;
+    DD_IterateThinkers(gx.MobjThinker, mobjIdLookup, &lookup);
+    return lookup.result;
+}
+
 static void linkThinkerToList(thinker_t* th, thinkerlist_t* list)
 {
     // Link the thinker to the thinker list.
@@ -155,17 +184,28 @@ static boolean runThinker(thinker_t* th, void* context)
     // Thinker cannot think when in stasis.
     if(!th->inStasis)
     {
+        // Time to remove it?
         if(th->function == (think_t) -1)
         {
-            // Time to remove it.
             unlinkThinkerFromList(th);
 
             if(th->id)
-            {   // Its a mobj.
-                P_MobjRecycle((mobj_t*) th);
+            {
+                mobj_t* mo = (mobj_t*) th;
+                if(!Cl_IsClientMobj(mo))
+                {
+                    // It's a regular mobj: recycle for reduced allocation overhead.
+                    P_MobjRecycle(mo);
+                }
+                else
+                {
+                    // Delete the client mobj.
+                    ClMobj_Destroy(mo);
+                }
             }
             else
             {
+                // Non-mobjs are just deleted right away.
                 Z_Free(th);
             }
         }
@@ -224,8 +264,12 @@ void P_ThinkerAdd(thinker_t* th, boolean makePublic)
     // Will it need an ID?
     if(P_IsMobjThinker(th->function))
     {
-        // It is a mobj, give it an ID.
-        th->id = newMobjID();
+        // It is a mobj, give it an ID (not for client mobjs, though, they
+        // already have an id).
+        if(!Cl_IsClientMobj((mobj_t*)th))
+        {
+            th->id = newMobjID();
+        }
     }
     else
     {
@@ -245,8 +289,9 @@ void P_ThinkerRemove(thinker_t* th)
 {
     // Has got an ID?
     if(th->id)
-    {   // Then it must be a mobj.
-        mobj_t*             mo = (mobj_t *) th;
+    {
+        // Then it must be a mobj.
+        mobj_t* mo = (mobj_t *) th;
 
         // Flag the ID as free.
         P_SetMobjID(th->id, false);
@@ -263,7 +308,7 @@ void P_ThinkerRemove(thinker_t* th)
         }
     }
 
-    th->function = (think_t) - 1;
+    th->function = (think_t) -1;
 }
 
 boolean P_IsMobjThinker(think_t func)
@@ -293,7 +338,7 @@ void P_InitThinkerLists(byte flags)
 
         for(i = 0; i < numThinkerLists; ++i)
         {
-            thinkerlist_t*      list = thinkerLists[i];
+            thinkerlist_t* list = thinkerLists[i];
 
             if(list->isPublic && !(flags & 0x1))
                 continue;
@@ -344,8 +389,8 @@ boolean P_IterateThinkers(think_t func, byte flags,
     }
 
     {
-    boolean             result = true;
-    size_t              i;
+    boolean result = true;
+    size_t i;
 
     for(i = 0; i < numThinkerLists; ++i)
     {

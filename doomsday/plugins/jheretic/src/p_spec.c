@@ -391,6 +391,12 @@ void P_InitPicAnims(void)
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
 {
+    if(IS_CLIENT)
+    {
+        // Clients do not activate lines.
+        return false;
+    }
+
     switch(actType)
     {
     case SPAC_CROSS:
@@ -1129,10 +1135,11 @@ void P_UpdateSpecials(void)
     }
 
     // ANIMATE LINE SPECIALS
-    if(P_IterListSize(linespecials))
+    if(IterList_Size(linespecials))
     {
-        P_IterListResetIterator(linespecials, false);
-        while((line = P_IterListIterator(linespecials)) != NULL)
+        IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
+        IterList_RewindIterator(linespecials);
+        while((line = IterList_MoveIterator(linespecials)) != NULL)
         {
             switch(P_ToXLine(line)->special)
             {
@@ -1192,7 +1199,7 @@ void P_SpawnSpecials(void)
         if(xsec->tag)
         {
             list = P_GetSectorIterListForTag(xsec->tag, true);
-            P_AddObjectToIterList(list, sec);
+            IterList_Push(list, sec);
         }
 
         if(!xsec->special)
@@ -1279,7 +1286,7 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_EmptyIterList(linespecials);
+    IterList_Empty(linespecials);
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
@@ -1293,7 +1300,7 @@ void P_SpawnSpecials(void)
         case 99:
             // EFFECT FIRSTCOL SCROLL-
             // DJS - Heretic also has a backwards wall scroller.
-            P_AddObjectToIterList(linespecials, line);
+            IterList_Push(linespecials, line);
             break;
 
         default:
@@ -1303,7 +1310,7 @@ void P_SpawnSpecials(void)
         if(xline->tag)
         {
            list = P_GetLineIterListForTag(xline->tag, true);
-           P_AddObjectToIterList(list, line);
+           IterList_Push(list, line);
         }
     }
 

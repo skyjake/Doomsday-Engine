@@ -21,7 +21,7 @@
 ################################################################################
 
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
+FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c ${CMAKE_SOURCE_DIR}/plugins/common/include/*.h )
 
 ################################################################################
 ######################## jHeretic Game Plugin  ####################################
@@ -55,7 +55,7 @@ IF (ENABLEMAO)
 	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/p_spec.c
 	${CMAKE_SOURCE_DIR}/plugins/jheretic/src/st_stuff.c )
 ELSE (ENABLEMAO)
-	FILE(GLOB JHERETIC_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jheretic/src/*.c )
+	FILE(GLOB JHERETIC_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jheretic/src/*.c ${CMAKE_SOURCE_DIR}/plugins/jheretic/include/*.h )
 ENDIF (ENABLEMAO)
 
 IF (ENABLEMAO)

@@ -51,6 +51,9 @@ manifest = """
 opts = {
     "py2exe": {
         "includes": "webbrowser",
+        'bundle_files': 1,
+        'compressed': 1,
+        'optimize': 2
     }
 }
 
@@ -74,7 +77,7 @@ setup(
             "other_resources": [(24, 1, manifest)]
         }
     ],
-    data_files=["graphics/snowberry.ico"]
-    #           "myprogram.ico",
-    #            "ChangeLog.txt"],
+    data_files= [ 
+        ( '.', ['graphics/snowberry.ico'] ) 
+    ]
 )

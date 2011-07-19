@@ -157,8 +157,8 @@ static void rendPlayerView(int player)
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
 
     // $democam
-    GL_SetFilter((plr->plr->flags & DDPF_VIEW_FILTER)? true : false);
-    if(plr->plr->flags & DDPF_VIEW_FILTER)
+    GL_SetFilter((plr->plr->flags & DDPF_USE_VIEW_FILTER)? true : false);
+    if(plr->plr->flags & DDPF_USE_VIEW_FILTER)
     {
         const float* color = plr->plr->filterColor;
         GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);

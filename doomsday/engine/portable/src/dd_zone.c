@@ -71,6 +71,8 @@
 
 #define MINFRAGMENT (sizeof(memblock_t)+32)
 
+#define ALIGNED(x) (((x) + sizeof(void*) - 1)&(~(sizeof(void*) - 1)))
+
 // TYPES -------------------------------------------------------------------
 
 /**
@@ -349,6 +351,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // You can't allocate "nothing."
         return NULL;
     }
+
+    // Align to pointer size.
+    size = ALIGNED(size);
 
     // Account for size of block header.
     size += sizeof(memblock_t);
@@ -722,7 +727,7 @@ void *Z_Calloc(size_t size, int tag, void *user)
 {
     void           *ptr = Z_Malloc(size, tag, user);
 
-    memset(ptr, 0, size);
+    memset(ptr, 0, ALIGNED(size));
     return ptr;
 }
 

@@ -79,211 +79,12 @@ void Cl_InitPlayers(void)
     memset(&clPlayerStates, 0, sizeof(clPlayerStates));
     memset(fixPos, 0, sizeof(fixPos));
     memset(cpMom, 0, sizeof(cpMom));
-
-    // Clear psprites. The server will send them.
-    { int i;
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        client_t* cl = &clients[i];
-        if(cl->lastCmd)
-            memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
-    }}
 }
 
-/**
- * Updates the state of the local player by looking at lastCmd.
- */
-void Cl_LocalCommand(void)
+clplayerstate_t *ClPlayer_State(int plrNum)
 {
-    client_t           *cl = &clients[consolePlayer];
-    player_t           *plr = &ddPlayers[consolePlayer];
-    ddplayer_t         *ddpl = &plr->shared;
-    clplayerstate_t    *s = &clPlayerStates[consolePlayer];
-    float               off, vel;
-
-    if(ddMapTime < 0.333)
-    {
-        // In the very beginning of a map, moving is not allowed.
-        memset(cl->lastCmd, 0, TICCMD_SIZE);
-        if(s->cmo)
-        {
-            s->cmo->mo.mom[MX] = 0;
-            s->cmo->mo.mom[MY] = 0;
-        }
-    }
-
-    //s->forwardMove = cl->lastCmd->forwardMove * 2048;
-
-    P_GetControlState(consolePlayer, CTL_WALK, &vel, &off);
-    s->forwardMove = (off + vel) * 2048;
-
-    s->sideMove = cl->lastCmd->sideMove * 2048;
-    s->angle = ddpl->mo->angle; //ddpl->clAngle; /* $unifiedangles */
-#if _DEBUG
-    if(s->forwardMove || s->sideMove)
-    {
-        Con_Message("Cl_LocalCommand: fwd=%i sd=%i\n", s->forwardMove, s->sideMove);
-    }
-    VERBOSE2(Con_Message("Cl_LocalCommand: angle=%x\n", s->angle));
-#endif
-    s->turnDelta = 0;
-}
-
-/**
- * Reads a single player delta from the message buffer and applies it to the
- * player in question. Returns false only if the list of deltas ends.
- *
- * \deprecated THIS FUNCTION IS NOW OBSOLETE (only used with PSV_FRAME
- * packets).
- */
-int Cl_ReadPlayerDelta(void)
-{
-    int                 df, psdf, i, idx;
-    int                 num = Msg_ReadByte();
-    short               junk;
-    player_t           *plr;
-    clplayerstate_t    *s;
-    ddplayer_t         *ddpl;
-    ddpsprite_t        *psp;
-
-    if(num == 0xff)
-        return false;           // End of list.
-
-    // The first byte consists of a player number and some flags.
-    df = (num & 0xf0) << 8;
-    df |= Msg_ReadByte();       // Second byte is just flags.
-    num &= 0xf;                 // Clear the upper bits of the number.
-
-    plr = &ddPlayers[num];
-    ddpl = &plr->shared;
-    s = &clPlayerStates[num];
-
-    if(df & PDF_MOBJ)
-    {
-        clmobj_t           *old = s->cmo;
-        int                 newid = Msg_ReadShort();
-
-        /**
-         * Make sure the 'new' mobj is different than the old one; there
-         * will be linking problems otherwise.
-         * \fixme What causes the duplicate sending of mobj ids?
-         */
-        if(newid != s->mobjId)
-        {
-            s->mobjId = newid;
-
-            // Find the new mobj.
-            s->cmo = Cl_FindMobj(s->mobjId);
-#ifdef _DEBUG
-Con_Message("Pl%i: mobj=%i old=%p\n", num, s->mobjId, old);
-Con_Message("  x=%f y=%f z=%f\n", s->cmo->mo.pos[VX],
-            s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ]);
-#endif
-            s->cmo->mo.dPlayer = ddpl;
-
-#ifdef _DEBUG
-Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
-#endif
-
-            // Unlink this cmo (not interactive or visible).
-            Cl_UnsetMobjPosition(s->cmo);
-            // Make the old clmobj a non-player one.
-            if(old)
-            {
-                old->mo.dPlayer = NULL;
-                Cl_SetMobjPosition(old);
-                Cl_UpdateRealPlayerMobj(ddpl->mo, &s->cmo->mo, ~0);
-            }
-            else
-            {
-                //Cl_UpdatePlayerPos(ddpl);
-
-                // Replace the hidden client mobj with the real player mobj.
-                Cl_UpdateRealPlayerMobj(ddpl->mo, &s->cmo->mo, ~0);
-            }
-            // Update the real player mobj.
-            //Cl_UpdateRealPlayerMobj(ddpl->mo, &s->cmo->mo, ~0);
-        }
-    }
-
-    if(df & PDF_FORWARDMOVE)
-        s->forwardMove = (char) Msg_ReadByte() * 2048;
-    if(df & PDF_SIDEMOVE)
-        s->sideMove = (char) Msg_ReadByte() * 2048;
-    if(df & PDF_ANGLE)
-        //s->angle = Msg_ReadByte() << 24;
-        junk = Msg_ReadByte(); /* $unifiedangles */
-    if(df & PDF_TURNDELTA)
-    {
-        s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
-    }
-    if(df & PDF_FRICTION)
-        s->friction = Msg_ReadByte() << 8;
-    if(df & PDF_EXTRALIGHT)
-    {
-        i = Msg_ReadByte();
-        ddpl->fixedColorMap = i & 7;
-        ddpl->extraLight = i & 0xf8;
-    }
-    if(df & PDF_FILTER)
-    {
-        int             filter = Msg_ReadLong();
-
-        if(filter)
-            ddpl->flags |= DDPF_VIEW_FILTER;
-        else
-            ddpl->flags &= ~DDPF_VIEW_FILTER;
-
-        ddpl->filterColor[CR] = filter & 0xff;
-        ddpl->filterColor[CG] = (filter >> 8) & 0xff;
-        ddpl->filterColor[CB] = (filter >> 16) & 0xff;
-        ddpl->filterColor[CA] = (filter >> 24) & 0xff;
-    }
-    if(df & PDF_CLYAW)          // Only sent when Fixangles is used.
-        //pl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
-        junk = Msg_ReadShort();
-    if(df & PDF_CLPITCH)        // Only sent when Fixangles is used.
-        //pl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
-        junk = Msg_ReadShort();
-    if(df & PDF_PSPRITES)
-    {
-        for(i = 0; i < 2; ++i)
-        {
-            // First the flags.
-            psdf = Msg_ReadByte();
-            psp = ddpl->pSprites + i;
-            if(psdf & PSDF_STATEPTR)
-            {
-                idx = Msg_ReadPackedShort();
-                if(!idx)
-                    psp->statePtr = 0;
-                else if(idx < countStates.num)
-                {
-                    psp->statePtr = states + (idx - 1);
-                    psp->tics = psp->statePtr->tics;
-                }
-            }
-            //if(psdf & PSDF_SPRITE) psp->sprite = Msg_ReadPackedShort() - 1;
-            //if(psdf & PSDF_FRAME) psp->frame = Msg_ReadByte();
-            //if(psdf & PSDF_NEXT/*FRAME*/) psp->nextframe = (char) Msg_ReadByte();
-            //if(psdf & PSDF_NEXT/*TIME*/) psp->nexttime = (char) Msg_ReadByte();
-            //if(psdf & PSDF_TICS) psp->tics = (char) Msg_ReadByte();
-            if(psdf & PSDF_LIGHT)
-                /* psp->light = */ Msg_ReadByte() /* / 255.0f */;
-            if(psdf & PSDF_ALPHA)
-                psp->alpha = Msg_ReadByte() / 255.0f;
-            if(psdf & PSDF_STATE)
-                psp->state = Msg_ReadByte();
-            if(psdf & PSDF_OFFSET)
-            {
-                psp->offset[VX] = (char) Msg_ReadByte() * 2;
-                psp->offset[VY] = (char) Msg_ReadByte() * 2;
-            }
-        }
-    }
-
-    // Continue reading.
-    return true;
+    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    return &clPlayerStates[plrNum];
 }
 
 /**
@@ -304,108 +105,60 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
 }
 
 /**
- * Predict the movement of the given player.
+ * @param plrNum  Player number.
  *
- * This kind of player movement can't be used with demos. The local player
- * movement is recorded into the demo file as absolute coordinates.
+ * @return  The engineside client mobj of a player, representing a remote mobj on the server.
  */
-void Cl_MovePlayer(int plrNum)
+struct mobj_s* ClPlayer_ClMobj(int plrNum)
 {
-    player_t           *plr;
-    ddplayer_t         *ddpl;
-    clplayerstate_t    *st;
-    mobj_t             *mo;
-
-    if(plrNum < 0 || plrNum >= DDMAXPLAYERS)
-        return;
-
-    // If we are playing a demo, we shouldn't be here...
-    if(playback && plrNum == consolePlayer)
-        return;
-
-    plr = &ddPlayers[plrNum];
-    st = &clPlayerStates[plrNum];
-    ddpl = &plr->shared;
-    mo = plr->shared.mo;
-
-    // Move.
-    P_MobjMovement2(mo, st);
-    P_MobjZMovement(mo);
-
-#ifdef _DEBUG
-    VERBOSE2(Con_Message("Cl_MovePlayer: Pl%i: mo x=%g y=%g\n", plrNum, mo->pos[VX], mo->pos[VY]));
-#endif
-
-    /**
-     * Predict change in movement (thrust).
-     * The console player is always affected by the thrust multiplier
-     * (Other players are never handled because clients only receive mobj
-     * information about non-local player movement).
-     */
-    if(plrNum == consolePlayer)
-    {
-        float               airThrust = 1.0f / 32;
-        boolean             airborne =
-            (mo->pos[VZ] > mo->floorZ && !(mo->ddFlags & DDMF_FLY));
-
-        if(!(ddpl->flags & DDPF_DEAD) && !mo->reactionTime) // Dead players do not move willfully.
-        {
-            float       mul = (airborne? airThrust : cplrThrustMul);
-
-            if(st->forwardMove)
-                Cl_ThrustMul(mo, st->angle, FIX2FLT(st->forwardMove), mul);
-            if(st->sideMove)
-                Cl_ThrustMul(mo, st->angle - ANG90, FIX2FLT(st->sideMove), mul);
-        }
-        // Turn delta on move prediction angle.
-        st->angle += st->turnDelta;
-        //mo->angle += st->turnDelta;
-    }
-
-    // Mirror changes in the (hidden) client mobj.
-    Cl_UpdatePlayerPos(plrNum);
+    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
+    return ClMobj_Find(clPlayerStates[plrNum].clMobjId);
 }
 
 /**
  * Move the (hidden, unlinked) client player mobj to the same coordinates
  * where the real mobj of the player is.
  */
-void Cl_UpdatePlayerPos(int plrNum)
+void ClPlayer_UpdatePos(int plrNum)
 {
     player_t           *plr;
-    mobj_t             *clmo, *mo;
+    mobj_t             *remoteClientMobj, *localMobj;
     clplayerstate_t    *s;
 
-    if(plrNum < 0 || plrNum >= DDMAXPLAYERS)
-        return;
-    plr = &ddPlayers[plrNum];
-    s = &clPlayerStates[plrNum];
+    assert(plrNum >= 0 && plrNum < DDMAXPLAYERS);
 
-    if(!s->cmo || !plr->shared.mo)
+    plr = &ddPlayers[plrNum];
+    s = ClPlayer_State(plrNum);
+
+    if(!s->clMobjId || !plr->shared.mo)
         return;                 // Must have a mobj!
 
-    clmo = &s->cmo->mo;
-    mo = plr->shared.mo;
+    remoteClientMobj = ClMobj_Find(s->clMobjId);
+    localMobj = plr->shared.mo;
 
-    clmo->angle = mo->angle;
+    // The client mobj is never solid.
+    remoteClientMobj->ddFlags &= ~DDMF_SOLID;
+
+    remoteClientMobj->angle = localMobj->angle;
+
     // The player's client mobj is not linked to any lists, so position
     // can be updated without any hassles.
-    memcpy(clmo->pos, mo->pos, sizeof(mo->pos));
-    P_MobjLink(clmo, 0); // Update subsector pointer.
-    clmo->floorZ = mo->floorZ;
-    clmo->ceilingZ = mo->ceilingZ;
-    clmo->mom[MX] = mo->mom[MX];
-    clmo->mom[MY] = mo->mom[MY];
-    clmo->mom[MZ] = mo->mom[MZ];
+    memcpy(remoteClientMobj->pos, localMobj->pos, sizeof(localMobj->pos));
+    P_MobjLink(remoteClientMobj, 0); // Update subsector pointer.
+    remoteClientMobj->floorZ = localMobj->floorZ;
+    remoteClientMobj->ceilingZ = localMobj->ceilingZ;
+    remoteClientMobj->mom[MX] = localMobj->mom[MX];
+    remoteClientMobj->mom[MY] = localMobj->mom[MY];
+    remoteClientMobj->mom[MZ] = localMobj->mom[MZ];
 }
 
-void Cl_CoordsReceived(void)
+void ClPlayer_CoordsReceived(void)
 {
     if(playback)
         return;
 
 #ifdef _DEBUG
-Con_Printf("Cl_CoordsReceived\n");
+    //Con_Printf("ClPlayer_CoordsReceived\n");
 #endif
 
     fixPos[VX] = (float) Msg_ReadShort();
@@ -415,109 +168,115 @@ Con_Printf("Cl_CoordsReceived\n");
     fixPos[VY] /= fixSpeed;
 }
 
-void Cl_HandlePlayerFix(void)
+void ClPlayer_ApplyPendingFixes(int plrNum)
+{
+    clplayerstate_t *state = ClPlayer_State(plrNum);
+    player_t        *plr = &ddPlayers[plrNum];
+    mobj_t          *clmo = ClPlayer_ClMobj(plrNum);
+    ddplayer_t      *ddpl = &plr->shared;
+    mobj_t          *mo = ddpl->mo;
+
+    // If either mobj is missing, the fix cannot be applied yet.
+    if(!mo || !clmo) return;
+
+    if(clmo->thinker.id != state->pendingFixTargetClMobjId)
+        return;
+
+    assert(clmo->thinker.id == state->clMobjId);
+
+    if(state->pendingFixes & DDPF_FIXANGLES)
+    {
+        state->pendingFixes &= ~DDPF_FIXANGLES;
+
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...\n",
+                    state->pendingAngleFix, mo, clmo->thinker.id);
+#endif
+        clmo->angle = mo->angle = state->pendingAngleFix;
+        ddpl->lookDir = state->pendingLookDirFix;
+    }
+
+    if(state->pendingFixes & DDPF_FIXPOS)
+    {
+        state->pendingFixes &= ~DDPF_FIXPOS;
+
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...\n",
+                    state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ],
+                    mo, clmo->thinker.id);
+#endif
+        P_MobjSetPos(mo, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
+        mo->reactionTime = 18;
+
+        // The position is now known.
+        ddpl->flags &= ~DDPF_UNDEFINED_POS;
+
+        ClPlayer_UpdatePos(plrNum);
+    }
+
+    if(state->pendingFixes & DDPF_FIXMOM)
+    {
+        state->pendingFixes &= ~DDPF_FIXMOM;
+
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...\n",
+                    state->pendingMomFix[VX], state->pendingMomFix[VY], state->pendingMomFix[VZ],
+                    mo, clmo->thinker.id);
+#endif
+        mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
+        mo->mom[MY] = clmo->mom[VY] = state->pendingMomFix[VY];
+        mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
+    }
+}
+
+void ClPlayer_HandleFix(void)
 {
     player_t           *plr = &ddPlayers[consolePlayer];
-    clmobj_t           *clmo = clPlayerStates[consolePlayer].cmo;
+    //mobj_t             *clmo = ClPlayer_ClMobj(consolePlayer);
     ddplayer_t         *ddpl = &plr->shared;
-    mobj_t             *mo = ddpl->mo;
+    //mobj_t             *mo = ddpl->mo;
     int                 fixes = Msg_ReadLong();
-    angle_t             angle;
-    float               lookdir;
+    clplayerstate_t    *state = ClPlayer_State(consolePlayer);
+
+    state->pendingFixTargetClMobjId = Msg_ReadLong();
 
     if(fixes & 1) // fix angles?
     {
         ddpl->fixCounter.angles = ddpl->fixAcked.angles = Msg_ReadLong();
-        angle = Msg_ReadLong();
-        lookdir = FIX2FLT(Msg_ReadLong());
+        state->pendingAngleFix = Msg_ReadLong();
+        state->pendingLookDirFix = FIX2FLT(Msg_ReadLong());
+        state->pendingFixes |= DDPF_FIXANGLES;
 
 #ifdef _DEBUG
-Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
-            ddpl->fixAcked.angles, FIX2FLT(angle), lookdir);
+        Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
+                    ddpl->fixAcked.angles, FIX2FLT(state->pendingAngleFix), state->pendingLookDirFix);
 #endif
-        if(mo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to mobj %p...\n", mo);
-#endif
-            mo->angle = angle;
-            ddpl->lookDir = lookdir;
-        }
-
-        if(clmo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
-#endif
-            clmo->mo.angle = angle;
-        }
     }
 
     if(fixes & 2) // fix pos?
     {
-        float               pos[3];
-
         ddpl->fixCounter.pos = ddpl->fixAcked.pos = Msg_ReadLong();
-        pos[VX] = FIX2FLT(Msg_ReadLong());
-        pos[VY] = FIX2FLT(Msg_ReadLong());
-        pos[VZ] = FIX2FLT(Msg_ReadLong());
+        state->pendingPosFix[VX] = FIX2FLT(Msg_ReadLong());
+        state->pendingPosFix[VY] = FIX2FLT(Msg_ReadLong());
+        state->pendingPosFix[VZ] = FIX2FLT(Msg_ReadLong());
+        state->pendingFixes |= DDPF_FIXPOS;
 
 #ifdef _DEBUG
-Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
-            ddpl->fixAcked.pos, pos[VX], pos[VY], pos[VZ]);
+        Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
+                    ddpl->fixAcked.pos, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
 #endif
-        if(mo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to mobj %p...\n", mo);
-#endif
-            Sv_PlaceMobj(mo, pos[VX], pos[VY], pos[VZ], false);
-            mo->reactionTime = 18;
-        }
-
-        if(clmo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
-#endif
-            Cl_UpdatePlayerPos(plr - ddPlayers);
-        }
     }
 
     if(fixes & 4) // fix momentum?
     {
-        float               pos[3];
-
         ddpl->fixCounter.mom = ddpl->fixAcked.mom = Msg_ReadLong();
-
-        pos[0] = FIX2FLT(Msg_ReadLong());
-        pos[1] = FIX2FLT(Msg_ReadLong());
-        pos[2] = FIX2FLT(Msg_ReadLong());
-
-#ifdef _DEBUG
-Con_Message("Cl_HandlePlayerFix: Fix momentum %i. Mom=%f, %f, %f\n",
-            ddpl->fixAcked.mom, pos[0], pos[1], pos[2]);
-#endif
-        if(mo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to mobj %p...\n", mo);
-#endif
-            mo->mom[MX] = pos[0];
-            mo->mom[MY] = pos[1];
-            mo->mom[MZ] = pos[2];
-        }
-
-        if(clmo)
-        {
-#ifdef _DEBUG
-Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
-#endif
-            clmo->mo.mom[MX] = pos[0];
-            clmo->mo.mom[MY] = pos[1];
-            clmo->mo.mom[MZ] = pos[2];
-        }
+        state->pendingMomFix[VX] = FIX2FLT(Msg_ReadLong());
+        state->pendingMomFix[VY] = FIX2FLT(Msg_ReadLong());
+        state->pendingMomFix[VZ] = FIX2FLT(Msg_ReadLong());
+        state->pendingFixes |= DDPF_FIXMOM;
     }
+
+    ClPlayer_ApplyPendingFixes(consolePlayer);
 
     // Send an acknowledgement.
     Msg_Begin(PCL_ACK_PLAYER_FIX);
@@ -538,7 +297,7 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
  *                      If @c false the mobj's Z will be param 'z' and
  *                      viewheight is zero.
  */
-void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
+void ClPlayer_MoveLocal(float dx, float dy, float z, boolean onground)
 {
     player_t           *plr = &ddPlayers[consolePlayer];
     ddplayer_t         *ddpl = &plr->shared;
@@ -587,75 +346,14 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
         mo->pos[VZ] = z;
     }
 
-    Cl_UpdatePlayerPos(consolePlayer);
+    ClPlayer_UpdatePos(consolePlayer);
 }
-
-/**
- * Animates the player sprites based on their states (up, down, etc.)
- */
-#if 0 // Currently unused.
-void Cl_MovePsprites(void)
-{
-    ddplayer_t         *pl = &players[consolePlayer].shared;
-    ddpsprite_t        *psp = pl->pSprites;
-    int                 i;
-
-    for(i = 0; i < 2; ++i)
-        if(psp[i].tics > 0)
-            psp[i].tics--;
-
-    switch(psp->state)
-    {
-    case DDPSP_UP:
-        pspY -= pspMoveSpeed;
-        if(pspY <= TOP_PSPY)
-        {
-            pspY = TOP_PSPY;
-            psp->state = DDPSP_BOBBING;
-        }
-        psp->y = pspY;
-        break;
-
-    case DDPSP_DOWN:
-        pspY += pspMoveSpeed;
-        if(pspY > BOTTOM_PSPY)
-            pspY = BOTTOM_PSPY;
-        psp->y = pspY;
-        break;
-
-    case DDPSP_FIRE:
-        pspY = TOP_PSPY;
-        //psp->x = 0;
-        psp->y = pspY;
-        break;
-
-    case DDPSP_BOBBING:
-        pspY = TOP_PSPY;
-        // Get bobbing from the Game DLL.
-        psp->x = *((float*) gx.GetVariable(DD_PSPRITE_BOB_X));
-        psp->y = *((float*) gx.GetVariable(DD_PSPRITE_BOB_Y));
-        break;
-    }
-
-    if(psp->state != DDPSP_BOBBING)
-    {
-        if(psp->offX)
-            psp->x = psp->offX;
-        if(psp->offY)
-            psp->y = psp->offY;
-    }
-
-    // The other psprite gets the same coords.
-    psp[1].x = psp->x;
-    psp[1].y = psp->y;
-}
-#endif
 
 /**
  * Reads a single PSV_FRAME2 player delta from the message buffer and
  * applies it to the player in question.
  */
-void Cl_ReadPlayerDelta2(boolean skip)
+void ClPlayer_ReadDelta2(boolean skip)
 {
     static player_t     dummyPlayer;
     static clplayerstate_t dummyClState;
@@ -687,80 +385,91 @@ void Cl_ReadPlayerDelta2(boolean skip)
 
     if(df & PDF_MOBJ)
     {
-        clmobj_t           *old = s->cmo;
+        mobj_t *old = ClMobj_Find(s->clMobjId);
 
         newId = Msg_ReadShort();
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.
-        if(!skip && newId != s->mobjId)
+        if(!skip && newId != s->clMobjId)
         {
+            // We are now changing the player's mobj.
+            mobj_t* clmo = 0;
+            clmoinfo_t* info = 0;
             boolean justCreated = false;
 
-            s->mobjId = newId;
+            s->clMobjId = newId;
 
             // Find the new mobj.
-            s->cmo = Cl_FindMobj(s->mobjId);
-            if(!s->cmo)
+            clmo = ClMobj_Find(s->clMobjId);
+            info = ClMobj_GetInfo(clmo);
+            if(!clmo)
             {
+#ifdef _DEBUG
+                Con_Message("ClPlayer_ReadDelta2: Player %i's new clmobj is %i, but we don't know it yet.\n",
+                            num, newId);
+#endif
                 // This mobj hasn't yet been sent to us.
                 // We should be receiving the rest of the info very shortly.
-                s->cmo = Cl_CreateMobj(s->mobjId);
+                clmo = ClMobj_Create(s->clMobjId);
+                info = ClMobj_GetInfo(clmo);
+                /*
                 if(num == consolePlayer)
                 {
                     // Mark everything known about our local player.
-                    s->cmo->flags |= CLMF_KNOWN;
-                }
+                    //info->flags |= CLMF_KNOWN;
+                }*/
                 justCreated = true;
             }
             else
             {
                 // The client mobj is already known to us.
                 // Unlink it (not interactive or visible).
-                Cl_UnsetMobjPosition(s->cmo);
+                ClMobj_UnsetPosition(clmo);
             }
 
-            s->cmo->mo.dPlayer = ddpl;
+            clmo->dPlayer = ddpl;
 
             // Make the old clmobj a non-player one (if any).
             if(old)
             {
-                old->mo.dPlayer = NULL;
-                Cl_SetMobjPosition(old);
+                old->dPlayer = NULL;
+                ClMobj_SetPosition(old);
             }
 
             // If it was just created, the coordinates are not yet correct.
             // The update will be made when the mobj data is received.
-            if(!justCreated && num != consolePlayer)
+            if(!justCreated) // && num != consolePlayer)
             {
-                // Replace the hidden client mobj with the real player mobj.
-                Cl_UpdateRealPlayerMobj(ddpl->mo, &s->cmo->mo, 0xffffffff);
+#ifdef _DEBUG
+                Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.\n",
+                            newId, num, ddpl->mo);
+#endif
+                Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff);
             }
+            /*
             else if(ddpl->mo)
             {
                 // Update the new client mobj's information from the real
                 // mobj, which is already known.
 #if _DEBUG
-                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.\n",
-                            num);
-                Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->pos[VX], ddpl->mo->pos[VY],
-                            ddpl->mo->pos[VZ]);
+                Con_Message("Cl_RdPlrD2: Pl%i: Copying pos&angle from real mobj to clmobj.\n", num);
+                Con_Message("  x=%g y=%g z=%g\n", ddpl->mo->pos[VX], ddpl->mo->pos[VY], ddpl->mo->pos[VZ]);
 #endif
-                s->cmo->mo.pos[VX] = ddpl->mo->pos[VX];
-                s->cmo->mo.pos[VY] = ddpl->mo->pos[VY];
-                s->cmo->mo.pos[VZ] = ddpl->mo->pos[VZ];
-                s->cmo->mo.angle = ddpl->mo->angle;
+                clmo->pos[VX] = ddpl->mo->pos[VX];
+                clmo->pos[VY] = ddpl->mo->pos[VY];
+                clmo->pos[VZ] = ddpl->mo->pos[VZ];
+                clmo->angle = ddpl->mo->angle;
                 if(!skip)
-                    Cl_UpdatePlayerPos(num);
+                    ClPlayer_UpdatePos(num);
             }
+            */
 
 #if _DEBUG
-Con_Message("Cl_RdPlrD2: Pl%i: mobj=%i old=%p\n", num, s->mobjId, old);
-Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", s->cmo->mo.pos[VX],
-            s->cmo->mo.pos[VY], s->cmo->mo.pos[VZ],
-            s->cmo->mo.floorZ, s->cmo->mo.ceilingZ);
-Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
-            (skip? -1 : num), s->mobjId);
+            Con_Message("ClPlr_RdD2: Pl%i: mobj=%i old=%p\n", num, s->clMobjId, old);
+            Con_Message("  x=%g y=%g z=%g fz=%g cz=%g\n", clmo->pos[VX],
+                        clmo->pos[VY], clmo->pos[VZ], clmo->floorZ, clmo->ceilingZ);
+            Con_Message("ClPlr_RdD2: pl=%i => moid=%i\n", (skip? -1 : num), s->clMobjId);
 #endif
         }
     }
@@ -786,17 +495,28 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
     }
     if(df & PDF_FILTER)
     {
-        int             filter = Msg_ReadLong();
+        unsigned int filter = Msg_ReadLong();
 
-        if(filter)
-            ddpl->flags |= DDPF_VIEW_FILTER;
+        ddpl->filterColor[CR] = (filter & 0xff) / 255.f;
+        ddpl->filterColor[CG] = ((filter >> 8) & 0xff) / 255.f;
+        ddpl->filterColor[CB] = ((filter >> 16) & 0xff) / 255.f;
+        ddpl->filterColor[CA] = ((filter >> 24) & 0xff) / 255.f;
+
+        if(ddpl->filterColor[CA] > 0)
+        {
+            ddpl->flags |= DDPF_REMOTE_VIEW_FILTER;
+        }
         else
-            ddpl->flags &= ~DDPF_VIEW_FILTER;
-
-        ddpl->filterColor[CR] = filter & 0xff;
-        ddpl->filterColor[CG] = (filter >> 8) & 0xff;
-        ddpl->filterColor[CB] = (filter >> 16) & 0xff;
-        ddpl->filterColor[CA] = (filter >> 24) & 0xff;
+        {
+            ddpl->flags &= ~DDPF_REMOTE_VIEW_FILTER;
+        }
+#ifdef _DEBUG
+        Con_Message("ClPlayer_ReadDelta2: Filter color set remotely to (%f,%f,%f,%f)\n",
+                    ddpl->filterColor[CR],
+                    ddpl->filterColor[CG],
+                    ddpl->filterColor[CB],
+                    ddpl->filterColor[CA]);
+#endif
     }
     if(df & PDF_CLYAW) // Only sent when Fixangles is used.
         //ddpl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
@@ -839,17 +559,23 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
 }
 
 /**
+ * @return  The gameside local mobj of a player.
+ */
+mobj_t *ClPlayer_LocalGameMobj(int plrNum)
+{
+    return ddPlayers[plrNum].shared.mo;
+}
+
+/**
  * Used by the client plane mover.
  *
  * @return              @c true, if the player is free to move according to
  *                      floorz and ceilingz.
  */
-boolean Cl_IsFreeToMove(int plrNum)
+boolean ClPlayer_IsFreeToMove(int plrNum)
 {
-    mobj_t*             mo = ddPlayers[plrNum].shared.mo;
-
-    if(!mo)
-        return false;
+    mobj_t* mo = ClPlayer_LocalGameMobj(plrNum);
+    if(!mo) return false;
 
     return (mo->pos[VZ] >= mo->floorZ &&
             mo->pos[VZ] + mo->height <= mo->ceilingZ);

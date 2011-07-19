@@ -44,9 +44,9 @@
 #define CONSOLEPLAYER       Get(DD_CONSOLEPLAYER)
 #define DISPLAYPLAYER       Get(DD_DISPLAYPLAYER)
 
-#define GAMETIC             Get(DD_GAMETIC)
-#define maketic             Get(DD_MAKETIC)
-#define ticdup              1
+#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
+//#define maketic             Get(DD_MAKETIC)
+//#define ticdup              1
 
 // Status flags for refresh.
 extern boolean paused;

@@ -71,7 +71,7 @@ typedef enum {
 #define MDF_MOM_Z               0x0020
 #define MDF_MOM                 0x0038
 #define MDF_ANGLE               0x0040
-#define MDF_LONG_FLOORCLIP      0x0080
+#define MDF_HEALTH              0x0080
 #define MDF_MORE_FLAGS          0x0100 // A byte of extra flags follows.
 #define MDF_SELSPEC             0x0200 // Only during transfer.
 #define MDF_SELECTOR            0x0400
@@ -80,13 +80,16 @@ typedef enum {
 #define MDF_HEIGHT              0x2000
 #define MDF_FLAGS               0x4000
 #define MDF_FLOORCLIP           0x8000
+#define MDF_EVERYTHING          (MDF_POS | MDF_MOM | MDF_ANGLE | MDF_SELECTOR | MDF_STATE |\
+                                 MDF_RADIUS | MDF_HEIGHT | MDF_FLAGS | MDF_HEALTH | MDF_FLOORCLIP)
 
 // Mobj Delta Control flags (not included directly in the frame).
-#define MDFC_NULL               0x10000 // The delta is not defined.
-#define MDFC_CREATE             0x20000 // Mobj didn't exist before.
-#define MDFC_TRANSLUCENCY       0x40000 // Mobj has translucency.
-#define MDFC_FADETARGET         0x80000 // Mobj is fading to/from visible/invisible
-
+#define MDFC_NULL               0x010000 // The delta is not defined.
+#define MDFC_CREATE             0x020000 // Mobj didn't exist before.
+#define MDFC_TRANSLUCENCY       0x040000 // Mobj has translucency.
+#define MDFC_FADETARGET         0x080000 // Mobj is fading to/from visible/invisible
+#define MDFC_TYPE               0x100000 // Mobj type specified in delta.
+#define MDFC_ON_FLOOR           0x200000 // Mobj Z is floorZ.
 
 // Extra flags for the Extra Flags byte.
 #define MDFE_FAST_MOM           0x01 // Momentum has 10.6 bits (+/- 512)
@@ -94,6 +97,7 @@ typedef enum {
 #define MDFE_Z_FLOOR            0x04 // Mobj z is on the floor.
 #define MDFE_Z_CEILING          0x08 // Mobj z+hgt is in the ceiling.
 #define MDFE_FADETARGET         0x10
+#define MDFE_TYPE               0x20 // Mobj type.
 
 // The flags that are not included when a mobj is the viewpoint.
 #define MDF_CAMERA_EXCLUDE      0x0e00

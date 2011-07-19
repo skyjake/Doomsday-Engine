@@ -574,7 +574,7 @@ void ST_HUDUnHide(int player, hueevent_t ev)
         return;
 
     plr = &players[player];
-    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+    if(!plr->plr->inGame)
         return;
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
@@ -797,6 +797,7 @@ void ST_Ticker(timespan_t ticLength)
     boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
     /// kludge end.
     int i;
+
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* plr = &players[i];
@@ -863,6 +864,16 @@ void ST_Ticker(timespan_t ticLength)
                 UIWidget_RunTic(GUI_MustFindObjectById(hud->widgetGroupIds[j]), ticLength);
             }
         }
+        else
+        {
+            if(hud->hideTics > 0)
+                hud->hideTics--;
+            if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                hud->hideAmount += 0.1f;
+        }
+
+        ST_updateWidgets(i);
+        hud->oldHealth = plr->health;
     }
 }
 
@@ -909,7 +920,9 @@ void ST_doPaletteStuff(int player)
         R_GetFilterColor(plr->plr->filterColor, palette);
     }
     else
+    {
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
+    }
 }
 
 void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2914,7 +2927,7 @@ void ST_Drawer(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     hud = &hudStates[player];

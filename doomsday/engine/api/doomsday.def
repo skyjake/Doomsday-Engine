@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 536 <--
-; Other free ordinals: 65, 97, 103
+; Highest ordinal is currently: --> 538 <--
+; Other free ordinals: -
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -326,7 +326,6 @@ EXPORTS
     P_GetGMOFloat               @420 NONAME
 
 ; Play: Misc.
-    P_MergeCommand              @333 NONAME
     P_RegisterMapObj            @411 NONAME
     P_RegisterMapObjProperty    @412 NONAME
 
@@ -337,6 +336,9 @@ EXPORTS
     P_MobjUnlink                @67 NONAME
     P_MobjLinesIterator         @71 NONAME
     P_MobjSectorsIterator       @72 NONAME
+    P_MobjForID                 @333 NONAME
+    ClMobj_IsValid              @103 NONAME
+    ClPlayer_ClMobj             @537 NONAME
 
 ; Play: Polyobjs.
     P_PolyobjMove               @79 NONAME
@@ -365,6 +367,7 @@ EXPORTS
     DD_IterateThinkers          @425 NONAME
 
 ; Refresh.
+    DD_IsSharpTick              @538 NONAME
     DD_GetFrameRate             @88 NONAME
     R_SetupMap                  @89 NONAME
     R_PrecacheMobjNum           @427 NONAME
@@ -374,6 +377,7 @@ EXPORTS
     R_ViewWindowDimensions      @91 NONAME
     R_SetViewWindowDimensions   @92 NONAME
     R_ViewportDimensions        @430 NONAME
+    R_SetViewPortPlayer         @65 NONAME
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
@@ -381,7 +385,7 @@ EXPORTS
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_HSVToRGB                  @439 NONAME
-    R_CreateColorPalette		@444 NONAME
+    R_CreateColorPalette		 @444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
     R_GetColorPaletteNameForNum @445 NONAME
     R_GetColorPaletteRGBf       @423 NONAME
@@ -582,6 +586,8 @@ EXPORTS
     M_RatioReduce               @499 NONAME
 
 ; Math.
+    RNG_RandByte                @97 NONAME
+
     ; Binary angles.
     bamsAtan2                   @145 NONAME
 

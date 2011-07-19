@@ -31,8 +31,8 @@
 
 #include "d_net.h"
 
-void*           NetCl_WriteCommands(ticcmd_t* cmd, int count);
 void            NetCl_UpdateGameState(byte* data);
+void            NetCl_PlayerSpawnPosition(byte* data);
 void            NetCl_CheatRequest(const char* command);
 void            NetCl_UpdatePlayerState(byte* data, int plrNum);
 void            NetCl_UpdatePlayerState2(byte* data, int plrNum);
@@ -44,6 +44,7 @@ void            NetCl_SendPlayerInfo(void);
 void            NetCl_SaveGame(void* data);
 void            NetCl_LoadGame(void* data);
 void            NetCl_Paused(boolean setPause);
-void            NetCl_PlayerActionRequest(player_t* player, int actionType);
+void            NetCl_PlayerActionRequest(player_t* player, int actionType, int actionParam);
+void            NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage);
 
 #endif

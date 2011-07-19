@@ -231,6 +231,7 @@ int D_NetDisconnect(int before)
     return true;
 }
 
+/*
 void* D_NetWriteCommands(int numCommands, void* data)
 {
     // It's time to send ticcmds to the server.
@@ -243,6 +244,7 @@ void* D_NetReadCommands(size_t pktLength, void* data)
     // 'plrNumber' is the length of the packet.
     return NetSv_ReadCommands(data, pktLength);
 }
+*/
 
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
@@ -294,18 +296,12 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
             P_DealPlayerStarts(0);
     }
     // DDPE_CHAT_MESSAGE occurs when a PKT_CHAT is received.
-    // Here we will only display the message (if not a local message).
-    else if(peType == DDPE_CHAT_MESSAGE && plrNumber != CONSOLEPLAYER)
+    // Here we will only display the message.
+    else if(peType == DDPE_CHAT_MESSAGE)
     {
-        int     i, num, oldecho = cfg.echoMsg;
+        int oldecho = cfg.echoMsg;
 
-        // Count the number of players.
-        for(i = num = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->inGame)
-                num++;
-
-        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber),
-                (const char *) data);
+        dd_snprintf(msgBuff, NETBUFFER_MAXMESSAGE, "%s: %s", Net_GetPlayerName(plrNumber), (const char *) data);
 
         // The chat message is already echoed by the console.
         cfg.echoMsg = false;
@@ -357,43 +353,34 @@ int D_NetWorldEvent(int type, int parm, void* data)
     // Client events:
     //
 #if 0
-    case DDWE_PROJECTILE:
-#  ifdef _DEBUG
-        if(parm > 32)           // Too many?
-            gi.Error("D_NetWorldEvent: Too many missiles (%i).\n", parm);
-#  endif
-        // Projectile data consists of shorts.
-        for(ptr = *(short **) data, i = 0; i < parm; ++i)
-        {
-            flags = *(unsigned short *) ptr & DDMS_FLAG_MASK;
-            mtype = *(unsigned short *) ptr & ~DDMS_FLAG_MASK;
-            ptr++;
-            x = *ptr++ << 16;
-            y = *ptr++ << 16;
-            z = *ptr++ << 16;
-            momx = momy = momz = 0;
-            if(flags & DDMS_MOVEMENT_XY)
-            {
-                momx = *ptr++ << 8;
-                momy = *ptr++ << 8;
-            }
-            if(flags & DDMS_MOVEMENT_Z)
-            {
-                momz = *ptr++ << 8;
-            }
-            NetCl_SpawnMissile(mtype, x, y, z, momx, momy, momz);
-        }
-        // Update pointer.
-        *(short **) data = ptr;
-        break;
-#endif
-
     case DDWE_SECTOR_SOUND:
         // High word: sector number, low word: sound id.
         if(parm & 0xffff)
             S_StartSound(parm & 0xffff, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
         else
-            S_StopSound(0, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
+            S_StopSound(0, (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
+                                               DMU_SOUND_ORIGIN));
+
+        break;
+#endif
+
+    case DDWE_DEMO_END:
+        // Demo playback has ended. Advance demo sequence.
+        if(parm)                // Playback was aborted.
+            G_DemoAborted();
+        else                    // Playback ended normally.
+            G_DemoEnds();
+
+        // Restore normal game state.
+        deathmatch = false;
+        noMonstersParm = false;
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        respawnMonsters = false;
+#endif
+
+#if __JHEXEN__
+        randomClassParm = false;
+#endif
         break;
 
     default:
@@ -425,16 +412,22 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         case GPT_ACTION_REQUEST:
             NetSv_DoAction(fromplayer, data);
             break;
+
+        case GPT_DAMAGE:
+            NetSv_DoDamage(fromplayer, data);
+            break;
         }
         return;
     }
     //
     // Client events.
     //
-    switch (type)
+    switch(type)
     {
     case GPT_GAME_STATE:
-        Con_Printf("Received GTP_GAME_STATE\n");
+#ifdef _DEBUG
+        Con_Message("Received GTP_GAME_STATE\n");
+#endif
         NetCl_UpdateGameState(data);
 
         // Tell the engine we're ready to proceed. It'll start handling
@@ -442,7 +435,14 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         Set(DD_GAME_READY, true);
         break;
 
+    case GPT_PLAYER_SPAWN_POSITION:
+        NetCl_PlayerSpawnPosition(data);
+        break;
+
     case GPT_MESSAGE:
+#ifdef _DEBUG
+        Con_Message("D_HandlePacket: GPT_MESSAGE\n");
+#endif
         dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
         P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
         break;
@@ -484,8 +484,36 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
-        players[CONSOLEPLAYER].class = bData[0];
+    {
+        player_t* plr = &players[CONSOLEPLAYER];
+        int newClass = bData[0];
+        int oldClass = plr->class_;
+        plr->class_ = newClass;
+#ifdef _DEBUG
+        Con_Message("D_HandlePacket: Player %i class set to %i.\n", CONSOLEPLAYER, plr->class_);
+#endif
+#if __JHERETIC__
+        if(oldClass != newClass)
+        {
+            if(newClass == PCLASS_CHICKEN)
+            {
+#ifdef _DEBUG
+                Con_Message("D_HandlePacket: Player %i activating morph..\n", CONSOLEPLAYER);
+#endif
+                P_ActivateMorphWeapon(plr);
+            }
+            else if(oldClass == PCLASS_CHICKEN)
+            {
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState: Player %i post-morph weapon %i.\n", CONSOLEPLAYER, plr->readyWeapon);
+#endif
+                // The morph has ended.
+                P_PostMorphWeapon(plr, plr->readyWeapon);
+            }
+        }
+#endif
         break;
+    }
 #endif
 
     case GPT_SAVE:
@@ -545,7 +573,7 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
         return;
     plr = &players[player];
 
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", msg);
@@ -592,6 +620,8 @@ void D_NetMessageNoSound(int player, const char* msg)
 boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                         int damage)
 {
+    return false;
+#if 0
     if(!source || !source->player)
     {
         return false;
@@ -599,27 +629,27 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 
     if(IS_SERVER && source->player - players > 0)
     {
-        // A client is trying to do damage.
-#if _DEBUG
-Con_Message("P_DamageMobj2: Server ignores client's damage on svside.\n");
-#endif
-        //// \todo Damage requests have not been fully implemented yet.
+        /*
+         * A client is trying to do damage. However, it is not guaranteed
+         * that the server is 100% accurately aware of the gameplay situation
+         * in which the damage is being inflicted (due to network latency),
+         * so instead of applying the damage now we will wait for the client
+         * to request it separately.
+         */
         return false;
-        //return true;
     }
     else if(IS_CLIENT && source->player - players == CONSOLEPLAYER)
     {
-#if _DEBUG
-Con_Message("P_DamageMobj2: Client should request damage on mobj %p.\n", target);
-#endif
+        NetCl_DamageRequest(target, inflictor, source, damage);
         return true;
     }
 
 #if _DEBUG
-Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
+    Con_Message("D_NetDamageMobj: Allowing normal damage in netgame.\n");
 #endif
     // Process as normal damage.
     return false;
+#endif
 }
 
 /**
@@ -645,22 +675,25 @@ D_CMD(SetColor)
 
         cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
 
-        // Change the color of the mobj (translation flags).
-        players[player].plr->mo->flags &= ~MF_TRANSLATION;
+        if(players[player].plr->mo)
+        {
+            // Change the color of the mobj (translation flags).
+            players[player].plr->mo->flags &= ~MF_TRANSLATION;
 
 #if __JHEXEN__
-        // Additional difficulty is caused by the fact that the Fighter's
-        // colors 0 (blue) and 2 (yellow) must be swapped.
-        players[player].plr->mo->flags |=
-            (cfg.playerClass[player] ==
-             PCLASS_FIGHTER ? (cfg.playerColor[player] ==
-                               0 ? 2 : cfg.playerColor[player] ==
-                               2 ? 0 : cfg.playerColor[player]) : cfg.
-             playerColor[player]) << MF_TRANSSHIFT;
-        players[player].colorMap = cfg.playerColor[player];
+            // Additional difficulty is caused by the fact that the Fighter's
+            // colors 0 (blue) and 2 (yellow) must be swapped.
+            players[player].plr->mo->flags |=
+                (cfg.playerClass[player] ==
+                 PCLASS_FIGHTER ? (cfg.playerColor[player] ==
+                                   0 ? 2 : cfg.playerColor[player] ==
+                                   2 ? 0 : cfg.playerColor[player]) : cfg.
+                 playerColor[player]) << MF_TRANSSHIFT;
+            players[player].colorMap = cfg.playerColor[player];
 #else
-        players[player].plr->mo->flags |= cfg.playerColor[player] << MF_TRANSSHIFT;
+            players[player].plr->mo->flags |= cfg.playerColor[player] << MF_TRANSSHIFT;
 #endif
+        }
 
         // Tell the clients about the change.
         NetSv_SendPlayerInfo(player, DDSP_ALL_PLAYERS);

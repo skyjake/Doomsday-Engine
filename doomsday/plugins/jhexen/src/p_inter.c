@@ -339,7 +339,7 @@ boolean P_GiveMana(player_t *plr, ammotype_t ammo, int num)
     plr->update |= PSF_AMMO;
 
     //// \fixme - DJS: This shouldn't be actioned from here.
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
+    if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon == WT_SECOND &&
        ammo == AT_BLUEMANA && prevMana <= 0)
     {
         P_SetPsprite(plr, ps_weapon, S_FAXEREADY_G);
@@ -387,7 +387,7 @@ boolean P_GiveWeapon(player_t* plr, playerclass_t matchClass,
 {
     boolean             gaveMana = false;
 
-    if(plr->class != matchClass)
+    if(plr->class_ != matchClass)
         return giveWeaponWrongClassMana(plr, matchClass, weaponType);
 
     plr->update |= PSF_WEAPONS;
@@ -428,7 +428,7 @@ boolean P_GiveWeaponPiece(player_t* plr, playerclass_t matchClass,
     };
     boolean             gaveMana = false;
 
-    if(plr->class != matchClass)
+    if(plr->class_ != matchClass)
         return giveWeaponPieceWrongClassMana(plr, matchClass);
 
     // Always attempt to give mana unless this a cooperative game and the
@@ -530,8 +530,8 @@ boolean P_GiveArmor2(player_t* plr, armortype_t type, int amount)
         plr->armorPoints[ARMOR_ARMOR] +
         plr->armorPoints[ARMOR_SHIELD] +
         plr->armorPoints[ARMOR_HELMET] +
-        plr->armorPoints[ARMOR_AMULET] + PCLASS_INFO(plr->class)->autoArmorSave;
-    if(totalArmor >= PCLASS_INFO(plr->class)->maxArmor * 5 * FRACUNIT)
+        plr->armorPoints[ARMOR_AMULET] + PCLASS_INFO(plr->class_)->autoArmorSave;
+    if(totalArmor >= PCLASS_INFO(plr->class_)->maxArmor * 5 * FRACUNIT)
         return false;
 
     plr->armorPoints[type] += hits;
@@ -576,7 +576,7 @@ boolean P_GivePower(player_t *plr, powertype_t power)
         {
             plr->powers[power] = INVULNTICS;
             plr->plr->mo->flags2 |= MF2_INVULNERABLE;
-            if(plr->class == PCLASS_MAGE)
+            if(plr->class_ == PCLASS_MAGE)
             {
                 plr->plr->mo->flags2 |= MF2_REFLECTIVE;
             }
@@ -787,25 +787,25 @@ static boolean pickupHealthVial(player_t* plr)
 static boolean pickupMesh(player_t* plr)
 {
     return P_GiveArmor(plr, ARMOR_ARMOR,
-                       PCLASS_INFO(plr->class)->armorIncrement[ARMOR_ARMOR]);
+                       PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_ARMOR]);
 }
 
 static boolean pickupShield(player_t* plr)
 {
     return P_GiveArmor(plr, ARMOR_SHIELD,
-                       PCLASS_INFO(plr->class)->armorIncrement[ARMOR_SHIELD]);
+                       PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_SHIELD]);
 }
 
 static boolean pickupHelmet(player_t* plr)
 {
     return P_GiveArmor(plr, ARMOR_HELMET,
-                       PCLASS_INFO(plr->class)->armorIncrement[ARMOR_HELMET]);
+                       PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_HELMET]);
 }
 
 static boolean pickupAmulet(player_t* plr)
 {
     return P_GiveArmor(plr, ARMOR_AMULET,
-                        PCLASS_INFO(plr->class)->armorIncrement[ARMOR_AMULET]);
+                        PCLASS_INFO(plr->class_)->armorIncrement[ARMOR_AMULET]);
 }
 
 static boolean pickupSteelKey(player_t* plr)
@@ -1413,7 +1413,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         if(target->flags2 & MF2_FIREDAMAGE)
         {   // Player flame death.
             //// \todo Should be pulled from the player class definition.
-            switch(target->player->class)
+            switch(target->player->class_)
             {
             case PCLASS_FIGHTER:
                 S_StartSound(SFX_PLAYER_FIGHTER_BURN_DEATH, target);
@@ -1440,7 +1440,7 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
             target->flags &= ~(7 << MF_TRANSSHIFT); //no translation
             target->flags |= MF_ICECORPSE;
             //// \todo Should be pulled from the player class definition.
-            switch(target->player->class)
+            switch(target->player->class_)
             {
             case PCLASS_FIGHTER:
                 P_MobjChangeState(target, S_FPLAY_ICE);
@@ -1675,7 +1675,7 @@ boolean P_MorphPlayer(player_t *player)
     player->health = beastMo->health = MAXMORPHHEALTH;
     player->plr->mo = beastMo;
     memset(&player->armorPoints[0], 0, NUMARMOR * sizeof(int));
-    player->class = PCLASS_PIG;
+    player->class_ = PCLASS_PIG;
 
     if(oldFlags2 & MF2_FLY)
         beastMo->flags2 |= MF2_FLY;
@@ -1825,6 +1825,12 @@ void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
         player->poisonCount = 100;
 }
 
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
+}
+
 /**
  * Damages both enemies and players
  * \note 'source' and 'inflictor' are the same for melee attacks.
@@ -1836,8 +1842,8 @@ void P_PoisonPlayer(player_t *player, mobj_t *poisoner, int poison)
  * @param source            Is the mobj to target after taking damage
  *                          creature or @c NULL.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                  int damageP, boolean stomping, boolean skipNetworkCheck)
 {
     uint            an;
     angle_t         angle;
@@ -1856,15 +1862,16 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // non-player mobj).
     damage = damageP;
 
-    if(IS_NETGAME && !stomping &&
-       D_NetDamageMobj(target, inflictor, source, damage))
-    {   // We're done here.
-        return 0;
+    if(!skipNetworkCheck)
+    {
+        if(IS_NETGAME && !stomping && D_NetDamageMobj(target, inflictor, source, damage))
+        {   // We're done here.
+            return 0;
+        }
+        // Clients can't harm anybody.
+        if(IS_CLIENT)
+            return 0;
     }
-
-    // Clients can't harm anybody.
-    if(IS_CLIENT)
-        return 0;
 
     if(!(target->flags & MF_SHOOTABLE))
         return 0; // Shouldn't happen.
@@ -2142,7 +2149,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         }
 
         savedPercent = FIX2FLT(
-            PCLASS_INFO(player->class)->autoArmorSave + player->armorPoints[ARMOR_ARMOR] +
+            PCLASS_INFO(player->class_)->autoArmorSave + player->armorPoints[ARMOR_ARMOR] +
             player->armorPoints[ARMOR_SHIELD] +
             player->armorPoints[ARMOR_HELMET] +
             player->armorPoints[ARMOR_AMULET]);
@@ -2158,7 +2165,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
                 if(player->armorPoints[i])
                 {
                     player->armorPoints[i] -=
-                        FLT2FIX(((float) damage * FIX2FLT(PCLASS_INFO(player->class)->armorIncrement[i])) /
+                        FLT2FIX(((float) damage * FIX2FLT(PCLASS_INFO(player->class_)->armorIncrement[i])) /
                                  300);
 
                     if(player->armorPoints[i] < 2 * FRACUNIT)

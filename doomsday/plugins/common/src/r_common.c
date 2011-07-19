@@ -76,13 +76,16 @@ char gammamsg[5][81];
 void R_PrecachePSprites(void)
 {
     int                 i, k;
-    int                 pclass = players[CONSOLEPLAYER].class;
+    int                 pclass = players[CONSOLEPLAYER].class_;
+
+    if(IS_DEDICATED)
+        return;
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         for(k = 0; k < NUMWEAPLEVELS; ++k)
         {
-            pclass = players[CONSOLEPLAYER].class;
+            pclass = players[CONSOLEPLAYER].class_;
 
             R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_UP]);
             R_PrecacheSkinsForState(weaponInfo[i][pclass].mode[k].states[WSN_DOWN]);

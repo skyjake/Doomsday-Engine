@@ -1260,3 +1260,8 @@ Text {
   ID = "PLAYERSETUP";
   Text = "Player Setup";
 }
+
+Text {
+  ID = "DISCONNECT";
+  Text = "Really disconnect?";
+}

@@ -47,6 +47,7 @@ boolean         P_GiveWeapon(player_t* plr, weapontype_t weapon, boolean dropped
 boolean         P_GiveArmor(player_t* plr, int type, int points);
 
 void            P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
-int             P_DamageMobj(mobj_t* target, mobj_t* inflictor,
-                             mobj_t* source, int damage, boolean stomping);
+int             P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
+int             P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
+
 #endif

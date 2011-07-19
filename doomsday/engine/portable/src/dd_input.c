@@ -308,7 +308,7 @@ void I_DeviceReset(uint ident)
     inputdev_t*         dev = &inputDevices[ident];
     int                 k;
 
-    for(k = 0; k < dev->numAxes; ++k)
+    for(k = 0; k < (int)dev->numAxes; ++k)
     {
         if(dev->axes[k].type == IDAT_POINTER)
         {
@@ -423,7 +423,7 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
 {
     int         i;
 
-    for(i = 0; i < device->numKeys; ++i)
+    for(i = 0; i < (int)device->numKeys; ++i)
     {
         if(device->keys[i].name && !stricmp(device->keys[i].name, name))
             return i;
@@ -780,8 +780,18 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     if(ddEvent->type == E_SYMBOLIC)
     {
         ev->type = EV_SYMBOLIC;
-        ev->data1 = ((int64_t) ddEvent->symbolic.name) & 0xffffffff; // low dword
-        ev->data2 = ((int64_t) ddEvent->symbolic.name) >> 32; // high dword
+#ifdef __64BIT__
+        ASSERT_64BIT(int64_t);
+        ASSERT_64BIT(ddEvent->symbolic.name);
+
+        ev->data1 = (int)(((int64_t) ddEvent->symbolic.name) & 0xffffffff); // low dword
+        ev->data2 = (int)(((int64_t) ddEvent->symbolic.name) >> 32); // high dword
+#else
+        ASSERT_NOT_64BIT(ddEvent->symbolic.name);
+
+        ev->data1 = (int) ddEvent->symbolic.name;
+        ev->data2 = 0;
+#endif
     }
     else
     {

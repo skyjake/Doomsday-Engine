@@ -494,7 +494,7 @@ D_CMD(Pause)
 
 void G_SetPause(boolean yes)
 {
-    if(Hu_MenuIsActive() || Hu_IsMessageActive())
+    if(Hu_MenuIsActive() || Hu_IsMessageActive() || IS_CLIENT)
         return; // No change.
 
     if(yes)
@@ -719,7 +719,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     int     flyheight = 0;
     pcontrolstate_t *cstate = &controlStates[pnum];
     player_t *plr = &players[pnum];
-    classinfo_t *pClassInfo = PCLASS_INFO(plr->class);
+    classinfo_t *pClassInfo = PCLASS_INFO(plr->class_);
 
     // Check the joystick axes.
     for(i = 0; i < 8; i++)

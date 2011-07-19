@@ -95,15 +95,13 @@ boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netG
 
 boolean drawGame = true; // If false the game viewport won't be rendered
 
-trigger_t sharedFixedTrigger = { 1 / 35.0, 0 };
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static double lastFrameTime;
-
 static float fps;
 static int lastFrameCount;
 static boolean firstTic = true;
+static boolean tickIsSharp = false;
 
 // CODE --------------------------------------------------------------------
 
@@ -311,85 +309,86 @@ float DD_GetFrameRate(void)
 }
 
 /**
+ * Determines whether it is time for tickers to run their 35 Hz actions.
+ * Set at the beginning of a tick by DD_Ticker.
+ */
+boolean DD_IsSharpTick(void)
+{
+    return tickIsSharp;
+}
+
+/**
  * This is the main ticker of the engine. We'll call all the other tickers
  * from here.
+ *
+ * @param time  Duration of the tick. This will never be longer than 1.0/TICSPERSEC.
  */
 void DD_Ticker(timespan_t time)
 {
     static float realFrameTimePos = 0;
 
-    if(!Con_TransitionInProgress())
+    // Sharp ticks are the ones that occur 35 per second. The rest are interpolated
+    // (smoothed) somewhere in between.
+    tickIsSharp = false;
+
+    if(!Con_TransitionInProgress() && (tickFrame || netGame)) // Advance frametime?
     {
-        // Demo ticker. Does stuff like smoothing of view angles.
-        Net_BuildLocalCommands(time);
-        Demo_Ticker(time);
-        P_ControlTicker(time);
-        P_Ticker(time);
+        /**
+         * realFrameTimePos will be reduced when new sharp world positions are calculated,
+         * so that frametime always stays within the range 0..1.
+         */
+        realFrameTimePos += time * TICSPERSEC;
 
-        if(tickFrame || netGame)
+        // When one full tick has passed, it is time to do a sharp tick.
+        if(realFrameTimePos >= 1)
         {
-            /**
-             * It will be reduced when new sharp world positions are calculated,
-             * so that frametime always stays within the range 0..1.
-             */
-            realFrameTimePos += time * TICSPERSEC;
+            tickIsSharp = true;
+        }
 
-            Materials_Ticker(time);
-            UI2_Ticker(time);
+        // Demo ticker. Does stuff like smoothing of view angles.
+        Demo_Ticker(time);
+        P_Ticker(time);
+        UI2_Ticker(time);
 
-            // InFine ticks whenever it's active.
-            FI_Ticker(time);
+        // InFine ticks whenever it's active.
+        FI_Ticker(time);
 
-            // Game logic.
-            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Ticker)
-            {
-                gx.Ticker(time);
-            }
-
-            // Advance global fixed time (35Hz).
-            if(M_RunTrigger(&sharedFixedTrigger, time))
-            {   // A new 35 Hz tick has begun.
-                // Clear the player fixangles flags which have been in effect
-                // for any fractional ticks since they were set.
-                //Sv_FixLocalAngles(true /* just clear flags; don't apply */);
-
-                /**
-                 * Server ticks.
-                 *
-                 * These are placed here because they still rely on fixed ticks
-                 * and thus it's best to keep them in sync with the fixed game
-                 * ticks.
-                 */
-                if(isClient)
-                    Cl_Ticker( /* time */ );
-                else
-                    Sv_Ticker( /* time */ );
-
-                // This is needed by camera smoothing.  It needs to know
-                // when the world tic has occured so the next sharp
-                // position can be processed.
-
-                // Frametime will be set back by one tick.
-                realFrameTimePos -= 1;
-
-                // We can't sent FixAngles messages to ourselves, so it's
-                // done here.
-                //Sv_FixLocalAngles(false /* apply only; don't clear flag */);
-
-                R_NewSharpWorld();
-            }
-
-            // While paused, don't modify frametime so things keep still.
-            if(!clientPaused)
-                frameTimePos = realFrameTimePos;
-
-            // We can't sent FixAngles messages to ourselves, so it's
-            // done here.
-            //Sv_FixLocalAngles(false /* apply only; don't clear flag */);
+        // Game logic.
+        if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Ticker)
+        {
+            gx.Ticker(time);
         }
 
         // Windowing system ticks.
         R_Ticker(time);
+
+        if(DD_IsSharpTick())
+        {
+            // A new 35 Hz tick begins.
+            /**
+             * Server ticks.
+             *
+             * These are placed here because they still rely on fixed ticks
+             * and thus it's best to keep them in sync with the fixed game
+             * ticks.
+             */
+            if(isClient)
+                Cl_Ticker( /* time */ );
+            else
+                Sv_Ticker( /* time */ );
+
+            // Set frametime back by one tick (to stay in the 0..1 range).
+            realFrameTimePos -= 1;
+            //assert(realFrameTimePos < 1);
+
+            // Camera smoothing: now that the world tic has occurred, the next sharp
+            // position can be processed.
+            R_NewSharpWorld();
+        }
+
+        // While paused, don't modify frametime so things keep still.
+        if(!clientPaused)
+            frameTimePos = realFrameTimePos;
     }
 
     // Console is always ticking.
@@ -402,6 +401,9 @@ void DD_Ticker(timespan_t time)
 
     // Plugins tick always.
     DD_CallHooks(HOOK_TICKER, 0, &time);
+
+    // The netcode gets to tick, too.
+    Net_Ticker(/*ticLength*/);
 }
 
 /**
@@ -462,8 +464,7 @@ void DD_RunTics(void)
     // allowed interval between tics).
     if(maxFrameRate > 0)
     {
-        while((nowTime =
-               Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
+        while((nowTime = Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
         {
             // Wait for a short while.
             Sys_Sleep(3);
@@ -488,9 +489,6 @@ void DD_RunTics(void)
 
         // Call all the tickers.
         DD_Ticker(ticLength);
-
-        // The netcode gets to tick, too.
-        Net_Ticker(/*ticLength*/);
 
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);

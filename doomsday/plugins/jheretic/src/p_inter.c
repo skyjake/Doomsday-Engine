@@ -142,7 +142,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
+            if(!weaponInfo[weapon][player->class_].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
@@ -163,7 +163,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
+            if(!weaponInfo[weapon][player->class_].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
@@ -547,11 +547,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!plr->keys[KT_BLUE])
         {
             P_SetMessage(plr, TXT_GOTBLUEKEY, false);
+            P_GiveKey(plr, KT_BLUE);
+            if(!mapSetup)
+                S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         }
-
-        P_GiveKey(plr, KT_BLUE);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -560,11 +559,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!plr->keys[KT_YELLOW])
         {
             P_SetMessage(plr, TXT_GOTYELLOWKEY, false);
+            P_GiveKey(plr, KT_YELLOW);
+            if(!mapSetup)
+                S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         }
-
-        P_GiveKey(plr, KT_YELLOW);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -573,11 +571,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         if(!plr->keys[KT_GREEN])
         {
             P_SetMessage(plr, TXT_GOTGREENKEY, false);
+            P_GiveKey(plr, KT_GREEN);
+            if(!mapSetup)
+                S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         }
-
-        P_GiveKey(plr, KT_GREEN);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -999,6 +996,10 @@ boolean P_MorphPlayer(player_t* player)
     angle_t             angle;
     int                 oldFlags2;
 
+#ifdef _DEBUG
+    Con_Message("P_MorphPlayer: Player %i.\n", player - players);
+#endif
+
     if(player->morphTics)
     {
         if((player->morphTics < CHICKENTICS - TICSPERSEC) &&
@@ -1032,6 +1033,7 @@ boolean P_MorphPlayer(player_t* player)
     chicken->player = player;
     chicken->dPlayer = player->plr;
 
+    player->class_ = PCLASS_CHICKEN;
     player->health = chicken->health = MAXCHICKENHEALTH;
     player->plr->mo = chicken;
     player->armorPoints = player->armorType = 0;
@@ -1043,8 +1045,7 @@ boolean P_MorphPlayer(player_t* player)
 
     player->morphTics = CHICKENTICS;
     player->plr->flags |= DDPF_FIXPOS | DDPF_FIXMOM;
-    player->update |=
-        PSF_MORPH_TIME | PSF_HEALTH | PSF_POWERS | PSF_ARMOR_POINTS;
+    player->update |= PSF_MORPH_TIME | PSF_HEALTH | PSF_POWERS | PSF_ARMOR_POINTS;
 
     P_ActivateMorphWeapon(player);
     return true;
@@ -1165,6 +1166,12 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
     player->plr->mo->health = player->health;
 }
 
+int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                 int damageP, boolean stomping)
+{
+    return P_DamageMobj2(target, inflictor, source, damageP, stomping, false);
+}
+
 /**
  * Damages both enemies and players.
  *
@@ -1175,8 +1182,8 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
  *                      Source and inflictor are the same for melee attacks.
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
-                 int damageP, boolean stomping)
+int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+                  int damageP, boolean stomping, boolean skipNetworkCheck)
 {
     angle_t             angle;
     int                 saved, originalHealth;
@@ -1192,18 +1199,28 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
     // non-player mobj).
     damage = damageP;
 
-    if(IS_NETGAME && !stomping &&
-       D_NetDamageMobj(target, inflictor, source, damage))
-    {   // We're done here.
-        return 0;
+    if(!skipNetworkCheck)
+    {
+        if(IS_NETGAME && !stomping && D_NetDamageMobj(target, inflictor, source, damage))
+        {   // We're done here.
+            return 0;
+        }
+        // Clients can't harm anybody.
+        if(IS_CLIENT)
+            return 0;
     }
 
-    // Clients can't harm anybody.
-    if(IS_CLIENT)
-        return 0;
+#ifdef _DEBUG
+    Con_Message("P_DamageMobj2: Damaging %i with %i points.\n", target->thinker.id, damage);
+#endif
 
     if(!(target->flags & MF_SHOOTABLE))
+    {
+#ifdef _DEBUG
+        Con_Message("P_DamageMobj2: Target %i is not shootable!\n", target->thinker.id);
+#endif
         return 0; // Shouldn't happen...
+    }
 
     if(target->health <= 0)
         return 0;

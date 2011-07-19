@@ -379,6 +379,13 @@ boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
     acs_t*              script;
     aste_t*             statePtr;
 
+#ifdef _DEBUG
+    if(IS_CLIENT)
+    {
+        Con_Message("P_StartACS: Client is attempting to start a script!\n");
+    }
+#endif
+
     NewScript = NULL;
     if(map && map-1 != gameMap)
     {   // Script is not for the current map.
@@ -1303,8 +1310,9 @@ static int CmdChangeFloor(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_FLOOR_MATERIAL, mat);
         }
@@ -1330,8 +1338,9 @@ static int CmdChangeFloorDirect(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_FLOOR_MATERIAL, mat);
         }
@@ -1357,8 +1366,9 @@ static int CmdChangeCeiling(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
@@ -1384,8 +1394,9 @@ static int CmdChangeCeilingDirect(void)
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((sec = IterList_MoveIterator(list)) != NULL)
         {
             P_SetPtrp(sec, DMU_CEILING_MATERIAL, mat);
         }
@@ -1735,8 +1746,9 @@ static int CmdSetLineTexture(void)
     list = P_GetLineIterListForTag(lineTag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((line = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((line = IterList_MoveIterator(list)) != NULL)
         {
             sidedef_t*          sdef =
                 P_GetPtrp(line, (side == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1));
@@ -1772,8 +1784,9 @@ static int CmdSetLineBlocking(void)
     list = P_GetLineIterListForTag(lineTag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((line = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((line = IterList_MoveIterator(list)) != NULL)
         {
             P_SetIntp(line, DMU_FLAGS,
                 (P_GetIntp(line, DMU_FLAGS) & ~DDLF_BLOCKING) | blocking);
@@ -1801,8 +1814,9 @@ static int CmdSetLineSpecial(void)
     list = P_GetLineIterListForTag(lineTag, false);
     if(list)
     {
-        P_IterListResetIterator(list, true);
-        while((line = P_IterListIterator(list)) != NULL)
+        IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+        IterList_RewindIterator(list);
+        while((line = IterList_MoveIterator(list)) != NULL)
         {
             xline_t* xline = P_ToXLine(line);
             xline->special = special;

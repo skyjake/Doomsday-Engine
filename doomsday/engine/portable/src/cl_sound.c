@@ -60,7 +60,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
     int                 sound = 0, soundFlags = 0;
     byte                flags = 0;
-    clmobj_t           *cmo = NULL;
+    mobj_t             *cmo = NULL;
     thid_t              mobjId = 0;
     sector_t           *sector = NULL;
     polyobj_t          *poly = NULL;
@@ -74,9 +74,10 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_MOBJ_SOUND)
     {
-        if((cmo = Cl_FindMobj(mobjId = Msg_ReadShort())) != NULL)
+        if((cmo = ClMobj_Find(mobjId = Msg_ReadShort())) != NULL)
         {
-            if(cmo->flags & CLMF_HIDDEN)
+            clmoinfo_t* info = ClMobj_GetInfo(cmo);
+            if(info->flags & CLMF_HIDDEN)
             {
                 // We can't play sounds from hidden mobjs, because we
                 // aren't sure exactly where they are located.
@@ -84,13 +85,13 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
             }
             else
             {
-                emitter = &cmo->mo;
+                emitter = cmo;
             }
         }
     }
     else if(type == DT_SECTOR_SOUND)
     {
-        uint                index = (ushort) Msg_ReadShort();
+        uint index = (ushort) Msg_ReadShort();
 
         if(index < numSectors)
         {
@@ -105,7 +106,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else                        /* DT_POLY_SOUND */
     {
-        uint                index = (ushort) Msg_ReadShort();
+        uint index = (ushort) Msg_ReadShort();
 
         if(index < numPolyObjs)
         {
@@ -141,7 +142,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(flags & SNDDF_VOLUME)
     {
-        byte            b = Msg_ReadByte();
+        byte b = Msg_ReadByte();
 
         if(b == 255)
         {
@@ -170,11 +171,14 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         // Do we need to queue this sound?
         if(type == DT_MOBJ_SOUND && !cmo)
         {
+            clmoinfo_t* info = 0;
+
             // Create a new Hidden clmobj.
-            cmo = Cl_CreateMobj(mobjId);
-            cmo->flags |= CLMF_HIDDEN | CLMF_SOUND;
-            cmo->sound = sound;
-            cmo->volume = volume;
+            cmo = ClMobj_Create(mobjId);
+            info = ClMobj_GetInfo(cmo);
+            info->flags |= CLMF_HIDDEN | CLMF_SOUND;
+            info->sound = sound;
+            info->volume = volume;
             /*#ifdef _DEBUG
                Con_Printf("Cl_ReadSoundDelta2(%i): Queueing: id=%i snd=%i vol=%.2f\n",
                type, mobjId, sound, volume);
@@ -188,15 +192,14 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
         {
             // Not enough information.
 #ifdef _DEBUG
-Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
-           type, sound);
+            Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n", type, sound);
 #endif
             return;
         }
 
         // Sounds originating from the viewmobj should really originate
         // from the real player mobj.
-        if(cmo && cmo == clPlayerStates[consolePlayer].cmo)
+        if(cmo && cmo->thinker.id == ClPlayer_State(consolePlayer)->clMobjId)
         {
             /*#ifdef _DEBUG
                Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
@@ -275,7 +278,7 @@ void Cl_Sound(void)
         return;                 // Bad sound ID!
     }
 #ifdef _DEBUG
-Con_Printf("Cl_Sound: %i\n", sound);
+    Con_Printf("Cl_Sound: %i\n", sound);
 #endif
 
     if(flags & SNDF_VOLUME)
@@ -290,11 +293,10 @@ Con_Printf("Cl_Sound: %i\n", sound);
     if(flags & SNDF_ID)
     {
         thid_t  sourceId = Msg_ReadShort();
-        clmobj_t *cmo = Cl_FindMobj(sourceId);
-
+        mobj_t *cmo = ClMobj_Find(sourceId);
         if(cmo)
         {
-            S_LocalSoundAtVolume(sound, &cmo->mo, volume / 127.0f);
+            S_LocalSoundAtVolume(sound, cmo, volume / 127.0f);
         }
     }
     else if(flags & SNDF_SECTOR)

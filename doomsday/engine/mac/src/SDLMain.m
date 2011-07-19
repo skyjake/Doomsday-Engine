@@ -14,8 +14,10 @@
     Feel free to customize this file to suit your needs
 */
 
+#ifdef MACOS_10_4
 #include <stdint.h>
 typedef uint64_t      io_user_reference_t; 
+#endif
 
 #import "SDL.h"
 #import "../include/SDLMain.h"
@@ -235,7 +237,7 @@ void CustomApplicationMain (argc, argv)
     
     /* Create a window for Doomsday startup messages. */
     openStartupWindow();
-    
+
     /* Start the main event loop */
     [NSApp run];
         
@@ -326,17 +328,16 @@ void CustomApplicationMain (argc, argv)
 /* Main entry point to executable - should *not* be SDL_main! */
 int main (int argc, char *argv[])
 {
-
     /* Copy the arguments into a global variable */
     int i;
     
     /* This is passed if we are launched by double-clicking */
     if ( argc >= 2 && strncmp (argv[1], "-psn", 4) == 0 ) {
         gArgc = 1;
-	gFinderLaunch = YES;
+        gFinderLaunch = YES;
     } else {
         gArgc = argc;
-	gFinderLaunch = NO;
+        gFinderLaunch = NO;
     }
     gArgv = (char**) malloc (sizeof(*gArgv) * (gArgc+1));
     assert (gArgv != NULL);

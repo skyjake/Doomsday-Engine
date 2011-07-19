@@ -8,15 +8,14 @@
 
 @begin
 
-CONTENTS: @contents{1}
+@toc
 
 @chapter{ What do you need? }
 
 @list{
 @item One of the distribution packages:
 
-    @table{45 55}{
-		@header{File name} @tab @header{Contains}
+    @table{45 55}{ @header{File name} @tab @header{Contains}
 	@row{single}
 		@file{deng-inst-(version).exe} @tab Installer, jDoom, jHeretic, jHexen (for Windows)
 	@row

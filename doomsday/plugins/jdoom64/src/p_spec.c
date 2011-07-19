@@ -956,10 +956,11 @@ void P_UpdateSpecials(void)
     XG_Ticker();
 
     // Animate line specials.
-    if(P_IterListSize(linespecials))
+    if(IterList_Size(linespecials))
     {
-        P_IterListResetIterator(linespecials, false);
-        while((line = P_IterListIterator(linespecials)) != NULL)
+        IterList_SetIteratorDirection(linespecials, ITERLIST_BACKWARD);
+        IterList_RewindIterator(linespecials);
+        while((line = IterList_MoveIterator(linespecials)) != NULL)
         {
             switch(P_ToXLine(line)->special)
             {
@@ -1073,8 +1074,9 @@ void P_ThunderSector(void)
     if(!list)
         return;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         if(!(mapTime & 32))
         {
@@ -1106,7 +1108,7 @@ void P_SpawnSpecials(void)
         if(xsec->tag)
         {
            list = P_GetSectorIterListForTag(xsec->tag, true);
-           P_AddObjectToIterList(list, sec);
+           IterList_Push(list, sec);
         }
 
         if(!xsec->special)
@@ -1214,7 +1216,7 @@ void P_SpawnSpecials(void)
     }
 
     // Init animating line specials.
-    P_EmptyIterList(linespecials);
+    IterList_Empty(linespecials);
     P_DestroyLineTagLists();
     for(i = 0; i < numlines; ++i)
     {
@@ -1229,7 +1231,7 @@ void P_SpawnSpecials(void)
         case 2562: // jd64: wall scroll down
         case 2080: // jd64: wall scroll up/right
         case 2614: // jd64: wall scroll up/left
-            P_AddObjectToIterList(linespecials, line);
+            IterList_Push(linespecials, line);
             break;
 
         case 994: // jd64
@@ -1242,7 +1244,7 @@ void P_SpawnSpecials(void)
         if(xline->tag)
         {
            list = P_GetLineIterListForTag(xline->tag, true);
-           P_AddObjectToIterList(list, line);
+           IterList_Push(list, line);
         }
     }
 

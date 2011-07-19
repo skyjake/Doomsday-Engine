@@ -44,9 +44,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Clients send commands on every tic.
-#define CLIENT_TICCMD_INTERVAL  0
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -76,6 +73,7 @@ void Cl_InitID(void)
 {
     int                 i;
     FILE*               file;
+    size_t              result;
 
     if((i = ArgCheckWith("-id", 1)) != 0)
     {
@@ -88,7 +86,7 @@ void Cl_InitID(void)
     srand(time(NULL));
     if((file = fopen("client.id", "rb")) != NULL)
     {
-        fread(&clientID, sizeof(clientID), 1, file);
+        result = fread(&clientID, sizeof(clientID), 1, file); // return value ignored
         clientID = ULONG(clientID);
         fclose(file);
         return;
@@ -163,9 +161,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     // Check the version number.
     if(shake.version != SV_VERSION)
     {
-        Con_Message
-            ("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
-             SV_VERSION, shake.version);
+        Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
+                    SV_VERSION, shake.version);
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
@@ -179,8 +176,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
         ddPlayers[i].shared.inGame = (shake.playerMask & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = shake.yourConsole;
-    clients[consolePlayer].numTics = 0;
-    clients[consolePlayer].firstTic = 0;
+    //clients[consolePlayer].numTics = 0;
+    //clients[consolePlayer].firstTic = 0;
 
     Net_AllocClientBuffers(consolePlayer);
 
@@ -269,9 +266,11 @@ void Cl_GetPackets(void)
 
             switch(netBuffer.msg.type)
             {
+            /*
             case PSV_FRAME:
                 Cl_FrameReceived();
                 break;
+                */
 
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
@@ -279,29 +278,13 @@ void Cl_GetPackets(void)
                 break;
 
             case PKT_COORDS:
-                Cl_CoordsReceived();
+                ClPlayer_CoordsReceived();
                 break;
 
             case PSV_SOUND:
                 Cl_Sound();
                 break;
 
-            case PSV_FILTER:
-                {
-                player_t*           plr = &ddPlayers[consolePlayer];
-                int                 filter = Msg_ReadLong();
-
-                if(filter)
-                    plr->shared.flags |= DDPF_VIEW_FILTER;
-                else
-                    plr->shared.flags &= ~DDPF_VIEW_FILTER;
-
-                plr->shared.filterColor[CR] = filter & 0xff;
-                plr->shared.filterColor[CG] = (filter >> 8) & 0xff;
-                plr->shared.filterColor[CB] = (filter >> 16) & 0xff;
-                plr->shared.filterColor[CA] = (filter >> 24) & 0xff;
-                break;
-                }
             default:
                 handled = false;
             }
@@ -313,7 +296,7 @@ void Cl_GetPackets(void)
         switch(netBuffer.msg.type)
         {
         case PSV_PLAYER_FIX:
-            Cl_HandlePlayerFix();
+            ClPlayer_HandleFix();
             break;
 
         case PKT_DEMOCAM:
@@ -381,10 +364,49 @@ void Cl_GetPackets(void)
             else
             {
 #ifdef _DEBUG
-Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n", netBuffer.msg.type);
+                Con_Message("Cl_GetPackets: Packet (type %i) was discarded!\n", netBuffer.msg.type);
 #endif
             }
         }
+    }
+}
+
+/**
+ * Check the state of the client on engineside. This is a debugging utility
+ * and only gets called when _DEBUG is defined.
+ */
+void Cl_Assertions(int plrNum)
+{
+    player_t           *plr;
+    mobj_t             *clmo, *mo;
+    clplayerstate_t    *s;
+
+    if(!isClient || !Cl_GameReady() || clientPaused) return;
+    if(plrNum < 0 || plrNum >= DDMAXPLAYERS) return;
+
+    plr = &ddPlayers[plrNum];
+    s = ClPlayer_State(plrNum);
+
+    // Must have a mobj!
+    if(!s->clMobjId || !plr->shared.mo)
+        return;
+
+    clmo = ClMobj_Find(s->clMobjId);
+    mo = plr->shared.mo;
+
+    /*
+    Con_Message("Assert: client %i, clmo %i (flags 0x%x)\n",
+                plrNum, clmo->thinker.id, clmo->ddFlags);
+                */
+
+    // Make sure the flags are correctly set for a client.
+    if(mo->ddFlags & DDMF_REMOTE)
+    {
+        Con_Message("Cl_Assertions: client %i, mobj should not be remote!\n", plrNum);
+    }
+    if(clmo->ddFlags & DDMF_SOLID)
+    {
+        Con_Message("Cl_Assertions: client %i, clmobj should not be solid (when player is alive)!\n", plrNum);
     }
 }
 
@@ -393,23 +415,25 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n", netBuffer.msg.typ
  */
 void Cl_Ticker(void)
 {
-    //static trigger_t fixed = { 1.0 / 35 };
-    static int  ticSendTimer = 0;
+    int i;
 
     if(!isClient || !Cl_GameReady() || clientPaused)
         return;
 
-    //if(!M_RunTrigger(&fixed, time)) return;
-
-    Cl_LocalCommand();
-    Cl_PredictMovement();
-    //Cl_MovePsprites();
-
-    // Clients don't send commands on every tic (over the network).
-    if(++ticSendTimer > CLIENT_TICCMD_INTERVAL)
+    // On clientside, players are represented by two mobjs: the real mobj,
+    // created by the Game, is the one that is visible and modified by game
+    // logic. We'll need to sync the hidden client mobj (that receives all
+    // the changes from the server) to match the changes. The game ticker
+    // has already been run when Cl_Ticker() is called, so let's update the
+    // player's clmobj to its updated state.
+    for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ticSendTimer = 0;
-        Net_SendCommands();
+        ClPlayer_ApplyPendingFixes(i);
+        ClPlayer_UpdatePos(i);
+
+#ifdef _DEBUG
+        Cl_Assertions(i);
+#endif
     }
 }
 

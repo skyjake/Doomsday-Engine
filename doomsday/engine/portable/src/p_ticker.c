@@ -113,9 +113,9 @@ boolean P_MobjTicker(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
+boolean PIT_ClientMobjTicker(mobj_t *cmo, void *parm)
 {
-    P_MobjTicker((thinker_t*) &cmo->mo, NULL);
+    P_MobjTicker((thinker_t*) cmo, NULL);
 
     // Continue iteration.
     return true;
@@ -126,19 +126,17 @@ boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
  */
 void P_Ticker(timespan_t time)
 {
-    static trigger_t    fixed = { 1.0 / 35, 0 };
+    P_ControlTicker(time);
+    Materials_Ticker(time);
 
     if(!P_ThinkerListInited())
         return; // Not initialized yet.
 
-    if(!M_RunTrigger(&fixed, time))
-        return;
+    if(DD_IsSharpTick())
+    {
+        R_SkyTicker();
 
-    R_SkyTicker();
-
-    // Check all mobjs (always public).
-    P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
-
-    // Check all client mobjs.
-    Cl_MobjIterator(PIT_ClientMobjTicker, NULL);
+        // Check all mobjs (always public).
+        P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
+    }
 }

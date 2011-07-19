@@ -19,7 +19,7 @@
 ##
 ################################################################################
 INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
+FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c ${CMAKE_SOURCE_DIR}/plugins/common/include/*.h )
 
 ################################################################################
 ######################## jDoom Game Plugin  ####################################
@@ -28,7 +28,7 @@ ADD_DEFINITIONS (-D__JDOOM__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB JDOOM_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jdoom/src/*.c )
+FILE(GLOB JDOOM_SOURCES ${CMAKE_SOURCE_DIR}/plugins/jdoom/src/*.c ${CMAKE_SOURCE_DIR}/plugins/jdoom/include/*.h )
 
 IF (ENABLEMAO)
 	CREATE_MODULE_AT_ONCE_FILE (${CMAKE_BINARY_DIR}/_jdoom_mao.c ${JDOOM_SOURCES} )

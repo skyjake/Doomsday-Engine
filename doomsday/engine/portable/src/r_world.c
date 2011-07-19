@@ -94,14 +94,18 @@ static surfacelistnode_t* allocListNode(void)
     return node;
 }
 
+#if 0
 /**
  * Free all memory acquired for the given surface list node.
+ *
+ * @todo  This function is never called anywhere?
  */
 static void freeListNode(surfacelistnode_t* node)
 {
     if(node)
         Z_Free(node);
 }
+#endif
 
 surfacelistnode_t* R_SurfaceListNodeCreate(void)
 {
@@ -1413,7 +1417,7 @@ void R_SetupMap(int mode, int flags)
             player_t* plr = &ddPlayers[i];
             ddplayer_t* ddpl = &plr->shared;
 
-            clients[i].numTics = 0;
+            //clients[i].numTics = 0;
 
             // Determine if the player is in the void.
             ddpl->inVoid = true;

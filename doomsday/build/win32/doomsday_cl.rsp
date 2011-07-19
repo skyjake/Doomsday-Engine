@@ -120,14 +120,12 @@
  .\..\..\engine\portable\src\sv_frame.c
  .\..\..\engine\portable\src\sv_infine.c
  .\..\..\engine\portable\src\cl_world.c
- .\..\..\engine\portable\src\cl_oldworld.c
  .\..\..\engine\portable\src\cl_sound.c
  .\..\..\engine\portable\src\cl_player.c
  .\..\..\engine\portable\src\cl_mobj.c
  .\..\..\engine\portable\src\cl_main.c
  .\..\..\engine\portable\src\cl_frame.c
  .\..\..\engine\portable\src\cl_infine.c
- .\..\..\engine\portable\src\cl_oldframe.c
  .\..\..\engine\portable\src\net_ping.c
  .\..\..\engine\portable\src\net_msg.c
  .\..\..\engine\portable\src\net_main.c

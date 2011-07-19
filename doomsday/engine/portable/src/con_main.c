@@ -2036,12 +2036,12 @@ D_CMD(Clear)
 
 D_CMD(Version)
 {
-    Con_Printf("%s %s (" __TIME__ ") \n", DOOMSDAY_NICENAME, DOOMSDAY_VERSIONTEXT, DOOMSDAY_HOMEURL);
+    Con_Printf("%s %s (" __TIME__ ") %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT, DOOMSDAY_HOMEURL);
     Con_Printf("%s\n", DENGPROJECT_HOMEURL);
     // Print the version info of the current game if loaded.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
+        Con_Printf("Game: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
     }
     return true;
 }

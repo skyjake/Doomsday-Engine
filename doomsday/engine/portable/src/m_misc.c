@@ -661,8 +661,9 @@ void M_ProjectViewRelativeLine2D(const float center[2],
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     float sinrv, cosrv;
 
-    if(alignToViewPlane)
-    {   // Should be fully aligned to view plane.
+    if(alignToViewPlane)       
+    {
+        // Should be fully aligned to view plane.
         sinrv = -viewData->viewCos;
         cosrv = viewData->viewSin;
     }
@@ -966,7 +967,7 @@ int M_ScreenShot(const char* name, int bits)
     file = fopen(Str_Text(&fullName), "wb");
     if(NULL == file)
     {
-        Con_Message("Warning:M_Screenshot: Failed opening \"%s\" for write.\n", Str_Text(&fullName));
+        Con_Message("Warning: M_Screenshot: Failed opening \"%s\" for write.\n", Str_Text(&fullName));
         Str_Free(&fullName);
         return false;
     }
@@ -1119,13 +1120,14 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 }
 
 /**
-* Advances time and return true if the trigger is triggered.
+ * Checks if the trigger will trigger after @a advanceTime seconds.
+ * The trigger itself is not modified in any way.
  *
  * @param trigger      Time trigger.
  * @param advanceTime  Amount of time to advance the trigger.
  *
- * @return              @c true, if the trigger has accumulated enough time
- *                      to fill the trigger's time threshold.
+ * @return @c true, if the trigger will accumulate enough time after @a advanceTime
+ *         to fill the trigger's time threshold.
  */
 boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {

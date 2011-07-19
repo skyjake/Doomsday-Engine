@@ -180,15 +180,10 @@ typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
 
     // Heretic-specific data:
-    mobjinfo_t     *info;           // &mobjinfo[mobj->type]
     int             damage;         // For missiles
-    int             flags;
-    int             flags2;         // Heretic flags
-    int             flags3;
     int             special1;       // Special info
     int             special2;       // Special info
     int             special3;       // Special info
-    int             health;
     int             moveDir;        // 0-7
     int             moveCount;      // when 0, select a new dir
     struct mobj_s  *target;         // thing being chased/attacked (or NULL)

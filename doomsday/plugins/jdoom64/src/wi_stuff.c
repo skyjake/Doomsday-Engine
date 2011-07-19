@@ -889,28 +889,45 @@ static void maybeAdvanceState(void)
 
         if(player->brain.attack)
         {
-            if(!player->attackDown)
-                advanceState = true;
-            player->attackDown = true;
-        }
-        else
-        {
-            player->attackDown = false;
-        }
+            if(player->brain.attack)
+            {
+                if(!player->attackDown)
+                {
+                    if(IS_CLIENT)
+                        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                    else
+                        IN_SkipToNext();
+                }
+                player->attackDown = true;
+            }
+            else
+                player->attackDown = false;
 
-        if(player->brain.use)
-        {
-            if(!player->useDown)
-                advanceState = true;
-            player->useDown = true;
-        }
-        else
-        {
-            player->useDown = false;
+            if(player->brain.use)
+            {
+                if(!player->useDown)
+                {
+                    if(IS_CLIENT)
+                        NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                    else
+                        IN_SkipToNext();
+                }
+                player->useDown = true;
+            }
+            else
+                player->useDown = false;
         }
     }
 }
 
+void IN_SkipToNext(void)
+{
+    accelerateStage = 1;
+}
+
+/**
+ * Updates stuff each tick.
+ */
 void WI_Ticker(void)
 {
     ++backgroundAnimCounter;

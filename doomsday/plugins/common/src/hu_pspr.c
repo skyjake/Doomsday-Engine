@@ -164,7 +164,7 @@ void HU_UpdatePlayerSprite(int pnum)
             ddpsp->alpha = .25f;
         }
 #elif __JHEXEN__
-        if(pl->powers[PT_INVULNERABILITY] && pl->class == PCLASS_CLERIC)
+        if(pl->powers[PT_INVULNERABILITY] && pl->class_ == PCLASS_CLERIC)
         {
             if(pl->powers[PT_INVULNERABILITY] > 4 * 32)
             {

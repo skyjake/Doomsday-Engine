@@ -109,4 +109,6 @@ const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
  */
 void R_ViewWindowTicker(int player, timespan_t ticLength);
 
+void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+
 #endif /* LIBDENG_REFRESH_MAIN_H */

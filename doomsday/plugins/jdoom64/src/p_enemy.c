@@ -226,12 +226,12 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
             return true;
         }
 
-        if(!P_IterListSize(spechit))
+        if(!IterList_Size(spechit))
             return false;
 
         actor->moveDir = DI_NODIR;
         good = false;
-        while((ld = P_PopIterList(spechit)) != NULL)
+        while((ld = IterList_Pop(spechit)) != NULL)
         {
             /**
              * If the special is not a door that can be opened, return false.
@@ -1710,7 +1710,7 @@ void C_DECL A_FatAttack1(mobj_t *actor)
  */
 void C_DECL A_FatAttack2(mobj_t *actor)
 {
-    fatFire(actor, MT_FATSHOT, -(FATSPREAD * 1.5), -FAT_DELTAANGLE,
+    fatFire(actor, MT_FATSHOT, (angle_t)(-(FATSPREAD * 1.5f)), -FAT_DELTAANGLE,
             FAT_ARM_EXTENSION_LONG, FAT_ARM_HEIGHT);
     fatFire(actor, MT_FATSHOT, FATSPREAD / 4, FAT_DELTAANGLE,
             FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);

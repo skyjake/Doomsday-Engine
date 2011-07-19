@@ -217,6 +217,10 @@ boolean EV_Teleport(int tid, mobj_t* thing, boolean fog)
     int                 i, count, searcher;
     mobj_t*             mo = 0;
 
+    // Clients cannot teleport on their own.
+    if(IS_CLIENT)
+        return 0;
+
     if(!thing)
         return false;
 

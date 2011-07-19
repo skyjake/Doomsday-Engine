@@ -37,7 +37,7 @@
 #define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
 
 /**
- * Version number rules: (major).(minor).(revision)-(release)
+ * Version number rules: (major).(minor).(revision)-(release name)
  *
  * Major version will be 1 for now (few things short of a complete
  * rewrite will increase the major version).
@@ -49,7 +49,17 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_RELEASE_NAME   "beta6.9"
+#define DOOMSDAY_VERSION_BASE   "1.9.7"
+#define DOOMSDAY_VERSION_NUMBER 1,9,7,0 // For WIN32 version info.
+//#define DOOMSDAY_RELEASE_NAME   "Example"
+
+/**
+ * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
+ * Possible values are "Unstable", "Candidate" and "Stable".
+ */
+#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
@@ -57,19 +67,14 @@
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
 #define DOOMSDAY_VERSION        10900 // Don't touch; see above.
-#if defined(DOOMSDAY_RELEASE_NAME)
-#  define DOOMSDAY_VERSION_TEXT "1.9.0-" DOOMSDAY_RELEASE_NAME
-#else
-#  define DOOMSDAY_VERSION_TEXT "1.9.0"
-#endif
-#define DOOMSDAY_VERSION_NUMBER 1,9,0,0 // For WIN32 version info.
 
-/**
- * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
- * will be marked accordingly, indicating that this is a special build,
- * for example, an alpha/beta/release candidate/etc and the SpecialBuild
- * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
- */
-//#define DOOMSDAY_RELEASE_FULL   1
+#if defined(DOOMSDAY_BUILD_TEXT)
+/** The build number is included only for non-Stable builds. */
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE " [#" DOOMSDAY_BUILD_TEXT "]"
+#elif defined(DOOMSDAY_RELEASE_NAME)
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME
+#else
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE
+#endif
 
 #endif /* LIBDENG_VERSION_H */

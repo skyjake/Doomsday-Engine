@@ -275,7 +275,7 @@ static void giveArmor(player_t* plr)
     int i;
     plr->update |= PSF_ARMOR_POINTS;
     for(i = 0; i < NUMARMOR; ++i)
-        plr->armorPoints[i] = PCLASS_INFO(plr->class)->armorIncrement[i];
+        plr->armorPoints[i] = PCLASS_INFO(plr->class_)->armorIncrement[i];
 }
 
 static void giveWeapons(player_t* plr)

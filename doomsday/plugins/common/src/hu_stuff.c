@@ -440,7 +440,7 @@ static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
         if(plr->morphTics > 0)
             info->pClass = PCLASS_PIG;
         else
-            info->pClass = plr->class;
+            info->pClass = plr->class_;
 #else
         info->pClass = PCLASS_PLAYER;
 #endif
@@ -498,7 +498,7 @@ void HU_ScoreBoardUnHide(int player)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     ss = &scoreStates[player];
@@ -847,7 +847,7 @@ void Hu_Ticker(void)
         scoreboardstate_t* ss = &scoreStates[i];
         player_t* plr = &players[i];
 
-        if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+        if(!plr->plr->inGame)
             continue;
 
         if(ss->hideTics > 0)

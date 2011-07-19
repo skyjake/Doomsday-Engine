@@ -340,7 +340,7 @@ void P_CheckPlayerJump(player_t *player)
 #endif
             player->plr->mo->mom[MZ] = power;
 
-        player->jumpTics = PCLASS_INFO(player->class)->jumpTics;
+        player->jumpTics = PCLASS_INFO(player->class_)->jumpTics;
 
 #if __JHEXEN__
         player->plr->mo->onMobj = NULL;
@@ -350,13 +350,29 @@ void P_CheckPlayerJump(player_t *player)
 
 void P_MovePlayer(player_t *player)
 {
-    ddplayer_t *dp = player->plr;
-    mobj_t     *plrmo = player->plr->mo;
-    //ticcmd_t   *cmd = &player->plr->cmd;
+    ddplayer_t* dp = player->plr;
+    mobj_t* plrmo = player->plr->mo;
     playerbrain_t *brain = &player->brain;
-    classinfo_t *pClassInfo = PCLASS_INFO(player->class);
-    int         speed;
-    float       forwardMove, sideMove;
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
+    int speed;
+    float forwardMove;
+    float sideMove;
+
+    if(IS_NETGAME && IS_SERVER)
+    {
+        // Server just starts the walking animation for remote players.
+        if((dp->forwardMove != 0 || dp->sideMove != 0) &&
+           plrmo->state == &STATES[pClassInfo->normalState])
+        {
+            P_MobjChangeState(plrmo, pClassInfo->runState);
+        }
+        else if(P_PlayerInWalkState(player) && !dp->forwardMove && !dp->sideMove)
+        {
+            // If in a walking frame, stop moving.
+            P_MobjChangeState(plrmo, pClassInfo->normalState);
+        }
+        return;
+    }
 
     // Change the angle if possible.
     /* $unifiedangles */
@@ -446,9 +462,9 @@ void P_MovePlayer(player_t *player)
         }
 
         if((forwardMove != 0 || sideMove != 0) &&
-           player->plr->mo->state == &STATES[pClassInfo->normalState])
+           plrmo->state == &STATES[pClassInfo->normalState])
         {
-            P_MobjChangeState(player->plr->mo, pClassInfo->runState);
+            P_MobjChangeState(plrmo, pClassInfo->runState);
         }
 
         //P_CheckPlayerJump(player); // done in a different place
@@ -464,10 +480,8 @@ void P_MovePlayer(player_t *player)
        } */
 
     // 110 corresponds 85 degrees.
-    if(player->plr->lookDir > 110)
-        player->plr->lookDir = 110;
-    if(player->plr->lookDir < -110)
-        player->plr->lookDir = -110;
+    if(dp->lookDir > 110) dp->lookDir = 110;
+    if(dp->lookDir < -110) dp->lookDir = -110;
 #endif
 }
 
@@ -616,7 +630,7 @@ void P_DeathThink(player_t* player)
     {
         if(IS_CLIENT)
         {
-            NetCl_PlayerActionRequest(player, GPA_USE);
+            NetCl_PlayerActionRequest(player, GPA_USE, 0);
         }
         else
         {
@@ -638,7 +652,7 @@ void P_PlayerReborn(player_t* player)
     newTorch[player - players] = 0;
     newTorchDelta[player - players] = 0;
 # if __JHEXEN__
-    player->plr->mo->special1 = player->class;
+    player->plr->mo->special1 = player->class_;
     if(player->plr->mo->special1 > 2)
     {
         player->plr->mo->special1 = 0;
@@ -684,7 +698,7 @@ void P_MorphThink(player_t *player)
         player->chickenPeck -= 3;
     }
 
-    if(IS_CLIENT || player->morphTics & 15)
+    if(/*IS_CLIENT || */ player->morphTics & 15)
         return;
 
     pmo = player->plr->mo;
@@ -694,11 +708,22 @@ void P_MorphThink(player_t *player)
         pmo->angle += (P_Random() - P_Random()) << 19;
     }
 
-    if(pmo->pos[VZ] <= pmo->floorZ && (P_Random() < 32))
-    {   // Jump and noise
-        pmo->mom[MZ] += 1;
-        P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
-        return;
+    if(!IS_NETGAME || IS_CLIENT)
+    {
+        //// \fixme: Replace equality to zero checks with mom in-range.
+        if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 160)
+        {   // Twitch view angle
+            pmo->angle += (P_Random() - P_Random()) << 19;
+        }
+/*    }
+    if(!IS_NETGAME || !IS_CLIENT)
+    {*/
+        if(pmo->pos[VZ] <= pmo->floorZ && (P_Random() < 32))
+        {   // Jump and noise
+            pmo->mom[MZ] += 1;
+            P_MobjChangeState(pmo, S_CHICPLAY_PAIN);
+            return;
+        }
     }
 
     if(P_Random() < 48)
@@ -717,6 +742,8 @@ boolean P_UndoPlayerMorph(player_t *player)
     int                 playerNum;
     weapontype_t        weapon;
     int                 oldFlags, oldFlags2, oldBeast;
+
+    if(IS_CLIENT) return false;
 
 # if __JHEXEN__
     player->update |= PSF_MORPH_TIME | PSF_POWERS | PSF_HEALTH;
@@ -766,7 +793,7 @@ boolean P_UndoPlayerMorph(player_t *player)
     }
 
 # if __JHEXEN__
-    if(player->class == PCLASS_FIGHTER)
+    if(player->class_ == PCLASS_FIGHTER)
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
@@ -799,9 +826,9 @@ boolean P_UndoPlayerMorph(player_t *player)
     player->health = mo->health = maxHealth;
     player->plr->mo = mo;
 # if __JHERETIC__
-    player->class = PCLASS_PLAYER;
+    player->class_ = PCLASS_PLAYER;
 # else
-    player->class = cfg.playerClass[playerNum];
+    player->class_ = cfg.playerClass[playerNum];
 # endif
     an = angle >> ANGLETOFINESHIFT;
 
@@ -824,169 +851,6 @@ boolean P_UndoPlayerMorph(player_t *player)
     return true;
 }
 #endif
-
-/**
- * Called once per tick by P_Ticker.
- * This routine does all the thinking for the console player during
- * netgames.
- *
- * FIXME: This should be removed in favor of the regular P_PlayerThink, which
- *        is supposed to handle all thinking regardless of whether it's a client
- *        or a server doing the thinking.
- */
-void P_ClientSideThink(void)
-{
-    player_t *pl;
-    ddplayer_t *dpl;
-    mobj_t *mo;
-
-    /*    int     i;
-    ticcmd_t *cmd;
-    int     fly;
-*/
-    if(!IS_CLIENT || !Get(DD_GAME_READY))
-        return;
-
-    pl = &players[CONSOLEPLAYER];
-    dpl = pl->plr;
-    mo = dpl->mo;
-
-    // Applicable parts of the regular P_PlayerThink routine will be used.
-    P_PlayerThink(pl, 1.0/TICSPERSEC);
-
-    /*
-
-    if(!mo)
-        return;
-
-    if(pl->playerState == PST_DEAD)
-    {
-        P_DeathThink(pl);
-    }
-
-    cmd = &pl->cmd; // The latest local command.
-    P_CalcHeight(pl);
-
-#if __JHEXEN__
-    if(pl->morphTics > 0)
-        pl->morphTics--;
-#endif
-
-    // Powers tic away.
-    for(i = 0; i < NUM_POWER_TYPES; i++)
-    {
-        switch (i)
-        {
-#if __JDOOM__ || __JDOOM64__
-        case PT_INVULNERABILITY:
-        case PT_INVISIBILITY:
-        case PT_IRONFEET:
-        case PT_INFRARED:
-        case PT_STRENGTH:
-#elif __JHERETIC__
-        case PT_INVULNERABILITY:
-        case PT_WEAPONLEVEL2:
-        case PT_INVISIBILITY:
-        case PT_FLIGHT:
-        case PT_INFRARED:
-#elif __JHEXEN__
-        case PT_INVULNERABILITY:
-        case PT_INFRARED:
-        case PT_FLIGHT:
-        case PT_SPEED:
-        case PT_MINOTAUR:
-#endif
-            if(pl->powers[i] > 0)
-                pl->powers[i]--;
-            else
-                pl->powers[i] = 0;
-            break;
-        }
-    }
-
-    // Jumping.
-    if(pl->jumpTics)
-        pl->jumpTics--;
-
-    P_CheckPlayerJump(pl);
-
-    // Flying.
-    fly = cmd->fly; //lookfly >> 4;
-    if(fly && pl->powers[PT_FLIGHT])
-    {
-        if(fly != TOCENTER)
-        {
-            pl->flyHeight = fly * 2;
-            if(!(mo->ddFlags & DDMF_FLY))
-            {
-                // Start flying.
-                //      mo->ddFlags |= DDMF_FLY | DDMF_NOGRAVITY;
-            }
-        }
-        else
-        {
-            //  mo->ddFlags &= ~(DDMF_FLY | DDMF_NOGRAVITY);
-        }
-    }
-    // We are flying when the Fly flag is set.
-    if(mo->ddFlags & DDMF_FLY)
-    {
-        // If we were on a mobj, we are NOT now.
-        if(mo->onMobj)
-            mo->onMobj = NULL;
-
-        // Keep the fly flag in sync.
-        mo->flags2 |= MF2_FLY;
-
-        mo->mom[MZ] = (float) pl->flyHeight;
-        if(pl->flyHeight)
-            pl->flyHeight /= 2;
-        // Do some fly-bobbing.
-        if(mo->pos[VZ] > mo->floorZ && (mo->flags2 & MF2_FLY) &&
-           !mo->onMobj && (mapTime & 2))
-            mo->pos[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
-    }
-#if __JHEXEN__
-    else
-    {
-        // Clear the Fly flag.
-        mo->flags2 &= ~MF2_FLY;
-    }
-#endif
-*/
-
-#if __JHEXEN__
-/*    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special)
-        P_PlayerInSpecialSector(pl);
-*/
-    // Set CONSOLEPLAYER thrust multiplier.
-    if(mo->pos[VZ] > mo->floorZ)      // Airborne?
-    {
-        float               mul = (mo->ddFlags & DDMF_FLY) ? 1 : 0;
-        DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
-    }
-    else
-    {   const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
-        float               mul =
-            ((tt->flags & TTF_FRICTION_LOW) ? (1.0f / 2) : 1);
-
-        DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
-    }
-#else
-    // Set the proper thrust multiplier. XG gives this quite easily.
-    // (The thrust multiplier is used by Cl_MovePlayer, the movement
-    // "predictor"; almost all clientside movement is handled by that
-    // routine, in fact.)
-    {
-    float       mul = XS_ThrustMul(P_GetPtrp(mo->subsector, DMU_SECTOR));
-    DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
-    }
-#endif
-
-    // Update view angles. The server fixes them if necessary.
-    /*mo->angle = dpl->clAngle;
-    dpl->lookDir = dpl->clLookDir;*/ /* $unifiedangles */
-}
 
 void P_PlayerThinkState(player_t *player)
 {
@@ -1111,7 +975,7 @@ void P_PlayerThinkMove(player_t *player)
             {
                 playerNum = P_GetPlayerNum(player);
 
-                if(player->class == PCLASS_FIGHTER)
+                if(player->class_ == PCLASS_FIGHTER)
                 {
                     // The first type should be blue, and the
                     // third should be the Fighter's original gold color.
@@ -1130,7 +994,7 @@ void P_PlayerThinkMove(player_t *player)
                 }
 
                 speedMo->target = plrmo;
-                speedMo->special1 = player->class;
+                speedMo->special1 = player->class_;
                 if(speedMo->special1 > 2)
                 {
                     speedMo->special1 = 0;
@@ -1153,7 +1017,7 @@ void P_PlayerThinkFly(player_t *player)
     mobj_t             *plrmo = player->plr->mo;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
-    if(plrmo->reactionTime)
+    if(!plrmo || plrmo->reactionTime)
         return;
 
     // Is flying allowed?
@@ -1194,7 +1058,7 @@ void P_PlayerThinkFly(player_t *player)
 
 void P_PlayerThinkJump(player_t *player)
 {
-    if(player->plr->mo->reactionTime)
+    if(!player->plr->mo || player->plr->mo->reactionTime)
         return; // Not yet.
 
     // Jumping.
@@ -1206,11 +1070,16 @@ void P_PlayerThinkJump(player_t *player)
 
 void P_PlayerThinkView(player_t* player)
 {
-    P_CalcHeight(player);
+    if(player->plr->mo)
+    {
+        P_CalcHeight(player);
+    }
 }
 
 void P_PlayerThinkSpecial(player_t* player)
 {
+    if(!player->plr->mo) return;
+
     if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
 
@@ -1244,9 +1113,11 @@ void P_PlayerThinkInventory(player_t* player)
 void P_PlayerThinkSounds(player_t* player)
 {
 #if __JHEXEN__
-    mobj_t*             plrmo = player->plr->mo;
+    mobj_t* plrmo = player->plr->mo;
 
-    switch(player->class)
+    if(!plrmo) return;
+
+    switch(player->class_)
     {
         case PCLASS_FIGHTER:
             if(plrmo->mom[MZ] <= -35 &&
@@ -1336,7 +1207,8 @@ void P_PlayerThinkWeapons(player_t* player)
 #else
     if(brain->changeWeapon != WT_NOCHANGE)
 #endif
-    {   // Direct slot selection.
+    {
+        // Direct slot selection.
         weapontype_t        cand, first;
 
         // Is this a same-slot weapon cycle?
@@ -1361,19 +1233,30 @@ void P_PlayerThinkWeapons(player_t* player)
                 first);
     }
     else if(brain->cycleWeapon)
-    {   // Linear cycle.
+    {
+        // Linear cycle.
         newweapon = P_PlayerFindWeapon(player, brain->cycleWeapon < 0);
     }
 
     if(newweapon != WT_NOCHANGE && newweapon != player->readyWeapon)
     {
-        if(weaponInfo[newweapon][player->class].mode[0].gameModeBits
-           & gameModeBits)
+        if(weaponInfo[newweapon][player->class_].mode[0].gameModeBits & gameModeBits)
         {
+            if(IS_CLIENT)
+            {
+                // Send a notification to the server.
+                NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, newweapon);
+            }
+#ifdef _DEBUG
+            Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).\n",
+                        player - players, newweapon, brain->changeWeapon);
+#endif
             player->pendingWeapon = newweapon;
+            brain->changeWeapon = WT_NOCHANGE;
         }
     }
 
+    /*
     if(player->pendingWeapon != oldweapon)
     {
 #if __JDOOM__ || __JDOOM64__
@@ -1382,6 +1265,7 @@ void P_PlayerThinkWeapons(player_t* player)
         player->update |= PSF_PENDING_WEAPON;
 #endif
     }
+    */
 }
 
 void P_PlayerThinkUse(player_t *player)
@@ -1590,7 +1474,7 @@ void P_PlayerThinkPowers(player_t* player)
 #if __JHEXEN__
     if(player->powers[PT_INVULNERABILITY])
     {
-        if(player->class == PCLASS_CLERIC)
+        if(player->class_ == PCLASS_CLERIC)
         {
             if(!(mapTime & 7) && (player->plr->mo->flags & MF_SHADOW) &&
                !(player->plr->mo->flags2 & MF2_DONTDRAW))
@@ -1625,7 +1509,7 @@ void P_PlayerThinkPowers(player_t* player)
         if(!(--player->powers[PT_INVULNERABILITY]))
         {
             player->plr->mo->flags2 &= ~(MF2_INVULNERABLE | MF2_REFLECTIVE);
-            if(player->class == PCLASS_CLERIC)
+            if(player->class_ == PCLASS_CLERIC)
             {
                 player->plr->mo->flags2 &= ~(MF2_DONTDRAW | MF2_NONSHOOTABLE);
                 player->plr->mo->flags &= ~(MF_SHADOW | MF_ALTSHADOW);
@@ -1671,7 +1555,7 @@ void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
     ddplayer_t* plr = player->plr;
     float vel, off, turnSpeed;
     float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
-    classinfo_t* pClassInfo = PCLASS_INFO(player->class);
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
@@ -1732,11 +1616,18 @@ void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
 void P_PlayerThinkUpdateControls(player_t* player)
 {
     int                 playerNum = player - players;
+    ddplayer_t         *dp = player->plr;
     float               vel, off, offsetSensitivity = 100;
     int                 i;
     boolean             strafe = false;
     playerbrain_t      *brain = &player->brain;
     boolean             oldAttack = brain->attack;
+
+    if(IS_DEDICATED)
+    {
+        // There are no players on the server that need control.
+        return;
+    }
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
@@ -1753,6 +1644,10 @@ void P_PlayerThinkUpdateControls(player_t* player)
     // Saturate sidestep.
     vel = (vel > 0? 1 : vel < 0? -1 : 0);
     brain->sideMove = off * offsetSensitivity + vel;
+
+    // Let the engine know these.
+    dp->forwardMove = brain->forwardMove;
+    dp->sideMove = brain->sideMove;
 
     // Flight.
     P_GetControlState(playerNum, CTL_ZFLY, &vel, &off);
@@ -1876,6 +1771,36 @@ void P_PlayerThinkUpdateControls(player_t* player)
 }
 
 /**
+ * Verify that the player state is valid. This is a debugging utility and
+ * only gets called when _DEBUG is defined.
+ */
+void P_PlayerThinkAssertions(player_t* player)
+{
+    int plrNum = player - players;
+    mobj_t* mo = player->plr->mo;
+    if(!mo) return;
+
+    if(IS_CLIENT)
+    {
+        // Let's do some checks about the state of a client player.
+        if(player->playerState == PST_LIVE)
+        {
+            if(!(mo->ddFlags & DDMF_SOLID))
+            {
+                Con_Message("P_PlayerThinkAssertions: player %i, mobj should be solid when alive!\n", plrNum);
+            }
+        }
+        else if(player->playerState == PST_DEAD)
+        {
+            if(mo->ddFlags & DDMF_SOLID)
+            {
+                Con_Message("P_PlayerThinkAssertions: player %i, mobj should not be solid when dead!\n", plrNum);
+            }
+        }
+    }
+}
+
+/**
  * Main thinker function for players. Handles both single player and
  * multiplayer games, as well as all the different types of players
  * (normal/camera).
@@ -1901,23 +1826,30 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
         return;
     }
 
+#ifdef _DEBUG
+    P_PlayerThinkAssertions(player);
+#endif
+
     P_PlayerThinkState(player);
 
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, ticLength);
 
-    if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
-        return; // It's too soon.
+    if(!DD_IsSharpTick())
+    {
+        // The rest of this function occurs only during sharp ticks.
+        return;
+    }
 
 #if __JHEXEN__
     player->worldTimer++;
 #endif
 
     P_PlayerThinkUpdateControls(player);
+    P_PlayerThinkCamera(player); // $democam
 
     if(!IS_CLIENT) // Locally only.
     {
-        P_PlayerThinkCamera(player); // $democam
         P_PlayerThinkCheat(player);
     }
 
@@ -1926,13 +1858,9 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(P_PlayerThinkDeath(player))
         return; // I'm dead!
 
-    if(!IS_CLIENT) // Locally only.
-    {
-        P_PlayerThinkMorph(player);
-        P_PlayerThinkAttackLunge(player);
-        P_PlayerThinkMove(player);
-    }
-
+    P_PlayerThinkMorph(player);
+    P_PlayerThinkAttackLunge(player);
+    P_PlayerThinkMove(player);
     P_PlayerThinkFly(player);
     P_PlayerThinkJump(player);
     P_PlayerThinkView(player);
@@ -1941,11 +1869,12 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkSounds(player);
-#if __JHERETIC__ || __JHEXEN__
-        P_PlayerThinkInventory(player);
-#endif
-        P_PlayerThinkItems(player);
     }
+
+#if __JHERETIC__ || __JHEXEN__
+    P_PlayerThinkInventory(player);
+    P_PlayerThinkItems(player);
+#endif
 
     P_PlayerThinkUse(player);
     P_PlayerThinkWeapons(player);

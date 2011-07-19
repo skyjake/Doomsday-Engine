@@ -71,10 +71,29 @@ void Msg_WriteByte(byte b)
     *netBuffer.cursor++ = b;
 }
 
+byte Msg_ReadByte(void)
+{
+#ifdef _DEBUG
+    if(Msg_Offset() >= netBuffer.length)
+        Con_Error("Msg_ReadByte: Packet read overflow!\n");
+#endif
+    return *netBuffer.cursor++;
+}
+
 void Msg_WriteShort(short w)
 {
     *(short *) netBuffer.cursor = SHORT(w);
     netBuffer.cursor += 2;
+}
+
+short Msg_ReadShort(void)
+{
+#ifdef _DEBUG
+    if(Msg_Offset() >= netBuffer.length)
+        Con_Error("Msg_ReadShort: Packet read overflow!\n");
+#endif
+    netBuffer.cursor += 2;
+    return SHORT( *(short *) (netBuffer.cursor - 2) );
 }
 
 /**
@@ -100,51 +119,6 @@ void Msg_WritePackedShort(short w)
     }
 }
 
-void Msg_WriteLong(int l)
-{
-    *(int *) netBuffer.cursor = LONG(l);
-    netBuffer.cursor += 4;
-}
-
-void Msg_WritePackedLong(uint l)
-{
-    while(l >= 0x80)
-    {
-        // Write the lowest 7 bits, and set the high bit to indicate that
-        // at least one more byte will follow.
-        Msg_WriteByte(0x80 | (l & 0x7f));
-
-        l >>= 7;
-    }
-    // Write the last byte, with the high bit clear.
-    Msg_WriteByte(l);
-}
-
-void Msg_Write(const void *src, size_t len)
-{
-    memcpy(netBuffer.cursor, src, len);
-    netBuffer.cursor += len;
-}
-
-byte Msg_ReadByte(void)
-{
-#ifdef _DEBUG
-    if(Msg_Offset() >= netBuffer.length)
-        Con_Error("Msg_ReadByte: Packet read overflow!\n");
-#endif
-    return *netBuffer.cursor++;
-}
-
-short Msg_ReadShort(void)
-{
-#ifdef _DEBUG
-    if(Msg_Offset() >= netBuffer.length)
-        Con_Error("Msg_ReadShort: Packet read overflow!\n");
-#endif
-    netBuffer.cursor += 2;
-    return SHORT( *(short *) (netBuffer.cursor - 2) );
-}
-
 /**
  * Only 15 bits can be used for the number because the high bit of the
  * lower byte is used to determine whether the upper byte follows or not.
@@ -161,6 +135,12 @@ short Msg_ReadPackedShort(void)
     return pack;
 }
 
+void Msg_WriteLong(int l)
+{
+    *(int *) netBuffer.cursor = LONG(l);
+    netBuffer.cursor += 4;
+}
+
 int Msg_ReadLong(void)
 {
 #ifdef _DEBUG
@@ -169,6 +149,30 @@ int Msg_ReadLong(void)
 #endif
     netBuffer.cursor += 4;
     return LONG( *(int *) (netBuffer.cursor - 4) );
+}
+
+void Msg_WriteFloat(float f)
+{
+    Msg_WriteLong(FLT2FIX(f));
+}
+
+float Msg_ReadFloat(void)
+{
+    return FIX2FLT(Msg_ReadLong());
+}
+
+void Msg_WritePackedLong(uint l)
+{
+    while(l >= 0x80)
+    {
+        // Write the lowest 7 bits, and set the high bit to indicate that
+        // at least one more byte will follow.
+        Msg_WriteByte(0x80 | (l & 0x7f));
+
+        l >>= 7;
+    }
+    // Write the last byte, with the high bit clear.
+    Msg_WriteByte(l);
 }
 
 uint Msg_ReadPackedLong(void)
@@ -190,6 +194,12 @@ uint Msg_ReadPackedLong(void)
     } while(pack & 0x80);
 
     return value;
+}
+
+void Msg_Write(const void *src, size_t len)
+{
+    memcpy(netBuffer.cursor, src, len);
+    netBuffer.cursor += len;
 }
 
 void Msg_Read(void *dest, size_t len)

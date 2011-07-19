@@ -62,7 +62,6 @@ typedef struct reg_mobj_s {
     struct reg_mobj_s*  next, *prev;
 
     // The tic when the mobj state was last sent.
-    int                 lastTimeStateSent;
     dt_mobj_t           mo; // The state of the mobj.
 } reg_mobj_t;
 
@@ -279,9 +278,9 @@ uint Sv_RegisterHashFunction(thid_t id)
 }
 
 /**
- * @return              Pointer to the register-mobj, if it already exists.
+ * @return  Pointer to the register-mobj, if it already exists.
  */
-reg_mobj_t*             Sv_RegisterFindMobj(cregister_t* reg, thid_t id)
+reg_mobj_t* Sv_RegisterFindMobj(cregister_t* reg, thid_t id)
 {
     mobjhash_t*         hash = &reg->mobjs[Sv_RegisterHashFunction(id)];
     reg_mobj_t*         iter;
@@ -371,6 +370,8 @@ void Sv_RegisterRemoveMobj(cregister_t* reg, reg_mobj_t* regMo)
  */
 float Sv_GetMaxedMobjZ(const mobj_t* mo)
 {
+    // No maxing for now.
+    /*
     if(mo->pos[VZ] == mo->floorZ)
     {
         return DDMINFLOAT;
@@ -379,6 +380,7 @@ float Sv_GetMaxedMobjZ(const mobj_t* mo)
     {
         return DDMAXFLOAT;
     }
+    */
     return mo->pos[VZ];
 }
 
@@ -391,6 +393,7 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
     // (dt_mobj_t <=> mobj_t)
     // Just copy the data we need.
     reg->thinker.id = mo->thinker.id;
+    reg->type = mo->type;
     reg->dPlayer = mo->dPlayer;
     reg->subsector = mo->subsector;
     reg->pos[VX] = mo->pos[VX];
@@ -407,6 +410,10 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
     reg->radius = mo->radius;
     reg->height = mo->height;
     reg->ddFlags = mo->ddFlags;
+    reg->flags = mo->flags;
+    reg->flags2 = mo->flags2;
+    reg->flags3 = mo->flags3;
+    reg->health = mo->health;
     reg->floorClip = mo->floorClip;
     reg->translucency = mo->translucency;
     reg->visTarget = mo->visTarget;
@@ -418,15 +425,20 @@ void Sv_RegisterMobj(dt_mobj_t* reg, const mobj_t* mo)
  */
 void Sv_RegisterResetMobj(dt_mobj_t* reg)
 {
-    reg->pos[VX] = 0;
-    reg->pos[VY] = 0;
-    reg->pos[VZ] = 0;
+    reg->pos[VX] = DDMINFLOAT;
+    reg->pos[VY] = DDMINFLOAT;
+    reg->pos[VZ] = -1000000;
     reg->angle = 0;
+    reg->type = -1;
     reg->selector = 0;
     reg->state = 0;
-    reg->radius = 0;
-    reg->height = 0;
+    reg->radius = -1;
+    reg->height = -1;
     reg->ddFlags = 0;
+    reg->flags = 0;
+    reg->flags2 = 0;
+    reg->flags3 = 0;
+    reg->health = 0;
     reg->floorClip = 0;
     reg->translucency = 0;
     reg->visTarget = 0;
@@ -442,11 +454,11 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 
     player_t*           plr = &ddPlayers[number];
     ddplayer_t*         ddpl = &plr->shared;
-    client_t*           c = &clients[number];
+    //client_t*           c = &clients[number];
 
     reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
-    reg->forwardMove = 0;//c->lastCmd->forwardMove;
-    reg->sideMove = 0;//c->lastCmd->sideMove;
+    reg->forwardMove = 0;
+    reg->sideMove = 0;
     reg->angle = (ddpl->mo ? ddpl->mo->angle : 0);
     reg->turnDelta = (ddpl->mo ? ddpl->mo->angle - ddpl->lastAngle : 0);
     reg->friction = ddpl->mo &&
@@ -456,8 +468,9 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
     if(ddpl->flags & DDPF_VIEW_FILTER)
     {
         reg->filter = FMAKERGBA(ddpl->filterColor[CR],
-            ddpl->filterColor[CG], ddpl->filterColor[CB],
-            ddpl->filterColor[CA]);
+                                ddpl->filterColor[CG],
+                                ddpl->filterColor[CB],
+                                ddpl->filterColor[CA]);
     }
     else
     {
@@ -556,15 +569,23 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
     else
     {
         // This didn't exist in the register, so it's a new mobj.
-        df = MDFC_CREATE;
+        df = MDFC_CREATE | MDF_EVERYTHING | MDFC_TYPE;
     }
 
     if(r->pos[VX] != s->pos[VX])
         df |= MDF_POS_X;
     if(r->pos[VY] != s->pos[VY])
         df |= MDF_POS_Y;
-    if(r->pos[VZ] != Sv_GetMaxedMobjZ(s))
+    if(r->pos[VZ] != Sv_GetMaxedMobjZ(s) || r->floorZ != s->floorZ || r->ceilingZ != s->ceilingZ)
+    {
         df |= MDF_POS_Z;
+        if(!(df & MDFC_CREATE) && s->pos[VZ] <= s->floorZ)
+        {
+            // It is currently on the floor. The client will place it on its
+            // clientside floor and disregard the Z coordinate.
+            df |= MDFC_ON_FLOOR;
+        }
+    }
 
     if(r->mom[MX] != s->mom[MX])
         df |= MDF_MOM_X;
@@ -579,35 +600,35 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
         df |= MDF_SELECTOR;
     if(r->translucency != s->translucency)
         df |= MDFC_TRANSLUCENCY;
-
     if(r->visTarget != s->visTarget)
         df |= MDFC_FADETARGET;
+    if(r->type != s->type)
+        df |= MDFC_TYPE;
 
     // Mobj state sent periodically, if it keeps changing.
-    if((!(s->ddFlags & DDMF_MISSILE) && regMo &&
-        Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35) &&
-        r->state != s->state) ||
+    if((!(s->ddFlags & DDMF_MISSILE) && regMo && r->state != s->state) ||
        !Def_SameStateSequence(r->state, s->state))
     {
         df |= MDF_STATE;
 
-#ifdef _DEBUG
-VERBOSE2( if(regMo && Sys_GetTime() - regMo->lastTimeStateSent > (60 + s->thinker.id%35))
-    Con_Message("Sv_RegisterCompareMobj: (%i) Sending state due to time.\n",
-                s->thinker.id) );
-#endif
-
-        if(regMo) regMo->lastTimeStateSent = Sys_GetTime();
+        if(s->state == NULL)
+        {
+            // No valid comparison can be generated because the mobj is gone.
+            return false;
+        }
     }
 
     if(r->radius != s->radius)
         df |= MDF_RADIUS;
     if(r->height != s->height)
         df |= MDF_HEIGHT;
-    if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK))
+    if((r->ddFlags & DDMF_PACK_MASK) != (s->ddFlags & DDMF_PACK_MASK) ||
+       r->flags != s->flags || r->flags2 != s->flags2 || r->flags3 != s->flags3)
     {
         df |= MDF_FLAGS;
     }
+    if(r->health != s->health)
+        df |= MDF_HEALTH;
     if(r->floorClip != s->floorClip)
         df |= MDF_FLOORCLIP;
 
@@ -744,8 +765,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
     else
     {
-        if(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height)
-           > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_FLOOR].height - s->planes[PLN_FLOOR]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_FLOOR_HEIGHT;
     }
 
@@ -757,8 +777,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
     else
     {
-        if(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height)
-           > PLANE_SKIP_LIMIT)
+        if(fabs(r->planes[PLN_CEILING].height - s->planes[PLN_CEILING]->height) > PLANE_SKIP_LIMIT)
             df |= SDF_CEILING_HEIGHT;
     }
 
@@ -783,6 +802,13 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
     }
+
+#ifdef _DEBUG
+    if(df & (SDF_CEILING_HEIGHT | SDF_CEILING_SPEED | SDF_CEILING_TARGET))
+    {
+        Con_Message("Sector %i: ceiling state change noted (target = %f)\n", number, s->planes[PLN_CEILING]->target);
+    }
+#endif
 
     // Only do a delta when something changes.
     if(df)

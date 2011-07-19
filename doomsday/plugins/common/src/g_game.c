@@ -529,14 +529,13 @@ void R_SetTranslation(mobj_t* mo)
     else
     {
         int tclass, tmap;
-
         tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 
         if(mo->player)
         {
             tclass = 1;
 
-            if(mo->player->class == PCLASS_FIGHTER)
+            if(mo->player->class_ == PCLASS_FIGHTER)
             {   // Fighter's colors are a bit different.
                 if(tmap == 0)
                     tmap = 2;
@@ -1006,11 +1005,9 @@ void G_ChangeGameState(gamestate_t state)
     if(gameState != state)
     {
 #if _DEBUG
-// Log gamestate changes in debug builds, with verbose.
-VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
-                    getGameStateStr(state)));
+        // Log gamestate changes in debug builds, with verbose.
+        Con_Message("G_ChangeGameState: New state %s.\n", getGameStateStr(state));
 #endif
-
         gameState = state;
     }
 
@@ -1101,7 +1098,14 @@ int G_EndGameResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        G_StartTitle();
+        if(IS_CLIENT)
+        {
+            DD_Executef(false, "net disconnect");
+        }
+        else
+        {
+            G_StartTitle();
+        }
     }
     return true;
 }
@@ -1119,13 +1123,15 @@ void G_EndGame(void)
         return;
     }
 
+    /*
     if(IS_NETGAME)
     {
         Hu_MsgStart(MSG_ANYKEY, NETEND, NULL, NULL);
         return;
     }
+    */
 
-    Hu_MsgStart(MSG_YESNO, ENDGAME, G_EndGameResponse, NULL);
+    Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, G_EndGameResponse, NULL);
 }
 
 void G_DoLoadMap(void)
@@ -1201,7 +1207,7 @@ void G_DoLoadMap(void)
     }
 
     P_SetupMap(gameEpisode, gameMap, 0, gameSkill);
-    Set(DD_DISPLAYPLAYER, CONSOLEPLAYER); // View the guy you are playing.
+    R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     G_SetGameAction(GA_NONE);
     nextMap = 0;
 
@@ -1325,7 +1331,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoArmorSave +
+    gsvArmor = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
                         pl->armorPoints[ARMOR_ARMOR] +
                         pl->armorPoints[ARMOR_SHIELD] +
                         pl->armorPoints[ARMOR_HELMET] +
@@ -1514,14 +1520,12 @@ static void runGameAction(void)
 void G_Ticker(timespan_t ticLength)
 {
     static gamestate_t oldGameState = -1;
-    static trigger_t fixed = {1.0 / TICSPERSEC};
-
     int i;
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
     Hu_MenuTicker(ticLength);
-    Hu_MsgTicker(ticLength);
+    Hu_MsgTicker();
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;
@@ -1550,7 +1554,7 @@ void G_Ticker(timespan_t ticLength)
 
                 // Let's get rid of the mobj.
 #ifdef _DEBUG
-Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
+                Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 #endif
                 P_MobjRemove(plr->plr->mo, true);
                 plr->plr->mo = NULL;
@@ -1596,7 +1600,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     R_ResizeViewWindow(0);
 
     // The following is restricted to fixed 35 Hz ticks.
-    if(M_RunTrigger(&fixed, ticLength))
+    if(DD_IsSharpTick())
     {
         // Do main actions.
         switch(G_GetGameState())
@@ -1865,11 +1869,14 @@ void G_PlayerReborn(int player)
     p->colorMap = cfg.playerColor[player];
 #endif
 #if __JHEXEN__
-    p->class = cfg.playerClass[player];
+    p->class_ = cfg.playerClass[player];
+#else
+    p->class_ = PCLASS_PLAYER;
 #endif
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
     p->health = maxHealth;
+    p->brain.changeWeapon = WT_NOCHANGE;
 
 #if __JDOOM__ || __JDOOM64__
     p->readyWeapon = p->pendingWeapon = WT_SECOND;
@@ -1911,7 +1918,7 @@ void G_PlayerReborn(int player)
     p->update |=
         PSF_STATE | PSF_HEALTH | PSF_ARMOR_TYPE | PSF_ARMOR_POINTS |
         PSF_INVENTORY | PSF_POWERS | PSF_KEYS | PSF_OWNED_WEAPONS | PSF_AMMO |
-        PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+        PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON | PSF_MORPH_TIME;
 #else
     p->update |= PSF_REBORN;
 #endif
@@ -1939,8 +1946,14 @@ void G_DoReborn(int plrNum)
     if(plrNum < 0 || plrNum >= MAXPLAYERS)
         return; // Wha?
 
-    // Clear the currently playing script, if any.
-    FI_StackClear();
+    if(plrNum == CONSOLEPLAYER)
+    {
+#ifdef _DEBUG
+        Con_Message("G_DoReborn: Console player reborn, reseting InFine.\n");
+#endif
+        // Clear the currently playing script, if any.
+        FI_StackClear();
+    }
 
     if(!IS_NETGAME)
     {
@@ -1997,7 +2010,7 @@ void G_StartNewGame(skillmode_t skill)
  */
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 {
-    if(cyclingMaps && mapCycleNoExit)
+    if(IS_CLIENT || (cyclingMaps && mapCycleNoExit))
         return;
 
 #if __JHEXEN__

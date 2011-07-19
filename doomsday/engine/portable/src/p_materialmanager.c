@@ -1079,8 +1079,6 @@ void Materials_Precache(material_t* mat, materialvariantspecification_t* spec)
 
 void Materials_Ticker(timespan_t time)
 {
-    static trigger_t fixed = { 1.0 / 35, 0 };
-
     // The animation will only progress when the game is not paused.
     if(clientPaused)
         return;
@@ -1092,10 +1090,10 @@ void Materials_Ticker(timespan_t time)
         node = node->next;
     }}
 
-    if(!M_RunTrigger(&fixed, time))
-        return;
-
-    animateAnimGroups();
+    if(DD_IsSharpTick())
+    {
+        animateAnimGroups();
+    }
 }
 
 static texture_t* findDetailTextureLinkedToMaterialBinding(const materialbind_t* mb)
@@ -1489,6 +1487,12 @@ struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
             "not yet initialized.");
     return getVariantSpecificationForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
         minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
+/*=======
+    if(DD_IsSharpTick())
+    {
+        animateAnimGroups();
+    }
+>>>>>>> master*/
 }
 
 materialvariant_t* Materials_ChooseVariant(material_t* mat,

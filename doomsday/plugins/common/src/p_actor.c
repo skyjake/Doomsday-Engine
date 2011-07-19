@@ -118,6 +118,8 @@ void P_SpawnTelefog(mobj_t* mo, void* context)
  */
 void P_MobjRemove(mobj_t* mo, boolean noRespawn)
 {
+    if(mo->ddFlags & DDMF_REMOTE) goto justDoIt;
+
 #if __JDOOM__ || __JDOOM64__
     if(!noRespawn)
     {
@@ -151,6 +153,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
     P_MobjRemoveFromTIDList(mo);
 #endif
 
+justDoIt:
     P_MobjDestroy(mo);
 }
 
@@ -159,7 +162,7 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
  */
 void P_MobjSetPosition(mobj_t* mo)
 {
-    int                 flags = DDLINK_BLOCKMAP;
+    int flags = DDLINK_BLOCKMAP;
 
     if(!(mo->flags & MF_NOSECTOR))
         flags |= DDLINK_SECTOR;

@@ -310,6 +310,36 @@ int P_GetPlayerCheats(const player_t* player)
 }
 
 /**
+ * Determines whether the player's state is one of the walking states.
+ *
+ * @param pl  Player whose state to check.
+ *
+ * @return  @c true, if the player is walking.
+ */
+boolean P_PlayerInWalkState(player_t* pl)
+{
+    if(!pl->plr->mo) return false;
+
+    /// @todo  Implementation restricts possibilities for modifying behavior solely with state definitions.
+
+#if __JDOOM__
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+#endif
+
+#if __JHERETIC__
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+#endif
+
+#if __JHEXEN__
+    return ((unsigned) ((pl->plr->mo->state - STATES) - PCLASS_INFO(pl->class_)->runState) < 4);
+#endif
+
+#if __JDOOM64__
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+#endif
+}
+
+/**
  * Subtract the appropriate amount of ammo from the player for firing
  * the current ready weapon.
  *
@@ -320,7 +350,9 @@ void P_ShotAmmo(player_t *player)
     ammotype_t          i;
     int                 fireMode;
     weaponinfo_t*       wInfo =
-        &weaponInfo[player->readyWeapon][player->class];
+        &weaponInfo[player->readyWeapon][player->class_];
+
+    if(IS_CLIENT) return; // Server keeps track of this.
 
 #if __JHERETIC__
     if(deathmatch)
@@ -340,6 +372,7 @@ void P_ShotAmmo(player_t *player)
         player->ammo[i].owned = MAX_OF(0,
             player->ammo[i].owned - wInfo->mode[fireMode].perShot[i]);
     }
+    player->update |= PSF_AMMO;
 }
 
 /**
@@ -375,10 +408,15 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     weaponinfo_t       *winf;
     boolean             found;
 
+#ifdef _DEBUG
+    Con_Message("P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i\n",
+                player - players, weapon, ammo, force);
+#endif
+
     // Assume weapon power level zero.
     lvl = 0;
 
-    pclass = player->class;
+    pclass = player->class_;
 
 #if __JHERETIC__
     if(player->powers[PT_WEAPONLEVEL2])
@@ -553,7 +591,7 @@ boolean P_CheckAmmo(player_t* plr)
     ammotype_t          i;
     weaponinfo_t*       wInfo;
 
-    wInfo = &weaponInfo[plr->readyWeapon][plr->class];
+    wInfo = &weaponInfo[plr->readyWeapon][plr->class_];
 #if __JDOOM__ || __JDOOM64__ || __JHEXEN__
     fireMode = 0;
 #endif
@@ -569,7 +607,7 @@ boolean P_CheckAmmo(player_t* plr)
     //// \kludge Work around the multiple firing modes problems.
     //// We need to split the weapon firing routines and implement them as
     //// new fire modes.
-    if(plr->class == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
+    if(plr->class_ == PCLASS_FIGHTER && plr->readyWeapon != WT_FOURTH)
         return true;
     // < KLUDGE
 #endif
@@ -685,7 +723,7 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
             break;
 
         // Available in this game mode? And a valid weapon?
-        if((weaponInfo[w][player->class].mode[lvl].
+        if((weaponInfo[w][player->class_].mode[lvl].
             gameModeBits & gameModeBits) && player->weapons[w].owned)
             break;
     }
@@ -709,7 +747,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
     if(!PCLASS_INFO(newClass)->userSelectable)
         return;
 
-    player->class = newClass;
+    player->class_ = newClass;
     cfg.playerClass[player - players] = newClass;
 
     // Take away armor.
@@ -890,17 +928,19 @@ int P_CameraZMovement(mobj_t *mo)
  */
 void P_PlayerThinkCamera(player_t *player)
 {
-    mobj_t             *mo;
+    mobj_t *mo = player->plr->mo;
+
+    if(!mo) return;
 
     // If this player is not a camera, get out of here.
     if(!(player->plr->flags & DDPF_CAMERA))
     {
         if(player->playerState == PST_LIVE)
-            player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
+        {
+            mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
+        }
         return;
     }
-
-    mo = player->plr->mo;
 
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
 

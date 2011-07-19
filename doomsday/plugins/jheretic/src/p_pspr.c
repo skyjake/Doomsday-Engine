@@ -562,7 +562,6 @@ void P_ActivateMorphWeapon(player_t *player)
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     player->pSprites[ps_weapon].pos[VY] = WEAPONTOP;
     P_SetPsprite(player, ps_weapon, S_BEAKREADY);
-    NetSv_PSpriteChange(player - players, S_BEAKREADY);
 }
 
 void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
@@ -571,7 +570,7 @@ void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
     player->readyWeapon = weapon;
     player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
-    P_SetPsprite(player, ps_weapon, weaponInfo[weapon][player->class].mode[0].states[WSN_UP]);
+    P_SetPsprite(player, ps_weapon, weaponInfo[weapon][player->class_].mode[0].states[WSN_UP]);
 }
 
 /**
@@ -581,7 +580,7 @@ void P_BringUpWeapon(player_t *player)
 {
     weaponmodeinfo_t   *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class,
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_,
                          (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
     if(player->pendingWeapon == WT_NOCHANGE)
@@ -601,17 +600,25 @@ void P_FireWeapon(player_t *player)
     statenum_t          attackState;
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
+#ifdef _DEBUG
+    Con_Message("P_FireWeapon: player %i\n", player - players);
+#endif
+
     if(!P_CheckAmmo(player))
         return;
 
-    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->attackState);
+    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+
+    P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
+#ifdef _DEBUG
+    Con_Message("P_FireWeapon: Setting player %i to attack state.\n", player - players);
+#endif
 
     if(player->refire)
-        attackState = weaponInfo[player->readyWeapon][player->class].mode[lvl].states[WSN_ATTACK_HOLD];
+        attackState = weaponInfo[player->readyWeapon][player->class_].mode[lvl].states[WSN_ATTACK_HOLD];
     else
-        attackState = weaponInfo[player->readyWeapon][player->class].mode[lvl].states[WSN_ATTACK];
+        attackState = weaponInfo[player->readyWeapon][player->class_].mode[lvl].states[WSN_ATTACK];
 
-    NetSv_PSpriteChange(player - players, attackState);
     P_SetPsprite(player, ps_weapon, attackState);
 
     P_NoiseAlert(player->plr->mo, player->plr->mo);
@@ -640,7 +647,7 @@ void P_DropWeapon(player_t *player)
         level = 0;
 
     P_SetPsprite(player, ps_weapon,
-                 weaponInfo[player->readyWeapon][player->class].mode[level].states[WSN_DOWN]);
+                 weaponInfo[player->readyWeapon][player->class_].mode[level].states[WSN_DOWN]);
 }
 
 /**
@@ -660,7 +667,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
 
     if(player->readyWeapon != WT_NOCHANGE)
     {
-        wminfo = WEAPON_INFO(player->readyWeapon, player->class, (player->powers[PT_WEAPONLEVEL2]?1:0));
+        wminfo = WEAPON_INFO(player->readyWeapon, player->class_, (player->powers[PT_WEAPONLEVEL2]?1:0));
 
         // A weaponready sound?
         if(psp->state == &STATES[wminfo->states[WSN_READY]] && wminfo->readySound)
@@ -680,7 +687,7 @@ void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
     // Check for autofire.
     if(player->brain.attack)
     {
-        wminfo = WEAPON_INFO(player->readyWeapon, player->class, 0);
+        wminfo = WEAPON_INFO(player->readyWeapon, player->class_, 0);
 
         if(!player->attackDown || wminfo->autoFire)
         {
@@ -714,18 +721,18 @@ void P_UpdateBeak(player_t *player, pspdef_t *psp)
 void C_DECL A_BeakReady(player_t *player, pspdef_t *psp)
 {
     if(player->brain.attack)
-    {   // Chicken beak attack.
+    {
+        // Chicken beak attack.
         player->attackDown = true;
+        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
         P_MobjChangeState(player->plr->mo, S_CHICPLAY_ATK1);
         if(player->powers[PT_WEAPONLEVEL2])
         {
             P_SetPsprite(player, ps_weapon, S_BEAKATK2_1);
-            NetSv_PSpriteChange(player - players, S_BEAKATK2_1);
         }
         else
         {
             P_SetPsprite(player, ps_weapon, S_BEAKATK1_1);
-            NetSv_PSpriteChange(player - players, S_BEAKATK1_1);
         }
         P_NoiseAlert(player->plr->mo, player->plr->mo);
     }
@@ -773,8 +780,8 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
       ((player->powers[PT_WEAPONLEVEL2] &&
-        weaponInfo[player->readyWeapon][player->class].mode[1].staticSwitch) ||
-       weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch))
+        weaponInfo[player->readyWeapon][player->class_].mode[1].staticSwitch) ||
+       weaponInfo[player->readyWeapon][player->class_].mode[0].staticSwitch))
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -805,8 +812,8 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
     // Should we suddenly lower the weapon?
     if(cfg.bobWeaponLower &&
       ((player->powers[PT_WEAPONLEVEL2] &&
-        !weaponInfo[player->readyWeapon][player->class].mode[1].staticSwitch) ||
-       !weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch))
+        !weaponInfo[player->readyWeapon][player->class_].mode[1].staticSwitch) ||
+       !weaponInfo[player->readyWeapon][player->class_].mode[0].staticSwitch))
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 1000);
     }
@@ -818,7 +825,7 @@ void C_DECL A_BeakRaise(player_t *player, pspdef_t *psp)
 {
     psp->pos[VY] = WEAPONTOP;
     P_SetPsprite(player, ps_weapon,
-                 weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_READY]);
+                 weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_READY]);
 }
 
 void C_DECL A_Raise(player_t *player, pspdef_t *psp)
@@ -831,8 +838,8 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     // Should we disable the lowering?
     if(!cfg.bobWeaponLower ||
       ((player->powers[PT_WEAPONLEVEL2] &&
-        weaponInfo[player->readyWeapon][player->class].mode[1].staticSwitch) ||
-       weaponInfo[player->readyWeapon][player->class].mode[0].staticSwitch))
+        weaponInfo[player->readyWeapon][player->class_].mode[1].staticSwitch) ||
+       weaponInfo[player->readyWeapon][player->class_].mode[0].staticSwitch))
     {
         DD_SetInteger(DD_WEAPON_OFFSET_SCALE_Y, 0);
     }
@@ -850,9 +857,9 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
     // The weapon has been raised all the way,
     //  so change to the ready state.
     if(player->powers[PT_WEAPONLEVEL2])
-        newstate = weaponInfo[player->readyWeapon][player->class].mode[1].states[WSN_READY];
+        newstate = weaponInfo[player->readyWeapon][player->class_].mode[1].states[WSN_READY];
     else
-        newstate = weaponInfo[player->readyWeapon][player->class].mode[0].states[WSN_READY];
+        newstate = weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_READY];
 
     P_SetPsprite(player, ps_weapon, newstate);
 }
@@ -1645,7 +1652,6 @@ void C_DECL A_FirePhoenixPL2(player_t *player, pspdef_t *psp)
     if(--player->flameCount == 0)
     {   // Out of flame
         P_SetPsprite(player, ps_weapon, S_PHOENIXATK2_4);
-        NetSv_PSpriteChange(player - players, S_PHOENIXATK2_4);
         player->refire = 0;
         return;
     }
@@ -1906,6 +1912,10 @@ void C_DECL A_Egg(mobj_t* mo)
 {
     if(!mo->player)
         return;
+
+#ifdef _DEBUG
+    Con_Message("A_Egg: Spawning EGGFXs.\n");
+#endif
 
 #if __JHEXEN__
     P_SpawnPlayerMissile(MT_EGGFX, mo);

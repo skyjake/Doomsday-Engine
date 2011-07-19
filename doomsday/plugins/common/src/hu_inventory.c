@@ -589,7 +589,7 @@ void Hu_InventoryOpen(int player, boolean show)
         return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return;
 
     inv = &hudInventories[player];
@@ -670,7 +670,7 @@ boolean Hu_InventoryMove(int player, int dir, boolean canWrap, boolean silent)
         return false;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
+    if(!plr->plr->inGame)
         return false;
     inv = &hudInventories[player];
 
@@ -722,7 +722,7 @@ void Hu_InventoryTicker(void)
         player_t*           plr = &players[i];
         hud_inventory_t*    inv = &hudInventories[i];
 
-        if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
+        if(!plr->plr->inGame)
             continue;
 
         if(inv->flags & HIF_IS_DIRTY)

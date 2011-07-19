@@ -2466,7 +2466,7 @@ void R_PrecacheMobjNum(int num)
 {
     materialvariantspecification_t* spec;
 
-    if(!((useModels && precacheSkins) || precacheSprites))
+    if(novideo || !((useModels && precacheSkins) || precacheSprites))
         return;
 
     if(num < 0 || num >= defs.count.mobjs.num)

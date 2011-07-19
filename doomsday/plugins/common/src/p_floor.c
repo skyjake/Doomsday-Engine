@@ -600,8 +600,9 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
         // If already moving, keep going...
@@ -1058,8 +1059,9 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
 
@@ -1265,8 +1267,9 @@ int EV_BuildStairs(linedef_t* line, byte* args, int direction,
     if(!list)
         return 0;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         stairData.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         stairData.startHeight = P_GetFloatp(sec, DMU_FLOOR_HEIGHT);
@@ -1321,8 +1324,9 @@ int EV_DoDonut(linedef_t* line)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         findfirsttwosidedparams_t params;
 
@@ -1455,8 +1459,9 @@ int EV_DoFloorAndCeiling(linedef_t* line, int ftype, int ctype)
 # else
     floor = EV_DoFloor(line, ftype);
 # endif
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         P_ToXSector(sec)->specialData = NULL;
     }

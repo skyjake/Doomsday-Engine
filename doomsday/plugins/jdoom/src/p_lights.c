@@ -226,8 +226,9 @@ void EV_StartLightStrobing(linedef_t *line)
     if(!list)
         return;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         if(P_ToXSector(sec)->specialData)
             continue;
@@ -247,8 +248,9 @@ void EV_TurnTagLightsOff(linedef_t *line)
     if(!list)
         return;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         lightLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
         otherLevel = DDMAXFLOAT;
@@ -273,8 +275,9 @@ void EV_LightTurnOn(linedef_t *line, float max)
     if(max != 0)
         lightLevel = max;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         // If Max = 0 means to search for the highest light level in the
         // surrounding sector.

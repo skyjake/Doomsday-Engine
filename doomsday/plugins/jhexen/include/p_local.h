@@ -61,7 +61,7 @@
 #define VIEWHEIGHT          48
 
 #define FLOATBOBRES         64
-#define FLOATBOBOFFSET(n)   (FloatBobOffset[(n) < 0? 0 : (n) > FLOATBOBRES - 1? FLOATBOBRES - 1 : (n)])
+#define FLOATBOBOFFSET(n)   (FloatBobOffset[MIN_OF(((uint8_t)(n)), FLOATBOBRES - 1)])
 
 // Player radius for movement checking.
 #define PLAYERRADIUS        16
@@ -158,8 +158,8 @@ extern int clipmana[NUM_AMMO_TYPES];
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 void        P_PoisonPlayer(player_t* plr, mobj_t* poisoner, int poison);
 
-int         P_DamageMobj(mobj_t* target, mobj_t* inflictor,
-                         mobj_t* source, int damage, boolean stomping);
+int         P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping);
+int         P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage, boolean stomping, boolean skipNetworkCheck);
 int         P_FallingDamage(player_t* plr);
 int         P_PoisonDamage(player_t* plr, mobj_t* source, int damage,
                            boolean playPainSound);

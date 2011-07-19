@@ -740,11 +740,11 @@ void P_MobjLink(mobj_t* mo, byte flags)
         P_LinkToLines(mo);
     }
 
-    // If this is a player - perform addtional tests to see if they have
+    // If this is a player - perform additional tests to see if they have
     // entered or exited the void.
-    if(mo->dPlayer)
+    if(mo->dPlayer && mo->dPlayer->mo)
     {
-        ddplayer_t*         player = mo->dPlayer;
+        ddplayer_t* player = mo->dPlayer;
 
         player->inVoid = true;
         if(R_IsPointInSector2(player->mo->pos[VX],

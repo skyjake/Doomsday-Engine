@@ -150,6 +150,9 @@ void N_PostMessage(netmessage_t *msg)
     // This will be the latest message.
     msg->next = NULL;
 
+    // Set the timestamp for reception.
+    msg->receivedAt = Sys_GetRealSeconds();
+
     if(msgTail)
     {
         // There are previous messages.
@@ -189,18 +192,28 @@ netmessage_t *N_GetMessage(void)
     {
         msg = msgHead;
 
-        // If there are no more messages, the tail pointer must be
-        // cleared, too.
-        if(!msgHead->next)
-            msgTail = NULL;
-
-        // Advance the head pointer.
-        msgHead = msgHead->next;
-
-        if(msg)
+        // Check for simulated latency.
+        if(netSimulatedLatencySeconds > 0 &&
+           (Sys_GetRealSeconds() - msg->receivedAt < netSimulatedLatencySeconds))
         {
-            // One less message available.
-            msgCount--;
+            // This message has not been received yet.
+            msg = NULL;
+        }
+        else
+        {
+            // If there are no more messages, the tail pointer must be
+            // cleared, too.
+            if(!msgHead->next)
+                msgTail = NULL;
+
+            // Advance the head pointer.
+            msgHead = msgHead->next;
+
+            if(msg)
+            {
+                // One less message available.
+                msgCount--;
+            }
         }
     }
     N_LockQueue(false);
@@ -260,12 +273,12 @@ void N_SendPacket(int flags)
     // Figure out the destination DPNID.
     if(netServerMode)
     {
-        player_t           *plr = &ddPlayers[netBuffer.player];
-        ddplayer_t         *ddpl = &plr->shared;
+        //player_t           *plr = &ddPlayers[netBuffer.player];
+        //ddplayer_t         *ddpl = &plr->shared;
 
         if(netBuffer.player >= 0 && netBuffer.player < DDMAXPLAYERS)
         {
-            if((ddpl->flags & DDPF_LOCAL) ||
+            if(/*(ddpl->flags & DDPF_LOCAL) ||*/
                !clients[netBuffer.player].connected)
             {
                 // Do not send anything to local or disconnected players.
@@ -302,20 +315,11 @@ void N_SendPacket(int flags)
     // This many bytes are actually sent.
     numSentBytes += size;
 
-    if(flags & (SPF_CONFIRM | SPF_ORDERED))
-    {
-        // Ordered and confirmed messages are send over a TCP connection.
-        N_SendDataBufferReliably(data, size, dest);
+    // All messages are send over a TCP connection.
+    N_SendDataBufferReliably(data, size, dest);
 #if _DEBUG
-VERBOSE2(Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", (unsigned int) size, dest));
+    VERBOSE2(Con_Message("N_SendPacket: Sending %li bytes reliably to %i.\n", size, dest));
 #endif
-    }
-    else
-    {
-        // Other messages are sent via UDP, so that there is as little latency
-        // as possible.
-        N_SendDataBuffer(data, size, dest);
-    }
 }
 
 /**
@@ -454,8 +458,9 @@ void N_PrintHuffmanStats(void)
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %ul bytes, sent: %ul bytes)\n",
-                   100 - (100.0f * numSentBytes) / numOutBytes, (unsigned int) numOutBytes, (unsigned int) numSentBytes);
+        Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
+                   "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
+                   (int)numOutBytes, (int)numSentBytes);
     }
 }
 

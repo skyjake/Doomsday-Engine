@@ -48,9 +48,9 @@ DD_BASE_MOBJ_ELEMENTS()} mobj_t;
 #define DEFAULT_FRICTION    FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
 
-extern float    tmpFloorZ, tmpCeilingZ;
-extern mobj_t  *blockingMobj;
-extern boolean  dontHitMobjs;
+//extern float    tmpFloorZ, tmpCeilingZ;
+//extern mobj_t  *blockingMobj;
+//extern boolean  dontHitMobjs;
 
 #include "cl_def.h"                // for clplayerstate_s
 
@@ -61,14 +61,8 @@ mobj_t         *P_MobjCreate(think_t function, float x, float y, float z,
                              int ddflags);
 void            P_MobjDestroy(mobj_t *mo);
 void            P_MobjRecycle(mobj_t *mo);
-
 void            P_MobjSetState(mobj_t *mo, int statenum);
-void            P_MobjMovement(mobj_t *mo);
-void            P_MobjMovement2(mobj_t *mo, void *pstate);
-void            P_MobjZMovement(mobj_t *mo);
-boolean         P_TryMoveXYZ(mobj_t *mo, float x, float y, float z);
-boolean         P_StepMove(mobj_t *mo, float dx, float dy, float dz);
-boolean         P_CheckPosXY(mobj_t *mo, float x, float y);
-boolean         P_CheckPosXYZ(mobj_t *mo, float x, float y, float z);
-boolean         P_SectorPlanesChanged(sector_t *sector);
+
+boolean         P_MobjSetPos(struct mobj_s* mo, float x, float y, float z);
+
 #endif

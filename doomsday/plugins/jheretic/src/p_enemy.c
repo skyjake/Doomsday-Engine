@@ -211,12 +211,12 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
             return true;
         }
 
-        if(!P_IterListSize(spechit))
+        if(!IterList_Size(spechit))
             return false;
 
         actor->moveDir = DI_NODIR;
         good = false;
-        while((ld = P_PopIterList(spechit)) != NULL)
+        while((ld = IterList_Pop(spechit)) != NULL)
         {
             /**
              * If the special is not a door that can be opened, return false.

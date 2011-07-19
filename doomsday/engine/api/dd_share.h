@@ -74,8 +74,9 @@ extern "C" {
 
 // The case-independent strcmps have different names.
 #if WIN32
-# define strcasecmp stricmp
-# define strncasecmp strnicmp
+# define strcasecmp _stricmp
+# define strncasecmp _strnicmp
+# define strlwr _strlwr
 #endif
 
 #if UNIX
@@ -282,7 +283,7 @@ enum {
     DD_POLYOBJ_COUNT,
     DD_MATERIAL_COUNT,
     DD_XGFUNC_LINK, // XG line classes
-    DD_SHARED_FIXED_TRIGGER,
+    DD_SHARED_FIXED_TRIGGER_OBSOLETE, // obsolete
     DD_GAMETIC,
     DD_OPENRANGE,
     DD_OPENTOP,
@@ -293,7 +294,7 @@ enum {
     DD_VIEW_Z,
     DD_VIEW_ANGLE,
     DD_VIEW_PITCH,
-    DD_CPLAYER_THRUST_MUL,
+    DD_CPLAYER_THRUST_MUL_OBSOLETE, // obsolete
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, // 10x
     DD_PSPRITE_OFFSET_Y, // 10x
@@ -855,7 +856,12 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     short           visTarget; /* -1 = mobj is becoming less visible, */ \
                                /* 0 = no change, 2= mobj is becoming more visible */ \
     int             reactionTime; /* if not zero, freeze controls */ \
-    int             tmap, tclass;
+    int             tmap, tclass;\
+    int             flags;\
+    int             flags2;\
+    int             flags3;\
+    int             health;\
+    mobjinfo_t     *info; /* &mobjinfo[mobj->type] */
 
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \
@@ -1325,6 +1331,7 @@ typedef struct cvartemplate_s {
     //
     //------------------------------------------------------------------------
 
+#if 0
 /**
  * Tick Commands. Usually only a part of this data is transferred over
  * the network. In addition to tick commands, clients will sent 'impulses'
@@ -1339,6 +1346,7 @@ typedef struct ticcmd_s {
     short       pitch; // View pitch.
     short       actions; // On/off action flags.
 } ticcmd_t;
+#endif
 
     // Network Player Events
     enum {
@@ -1351,8 +1359,7 @@ typedef struct ticcmd_s {
     // World events (handled by clients)
     enum {
         DDWE_HANDSHAKE, // Shake hands with a new player.
-        DDWE_PROJECTILE, // Spawn a projectile.
-        DDWE_SECTOR_SOUND, // Play a sector sound.
+        DDWE_DEMO_END // Demo playback ends.
     };
 
     /*
@@ -1395,7 +1402,7 @@ typedef struct ticcmd_s {
 #define DDPT_HELLO              0
 #define DDPT_OK                 1
 #define DDPT_CANCEL             2
-#define DDPT_COMMANDS           32
+#define DDPT_COMMANDS_OBSOLETE  32
 #define DDPT_FIRST_GAME_EVENT   64
 #define DDPT_MESSAGE            67
 
@@ -1466,18 +1473,21 @@ typedef struct ticcmd_s {
     } controltype_t;
 
     // Player flags.
-#define DDPF_FIXANGLES      0x1 // Server: send angle/pitch to client.
-#define DDPF_FILTER         0x2 // Server: send filter to client.
-#define DDPF_FIXPOS         0x4 // Server: send coords to client.
-#define DDPF_DEAD           0x8 // Cl & Sv: player is dead.
-#define DDPF_CAMERA         0x10 // Player is a cameraman.
-#define DDPF_LOCAL          0x20 // Player is local (e.g. player zero).
-#define DDPF_FIXMOM         0x40 // Server: send momentum to client.
-#define DDPF_NOCLIP         0x80 // Client: don't clip movement.
-#define DDPF_CHASECAM       0x100 // Chase camera mode (third person view).
-#define DDPF_INTERYAW       0x200 // Interpolate view yaw angles (used with locking).
-#define DDPF_INTERPITCH     0x400 // Interpolate view pitch angles (used with locking).
-#define DDPF_VIEW_FILTER    0x800 // Cl & Sv: Draw the current view filter.
+#define DDPF_FIXANGLES          0x0001 // Server: send angle/pitch to client.
+#define DDPF_FILTER             0x0002 // Server: send filter to client.
+#define DDPF_FIXPOS             0x0004 // Server: send coords to client.
+#define DDPF_DEAD               0x0008 // Cl & Sv: player is dead.
+#define DDPF_CAMERA             0x0010 // Player is a cameraman.
+#define DDPF_LOCAL              0x0020 // Player is local (e.g. player zero).
+#define DDPF_FIXMOM             0x0040 // Server: send momentum to client.
+#define DDPF_NOCLIP             0x0080 // Client: don't clip movement.
+#define DDPF_CHASECAM           0x0100 // Chase camera mode (third person view).
+#define DDPF_INTERYAW           0x0200 // Interpolate view yaw angles (used with locking).
+#define DDPF_INTERPITCH         0x0400 // Interpolate view pitch angles (used with locking).
+#define DDPF_VIEW_FILTER        0x0800 // Cl & Sv: Draw the current view filter.
+#define DDPF_REMOTE_VIEW_FILTER 0x1000 // Client: Draw the view filter (has been set remotely).
+#define DDPF_USE_VIEW_FILTER    (DDPF_VIEW_FILTER | DDPF_REMOTE_VIEW_FILTER)
+#define DDPF_UNDEFINED_POS      0x2000 // Position of the player is undefined (view not drawn).
 
 #define PLAYERNAMELEN       81
 
@@ -1524,7 +1534,8 @@ typedef struct ticcmd_s {
     } fixcounters_t;
 
     typedef struct ddplayer_s {
-        ticcmd_t        cmd;
+        float           forwardMove; // Copied from player brain (read only).
+        float           sideMove; // Copied from player brain (read only).
         struct mobj_s*  mo; // Pointer to a (game specific) mobj.
         float           lookDir; // For mouse look.
         int             fixedColorMap; // Can be set to REDCOLORMAP, etc.

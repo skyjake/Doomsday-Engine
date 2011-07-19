@@ -83,7 +83,7 @@ elif host.isWindowsVista():
 elif host.isWindows():
     SNOWBERRY_HOME_DIR = os.path.join('My Documents', 'Doomsday Frontend')
 else:
-    SNOWBERRY_HOME_DIR = '.deng'
+    SNOWBERRY_HOME_DIR = '.doomsday'
     
 # In a homeless setup all the user data goes in the main installation folder.
 if isHomeless():

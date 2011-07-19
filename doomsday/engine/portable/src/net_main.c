@@ -114,8 +114,9 @@ byte    netDev = false;
 byte    netDontSleep = false;
 byte    netTicSync = true;
 float   netConnectTime;
-int     netCoordTime = 17;
+//int     netCoordTime = 17;
 float   netConnectTimeout = 10;
+float   netSimulatedLatencySeconds = 0;
 
 // Local packets are stored into this buffer.
 boolean reboundPacket;
@@ -132,6 +133,9 @@ void Net_Register(void)
     // Cvars
     C_VAR_BYTE("net-queue-show", &monitorMsgQueue, 0, 0, 1);
     C_VAR_BYTE("net-dev", &netDev, 0, 0, 1);
+#ifdef _DEBUG
+    C_VAR_FLOAT("net-dev-latency", &netSimulatedLatencySeconds, CVF_NO_MAX, 0, 0);
+#endif
     C_VAR_BYTE("net-nosleep", &netDontSleep, 0, 0, 1);
     C_VAR_CHARPTR("net-master-address", &masterAddress, 0, 0, 0);
     C_VAR_INT("net-master-port", &masterPort, 0, 0, 65535);
@@ -139,7 +143,7 @@ void Net_Register(void)
     C_VAR_CHARPTR("net-name", &playerName, 0, 0, 0);
 
     // Cvars (client)
-    C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
+    //C_VAR_INT("client-pos-interval", &netCoordTime, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("client-connect-timeout", &netConnectTimeout, CVF_NO_MAX,
                 0, 0);
 
@@ -194,7 +198,7 @@ void Net_Init(void)
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
     // The game is always started in single-player mode.
-    netGame = false;
+    netGame = false;   
 }
 
 void Net_Shutdown(void)
@@ -345,12 +349,12 @@ void Net_ResetTimer(void)
 }
 
 /**
- * @return              @c true, if the specified player is a real, local
- *                      player.
+ * @return @c true, if the specified player is a real, local
+ *         player.
  */
 boolean Net_IsLocalPlayer(int plrNum)
 {
-    player_t           *plr = &ddPlayers[plrNum];
+    player_t *plr = &ddPlayers[plrNum];
 
     return plr->shared.inGame && (plr->shared.flags & DDPF_LOCAL);
 }
@@ -360,6 +364,7 @@ boolean Net_IsLocalPlayer(int plrNum)
  */
 void Net_SendCommands(void)
 {
+#if 0
     uint                i;
     byte               *msg;
     ticcmd_t           *cmd;
@@ -408,6 +413,7 @@ void Net_SendCommands(void)
         // has been sent.
         memset(cmd, 0, TICCMD_SIZE);
     }
+#endif
 }
 
 static void Net_DoUpdate(void)
@@ -485,27 +491,38 @@ static void Net_DoUpdate(void)
      * any prediction errors can be fixed. Client movement is almost
      * entirely local.
      */
+#ifdef _DEBUG
+    VERBOSE2( Con_Message("Net_DoUpdate: coordTimer=%i cl:%i af:%i shmo:%p\n", coordTimer,
+                          isClient, allowFrames, ddPlayers[consolePlayer].shared.mo) );
+#endif
     coordTimer -= newTics;
-    if(isClient && allowFrames && coordTimer < 0 &&
+    if(isClient /*&& allowFrames*/ && coordTimer <= 0 &&
        ddPlayers[consolePlayer].shared.mo)
     {
-        mobj_t             *mo = ddPlayers[consolePlayer].shared.mo;
+        mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
 
-        coordTimer = netCoordTime; // 35/2
+        coordTimer = 1; //netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
-        Msg_WriteShort((short) mo->pos[VX]);
-        Msg_WriteShort((short) mo->pos[VY]);
+        Msg_WriteFloat(mo->pos[VX]);
+        Msg_WriteFloat(mo->pos[VY]);
         if(mo->pos[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
-            Msg_WriteShort(DDMININT >> 16);
+            Msg_WriteLong(DDMININT);
         }
         else
         {
-            Msg_WriteShort((short) mo->pos[VZ]);
+            Msg_WriteLong(FLT2FIX(mo->pos[VZ]));
         }
-
-        Net_SendBuffer(0, 0);
+        // Also include momentum and angle.
+        Msg_WriteShort((short) (mo->mom[VX] * 256));
+        Msg_WriteShort((short) (mo->mom[VY] * 256));
+        Msg_WriteShort((short) (mo->mom[VZ] * 256));
+        Msg_WriteShort(mo->angle >> 16);
+        // Control state.
+        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
+        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
+        Net_SendBuffer(0, 0);       
     }
 }
 
@@ -530,6 +547,10 @@ void Net_Update(void)
  */
 void Net_BuildLocalCommands(timespan_t time)
 {
+#if 0
+    uint        i;
+    ticcmd_t   *cmd;
+
     if(isDedicated)
         return;
 
@@ -556,8 +577,8 @@ void Net_BuildLocalCommands(timespan_t time)
         // Be sure to merge each built command into the aggregate that
         // will be sent periodically to the server.
         P_MergeCommand(clients[i].aggregateCmd, cmd);
-        }
-    }}
+    }
+#endif
 }
 
 static __inline client_t* clientInfoForClientId(int clientNum)
@@ -570,39 +591,21 @@ void Net_AllocClientBuffers(int clientId)
 {
     client_t* cl = clientInfoForClientId(clientId);
 
-    if(cl->ticCmds)
-        return; // Already done.
-
-    // The server stores ticcmds sent by the clients to these
-    // buffers.
-    cl->ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
-    // The last cmd that was executed is stored here.
-    cl->lastCmd = M_Calloc(TICCMD_SIZE);
-    cl->aggregateCmd = M_Calloc(TICCMD_SIZE);
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        memset(clients + i, 0, sizeof(clients[i]));
+        // The server stores ticcmds sent by the clients to these
+        // buffers.
+        //clients[i].ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
+        // The last cmd that was executed is stored here.
+        //clients[i].lastCmd = M_Calloc(TICCMD_SIZE);
+        //clients[i].aggregateCmd = M_Calloc(TICCMD_SIZE);
+        clients[i].runTime = -1;
+    }
 }
 
 void Net_DestroyArrays(void)
 {
-#if 0
-    M_Free(localticcmds);
-    localticcmds = 0;
-#endif
-
-    { int i;
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(clients[i].ticCmds)
-            M_Free(clients[i].ticCmds);
-        clients[i].ticCmds = 0;
-
-        if(clients[i].lastCmd)
-            M_Free(clients[i].lastCmd);
-        clients[i].lastCmd = 0;
-
-        if(clients[i].aggregateCmd)
-            M_Free(clients[i].aggregateCmd);
-        clients[i].aggregateCmd = 0;
-    }}
 }
 
 /**
@@ -644,7 +647,9 @@ void Net_StopGame(void)
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
         Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+#if 0
         N_FlushOutgoing();
+#endif
     }
     else
     {   // We are a connected client.
@@ -687,6 +692,9 @@ void Net_StopGame(void)
             ddPlayers[consolePlayer].shared.lookDir;
     }
 
+#ifdef _DEBUG
+    Con_Message("Net_StopGame: Reseting console & view player to zero.\n");
+#endif
     consolePlayer = displayPlayer = 0;
     ddPlayers[0].shared.inGame = true;
     clients[0].ready = true;
@@ -731,6 +739,10 @@ int Net_TimeDelta(byte now, byte then)
  */
 int Net_GetTicCmd(void *pCmd, int player)
 {
+    return false;
+
+#if 0
+
     client_t *client = &clients[player];
     ticcmd_t *cmd = pCmd;
 
@@ -753,105 +765,6 @@ int Net_GetTicCmd(void *pCmd, int player)
 
     // Make sure the firsttic index is in range.
     client->firstTic %= BACKUPTICS;
-    return true;
-
-#if 0
-/*
-#if _DEBUG
-Con_Printf("GetTicCmd: Cl=%i, GT=%i (%i)...\n", player, gametic, (byte)gametic);
-
-// Check the lag stress.
-if(cl->lagStress > net_stressmargin)
-{
-   // Command lag should be increased, we're running out of cmds.
-   cl->lagStress -= net_stressmargin;
-   memcpy(cmd, cl->lastcmd, TICCMD_SIZE);   // Repeat lastcmd.
-   Con_Printf("  Increasing lag\n");
-   return true;
-}
-else if(cl->lagStress < -net_stressmargin)
-{
-   // Command lag should be decreased.
-   cl->lagStress += net_stressmargin;
-   cl->runTime++;
-   Con_Printf("  Decreasing lag\n");
-}
-#endif
-*/
-    for(;;)
-    {
-        if(Net_TimeDelta(gametic, cl->runTime) <= 0)
-        {
-/*
-#if _DEBUG
-Con_Printf("  Running in the future! Rt=%i\n", cl->runTime);
-#endif
-*/
-            future = true;
-            //cl->lagStress++;
-        }
-        else
-        {
-            future = false;
-        }
-        // Are there any commands left for this player?
-        if(!cl->numtics)
-        {
-            cl->lagStress++;
-            // Reuse the last command.
-            memcpy(cmd, cl->lastcmd, TICCMD_SIZE);
-            // Runtime advances.
-            if(!future)
-                cl->runTime++;
-/*
-#if _DEBUG
-Con_Printf("  Out of Cmds! Rt set to %i\n", cl->runTime);
-#endif
-*/
-            return false;
-        }
-
-        // There's at least one command in the buffer.
-        // There will be one less tic in the buffer after this.
-        cl->numtics--;
-        memcpy(cmd, &cl->ticcmds[TICCMD_IDX(cl->firsttic++)], TICCMD_SIZE);
-
-        // Make sure the firsttic iterator is in range.
-        if(cl->firsttic >= BACKUPTICS)
-            cl->firsttic = 0;
-        // Do we need to do any merging?
-        if(doMerge && gx.DiscardTicCmd)
-            gx.DiscardTicCmd(cl->lastcmd, cmd);
-
-        // This is the new last command.
-        memcpy(cl->lastcmd, cmd, TICCMD_SIZE);
-        // Check that the command is valid (not if its tick has already passed).
-        if(Net_TimeDelta(cl->runTime, cmd->time) >= 0)
-        {
-/*
-#if _DEBUG
-Con_Printf("  Obsolete Cmd! Rt=%i Ct=%i\n", cl->runTime, cmd->time);
-#endif
-*/
-            // Cmd is too old. Go to next command and merge this one with it.
-            doMerge = true;
-            continue;
-        }
-
-        cl->runTime = cmd->time;
-        // Note command lag.
-        cl->lag = Sv_Latency(cmd->time);
-        // The local player doesn't need lag stress, because we know it's
-        // always running exactly synced with the server, i.e. itself.
-        if(player && cl->numtics > 1)
-            cl->lagStress--;
-/*
-#if _DEBUG
-Con_Printf("  CmdLag=%i\n", cl->lag);
-#endif
-*/
-        break;
-    }
     return true;
 #endif
 }
@@ -1318,7 +1231,6 @@ D_CMD(MakeCamera)
 
     clients[cp].connected = true;
     clients[cp].ready = true;
-    clients[cp].updateCount = UPDATECOUNT;
     clients[cp].viewConsole = cp;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
     Net_AllocClientBuffers(cp);

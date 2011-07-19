@@ -4,8 +4,6 @@ IF "%1" == "help" GOTO Help
 GOTO SetPaths
 :Help
 cls
-ECHO $Id$
-ECHO.
 ECHO This build script compiles the Doomsday Engine and the associated
 ECHO libraries.
 ECHO.
@@ -72,7 +70,7 @@ IF NOT EXIST %BIN_DIR% md %BIN_DIR%
 IF NOT EXIST %OBJ_DIR% md %OBJ_DIR%
 
 :: -- Compiler and linker options.
-SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_CRT_SECURE_NO_DEPRECATE"
+SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_CRT_SECURE_NO_DEPRECATE" /DDOOMSDAY_BUILD_TEXT="\"%DOOMSDAY_BUILD%\""
 SET DLLDEFINES=/D "_USRDLL" /D "_WINDLL" %DEFINES%
 
 SET INCS_ENGINE_API=%DENG_ENGINE_API_DIR%
@@ -372,7 +370,7 @@ GOTO Done
 
 :Failure2
 ECHO There were build errors.
-GOTO TheRealEnd
+EXIT /b 1
 
 
 :TheEnd

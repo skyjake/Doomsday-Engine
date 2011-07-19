@@ -47,6 +47,13 @@
 #include <ctype.h>
 #include <assert.h>
 
+#ifdef WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#endif
+
 // This plugin accesses the internal definition arrays. This dependency
 // should be removed entirely, either by making the plugin modify the
 // definitions via an API or by integrating the plugin into the engine.
@@ -62,7 +69,7 @@
 #define OFF_FIXED   0x10000000
 #define OFF_MASK    0x00ffffff
 
-#define myoffsetof(type,identifier,fl) (((size_t)&((type*)0)->identifier)|fl)
+#define myoffsetof(type,identifier,fl) (((ptrdiff_t)&((type*)0)->identifier)|fl)
 
 #define LPrintf     Con_Message
 
@@ -927,8 +934,9 @@ char   *COM_Parse(char *data)
 boolean IsNum(char *str)
 {
     char   *end;
+    int     value;
 
-    strtol(str, &end, 0);
+    value = strtol(str, &end, 0); // ignoring returned value
     if(*end && !isspace(*end))
         return false;
     return true;
@@ -2227,6 +2235,7 @@ int DoInclude(int dummy)
     int     len;
     FILE   *file;
     char   *patch;
+    size_t  result;
 
     if(including)
     {
@@ -2267,7 +2276,7 @@ int DoInclude(int dummy)
     len = ftell(file);
     patch = calloc(len + 1, 1);
     rewind(file);
-    fread(patch, len, 1, file);
+    result = fread(patch, len, 1, file); // return value ignored
     patch[len] = 0;
     fclose(file);
     ApplyDEH(patch, len);
@@ -2394,6 +2403,7 @@ void ReadDehacked(char *filename)
     FILE   *file;
     char   *deh;
     int     len;
+    size_t  result;
 
     Con_Message("Applying Dehacked: %s...\n", filename);
 
@@ -2406,7 +2416,7 @@ void ReadDehacked(char *filename)
     // Allocate enough memory and read it.
     deh = calloc(len + 1, 1);
     rewind(file);
-    fread(deh, len, 1, file);
+    result = fread(deh, len, 1, file); // return value ignored
     fclose(file);
     // Process it!
     ApplyDEH(deh, len);

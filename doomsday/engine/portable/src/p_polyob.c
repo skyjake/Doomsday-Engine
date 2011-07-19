@@ -472,6 +472,7 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
     }
 
     po->angle += angle;
+
     P_PolyobjLink(po);
     P_PolyobjChanged(po);
     return true;

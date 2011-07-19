@@ -77,7 +77,7 @@ typedef enum {
 typedef struct player_s {
     ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class; // Player class.
+    playerclass_t   class_; // Player class.
     playerbrain_t   brain;
 
     // This is only used between levels,

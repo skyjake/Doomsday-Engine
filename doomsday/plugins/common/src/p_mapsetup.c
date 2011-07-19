@@ -377,6 +377,31 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
 }
 
 /**
+ * Determines if a client is allowed to spawn a thing of type @a doomEdNum.
+ */
+static boolean P_IsClientAllowedToSpawn(int doomEdNum)
+{
+    switch(doomEdNum)
+    {
+    case 11: // Deathmatch
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+#if __JHEXEN__
+    case 9100: // Player starts 5 through 8.
+    case 9101:
+    case 9102:
+    case 9103:
+#endif
+        return true;
+
+    default:
+        return false;
+    }
+}
+
+/**
  * Should we auto-spawn one or more mobjs from the specified map spot?
  */
 static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
@@ -608,6 +633,18 @@ static void spawnMapObjects(void)
             continue;
 
         // A spot that should auto-spawn one (or more) mobjs.
+
+        // Check for things that clients don't spawn on their own.
+        if(IS_CLIENT)
+        {
+            // Client is allowed to spawn objects that are flagged local.
+            // The server will not send any information about them.
+            if(!(MOBJINFO[type].flags & MF_LOCAL))
+            {
+                if(!P_IsClientAllowedToSpawn(spot->doomEdNum))
+                    continue;
+            }
+        }
 
         // Find which type to spawn.
         if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) != MT_NONE)

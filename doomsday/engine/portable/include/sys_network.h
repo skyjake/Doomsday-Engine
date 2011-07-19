@@ -54,7 +54,7 @@ extern          "C" {
 
     extern char    *nptIPAddress;
     extern int      nptIPPort;
-    extern int      nptUDPPort;
+    //extern int      nptUDPPort;
 
     extern char    *serverName, *serverInfo, *playerName;
     extern int      serverData[];
@@ -79,15 +79,16 @@ extern          "C" {
     boolean         N_ServerOpen(void);
     boolean         N_ServerClose(void);
 
+    /*
     void            N_SendDataBuffer(void *data, size_t size,
-                                     nodeid_t destination);
+                                     nodeid_t destination);*/
     void            N_SendDataBufferReliably(void *data, size_t size,
                                              nodeid_t destination);
     void            N_ReturnBuffer(void *handle);
-    uint            N_GetSendQueueCount(int player);
-    uint            N_GetSendQueueSize(int player);
+    //uint            N_GetSendQueueCount(int player);
+    //uint            N_GetSendQueueSize(int player);
     void            N_TerminateNode(nodeid_t id);
-    void            N_FlushOutgoing(void);
+    //void            N_FlushOutgoing(void);
 
     boolean         N_GetNodeName(nodeid_t id, char *name);
     const char     *N_GetProtocolName(void);

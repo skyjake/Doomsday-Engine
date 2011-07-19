@@ -71,7 +71,7 @@ extern boolean singledemo;
 //  according to user inputs. Partly load from
 //  WAD, partly set at startup time.
 
-#define gametic     Get(DD_GAMETIC)
+//#define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
 // Bookkeeping on players - state.
 extern player_t players[MAXPLAYERS];

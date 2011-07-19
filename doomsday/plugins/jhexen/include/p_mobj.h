@@ -177,14 +177,9 @@ typedef struct mobj_s {
 
     // Hexen-specific data:
     struct player_s *player; // Only valid if type == MT_PLAYER
-    mobjinfo_t*     info; // &MOBJINFO[mobj->type]
     int             damage; // For missiles
-    int             flags;
-    int             flags2; // Heretic flags
-    int             flags3;
     int             special1; // Special info
     int             special2; // Special info
-    int             health;
     int             moveDir; // 0-7
     int             moveCount; // When 0, select a new dir
     struct mobj_s*  target; // Thing being chased/attacked (or NULL)

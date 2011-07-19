@@ -82,24 +82,20 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
     state_t*            st;
 
     if(state == S_NULL)
-    {   // Remove mobj.
+    {
+        // Remove mobj.
         mobj->state = (state_t *) S_NULL;
         P_MobjRemove(mobj, false);
         return false;
     }
 
-    if(mobj->ddFlags & DDMF_REMOTE)
-    {
-        Con_Error("P_MobjChangeState: Can't set Remote state!\n");
-    }
+    P_MobjSetState(mobj, state);
+    mobj->turnTime = false; // $visangle-facetarget.
 
     st = &STATES[state];
-    P_MobjSetState(mobj, state);
-
-    mobj->turnTime = false; // $visangle-facetarget.
-    if(st->action)
-    {   // Call action function.
-        st->action(mobj);
+    if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+    {
+        if(st->action) st->action(mobj); // Call action function.
     }
 
     return true;
@@ -125,12 +121,7 @@ boolean P_SetMobjStateNF(mobj_t *mobj, statenum_t state)
 
 void P_ExplodeMissile(mobj_t *mo)
 {
-    if(IS_CLIENT)
-    {
-        // Clients won't explode missiles.
-        P_MobjChangeState(mo, S_NULL);
-        return;
-    }
+    if(!mo->info) return;
 
     if(mo->type == MT_WHIRLWIND)
     {
@@ -377,7 +368,6 @@ void P_MobjMoveXY(mobj_t* mo)
             mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
             P_MobjChangeState(mo, P_GetState(mo->type, SN_SEE));
         }
-
         return;
     }
 
@@ -492,7 +482,7 @@ void P_MobjMoveXY(mobj_t* mo)
     // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
     {
-        // Debug option for no sliding at all
+        // Debug option for no sliding a`t all
         mo->mom[MX] = mo->mom[MY] = 0;
         return;
     }
@@ -525,14 +515,16 @@ void P_MobjMoveXY(mobj_t* mo)
     }
 
     // Stop player walking animation.
-    if(player && (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
-                  player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
-       INRANGE_OF(mo->mom[MX], 0, STANDSPEED_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, STANDSPEED_THRESHOLD))
+    if((!player || (!(player->plr->forwardMove || player->plr->sideMove) &&
+        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
+       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {
         // If in a walking frame, stop moving.
-        if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
+        {
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
+        }
 
         // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
         if(player && player->plr->mo == mo)
@@ -835,8 +827,8 @@ void P_NightmareRespawn(mobj_t* mobj)
 
 void P_MobjThinker(mobj_t *mobj)
 {
-    if(mobj->ddFlags & DDMF_REMOTE)
-        return; // Remote mobjs are handled separately.
+    if(IS_CLIENT && !ClMobj_IsValid(mobj))
+        return; // We should not touch this right now.
 
     if(mobj->type == MT_BLASTERFX1)
     {
@@ -1071,9 +1063,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
+    /*
     // Clients only spawn local objects.
     if(!(info->flags & MF_LOCAL) && IS_CLIENT)
         return NULL;
+     */
 
     // Not for deathmatch?
     if(deathmatch && (info->flags & MF_NOTDMATCH))

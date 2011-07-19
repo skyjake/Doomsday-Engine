@@ -259,8 +259,9 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
     if(!list)
         return rtn;
 
-    P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
+    IterList_RewindIterator(list);
+    while((sec = IterList_MoveIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
 

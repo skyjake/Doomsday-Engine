@@ -45,30 +45,48 @@
 #define CLMF_KNOWN_STATE    0x80000
 #define CLMF_KNOWN          0xf0000 // combination of all the KNOWN-flags
 
-typedef struct clmobj_s {
-    struct clmobj_s *next, *prev;
+// Magic number for client mobj information.
+#define CLM_MAGIC1          0xdecafed1
+#define CLM_MAGIC2          0xcafedeb8
+
+/// Asserts that a given mobj is a client mobj.
+#define CL_ASSERT_CLMOBJ(mo)    assert(Cl_IsClientMobj(mo));
+
+/**
+ * Information about a client mobj. This structure is attached to
+ * gameside mobjs. The last 4 bytes must be CLM_MAGIC.
+ */
+typedef struct clmoinfo_s {
+    uint            startMagic;     // The client mobj magic number (CLM_MAGIC1).
+    struct clmoinfo_s *next, *prev;
     int             flags;
-    uint            time; // Time of last update.
-    int             sound; // Queued sound ID.
-    float           volume; // Volume for queued sound.
-    mobj_t          mo;
-} clmobj_t;
+    uint            time;           // Time of last update.
+    int             sound;          // Queued sound ID.
+    float           volume;         // Volume for queued sound.
+    uint            endMagic;       // The client mobj magic number (CLM_MAGIC2).
+} clmoinfo_t;
 
 void            Cl_InitClientMobjs(void);
 void            Cl_Reset(void);
 void            Cl_DestroyClientMobjs(void);
-clmobj_t       *Cl_CreateMobj(thid_t id);
-void            Cl_DestroyMobj(clmobj_t *cmo);
-boolean         Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *),
-                                void *parm);
-void            Cl_PredictMovement(void);
-void            Cl_UnsetMobjPosition(clmobj_t *cmo);
-void            Cl_SetMobjPosition(clmobj_t *cmo);
-int             Cl_ReadMobjDelta(void);
-void            Cl_ReadMobjDelta2(boolean skip);
-void            Cl_ReadNullMobjDelta2(boolean skip);
-clmobj_t       *Cl_FindMobj(thid_t id);
-void            Cl_CheckMobj(clmobj_t *cmo, boolean justCreated);
-void            Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags);
+void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags);
+
+mobj_t         *ClMobj_Create(thid_t id);
+void            ClMobj_Destroy(mobj_t *mo);
+clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
+mobj_t         *ClMobj_Find(thid_t id);
+mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
+boolean         ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm);
+void            ClMobj_UnsetPosition(mobj_t *cmo); // needed?
+void            ClMobj_SetPosition(mobj_t *cmo); // needed?
+void            ClMobj_SetState(mobj_t *mo, int stnum); // needed?
+void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
+
+//int             ClMobj_ReadDelta(void); // obsolete
+void            ClMobj_ReadDelta2(boolean skip);
+void            ClMobj_ReadNullDelta2(boolean skip);
+
+boolean         Cl_IsClientMobj(mobj_t* mo); // public
+boolean         ClMobj_IsValid(mobj_t* mo); // public
 
 #endif

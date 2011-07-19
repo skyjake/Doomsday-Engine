@@ -1422,8 +1422,8 @@ void Def_PostInit(void)
  */
 boolean Def_SameStateSequence(state_t* snew, state_t* sold)
 {
-    int                 it, target = snew - states, start = sold - states;
-    int                 count = 0;
+    int it, target = snew - states, start = sold - states;
+    int count = 0;
 
     if(!snew || !sold)
         return false;

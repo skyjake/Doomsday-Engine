@@ -31,6 +31,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#if 0
+
 #include "de_base.h"
 #include "de_network.h"
 #include "de_play.h"
@@ -115,3 +117,5 @@ void P_BuildCommand(ticcmd_t *cmd, int playerNumber)
     }
 #endif
 }
+
+#endif

@@ -334,6 +334,21 @@ int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h)
 }
 
 /**
+ * Sets the view player for a console.
+ *
+ * @param consoleNum  Player whose view to set.
+ * @param viewPlayer  Player that will be viewed by player @a consoleNum.
+ */
+void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewports[p].console = viewPlayer;
+    }
+}
+
+/**
  * Calculate the placement and dimensions of a specific viewport.
  * Assumes that the grid has already been configured.
  */
@@ -817,6 +832,14 @@ void R_SetupFrame(player_t* player)
     if(resetNextViewer ||
        V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
+#ifdef _DEBUG
+        Con_Message("R_SetupFrame: resetNextViewer = %i\n", resetNextViewer);
+#endif
+
+        // Keep reseting until a new sharp world has arrived.
+        if(resetNextViewer > 1)
+            resetNextViewer = 0;
+
         // Just view from the sharp position.
         R_CopyViewer(&vd->current, &sharpView);
 
@@ -883,15 +906,15 @@ void R_SetupFrame(player_t* player)
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
                         sysTime - old->time,
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
-                        smoothView.pos[2] - old->z /*,
-                        smoothView.pos[0] - old->x / (sysTime - old->time),
+                        smoothView.pos[2] - old->z,
+                        (smoothView.pos[0] - old->x) / (sysTime - old->time) /*,
                         smoothView.pos[1] - old->y / (sysTime - old->time)*/);
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
@@ -1167,7 +1190,7 @@ void R_RenderViewPorts(void)
             displayPlayer = vp->console;
             R_UseViewPort(vp);
 
-            if(displayPlayer < 0)
+            if(displayPlayer < 0 || ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS)
             {
                 R_RenderBlankView();
                 continue;

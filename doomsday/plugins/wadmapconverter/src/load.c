@@ -37,6 +37,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef WIN32
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 // Size of the map data structures in bytes in the arrived WAD format.
@@ -172,7 +177,7 @@ static const materialref_t* getMaterial(const char* regName,
 
 const materialref_t* GetMaterial(const char* name, boolean isFlat)
 {
-    return getMaterial(name, isFlat? &map->flats : &map->textures,
+    return getMaterial(name, (materialref_t* const**)(isFlat? &map->flats : &map->textures),
                        isFlat? map->numFlats : map->numTextures);
 }
 

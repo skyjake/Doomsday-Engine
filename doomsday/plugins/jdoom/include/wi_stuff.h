@@ -111,4 +111,9 @@ void WI_SetState(interludestate_t st);
  */
 void WI_End(void);
 
+/**
+ * Skip to the next state in the intermission.
+ */
+void IN_SkipToNext(void);
+
 #endif /* LIBDOOM_WI_STUFF_H */

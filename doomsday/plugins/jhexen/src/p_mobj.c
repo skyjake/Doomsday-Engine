@@ -103,18 +103,20 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
     state_t*            st;
 
     if(state == S_NULL)
-    {   // Remove mobj.
+    {
+        // Remove mobj.
         mobj->state = (state_t *) S_NULL;
         P_MobjRemove(mobj, false);
         return false;
     }
-    st = &STATES[state];
 
     P_MobjSetState(mobj, state);
     mobj->turnTime = false; // $visangle-facetarget
-    if(st->action)
-    {   // Call action function.
-        st->action(mobj);
+
+    st = &STATES[state];
+    if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+    {
+        if(st->action) st->action(mobj); // Call action function.
     }
 
     // Return false if the action function removed the mobj.
@@ -675,29 +677,20 @@ explode:
     }
 
     // Stop player walking animation.
-    if(player && (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
-                  player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
-       INRANGE_OF(mo->mom[MX], 0, STANDSPEED_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, STANDSPEED_THRESHOLD))
-    {
-        // If in a walking frame, stop moving.
-        if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
-
-        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-        if(player && player->plr->mo == mo)
-            player->bob = 0;
-    }
-
-    if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove)) &&
+    if((!player || (!(player->plr->forwardMove || player->plr->sideMove))) &&
        INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
        INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
-    {
-        mo->mom[MX] = mo->mom[MY] = 0;
-
-        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-        if(player && player->plr->mo == mo)
-            player->bob = 0;
+    {   // If in a walking frame, stop moving
+        if(player)
+        {
+            if((unsigned)
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class_)->runState) < 4)
+            {
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
+            }
+        }
+        mo->mom[MX] = 0;
+        mo->mom[MY] = 0;
     }
     else
     {
@@ -851,7 +844,7 @@ void P_MobjMoveZ(mobj_t *mo)
                         // Fix DOOM bug - dead players grunting when hitting the ground
                         // (e.g., after an archvile attack)
                         if(mo->player->health > 0)
-                            switch(mo->player->class)
+                            switch(mo->player->class_)
                             {
                             case PCLASS_FIGHTER:
                                 S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -978,7 +971,7 @@ void P_MobjMoveZ(mobj_t *mo)
 
 static void landedOnThing(mobj_t* mo)
 {
-    if(!mo->player)
+    if(!mo || !mo->player)
         return; // We are only interested in players.
 
     mo->player->viewHeightDelta = mo->mom[MZ] / 8;
@@ -990,7 +983,7 @@ static void landedOnThing(mobj_t* mo)
     else if(mo->mom[MZ] < -P_GetGravity() * 12 && !mo->player->morphTics)
     {
         S_StartSound(SFX_PLAYER_LAND, mo);
-        switch(mo->player->class)
+        switch(mo->player->class_)
         {
         case PCLASS_FIGHTER:
             S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -1020,8 +1013,8 @@ static void landedOnThing(mobj_t* mo)
 
 void P_MobjThinker(mobj_t* mobj)
 {
-    if(mobj->ddFlags & DDMF_REMOTE) // Remote mobjs are handled separately.
-        return;
+    if(IS_CLIENT && !ClMobj_IsValid(mobj))
+        return; // We should not touch this right now.
 
     if(mobj->type == MT_MWAND_MISSILE || mobj->type == MT_CFLAME_MISSILE)
     {
@@ -1233,9 +1226,11 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     info = &MOBJINFO[type];
 
+    /*
     // Clients only spawn local objects.
     if(!(info->flags & MF_LOCAL) && IS_CLIENT)
         return NULL;
+    */
 
     // Not for deathmatch?
     if(deathmatch && (info->flags & MF_NOTDMATCH))
@@ -1498,6 +1493,8 @@ boolean P_HitFloor(mobj_t *thing)
     mobj_t*             mo;
     int                 smallsplash = false;
     const terraintype_t* tt;
+
+    if(!thing->info) return false;
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {   // Don't splash if landing on the edge above water/lava/etc....
@@ -1904,7 +1901,7 @@ boolean P_HealRadius(player_t* player)
     params.origin[VY] = pmo->pos[VY];
     params.maxDistance = HEAL_RADIUS_DIST;
 
-    switch(player->class)
+    switch(player->class_)
     {
     case PCLASS_FIGHTER:
         DD_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);
