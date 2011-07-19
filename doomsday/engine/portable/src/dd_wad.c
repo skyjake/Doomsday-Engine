@@ -512,7 +512,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
     // Do not read files twice.
     if(!allowDuplicate && !F_CheckFileId(fileName))
     {
-        Con_Message("\"%s\" (0) already loaded.\n", F_PrettyPath(fileName));
+        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
         F_Close(handle); // The file is not used.
         return false;
     }
