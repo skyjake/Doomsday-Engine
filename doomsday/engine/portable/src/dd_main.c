@@ -2213,7 +2213,7 @@ texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
     return TEXTURENAMESPACE_COUNT; // Unknown.
 }
 
-materialnamespaceid_t DD_ParseFontNamespace(const char* str)
+fontnamespaceid_t DD_ParseFontNamespace(const char* str)
 {
     if(!str || 0 == strlen(str))
         return FN_ANY;
