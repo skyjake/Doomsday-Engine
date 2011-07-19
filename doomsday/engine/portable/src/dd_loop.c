@@ -351,7 +351,7 @@ void DD_Ticker(timespan_t time)
         UI2_Ticker(time);
 
         // InFine ticks whenever it's active.
-        FI_Ticker(time);
+        FI_Ticker();
 
         // Game logic.
         if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Ticker)

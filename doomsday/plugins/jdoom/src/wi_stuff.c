@@ -233,7 +233,7 @@ void WI_Register(void)
 
 void IN_SkipToNext(void)
 {
-    accelerateStage = 1;
+    advanceState = true;
 }
 
 static void drawBackground(void)

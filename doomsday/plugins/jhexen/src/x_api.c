@@ -42,6 +42,7 @@
 #include "hu_menu.h"
 #include "p_mapsetup.h"
 #include "r_common.h"
+#include "p_map.h"
 
 #define GID(v)          (toGameId(v))
 

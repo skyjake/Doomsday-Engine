@@ -331,7 +331,7 @@ int Cht_GiveArmorFunc(const int* args, int player)
 
     for(i = (int)ARMOR_FIRST; i < (int)NUMARMOR; ++i)
     {
-        P_GiveArmor(plr, (armortype_t)i, PCLASS_INFO(plr->class)->armorIncrement[i]);
+        P_GiveArmor(plr, (armortype_t)i, PCLASS_INFO(plr->class_)->armorIncrement[i]);
     }
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
@@ -1189,7 +1189,7 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific armor.
-                    P_GiveArmor(plr, (armortype_t)idx, PCLASS_INFO(plr->class)->armorIncrement[idx]);
+                    P_GiveArmor(plr, (armortype_t)idx, PCLASS_INFO(plr->class_)->armorIncrement[idx]);
                     break;
                 }
             }

@@ -386,7 +386,7 @@ void Sv_HandlePacket(void)
             Msg_Read(buf, 16);
             if(strnicmp(buf, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), 16))
             {
-                Con_Printf("  Bad Game ID: %-.16s (expected %s)\n", buf, (char*)gx.GetVariable(DD_GAME_MODE));
+                Con_Printf("  Bad Game ID: %-.16s\n", buf);
                 N_TerminateClient(from);
                 break;
             }

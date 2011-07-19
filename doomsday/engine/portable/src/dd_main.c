@@ -991,7 +991,6 @@ static int DD_ChangeGameWorker(void* paramaters)
 
         if(isServer && plr->shared.inGame)
             clients[i].runTime = SECONDS_TO_TICKS(gameTime);
-        clients[i].numTics = 0;
     }}
 
     if(gx.PostInit)

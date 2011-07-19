@@ -96,10 +96,10 @@ float HU_PSpriteYOffset(player_t* pl)
 
 #if __JHERETIC__ 
     if(winH == portH)
-        offy += PSpriteSY[pl->morphTics? PCLASS_CHICKEN : pl->class][pl->readyWeapon];
+        offy += PSpriteSY[pl->morphTics? PCLASS_CHICKEN : pl->class_][pl->readyWeapon];
 #elif __JHEXEN__
     if(winH == portH)
-        offy += PSpriteSY[pl->morphTics? PCLASS_PIG : pl->class][pl->readyWeapon];
+        offy += PSpriteSY[pl->morphTics? PCLASS_PIG : pl->class_][pl->readyWeapon];
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__

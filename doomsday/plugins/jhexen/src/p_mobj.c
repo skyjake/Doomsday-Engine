@@ -354,7 +354,7 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
 
 static __inline boolean isInWalkState(player_t* pl)
 {
-    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class)->runState < 4;
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
 
 float P_MobjGetFriction(mobj_t* mo)

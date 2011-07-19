@@ -604,11 +604,13 @@ void SBarBackground_UpdateDimensions(uiwidget_t* obj)
 #undef WIDTH
 }
 
+/*
 void ST_updateWidgets(int player)
 {
     hudstate_t* hud = &hudStates[player];
 
 }
+*/
 
 int ST_Responder(event_t* ev)
 {
@@ -1179,7 +1181,7 @@ void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
         return;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
         ammo->value = plr->ammo[ammoType].owned;
         break;
@@ -1287,7 +1289,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
         return;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
         icon->patchId = pAmmoIcons[ammoType].id;
         break;

@@ -156,8 +156,8 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
-                    *p, Str_Text(&uri->_path), p - Str_Text(&uri->_path));
+                Con_Message("Invalid character '%c' in \"%s\" at %i (Uri::resolveUri).\n",
+                            *p, Str_Text(&uri->_path), p - Str_Text(&uri->_path));
                 goto parseEnded;
             }
             // Skip over the opening brace.

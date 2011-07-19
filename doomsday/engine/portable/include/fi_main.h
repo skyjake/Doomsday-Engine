@@ -35,6 +35,6 @@ void FI_Register(void);
 void FI_Init(void);
 void FI_Shutdown(void);
 
-void FI_Ticker(timespan_t time);
+void FI_Ticker(void);
 
 #endif /* LIBDENG_INFINE_MAIN_H */

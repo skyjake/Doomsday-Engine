@@ -328,7 +328,7 @@ float P_MobjGetFriction(mobj_t *mo)
 
 static __inline boolean isInWalkState(player_t* pl)
 {
-    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class)->runState < 4;
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
 
 static float getFriction(mobj_t* mo)
@@ -520,22 +520,13 @@ void P_MobjMoveXY(mobj_t* mo)
        INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
        INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {
+        mo->mom[MX] = mo->mom[MY] = 0;
+
         // If in a walking frame, stop moving.
         if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
         {
             P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
         }
-
-        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-        if(player && player->plr->mo == mo)
-            player->bob = 0;
-    }
-
-    if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove)) &&
-       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
-    {
-        mo->mom[MX] = mo->mom[MY] = 0;
 
         // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
         if(player && player->plr->mo == mo)

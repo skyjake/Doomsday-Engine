@@ -85,7 +85,7 @@ const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id);
 
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
-fontnamespaceid_t DD_ParseFontNamespace(const char* str);
+materialnamespaceid_t DD_ParseFontNamespace(const char* str);
 
 materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 

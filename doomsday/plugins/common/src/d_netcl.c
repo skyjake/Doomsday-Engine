@@ -707,6 +707,7 @@ void NetCl_Intermission(byte* data)
 #endif
 }
 
+#if 0 // MOVED INTO THE ENGINE
 /**
  * This is where clients start their InFine interludes.
  */
@@ -754,6 +755,7 @@ void NetCl_Finale(int packetType, byte *data)
         FI_SkipRequest();
     }
 }
+#endif
 
 /**
  * Clients have other players' info, but it's only "FYI"; they don't really need it.

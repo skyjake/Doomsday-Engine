@@ -399,9 +399,6 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         default:
             Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
             break;
-
-        default:
-            break;
         }
         suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;
     }

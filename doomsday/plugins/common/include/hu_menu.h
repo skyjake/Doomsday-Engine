@@ -84,7 +84,7 @@ extern mn_page_t PlayerClassMenu;
 #if __JDOOM__ || __JHERETIC__
 extern mn_page_t EpisodeMenu;
 #endif
-extern mn_page_t SkillMenu;
+//extern mn_page_t SkillMenu;
 extern mn_page_t OptionsMenu;
 extern mn_page_t SoundMenu;
 extern mn_page_t GameplayMenu;

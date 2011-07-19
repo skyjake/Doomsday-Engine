@@ -872,8 +872,8 @@ void ST_Ticker(timespan_t ticLength)
                 hud->hideAmount += 0.1f;
         }
 
-        ST_updateWidgets(i);
-        hud->oldHealth = plr->health;
+        //ST_updateWidgets(i);
+        //hud->oldHealth = plr->health;
     }
 }
 
@@ -942,7 +942,7 @@ void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     found = false;
     for(ammoType=0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
         ammo->value = plr->ammo[ammoType].owned;
         found = true;
@@ -2140,7 +2140,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     icon->sprite = -1;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammoType])
             continue;
         icon->sprite = ammoSprite[ammoType];
         break;

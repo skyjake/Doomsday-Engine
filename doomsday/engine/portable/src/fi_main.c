@@ -342,9 +342,9 @@ void FI_ScriptTerminate(finaleid_t id)
     }
 }
 
-void FI_Ticker(timespan_t ticLength)
+void FI_Ticker(void)
 {
-    if(!M_CheckTrigger(&sharedFixedTrigger, ticLength))
+    if(!DD_IsSharpTick())
         return;
 
     // A new 'sharp' tick has begun.

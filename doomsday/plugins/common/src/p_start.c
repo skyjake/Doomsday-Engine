@@ -175,8 +175,8 @@ mobjtype_t P_DoomEdNumToMobjType(int doomEdNum)
 void P_Init(void)
 {
     // Create the various line lists (spechits, anims, buttons etc).
-    spechit = P_CreateIterList();
-    linespecials = P_CreateIterList();
+    spechit = IterList_ConstructDefault();
+    linespecials = IterList_ConstructDefault();
 
 #if __JHEXEN__
     X_CreateLUTs();
@@ -797,12 +797,12 @@ void P_RebornPlayer(int plrNum)
                         foundSpot = true;
 
 #ifdef _DEBUG
-                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", start->pos[VX], start->pos[VY]);
+                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", spot->pos[VX], spot->pos[VY]);
 #endif
                         break;
                     }
 #ifdef _DEBUG
-                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", start->pos[VX], start->pos[VY]);
+                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", spot->pos[VX], spot->pos[VY]);
 #endif
                 }
             }

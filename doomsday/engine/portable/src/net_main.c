@@ -589,19 +589,14 @@ static __inline client_t* clientInfoForClientId(int clientNum)
 
 void Net_AllocClientBuffers(int clientId)
 {
-    client_t* cl = clientInfoForClientId(clientId);
+/*    client_t* cl = clientInfoForClientId(clientId);
 
+    cl->runTime = -1;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         memset(clients + i, 0, sizeof(clients[i]));
-        // The server stores ticcmds sent by the clients to these
-        // buffers.
-        //clients[i].ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
-        // The last cmd that was executed is stored here.
-        //clients[i].lastCmd = M_Calloc(TICCMD_SIZE);
-        //clients[i].aggregateCmd = M_Calloc(TICCMD_SIZE);
         clients[i].runTime = -1;
-    }
+    }*/
 }
 
 void Net_DestroyArrays(void)

@@ -149,13 +149,13 @@ const dduri_t* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
 {
     assert(rec);
     if(rec->_searchPaths)
-        return rec->_searchPaths;
+        return (const dduri_t* const*) rec->_searchPaths;
     { ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
     rec->_searchPaths = F_CreateUriListStr(rec->_rclass, searchPaths);
     if(searchPaths)
         Str_Delete(searchPaths);
     }
-    return rec->_searchPaths;
+    return (const dduri_t* const*) rec->_searchPaths;
 }
 
 ddstring_t* ResourceRecord_SearchPathsAsStringList(resourcerecord_t* rec)
@@ -190,7 +190,7 @@ int ResourceRecord_ResourceFlags(resourcerecord_t* rec)
 const ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec)
 {
     assert(rec);
-    return rec->_identityKeys;
+    return (const ddstring_t* const*) rec->_identityKeys;
 }
 
 void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)

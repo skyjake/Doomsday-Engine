@@ -263,8 +263,8 @@ void P_DestroyLineTagLists(void)
     { uint i; 
     for(i = 0; i < numLineTagLists; ++i)
     {
-        P_EmptyIterList(lineTagLists[i].list);
-        P_DestroyIterList(lineTagLists[i].list);
+        IterList_Empty(lineTagLists[i].list);
+        IterList_Destruct(lineTagLists[i].list);
     }}
 
     free(lineTagLists);
@@ -291,7 +291,7 @@ iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = P_CreateIterList());
+    return (tagList->list = IterList_ConstructDefault());
 }
 
 void P_DestroySectorTagLists(void)
@@ -302,8 +302,8 @@ void P_DestroySectorTagLists(void)
     { uint i;
     for(i = 0; i < numSectorTagLists; ++i)
     {
-        P_EmptyIterList(sectorTagLists[i].list);
-        P_DestroyIterList(sectorTagLists[i].list);
+        IterList_Empty(sectorTagLists[i].list);
+        IterList_Destruct(sectorTagLists[i].list);
     }}
 
     free(sectorTagLists);
@@ -330,7 +330,7 @@ iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList)
     tagList = &sectorTagLists[numSectorTagLists - 1];
     tagList->tag = tag;
 
-    return (tagList->list = P_CreateIterList());
+    return (tagList->list = IterList_ConstructDefault());
 }
 
 sector_t* P_GetNextSector(linedef_t* line, sector_t* sec)

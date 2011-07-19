@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright Â© 2003-2011 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -643,7 +643,7 @@ void FIPage_Ticker(fi_page_t* p, timespan_t ticLength)
 {
     if(!p) Con_Error("FIPage_Ticker: Invalid page.");
 
-    if(!M_CheckTrigger(&sharedFixedTrigger, ticLength))
+    if(!DD_IsSharpTick())
         return;
     // A new 'sharp' tick has begun.
     p->_timer++;

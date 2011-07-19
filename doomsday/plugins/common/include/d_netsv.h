@@ -46,8 +46,8 @@ void            NetSv_NewPlayerEnters(int plrNum);
 void            NetSv_ResetPlayerFrags(int plrNum);
 void            NetSv_SendGameState(int flags, int to);
 void            NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle);
-void            NetSv_SendMessage(int plrNum, char *msg);
-void            NetSv_SendYellowMessage(int plrNum, char *msg);
+void            NetSv_SendMessage(int plrNum, const char *msg);
+void            NetSv_SendYellowMessage(int plrNum, const char *msg);
 void            NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
                                       boolean reliable);
 void            NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum,
