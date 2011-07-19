@@ -229,14 +229,14 @@ texturenamespaceid_t Texture_Namespace(const texture_t* tex)
     return tex->_texNamespace;
 }
 
-struct texturenamespace_hashnode_s* Texture_NamespaceHashNode(const texture_t* tex)
+struct texturenamespace_namehash_node_s* Texture_NamespaceHashNode(const texture_t* tex)
 {
     assert(tex);
     return tex->_texNamespaceHashNode;
 }
 
 void Texture_SetNamespace(texture_t* tex, texturenamespaceid_t texNamespace,
-    struct texturenamespace_hashnode_s* texNamespaceHashNode)
+    struct texturenamespace_namehash_node_s* texNamespaceHashNode)
 {
     assert(tex && VALID_TEXTURENAMESPACE(texNamespace) && texNamespaceHashNode);
     tex->_texNamespace = texNamespace;
