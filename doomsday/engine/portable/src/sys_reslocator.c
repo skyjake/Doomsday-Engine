@@ -513,7 +513,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     createResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, composeHashNameForFilePath,
-        hashVarLengthNameIgnoreCase, searchPaths, searchPathsCount, 0, 0, 0);
+        hashVarLengthNameIgnoreCase, (const dduri_t**)searchPaths, searchPathsCount, 0, 0, 0);
 
     for(idx = 0; idx < searchPathsCount; ++idx)
         Uri_Destruct(searchPaths[idx]);
@@ -567,7 +567,7 @@ static void createResourceNamespaces(void)
             searchPaths[j] = Uri_Construct2(def->searchPaths[j], RC_NULL);
 
         createResourceNamespace(def->name, composeHashNameForFilePath, hashVarLengthNameIgnoreCase,
-            searchPaths, searchPathsCount, def->flags, def->overrideName, def->overrideName2);
+            (const dduri_t**)searchPaths, searchPathsCount, def->flags, def->overrideName, def->overrideName2);
 
         for(j = 0; j < searchPathsCount; ++j)
             Uri_Destruct(searchPaths[j]);
@@ -843,7 +843,7 @@ uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
 
     if((list = F_CreateUriListStr(rclass, searchPaths)) != 0)
     {
-        result = findResource(rclass, list, optionalSuffix, foundPath);
+        result = findResource(rclass, (const dduri_t**)list, optionalSuffix, foundPath);
         F_DestroyUriList(list);
     }
     return result;

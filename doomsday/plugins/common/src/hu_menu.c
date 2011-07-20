@@ -2068,8 +2068,7 @@ void Hu_MenuTicker(timespan_t ticLength)
     // Move towards the target alpha level for the entire menu.
     if(mnAlpha != mnTargetAlpha)
     {
-#define MENUALPHA_FADE_STEP (.07)
-
+#define MENUALPHA_FADE_STEP (.07f)
         float diff = mnTargetAlpha - mnAlpha;
         if(fabs(diff) > MENUALPHA_FADE_STEP)
         {
@@ -2079,7 +2078,6 @@ void Hu_MenuTicker(timespan_t ticLength)
         {
             mnAlpha = mnTargetAlpha;
         }
-
 #undef MENUALPHA_FADE_STEP
     }
 
