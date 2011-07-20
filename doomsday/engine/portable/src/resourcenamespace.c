@@ -280,6 +280,7 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     }
     else
         rn->_overrideName2 = 0;
+
     return rn;
     }
 }

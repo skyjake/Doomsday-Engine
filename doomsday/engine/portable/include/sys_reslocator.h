@@ -27,8 +27,8 @@
 
 #include "dd_string.h"
 
-struct resourcenamespace_s;
-struct resourcerecord_s;
+#include "resourcenamespace.h"
+
 struct filedirectory_s;
 struct dduri_s;
 
@@ -94,6 +94,32 @@ void F_InitResourceLocator(void);
  * queries are no longer possible.
  */
 void F_ShutdownResourceLocator(void);
+
+void F_ResetAllResourceNamespaces(void);
+
+void F_CreateNamespacesForFileResourcePaths(void);
+
+/**
+ * @return  Newly created hash name. Ownership passes to the caller who should
+ * ensure to release it with Str_Delete when done.
+ */
+ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath);
+
+/**
+ * This is a hash function. It uses the resource name to generate a
+ * somewhat-random number between 0 and RESOURCENAMESPACE_HASHSIZE.
+ *
+ * @return  The generated hash key.
+ */
+resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const ddstring_t* name);
+
+#define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
+
+resourcenamespace_t* F_CreateResourceNamespace(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
+    const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
+    const char* overrideName2);
 
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
