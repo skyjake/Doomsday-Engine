@@ -215,11 +215,11 @@ static const ddstring_t* nameForMaterialNamespaceId(materialnamespaceid_t id)
 static materialnamespaceid_t materialNamespaceIdForTextureNamespaceId(texturenamespaceid_t id)
 {
     static const materialnamespaceid_t namespaceIds[TEXTURENAMESPACE_COUNT] = {
-        /* TN_SYSTEM */    { MN_SYSTEM },
-        /* TN_FLATS */     { MN_FLATS },
-        /* TN_TEXTURES */  { MN_TEXTURES },
-        /* TN_SPRITES */   { MN_SPRITES },
-        /* TN_PATCHES */   { MN_ANY } // No materials for these yet.
+        /* TN_SYSTEM */    MN_SYSTEM,
+        /* TN_FLATS */     MN_FLATS,
+        /* TN_TEXTURES */  MN_TEXTURES,
+        /* TN_SPRITES */   MN_SPRITES,
+        /* TN_PATCHES */   MN_ANY // No materials for these yet.
     };
     if(VALID_TEXTURENAMESPACE(id))
         return namespaceIds[id-TEXTURENAMESPACE_FIRST];

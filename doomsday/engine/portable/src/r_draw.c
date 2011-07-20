@@ -98,7 +98,7 @@ static void loadViewBorderPatches(void)
     bwidth = info.height;
 }
 
-void R_SetBorderGfx(const dduri_t* paths[9])
+void R_SetBorderGfx(const dduri_t* const* paths)
 {
     assert(inited);
     {

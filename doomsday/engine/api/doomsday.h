@@ -400,7 +400,7 @@ boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
-    void            R_SetBorderGfx(const dduri_t* paths[9]);
+    void            R_SetBorderGfx(const dduri_t* const* paths);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 const ddstring_t* R_GetPatchName(patchid_t id);

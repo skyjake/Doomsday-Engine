@@ -575,7 +575,7 @@ Draw_EndZoom();
             if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammotype])
                 continue;
 
-            sprintf(buf, "%i", plr->ammo[ammotype]);
+            sprintf(buf, "%i", plr->ammo[ammotype].owned);
             pos = h_width/2;
 
             DGL_Enable(DGL_TEXTURE_2D);

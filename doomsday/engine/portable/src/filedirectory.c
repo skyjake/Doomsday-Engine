@@ -187,7 +187,7 @@ static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
         if(Str_RAt(searchPath, 0) != FILEDIRECTORY_DELIMITER)
             Str_AppendChar(searchPath, FILEDIRECTORY_DELIMITER);
 
-        addPaths(fd, &searchPath, 1, callback, paramaters);
+        addPaths(fd, (const ddstring_t**)&searchPath, 1, callback, paramaters);
         Str_Delete(searchPath);
     }}
 }
@@ -226,7 +226,7 @@ filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList)
     {
         size_t count;
         dduri_t** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        resolveAndAddSearchPathsToDirectory(fd, uris, (uint)count, 0, 0);
+        resolveAndAddSearchPathsToDirectory(fd, (const dduri_t**)uris, (uint)count, 0, 0);
         F_DestroyUriList(uris);
     }
     return fd;
@@ -332,7 +332,7 @@ void FileDirectory_AddPathList3(filedirectory_t* fd, const char* pathList,
     size_t pathsCount = 0;
     if(NULL != pathList && pathList[0])
         paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);
-    FileDirectory_AddPaths3(fd, paths, (uint)pathsCount, callback, paramaters);
+    FileDirectory_AddPaths3(fd, (const dduri_t**)paths, (uint)pathsCount, callback, paramaters);
     if(NULL != paths)
         F_DestroyUriList(paths);
     }

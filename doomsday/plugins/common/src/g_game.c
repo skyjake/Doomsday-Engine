@@ -821,7 +821,7 @@ void R_InitRefresh(void)
     uint i;
     for(i = 0; i < 9; ++i)
         paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_Construct2(borderGraphics[i], RC_NULL) : 0);
-    R_SetBorderGfx(paths);
+    R_SetBorderGfx((const dduri_t**)paths);
     for(i = 0; i < 9; ++i)
         if(paths[i])
             Uri_Destruct(paths[i]);

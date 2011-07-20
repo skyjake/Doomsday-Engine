@@ -32,7 +32,7 @@
 void R_InitViewWindow(void);
 void R_ShutdownViewWindow(void);
 
-void R_SetBorderGfx(const dduri_t* paths[9]);
+void R_SetBorderGfx(const dduri_t* const* paths);
 void R_DrawViewBorder(void);
 
 void R_DrawPatch(patchtex_t* p, int x, int y);

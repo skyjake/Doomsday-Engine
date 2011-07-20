@@ -1411,22 +1411,22 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
 void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* baseSpec)
 {
     static const char* textureUsageContextNames[1+TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
-        /* TC_UNKNOWN */                    { "unknown" },
-        /* TC_UI */                         { "ui" },
-        /* TC_MAPSURFACE_DIFFUSE */         { "mapsurface_diffuse" },
-        /* TC_MAPSURFACE_REFLECTION */      { "mapsurface_reflection" },
-        /* TC_MAPSURFACE_REFLECTIONMASK */  { "mapsurface_reflectionmask" },
-        /* TC_MAPSURFACE_LIGHTMAP */        { "mapsurface_lightmap" },
-        /* TC_SPRITE_DIFFUSE */             { "sprite_diffuse" },
-        /* TC_MODELSKIN_DIFFUSE */          { "modelskin_diffuse" },
-        /* TC_MODELSKIN_REFLECTION */       { "modelskin_reflection" },
-        /* TC_HALO_LUMINANCE */             { "halo_luminance" },
-        /* TC_PSPRITE_DIFFUSE */            { "psprite_diffuse" },
-        /* TC_SKYSPHERE_DIFFUSE */          { "skysphere_diffuse" }
+        /* TC_UNKNOWN */                    "unknown",
+        /* TC_UI */                         "ui",
+        /* TC_MAPSURFACE_DIFFUSE */         "mapsurface_diffuse",
+        /* TC_MAPSURFACE_REFLECTION */      "mapsurface_reflection",
+        /* TC_MAPSURFACE_REFLECTIONMASK */  "mapsurface_reflectionmask",
+        /* TC_MAPSURFACE_LIGHTMAP */        "mapsurface_lightmap",
+        /* TC_SPRITE_DIFFUSE */             "sprite_diffuse",
+        /* TC_MODELSKIN_DIFFUSE */          "modelskin_diffuse",
+        /* TC_MODELSKIN_REFLECTION */       "modelskin_reflection",
+        /* TC_HALO_LUMINANCE */             "halo_luminance",
+        /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
+        /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
     };
     static const char* textureSpecificationTypeNames[TEXTUREVARIANTSPECIFICATIONTYPE_COUNT] = {
-        /* TST_GENERAL */   { "general" },
-        /* TST_DETAIL */    { "detail"  }
+        /* TST_GENERAL */   "general",
+        /* TST_DETAIL */    "detail"
     };
     static const char* filterModeNames[] = { "sprite", "noclass", "const" };
     static const char* glFilterNames[] = {
