@@ -175,6 +175,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     mobj_t          *clmo = ClPlayer_ClMobj(plrNum);
     ddplayer_t      *ddpl = &plr->shared;
     mobj_t          *mo = ddpl->mo;
+    bool             sendAck = false;
 
     // If either mobj is missing, the fix cannot be applied yet.
     if(!mo || !clmo) return;
@@ -187,6 +188,8 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if(state->pendingFixes & DDPF_FIXANGLES)
     {
         state->pendingFixes &= ~DDPF_FIXANGLES;
+        ddpl->fixAcked.angles = ddpl->fixCounter.angles;
+        sendAck = true;
 
 #ifdef _DEBUG
         Con_Message("ClPlayer_ApplyPendingFixes: Applying angle %x to mobj %p and clmo %i...\n",
@@ -199,6 +202,8 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if(state->pendingFixes & DDPF_FIXPOS)
     {
         state->pendingFixes &= ~DDPF_FIXPOS;
+        ddpl->fixAcked.pos = ddpl->fixCounter.pos;
+        sendAck = true;
 
 #ifdef _DEBUG
         Con_Message("ClPlayer_ApplyPendingFixes: Applying pos (%f, %f, %f) to mobj %p and clmo %i...\n",
@@ -217,6 +222,8 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     if(state->pendingFixes & DDPF_FIXMOM)
     {
         state->pendingFixes &= ~DDPF_FIXMOM;
+        ddpl->fixAcked.mom = ddpl->fixCounter.mom;
+        sendAck = true;
 
 #ifdef _DEBUG
         Con_Message("ClPlayer_ApplyPendingFixes: Applying mom (%f, %f, %f) to mobj %p and clmo %i...\n",
@@ -226,6 +233,16 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         mo->mom[MX] = clmo->mom[VX] = state->pendingMomFix[VX];
         mo->mom[MY] = clmo->mom[VY] = state->pendingMomFix[VY];
         mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
+    }
+
+    if(sendAck)
+    {
+        // Send an acknowledgement.
+        Msg_Begin(PCL_ACK_PLAYER_FIX);
+        Msg_WriteLong(ddpl->fixAcked.angles);
+        Msg_WriteLong(ddpl->fixAcked.pos);
+        Msg_WriteLong(ddpl->fixAcked.mom);
+        Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
     }
 }
 
@@ -242,7 +259,7 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 1) // fix angles?
     {
-        ddpl->fixCounter.angles = ddpl->fixAcked.angles = Msg_ReadLong();
+        ddpl->fixCounter.angles = Msg_ReadLong();
         state->pendingAngleFix = Msg_ReadLong();
         state->pendingLookDirFix = FIX2FLT(Msg_ReadLong());
         state->pendingFixes |= DDPF_FIXANGLES;
@@ -255,7 +272,7 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 2) // fix pos?
     {
-        ddpl->fixCounter.pos = ddpl->fixAcked.pos = Msg_ReadLong();
+        ddpl->fixCounter.pos = Msg_ReadLong();
         state->pendingPosFix[VX] = FIX2FLT(Msg_ReadLong());
         state->pendingPosFix[VY] = FIX2FLT(Msg_ReadLong());
         state->pendingPosFix[VZ] = FIX2FLT(Msg_ReadLong());
@@ -269,7 +286,7 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 4) // fix momentum?
     {
-        ddpl->fixCounter.mom = ddpl->fixAcked.mom = Msg_ReadLong();
+        ddpl->fixCounter.mom = Msg_ReadLong();
         state->pendingMomFix[VX] = FIX2FLT(Msg_ReadLong());
         state->pendingMomFix[VY] = FIX2FLT(Msg_ReadLong());
         state->pendingMomFix[VZ] = FIX2FLT(Msg_ReadLong());
@@ -277,13 +294,6 @@ void ClPlayer_HandleFix(void)
     }
 
     ClPlayer_ApplyPendingFixes(consolePlayer);
-
-    // Send an acknowledgement.
-    Msg_Begin(PCL_ACK_PLAYER_FIX);
-    Msg_WriteLong(ddpl->fixAcked.angles);
-    Msg_WriteLong(ddpl->fixAcked.pos);
-    Msg_WriteLong(ddpl->fixAcked.mom);
-    Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
 }
 
 /**

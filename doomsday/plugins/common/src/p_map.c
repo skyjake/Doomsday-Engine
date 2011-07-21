@@ -1505,6 +1505,15 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
                         P_ActivateLine(ld, thing, oldSide, SPAC_PCROSS);
                     }
 #else
+#ifdef _DEBUG
+                    if(!IS_CLIENT && thing->player)
+                    {
+                        Con_Message("P_TryMove2: Mobj %i crossing line %i from %f,%f to %f,%f\n",
+                                    thing->thinker.id, P_ToIndex(ld),
+                                    oldpos[VX], oldpos[VY],
+                                    thing->pos[VX], thing->pos[VY]);
+                    }
+#endif
                     P_ActivateLine(ld, thing, oldSide, SPAC_CROSS);
 #endif
                 }

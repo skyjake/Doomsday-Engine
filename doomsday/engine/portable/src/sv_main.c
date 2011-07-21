@@ -693,14 +693,14 @@ void Sv_GetPackets(void)
             acked->pos = Msg_ReadLong();
             acked->mom = Msg_ReadLong();
 #ifdef _DEBUG
-Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
-            netBuffer.player,
-            acked->angles,
-            ddpl->fixCounter.angles,
-            acked->pos,
-            ddpl->fixCounter.pos,
-            acked->mom,
-            ddpl->fixCounter.mom);
+            Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
+                        netBuffer.player,
+                        acked->angles,
+                        ddpl->fixCounter.angles,
+                        acked->pos,
+                        ddpl->fixCounter.pos,
+                        acked->mom,
+                        ddpl->fixCounter.mom);
 #endif
             break;
         }
@@ -1067,6 +1067,9 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
     Net_SendBuffer(plrNum, SPF_ORDERED | SPF_CONFIRM);
 
     ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM);
+#ifdef _DEBUG
+    Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.\n", plrNum);
+#endif
 }
 
 void Sv_Ticker(void)
