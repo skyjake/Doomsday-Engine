@@ -28,6 +28,7 @@
 #include "dd_string.h"
 
 #include "resourcenamespace.h"
+#include "resourcerecord.h"
 
 struct filedirectory_s;
 struct dduri_s;
