@@ -77,17 +77,16 @@ typedef struct texturevariantspecificationlist_node_s {
 
 typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
 
-typedef struct texturenamespace_hashnode_s {
-    struct texturenamespace_hashnode_s* next;
+#define TEXTURENAMESPACE_NAMEHASH_SIZE (512)
+
+typedef struct texturenamespace_namehash_node_s {
+    struct texturenamespace_namehash_node_s* next;
     texture_t* tex;
-} texturenamespace_hashnode_t;
-
-#define TEXTURENAMESPACE_HASH_SIZE (512)
-
-static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
+} texturenamespace_namehash_node_t;
+typedef texturenamespace_namehash_node_t* texturenamespace_namehash_t[TEXTURENAMESPACE_NAMEHASH_SIZE];
 
 typedef struct texturenamespace_s {
-    texturenamespace_hashnode_t* hashTable[TEXTURENAMESPACE_HASH_SIZE];
+    texturenamespace_namehash_t hashTable;
 } texturenamespace_t;
 
 D_CMD(LowRes);
@@ -95,7 +94,8 @@ D_CMD(ResetTextures);
 D_CMD(MipMap);
 
 static uint hashForTextureName(const char* name);
-static texturenamespace_hashnode_t* findNamespaceHashNodeForTextureByName(const char* name, uint hash, texturenamespaceid_t texNamespace);
+static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
+static texturenamespace_namehash_node_t* findNamespaceHashNodeForTextureByName(const char* name, uint hash, texturenamespaceid_t texNamespace);
 
 void GL_DoResetDetailTextures(void);
 
@@ -692,7 +692,7 @@ static void unlinkTextureFromGlobalList(texture_t* tex)
     }
     else
     {
-        texturenamespace_hashnode_t* node = Texture_NamespaceHashNode(tex);
+        texturenamespace_namehash_node_t* node = Texture_NamespaceHashNode(tex);
         if(NULL == node)
         {
             Con_Error("unlinkTextureFromGlobalList: Internal error, mistracked textures!");
@@ -716,7 +716,7 @@ static void unlinkTextureFromTextureNamespace(texture_t* tex)
 {
     assert(NULL != tex);
     {
-    texturenamespace_hashnode_t* node = Texture_NamespaceHashNode(tex);
+    texturenamespace_namehash_node_t* node = Texture_NamespaceHashNode(tex);
     texturenamespace_t* tn;
     uint hash;
 
@@ -732,7 +732,7 @@ static void unlinkTextureFromTextureNamespace(texture_t* tex)
     else
     {
         // Find the node previous.
-        texturenamespace_hashnode_t* prevNode;
+        texturenamespace_namehash_node_t* prevNode;
         for(prevNode = tn->hashTable[hash]; prevNode->next && prevNode->next != node;
             prevNode = prevNode->next) {}
 
@@ -772,10 +772,10 @@ static void destroyTextures(texturenamespaceid_t texNamespace)
     {
         texturenamespace_t* tn = textureNamespaceForId(texNamespace);
         uint i;
-        for(i = 0; i < TEXTURENAMESPACE_HASH_SIZE; ++i)
+        for(i = 0; i < TEXTURENAMESPACE_NAMEHASH_SIZE; ++i)
         {
-            texturenamespace_hashnode_t* node = tn->hashTable[i];
-            texturenamespace_hashnode_t* next;
+            texturenamespace_namehash_node_t* node = tn->hashTable[i];
+            texturenamespace_namehash_node_t* next;
             while(node)
             {
                 next = node->next;
@@ -1286,7 +1286,7 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
 
 /**
  * This is a hash function. Given a texture name it generates a
- * somewhat-random number between 0 and TEXTURENAMESPACE_HASH_SIZE.
+ * somewhat-random number between 0 and TEXTURENAMESPACE_NAMEHASH_SIZE.
  *
  * @return  The generated hash index.
  */
@@ -1310,7 +1310,7 @@ static uint hashForTextureName(const char* name)
         }
     }
 
-    return key % TEXTURENAMESPACE_HASH_SIZE;
+    return key % TEXTURENAMESPACE_NAMEHASH_SIZE;
 }
 
 /**
@@ -1322,7 +1322,7 @@ static uint hashForTextureName(const char* name)
  * @param type  Specific texture data.
  * @return  Ptr to the found texture_t else, @c NULL.
  */
-static texturenamespace_hashnode_t* findNamespaceHashNodeForTextureByName(
+static texturenamespace_namehash_node_t* findNamespaceHashNodeForTextureByName(
     const char* name, uint hash, texturenamespaceid_t texNamespace)
 {
     texturenamespace_t* tn = NULL;
@@ -1330,7 +1330,7 @@ static texturenamespace_hashnode_t* findNamespaceHashNodeForTextureByName(
         tn = textureNamespaceForId(texNamespace);
     if(tn != NULL)
     {
-        texturenamespace_hashnode_t* node;
+        texturenamespace_namehash_node_t* node;
         for(node = tn->hashTable[hash]; node; node = node->next)
         {
             if(!strnicmp(Texture_Name(node->tex), name, 8))
@@ -1342,7 +1342,7 @@ static texturenamespace_hashnode_t* findNamespaceHashNodeForTextureByName(
 
 static const texture_t* findTextureByName(const char* name, texturenamespaceid_t texNamespace)
 {
-    texturenamespace_hashnode_t* node =
+    texturenamespace_namehash_node_t* node =
         findNamespaceHashNodeForTextureByName(name, hashForTextureName(name), texNamespace);
     return ((node != NULL)? node->tex : 0);
 }
@@ -1634,6 +1634,7 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseGLTexturesByNamespace(TN_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
+    R_ReleaseGLTexturesForSkins();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeGLTextures();
 }
@@ -3301,7 +3302,7 @@ const texture_t* GL_CreateTexture2(const char* name, uint index,
 {
     assert(VALID_TEXTURENAMESPACE(texNamespace));
     {
-    texturenamespace_hashnode_t* node;
+    texturenamespace_namehash_node_t* node;
     texturenamespace_t* tn;
     texture_t* tex;
     uint hash;
@@ -3326,7 +3327,7 @@ const texture_t* GL_CreateTexture2(const char* name, uint index,
     hash = hashForTextureName(name);
     tn = textureNamespaceForId(texNamespace);
 
-    if(NULL == (node = (texturenamespace_hashnode_t*) malloc(sizeof(*node))))
+    if(NULL == (node = (texturenamespace_namehash_node_t*) malloc(sizeof(*node))))
         Con_Error("GL_CreateTexture: Failed on allocation of %lu bytes for "
                   "namespace hashnode.", (unsigned long) sizeof(*node));
     node->tex = tex;

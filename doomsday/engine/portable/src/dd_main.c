@@ -54,6 +54,7 @@
 
 #include "filedirectory.h"
 #include "resourcerecord.h"
+#include "resourcenamespace.h"
 #include "m_misc.h"
 #include "m_args.h"
 #include "texture.h"
@@ -574,7 +575,7 @@ static void locateGameResources(gameinfo_t* info)
         /// \kludge Temporarily switch GameInfo.
         currentGameInfoIndex = gameInfoIndex(info);
         // Re-init the resource locator using the search paths of this GameInfo.
-        F_InitResourceLocator();
+        F_ResetAllResourceNamespaces();
     }
 
     { uint i;
@@ -598,7 +599,7 @@ static void locateGameResources(gameinfo_t* info)
         /// \kludge Restore the old GameInfo.
         currentGameInfoIndex = oldGameInfoIndex;
         // Re-init the resource locator using the search paths of this GameInfo.
-        F_InitResourceLocator();
+        F_ResetAllResourceNamespaces();
     }
     }
 }
@@ -860,11 +861,10 @@ static int DD_ChangeGameWorker(void* paramaters)
     if(p->initiatedBusyMode)
         Con_SetProgress(10);
 
-    F_InitResourceLocator();
-    F_InitializeResourcePathMap();
-
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
+    F_InitializeResourcePathMap();
+    F_ResetAllResourceNamespaces();
 
     /**
      * Open all the files, load headers, count lumps, etc, etc...
@@ -928,7 +928,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
     F_InitDirec();
-    F_InitResourceLocator();
+    F_ResetAllResourceNamespaces();
     Cl_InitTranslations();
 
     Con_SetProgress(60);
@@ -1094,6 +1094,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         R_ShutdownVectorGraphics();
         R_ClearPatchTexs();
+        R_DestroySkins();
         R_DestroyColorPalettes();
 
         GL_DestroyRuntimeTextures();
@@ -1110,14 +1111,12 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Con_InitDatabases();
         DD_Register();
 
-        F_InitResourceLocator();
-        F_InitializeResourcePathMap();
-
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
+        F_InitializeResourcePathMap();
+        F_ResetAllResourceNamespaces();
 
         R_InitVectorGraphics();
-
         R_InitViewWindow();
 
         W_Reset();
@@ -1485,7 +1484,7 @@ int DD_Main(void)
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
     F_InitDirec();
-    F_InitResourceLocator();
+    F_ResetAllResourceNamespaces();
 
     // One-time execution of various command line features available during startup.
     if(ArgCheckWith("-dumplump", 1))
@@ -1562,12 +1561,11 @@ int DD_Main(void)
     else
     {   // No game loaded.
         // Ok, lets get most of everything else initialized.
-        F_InitResourceLocator();
-        F_InitializeResourcePathMap();
-        F_InitDirec();
-
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
+        F_InitDirec();
+        F_InitializeResourcePathMap();
+        F_ResetAllResourceNamespaces();
 
         R_InitPatchComposites();
         R_InitFlatTextures();
@@ -1603,6 +1601,23 @@ int DD_Main(void)
     return exitCode;
 }
 
+static DD_InitResourceSystem(void)
+{
+    Con_Message("Initializing Resource subsystem...");
+
+    // Initialize the file system databases.
+    Zip_Init();
+    W_Init();
+
+    F_InitResourceLocator();
+    F_CreateNamespacesForFileResourcePaths();
+    F_InitializeResourcePathMap();
+    F_ResetAllResourceNamespaces();
+
+    // Initialize the definition databases.
+    Def_Init();
+}
+
 static int DD_StartupWorker(void* parm)
 {
 #ifdef WIN32
@@ -1626,14 +1641,7 @@ static int DD_StartupWorker(void* parm)
 
     bamsInit(); // Binary angle calculations.
 
-    // Initialize the file system databases.
-    Zip_Init();
-    W_Init();
-    F_InitResourceLocator();
-    F_InitializeResourcePathMap();
-
-    // Initialize the definition databases.
-    Def_Init();
+    DD_InitResourceSystem();
 
     Con_SetProgress(40);
 
@@ -1792,6 +1800,8 @@ void DD_UpdateEngineState(void)
 
     // Update the dir/WAD translations.
     F_InitDirec();
+    /// Re-initialize the resource locator as there may now be new resources to be found.
+    F_ResetAllResourceNamespaces();
 
     if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
         gx.UpdateState(DD_PRE);
@@ -2209,7 +2219,7 @@ texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
     return TEXTURENAMESPACE_COUNT; // Unknown.
 }
 
-materialnamespaceid_t DD_ParseFontNamespace(const char* str)
+fontnamespaceid_t DD_ParseFontNamespace(const char* str)
 {
     if(!str || 0 == strlen(str))
         return FN_ANY;

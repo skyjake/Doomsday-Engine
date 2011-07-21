@@ -427,6 +427,8 @@ const skinname_t* R_GetSkinNameByIndex(uint id);
 uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
 void            R_DestroySkins(void);
 
+void R_ReleaseGLTexturesForSkins(void);
+
 boolean         R_DrawVLightVector(const vlight_t* light, void* context);
 
 void            R_InitAnimGroup(ded_group_t* def);

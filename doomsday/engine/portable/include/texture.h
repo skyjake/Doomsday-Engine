@@ -26,7 +26,7 @@
 #define LIBDENG_GL_TEXTURE_H
 
 struct texturevariant_s;
-struct texturenamespace_hashnode_s;
+struct texturenamespace_namehash_node_s;
 
 typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
@@ -58,7 +58,7 @@ typedef struct texture_s {
     /// Unique Texture Namespace Identifier.
     /// \todo make external.
     texturenamespaceid_t _texNamespace;
-    struct texturenamespace_hashnode_s* _texNamespaceHashNode;
+    struct texturenamespace_namehash_node_s* _texNamespaceHashNode;
 
     /// List of variants (e.g., color translations).
     struct texture_variantlist_node_s* _variants;
@@ -161,8 +161,8 @@ int Texture_TypeIndex(const texture_t* tex);
 texturenamespaceid_t Texture_Namespace(const texture_t* tex);
 
 /// @return  Texture namespace hash node.
-struct texturenamespace_hashnode_s* Texture_NamespaceHashNode(const texture_t* tex);
+struct texturenamespace_namehash_node_s* Texture_NamespaceHashNode(const texture_t* tex);
 
 void Texture_SetNamespace(texture_t* tex, texturenamespaceid_t texNamespace,
-    struct texturenamespace_hashnode_s* texNamespaceHashNode);
+    struct texturenamespace_namehash_node_s* texNamespaceHashNode);
 #endif /* LIBDENG_GL_TEXTURE_H */

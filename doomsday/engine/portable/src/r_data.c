@@ -2326,6 +2326,8 @@ void R_DestroySkins(void)
     if(0 == numSkinNames)
         return;
 
+    R_ReleaseGLTexturesForSkins();
+
     { uint i;
     for(i = 0; i < numSkinNames; ++i)
         Uri_Destruct(skinNames[i].path);
@@ -2333,6 +2335,19 @@ void R_DestroySkins(void)
     M_Free(skinNames);
     skinNames = NULL;
     numSkinNames = 0;
+}
+
+void R_ReleaseGLTexturesForSkins(void)
+{
+    uint i;
+    for(i = 0; i < numSkinNames; ++i)
+    {
+        skinname_t* sn = skinNames + i;
+        texture_t* tex = GL_ToTexture(sn->id);
+        if(tex == NULL) continue;
+
+        GL_ReleaseGLTexturesForTexture(tex);
+    }
 }
 
 void R_UpdatePatchCompositesAndFlats(void)

@@ -46,8 +46,8 @@
 #include "m_misc.h"
 
 #include "filedirectory.h"
-#include "resourcenamespace.h"
 #include "resourcerecord.h"
+#include "resourcenamespace.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -68,9 +68,6 @@ typedef struct {
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static resourcenamespace_namehash_key_t hashVarLengthNameIgnoreCase(const ddstring_t* name);
-static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -124,39 +121,6 @@ static resourcenamespace_t** namespaces = 0;
 static uint numNamespaces = 0;
 
 // CODE --------------------------------------------------------------------
-
-static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath)
-{
-    ddstring_t* hashName = Str_New();
-    F_FileName(hashName, Str_Text(filePath));
-    return hashName;
-}
-
-/**
- * This is a hash function. It uses the resource name to generate a
- * somewhat-random number between 0 and RESOURCENAMESPACE_HASHSIZE.
- *
- * @return              The generated hash key.
- */
-static resourcenamespace_namehash_key_t hashVarLengthNameIgnoreCase(const ddstring_t* name)
-{
-    assert(name);
-    {
-    resourcenamespace_namehash_key_t key = 0;
-    byte op = 0;
-    const char* c;
-    for(c = Str_Text(name); *c; c++)
-    {
-        switch(op)
-        {
-        case 0: key ^= tolower(*c); ++op;   break;
-        case 1: key *= tolower(*c); ++op;   break;
-        case 2: key -= tolower(*c);   op=0; break;
-        }
-    }
-    return key % RESOURCENAMESPACE_HASHSIZE;
-    }
-}
 
 static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
 {
@@ -389,21 +353,33 @@ static int findResource(resourceclass_t rclass, const dduri_t* const* list,
     }
 }
 
-static resourcenamespace_t* createResourceNamespace(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
-    const char* overrideName2)
+ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath)
+{
+    ddstring_t* hashName = Str_New();
+    F_FileName(hashName, Str_Text(filePath));
+    return hashName;
+}
+
+resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const ddstring_t* name)
 {
     assert(name);
     {
-    resourcenamespace_t* rn = ResourceNamespace_Construct5(name, composeHashNameFunc,
-        hashNameFunc, searchPaths, numSearchPaths, flags, overrideName, overrideName2);
-    namespaces = realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);
-    namespaces[numNamespaces-1] = rn;
-    return rn;
+    resourcenamespace_namehash_key_t key = 0;
+    byte op = 0;
+    const char* c;
+    for(c = Str_Text(name); *c; c++)
+    {
+        switch(op)
+        {
+        case 0: key ^= tolower(*c); ++op;   break;
+        case 1: key *= tolower(*c); ++op;   break;
+        case 2: key -= tolower(*c);   op=0; break;
+        }
+    }
+    return key % RESOURCENAMESPACE_HASHSIZE;
     }
 }
+
 
 static void createPackagesResourceNamespace(void)
 {
@@ -513,15 +489,15 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    createResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, composeHashNameForFilePath,
-        hashVarLengthNameIgnoreCase, (const dduri_t**)searchPaths, searchPathsCount, 0, 0, 0);
+    F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, F_ComposeHashNameForFilePath,
+        F_HashKeyForFilePathHashName, (const dduri_t**)searchPaths, searchPathsCount, 0, 0, 0);
 
     for(idx = 0; idx < searchPathsCount; ++idx)
         Uri_Destruct(searchPaths[idx]);
     free(searchPaths);
 }
 
-static void createResourceNamespaces(void)
+void F_CreateNamespacesForFileResourcePaths(void)
 {
 #define NAMESPACEDEF_MAX_SEARCHPATHS        5
 
@@ -567,7 +543,7 @@ static void createResourceNamespaces(void)
         for(j = 0; j < searchPathsCount; ++j)
             searchPaths[j] = Uri_Construct2(def->searchPaths[j], RC_NULL);
 
-        createResourceNamespace(def->name, composeHashNameForFilePath, hashVarLengthNameIgnoreCase,
+        F_CreateResourceNamespace(def->name, F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName,
             (const dduri_t**)searchPaths, searchPathsCount, def->flags, def->overrideName, def->overrideName2);
 
         for(j = 0; j < searchPathsCount; ++j)
@@ -580,13 +556,7 @@ static void createResourceNamespaces(void)
 
 void F_InitResourceLocator(void)
 {
-    if(!inited)
-    {   // First init.
-        createResourceNamespaces();
-    }
-
     // Allow re-init.
-    resetAllNamespaces();
     inited = true;
 }
 
@@ -596,6 +566,13 @@ void F_ShutdownResourceLocator(void)
         return;
     destroyAllNamespaces();
     inited = false;
+}
+
+void F_ResetAllResourceNamespaces(void)
+{
+    if(!inited)
+        return;
+    resetAllNamespaces();
 }
 
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)
@@ -631,6 +608,25 @@ boolean F_IsValidResourceNamespaceId(int val)
 {
     assert(inited);
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
+}
+
+resourcenamespace_t* F_CreateResourceNamespace(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
+    const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
+    const char* overrideName2)
+{
+    assert(inited && name);
+    {
+    resourcenamespace_t* rn = ResourceNamespace_Construct5(name, composeHashNameFunc,
+        hashNameFunc, searchPaths, numSearchPaths, flags, overrideName, overrideName2);
+    namespaces = (resourcenamespace_t**) realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);
+    if(namespaces == NULL)
+        Con_Error("F_CreateResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n",
+            (unsigned long) (sizeof(*namespaces) * numNamespaces));
+    namespaces[numNamespaces-1] = rn;
+    return rn;
+    }
 }
 
 dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
