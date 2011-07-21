@@ -1335,6 +1335,7 @@ D_CMD(Connect)
     strcpy(param.address, argv[1]);
 
     // If there is a port specified in the address, use it.
+    param.port = 0;
     if((ptr = strrchr(param.address, ':')))
     {
         param.port = strtol(ptr + 1, 0, 0);
