@@ -32,6 +32,9 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8.3 FATAL_ERROR)
 
 SET ( CMAKE_BUILD_TYPE Release CACHE STRING "Type of build." )
 
+SET ( CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "Flags.")
+SET ( CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "Flags.")
+
 PROJECT(doomsday C CXX)
 
 ################################################################################
@@ -61,7 +64,6 @@ OPTION (ENABLEMAO "Combine all source files in a module and build it at once. De
 OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF" OFF)
 OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
-OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 OPTION (INSTALLSNOWBERRY "Include Snowberry and associated files in installation." ON)
 
 #MARK_AS_ADVANCED (BUILDJDOOM64)
@@ -69,12 +71,6 @@ MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
 MARK_AS_ADVANCED (ENABLERANGECHECKING)
-MARK_AS_ADVANCED (FINK)
-
-IF (NOT APPLE AND FINK)
-    MESSAGE( FATAL_ERROR
-    "FINK build option is only available on OSX")
-ENDIF (NOT APPLE AND FINK)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     MESSAGE( FATAL_ERROR "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
