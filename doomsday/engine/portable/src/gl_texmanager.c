@@ -1634,6 +1634,7 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseGLTexturesByNamespace(TN_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
+    R_ReleaseGLTexturesForSkins();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeGLTextures();
 }

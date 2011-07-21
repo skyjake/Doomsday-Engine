@@ -1095,6 +1095,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         R_ShutdownVectorGraphics();
         R_ClearPatchTexs();
+        R_DestroySkins();
         R_DestroyColorPalettes();
 
         GL_DestroyRuntimeTextures();

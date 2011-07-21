@@ -1114,6 +1114,35 @@ static void setupModel(ded_model_t* def)
     }
 }
 
+static void R_ClearModelList(void)
+{
+    int i, k;
+    model_t* m;
+    for(i = 1; i < MAX_MODELS; ++i)
+    {
+        if(!(m = modellist[i]))
+            continue;
+
+        M_Free(m->skins);
+        //M_Free(modellist[i]->texCoords);
+        for(k = 0; k < m->info.numFrames; ++k)
+        {
+            M_Free(m->frames[k].vertices);
+            M_Free(m->frames[k].normals);
+        }
+        M_Free(m->frames);
+
+        for(k = 0; k < m->info.numLODs; ++k)
+        {
+            //M_Free(modellist[i]->lods[k].triangles);
+            M_Free(m->lods[k].glCommands);
+        }
+        M_Free(m->vertexUsage);
+        M_Free(m);
+        modellist[i] = NULL;
+    }
+}
+
 /**
  * States must be initialized before this.
  */
@@ -1131,6 +1160,7 @@ void R_InitModels(void)
     VERBOSE( Con_Message("Initializing Models...\n") )
     usedTime = Sys_GetRealTime();
 
+    R_ClearModelList();
     if(modefs)
         M_Free(modefs);
 
@@ -1212,9 +1242,6 @@ if(closest)
  */
 void R_ShutdownModels(void)
 {
-    int                 i, k;
-    model_t            *m;
-
     if(modefs)
         M_Free(modefs);
     modefs = NULL;
@@ -1222,29 +1249,7 @@ void R_ShutdownModels(void)
         M_Free(stateModefs);
     stateModefs = NULL;
 
-    for(i = 1; i < MAX_MODELS; ++i)
-    {
-        if(!(m = modellist[i]))
-            continue;
-
-        M_Free(m->skins);
-        //M_Free(modellist[i]->texCoords);
-        for(k = 0; k < m->info.numFrames; ++k)
-        {
-            M_Free(m->frames[k].vertices);
-            M_Free(m->frames[k].normals);
-        }
-        M_Free(m->frames);
-
-        for(k = 0; k < m->info.numLODs; ++k)
-        {
-            //M_Free(modellist[i]->lods[k].triangles);
-            M_Free(m->lods[k].glCommands);
-        }
-        M_Free(m->vertexUsage);
-        M_Free(m);
-        modellist[i] = NULL;
-    }
+    R_ClearModelList();
 }
 
 void R_SetModelFrame(modeldef_t* modef, int frame)
