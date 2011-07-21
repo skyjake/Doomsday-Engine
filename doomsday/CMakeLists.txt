@@ -32,10 +32,10 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8.3 FATAL_ERROR)
 
 SET ( CMAKE_BUILD_TYPE Release CACHE STRING "Type of build." )
 
-PROJECT(doomsday C CXX)
+SET ( CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "Flags.")
+SET ( CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "Flags.")
 
-# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build/cmake")
+PROJECT(doomsday C CXX)
 
 ################################################################################
 ######################## Macros  ###############################################
@@ -64,7 +64,6 @@ OPTION (ENABLEMAO "Combine all source files in a module and build it at once. De
 OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF" OFF)
 OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
-OPTION (FINK "Build with FINK on OSX. Default OFF" OFF)
 OPTION (INSTALLSNOWBERRY "Include Snowberry and associated files in installation." ON)
 
 #MARK_AS_ADVANCED (BUILDJDOOM64)
@@ -72,12 +71,6 @@ MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
 MARK_AS_ADVANCED (ENABLERANGECHECKING)
-MARK_AS_ADVANCED (FINK)
-
-IF (NOT APPLE AND FINK)
-    MESSAGE( FATAL_ERROR
-    "FINK build option is only available on OSX")
-ENDIF (NOT APPLE AND FINK)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     MESSAGE( FATAL_ERROR "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
@@ -137,9 +130,80 @@ IF (UNIX)
         ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${libdir}/" ')
     ENDIF (NOT APPLE)
 ENDIF (UNIX)
+
+SET (USE_STATIC_PNG "NO")
+
 IF (APPLE)
+    ADD_DEFINITIONS ( -DMACOSX )
+
+    IF(NOT MACOS_VERSION)
+        SET(MACOS_VERSION "10.4")
+    ENDIF()
+
+    MESSAGE( STATUS "Making a 32-bit build only." )
+
+	IF(MACOS_VERSION STREQUAL "10.4" OR MACOS_VERSION STREQUAL "10.5")
+		ADD_DEFINITIONS ( -DMACOS_10_4 )
+		SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
+		SET (CMAKE_OSX_ARCHITECTURES "ppc;i386") # 32-bit
+		SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
+		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
+		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
+		# 10.4 doesn't appear to have libpng.dylib as a system library.
+		# So we'll use a statically linked one instead.
+		SET (USE_STATIC_PNG "YES")
+		SET (PNG_LIBRARY_STATIC "/opt/local/lib/libpng.a") # MacPorts (with both archs)
+	ELSE()
+		ADD_DEFINITIONS ( -DMACOS_10_6 )
+		SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
+		SET (CMAKE_OSX_ARCHITECTURES "i386")
+		SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk")
+		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.6" )
+		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6" )
+	ENDIF()
+
+	SET (BUILDSYSTEM MACOSX)
+
+	## Add needed Compiler and Linker flags for OSX
+	IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+
+		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace" )
+		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress" )
+
+		SET (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wimplicit-function-declaration -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wimplicit-function-declaration -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
+
+		SET (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
+
+		SET (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
+
+		SET (CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+		SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
+
+	ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+
     ADD_DEFINITIONS ('-DDENG_BASE_DIR="./" ')
     ADD_DEFINITIONS ('-DDENG_LIBRARY_DIR="./" ')
+
+    # Look in the correct SDK.
+    INCLUDE_DIRECTORIES (${CMAKE_OSX_SYSROOT}/usr/X11/include)
 ENDIF (APPLE)
 
 ################################################################################
@@ -296,75 +360,6 @@ ENDIF (UNIX)
 IF(CMAKE_SYSTEM MATCHES "SunOS-*")
     ADD_DEFINITIONS ( -DSOLARIS)
 ENDIF(CMAKE_SYSTEM MATCHES "SunOS-*")
-
-SET (USE_STATIC_PNG "NO")
-
-IF (APPLE)
-	ADD_DEFINITIONS ( -DMACOSX )
-
-    IF(NOT MACOS_VERSION)
-        SET(MACOS_VERSION "10.4")
-    ENDIF()
-
-    MESSAGE( STATUS "Making a 32-bit build only." )
-
-    IF(MACOS_VERSION STREQUAL "10.4" OR MACOS_VERSION STREQUAL "10.5")
-	    ADD_DEFINITIONS ( -DMACOS_10_4 )
-        SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.4)
-        SET (CMAKE_OSX_ARCHITECTURES "ppc;i386") # 32-bit
-        SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.4u.sdk")
-        SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
-        SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
-    	# 10.4 doesn't appear to have libpng.dylib as a system library.
-    	# So we'll use a statically linked one instead.
-    	SET (USE_STATIC_PNG "YES")
-    	SET (PNG_LIBRARY_STATIC "/opt/local/lib/libpng.a") # MacPorts (with both archs)
-	ELSE()
-	    ADD_DEFINITIONS ( -DMACOS_10_6 )
-        SET (CMAKE_OSX_DEPLOYMENT_TARGET 10.6)
-        SET (CMAKE_OSX_ARCHITECTURES "i386")
-	    SET (CMAKE_OSX_SYSROOT "/Developer/SDKs/MacOSX10.6.sdk")
-		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.6" )
-		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6" )
-    ENDIF()
-
-	SET (BUILDSYSTEM MACOSX)
-
-	## Add needed Compiler and Linker flags for OSX
-	IF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-
-		SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flat_namespace" )
-		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
-		SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -flat_namespace -undefined suppress" )
-		SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flat_namespace -undefined suppress" )
-
-		SET (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wimplicit-function-declaration -flat_namespace -undefined suppress" )
-		SET (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wimplicit-function-declaration -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-		SET (CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-		SET (CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -flat_namespace -undefined suppress" )
-
-		SET (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-		SET (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-		SET (CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-		SET (CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -flat_namespace -undefined suppress" )
-
-		SET (CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-		SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-		SET (CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-		SET (CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} -flat_namespace -undefined suppress" )
-
-		SET (CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-		SET (CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-		SET (CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-		SET (CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "${CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-		SET (CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "${CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL} -flat_namespace -undefined suppress" )
-
-	ENDIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-ENDIF (APPLE)
 
 ################################################################################
 ######################## Find Our Build Deps  ##################################

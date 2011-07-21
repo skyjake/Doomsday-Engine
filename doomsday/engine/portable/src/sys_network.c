@@ -1231,8 +1231,7 @@ boolean N_LookForHosts(const char *address, int port)
     sock = SDLNet_TCP_Open(&located.addr);
     if(!sock)
     {
-        Con_Message("N_LookForHosts: No reply from %s (port %i).\n", address,
-                    port);
+        Con_Message("N_LookForHosts: No reply from %s (port %i).\n", address, port);
         return false;
     }
 
