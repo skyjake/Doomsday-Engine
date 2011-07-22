@@ -33,16 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "d_net.h"
 #include "p_svtexarc.h"
 #include "p_player.h"

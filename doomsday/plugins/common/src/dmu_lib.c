@@ -31,18 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
-#endif
-
+#include "common.h"
 #include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
