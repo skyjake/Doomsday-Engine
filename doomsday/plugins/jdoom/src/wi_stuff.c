@@ -1276,6 +1276,7 @@ void WI_Ticker(void)
 #if _DEBUG
         Con_Error("WI_Ticker: Invalid state %i.", (int) inState);
 #endif
+        break;
     }
 }
 
@@ -1476,5 +1477,6 @@ void WI_SetState(interludestate_t st)
 #if _DEBUG
         Con_Error("WI_SetState: Invalid state %i.", (int) st);
 #endif
+        break;
     }
 }
