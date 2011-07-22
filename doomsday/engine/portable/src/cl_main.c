@@ -406,7 +406,7 @@ void Cl_Assertions(int plrNum)
 /**
  * Client-side game ticker.
  */
-void Cl_Ticker(void)
+void Cl_Ticker(timespan_t ticLength)
 {
     int i;
 

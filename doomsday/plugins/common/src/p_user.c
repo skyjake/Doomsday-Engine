@@ -51,6 +51,7 @@
 #  include "p_inventory.h"
 #endif
 
+#include "doomsday.h"
 #include "p_player.h"
 #include "p_tick.h" // for P_IsPaused()
 #include "p_view.h"
@@ -348,6 +349,51 @@ void P_CheckPlayerJump(player_t *player)
     }
 }
 
+/**
+ * Moves a player according to its smoother.
+ */
+void P_PlayerRemoteMove(player_t* player)
+{
+    int plrNum = player - players;
+    Smoother* smoother = Net_PlayerSmoother(plrNum);
+    mobj_t* mo = player->plr->mo;
+    float xyz[3];
+
+    if(!IS_NETGAME || !IS_SERVER) return;
+    if(!mo || !smoother) return;
+
+    // As the mobj is being moved by the smoother, it has no momentum in the regular
+    // physics sense.
+    mo->mom[VX] = 0;
+    mo->mom[VY] = 0;
+    mo->mom[VZ] = 0;
+
+    if(!Smoother_Evaluate(smoother, xyz))
+    {
+        // The smoother has no coordinates for us, so we won't touch the mobj.
+        return;
+    }
+
+    if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
+    {
+        if(Smoother_IsOnFloor(smoother))
+        {
+            mo->pos[VZ] = mo->floorZ;
+/*#ifdef _DEBUG
+            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+#endif*/
+        }
+        else
+        {
+/*#ifdef _DEBUG
+            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+#endif*/
+        }
+    }
+}
+
 void P_MovePlayer(player_t *player)
 {
     ddplayer_t* dp = player->plr;
@@ -358,9 +404,11 @@ void P_MovePlayer(player_t *player)
     float forwardMove;
     float sideMove;
 
+    if(!plrmo) return;
+
     if(IS_NETGAME && IS_SERVER)
     {
-        // Server just starts the walking animation for remote players.
+        // Server starts the walking animation for remote players.
         if((dp->forwardMove != 0 || dp->sideMove != 0) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
@@ -1824,6 +1872,8 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, ticLength);
+
+    P_PlayerRemoteMove(player);
 
     if(!DD_IsSharpTick())
     {

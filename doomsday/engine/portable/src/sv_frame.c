@@ -955,11 +955,13 @@ Con_Printf("set%i\n", pool->setDealer);
         // Did we go over the limit?
         if(Msg_Offset() > maxFrameSize)
         {
+            /*
             // Time to see if BWR needs to be adjusted.
             if(clients[plrNum].bwrAdjustTime <= 0)
             {
                 clients[plrNum].bwrAdjustTime = BWR_ADJUST_TICS;
             }
+            */
 
             // Cancel the last delta.
             Msg_SetOffset(lastStart);

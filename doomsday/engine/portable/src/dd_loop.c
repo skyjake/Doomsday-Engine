@@ -347,21 +347,14 @@ void DD_Ticker(timespan_t time)
         // Game logic.
         gx.Ticker(time);
 
+        if(isClient)
+            Cl_Ticker(time);
+        else
+            Sv_Ticker(time);
+
         if(DD_IsSharpTick())
         {
             // A new 35 Hz tick begins.
-            /**
-             * Server ticks.
-             *
-             * These are placed here because they still rely on fixed ticks
-             * and thus it's best to keep them in sync with the fixed game
-             * ticks.
-             */
-            if(isClient)
-                Cl_Ticker( /* time */ );
-            else
-                Sv_Ticker( /* time */ );
-
             // Set frametime back by one tick (to stay in the 0..1 range).
             realFrameTimePos -= 1;
             //assert(realFrameTimePos < 1);

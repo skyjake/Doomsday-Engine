@@ -67,6 +67,7 @@ extern          "C" {
 
 #include "dd_share.h"
 #include "dd_plugin.h"
+#include "smoother.h"
 
     // Base.
     void            DD_AddIWAD(const char* path);
@@ -209,6 +210,7 @@ extern          "C" {
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
+    Smoother*       Net_PlayerSmoother(int player);
 
     // Play.
     float           P_AccurateDistance(float dx, float dy);

@@ -36,6 +36,7 @@
 #include "net_msg.h"
 #include "p_mapdata.h"
 #include "con_decl.h"
+#include "smoother.h"
 
 #define BIT(x)              (1 << (x))
 
@@ -175,7 +176,7 @@ typedef struct {
 
     // Client-reported time of the last processed ticcmd.
     // Older or as old tics than this are discarded.
-    int             runTime;
+    //int             runTime;
 
     // Bandwidth rating for connection. Determines how much information
     // can be sent to the client. Determined dynamically.
@@ -183,11 +184,11 @@ typedef struct {
 
     // During the adjust period, raising the BWR is allowed (hitting max
     // frame size).
-    int             bwrAdjustTime;
+    //int             bwrAdjustTime;
 
     // A record of the past few acknowledgement times.
-    uint            ackTimes[NUM_ACK_TIMES];
-    int             ackIdx;
+    //uint            ackTimes[NUM_ACK_TIMES];
+    //int             ackIdx;
 
     // Clients use this to determine how long ago they received the
     // last update of this client.
@@ -225,6 +226,9 @@ typedef struct {
     LZFILE         *demo;
     boolean         recording;
     boolean         recordPaused;
+
+    // Movement smoother.
+    Smoother*       smoother;
 
     // View console. Which player this client is viewing?
     int             viewConsole;

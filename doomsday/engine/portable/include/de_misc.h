@@ -44,5 +44,6 @@
 #include "m_binarytree.h"
 #include "m_gridmap.h"
 #include "m_decomp64.h"
+#include "smoother.h"
 
 #endif
