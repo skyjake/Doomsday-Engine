@@ -175,7 +175,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     mobj_t          *clmo = ClPlayer_ClMobj(plrNum);
     ddplayer_t      *ddpl = &plr->shared;
     mobj_t          *mo = ddpl->mo;
-    bool             sendAck = false;
+    boolean          sendAck = false;
 
     // If either mobj is missing, the fix cannot be applied yet.
     if(!mo || !clmo) return;
