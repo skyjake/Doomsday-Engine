@@ -1072,6 +1072,9 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
 #ifdef _DEBUG
     Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.\n", plrNum);
 #endif
+
+    // Clear the smoother for this client.
+    Smoother_Clear(clients[plrNum].smoother);
 }
 
 void Sv_Ticker(timespan_t ticLength)
@@ -1270,7 +1273,7 @@ void Sv_ClientCoords(int plrNum)
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
-    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
+    if(Sv_CanTrustClientPos(plrNum))
     {
 #ifdef _DEBUG
         VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
@@ -1295,6 +1298,22 @@ void Sv_ClientCoords(int plrNum)
         }
         */
     }
+}
+
+/**
+ * Determines whether the coordinates sent by a player are valid at the moment.
+ */
+boolean Sv_CanTrustClientPos(int plrNum)
+{
+    player_t* plr = &ddPlayers[plrNum];
+    ddplayer_t* ddpl = &plr->shared;
+
+    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
+    {
+        return true;
+    }
+    // Server's position is valid, client is not up-to-date.
+    return false;
 }
 
 /**

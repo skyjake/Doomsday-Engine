@@ -455,7 +455,7 @@ void ClPlayer_ReadDelta2(boolean skip)
                 Con_Message("ClPlayer_ReadDelta2: Copying clmo %i state to real player %i mobj %p.\n",
                             newId, num, ddpl->mo);
 #endif
-                Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff);
+                Cl_UpdateRealPlayerMobj(ddpl->mo, clmo, 0xffffffff, true);
             }
             /*
             else if(ddpl->mo)

@@ -211,6 +211,7 @@ extern          "C" {
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
     Smoother*       Net_PlayerSmoother(int player);
+    boolean         Sv_CanTrustClientPos(int player);
 
     // Play.
     float           P_AccurateDistance(float dx, float dy);

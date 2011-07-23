@@ -65,5 +65,6 @@ boolean         Sv_StringToInfo(const char* valuePair, serverinfo_t* info);
 int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
 boolean         Sv_CheckBandwidth(int playerNumber);
+boolean         Sv_CanTrustClientPos(int plrNum);
 
 #endif

@@ -79,9 +79,18 @@ void Smoother_Clear(Smoother* sm)
 
 void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolean onFloor)
 {
+    if(!sm) return;
+
+#ifdef _DEBUG
+    Con_Message("Smoother_AddPos: new time %f, smoother at %f\n", time, sm->at);
+#endif
+
     if(time <= sm->pos[SMOOTHER_PRESENT].time)
     {
         // The new point would be in the past, this is no good.
+#ifdef _DEBUG
+        Con_Message("Smoother_AddPos: DISCARDING new pos.\n");
+#endif
         return;
     }
 
@@ -118,7 +127,13 @@ boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
     float t;
     int i;
 
-    if(!Smoother_IsValid(sm)) return false;
+    if(!Smoother_IsValid(sm))
+    {
+#ifdef _DEBUG
+        Con_Message("Smoother_Evaluate: sm=%p not valid!\n", sm);
+#endif
+        return false;
+    }
 
     if(sm->at < past->time)
     {
@@ -144,6 +159,7 @@ boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
         // Linear interpolation.
         xyz[i] = now->xyz[i] * t + past->xyz[i] * (1-t);
     }
+    return true;
 }
 
 boolean Smoother_IsOnFloor(const Smoother* sm)
@@ -173,6 +189,12 @@ boolean Smoother_IsMoving(const Smoother* sm)
 void Smoother_Advance(Smoother* sm, float period)
 {
     sm->at += period;
+
+    if(sm->at < sm->pos[SMOOTHER_PAST].time)
+    {
+        // Don't fall too far back.
+        sm->at = sm->pos[SMOOTHER_PAST].time;
+    }
 
     // Did we go past the present?
     if(sm->at >= sm->pos[SMOOTHER_PRESENT].time)

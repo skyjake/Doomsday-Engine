@@ -359,8 +359,23 @@ void P_PlayerRemoteMove(player_t* player)
     mobj_t* mo = player->plr->mo;
     float xyz[3];
 
-    if(!IS_NETGAME || !IS_SERVER) return;
-    if(!mo || !smoother) return;
+    /*
+#ifdef _DEBUG
+    Con_Message("P_PlayerRemoteMove: player=%i IS_NETGAME=%i mo=%p smoother=%p IS_CLIENT=%i IS_SERVER=%i CNSPLR=%i\n",
+                plrNum, IS_NETGAME, mo, smoother, IS_CLIENT, IS_SERVER, CONSOLEPLAYER);
+#endif
+    */
+
+    if(!IS_NETGAME || !mo || !smoother)
+        return;
+
+    // On client, the console player is not remote.
+    if(IS_CLIENT && plrNum == CONSOLEPLAYER)
+        return;
+
+    // On server, there must be valid coordinates.
+    if(IS_SERVER && !Sv_CanTrustClientPos(plrNum))
+        return;
 
     // As the mobj is being moved by the smoother, it has no momentum in the regular
     // physics sense.
@@ -379,18 +394,25 @@ void P_PlayerRemoteMove(player_t* player)
         if(Smoother_IsOnFloor(smoother))
         {
             mo->pos[VZ] = mo->floorZ;
-/*#ifdef _DEBUG
+#ifdef _DEBUG
             Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
                         plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-#endif*/
+#endif
         }
         else
         {
-/*#ifdef _DEBUG
+#ifdef _DEBUG
             Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
                         plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-#endif*/
+#endif
         }
+    }
+    else
+    {
+#ifdef _DEBUG
+        Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!\n",
+                    plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+#endif
     }
 }
 
@@ -1000,7 +1022,7 @@ void P_PlayerThinkMorph(player_t *player)
 
 void P_PlayerThinkMove(player_t *player)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t* plrmo = player->plr->mo;
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.

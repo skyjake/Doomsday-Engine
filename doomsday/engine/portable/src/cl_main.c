@@ -235,6 +235,8 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
     {
         // This is a new player! Let the game know about this.
         gx.NetPlayerEvent(info->console, DDPE_ARRIVAL, 0);
+
+        Smoother_Clear(clients[info->console].smoother);
     }
 }
 
@@ -421,6 +423,9 @@ void Cl_Ticker(timespan_t ticLength)
     // player's clmobj to its updated state.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        // Update the smoother.
+        Smoother_Advance(clients[i].smoother, ticLength);
+
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdatePos(i);
 

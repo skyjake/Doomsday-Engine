@@ -305,8 +305,10 @@ void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
  * The client mobj is always unlinked. Only the *real* mobj is visible.
  * (The real mobj was created by the Game.)
  */
-void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags)
+void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
 {
+    int plrNum;
+
 #if _DEBUG
     if(!localMobj || !remoteClientMobj)
     {
@@ -315,7 +317,22 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     }
 #endif
 
-    if(flags & (MDF_POS_X | MDF_POS_Y))
+    assert(localMobj->dPlayer != 0);
+    plrNum = P_GetDDPlayerIdx(localMobj->dPlayer);
+    Smoother_AddPos(clients[plrNum].smoother, gameTime,
+                    remoteClientMobj->pos[VX],
+                    remoteClientMobj->pos[VY],
+                    remoteClientMobj->pos[VZ], onFloor);
+
+/*#ifdef _DEBUG
+    Con_Message("Cl_UpdateRealPlayerMobj: plr=%i sm=%p gt=%f xyz=%f,%f,%f onFloor=%i\n",
+                plrNum, clients[plrNum].smoother, gameTime,
+                                    remoteClientMobj->pos[VX],
+                                    remoteClientMobj->pos[VY],
+                                    remoteClientMobj->pos[VZ], onFloor);
+#endif*/
+
+/*    if(flags & (MDF_POS_X | MDF_POS_Y))
     {
         // We have to unlink the real mobj before we move it.
         P_MobjUnlink(localMobj);
@@ -323,7 +340,8 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
         localMobj->pos[VY] = remoteClientMobj->pos[VY];
         P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
-    localMobj->pos[VZ] = remoteClientMobj->pos[VZ];
+    localMobj->pos[VZ] = remoteClientMobj->pos[VZ];*/
+
     if(flags & MDF_MOM_X) localMobj->mom[MX] = remoteClientMobj->mom[MX];
     if(flags & MDF_MOM_Y) localMobj->mom[MY] = remoteClientMobj->mom[MY];
     if(flags & MDF_MOM_Z) localMobj->mom[MZ] = remoteClientMobj->mom[MZ];
@@ -667,6 +685,7 @@ void ClMobj_ReadDelta2(boolean skip)
     byte        moreFlags = 0, fastMom = false;
     short       mom;
     thid_t      id = Msg_ReadShort();   // Read the ID.
+    boolean     onFloor = false;
 
     // Flags.
     df = Msg_ReadShort();
@@ -768,6 +787,8 @@ void ClMobj_ReadDelta2(boolean skip)
         }
         else
         {
+            onFloor = true;
+
             // Ignore these.
             Msg_ReadShort();
             Msg_ReadByte();
@@ -917,10 +938,10 @@ void ClMobj_ReadDelta2(boolean skip)
         {
 #ifdef _DEBUG
             VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state (%f, %f, %f).\n",
-                                  P_GetDDPlayerIdx(d->dPlayer), mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+                                  P_GetDDPlayerIdx(d->dPlayer), d->pos[VX], d->pos[VY], d->pos[VZ]) );
 #endif
             // Players have real mobjs. The client mobj is hidden (unlinked).
-            Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
+            Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df, onFloor);
         }
     }
 }
