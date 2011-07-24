@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "doomsday.h"
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
@@ -1240,7 +1241,8 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
     float               oldpos[3];
     int                 side, oldSide;
     linedef_t*          ld;
-    boolean             isRemotePlayer = (IS_DEDICATED && thing->dPlayer);
+    boolean             isRemotePlayer = ((IS_DEDICATED && thing->dPlayer) ||
+                                          (IS_CLIENT && thing->player && thing->player - players != CONSOLEPLAYER));
 
     // $dropoff_fix: fellDown.
     floatOk = false;

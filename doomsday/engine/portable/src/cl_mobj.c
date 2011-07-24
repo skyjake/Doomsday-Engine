@@ -379,10 +379,14 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     }
     if(flags & MDF_POS_Z)
     {
-        if(onFloor)
+        // Stay on the floor if the mobj is locally touching the right plane.
+        if(onFloor) // && localMobj->floorZ == localMobj->subsector->sector->planes[PLN_FLOOR]->height)
         {
-            // It's supposed to be on the local floor Z.
-            remoteClientMobj->pos[VZ] = remoteClientMobj->floorZ = localMobj->floorZ;
+//            if(
+//            {
+                // It's supposed to be on the local floor Z.
+//                remoteClientMobj->pos[VZ] = remoteClientMobj->floorZ = localMobj->floorZ;
+            //}
         }
         else
         {
@@ -827,13 +831,13 @@ void ClMobj_ReadDelta2(boolean skip)
         d->ceilingZ = Msg_ReadFloat();
     }
 
-#if _DEBUG
+/*#if _DEBUG
     if((df & MDF_POS_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
     {
         Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i\n", P_GetDDPlayerIdx(d->dPlayer),
                     d->pos[VZ], onFloor);
     }
-#endif
+#endif*/
 
     /*
     // When these flags are set, the normal Z coord is not included.

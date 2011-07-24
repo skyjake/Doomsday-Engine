@@ -342,7 +342,14 @@ void Net_ShowChatMessage(void)
  */
 void Net_ResetTimer(void)
 {
+    int i;
+
     firstNetUpdate = true;
+
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        Smoother_Clear(clients[i].smoother);
+    }
 }
 
 /**
