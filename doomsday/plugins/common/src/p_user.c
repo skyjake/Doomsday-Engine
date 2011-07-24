@@ -403,15 +403,15 @@ void P_PlayerRemoteMove(player_t* player)
                 // It successfully moved to the right XY coords.
                 mo->pos[VZ] = mo->floorZ;
     #ifdef _DEBUG
-                Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
-                            plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                                     plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
     #endif
             }
             else
             {
     #ifdef _DEBUG
-                Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
-                            plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                                      plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
     #endif
             }
         }
@@ -425,6 +425,13 @@ void P_PlayerRemoteMove(player_t* player)
     }
     else
     {
+#ifdef _DEBUG
+        //Smoother_Debug(smoother);
+#endif
+        /*Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                    plrNum, xyz[VX], xyz[VY], xyz[VZ]);*/
+
+        /*
         // Clientside moves have no side-effects.
         P_MobjUnlink(mo);
         mo->pos[VX] = xyz[VX];
@@ -434,6 +441,7 @@ void P_PlayerRemoteMove(player_t* player)
         P_CheckPosition3fv(mo, xyz);
         mo->floorZ = tmFloorZ;
         mo->ceilingZ = tmCeilingZ;
+        */
     }
 }
 
