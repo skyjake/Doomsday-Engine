@@ -26,13 +26,10 @@
 
 #include "dd_string.h"
 
+struct stringpool_intern_s;
+
 // Intern string identifier.
 typedef uint stringpool_internid_t;
-
-// Intern string record.
-typedef struct stringpool_intern_s {
-    ddstring_t string;
-} stringpool_intern_t;
 
 /**
  * String Pool.  Simple data structure for managing a set of unique strings
@@ -45,7 +42,7 @@ typedef struct stringpool_intern_s {
  */
 typedef struct stringpool_s {
     /// Intern list (StringPool::_internsCount size).
-    stringpool_intern_t* _interns;
+    struct stringpool_intern_s* _interns;
     uint _internsCount;
 
     /// Sorted redirection table.

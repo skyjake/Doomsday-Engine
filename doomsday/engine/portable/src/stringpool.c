@@ -26,6 +26,11 @@
 
 #include "stringpool.h"
 
+// Intern string record.
+typedef struct stringpool_intern_s {
+    ddstring_t string;
+} stringpool_intern_t;
+
 static stringpool_intern_t* internById(stringpool_t* pool, stringpool_internid_t internId)
 {
     assert(NULL != pool);
