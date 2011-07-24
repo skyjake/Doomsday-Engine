@@ -184,9 +184,12 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
  */
 void I_InitVirtualInputDevices(void)
 {
-    int         i;
-    inputdev_t *dev;
-    inputdevaxis_t *axis;
+    inputdev_t* dev;
+    inputdevaxis_t* axis;
+    int i;
+
+    // Allow re-init.
+    I_ShutdownInputDevices();
 
     memset(inputDevices, 0, sizeof(inputDevices));
 

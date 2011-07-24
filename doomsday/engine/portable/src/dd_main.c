@@ -1110,6 +1110,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         Con_InitDatabases();
         DD_Register();
+        I_InitVirtualInputDevices();
 
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();

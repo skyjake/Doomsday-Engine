@@ -25,15 +25,11 @@
 #include "de_base.h"
 #include "de_console.h"
 
+#include "stringpool.h"
 #include "pathdirectory.h"
 
-typedef struct pathdirectory_internname_s {
-    ddstring_t name;
-    ushort hash;
-} pathdirectory_internname_t;
-
 typedef struct pathdirectory_node_userdatapair_s {
-    pathdirectory_internnameid_t nameId;
+    stringpool_internid_t internId;
     void* data;
 } pathdirectory_node_userdatapair_t;
 
@@ -47,137 +43,18 @@ typedef struct pathdirectory_node_s {
     /// Symbolic node type.
     pathdirectory_nodetype_t _type;
 
-    /// Path directory which owns this node.
+    /// PathDirectory which owns this node.
     pathdirectory_t* _directory;
 
     /// User data present at this node.
-    pathdirectory_node_userdatapair_t pair;
+    pathdirectory_node_userdatapair_t _pair;
 } pathdirectory_node_t;
 
 static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
-    pathdirectory_internnameid_t nameId, void* userData);
+    stringpool_internid_t internId, void* userData);
 
 static void PathDirectoryNode_Destruct(pathdirectory_node_t* node);
-
-static const pathdirectory_internname_t* getInternNameById(pathdirectory_t* pd,
-    pathdirectory_internnameid_t id)
-{
-    assert(NULL != pd);
-    if(0 != id && id <= pd->_internNamesCount)
-        return &pd->_internNames[id-1];
-    return NULL;
-}
-
-static pathdirectory_internnameid_t findInternNameIdForName(pathdirectory_t* pd,
-    const ddstring_t* name)
-{
-    assert(NULL != pd && NULL != name);
-    {
-    pathdirectory_internnameid_t nameId = 0; // Not a valid id.
-    if(0 != pd->_internNamesCount)
-    {
-        uint bottomIdx = 0, topIdx = pd->_internNamesCount - 1, pivot;
-        const pathdirectory_internname_t* intern;
-        boolean isDone = false;
-        int result;
-        while(bottomIdx <= topIdx && !isDone)
-        {
-            pivot = bottomIdx + (topIdx - bottomIdx)/2;
-            intern = getInternNameById(pd, pd->_sortedNameIdMap[pivot]);
-            assert(NULL != intern);
-
-            result = Str_CompareIgnoreCase(&intern->name, Str_Text(name));
-            if(result == 0)
-            {   // Found.
-                nameId = pd->_sortedNameIdMap[pivot];
-                isDone = true;
-            }
-            else if(result > 0)
-            {
-                if(pivot == 0)
-                    isDone = true; // Not present.
-                else
-                    topIdx = pivot - 1;
-            }
-            else
-            {
-                bottomIdx = pivot + 1;
-            }
-        }
-    }
-    return nameId;
-    }
-}
-
-static pathdirectory_internnameid_t internName(pathdirectory_t* pd, const ddstring_t* name,
-    ushort hash)
-{
-    assert(NULL != pd && NULL != name);
-    {
-    pathdirectory_internname_t* intern;
-    uint sortedMapIndex = 0;
-
-    if(((uint)-1) == pd->_internNamesCount)
-        return 0; // No can do sir, we're out of indices!
-
-    // Add the name to the intern name list.
-    pd->_internNames = (pathdirectory_internname_t*) realloc(pd->_internNames,
-        sizeof(*pd->_internNames) * ++pd->_internNamesCount);
-    if(NULL == pd->_internNames)
-        Con_Error("PathDirectory::internName: Failed on (re)allocation of %lu bytes for "
-            "intern name list.", (unsigned long) (sizeof(*pd->_internNames) * pd->_internNamesCount));
-
-    intern = &pd->_internNames[pd->_internNamesCount-1];
-    Str_Init(&intern->name);
-    Str_Set(&intern->name, Str_Text(name));
-    intern->hash = hash;
-
-    // Update the intern name identifier map.
-    pd->_sortedNameIdMap = (pathdirectory_internnameid_t*) realloc(pd->_sortedNameIdMap,
-        sizeof(*pd->_sortedNameIdMap) * pd->_internNamesCount);
-    if(NULL == pd->_sortedNameIdMap)
-        Con_Error("PathDirectory::internName: Failed on (re)allocation of %lu bytes for "
-            "intern name identifier map.", (unsigned long) (sizeof(*pd->_sortedNameIdMap) * pd->_internNamesCount));
-
-    // Find the insertion point.
-    if(1 != pd->_internNamesCount)
-    {
-        uint i;
-        for(i = 0; i < pd->_internNamesCount - 1; ++i)
-        {
-            const pathdirectory_internname_t* other = getInternNameById(pd, pd->_sortedNameIdMap[i]);
-            if(Str_CompareIgnoreCase(&other->name, Str_Text(&intern->name)) > 0)
-                break;
-        }
-        if(i != pd->_internNamesCount - 1)
-            memmove(pd->_sortedNameIdMap + i + 1, pd->_sortedNameIdMap + i,
-                sizeof(*pd->_sortedNameIdMap) * (pd->_internNamesCount - 1 - i));
-        sortedMapIndex = i;
-    }
-    pd->_sortedNameIdMap[sortedMapIndex] = pd->_internNamesCount; // 1-based index.
-
-    return pd->_internNamesCount; // 1-based index.
-    }
-}
-
-static void destroyInternNames(pathdirectory_t* pd)
-{
-    assert(NULL != pd);
-
-    if(0 == pd->_internNamesCount) return;
-
-    { uint i;
-    for(i = 0; i < pd->_internNamesCount; ++i)
-    {
-        pathdirectory_internname_t* intern = &pd->_internNames[i];
-        Str_Free(&intern->name);
-    }}
-    free(pd->_internNames); pd->_internNames = NULL;
-    pd->_internNamesCount = 0;
-
-    free(pd->_sortedNameIdMap); pd->_sortedNameIdMap = NULL;
-}
 
 /**
  * This is a hash function. It uses the path fragment string to generate
@@ -230,6 +107,16 @@ static void destroyPathHash(pathdirectory_t* pd)
     }
 }
 
+static void clearInternPool(pathdirectory_t* pd)
+{
+    assert(NULL != pd);
+    if(NULL != pd->_internPool.strings)
+    {
+        StringPool_Destruct(pd->_internPool.strings), pd->_internPool.strings = NULL;
+        free(pd->_internPool.idHashMap), pd->_internPool.idHashMap = NULL;
+    }
+}
+
 static void clearPathHash(pathdirectory_pathhash_t* ph)
 {
     ushort i;
@@ -270,25 +157,65 @@ static size_t countNodes(pathdirectory_t* pd, int flags)
 }
 
 static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t* parent,
-    pathdirectory_nodetype_t nodeType, pathdirectory_internnameid_t nameId)
+    pathdirectory_nodetype_t nodeType, stringpool_internid_t internId)
 {
-    assert(NULL != pd && 0 != nameId);
+    assert(NULL != pd && 0 != internId);
     {
     pathdirectory_node_t* node = NULL;
     if(NULL != pd->_pathHash)
     {
-        const pathdirectory_internname_t* intern = getInternNameById(pd, nameId);
-        assert(NULL != intern);
-        for(node = (*pd->_pathHash)[intern->hash]; NULL != node; node = node->next)
+        ushort hash = pd->_internPool.idHashMap[internId-1];
+        for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
             if(nodeType != PathDirectoryNode_Type(node)) continue;
 
-            if(nameId == node->pair.nameId)
+            if(internId == PathDirectoryNode_InternId(node))
                 return node;
         }
     }
     return node;
+    }
+}
+
+static ushort hashForInternId(pathdirectory_t* pd, stringpool_internid_t internId)
+{
+    assert(NULL != pd);
+    if(0 == internId)
+        Con_Error("PathDirectory::hashForInternId: Invalid internId %u.", internId);
+    return pd->_internPool.idHashMap[internId-1];
+}
+
+static stringpool_internid_t internNameAndUpdateIdHashMap(pathdirectory_t* pd,
+    const ddstring_t* name, ushort hash)
+{
+    assert(NULL != pd);
+    {
+    stringpool_t* pool = pd->_internPool.strings;
+    stringpool_internid_t internId;
+    uint oldSize;
+
+    if(NULL == pool)
+    {
+        pool = pd->_internPool.strings = StringPool_ConstructDefault();
+    }
+    oldSize = StringPool_Size(pool);
+
+    internId = StringPool_Intern(pool, name);
+    if(oldSize != StringPool_Size(pool))
+    {
+        // A new string was added to the pool.
+        pd->_internPool.idHashMap = (ushort*) realloc(pd->_internPool.idHashMap, sizeof(*pd->_internPool.idHashMap) * StringPool_Size(pool));
+        if(NULL == pd->_internPool.idHashMap)
+            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of "
+                "%lu bytes for the IdHashMap", (unsigned long) (sizeof(*pd->_internPool.idHashMap) * StringPool_Size(pool)));
+        if(internId < StringPool_Size(pool))
+        {
+            memmove(pd->_internPool.idHashMap + internId, pd->_internPool.idHashMap + (internId-1), sizeof(*pd->_internPool.idHashMap) * (StringPool_Size(pool) - internId));
+        }
+        pd->_internPool.idHashMap[internId-1] = hash;
+    }
+    return internId;
     }
 }
 
@@ -301,17 +228,20 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
 {
     assert(NULL != pd && NULL != name);
     {
-    const pathdirectory_internname_t* intern;
-    pathdirectory_internnameid_t nameId;
+    stringpool_internid_t internId = 0;
     pathdirectory_node_t* node;
+    ushort hash;
 
     // Have we already encountered this?
-    nameId = findInternNameIdForName(pd, name);
-    if(0 != nameId)
+    if(NULL != pd->_internPool.strings)
     {
-        // The name is known. Perhaps we have.
-        node = findNode(pd, parent, nodeType, nameId);
-        if(NULL != node) return node;
+        internId = StringPool_IsInterned(pd->_internPool.strings, name);
+        if(0 != internId)
+        {
+            // The name is known. Perhaps we have.
+            node = findNode(pd, parent, nodeType, internId);
+            if(NULL != node) return node;
+        }
     }
 
     /**
@@ -319,25 +249,29 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
      */
 
     // Do we need a new name identifier (and hash)?
-    if(0 == nameId)
+    if(0 == internId)
     {
-        nameId = internName(pd, name, hashName(Str_Text(name), Str_Length(name), delimiter));
+        hash = hashName(Str_Text(name), Str_Length(name), delimiter);
+        internId = internNameAndUpdateIdHashMap(pd, name, hash);
     }
+    else
+    {
+        hash = hashForInternId(pd, internId);
+    }
+
     // Are we out of name indices?
-    if(0 == nameId)
+    if(0 == internId)
         return NULL;
 
-    node = PathDirectoryNode_Construct(pd, nodeType, parent, nameId, userData);
+    node = PathDirectoryNode_Construct(pd, nodeType, parent, internId, userData);
 
     // Do we need to init the path hash?
     if(NULL == pd->_pathHash)
         initPathHash(pd);
 
     // Insert the new node into the path hash.
-    intern = getInternNameById(pd, nameId);
-    assert(NULL != intern);
-    node->next = (*pd->_pathHash)[intern->hash];
-    (*pd->_pathHash)[intern->hash] = node;
+    node->next = (*pd->_pathHash)[hash];
+    (*pd->_pathHash)[hash] = node;
 
     return node;
     }
@@ -459,9 +393,8 @@ pathdirectory_t* PathDirectory_Construct(void)
     if(NULL == pd)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for "
             "new PathDirectory.", (unsigned long) sizeof(*pd));
-    pd->_internNames = NULL;
-    pd->_internNamesCount = 0;
-    pd->_sortedNameIdMap = NULL;
+    pd->_internPool.strings = NULL;
+    pd->_internPool.idHashMap = NULL;
     pd->_pathHash = NULL;
     return pd;
 }
@@ -471,7 +404,7 @@ void PathDirectory_Destruct(pathdirectory_t* pd)
     assert(NULL != pd);
     clearPathHash(pd->_pathHash);
     destroyPathHash(pd);
-    destroyInternNames(pd);
+    clearInternPool(pd);
     free(pd);
 }
 
@@ -479,6 +412,7 @@ void PathDirectory_Clear(pathdirectory_t* pd)
 {
     assert(NULL != pd);
     clearPathHash(pd->_pathHash);
+    clearInternPool(pd);
 }
 
 pathdirectory_node_t* PathDirectory_Insert2(pathdirectory_t* pd, const char* path, char delimiter,
@@ -520,6 +454,91 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, int flags, const path
     return PathDirectory_Iterate2_Const(pd, flags, parent, callback, NULL);
 }
 
+const ddstring_t* PathDirectory_GetFragment(pathdirectory_t* pd, const pathdirectory_node_t* node)
+{
+    assert(NULL != pd);
+    return StringPool_String(pd->_internPool.strings, PathDirectoryNode_InternId(node));
+}
+
+/**
+ * Calculate the total length of the final composed path.
+ */
+static int PathDirectory_CalcPathLength(pathdirectory_t* pd, const pathdirectory_node_t* node, char delimiter)
+{
+    assert(NULL != pd && NULL != node);
+    {
+    const int delimiterLen = delimiter? 1 : 0;
+    int requiredLen = 0;
+
+    if(PT_BRANCH == PathDirectoryNode_Type(node))
+        requiredLen += delimiterLen;
+
+    requiredLen += Str_Length(PathDirectory_GetFragment(pd, node));
+    if(NULL != PathDirectoryNode_Parent(node))
+    {
+        const pathdirectory_node_t* trav = PathDirectoryNode_Parent(node);
+        requiredLen += delimiterLen;
+        do
+        {
+            requiredLen += Str_Length(PathDirectory_GetFragment(pd, trav));
+            if(NULL != PathDirectoryNode_Parent(trav))
+                requiredLen += delimiterLen;
+        } while(NULL != (trav = PathDirectoryNode_Parent(trav)));
+    }
+
+    return requiredLen;
+    }
+}
+
+/// \assume @a foundPath already has sufficent characters reserved to hold the fully composed path.
+static ddstring_t* PathDirectory_ConstructPath(pathdirectory_t* pd, const pathdirectory_node_t* node,
+    ddstring_t* foundPath, char delimiter)
+{
+    assert(NULL != pd && NULL != node && foundPath != NULL);
+    {
+    const int delimiterLen = delimiter? 1 : 0;
+    const pathdirectory_node_t* trav;
+    const ddstring_t* fragment;
+    if(PT_BRANCH == PathDirectoryNode_Type(node) && 0 != delimiterLen)
+        Str_AppendChar(foundPath, delimiter);
+    trav = node;
+    do
+    {
+        fragment = PathDirectory_GetFragment(pd, trav);
+        Str_Prepend(foundPath, Str_Text(fragment));
+        if(NULL != PathDirectoryNode_Parent(trav) && 0 != delimiterLen)
+            Str_PrependChar(foundPath, delimiter);
+    } while(NULL != (trav = PathDirectoryNode_Parent(trav)));
+    return foundPath;
+    }
+}
+
+ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const pathdirectory_node_t* node,
+    ddstring_t* foundPath, int* length, char delimiter)
+{
+    assert(NULL != pd && NULL != node);
+    if(NULL == foundPath && length != NULL)
+    {
+        PathDirectory_CalcPathLength(pd, node, delimiter);
+        return foundPath;
+    }
+    else
+    {
+        int fullLength;
+
+        PathDirectory_ComposePath(pd, node, NULL, &fullLength, delimiter);
+        if(NULL != length)
+            *length = fullLength;
+
+        if(NULL == foundPath)
+            return foundPath;
+
+        Str_Clear(foundPath);
+        Str_Reserve(foundPath, fullLength);
+        return PathDirectory_ConstructPath(pd, node, foundPath, delimiter);
+    }
+}
+
 pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, int flags, const char* searchPath,
     char delimiter)
 {
@@ -528,8 +547,8 @@ pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, int flags, const c
     {
         size_t searchPathLen = strlen(searchPath);
         ushort hash = hashName(searchPath, searchPathLen, delimiter);
-        pathdirectory_node_t* node = (*pd->_pathHash)[hash];
         // Perform the search.
+        pathdirectory_node_t* node = (*pd->_pathHash)[hash];
         while(NULL != node && !PathDirectoryNode_MatchDirectory(node, flags, searchPath, searchPathLen, delimiter))
             node = node->next;
         return node;
@@ -564,7 +583,7 @@ ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char deli
                 continue;
 
             Str_Init(*pathPtr);
-            PathDirectoryNode_ComposePath(node, *pathPtr, delimiter);
+            PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, *pathPtr, NULL, delimiter);
             pathPtr++;
         }
         *pathPtr = NULL;
@@ -606,8 +625,10 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
 
 static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
-    pathdirectory_internnameid_t nameId, void* userData)
+    stringpool_internid_t internId, void* userData)
 {
+    assert(NULL != directory);
+    {
     pathdirectory_node_t* node = (pathdirectory_node_t*) malloc(sizeof(*node));
     if(NULL == node)
         Con_Error("PathDirectory::direcNode: Failed on allocation of %lu bytes for "
@@ -616,9 +637,10 @@ static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* direct
     node->_directory = directory;
     node->_type = type;
     node->_parent = parent;
-    node->pair.nameId = nameId;
-    node->pair.data = userData;
+    node->_pair.internId = internId;
+    node->_pair.data = userData;
     return node;
+    }
 }
 
 static void PathDirectoryNode_Destruct(pathdirectory_node_t* node)
@@ -632,8 +654,9 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, int f
 {
     assert(NULL != node);
     {
-    const pathdirectory_internname_t* intern;
     const char* begin, *from, *to;
+    pathdirectory_t* pd;
+    const ddstring_t* fragment;
     size_t i;
 
     if(NULL == searchPath || 0 == searchPathLen)
@@ -643,6 +666,7 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, int f
        ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
         return false;
 
+    pd = node->_directory;
     begin = searchPath;
     to = begin + searchPathLen - 1;
 
@@ -655,25 +679,23 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, int f
         // Find the start of the next path fragment.
         for(from = to; from > begin && !(*from == delimiter); from--) {}
 
-        // Does this match?
-        intern = getInternNameById(node->_directory, node->pair.nameId);
-        assert(NULL != intern);
-
-        if(Str_Length(&intern->name) < (to - from) + (from == begin && *from != delimiter? 1 : 0))
+        fragment = PathDirectory_GetFragment(pd, node);
+        assert(NULL != fragment);
+        if(Str_Length(fragment) < (to - from) + (from == begin && *from != delimiter? 1 : 0))
             return false;
-        if(strnicmp(Str_Text(&intern->name), *from == delimiter? from + 1 : from, Str_Length(&intern->name)))
+        if(strnicmp(Str_Text(fragment), *from == delimiter? from + 1 : from, Str_Length(fragment)))
             return false;
 
         // Have we arrived at the search target?
         if(from == begin)
-            return (!(flags & PCF_MATCH_FULL) || NULL == node->_parent);
+            return (!(flags & PCF_MATCH_FULL) || NULL == PathDirectoryNode_Parent(node));
 
         // Are there no more parent directories?
-        if(NULL == node->_parent)
+        if(NULL == PathDirectoryNode_Parent(node))
             return false;
 
         // So far so good. Move one directory level upwards.
-        node = node->_parent;
+        node = PathDirectoryNode_Parent(node);
 
         // The string now ends here.
         to = from-1;
@@ -683,48 +705,10 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, int f
     }
 }
 
-ddstring_t* PathDirectoryNode_ComposePath(const pathdirectory_node_t* node,
-    ddstring_t* foundPath, char delimiter)
+pathdirectory_t* PathDirectoryNode_Directory(const struct pathdirectory_node_s* node)
 {
-    assert(NULL != node && NULL != foundPath);
-    {
-    const int delimiterLen = delimiter? 1 : 0;
-    const pathdirectory_node_t* trav;
-    const pathdirectory_internname_t* intern;
-    int requiredLen = 0;
-
-    // Calculate the total length of the final composed path.
-    if(PT_BRANCH == node->_type && 0 != delimiterLen)
-        requiredLen += delimiterLen;
-    trav = node;
-    do
-    {
-        intern = getInternNameById(trav->_directory, trav->pair.nameId);
-        assert(NULL != intern);
-
-        requiredLen += Str_Length(&intern->name);
-        if(NULL != trav->_parent && 0 != delimiterLen)
-            requiredLen += delimiterLen;
-    } while(NULL != (trav = trav->_parent));
-
-    // Compose the path.
-    Str_Clear(foundPath);
-    Str_Reserve(foundPath, requiredLen);
-    if(PT_BRANCH == node->_type && 0 != delimiterLen)
-        Str_AppendChar(foundPath, delimiter);
-    trav = node;
-    do
-    {
-        intern = getInternNameById(trav->_directory, trav->pair.nameId);
-        assert(NULL != intern);
-
-        Str_Prepend(foundPath, Str_Text(&intern->name));
-        if(NULL != trav->_parent && 0 != delimiterLen)
-            Str_PrependChar(foundPath, delimiter);
-    } while(NULL != (trav = trav->_parent));
-
-    return foundPath;
-    }
+    assert(NULL != node);
+    return node->_directory;
 }
 
 struct pathdirectory_node_s* PathDirectoryNode_Parent(const struct pathdirectory_node_s* node)
@@ -739,25 +723,31 @@ pathdirectory_nodetype_t PathDirectoryNode_Type(const pathdirectory_node_t* node
     return node->_type;
 }
 
+stringpool_internid_t PathDirectoryNode_InternId(const pathdirectory_node_t* node)
+{
+    assert(NULL != node);
+    return node->_pair.internId;
+}
+
 void PathDirectoryNode_AttachUserData(pathdirectory_node_t* node, void* data)
 {
     assert(NULL != node);
 #if _DEBUG
-    if(NULL != node->pair.data)
+    if(NULL != node->_pair.data)
     {
         Con_Message("Warning:PathDirectoryNode::AttachUserData: Data is already associated "
             "with this node, will be replaced.");
     }
 #endif
-    node->pair.data = data;
+    node->_pair.data = data;
 }
 
 void* PathDirectoryNode_DetachUserData(pathdirectory_node_t* node)
 {
     assert(NULL != node);
     {
-    void* data = node->pair.data;
-    node->pair.data = NULL;
+    void* data = node->_pair.data;
+    node->_pair.data = NULL;
     return data;
     }
 }
@@ -765,5 +755,5 @@ void* PathDirectoryNode_DetachUserData(pathdirectory_node_t* node)
 void* PathDirectoryNode_UserData(const pathdirectory_node_t* node)
 {
     assert(NULL != node);
-    return node->pair.data;
+    return node->_pair.data;
 }

@@ -342,6 +342,7 @@
 		<Unit filename="..\..\engine\portable\include\s_mus.h" />
 		<Unit filename="..\..\engine\portable\include\s_sfx.h" />
 		<Unit filename="..\..\engine\portable\include\s_wav.h" />
+		<Unit filename="..\..\engine\portable\include\stringpool.h" />
 		<Unit filename="..\..\engine\portable\include\sv_def.h" />
 		<Unit filename="..\..\engine\portable\include\sv_frame.h" />
 		<Unit filename="..\..\engine\portable\include\sv_infine.h" />
@@ -782,6 +783,7 @@
 		<Unit filename="..\..\engine\portable\src\s_wav.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\stringpool.c" />
 		<Unit filename="..\..\engine\portable\src\sv_frame.c" />
 		<Unit filename="..\..\engine\portable\src\sv_infine.c" />
 		<Unit filename="..\..\engine\portable\src\sv_main.c">
