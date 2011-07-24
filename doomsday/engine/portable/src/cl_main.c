@@ -423,6 +423,8 @@ void Cl_Ticker(timespan_t ticLength)
     // player's clmobj to its updated state.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        if(!ddPlayers[i].shared.inGame) continue;
+
         // Update the smoother.
         Smoother_Advance(clients[i].smoother, ticLength);
 

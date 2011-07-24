@@ -81,9 +81,9 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
 {
     if(!sm) return;
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
     Con_Message("Smoother_AddPos: new time %f, smoother at %f\n", time, sm->at);
-#endif
+#endif*/
 
     if(time <= sm->pos[SMOOTHER_PRESENT].time)
     {
@@ -91,6 +91,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
 #ifdef _DEBUG
         Con_Message("Smoother_AddPos: DISCARDING new pos.\n");
 #endif
+        Smoother_Clear(sm);
         return;
     }
 
@@ -188,7 +189,7 @@ boolean Smoother_IsMoving(const Smoother* sm)
 
 void Smoother_Advance(Smoother* sm, float period)
 {
-    sm->at += period;
+    sm->at += period;  
 
     if(sm->at < sm->pos[SMOOTHER_PAST].time)
     {
@@ -213,4 +214,11 @@ void Smoother_Advance(Smoother* sm, float period)
             sm->at = sm->pos[SMOOTHER_PRESENT].time;
         }
     }
+
+/*#ifdef _DEBUG
+    Con_Message("Smoother_Advance: sm=%p at=%f past=%f now=%f fut=%f\n", sm,
+                sm->at, sm->pos[SMOOTHER_PAST].time,
+                sm->pos[SMOOTHER_PRESENT].time,
+                sm->pos[SMOOTHER_FUTURE].time);
+#endif*/
 }

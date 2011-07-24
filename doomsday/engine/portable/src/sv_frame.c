@@ -920,16 +920,23 @@ void Sv_SendFrame(int plrNum)
     // first frame packet type.
     Msg_Begin(pool->isFirst ? PSV_FIRST_FRAME2 : PSV_FRAME2);
 
+    // First send the gameTime of this frame.
+    Msg_WriteFloat(gameTime);
+
+    /*
     // The first byte contains the set number, which identifies this
     // frame. The client will keep track of the numbers to detect
     // duplicates.
     Msg_WriteByte(pool->setDealer);
+    */
 
     // The number of deltas in the packet will be here.
     deltaCountOffset = Msg_Offset();
+    /*
 #ifdef _NETDEBUG
     Msg_WriteLong(0);
 #endif
+    */
 
 /*
 #ifdef _DEBUG

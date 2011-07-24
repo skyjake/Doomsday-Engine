@@ -495,7 +495,7 @@ static void Net_DoUpdate(void)
     {
         mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
 
-        coordTimer = 2; //netCoordTime; // 35/2
+        coordTimer = 1; //netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
         Msg_WriteFloat(gameTime);
         Msg_WriteFloat(mo->pos[VX]);

@@ -319,7 +319,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
 
     assert(localMobj->dPlayer != 0);
     plrNum = P_GetDDPlayerIdx(localMobj->dPlayer);
-    Smoother_AddPos(clients[plrNum].smoother, gameTime,
+    Smoother_AddPos(clients[plrNum].smoother, Cl_FrameGameTime(),
                     remoteClientMobj->pos[VX],
                     remoteClientMobj->pos[VY],
                     remoteClientMobj->pos[VZ], onFloor);
@@ -332,15 +332,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
                                     remoteClientMobj->pos[VZ], onFloor);
 #endif*/
 
-/*    if(flags & (MDF_POS_X | MDF_POS_Y))
-    {
-        // We have to unlink the real mobj before we move it.
-        P_MobjUnlink(localMobj);
-        localMobj->pos[VX] = remoteClientMobj->pos[VX];
-        localMobj->pos[VY] = remoteClientMobj->pos[VY];
-        P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-    }
-    localMobj->pos[VZ] = remoteClientMobj->pos[VZ];*/
+    localMobj->radius = remoteClientMobj->radius;
 
     if(flags & MDF_MOM_X) localMobj->mom[MX] = remoteClientMobj->mom[MX];
     if(flags & MDF_MOM_Y) localMobj->mom[MY] = remoteClientMobj->mom[MY];
@@ -362,14 +354,48 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
     localMobj->flags = (localMobj->flags & ~0x1c000000) |
                        (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
-    localMobj->radius = remoteClientMobj->radius;
     localMobj->height = remoteClientMobj->height;
     localMobj->floorClip = remoteClientMobj->floorClip;
-    localMobj->floorZ = remoteClientMobj->floorZ;
-    localMobj->ceilingZ = remoteClientMobj->ceilingZ;
     localMobj->selector &= ~DDMOBJ_SELECTOR_MASK;
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;
+
+    if(flags & (MDF_POS_X | MDF_POS_Y))
+    {
+        // We have to unlink the real mobj before we move it.
+        /*P_MobjUnlink(localMobj);
+        localMobj->pos[VX] = remoteClientMobj->pos[VX];
+        localMobj->pos[VY] = remoteClientMobj->pos[VY];
+        P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);*/
+
+        // This'll update the contacted floor and ceiling heights as well.
+        if(gx.MobjTryMove3f)
+        {
+            gx.MobjTryMove3f(localMobj,
+                             remoteClientMobj->pos[VX],
+                             remoteClientMobj->pos[VY],
+                             remoteClientMobj->pos[VZ]);
+        }
+    }
+    if(flags & MDF_POS_Z)
+    {
+        if(onFloor)
+        {
+            // It's supposed to be on the local floor Z.
+            remoteClientMobj->pos[VZ] = remoteClientMobj->floorZ = localMobj->floorZ;
+        }
+        else
+        {
+            localMobj->floorZ = remoteClientMobj->floorZ;
+        }
+        localMobj->ceilingZ = remoteClientMobj->ceilingZ;
+
+        localMobj->pos[VZ] = remoteClientMobj->pos[VZ];
+
+        // Don't go below the floor level.
+        if(localMobj->pos[VZ] < localMobj->floorZ)
+            localMobj->pos[VZ] = localMobj->floorZ;
+    }
 }
 
 /**
@@ -800,6 +826,14 @@ void ClMobj_ReadDelta2(boolean skip)
 
         d->ceilingZ = Msg_ReadFloat();
     }
+
+#if _DEBUG
+    if((df & MDF_POS_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
+    {
+        Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i\n", P_GetDDPlayerIdx(d->dPlayer),
+                    d->pos[VZ], onFloor);
+    }
+#endif
 
     /*
     // When these flags are set, the normal Z coord is not included.

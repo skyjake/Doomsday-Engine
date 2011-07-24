@@ -370,7 +370,7 @@ void P_PlayerRemoteMove(player_t* player)
         return;
 
     // On client, the console player is not remote.
-    if(IS_CLIENT && plrNum == CONSOLEPLAYER)
+    if(IS_CLIENT) // && plrNum == CONSOLEPLAYER)
         return;
 
     // On server, there must be valid coordinates.
