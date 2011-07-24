@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 452 <--
+; --> 456 <--
 ; Free ordinals:
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
@@ -164,8 +164,10 @@ EXPORTS
     Net_GetTicCmd               @54 NONAME
     Net_GetPlayerName           @55 NONAME
     Net_GetPlayerID             @56 NONAME
+    Net_PlayerSmoother          @455 NONAME
+    Sv_CanTrustClientPos        @456 NONAME
 
-; Play.
+    ; Play.
     P_AccurateDistance          @57 NONAME
     P_ApproxDistance            @58 NONAME
     P_ApproxDistance3           @243 NONAME
@@ -532,3 +534,7 @@ EXPORTS
     DED_NewEntry                @193 NONAME
     DED_DelEntry                @194 NONAME
     DED_DelArray                @195 NONAME
+
+; Smoother.
+    Smoother_IsOnFloor          @453 NONAME
+    Smoother_Evaluate           @454 NONAME
