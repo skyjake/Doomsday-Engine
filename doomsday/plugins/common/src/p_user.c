@@ -370,7 +370,7 @@ void P_PlayerRemoteMove(player_t* player)
         return;
 
     // On client, the console player is not remote.
-    if(IS_CLIENT) // && plrNum == CONSOLEPLAYER)
+    if(IS_CLIENT && plrNum == CONSOLEPLAYER)
         return;
 
     // On server, there must be valid coordinates.
@@ -389,30 +389,51 @@ void P_PlayerRemoteMove(player_t* player)
         return;
     }
 
-    if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
+    if(IS_SERVER)
     {
-        if(Smoother_IsOnFloor(smoother))
+        // On the server, the move must trigger all the usual player movement side-effects
+        // (e.g., teleporting).
+
+        if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
         {
-            mo->pos[VZ] = mo->floorZ;
-#ifdef _DEBUG
-            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
-                        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-#endif
+            if(INRANGE_OF(mo->pos[VX], xyz[VX], .001f) &&
+               INRANGE_OF(mo->pos[VY], xyz[VY], .001f) &&
+               Smoother_IsOnFloor(smoother))
+            {
+                // It successfully moved to the right XY coords.
+                mo->pos[VZ] = mo->floorZ;
+    #ifdef _DEBUG
+                Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                            plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+    #endif
+            }
+            else
+            {
+    #ifdef _DEBUG
+                Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                            plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+    #endif
+            }
         }
         else
         {
-#ifdef _DEBUG
-            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+    #ifdef _DEBUG
+            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!\n",
                         plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-#endif
+    #endif
         }
     }
     else
     {
-#ifdef _DEBUG
-        Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!\n",
-                    plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
-#endif
+        // Clientside moves have no side-effects.
+        P_MobjUnlink(mo);
+        mo->pos[VX] = xyz[VX];
+        mo->pos[VY] = xyz[VY];
+        mo->pos[VZ] = xyz[VZ];
+        P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_CheckPosition3fv(mo, xyz);
+        mo->floorZ = tmFloorZ;
+        mo->ceilingZ = tmCeilingZ;
     }
 }
 
