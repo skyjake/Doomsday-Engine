@@ -66,7 +66,7 @@ static void printPathHash(resourcenamespace_t* rn)
         while(node)
         {
             Str_Clear(&path);
-            PathDirectoryNode_ComposePath(node->data, &path, FILEDIRECTORY_DELIMITER);
+            PathDirectory_ComposePath(PathDirectoryNode_Directory(node->data), node->data, &path, NULL, FILEDIRECTORY_DELIMITER);
             { ddstring_t* hashName = rn->_composeHashName(&path);
             Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, (unsigned long)i,
                        Str_Text(hashName), Str_Text(&path));
@@ -133,7 +133,7 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
 
     // Does the caller want to know the matched path?
     if(node && foundPath)
-        PathDirectoryNode_ComposePath(node->data, foundPath, FILEDIRECTORY_DELIMITER);
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(node->data), node->data, foundPath, NULL, FILEDIRECTORY_DELIMITER);
 
     return (node == 0? false : true);
     }
@@ -151,7 +151,7 @@ static int addFilePathWorker(const struct pathdirectory_node_s* fdNode, void* pa
 
     // Extract the file name and hash it.
     Str_Init(&filePath);
-    PathDirectoryNode_ComposePath(fdNode, &filePath, FILEDIRECTORY_DELIMITER);
+    PathDirectory_ComposePath(PathDirectoryNode_Directory(fdNode), fdNode, &filePath, NULL, FILEDIRECTORY_DELIMITER);
     hashName = rn->_composeHashName(&filePath);
 
     // Is this a new resource?

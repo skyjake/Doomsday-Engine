@@ -113,6 +113,7 @@
  .\..\..\engine\portable\src\bsp_main.c
  .\..\..\engine\portable\src\bsp_node.c
  .\..\..\engine\portable\src\bsp_superblock.c
+ .\..\..\engine\portable\src\stringpool.c
  .\..\..\engine\portable\src\sv_sound.c
  .\..\..\engine\portable\src\sv_pool.c
  .\..\..\engine\portable\src\sv_missile.c

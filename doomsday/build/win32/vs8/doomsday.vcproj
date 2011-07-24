@@ -1477,6 +1477,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\stringpool.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\sv_frame.c"
 				>
 			</File>
@@ -3175,6 +3179,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\s_wav.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\stringpool.h"
 				>
 			</File>
 			<File

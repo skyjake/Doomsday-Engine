@@ -395,7 +395,7 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeTyp
     // Does caller want to know the full path?
     if(NULL != foundName && NULL != foundNode)
     {
-        PathDirectoryNode_ComposePath(foundNode, foundName, FILEDIRECTORY_DELIMITER);
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(foundNode), foundNode, foundName, NULL, FILEDIRECTORY_DELIMITER);
     }
 
     return (NULL != foundNode);

@@ -395,7 +395,7 @@ cvartype_t CVar_Type(const cvar_t* var)
 ddstring_t* CVar_ComposeName(cvar_t* var)
 {
     assert(NULL != var);
-    return PathDirectoryNode_ComposePath(var->directoryNode, Str_New(), CVARDIRECTORY_DELIMITER);
+    return PathDirectory_ComposePath(PathDirectoryNode_Directory(var->directoryNode), var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
 }
 
 void CVar_SetString2(cvar_t* var, const char* text, int svFlags)

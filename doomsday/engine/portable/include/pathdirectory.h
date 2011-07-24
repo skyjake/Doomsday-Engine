@@ -26,6 +26,7 @@
 #define LIBDENG_PATHDIRECTORY_H
 
 #include "dd_string.h"
+#include "stringpool.h"
 
 struct pathdirectory_node_s;
 
@@ -66,17 +67,12 @@ typedef enum {
 #define PATHDIRECTORY_PATHHASH_SIZE 512
 typedef struct pathdirectory_node_s* pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
 
-// Intern name identifier. Used privately by this class and friends.
-typedef uint pathdirectory_internnameid_t;
-
 typedef struct pathdirectory_s {
-    /// Intern name list. Indices become class-private identifiers.
-    uint _internNamesCount;
-    struct pathdirectory_internname_s* _internNames;
-
-    /// Sorted redirection table.
-    pathdirectory_internnameid_t* _sortedNameIdMap;
-
+    /// Path name fragment intern pool.
+    struct pathdirectory_internpool_s {
+        stringpool_t* strings;
+        ushort* idHashMap; // Index by @c stringpool_internid_t-1
+    } _internPool;
     /// Path hash map.
     pathdirectory_pathhash_t* _pathHash;
 } pathdirectory_t;
@@ -93,9 +89,9 @@ void PathDirectory_Clear(pathdirectory_t* pd);
 /**
  * Check if @a searchPath exists in the directory.
  *
- * @param flags             @see pathComparisonFlags
- * @param searchPath        Relative or absolute path.
- * @param delimiter         Fragments of the path are delimited by this character.
+ * @param flags  @see pathComparisonFlags
+ * @param searchPath  Relative or absolute path.
+ * @param delimiter  Fragments of the path are delimited by this character.
  *
  * @return  Pointer to the associated node iff found else @c 0
  */
@@ -106,9 +102,9 @@ struct pathdirectory_node_s* PathDirectory_Find(pathdirectory_t* pd, int flags,
  * Add a new path. Duplicates are automatically pruned however, note that their
  * associated value is replaced!
  *
- * @param path              New path to add to the directory.
- * @param delimiter         Fragments of the path are delimited by this character.
- * @param value             Associated data value.
+ * @param path  New path to add to the directory.
+ * @param delimiter  Fragments of the path are delimited by this character.
+ * @param value  Associated data value.
  */
 struct pathdirectory_node_s* PathDirectory_Insert2(pathdirectory_t* pd,
     const char* path, char delimiter, void* value);
@@ -119,12 +115,12 @@ struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
  * Iterate over nodes in the directory making a callback for each.
  * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
- * @param flags             @see pathComparisonFlags
- * @param parent            Parent node reference, used when restricting processing
- *      to the child nodes of this node. Only used when the flag PCF_MATCH_PARENT
- *      is set in @a flags.
- * @param callback          Callback function ptr.
- * @param paramaters        Passed to the callback.
+ * @param flags  @see pathComparisonFlags
+ * @param parent  Parent node reference, used when restricting processing to the
+ *      child nodes of this node. Only used when the flag PCF_MATCH_PARENT is set
+ *      in @a flags.
+ * @param callback  Callback function ptr.
+ * @param paramaters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
@@ -139,46 +135,42 @@ int PathDirectory_Iterate_Const(const pathdirectory_t* pd, int flags, const stru
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
 /**
+ * Composes and/or calculates the composed-length of the relative path for a node.
+ *
+ * @param path  If not @c NULL the composed path is written here.
+ * @param length  If not @c NULL the length of the composed path is written here.
+ * @param delimiter  Path is composed with fragments delimited by this character.
+ *
+ * @return  The composed path pointer specified with @a path, for caller's convenience.
+ */
+ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const struct pathdirectory_node_s* node,
+    ddstring_t* path, int* length, char delimiter);
+
+/**
  * Collate all paths in the directory into a list.
  *
  * @todo Does this really belong here (perhaps a class static non-member)?
  *
- * @param flags             @see pathComparisonFlags
- * @param delimiter         Fragments of the path will be delimited by this character.
- * @param count             Number of visited paths is written back here.
+ * @param flags  @see pathComparisonFlags
+ * @param delimiter  Fragments of the path will be delimited by this character.
+ * @param count  Number of visited paths is written back here.
  *
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and free() the list itself.
  */
-ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter,
-    size_t* count);
+ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter, size_t* count);
 
-/**
- * @param flags             @see pathComparisonFlags
- * @param searchPath        A relative path.
- * @param searchPathLen     Number of characters from @a searchPath to match. Normally
- *      equal to the full length of @a searchPath excluding any terminating '\0'.
- * @param delimiter         Delimiter used to separate fragments of @a searchPath.
- *
- * @return  @c true iff @a searchPath matches this.
- */
-boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
-    int flags, const char* searchPath, size_t searchPathLen, char delimiter);
-
-/**
- * Composes a relative path for the directory node.
- * @param path              Composed path is written here.
- * @param delimiter         Path is composed with fragments delimited by this character.
- * @return  The composed path pointer specified with @a path, for caller's convenience.
- */
-ddstring_t* PathDirectoryNode_ComposePath(const struct pathdirectory_node_s* node,
-    ddstring_t* path, char delimiter);
+/// @return  PathDirectory which owns this node.
+pathdirectory_t* PathDirectoryNode_Directory(const struct pathdirectory_node_s* node);
 
 /// @return  Parent of this directory node else @c NULL
 struct pathdirectory_node_s* PathDirectoryNode_Parent(const struct pathdirectory_node_s* node);
 
 /// @return  Type of this directory node.
 pathdirectory_nodetype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);
+
+/// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
+stringpool_internid_t PathDirectoryNode_InternId(const struct pathdirectory_node_s* node);
 
 /**
  * Attach user data to this. PathDirectoryNode is given ownership of @a data
@@ -192,6 +184,18 @@ void* PathDirectoryNode_DetachUserData(struct pathdirectory_node_s* node);
 
 /// @return  Data associated with this.
 void* PathDirectoryNode_UserData(const struct pathdirectory_node_s* node);
+
+/**
+ * @param flags  @see pathComparisonFlags
+ * @param searchPath  A relative path.
+ * @param searchPathLen Number of characters from @a searchPath to match. Normally
+ *      equal to the full length of @a searchPath excluding any terminating '\0'.
+ * @param delimiter  Delimiter used to separate fragments of @a searchPath.
+ *
+ * @return  @c true iff @a searchPath matches this.
+ */
+boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
+    int flags, const char* searchPath, size_t searchPathLen, char delimiter);
 
 #if _DEBUG
 void PathDirectory_Print(pathdirectory_t* pd, char delimiter);
