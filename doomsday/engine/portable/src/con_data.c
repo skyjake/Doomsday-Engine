@@ -593,7 +593,7 @@ char* CVar_String(const cvar_t* var)
 }
 
 void Con_AddVariable(const cvartemplate_t* tpl)
-{   
+{
     assert(inited);
     if(NULL == tpl)
     {
@@ -850,7 +850,7 @@ if(ccmd->args == NULL)
     // data to change in case of dynamic registrations).
     { char* nameCopy = Z_Malloc(strlen(ccmd->name) + 1, PU_APPSTATIC, NULL);
     if(NULL == nameCopy)
-        Con_Error("Con_AddCommand: Failed on allocation of %lu bytes for command name.", 
+        Con_Error("Con_AddCommand: Failed on allocation of %lu bytes for command name.",
             (unsigned long) (strlen(ccmd->name) + 1));
     strcpy(nameCopy, ccmd->name);
     newCCmd->name = nameCopy;

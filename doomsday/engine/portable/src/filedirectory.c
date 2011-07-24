@@ -349,7 +349,7 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList)
     FileDirectory_AddPathList2(fd, pathList, NULL);
 }
 
-int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t nodeType, 
+int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
     const struct pathdirectory_node_s* parent,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
