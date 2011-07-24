@@ -54,8 +54,6 @@ typedef struct stringpool_s {
 
 /**
  * @param strings  Array of strings to be interned (must contain at least @a count strings!)
- * @param dataPtrs  Array of user data pointers to associate with the interned
- *      strings (must contain at least @a count pointers!)
  * @param count  Number of strings to be interned.
  */
 stringpool_t* StringPool_Construct(ddstring_t** strings, uint count);
