@@ -370,8 +370,9 @@ boolean P_LoadMap(const char *mapID)
         {
             player_t           *plr = &ddPlayers[i];
 
+            /*
             if(isServer && plr->shared.inGame)
-                clients[i].runTime = SECONDS_TO_TICKS(gameTime);
+                clients[i].runTime = SECONDS_TO_TICKS(gameTime);*/
 
             plr->extraLight = plr->targetExtraLight = 0;
             plr->extraLightCounter = 0;

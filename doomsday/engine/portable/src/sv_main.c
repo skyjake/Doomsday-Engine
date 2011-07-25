@@ -409,7 +409,7 @@ void Sv_HandlePacket(void)
 
             // Note the time when the player entered.
             sender->enterTime = SECONDS_TO_TICKS(gameTime);
-            sender->runTime = SECONDS_TO_TICKS(gameTime) - 1;
+            //sender->runTime = SECONDS_TO_TICKS(gameTime) - 1;
             //sender->lagStress = 0;
         }
         else if(ddpl->inGame)
@@ -769,6 +769,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
                 ddpl->fixAcked.mom = -1;
 
             Sv_InitPoolForClient(i);
+            Smoother_Clear(cl->smoother);
 
             VERBOSE(Con_Printf
                     ("Sv_PlayerArrives: '%s' assigned to "
@@ -937,15 +938,16 @@ void Sv_StartNetGame(void)
         //client->numTics = 0;
         //client->firstTic = 0;
         client->enterTime = 0;
-        client->runTime = -1;
+        //client->runTime = -1;
         client->lastTransmit = -1;
         //client->updateCount = UPDATECOUNT;
         client->fov = 90;
         client->viewConsole = -1;
         memset(client->name, 0, sizeof(client->name));
         client->bandwidthRating = BWR_DEFAULT;
-        client->bwrAdjustTime = 0;
-        memset(client->ackTimes, 0, sizeof(client->ackTimes));
+        //client->bwrAdjustTime = 0;
+        //memset(client->ackTimes, 0, sizeof(client->ackTimes));
+        Smoother_Clear(client->smoother);
     }
     gameTime = 0;
     firstNetUpdate = true;
@@ -1070,9 +1072,12 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
 #ifdef _DEBUG
     Con_Message("Sv_SendPlayerFixes: Cleared FIX flags of player %i.\n", plrNum);
 #endif
+
+    // Clear the smoother for this client.
+    Smoother_Clear(clients[plrNum].smoother);
 }
 
-void Sv_Ticker(void)
+void Sv_Ticker(timespan_t ticLength)
 {
     int                 i;
 
@@ -1084,13 +1089,20 @@ void Sv_Ticker(void)
         if(!plr->shared.inGame || !plr->shared.mo)
             continue;
 
-        plr->shared.lastAngle = plr->shared.mo->angle;
+        // Update the smoother.
+        Smoother_Advance(clients[i].smoother, ticLength);
 
+        if(DD_IsSharpTick())
+        {
+            plr->shared.lastAngle = plr->shared.mo->angle;
+        }
+
+        /*
         if(clients[i].bwrAdjustTime > 0)
         {
             // BWR adjust time tics away.
             clients[i].bwrAdjustTime--;
-        }
+        }*/
 
         // Increment counter, send new data.
         Sv_SendPlayerFixes(i);
@@ -1195,6 +1207,7 @@ void Sv_ClientCoords(int plrNum)
     ddplayer_t         *ddpl = &plr->shared;
     mobj_t             *mo = ddpl->mo;
     int                 clz;
+    float               clientGameTime;
     float               clientPos[3];
     float               clientMom[3];
     angle_t             clientAngle;
@@ -1203,6 +1216,8 @@ void Sv_ClientCoords(int plrNum)
     // If mobj or player is invalid, the message is discarded.
     if(!mo || !ddpl->inGame || (ddpl->flags & DDPF_DEAD))
         return;
+
+    clientGameTime = Msg_ReadFloat();
 
     clientPos[VX] = Msg_ReadFloat();
     clientPos[VY] = Msg_ReadFloat();
@@ -1240,6 +1255,7 @@ void Sv_ClientCoords(int plrNum)
 
     if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
     {
+        /*
 #ifdef _DEBUG
         VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
                               clientMom[VX], clientMom[VY], clientMom[VZ]) );
@@ -1247,6 +1263,7 @@ void Sv_ClientCoords(int plrNum)
         mo->mom[VX] = clientMom[VX];
         mo->mom[VY] = clientMom[VY];
         mo->mom[VZ] = clientMom[VZ];
+        */
     }
 
 #ifdef _DEBUG
@@ -1256,12 +1273,16 @@ void Sv_ClientCoords(int plrNum)
 
     // If we aren't about to forcibly change the client's position, update
     // with new pos if it's valid. But it must be a valid pos.
-    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
+    if(Sv_CanTrustClientPos(plrNum))
     {
 #ifdef _DEBUG
         VERBOSE2( Con_Message("Sv_ClientCoords: Setting coords for player %i: %f, %f, %f\n", plrNum,
                               clientPos[VX], clientPos[VY], clientPos[VZ]) );
 #endif
+        Smoother_AddPos(clients[plrNum].smoother, clientGameTime,
+                        clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
+
+        /*
         if(!P_MobjSetPos(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
         {
             Con_Message("Sv_ClientCoords: Player %i attempts an illegal move to: %f, %f, %f\n", plrNum,
@@ -1275,7 +1296,24 @@ void Sv_ClientCoords(int plrNum)
             if(onFloor)
                 mo->pos[VZ] = mo->floorZ;
         }
+        */
     }
+}
+
+/**
+ * Determines whether the coordinates sent by a player are valid at the moment.
+ */
+boolean Sv_CanTrustClientPos(int plrNum)
+{
+    player_t* plr = &ddPlayers[plrNum];
+    ddplayer_t* ddpl = &plr->shared;
+
+    if(ddpl->fixCounter.pos == ddpl->fixAcked.pos && !(ddpl->flags & DDPF_FIXPOS))
+    {
+        return true;
+    }
+    // Server's position is valid, client is not up-to-date.
+    return false;
 }
 
 /**

@@ -44,7 +44,7 @@ extern int      clientPaused;
 void            Cl_InitID(void);
 void            Cl_CleanUp(void);
 void            Cl_GetPackets(void);
-void            Cl_Ticker(void);
+void            Cl_Ticker(timespan_t ticLength);
 int             Cl_GameReady(void);
 void            Cl_SendHello(void);
 

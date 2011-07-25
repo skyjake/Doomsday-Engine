@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "doomsday.h"
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
@@ -1240,6 +1241,8 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
     float               oldpos[3];
     int                 side, oldSide;
     linedef_t*          ld;
+    boolean             isRemotePlayer = ((IS_DEDICATED && thing->dPlayer) ||
+                                          (IS_CLIENT && thing->player && thing->player - players != CONSOLEPLAYER));
 
     // $dropoff_fix: fellDown.
     floatOk = false;
@@ -1317,7 +1320,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 # endif
             )
         {
-            if(tmFloorZ - thing->pos[VZ] > 24)
+            if(!isRemotePlayer && tmFloorZ - thing->pos[VZ] > 24)
             {
 # if __JHERETIC__
                 CheckMissileImpact(thing);
@@ -1358,8 +1361,9 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 #if __JHEXEN__
         if(!(thing->flags & MF_TELEPORT)
            // The Minotaur floor fire (MT_MNTRFX2) can step up any amount
-           && thing->type != MT_MNTRFX2 && thing->type != MT_LIGHTNING_FLOOR &&
-           tmFloorZ - thing->pos[VZ] > 24)
+           && thing->type != MT_MNTRFX2 && thing->type != MT_LIGHTNING_FLOOR
+           && !isRemotePlayer
+           && tmFloorZ - thing->pos[VZ] > 24)
         {
             goto pushline;
         }
@@ -1418,6 +1422,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
 #if __JDOOM64__
         //// \fixme DJS - FIXME! Mother demon fire attack.
         if(!(thing->flags & MF_TELEPORT) /*&& thing->type != MT_SPAWNFIRE*/
+            && !isRemotePlayer
             && tmFloorZ - thing->pos[VZ] > 24)
         { // Too big a step up
             CheckMissileImpact(thing);

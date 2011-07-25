@@ -1042,6 +1042,7 @@ void R_ProjectSprite(mobj_t* mo)
     material_t* mat;
     material_snapshot_t ms;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    float moPos[3];
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
        mo->state == NULL || mo->state == states)
@@ -1057,9 +1058,19 @@ void R_ProjectSprite(mobj_t* mo)
         return;
     }
 
+    moPos[VX] = mo->pos[VX];
+    moPos[VY] = mo->pos[VY];
+    moPos[VZ] = mo->pos[VZ];
+
+    // The client may have a Smoother for this object.
+    if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
+    {
+        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, moPos);
+    }
+
     // Transform the origin point.
-    pos[VX] = mo->pos[VX] - viewData->current.pos[VX];
-    pos[VY] = mo->pos[VY] - viewData->current.pos[VY];
+    pos[VX] = moPos[VX] - viewData->current.pos[VX];
+    pos[VY] = moPos[VY] - viewData->current.pos[VY];
 
     // Decide which patch to use for sprite relative to player.
 
@@ -1079,7 +1090,7 @@ void R_ProjectSprite(mobj_t* mo)
     sprFrame = &sprDef->spriteFrames[mo->frame];
 
     // Determine distance to object.
-    distance = Rend_PointDist2D(mo->pos);
+    distance = Rend_PointDist2D(moPos);
 
     // Check for a 3D model.
     if(useModels)
@@ -1096,7 +1107,7 @@ void R_ProjectSprite(mobj_t* mo)
 
     if(sprFrame->rotate && !mf)
     {   // Choose a different rotation based on player view.
-        ang = R_PointToAngle(mo->pos[VX], mo->pos[VY]);
+        ang = R_PointToAngle(moPos[VX], moPos[VY]);
         rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         mat = sprFrame->mats[rot];
         matFlipS = (boolean) sprFrame->flip[rot];
@@ -1134,8 +1145,8 @@ void R_ProjectSprite(mobj_t* mo)
 
     // Project a line segment relative to the view in 2D, then check
     // if not entirely clipped away in the 360 degree angle clipper.
-    center[VX] = mo->pos[VX];
-    center[VY] = mo->pos[VY];
+    center[VX] = moPos[VX];
+    center[VY] = moPos[VY];
     M_ProjectViewRelativeLine2D(center, mf || (align || alwaysAlign == 3),
                                 width, offset, v1, v2);
 
@@ -1148,7 +1159,7 @@ void R_ProjectSprite(mobj_t* mo)
             // draw it. Otherwise large models are likely to disappear
             // too early.
             if(P_ApproxDistance
-                (distance, mo->pos[VZ] + (mo->height / 2) - viewData->current.pos[VZ]) >
+                (distance, moPos[VZ] + (mo->height / 2) - viewData->current.pos[VZ]) >
                MAX_OBJECT_RADIUS)
             {
                 return; // Can't be visible.
@@ -1178,9 +1189,9 @@ void R_ProjectSprite(mobj_t* mo)
     // Store information in a vissprite.
     vis = R_NewVisSprite();
     vis->type = visType;
-    vis->center[VX] = mo->pos[VX];
-    vis->center[VY] = mo->pos[VY];
-    vis->center[VZ] = mo->pos[VZ];
+    vis->center[VX] = moPos[VX];
+    vis->center[VY] = moPos[VY];
+    vis->center[VZ] = moPos[VZ];
     vis->distance = distance;
 
     floorAdjust = (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
@@ -1417,7 +1428,7 @@ void R_ProjectSprite(mobj_t* mo)
         sprFrame = &sprDef->spriteFrames[mo->frame];
         if(sprFrame->rotate)
         {
-            mat = sprFrame->mats[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
+            mat = sprFrame->mats[(R_PointToAngle(moPos[VX], moPos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
         }
         else
         {
@@ -1447,7 +1458,7 @@ if(!mat)
         vis->distance = distance;
 
         // Determine the exact center of the flare.
-        V3_Sum(vis->center, mo->pos, visOff);
+        V3_Sum(vis->center, moPos, visOff);
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
         
         flareSize = pl->brightMul;

@@ -992,8 +992,10 @@ static int DD_ChangeGameWorker(void* paramaters)
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
 
+        /*
         if(isServer && plr->shared.inGame)
             clients[i].runTime = SECONDS_TO_TICKS(gameTime);
+            */
     }}
 
     if(gx.PostInit)

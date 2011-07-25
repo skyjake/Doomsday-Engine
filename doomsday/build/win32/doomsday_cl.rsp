@@ -176,3 +176,4 @@
  .\..\..\engine\portable\src\resourcenamespace.c
  .\..\..\engine\portable\src\resourcerecord.c
  .\..\..\engine\portable\src\uri.c
+ .\..\..\engine\portable\src\smoother.c

@@ -68,6 +68,7 @@ extern          "C" {
 
 #include "dd_share.h"
 #include "dd_plugin.h"
+#include "smoother.h"
 
 //------------------------------------------------------------------------
 //
@@ -276,6 +277,8 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
+    Smoother*       Net_PlayerSmoother(int player);
+    boolean         Sv_CanTrustClientPos(int player);
 
 //------------------------------------------------------------------------
 //

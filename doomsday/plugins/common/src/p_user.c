@@ -45,6 +45,7 @@
 #  include "jhexen.h"
 #endif
 
+#include "doomsday.h"
 #include "g_common.h"
 #include "p_player.h"
 #include "p_tick.h" // for P_IsPaused()
@@ -348,6 +349,102 @@ void P_CheckPlayerJump(player_t *player)
     }
 }
 
+/**
+ * Moves a player according to its smoother.
+ */
+void P_PlayerRemoteMove(player_t* player)
+{
+    int plrNum = player - players;
+    Smoother* smoother = Net_PlayerSmoother(plrNum);
+    mobj_t* mo = player->plr->mo;
+    float xyz[3];
+
+    /*
+#ifdef _DEBUG
+    Con_Message("P_PlayerRemoteMove: player=%i IS_NETGAME=%i mo=%p smoother=%p IS_CLIENT=%i IS_SERVER=%i CNSPLR=%i\n",
+                plrNum, IS_NETGAME, mo, smoother, IS_CLIENT, IS_SERVER, CONSOLEPLAYER);
+#endif
+    */
+
+    if(!IS_NETGAME || !mo || !smoother)
+        return;
+
+    // On client, the console player is not remote.
+    if(IS_CLIENT && plrNum == CONSOLEPLAYER)
+        return;
+
+    // On server, there must be valid coordinates.
+    if(IS_SERVER && !Sv_CanTrustClientPos(plrNum))
+        return;
+
+    // As the mobj is being moved by the smoother, it has no momentum in the regular
+    // physics sense.
+    mo->mom[VX] = 0;
+    mo->mom[VY] = 0;
+    mo->mom[VZ] = 0;
+
+    if(!Smoother_Evaluate(smoother, xyz))
+    {
+        // The smoother has no coordinates for us, so we won't touch the mobj.
+        return;
+    }
+
+    if(IS_SERVER)
+    {
+        // On the server, the move must trigger all the usual player movement side-effects
+        // (e.g., teleporting).
+
+        if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
+        {
+            if(INRANGE_OF(mo->pos[VX], xyz[VX], .001f) &&
+               INRANGE_OF(mo->pos[VY], xyz[VY], .001f) &&
+               Smoother_IsOnFloor(smoother))
+            {
+                // It successfully moved to the right XY coords.
+                mo->pos[VZ] = mo->floorZ;
+    #ifdef _DEBUG
+                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                                     plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+    #endif
+            }
+            else
+            {
+    #ifdef _DEBUG
+                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                                      plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+    #endif
+            }
+        }
+        else
+        {
+    #ifdef _DEBUG
+            Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f FAILED!\n",
+                        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+    #endif
+        }
+    }
+    else
+    {
+#ifdef _DEBUG
+        //Smoother_Debug(smoother);
+#endif
+        /*Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                    plrNum, xyz[VX], xyz[VY], xyz[VZ]);*/
+
+        /*
+        // Clientside moves have no side-effects.
+        P_MobjUnlink(mo);
+        mo->pos[VX] = xyz[VX];
+        mo->pos[VY] = xyz[VY];
+        mo->pos[VZ] = xyz[VZ];
+        P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        P_CheckPosition3fv(mo, xyz);
+        mo->floorZ = tmFloorZ;
+        mo->ceilingZ = tmCeilingZ;
+        */
+    }
+}
+
 void P_MovePlayer(player_t *player)
 {
     ddplayer_t* dp = player->plr;
@@ -358,9 +455,11 @@ void P_MovePlayer(player_t *player)
     float forwardMove;
     float sideMove;
 
+    if(!plrmo) return;
+
     if(IS_NETGAME && IS_SERVER)
     {
-        // Server just starts the walking animation for remote players.
+        // Server starts the walking animation for remote players.
         if((dp->forwardMove != 0 || dp->sideMove != 0) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
@@ -954,7 +1053,7 @@ void P_PlayerThinkMorph(player_t *player)
 
 void P_PlayerThinkMove(player_t *player)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t* plrmo = player->plr->mo;
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.
@@ -1834,6 +1933,8 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, ticLength);
+
+    P_PlayerRemoteMove(player);
 
     if(!DD_IsSharpTick())
     {

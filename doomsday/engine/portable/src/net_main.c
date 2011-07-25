@@ -300,6 +300,17 @@ boolean Net_GetPacket(void)
 }
 
 /**
+ * Provides access to the player's movement smoother.
+ */
+Smoother* Net_PlayerSmoother(int player)
+{
+    if(player < 0 || player >= DDMAXPLAYERS)
+        return 0;
+
+    return clients[player].smoother;
+}
+
+/**
  * This is the public interface of the message sender.
  */
 void Net_SendPacket(int to_player, int type, const void* data, size_t length)
@@ -345,7 +356,14 @@ void Net_ShowChatMessage(void)
  */
 void Net_ResetTimer(void)
 {
+    int i;
+
     firstNetUpdate = true;
+
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        Smoother_Clear(clients[i].smoother);
+    }
 }
 
 /**
@@ -503,6 +521,7 @@ static void Net_DoUpdate(void)
 
         coordTimer = 1; //netCoordTime; // 35/2
         Msg_Begin(PKT_COORDS);
+        Msg_WriteFloat(gameTime);
         Msg_WriteFloat(mo->pos[VX]);
         Msg_WriteFloat(mo->pos[VY]);
         if(mo->pos[VZ] == mo->floorZ)
@@ -581,26 +600,29 @@ void Net_BuildLocalCommands(timespan_t time)
 #endif
 }
 
-static __inline client_t* clientInfoForClientId(int clientNum)
-{
-    assert(clientNum >= 0 && clientNum < DDMAXPLAYERS);
-    return clients + clientNum;
-}
-
 void Net_AllocClientBuffers(int clientId)
 {
-/*    client_t* cl = clientInfoForClientId(clientId);
+    int i;
 
-    cl->runTime = -1;
+    memset(clients, 0, sizeof(clients));
+
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        memset(clients + i, 0, sizeof(clients[i]));
-        clients[i].runTime = -1;
-    }*/
+        // Movement smoother.
+        clients[i].smoother = Smoother_New();
+    }
 }
 
 void Net_DestroyArrays(void)
 {
+    int i;
+
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        Smoother_Destruct(clients[i].smoother);
+    }
+
+    memset(clients, 0, sizeof(clients));
 }
 
 /**
@@ -846,6 +868,7 @@ void Net_Drawer(void)
  */
 void Net_SetAckTime(int clientNumber, uint period)
 {
+    /*
     client_t *client = &clients[clientNumber];
 
     // Add the new time into the array.
@@ -856,6 +879,7 @@ void Net_SetAckTime(int clientNumber, uint period)
     VERBOSE( Con_Printf("Net_SetAckTime: Client %i, new ack sample of %05u ms.\n",
                         clientNumber, period) );
 #endif
+    */
 }
 
 /**
@@ -863,6 +887,7 @@ void Net_SetAckTime(int clientNumber, uint period)
  */
 uint Net_GetAckTime(int clientNumber)
 {
+    /*
     client_t   *client = &clients[clientNumber];
     uint        average = 0;
     int         i, count = 0;
@@ -896,7 +921,8 @@ uint Net_GetAckTime(int clientNumber)
     else
     {
         return client->ackTimes[0];
-    }
+    }*/
+    return 0;
 }
 
 /**
@@ -904,12 +930,14 @@ uint Net_GetAckTime(int clientNumber)
  */
 void Net_SetInitialAckTime(int clientNumber, uint period)
 {
+    /*
     int         i;
 
     for(i = 0; i < NUM_ACK_TIMES; ++i)
     {
         clients[clientNumber].ackTimes[i] = period;
     }
+    */
 }
 
 /**
@@ -918,6 +946,7 @@ void Net_SetInitialAckTime(int clientNumber, uint period)
  */
 uint Net_GetAckThreshold(int clientNumber)
 {
+    /*
     uint        threshold =
         Net_GetAckTime(clientNumber) * ACK_THRESHOLD_MUL;
 
@@ -926,7 +955,8 @@ uint Net_GetAckThreshold(int clientNumber)
         threshold = ACK_MINIMUM_THRESHOLD;
     }
 
-    return threshold;
+    return threshold;*/
+    return 0;
 }
 
 void Net_Ticker(void /*timespan_t time*/)
@@ -949,11 +979,11 @@ void Net_Ticker(void /*timespan_t time*/)
                 if(Sv_IsFrameTarget(i))
                 {
                     Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
-                                "bwr=%05i (adj:%i) maxfs=%05lub unakd=%05i\n", i,
+                                "bwr=%05i maxfs=%05lub unakd=%05i\n", i,
                                 clients[i].ready, Net_GetAckTime(i),
                                 Net_GetAckThreshold(i),
                                 clients[i].bandwidthRating,
-                                clients[i].bwrAdjustTime,
+                                /*clients[i].bwrAdjustTime,*/
                                 (unsigned long) Sv_GetMaxFrameSize(i),
                                 Sv_CountUnackedDeltas(i));
                 }

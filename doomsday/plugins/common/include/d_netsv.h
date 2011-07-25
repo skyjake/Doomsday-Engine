@@ -25,15 +25,7 @@
 #ifndef LIBCOMMON_NETSV_H
 #define LIBCOMMON_NETSV_H
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 extern char cyclingMaps, mapCycleNoExit;
 extern int netSvAllowCheats;

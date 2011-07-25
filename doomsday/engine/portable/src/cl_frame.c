@@ -62,6 +62,9 @@ boolean gotFirstFrame;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// gameTime of the current frame.
+static float frameGameTime = 0;
+
 #if 0
 // Ordinal of the latest set received by the client. Used for detecting deltas
 // that arrive out of order. The ordinal is the logical equivalent of the set
@@ -120,6 +123,11 @@ void Cl_ResetFrame(void)
     // All frames received before the PSV_FIRST_FRAME2 are ignored.
     // They must be from the wrong map.
     gotFirstFrame = false;
+}
+
+float Cl_FrameGameTime(void)
+{
+    return frameGameTime;
 }
 
 #if 0
@@ -214,7 +222,7 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
  */
 void Cl_Frame2Received(int packetType)
 {
-    byte        set = Msg_ReadByte(), deltaType;
+    byte        /*set = Msg_ReadByte(),*/ deltaType;
     //byte        resendAcks[300];
     //int         i, numResendAcks = 0;
     boolean     skip = false;
@@ -224,28 +232,33 @@ void Cl_Frame2Received(int packetType)
     int         deltaLength;
 #endif
 
+    // The first thing in the frame is the gameTime.
+    frameGameTime = Msg_ReadFloat();
+
     // All frames that arrive before the first frame are ignored.
     // They are most likely from the wrong map.
     if(packetType == PSV_FIRST_FRAME2)
     {
         gotFirstFrame = true;
-#ifdef _DEBUG
+/*#ifdef _DEBUG
         VERBOSE( Con_Printf("*** GOT THE FIRST FRAME (%i) ***\n", set) );
-#endif
+#endif*/
     }
     else if(!gotFirstFrame)
     {
         // Just ignore. If this was a legitimate frame, the server will
         // send it again when it notices no ack is coming.
-#ifdef _DEBUG
+/*#ifdef _DEBUG
         VERBOSE( Con_Printf("==> Ignored set %i\n", set) );
-#endif
+#endif*/
         return;
     }
 
+    /*
 #ifdef _DEBUG
     VERBOSE2( Con_Printf("Cl_Frame2Received: Processing delta set %i.\n", set) );
 #endif
+    */
 
 #if 0
     if(packetType != PSV_FIRST_FRAME2)
@@ -273,12 +286,14 @@ void Cl_Frame2Received(int packetType)
         // It isn't yet in the history, so add it there.
         //Cl_HistoryAdd(set);
 
-        VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
+        //VERBOSE2( Con_Printf("Starting to process deltas in set %i.\n", set) );
 
+        /*
 #ifdef _NETDEBUG
         deltaCount = Msg_ReadLong();
         VERBOSE2( Con_Message("Set contains %i deltas.\n", deltaCount) );
 #endif
+        */
 
         // Read and process the message.
         while(!Msg_End())

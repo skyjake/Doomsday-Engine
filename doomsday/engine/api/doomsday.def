@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 538 <--
+; Highest ordinal is currently: --> 542 <--
 ; Other free ordinals: -
 
 NAME                            "DOOMSDAY"
@@ -204,6 +204,8 @@ EXPORTS
     Net_GetTicCmd               @54 NONAME
     Net_GetPlayerName           @55 NONAME
     Net_GetPlayerID             @56 NONAME
+    Net_PlayerSmoother          @541 NONAME
+    Sv_CanTrustClientPos        @542 NONAME
 
 ; Play.
     P_AccurateDistance          @57 NONAME
@@ -651,3 +653,7 @@ EXPORTS
     DED_NewEntry                @193 NONAME
     DED_DelEntry                @194 NONAME
     DED_DelArray                @195 NONAME
+
+; Smoother.
+    Smoother_IsOnFloor          @539 NONAME
+    Smoother_Evaluate           @540 NONAME

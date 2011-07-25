@@ -305,8 +305,12 @@ void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
  * The client mobj is always unlinked. Only the *real* mobj is visible.
  * (The real mobj was created by the Game.)
  */
-void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags)
+void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
 {
+    //float x, y, z;
+    //boolean addSmooth = false;
+    int plrNum = P_GetDDPlayerIdx(localMobj->dPlayer);
+
 #if _DEBUG
     if(!localMobj || !remoteClientMobj)
     {
@@ -315,15 +319,8 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     }
 #endif
 
-    if(flags & (MDF_POS_X | MDF_POS_Y))
-    {
-        // We have to unlink the real mobj before we move it.
-        P_MobjUnlink(localMobj);
-        localMobj->pos[VX] = remoteClientMobj->pos[VX];
-        localMobj->pos[VY] = remoteClientMobj->pos[VY];
-        P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-    }
-    localMobj->pos[VZ] = remoteClientMobj->pos[VZ];
+    localMobj->radius = remoteClientMobj->radius;
+
     if(flags & MDF_MOM_X) localMobj->mom[MX] = remoteClientMobj->mom[MX];
     if(flags & MDF_MOM_Y) localMobj->mom[MY] = remoteClientMobj->mom[MY];
     if(flags & MDF_MOM_Z) localMobj->mom[MZ] = remoteClientMobj->mom[MZ];
@@ -344,14 +341,77 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     localMobj->ddFlags = (localMobj->ddFlags & DDMF_KEEP_MASK) | (remoteClientMobj->ddFlags & ~DDMF_KEEP_MASK);
     localMobj->flags = (localMobj->flags & ~0x1c000000) |
                        (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
-    localMobj->radius = remoteClientMobj->radius;
     localMobj->height = remoteClientMobj->height;
     localMobj->floorClip = remoteClientMobj->floorClip;
-    localMobj->floorZ = remoteClientMobj->floorZ;
-    localMobj->ceilingZ = remoteClientMobj->ceilingZ;
     localMobj->selector &= ~DDMOBJ_SELECTOR_MASK;
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;
+
+    // Old position.
+    /*x = localMobj->pos[VX];
+    y = localMobj->pos[VY];
+    z = localMobj->pos[VZ];*/
+
+    if(flags & (MDF_POS_X | MDF_POS_Y))
+    {
+        // We have to unlink the real mobj before we move it.
+        P_MobjUnlink(localMobj);
+        localMobj->pos[VX] = remoteClientMobj->pos[VX];
+        localMobj->pos[VY] = remoteClientMobj->pos[VY];
+        P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+
+        // This'll update the contacted floor and ceiling heights as well.
+        if(gx.MobjTryMove3f)
+        {
+            gx.MobjTryMove3f(localMobj,
+                             remoteClientMobj->pos[VX],
+                             remoteClientMobj->pos[VY],
+                             remoteClientMobj->pos[VZ]);
+        }
+
+        /*addSmooth = true;
+
+        x = remoteClientMobj->pos[VX];
+        y = remoteClientMobj->pos[VY];
+        */
+    }
+    if(flags & MDF_POS_Z)
+    {
+        //addSmooth = true;
+
+        // Stay on the floor if the mobj is locally touching the right plane.
+        if(!onFloor)
+        {
+            localMobj->floorZ = remoteClientMobj->floorZ;
+        }
+        localMobj->ceilingZ = remoteClientMobj->ceilingZ;
+
+        localMobj->pos[VZ] = remoteClientMobj->pos[VZ];
+
+        // Don't go below the floor level.
+        if(localMobj->pos[VZ] < localMobj->floorZ)
+            localMobj->pos[VZ] = localMobj->floorZ;
+    }
+    /*else if(addSmooth)
+    {
+        // The Z coordinate information was not included, so we have to rely
+        // on local information about whether it's on the floor.
+
+        // Stay on the floor?
+        onFloor = Smoother_IsOnFloor(clients[plrNum].smoother);
+    }*/
+
+    /*if(addSmooth)
+    {
+        Smoother_AddPos(clients[plrNum].smoother, Cl_FrameGameTime(),
+                        x, y, z, onFloor);
+
+#ifdef _DEBUG
+        if(plrNum != consolePlayer)
+            Con_Message("Cl_UpdateRealPlayerMobj: AddPos plr=%i gt=%f xyz=%f,%f,%f onFloor=%i\n",
+                        plrNum, Cl_FrameGameTime(), x, y, z, onFloor);
+#endif
+    }*/
 }
 
 /**
@@ -666,6 +726,7 @@ void ClMobj_ReadDelta2(boolean skip)
     byte        moreFlags = 0, fastMom = false;
     short       mom;
     thid_t      id = Msg_ReadShort();   // Read the ID.
+    boolean     onFloor = false;
 
     // Flags.
     df = Msg_ReadShort();
@@ -767,6 +828,8 @@ void ClMobj_ReadDelta2(boolean skip)
         }
         else
         {
+            onFloor = true;
+
             // Ignore these.
             Msg_ReadShort();
             Msg_ReadByte();
@@ -778,6 +841,14 @@ void ClMobj_ReadDelta2(boolean skip)
 
         d->ceilingZ = Msg_ReadFloat();
     }
+
+/*#if _DEBUG
+    if((df & MDF_POS_Z) && d->dPlayer && P_GetDDPlayerIdx(d->dPlayer) != consolePlayer)
+    {
+        Con_Message("ClMobj_ReadDelta2: Player=%i z=%f onFloor=%i\n", P_GetDDPlayerIdx(d->dPlayer),
+                    d->pos[VZ], onFloor);
+    }
+#endif*/
 
     /*
     // When these flags are set, the normal Z coord is not included.
@@ -916,10 +987,10 @@ void ClMobj_ReadDelta2(boolean skip)
         {
 #ifdef _DEBUG
             VERBOSE2( Con_Message("ClMobj_ReadDelta2: Updating player %i local mobj with new clmobj state (%f, %f, %f).\n",
-                                  P_GetDDPlayerIdx(d->dPlayer), mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+                                  P_GetDDPlayerIdx(d->dPlayer), d->pos[VX], d->pos[VY], d->pos[VZ]) );
 #endif
             // Players have real mobjs. The client mobj is hidden (unlinked).
-            Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
+            Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df, onFloor);
         }
     }
 }

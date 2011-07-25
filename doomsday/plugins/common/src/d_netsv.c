@@ -33,16 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "d_net.h"
 #include "p_player.h"
 #include "p_user.h"
@@ -1484,23 +1475,38 @@ void NetSv_DoAction(int player, const char *data)
     case GPA_FIRE:
         if(pl->plr->mo)
         {
-            if(P_CheckPosition3fv(pl->plr->mo, pos))
+            mobj_t* mo = pl->plr->mo;
+            float oldPos[3] = { mo->pos[VX], mo->pos[VY], mo->pos[VZ] };
+            float oldFloorZ = mo->floorZ;
+            float oldCeilingZ = mo->ceilingZ;
+
+            // We will temporarily move the object to the action coords.
+            if(P_CheckPosition3fv(mo, pos))
             {
-                P_MobjUnlink(pl->plr->mo);
-                pl->plr->mo->pos[VX] = pos[VX];
-                pl->plr->mo->pos[VY] = pos[VY];
-                pl->plr->mo->pos[VZ] = pos[VZ];
-                P_MobjLink(pl->plr->mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
-                pl->plr->mo->floorZ = tmFloorZ;
-                pl->plr->mo->ceilingZ = tmCeilingZ;
+                P_MobjUnlink(mo);
+                mo->pos[VX] = pos[VX];
+                mo->pos[VY] = pos[VY];
+                mo->pos[VZ] = pos[VZ];
+                P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+                mo->floorZ = tmFloorZ;
+                mo->ceilingZ = tmCeilingZ;
             }
-            pl->plr->mo->angle = angle;
-            pl->plr->lookDir = lookDir;
+            mo->angle = angle;
+            lookDir = lookDir;
 
             if(type == GPA_USE)
                 P_UseLines(pl);
             else
                 P_FireWeapon(pl);
+
+            // Restore the old position.
+            P_MobjUnlink(mo);
+            mo->pos[VX] = oldPos[VX];
+            mo->pos[VY] = oldPos[VY];
+            mo->pos[VZ] = oldPos[VZ];
+            P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+            mo->floorZ = oldFloorZ;
+            mo->ceilingZ = oldCeilingZ;
         }
         break;
 

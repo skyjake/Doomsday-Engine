@@ -237,6 +237,8 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
     {
         // This is a new player! Let the game know about this.
         gx.NetPlayerEvent(info->console, DDPE_ARRIVAL, 0);
+
+        Smoother_Clear(clients[info->console].smoother);
     }
 }
 
@@ -413,7 +415,7 @@ void Cl_Assertions(int plrNum)
 /**
  * Client-side game ticker.
  */
-void Cl_Ticker(void)
+void Cl_Ticker(timespan_t ticLength)
 {
     int i;
 
@@ -428,6 +430,20 @@ void Cl_Ticker(void)
     // player's clmobj to its updated state.
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        if(!ddPlayers[i].shared.inGame) continue;
+
+        if(DD_IsSharpTick() && ddPlayers[i].shared.mo)
+        {
+            Smoother_AddPos(clients[i].smoother, gameTime,
+                            ddPlayers[i].shared.mo->pos[VX],
+                            ddPlayers[i].shared.mo->pos[VY],
+                            ddPlayers[i].shared.mo->pos[VZ],
+                            false);
+        }
+
+        // Update the smoother.
+        Smoother_Advance(clients[i].smoother, ticLength);
+
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdatePos(i);
 
