@@ -78,7 +78,7 @@ typedef struct resourcenamespace_s {
     uint _extraSearchPathsCount;
 
     /// Path hash table.
-    filedirectory_t* _fileDirectory;
+    filedirectory_t* _directory;
     ddstring_t* (*_composeHashName) (const ddstring_t* path);
     resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
     resourcenamespace_namehash_t _pathHash;
@@ -88,22 +88,22 @@ typedef struct resourcenamespace_s {
 } resourcenamespace_t;
 
 resourcenamespace_t* ResourceNamespace_Construct(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name));
 resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount);
 resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount, byte flags);
 resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount, byte flags, const char* overrideName);
 resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount, byte flags, const char* overrideName,
     const char* overrideName2);
@@ -161,5 +161,8 @@ boolean ResourceNamespace_MapPath(resourcenamespace_t* rnamespace, ddstring_t* p
  */
 /// @return  Ptr to a string containing the symbolic name.
 const ddstring_t* ResourceNamespace_Name(const resourcenamespace_t* rnamespace);
+
+/// @return  Ptr to the path directory used with this namespace.
+filedirectory_t* ResourceNamespace_Directory(const resourcenamespace_t* rnamespace);
 
 #endif /* LIBDENG_SYSTEM_RESOURCENAMESPACE_H */

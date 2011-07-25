@@ -155,8 +155,14 @@ static void destroyAllNamespaces(void)
         return;
     { uint i;
     for(i = 0; i < numNamespaces; ++i)
-        ResourceNamespace_Destruct(namespaces[i]);
-    }
+    {
+        resourcenamespace_t* rnamespace = namespaces[i];
+        if(NULL != ResourceNamespace_Directory(rnamespace))
+        {
+            FileDirectory_Destruct(ResourceNamespace_Directory(rnamespace));
+        }
+        ResourceNamespace_Destruct(rnamespace);
+    }}
     free(namespaces);
     namespaces = 0;
 }
@@ -384,6 +390,7 @@ static void createPackagesResourceNamespace(void)
 {
     ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
     uint doomWadPathsCount = 0, searchPathsCount, idx;
+    filedirectory_t* directory;
     dduri_t** searchPaths;
 
     // Is the DOOMWADPATH environment variable in use?
@@ -488,7 +495,8 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, F_ComposeHashNameForFilePath,
+    directory = FileDirectory_ConstructDefault();
+    F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, directory, F_ComposeHashNameForFilePath,
         F_HashKeyForFilePathHashName, (const dduri_t**)searchPaths, searchPathsCount, 0, 0, 0);
 
     for(idx = 0; idx < searchPathsCount; ++idx)
@@ -530,6 +538,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         struct namespacedef_s* def = &defs[i];
         dduri_t** searchPaths = 0;
         uint j, searchPathsCount = 0;
+        filedirectory_t* directory;
 
         for(searchPathsCount = 0; searchPathsCount < NAMESPACEDEF_MAX_SEARCHPATHS; ++searchPathsCount)
             if(!def->searchPaths[searchPathsCount])
@@ -542,7 +551,8 @@ void F_CreateNamespacesForFileResourcePaths(void)
         for(j = 0; j < searchPathsCount; ++j)
             searchPaths[j] = Uri_Construct2(def->searchPaths[j], RC_NULL);
 
-        F_CreateResourceNamespace(def->name, F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName,
+        directory = FileDirectory_ConstructDefault();
+        F_CreateResourceNamespace(def->name, directory, F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName,
             (const dduri_t**)searchPaths, searchPathsCount, def->flags, def->overrideName, def->overrideName2);
 
         for(j = 0; j < searchPathsCount; ++j)
@@ -610,14 +620,14 @@ boolean F_IsValidResourceNamespaceId(int val)
 }
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
     const char* overrideName2)
 {
     assert(inited && name);
     {
-    resourcenamespace_t* rn = ResourceNamespace_Construct5(name, composeHashNameFunc,
+    resourcenamespace_t* rn = ResourceNamespace_Construct5(name, directory, composeHashNameFunc,
         hashNameFunc, searchPaths, numSearchPaths, flags, overrideName, overrideName2);
     namespaces = (resourcenamespace_t**) realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);
     if(namespaces == NULL)

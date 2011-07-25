@@ -116,7 +116,7 @@ resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const dd
 #define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
     const char* overrideName2);

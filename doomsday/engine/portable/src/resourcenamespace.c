@@ -189,10 +189,7 @@ static void rebuild(resourcenamespace_t* rn)
     if(rn->_flags & RNF_IS_DIRTY)
     {
         clearPathHash(rn);
-        if(NULL != rn->_fileDirectory)
-        {
-            FileDirectory_Clear(rn->_fileDirectory);
-        }
+        FileDirectory_Clear(rn->_directory);
 
         { ddstring_t tmp; Str_Init(&tmp);
         formSearchPathList(&tmp, rn);
@@ -205,7 +202,7 @@ static void rebuild(resourcenamespace_t* rn)
             //startTime = verbose >= 2? Sys_GetRealTime(): 0;
 #endif
 
-            FileDirectory_AddPathList3(rn->_fileDirectory, Str_Text(&tmp), addFilePathWorker, rn);
+            FileDirectory_AddPathList3(rn->_directory, Str_Text(&tmp), addFilePathWorker, rn);
 
 /*#if _DEBUG
             printPathHash(rn);
@@ -220,12 +217,12 @@ static void rebuild(resourcenamespace_t* rn)
 }
 
 resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount, byte flags,
     const char* overrideName, const char* overrideName2)
 {
-    assert(name && composeHashNameFunc && hashNameFunc);
+    assert(name && directory && composeHashNameFunc && hashNameFunc);
     {
     resourcenamespace_t* rn;
 
@@ -240,7 +237,7 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     rn->_flags = flags;
     Str_Init(&rn->_name); Str_Set(&rn->_name, name);
 
-    rn->_fileDirectory = FileDirectory_ConstructDefault();
+    rn->_directory = directory;
     rn->_composeHashName = composeHashNameFunc;
     rn->_hashName = hashNameFunc;
     memset(rn->_pathHash, 0, sizeof(rn->_pathHash));
@@ -286,38 +283,38 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
 }
 
 resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount, byte flags,
     const char* overrideName)
 {
-    return ResourceNamespace_Construct5(name, composeHashNameFunc, hashNameFunc,
+    return ResourceNamespace_Construct5(name, directory, composeHashNameFunc, hashNameFunc,
         searchPaths, searchPathsCount, flags, overrideName, 0);
 }
 
 resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount, byte flags)
 {
-    return ResourceNamespace_Construct4(name, composeHashNameFunc, hashNameFunc,
+    return ResourceNamespace_Construct4(name, directory, composeHashNameFunc, hashNameFunc,
         searchPaths, searchPathsCount, flags, 0);
 }
 
 resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
     const dduri_t* const* searchPaths, uint searchPathsCount)
 {
-    return ResourceNamespace_Construct3(name, composeHashNameFunc, hashNameFunc,
+    return ResourceNamespace_Construct3(name, directory, composeHashNameFunc, hashNameFunc,
         searchPaths, searchPathsCount, 0);
 }
 
 resourcenamespace_t* ResourceNamespace_Construct(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name))
 {
-    return ResourceNamespace_Construct2(name, composeHashNameFunc, hashNameFunc, 0, 0);
+    return ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, 0, 0);
 }
 
 void ResourceNamespace_Destruct(resourcenamespace_t* rn)
@@ -326,11 +323,6 @@ void ResourceNamespace_Destruct(resourcenamespace_t* rn)
     ResourceNamespace_ClearSearchPaths(rn);
     ResourceNamespace_ClearExtraSearchPaths(rn);
     clearPathHash(rn);
-    if(NULL != rn->_fileDirectory)
-    {
-        FileDirectory_Destruct(rn->_fileDirectory);
-        rn->_fileDirectory = NULL;
-    }
     Str_Free(&rn->_name);
     if(rn->_overrideName)
         Str_Delete(rn->_overrideName);
@@ -344,10 +336,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rn)
     assert(rn);
     ResourceNamespace_ClearExtraSearchPaths(rn);
     clearPathHash(rn);
-    if(NULL != rn->_fileDirectory)
-    {
-        FileDirectory_Clear(rn->_fileDirectory);
-    }
+    FileDirectory_Clear(rn->_directory);
     rn->_flags |= RNF_IS_DIRTY;
 }
 
@@ -470,4 +459,10 @@ const ddstring_t* ResourceNamespace_Name(const resourcenamespace_t* rn)
 {
     assert(rn);
     return &rn->_name;
+}
+
+filedirectory_t* ResourceNamespace_Directory(const resourcenamespace_t* rn)
+{
+    assert(rn);
+    return rn->_directory;
 }
