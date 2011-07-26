@@ -98,6 +98,14 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
 
     if(!sm) return;
 
+    // Is it the same point?
+    last = &sm->points[SM_NUM_POINTS - 1];
+    if(last->time == time && last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
+    {
+        // Ignore it.
+        return;
+    }
+
     if(time <= sm->now.time)
     {
         // The new point would be in the past, this is no good.
@@ -126,6 +134,10 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
 
         // Replace the now with the point about to be discarded.
         memcpy(&sm->now, &sm->points[0], sizeof(pos_t));
+
+/*#ifdef _DEBUG
+        Con_Message("Smoother_AddPos: Discarded a point!\n");
+#endif*/
     }
 
     // Rotate the old points.
