@@ -248,12 +248,13 @@ void Hu_LoadData(void)
     }
     else
     {
+        int numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
         int j;
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
         pMapNames = Z_Malloc(sizeof(patchid_t) * (9*4), PU_GAMESTATIC, 0);
-        for(i = 0; i < 4; ++i) // Number of episodes.
+        for(i = 0; i < numEpisodes; ++i)
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
