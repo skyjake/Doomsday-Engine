@@ -87,7 +87,7 @@ boolean Smoother_IsMoving(const Smoother* sm);
  */
 void Smoother_Advance(Smoother* sm, float period);
 
-void Smoother_Debug(const Smoother* sm);
+//void Smoother_Debug(const Smoother* sm);
 
 #ifdef __cplusplus
 } // extern "C"

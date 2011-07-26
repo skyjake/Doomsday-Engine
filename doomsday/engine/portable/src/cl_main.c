@@ -425,17 +425,20 @@ void Cl_Ticker(timespan_t ticLength)
     {
         if(!ddPlayers[i].shared.inGame) continue;
 
-        if(DD_IsSharpTick() && ddPlayers[i].shared.mo)
+        if(i != consolePlayer)
         {
-            Smoother_AddPos(clients[i].smoother, gameTime,
-                            ddPlayers[i].shared.mo->pos[VX],
-                            ddPlayers[i].shared.mo->pos[VY],
-                            ddPlayers[i].shared.mo->pos[VZ],
-                            false);
-        }
+            if(DD_IsSharpTick() && ddPlayers[i].shared.mo)
+            {
+                Smoother_AddPos(clients[i].smoother, gameTime,
+                                ddPlayers[i].shared.mo->pos[VX],
+                                ddPlayers[i].shared.mo->pos[VY],
+                                ddPlayers[i].shared.mo->pos[VZ],
+                                false);
+            }
 
-        // Update the smoother.
-        Smoother_Advance(clients[i].smoother, ticLength);
+            // Update the smoother.
+            Smoother_Advance(clients[i].smoother, ticLength);
+        }
 
         ClPlayer_ApplyPendingFixes(i);
         ClPlayer_UpdatePos(i);
