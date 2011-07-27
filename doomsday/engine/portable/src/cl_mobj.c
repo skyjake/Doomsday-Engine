@@ -307,8 +307,6 @@ void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
  */
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
 {
-    //float x, y, z;
-    //boolean addSmooth = false;
     int plrNum = P_GetDDPlayerIdx(localMobj->dPlayer);
 
 #if _DEBUG
@@ -347,39 +345,33 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;
 
-    // Old position.
-    /*x = localMobj->pos[VX];
-    y = localMobj->pos[VY];
-    z = localMobj->pos[VZ];*/
-
     if(flags & (MDF_POS_X | MDF_POS_Y))
     {
+        /*
         // We have to unlink the real mobj before we move it.
         P_MobjUnlink(localMobj);
         localMobj->pos[VX] = remoteClientMobj->pos[VX];
         localMobj->pos[VY] = remoteClientMobj->pos[VY];
         P_MobjLink(localMobj, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        */
 
         // This'll update the contacted floor and ceiling heights as well.
         if(gx.MobjTryMove3f)
         {
-            gx.MobjTryMove3f(localMobj,
-                             remoteClientMobj->pos[VX],
-                             remoteClientMobj->pos[VY],
-                             remoteClientMobj->pos[VZ]);
+            if(gx.MobjTryMove3f(localMobj,
+                                remoteClientMobj->pos[VX],
+                                remoteClientMobj->pos[VY],
+                                (flags & MDF_POS_Z)? remoteClientMobj->pos[VZ] : localMobj->pos[VZ]))
+            {
+                if((flags & MDF_POS_Z) && onFloor)
+                {
+                    localMobj->pos[VZ] = remoteClientMobj->pos[VZ] = localMobj->floorZ;
+                }
+            }
         }
-
-        /*addSmooth = true;
-
-        x = remoteClientMobj->pos[VX];
-        y = remoteClientMobj->pos[VY];
-        */
     }
     if(flags & MDF_POS_Z)
     {
-        //addSmooth = true;
-
-        // Stay on the floor if the mobj is locally touching the right plane.
         if(!onFloor)
         {
             localMobj->floorZ = remoteClientMobj->floorZ;
@@ -392,26 +384,6 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
         if(localMobj->pos[VZ] < localMobj->floorZ)
             localMobj->pos[VZ] = localMobj->floorZ;
     }
-    /*else if(addSmooth)
-    {
-        // The Z coordinate information was not included, so we have to rely
-        // on local information about whether it's on the floor.
-
-        // Stay on the floor?
-        onFloor = Smoother_IsOnFloor(clients[plrNum].smoother);
-    }*/
-
-    /*if(addSmooth)
-    {
-        Smoother_AddPos(clients[plrNum].smoother, Cl_FrameGameTime(),
-                        x, y, z, onFloor);
-
-#ifdef _DEBUG
-        if(plrNum != consolePlayer)
-            Con_Message("Cl_UpdateRealPlayerMobj: AddPos plr=%i gt=%f xyz=%f,%f,%f onFloor=%i\n",
-                        plrNum, Cl_FrameGameTime(), x, y, z, onFloor);
-#endif
-    }*/
 }
 
 /**
