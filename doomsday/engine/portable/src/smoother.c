@@ -113,7 +113,7 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
     {
         // The new point would be in the past, this is no good.
 #ifdef _DEBUG
-        Con_Message("Smoother_AddPos: DISCARDING new pos.\n");
+        Con_Message("Smoother_AddPos: DISCARDING new pos, time=%f, now=%f.\n", time, sm->now.time);
 #endif
         Smoother_Clear(sm);
         return;
@@ -167,9 +167,9 @@ boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
 
     if(!Smoother_IsValid(sm))
     {
-#ifdef _DEBUG
+/*#ifdef _DEBUG
         Con_Message("Smoother_Evaluate: sm=%p not valid!\n", sm);
-#endif
+#endif*/
         return false;
     }
 
