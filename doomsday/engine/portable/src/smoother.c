@@ -45,11 +45,8 @@ typedef struct pos_s {
     boolean onFloor;    // Special Z handling: should be on the floor.
 } pos_t;
 
-enum {
-    SMOOTHER_PAST = 0,
-    SMOOTHER_PRESENT = 1,
-    SMOOTHER_FUTURE = 2
-};
+/** Points from the future. */
+#define SM_NUM_POINTS 2
 
 /**
  * The smoother contains the data necessary to determine the 
@@ -57,8 +54,13 @@ enum {
  * It is assumed that time always moves forward.
  */
 struct smoother_s {
-    pos_t   past, now, future;
+    pos_t   points[SM_NUM_POINTS];  // Future points.
+    pos_t   past, now;  // Current interpolation.
     float   at;         // Current position in time for the smoother.
+
+#ifdef _DEBUG
+    float   prevEval[2], prevAt;
+#endif
 };
 
 Smoother* Smoother_New()
@@ -72,6 +74,22 @@ void Smoother_Destruct(Smoother* sm)
     free(sm);
 }
 
+void Smoother_Debug(const Smoother* sm)
+{
+    Con_Message("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f\n",
+                sm->past.time, sm->now.time, sm->points[0].time, sm->at);
+}
+
+static boolean Smoother_IsValid(const Smoother* sm)
+{
+    if(sm->past.time == 0 || sm->now.time == 0)
+    {
+        // We don't have valid data.
+        return false;
+    }
+    return true;
+}
+
 void Smoother_Clear(Smoother* sm)
 {
     memset(sm, 0, sizeof(*sm));
@@ -79,11 +97,17 @@ void Smoother_Clear(Smoother* sm)
 
 void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolean onFloor)
 {
+    pos_t* last;
+
     if(!sm) return;
 
-/*#ifdef _DEBUG
-    Con_Message("Smoother_AddPos: new time %f, smoother at %f\n", time, sm->at);
-#endif*/
+    // Is it the same point?
+    last = &sm->points[SM_NUM_POINTS - 1];
+    if(last->time == time && last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
+    {
+        // Ignore it.
+        return;
+    }
 
     if(time <= sm->now.time)
     {
@@ -95,30 +119,43 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
         return;
     }
 
-    // Set the future.
-    sm->future.time = time;
-    sm->future.xyz[VX] = x;
-    sm->future.xyz[VY] = y;
-    sm->future.xyz[VZ] = z;
-    sm->future.onFloor = onFloor;
+    // If we are about to discard an unused future point, we will force
+    // the current interpolation into the future.
+    if(Smoother_IsValid(sm) && sm->points[0].time > sm->now.time)
+    {
+        float mid[3];
+        float remaining;
+
+        // Move the past forward in time so that the interpolation remains continuous.
+        remaining = sm->now.time - sm->at;
+
+        Smoother_Evaluate(sm, mid);
+        sm->at = sm->past.time = sm->points[0].time - remaining;
+        sm->past.xyz[VX] = mid[VX];
+        sm->past.xyz[VY] = mid[VY];
+        sm->past.xyz[VZ] = mid[VZ];
+
+        // Replace the now with the point about to be discarded.
+        memcpy(&sm->now, &sm->points[0], sizeof(pos_t));
+    }
+
+    // Rotate the old points.
+    memmove(&sm->points[0], &sm->points[1], sizeof(pos_t) * (SM_NUM_POINTS - 1));
+
+    last = &sm->points[SM_NUM_POINTS - 1];
+    last->time = time;
+    last->xyz[VX] = x;
+    last->xyz[VY] = y;
+    last->xyz[VZ] = z;
+    last->onFloor = onFloor;
 
     // Is this the first one?
     if(sm->now.time == 0)
     {
         sm->at = time;
-        memcpy(&sm->past, &sm->future, sizeof(pos_t));
-        memcpy(&sm->now, &sm->future, sizeof(pos_t));
+        memcpy(&sm->past, last, sizeof(pos_t));
+        memcpy(&sm->now, last, sizeof(pos_t));
     }
-}
-
-static boolean Smoother_IsValid(const Smoother* sm)
-{
-    if(sm->past.time == 0 || sm->now.time == 0)
-    {
-        // We don't have valid data.
-        return false;
-    }
-    return true;
 }
 
 boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
@@ -142,14 +179,25 @@ boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
         xyz[VX] = past->xyz[VX];
         xyz[VY] = past->xyz[VY];
         xyz[VZ] = past->xyz[VZ];
+/*#if _DEBUG
+        Con_Message("Smoother_Evaluate: falling behind\n");
+        ((Smoother*)sm)->prevEval[0] = xyz[0];
+        ((Smoother*)sm)->prevEval[1] = xyz[1];
+#endif*/
         return true;
     }
-    if(sm->at > now->time || now->time <= past->time)
+    //assert(sm->at <= now->time);
+    if(now->time <= past->time)
     {
         // Too far in the ever-shifting future.
         xyz[VX] = now->xyz[VX];
         xyz[VY] = now->xyz[VY];
         xyz[VZ] = now->xyz[VZ];
+/*#if _DEBUG
+        Con_Message("Smoother_Evaluate: stalling\n");
+        ((Smoother*)sm)->prevEval[0] = xyz[0];
+        ((Smoother*)sm)->prevEval[1] = xyz[1];
+#endif*/
         return true;
     }
 
@@ -160,6 +208,21 @@ boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
         // Linear interpolation.
         xyz[i] = now->xyz[i] * t + past->xyz[i] * (1-t);
     }
+
+/*#ifdef _DEBUG
+    {
+        float dt = sm->at - sm->prevAt;
+        //Smoother_Debug(sm);
+        if(dt > 0)
+        {
+            float diff[2] = { xyz[0] - sm->prevEval[0], xyz[1] - sm->prevEval[1] };
+            Con_Message("Smoother_Evaluate: [%05.3f] diff = %+06.3f  %+06.3f\n", dt, diff[0]/dt, diff[1]/dt);
+            ((Smoother*)sm)->prevEval[0] = xyz[0];
+            ((Smoother*)sm)->prevEval[1] = xyz[1];
+        }
+        ((Smoother*)sm)->prevAt = sm->at;
+    }
+#endif*/
     return true;
 }
 
@@ -189,42 +252,46 @@ boolean Smoother_IsMoving(const Smoother* sm)
 
 void Smoother_Advance(Smoother* sm, float period)
 {
+    int i;
+
+    if(period <= 0) return;
+
     sm->at += period;  
+
+    // Did we go past the present?
+    while(sm->at > sm->now.time)
+    {
+        int j = -1;
+
+        // The present has become the past.
+        memcpy(&sm->past, &sm->now, sizeof(pos_t));
+
+        // Choose the next point from the future.
+        for(i = 0; i < SM_NUM_POINTS; ++i)
+        {
+            if(sm->points[i].time > sm->now.time)
+            {
+                // Use this one.
+                j = i;
+                break;
+            }
+        }
+        if(j < 0)
+        {
+            // No points were applicable. We need to stop here until
+            // new points are received.
+            sm->at = sm->now.time;
+            break;
+        }
+        else
+        {
+            memcpy(&sm->now, &sm->points[j], sizeof(pos_t));
+        }
+    }
 
     if(sm->at < sm->past.time)
     {
         // Don't fall too far back.
         sm->at = sm->past.time;
     }
-
-    // Did we go past the present?
-    if(sm->at >= sm->now.time)
-    {
-        // The present has become the past.
-        memcpy(&sm->past, &sm->now, sizeof(pos_t));
-
-        // Is the future valid?
-        if(sm->future.time > sm->now.time)
-        {
-            memcpy(&sm->now, &sm->future, sizeof(pos_t));
-        }
-        else
-        {
-            // Stay at the threshold rather than going to an unknown future.
-            sm->at = sm->now.time;
-        }
-    }
-
-/*#ifdef _DEBUG
-    Con_Message("Smoother_Advance: sm=%p at=%f past=%f now=%f fut=%f\n", sm,
-                sm->at, sm->past.time,
-                sm->now.time,
-                sm->future.time);
-#endif*/
-}
-
-void Smoother_Debug(const Smoother* sm)
-{
-    Con_Message("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f\n",
-                sm->past.time, sm->now.time, sm->future.time, sm->at);
 }
