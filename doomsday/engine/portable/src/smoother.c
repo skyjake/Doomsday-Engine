@@ -57,7 +57,10 @@ struct smoother_s {
     pos_t   points[SM_NUM_POINTS];  // Future points.
     pos_t   past, now;  // Current interpolation.
     float   at;         // Current position in time for the smoother.
+
+#ifdef _DEBUG
     float   prevEval[2], prevAt;
+#endif
 };
 
 Smoother* Smoother_New()
@@ -134,10 +137,6 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
 
         // Replace the now with the point about to be discarded.
         memcpy(&sm->now, &sm->points[0], sizeof(pos_t));
-
-/*#ifdef _DEBUG
-        Con_Message("Smoother_AddPos: Discarded a point!\n");
-#endif*/
     }
 
     // Rotate the old points.
@@ -283,35 +282,11 @@ void Smoother_Advance(Smoother* sm, float period)
             // new points are received.
             sm->at = sm->now.time;
             break;
-/*#ifdef _DEBUG
-            Con_Message("STALL\n");
-#endif*/
         }
         else
         {
             memcpy(&sm->now, &sm->points[j], sizeof(pos_t));
-            //sm->at = sm->past.time;
-            /*if(sm->at > sm->now.time)
-            {
-                // Don't goo too far in the future.
-                sm->at = sm->now.time;
-            }*/
-/*#ifdef _DEBUG
-            Con_Message("Switch!\n");
-#endif*/
         }
-
-        /*
-        // Is the future valid?
-        if(sm->future.time > sm->now.time)
-        {
-            memcpy(&sm->now, &sm->future, sizeof(pos_t));
-        }
-        else
-        {
-            // Stay at the threshold rather than going to an unknown future.
-            sm->at = sm->now.time;
-        }*/
     }
 
     if(sm->at < sm->past.time)
@@ -319,13 +294,4 @@ void Smoother_Advance(Smoother* sm, float period)
         // Don't fall too far back.
         sm->at = sm->past.time;
     }
-
-    //Smoother_Debug(sm);
-
-/*#ifdef _DEBUG
-    Con_Message("Smoother_Advance: sm=%p at=%f past=%f now=%f fut=%f\n", sm,
-                sm->at, sm->past.time,
-                sm->now.time,
-                sm->future.time);
-#endif*/
 }
