@@ -559,6 +559,7 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
     if(df & SDF_CEIL_COLOR_BLUE)
         Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
 
+    /*
     if(df & SDF_FLOOR_GLOW_RED)
         Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
     if(df & SDF_FLOOR_GLOW_GREEN)
@@ -581,6 +582,7 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
         Msg_WriteShort(d->planes[PLN_CEILING].glow < 0 ? 0 :
                        d->planes[PLN_CEILING].glow > 1 ? DDMAXSHORT :
                        (short)(d->planes[PLN_CEILING].glow * DDMAXSHORT));
+                       */
 }
 
 /**

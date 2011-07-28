@@ -1772,8 +1772,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     }
     else
     {
-        pln->glowRGB[CR] = pln->glowRGB[CG] =
-            pln->glowRGB[CB] = 0;
+        pln->glowRGB[CR] = pln->glowRGB[CG] = pln->glowRGB[CB] = 0;
         pln->glow = 0;
     }
 

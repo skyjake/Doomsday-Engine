@@ -504,9 +504,11 @@ void Sv_RegisterSector(dt_sector_t* reg, uint number)
         reg->planes[i].height = sec->planes[i]->height;
         reg->planes[i].target = sec->planes[i]->target;
         reg->planes[i].speed = sec->planes[i]->speed;
+        /*
         reg->planes[i].glow = sec->planes[i]->glow;
         memcpy(reg->planes[i].glowRGB, sec->planes[i]->glowRGB,
                sizeof(reg->planes[i].glowRGB));
+               */
 
         // Surface properties.
         memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
@@ -754,6 +756,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     if(r->planes[PLN_CEILING].surface.rgba[2] != s->SP_ceilrgb[2])
         df |= SDF_CEIL_COLOR_BLUE;
 
+    /*
     if(r->planes[PLN_FLOOR].glowRGB[0] != s->SP_floorglowrgb[0])
         df |= SDF_FLOOR_GLOW_RED;
     if(r->planes[PLN_FLOOR].glowRGB[1] != s->SP_floorglowrgb[1])
@@ -772,6 +775,7 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
         df |= SDF_FLOOR_GLOW;
     if(r->planes[PLN_CEILING].glow != s->planes[PLN_CEILING]->glow)
         df |= SDF_CEIL_GLOW;
+        */
 
     // The cases where an immediate change to a plane's height is needed:
     // 1) Plane is not moving, but the heights are different. This means
@@ -1436,6 +1440,7 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
             d->planes[PLN_CEILING].surface.rgba[2] =
                 s->planes[PLN_CEILING].surface.rgba[2];
 
+        /*
         if(sf & SDF_FLOOR_GLOW_RED)
             d->planes[PLN_FLOOR].glowRGB[0] = s->planes[PLN_FLOOR].glowRGB[0];
         if(sf & SDF_FLOOR_GLOW_GREEN)
@@ -1454,6 +1459,7 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
             d->planes[PLN_FLOOR].glow = s->planes[PLN_FLOOR].glow;
         if(sf & SDF_CEIL_GLOW)
             d->planes[PLN_CEILING].glow = s->planes[PLN_CEILING].glow;
+            */
     }
     else if(src->type == DT_SIDE)
     {

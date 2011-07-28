@@ -623,7 +623,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         Surface_SetColorG(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
         Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
-
+/*
     if(df & SDF_FLOOR_GLOW_RED)
         sec->planes[PLN_FLOOR]->glowRGB[0] = Msg_ReadByte() / 255.f;
     if(df & SDF_FLOOR_GLOW_GREEN)
@@ -642,7 +642,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->planes[PLN_FLOOR]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
     if(df & SDF_CEIL_GLOW)
         sec->planes[PLN_CEILING]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
-
+*/
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
         return;
@@ -651,7 +651,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // the sector.
     if(wasChanged)
     {
-        //P_SectorPlanesChanged(GET_SECTOR_IDX(sec));
+#ifdef _DEBUG
+        Con_Message("Cl_ReadSectorDelta2: WARNING: Plane height changed bypassing DMU!\n");
+#endif
     }
 
     // Do we need to start any moving planes?
