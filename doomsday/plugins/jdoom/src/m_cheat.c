@@ -516,7 +516,7 @@ static void printDebugInfo(player_t* plr)
     // Also print some information to the console.
     Con_Message("%s", textBuffer);
     sub = plr->plr->mo->subsector;
-    Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
+    Con_Message("\nSubsector %i / Sector %i:\n", P_ToIndex(sub), P_ToIndex(P_GetPtrp(sub, DMU_SECTOR)));
     Con_Message("  FloorZ:%g Material:%s\n",
                 P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
                 Str_Text(Materials_GetSymbolicName(P_GetPtrp(sub, DMU_FLOOR_MATERIAL))));

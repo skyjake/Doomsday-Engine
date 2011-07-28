@@ -137,7 +137,7 @@ short Msg_ReadPackedShort(void)
 
 void Msg_WriteLong(int l)
 {
-    *(int *) netBuffer.cursor = LONG(l);
+    *(int*) netBuffer.cursor = LONG(l);
     netBuffer.cursor += 4;
 }
 
@@ -153,12 +153,13 @@ int Msg_ReadLong(void)
 
 void Msg_WriteFloat(float f)
 {
-    Msg_WriteLong(FLT2FIX(f));
+    Msg_WriteLong(*(int*)&f);
 }
 
 float Msg_ReadFloat(void)
 {
-    return FIX2FLT(Msg_ReadLong());
+    int v = Msg_ReadLong();
+    return *(float*) &v;
 }
 
 void Msg_WritePackedLong(uint l)

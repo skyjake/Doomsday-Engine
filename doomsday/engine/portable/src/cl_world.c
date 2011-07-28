@@ -632,7 +632,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // the sector.
     if(wasChanged)
     {
-        //P_SectorPlanesChanged(GET_SECTOR_IDX(sec));
+#ifdef _DEBUG
+        Con_Message("Cl_ReadSectorDelta2: WARNING: Plane height changed bypassing DMU!\n");
+#endif
     }
 
     // Do we need to start any moving planes?
