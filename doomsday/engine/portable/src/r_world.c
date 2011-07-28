@@ -431,7 +431,7 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
             pln = wpl->list[i];
 
             pln->visHeightDelta = 0;
-            pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
+            pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
 
             if(pln->type == PLN_FLOOR || pln->type == PLN_CEILING)
             {
@@ -464,9 +464,11 @@ void R_InterpolateWatchedPlanes(watchedplanelist_t *wpl,
             }
 
             // Has this plane reached its destination?
-            if(pln->visHeight == pln->height)
+            if(pln->visHeight == pln->height) /// @todo  Can this fail? (float equality)
+            {
                 if(R_RemoveWatchedPlane(wpl, pln))
                     i = (i > 0? i-1 : 0);
+            }
         }
     }
 }
@@ -1412,6 +1414,10 @@ void R_SetupMap(int mode, int flags)
         // numbers of mallocs with no frees in between.
         Z_EnableFastMalloc(false);
 
+#ifdef _DEBUG
+        Con_Message("R_SetupMap: ddMapSetup begins (fast mallocs).\n");
+#endif
+
         // A new map is about to be setup.
         ddMapSetup = true;
         return;
@@ -1555,6 +1561,10 @@ void R_SetupMap(int mode, int flags)
 
         // We've finished setting up the map.
         ddMapSetup = false;
+
+#ifdef _DEBUG
+        Con_Message("R_SetupMap: ddMapSetup done (normal mallocs from now on).\n");
+#endif
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
