@@ -4265,8 +4265,13 @@ static void Rend_RenderBoundingBoxes(void)
     material_t*         mat;
     material_snapshot_t ms;
 
-    if((!devMobjBBox && !devPolyobjBBox)/* || netGame*/)
+    if(!devMobjBBox && !devPolyobjBBox)
         return;
+
+#ifndef _DEBUG
+    // Bounding boxes are not allowed in non-debug netgames.
+    if(netGame) return;
+#endif
 
     if(!dlBBox)
         dlBBox = constructBBox(0, .08f);
