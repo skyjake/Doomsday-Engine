@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 456 <--
+; --> 457 <--
 ; Free ordinals:
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
@@ -538,3 +538,4 @@ EXPORTS
 ; Smoother.
     Smoother_IsOnFloor          @453 NONAME
     Smoother_Evaluate           @454 NONAME
+    Smoother_Clear              @457 NONAME
