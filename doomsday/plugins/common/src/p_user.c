@@ -397,22 +397,33 @@ void P_PlayerRemoteMove(player_t* player)
         if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
         {
             if(INRANGE_OF(mo->pos[VX], xyz[VX], .001f) &&
-               INRANGE_OF(mo->pos[VY], xyz[VY], .001f) &&
-               Smoother_IsOnFloor(smoother))
+               INRANGE_OF(mo->pos[VY], xyz[VY], .001f))
             {
-                // It successfully moved to the right XY coords.
-                mo->pos[VZ] = mo->floorZ;
-    #ifdef _DEBUG
-                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
-                                     plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
-    #endif
+                if(Smoother_IsOnFloor(smoother))
+                {
+                    // It successfully moved to the right XY coords.
+                    mo->pos[VZ] = mo->floorZ;
+#ifdef _DEBUG
+                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                                         plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+#endif
+                }
+                else
+                {
+#ifdef _DEBUG
+                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                                          plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+#endif
+                }
             }
-            else
+
+            if(players[plrNum].plr->flags & DDPF_FIXPOS)
             {
-    #ifdef _DEBUG
-                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
-                                      plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
-    #endif
+                // The player must have teleported.
+#ifdef _DEBUG
+                Con_Message("P_PlayerRemoteMove: Player %i: Clearing smoother because of FIXPOS.\n", plrNum);
+#endif
+                Smoother_Clear(smoother);
             }
         }
         else
