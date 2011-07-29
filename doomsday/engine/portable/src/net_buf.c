@@ -315,23 +315,11 @@ void N_SendPacket(int flags)
     // This many bytes are actually sent.
     numSentBytes += size;
 
-    //if(flags & (SPF_CONFIRM | SPF_ORDERED))
-    //{
-
-    // All messages are send over a TCP connection.
+    // All messages are sent over a TCP connection.
     N_SendDataBufferReliably(data, size, dest);
 #if _DEBUG
     VERBOSE2(Con_Message("N_SendPacket: Sending %li bytes reliably to %i.\n", size, dest));
 #endif
-
-    /*}
-    else
-    {
-        // Other messages are sent via UDP, so that there is as little latency
-        // as possible.
-        N_SendDataBuffer(data, size, dest);
-    }
-    */
 }
 
 /**

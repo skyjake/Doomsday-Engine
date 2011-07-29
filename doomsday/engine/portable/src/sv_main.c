@@ -997,6 +997,10 @@ void Sv_Kick(int who)
     //ddPlayers[who].shared.inGame = false;
 }
 
+/**
+ * Sends player @a plrNum's position, momentum and/or angles override to all
+ * clients.
+ */
 void Sv_SendPlayerFixes(int plrNum)
 {
     int                 fixes = 0;
@@ -1011,6 +1015,9 @@ void Sv_SendPlayerFixes(int plrNum)
 
     // Start writing a player fix message.
     Msg_Begin(PSV_PLAYER_FIX);
+
+    // Which player is being fixed?
+    Msg_WriteByte(plrNum);
 
     // Indicate what is included in the message.
     if(ddpl->flags & DDPF_FIXANGLES)
@@ -1065,8 +1072,8 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
 #endif
     }
 
-    // Send the fix message.
-    Net_SendBuffer(plrNum, SPF_ORDERED | SPF_CONFIRM);
+    // Send the fix message to everyone.
+    Net_SendBuffer(DDSP_ALL_PLAYERS, SPF_ORDERED | SPF_CONFIRM);
 
     ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM);
 #ifdef _DEBUG

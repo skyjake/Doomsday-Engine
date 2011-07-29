@@ -97,9 +97,10 @@ enum {
     PSV_SOUND2 = 24,                // unused?
     PSV_STOP_SOUND = 25,
     PCL_ACKS = 26,
-    PSV_PLAYER_FIX = 27,            // Fix angles/pos/mom.
+    PSV_PLAYER_FIX_OBSOLETE = 27,   // Fix angles/pos/mom (without console number).
     PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
     PKT_COMMAND2 = 29,
+    PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
 
     PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
 

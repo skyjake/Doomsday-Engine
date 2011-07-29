@@ -216,6 +216,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         // The position is now known.
         ddpl->flags &= ~DDPF_UNDEFINED_POS;
 
+        Smoother_Clear(clients[plrNum].smoother);
         ClPlayer_UpdatePos(plrNum);
     }
 
@@ -235,7 +236,8 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
     }
 
-    if(sendAck)
+    // We'll only need to ack fixes targeted to the consoleplayer.
+    if(sendAck && plrNum == consolePlayer)
     {
         // Send an acknowledgement.
         Msg_Begin(PCL_ACK_PLAYER_FIX);
@@ -248,12 +250,20 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
 
 void ClPlayer_HandleFix(void)
 {
-    player_t           *plr = &ddPlayers[consolePlayer];
-    //mobj_t             *clmo = ClPlayer_ClMobj(consolePlayer);
-    ddplayer_t         *ddpl = &plr->shared;
-    //mobj_t             *mo = ddpl->mo;
-    int                 fixes = Msg_ReadLong();
-    clplayerstate_t    *state = ClPlayer_State(consolePlayer);
+    int plrNum = 0;
+    int fixes = 0;
+    player_t* plr;
+    ddplayer_t* ddpl;
+    clplayerstate_t* state;
+
+    // Target player.
+    plrNum = Msg_ReadByte();
+    plr = &ddPlayers[plrNum];
+    ddpl = &plr->shared;
+    state = ClPlayer_State(plrNum);
+
+    // What to fix?
+    fixes = Msg_ReadLong();
 
     state->pendingFixTargetClMobjId = Msg_ReadLong();
 
@@ -265,7 +275,7 @@ void ClPlayer_HandleFix(void)
         state->pendingFixes |= DDPF_FIXANGLES;
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
+        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix angles %i. Angle=%f, lookdir=%f\n", plrNum,
                     ddpl->fixAcked.angles, FIX2FLT(state->pendingAngleFix), state->pendingLookDirFix);
 #endif
     }
@@ -279,7 +289,7 @@ void ClPlayer_HandleFix(void)
         state->pendingFixes |= DDPF_FIXPOS;
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
+        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f\n", plrNum,
                     ddpl->fixAcked.pos, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
 #endif
     }
@@ -293,7 +303,7 @@ void ClPlayer_HandleFix(void)
         state->pendingFixes |= DDPF_FIXMOM;
     }
 
-    ClPlayer_ApplyPendingFixes(consolePlayer);
+    ClPlayer_ApplyPendingFixes(plrNum);
 }
 
 /**
