@@ -162,9 +162,9 @@ boolean Mus_Init(void)
     // Print a list of the chosen interfaces.
     if(verbose)
     {
-        char                buf[40];
+        char buf[80];
 
-        Con_Printf("Mus_Init: Interfaces:");
+        Con_Message("Mus_Init: Interfaces:");
         for(i = 0; i < NUM_INTERFACES; ++i)
         {
             if(*interfaces[i].ip)
@@ -172,11 +172,11 @@ boolean Mus_Init(void)
                 if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf))
                     strcpy(buf, "?");
 
-                Con_Printf(" %s", buf);
+                Con_Message(" %s", buf);
             }
         }
 
-        Con_Printf("\n");
+        Con_Message("\n");
     }
 
     currentSong = -1;
@@ -187,10 +187,21 @@ boolean Mus_Init(void)
 
 void Mus_Shutdown(void)
 {
+    int i;
+
     if(!musAvail)
         return;
 
     musAvail = false;
+
+    // Shutdown interfaces.
+    for(i = 0; i < NUM_INTERFACES; ++i)
+    {
+        if(*interfaces[i].ip && (*interfaces[i].ip)->Shutdown)
+        {
+            (*interfaces[i].ip)->Shutdown();
+        }
+    }
 
     // No more interfaces.
     iMusic = 0;

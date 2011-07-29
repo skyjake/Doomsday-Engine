@@ -115,6 +115,7 @@ audiointerface_sfx_t audiod_sdlmixer_sfx = { {
 
 audiointerface_music_t audiod_sdlmixer_music = { {
     DS_SDLMixer_Music_Init,
+    NULL,
     DS_SDLMixer_Music_Update,
     DS_SDLMixer_Music_Set,
     DS_SDLMixer_Music_Get,

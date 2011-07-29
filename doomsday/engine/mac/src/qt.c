@@ -28,6 +28,8 @@
  * This is only used in the Mac OS X version of the plugin.
  */
 
+#if 0
+
 // HEADER FILES ------------------------------------------------------------
 
 #ifdef MACOS_10_4
@@ -42,8 +44,6 @@ typedef uint64_t io_user_reference_t;
 #include <QuickTime/Movies.h>
 
 // MACROS ------------------------------------------------------------------
-
-//#define BUFFERED_MUSIC_FILE "_dd-qt-buffered-music-file"
 
 // TYPES -------------------------------------------------------------------
 
@@ -88,25 +88,6 @@ static void ExtMus_Init(void)
 
     qtInited = true;
 }
-
-/*
-static void ExtMus_Shutdown(void)
-{
-    DM_Ext_Stop();
-
-    if(song)
-        free(song);
-    if(movie)
-        DisposeMovie(movie);
-
-    // Shut down QuickTime.
-    ExitMovies();
-
-    song = NULL;
-    movie = NULL;
-    qtInited = false;
-}
-*/
 
 static int DM_Ext_Init(void)
 {
@@ -164,45 +145,6 @@ static int DM_Ext_Get(int property, void *value)
     }
     return true;
 }
-
-/*
-static void *DM_Ext_SongBuffer(int length)
-{
-    if(!qtInited)
-        return NULL;
-
-    if(song)
-        free(song);
-
-    songSize = length;
-    return song = malloc(length);
-}
-
-static int DM_Ext_PlayBuffer(int looped)
-{
-    if(!qtInited)
-        return false;
-
-    if(song)
-    {
-        // Dump the song into a temporary file where QuickTime can
-        // load it.
-        FILE   *tmp = fopen(BUFFERED_MUSIC_FILE, "wb");
-
-        if(tmp)
-        {
-            fwrite(song, songSize, 1, tmp);
-            fclose(tmp);
-        }
-
-        free(song);
-        song = 0;
-        songSize = 0;
-    }
-
-    return DM_Ext_PlayFile(BUFFERED_MUSIC_FILE, looped);
-}
-*/
 
 static void DM_Ext_Pause(int pause)
 {
@@ -297,65 +239,6 @@ static int DM_Ext_PlayFile(const char *filename, int looped)
     return playFile(filename, looped);
 }
 
-/*
-static int DM_Mus_Init(void)
-{
-    ExtMus_Init();
-    return qtInited;
-}
-
-static void DM_Mus_Update(void)
-{
-    // Nothing to update.
-}
-
-static void DM_Mus_Set(int property, float value)
-{
-    // No MUS-specific properties exist.
-}
-
-static int DM_Mus_Get(int property, void *value)
-{
-    if(!qtInited)
-        return false;
-
-    switch (property)
-    {
-    case MUSIP_ID:
-        strcpy(value, "QuickTime/Mus");
-        break;
-
-    default:
-        return false;
-    }
-    return true;
-}
-
-static void DM_Mus_Pause(int pause)
-{
-    // Not needed.
-}
-
-static void DM_Mus_Stop(void)
-{
-    // Not needed.
-}
-
-static void *DM_Mus_SongBuffer(int length)
-{
-    return DM_Ext_SongBuffer(length);
-}
-
-static int DM_Mus_Play(int looped)
-{
-    char fileName[256];
-
-    sprintf(fileName, "%s.mid", BUFFERED_MUSIC_FILE);
-    convertMusToMidi((byte*) song, songSize, fileName);
-    return playFile(fileName, looped);
-}
-*/
-
 // The audio driver struct.
 audiointerface_music_t audiodQuickTimeMusic = { {
     DM_Ext_Init,
@@ -369,3 +252,4 @@ audiointerface_music_t audiodQuickTimeMusic = { {
     DM_Ext_PlayFile,
 };
 
+#endif

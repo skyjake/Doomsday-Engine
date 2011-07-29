@@ -156,6 +156,9 @@ IF (APPLE)
 		SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.6" )
 	ENDIF()
 
+	# Link against QTKit.
+	SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework QTKit")
+
 	SET (BUILDSYSTEM MACOSX)
 
 	## Add needed Compiler and Linker flags for OSX
