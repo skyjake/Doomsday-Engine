@@ -2534,6 +2534,7 @@ boolean PTR_SlideTraverse(intercept_t* in)
  */
 void P_SlideMove(mobj_t* mo)
 {
+    float oldPos[2] = { mo->pos[VX], mo->pos[VY] };
     int hitcount = 3;
 
     slideMo = mo;
@@ -2648,6 +2649,14 @@ void P_SlideMove(mobj_t* mo)
 #else
     } while(!P_TryMove(mo, mo->pos[VX] + tmMove[MX],
                            mo->pos[VY] + tmMove[MY], true, true));
+#endif
+
+#ifdef _DEBUG
+    // Didn't move?
+    if(mo->player && mo->pos[VX] == oldPos[VX] && mo->pos[VY] == oldPos[VY])
+    {
+        Con_Message("P_SlideMove: Mobj pos stays the same.\n");
+    }
 #endif
 }
 
