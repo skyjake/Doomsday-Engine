@@ -2466,7 +2466,7 @@ static void P_HitSlideLine(linedef_t* ld)
     if(deltaAngle > ANG180)
         deltaAngle += ANG180;
 
-    moveLen = P_AccurateDistance(tmMove[MX], tmMove[MY]);
+    moveLen = P_ApproxDistance(tmMove[MX], tmMove[MY]);
     an = deltaAngle >> ANGLETOFINESHIFT;
     newLen = moveLen * FIX2FLT(finecosine[an]);
 
