@@ -427,10 +427,17 @@ boolean N_ReceiveReliably(nodeid_t from)
     // \todo What if we get one byte? How come we are here if there's nothing to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
     {
-        int number = errno;
-        Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
-        Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
-        return false;
+        if(bytes == 0)
+        {
+            return true;
+        }
+        else
+        {
+            int number = errno;
+            Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
+            Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
+            return false;
+        }
     }
 
     size = SHORT(size);
@@ -445,9 +452,10 @@ boolean N_ReceiveReliably(nodeid_t from)
         int received = SDLNet_TCP_Recv(sock, packet->data + bytes, size);
         if(received == -1)
         {
+            int number = errno;
             SDLNet_FreePacket(packet);
-            Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)",
-                        SDLNet_GetError(), strerror(errno));
+            Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
+                        SDLNet_GetError(), strerror(number));
             error = true;
             read = true;
         }
