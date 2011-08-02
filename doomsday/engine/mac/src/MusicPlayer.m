@@ -69,6 +69,8 @@ static MusicPlayer* musicPlayer;
 
     // Start playing.
     [currentSong play];
+    
+    return true;
 }
 
 - (void)setVolume:(float)volume
