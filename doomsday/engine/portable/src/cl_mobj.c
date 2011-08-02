@@ -307,8 +307,6 @@ void ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated)
  */
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
 {
-    int plrNum = P_GetDDPlayerIdx(localMobj->dPlayer);
-
 #if _DEBUG
     if(!localMobj || !remoteClientMobj)
     {
