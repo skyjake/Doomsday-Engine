@@ -1605,7 +1605,7 @@ int DD_Main(void)
 
 static DD_InitResourceSystem(void)
 {
-    Con_Message("Initializing Resource subsystem...");
+    Con_Message("Initializing Resource subsystem...\n");
 
     // Initialize the file system databases.
     Zip_Init();
