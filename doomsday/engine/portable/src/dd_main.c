@@ -2343,6 +2343,14 @@ D_CMD(Load)
     { gameinfo_t* info = findGameInfoForIdentityKey(Str_Text(&searchPath));
     if(NULL != info)
     {
+        if(!allGameResourcesFound(info))
+        {
+            Con_Message("Failed to locating all required startup resources:\n");
+            printGameInfoResources(info, true, RF_STARTUP);
+            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
+            Str_Free(&searchPath);
+            return true;
+        }
         if(!DD_ChangeGame(info))
         {
             Str_Free(&searchPath);
