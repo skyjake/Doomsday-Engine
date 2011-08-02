@@ -302,20 +302,38 @@ void GL_UploadTextureContent(texturecontent_t* content)
  */
 DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
 {
-    boolean             deferred = true;
+    boolean deferred = true;
 
-    // Calculate the size of the buffer automatically?
-    if(content->bufferSize == 0)
+    if(content->flags & TXCF_GRAY_MIPMAP)
     {
-        int                 bytesPerPixel = 0;
+        content->grayMipmap = ((content->flags & TXCF_GRAY_MIPMAP_LEVEL_MASK)
+                               >> TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
+    }
+
+    content->name = GL_GetReservedName();
+
+    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
+    {
+        // Let's do this right away. No need to take a copy.
+        GL_UploadTextureContent(content);
+#ifdef _DEBUG
+        VERBOSE2(Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
+            "Should be precached in busy mode?\n", content->name,
+            content->width, content->height));
+#endif
+        deferred = false; // We haven't deferred.
+    }
+    else
+    {
+        // Defer this operation. We need to make a copy.
+        // First calculate the size of the buffer.
+        size_t bufferSize = 0;
+        int bytesPerPixel = 0;
 
         switch(content->format)
         {
         case DGL_LUMINANCE:
-            if(content->flags & TXCF_CONVERT_8BIT_TO_ALPHA)
-                bytesPerPixel = 2; // We'll need a larger buffer.
-            else
-                bytesPerPixel = 1;
+            bytesPerPixel = 1;
             break;
 
         case DGL_COLOR_INDEX_8:
@@ -340,36 +358,12 @@ DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
             Con_Error("GL_NewTexture: Unknown format %i, "
                       "don't know pixel size.\n", content->format);
         }
-        content->bufferSize = content->width * content->height *
-            bytesPerPixel;
-    }
+        bufferSize = content->width * content->height * bytesPerPixel;
 
-    if(content->flags & TXCF_GRAY_MIPMAP)
-    {
-        content->grayMipmap = ((content->flags & TXCF_GRAY_MIPMAP_LEVEL_MASK)
-                               >> TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
-    }
-
-    content->name = GL_GetReservedName();
-
-    if((content->flags & TXCF_NEVER_DEFER) || !Con_IsBusy())
-    {
-        // Let's do this right away. No need to take a copy.
-        GL_UploadTextureContent(content);
-#ifdef _DEBUG
-        VERBOSE2(Con_Message("GL_NewTexture: Uploading (%i:%ix%i) while not busy! "
-            "Should be precached in busy mode?\n", content->name,
-            content->width, content->height));
-#endif
-        deferred = false; // We haven't deferred.
-    }
-    else
-    {
-        // Defer this operation. Need to make a copy.
         deferred_t* d = M_Calloc(sizeof(deferred_t));
         memcpy(&d->content, content, sizeof(*content));
-        d->content.buffer = M_Malloc(content->bufferSize);
-        memcpy(d->content.buffer, content->buffer, content->bufferSize);
+        d->content.buffer = M_Malloc(bufferSize);
+        memcpy(d->content.buffer, content->buffer, bufferSize);
 
         Sys_Lock(deferredMutex);
         if(deferredContentLast)

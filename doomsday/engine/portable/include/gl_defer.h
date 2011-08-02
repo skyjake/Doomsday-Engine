@@ -36,7 +36,7 @@
 typedef struct texturecontent_s {
     DGLuint         name;
     void*           buffer;
-    size_t          bufferSize;
+    //size_t          bufferSize;
     dgltexformat_t  format;
     colorpaletteid_t palette;
     int             width;
