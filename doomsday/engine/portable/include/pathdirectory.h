@@ -160,6 +160,24 @@ ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const struct pathdire
  */
 ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter, size_t* count);
 
+/**
+ * @param node  Right-most node in path.
+ * @param flags  @see pathComparisonFlags
+ * @param searchPath  A relative path.
+ * @param searchPathLen Number of characters from @a searchPath to match. Normally
+ *      equal to the full length of @a searchPath excluding any terminating '\0'.
+ * @param delimiter  Delimiter used to separate fragments of @a searchPath.
+ *
+ * @return  @c true iff @a searchPath matches this.
+ */
+boolean PathDirectory_MatchDirectory(pathdirectory_t* pd, const struct pathdirectory_node_s* node,
+    int flags, const char* searchPath, size_t searchPathLen, char delimiter);
+
+#if _DEBUG
+void PathDirectory_Print(pathdirectory_t* pd, char delimiter);
+#endif 
+
+
 /// @return  PathDirectory which owns this node.
 pathdirectory_t* PathDirectoryNode_Directory(const struct pathdirectory_node_s* node);
 
@@ -184,21 +202,5 @@ void* PathDirectoryNode_DetachUserData(struct pathdirectory_node_s* node);
 
 /// @return  Data associated with this.
 void* PathDirectoryNode_UserData(const struct pathdirectory_node_s* node);
-
-/**
- * @param flags  @see pathComparisonFlags
- * @param searchPath  A relative path.
- * @param searchPathLen Number of characters from @a searchPath to match. Normally
- *      equal to the full length of @a searchPath excluding any terminating '\0'.
- * @param delimiter  Delimiter used to separate fragments of @a searchPath.
- *
- * @return  @c true iff @a searchPath matches this.
- */
-boolean PathDirectoryNode_MatchDirectory(const struct pathdirectory_node_s* node,
-    int flags, const char* searchPath, size_t searchPathLen, char delimiter);
-
-#if _DEBUG
-void PathDirectory_Print(pathdirectory_t* pd, char delimiter);
-#endif
 
 #endif /* LIBDENG_PATHDIRECTORY_H */
