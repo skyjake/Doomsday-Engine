@@ -26,10 +26,9 @@
  * m_string.c: Dynamic Strings
  *
  * Simple dynamic string management.
- * Uses the memory zone for memory allocation.
+ * Uses either normal mallocs or the memory zone for memory allocation
+ * (chosen with the Init function).
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
 #include <stdio.h>
@@ -38,33 +37,61 @@
 #include "de_base.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define MAX_LENGTH  0x4000
 
-// TYPES -------------------------------------------------------------------
+static void* zoneAlloc(size_t n) {
+    return Z_Malloc(n, PU_STATIC, 0);
+}
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+static void* zoneCalloc(size_t n) {
+    return Z_Calloc(n, PU_STATIC, 0);
+}
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+static void* stdCalloc(size_t n) {
+    return calloc(1, n);
+}
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+static void Str_AutoInit(ddstring_t* ds)
+{
+    if(!ds->memFree && !ds->memAlloc && !ds->memCalloc)
+    {
+        // If the memory model is unspecified, default to the standard,
+        // it is safer for threading.
+        ds->memFree = free;
+        ds->memAlloc = malloc;
+        ds->memCalloc = stdCalloc;
+    }
+    assert(ds->memFree);
+    assert(ds->memAlloc);
+    assert(ds->memCalloc);
+}
 
 /**
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
+ * The string will use the memory zone.
  */
 void Str_Init(ddstring_t *ds)
 {
     memset(ds, 0, sizeof(*ds));
+
+    // Init the memory management.
+    ds->memFree = Z_Free;
+    ds->memAlloc = zoneAlloc;
+    ds->memCalloc = zoneCalloc;
+}
+
+/**
+ * The string will use standard memory allocation.
+ */
+void Str_InitStd(ddstring_t *ds)
+{
+    memset(ds, 0, sizeof(*ds));
+
+    // Init the memory management.
+    ds->memFree = free;
+    ds->memAlloc = malloc;
+    ds->memCalloc = stdCalloc;
 }
 
 /**
@@ -73,12 +100,18 @@ void Str_Init(ddstring_t *ds)
  */
 void Str_Free(ddstring_t *ds)
 {
+    Str_AutoInit(ds);
+
     if(ds->size)
     {
         // The string has memory allocated, free it.
-        Z_Free(ds->str);
+        ds->memFree(ds->str);
     }
-    memset(ds, 0, sizeof(*ds));
+
+    // Memory model left unchanged.
+    ds->length = 0;
+    ds->size = 0;
+    ds->str = 0;
 }
 
 /**
@@ -91,7 +124,16 @@ void Str_Free(ddstring_t *ds)
  */
 ddstring_t *Str_New(void)
 {
-    return M_Calloc(sizeof(ddstring_t));
+    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    Str_Init(str);
+    return str;
+}
+
+ddstring_t *Str_NewStd(void)
+{
+    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    Str_InitStd(str);
+    return str;
 }
 
 /**
@@ -129,6 +171,8 @@ void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
     if(ds->size >= for_length)
         return;                 // We're OK.
 
+    Str_AutoInit(ds);
+
     // Already some memory allocated?
     if(ds->size)
         old_data = true;
@@ -137,14 +181,19 @@ void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
 
     while(ds->size < for_length)
         ds->size *= 2;
-    buf = Z_Calloc(ds->size, PU_STATIC, 0);
+
+    assert(ds->memCalloc);
+    buf = ds->memCalloc(ds->size);
 
     if(preserve && ds->str)
         strncpy(buf, ds->str, ds->size - 1);
 
     // Replace the old string with the new buffer.
     if(old_data)
-        Z_Free(ds->str);
+    {
+        assert(ds->memFree);
+        ds->memFree(ds->str);
+    }
     ds->str = buf;
 }
 
@@ -155,24 +204,35 @@ void Str_Reserve(ddstring_t *ds, size_t length)
 
 void Str_Set(ddstring_t *ds, const char *text)
 {
-    size_t          incoming = strlen(text);
+    size_t incoming = strlen(text);
+    char* copied = M_Malloc(incoming + 1); // take a copy in case text points to (a part of) ds->str
 
+    strcpy(copied, text);
     Str_Alloc(ds, incoming, false);
-    strcpy(ds->str, text);
+    strcpy(ds->str, copied);
     ds->length = incoming;
+    M_Free(copied);
 }
 
 void Str_Append(ddstring_t *ds, const char *append_text)
 {
-    size_t          incoming = strlen(append_text);
+    size_t incoming = strlen(append_text);
+    char* copied;
 
     // Don't allow extremely long strings.
     if(ds->length > MAX_LENGTH)
         return;
 
+    // Take a copy in case append_text points to (a part of) ds->str, which may be invalidated
+    // by Str_Alloc.
+    copied = M_Malloc(incoming + 1);
+    strcpy(copied, append_text);
+
     Str_Alloc(ds, ds->length + incoming, true);
-    strcpy(ds->str + ds->length, append_text);
+    strcpy(ds->str + ds->length, copied);
     ds->length += incoming;
+
+    M_Free(copied);
 }
 
 void Str_AppendChar(ddstring_t* ds, char ch)
@@ -186,7 +246,7 @@ void Str_AppendChar(ddstring_t* ds, char ch)
  */
 void Str_Appendf(ddstring_t *ds, const char *format, ...)
 {
-    char    buf[1024];
+    char buf[1024];
     va_list args;
 
     // Print the message into the buffer.
@@ -201,12 +261,18 @@ void Str_Appendf(ddstring_t *ds, const char *format, ...)
  */
 void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
 {
+    char* copied = M_Malloc(count);
+
+    memcpy(copied, src + start, count);
+
     Str_Alloc(dest, dest->length + count + 1, true);
-    memcpy(dest->str + dest->length, src + start, count);
+    memcpy(dest->str + dest->length, copied, count);
     dest->length += count;
 
     // Terminate the appended part.
     dest->str[dest->length] = 0;
+
+    M_Free(copied);
 }
 
 /**
@@ -214,16 +280,22 @@ void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
  */
 void Str_Prepend(ddstring_t *ds, const char *prepend_text)
 {
-    size_t          incoming = strlen(prepend_text);
+    size_t incoming = strlen(prepend_text);
+    char* copied;
 
     // Don't allow extremely long strings.
     if(ds->length > MAX_LENGTH)
         return;
 
+    copied = M_Malloc(incoming);
+    memcpy(copied, prepend_text, incoming);
+
     Str_Alloc(ds, ds->length + incoming, true);
     memmove(ds->str + incoming, ds->str, ds->length + 1);
-    memcpy(ds->str, prepend_text, incoming);
+    memcpy(ds->str, copied, incoming);
     ds->length += incoming;
+
+    M_Free(copied);
 }
 
 /**
@@ -252,7 +324,8 @@ void Str_Copy(ddstring_t *dest, ddstring_t *src)
     Str_Free(dest);
     dest->size = src->size;
     dest->length = src->length;
-    dest->str = Z_Malloc(src->size, PU_STATIC, 0);
+    assert(dest->memAlloc);
+    dest->str = dest->memAlloc(src->size);
     memcpy(dest->str, src->str, src->size);
 }
 

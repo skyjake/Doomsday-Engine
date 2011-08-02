@@ -719,7 +719,7 @@ int Z_GetTag(void *ptr)
  */
 void *Z_Calloc(size_t size, int tag, void *user)
 {
-    void           *ptr = Z_Malloc(size, tag, user);
+    void *ptr = Z_Malloc(size, tag, user);
 
     memset(ptr, 0, ALIGNED(size));
     return ptr;
@@ -733,6 +733,8 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     memblock_t     *block;
     void           *p;
     size_t          bsize;
+
+    n = ALIGNED(n);
 
     if(ptr)                     // Has old data.
     {

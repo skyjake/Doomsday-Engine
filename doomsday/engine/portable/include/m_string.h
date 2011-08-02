@@ -33,8 +33,11 @@
 
 typedef struct ddstring_s {
 	char           *str;
-	size_t          length;		   // String length (no terminating nulls).
-	size_t          size;		   // Allocated memory (not necessarily string size).
+	size_t          length;		// String length (no terminating nulls).
+	size_t          size;			// Allocated memory (not necessarily string size).
+	void (*memFree)(void*);
+	void* (*memAlloc)(size_t n);
+	void* (*memCalloc)(size_t n);
 } ddstring_t;
 
 // Format checking for Str_Appendf in GCC2
@@ -44,9 +47,11 @@ typedef struct ddstring_s {
 #   define PRINTF_F(f,v)
 #endif
 
-void            Str_Init(ddstring_t *ds);
+void            Str_Init(ddstring_t *ds); // uses the memory zone
+void			 Str_InitStd(ddstring_t* ds); // uses malloc/free
 void            Str_Free(ddstring_t *ds);
-ddstring_t     *Str_New(void);
+ddstring_t		*Str_New(void);
+ddstring_t		*Str_NewStd(void);
 void            Str_Delete(ddstring_t *ds);
 void            Str_Clear(ddstring_t *ds);
 void            Str_Reserve(ddstring_t *ds, size_t length);

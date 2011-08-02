@@ -198,7 +198,7 @@ static int N_MasterParseResponse(ddstring_t *msg)
     const char *pos;
     serverinfo_t *info = NULL;
 
-    Str_Init(&line);
+    Str_InitStd(&line);
 
     // Clear the list of servers.
     N_MasterClearList();
@@ -257,7 +257,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
 	N_MasterGetUrl(masterUrl);
 	strcat(masterUrl, "?list");
 
-	Str_Init(&response);
+	Str_InitStd(&response);
 
 	// Prepare the curl session for our HTTP GET request.
 	session = curl_easy_init();
@@ -324,7 +324,7 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
 	N_MasterGetUrl(masterUrl);
 
     // Convert the serverinfo into plain text.
-    Str_Init(&msg);
+    Str_InitStd(&msg);
     Sv_InfoToString(info, &msg);
     // Free the serverinfo, it's no longer needed.
     M_Free(info);
