@@ -382,7 +382,7 @@ void ClPlayer_ReadDelta2(boolean skip)
     clplayerstate_t    *s;
     ddplayer_t         *ddpl;
     ddpsprite_t        *psp;
-    int                 num, newId;
+    unsigned short num, newId;
     short               junk;
 
     // The first byte consists of a player number and some flags.
@@ -407,7 +407,7 @@ void ClPlayer_ReadDelta2(boolean skip)
     {
         mobj_t *old = ClMobj_Find(s->clMobjId);
 
-        newId = Msg_ReadShort();
+        newId = Msg_ReadUnsignedShort();
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.

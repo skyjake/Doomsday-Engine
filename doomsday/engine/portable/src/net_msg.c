@@ -96,6 +96,11 @@ short Msg_ReadShort(void)
     return SHORT( *(short *) (netBuffer.cursor - 2) );
 }
 
+unsigned short Msg_ReadUnsignedShort(void)
+{
+    return (unsigned short) Msg_ReadShort();
+}
+
 /**
  * Only 15 bits can be used for the number because the high bit of the
  * lower byte is used to determine whether the upper byte follows or not.

@@ -234,6 +234,7 @@ void N_ReleaseMessage(netmessage_t *msg)
     if(msg->handle)
     {
         N_ReturnBuffer(msg->handle);
+        msg->handle = 0;
     }
     M_Free(msg);
 }

@@ -533,8 +533,8 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     int     i, levelWidth, levelHeight; // width and height at the current level
     int     comps;
     byte   *buffer, *rgbaOriginal, *idxBuffer;
-    boolean freeOriginal;
-    boolean freeBuffer;
+    boolean freeOriginal = false;
+    boolean freeBuffer = false;
 
     // Number of color components in the destination image.
     comps = (alphaChannel ? 4 : 3);
@@ -550,7 +550,6 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         // The source image can be used as-is.
         freeOriginal = false;
         rgbaOriginal = data;
-
     }
     else
     {

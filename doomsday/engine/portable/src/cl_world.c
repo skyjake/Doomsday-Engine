@@ -466,13 +466,13 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     dummy.planes = dummyPlaneArray;
 
     // Sector index number.
-    num = Msg_ReadShort();
+    num = Msg_ReadUnsignedShort();
 
     // Flags.
     if(deltaType == DT_SECTOR_R6)
     {
         // The R6 protocol reserves two bytes for the flags.
-        df = Msg_ReadShort();
+        df = Msg_ReadUnsignedShort();
     }
     else
     {
@@ -684,7 +684,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     sidedef_t          *sid;
 
     // First read all the data.
-    num = Msg_ReadShort();
+    num = Msg_ReadUnsignedShort();
 
     // Flags.
     if(deltaType == DT_SIDE_R6)

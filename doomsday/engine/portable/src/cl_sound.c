@@ -70,11 +70,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     if(type == DT_SOUND)
     {
         // Delta ID is the sound ID.
-        sound = Msg_ReadShort();
+        sound = Msg_ReadUnsignedShort();
     }
     else if(type == DT_MOBJ_SOUND)
     {
-        if((cmo = ClMobj_Find(mobjId = Msg_ReadShort())) != NULL)
+        if((cmo = ClMobj_Find(mobjId = Msg_ReadUnsignedShort())) != NULL)
         {
             clmoinfo_t* info = ClMobj_GetInfo(cmo);
             if(info->flags & CLMF_HIDDEN)
@@ -91,7 +91,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_SECTOR_SOUND)
     {
-        uint index = (ushort) Msg_ReadShort();
+        uint index = Msg_ReadUnsignedShort();
 
         if(index < numSectors)
         {
@@ -106,7 +106,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else                        /* DT_POLY_SOUND */
     {
-        uint index = (ushort) Msg_ReadShort();
+        uint index = Msg_ReadUnsignedShort();
 
         if(index < numPolyObjs)
         {
@@ -126,7 +126,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     if(type != DT_SOUND)
     {
         // The sound ID.
-        sound = Msg_ReadShort();
+        sound = Msg_ReadUnsignedShort();
     }
 
     if(type == DT_SECTOR_SOUND)
@@ -264,7 +264,7 @@ void Cl_Sound(void)
     // Sound ID.
     if(flags & SNDF_SHORT_SOUND_ID)
     {
-        sound = Msg_ReadShort();
+        sound = Msg_ReadUnsignedShort();
     }
     else
     {
@@ -292,7 +292,7 @@ void Cl_Sound(void)
     }
     if(flags & SNDF_ID)
     {
-        thid_t  sourceId = Msg_ReadShort();
+        thid_t  sourceId = Msg_ReadUnsignedShort();
         mobj_t *cmo = ClMobj_Find(sourceId);
         if(cmo)
         {

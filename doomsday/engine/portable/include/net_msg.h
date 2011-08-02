@@ -40,6 +40,7 @@ void            Msg_Write(const void *src, size_t len);
 byte            Msg_ReadByte(void);
 short           Msg_ReadShort(void);
 short           Msg_ReadPackedShort(void);
+unsigned short  Msg_ReadUnsignedShort(void);
 int             Msg_ReadLong(void);
 unsigned int    Msg_ReadPackedLong(void);
 float           Msg_ReadFloat(void);

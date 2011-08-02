@@ -451,7 +451,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         // The first byte contains the sender.
         msgfrom = Msg_ReadByte();
         // Is the message for us?
-        mask = Msg_ReadShort();
+        mask = Msg_ReadUnsignedShort();
         // Copy the message into a buffer.
 
         // integer overflow in PKT_CHAT attacks us with an incomplete PKT_CHAT packet
@@ -546,7 +546,7 @@ void Sv_ExecuteCommand(void)
         return;
     }
     // The command packet is very simple.
-    len = Msg_ReadShort();
+    len = Msg_ReadUnsignedShort();
     silent = (len & 0x8000) != 0;
     len &= 0x7fff;
     switch(netBuffer.msg.type)
@@ -558,7 +558,7 @@ void Sv_ExecuteCommand(void)
     case PKT_COMMAND2:
         // New format includes flags and command source.
         // Flags are currently unused but added for future expansion.
-        flags = Msg_ReadShort();
+        flags = Msg_ReadUnsignedShort();
         cmdSource = Msg_ReadByte();
         break;
 

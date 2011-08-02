@@ -696,11 +696,11 @@ void ClMobj_ReadDelta2(boolean skip)
     int         df = 0;
     byte        moreFlags = 0, fastMom = false;
     short       mom;
-    thid_t      id = Msg_ReadShort();   // Read the ID.
+    thid_t      id = Msg_ReadUnsignedShort();   // Read the ID.
     boolean     onFloor = false;
 
     // Flags.
-    df = Msg_ReadShort();
+    df = Msg_ReadUnsignedShort();
 
     // More flags?
     if(df & MDF_MORE_FLAGS)
@@ -977,7 +977,7 @@ void ClMobj_ReadNullDelta2(boolean skip)
     thid_t  id;
 
     // The delta only contains an ID.
-    id = Msg_ReadShort();
+    id = Msg_ReadUnsignedShort();
 
     if(skip)
         return;
