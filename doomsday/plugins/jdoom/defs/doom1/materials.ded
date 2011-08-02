@@ -95,6 +95,9 @@ Material Mods "flats:FWATER4" {
   }
 }
 
+# The rest of this file is skipped if HacX.
+SkipIf hacx;
+
 #
 # Glowing textures:
 #
