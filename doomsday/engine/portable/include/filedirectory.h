@@ -126,11 +126,11 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t type,
  * @return  @c 0 iff iteration completed wholly.
  */
 int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t type,
-    const struct pathdirectory_node_s* parent,
+    const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters);
 int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t type,
-    const struct pathdirectory_node_s* parent,
+    const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
 #if _DEBUG

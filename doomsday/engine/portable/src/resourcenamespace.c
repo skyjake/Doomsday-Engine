@@ -110,18 +110,25 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
     assert(rn && hashName && !Str_IsEmpty(hashName) && searchPath && !Str_IsEmpty(searchPath));
     {
     resourcenamespace_namehash_key_t key = rn->_hashName(hashName);
-    resourcenamespace_namehash_node_t* node;
+    resourcenamespace_namehash_node_t* node = rn->_pathHash[key].first;
+    struct pathdirectory_node_s* resultNode = NULL;
 
-    // Go through the candidates.
-    node = rn->_pathHash[key].first;
-    while(NULL != node && !PathDirectory_MatchDirectory(PathDirectoryNode_Directory(node->data), node->data, 0, Str_Text(searchPath), Str_Length(searchPath), FILEDIRECTORY_DELIMITER))
-        node = node->next;
+    if(NULL != node)
+    {
+        pathdirectory_t* pd = PathDirectoryNode_Directory(node->data);
+        pathdirectory_search_t* search = PathDirectory_BeginSearchStr(pd, 0, searchPath, FILEDIRECTORY_DELIMITER);
+        {
+            while(NULL != node && !DD_SearchPathDirectoryCompare(node->data, PathDirectory_Search(pd)))
+                node = node->next;
+        }
+        PathDirectory_EndSearch2(pd, &resultNode);
+    }
 
     // Does the caller want to know the matched path?
-    if(node && foundPath)
-        PathDirectory_ComposePath(PathDirectoryNode_Directory(node->data), node->data, foundPath, NULL, FILEDIRECTORY_DELIMITER);
+    if(NULL != foundPath && NULL != resultNode)
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(resultNode), resultNode, foundPath, NULL, FILEDIRECTORY_DELIMITER);
 
-    return (node == 0? false : true);
+    return (NULL == node? false : true);
     }
 }
 

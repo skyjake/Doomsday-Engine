@@ -2276,6 +2276,35 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     return 0;
 }
 
+int DD_SearchPathDirectoryCompare(struct pathdirectory_node_s* node, void* paramaters)
+{
+    pathdirectory_search_t* search = (pathdirectory_search_t*)paramaters;
+    search->resultNode = node;
+    return search->result = PathDirectoryNode_MatchDirectory(node, search);
+}
+
+struct pathdirectory_node_s* DD_SearchPathDirectory(pathdirectory_t* pd, int flags,
+    const char* searchPath, char delimiter)
+{
+    assert(NULL != pd);
+    if(NULL != searchPath && searchPath[0])
+    {
+        int result;
+        struct pathdirectory_node_s* node;
+        pathdirectory_search_t* search = PathDirectory_BeginSearch(pd, flags, searchPath, delimiter);
+
+        PathDirectory_Iterate2(pd, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL, search->info[0].hash,
+            DD_SearchPathDirectoryCompare, (void*)search);
+
+        result = PathDirectory_EndSearch2(pd, &node);
+        if(result != 0)
+        {
+            return node;
+        }
+    }
+    return NULL;
+}
+
 /**
  * Gets the data of a player.
  */

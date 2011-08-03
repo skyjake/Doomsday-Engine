@@ -123,7 +123,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
             {
                 if(PT_BRANCH == PathDirectoryNode_Type(node))
                 {
-                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, callback, paramaters);
+                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, -1, callback, paramaters);
                 }
                 else
                 {
@@ -274,7 +274,7 @@ static void clearNodeInfo(filedirectory_t* fd)
 {
     assert(NULL != fd);
     if(NULL == fd->_pathDirectory) return;
-    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, freeNodeInfo);
+    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, -1, freeNodeInfo);
 }
 
 void FileDirectory_Destruct(filedirectory_t* fd)
@@ -350,22 +350,22 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList)
 }
 
 int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
-    const struct pathdirectory_node_s* parent,
+    const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
 {
     assert(NULL != fd);
     {
     int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
-    return PathDirectory_Iterate2_Const(fd->_pathDirectory, flags, parent, callback, paramaters);
+    return PathDirectory_Iterate2_Const(fd->_pathDirectory, flags, parent, hash, callback, paramaters);
     }
 }
 
 int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
-    const struct pathdirectory_node_s* parent,
+    const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters))
 {
-    return FileDirectory_Iterate2(fd, nodeType, parent, callback, NULL);
+    return FileDirectory_Iterate2(fd, nodeType, parent, hash, callback, NULL);
 }
 
 boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
@@ -389,7 +389,7 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeTyp
 
     // Perform the search.
     flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
-    foundNode = PathDirectory_Find(fd->_pathDirectory, flags, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
+    foundNode = DD_SearchPathDirectory(fd->_pathDirectory, flags, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?
