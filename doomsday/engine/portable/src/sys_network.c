@@ -1779,6 +1779,8 @@ static int C_DECL N_JoinedListenerThread(void* param)
                 Sys_Unlock(mutexJoinedSockSet);
             }
         }
+
+	Sys_Sleep(1);
     }
 }
 
