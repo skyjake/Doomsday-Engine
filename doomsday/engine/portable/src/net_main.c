@@ -536,11 +536,13 @@ void Net_Update(void)
 {
     Net_DoUpdate();
 
-    // Listen for packets. Call the correct packet handler.
-    N_Listen();
+    // Check for new arrivals and unjoined net commands.
+    N_ListenUnjoinedNodes();
+
+    // Check for received packets.
     if(isClient)
         Cl_GetPackets();
-    else // Single-player or server.
+    else
         Sv_GetPackets();
 }
 

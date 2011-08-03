@@ -120,6 +120,8 @@ void N_IPToString(char *buf, IPaddress *ip);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static int C_DECL N_JoinedListenerThread(void* param);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -146,8 +148,11 @@ static TCPsocket serverSock;
 //static mutex_t mutexInSock;
 static netnode_t netNodes[MAX_NODES];
 static SDLNet_SocketSet sockSet;
+static SDLNet_SocketSet joinedSockSet;
+static mutex_t mutexJoinedSockSet;
 //static thread_t hTransmitter;
-//static thread_t hReceiver;
+static thread_t joinedListener;
+static volatile boolean stopJoinedListener;
 //static sendqueue_t sendQ;
 static foundhost_t located;
 //static volatile boolean stopReceiver;
@@ -162,6 +167,26 @@ void N_Register(void)
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
     C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
     //C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
+}
+
+static void N_StartJoinedListener(void)
+{
+    Con_Message("N_StartJoinedListener.\n");
+
+    stopJoinedListener = false;
+    joinedListener = Sys_StartThread(N_JoinedListenerThread, 0);
+}
+
+static void N_StopJoinedListener(void)
+{
+    if(joinedListener)
+    {
+        Con_Message("N_StopJoinedListener.\n");
+
+        stopJoinedListener = true;
+        Sys_WaitThread(joinedListener);
+        joinedListener = 0;
+    }
 }
 
 #if 0
@@ -864,6 +889,9 @@ boolean N_InitService(boolean inServerMode)
         Con_Message("N_InitService: SDLNet_Init %s\n", SDLNet_GetError());
     }
 
+    // Mutex for the socket set.
+    mutexJoinedSockSet = Sys_CreateMutex("sockSet");
+
     if(inServerMode)
     {
         port = (!nptIPPort ? defaultTCPPort : nptIPPort);
@@ -883,13 +911,21 @@ boolean N_InitService(boolean inServerMode)
             return false;
         }
 
-        // Allocate a socket set, which we'll use for listening to the
+        // Allocate socket sets, which we'll use for listening to the
         // client sockets.
         if(!(sockSet = SDLNet_AllocSocketSet(MAX_NODES)))
         {
             Con_Message("N_InitService: %s\n", SDLNet_GetError());
             return false;
         }
+        if(!(joinedSockSet = SDLNet_AllocSocketSet(MAX_NODES)))
+        {
+            Con_Message("N_InitService: %s\n", SDLNet_GetError());
+            return false;
+        }
+
+        // We can start the listener immediately.
+        N_StartJoinedListener();
     }
     else
     {
@@ -952,6 +988,8 @@ void N_ShutdownService(void)
     N_StopReceiver();
 #endif
 
+    N_StopJoinedListener();
+
     if(netServerMode)
     {
         // Close the listening socket.
@@ -964,13 +1002,18 @@ void N_ShutdownService(void)
 
         // Free the socket set.
         SDLNet_FreeSocketSet(sockSet);
+        SDLNet_FreeSocketSet(joinedSockSet);
         sockSet = NULL;
+        joinedSockSet = NULL;
     }
     else
     {
         // Let's forget about servers found earlier.
         located.valid = false;
     }
+
+    Sys_DestroyMutex(mutexJoinedSockSet);
+    mutexJoinedSockSet = 0;
 
     SDLNet_Quit();
 
@@ -1044,6 +1087,10 @@ void N_TerminateNode(nodeid_t id)
 
     if(netServerMode && node->hasJoined)
     {
+        Sys_Lock(mutexJoinedSockSet);
+        SDLNet_TCP_DelSocket(joinedSockSet, node->sock);
+        Sys_Unlock(mutexJoinedSockSet);
+
         // This causes a network event.
         netEvent.type = NE_CLIENT_EXIT;
         netEvent.id = id;
@@ -1143,6 +1190,12 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
 
     // Convert the network node into a real client node.
     node->hasJoined = true;
+
+    // Move it to the joined socket set.
+    SDLNet_TCP_DelSocket(sockSet, node->sock);
+    Sys_Lock(mutexJoinedSockSet);
+    SDLNet_TCP_AddSocket(joinedSockSet, node->sock);
+    Sys_Unlock(mutexJoinedSockSet);
 
     // \fixme We should use more discretion with the name. It has
     // been provided by an untrusted source.
@@ -1385,11 +1438,14 @@ boolean N_Connect(int index)
 #endif
 
     // Put the server's socket in a socket set so we may listen to it.
-    sockSet = SDLNet_AllocSocketSet(1);
-    SDLNet_TCP_AddSocket(sockSet, svNode->sock);
+    joinedSockSet = SDLNet_AllocSocketSet(1);
+    SDLNet_TCP_AddSocket(joinedSockSet, svNode->sock);
 
     // Clients are allowed to send packets to the server.
     svNode->hasJoined = true;
+
+    // Start the TCP receiver thread.
+    N_StartJoinedListener();
 
     allowSending = true;
     handshakeReceived = false;
@@ -1434,12 +1490,15 @@ boolean N_Disconnect(void)
     N_BindIncoming(NULL, 0);
 #endif
 
+    // Stop the TCP receiver thread.
+    N_StopJoinedListener();
+
     // Close the control connection.  This will let the server know
     // that we are no more.
     SDLNet_TCP_Close(svNode->sock);
 
-    SDLNet_FreeSocketSet(sockSet);
-    sockSet = NULL;
+    SDLNet_FreeSocketSet(joinedSockSet);
+    joinedSockSet = NULL;
 
     return true;
 }
@@ -1597,89 +1656,127 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     return true;
 }
 
-/**
- * Poll all TCP sockets for activity.  Client commands are processed.
- * The logic ain't very pretty, but hopefully functional.
- */
-void N_Listen(void)
+void N_ListenUnjoinedNodes(void)
 {
     TCPsocket sock;
-    int     i, result;
-    char    buf[256];
-    netnode_t *node;
 
-    if(netServerMode)
+    if(!netServerMode)
     {
-        // Any incoming connections on the listening socket?
-        // \fixme Include this in the set of sockets?
-        while((sock = SDLNet_TCP_Accept(serverSock)) != NULL)
+        // This is only for the server.
+        return;
+    }
+
+    // Any incoming connections on the listening socket?
+    // \fixme Include this in the set of sockets?
+    while((sock = SDLNet_TCP_Accept(serverSock)) != NULL)
+    {
+        // A new client is attempting to connect. Let's try to
+        // register the new socket as a network node.
+        if(!N_RegisterNewSocket(sock))
         {
-            // A new client is attempting to connect. Let's try to
-            // register the new socket as a network node.
-            if(!N_RegisterNewSocket(sock))
+            // There was a failure, close the socket.
+            SDLNet_TCP_Close(sock);
+        }
+    }
+
+    // Any activity on the client sockets? (Don't wait.)
+    if(SDLNet_CheckSockets(sockSet, 0) > 0)
+    {
+        char buf[256];
+        int i, result;
+        for(i = 0; i < MAX_NODES; ++i)
+        {
+            netnode_t* node = netNodes + i;
+            if(node->hasJoined || !node->sock) continue;
+
+            // Does this socket have got any activity?
+            if(SDLNet_SocketReady(node->sock))
             {
-                // There was a failure, close the socket.
-                SDLNet_TCP_Close(sock);
+                result = SDLNet_TCP_Recv(node->sock, buf, sizeof(buf));
+                if(result <= 0)
+                {
+                    // Close this socket & node.
+                    Con_Message("N_ListenUnjoinedNodes: Connection closed on node %i.\n", i);
+                    N_TerminateNode(i);
+                }
+                else
+                {
+                    /** \fixme Read into a buffer, execute when newline
+                    * received.
+                    *
+                    * Process the command; we will need to answer, or
+                    * do something else.
+                    */
+                    N_DoNodeCommand(i, buf, result);
+                }
             }
         }
+    }
+}
 
-        // Any activity on the client sockets? (Don't wait.)
-        if(SDLNet_CheckSockets(sockSet, 0) > 0)
+/**
+ * TCP sockets receiver thread for joined nodes.
+ */
+static int C_DECL N_JoinedListenerThread(void* param)
+{
+    while(!stopJoinedListener || !joinedSockSet)
+    {
+        if(netServerMode)
         {
-            for(i = 0; i < MAX_NODES; ++i)
-            {
-                node = netNodes + i;
+            Sys_Lock(mutexJoinedSockSet);
 
-                // Does this socket have got any activity?
-                if(SDLNet_SocketReady(node->sock))
+            // Any activity on the client sockets?
+            if(SDLNet_CheckSockets(joinedSockSet, 10) > 0)
+            {
+                int i;
+                Sys_Unlock(mutexJoinedSockSet);
+                for(i = 0; i < MAX_NODES; ++i)
                 {
-                    if(!node->hasJoined)
-                    {
-                        result = SDLNet_TCP_Recv(node->sock, buf, sizeof(buf));
-                        if(result <= 0)
-                        {
-                            // Close this socket & node.
-                            VERBOSE2(Con_Message("N_Listen: Connection closed on node %i.\n", i));
-                            N_TerminateNode(i);
-                        }
-                        else
-                        {
-                            /** \fixme Read into a buffer, execute when newline
-                            * received.
-                            *
-                            * Process the command; we will need to answer, or
-                            * do something else.
-                            */
-                            N_DoNodeCommand(i, buf, result);
-                        }
-                    }
-                    else
+                    netnode_t* node = netNodes + i;
+
+                    // Does this socket have got any activity?
+                    if(node->hasJoined && SDLNet_SocketReady(node->sock))
                     {
                         if(!N_ReceiveReliably(i))
                         {
-                            Con_Message("N_Listen: Connection closed on node %i.\n", i);
+                            Con_Message("N_JoinedListenerThread: Connection closed on node %i.\n", i);
                             N_TerminateNode(i);
                         }
                     }
                 }
             }
-        }
-    }
-    else
-    {
-        // Clientside listening.  On clientside, the socket set only
-        // includes the server's socket.
-        if(sockSet && SDLNet_CheckSockets(sockSet, 0) > 0)
-        {
-            if(!N_ReceiveReliably(0))
+            else
             {
-                netevent_t nev;
+                Sys_Unlock(mutexJoinedSockSet);
+            }
+        }
+        else
+        {
+            Sys_Lock(mutexJoinedSockSet);
 
-                Con_Message("N_Listen: N_ReceiveReliably failed. Terminating!\n");
+            // Clientside listening.  On clientside, the socket set only
+            // includes the server's socket.
+            if(SDLNet_CheckSockets(joinedSockSet, 10) > 0)
+            {
+                Sys_Unlock(mutexJoinedSockSet);
 
-                nev.id = 0;
-                nev.type = NE_END_CONNECTION;
-                N_NEPost(&nev);
+                if(!N_ReceiveReliably(0))
+                {
+                    netevent_t nev;
+
+                    Con_Message("N_JoinedListenerThread: N_ReceiveReliably failed. Terminating!\n");
+
+                    nev.id = 0;
+                    nev.type = NE_END_CONNECTION;
+                    N_NEPost(&nev);
+
+                    // No point in continuing with the listener.
+                    break;
+                }
+            }
+            else
+            {
+                Sys_Unlock(mutexJoinedSockSet);
             }
         }
     }
