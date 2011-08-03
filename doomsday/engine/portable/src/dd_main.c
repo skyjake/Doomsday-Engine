@@ -1800,8 +1800,11 @@ void DD_UpdateEngineState(void)
     // Update refresh.
     Con_Message("Updating engine state...\n");
 
+    //F_ResetFileIds();
+
     // Update the dir/WAD translations.
     F_InitDirec();
+    F_InitializeResourcePathMap();
     /// Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();
 
