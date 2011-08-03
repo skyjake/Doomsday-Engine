@@ -757,13 +757,6 @@ pathdirectory_search_t* PathDirectory_Search(pathdirectory_t* pd)
     return &search;
 }
 
-pathdirectory_node_t* PathDirectory_ListForHash(pathdirectory_t* pd, ushort hash)
-{
-    assert(NULL != pd);
-
-    return (*pd->_pathHash)[hash];
-}
-
 ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter,
     size_t* retCount)
 {
