@@ -426,8 +426,19 @@ boolean N_GetPacket(void)
 */
     netBuffer.player = msg->player;
     netBuffer.length = msg->size - netBuffer.headerLength;
-    memcpy(&netBuffer.msg, msg->data,
-           MIN_OF(sizeof(netBuffer.msg), msg->size));
+
+    if(sizeof(netBuffer.msg) >= msg->size)
+    {
+        memcpy(&netBuffer.msg, msg->data, msg->size);
+    }
+    else
+    {
+#ifdef _DEBUG
+        Con_Error("N_GetPacket: Received a packet of size %lu.\n", msg->size);
+#endif
+        N_ReleaseMessage(msg);
+        return false;
+    }
 
     // The message can now be freed.
     N_ReleaseMessage(msg);

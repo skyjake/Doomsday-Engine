@@ -47,7 +47,7 @@
 
 // The minimum frame size is used when bandwidth rating is zero (poorest
 // possible connection).
-#define MINIMUM_FRAME_SIZE  4096 // bytes
+#define MINIMUM_FRAME_SIZE  1800 // bytes
 
 // The first frame should contain as much information as possible.
 #define MAX_FIRST_FRAME_SIZE    NETBUFFER_MAXDATA // 256000
