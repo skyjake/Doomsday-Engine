@@ -1197,8 +1197,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
 
         for(end = str; *end && *end != '{';)
         {
-            boolean newline = false;
-            int fragmentAlignFlags;
+            int newlines = 0, fragmentAlignFlags;
             float alignx = 0;
 
             // Find the end of the next fragment.
@@ -1230,10 +1229,10 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             fragment = buffer;
             }
 
-            if(end && *end == '\n')
+            while(*end == '\n')
             {
-                newline = true;
-                ++end;
+                newlines++;
+                end++;
             }
 
             // Continue from here.
@@ -1278,7 +1277,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
             charCount += strlen(fragment);
 
             // Advance the current position?
-            if(!newline)
+            if(newlines == 0)
             {
                 cx += ((float) textFragmentWidth(fragment) + currentAttribs()->tracking) * state.scaleX;
             }
@@ -1288,7 +1287,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlag
                     state.lastLineHeight = textFragmentHeight(fragment);
 
                 cx = (float) x;
-                cy += (float) state.lastLineHeight * (1+FR_Leading());
+                cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
             }
 
             glMatrixMode(GL_MODELVIEW);

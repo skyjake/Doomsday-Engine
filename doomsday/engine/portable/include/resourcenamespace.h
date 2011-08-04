@@ -46,6 +46,16 @@ typedef struct {
 } resourcenamespace_hashentry_t;
 typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMESPACE_HASHSIZE];
 
+typedef enum {
+    SPG_OVERRIDE = 0, // Override paths
+    SPG_EXTRA, // Extra/runtime paths
+    SPG_DEFAULT = 0, // Default paths
+    SPG_FALLBACK, // Last-resort paths
+    SEARCHPATHGROUP_COUNT
+} resourcenamespace_searchpathgroup_t;
+
+#define VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(g) ((g) >= SPG_DEFAULT && (g) < SEARCHPATHGROUP_COUNT)
+
 /**
  * @defGroup ResourceNamespaceFlags Resource Namespace Flags
  * @ingroup core.
@@ -69,44 +79,24 @@ typedef struct resourcenamespace_s {
     /// @see ResourceNamespaceFlags
     byte _flags;
 
-    /// Set of "normal" search paths (in order of greatest-importance, right to left).
-    dduri_t** _searchPaths;
-    uint _searchPathsCount;
-
-    /// Set of "extra" search paths (in order of greatest-importance, right to left).
-    dduri_t** _extraSearchPaths;
-    uint _extraSearchPathsCount;
+    /// Sets of search paths known by this namespace.
+    /// Each set is in order of greatest-importance, right to left.
+    dduri_t** _searchPaths[SEARCHPATHGROUP_COUNT];
+    uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
     /// Path hash table.
-    filedirectory_t* _fileDirectory;
+    filedirectory_t* _directory;
     ddstring_t* (*_composeHashName) (const ddstring_t* path);
     resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
     resourcenamespace_namehash_t _pathHash;
-
-    /// Command line options for overriding resource paths explicitly. Name 2 has precendence.
-    ddstring_t* _overrideName, *_overrideName2;
 } resourcenamespace_t;
 
 resourcenamespace_t* ResourceNamespace_Construct(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name));
 resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount);
-resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags);
-resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags, const char* overrideName);
-resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags, const char* overrideName,
-    const char* overrideName2);
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
 void ResourceNamespace_Destruct(resourcenamespace_t* rn);
 
@@ -116,19 +106,20 @@ void ResourceNamespace_Destruct(resourcenamespace_t* rn);
 void ResourceNamespace_Reset(resourcenamespace_t* rnamespace);
 
 /**
- * Add a new raw path to the list of "extra" search paths in this namespace.
+ * Add a new path to this namespace.
+ *
+ * @param path  New unresolved path to add.
+ * @param group  Group to add this path to. @see resourcenamespace_searchpathgroup_t
+ * @return  @c true if the path is correctly formed and present in the namespace.
  */
-boolean ResourceNamespace_AddExtraSearchPath(resourcenamespace_t* rnamespace, const dduri_t* newUri);
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* path,
+    resourcenamespace_searchpathgroup_t group);
 
 /**
- * Clear "normal" search paths in this namespace.
+ * Clear search paths in this namespace.
+ * @param group  Search path group to be cleared.
  */
-void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
-
-/**
- * Clear "extra" resource search paths in this namespace.
- */
-void ResourceNamespace_ClearExtraSearchPaths(resourcenamespace_t* rnamespace);
+void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespace_searchpathgroup_t group);
 
 /**
  * Find a path to a named resource in the namespace.
@@ -161,5 +152,8 @@ boolean ResourceNamespace_MapPath(resourcenamespace_t* rnamespace, ddstring_t* p
  */
 /// @return  Ptr to a string containing the symbolic name.
 const ddstring_t* ResourceNamespace_Name(const resourcenamespace_t* rnamespace);
+
+/// @return  Ptr to the path directory used with this namespace.
+filedirectory_t* ResourceNamespace_Directory(const resourcenamespace_t* rnamespace);
 
 #endif /* LIBDENG_SYSTEM_RESOURCENAMESPACE_H */

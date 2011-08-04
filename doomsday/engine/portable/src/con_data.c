@@ -123,7 +123,7 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
             char** ptr = (char**) var->ptr;
             // \note Multiple vars could be using the same pointer (so ensure
             // that we attempt to free only once).
-            PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, markStringVariableFreed, ptr);
+            PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, -1, markStringVariableFreed, ptr);
             free(*ptr);
             *ptr = emptyString;
         }
@@ -134,7 +134,7 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 
 static void clearVariables(void)
 {
-    PathDirectory_Iterate(cvarDirectory, PCF_NO_BRANCH, NULL, clearVariable);
+    PathDirectory_Iterate(cvarDirectory, PCF_NO_BRANCH, NULL, -1, clearVariable);
     PathDirectory_Destruct(cvarDirectory); cvarDirectory = NULL;
     cvarCount = 0;
 }
@@ -315,7 +315,7 @@ static void updateKnownWords(void)
 
     // Count the number of visible console variables.
     knownCVars = 0;
-    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, countVariable, &knownCVars);
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, -1, countVariable, &knownCVars);
 
     knownGames = 0;
     { int i, gameInfoCount = DD_GameInfoCount();
@@ -349,7 +349,7 @@ static void updateKnownWords(void)
     if(0 != knownCVars)
     {
         /// \note cvars are NOT sorted.
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, addVariableToKnownWords, &c);
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, -1, addVariableToKnownWords, &c);
     }
 
     // Add aliases?
@@ -637,7 +637,7 @@ cvar_t* Con_FindVariable(const char* name)
     {
     struct pathdirectory_node_s* node;
     if(0 == cvarCount) return NULL;
-    node = PathDirectory_Find(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, name, CVARDIRECTORY_DELIMITER);
+    node = DD_SearchPathDirectory(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, name, CVARDIRECTORY_DELIMITER);
     if(NULL == node) return NULL;
     return (cvar_t*) PathDirectoryNode_UserData(node);
     }

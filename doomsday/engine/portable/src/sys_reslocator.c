@@ -122,6 +122,14 @@ static uint numNamespaces = 0;
 
 // CODE --------------------------------------------------------------------
 
+static void errorIfNotInited(const char* callerName)
+{
+    if(inited) return;
+    Con_Error("%s: resource locator module is not presently initialized.", callerName);
+    // Unreachable. Prevents static analysers from getting rather confused, poor things.
+    exit(1);
+}
+
 static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
 {
     assert(VALID_RESOURCE_TYPE(type));
@@ -130,9 +138,25 @@ static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t 
 
 static __inline resourcenamespace_t* getNamespaceForId(resourcenamespaceid_t rni)
 {
+    errorIfNotInited("getNamespaceForId");
     if(!F_IsValidResourceNamespaceId(rni))
         Con_Error("getNamespaceForId: Invalid namespace id %i.", (int)rni);
     return namespaces[((uint)rni)-1];
+}
+
+static resourcenamespaceid_t findNamespaceId(resourcenamespace_t* rnamespace)
+{
+    if(NULL != rnamespace)
+    {
+        uint i;
+        for(i = 0; i < numNamespaces; ++i)
+        {
+            resourcenamespace_t* other = namespaces[i];
+            if(other == rnamespace)
+                return (resourcenamespaceid_t)(i+1);
+        }
+    }
+    return 0;
 }
 
 static resourcenamespaceid_t findNamespaceForName(const char* name)
@@ -156,8 +180,14 @@ static void destroyAllNamespaces(void)
         return;
     { uint i;
     for(i = 0; i < numNamespaces; ++i)
-        ResourceNamespace_Destruct(namespaces[i]);
-    }
+    {
+        resourcenamespace_t* rnamespace = namespaces[i];
+        if(NULL != ResourceNamespace_Directory(rnamespace))
+        {
+            FileDirectory_Destruct(ResourceNamespace_Directory(rnamespace));
+        }
+        ResourceNamespace_Destruct(rnamespace);
+    }}
     free(namespaces);
     namespaces = 0;
 }
@@ -167,18 +197,6 @@ static void resetAllNamespaces(void)
     uint i;
     for(i = 0; i < numNamespaces; ++i)
         ResourceNamespace_Reset(namespaces[i]);
-}
-
-static void clearNamespaceSearchPaths(resourcenamespaceid_t rni)
-{
-    if(rni == 0)
-    {
-        uint i;
-        for(i = 0; i < numNamespaces; ++i)
-            ResourceNamespace_ClearExtraSearchPaths(namespaces[i]);
-        return;
-    }
-    ResourceNamespace_ClearExtraSearchPaths(getNamespaceForId(rni));
 }
 
 static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* searchPath,
@@ -385,6 +403,8 @@ static void createPackagesResourceNamespace(void)
 {
     ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
     uint doomWadPathsCount = 0, searchPathsCount, idx;
+    resourcenamespace_t* rnamespace;
+    filedirectory_t* directory;
     dduri_t** searchPaths;
 
     // Is the DOOMWADPATH environment variable in use?
@@ -489,8 +509,18 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, F_ComposeHashNameForFilePath,
-        F_HashKeyForFilePathHashName, (const dduri_t**)searchPaths, searchPathsCount, 0, 0, 0);
+    directory = FileDirectory_ConstructDefault();
+    rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, directory,
+        F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, 0);
+
+    if(searchPathsCount != 0)
+    {
+        uint i;
+        for(i = 0; i < searchPathsCount; ++i)
+        {
+            ResourceNamespace_AddSearchPath(rnamespace, searchPaths[i], SPG_DEFAULT);
+        }
+    }
 
     for(idx = 0; idx < searchPathsCount; ++idx)
         Uri_Destruct(searchPaths[idx]);
@@ -503,23 +533,34 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
     struct namespacedef_s {
         const char* name;
-        const char* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
+        const char* optOverridePath;
+        const char* optFallbackPath;
         byte flags;
-        const char* overrideName;
-        const char* overrideName2;
+        const char* defaultPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
-        { DEFINITIONS_RESOURCE_NAMESPACE_NAME, { "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey)/", "$(GameInfo.DefsPath)/", "$(App.DefsPath)/" } },
-        { GRAPHICS_RESOURCE_NAMESPACE_NAME,    { "$(App.DataPath)/graphics/" }, 0, "-gfxdir",  "-gfxdir2" },
-        { MODELS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/models/" },       RNF_USE_VMAP,  "-modeldir", "-modeldir2" },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/sfx/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/sfx/" },             RNF_USE_VMAP,  "-sfxdir",   "-sfxdir2" },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/music/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/music/" },         RNF_USE_VMAP,  "-musdir",   "-musdir2" },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,    { "$(GameInfo.DataPath)/textures/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/textures/" },   RNF_USE_VMAP,  "-texdir",   "-texdir2" },
-        { FLATS_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/flats/" },         RNF_USE_VMAP,  "-flatdir",  "-flatdir2" },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,     { "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/patches/" },     RNF_USE_VMAP,  "-patdir",   "-patdir2" },
-        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,   { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/lightmaps/" }, RNF_USE_VMAP,  "-lmdir",    "-lmdir2" },
-        { FONTS_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/fonts/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/fonts/", "$(App.DataPath)/fonts/" }, RNF_USE_VMAP, "-fontdir", "-fontdir2" },
+        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0,
+            { "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey)/", "$(GameInfo.DefsPath)/", "$(App.DefsPath)/" } },
+        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0,
+            { "$(App.DataPath)/graphics/" } },
+        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/models/" } },
+        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/sfx/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/sfx/" } },
+        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/music/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/music/" } },
+        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/textures/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/textures/" } },
+        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/flats/" } },
+        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/patches/" } },
+        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/lightmaps/" } },
+        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP,
+            { "$(GameInfo.DataPath)/fonts/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
         { NULL }
     };
+    dduri_t* uri = Uri_ConstructDefault();
 
     // Setup of the Packages namespace is somewhat more involved...
     createPackagesResourceNamespace();
@@ -528,28 +569,47 @@ void F_CreateNamespacesForFileResourcePaths(void)
     { size_t i;
     for(i = 0; defs[i].name; ++i)
     {
+        uint j, defaultPathCount;
         struct namespacedef_s* def = &defs[i];
-        dduri_t** searchPaths = 0;
-        uint j, searchPathsCount = 0;
+        filedirectory_t* directory = FileDirectory_ConstructDefault();
+        resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
+            F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 
-        for(searchPathsCount = 0; searchPathsCount < NAMESPACEDEF_MAX_SEARCHPATHS; ++searchPathsCount)
-            if(!def->searchPaths[searchPathsCount])
-                break;
+        defaultPathCount = 0;
+        while(def->defaultPaths[defaultPathCount] && ++defaultPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
+        {}
 
-        if((searchPaths = malloc(sizeof(*searchPaths) * searchPathsCount)) == 0)
-            Con_Error("createResourceNamespaces: Failed on allocation of %lu bytes.",
-                      (unsigned long) (sizeof(*searchPaths) * searchPathsCount)); 
+        for(j = 0; j < defaultPathCount; ++j)
+        {
+            Uri_SetUri3(uri, def->defaultPaths[j], RC_NULL);
+            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_DEFAULT);
+        }
 
-        for(j = 0; j < searchPathsCount; ++j)
-            searchPaths[j] = Uri_Construct2(def->searchPaths[j], RC_NULL);
+        if(def->optOverridePath && ArgCheckWith(def->optOverridePath, 1))
+        {
+            const char* path = ArgNext();
+            ddstring_t path2;
 
-        F_CreateResourceNamespace(def->name, F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName,
-            (const dduri_t**)searchPaths, searchPathsCount, def->flags, def->overrideName, def->overrideName2);
+            // Override paths are added in reverse order.
+            Str_Init(&path2);
+            Str_Appendf(&path2, "%s/$(GameInfo.IdentityKey)", path);
+            Uri_SetUri3(uri, Str_Text(&path2), RC_NULL);
+            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
 
-        for(j = 0; j < searchPathsCount; ++j)
-            Uri_Destruct(searchPaths[j]);
-        free(searchPaths);
+            Uri_SetUri3(uri, path, RC_NULL);
+            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
+
+            Str_Free(&path2);
+        }
+
+        if(def->optFallbackPath && ArgCheckWith(def->optFallbackPath, 1))
+        {
+            Uri_SetUri3(uri, ArgNext(), RC_NULL);
+            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_FALLBACK);
+        }
     }}
+
+    Uri_Destruct(uri);
 
 #undef NAMESPACEDEF_MAX_SEARCHPATHS
 }
@@ -570,56 +630,56 @@ void F_ShutdownResourceLocator(void)
 
 void F_ResetAllResourceNamespaces(void)
 {
-    if(!inited)
-        return;
+    errorIfNotInited("F_ResetAllResourceNamespaces");
     resetAllNamespaces();
+}
+
+void F_ResetResourceNamespace(resourcenamespaceid_t rni)
+{
+    ResourceNamespace_Reset(F_ToResourceNamespace(rni));
 }
 
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
-    assert(inited);
     return getNamespaceForId(rni);
 }
 
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
 {
-    assert(inited);
+    errorIfNotInited("F_SafeResourceNamespaceForName");
     return findNamespaceForName(name);
 }
 
 resourcenamespaceid_t F_ResourceNamespaceForName(const char* name)
 {
-    assert(inited);
-    {
-    resourcenamespaceid_t result;
-    if((result = F_SafeResourceNamespaceForName(name)) == 0)
-        Con_Error("resourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
+    resourcenamespaceid_t result = F_SafeResourceNamespaceForName(name);
+    if(result == 0)
+        Con_Error("F_ResourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
     return result;
-    }
 }
 
 uint F_NumResourceNamespaces(void)
 {
-    assert(inited);
+    errorIfNotInited("F_NumResourceNamespaces");
     return numNamespaces;
 }
 
 boolean F_IsValidResourceNamespaceId(int val)
 {
-    assert(inited);
+    errorIfNotInited("F_IsValidResourceNamespaceId");
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
-    const char* overrideName2)
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
 {
-    assert(inited && name);
+    assert(name);
+    errorIfNotInited("F_CreateResourceNamespace");
     {
-    resourcenamespace_t* rn = ResourceNamespace_Construct5(name, composeHashNameFunc,
-        hashNameFunc, searchPaths, numSearchPaths, flags, overrideName, overrideName2);
+    resourcenamespace_t* rn = ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, flags);
+
+    // Add this new namespace to the global list.
     namespaces = (resourcenamespace_t**) realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);
     if(namespaces == NULL)
         Con_Error("F_CreateResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n",
@@ -811,7 +871,7 @@ void F_PrintStringList(const ddstring_t** strings, size_t stringsCount)
 uint F_FindResource4(resourceclass_t rclass, const dduri_t** searchPaths,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix)
 {
-    assert(inited);
+    errorIfNotInited("F_FindResource4");
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
         Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
     if(!searchPaths)
@@ -822,11 +882,10 @@ uint F_FindResource4(resourceclass_t rclass, const dduri_t** searchPaths,
 uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix)
 {
-    assert(inited);
-    {
     dduri_t** list;
     int result = 0;
 
+    errorIfNotInited("F_FindResourceStr3");
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
         Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
 
@@ -844,7 +903,6 @@ uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
         F_DestroyUriList(list);
     }
     return result;
-    }
 }
 
 uint F_FindResourceForRecord(resourcerecord_t* rec, ddstring_t* foundPath)
@@ -894,7 +952,7 @@ uint F_FindResource(resourceclass_t rclass, const char* searchPaths)
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
 {
-    assert(inited);
+    errorIfNotInited("F_DefaultResourceClassForType");
     if(type == RT_NONE)
         return RC_UNKNOWN;
     return getInfoForResourceType(type)->defaultClass;
@@ -902,13 +960,14 @@ resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
 
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
-    assert(inited && VALID_RESOURCE_CLASS(rclass));
+    assert(VALID_RESOURCE_CLASS(rclass));
+    errorIfNotInited("F_DefaultResourceNamespaceForClass");
     return F_ResourceNamespaceForName(Str_Text(&defaultNamespaceForClass[rclass]));
 }
 
 resourcetype_t F_GuessResourceTypeByName(const char* path)
 {
-    assert(inited);
+    errorIfNotInited("F_GuessResourceTypeByName");
 
     if(!path || !path[0])
         return RT_NONE; // Unrecognizable.
@@ -939,7 +998,8 @@ resourcetype_t F_GuessResourceTypeByName(const char* path)
 
 boolean F_ApplyPathMapping(ddstring_t* path)
 {
-    assert(inited && path);
+    assert(path);
+    errorIfNotInited("F_ApplyPathMapping");
     { uint i = 0;
     boolean result = false;
     while(i < numNamespaces && !(result = ResourceNamespace_MapPath(namespaces[i++], path)));

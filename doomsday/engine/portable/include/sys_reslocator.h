@@ -98,6 +98,8 @@ void F_ShutdownResourceLocator(void);
 
 void F_ResetAllResourceNamespaces(void);
 
+void F_ResetResourceNamespace(resourcenamespaceid_t rni);
+
 void F_CreateNamespacesForFileResourcePaths(void);
 
 /**
@@ -117,10 +119,8 @@ resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const dd
 #define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
-    const char* overrideName2);
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
@@ -131,7 +131,7 @@ boolean F_IsValidResourceNamespaceId(int value);
 /**
  * Given an id return the associated resource namespace object.
  */
-struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
+resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 /**
  * Attempt to locate a known resource.

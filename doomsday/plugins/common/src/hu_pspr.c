@@ -145,7 +145,7 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->flags = 0;
 
         // Fullbright?
-        if((psp->state->flags & STF_FULLBRIGHT) ||
+        if((psp->state && (psp->state->flags & STF_FULLBRIGHT)) ||
             (pl->powers[PT_INFRARED] > 4 * 32) || (pl->powers[PT_INFRARED] & 8)
 # if __JDOOM__ || __JDOOM64__
             || (pl->powers[PT_INVULNERABILITY] > 30)

@@ -56,6 +56,38 @@ static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* direct
 
 static void PathDirectoryNode_Destruct(pathdirectory_node_t* node);
 
+static volatile int numInstances = 0;
+// A mutex is used to protect access to the shared fragment info buffer and search state.
+static mutex_t fragmentBuffer_Mutex = 0;
+
+#define PATHDIRECTORY_FRAGMENT_BUFFER_SIZE 16
+
+/// \protected by fragmentBuffer_Mutex;
+static pathdirectory_fragmentinfo_t smallFragmentBuffer[PATHDIRECTORY_FRAGMENT_BUFFER_SIZE];
+static pathdirectory_fragmentinfo_t* largeFragmentBuffer = NULL;
+static size_t largeFragmentBufferSize = 0;
+static pathdirectory_search_t search;
+
+static volatile boolean searchInProgress = false;
+
+#if 0//_DEBUG
+void lockMutex(mutex_t mutex)
+{
+    //searchInProgress = true;
+    Con_Message("Locking PathDirectory.\n");
+    Sys_Lock(mutex);
+}
+#define Sys_Lock lockMutex
+
+void unlockMutex(mutex_t mutex)
+{
+    //searchInProgress = false;
+    Con_Message("Unlocking PathDirectory.\n");
+    Sys_Unlock(mutex);
+}
+#define Sys_Unlock unlockMutex
+#endif
+
 /**
  * This is a hash function. It uses the path fragment string to generate
  * a somewhat-random number between @c 0 and @c PATHDIRECTORY_PATHHASH_SIZE
@@ -331,7 +363,7 @@ static pathdirectory_node_t* addPath(pathdirectory_t* fd, const char* path,
 }
 
 static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
-    int (*callback) (pathdirectory_node_t* node, void* paramaters),
+    ushort hash, int (*callback) (pathdirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
     assert(NULL != pd && NULL != callback);
@@ -341,18 +373,34 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
     {
         pathdirectory_node_t* node;
         ushort i;
-
-        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-        for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+        if(parent == NULL && hash >= 0 && hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
-            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                continue;
-            if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
-                continue;
+            for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
+            {
+                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                    continue;
+                if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
+                    continue;
 
-            if(0 != (result = callback(node, paramaters)))
-                break;
+                if(0 != (result = callback(node, paramaters)))
+                    break;
+            }
+        }
+        else
+        {
+            for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+            {
+                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                    continue;
+                if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
+                    continue;
+
+                if(0 != (result = callback(node, paramaters)))
+                    break;
+            }
         }
     }
     return result;
@@ -360,7 +408,7 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
 }
 
 static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdirectory_node_t* parent,
-    int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
+    ushort hash, int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
     assert(NULL != pd && NULL != callback);
     {
@@ -369,18 +417,34 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
     {
         pathdirectory_node_t* node;
         ushort i;
-
-        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-        for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+        if(parent == NULL && hash >= 0 && hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
-            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                continue;
-            if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
-                continue;
+            for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
+            {
+                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                    continue;
+                if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
+                    continue;
 
-            if(0 != (result = callback(node, paramaters)))
-                break;
+                if(0 != (result = callback(node, paramaters)))
+                    break;
+            }
+        }
+        else
+        {
+            for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+            {
+                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+                    continue;
+                if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
+                    continue;
+
+                if(0 != (result = callback(node, paramaters)))
+                    break;
+            }
         }
     }
     return result;
@@ -396,6 +460,12 @@ pathdirectory_t* PathDirectory_Construct(void)
     pd->_internPool.strings = NULL;
     pd->_internPool.idHashMap = NULL;
     pd->_pathHash = NULL;
+
+    if(numInstances == 0)
+    {
+        fragmentBuffer_Mutex = Sys_CreateMutex("PathDirectory::fragmentBuffer_MUTEX");
+    }
+    ++numInstances;
     return pd;
 }
 
@@ -406,6 +476,13 @@ void PathDirectory_Destruct(pathdirectory_t* pd)
     destroyPathHash(pd);
     clearInternPool(pd);
     free(pd);
+
+    --numInstances;
+    if(numInstances == 0)
+    {
+        Sys_DestroyMutex(fragmentBuffer_Mutex);
+        fragmentBuffer_Mutex = 0;
+    }
 }
 
 void PathDirectory_Clear(pathdirectory_t* pd)
@@ -430,28 +507,28 @@ pathdirectory_node_t* PathDirectory_Insert(pathdirectory_t* pd, const char* path
 }
 
 int PathDirectory_Iterate2(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
-    int (*callback) (pathdirectory_node_t* node, void* paramaters), void* paramaters)
+    ushort hash, int (*callback) (pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
-    return iteratePaths(pd, flags, parent, callback, paramaters);
+    return iteratePaths(pd, flags, parent, hash, callback, paramaters);
 }
 
 int PathDirectory_Iterate(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
-    int (*callback) (pathdirectory_node_t* node, void* paramaters))
+    ushort hash, int (*callback) (pathdirectory_node_t* node, void* paramaters))
 {
-    return PathDirectory_Iterate2(pd, flags, parent, callback, NULL);
+    return PathDirectory_Iterate2(pd, flags, parent, hash, callback, NULL);
 }
 
 int PathDirectory_Iterate2_Const(const pathdirectory_t* pd, int flags, const pathdirectory_node_t* parent,
-    int (*callback) (const pathdirectory_node_t* node, void* paramaters),
+    ushort hash, int (*callback) (const pathdirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
-    return iteratePaths_const(pd, flags, parent, callback, paramaters);
+    return iteratePaths_const(pd, flags, parent, hash, callback, paramaters);
 }
 
 int PathDirectory_Iterate_Const(const pathdirectory_t* pd, int flags, const pathdirectory_node_t* parent,
-    int (*callback) (const pathdirectory_node_t* node, void* paramaters))
+    ushort hash, int (*callback) (const pathdirectory_node_t* node, void* paramaters))
 {
-    return PathDirectory_Iterate2_Const(pd, flags, parent, callback, NULL);
+    return PathDirectory_Iterate2_Const(pd, flags, parent, hash, callback, NULL);
 }
 
 const ddstring_t* PathDirectory_GetFragment(pathdirectory_t* pd, const pathdirectory_node_t* node)
@@ -539,21 +616,145 @@ ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const pathdirectory_n
     }
 }
 
-pathdirectory_node_t* PathDirectory_Find(pathdirectory_t* pd, int flags, const char* searchPath,
-    char delimiter)
+static size_t splitSearchPath(const char* searchPath, size_t searchPathLen, char delimiter,
+    pathdirectory_fragmentinfo_t* storage)
+{
+    assert(searchPath && searchPath[0] && searchPathLen != 0);
+    {
+    size_t i, fragments;
+    const char* begin = searchPath;
+    const char* to = begin + searchPathLen - 1;
+    const char* from;
+
+    // Skip over any trailing delimiters.
+    for(i = searchPathLen; *to && *to == delimiter && i-- > 0; to--) {}
+
+    // In reverse order scan for distinct fragments in the search term.
+    fragments = 0;
+    for(;;)
+    {
+        // Find the start of the next path fragment.
+        for(from = to; from > begin && !(*from == delimiter); from--) {}
+
+        // One more.
+        fragments++;
+
+        // Are we storing info?
+        if(storage)
+        {
+            storage->from = (*from == delimiter? from + 1 : from);
+            storage->to   = to;
+            // Hashing is deferred; means not-hashed yet.
+            storage->hash = PATHDIRECTORY_PATHHASH_SIZE;
+        }
+
+        // Are there no more parent directories?
+        if(from == begin) break;
+
+        // So far so good. Move one directory level upwards.
+        // The next fragment ends here.
+        to = from-1;
+
+        if(storage) storage++;
+    }
+
+    return fragments;
+    }
+}
+
+static pathdirectory_fragmentinfo_t* enlargeFragmentBuffer(size_t fragments)
+{
+    if(fragments <= PATHDIRECTORY_FRAGMENT_BUFFER_SIZE)
+    {
+        return smallFragmentBuffer;
+    }
+    if(largeFragmentBuffer == NULL || fragments > largeFragmentBufferSize)
+    {
+        largeFragmentBufferSize = fragments;
+        largeFragmentBuffer = (pathdirectory_fragmentinfo_t*)realloc(largeFragmentBuffer,
+            sizeof(*largeFragmentBuffer) * largeFragmentBufferSize);
+        if(largeFragmentBuffer == NULL)
+            Con_Error("PathDirectory::enlargeFragmentBuffer: Failed on reallocation of %lu bytes.",
+                (unsigned long)(sizeof(*largeFragmentBuffer) * largeFragmentBufferSize));
+    }
+    return largeFragmentBuffer;
+}
+
+static void freeFragmentBuffer(void)
+{
+    if(largeFragmentBuffer == NULL)
+        return;
+    free(largeFragmentBuffer), largeFragmentBuffer = NULL;
+    largeFragmentBufferSize = 0;
+}
+
+pathdirectory_search_t* PathDirectory_BeginSearchStr(pathdirectory_t* pd, int flags,
+    const ddstring_t* searchPath, char delimiter)
 {
     assert(NULL != pd);
-    if(NULL != searchPath && searchPath[0] && NULL != pd->_pathHash)
+
+    if(searchInProgress)
+        Con_Error("PathDirectory::BeginSearch: Search already in progress.");
+
+    Sys_Lock(fragmentBuffer_Mutex);
+
+    search.resultNode = NULL;
+    search.result = 0;
+    search.flags = flags;
+    search.delimiter = delimiter;
+    Str_Init(&search.path);
+    Str_Reserve(&search.path, Str_Length(searchPath));
+    Str_Set(&search.path, Str_Text(searchPath));
+    search.fragments = splitSearchPath(Str_Text(&search.path), Str_Length(&search.path), delimiter, NULL);
+    searchInProgress = true;
+    search.info  = enlargeFragmentBuffer(search.fragments);
+    splitSearchPath(Str_Text(&search.path), Str_Length(&search.path), delimiter, search.info);
+    // Hash the first (i.e., rightmost) fragment now.
+    search.info[0].hash = hashName(search.info[0].from, (search.info[0].to - search.info[0].from) + 1, delimiter);
+
+    return &search;
+}
+
+pathdirectory_search_t* PathDirectory_BeginSearch(pathdirectory_t* pd, int flags,
+    const char* searchPath, char delimiter)
+{
+    pathdirectory_search_t* result;
+    ddstring_t temp; Str_Init(&temp); Str_Set(&temp, searchPath);
+    result = PathDirectory_BeginSearchStr(pd, flags, &temp, delimiter);
+    Str_Free(&temp);
+    return result;
+}
+
+int PathDirectory_EndSearch2(pathdirectory_t* pd, pathdirectory_node_t** resultNode)
+{
+    assert(NULL != pd);
     {
-        size_t searchPathLen = strlen(searchPath);
-        ushort hash = hashName(searchPath, searchPathLen, delimiter);
-        // Perform the search.
-        pathdirectory_node_t* node = (*pd->_pathHash)[hash];
-        while(NULL != node && !PathDirectoryNode_MatchDirectory(node, flags, searchPath, searchPathLen, delimiter))
-            node = node->next;
-        return node;
+    int result = search.result;
+    if(resultNode) *resultNode = search.resultNode;
+
+    if(!searchInProgress)
+        Con_Error("PathDirectory::EndSearch: Attempted with no search in progress.\n");
+
+    freeFragmentBuffer();
+    Str_Free(&search.path);
+    Sys_Unlock(fragmentBuffer_Mutex);
+    searchInProgress = false;
+    return result;
     }
-    return NULL;
+}
+
+int PathDirectory_EndSearch(pathdirectory_t* pd)
+{
+    return PathDirectory_EndSearch2(pd, NULL);
+}
+
+pathdirectory_search_t* PathDirectory_Search(pathdirectory_t* pd)
+{
+    assert(NULL != pd);
+
+    if(!searchInProgress)
+        Con_Error("PathDirectory::Search: Attempted with no search in progress.\n");
+    return &search;
 }
 
 ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter,
@@ -649,62 +850,6 @@ static void PathDirectoryNode_Destruct(pathdirectory_node_t* node)
     free(node);
 }
 
-boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, int flags,
-    const char* searchPath, size_t searchPathLen, char delimiter)
-{
-    assert(NULL != node);
-    {
-    const char* begin, *from, *to;
-    pathdirectory_t* pd;
-    const ddstring_t* fragment;
-    size_t i;
-
-    if(NULL == searchPath || 0 == searchPathLen)
-        return false;
-
-    if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-       ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-        return false;
-
-    pd = node->_directory;
-    begin = searchPath;
-    to = begin + searchPathLen - 1;
-
-    // Skip over any trailing delimiters.
-    for(i = searchPathLen; *to && *to == delimiter && i-- > 0; to--) {}
-
-    // In reverse order, compare path fragments in the search term.
-    for(;;)
-    {
-        // Find the start of the next path fragment.
-        for(from = to; from > begin && !(*from == delimiter); from--) {}
-
-        fragment = PathDirectory_GetFragment(pd, node);
-        assert(NULL != fragment);
-        if(Str_Length(fragment) < (to - from) + (from == begin && *from != delimiter? 1 : 0))
-            return false;
-        if(strnicmp(Str_Text(fragment), *from == delimiter? from + 1 : from, Str_Length(fragment)))
-            return false;
-
-        // Have we arrived at the search target?
-        if(from == begin)
-            return (!(flags & PCF_MATCH_FULL) || NULL == PathDirectoryNode_Parent(node));
-
-        // Are there no more parent directories?
-        if(NULL == PathDirectoryNode_Parent(node))
-            return false;
-
-        // So far so good. Move one directory level upwards.
-        node = PathDirectoryNode_Parent(node);
-
-        // The string now ends here.
-        to = from-1;
-    }
-    // Unreachable.
-    return false;
-    }
-}
-
 pathdirectory_t* PathDirectoryNode_Directory(const struct pathdirectory_node_s* node)
 {
     assert(NULL != node);
@@ -727,6 +872,58 @@ stringpool_internid_t PathDirectoryNode_InternId(const pathdirectory_node_t* nod
 {
     assert(NULL != node);
     return node->_pair.internId;
+}
+
+boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, pathdirectory_search_t* s)
+{
+    assert(NULL != node && NULL != s);
+    {
+    pathdirectory_t* pd = PathDirectoryNode_Directory(node);
+    pathdirectory_fragmentinfo_t* info;
+    const ddstring_t* fragment;
+    size_t i;
+
+    if(NULL == s->info || 0 == s->fragments)
+        return false;
+
+    if(((s->flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+       ((s->flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+        return false;
+
+    // In reverse order, compare path s.fragments in the search term.
+    info = s->info;
+    for(i = 0; i < s->fragments; ++i)
+    {
+        // Is it time to compute the hash for this path fragment?
+        if(info->hash == PATHDIRECTORY_PATHHASH_SIZE)
+        {
+            info->hash = hashName(info->from, (info->to - info->from) + 1, s->delimiter);
+        }
+
+        // If the hashes don't match it can't possibly be this.
+        if(info->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
+            return false;
+
+        fragment = PathDirectory_GetFragment(pd, node);
+        if(Str_Length(fragment) < (info->to - info->from)+1 ||
+           strnicmp(Str_Text(fragment), info->from, Str_Length(fragment)))
+            return false;
+
+        // Have we arrived at the search target?
+        if(i == s->fragments-1)
+            return (!(s->flags & PCF_MATCH_FULL) || NULL == PathDirectoryNode_Parent(node));
+
+        // Are there no more parent directories?
+        if(NULL == PathDirectoryNode_Parent(node))
+            return false;
+
+        // So far so good. Move one directory level upwards.
+        node = PathDirectoryNode_Parent(node);
+        info++;
+    }
+
+    return false;
+    }
 }
 
 void PathDirectoryNode_AttachUserData(pathdirectory_node_t* node, void* data)

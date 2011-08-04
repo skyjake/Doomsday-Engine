@@ -82,40 +82,26 @@ static void printPathHash(resourcenamespace_t* rn)
 }
 #endif
 
+static void appendSearchPathsInGroup(ddstring_t* pathList, resourcenamespace_t* rn,
+    resourcenamespace_searchpathgroup_t group)
+{
+    assert(pathList && rn && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
+    { uint i;
+    for(i = 0; i < rn->_searchPathsCount[group]; ++i)
+    {
+        ddstring_t* path = Uri_ComposePath(rn->_searchPaths[group][i]);
+        Str_Appendf(pathList, "%s;", Str_Text(path));
+        Str_Delete(path);
+    }}
+}
+
 static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rn)
 {
-    assert(rn && pathList);
-
-    // A command line override path?
-    if(rn->_overrideName2 && ArgCheckWith(Str_Text(rn->_overrideName2), 1))
-    {
-        const char* newPath = ArgNext();
-        Str_Appendf(pathList, "%s;%s/$(GameInfo.IdentityKey);", newPath, newPath);
-    }
-
-    // Join the extra pathlist from the resource namespace to the final pathlist?
-    { uint i;
-    for(i = 0; i < rn->_extraSearchPathsCount; ++i)
-    {
-        ddstring_t* path = Uri_ComposePath(rn->_extraSearchPaths[i]);
-        Str_Appendf(pathList, "%s;", Str_Text(path));
-        Str_Delete(path);
-    }}
-
-    // Join the pathlist from the resource namespace to the final pathlist.
-    { uint i;
-    for(i = 0; i < rn->_searchPathsCount; ++i)
-    {
-        ddstring_t* path = Uri_ComposePath(rn->_searchPaths[i]);
-        Str_Appendf(pathList, "%s;", Str_Text(path));
-        Str_Delete(path);
-    }}
-
-    // A command line default path?
-    if(rn->_overrideName && ArgCheckWith(Str_Text(rn->_overrideName), 1))
-    {
-        Str_Appendf(pathList, "%s;", ArgNext());
-    }
+    assert(pathList && rn);
+    appendSearchPathsInGroup(pathList, rn, SPG_OVERRIDE);
+    appendSearchPathsInGroup(pathList, rn, SPG_EXTRA);
+    appendSearchPathsInGroup(pathList, rn, SPG_DEFAULT);
+    appendSearchPathsInGroup(pathList, rn, SPG_FALLBACK);
 }
 
 static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
@@ -124,18 +110,25 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
     assert(rn && hashName && !Str_IsEmpty(hashName) && searchPath && !Str_IsEmpty(searchPath));
     {
     resourcenamespace_namehash_key_t key = rn->_hashName(hashName);
-    resourcenamespace_namehash_node_t* node;
+    resourcenamespace_namehash_node_t* node = rn->_pathHash[key].first;
+    struct pathdirectory_node_s* resultNode = NULL;
 
-    // Go through the candidates.
-    node = rn->_pathHash[key].first;
-    while(NULL != node && !PathDirectoryNode_MatchDirectory(node->data, 0, Str_Text(searchPath), Str_Length(searchPath), FILEDIRECTORY_DELIMITER))
-        node = node->next;
+    if(NULL != node)
+    {
+        pathdirectory_t* pd = PathDirectoryNode_Directory(node->data);
+        pathdirectory_search_t* search = PathDirectory_BeginSearchStr(pd, 0, searchPath, FILEDIRECTORY_DELIMITER);
+        {
+            while(NULL != node && !DD_SearchPathDirectoryCompare(node->data, PathDirectory_Search(pd)))
+                node = node->next;
+        }
+        PathDirectory_EndSearch2(pd, &resultNode);
+    }
 
     // Does the caller want to know the matched path?
-    if(node && foundPath)
-        PathDirectory_ComposePath(PathDirectoryNode_Directory(node->data), node->data, foundPath, NULL, FILEDIRECTORY_DELIMITER);
+    if(NULL != foundPath && NULL != resultNode)
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(resultNode), resultNode, foundPath, NULL, FILEDIRECTORY_DELIMITER);
 
-    return (node == 0? false : true);
+    return (NULL == node? false : true);
     }
 }
 
@@ -189,10 +182,7 @@ static void rebuild(resourcenamespace_t* rn)
     if(rn->_flags & RNF_IS_DIRTY)
     {
         clearPathHash(rn);
-        if(NULL != rn->_fileDirectory)
-        {
-            FileDirectory_Clear(rn->_fileDirectory);
-        }
+        FileDirectory_Clear(rn->_directory);
 
         { ddstring_t tmp; Str_Init(&tmp);
         formSearchPathList(&tmp, rn);
@@ -205,7 +195,7 @@ static void rebuild(resourcenamespace_t* rn)
             //startTime = verbose >= 2? Sys_GetRealTime(): 0;
 #endif
 
-            FileDirectory_AddPathList3(rn->_fileDirectory, Str_Text(&tmp), addFilePathWorker, rn);
+            FileDirectory_AddPathList3(rn->_directory, Str_Text(&tmp), addFilePathWorker, rn);
 
 /*#if _DEBUG
             printPathHash(rn);
@@ -219,13 +209,11 @@ static void rebuild(resourcenamespace_t* rn)
     }
 }
 
-resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags,
-    const char* overrideName, const char* overrideName2)
+resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
 {
-    assert(name && composeHashNameFunc && hashNameFunc);
+    assert(name && directory && composeHashNameFunc && hashNameFunc);
     {
     resourcenamespace_t* rn;
 
@@ -240,181 +228,95 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     rn->_flags = flags;
     Str_Init(&rn->_name); Str_Set(&rn->_name, name);
 
-    rn->_fileDirectory = FileDirectory_ConstructDefault();
+    { uint i;
+    for(i = 0; i < SEARCHPATHGROUP_COUNT; ++i)
+    {
+        rn->_searchPathsCount[i] = 0;
+        rn->_searchPaths[i] = NULL;
+    }}
+
+    rn->_directory = directory;
     rn->_composeHashName = composeHashNameFunc;
     rn->_hashName = hashNameFunc;
     memset(rn->_pathHash, 0, sizeof(rn->_pathHash));
-
-    rn->_extraSearchPaths = 0;
-    rn->_extraSearchPathsCount = 0;
-
-    if(searchPaths && searchPathsCount != 0)
-    {
-        rn->_searchPathsCount = searchPathsCount;
-        rn->_searchPaths = (dduri_t**) malloc(sizeof(*rn->_searchPaths) * rn->_searchPathsCount);
-        if(NULL == rn->_searchPaths)
-            Con_Error("ResourceNamespace::Construct: Failed on allocation of %lu bytes for "
-                "searchPath list.", (unsigned long) (sizeof(*rn->_searchPaths) * rn->_searchPathsCount));
-        { uint i;
-        for(i = 0; i < rn->_searchPathsCount; ++i)
-            rn->_searchPaths[i] = Uri_ConstructCopy(searchPaths[i]);
-        }
-    }
-    else
-    {
-        rn->_searchPathsCount = 0;
-        rn->_searchPaths = 0;
-    }
-
-    if(overrideName && strlen(overrideName) != 0)
-    {
-        rn->_overrideName = Str_New();
-        Str_Init(rn->_overrideName); Str_Set(rn->_overrideName, overrideName);
-    }
-    else
-        rn->_overrideName = 0;
-    if(overrideName2 && strlen(overrideName2) != 0)
-    {
-        rn->_overrideName2 = Str_New();
-        Str_Init(rn->_overrideName2); Str_Set(rn->_overrideName2, overrideName2);
-    }
-    else
-        rn->_overrideName2 = 0;
 
     return rn;
     }
 }
 
-resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags,
-    const char* overrideName)
-{
-    return ResourceNamespace_Construct5(name, composeHashNameFunc, hashNameFunc,
-        searchPaths, searchPathsCount, flags, overrideName, 0);
-}
-
-resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags)
-{
-    return ResourceNamespace_Construct4(name, composeHashNameFunc, hashNameFunc,
-        searchPaths, searchPathsCount, flags, 0);
-}
-
-resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t* const* searchPaths, uint searchPathsCount)
-{
-    return ResourceNamespace_Construct3(name, composeHashNameFunc, hashNameFunc,
-        searchPaths, searchPathsCount, 0);
-}
-
 resourcenamespace_t* ResourceNamespace_Construct(const char* name,
-    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name))
 {
-    return ResourceNamespace_Construct2(name, composeHashNameFunc, hashNameFunc, 0, 0);
+    return ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, 0);
 }
 
 void ResourceNamespace_Destruct(resourcenamespace_t* rn)
 {
     assert(rn);
-    ResourceNamespace_ClearSearchPaths(rn);
-    ResourceNamespace_ClearExtraSearchPaths(rn);
+    ResourceNamespace_ClearSearchPaths(rn, SPG_OVERRIDE);
+    ResourceNamespace_ClearSearchPaths(rn, SPG_DEFAULT);
+    ResourceNamespace_ClearSearchPaths(rn, SPG_EXTRA);
+    ResourceNamespace_ClearSearchPaths(rn, SPG_FALLBACK);
     clearPathHash(rn);
-    if(NULL != rn->_fileDirectory)
-    {
-        FileDirectory_Destruct(rn->_fileDirectory);
-        rn->_fileDirectory = NULL;
-    }
     Str_Free(&rn->_name);
-    if(rn->_overrideName)
-        Str_Delete(rn->_overrideName);
-    if(rn->_overrideName2)
-        Str_Delete(rn->_overrideName2);
     free(rn);
 }
 
 void ResourceNamespace_Reset(resourcenamespace_t* rn)
 {
     assert(rn);
-    ResourceNamespace_ClearExtraSearchPaths(rn);
+    ResourceNamespace_ClearSearchPaths(rn, SPG_EXTRA);
     clearPathHash(rn);
-    if(NULL != rn->_fileDirectory)
-    {
-        FileDirectory_Clear(rn->_fileDirectory);
-    }
+    FileDirectory_Clear(rn->_directory);
     rn->_flags |= RNF_IS_DIRTY;
 }
 
-boolean ResourceNamespace_AddExtraSearchPath(resourcenamespace_t* rn, const dduri_t* newUri)
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* newUri,
+    resourcenamespace_searchpathgroup_t group)
 {
-    assert(rn && newUri);
+    assert(rn && newUri && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
 
     if(Str_IsEmpty(Uri_Path(newUri)) || !Str_CompareIgnoreCase(Uri_Path(newUri), DIR_SEP_STR))
         return false; // Not suitable.
 
     // Have we seen this path already (we don't want duplicates)?
-    { uint i;
-    for(i = 0; i < rn->_extraSearchPathsCount; ++i)
+    { uint i, j;
+    for(i = 0; i < SEARCHPATHGROUP_COUNT; ++i)
+    for(j = 0; j < rn->_searchPathsCount[i]; ++j)
     {
-        if(Uri_Equality(rn->_extraSearchPaths[i], newUri))
-            return true;
-    }}
-    { uint i;
-    for(i = 0; i < rn->_searchPathsCount; ++i)
-    {
-        if(Uri_Equality(rn->_searchPaths[i], newUri))
+        if(Uri_Equality(rn->_searchPaths[i][j], newUri))
             return true;
     }}
 
-    rn->_extraSearchPaths = (dduri_t**) realloc(rn->_extraSearchPaths,
-        sizeof(*rn->_extraSearchPaths) * ++rn->_extraSearchPathsCount);
-    if(NULL == rn->_extraSearchPaths)
+    rn->_searchPaths[group] = (dduri_t**) realloc(rn->_searchPaths[group],
+        sizeof(*rn->_searchPaths[group]) * ++rn->_searchPathsCount[group]);
+    if(NULL == rn->_searchPaths[group])
         Con_Error("ResourceNamespace::AddExtraSearchPath: Failed on reallocation of %lu bytes for "
-            "extraSearchPath list.", (unsigned long) sizeof(*rn->_extraSearchPaths) * (rn->_extraSearchPathsCount-1));
+            "searchPath list.", (unsigned long) sizeof(*rn->_searchPaths[group]) * (rn->_searchPathsCount[group]-1));
 
     // Prepend to the path list - newer paths have priority.
-    if(rn->_extraSearchPathsCount > 1)
-        memmove(rn->_extraSearchPaths + 1, rn->_extraSearchPaths,
-            sizeof(*rn->_extraSearchPaths) * (rn->_extraSearchPathsCount-1));
-    rn->_extraSearchPaths[0] = Uri_ConstructCopy(newUri);
+    if(rn->_searchPathsCount[group] > 1)
+        memmove(rn->_searchPaths[group] + 1, rn->_searchPaths[group],
+            sizeof(*rn->_searchPaths[group]) * (rn->_searchPathsCount[group]-1));
+    rn->_searchPaths[group][0] = Uri_ConstructCopy(newUri);
 
     rn->_flags |= RNF_IS_DIRTY;
     return true;
 }
 
-void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn)
+void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespace_searchpathgroup_t group)
 {
-    assert(rn);
-    if(!rn->_searchPaths)
+    assert(rn && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
+    if(!rn->_searchPaths[group])
         return;
     { uint i;
-    for(i = 0; i < rn->_searchPathsCount; ++i)
-        Uri_Destruct(rn->_searchPaths[i]);
+    for(i = 0; i < rn->_searchPathsCount[group]; ++i)
+        Uri_Destruct(rn->_searchPaths[group][i]);
     }
-    free(rn->_searchPaths);
-    rn->_searchPaths = 0;
-    rn->_searchPathsCount = 0;
-    rn->_flags |= RNF_IS_DIRTY;
-}
-
-void ResourceNamespace_ClearExtraSearchPaths(resourcenamespace_t* rn)
-{
-    assert(rn);
-    if(!rn->_extraSearchPaths)
-        return;
-    { uint i;
-    for(i = 0; i < rn->_extraSearchPathsCount; ++i)
-        Uri_Destruct(rn->_extraSearchPaths[i]);
-    }
-    free(rn->_extraSearchPaths);
-    rn->_extraSearchPaths = 0;
-    rn->_extraSearchPathsCount = 0;
+    free(rn->_searchPaths[group]);
+    rn->_searchPaths[group] = 0;
+    rn->_searchPathsCount[group] = 0;
     rn->_flags |= RNF_IS_DIRTY;
 }
 
@@ -470,4 +372,10 @@ const ddstring_t* ResourceNamespace_Name(const resourcenamespace_t* rn)
 {
     assert(rn);
     return &rn->_name;
+}
+
+filedirectory_t* ResourceNamespace_Directory(const resourcenamespace_t* rn)
+{
+    assert(rn);
+    return rn->_directory;
 }

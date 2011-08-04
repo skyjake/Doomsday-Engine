@@ -981,8 +981,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        ResourceNamespace_ClearExtraSearchPaths(F_ToResourceNamespace(
-            F_DefaultResourceNamespaceForClass(RC_MODEL)));
+        F_ResetResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL));
 
         { uint i, materialCount = Materials_Count();
         for(i = 0; i < materialCount; ++i)

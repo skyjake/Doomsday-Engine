@@ -1606,7 +1606,7 @@ int DD_Main(void)
 
 static DD_InitResourceSystem(void)
 {
-    Con_Message("Initializing Resource subsystem...");
+    Con_Message("Initializing Resource subsystem...\n");
 
     // Initialize the file system databases.
     Zip_Init();
@@ -1801,8 +1801,11 @@ void DD_UpdateEngineState(void)
     // Update refresh.
     Con_Message("Updating engine state...\n");
 
+    //F_ResetFileIds();
+
     // Update the dir/WAD translations.
     F_InitDirec();
+    F_InitializeResourcePathMap();
     /// Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();
 
@@ -2271,6 +2274,35 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     return 0;
 }
 
+int DD_SearchPathDirectoryCompare(struct pathdirectory_node_s* node, void* paramaters)
+{
+    pathdirectory_search_t* search = (pathdirectory_search_t*)paramaters;
+    search->resultNode = node;
+    return search->result = PathDirectoryNode_MatchDirectory(node, search);
+}
+
+struct pathdirectory_node_s* DD_SearchPathDirectory(pathdirectory_t* pd, int flags,
+    const char* searchPath, char delimiter)
+{
+    assert(NULL != pd);
+    if(NULL != searchPath && searchPath[0])
+    {
+        int result;
+        struct pathdirectory_node_s* node;
+        pathdirectory_search_t* search = PathDirectory_BeginSearch(pd, flags, searchPath, delimiter);
+
+        PathDirectory_Iterate2(pd, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL, search->info[0].hash,
+            DD_SearchPathDirectoryCompare, (void*)search);
+
+        result = PathDirectory_EndSearch2(pd, &node);
+        if(result != 0)
+        {
+            return node;
+        }
+    }
+    return NULL;
+}
+
 /**
  * Gets the data of a player.
  */
@@ -2341,6 +2373,14 @@ D_CMD(Load)
     { gameinfo_t* info = findGameInfoForIdentityKey(Str_Text(&searchPath));
     if(NULL != info)
     {
+        if(!allGameResourcesFound(info))
+        {
+            Con_Message("Failed to locating all required startup resources:\n");
+            printGameInfoResources(info, true, RF_STARTUP);
+            Con_Message("%s (%s) cannot be loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
+            Str_Free(&searchPath);
+            return true;
+        }
         if(!DD_ChangeGame(info))
         {
             Str_Free(&searchPath);
@@ -2442,8 +2482,8 @@ D_CMD(ReloadGame)
 {
     if(DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Message("No game is presently loaded.");
-        return false;
+        Con_Message("No game is presently loaded.\n");
+        return true;
     }
     DD_ChangeGame2(DD_GameInfo(), true);
     return true;

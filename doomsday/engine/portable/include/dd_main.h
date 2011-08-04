@@ -89,6 +89,19 @@ fontnamespaceid_t DD_ParseFontNamespace(const char* str);
 
 materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
+int DD_SearchPathDirectoryCompare(struct pathdirectory_node_s* node, void* paramaters);
+
+/**
+ * Search the directory for @a searchPath.
+ *
+ * @param flags  @see pathComparisonFlags
+ * @param searchPath  Relative or absolute path.
+ * @param delimiter  Fragments of the path are delimited by this character.
+ *
+ * @return  Pointer to the associated node iff found else @c 0
+ */
+struct pathdirectory_node_s* DD_SearchPathDirectory(struct pathdirectory_s* pd, int flags, const char* searchPath, char delimiter);
+
 const char* value_Str(int val);
 
 /**
