@@ -329,6 +329,7 @@ DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
         // First calculate the size of the buffer.
         size_t bufferSize = 0;
         int bytesPerPixel = 0;
+        deferred_t* d = 0;
 
         switch(content->format)
         {
@@ -360,7 +361,7 @@ DGLuint GL_NewTexture(texturecontent_t* content, boolean* result)
         }
         bufferSize = content->width * content->height * bytesPerPixel;
 
-        deferred_t* d = M_Calloc(sizeof(deferred_t));
+        d = M_Calloc(sizeof(deferred_t));
         memcpy(&d->content, content, sizeof(*content));
         d->content.buffer = M_Malloc(bufferSize);
         memcpy(d->content.buffer, content->buffer, bufferSize);
