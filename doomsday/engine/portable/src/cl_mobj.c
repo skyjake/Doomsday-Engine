@@ -901,9 +901,7 @@ void ClMobj_ReadDelta2(boolean skip)
         d->height = Msg_ReadFloat();
 
     if(df & MDF_FLOORCLIP)
-    {
-        d->floorClip = FIX2FLT(Msg_ReadPackedShort() << 14);
-    }
+        d->floorClip = Msg_ReadFloat();
 
     if(moreFlags & MDFE_TRANSLUCENCY)
         d->translucency = Msg_ReadByte();

@@ -45,5 +45,7 @@ int             P_ConsoleToLocal(int playerNum);
 int             P_GetDDPlayerIdx(ddplayer_t *ddpl);
 
 boolean         P_IsInVoid(player_t *p);
+short           P_LookDirToShort(float lookDir);
+float           P_ShortToLookDir(short s);
 
 #endif

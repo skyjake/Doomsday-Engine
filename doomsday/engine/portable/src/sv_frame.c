@@ -360,7 +360,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
         Msg_WriteFloat(d->height);
 
     if(df & MDF_FLOORCLIP)
-        Msg_WritePackedShort(FLT2FIX(d->floorClip) >> 14);
+        Msg_WriteFloat(d->floorClip);
 
     if(df & MDFC_TRANSLUCENCY)
         Msg_WriteByte(d->translucency);

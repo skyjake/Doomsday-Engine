@@ -1216,8 +1216,9 @@ void Sv_ClientCoords(int plrNum)
     int                 clz;
     float               clientGameTime;
     float               clientPos[3];
-    float               clientMom[3];
+    //float               clientMom[3];
     angle_t             clientAngle;
+    float               clientLookDir;
     boolean             onFloor = false;
 
     // If mobj or player is invalid, the message is discarded.
@@ -1240,13 +1241,16 @@ void Sv_ClientCoords(int plrNum)
         clientPos[VZ] = FIX2FLT(clz);
     }
 
+    /*
     // The momentum.
     clientMom[VX] = ((float) Msg_ReadShort()) / 256;
     clientMom[VY] = ((float) Msg_ReadShort()) / 256;
     clientMom[VZ] = ((float) Msg_ReadShort()) / 256;
+    */
 
-    // The angle.
+    // The angles.
     clientAngle = ((angle_t) Msg_ReadShort()) << 16;
+    clientLookDir = P_ShortToLookDir(Msg_ReadShort());
 
     // Movement intent.
     ddpl->forwardMove = FIX2FLT(((char) Msg_ReadByte()) << 13);
@@ -1255,14 +1259,15 @@ void Sv_ClientCoords(int plrNum)
     if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
 #ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angle for player %i: %x\n", plrNum, clientAngle) );
+        VERBOSE2( Con_Message("Sv_ClientCoords: Setting angles for player %i: %x, %f\n", plrNum, clientAngle, clientLookDir) );
 #endif
         mo->angle = clientAngle;
+        ddpl->lookDir = clientLookDir;
     }
 
+    /*
     if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
     {
-        /*
 #ifdef _DEBUG
         VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
                               clientMom[VX], clientMom[VY], clientMom[VZ]) );
@@ -1270,8 +1275,8 @@ void Sv_ClientCoords(int plrNum)
         mo->mom[VX] = clientMom[VX];
         mo->mom[VY] = clientMom[VY];
         mo->mom[VZ] = clientMom[VZ];
-        */
     }
+    */
 
 #ifdef _DEBUG
     VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f\n", plrNum,
@@ -1288,22 +1293,6 @@ void Sv_ClientCoords(int plrNum)
 #endif
         Smoother_AddPos(clients[plrNum].smoother, clientGameTime,
                         clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
-
-        /*
-        if(!P_MobjSetPos(mo, clientPos[VX], clientPos[VY], clientPos[VZ]))
-        {
-            Con_Message("Sv_ClientCoords: Player %i attempts an illegal move to: %f, %f, %f\n", plrNum,
-                        clientPos[VX], clientPos[VY], clientPos[VZ]);
-
-            // We need to restore the client's old position.
-            //ddpl->flags |= DDPF_FIXPOS;
-        }
-        else // The move was successful.
-        {
-            if(onFloor)
-                mo->pos[VZ] = mo->floorZ;
-        }
-        */
     }
 }
 

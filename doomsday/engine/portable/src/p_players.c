@@ -182,3 +182,17 @@ boolean P_IsInVoid(player_t* player)
 
     return false;
 }
+
+short P_LookDirToShort(float lookDir)
+{
+    int dir = (int) (lookDir/110.f * DDMAXSHORT);
+
+    if(dir < DDMINSHORT) return DDMINSHORT;
+    if(dir > DDMAXSHORT) return DDMAXSHORT;
+    return (short) dir;
+}
+
+float P_ShortToLookDir(short s)
+{
+    return s / (float)DDMAXSHORT * 110.f;
+}
