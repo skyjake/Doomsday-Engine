@@ -1544,7 +1544,7 @@ void NetSv_DoAction(int player, const char *data)
                 mo->ceilingZ = tmCeilingZ;
             }
             mo->angle = angle;
-            lookDir = lookDir;
+            pl->plr->lookDir = lookDir;
 
             if(type == GPA_USE)
                 P_UseLines(pl);
