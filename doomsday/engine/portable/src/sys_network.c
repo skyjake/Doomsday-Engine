@@ -428,9 +428,10 @@ static int C_DECL N_UDPReceiver(void *parm)
  */
 void N_ReturnBuffer(void *handle)
 {
-    if(!handle)
-        return;
-    SDLNet_FreePacket(handle);
+    if(handle)
+    {
+        M_Free(handle);
+    }
 }
 
 /**
@@ -445,9 +446,9 @@ boolean N_ReceiveReliably(nodeid_t from)
 {
     ushort  size = 0;
     TCPsocket sock = netNodes[from].sock;
-    UDPpacket *packet = NULL;
     int     bytes = 0;
     boolean error, read;
+    char*   packet = 0;
 
     // \todo What if we get one byte? How come we are here if there's nothing to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
@@ -461,25 +462,27 @@ boolean N_ReceiveReliably(nodeid_t from)
     size = SHORT(size);
 
     // Read the entire packet's data.
-    packet = SDLNet_AllocPacket(size);
+    packet = M_Malloc(size);
     bytes = 0;
     read = false;
     error = false;
     while(!read)
     {
-        int received = SDLNet_TCP_Recv(sock, packet->data + bytes, size);
+        int received = SDLNet_TCP_Recv(sock, packet + bytes, size - bytes);
         if(received == -1)
         {
             int number = errno;
-            SDLNet_FreePacket(packet);
+            M_Free(packet); 
+            packet = 0;
             Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
                         SDLNet_GetError(), strerror(number));
             error = true;
             read = true;
         }
         bytes += received;
-        if(!(bytes < size))
+        if(bytes == size)
             read = true;
+        assert(bytes <= size);
     }
     if(error)
         return false;
@@ -489,7 +492,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
 
         msg->sender = from;
-        msg->data = packet->data;
+        msg->data = packet;
         msg->size = size;
         msg->handle = packet;
 
