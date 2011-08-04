@@ -228,9 +228,9 @@ void Cl_MoverThinker(mover_t *mover)
         // Can we remove this thinker?
         if(remove)
         {
-    #ifdef _DEBUG
-            Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum);
-    #endif
+#ifdef _DEBUG
+            VERBOSE2( Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum) );
+#endif
             // It stops.
             P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
 
@@ -246,9 +246,9 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     int                 dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
                                                       : DMU_CEILING_OF_SECTOR);
 #ifdef _DEBUG
-    Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
-                sectornum, type==MVT_FLOOR? "floor" : "ceiling",
-                dest, speed);
+    VERBOSE2( Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
+                          sectornum, type==MVT_FLOOR? "floor" : "ceiling",
+                          dest, speed) );
 #endif
 
     if(sectornum >= numSectors)
@@ -270,7 +270,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
         if(activemovers[i] == NULL)
         {
             // Allocate a new mover_t thinker.
-            mov = activemovers[i] = Z_Malloc(sizeof(mover_t), PU_MAP, 0);
+            mov = activemovers[i] = Z_Malloc(sizeof(mover_t), PU_MAP, &activemovers[i]);
             memset(mov, 0, sizeof(mover_t));
             mov->thinker.function = Cl_MoverThinker;
             mov->type = type;
@@ -288,9 +288,6 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_TARGET_HEIGHT, dest);
             P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_SPEED, speed);
 
-#ifdef _DEBUG
-            Con_Message("Cl_AddMover: Adding thinker %p\n", &mov->thinker);
-#endif
             P_ThinkerAdd(&mov->thinker, false /*not public*/);
             break;
         }
@@ -521,81 +518,85 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->lightLevel = Msg_ReadByte() / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
     {
-        sec->planes[PLN_FLOOR]->height = FIX2FLT(Msg_ReadShort() << 16);
+        P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_HEIGHT, FIX2FLT(Msg_ReadShort() << 16));
         wasChanged = true;
 
+        /*
         if(!skip)
         {
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute floor height=%f\n",
                                 num, sec->SP_floorheight) );
         }
+        */
     }
     if(df & SDF_CEILING_HEIGHT)
     {
         fixed_t height = Msg_ReadShort() << 16;
+        P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_HEIGHT, FIX2FLT(height));
+        wasChanged = true;
 
-        if(!skip)
-        {
-            sec->planes[PLN_CEILING]->height = FIX2FLT(height);
-            wasChanged = true;
-
+        /*
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute ceiling height=%f%s\n",
                                 num, sec->SP_ceilheight, skip? " --SKIPPED!--" : "") );
-        }
+        }*/
     }
     if(df & SDF_FLOOR_TARGET)
     {
         fixed_t height = Msg_ReadShort() << 16;
-        if(!skip)
+        P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_TARGET_HEIGHT, FIX2FLT(height));
+
+        /*if(!skip)
         {
             sec->planes[PLN_FLOOR]->target = FIX2FLT(height);
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor target=%f\n",
                                 num, sec->planes[PLN_FLOOR]->target) );
-        }
+        }*/
     }
     if(df & SDF_FLOOR_SPEED)
     {
         fixed_t speed = Msg_ReadByte();
-        if(!skip)
+        //if(!skip)
         {
-            sec->planes[PLN_FLOOR]->speed =
-                FIX2FLT(speed << (df & SDF_FLOOR_SPEED_44 ? 12 : 15));
+            P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_SPEED,
+                        FIX2FLT(speed << (df & SDF_FLOOR_SPEED_44 ? 12 : 15)));
 
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n",
-                                num, sec->planes[PLN_FLOOR]->speed) );
+            /*VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n",
+                                num, sec->planes[PLN_FLOOR]->speed) );*/
         }
     }
+#if 0
     if(df & SDF_FLOOR_TEXMOVE)
     {   // Old clients might include these.
         /*fixed_t moveX = */ Msg_ReadShort() /* << 8*/;
         /*fixed_t moveY = */ Msg_ReadShort() /* << 8*/;
     }
+#endif
     if(df & SDF_CEILING_TARGET)
     {
         fixed_t target = Msg_ReadShort() << 16;
-#ifdef _DEBUG
+/*#ifdef _DEBUG
         Con_Message("Cl_ReadSectorDelta2: Ceiling target %f for sector %i\n", FIX2FLT(target), num);
-#endif
+#endif*/
 
-        if(!skip)
+        //if(!skip)
         {
-            sec->planes[PLN_CEILING]->target = FIX2FLT(target);
+            P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_TARGET_HEIGHT, FIX2FLT(target));
 
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n",
-                                num, sec->planes[PLN_CEILING]->target) );
+          /*  VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n",
+                                num, sec->planes[PLN_CEILING]->target) );*/
         }
     }
     if(df & SDF_CEILING_SPEED)
     {
         byte speed = Msg_ReadByte();
-        if(!skip)
+        //if(!skip)
         {
-            sec->planes[PLN_CEILING]->speed =
-                FIX2FLT(speed << (df & SDF_CEILING_SPEED_44 ? 12 : 15));
+            P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_SPEED,
+                        FIX2FLT(speed << (df & SDF_CEILING_SPEED_44 ? 12 : 15)));
 
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n",
-                                num, sec->planes[PLN_CEILING]->speed) );
+            /*VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n",
+                                num, sec->planes[PLN_CEILING]->speed) );*/
         }
     }
     if(df & SDF_CEILING_TEXMOVE)
@@ -651,9 +652,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // the sector.
     if(wasChanged)
     {
-#ifdef _DEBUG
-        Con_Message("Cl_ReadSectorDelta2: WARNING: Plane height changed bypassing DMU!\n");
-#endif
+        // Let the game know we made some changes.
+        if(gx.SectorHeightChangeNotification)
+            gx.SectorHeightChangeNotification(num);
     }
 
     // Do we need to start any moving planes?
