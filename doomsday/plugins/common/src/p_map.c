@@ -2679,6 +2679,9 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
 {
     mobj_t*             mo;
 
+    if(!thing->info)
+        return true; // Invalid thing?
+
     // Don't check things that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
         return true;
@@ -2836,8 +2839,7 @@ static void CheckMissileImpact(mobj_t* mobj)
     int                 size;
     linedef_t*          ld;
 
-    if(!mobj->target || !mobj->target->player ||
-       !(mobj->flags & MF_MISSILE))
+    if(IS_CLIENT || !mobj->target || !mobj->target->player || !(mobj->flags & MF_MISSILE))
         return;
 
     if(!(size = IterList_Size(spechit)))
