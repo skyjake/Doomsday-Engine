@@ -1780,8 +1780,9 @@ static int C_DECL N_JoinedListenerThread(void* param)
             }
         }
 
-	Sys_Sleep(1);
+        Sys_Sleep(1);
     }
+    return 0;
 }
 
 /**
