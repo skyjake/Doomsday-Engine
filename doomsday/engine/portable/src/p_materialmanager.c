@@ -1645,20 +1645,28 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
 
 static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 {
+    size_t printTotal = 0;
     // Only one namespace to print?
     if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
-        printMaterials2(namespaceId, like);
-        return;
+        printTotal = printMaterials2(namespaceId, like);
+        Con_FPrintf(CBLF_RULER, "");
     }
-
-    // Collect and sort in each namespace separately.
-    { int i;
-    for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
+    else
     {
-        if(printMaterials2((materialnamespaceid_t)i, like) != 0)
-            Con_FPrintf(CBLF_RULER, "");
-    }}
+        // Collect and sort in each namespace separately.
+        int i;
+        for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
+        {
+            size_t printed = printMaterials2((materialnamespaceid_t)i, like);
+            if(printed != 0)
+            {
+                printTotal += printed;
+                Con_FPrintf(CBLF_RULER, "");
+            }
+        }
+    }
+    Con_Message("Found %lu Materials.\n", (unsigned long) printTotal);
 }
 
 boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)
