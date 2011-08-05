@@ -64,6 +64,12 @@ size_t Zip_GetSize(zipindex_t index);
 uint Zip_GetLastModified(zipindex_t index);
 
 /**
+ * @return  The name of the Zip archive where the given file resides. Always
+ *      returns a valid filename (or an empty string).
+ */
+const char* Zip_SourceFile(zipindex_t index);
+
+/**
  * Reads a zipentry into the buffer. The caller must make sure that
  * the buffer is large enough. Zip_GetSize() returns the size.
  *
