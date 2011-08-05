@@ -3139,6 +3139,7 @@ void P_BounceWall(mobj_t* mo)
     else
         leadPos[VY] -= mo->radius;
 
+    bestSlideLine = NULL;
     bestSlideFrac = 1;
     P_PathTraverse(leadPos[VX], leadPos[VY],
                    leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
