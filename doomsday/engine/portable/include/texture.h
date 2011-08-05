@@ -76,6 +76,9 @@ texture_t* Texture_Construct2(textureid_t id, const char name[9], int index, int
 
 void Texture_Destruct(texture_t* tex);
 
+/// Destroy all prepared variants owned by this texture.
+void Texture_ClearVariants(texture_t* tex);
+
 /**
  * Add a new prepared variant to the list of resources for this Texture.
  * Texture takes ownership of the variant.
