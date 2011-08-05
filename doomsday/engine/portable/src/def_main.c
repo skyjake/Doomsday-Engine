@@ -983,24 +983,8 @@ void Def_Read(void)
         // Get rid of everything.
         F_ResetResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL));
 
-        { uint i, materialCount = Materials_Count();
-        for(i = 0; i < materialCount; ++i)
-        {
-            material_t* mat = Materials_ToMaterial(1+i); // 1-based index.
-            Material_SetDefinition(mat, NULL);
-        }}
-        /// \todo MaterialBind contains links to definitions; clear them also.
-
-        { uint i, fontCount = Fonts_Count();
-        for(i = 0; i < fontCount; ++i)
-        {
-            font_t* font = Fonts_ToFont(1+i); // 1-based index.
-            if(Font_Type(font) == FT_BITMAPCOMPOSITE)
-            {
-                BitmapCompositeFont_SetDefinition(font, NULL);
-            }
-        }}
-        /// \todo FontBind contains links to definitions; clear them also.
+        Materials_ClearDefinitionLinks();
+        Fonts_ClearDefinitionLinks();
 
         Def_Destroy();
     }

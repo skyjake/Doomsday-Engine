@@ -646,6 +646,30 @@ void Materials_Shutdown(void)
     initedOk = false;
 }
 
+void Materials_ClearDefinitionLinks(void)
+{
+    assert(initedOk);
+    {
+    materiallist_node_t* node;
+    materialnum_t i;
+    for(node = materials; node; node = node->next)
+    {
+        material_t* mat = node->mat;
+        Material_SetDefinition(mat, NULL);
+    }
+    for(i = 0; i < bindingsCount; ++i)
+    {
+        materialbind_t* mb = &bindings[i];
+        materialbindinfo_t* info = MaterialBind_Info(mb);
+        if(NULL == info) continue;
+        info->decorationDefs[0]     = info->decorationDefs[1] = NULL;
+        info->detailtextureDefs[0]  = info->detailtextureDefs[1] = NULL;
+        info->ptcgenDefs[0]         = info->ptcgenDefs[1] = NULL;
+        info->reflectionDefs[0]     = info->reflectionDefs[1] = NULL;
+    }
+    }
+}
+
 void Materials_Rebuild(material_t* mat, ded_material_t* def)
 {
     assert(initedOk);

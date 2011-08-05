@@ -388,6 +388,21 @@ void Fonts_Clear(void)
     Fonts_ClearSystemFonts();
 }
 
+void Fonts_ClearDefinitionLinks(void)
+{
+    errorIfNotInited("Fonts::ClearDefinitionLinks");
+
+    { fontlist_node_t* node;
+    for(node = fonts; node; node = node->next)
+    {
+        font_t* font = node->font;
+        if(Font_Type(font) == FT_BITMAPCOMPOSITE)
+        {
+            BitmapCompositeFont_SetDefinition(font, NULL);
+        }
+    }}
+}
+
 uint Fonts_Count(void)
 {
     if(inited)
