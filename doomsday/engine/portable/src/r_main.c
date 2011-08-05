@@ -505,6 +505,8 @@ void R_Update(void)
         }
     }}
 
+    R_MapInitSurfaceLists();
+
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
