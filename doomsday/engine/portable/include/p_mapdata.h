@@ -282,6 +282,12 @@ void            P_RegisterUnknownTexture(const char* name, boolean planeTex);
 void            P_PrintMissingTextureList(void);
 void            P_FreeBadTexList(void);
 
+/// To be called to initialize the game map object defs.
+void P_InitGameMapObjDefs(void);
+
+/// To be called to free all memory allocated for the map obj defs.
+void P_ShutdownGameMapObjDefs(void);
+
 void            P_InitGameMapObjDefs(void);
 void            P_ShutdownGameMapObjDefs(void);
 

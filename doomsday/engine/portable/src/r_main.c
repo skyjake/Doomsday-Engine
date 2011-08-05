@@ -464,6 +464,9 @@ void R_Update(void)
     P_UpdateParticleGens(); // Defs might've changed.
     R_SkyUpdate();
 
+    // Reset the archived map cache (the available maps may have changed).
+    DAM_Init();
+
     { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
