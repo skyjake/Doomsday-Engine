@@ -564,6 +564,36 @@ static int validateResource(resourcerecord_t* rec, void* paramaters)
     }
 }
 
+static boolean isRequiredResource(gameinfo_t* info, const char* absolutePath)
+{
+    resourcerecord_t* const* records = GameInfo_Resources(DD_GameInfo(), RC_PACKAGE, 0);
+    boolean found = false;
+    if(records)
+    {
+        // Is this resource from an archive?
+        const char* archivePath = Zip_SourceFile(Zip_Find(absolutePath));
+        if(archivePath[0])
+        {
+            // Yes. Use the archive path instead.
+            absolutePath = archivePath;
+        }
+
+        do
+        {
+            resourcerecord_t* rec = *records;
+            if(ResourceRecord_ResourceFlags(rec) & RF_STARTUP)
+            {
+                const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
+                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
+                {
+                    found = true;
+                }
+            }
+        } while(!found && *(++records));
+    }
+    return found;
+}
+
 static void locateGameResources(gameinfo_t* info)
 {
     assert(info);
@@ -626,9 +656,9 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     return true;
 }
 
-static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const char* searchPath)
+static void loadGameResources(gameinfo_t* info, resourceclass_t rclass)
 {
-    assert(info && VALID_RESOURCE_CLASS(rclass) && searchPath);
+    assert(info && VALID_RESOURCE_CLASS(rclass));
     {
     resourcerecord_t* const* records = GameInfo_Resources(info, rclass, 0);
     if(NULL != records)
@@ -878,7 +908,7 @@ static int DD_ChangeGameWorker(void* paramaters)
      * \fixme dj: First ZIPs then WADs (they may contain WAD files).
      */
 #pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
-    loadGameResources(p->info, RC_PACKAGE, "");
+    loadGameResources(p->info, RC_PACKAGE);
 
     /**
      * Phase 2: Add additional game-startup files.
@@ -2472,9 +2502,22 @@ D_CMD(Unload)
         Str_Set(&searchPath, argv[i]);
         Str_Strip(&searchPath);
 
-        if(F_FindResource2(RC_UNKNOWN, Str_Text(&searchPath), &foundPath) != 0 &&
-           W_RemoveFile(Str_Text(&foundPath)))
+        if(!F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath))
+            continue;
+
+        // Do not attempt to unload a resource required by the current game.
+        if(isRequiredResource(DD_GameInfo(), Str_Text(&foundPath)))
+        {
+            Con_Message("\"%s\" is required by the current game and cannot be unloaded in isolation.\n",
+                F_PrettyPath(Str_Text(&foundPath)));
+            continue;
+        }
+
+        // We can safely remove this file.
+        if(W_RemoveFile(Str_Text(&foundPath)))
+        {
             result = 1;
+        }
     }}
     Str_Free(&foundPath);
     Str_Free(&searchPath);
