@@ -34,7 +34,8 @@
  */
 //#define FAKE_MEMORY_ZONE 1
 
-#define PU_REFRESHTEX       11 // Textures and Flats
+#define PU_REFRESHFLAT      10 // Flats
+#define PU_REFRESHTEX       11 // Textures
 //#define PU_REFRESHCM        12 // Colormap.
 #define PU_REFRESHTRANS     13
 //#define PU_REFRESHSPR       14

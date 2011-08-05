@@ -441,7 +441,6 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    R_UpdatePatchCompositesAndFlats();
     R_InitPatchComposites();
     R_InitFlatTextures();
     R_InitSpriteTextures();
