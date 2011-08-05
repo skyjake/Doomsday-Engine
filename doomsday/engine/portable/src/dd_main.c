@@ -1030,6 +1030,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     assert(info);
     {
     boolean isReload = false;
+    char buf[256];
 
     // Ignore attempts to re-load the current game?
     if(DD_GameInfo() == info)
@@ -1143,6 +1144,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
+        DD_ComposeMainWindowTitle(buf);
+        Sys_SetWindowTitle(windowIDX, buf);
+
         Materials_Initialize();
         FI_Init();
         P_PtcInit();
@@ -1153,6 +1157,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
     // This is now the current game.
     currentGameInfoIndex = gameInfoIndex(info);
+
+    DD_ComposeMainWindowTitle(buf);
+    Sys_SetWindowTitle(windowIDX, buf);
 
     Materials_Initialize();
     FI_Init();
