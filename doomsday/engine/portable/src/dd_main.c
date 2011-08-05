@@ -79,8 +79,8 @@ typedef struct autoload_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int DD_StartupWorker(void* parm);
-static int DD_DummyWorker(void* parm);
+static int DD_StartupWorker(void* paramaters);
+static int DD_DummyWorker(void* paramaters);
 static void DD_AutoLoad(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -1121,7 +1121,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         // If a map was loaded; unload it.
         P_SetCurrentMap(0);
-        DAM_Shutdown();
+        P_ShutdownGameMapObjDefs();
         Cl_Reset();
 
         R_ShutdownVectorGraphics();
@@ -1146,6 +1146,8 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
+        // Update the dir/WAD translations.
+        F_InitDirec();
         F_InitializeResourcePathMap();
         F_ResetAllResourceNamespaces();
 
@@ -1196,6 +1198,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     P_PtcInit();
 
     P_InitMapUpdate();
+    P_InitGameMapObjDefs();
     DAM_Init();
 
     if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.PreInit)
