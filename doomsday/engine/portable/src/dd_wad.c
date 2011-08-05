@@ -240,7 +240,7 @@ int W_RecordGetIdx(const char* fileName)
             {
                 foundRecordIdx = idx;
             }
-        } while(foundRecordIdx != -1 && ++idx < numRecords);
+        } while(foundRecordIdx == -1 && ++idx < numRecords);
         Str_Free(&buf);
     }
     return foundRecordIdx;
@@ -713,11 +713,12 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num)
     return succeeded;
 }
 
-void W_Reset(void)
+int W_Reset(void)
 {
-    boolean unloadedResources = false;
+    int i, unloadedResources = 0;
+
     Z_FreeTags(PU_CACHE, PU_CACHE);
-    { int i;
+
     for(i = 0; i < numRecords; ++i)
     {
         if(!(records[i].flags & FRF_RUNTIME))
@@ -725,11 +726,10 @@ void W_Reset(void)
         if(removeFile(Str_Text(&records[i].absolutePath)))
         {
             i = -1;
-            unloadedResources = true;
+            ++unloadedResources;
         }
-    }}
-    if(unloadedResources)
-        DD_UpdateEngineState();
+    }
+    return unloadedResources;
 }
 
 /**

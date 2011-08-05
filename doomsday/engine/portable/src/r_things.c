@@ -567,16 +567,14 @@ void R_InitSprites(void)
 
 material_t* R_GetMaterialForSprite(int sprite, int frame)
 {
-    spritedef_t* sprDef;
-
-    if((unsigned) sprite >= (unsigned) numSprites)
-        return NULL;
-    sprDef = &sprites[sprite];
-
-    if(frame >= sprDef->numFrames)
-        return NULL;
-
-    return sprDef->spriteFrames[frame].mats[0];
+    if((unsigned) sprite < (unsigned) numSprites)
+    {
+        spritedef_t* sprDef = &sprites[sprite];
+        if(frame < sprDef->numFrames)
+            return sprDef->spriteFrames[frame].mats[0];
+    }
+    //Con_Message("Warning::R_GetMaterialForSprite: Invalid sprite %i and/or frame %i.\n", sprite, frame);
+    return NULL;
 }
 
 boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
@@ -590,7 +588,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     if((unsigned) sprite >= (unsigned) numSprites)
     {
-        Con_Message("R_GetSpriteInfo: Warning, invalid sprite number %i.\n", sprite);
+        Con_Message("Warning::R_GetSpriteInfo: Invalid sprite number %i.\n", sprite);
         return false;
     }
 
@@ -599,6 +597,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     if(frame >= sprDef->numFrames)
     {
         // We have no information to return.
+        Con_Message("Warning::R_GetSpriteInfo: Invalid sprite frame %i.\n", frame);
         memset(info, 0, sizeof(*info));
         return false;
     }
@@ -628,17 +627,14 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     return true;
 }
 
-/**
- * @return              Radius of the mobj as it would visually appear to be.
- */
 float R_VisualRadius(mobj_t* mo)
 {
-    modeldef_t* mf, *nextmf;
-    material_snapshot_t ms;
+    material_t* material;
 
     // If models are being used, use the model's radius.
     if(useModels)
     {
+        modeldef_t* mf, *nextmf;
         R_CheckModelFor(mo, &mf, &nextmf);
         if(mf)
         {
@@ -647,12 +643,19 @@ float R_VisualRadius(mobj_t* mo)
         }
     }
 
-    // Use the sprite frame's width.
-    // @fixme What about rotation?
-    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
-    return ms.width / 2;
+    // Use the sprite frame's width?
+    material = R_GetMaterialForSprite(mo->sprite, mo->frame);
+    if(material)
+    {
+        material_snapshot_t ms;
+        Materials_Prepare(&ms, material, true,
+            Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
+        return ms.width / 2;
+    }
+
+    // Use the physical radius.
+    return mo->radius;
 }
 
 /**

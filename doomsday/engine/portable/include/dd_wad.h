@@ -55,8 +55,9 @@ void W_EndStartup(void);
 
 /**
  * Remove all records flagged Runtime.
+ * @return  Number of records removed.
  */
-void W_Reset(void);
+int W_Reset(void);
 
 /**
  * Copies the file name of the IWAD to the given buffer.

@@ -760,7 +760,7 @@ void GL_TotalReset(void)
     // Update the secondary title and the game status.
     Rend_ConsoleUpdateTitle();
 
-    // Delete all textures.
+    // Release all texture memory.
     GL_ResetTextureManager();
     GL_ReleaseReservedNames();
 

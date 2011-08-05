@@ -105,7 +105,14 @@ void Texture_Destruct(texture_t* tex)
 {
     assert(tex);
     destroyVariants(tex);
+    destroyAnalyses(tex);
     free(tex);
+}
+
+void Texture_ClearVariants(texture_t* tex)
+{
+    assert(tex);
+    destroyVariants(tex);
 }
 
 texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)

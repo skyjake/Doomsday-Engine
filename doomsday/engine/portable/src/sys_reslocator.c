@@ -1206,7 +1206,7 @@ const char* F_FindFileExtension(const char* path)
                    *(p - 1) == DIR_WRONG_SEP_CHAR)
                     break;
                 if(*p == '.')
-                    return p - path < len - 1? p + 1 : NULL;
+                    return (unsigned) (p - path) < len - 1? p + 1 : NULL;
             } while(--p > path);
         }
     }
@@ -1300,14 +1300,14 @@ boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
         {
             ddstring_t buf;
             Str_Init(&buf);
-            Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+            Str_PartAppend(&buf, Str_Text(absPath), (int)strlen(ddBasePath), Str_Length(absPath) - (int)strlen(ddBasePath));
             Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
 
         Str_Clear(dst);
-        Str_PartAppend(dst, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+        Str_PartAppend(dst, Str_Text(absPath), (int)strlen(ddBasePath), Str_Length(absPath) - (int)strlen(ddBasePath));
         return true;
     }
 
@@ -1493,9 +1493,9 @@ const char* F_PrettyPath(const char* path)
     static uint index = 0;
 
     ddstring_t* buf = NULL;
-    size_t len;
+    int len;
 
-    if(NULL == path || 0 == (len = strlen(path)))
+    if(NULL == path || 0 == (len = (int)strlen(path)))
         return path;
 
     // Hide relative directives like '}'

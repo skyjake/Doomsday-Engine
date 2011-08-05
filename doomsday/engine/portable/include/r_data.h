@@ -277,8 +277,6 @@ void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
                                const walldiv_t* divs, float bL, float tL,
                                float bR, float tR);
 
-void            R_UpdatePatchCompositesAndFlats(void);
-
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
 

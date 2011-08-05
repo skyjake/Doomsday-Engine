@@ -80,11 +80,13 @@ float           R_CheckSectorLight(float lightlevel, float min, float max);
  */
 boolean R_IsSkySurface(const surface_t* suf);
 
-boolean         R_SectorContainsSkySurfaces(const sector_t* sec);
+boolean R_SectorContainsSkySurfaces(const sector_t* sec);
 
-void            R_UpdatePlanes(void);
-void            R_ClearSectorFlags(void);
-void            R_InitSkyFix(void);
+void R_UpdatePlanes(void);
+void R_ClearSectorFlags(void);
+void R_InitSkyFix(void);
+void R_MapInitSurfaceLists(void);
+
 void            R_UpdateSkyFixForSec(const sector_t* sec);
 void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
                                 vertex_t* verts[2]);
@@ -111,11 +113,24 @@ boolean         R_RemoveWatchedPlane(watchedplanelist_t* wpl,
 void            R_UpdateMovingSurfaces(void);
 void            R_InterpolateMovingSurfaces(boolean resetNextViewer);
 
-void            R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf);
-boolean         R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf);
-boolean         R_SurfaceListIterate(surfacelist_t* sl,
-                                     boolean (*callback) (surface_t* suf, void*),
-                                     void* context);
+/**
+ * Adds the surface to the given surface list.
+ *
+ * @param sl  The surface list to add the surface to.
+ * @param suf  The surface to add to the list.
+ */
+void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf);
+boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf);
+void R_SurfaceListClear(surfacelist_t* sl);
+
+/**
+ * Iterate the list of surfaces making a callback for each.
+ *
+ * @param callback  The callback to make. Iteration will continue until
+ *      a callback returns a zero value.
+ * @param context  Is passed to the callback function.
+ */
+boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*), void* context);
 
 void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
 

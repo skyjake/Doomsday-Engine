@@ -646,6 +646,30 @@ void Materials_Shutdown(void)
     initedOk = false;
 }
 
+void Materials_ClearDefinitionLinks(void)
+{
+    assert(initedOk);
+    {
+    materiallist_node_t* node;
+    materialnum_t i;
+    for(node = materials; node; node = node->next)
+    {
+        material_t* mat = node->mat;
+        Material_SetDefinition(mat, NULL);
+    }
+    for(i = 0; i < bindingsCount; ++i)
+    {
+        materialbind_t* mb = &bindings[i];
+        materialbindinfo_t* info = MaterialBind_Info(mb);
+        if(NULL == info) continue;
+        info->decorationDefs[0]     = info->decorationDefs[1] = NULL;
+        info->detailtextureDefs[0]  = info->detailtextureDefs[1] = NULL;
+        info->ptcgenDefs[0]         = info->ptcgenDefs[1] = NULL;
+        info->reflectionDefs[0]     = info->reflectionDefs[1] = NULL;
+    }
+    }
+}
+
 void Materials_Rebuild(material_t* mat, ded_material_t* def)
 {
     assert(initedOk);
@@ -1625,20 +1649,28 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
 
 static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 {
+    size_t printTotal = 0;
     // Only one namespace to print?
     if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
-        printMaterials2(namespaceId, like);
-        return;
+        printTotal = printMaterials2(namespaceId, like);
+        Con_FPrintf(CBLF_RULER, "");
     }
-
-    // Collect and sort in each namespace separately.
-    { int i;
-    for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
+    else
     {
-        if(printMaterials2((materialnamespaceid_t)i, like) != 0)
-            Con_FPrintf(CBLF_RULER, "");
-    }}
+        // Collect and sort in each namespace separately.
+        int i;
+        for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
+        {
+            size_t printed = printMaterials2((materialnamespaceid_t)i, like);
+            if(printed != 0)
+            {
+                printTotal += printed;
+                Con_FPrintf(CBLF_RULER, "");
+            }
+        }
+    }
+    Con_Message("Found %lu Materials.\n", (unsigned long) printTotal);
 }
 
 boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)

@@ -205,17 +205,18 @@ float MaterialVariant_TranslationPoint(materialvariant_t* mat)
 void MaterialVariant_SetTranslation(materialvariant_t* mat,
     materialvariant_t* current, materialvariant_t* next)
 {
-    assert(mat && current);
-    if(next)
+    assert(mat);
+
+    if(next && current)
     {
         mat->_current = current;
         mat->_next = next;
         mat->_inter = 0;
         return;
     }
-#if _DEBUG
-    Con_Error("MaterialVariant::SetTranslation: Invalid paramaters.");
-#endif
+
+    mat->_current = mat->_next = mat;
+    mat->_inter = 0;
 }
 
 void MaterialVariant_SetTranslationPoint(materialvariant_t* mat, float inter)

@@ -109,7 +109,7 @@ static void freeListNode(surfacelistnode_t* node)
 
 surfacelistnode_t* R_SurfaceListNodeCreate(void)
 {
-    surfacelistnode_t*      node;
+    surfacelistnode_t* node;
 
     // Is there a free node in the unused list?
     if(unusedSurfaceListNodes)
@@ -136,15 +136,9 @@ void R_SurfaceListNodeDestroy(surfacelistnode_t* node)
     unusedSurfaceListNodes = node;
 }
 
-/**
- * Adds the surface to the given surface list.
- *
- * @param sl            The surface list to add the surface to.
- * @param suf           The surface to add to the list.
- */
 void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
 {
-    surfacelistnode_t*  node;
+    surfacelistnode_t* node;
 
     if(!sl || !suf)
         return;
@@ -167,9 +161,9 @@ void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
     sl->num++;
 }
 
-boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t *suf)
+boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf)
 {
-    surfacelistnode_t*  last, *n;
+    surfacelistnode_t* last, *n;
 
     if(!sl || !suf)
         return false;
@@ -196,19 +190,25 @@ boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t *suf)
     return false;
 }
 
-/**
- * Iterate the list of surfaces making a callback for each.
- *
- * @param sl            The surface list to iterate.
- * @param callback      The callback to make. Iteration will continue
- *                      until a callback returns a zero value.
- * @param context       Is passed to the callback function.
- */
-boolean R_SurfaceListIterate(surfacelist_t* sl,
-                             boolean (*callback) (surface_t* suf, void*),
-                             void* context)
+void R_SurfaceListClear(surfacelist_t* sl)
 {
-    boolean             result = true;
+    if(sl)
+    {
+        surfacelistnode_t* node, *next;
+        node = sl->head;
+        while(node)
+        {
+            next = node->next;
+            R_SurfaceListRemove(sl, (surface_t*)node->data);
+            node = next;
+        }
+    }
+}
+
+boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*),
+    void* context)
+{
+    boolean  result = true;
     surfacelistnode_t*  n, *np;
 
     if(sl)
@@ -1319,6 +1319,9 @@ static void addToSurfaceLists(surface_t* suf, material_t* mat)
 
 void R_MapInitSurfaceLists(void)
 {
+    R_SurfaceListClear(decoratedSurfaceList);
+    R_SurfaceListClear(glowingSurfaceList);
+
     { uint i;
     for(i = 0; i < numSideDefs; ++i)
     {

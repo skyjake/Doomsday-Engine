@@ -752,6 +752,14 @@ uint Zip_GetLastModified(zipindex_t index)
     return 0; // Doesn't exist.
 }
 
+const char* Zip_SourceFile(zipindex_t index)
+{
+    zipentry_t* entry = findZipEntryForIndex(index);
+    if(entry)
+        return Str_Text(&entry->package->name);
+    return ""; // Doesn't exist.
+}
+
 size_t Zip_Read(zipindex_t index, void* buffer)
 {
     zipentry_t* entry;

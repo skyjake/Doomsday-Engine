@@ -642,19 +642,7 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     return true; // Success!
 }
 
-/**
- * Called during init to initialize the map obj defs.
- */
-void P_InitGameMapObjDefs(void)
-{
-    gameMapObjDefs = NULL;
-    numGameMapObjDefs = 0;
-}
-
-/**
- * Called at shutdown to free all memory allocated for the map obj defs.
- */
-void P_ShutdownGameMapObjDefs(void)
+static void clearGameMapObjDefs(void)
 {
     if(NULL != gameMapObjDefs)
     {
@@ -675,6 +663,17 @@ void P_ShutdownGameMapObjDefs(void)
         gameMapObjDefs = NULL;
     }
     numGameMapObjDefs = 0;
+}
+
+void P_InitGameMapObjDefs(void)
+{
+    // Allow re-init.
+    clearGameMapObjDefs();
+}
+
+void P_ShutdownGameMapObjDefs(void)
+{
+    clearGameMapObjDefs();
 }
 
 static valuetable_t *getDBTable(valuedb_t *db, valuetype_t type,

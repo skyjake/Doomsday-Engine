@@ -1322,6 +1322,22 @@ void R_UpdateRawTexs(void)
     R_InitRawTexs();
 }
 
+static void clearPatchComposites(void)
+{
+    int i;
+
+    if(patchCompositeTexturesCount == 0) return;
+
+    for(i = 0; i < patchCompositeTexturesCount; ++i)
+    {
+        patchcompositetex_t* pcomTex = patchCompositeTextures[i];
+        Str_Free(&pcomTex->name);
+    }
+    Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
+    patchCompositeTextures = NULL;
+    patchCompositeTexturesCount = 0;
+}
+
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     size_t lumpSize = W_LumpLength(lumpNum);
@@ -1910,10 +1926,8 @@ void R_InitPatchComposites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
 
+    clearPatchComposites();
     VERBOSE( Con_Message("Initializing PatchComposites...\n") )
-
-    patchCompositeTexturesCount = 0;
-    patchCompositeTextures = NULL;
 
     // Load texture definitions from TEXTURE1/2 lumps.
     loadPatchCompositeDefs();
@@ -1982,8 +1996,8 @@ static int R_NewFlat(const char* name, lumpnum_t lumpNum, boolean isCustom)
     }}
 
     // A new flat.
-    flatTextures = Z_Realloc(flatTextures, sizeof(flat_t*) * ++flatTexturesCount, PU_REFRESHTEX);
-    { flat_t* flat = flatTextures[flatTexturesCount - 1] = Z_Malloc(sizeof(*flat), PU_REFRESHTEX, 0);
+    flatTextures = Z_Realloc(flatTextures, sizeof(flat_t*) * ++flatTexturesCount, PU_REFRESHFLAT);
+    { flat_t* flat = flatTextures[flatTexturesCount - 1] = Z_Malloc(sizeof(*flat), PU_REFRESHFLAT, 0);
     Str_Init(&flat->name);
     Str_Set(&flat->name, name);
     flat->lumpNum = lumpNum;
@@ -1993,11 +2007,31 @@ static int R_NewFlat(const char* name, lumpnum_t lumpNum, boolean isCustom)
     return flatTexturesCount - 1;
 }
 
+/**
+ * Free all memory acquired for Flat textures.
+ * \note  Does nothing about any Textures or Materials created from these!
+ */
+static void clearFlatTextures(void)
+{
+    int i;
+    if(0 == flatTexturesCount) return;
+
+    for(i = 0; i < flatTexturesCount; ++i)
+    {
+        flat_t* flat = flatTextures[i];
+        Str_Free(&flat->name);
+    }
+    Z_FreeTags(PU_REFRESHFLAT, PU_REFRESHFLAT);
+    flatTextures = NULL;
+    flatTexturesCount = 0;
+}
+
 void R_InitFlatTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack = Stack_New();
 
+    clearFlatTextures();
     assert(flatTexturesCount == 0);
 
     VERBOSE( Con_Message("Initializing Flats...\n") )
@@ -2348,26 +2382,6 @@ void R_ReleaseGLTexturesForSkins(void)
 
         GL_ReleaseGLTexturesForTexture(tex);
     }
-}
-
-void R_UpdatePatchCompositesAndFlats(void)
-{
-    int i;
-    for(i = 0; i < flatTexturesCount; ++i)
-    {
-        flat_t* flat = flatTextures[i];
-        Str_Free(&flat->name);
-    }
-    for(i = 0; i < patchCompositeTexturesCount; ++i)
-    {
-        patchcompositetex_t* pcomTex = patchCompositeTextures[i];
-        Str_Free(&pcomTex->name);
-    }
-    Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
-    flatTextures = NULL;
-    flatTexturesCount = 0;
-    patchCompositeTextures = NULL;
-    patchCompositeTexturesCount = 0;
 }
 
 void R_UpdateData(void)

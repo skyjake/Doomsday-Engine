@@ -1035,7 +1035,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         if(ISTOKEN("Material"))
         {
             boolean bModify = false;
-            ded_material_t* mat;
+            ded_material_t* mat, dummyMat;
             uint layer = 0;
             int stage;
 
@@ -1056,17 +1056,23 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 mat = Def_GetMaterial(otherMat);
                 if(NULL == mat)
                 {
-                    ddstring_t* path = Uri_ToString(otherMat);
-                    SetError2("Unknown Material.", Str_Text(path));
-                    Str_Delete(path);
+                    VERBOSE(
+                        ddstring_t* path = Uri_ToString(otherMat);
+                        Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.\n",
+                            Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
+                        Str_Delete(path) )
 
-                    retVal = false;
-                    goto ded_end_read;
+                    // We'll read into a dummy definition.
+                    idx = -1;
+                    memset(&dummyMat, 0, sizeof(dummyMat));
+                    mat = &dummyMat;
                 }
-
-                idx = mat - ded->materials;
+                else
+                {
+                    idx = mat - ded->materials;
+                    bModify = true;
+                }
                 Uri_Destruct(otherMat);
-                bModify = true;
             }
             else
             {
@@ -1178,7 +1184,12 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 else RV_END
                 CHECKSC;
             }
-            prevMaterialDefIdx = idx;
+
+            // If we did not read into a dummy update the previous index.
+            if(idx > 0)
+            {
+                prevMaterialDefIdx = idx;
+            }
         }
 
         if(ISTOKEN("Model"))

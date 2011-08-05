@@ -456,7 +456,6 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    R_UpdatePatchCompositesAndFlats();
     R_InitPatchComposites();
     R_InitFlatTextures();
     R_InitSpriteTextures();
@@ -478,6 +477,9 @@ void R_Update(void)
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.
     R_SkyUpdate();
+
+    // Reset the archived map cache (the available maps may have changed).
+    DAM_Init();
 
     { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -519,6 +521,8 @@ void R_Update(void)
             segPtr++;
         }
     }}
+
+    R_MapInitSurfaceLists();
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.

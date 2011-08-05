@@ -59,29 +59,15 @@ byte mapCache = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char *mapCacheDir = "mapcache/";
+static const char* mapCacheDir = "mapcache/";
 
-static archivedmap_t **archivedMaps;
-static uint numArchivedMaps;
+static archivedmap_t** archivedMaps = NULL;
+static uint numArchivedMaps = 0;
 
 // CODE --------------------------------------------------------------------
 
-void DAM_Register(void)
+static void clearArchivedMaps(void)
 {
-    C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
-}
-
-void DAM_Init(void)
-{
-    archivedMaps = NULL;
-    numArchivedMaps = 0;
-
-    P_InitGameMapObjDefs();
-}
-
-void DAM_Shutdown(void)
-{
-    // Free all the archived map records.
     if(NULL != archivedMaps)
     {
         uint i;
@@ -93,8 +79,22 @@ void DAM_Shutdown(void)
         archivedMaps = NULL;
     }
     numArchivedMaps = 0;
+}
 
-    P_ShutdownGameMapObjDefs();
+void DAM_Register(void)
+{
+    C_VAR_BYTE("map-cache", &mapCache, 0, 0, 1);
+}
+
+void DAM_Init(void)
+{
+    // Allow re-init.
+    clearArchivedMaps();
+}
+
+void DAM_Shutdown(void)
+{
+    clearArchivedMaps();
 }
 
 static int mapLumpTypeForName(const char* name)

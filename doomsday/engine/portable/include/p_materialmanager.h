@@ -42,6 +42,9 @@ void Materials_Initialize(void);
  */
 void Materials_Shutdown(void);
 
+/// To be called during a definition database reset to clear all links to defs.
+void Materials_ClearDefinitionLinks(void);
+
 /**
  * Update the Material according to the supplied definition.
  * To be called after an engine update/reset.

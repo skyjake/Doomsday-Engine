@@ -52,6 +52,9 @@ void Fonts_ClearRuntimeFonts(void);
 
 void Fonts_ClearSystemFonts(void);
 
+/// To be called during a definition database reset to clear all links to defs.
+void Fonts_ClearDefinitionLinks(void);
+
 /**
  * To be called during engine/gl-subsystem reset to release all resources
  * acquired from the GL subsystem (v-buffers, d-lists, textures, etc...)

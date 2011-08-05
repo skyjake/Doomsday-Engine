@@ -213,7 +213,10 @@ extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
 material_t*     R_GetMaterialForSprite(int sprite, int frame);
 boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
-float           R_VisualRadius(struct mobj_s* mo);
+
+/// @return  Radius of the mobj as it would visually appear to be.
+float R_VisualRadius(struct mobj_s* mo);
+
 float           R_GetBobOffset(struct mobj_s* mo);
 float           R_MovementYaw(float momx, float momy);
 float           R_MovementPitch(float momx, float momy, float momz);
