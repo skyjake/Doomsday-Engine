@@ -45,8 +45,8 @@ typedef struct image_s {
     /// @see imageFlags
     int flags;
 
-    /// Index of the color palette used/assumed or @c 0 if none (1-based).
-    int palette;
+    /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
+    colorpaletteid_t paletteId;
 
     /// Dimensions of the image in pixels.
     int width;

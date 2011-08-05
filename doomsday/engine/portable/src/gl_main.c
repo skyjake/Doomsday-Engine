@@ -1053,7 +1053,7 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
 }
 
 uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat,
-    int paletteIdx, int outformat)
+    colorpalette_t* palette, int outformat)
 {
     assert(in);
     {
@@ -1062,7 +1062,13 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     if(width <= 0 || height <= 0)
     {
         Con_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
-        return (uint8_t*)in;
+        exit(1); // Unreachable.
+    }
+
+    if(informat <= 2 && palette == NULL)
+    {
+        Con_Error("GL_ConvertBuffer: Cannot process image of pixelsize==1 without palette.");
+        exit(1); // Unreachable.
     }
 
     if(informat == outformat)
@@ -1077,14 +1083,14 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
     // Conversion from pal8(a) to RGB(A).
     if(informat <= 2 && outformat >= 3)
     {
-        GL_PalettizeImage(out, outformat, R_ToColorPalette(paletteIdx), false, in, informat, width, height);
+        GL_PalettizeImage(out, outformat, palette, false, in, informat, width, height);
         return out;
     }
 
     // Conversion from RGB(A) to pal8(a), using pal18To8.
     if(informat >= 3 && outformat <= 2)
     {
-        GL_QuantizeImageToPalette(out, outformat, R_ToColorPalette(paletteIdx), in, informat, width, height);
+        GL_QuantizeImageToPalette(out, outformat, palette, in, informat, width, height);
         return out;
     }
 
@@ -1109,22 +1115,22 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
 }
 
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
-    int paletteIdx, float* brightX, float* brightY, float color[3], float* lumSize)
+    colorpalette_t* palette, float* brightX, float* brightY, float color[3], float* lumSize)
 {
     assert(buffer && brightX && brightY && color && lumSize);
     {
     const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
     int i, k, x, y, c, cnt = 0, posCnt = 0;
     const uint8_t* src, *alphaSrc = NULL;
-    colorpalette_t* pal = NULL;
     int avgCnt = 0, lowCnt = 0;
     float average[3], lowAvg[3];
     uint8_t rgb[3];
     int region[4];
 
-    if(pixelSize == 1)
+    if(pixelSize == 1 && palette == NULL)
     {
-        pal = R_ToColorPalette(paletteIdx);
+        Con_Error("GL_CalcLuminance: Cannot process image of pixelsize==1 without palette.");
+        exit(1); // Unreachable.
     }
 
     for(i = 0; i < 3; ++i)
@@ -1174,7 +1180,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
             // Bright enough?
             if(pixelSize == 1)
             {
-                ColorPalette_Color(pal, *src, rgb);
+                ColorPalette_Color(palette, *src, rgb);
             }
             else if(pixelSize >= 3)
             {

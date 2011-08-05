@@ -35,7 +35,7 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
     uint8_t* alphaChannel = NULL;
     uint8_t* ptr = image->pixels;
 
-    if(0 != image->palette || (image->flags & IMGF_IS_MASKED))
+    if(0 != image->paletteId || (image->flags & IMGF_IS_MASKED))
     {
 #if _DEBUG
         Con_Message("Warning:GL_ConvertToLuminance: Attempt to convert "
@@ -98,7 +98,7 @@ boolean GL_ImageHasAlpha(const image_t* image)
 {
     assert(image);
 
-    if(0 != image->palette || (image->flags & IMGF_IS_MASKED))
+    if(0 != image->paletteId || (image->flags & IMGF_IS_MASKED))
     {
 #if _DEBUG
         Con_Message("Warning:GL_ImageHasAlpha: Attempt to determine alpha for "

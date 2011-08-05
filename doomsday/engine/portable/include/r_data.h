@@ -229,6 +229,8 @@ typedef struct {
     DGLuint         tex;
 } ddtexture_t;
 
+extern colorpaletteid_t defaultColorPalette;
+
 extern nodeindex_t* linelinks;
 extern blockmap_t* BlockMap;
 extern blockmap_t* SSecBlockMap;
@@ -319,11 +321,14 @@ void R_DestroyColorPalettes(void);
 /// @return  Number of available color palettes.
 int R_ColorPaletteCount(void);
 
+/// @return  ColorPalette associated with unique @a id, else @c NULL.
+struct colorpalette_s* R_ToColorPalette(colorpaletteid_t id);
+
 /**
- * Given a color palette index return the associated ColorPalette.
+ * Given a color palette list index return the ColorPalette.
  * @return  ColorPalette if found else @c NULL
  */
-struct colorpalette_s* R_ToColorPalette(int paletteIdx);
+struct colorpalette_s* R_GetColorPaletteByIndex(int paletteIdx);
 
 /**
  * Add a new (named) color palette.
@@ -366,17 +371,6 @@ const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
  * @return  Identifier of the palette associated with this name, else @c 0
  */
 colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
-
-/**
- * Given a colorpalette id return the associated color palette index.
- * If the specified id cannot be found, the default color palette will be
- * returned instead (if defined).
- *
- * @param id  Id of the color palette to be prepared.
- *
- * @return  Index of the palette iff found else @c 0
- */
-int R_FindColorPaletteIndexForId(colorpaletteid_t id);
 
 /**
  * Given a color palette index, calculate the equivalent RGB color.
