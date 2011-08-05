@@ -492,7 +492,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
 
         msg->sender = from;
-        msg->data = packet;
+        msg->data = (byte*) packet;
         msg->size = size;
         msg->handle = packet;
 
