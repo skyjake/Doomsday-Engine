@@ -112,7 +112,9 @@ void DD_ComposeMainWindowTitle(char* title)
 {
     if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.GetVariable)
     {
-        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s %s : %s", (isDedicated? " (Dedicated)" : ""), (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s (%s %s)",
+            (isDedicated? " (Dedicated)" : ""), Str_Text(GameInfo_Title(DD_GameInfo())),
+            (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     }
     else
     {
