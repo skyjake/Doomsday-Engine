@@ -350,6 +350,25 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList)
 }
 
 int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
+    struct pathdirectory_node_s* parent, ushort hash,
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters),
+    void* paramaters)
+{
+    assert(NULL != fd);
+    {
+    int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
+    return PathDirectory_Iterate2(fd->_pathDirectory, flags, parent, hash, callback, paramaters);
+    }
+}
+
+int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
+    struct pathdirectory_node_s* parent, ushort hash,
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters))
+{
+    return FileDirectory_Iterate2(fd, nodeType, parent, hash, callback, NULL);
+}
+
+int FileDirectory_Iterate2_Const(const filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
     const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
@@ -361,11 +380,11 @@ int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectory_nodetype_t nodeTyp
     }
 }
 
-int FileDirectory_Iterate(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
+int FileDirectory_Iterate_Const(const filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
     const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters))
 {
-    return FileDirectory_Iterate2(fd, nodeType, parent, hash, callback, NULL);
+    return FileDirectory_Iterate2_Const(fd, nodeType, parent, hash, callback, NULL);
 }
 
 boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeType,
