@@ -1760,6 +1760,8 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
     int                 normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
     int                 superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
 
+    if(!player->plr->mo) return;
+
     //// \todo Do this in the inventory code?
     if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
     {
