@@ -1,4 +1,4 @@
-/**\file
+/**\file dd_zip.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -47,11 +47,24 @@ void Zip_Init(void);
 void Zip_Shutdown(void);
 
 /**
+ * \post No more Zips will be loaded in startup mode.
+ */
+void Zip_EndStartup(void);
+
+/**
+ * Remove all records flagged Runtime.
+ * @return  Number of records removed.
+ */
+int Zip_Reset(void);
+
+/**
  * Opens the file zip, reads the directory and stores the info for later access.
  *
  * @param prevOpened  If not @c NULL, all data will be read from there.
  */
 boolean Zip_Open(const char* fileName, DFILE* prevOpened);
+
+boolean Zip_Close(const char* fileName);
 
 /**
  * @return  Size of a zipentry specified by index.

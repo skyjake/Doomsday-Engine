@@ -492,12 +492,12 @@ static void insertLumps(filelump_t* fileinfo, filerecord_t* rec)
 
 static boolean addFile(const char* fileName, boolean allowDuplicate)
 {
-    wadinfo_t           header;
-    DFILE*              handle;
-    unsigned int        length;
-    filelump_t          singleInfo, *fileInfo, *freeFileInfo;
-    filerecord_t*       rec;
-    const char*         extension;
+    filelump_t singleInfo, *fileInfo, *freeFileInfo;
+    resourcetype_t resourceType;
+    unsigned int length;
+    filerecord_t* rec;
+    wadinfo_t header;
+    DFILE* handle;
 
     // Filename given?
     if(!fileName || !fileName[0])
@@ -519,15 +519,9 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
 
     VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(fileName)) )
 
-    // Determine the file name extension.
-    extension = strrchr(fileName, '.');
-    if(!extension)
-        extension = "";
-    else
-        extension++; // Move to point after the dot.
-
+    resourceType = F_GuessResourceTypeByName(fileName);
     // Is it a zip/pk3 package?
-    if(!stricmp(extension, "zip") || !stricmp(extension, "pk3"))
+    if(resourceType == RT_ZIP)
     {
         return Zip_Open(fileName, handle);
     }
@@ -543,7 +537,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
     Str_Strip(&rec->absolutePath);
     F_FixSlashes(&rec->absolutePath, &rec->absolutePath);
 
-    if(stricmp(extension, "wad")) // lmp?
+    if(resourceType != RT_WAD) // lmp?
     {
         int offset = 0;
         char* slash = 0;
@@ -569,7 +563,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
         F_ExtractFileBase2(singleInfo.name, fileName, 8, offset);
         rec->numLumps = 1;
 
-        if(!stricmp(extension, "deh"))
+        if(resourceType == RT_DEH)
             strncpy(fileInfo->name, "DEHACKED", 8);
     }
     else
@@ -585,8 +579,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
         }
         else
         {   // Found an IWAD.
-            if(!stricmp(extension, "wad"))
-                rec->iwad = true;
+            rec->iwad = true;
         }
 
         header.numLumps = LONG(header.numLumps);
@@ -627,11 +620,18 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
 
 static boolean removeFile(const char* fileName)
 {
-    int idx = W_RecordGetIdx(fileName);
     filerecord_t* rec;
+    int idx;
 
     VERBOSE( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(fileName)) )
 
+    // Is it a zip/pk3 package?
+    if(F_GuessResourceTypeByName(fileName) == RT_ZIP)
+    {
+        return Zip_Close(fileName);
+    }
+
+    idx = W_RecordGetIdx(fileName);
     if(idx == -1)
         return false; // No such file loaded.
     rec = records + idx;
@@ -1351,8 +1351,8 @@ D_CMD(ListWadFiles)
     int i;
     for(i = 0; i < numRecords; ++i)
     {
-        Con_Printf("%s (%d lump%s%s)", Str_Text(&records[i].absolutePath),
-                   records[i].numLumps, records[i].numLumps != 1 ? "s" : "",
+        Con_Printf("\"%s\" (%d %s%s)", F_PrettyPath(Str_Text(&records[i].absolutePath)),
+                   records[i].numLumps, records[i].numLumps != 1 ? "lumps" : "lump",
                    !(records[i].flags & FRF_RUNTIME) ? ", startup" : "");
         if(records[i].iwad)
             Con_Printf(" [%08x]", W_CRCNumberForRecord(i));
