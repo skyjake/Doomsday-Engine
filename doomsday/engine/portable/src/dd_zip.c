@@ -308,7 +308,10 @@ static void unlinkPackage(package_t* pack)
         do
         {
             if(other->next == pack)
+            {
                 other->next = pack->next;
+                break;
+            }
         } while(NULL != (other = other->next));
     }
 }
