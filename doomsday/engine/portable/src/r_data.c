@@ -2185,7 +2185,7 @@ void R_InitSpriteTextures(void)
         Str_Init(&sprTex->name);
         Str_Set(&sprTex->name, name);
         sprTex->lumpNum = (lumpnum_t)i;
-        sprTex->isCustom = W_LumpIsFromIWAD(i);
+        sprTex->isCustom = !W_LumpIsFromIWAD(i);
     }}
 
     while(Stack_Height(stack))
