@@ -244,7 +244,7 @@ void DD_ShutdownAll(void)
     UI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();
-    Zip_Shutdown();
+    F_Shutdown();
 
 #ifdef WIN32
     // Enables Alt-Tab, Alt-Esc, Ctrl-Alt-Del.

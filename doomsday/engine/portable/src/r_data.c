@@ -128,6 +128,8 @@ skinname_t* skinNames = NULL;
 int gameDataFormat; // Use a game-specifc data format where applicable.
 byte rendInfoRPolys = 0;
 
+colorpaletteid_t defaultColorPalette = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int spriteTexturesCount = 0;
@@ -154,8 +156,6 @@ static int numColorPalettes;
 static colorpalette_t** colorPalettes;
 static int numColorPaletteBinds;
 static colorpalettebind_t* colorPaletteBinds;
-
-static colorpaletteid_t defaultColorPalette;
 
 // CODE --------------------------------------------------------------------
 
@@ -269,30 +269,31 @@ int R_ColorPaletteCount(void)
     return numColorPalettes;
 }
 
-colorpalette_t* R_ToColorPalette(int paletteIdx)
-{
-    assert(initedColorPalettes);
-    if(paletteIdx > 0 && numColorPalettes >= paletteIdx)
-        return colorPalettes[paletteIdx-1];
-    Con_Error("R_ToColorPalette: Failed to locate palette for index #%i", paletteIdx);
-    // Unreachable.
-    return NULL;
-}
-
-int R_FindColorPaletteIndexForId(colorpaletteid_t id)
+colorpalette_t* R_ToColorPalette(colorpaletteid_t id)
 {
     assert(initedColorPalettes);
     if(id == 0 || id - 1 >= (unsigned)numColorPaletteBinds)
         id = defaultColorPalette;
-    if(numColorPaletteBinds > 0)
-        return colorPaletteBinds[id-1].idx;
-    return 0;
+    if(id != 0 && numColorPaletteBinds > 0)
+        return colorPalettes[colorPaletteBinds[id-1].idx-1];
+    return NULL;
+}
+
+colorpalette_t* R_GetColorPaletteByIndex(int paletteIdx)
+{
+    assert(initedColorPalettes);
+    if(paletteIdx > 0 && numColorPalettes >= paletteIdx)
+    {
+        return colorPalettes[paletteIdx-1];
+    }
+    Con_Error("R_GetColorPaletteByIndex: Failed to locate palette for index #%i", paletteIdx);
+    exit(1); // Unreachable.
 }
 
 boolean R_SetDefaultColorPalette(colorpaletteid_t id)
 {
     assert(initedColorPalettes);
-    if(id != 0 && id - 1 < (unsigned)numColorPaletteBinds)
+    if(id - 1 < (unsigned)numColorPaletteBinds)
     {
         defaultColorPalette = id;
         return true;
@@ -397,11 +398,12 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
 
     if(0 != (id = colorPaletteNumForName(name)))
     {   // Replacing an existing palette.
-        bind = &colorPaletteBinds[id-1];
+        colorpalette_t* palette;
 
-        // Destroy the existing color palette.
-        deleteColorPalettes(1, &bind->idx);
-        bind->idx = 0;
+        bind = &colorPaletteBinds[id-1];
+        palette = R_GetColorPaletteByIndex(bind->idx);
+        ColorPalette_ReplaceColorTable(palette, compOrder, compSize, colorData, colorCount);
+        GL_ReleaseGLTexturesByColorPalette(id);
     }
     else
     {   // A new palette.
@@ -447,7 +449,7 @@ const char* R_GetColorPaletteNameForNum(colorpaletteid_t id)
     return NULL;
 }
 
-void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
+void R_GetColorPaletteRGBubv(colorpaletteid_t paletteId, int colorIdx, uint8_t rgb[3],
     boolean applyTexGamma)
 {
     if(!initedColorPalettes)
@@ -461,11 +463,10 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
         return;
     }
 
-    { int paletteIdx = R_FindColorPaletteIndexForId(id);
-    if(0 != paletteIdx)
+    { colorpalette_t* palette = R_ToColorPalette(paletteId);
+    if(NULL != palette)
     {
-        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
-        ColorPalette_Color(pal, colorIdx, rgb);
+        ColorPalette_Color(palette, colorIdx, rgb);
         if(applyTexGamma)
         {
             rgb[CR] = gammaTable[rgb[CR]];
@@ -475,10 +476,10 @@ void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
         return;
     }}
 
-    Con_Message("Warning:R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %i.\n", id);
+    Con_Message("Warning:R_GetColorPaletteRGBubv: Failed to locate ColorPalette for id %i.\n", paletteId);
 }
 
-void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
+void R_GetColorPaletteRGBf(colorpaletteid_t paletteId, int colorIdx, float rgb[3],
     boolean applyTexGamma)
 {
     if(!initedColorPalettes)
@@ -492,12 +493,11 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
         return;
     }
 
-    { int paletteIdx = R_FindColorPaletteIndexForId(id);
-    if(0 != paletteIdx)
+    { colorpalette_t* palette = R_ToColorPalette(paletteId);
+    if(NULL != palette)
     {
-        colorpalette_t* pal = R_ToColorPalette(paletteIdx);
         uint8_t ubv[3];
-        ColorPalette_Color(pal, colorIdx, ubv);
+        ColorPalette_Color(palette, colorIdx, ubv);
         if(applyTexGamma)
         {
             ubv[CR] = gammaTable[ubv[CR]];
@@ -510,7 +510,7 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
         return;
     }}
 
-    Con_Message("Warning:R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %i.\n", id);
+    Con_Message("Warning:R_GetColorPaletteRGBf: Failed to locate ColorPalette for id %i.\n", paletteId);
 }
 
 void R_InfoRendVerticesPool(void)

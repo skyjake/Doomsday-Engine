@@ -380,9 +380,7 @@ dduri_t* GL_ConstructUriForTexture(struct texture_s* tex);
  */
 void GL_SetAllTexturesMinFilter(int minFilter);
 
-/**
- * Releases all GL texture objects for all prepared TextureVariants.
- */
 void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace);
+void GL_ReleaseGLTexturesByColorPalette(colorpaletteid_t paletteId);
 
 #endif /* LIBDENG_TEXTURE_MANAGER_H */

@@ -1003,6 +1003,28 @@ unsigned int F_LastModified(const char* fileName)
     return modified;
 }
 
+void F_Init(void)
+{
+    Zip_Init();
+    W_Init();
+}
+
+void F_Shutdown(void)
+{
+    Zip_Shutdown();
+}
+
+void F_EndStartup(void)
+{
+    Zip_EndStartup();
+    W_EndStartup();
+}
+
+int F_Reset(void)
+{
+    return Zip_Reset() + W_Reset();
+}
+
 typedef struct {
     /// Callback to make for each processed node.
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters);

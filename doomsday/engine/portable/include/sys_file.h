@@ -50,6 +50,27 @@ typedef struct {
     unsigned int lastModified;
 } DFILE;
 
+/**
+ * Initialize the file system databases.
+ */
+void F_Init(void);
+
+/**
+ * Shutdown the file system databases.
+ */
+void F_Shutdown(void);
+
+/**
+ * \post No more files will be loaded in startup mode.
+ */
+void F_EndStartup(void);
+
+/**
+ * Remove all file records flagged Runtime.
+ * @return  Number of records removed.
+ */
+int F_Reset(void);
+
 int F_Access(const char* path);
 
 /**

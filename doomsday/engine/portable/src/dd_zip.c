@@ -78,9 +78,15 @@ enum {
 
 // TYPES -------------------------------------------------------------------
 
+/**
+ * @defgroup packageFlags Package flags.
+ */
+/*@{*/
+#define PF_RUNTIME              0x1 // Loaded at runtime (for reset).
+/*@}*/
+
 typedef struct package_s {
-    /// Absolute path.
-    ddstring_t name;
+    int flags; /// @see packageFlags
 
     /// File stream handle if open else @c NULL.
     DFILE* file;
@@ -90,6 +96,9 @@ typedef struct package_s {
 
     /// Next package in the llist.
     struct package_s* next;
+
+    /// Absolute path.
+    ddstring_t name;
 } package_t;
 
 typedef struct zipentry_s {
@@ -186,6 +195,8 @@ static package_t* zipRoot;
 static zipentry_t* zipFiles;
 static uint numZipFiles, maxZipFiles;
 
+static boolean loadingForStartup = true;
+
 // CODE --------------------------------------------------------------------
 
 static __inline boolean isValidIndex(zipindex_t index)
@@ -251,6 +262,89 @@ static void sortZipEntries(void)
     qsort(zipFiles, numZipFiles, sizeof(zipentry_t), Zip_EntrySorter);
 }
 
+
+static package_t* findPackageByName(const char* fileName)
+{
+    package_t* pack = NULL;
+    if(NULL != fileName && fileName[0] && numZipFiles > 0)
+    {
+        ddstring_t buf;
+
+        // Transform the given path into one we can process.
+        Str_Init(&buf); Str_Set(&buf, fileName);
+        F_FixSlashes(&buf, &buf);
+
+        // Perform the search.
+        for(pack = zipRoot; pack; pack = pack->next)
+        {
+            if(!Str_CompareIgnoreCase(&pack->name, Str_Text(&buf)))
+                break;
+        }
+        Str_Free(&buf);
+    }
+    return pack;
+}
+
+static void linkPackage(package_t* pack)
+{
+    assert(NULL != pack);
+    pack->next = zipRoot;
+}
+
+static void unlinkPackage(package_t* pack)
+{
+    assert(NULL != pack);
+    if(NULL == zipRoot) return;
+
+    if(pack == zipRoot)
+    {
+        zipRoot = pack->next;
+        return;
+    }
+
+    if(NULL != zipRoot->next)
+    {
+        package_t* other = zipRoot;
+        do
+        {
+            if(other->next == pack)
+                other->next = pack->next;
+        } while(NULL != (other = other->next));
+    }
+}
+
+static int removeZipFilesByPackage(package_t* pack)
+{
+    int i, oldNumZipFiles = numZipFiles;
+
+    for(i = 0; i < (int)numZipFiles; )
+    {
+        zipentry_t* file = &zipFiles[i];
+        if(file->package != pack)
+        {
+            ++i;
+            continue;
+        }
+
+        Str_Free(&file->name);
+        if(i != numZipFiles - 1)
+            memmove(zipFiles + i, zipFiles + i + 1, sizeof(zipentry_t) * (maxZipFiles - i - 1));
+        --numZipFiles;
+    }
+
+    if(numZipFiles == 0)
+    {
+        free(zipFiles), zipFiles = NULL;
+        maxZipFiles = 0;
+    }
+    else
+    {
+        memset(zipFiles + numZipFiles, 0, sizeof(zipentry_t) * (maxZipFiles - numZipFiles));
+    }
+
+    return oldNumZipFiles - numZipFiles;
+}
+
 /**
  * Adds a new package to the list of packages.
  */
@@ -261,8 +355,11 @@ static package_t* newPackage(void)
     package_t* pack = calloc(1, sizeof(*pack));
 
     Str_Init(&pack->name);
-    pack->next = zipRoot;
     pack->order = packageCounter++;
+    if(!loadingForStartup)
+        pack->flags = PF_RUNTIME;
+    linkPackage(pack);
+
     return zipRoot = pack;
 }
 
@@ -271,8 +368,21 @@ static void destroyPackage(package_t* pack)
     assert(pack);
     if(pack->file)
         F_Close(pack->file);
+    F_ReleaseFileId(Str_Text(&pack->name));
     Str_Free(&pack->name);
     free(pack);
+}
+
+static boolean closePackage(package_t* pack)
+{
+    if(NULL != pack)
+    {
+        unlinkPackage(pack);
+        removeZipFilesByPackage(pack);
+        destroyPackage(pack);
+        return true;
+    }
+    return false; // No such file loaded.
 }
 
 /**
@@ -496,6 +606,9 @@ void Zip_Init(void)
 {
     VERBOSE( Con_Message("Initializing Package subsystem...\n") );
 
+    // This'll force the loader NOT the flag new records Runtime. (?)
+    loadingForStartup = true;
+
     zipRoot = NULL;
     zipFiles = 0;
     numZipFiles = 0;
@@ -524,6 +637,28 @@ void Zip_Shutdown(void)
     zipFiles = NULL;
     numZipFiles = 0;
     maxZipFiles = 0;
+}
+
+void Zip_EndStartup(void)
+{
+    loadingForStartup = false;
+}
+
+int Zip_Reset(void)
+{
+    int unloadedResources = 0;
+    package_t* pack = zipRoot;
+    while(pack)
+    {
+        package_t* next = pack->next;
+        if(pack->flags & PF_RUNTIME)
+        {
+            closePackage(pack);
+            ++unloadedResources;
+        }
+        pack = next;
+    }
+    return unloadedResources;
 }
 
 boolean Zip_Open(const char* fileName, DFILE* prevOpened)
@@ -661,6 +796,14 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     // File successfully opened!
     return true;
     }
+}
+
+boolean Zip_Close(const char* fileName)
+{
+    package_t* pack = findPackageByName(fileName);
+    if(NULL != pack)
+        return closePackage(pack);
+    return false; // Not loaded.
 }
 
 int Zip_Iterate2(int (*callback) (const ddstring_t*, void*), void* paramaters)

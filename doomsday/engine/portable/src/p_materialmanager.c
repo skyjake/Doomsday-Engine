@@ -1229,7 +1229,7 @@ void Materials_InitSnapshot(material_snapshot_t* ss)
     V3_Set(ss->colorAmplified, 1, 1, 1);
 }
 
-void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
+materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
     boolean smoothed, materialvariantspecification_t* spec)
 {
     assert(mat && spec);
@@ -1355,12 +1355,12 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     // If we aren't taking a snapshot; get out of here.
     if(!snapshot)
-        return;
+        return variant;
 
     Materials_InitSnapshot(snapshot);
 
     if(0 == Material_Width(mat) && 0 == Material_Height(mat))
-        return;
+        return variant;
 
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
@@ -1463,6 +1463,8 @@ void Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
         snapshot->colorAmplified[CG] = ambientLight->colorAmplified[CG];
         snapshot->colorAmplified[CB] = ambientLight->colorAmplified[CB];
     }
+
+    return variant;
     }
 }
 
@@ -1800,9 +1802,9 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
     {
     setmaterialtranslationworker_paramaters_t* params =
         (setmaterialtranslationworker_paramaters_t*) paramaters;
-    const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
-    materialvariant_t* current = Materials_ChooseVariant(params->current, spec);
-    materialvariant_t* next    = Materials_ChooseVariant(params->next,    spec);
+    materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
+    materialvariant_t* current = Materials_Prepare(NULL, params->current, false, spec);
+    materialvariant_t* next    = Materials_Prepare(NULL, params->next,    false, spec);
 
     MaterialVariant_SetTranslation(variant, current, next);
     return 0; // Continue iteration.

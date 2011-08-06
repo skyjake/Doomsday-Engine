@@ -47,7 +47,7 @@ typedef struct texturecontent_s {
     dgltexformat_t format;
     DGLuint name;
     const uint8_t* pixels;
-    colorpaletteid_t palette;
+    colorpaletteid_t paletteId;
     int width;
     int height;
     int minFilter;

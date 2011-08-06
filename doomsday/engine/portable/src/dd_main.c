@@ -840,18 +840,6 @@ static boolean exchangeEntryPoints(pluginid_t pluginId)
     return true;
 }
 
-static __inline boolean isZip(const char* fn)
-{
-    size_t len = strlen(fn);
-    return (len > 4 && (!strnicmp(fn + len - 4, ".pk3", 4) || !strnicmp(fn + len - 4, ".zip", 4)));
-}
-
-static __inline boolean isWad(const char* fn)
-{
-    size_t len = strlen(fn);
-    return (len > 4 && !strnicmp(fn + len - 4, ".wad", 4));
-}
-
 typedef struct {
     gameinfo_t* info;
     /// @c true iff caller (i.e., DD_ChangeGame) initiated busy mode.
@@ -941,14 +929,15 @@ static int DD_ChangeGameWorker(void* paramaters)
         addFilesFromAutoData(false);
         if(numGameResourceFileList > 0)
         {
-            size_t i;
+            size_t i, pass;
+            for(pass = 0; pass < 2; ++pass)
             for(i = 0; i < numGameResourceFileList; ++i)
-                if(isZip(Str_Text(gameResourceFileList[i])))
+            {
+                resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(gameResourceFileList[i]));
+                if((pass == 0 && resType == RT_ZIP) ||
+                   (pass == 1 && resType == RT_WAD))
                     W_AddFile(Str_Text(gameResourceFileList[i]), false);
-
-            for(i = 0; i < numGameResourceFileList; ++i)
-                if(isWad(Str_Text(gameResourceFileList[i])))
-                    W_AddFile(Str_Text(gameResourceFileList[i]), false);
+            }
         }
 
         // Final autoload round.
@@ -1648,10 +1637,7 @@ static DD_InitResourceSystem(void)
 {
     Con_Message("Initializing Resource subsystem...\n");
 
-    // Initialize the file system databases.
-    Zip_Init();
-    W_Init();
-
+    F_Init();
     F_InitResourceLocator();
     F_CreateNamespacesForFileResourcePaths();
     F_InitializeResourcePathMap();
@@ -1718,10 +1704,8 @@ static int DD_StartupWorker(void* parm)
     Str_Free(&foundPath);
     }
 
-    // No more WADs will be loaded in startup mode after this point.
-    W_EndStartup();
-
-    F_InitDirec();
+    // No more files/packages will be loaded in startup mode after this point.
+    F_EndStartup();
 
     // Load engine help resources.
     DD_InitHelp();
@@ -2415,7 +2399,7 @@ D_CMD(Load)
     {
         if(!allGameResourcesFound(info))
         {
-            Con_Message("Failed to locating all required startup resources:\n");
+            Con_Message("Failed to locate all required startup resources:\n");
             printGameInfoResources(info, true, RF_STARTUP);
             Con_Message("%s (%s) cannot be loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
             Str_Free(&searchPath);

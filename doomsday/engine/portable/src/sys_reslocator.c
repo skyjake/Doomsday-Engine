@@ -967,8 +967,6 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 
 resourcetype_t F_GuessResourceTypeByName(const char* path)
 {
-    errorIfNotInited("F_GuessResourceTypeByName");
-
     if(!path || !path[0])
         return RT_NONE; // Unrecognizable.
 

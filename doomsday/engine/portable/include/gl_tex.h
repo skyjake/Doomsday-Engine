@@ -29,6 +29,10 @@
 #ifndef LIBDENG_IMAGE_MANIPULATION_H
 #define LIBDENG_IMAGE_MANIPULATION_H
 
+typedef struct colorpalette_analysis_s {
+    colorpaletteid_t paletteId;
+} colorpalette_analysis_t;
+
 typedef struct pointlight_analysis_s {
     float originX, originY, brightMul;
     float color[3];
