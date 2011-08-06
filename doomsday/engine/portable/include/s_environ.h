@@ -23,7 +23,7 @@
  */
 
 /**
- * Environmental Sound Effects
+ * Sound Environment.
  */
 
 #ifndef LIBDENG_SOUND_ENVIRON_H
@@ -31,8 +31,13 @@
 
 #include "p_mapdata.h"
 
-void            S_CalcSectorReverb(sector_t* sec);
-void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
+void S_CalcSectorReverb(sector_t* sec);
+void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
+
+/// @return  Environment class name for identifier @a mclass.
+const char* S_MaterialClassName(material_env_class_t mclass);
+
+/// @return  Environment class associated with material @a path else @c MEC_UNKNOWN.
 material_env_class_t S_MaterialClassForName(const dduri_t* path);
 
 #endif /* LIBDENG_SOUND_ENVIRON_H */

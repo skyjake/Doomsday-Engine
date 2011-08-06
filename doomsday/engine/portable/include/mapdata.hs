@@ -123,12 +123,15 @@ end
 internal
 typedef enum {
     MEC_UNKNOWN = -1,
-    MEC_METAL = 0,
+    MEC_FIRST = 0,
+    MEC_METAL = MEC_FIRST,
     MEC_ROCK,
     MEC_WOOD,
     MEC_CLOTH,
     NUM_MATERIAL_ENV_CLASSES
 } material_env_class_t;
+
+#define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
 
 struct material_variantlist_node_s;
 end
