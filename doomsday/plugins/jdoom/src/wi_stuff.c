@@ -425,7 +425,7 @@ static void animateBackground(void)
     wianimstate_t* state;
     int i;
 
-    if(gameMode & GM_ANY_DOOM2)
+    if(gameModeBits & GM_ANY_DOOM2)
         return;
     if(wbs->episode > 2)
         return;
