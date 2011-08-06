@@ -155,8 +155,8 @@ uint Materials_Count(void);
 const ded_decor_t*  Materials_DecorationDef(materialnum_t num);
 const ded_ptcgen_t* Materials_PtcGenDef(materialnum_t num);
 
-void Materials_Prepare(struct material_snapshot_s* snapshot, struct material_s* mat,
-    boolean smoothed, struct materialvariantspecification_s* spec);
+struct materialvariant_s* Materials_Prepare(struct material_snapshot_s* snapshot,
+    struct material_s* mat, boolean smoothed, struct materialvariantspecification_s* spec);
 
 int Materials_AnimGroupCount(void);
 void Materials_ResetAnimGroups(void);
