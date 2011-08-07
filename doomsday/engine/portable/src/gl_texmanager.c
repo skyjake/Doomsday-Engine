@@ -2627,7 +2627,7 @@ byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
                 memset(image->pixels, 0, bufSize);
 
             // Load the raw image data.
-            F_Read(image->pixels, fileLength, file);
+            F_Read(file, image->pixels, fileLength);
             result = 1;
         }
         F_Close(file);
@@ -2672,7 +2672,7 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
                 memset(image->pixels, 0, bufSize);
 
             // Load the raw image data.
-            F_Read(image->pixels, fileLength, file);
+            F_Read(file, image->pixels, fileLength);
             result = 1;
 
 #undef FLAT_HEIGHT
@@ -2713,7 +2713,7 @@ static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tma
             if(NULL == buf)
                 Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
                     "temporary lump buffer.", (unsigned long) (fileLength));
-            F_Read(buf, fileLength, file);
+            F_Read(file, buf, fileLength);
             patch = (const doompatch_header_t*)buf;
 
             GL_InitImage(image);
@@ -2940,7 +2940,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
                     memset(image->pixels, 0, bufSize);
 
                 // Load the raw image data.
-                F_Read(image->pixels, fileLength, file);
+                F_Read(file, image->pixels, fileLength);
                 image->width = RAW_WIDTH;
                 image->height = (int) (fileLength / image->width);
                 image->pixelSize = 1;

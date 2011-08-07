@@ -434,7 +434,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         }
 
                         // Write the song into the buffer file.
-                        F_Read(buf, len, file);
+                        F_Read(file, buf, len);
                         fwrite(buf, 1, len, outFile);
                         fclose(outFile);
                         F_Close(file);
@@ -460,7 +460,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         def->id, F_PrettyPath(Str_Text(&path)), (unsigned long) len) )
 
                     ptr = iMusic->SongBuffer(len);
-                    F_Read(ptr, len, file);
+                    F_Read(file, ptr, len);
                     F_Close(file);
 
                     return iMusic->Play(looped);

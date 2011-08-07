@@ -2563,7 +2563,7 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // Copy the file into the local buffer and parse definitions.
-    F_Read((void*)bufferedDef, bufferedDefSize, file);
+    F_Read(file, (void*)bufferedDef, bufferedDefSize);
     F_Close(file);
     result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 

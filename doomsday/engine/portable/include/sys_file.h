@@ -50,6 +50,9 @@ typedef struct {
     unsigned int lastModified;
 } DFILE;
 
+/// Register the console commands, variables, etc..., of this module.
+void F_Register(void);
+
 /**
  * Initialize the file system databases.
  */
@@ -103,7 +106,7 @@ size_t F_Length(DFILE* file);
 /**
  * @return  Number of bytes read (at most @a count bytes will be read).
  */
-size_t F_Read(void* dest, size_t count, DFILE* file);
+size_t F_Read(DFILE* file, void* dest, size_t count);
 
 unsigned char F_GetC(DFILE* file);
 size_t F_Tell(DFILE* file);

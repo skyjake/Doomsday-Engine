@@ -62,7 +62,8 @@ int Zip_Reset(void);
  *
  * @param prevOpened  If not @c NULL, all data will be read from there.
  */
-boolean Zip_Open(const char* fileName, DFILE* prevOpened);
+boolean Zip_Open2(const char* fileName, DFILE* prevOpened);
+boolean Zip_Open(const char* fileName);
 
 boolean Zip_Close(const char* fileName);
 

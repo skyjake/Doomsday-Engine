@@ -115,14 +115,14 @@ static void writeShort(FILE* f, int16_t s)
 static uint8_t readByte(DFILE* f)
 {
     uint8_t v;
-    F_Read(&v, 1, f);
+    F_Read(f, &v, 1);
     return v;
 }
 
 static int16_t readShort(DFILE* f)
 {
     int16_t v;
-    F_Read(&v, sizeof(v), f);
+    F_Read(f, &v, sizeof(v));
     return SHORT(v);
 }
 
@@ -420,7 +420,7 @@ uint8_t* TGA_Load(DFILE* file, int* w, int* h, int* pixelSize)
 
     // Read the pixel data.
     srcBuf = malloc((*w) * (*h) * pixbytes);
-    F_Read(srcBuf, (*w) * (*h) * pixbytes, file);
+    F_Read(file, srcBuf, (*w) * (*h) * pixbytes);
 
     // "Unpack" the pixels (origin in the lower left corner).
     // TGA pixels are in BGRA format.

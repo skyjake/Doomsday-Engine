@@ -476,7 +476,7 @@ static size_t readZipEntry(zipentry_t* entry, void* buffer)
         // Read the compressed data into a buffer.
         void* compressedData = malloc(entry->deflatedSize);
         boolean result;
-        F_Read(compressedData, entry->deflatedSize, entry->package->file);
+        F_Read(entry->package->file, compressedData, entry->deflatedSize);
 
         // Run zlib's inflate to decompress.
         result = inflateZipEntry(compressedData, entry->deflatedSize, buffer, entry->size);
@@ -489,7 +489,7 @@ static size_t readZipEntry(zipentry_t* entry, void* buffer)
     else
     {
         // Read the uncompressed data directly to the buffer provided by the caller.
-        F_Read(buffer, entry->size, entry->package->file);
+        F_Read(entry->package->file, buffer, entry->size);
     }
     return entry->size;
 }
@@ -592,7 +592,7 @@ static boolean locateCentralDirectory(DFILE* file)
         F_Seek(file, -pos, SEEK_END);
 
         // Is this the signature?
-        F_Read(&signature, 4, file);
+        F_Read(file, &signature, 4);
         if(ULONG(signature) == SIG_END_OF_CENTRAL_DIR)
         {
             // This is it!
@@ -664,7 +664,7 @@ int Zip_Reset(void)
     return unloadedResources;
 }
 
-boolean Zip_Open(const char* fileName, DFILE* prevOpened)
+boolean Zip_Open2(const char* fileName, DFILE* prevOpened)
 {
     assert(fileName);
     {
@@ -698,7 +698,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     }
 
     // Read the central directory end record.
-    F_Read(&summary, sizeof(summary), file);
+    F_Read(file, &summary, sizeof(summary));
 
     // Does the summary say something we don't like?
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
@@ -709,7 +709,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     // Read the entire central directory into memory.
     directory = malloc(ULONG(summary.size));
     F_Seek(file, ULONG(summary.offset), SEEK_SET);
-    F_Read(directory, ULONG(summary.size), file);
+    F_Read(file, directory, ULONG(summary.size));
 
     pack = newPackage();
     Str_Set(&pack->name, fileName);
@@ -782,7 +782,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
         // Read the local file header, which contains the extra field size (Info-ZIP!).
         { localfileheader_t localHeader;
         F_Seek(file, ULONG(header->relOffset), SEEK_SET);
-        F_Read(&localHeader, sizeof(localHeader), file);
+        F_Read(file, &localHeader, sizeof(localHeader));
 
         entry->offset = ULONG(header->relOffset) + sizeof(localfileheader_t) + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
         }
@@ -799,6 +799,11 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     // File successfully opened!
     return true;
     }
+}
+
+boolean Zip_Open(const char* fileName)
+{
+    return Zip_Open2(fileName, NULL);
 }
 
 boolean Zip_Close(const char* fileName)

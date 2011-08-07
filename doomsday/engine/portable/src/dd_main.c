@@ -128,7 +128,7 @@ void DD_Register(void)
 {
     DD_RegisterLoop();
     DD_RegisterInput();
-    DD_RegisterVFS();
+    F_Register();
     B_Register(); // for control bindings
     Con_Register();
     DH_Register();

@@ -77,7 +77,7 @@ static int load(DFILE* file, int width, int height, uint8_t* dstBuf)
     len = F_Length(file);
     if(0 == (raw = malloc(len)))
         Con_Error("PCX_Load: Failed on allocation of %lu bytes for read buffer.", (unsigned long) len);
-    F_Read(raw, len, file);
+    F_Read(file, raw, len);
     srcPos = raw;
     // Palette is at the end.
     palette = srcPos + len - 768;
@@ -132,7 +132,7 @@ uint8_t* PCX_Load(DFILE* file, int* width, int* height, int* pixelSize)
     {
     header_t hdr;
     size_t initPos = F_Tell(file);
-    size_t readBytes = F_Read(&hdr, sizeof(hdr), file);
+    size_t readBytes = F_Read(file, &hdr, sizeof(hdr));
     uint8_t* dstBuf = 0;
     if(!(readBytes < sizeof(hdr)))
     {

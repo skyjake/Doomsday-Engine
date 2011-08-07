@@ -86,6 +86,8 @@ typedef struct fileidentifier_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+D_CMD(Dir);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static lumpdirectory_record_t* lumpDirectoryRecordForId(lumpdirectoryid_t id);
@@ -112,6 +114,16 @@ static uint vdMappingsCount;
 static uint vdMappingsMax;
 
 // CODE --------------------------------------------------------------------
+
+void F_Register(void)
+{
+    C_CMD("dir", "", Dir);
+    C_CMD("dir", "s*", Dir);
+    C_CMD("ls", "", Dir);
+    C_CMD("ls", "s*", Dir);
+
+    W_Register();
+}
 
 static __inline void initLumpPathMapping(lumppathmapping_t* lpm)
 {
@@ -895,7 +907,7 @@ void F_Close(DFILE* file)
     F_Release(file);
 }
 
-size_t F_Read(void* dest, size_t count, DFILE* file)
+size_t F_Read(DFILE* file, void* dest, size_t count)
 {
     size_t bytesleft;
 
@@ -933,7 +945,7 @@ unsigned char F_GetC(DFILE* file)
 
     if(!file->flags.open)
         return 0;
-    F_Read(&ch, 1, file);
+    F_Read(file, &ch, 1);
     return ch;
 }
 
@@ -1236,4 +1248,67 @@ int F_AllResourcePaths(const char* searchPath,
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters))
 {
     return F_AllResourcePaths2(searchPath, callback, 0);
+}
+
+/**
+ * Prints the resource path to the console.
+ * This is a f_allresourcepaths_callback_t.
+ */
+int printResourcePath(const ddstring_t* fileNameStr, pathdirectory_nodetype_t type,
+    void* paramaters)
+{
+    assert(fileNameStr && VALID_PATHDIRECTORY_NODETYPE(type));
+    {
+    const char* fileName = Str_Text(fileNameStr);
+    boolean makePretty = F_IsRelativeToBasePath(fileName);
+    Con_Printf("  %s\n", makePretty? F_PrettyPath(fileName) : fileName);
+    return 0; // Continue the listing.
+    }
+}
+
+static void printDirectory(const ddstring_t* path)
+{
+    ddstring_t dir;
+
+    Str_Init(&dir); Str_Set(&dir, Str_Text(path));
+    Str_Strip(&dir);
+    F_FixSlashes(&dir, &dir);
+    // Make sure it ends in a directory separator character.
+    if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&dir, DIR_SEP_CHAR);
+    if(!F_ExpandBasePath(&dir, &dir))
+        F_PrependBasePath(&dir, &dir);
+
+    Con_Printf("Directory: %s\n", F_PrettyPath(Str_Text(&dir)));
+
+    // Make the pattern.
+    Str_AppendChar(&dir, '*');
+    F_AllResourcePaths(Str_Text(&dir), printResourcePath);
+
+    Str_Free(&dir);
+}
+
+/**
+ * Print contents of directories as Doomsday sees them.
+ */
+D_CMD(Dir)
+{
+    ddstring_t path;
+    Str_Init(&path);
+    if(argc > 1)
+    {
+        int i;
+        for(i = 1; i < argc; ++i)
+        {
+            Str_Set(&path, argv[i]);
+            printDirectory(&path);
+        }
+    }
+    else
+    {
+        Str_Set(&path, "/");
+        printDirectory(&path);
+    }
+    Str_Free(&path);
+    return true;
 }

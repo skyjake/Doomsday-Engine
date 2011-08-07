@@ -23,13 +23,30 @@
  */
 
 /**
- * WAD Files and Data Lump Cache.
+ * WAD Files and Data Lump Cache
+ *
+ * This version supports runtime (un)loading.
+ *
+ * Internally, the cache has two parts: the Primary cache, which is loaded
+ * from data files, and the Auxiliary cache, which is generated at runtime.
+ * To outsiders, there is no difference between these two caches. The
+ * only visible difference is that lumps in the auxiliary cache use indices
+ * starting from AUXILIARY_BASE.
+ *
+ * The W_Select() function is responsible for activating the right cache
+ * when a lump index is provided. Functions that don't know the lump index
+ * will have to check both the primary and the auxiliary caches (e.g.,
+ * W_CheckLumpNumForName()).
  */
 
-#ifndef LIBDENG_WAD_H
-#define LIBDENG_WAD_H
+#ifndef LIBDENG_FILESYS_WAD_H
+#define LIBDENG_FILESYS_WAD_H
 
-void DD_RegisterVFS(void);
+#include "sys_file.h"
+
+#define AUXILIARY_BASE      100000000
+
+void W_Register(void);
 
 /**
  * Initializes the file system.
@@ -42,11 +59,6 @@ int W_LumpCount(void);
  * Calculated using the lumps of the main IWAD.
  */
 uint W_CRCNumber(void);
-
-/**
- * @return  @c true iff the file exists and appears to be an IWAD.
- */
-int W_IsIWAD(const char* fn);
 
 /**
  * \post No more WADs will be loaded in startup mode.
@@ -86,7 +98,18 @@ boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplic
 boolean W_RemoveFile(const char* fileName);
 boolean W_RemoveFiles(const char* const* filenames, size_t num);
 
+/**
+ * Try to open the specified WAD archive into the auxiliary lump cache.
+ *
+ * @param prevOpened  If not @c NULL re-use this previously opened file rather
+ *      than opening a new one. WAD loader takes ownership of the file.
+ *      Release with W_CloseAuxiliary.
+ * @return  Base index for lumps in this archive.
+ */
+lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
 lumpnum_t W_OpenAuxiliary(const char* fileName);
+
+void W_CloseAuxiliary(void);
 
 /**
  * @return  @c -1, if name not found, else lump num.
@@ -135,4 +158,4 @@ void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
  */
 boolean W_DumpLump(lumpnum_t lumpNum, const char* fileName);
 
-#endif /* LIBDENG_WAD_H */
+#endif /* LIBDENG_FILESYS_WAD_H */
