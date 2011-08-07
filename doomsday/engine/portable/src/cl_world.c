@@ -71,6 +71,9 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void Cl_MoverThinker(mover_t *mover);
+void Cl_PolyMoverThinker(polymover_t* mover);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -129,6 +132,18 @@ lumpnum_t Cl_TranslateLump(lumpnum_t lump)
     return xlat_lump[lump];
 }
 
+static boolean Cl_IsMoverValid(int i)
+{
+    if(!activemovers[i]) return false;
+    return (activemovers[i]->thinker.function == Cl_MoverThinker);
+}
+
+static boolean Cl_IsPolyValid(int i)
+{
+    if(!activepolys[i]) return false;
+    return (activepolys[i]->thinker.function == Cl_PolyMoverThinker);
+}
+
 /**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
@@ -145,10 +160,16 @@ void Cl_RemoveActiveMover(mover_t *mover)
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == mover)
         {
+#ifdef _DEBUG
+            Con_Message("Cl_RemoveActiveMover: Removing mover [%i] in sector %i.\n", i, mover->sectornum);
+#endif
             P_ThinkerRemove(&mover->thinker);
-            activemovers[i] = NULL;
-            break;
+            return;
         }
+
+#ifdef _DEBUG
+    Con_Message("Cl_RemoveActiveMover: Mover in sector %i not removed!\n", mover->sectornum);
+#endif
 }
 
 /**
@@ -162,7 +183,6 @@ void Cl_RemoveActivePoly(polymover_t *mover)
         if(activepolys[i] == mover)
         {
             P_ThinkerRemove(&mover->thinker);
-            activepolys[i] = NULL;
             break;
         }
 }
@@ -172,7 +192,6 @@ void Cl_RemoveActivePoly(polymover_t *mover)
  */
 void Cl_MoverThinker(mover_t *mover)
 {
-    //float              *current = mover->current, original = *current;
     float               original;
     boolean             remove = false;
     boolean             freeMove;
@@ -180,6 +199,19 @@ void Cl_MoverThinker(mover_t *mover)
 
     if(!Cl_GameReady())
         return; // Can we think yet?
+
+#ifdef _DEBUG
+    {
+        int i, gotIt = false;
+        for(i = 0; i < MAX_MOVERS; ++i)
+        {
+            if(activemovers[i] == mover)
+                gotIt = true;
+        }
+        if(!gotIt)
+            Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
+    }
+#endif
 
     // The move is cancelled if the consolePlayer becomes obstructed.
     freeMove = ClPlayer_IsFreeToMove(consolePlayer);
@@ -229,7 +261,7 @@ void Cl_MoverThinker(mover_t *mover)
         if(remove)
         {
 #ifdef _DEBUG
-            VERBOSE2( Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum) );
+            /*VERBOSE2*/( Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum) );
 #endif
             // It stops.
             P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
@@ -246,7 +278,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     int                 dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
                                                       : DMU_CEILING_OF_SECTOR);
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
+    /*VERBOSE2*/( Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
                           sectornum, type==MVT_FLOOR? "floor" : "ceiling",
                           dest, speed) );
 #endif
@@ -257,21 +289,27 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     // Remove any existing movers for the same plane.
     for(i = 0; i < MAX_MOVERS; ++i)
     {
-        if(activemovers[i]
-                && activemovers[i]->sectornum == sectornum
-                && activemovers[i]->type == type)
+        if(Cl_IsMoverValid(i) &&
+           activemovers[i]->sectornum == sectornum &&
+           activemovers[i]->type == type)
         {
+#ifdef _DEBUG
+            Con_Message("Cl_AddMover: Removing existing mover [%i] in sector %i, type %s\n", i, sectornum,
+                        type == MVT_FLOOR? "floor" : "ceiling");
+#endif
             Cl_RemoveActiveMover(activemovers[i]);
         }
     }
 
     // Add a new mover.
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] == NULL)
+        if(!activemovers[i])
         {
+#ifdef _DEBUG
+            Con_Message("Cl_AddMover: ...new mover [%i]\n", i);
+#endif
             // Allocate a new mover_t thinker.
-            mov = activemovers[i] = Z_Malloc(sizeof(mover_t), PU_MAP, &activemovers[i]);
-            memset(mov, 0, sizeof(mover_t));
+            mov = activemovers[i] = Z_Calloc(sizeof(mover_t), PU_MAP, &activemovers[i]);
             mov->thinker.function = Cl_MoverThinker;
             mov->type = type;
             mov->sectornum = sectornum;
@@ -345,38 +383,47 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         Cl_RemoveActivePoly(mover);
 }
 
-polymover_t* Cl_FindActivePoly(uint number)
+polymover_t* Cl_FindOrMakeActivePoly(uint number)
 {
-    uint                i;
+    int i;
+    int available = -1;
+    polymover_t* mover;
 
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activepolys[i] && activepolys[i]->number == number)
+    {
+        if(available < 0 && !activepolys[i])
+            available = i;
+
+        if(Cl_IsPolyValid(i) && activepolys[i]->number == number)
             return activepolys[i];
+    }
+
+    // Not found, make a new one.
+    if(available >= 0)
+    {
+#ifdef _DEBUG
+        Con_Message("Cl_FindOrMakeActivePoly: New polymover [%i] in polyobj %i.\n", available, number);
+#endif
+        activepolys[available] = mover = Z_Calloc(sizeof(polymover_t), PU_MAP, &activepolys[available]);
+        mover->thinker.function = Cl_PolyMoverThinker;
+        mover->poly = polyObjs[number];
+        mover->number = number;
+        P_ThinkerAdd(&mover->thinker, false /*not public*/);
+        return mover;
+    }
+
+    // Not successful.
     return NULL;
-}
-
-polymover_t* Cl_NewPolyMover(uint number)
-{
-    polymover_t*        mover;
-    polyobj_t*          poly = polyObjs[number];
-
-    mover = Z_Malloc(sizeof(polymover_t), PU_MAP, 0);
-    memset(mover, 0, sizeof(*mover));
-    mover->thinker.function = Cl_PolyMoverThinker;
-    mover->poly = poly;
-    mover->number = number;
-    P_ThinkerAdd(&mover->thinker, false /*not public*/);
-    return mover;
 }
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    polymover_t*        mover;
-
-    // Try to find an existing mover.
-    mover = Cl_FindActivePoly(number);
+    polymover_t* mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
-        mover = Cl_NewPolyMover(number);
+    {
+        Con_Message("Cl_SetPolyMover: Out of polymovers.\n");
+        return;
+    }
     // Flag for moving.
     if(move)
         mover->move = true;
@@ -393,15 +440,13 @@ void Cl_RemoveMovers(void)
 
     for(i = 0; i < MAX_MOVERS; ++i)
     {
-        if(activemovers[i])
+        if(Cl_IsMoverValid(i))
         {
             P_ThinkerRemove(&activemovers[i]->thinker);
-            activemovers[i] = NULL;
         }
-        if(activepolys[i])
+        if(Cl_IsPolyValid(i))
         {
             P_ThinkerRemove(&activepolys[i]->thinker);
-            activepolys[i] = NULL;
         }
     }
 }
@@ -411,7 +456,8 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
     int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] && activemovers[i]->sectornum == sectornum &&
+        if(Cl_IsMoverValid(i) &&
+           activemovers[i]->sectornum == sectornum &&
            activemovers[i]->type == type)
         {
             return activemovers[i];
