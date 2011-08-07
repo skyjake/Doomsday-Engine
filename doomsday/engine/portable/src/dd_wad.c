@@ -6,6 +6,10 @@
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 1999-2006 by Colin Phipps, Florian Schulze, Neil Stevens, Andrey Budko (PrBoom 2.2.6)
+ *\author Copyright © 1999-2001 by Jess Haas, Nicolas Kalkhof (PrBoom 2.2.6)
+ *\author Copyright © 1999 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,8 +55,12 @@ typedef struct {
 } filerecord_t;
 
 typedef struct {
-    size_t position; // Offset from start of WAD file.
+    size_t position; /// Offset from start of WAD file.
     size_t size;
+
+    // killough 1/31/98: hash table fields, used for ultra-fast hash table lookup
+    int index, next;
+
     DFILE* handle;
     lumpname_t name; /// Ends in '\0'.
 } lumpinfo_t;
@@ -74,21 +82,24 @@ typedef struct {
 D_CMD(DumpLump);
 D_CMD(ListWadFiles);
 
-static lumpinfo_t* lumpInfo = 0;
 static int numLumps = 0;
-static void** lumpCache = 0;
-static int numCache = 0;
+static lumpinfo_t* lumpInfo = 0;
+static boolean lumpInfoHashDirty = false;
 
-// The file records.
+static int numCache = 0;
+static void** lumpCache = 0;
+
 static int numRecords = 0;
 static filerecord_t* records = 0;
 
-static lumpinfo_t* PrimaryLumpInfo;
 static int PrimaryNumLumps;
+static boolean PrimaryLumpInfoHashDirty;
+static lumpinfo_t* PrimaryLumpInfo;
 static void** PrimaryLumpCache;
 
-static lumpinfo_t* AuxiliaryLumpInfo;
 static int AuxiliaryNumLumps;
+static boolean AuxiliaryLumpInfoHashDirty;
+static lumpinfo_t* AuxiliaryLumpInfo;
 static void** AuxiliaryLumpCache;
 static DFILE* AuxiliaryHandle;
 static boolean AuxiliaryOpened = false;
@@ -99,6 +110,33 @@ void W_Register(void)
 {
     C_CMD("dump", "s", DumpLump);
     C_CMD("listwadfiles", "", ListWadFiles);
+}
+
+/**
+ * This is a hash function. It uses the eight-character lump name to generate
+ * a somewhat-random number suitable for use as a hash key.
+ *
+ * Originally DOOM used a sequential search for locating lumps by name. Large
+ * wads with > 1000 lumps meant an average of over 500 were probed during every
+ * search. Rewritten by Lee Killough to use a hash table for performance and
+ * now the average is under 2 probes per search.
+ *
+ * @param  s  Lump name to be hashed.
+ * @return  The generated hash key.
+ */
+static uint hashLumpName(const char* s)
+{
+    uint hash;
+    (void) ((hash =          toupper(s[0]), s[1]) &&
+            (hash = hash*3 + toupper(s[1]), s[2]) &&
+            (hash = hash*2 + toupper(s[2]), s[3]) &&
+            (hash = hash*2 + toupper(s[3]), s[4]) &&
+            (hash = hash*2 + toupper(s[4]), s[5]) &&
+            (hash = hash*2 + toupper(s[5]), s[6]) &&
+            (hash = hash*2 + toupper(s[6]),
+             hash = hash*2 + toupper(s[7]))
+           );
+    return hash;
 }
 
 static lumpinfo_t* lumpInfoForLump(lumpnum_t lumpNum)
@@ -171,29 +209,6 @@ static int fileRecordIndexByName(const char* fileName)
         Str_Free(&buf);
     }
     return foundRecordIdx;
-}
-
-static lumpnum_t findLumpByName(char* lumpname, int startfrom)
-{
-    char name8[9];
-    int i, v1, v2;
-    lumpinfo_t* lump_p;
-
-    if(startfrom < 0 || startfrom > numLumps - 1)
-        return -1;
-
-    memset(name8, 0, sizeof(name8));
-    strncpy(name8, lumpname, 8);
-    v1 = *(int*)  name8;
-    v2 = *(int*) (name8 + 4);
-
-    // Start from the beginning.
-    for(i = startfrom, lump_p = lumpInfo + startfrom; i < numLumps; i++, lump_p++)
-    {
-        if(v1 == *(int *) lump_p->name && v2 == *(int *) (lump_p->name + 4))
-            return i;
-    }
-    return -1;
 }
 
 static void populateLumpInfo(int liIndex, const wadlumprecord_t* flump,
@@ -519,11 +534,13 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
 
     // Insert the lumps to lumpInfo, into their rightful places.
     insertLumps(fileInfo, rec);
+    lumpInfoHashDirty = true;
 
     if(freeFileInfo)
         M_Free(freeFileInfo);
 
     PrimaryLumpInfo = lumpInfo;
+    PrimaryLumpInfoHashDirty = lumpInfoHashDirty;
     PrimaryLumpCache = lumpCache;
     PrimaryNumLumps = numLumps;
 
@@ -566,13 +583,40 @@ static boolean removeFile(const char* fileName)
 
     // Destroy the file record.
     destroyFileRecord(idx);
+    lumpInfoHashDirty = true;
 
     PrimaryLumpInfo = lumpInfo;
+    PrimaryLumpInfoHashDirty = lumpInfoHashDirty;
     PrimaryLumpCache = lumpCache;
     PrimaryNumLumps = numLumps;
 
     // Success!
     return true;
+}
+
+static void buildLumpInfoHash(void)
+{
+    int i;
+
+    if(!lumpInfoHashDirty) return;
+
+    // First mark slots empty.
+    for(i = 0; i < numLumps; ++i)
+    {
+        lumpInfo[i].index = -1;
+    }
+
+    // Insert nodes to the beginning of each chain, in first-to-last
+    // lump order, so that the last lump of a given name appears first
+    // in any chain, observing pwad ordering rules. killough
+    for(i = 0; i < numLumps; ++i)
+    {
+        int j = hashLumpName(lumpInfo[i].name) % (unsigned) numLumps;
+        lumpInfo[i].next = lumpInfo[j].index; // Prepend to list
+        lumpInfo[j].index = i;
+    }
+
+    lumpInfoHashDirty = false;
 }
 
 /**
@@ -596,6 +640,7 @@ static void closeAuxiliaryFile(void)
 static void usePrimaryCache(void)
 {
     lumpInfo = PrimaryLumpInfo;
+    lumpInfoHashDirty = PrimaryLumpInfoHashDirty;
     numLumps = PrimaryNumLumps;
     lumpCache = PrimaryLumpCache;
 }
@@ -608,6 +653,7 @@ static boolean useAuxiliaryCache(void)
         return false;
     }
     lumpInfo = AuxiliaryLumpInfo;
+    lumpInfoHashDirty = AuxiliaryLumpInfoHashDirty;
     numLumps = AuxiliaryNumLumps;
     lumpCache = AuxiliaryLumpCache;
     return true;
@@ -629,24 +675,6 @@ static lumpnum_t chooseCache(lumpnum_t lumpNum)
         usePrimaryCache();
     }
     return lumpNum;
-}
-
-/**
- * Scan backwards so patch lump files take precedence.
- */
-static lumpnum_t scanLumpInfo(int v[2])
-{
-    lumpinfo_t* lump_p = lumpInfo + numLumps;
-
-    while(lump_p-- != lumpInfo)
-    {
-        if(*(int*)  lump_p->name    == v[0] &&
-           *(int*) &lump_p->name[4] == v[1])
-        {
-            return logicalLumpNum(lump_p - lumpInfo);
-        }
-    }
-    return -1;
 }
 
 void W_Init(void)
@@ -746,7 +774,7 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num)
     return succeeded;
 }
 
-lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened)
+lumpnum_t W_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent)
 {
     wadlumprecord_t* fileInfo, *sourceLump;
     lumpinfo_t* destLump;
@@ -758,7 +786,10 @@ lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened)
     {   // Try to open the file.
         if((handle = F_Open(fileName, "rb")) == NULL)
         {
-            Con_Message("Warning:W_OpenAuxiliary: Resource \"%s\" not found, aborting.\n", fileName);
+            if(!silent)
+            {
+                Con_Message("Warning:W_OpenAuxiliary: Resource \"%s\" not found, aborting.\n", fileName);
+            }
             return -1;
         }
     }
@@ -772,7 +803,10 @@ lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened)
     {
         if(strncmp(header.identification, "PWAD", 4))
         {
-            Con_Message("Warning:W_OpenAuxiliary: Resource \"%s\" does not appear to be a WAD archive.\n", fileName);
+            if(!silent)
+            {
+                Con_Message("Warning:W_OpenAuxiliary: Resource \"%s\" does not appear to be a WAD archive.\n", F_PrettyPath(fileName));
+            }
             return -1;
         }
     }
@@ -820,12 +854,20 @@ lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened)
         Con_Error("W_OpenAuxiliary: Failed on allocation of %lu bytes for lump cache.",
             (unsigned long) size);
 
+    lumpInfoHashDirty = true;
+
     AuxiliaryLumpInfo = lumpInfo;
+    AuxiliaryLumpInfoHashDirty = lumpInfoHashDirty;
     AuxiliaryLumpCache = lumpCache;
     AuxiliaryNumLumps = numLumps;
     AuxiliaryOpened = true;
 
     return AUXILIARY_BASE;
+}
+
+lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened)
+{
+    return W_OpenAuxiliary3(fileName, prevOpened, false);
 }
 
 lumpnum_t W_OpenAuxiliary(const char* fileName)
@@ -850,6 +892,7 @@ void W_CloseAuxiliary(void)
         }
         Z_Free(AuxiliaryLumpInfo), AuxiliaryLumpInfo = NULL;
         Z_Free(AuxiliaryLumpCache), AuxiliaryLumpCache = NULL;
+        AuxiliaryLumpInfoHashDirty = false;
         AuxiliaryNumLumps = 0;
 
         closeAuxiliaryFile();
@@ -861,44 +904,51 @@ void W_CloseAuxiliary(void)
 
 lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent)
 {
-    lumpnum_t idx = -1;
-    char name8[9];
-    int v[2];
+    register lumpnum_t idx;
+    uint hash;
 
-    // If the name string is empty, don't bother to search.
+    if(numLumps == 0)
+        return -1;
+
     if(!name || !name[0])
     {
         if(!silent)
-            VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") );
+            VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") )
         return -1;
     }
 
-    memset(name8, 0, sizeof(name8));
-
-    // Make the name into two integers for easy compares
-    strncpy(name8, name, 8);
-    strupr(name8); // case insensitive
-    v[0] = *(int *) name8;
-    v[1] = *(int *) &name8[4];
+    hash = hashLumpName(name);
 
     // We have to check both the primary and auxiliary caches because
     // we've only got a name and don't know where it is located. Start with
     // the auxiliary lumps because they take precedence.
     if(useAuxiliaryCache())
     {
-        idx = scanLumpInfo(v);
+        // Do we need to rebuild the name hash?
+        buildLumpInfoHash();
+        AuxiliaryLumpInfoHashDirty = lumpInfoHashDirty;
+
+        idx = lumpInfo[hash % (unsigned) numLumps].index;
+        while(idx >= 0 && strncasecmp(lumpInfo[idx].name, name, 8))
+            idx = lumpInfo[idx].next;
+
         if(idx != -1)
             return idx;
     }
 
     usePrimaryCache();
-    idx = scanLumpInfo(v);
-    if(idx != -1)
-        return idx;
+    // Do we need to rebuild the name hash?
+    buildLumpInfoHash();
+    PrimaryLumpInfoHashDirty = lumpInfoHashDirty;
 
-    if(!silent)
-        VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Lump \"%s\" not found.\n", name8) );
-    return -1;
+    idx = lumpInfo[hash % (unsigned) numLumps].index;
+    while(idx >= 0 && strncasecmp(lumpInfo[idx].name, name, 8))
+        idx = lumpInfo[idx].next;
+
+    if(idx == -1 && !silent)
+        VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
+
+    return idx;
 }
 
 lumpnum_t W_CheckLumpNumForName(const char* name)

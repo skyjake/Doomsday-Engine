@@ -106,6 +106,7 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num);
  *      Release with W_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
+lumpnum_t W_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
 lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
 lumpnum_t W_OpenAuxiliary(const char* fileName);
 
