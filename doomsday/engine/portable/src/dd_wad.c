@@ -617,6 +617,10 @@ static void buildLumpInfoHash(void)
     }
 
     lumpInfoHashDirty = false;
+
+#if _DEBUG
+    VERBOSE2( Con_Message("Rebuilt lump info hash.\n") )
+#endif
 }
 
 /**

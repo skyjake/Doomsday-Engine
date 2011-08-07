@@ -378,7 +378,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     default:
         break;
     }
-    
+
     GameInfo_AddResource(info, rclass, rec);
 
     Str_Free(&str);
@@ -443,7 +443,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     Str_Free(&cmdlineFlag);
     Str_Free(&defsPath);
     Str_Free(&dataPath);
-    
+
     return (gameid_t)gameInfoIndex(info);
     }
 }
@@ -497,36 +497,29 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    if(!F_FileExists(filePath))
+    lumpnum_t auxLumpBase = W_OpenAuxiliary3(filePath, NULL, true);
+    boolean result;
+
+    if(auxLumpBase == -1)
         return false;
 
-    { FILE* file;
-    if((file = fopen(filePath, "rb")))
+    // Ensure all identity lumps are present.
+    result = true;
+    if(data)
     {
-        char id[4];
-        if(fread(id, 4, 1, file) != 1)
+        const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
+        for(; result && *lumpNames; lumpNames++)
         {
-            fclose(file);
-            return false;
-        }
-        if(!(!strncmp(id, "IWAD", 4) || !strncmp(id, "PWAD", 4)))
-        {
-            fclose(file);
-            return false;
-        }
-        /*if(data)
-        {
-            /// \todo dj: Open this using the auxillary features of the WAD loader
-            /// and check all the specified lumps are present.
-            const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
-            for(; *lumpNames; lumpNames++)
+            lumpnum_t lumpNum = W_CheckLumpNumForName(Str_Text(*lumpNames));
+            if(lumpNum == -1)
             {
-                if(W_CheckLumpNumForName2(Str_Text(*lumpNames), true) == -1)
-                    return false;
+                result = false;
             }
-        }*/
-    }}
-    return true;
+        }
+    }
+
+    W_CloseAuxiliary();
+    return result;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
@@ -1087,7 +1080,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         P_PtcShutdown();
         P_ControlShutdown();
-        Con_Execute(CMDS_DDAY, "clearbindings", true, false); 
+        Con_Execute(CMDS_DDAY, "clearbindings", true, false);
 
         { uint i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
