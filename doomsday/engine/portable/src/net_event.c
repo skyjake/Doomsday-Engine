@@ -191,25 +191,15 @@ void N_NETicker(void)
             break;
 
         case MAC_LIST:
-            //Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", "Name:");
             Net_PrintServerInfo(0, NULL);
             num = i = N_MasterGet(0, 0);
             while(--i >= 0)
             {
                 serverinfo_t info;
-
                 N_MasterGet(i, &info);
-                /*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n",
-                 * i, info.name,
-                 * info.players, info.maxPlayers,
-                 * info.canJoin? ' ':'*', info.version, info.game,
-                 * info.address, info.port);
-                 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0],
-                 * info.description); */
                 Net_PrintServerInfo(i, &info);
             }
-            Con_Printf("%i server%s found.\n", num,
-                       num != 1 ? "s were" : " was");
+            Con_Printf("%i server%s found.\n", num, num != 1 ? "s were" : " was");
             N_MARemove();
             break;
 
