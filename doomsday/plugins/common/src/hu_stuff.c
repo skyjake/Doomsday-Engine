@@ -1397,7 +1397,7 @@ void HU_DrawScoreBoard(int player)
     M_WriteText2(x + width / 2 - M_StringWidth("ranking", GF_FONTB) / 2,
                  y + LINE_BORDER, "ranking", GF_FONTB, 1, 0, 0, hud->scoreAlpha);
 
-    drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
+    drawMapMetaData(x + 1, y + height - 20 - M_StringHeight("INFO", GF_FONTA), GF_FONTA, hud->scoreAlpha);
 
     drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount,
               hud->scoreAlpha, player);
