@@ -40,6 +40,7 @@
 #define MASTER_QUEUE_LEN    16
 #define NETEVENT_QUEUE_LEN  32
 #define MASTER_HEARTBEAT    120 // seconds
+#define MASTER_UPDATETIME   3 // seconds
 
 // TYPES -------------------------------------------------------------------
 
@@ -238,14 +239,14 @@ void N_Update(void)
             Sv_PlayerArrives(nevent.id, name);
 
             // Update the master.
-            masterHeartbeat = 0;
+            masterHeartbeat = MASTER_UPDATETIME;
             break;
 
         case NE_CLIENT_EXIT:
             Sv_PlayerLeaves(nevent.id);
 
             // Update the master.
-            masterHeartbeat = 0;
+            masterHeartbeat = MASTER_UPDATETIME;
             break;
 
         case NE_END_CONNECTION:
@@ -282,5 +283,5 @@ void N_TerminateClient(int console)
     N_TerminateNode(clients[console].nodeID);
 
     // Update the master.
-    masterHeartbeat = 0;
+    masterHeartbeat = MASTER_UPDATETIME;
 }
