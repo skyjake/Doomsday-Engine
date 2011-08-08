@@ -63,6 +63,9 @@ static int mqHead, mqTail;
 static netevent_t netEventQueue[NETEVENT_QUEUE_LEN];
 static int neqHead, neqTail;
 
+// Countdown for master updates.
+static timespan_t masterHeartbeat = 0;
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -155,17 +158,19 @@ boolean N_NEGet(netevent_t *nev)
 /**
  * Handles low-level net tick stuff: communication with the master server.
  */
-void N_NETicker(void)
+void N_NETicker(timespan_t time)
 {
     masteraction_t act;
-    int         i, num;
+    int i, num;
 
     if(netGame)
     {
+        masterHeartbeat -= time;
+
         // Update master every 2 minutes.
-        if(masterAware && N_UsingInternet() &&
-           !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT * TICRATE)))
+        if(masterAware && N_UsingInternet() && masterHeartbeat < 0)
         {
+            masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);
         }
     }
@@ -231,10 +236,16 @@ void N_Update(void)
 
             // Assign a console to the new player.
             Sv_PlayerArrives(nevent.id, name);
+
+            // Update the master.
+            masterHeartbeat = 0;
             break;
 
         case NE_CLIENT_EXIT:
             Sv_PlayerLeaves(nevent.id);
+
+            // Update the master.
+            masterHeartbeat = 0;
             break;
 
         case NE_END_CONNECTION:
@@ -269,4 +280,7 @@ void N_TerminateClient(int console)
                 clients[console].name, console);
 
     N_TerminateNode(clients[console].nodeID);
+
+    // Update the master.
+    masterHeartbeat = 0;
 }

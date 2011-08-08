@@ -950,13 +950,13 @@ uint Net_GetAckThreshold(int clientNumber)
     return 0;
 }
 
-void Net_Ticker(void /*timespan_t time*/)
+void Net_Ticker(timespan_t time)
 {
     int         i;
     client_t   *cl;
 
     // Network event ticker.
-    N_NETicker();
+    N_NETicker(time);
 
     if(netDev)
     {

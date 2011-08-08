@@ -289,7 +289,7 @@ void            Net_ShowChatMessage(void);
 int             Net_TimeDelta(byte now, byte then);
 int             Net_GetTicCmd(void *cmd, int player);
 void            Net_Update(void);
-void            Net_Ticker(void/*timespan_t time*/);
+void            Net_Ticker(timespan_t time);
 void            Net_Drawer(void);
 
 boolean         Net_IsLocalPlayer(int pNum);

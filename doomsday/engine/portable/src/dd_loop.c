@@ -381,7 +381,7 @@ void DD_Ticker(timespan_t time)
     Plug_DoHook(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
-    Net_Ticker(/*ticLength*/);
+    Net_Ticker(time);
 }
 
 /**

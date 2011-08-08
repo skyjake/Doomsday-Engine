@@ -46,7 +46,7 @@ void            N_MAClear(void);
 
 void            N_NEPost(netevent_t * nev);
 boolean         N_NEPending(void);
-void            N_NETicker(void);
+void            N_NETicker(timespan_t time);
 
 void            N_TerminateClient(int console);
 void            N_Update(void);
