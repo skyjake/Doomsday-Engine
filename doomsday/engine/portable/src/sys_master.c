@@ -517,6 +517,8 @@ void N_MasterAnnounceServer(boolean isOpen)
      // Must be a server.
     if(isClient) return;
 
+    Con_Message("N_MasterAnnounceServer: Announcing as open=%i.\n", isOpen);
+
     // The info is not freed in this function, but in the worker thread.
     info = M_Calloc(sizeof(serverinfo_t));
 
