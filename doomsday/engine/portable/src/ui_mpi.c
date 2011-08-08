@@ -338,8 +338,7 @@ void MPIUpdateServerInfo(ui_object_t *ob)
             str, myCrc);
 
     // Show IWAD warning?
-    if(!
-       (lst_found.count >= 1 && lst_found.selection >= 0 &&
+    if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
         lstit_found[lst_found.selection].data != -1 &&
         lstit_found[lst_found.selection].data != (int) myCrc))
     {
@@ -507,6 +506,10 @@ void MPIUpdateServerList(void)
         UI_FlagGroup(ob_client, UIG_CONNECT, UIF_DISABLED, !k);
     }
 
+    // Auto-select.
+    if(lst_found.selection < 0 && lst_found.count)
+        lst_found.selection = 0;
+
     // Make sure the current selection isn't past the end of the list.
     if(lst_found.selection >= lst_found.count)
         lst_found.selection = -1;
@@ -559,7 +562,6 @@ void MPIRetrieveServersFromMaster()
     // Get the list.
     N_MAPost(MAC_REQUEST);
     N_MAPost(MAC_WAIT);
-
 }
 
 void MPIRetrieve(ui_object_t *ob)
