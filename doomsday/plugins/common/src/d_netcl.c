@@ -486,6 +486,15 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                     ST_HUDUnHide(plrNum, HUE_ON_PICKUP_POWER);
 
                 pl->powers[i] = val;
+
+                // Should we reveal the map?
+                if(val && i == PT_ALLMAP && plrNum == CONSOLEPLAYER)
+                {
+#ifdef _DEBUG
+                    Con_Message("NetCl_UpdatePlayerState: Revealing automap.\n");
+#endif
+                    AM_RevealMap(AM_MapForPlayer(plrNum), true);
+                }
             }
         }
 #endif
