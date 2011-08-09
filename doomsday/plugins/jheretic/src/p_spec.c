@@ -1004,8 +1004,7 @@ static void P_ShootSpecialLine(mobj_t* thing, linedef_t* line)
  */
 void P_PlayerInSpecialSector(player_t *player)
 {
-    sector_t *sector =
-        P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    sector_t *sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
 
     // Falling, not all the way down yet?
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
@@ -1049,13 +1048,16 @@ void P_PlayerInSpecialSector(player_t *player)
         break;
 
     case 9:
-        // SECRET SECTOR
-        player->secretCount++;
-        P_ToXSector(sector)->special = 0;
-        if(cfg.secretMsg)
+        if(!IS_CLIENT)
         {
-            P_SetMessage(player, "You've found a secret area!", false);
-            S_ConsoleSound(SFX_SECRET, 0, player - players);
+            // SECRET SECTOR
+            player->secretCount++;
+            P_ToXSector(sector)->special = 0;
+            if(cfg.secretMsg)
+            {
+                P_SetMessage(player, "You've found a secret area!", false);
+                S_ConsoleSound(SFX_SECRET, 0, player - players);
+            }
         }
         break;
 
