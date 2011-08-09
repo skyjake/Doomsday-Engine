@@ -367,6 +367,7 @@ static int C_DECL MasterWorker_Thread(void* param)
             curl_easy_setopt(session, CURLOPT_URL, masterUrl);
             curl_easy_setopt(session, CURLOPT_TIMEOUT, RESPONSE_TIMEOUT);
             curl_easy_setopt(session, CURLOPT_ERRORBUFFER, errorBuf);
+            curl_easy_setopt(session, CURLOPT_DNS_CACHE_TIMEOUT, -1); // never clear hostcache
 
             // Perform the operation.
             if(!curl_easy_perform(session))
@@ -419,6 +420,7 @@ static int C_DECL MasterWorker_Thread(void* param)
             curl_easy_setopt(session, CURLOPT_URL, masterUrl);
             curl_easy_setopt(session, CURLOPT_TIMEOUT, RESPONSE_TIMEOUT);
             curl_easy_setopt(session, CURLOPT_ERRORBUFFER, errorBuf);
+            curl_easy_setopt(session, CURLOPT_DNS_CACHE_TIMEOUT, -1); // never clear hostcache
 
             if(curl_easy_perform(session))
             {
