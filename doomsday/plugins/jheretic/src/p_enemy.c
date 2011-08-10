@@ -97,6 +97,12 @@ static float dropoffDelta[2], floorZ;
 
 // CODE --------------------------------------------------------------------
 
+void P_ClearBodyQueue(void)
+{
+    memset(bodyque, 0, sizeof(bodyque));
+    bodyqueslot = 0;
+}
+
 /**
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.

@@ -796,6 +796,11 @@ int P_SetupMapWorker(void* ptr)
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
+#if __JHERETIC__ || __JHEXEN__
+    // The pointers in the body queue just became invalid.
+    P_ClearBodyQueue();
+#endif
+
     P_GetMapLumpName(param->episode, param->map, mapID);
     if(!P_LoadMap(mapID))
     {
