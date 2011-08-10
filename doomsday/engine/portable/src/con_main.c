@@ -119,6 +119,7 @@ D_CMD(Repeat);
 D_CMD(Toggle);
 D_CMD(Version);
 D_CMD(Wait);
+D_CMD(DebugCrash);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -209,6 +210,9 @@ static void Con_Register(void)
     C_CMD("toggle",         "s",    Toggle);
     C_CMD("version",        "",     Version);
     C_CMD("write",          "s",    WriteConsole);
+#ifdef _DEBUG
+    C_CMD("crash",          NULL,   DebugCrash);
+#endif
 
     // Console
     C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
@@ -2319,5 +2323,14 @@ D_CMD(Font)
         if(Cfont.sizeY <= 0)
             Cfont.sizeY = 1;
     }
+    return true;
+}
+
+D_CMD(DebugCrash)
+{
+    int* ptr = (int*) 0x123;
+
+    // Goodbye cruel world.
+    *ptr = 0;
     return true;
 }
