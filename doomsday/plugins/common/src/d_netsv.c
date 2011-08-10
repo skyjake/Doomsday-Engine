@@ -1076,8 +1076,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     int         i, k;
 
     if(IS_CLIENT || !pl->plr->inGame ||
-       (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
-        !players[destPlrNum].plr->inGame))
+       (destPlrNum >= 0 && destPlrNum < MAXPLAYERS && !players[destPlrNum].plr->inGame))
         return;
 
 #ifdef _DEBUG

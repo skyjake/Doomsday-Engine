@@ -677,8 +677,11 @@ void P_PlayerInSpecialSector(player_t *player)
     switch(xsector->special)
     {
     case 9: // SecretArea
-        player->secretCount++;
-        xsector->special = 0;
+        if(!IS_CLIENT)
+        {
+            player->secretCount++;
+            xsector->special = 0;
+        }
         break;
 
     case 201:

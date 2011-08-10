@@ -32,6 +32,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+void        P_ClearBodyQueue(void);
 int         P_Massacre(void);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 void        P_DSparilTeleport(mobj_t* actor);
