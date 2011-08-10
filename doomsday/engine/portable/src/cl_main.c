@@ -447,6 +447,8 @@ void Cl_Ticker(timespan_t ticLength)
         Cl_Assertions(i);
 #endif
     }
+
+    Cl_ExpireMobjs();
 }
 
 /**

@@ -47,9 +47,8 @@
 
 // Milliseconds it takes for Unpredictable and Hidden mobjs to be
 // removed from the hash. Under normal circumstances, the special
-// status should be removed fairly quickly (a matter of out-of-sequence
-// frames or sounds playing before a mobj is sent).
-#define CLMOBJ_TIMEOUT  10000   // 10 seconds
+// status should be removed fairly quickly.
+#define CLMOBJ_TIMEOUT  1000    // milliseconds
 
 // Missiles don't hit mobjs only after a short delay. This'll
 // allow the missile to move free of the shooter. (Quite a hack!)
@@ -432,6 +431,45 @@ void Cl_Reset(void)
 
     // Clear player data, too, since we just lost all clmobjs.
     Cl_InitPlayers();
+}
+
+/**
+ * Deletes hidden, unpredictable or nulled mobjs for which we have not received
+ * updates in a while.
+ */
+void Cl_ExpireMobjs(void)
+{
+    clmoinfo_t* info;
+    clmoinfo_t* next = 0;
+    mobj_t* mo;
+    int i;
+    uint nowTime = Sys_GetRealTime();
+
+    // Move all client mobjs.
+    for(i = 0; i < HASH_SIZE; ++i)
+    {
+        for(info = cmHash[i].first; info; info = next)
+        {
+            next = info->next;
+            mo = ClMobj_MobjForInfo(info);
+
+            if(mo->dPlayer != &ddPlayers[consolePlayer].shared &&
+               (mo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)))
+            {
+                // Has this mobj timed out?
+                if(nowTime - info->time > CLMOBJ_TIMEOUT)
+                {
+#ifdef _DEBUG
+                    Con_Message("Cl_ExpireMobjs: Mobj %i has expired.\n", mo->thinker.id);
+#endif
+                    // Too long. The server will probably never send anything
+                    // for this mobj, so get rid of it. (Both unpredictable
+                    // and hidden mobjs are not visible or bl/seclinked.)
+                    P_MobjDestroy(mo);
+                }
+            }
+        }
+    }
 }
 
 /**
