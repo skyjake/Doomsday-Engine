@@ -441,7 +441,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
                           (sender->shakePing * 35) / 2000);
             // Send reliably, although if it has to be resent, the tics
             // will already be way off...
-            Net_SendBuffer(from, SPF_CONFIRM);
+            Net_SendBuffer(from, 0);
             // Send welcome string.
             Sv_SendText(from, SV_CONSOLE_FLAGS, SV_WELCOME_STRING "\n");
         }
@@ -478,7 +478,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         for(i = 1; i < DDMAXPLAYERS; ++i)
             if(ddPlayers[i].shared.inGame && (mask & (1 << i)) && i != from)
             {
-                Net_SendBuffer(i, SPF_ORDERED);
+                Net_SendBuffer(i, 0);
             }
         M_Free(msg);
         break;
@@ -525,7 +525,7 @@ void Sv_Login(void)
     // Send a confirmation packet to the client.
     Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(true);        // Yes, you're logged in.
-    Net_SendBuffer(netRemoteUser, SPF_ORDERED);
+    Net_SendBuffer(netRemoteUser, 0);
 }
 
 /**
@@ -583,84 +583,15 @@ void Sv_GetPackets(void)
 {
     int         netconsole;
     client_t   *sender;
-    //int         start, num, i;
-    //byte       *unpacked;
 
     while(Net_GetPacket())
     {
         switch(netBuffer.msg.type)
         {
-#if 0
-        case PCL_COMMANDS:
-            // Determine who sent this packet.
-            netconsole = netBuffer.player;
-            if(netconsole < 0 || netconsole >= DDMAXPLAYERS)
-                continue;
-
-            sender = &clients[netconsole];
-
-            // If the client isn't ready, don't accept any cmds.
-            if(!clients[netconsole].ready)
-                continue;
-
-            // Now we know this client is alive, update the frame send count.
-            // Clients will only be refreshed if their updateCount is greater
-            // than zero.
-            sender->updateCount = UPDATECOUNT;
-
-            // Unpack the commands in the packet. Since the game defines the
-            // ticcmd_t structure, it is the only one who can do this.
-            unpacked = gx.NetReadCommands(netBuffer.length,
-                                          (void*) netBuffer.msg.data);
-
-            // The first two bytes contain the number of commands.
-            num = *(ushort *) unpacked;
-            unpacked += 2;
-
-            // Add the tics into the client's ticcmd buffer, if there is room.
-            // If the buffer overflows, the rest of the cmds will be forgotten.
-            if(sender->numTics + num > BACKUPTICS)
-            {
-                num = BACKUPTICS - sender->numTics;
-            }
-            start = sender->firstTic + sender->numTics;
-
-            // Increase the counter.
-            sender->numTics += num;
-
-            // Copy as many as fits (circular buffer).
-            for(i = start; num > 0; num--, ++i)
-            {
-                if(i >= BACKUPTICS)
-                    i -= BACKUPTICS;
-                memcpy(sender->ticCmds + TICCMD_IDX(i), unpacked, TICCMD_SIZE);
-                unpacked += TICCMD_SIZE;
-            }
+        case PCL_GOODBYE:
+            // The client is leaving.
+            N_TerminateClient(netBuffer.player);
             break;
-#endif
-
-#if 0
-        case PCL_ACK_SETS:
-            // The client is acknowledging that it has received a number of
-            // delta sets.
-            while(!Msg_End())
-            {
-                Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
-            }
-            break;
-
-        case PCL_ACKS:
-            // The client is acknowledging both entire sets and resent deltas.
-            // The first byte contains the acked set.
-            Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
-
-            // The rest of the packet contains resend IDs.
-            while(!Msg_End())
-            {
-                Sv_AckDeltaSet(netBuffer.player, 0, Msg_ReadByte());
-            }
-            break;
-#endif
 
         case PKT_COORDS:
             Sv_ClientCoords(netBuffer.player);
@@ -843,7 +774,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
         // Inform other clients about this.
         Msg_Begin(PSV_PLAYER_EXIT);
         Msg_WriteByte(plrNum);
-        Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+        Net_SendBuffer(NSP_BROADCAST, 0);
     }
 
     // This client no longer has an ID number.
@@ -979,7 +910,7 @@ void Sv_SendText(int to, int con_flags, char *text)
     Msg_Begin(PSV_CONSOLE_TEXT);
     Msg_WriteLong(con_flags & ~CBLF_TRANSMIT);
     Msg_Write(text, strlen(text) + 1);
-    Net_SendBuffer(to, SPF_ORDERED);
+    Net_SendBuffer(to, 0);
 }
 
 /**
@@ -993,7 +924,7 @@ void Sv_Kick(int who)
 
     Sv_SendText(who, SV_CONSOLE_FLAGS, "You were kicked out!\n");
     Msg_Begin(PSV_SERVER_CLOSE);
-    Net_SendBuffer(who, SPF_ORDERED);
+    Net_SendBuffer(who, 0);
     //ddPlayers[who].shared.inGame = false;
 }
 
@@ -1073,7 +1004,7 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
     }
 
     // Send the fix message to everyone.
-    Net_SendBuffer(DDSP_ALL_PLAYERS, SPF_ORDERED | SPF_CONFIRM);
+    Net_SendBuffer(DDSP_ALL_PLAYERS, 0);
 
     ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM);
 #ifdef _DEBUG
@@ -1326,7 +1257,7 @@ D_CMD(Logout)
     // Send a logout packet.
     Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(false);       // You're outta here.
-    Net_SendBuffer(netRemoteUser, SPF_ORDERED);
+    Net_SendBuffer(netRemoteUser, 0);
     netRemoteUser = 0;
     return true;
 }

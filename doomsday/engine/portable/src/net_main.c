@@ -303,11 +303,13 @@ void Net_SendPacket(int to_player, int type, void *data, size_t length)
 {
     int                 flags = 0;
 
+    /*
     // What kind of delivery to use?
     if(to_player & DDSP_CONFIRM)
         flags |= SPF_CONFIRM;
     if(to_player & DDSP_ORDERED)
         flags |= SPF_ORDERED;
+    */
 
     Msg_Begin(type);
     if(data)
@@ -651,13 +653,16 @@ void Net_StopGame(void)
         // This means we should inform all the connected clients that the
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
-        Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+        Net_SendBuffer(NSP_BROADCAST, 0);
 #if 0
         N_FlushOutgoing();
 #endif
     }
     else
     {   // We are a connected client.
+        Msg_Begin(PCL_GOODBYE);
+        Net_SendBuffer(0, 0);
+
         // Must stop recording, we're disconnecting.
         Demo_StopRecording(consolePlayer);
         Cl_CleanUp();
@@ -1122,18 +1127,18 @@ D_CMD(Chat)
     {
         if(mask == (unsigned short) ~0)
         {
-            Net_SendBuffer(NSP_BROADCAST, SPF_ORDERED);
+            Net_SendBuffer(NSP_BROADCAST, 0);
         }
         else
         {
             for(i = 1; i < DDMAXPLAYERS; ++i)
                 if(ddPlayers[i].shared.inGame && (mask & (1 << i)))
-                    Net_SendBuffer(i, SPF_ORDERED);
+                    Net_SendBuffer(i, 0);
         }
     }
     else
     {
-        Net_SendBuffer(0, SPF_ORDERED);
+        Net_SendBuffer(0, 0);
     }
 
     // Show the message locally.

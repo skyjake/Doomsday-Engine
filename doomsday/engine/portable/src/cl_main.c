@@ -141,7 +141,7 @@ Con_Message("Cl_SendHello: game mode = %s\n", buf);
 #endif
 
     Msg_Write(buf, 16);
-    Net_SendBuffer(0, SPF_ORDERED);
+    Net_SendBuffer(0, 0);
 }
 
 void Cl_AnswerHandshake(handshake_packet_t* pShake)
@@ -156,7 +156,7 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
 
     // Immediately send an acknowledgement.
     Msg_Begin(PCL_ACK_SHAKE);
-    Net_SendBuffer(0, SPF_ORDERED);
+    Net_SendBuffer(0, 0);
 
     // Check the version number.
     if(shake.version != SV_VERSION)
@@ -464,6 +464,6 @@ D_CMD(Login)
         Msg_WriteByte(0); // No password given!
     else
         Msg_Write(argv[1], strlen(argv[1]) + 1);
-    Net_SendBuffer(0, SPF_ORDERED);
+    Net_SendBuffer(0, 0);
     return true;
 }

@@ -249,6 +249,11 @@ void N_Update(void)
             masterHeartbeat = MASTER_UPDATETIME;
             break;
 
+        case NE_TERMINATE_NODE:
+            // The server receives this event when a client's connection is broken.
+            N_TerminateNode(nevent.id);
+            break;
+
         case NE_END_CONNECTION:
             // A client receives this event when the connection is
             // terminated.

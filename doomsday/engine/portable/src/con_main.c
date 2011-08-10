@@ -464,7 +464,7 @@ static void Con_Send(const char *command, byte src, int silent)
     Msg_WriteByte(src);
     Msg_Write(command, len);
     // Send it reliably.
-    Net_SendBuffer(0, SPF_ORDERED);
+    Net_SendBuffer(0, 0);
 }
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
