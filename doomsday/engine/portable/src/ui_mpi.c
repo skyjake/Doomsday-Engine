@@ -331,15 +331,12 @@ void MPIUpdateServerInfo(ui_object_t *ob)
         strcat(str_sinfo.pwads, ")");
     }
 
-    W_GetIWADFileName(str, sizeof(str));
     sprintf(warningString,
-            "This server is using %s (%x), " "but you have %s (%x). "
-            "Errors may occur during game play.", info.iwad, info.wadNumber,
-            str, myCrc);
+            "This server is using %x, " "but you have %x. "
+            "Errors may occur during game play.", info.wadNumber, myCrc);
 
     // Show IWAD warning?
-    if(!
-       (lst_found.count >= 1 && lst_found.selection >= 0 &&
+    if(!(lst_found.count >= 1 && lst_found.selection >= 0 &&
         lstit_found[lst_found.selection].data != -1 &&
         lstit_found[lst_found.selection].data != (int) myCrc))
     {
@@ -425,10 +422,10 @@ void MPISearch(ui_object_t *ob)
 /*
  * Formats the given serverinfo_t into a list-viewable tabbed string.
  */
-void MPIFormatServerInfo(char *dest, serverinfo_t *info)
+void MPIFormatServerInfo(char* dest, serverinfo_t *info)
 {
     sprintf(dest, "%s\t%i / %i players\t%s\t%s", info->name, info->numPlayers,
-            info->maxPlayers, info->map, info->iwad);
+            info->maxPlayers, info->map, info->gameIdentityKey);
 }
 
 /*

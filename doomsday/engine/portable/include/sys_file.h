@@ -69,6 +69,21 @@ void F_Shutdown(void);
 void F_EndStartup(void);
 
 /**
+ * Files with a .wad extension are archived data files with multiple 'lumps',
+ * other files are single lumps whose base filename will become the lump name.
+ *
+ * \note Lump names can appear multiple times. The name searcher looks backwards,
+ * so a later file can override an earlier one.
+ *
+ * @return  @c true, if the operation is successful.
+ */
+boolean F_AddFile(const char* fileName, boolean allowDuplicate);
+boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
+
+boolean F_RemoveFile(const char* fileName);
+boolean F_RemoveFiles(const char* const* filenames, size_t num);
+
+/**
  * Remove all file records flagged Runtime.
  * @return  Number of records removed.
  */

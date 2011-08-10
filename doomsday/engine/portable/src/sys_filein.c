@@ -294,6 +294,109 @@ static filehandle_t* getFileHandle(void)
     return fhdl;
 }
 
+boolean F_AddFile(const char* fileName, boolean allowDuplicate)
+{
+    resourcetype_t resourceType;
+    DFILE* handle;
+
+    // Filename given?
+    if(!fileName || !fileName[0])
+        return false;
+
+    if(!(handle = F_Open(fileName, "rb")))
+    {
+        Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
+        return false;
+    }
+
+    // Do not read files twice.
+    if(!allowDuplicate && !F_CheckFileId(fileName))
+    {
+        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
+        F_Close(handle); // The file is not used.
+        return false;
+    }
+
+    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(fileName)) )
+
+    /// \todo Do not guess, try in order: ZIP > WAD > other
+    resourceType = F_GuessResourceTypeByName(fileName);
+    switch(resourceType)
+    {
+    case RT_ZIP:    return Zip_Open2(fileName, handle);
+    case RT_WAD:    return (NULL != W_AddArchive(fileName, handle));
+    default:        return (NULL != W_AddFile(fileName, handle, (resourceType == RT_DEH)));
+    }
+}
+
+boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(F_AddFile(filenames[i], allowDuplicate))
+        {
+            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been loaded.
+        }
+        else
+            Con_Message("Warning: Errors occured while loading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
+}
+
+static boolean removeFile(const char* path)
+{
+    VERBOSE( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path)) )
+
+    // Is it a zip/pk3 package?
+    if(F_GuessResourceTypeByName(path) == RT_ZIP)
+    {
+        return Zip_Close(path);
+    }
+
+    // Perhaps its a WAD archive or a single lump?
+    return W_RemoveFile(path);
+}
+
+boolean F_RemoveFile(const char* path)
+{
+    boolean unloadedResources = removeFile(path);
+    if(unloadedResources)
+        DD_UpdateEngineState();
+    return unloadedResources;
+}
+
+boolean F_RemoveFiles(const char* const* filenames, size_t num)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(removeFile(filenames[i]))
+        {
+            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been unloaded.
+        }
+        else
+            Con_Message("Warning: Errors occured while unloading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
+}
+
 void F_ResetFileIds(void)
 {
     numReadFiles = 0;
@@ -1024,6 +1127,7 @@ void F_Init(void)
 void F_Shutdown(void)
 {
     Zip_Shutdown();
+    W_Shutdown();
 }
 
 void F_EndStartup(void)
@@ -1034,6 +1138,7 @@ void F_EndStartup(void)
 
 int F_Reset(void)
 {
+    Z_FreeTags(PU_CACHE, PU_CACHE);
     return Zip_Reset() + W_Reset();
 }
 

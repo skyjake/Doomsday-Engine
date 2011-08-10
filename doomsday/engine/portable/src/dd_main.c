@@ -225,7 +225,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        W_AddFile(token, false);
+        F_AddFile(token, false);
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -666,7 +666,7 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass)
                 { const ddstring_t* path;
                 if(0 != (path = ResourceRecord_ResolvedPath(*records, false)))
                 {
-                    W_AddFile(Str_Text(path), false);
+                    F_AddFile(Str_Text(path), false);
                 }}
                 break;
             default:
@@ -768,7 +768,7 @@ static int autoDataAdder(const ddstring_t* fileName, pathdirectory_nodetype_t ty
         autoload_t* data = (autoload_t*)paramaters;
         if(data->loadFiles)
         {
-            if(W_AddFile(Str_Text(fileName), false))
+            if(F_AddFile(Str_Text(fileName), false))
                 ++data->count;
         }
         else
@@ -929,7 +929,7 @@ static int DD_ChangeGameWorker(void* paramaters)
                 resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(gameResourceFileList[i]));
                 if((pass == 0 && resType == RT_ZIP) ||
                    (pass == 1 && resType == RT_WAD))
-                    W_AddFile(Str_Text(gameResourceFileList[i]), false);
+                    F_AddFile(Str_Text(gameResourceFileList[i]), false);
             }
         }
 
@@ -943,7 +943,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_ResetAllResourceNamespaces();
     Cl_InitTranslations();
 
-    Con_SetProgress(60);
+    Con_SetProgress(100);
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
     if(!isDedicated && !DD_IsNullGameInfo(p->info))
@@ -965,7 +965,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     Def_Read();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(140);
+        Con_SetProgress(130);
 
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
@@ -992,7 +992,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_ResetViewer();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(170);
+        Con_SetProgress(160);
 
     // Invalidate old cmds and init player values.
     { uint i;
@@ -1135,6 +1135,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         R_InitVectorGraphics();
         R_InitViewWindow();
+
+        /// \fixme Assumes we only cache lumps from non-startup wads.
+        Z_FreeTags(PU_CACHE, PU_CACHE);
 
         W_Reset();
     }
@@ -1500,7 +1503,7 @@ int DD_Main(void)
             continue;
 
         while(++p != Argc() && !ArgIsOption(p))
-            W_AddFile(Argv(p), false);
+            F_AddFile(Argv(p), false);
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }}
@@ -1518,7 +1521,9 @@ int DD_Main(void)
             W_DumpLump(lumpNum, 0);
     }
     if(ArgCheck("-dumpwaddir"))
+    {
         W_PrintLumpDirectory();
+    }
 
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
@@ -1690,7 +1695,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
     if(F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) != 0)
-        W_AddFile(Str_Text(&foundPath), false);
+        F_AddFile(Str_Text(&foundPath), false);
     else
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     Str_Free(&foundPath);
@@ -2417,7 +2422,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
-           W_AddFile(Str_Text(&foundPath), false))
+           F_AddFile(Str_Text(&foundPath), false))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
@@ -2494,7 +2499,7 @@ D_CMD(Unload)
         }
 
         // We can safely remove this file.
-        if(W_RemoveFile(Str_Text(&foundPath)))
+        if(F_RemoveFile(Str_Text(&foundPath)))
         {
             result = 1;
         }

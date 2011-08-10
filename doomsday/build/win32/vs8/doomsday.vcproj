@@ -1145,6 +1145,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\lumpdirectory.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\m_args.c"
 				>
 			</File>
@@ -2847,6 +2851,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\image.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\lumpdirectory.h"
 				>
 			</File>
 			<File

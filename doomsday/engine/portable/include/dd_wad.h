@@ -46,19 +46,56 @@
 
 #define AUXILIARY_BASE      100000000
 
+struct lumpdirectory_s;
+
+// LumpInfo record. POD.
+typedef struct {
+    lumpname_t name; /// Ends in '\0'.
+    size_t position; /// Offset from start of WAD file.
+    size_t size;
+} wadfile_lumpinfo_t;
+
+/**
+ * @defgroup wadFileFlags  Wad file flags.
+ */
+/*@{*/
+#define WFF_IWAD                    0x1 // File is marked IWAD (else its a PWAD).
+#define WFF_RUNTIME                 0x2 // Loaded at runtime (for reset).
+/*@}*/
+
+/**
+ * WadFile. Runtime representation of a WAD file.
+ *
+ * @ingroup FS
+ */
+typedef struct wadfile_s {
+    int _flags; /// @see wadFileFlags
+    size_t _numLumps;
+    wadfile_lumpinfo_t* _lumpInfo;
+    void** _lumpCache;
+    DFILE* _handle;
+    struct lumpdirectory_s* _directory; // All lumps from this file go into the same LumpDirectory
+    ddstring_t _absolutePath;
+
+    struct wadfile_s* next;
+} wadfile_t;
+
+struct lumpdirectory_s* WadFile_Directory(wadfile_t* fr);
+size_t WadFile_NumLumps(wadfile_t* fr);
+/// @return  @see wadFileFlags
+int WadFile_Flags(wadfile_t* fr);
+DFILE* WadFile_Handle(wadfile_t* fr);
+const ddstring_t* WadFile_AbsolutePath(wadfile_t* fr);
+
+/// Register the console commands, variables, etc..., of this module.
 void W_Register(void);
 
-/**
- * Initializes the file system.
- */
+/// Initialize this module. Cannot be re-initialized, must shutdown first.
 void W_Init(void);
 
-int W_LumpCount(void);
+void W_Shutdown(void);
 
-/**
- * Calculated using the lumps of the main IWAD.
- */
-uint W_CRCNumber(void);
+int W_LumpCount(void);
 
 /**
  * \post No more WADs will be loaded in startup mode.
@@ -71,32 +108,11 @@ void W_EndStartup(void);
  */
 int W_Reset(void);
 
-/**
- * Copies the file name of the IWAD to the given buffer.
- */
-void W_GetIWADFileName(char* buf, size_t bufSize);
+wadfile_t* W_AddArchive(const char* fileName, DFILE* handle);
+wadfile_t* W_AddFile(const char* fileName, DFILE* handle, boolean isDehackedPatch);
 
-/**
- * Compiles a list of PWAD file names, separated by the specified character.
- */
-void W_GetPWADFileNames(char* buf, size_t bufSize, char separator);
-
-void W_PrintLumpDirectory(void);
-
-/**
- * Files with a .wad extension are archived date files with multiple 'lumps',
- * other files are single lumps whose base filename will become the lump name.
- *
- * \note Lump names can appear multiple times. The name searcher looks backwards,
- * so a later file can override an earlier one.
- *
- * @return  @c true, if the operation is successful.
- */
-boolean W_AddFile(const char* fileName, boolean allowDuplicate);
-boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
-
+/// \note Also used with archives.
 boolean W_RemoveFile(const char* fileName);
-boolean W_RemoveFiles(const char* const* filenames, size_t num);
 
 /**
  * Try to open the specified WAD archive into the auxiliary lump cache.
@@ -118,44 +134,79 @@ void W_CloseAuxiliary(void);
 lumpnum_t W_CheckLumpNumForName(const char* name);
 lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent);
 
-/**
- * Calls W_CheckLumpNumForName, but bombs out if not found.
- */
+/// \note As per W_CheckLumpNumForName but results in a fatal error if not found.
 lumpnum_t W_GetLumpNumForName(const char* name);
 
 /**
- * Get the name of the given lump.
+ * Read the data associated with @a lumpNum into buffer @a dest.
+ *
+ * @param lumpNum  Logical lump index associated with the data being read.
+ * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
  */
+void W_ReadLump(lumpnum_t lumpNum, char* dest);
+
+/**
+ * Read a subsection of the data associated with @a lumpNum into buffer @a dest.
+ *
+ * @param lumpNum  Logical lump index associated with the data being read.
+ * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @param startOffset  Offset from the beginning of the lump to start reading.
+ * @param length  Number of bytes to be read.
+ */
+void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
+
+/**
+ * Read the data associated with @a lumpNum into the cache.
+ *
+ * @param lumpNum  Logical lump index associated with the data being read.
+ * @param tag  Zone purge level/cache tag to use.
+ * @return  Ptr to the cached copy of the associated data.
+ */
+const char* W_CacheLump(lumpnum_t lumpNum, int tag);
+
+/**
+ * Change the Zone purge level/cache tag associated with a cached data lump.
+ *
+ * @param lumpNum  Logical lump index associated with the data.
+ * @param tag  Zone purge level/cache tag to use.
+ */
+void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
+
+/// @return  Name of the lump associated with @a lumpNum.
 const char* W_LumpName(lumpnum_t lumpNum);
 
-/**
- * @return  The buffer size needed to load the given lump.
- */
+/// @return  Buffer size needed to load the data associated with @a lumpNum in bytes.
 size_t W_LumpLength(lumpnum_t lumpNum);
 
-/**
- * @return  The name of the WAD file where the given lump resides. Always
- *      returns a valid filename (or an empty string).
- */
+/// @return  Name of the WAD file where the data associated with @a lumpNum resides.
+///     Always returns a valid filename (or an empty string).
 const char* W_LumpSourceFile(lumpnum_t lumpNum);
 
-/**
- * @return  @ true, if the specified lump is in an IWAD. Otherwise it's from a PWAD.
- */
+/// @return  @c true iff the data associated with @a lumpNum resides in an IWAD.
 boolean W_LumpIsFromIWAD(lumpnum_t lumpNum);
 
 /**
- * Loads the lump into the given buffer, which must be >= W_LumpLength().
+ * Compiles a list of PWAD file names, separated by @a delimiter.
  */
-void W_ReadLump(lumpnum_t lumpNum, char* dest);
-void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
-
-const char* W_CacheLump(lumpnum_t lumpNum, int tag);
-
-void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
+void W_GetPWADFileNames(char* buf, size_t bufSize, char delimiter);
 
 /**
- * Writes the specifed lump to file with the given name.
+ * Calculated using the lumps of the main IWAD.
+ */
+uint W_CRCNumber(void);
+
+/**
+ * Print the contents of the primary lump directory to stdout.
+ */
+void W_PrintLumpDirectory(void);
+
+/**
+ * Write the data associated with @a lumpNum to @a fileName.
+ *
+ * @param lumpNum  Logical lump index associated with the data being dumped.
+ * @param fileName  If not @c NULL write the associated data to this path.
+ *      Can be @c NULL in which case the fileName will be chosen automatically.
+ * @return  @c true iff successful.
  */
 boolean W_DumpLump(lumpnum_t lumpNum, const char* fileName);
 

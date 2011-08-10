@@ -1374,7 +1374,6 @@ typedef struct ticcmd_s {
         char            map[20];
         char            clientNames[128];
         unsigned int    wadNumber;
-        char            iwad[32];
         char            pwads[128];
         int             data[3];
     } serverinfo_t;

@@ -259,6 +259,7 @@
 		<Unit filename="..\..\engine\portable\include\gl_texmanager.h" />
 		<Unit filename="..\..\engine\portable\include\gl_tga.h" />
 		<Unit filename="..\..\engine\portable\include\image.h" />
+		<Unit filename="..\..\engine\portable\include\lumpdirectory.h" />
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />
@@ -549,6 +550,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\image.c" />
+		<Unit filename="..\..\engine\portable\src\lumpdirectory.c" />
 		<Unit filename="..\..\engine\portable\src\m_args.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -166,6 +166,7 @@
  .\..\..\engine\portable\src\dd_zip.c
  .\..\..\engine\win32\src\dd_winit.c
  .\..\..\engine\win32\src\sys_window.c
+ .\..\..\engine\portable\src\lumpdirectory.c
  .\..\..\engine\portable\src\dd_wad.c
  .\..\..\engine\portable\src\dd_plugin.c
  .\..\..\engine\portable\src\dd_pinit.c
