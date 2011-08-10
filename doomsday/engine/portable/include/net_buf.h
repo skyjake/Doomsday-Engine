@@ -34,8 +34,8 @@
 // Send Packet flags:
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
 #define SPF_DONT_SEND   0x00040000 // Don't really send out anything
-#define SPF_CONFIRM     0x40000000 // Make sure it's received
-#define SPF_ORDERED     0x80000000 // Send in order & confirm
+//#define SPF_CONFIRM     0x40000000 // Make sure it's received
+//#define SPF_ORDERED     0x80000000 // Send in order & confirm
 
 #define NETBUFFER_MAXDATA   (0x7fff - 8) // 32 KB
 

@@ -1012,14 +1012,7 @@ if(delta->state == DELTA_UNACKED)
     Msg_SetOffset(endOffset);
 #endif
 
-    // The PSV_FIRST_FRAME2 packet is sent Ordered, which means it'll
-    // always arrive in the correct order when compared to the other
-    // game setup packets.
-    Net_SendBuffer(plrNum, pool->isFirst ? SPF_ORDERED : 0);
-
-    // If the target is local, ack immediately. This effectively removes
-    // all the sent deltas from the pool.
-    //if(ddPlayers[plrNum].shared.flags & DDPF_LOCAL)
+    Net_SendBuffer(plrNum, 0);
 
     // Once sent, the delta set can be discarded.
     Sv_AckDeltaSet(plrNum, pool->setDealer, 0);

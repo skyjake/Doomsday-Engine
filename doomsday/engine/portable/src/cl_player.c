@@ -244,7 +244,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         Msg_WriteLong(ddpl->fixAcked.angles);
         Msg_WriteLong(ddpl->fixAcked.pos);
         Msg_WriteLong(ddpl->fixAcked.mom);
-        Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
+        Net_SendBuffer(0, 0);
     }
 }
 
