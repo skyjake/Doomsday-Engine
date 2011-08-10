@@ -651,13 +651,16 @@ void Net_StopGame(void)
         // This means we should inform all the connected clients that the
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
-        Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+        Net_SendBuffer(NSP_BROADCAST, 0);
 #if 0
         N_FlushOutgoing();
 #endif
     }
     else
     {   // We are a connected client.
+        Msg_Begin(PCL_GOODBYE);
+        Net_SendBuffer(0, 0);
+
         // Must stop recording, we're disconnecting.
         Demo_StopRecording(consolePlayer);
         Cl_CleanUp();

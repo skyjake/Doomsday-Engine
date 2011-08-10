@@ -453,9 +453,9 @@ boolean N_ReceiveReliably(nodeid_t from)
     // \todo What if we get one byte? How come we are here if there's nothing to receive?
     if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
     {
-        int number = errno;
-        Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
-        Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
+        //int number = errno;
+        //Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
+        //Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
         return false;
     }
 
@@ -474,8 +474,8 @@ boolean N_ReceiveReliably(nodeid_t from)
             int number = errno;
             M_Free(packet); 
             packet = 0;
-            Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
-                        SDLNet_GetError(), strerror(number));
+            /*Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
+                        SDLNet_GetError(), strerror(number));*/
             error = true;
             read = true;
         }
@@ -496,9 +496,9 @@ boolean N_ReceiveReliably(nodeid_t from)
         msg->size = size;
         msg->handle = packet;
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
         VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
-#endif
+#endif*/
 
         // The message queue will handle the message from now on.
         N_PostMessage(msg);
@@ -1742,8 +1742,10 @@ static int C_DECL N_JoinedListenerThread(void* param)
                     {
                         if(!N_ReceiveReliably(i))
                         {
-                            Con_Message("N_JoinedListenerThread: Connection closed on node %i.\n", i);
-                            N_TerminateNode(i);
+                            netevent_t nev;
+                            nev.type = NE_TERMINATE_NODE;
+                            nev.id = i;
+                            N_NEPost(&nev);
                         }
                     }
                 }
@@ -1766,9 +1768,6 @@ static int C_DECL N_JoinedListenerThread(void* param)
                 if(!N_ReceiveReliably(0))
                 {
                     netevent_t nev;
-
-                    Con_Message("N_JoinedListenerThread: N_ReceiveReliably failed. Terminating!\n");
-
                     nev.id = 0;
                     nev.type = NE_END_CONNECTION;
                     N_NEPost(&nev);

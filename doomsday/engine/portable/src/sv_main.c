@@ -583,84 +583,15 @@ void Sv_GetPackets(void)
 {
     int         netconsole;
     client_t   *sender;
-    //int         start, num, i;
-    //byte       *unpacked;
 
     while(Net_GetPacket())
     {
         switch(netBuffer.msg.type)
         {
-#if 0
-        case PCL_COMMANDS:
-            // Determine who sent this packet.
-            netconsole = netBuffer.player;
-            if(netconsole < 0 || netconsole >= DDMAXPLAYERS)
-                continue;
-
-            sender = &clients[netconsole];
-
-            // If the client isn't ready, don't accept any cmds.
-            if(!clients[netconsole].ready)
-                continue;
-
-            // Now we know this client is alive, update the frame send count.
-            // Clients will only be refreshed if their updateCount is greater
-            // than zero.
-            sender->updateCount = UPDATECOUNT;
-
-            // Unpack the commands in the packet. Since the game defines the
-            // ticcmd_t structure, it is the only one who can do this.
-            unpacked = gx.NetReadCommands(netBuffer.length,
-                                          (void*) netBuffer.msg.data);
-
-            // The first two bytes contain the number of commands.
-            num = *(ushort *) unpacked;
-            unpacked += 2;
-
-            // Add the tics into the client's ticcmd buffer, if there is room.
-            // If the buffer overflows, the rest of the cmds will be forgotten.
-            if(sender->numTics + num > BACKUPTICS)
-            {
-                num = BACKUPTICS - sender->numTics;
-            }
-            start = sender->firstTic + sender->numTics;
-
-            // Increase the counter.
-            sender->numTics += num;
-
-            // Copy as many as fits (circular buffer).
-            for(i = start; num > 0; num--, ++i)
-            {
-                if(i >= BACKUPTICS)
-                    i -= BACKUPTICS;
-                memcpy(sender->ticCmds + TICCMD_IDX(i), unpacked, TICCMD_SIZE);
-                unpacked += TICCMD_SIZE;
-            }
+        case PCL_GOODBYE:
+            // The client is leaving.
+            N_TerminateClient(netBuffer.player);
             break;
-#endif
-
-#if 0
-        case PCL_ACK_SETS:
-            // The client is acknowledging that it has received a number of
-            // delta sets.
-            while(!Msg_End())
-            {
-                Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
-            }
-            break;
-
-        case PCL_ACKS:
-            // The client is acknowledging both entire sets and resent deltas.
-            // The first byte contains the acked set.
-            Sv_AckDeltaSet(netBuffer.player, Msg_ReadByte(), 0);
-
-            // The rest of the packet contains resend IDs.
-            while(!Msg_End())
-            {
-                Sv_AckDeltaSet(netBuffer.player, 0, Msg_ReadByte());
-            }
-            break;
-#endif
 
         case PKT_COORDS:
             Sv_ClientCoords(netBuffer.player);

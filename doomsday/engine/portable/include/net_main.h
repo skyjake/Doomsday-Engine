@@ -101,8 +101,9 @@ enum {
     PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
     PKT_COMMAND2 = 29,
     PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
+    PCL_GOODBYE = 31,
 
-    PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
+    //PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT // 64
