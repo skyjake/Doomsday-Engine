@@ -119,6 +119,7 @@ D_CMD(Repeat);
 D_CMD(Toggle);
 D_CMD(Version);
 D_CMD(Wait);
+D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -204,6 +205,7 @@ static void Con_Register(void)
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   IncDec);
     C_CMD("listmobjtypes",  "",     ListMobjs);
+    C_CMD("inspectmobj",    "i",    InspectMobj);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
     C_CMD("sub",            NULL,   AddSub);

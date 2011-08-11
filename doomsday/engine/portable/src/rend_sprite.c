@@ -37,6 +37,7 @@
 #include "de_play.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_ui.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -67,6 +68,7 @@ byte noSpriteTrans = false;
 int useSpriteAlpha = 1;
 
 byte devNoSprites = false;
+byte devThinkerIds = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -84,6 +86,7 @@ void Rend_SpriteRegister(void)
     C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);
     C_VAR_BYTE("rend-sprite-precache", &precacheSprites, 0, 0, 1);
     C_VAR_BYTE("rend-dev-nosprite", &devNoSprites, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-thinker-ids", &devThinkerIds, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c,
@@ -106,6 +109,71 @@ static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c,
         glTexCoord2fv(tc[3].st);
         glVertex3fv(v[3].xyz);
     glEnd();
+}
+
+static boolean drawThinkerId(thinker_t* thinker, void* context)
+{
+#define MAX_THINKER_DIST  2048
+    float* eye = (float*) context;
+    float pos[3], dist, alpha;
+    char buf[80];
+    mobj_t* mo;
+
+    // Skip non-mobjs.
+    if(!P_IsMobjThinker(thinker->function)) return true;
+
+    mo = (mobj_t*)thinker;
+    pos[VX] = mo->pos[VX];
+    pos[VY] = mo->pos[VY];
+    pos[VZ] = mo->pos[VZ] + mo->height/2;
+
+    dist = M_Distance(pos, eye);
+    alpha = 1.f - MIN_OF(dist, MAX_THINKER_DIST) / MAX_THINKER_DIST;
+
+    if(alpha > 0)
+    {
+        float scale = dist / (theWindow->width / 2);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(pos[VX], pos[VZ], pos[VY]);
+        glRotatef(-vang + 180, 0, 1, 0);
+        glRotatef(vpitch, 1, 0, 0);
+        glScalef(-scale, -scale, 1);
+
+        sprintf(buf, "%i", mo->thinker.id);
+        UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+
+    return true; // Continue iteration.
+#undef MAX_THINKER_DIST
+}
+
+/**
+ * Debugging aid for visualizing thinker IDs.
+ */
+void Rend_DrawThinkerIds(void)
+{
+    float eye[3];
+
+    if(!devThinkerIds)
+        return;
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
+    eye[VX] = vx;
+    eye[VY] = vz;
+    eye[VZ] = vy;
+
+    P_IterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
+
+    // Restore previous state.
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Rend_Draw3DPlayerSprites(void)
@@ -829,6 +897,12 @@ void Rend_DrawMasked(void)
             // And we're done...
             H_SetupState(false);
         }
+    }
+
+    // Developer aid: visualize thinker IDs.
+    if(devThinkerIds)
+    {
+        Rend_DrawThinkerIds();
     }
 }
 

@@ -209,3 +209,53 @@ boolean P_MobjSetPos(struct mobj_s* mo, float x, float y, float z)
     assert(gx.MobjTryMove3f != 0);
     return gx.MobjTryMove3f(mo, x, y, z);
 }
+
+D_CMD(InspectMobj)
+{
+    mobj_t* mo = 0;
+    thid_t id = 0;
+    clmoinfo_t* info = 0;
+
+    if(argc != 2)
+    {
+        Con_Printf("Usage: %s (mobj-id)\n", argv[0]);
+        return true;
+    }
+
+    // Get the ID.
+    id = strtol(argv[1], NULL, 10);
+
+    // Find the mobj.
+    mo = P_MobjForID(id);
+    if(!mo)
+    {
+        Con_Printf("Mobj with id %i not found.\n", id);
+        return false;
+    }
+
+    info = ClMobj_GetInfo(mo);
+
+    Con_Printf("%s %i [%p] State:%s (%i)\n", info? "CLMOBJ" : "Mobj", id, mo, Def_GetStateName(mo->state), mo->state - states);
+    Con_Printf("Type:%s (%i) Info:[%p]", Def_GetMobjName(mo->type), mo->type, mo->info);
+    if(mo->info)
+    {
+        Con_Printf(" (%i)\n", mo->info - mobjInfo);
+    }
+    else
+    {
+        Con_Printf("\n");
+    }
+    Con_Printf("Tics:%i ddFlags:%08x\n", mo->tics, mo->ddFlags);
+    if(info)
+    {
+        Con_Printf("Cltime:%i (now:%i) Flags:%04x\n", info->time, Sys_GetRealTime(), info->flags);
+    }
+    Con_Printf("Flags:%08x Flags2:%08x Flags3:%08x\n", mo->flags, mo->flags2, mo->flags3);
+    Con_Printf("Height:%f Radius:%f\n", mo->height, mo->radius);
+    Con_Printf("Angle:%x Pos:(%f,%f,%f) Mom:(%f,%f,%f)\n",
+               mo->angle,
+               mo->pos[0], mo->pos[1], mo->pos[2],
+               mo->mom[0], mo->mom[1], mo->mom[2]);
+
+    return true;
+}
