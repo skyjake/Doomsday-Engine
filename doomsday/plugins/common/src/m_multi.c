@@ -105,8 +105,8 @@ editfield_t plrNameEd;
 int CurrentPlrFrame = 0;
 
 menuitem_t MultiplayerItems[] = {
-    {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
-    {ITT_EFUNC, 0, "join game", SCEnterJoinMenu, 0 }
+    {ITT_EFUNC, 0, "join game", SCEnterJoinMenu, 0 },
+    {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 }
     //{ITT_EFUNC, 0, "host game", SCEnterHostMenu, 0 },
 };
 
