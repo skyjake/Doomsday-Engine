@@ -296,7 +296,9 @@ enum {
     DD_TORCH_RED,
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
-    DD_TORCH_ADDITIVE
+    DD_TORCH_ADDITIVE,
+    DD_TM_FLOOR_Z,  // output from P_CheckPosition
+    DD_TM_CEILING_Z // output from P_CheckPosition
 };
 
 // Bounding box coordinates.

@@ -1882,18 +1882,18 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
         // information.
         if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
         {
-            if(!Sv_IsCreateMobjDelta(delta))
+            if(Sv_IsNullMobjDelta(delta))
+            {
+                // The missile is being removed entirely.
+                // Remove the entry from the missile record.
+                Sv_MRRemove(pool, delta->id);
+            }
+            else if(!Sv_IsCreateMobjDelta(delta))
             {
                 // This'll might exclude the coordinates.
                 // The missile is put on record when the client acknowledges
                 // the Create Mobj delta.
                 flags &= ~Sv_MRCheck(pool, mobjDelta);
-            }
-            else if(Sv_IsNullMobjDelta(delta))
-            {
-                // The missile is being removed entirely.
-                // Remove the entry from the missile record.
-                Sv_MRRemove(pool, delta->id);
             }
         }
     }

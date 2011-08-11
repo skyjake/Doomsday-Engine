@@ -97,6 +97,7 @@ typedef struct {
     // Miscellaneous.
     void          (*MobjThinker) ();
     float         (*MobjFriction) (void* mobj); // Returns a friction factor.
+    boolean       (*MobjCheckPosition3f) (struct mobj_s* mobj, float x, float y, float z);
     boolean       (*MobjTryMove3f) (struct mobj_s* mobj, float x, float y, float z);
     void          (*SectorHeightChangeNotification)(int sectorIdx); // Applies necessary checks on objects.
 

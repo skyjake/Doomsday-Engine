@@ -48,7 +48,7 @@
 // Milliseconds it takes for Unpredictable and Hidden mobjs to be
 // removed from the hash. Under normal circumstances, the special
 // status should be removed fairly quickly.
-#define CLMOBJ_TIMEOUT  1000    // milliseconds
+#define CLMOBJ_TIMEOUT  4000    // milliseconds
 
 // Missiles don't hit mobjs only after a short delay. This'll
 // allow the missile to move free of the shooter. (Quite a hack!)
@@ -243,13 +243,6 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
         stnum = states[stnum].nextState;
     }
     while(!mo->tics && stnum > 0);
-
-    // Update mobj's type (this is not perfectly reliable...)
-    // from the stateOwners table.
-    if(stateOwners[stnum])
-        mo->type = stateOwners[stnum] - mobjInfo;
-    else
-        mo->type = 0;
 }
 
 #if 1
@@ -453,14 +446,24 @@ void Cl_ExpireMobjs(void)
             next = info->next;
             mo = ClMobj_MobjForInfo(info);
 
-            if(mo->dPlayer != &ddPlayers[consolePlayer].shared &&
-               (mo->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)))
+            // Already deleted?
+            if(mo->thinker.function == (think_t)-1) continue;
+
+            if((mo->dPlayer != &ddPlayers[consolePlayer].shared &&
+               (info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)))
+                    || !mo->info)
             {
                 // Has this mobj timed out?
                 if(nowTime - info->time > CLMOBJ_TIMEOUT)
                 {
 #ifdef _DEBUG
-                    Con_Message("Cl_ExpireMobjs: Mobj %i has expired.\n", mo->thinker.id);
+                    Con_Message("Cl_ExpireMobjs: Mobj %i has expired (%i << %i), in state %s [%c%c%c].\n",
+                                mo->thinker.id,
+                                info->time, nowTime,
+                                Def_GetStateName(mo->state),
+                                info->flags & CLMF_UNPREDICTABLE? 'U' : '_',
+                                info->flags & CLMF_HIDDEN? 'H' : '_',
+                                info->flags & CLMF_NULLED? '0' : '_');
 #endif
                     // Too long. The server will probably never send anything
                     // for this mobj, so get rid of it. (Both unpredictable
@@ -845,7 +848,7 @@ void ClMobj_ReadDelta2(boolean skip)
             Msg_ReadFloat();
 
             info->flags |= CLMF_KNOWN_Z;
-            d->pos[VZ] = d->floorZ;
+            //d->pos[VZ] = d->floorZ;
         }
 
         d->ceilingZ = Msg_ReadFloat();
@@ -928,9 +931,7 @@ void ClMobj_ReadDelta2(boolean skip)
     }
 
     if(df & MDF_HEALTH)
-    {
         d->health = Msg_ReadLong();
-    }
 
     if(df & MDF_RADIUS)
         d->radius = Msg_ReadFloat();
@@ -951,6 +952,8 @@ void ClMobj_ReadDelta2(boolean skip)
     {
         d->type = Msg_ReadLong();
         d->info = &mobjInfo[d->type]; /// @todo check validity of d->type
+
+        assert(d->info);
     }
 
     // The delta has now been read. We can now skip if necessary.
@@ -977,6 +980,17 @@ void ClMobj_ReadDelta2(boolean skip)
         ClMobj_CheckPlanes(mo, justCreated);
     }
     */
+
+    if(!d->dPlayer && onFloor && gx.MobjCheckPosition3f)
+    {
+        float* floorZ = gx.GetVariable(DD_TM_FLOOR_Z);
+        if(floorZ)
+        {
+            // Update the Z position to be on the local floor.
+            gx.MobjCheckPosition3f(d, d->pos[VX], d->pos[VY], DDMAXFLOAT);
+            d->pos[VZ] = d->floorZ = *floorZ;
+        }
+    }
 
     // If the clmobj is Hidden (or Nulled), it will not be linked back to
     // the world until it's officially Created. (Otherwise, partially updated

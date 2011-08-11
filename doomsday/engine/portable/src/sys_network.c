@@ -475,7 +475,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         int received = SDLNet_TCP_Recv(sock, packet + bytes, size - bytes);
         if(received == -1)
         {
-            int number = errno;
+            //int number = errno;
             M_Free(packet); 
             packet = 0;
             /*Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",

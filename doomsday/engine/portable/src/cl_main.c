@@ -387,6 +387,11 @@ void Cl_Assertions(int plrNum)
         return;
 
     clmo = ClMobj_Find(s->clMobjId);
+    if(!clmo)
+    {
+        Con_Message("Cl_Assertions: client %i does not have a clmobj yet [%i].\n", plrNum, s->clMobjId);
+        return;
+    }
     mo = plr->shared.mo;
 
     /*

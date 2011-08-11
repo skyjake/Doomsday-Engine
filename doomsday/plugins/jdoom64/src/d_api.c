@@ -124,6 +124,12 @@ void *G_GetVariable(int id)
         R_GetWeaponBob(CONSOLEPLAYER, NULL, &bob[1]);
         return &bob[1];
 
+    case DD_TM_FLOOR_Z:
+        return &tmFloorZ;
+
+    case DD_TM_CEILING_Z:
+        return &tmCeilingZ;
+
     default:
         break;
     }
@@ -159,6 +165,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.MobjCheckPosition3f = P_CheckPosition3f;
     gx.MobjTryMove3f = P_TryMove3f;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
     gx.EndFrame = G_EndFrame;

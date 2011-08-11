@@ -1252,7 +1252,7 @@ void P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator)
     }
 }
 
-#define SMALLSPLASHCLIP 12;
+#define SMALLSPLASHCLIP 12
 
 /**
  * @return              @c true, if mobj contacted a non-solid floor.
@@ -1261,6 +1261,8 @@ boolean P_HitFloor(mobj_t* thing)
 {
     mobj_t*             mo;
     const terraintype_t* tt;
+
+    if(IS_CLIENT) return false;
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {
