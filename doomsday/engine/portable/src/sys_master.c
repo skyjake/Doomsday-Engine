@@ -330,8 +330,12 @@ static int C_DECL MasterWorker_Thread(void* param)
     ddstring_t msg;
     char masterUrl[512];
     char errorBuf[CURL_ERROR_SIZE];
+    CURL* session;
 
     Str_InitStd(&msg);
+
+    // Prepare the curl session for our HTTP requests.
+    session = curl_easy_init();
 
     while(true)
     {
@@ -349,15 +353,11 @@ static int C_DECL MasterWorker_Thread(void* param)
         }
         else if(job.act == MWA_REQUEST)
         {
-            CURL* session;
-
             assert(!job.data);
 
             MasterWorker_GetUrl(masterUrl);
             strcat(masterUrl, "?list");
 
-            // Prepare the curl session for our HTTP GET request.
-            session = curl_easy_init();
 #ifdef _DEBUG
             curl_easy_setopt(session, CURLOPT_VERBOSE, true);
 #endif
@@ -385,15 +385,10 @@ static int C_DECL MasterWorker_Thread(void* param)
 
             // We're done with the parsing.
             Str_Free(&msg);
-
-            // Cleanup the curl session.
-            curl_easy_cleanup(session);
-            session = NULL;
         }
         else if(job.act == MWA_ANNOUNCE)
         {
             // Post a server announcement.
-            CURL* session;
             struct curl_slist* headers = 0;
             headers = curl_slist_append(0, "Content-Type: application/x-deng-announce");
 
@@ -406,8 +401,7 @@ static int C_DECL MasterWorker_Thread(void* param)
             M_Free(job.data);
             job.data = 0;
 
-            // Prepare the curl session for our HTTP POST request.
-            session = curl_easy_init();
+            // Setup the request.
 #ifdef _DEBUG
             curl_easy_setopt(session, CURLOPT_VERBOSE, true);
 #endif
@@ -428,17 +422,19 @@ static int C_DECL MasterWorker_Thread(void* param)
                 fprintf(outFile, "N_MasterSendAnnouncement: %s\n", errorBuf);
             }
 
+            // Cleanup.
             Str_Free(&msg);
-
-            // Cleanup the curl session.
             curl_slist_free_all(headers);
-            curl_easy_cleanup(session);
-            session = NULL;
         }
 
         // The job is done!
         MasterWorker_Discard();
     }
+
+    // Cleanup the curl session.
+    curl_easy_cleanup(session);
+    session = NULL;
+
     return 0;
 }
 
