@@ -890,10 +890,10 @@ void Sv_SendFrame(int plrNum)
     byte                oldResend;
     delta_t*            delta;
     int                 deltaCount = 0;
-    size_t              lastStart, maxFrameSize, deltaCountOffset = 0;
-#if _NETDEBUG
+    size_t              lastStart, maxFrameSize; //, deltaCountOffset = 0;
+/*#if _NETDEBUG
     int                 endOffset = 0;
-#endif
+#endif*/
 
     // Does the send queue allow us to send this packet?
     // Bandwidth rating is updated during the check.
@@ -933,7 +933,7 @@ void Sv_SendFrame(int plrNum)
     */
 
     // The number of deltas in the packet will be here.
-    deltaCountOffset = Msg_Offset();
+    //deltaCountOffset = Msg_Offset();
     /*
 #ifdef _NETDEBUG
     Msg_WriteLong(0);
@@ -1005,12 +1005,14 @@ if(delta->state == DELTA_UNACKED)
     }
 
     // Update the number of deltas included in the packet.
+/*
 #ifdef _NETDEBUG
     endOffset = Msg_Offset();
     Msg_SetOffset(deltaCountOffset);
     Msg_WriteLong(deltaCount);
     Msg_SetOffset(endOffset);
 #endif
+*/
 
     Net_SendBuffer(plrNum, 0);
 

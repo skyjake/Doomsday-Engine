@@ -43,6 +43,12 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifdef _DEBUG
+#  define CHECK_OVERFLOW(s)    if(Msg_Offset() >= NETBUFFER_ACTUALSIZE - s) Con_Error("net_msg: Buffer about to overflow!\n");
+#else
+#  define CHECK_OVERFLOW(s)
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -68,6 +74,7 @@ void Msg_Begin(int type)
 
 void Msg_WriteByte(byte b)
 {
+    CHECK_OVERFLOW(1);
     *netBuffer.cursor++ = b;
 }
 
@@ -82,6 +89,7 @@ byte Msg_ReadByte(void)
 
 void Msg_WriteShort(short w)
 {
+    CHECK_OVERFLOW(2);
     *(short *) netBuffer.cursor = SHORT(w);
     netBuffer.cursor += 2;
 }
@@ -107,6 +115,8 @@ unsigned short Msg_ReadUnsignedShort(void)
  */
 void Msg_WritePackedShort(short w)
 {
+    CHECK_OVERFLOW(2);
+
     if(w < 0)
     {
         Con_Error("Msg_WritePackedShort: Cannot write %i.\n", w);
@@ -142,6 +152,7 @@ short Msg_ReadPackedShort(void)
 
 void Msg_WriteLong(int l)
 {
+    CHECK_OVERFLOW(4);
     *(int*) netBuffer.cursor = LONG(l);
     netBuffer.cursor += 4;
 }
@@ -169,6 +180,8 @@ float Msg_ReadFloat(void)
 
 void Msg_WritePackedLong(uint l)
 {
+    CHECK_OVERFLOW(5);
+
     while(l >= 0x80)
     {
         // Write the lowest 7 bits, and set the high bit to indicate that
@@ -204,6 +217,8 @@ uint Msg_ReadPackedLong(void)
 
 void Msg_Write(const void *src, size_t len)
 {
+    CHECK_OVERFLOW(len);
+
     memcpy(netBuffer.cursor, src, len);
     netBuffer.cursor += len;
 }

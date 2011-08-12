@@ -402,7 +402,7 @@ void Cl_Frame2Received(int packetType)
                           deltaType);
             }
 
-#ifdef _NETDEBUG
+/*#ifdef _NETDEBUG
             // Check that we didn't misread.
             if(Msg_Offset() - startOffset != deltaLength)
             {
@@ -410,7 +410,7 @@ void Cl_Frame2Received(int packetType)
                           "%i bytes, but we read %i bytes.\n",
                           deltaLength, Msg_Offset() - startOffset);
             }
-#endif
+#endif*/
         }
 
 #ifdef _DEBUG

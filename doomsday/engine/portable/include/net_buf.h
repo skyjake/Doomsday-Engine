@@ -38,6 +38,7 @@
 //#define SPF_ORDERED     0x80000000 // Send in order & confirm
 
 #define NETBUFFER_MAXDATA   (0x7fff - 8) // 32 KB
+#define NETBUFFER_ACTUALSIZE    0xffff  // 64 KB
 
 // Each network node is identified by a number.
 typedef unsigned int nodeid_t;
@@ -59,7 +60,7 @@ typedef unsigned short msgid_t;
 typedef struct {
     msgid_t         id;             // Unused.
     byte            type;           // Type of the message.
-    byte            data[NETBUFFER_MAXDATA];
+    byte            data[NETBUFFER_ACTUALSIZE];
 } netdata_t;
 #pragma pack()
 

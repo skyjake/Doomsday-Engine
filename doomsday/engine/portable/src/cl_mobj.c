@@ -449,9 +449,10 @@ void Cl_ExpireMobjs(void)
             // Already deleted?
             if(mo->thinker.function == (think_t)-1) continue;
 
-            if((mo->dPlayer != &ddPlayers[consolePlayer].shared &&
-               (info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)))
-                    || !mo->info)
+            // Don't expire player mobjs.
+            if(mo->dPlayer) continue;
+
+            if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
             {
                 // Has this mobj timed out?
                 if(nowTime - info->time > CLMOBJ_TIMEOUT)
