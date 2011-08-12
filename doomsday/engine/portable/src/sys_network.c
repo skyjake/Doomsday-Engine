@@ -541,11 +541,6 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     memcpy(transmissionBuffer, &packetSize, 2);
     memcpy(transmissionBuffer + 2, data, size);
 
-#ifndef WIN32
-    // We really do not want to know about SIGPIPE.
-    signal(SIGPIPE, SIG_IGN);
-#endif
-
     // Send the data over the socket.
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
 
