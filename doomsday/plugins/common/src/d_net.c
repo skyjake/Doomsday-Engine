@@ -431,6 +431,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_PlayerSpawnPosition(data);
         break;
 
+    case GPT_MOBJ_IMPULSE:
+        NetCl_MobjImpulse(data);
+        break;
+
     case GPT_MESSAGE:
 #ifdef _DEBUG
         Con_Message("D_HandlePacket: GPT_MESSAGE\n");

@@ -638,8 +638,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             thing->mom[MX] += tmThing->mom[MX];
             thing->mom[MY] += tmThing->mom[MY];
 
-            if(thing->dPlayer)
-                thing->dPlayer->flags |= DDPF_FIXMOM;
+            NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX], tmThing->mom[VY], 0);
 
             if((thing->mom[MX] + thing->mom[MY]) > 3)
             {
@@ -693,8 +692,8 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 {
                     thing->mom[MX] += tmThing->mom[MX] / 16;
                     thing->mom[MY] += tmThing->mom[MY] / 16;
-                    if(thing->dPlayer)
-                        thing->dPlayer->flags |= DDPF_FIXMOM;
+
+                    NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX] / 16, tmThing->mom[MY] / 16, 0);
                 }
 
                 if((!thing->player && !(thing->flags2 & MF2_BOSS)) ||
@@ -859,8 +858,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             {   // Push thing
                 thing->mom[MX] += tmThing->mom[MX] / 4;
                 thing->mom[MY] += tmThing->mom[MY] / 4;
-                if(thing->dPlayer)
-                    thing->dPlayer->flags |= DDPF_FIXMOM;
+                NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
             }
             IterList_Empty(spechit);
             return true;
@@ -905,8 +903,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     {   // Push thing
         thing->mom[MX] += tmThing->mom[MX] / 4;
         thing->mom[MY] += tmThing->mom[MY] / 4;
-        if(thing->dPlayer)
-            thing->dPlayer->flags |= DDPF_FIXMOM;
+        NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
     }
 
     // \kludge: Always treat blood as a solid.

@@ -47,5 +47,6 @@ void            NetCl_LoadGame(void* data);
 void            NetCl_Paused(boolean setPause);
 void            NetCl_PlayerActionRequest(player_t* player, int actionType, int actionParam);
 void            NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage);
+void            NetCl_MobjImpulse(byte* data);
 
 #endif

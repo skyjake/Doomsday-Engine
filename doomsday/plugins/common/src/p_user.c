@@ -355,6 +355,7 @@ void P_CheckPlayerJump(player_t *player)
 void P_PlayerRemoteMove(player_t* player)
 {
     int plrNum = player - players;
+    ddplayer_t* ddpl = player->plr;
     Smoother* smoother = Net_PlayerSmoother(plrNum);
     mobj_t* mo = player->plr->mo;
     float xyz[3];
@@ -377,11 +378,15 @@ void P_PlayerRemoteMove(player_t* player)
     if(IS_SERVER && !Sv_CanTrustClientPos(plrNum))
         return;
 
-    // As the mobj is being moved by the smoother, it has no momentum in the regular
-    // physics sense.
-    mo->mom[VX] = 0;
-    mo->mom[VY] = 0;
-    mo->mom[VZ] = 0;
+    // Unless there is a pending momentum fix, clear the mobj's momentum.
+    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
+    {
+        // As the mobj is being moved by the smoother, it has no momentum in the regular
+        // physics sense.
+        mo->mom[VX] = 0;
+        mo->mom[VY] = 0;
+        mo->mom[VZ] = 0;
+    }
 
     if(!Smoother_Evaluate(smoother, xyz))
     {

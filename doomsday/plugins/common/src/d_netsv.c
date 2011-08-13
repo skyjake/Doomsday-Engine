@@ -995,6 +995,28 @@ void NetSv_SendGameState(int flags, int to)
 }
 
 /**
+ * Informs a player of an impulse momentum that needs to be applied to the player's mobj.
+ */
+void NetSv_PlayerMobjImpulse(mobj_t* mobj, float mx, float my, float mz)
+{
+    byte buffer[50];
+    byte *ptr = buffer;
+    int plrNum = 0;
+
+    if(!IS_SERVER || !mobj || !mobj->player) return;
+
+    // Which player?
+    plrNum = mobj->player - players;
+
+    WRITE_SHORT(ptr, mobj->thinker.id);
+    WRITE_FLOAT(ptr, mx);
+    WRITE_FLOAT(ptr, my);
+    WRITE_FLOAT(ptr, mz);
+
+    Net_SendPacket(plrNum, GPT_MOBJ_IMPULSE, buffer, ptr - buffer);
+}
+
+/**
  * Sends the initial player position to a client. This is the position defined
  * by the map's start spots. It is sent immediately after the server determines
  * where a player is to spawn.

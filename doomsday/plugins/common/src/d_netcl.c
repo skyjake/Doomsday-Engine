@@ -255,6 +255,33 @@ void NetCl_UpdateGameState(byte *data)
     Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
 }
 
+void NetCl_MobjImpulse(byte* data)
+{
+    mobj_t* mo = players[CONSOLEPLAYER].plr->mo;
+    mobj_t* clmo = ClPlayer_ClMobj(CONSOLEPLAYER);
+    thid_t id = 0;
+
+    if(!mo) return;
+
+    NetCl_SetReadBuffer(data);
+
+    id = NetCl_ReadUShort();
+    if(id != clmo->thinker.id)
+    {
+        // Not applicable; wrong mobj.
+        return;
+    }
+
+#ifdef _DEBUG
+    Con_Message("NetCl_MobjImpulse: Player %i, clmobj %i\n", CONSOLEPLAYER, id);
+#endif
+
+    // Apply to the local mobj.
+    mo->mom[MX] += NetCl_ReadFloat();
+    mo->mom[MY] += NetCl_ReadFloat();
+    mo->mom[MZ] += NetCl_ReadFloat();
+}
+
 void NetCl_PlayerSpawnPosition(byte* data)
 {
     player_t* p = &players[CONSOLEPLAYER];

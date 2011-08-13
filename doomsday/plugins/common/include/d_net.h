@@ -73,7 +73,8 @@ enum {
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
     GPT_PLAYER_SPAWN_POSITION,
-    GPT_DAMAGE                     // Client requests damage on a target.
+    GPT_DAMAGE,                    // Client requests damage on a target.
+    GPT_MOBJ_IMPULSE               // Momenum to apply on a mobj.
 };
 
 #if 0
