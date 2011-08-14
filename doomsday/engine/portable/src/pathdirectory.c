@@ -1003,7 +1003,7 @@ void printDistributionHistogram(pathdirectory_t* pd, ushort size,
     Con_Printf("\n");
     Con_FPrintf(CBLF_RULER, "");
 
-    { ushort i, from = 0, n = 0, range = (size != 0? PATHDIRECTORY_PATHHASH_SIZE / size + PATHDIRECTORY_PATHHASH_SIZE % size: 0);
+    { ushort i, from = 0, n = 0, range = (size != 0? PATHDIRECTORY_PATHHASH_SIZE / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
 
     for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
@@ -1025,7 +1025,7 @@ void printDistributionHistogram(pathdirectory_t* pd, ushort size,
         if(size != 0)
         {
             ddstring_t range; Str_Init(&range);
-            Str_Appendf(&range, "%*u...%*u", hashIndexDigits, from, hashIndexDigits, from+n);
+            Str_Appendf(&range, "%*u...%*u", hashIndexDigits, from, hashIndexDigits, from+n-1);
             Con_Printf("[%*s]", colWidths[col++]-2/*braces*/, Str_Text(&range));
             Str_Free(&range);
         }
