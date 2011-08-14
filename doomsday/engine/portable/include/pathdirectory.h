@@ -46,8 +46,8 @@ typedef enum {
  * @defgroup pathComparisonFlags  Path Comparison Flags
  * @{
  */
-#define PCF_NO_LEAF         0x1 /// Do not consider leaves as possible candidates.
-#define PCF_NO_BRANCH       0x2 /// Do not consider branches as possible candidates.
+#define PCF_NO_BRANCH       0x1 /// Do not consider branches as possible candidates.
+#define PCF_NO_LEAF         0x2 /// Do not consider leaves as possible candidates.
 #define PCF_MATCH_PARENT    0x4 /// Only consider nodes whose parent matches that referenced.
 #define PCF_MATCH_FULL      0x8 /// Whole path must match completely (i.e., path begins
                                 /// from the same root point) otherwise allow partial
@@ -73,6 +73,10 @@ typedef struct {
     struct pathdirectory_node_s* resultNode;
 } pathdirectory_search_t;
 
+typedef struct {
+    struct pathdirectory_node_s* head[PATHDIRECTORY_NODETYPES_COUNT];
+} pathdirectory_nodelist_t;
+
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship tree of
  * string+value data pairs.
@@ -84,7 +88,7 @@ typedef struct {
  */
 // Number of entries in the hash table.
 #define PATHDIRECTORY_PATHHASH_SIZE 512
-typedef struct pathdirectory_node_s* pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
+typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
 
 typedef struct pathdirectory_s {
     /// Path name fragment intern pool.

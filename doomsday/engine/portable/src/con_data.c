@@ -120,7 +120,7 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
     cvar_t* var = PathDirectoryNode_DetachUserData(node);
     if(NULL != var)
     {
-        assert(PCF_NO_LEAF == PathDirectoryNode_Type(node));
+        assert(PT_LEAF == PathDirectoryNode_Type(node));
         if((var->flags & CVF_CAN_FREE) && var->type == CVT_CHARPTR)
         {
             char** ptr = (char**) var->ptr;
@@ -1571,6 +1571,7 @@ D_CMD(VarStats)
     PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
     Con_Printf("       Total: %u\n      Hidden: %u\n\n", cvarCount, p.count);
     PathDirectory_PrintHashDistribution(cvarDirectory);
+    PathDirectory_Print(cvarDirectory, CVARDIRECTORY_DELIMITER);
     return true;
 }
 
