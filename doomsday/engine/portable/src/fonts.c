@@ -673,6 +673,7 @@ font_t* Fonts_LoadExternal(const char* name, const char* searchPath)
     fontNum = Fonts_CheckNumForPath(uri);
     if(fontNum != 0)
     {
+        Uri_Destruct(uri);
         return Fonts_ToFont(fontNum);
     }
 
