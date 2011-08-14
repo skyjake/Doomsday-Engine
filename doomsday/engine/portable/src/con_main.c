@@ -405,14 +405,13 @@ void Con_Shutdown(void)
 {
     Con_Message("Shuting down the console...\n");
 
-    Con_DestroyBuffer(histBuf); // The console history buffer.
-    Con_DestroyBuffer(oldCmds); // The old commands buffer.
-
+    Con_ClearExecBuffer();
+    Con_ShutdownDatabases();
     if(prbuff)
         M_Free(prbuff); // Free the print buffer.
 
-    Con_ClearExecBuffer();
-    Con_ShutdownDatabases();
+    Con_DestroyBuffer(histBuf); // The console history buffer.
+    Con_DestroyBuffer(oldCmds); // The old commands buffer.
 }
 
 boolean Con_IsActive(void)

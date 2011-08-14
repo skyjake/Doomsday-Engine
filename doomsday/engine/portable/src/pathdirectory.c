@@ -159,6 +159,13 @@ static void clearPathHash(pathdirectory_pathhash_t* ph)
     while(NULL != (*ph)[i])
     {
         pathdirectory_node_t* next = (*ph)[i]->next;
+#if _DEBUG
+        if(NULL != PathDirectoryNode_UserData((*ph)[i]))
+        {
+            Con_Error("PathDirectory::clearPathHash: Node %p has non-NULL user data.", (*ph)[i]);
+            exit(1); // Unreachable.
+        }
+#endif
         PathDirectoryNode_Destruct((*ph)[i]);
         (*ph)[i] = next;
     }
@@ -373,7 +380,7 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
     {
         pathdirectory_node_t* node;
         ushort i;
-        if(parent == NULL && hash >= 0 && hash < PATHDIRECTORY_PATHHASH_SIZE)
+        if(hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
             for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
             {
@@ -417,7 +424,7 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
     {
         pathdirectory_node_t* node;
         ushort i;
-        if(parent == NULL && hash >= 0 && hash < PATHDIRECTORY_PATHHASH_SIZE)
+        if(hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
             for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
             {
