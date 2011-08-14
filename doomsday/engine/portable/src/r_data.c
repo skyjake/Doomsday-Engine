@@ -1725,6 +1725,7 @@ typedef struct {
     free(validTexDefs);
     free(texDefNumPatches);
     free(maptex1);
+    free(patchInfo);
 
     if(numDefs)
         *numDefs = numValidTexDefs;
