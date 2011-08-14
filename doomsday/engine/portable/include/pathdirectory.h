@@ -100,6 +100,9 @@ pathdirectory_t* PathDirectory_Construct(void);
 
 void PathDirectory_Destruct(pathdirectory_t* pd);
 
+/// @return  Print-ready name for node @a type.
+const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type);
+
 /**
  * Clear the directory contents.
  */
@@ -192,9 +195,8 @@ ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const struct pathdire
  */
 ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter, size_t* count);
 
-#if _DEBUG
 void PathDirectory_Print(pathdirectory_t* pd, char delimiter);
-#endif 
+void PathDirectory_PrintHashDistribution(pathdirectory_t* pd);
 
 /// @return  PathDirectory which owns this node.
 pathdirectory_t* PathDirectoryNode_Directory(const struct pathdirectory_node_s* node);

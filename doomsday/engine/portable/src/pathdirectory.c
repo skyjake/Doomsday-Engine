@@ -27,6 +27,7 @@
 
 #include "stringpool.h"
 #include "pathdirectory.h"
+#include "m_misc.h"
 
 typedef struct pathdirectory_node_userdatapair_s {
     stringpool_internid_t internId;
@@ -492,6 +493,16 @@ void PathDirectory_Destruct(pathdirectory_t* pd)
     }
 }
 
+const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type)
+{
+    static const ddstring_t nodeNames[PATHDIRECTORY_NODETYPES_COUNT] = {
+        { "branch" },
+        { "leaf" },
+    };
+    assert(VALID_PATHDIRECTORY_NODETYPE(type));
+    return &nodeNames[type - PATHDIRECTORY_NODETYPES_FIRST];
+}
+
 void PathDirectory_Clear(pathdirectory_t* pd)
 {
     assert(NULL != pd);
@@ -802,7 +813,6 @@ ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char deli
     }
 }
 
-#if _DEBUG
 static int C_DECL comparePaths(const void* a, const void* b)
 {
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
@@ -815,7 +825,7 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
     size_t numLeafs, n = 0;
     ddstring_t* pathList;
 
-    Con_Printf("PathDirectory:\n");
+    Con_Printf("PathDirectory: %p\n", pd);
     if(NULL != (pathList = PathDirectory_CollectPaths(pd, PT_LEAF, delimiter, &numLeafs)))
     {
         qsort(pathList, numLeafs, sizeof(*pathList), comparePaths);
@@ -829,7 +839,330 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numLeafs, (numLeafs==1? "path":"paths"));
     }
 }
-#endif
+
+static void printDistributionOverviewElement(const int* colWidths, const char* name,
+    size_t numEmpty, size_t numCollisions, size_t maxCollisions, size_t sum, size_t total)
+{
+    assert(NULL != colWidths);
+    {
+    float coverage, collision, variance;
+    int col = 0;
+
+    if(0 != total)
+    {
+        size_t sumSqr = sum*sum;
+        float mean = (signed)sum / total;
+        variance = ((signed)sumSqr - (signed)sum * mean) / (((signed)total)-1);
+
+        coverage  = 100 / (float)PATHDIRECTORY_PATHHASH_SIZE * (PATHDIRECTORY_PATHHASH_SIZE - numEmpty);
+        collision = 100 / (float) total * numCollisions;
+    }
+    else
+    {
+        variance = coverage = collision = 0;
+    }
+
+    Con_Printf("%*s"    , colWidths[col++], name);
+    Con_Printf("%*.2f"  , colWidths[col++], variance);
+    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)maxCollisions);
+    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)numEmpty);
+    Con_Printf("%*.2f"  , colWidths[col++], coverage);
+    Con_Printf("%*.2f\n", colWidths[col++], collision);
+    }
+}
+
+static void printDistributionOverview(pathdirectory_t* pd,
+    size_t nodeCountSum[PATHDIRECTORY_NODETYPES_COUNT],
+    size_t nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT],
+    size_t nodeBucketCollisions[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketCollisionsTotal,
+    size_t nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT],
+    size_t nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketEmptyTotal,
+    size_t nodeCount[PATHDIRECTORY_NODETYPES_COUNT])
+{
+#define NUMCOLS             6/*type+variancee+height#+empty#+coverage%+collision%*/
+    assert(NULL != pd);
+    {
+    size_t collisionsMax, countSum, countTotal = 0;
+    int i, col, colWidths[NUMCOLS];
+
+    collisionsMax = 0;
+    countSum = 0;
+    countTotal = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+    {
+        if(nodeBucketCollisionsMax[i] > collisionsMax)
+            collisionsMax = nodeBucketCollisionsMax[i];
+        countSum += nodeCountSum[i];
+        countTotal += nodeCountTotal[i];
+    }
+
+    // Calculate minimum field widths:
+    colWidths[col = 0] = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+    {
+        if(Str_Length(PathDirectory_NodeTypeName(i)) > colWidths[0])
+            colWidths[0] = Str_Length(PathDirectory_NodeTypeName(i));
+    }
+    col++;
+    colWidths[col++] = 8; /*variance*/
+    colWidths[col++] = 7; /*height#*/
+    colWidths[col++] = 6; /*empty#*/
+    colWidths[col++] = 9; /*coverage%*/
+    colWidths[col++] = 10;/*collision%*/
+
+    // Apply formatting:
+    for(i = 0; i < NUMCOLS; ++i) { colWidths[i] += 1; }
+
+    Con_FPrintf(CBLF_YELLOW, "Directory Distribution (p:%p):\n", pd);
+    // Print heading:
+    col = 0;
+    Con_Printf("%*s", colWidths[col++], "type");
+    Con_Printf("%*s", colWidths[col++], "variance");
+    Con_Printf("%*s", colWidths[col++], "height#");
+    Con_Printf("%*s", colWidths[col++], "empty#");
+    Con_Printf("%*s", colWidths[col++], "coverage%");
+    Con_Printf("%*s\n", colWidths[col], "collision%");
+    Con_FPrintf(CBLF_RULER, "");
+
+    if(countTotal != 0)
+    {
+        for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        {
+            printDistributionOverviewElement(colWidths, Str_Text(PathDirectory_NodeTypeName(i)),
+                nodeBucketEmpty[i], nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
+                nodeCountSum[i], nodeCountTotal[i]);
+        }
+        Con_FPrintf(CBLF_RULER, "");
+    }
+
+    printDistributionOverviewElement(colWidths, "total", 
+        nodeBucketEmptyTotal, nodeBucketCollisionsTotal, collisionsMax,
+        countSum / PATHDIRECTORY_NODETYPES_COUNT, countTotal);
+    }
+#undef NUMCOLS
+}
+
+void printDistributionHistogram(pathdirectory_t* pd, ushort size,
+    size_t nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT])
+{
+#define NUMCOLS             4/*range+total+PATHDIRECTORY_NODETYPES_COUNT*/
+    assert(NULL != pd);
+    {
+    size_t totalForRange, total, nodeCount[PATHDIRECTORY_NODETYPES_COUNT];
+    int hashIndexDigits, col, colWidths[2+/*range+total*/PATHDIRECTORY_NODETYPES_COUNT];
+    pathdirectory_node_t* node;
+    int i, j;
+
+    total = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        total += nodeCountTotal[i];
+    if(0 == total) return;
+
+    // Calculate minimum field widths:
+    hashIndexDigits = M_NumDigits(PATHDIRECTORY_PATHHASH_SIZE);
+    col = 0;
+    if(size != 0)
+        colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
+    else
+        colWidths[col] = 2/*braces*/+hashIndexDigits;
+    colWidths[col] = MAX_OF(colWidths[col], 5/*range*/);
+    ++col;
+
+    { size_t max = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        if(nodeCountTotal[i] > max)
+            max = nodeCountTotal[i];
+    colWidths[col++] = MAX_OF(M_NumDigits((int)max), 5/*total*/);
+    }
+
+    { int i;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i, ++col)
+        colWidths[col] = Str_Length(PathDirectory_NodeTypeName(i));
+    }
+
+    // Apply formatting:
+    for(i = 1; i < NUMCOLS; ++i) { colWidths[i] += 1; }
+
+    Con_FPrintf(CBLF_YELLOW, "Histogram (p:%p):\n", pd);
+    // Print heading:
+    col = 0;
+    Con_Printf("%*s", colWidths[col++], "range");
+    Con_Printf("%*s", colWidths[col++], "total");
+    { int i;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        Con_Printf("%*s", colWidths[col++], Str_Text(PathDirectory_NodeTypeName(i)));
+    }
+    Con_Printf("\n");
+    Con_FPrintf(CBLF_RULER, "");
+
+    { ushort i, from = 0, n = 0, range = (size != 0? PATHDIRECTORY_PATHHASH_SIZE / size + PATHDIRECTORY_PATHHASH_SIZE % size: 0);
+    memset(nodeCount, 0, sizeof(nodeCount));
+
+    for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+    {
+        if(NULL != pd->_pathHash)
+        {
+            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+                ++nodeCount[PathDirectoryNode_Type(node) - PATHDIRECTORY_NODETYPES_FIRST];
+        }
+
+        if(size != 0 && (++n != range && i != PATHDIRECTORY_PATHHASH_SIZE-1))
+            continue;
+
+        totalForRange = 0;
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+            totalForRange += nodeCount[j];
+
+        col = 0;
+        if(size != 0)
+        {
+            ddstring_t range; Str_Init(&range);
+            Str_Appendf(&range, "%*u...%*u", hashIndexDigits, from, hashIndexDigits, from+n);
+            Con_Printf("[%*s]", colWidths[col++]-2/*braces*/, Str_Text(&range));
+            Str_Free(&range);
+        }
+        else
+        {
+            Con_Printf("[%*u]", colWidths[col++]-2/*braces*/, i);
+        }
+
+        Con_Printf("%*lu", colWidths[col++], (unsigned long) totalForRange);
+        if(0 != totalForRange)
+        {
+            for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j, ++col)
+            {
+                if(0 != nodeCount[j])
+                {
+                    Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCount[j]);
+                }
+                else if(j < PATHDIRECTORY_NODETYPES_COUNT-1 || 0 == size)
+                {
+                    Con_Printf("%*s", colWidths[col], "");
+                }
+            }
+        }
+
+        // Are we printing a "graphical" representation?
+        if(0 != totalForRange)
+        {
+            size_t max = MAX_OF(1, ROUND(total/(float)size/10));
+            size_t scale = totalForRange / (float)max;
+            
+            scale = MAX_OF(scale, 1);
+            Con_Printf(" ");
+            for(n = 0; n < scale; ++n)
+                Con_Printf("*");
+        }
+
+        Con_Printf("\n");
+        from = i+1;
+        n = 0;
+        memset(nodeCount, 0, sizeof(nodeCount));
+    }}
+    Con_FPrintf(CBLF_RULER, "");
+
+    // Sums:
+    col = 0;
+    Con_Printf("%*s",  colWidths[col++], "Sum");
+    Con_Printf("%*lu", colWidths[col++], (unsigned long) total);
+    if(0 != total)
+    {
+        int i;
+        for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i, ++col)
+        {
+            if(0 != nodeCountTotal[i])
+            {
+                Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCountTotal[i]);
+            }
+            else if(i < PATHDIRECTORY_NODETYPES_COUNT-1)
+            {
+                Con_Printf("%*s", colWidths[col], "");
+            }
+        }
+    }
+    Con_Printf("\n");
+    }
+#undef NUMCOLS
+}
+
+void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
+{
+    assert(NULL != pd);
+    {
+    size_t nodeCountSum[PATHDIRECTORY_NODETYPES_COUNT],
+           nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT],
+           nodeBucketCollisions[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketCollisionsTotal = 0,
+           nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT],
+           nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketEmptyTotal = 0,
+           nodeCount[PATHDIRECTORY_NODETYPES_COUNT];
+    size_t totalForRange;
+    pathdirectory_node_t* node;
+    int j;
+
+    memset(nodeCountTotal, 0, sizeof(nodeCountTotal));
+    if(NULL != pd->_pathHash)
+    {
+        ushort i;
+        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+                ++nodeCountTotal[PathDirectoryNode_Type(node) - PATHDIRECTORY_NODETYPES_FIRST];
+    }
+
+    memset(nodeCountSum, 0, sizeof(nodeCountSum));
+    memset(nodeBucketCollisions, 0, sizeof(nodeBucketCollisions));
+    memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
+    memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
+
+    { ushort i;
+    for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+    {
+        memset(nodeCount, 0, sizeof(nodeCount));
+        totalForRange = 0;
+        if(NULL != pd->_pathHash)
+        {
+            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+                ++nodeCount[PathDirectoryNode_Type(node) - PATHDIRECTORY_NODETYPES_FIRST];
+
+            for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+            {
+                totalForRange += nodeCount[j];
+                nodeCountSum[j] += nodeCount[j];
+            }
+        }
+
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+        {
+            if(nodeCount[j] != 0)
+            {
+                if(nodeCount[j] > 1)
+                    nodeBucketCollisions[j] += nodeCount[j]-1;
+            }
+            else
+            {
+                ++nodeBucketEmpty[j];
+            }
+            if(nodeCount[j] > nodeBucketCollisionsMax[j])
+                nodeBucketCollisionsMax[j] = nodeCount[j];
+        }
+
+        if(totalForRange != 0)
+        {
+            if(totalForRange > 1)
+                nodeBucketCollisionsTotal += totalForRange-1;
+        }
+        else
+        {
+            ++nodeBucketEmptyTotal;
+        }
+    }}
+
+    printDistributionOverview(pd, nodeCountSum, nodeCountTotal,
+        nodeBucketCollisions, nodeBucketCollisionsTotal,
+        nodeBucketCollisionsMax, nodeBucketEmpty, nodeBucketEmptyTotal, nodeCount);
+    Con_Printf("\n");
+    printDistributionHistogram(pd, 10, nodeCountTotal);
+    }
+}
 
 static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,

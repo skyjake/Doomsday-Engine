@@ -421,7 +421,6 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeTyp
     }
 }
 
-#if _DEBUG
 static int C_DECL comparePaths(const void* a, const void* b)
 {
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
@@ -448,4 +447,9 @@ void FileDirectory_Print(filedirectory_t* fd)
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "file":"files"));
     }
 }
-#endif
+
+void FileDirectory_PrintHashDistribution(filedirectory_t* fd)
+{
+    assert(NULL != fd);
+    PathDirectory_PrintHashDistribution(fd->_pathDirectory);
+}
