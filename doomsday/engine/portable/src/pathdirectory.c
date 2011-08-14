@@ -844,10 +844,8 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
     size_t sum, size_t total)
 {
-    assert(NULL != colWidths);
-    {
     float coverage, collision, variance;
-    int col = 0;
+    const int* col;
 
     if(0 != total)
     {
@@ -863,16 +861,18 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
         variance = coverage = collision = 0;
     }
 
-    Con_Printf("%*s"    , colWidths[col++], name);
-    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)total);
-    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)numEmpty);
-    Con_Printf("%*.2f"  , colWidths[col++], variance);
-    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)maxCollisions);
-    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)numCollisions);
-    Con_Printf("%*.2f"  , colWidths[col++], collision);
-    Con_Printf("%*.2f"  , colWidths[col++], coverage);
-    Con_Printf("%*lu\n" , colWidths[col++], (unsigned long)maxHeight);
-    }
+    assert(NULL != colWidths);
+    col = colWidths;
+    Con_Printf("%*s ",    *col++, name);
+    Con_Printf("%*lu ",   *col++, (unsigned long)total);
+    Con_Printf("%*lu",    *col++, PATHDIRECTORY_PATHHASH_SIZE - (unsigned long)numEmpty);
+    Con_Printf(":%-*lu ", *col++, (unsigned long)numEmpty);
+    Con_Printf("%*lu ",   *col++, (unsigned long)maxCollisions);
+    Con_Printf("%*lu ",   *col++, (unsigned long)numCollisions);
+    Con_Printf("%*.2f ",  *col++, collision);
+    Con_Printf("%*.2f ",  *col++, coverage);
+    Con_Printf("%*.2f ",  *col++, variance);
+    Con_Printf("%*lu\n",  *col++, (unsigned long)maxHeight);
 }
 
 static void printDistributionOverview(pathdirectory_t* pd,
@@ -883,11 +883,11 @@ static void printDistributionOverview(pathdirectory_t* pd,
     size_t nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketEmptyTotal, size_t nodeBucketHeight,
     size_t nodeCount[PATHDIRECTORY_NODETYPES_COUNT])
 {
-#define NUMCOLS             9/*type+total#+empty#+variance+collideMax+collide#+collide%+coverage%+maxheight*/
+#define NUMCOLS             10/*type+count+used:+empty+collideMax+collideCount+collidePercent+coverage+variance+maxheight*/
     assert(NULL != pd);
     {
-    size_t height = 0, collisionsMax = 0, countSum = 0, countTotal = 0;
-    int i, col, colWidths[NUMCOLS];
+    size_t collisionsMax = 0, countSum = 0, countTotal = 0;
+    int i, nodeCountDigits, colWidths[NUMCOLS], spans[4][2], *span, *col;
 
     for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
     {
@@ -896,40 +896,59 @@ static void printDistributionOverview(pathdirectory_t* pd,
         countSum += nodeCountSum[i];
         countTotal += nodeCountTotal[i];
     }
+    nodeCountDigits = M_NumDigits(countTotal);
 
     // Calculate minimum field widths:
-    colWidths[col = 0] = 0;
+    col = colWidths;
+    *col = 0;
     for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
     {
-        if(Str_Length(PathDirectory_NodeTypeName(i)) > colWidths[0])
-            colWidths[0] = Str_Length(PathDirectory_NodeTypeName(i));
+        if(Str_Length(PathDirectory_NodeTypeName(i)) > *col)
+            *col = Str_Length(PathDirectory_NodeTypeName(i));
     }
     col++;
-    colWidths[col++] = 6; /*total#*/
-    colWidths[col++] = 6; /*empty#*/
-    colWidths[col++] = 8; /*variance*/
-    colWidths[col++] = 10;/*collideMax*/
-    colWidths[col++] = 8; /*collide#*/
-    colWidths[col++] = 8; /*collide%*/
-    colWidths[col++] = 9; /*coverage%*/
-    colWidths[col++] = 9; /*maxheight*/
+    *col++ = MAX_OF(nodeCountDigits, 1); /*#*/
+    *col++ = MAX_OF(nodeCountDigits, 4); /*used*/
+    *col++ = MAX_OF(nodeCountDigits, 5); /*empty*/
+    *col++ = MAX_OF(nodeCountDigits, 3); /*max*/
+    *col++ = MAX_OF(nodeCountDigits, 4); /*num*/
+    *col++ = MAX_OF(3+1+2, 8);           /*percent*/
+    *col++ = MAX_OF(3+1+2, 9);           /*coverage*/
+    *col++ = MAX_OF(nodeCountDigits, 8); /*variance*/
+    *col   = MAX_OF(nodeCountDigits, 9); /*maxheight*/
 
-    // Apply formatting:
-    for(i = 0; i < NUMCOLS; ++i) { colWidths[i] += 1; }
+    // Calculate span widths:
+    spans[0][0] = colWidths[0] + 1/* */ + colWidths[1];
+    spans[1][0] = colWidths[2] + 1/*:*/ + colWidths[3];
+    spans[2][0] = colWidths[4] + 1/* */ + colWidths[5] + 1/* */ + colWidths[6];
+    spans[3][0] = colWidths[7] + 1/* */ + colWidths[8] + 1/* */ + colWidths[9];
+    for(i = 0; i < 4; ++i)
+    {
+        int remainder = spans[i][0] % 2;
+        spans[i][1] = remainder + (spans[i][0] /= 2);
+    }
 
     Con_FPrintf(CBLF_YELLOW, "Directory Distribution (p:%p):\n", pd);
-    // Print heading:
-    col = 0;
-    Con_Printf("%*s", colWidths[col++], "type");
-    Con_Printf("%*s", colWidths[col++], "total#");
-    Con_Printf("%*s", colWidths[col++], "empty#");
-    Con_Printf("%*s", colWidths[col++], "variance");
-    Con_Printf("%*s", colWidths[col++], "collideMax");
-    Con_Printf("%*s", colWidths[col++], "collide#");
-    Con_Printf("%*s", colWidths[col++], "collide%");
-    Con_Printf("%*s", colWidths[col++], "coverage%");
-    Con_Printf("%*s\n", colWidths[col], "maxheight");
-    Con_FPrintf(CBLF_RULER, "");
+
+    // Level1 headings:
+    span = &spans[0][0];
+    Con_Printf("%*s%-*s|",  *span++ +  5/2, "nodes",      *span++ -  5/2, "");
+    Con_Printf("%*s%-*s|",  *span++ +  4/2, "hash",       *span++ -  4/2, "");
+    Con_Printf("%*s%-*s|",  *span++ + 10/2, "collisions", *span++ - 10/2, "");
+    Con_Printf("%*s%-*s\n", *span++ +  5/2, "other",      *span++ -  5/2, "");
+
+    // Level2 headings:
+    col = colWidths;
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "type");
+    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "#");
+    Con_FPrintf(CBLF_LIGHT, "%*s:",   *col++, "used");
+    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "empty");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "max");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "num#");
+    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "percent%");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "coverage%");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "variance");
+    Con_FPrintf(CBLF_LIGHT, "%-*s\n", *col++, "maxheight");
 
     if(countTotal != 0)
     {
@@ -944,7 +963,8 @@ static void printDistributionOverview(pathdirectory_t* pd,
     }
 
     printDistributionOverviewElement(colWidths, "total", 
-        nodeBucketEmptyTotal, nodeBucketHeight, nodeBucketCollisionsTotal, collisionsMax,
+        nodeBucketEmptyTotal, nodeBucketHeight,
+        nodeBucketCollisionsTotal, collisionsMax,
         countSum / PATHDIRECTORY_NODETYPES_COUNT, countTotal);
     }
 #undef NUMCOLS
@@ -1197,7 +1217,7 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
         nodeBucketEmpty, nodeBucketEmptyTotal,
         nodeBucketHeight, nodeCount);
     Con_Printf("\n");
-    printDistributionHistogram(pd, 10, nodeCountTotal);
+    printDistributionHistogram(pd, 16, nodeCountTotal);
     }
 }
 
