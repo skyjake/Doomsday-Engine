@@ -841,7 +841,8 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
 }
 
 static void printDistributionOverviewElement(const int* colWidths, const char* name,
-    size_t numEmpty, size_t numCollisions, size_t maxCollisions, size_t sum, size_t total)
+    size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
+    size_t sum, size_t total)
 {
     assert(NULL != colWidths);
     {
@@ -863,11 +864,14 @@ static void printDistributionOverviewElement(const int* colWidths, const char* n
     }
 
     Con_Printf("%*s"    , colWidths[col++], name);
+    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)total);
+    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)numEmpty);
     Con_Printf("%*.2f"  , colWidths[col++], variance);
     Con_Printf("%*lu"   , colWidths[col++], (unsigned long)maxCollisions);
-    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)numEmpty);
+    Con_Printf("%*lu"   , colWidths[col++], (unsigned long)numCollisions);
+    Con_Printf("%*.2f"  , colWidths[col++], collision);
     Con_Printf("%*.2f"  , colWidths[col++], coverage);
-    Con_Printf("%*.2f\n", colWidths[col++], collision);
+    Con_Printf("%*lu\n" , colWidths[col++], (unsigned long)maxHeight);
     }
 }
 
@@ -875,19 +879,16 @@ static void printDistributionOverview(pathdirectory_t* pd,
     size_t nodeCountSum[PATHDIRECTORY_NODETYPES_COUNT],
     size_t nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT],
     size_t nodeBucketCollisions[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketCollisionsTotal,
-    size_t nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT],
-    size_t nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketEmptyTotal,
+    size_t nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketCollisionsMaxTotal,
+    size_t nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketEmptyTotal, size_t nodeBucketHeight,
     size_t nodeCount[PATHDIRECTORY_NODETYPES_COUNT])
 {
-#define NUMCOLS             6/*type+variancee+height#+empty#+coverage%+collision%*/
+#define NUMCOLS             9/*type+total#+empty#+variance+collideMax+collide#+collide%+coverage%+maxheight*/
     assert(NULL != pd);
     {
-    size_t collisionsMax, countSum, countTotal = 0;
+    size_t height = 0, collisionsMax = 0, countSum = 0, countTotal = 0;
     int i, col, colWidths[NUMCOLS];
 
-    collisionsMax = 0;
-    countSum = 0;
-    countTotal = 0;
     for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
     {
         if(nodeBucketCollisionsMax[i] > collisionsMax)
@@ -904,11 +905,14 @@ static void printDistributionOverview(pathdirectory_t* pd,
             colWidths[0] = Str_Length(PathDirectory_NodeTypeName(i));
     }
     col++;
-    colWidths[col++] = 8; /*variance*/
-    colWidths[col++] = 7; /*height#*/
+    colWidths[col++] = 6; /*total#*/
     colWidths[col++] = 6; /*empty#*/
+    colWidths[col++] = 8; /*variance*/
+    colWidths[col++] = 10;/*collideMax*/
+    colWidths[col++] = 8; /*collide#*/
+    colWidths[col++] = 8; /*collide%*/
     colWidths[col++] = 9; /*coverage%*/
-    colWidths[col++] = 10;/*collision%*/
+    colWidths[col++] = 9; /*maxheight*/
 
     // Apply formatting:
     for(i = 0; i < NUMCOLS; ++i) { colWidths[i] += 1; }
@@ -917,11 +921,14 @@ static void printDistributionOverview(pathdirectory_t* pd,
     // Print heading:
     col = 0;
     Con_Printf("%*s", colWidths[col++], "type");
-    Con_Printf("%*s", colWidths[col++], "variance");
-    Con_Printf("%*s", colWidths[col++], "height#");
+    Con_Printf("%*s", colWidths[col++], "total#");
     Con_Printf("%*s", colWidths[col++], "empty#");
+    Con_Printf("%*s", colWidths[col++], "variance");
+    Con_Printf("%*s", colWidths[col++], "collideMax");
+    Con_Printf("%*s", colWidths[col++], "collide#");
+    Con_Printf("%*s", colWidths[col++], "collide%");
     Con_Printf("%*s", colWidths[col++], "coverage%");
-    Con_Printf("%*s\n", colWidths[col], "collision%");
+    Con_Printf("%*s\n", colWidths[col], "maxheight");
     Con_FPrintf(CBLF_RULER, "");
 
     if(countTotal != 0)
@@ -929,14 +936,15 @@ static void printDistributionOverview(pathdirectory_t* pd,
         for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
         {
             printDistributionOverviewElement(colWidths, Str_Text(PathDirectory_NodeTypeName(i)),
-                nodeBucketEmpty[i], nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
+                nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
+                nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
                 nodeCountSum[i], nodeCountTotal[i]);
         }
         Con_FPrintf(CBLF_RULER, "");
     }
 
     printDistributionOverviewElement(colWidths, "total", 
-        nodeBucketEmptyTotal, nodeBucketCollisionsTotal, collisionsMax,
+        nodeBucketEmptyTotal, nodeBucketHeight, nodeBucketCollisionsTotal, collisionsMax,
         countSum / PATHDIRECTORY_NODETYPES_COUNT, countTotal);
     }
 #undef NUMCOLS
@@ -1090,9 +1098,9 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
     assert(NULL != pd);
     {
     size_t nodeCountSum[PATHDIRECTORY_NODETYPES_COUNT],
-           nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT],
+           nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketHeight = 0,
            nodeBucketCollisions[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketCollisionsTotal = 0,
-           nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT],
+           nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketCollisionsMaxTotal = 0,
            nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketEmptyTotal = 0,
            nodeCount[PATHDIRECTORY_NODETYPES_COUNT];
     size_t totalForRange;
@@ -1120,8 +1128,24 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
         totalForRange = 0;
         if(NULL != pd->_pathHash)
         {
+            size_t chainHeight = 0;
             for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+            {
+                size_t height = 0;
+                if(PT_LEAF == PathDirectoryNode_Type(node))
+                {
+                    pathdirectory_node_t* other = node;
+                    while(NULL != (other = PathDirectoryNode_Parent(other)))
+                    { ++height; }
+
+                    if(height > chainHeight)
+                        chainHeight = height;
+                }
                 ++nodeCount[PathDirectoryNode_Type(node) - PATHDIRECTORY_NODETYPES_FIRST];
+            }
+
+            if(chainHeight > nodeBucketHeight)
+                nodeBucketHeight = chainHeight;
 
             for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
             {
@@ -1145,6 +1169,15 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
                 nodeBucketCollisionsMax[j] = nodeCount[j];
         }
 
+        { size_t max = 0;
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+        {
+            max += nodeCount[j];
+        }
+        if(max > nodeBucketCollisionsMaxTotal)
+            nodeBucketCollisionsMaxTotal = max;        
+        }
+
         if(totalForRange != 0)
         {
             if(totalForRange > 1)
@@ -1154,11 +1187,15 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
         {
             ++nodeBucketEmptyTotal;
         }
+        if(totalForRange > nodeBucketCollisionsMaxTotal)
+            nodeBucketCollisionsMaxTotal = totalForRange;
     }}
 
     printDistributionOverview(pd, nodeCountSum, nodeCountTotal,
-        nodeBucketCollisions, nodeBucketCollisionsTotal,
-        nodeBucketCollisionsMax, nodeBucketEmpty, nodeBucketEmptyTotal, nodeCount);
+        nodeBucketCollisions,    nodeBucketCollisionsTotal,
+        nodeBucketCollisionsMax, nodeBucketCollisionsMaxTotal,
+        nodeBucketEmpty, nodeBucketEmptyTotal,
+        nodeBucketHeight, nodeCount);
     Con_Printf("\n");
     printDistributionHistogram(pd, 10, nodeCountTotal);
     }
