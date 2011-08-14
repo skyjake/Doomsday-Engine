@@ -56,6 +56,7 @@ D_CMD(HelpWhat);
 D_CMD(ListAliases);
 D_CMD(ListCmds);
 D_CMD(ListVars);
+D_CMD(VarStats);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -97,6 +98,7 @@ void Con_DataRegister(void)
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
+    C_CMD("varstats",       NULL,   VarStats);
 }
 
 static int markStringVariableFreed(struct pathdirectory_node_s* node, void* paramaters)
@@ -413,6 +415,18 @@ static void updateKnownWords(void)
     // Sort it so we get nice alphabetical word completions.
     qsort(knownWords, numKnownWords, sizeof(knownword_t), compareKnownWordByName);
     knownWordsNeedUpdate = false;
+}
+
+static const ddstring_t* CVar_TypeName(cvartype_t type)
+{
+    static const ddstring_t names[CVARTYPE_COUNT] = {
+        { "invalid" },
+        { "CVT_BYTE" },
+        { "CVT_INT" },
+        { "CVT_FLOAT" },
+        { "CVT_CHATPTR"},
+    };
+    return &names[(VALID_CVARTYPE(type)? type : 0)];
 }
 
 cvartype_t CVar_Type(const cvar_t* var)
@@ -1534,6 +1548,29 @@ D_CMD(ListVars)
     Con_Printf("Console variables:\n");
     Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CVAR, printKnownWordWorker, &numPrinted);
     Con_Printf("Found %u console variables.\n", numPrinted);
+    return true;
+}
+
+D_CMD(VarStats)
+{
+    cvartype_t type;
+    countvariableparams_t p;
+    Con_FPrintf(CBLF_YELLOW, "Console Variable Statistics:\n");
+    p.hidden = false;
+    p.ignoreHidden = false;
+    for(type = CVT_BYTE; type < CVARTYPE_COUNT; ++type)
+    {
+        p.count = 0;
+        p.type = type;
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
+        Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(type)), p.count);
+    }
+    p.count = 0;
+    p.type = -1;
+    p.hidden = true;
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
+    Con_Printf("       Total: %u\n      Hidden: %u\n\n", cvarCount, p.count);
+    PathDirectory_PrintHashDistribution(cvarDirectory);
     return true;
 }
 

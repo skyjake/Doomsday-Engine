@@ -533,6 +533,9 @@ inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 
 desc = Unload the current game or one or more data files.
 inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
 
+[varstats]
+desc = Show detailed statistics for console variables.
+
 [version]
 desc = Show detailed version information.
 

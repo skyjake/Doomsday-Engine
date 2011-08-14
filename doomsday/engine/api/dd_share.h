@@ -1261,8 +1261,11 @@ typedef enum {
     CVT_BYTE,
     CVT_INT,
     CVT_FLOAT,
-    CVT_CHARPTR // ptr points to a char*, which points to the string.
+    CVT_CHARPTR, // ptr points to a char*, which points to the string.
+    CVARTYPE_COUNT
 } cvartype_t;
+
+#define VALID_CVARTYPE(val) ((val) >= CVT_NULL && (val) <= CVARTYPE_COUNT)
 
 /**
  * Console variable template. Used with Con_AddVariable.
