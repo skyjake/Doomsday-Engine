@@ -35,7 +35,11 @@ struct writer_s
 
 static boolean Writer_Check(const Writer* writer, size_t len)
 {
-    if(!writer || !writer->data) return false;
+    if(!writer || !writer->data)
+    {
+        Con_Message("Writer_Check: Invalid Writer!\n");
+        return false;
+    }
     if(writer->pos > writer->size - len)
     {
         Con_Error("Writer_Check: Position %lu[+%lu] out of bounds, size=%lu.\n",
@@ -54,10 +58,10 @@ Writer* Writer_New(void)
     return w;
 }
 
-Writer* Writer_NewWithBuffer(byte* buffer, size_t len)
+Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen)
 {
     Writer* w = M_Calloc(sizeof(Writer));
-    w->size = len;
+    w->size = maxLen;
     w->data = buffer;
     return w;
 }
@@ -67,16 +71,21 @@ void Writer_Destruct(Writer* writer)
     M_Free(writer);
 }
 
-size_t Writer_Pos(const Writer* writer)
+size_t Writer_Size(const Writer* writer)
 {
     if(!writer) return 0;
     return writer->pos;
 }
 
-size_t Writer_Size(const Writer* writer)
+size_t Writer_TotalBufferSize(const Writer* writer)
 {
     if(!writer) return 0;
     return writer->size;
+}
+
+size_t Writer_BytesLeft(const Writer* writer)
+{
+    return Writer_TotalBufferSize(writer) - Writer_Size(writer);
 }
 
 void Writer_SetPos(Writer* writer, size_t newPos)

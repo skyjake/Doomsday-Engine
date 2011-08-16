@@ -86,6 +86,12 @@ void Reader_SetPos(Reader* reader, size_t newPos)
     Reader_Check(reader, 0);
 }
 
+boolean Reader_AtEnd(const Reader* reader)
+{
+    Reader_Check(reader, 0);
+    return reader->pos == reader->size;
+}
+
 int8_t Reader_ReadChar(Reader* reader)
 {
     if(!Reader_Check(reader, 1)) return 0;

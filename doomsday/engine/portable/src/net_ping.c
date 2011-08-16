@@ -115,10 +115,10 @@ void Net_SendPing(int player, int count)
     // Send a new ping.
     Msg_Begin(PKT_PING);
     cl->ping.sent = Sys_GetRealTime();
-    Msg_WriteLong(cl->ping.sent);
+    Writer_WriteUInt32(msgWriter, cl->ping.sent);
+    Msg_End();
 
     // Update the length of the message.
-    netBuffer.length = netBuffer.cursor - netBuffer.msg.data;
     netBuffer.player = player;
     N_SendPacket(10000);
 }
@@ -126,8 +126,8 @@ void Net_SendPing(int player, int count)
 // Called when a ping packet comes in.
 void Net_PingResponse(void)
 {
-    client_t           *cl = &clients[netBuffer.player];
-    int                 time = Msg_ReadLong();
+    client_t* cl = &clients[netBuffer.player];
+    unsigned int time = Reader_ReadUInt32(msgReader);
 
     // Is this a response to our ping?
     if(time == cl->ping.sent)

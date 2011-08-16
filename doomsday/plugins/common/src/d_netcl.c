@@ -392,9 +392,11 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     NetCl_SetReadBuffer(data);
     flags = NetCl_ReadUShort();
 
+    /*
 #ifdef _DEBUG
-    Con_Message("NetCl_UpdatePlayerState: fl=%x\n", flags);
+    VERBOSE( Con_Message("NetCl_UpdatePlayerState: fl=%x\n", flags) );
 #endif
+    */
 
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
@@ -878,112 +880,6 @@ void NetCl_Paused(boolean setPause)
     DD_SetInteger(DD_CLIENT_PAUSED, paused);
 }
 
-#if 0
-/**
- * \kludge Write a DDPT_COMMANDS (32) packet. Returns a pointer to a static
- * buffer that contains the data (kludge to work around the parameter
- * passing from the engine).
- */
-void *NetCl_WriteCommands(ticcmd_t *cmd, int count)
-{
-    static byte         msg[1024]; // A shared buffer.
-
-    int                 i;
-    ushort             *size = (ushort *) msg;
-    byte               *out = msg + 2, *flags, *start = out;
-    ticcmd_t            prev;
-
-    // Always compare against the previous command.
-    memset(&prev, 0, sizeof(prev));
-
-    for(i = 0; i < count; ++i, cmd++)
-    {
-        flags = out++;
-        *flags = 0;
-
-        // What has changed?
-        if(cmd->forwardMove != prev.forwardMove)
-        {
-            *flags |= CMDF_FORWARDMOVE;
-            *out++ = cmd->forwardMove;
-        }
-
-        if(cmd->sideMove != prev.sideMove)
-        {
-            *flags |= CMDF_SIDEMOVE;
-            *out++ = cmd->sideMove;
-        }
-
-        if(cmd->angle != prev.angle)
-        {
-            *flags |= CMDF_ANGLE;
-            *(unsigned short *) out = SHORT(cmd->angle);
-            out += 2;
-        }
-
-        if(cmd->pitch != prev.pitch)
-        {
-            *flags |= CMDF_LOOKDIR;
-            *(short *) out = SHORT(cmd->pitch);
-            out += 2;
-        }
-
-        if(cmd->actions != prev.actions)
-        {
-            *flags |= CMDF_BUTTONS;
-            *out++ = cmd->actions;
-        }
-/*
-        // Compile the button flags.
-        buttons = 0;
-        // Client sends player action requests sent instead.
-        if(!IS_CLIENT)
-        {
-            if(cmd->attack)
-                buttons |= CMDF_BTN_ATTACK;
-            if(cmd->use)
-                buttons |= CMDF_BTN_USE;
-        }
-        if(cmd->jump)
-            buttons |= CMDF_BTN_JUMP;
-        if(cmd->pause)
-            buttons |= CMDF_BTN_PAUSE;
-
-        // Always include nonzero buttons.
-        if(buttons != 0)
-        {
-            *flags |= CMDF_BUTTONS;
-            *out++ = buttons;
-        }
-
-        if(cmd->fly != prev.fly)
-        {
-            *flags |= CMDF_LOOKFLY;
-            *out++ = cmd->fly;
-        }
-        if(cmd->arti != prev.arti)
-        {
-            *flags |= CMDF_ARTI;
-            *out++ = cmd->arti;
-        }
-        if(cmd->changeWeapon != prev.changeWeapon)
-        {
-            *flags |= CMDF_CHANGE_WEAPON;
-            *(short *) out = SHORT(cmd->changeWeapon);
-            out += 2;
-        }
-*/
-        memcpy(&prev, cmd, sizeof(*cmd));
-    }
-
-    // First two bytes contain the size of the buffer (not included in
-    // the actual packet).
-    *size = out - start;
-
-    return msg;
-}
-#endif
-
 /**
  * Send a GPT_CHEAT_REQUEST packet to the server. If the server is allowing
  * netgame cheating, the cheat will be executed on the server.
@@ -1011,6 +907,23 @@ void NetCl_UpdateJumpPower(void *data)
 #ifdef _DEBUG
     Con_Printf("NetCl_UpdateJumpPower: %g\n", netJumpPower);
 #endif
+}
+
+void NetCl_FloorHitRequest(player_t* player)
+{
+    char msg[40];
+    char *ptr = msg;
+
+    if(!IS_CLIENT)
+        return;
+
+#ifdef _DEBUG
+    Con_Message("NetCl_FloorHitRequest: Player %i.\n", player - players);
+#endif
+
+    // Include the position of the hit.
+
+    Net_SendPacket(0, GPT_FLOOR_HIT_REQUEST, msg, size);
 }
 
 /**

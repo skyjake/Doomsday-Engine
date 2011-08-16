@@ -29,25 +29,26 @@
 #ifndef __DOOMSDAY_NETMESSAGE_H__
 #define __DOOMSDAY_NETMESSAGE_H__
 
-void            Msg_Begin(int type);
-void            Msg_WriteByte(byte b);
-void            Msg_WriteShort(short w);
-void            Msg_WritePackedShort(short w);
-void            Msg_WriteLong(int l);
-void            Msg_WritePackedLong(unsigned int l);
-void            Msg_WriteFloat(float f);
-void            Msg_Write(const void *src, size_t len);
-byte            Msg_ReadByte(void);
-short           Msg_ReadShort(void);
-short           Msg_ReadPackedShort(void);
-unsigned short  Msg_ReadUnsignedShort(void);
-int             Msg_ReadLong(void);
-unsigned int    Msg_ReadPackedLong(void);
-float           Msg_ReadFloat(void);
-void            Msg_Read(void *dest, size_t len);
-size_t          Msg_Offset(void);
-void            Msg_SetOffset(size_t offset);
-size_t          Msg_MemoryLeft(void);
-boolean         Msg_End(void);
+#include "reader.h"
+#include "writer.h"
+
+extern Writer* msgWriter;
+extern Reader* msgReader;
+
+/**
+ * Begin writing a message to netBuffer. If a message is currently being
+ * read, the reading will be ended.
+ */
+void Msg_Begin(int type);
+void Msg_End(void);
+
+boolean Msg_BeingWritten(void);
+
+/**
+ * Begin reading a message from netBuffer. If a message is currently being
+ * written, the writing will be ended.
+ */
+void Msg_BeginRead(void);
+void Msg_EndRead(void);
 
 #endif

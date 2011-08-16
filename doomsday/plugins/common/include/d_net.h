@@ -74,7 +74,8 @@ enum {
     GPT_ACTION_REQUEST,
     GPT_PLAYER_SPAWN_POSITION,
     GPT_DAMAGE,                    // Client requests damage on a target.
-    GPT_MOBJ_IMPULSE               // Momenum to apply on a mobj.
+    GPT_MOBJ_IMPULSE,              // Momenum to apply on a mobj.
+    GPT_FLOOR_HIT_REQUEST
 };
 
 #if 0

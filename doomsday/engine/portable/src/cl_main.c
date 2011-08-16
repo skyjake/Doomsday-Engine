@@ -130,17 +130,19 @@ void Cl_SendHello(void)
     char                buf[256];
 
     Msg_Begin(PCL_HELLO2);
-    Msg_WriteLong(clientID);
+    Writer_WriteUInt32(msgWriter, clientID);
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
     strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
 
 #ifdef _DEBUG
-Con_Message("Cl_SendHello: game mode = %s\n", buf);
+    Con_Message("Cl_SendHello: game mode = %s\n", buf);
 #endif
 
-    Msg_Write(buf, 16);
+    Writer_Write(msgWriter, buf, 16);
+    Msg_End();
+
     Net_SendBuffer(0, 0);
 }
 
@@ -156,6 +158,7 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
 
     // Immediately send an acknowledgement.
     Msg_Begin(PCL_ACK_SHAKE);
+    Msg_End();
     Net_SendBuffer(0, 0);
 
     // Check the version number.
@@ -258,11 +261,13 @@ void Cl_GetPackets(void)
     // All messages come from the server.
     while(Net_GetPacket())
     {
+        Msg_BeginRead();
+
         // First check for packets that are only valid when
         // a game is in progress.
         if(Cl_GameReady())
         {
-            boolean             handled = true;
+            boolean handled = true;
 
             switch(netBuffer.msg.type)
             {
@@ -277,9 +282,11 @@ void Cl_GetPackets(void)
                 Cl_Frame2Received(netBuffer.msg.type);
                 break;
 
+                /*
             case PKT_COORDS:
                 ClPlayer_CoordsReceived();
                 break;
+                */
 
             case PSV_SOUND:
                 Cl_Sound();
@@ -311,7 +318,7 @@ void Cl_GetPackets(void)
         case PSV_SYNC:
             // The server updates our time. Latency has been taken into
             // account, so...
-            gameTime = Msg_ReadLong() / 100.0;
+            gameTime = Reader_ReadFloat(msgReader);
             Con_Printf("PSV_SYNC: gameTime=%.3f\n", gameTime);
             DD_ResetTimer();
             break;
@@ -325,7 +332,7 @@ void Cl_GetPackets(void)
             break;
 
         case PSV_PLAYER_EXIT:
-            Cl_PlayerLeaves(Msg_ReadByte());
+            Cl_PlayerLeaves(Reader_ReadByte(msgReader));
             break;
 
         case PKT_CHAT:
@@ -340,14 +347,21 @@ void Cl_GetPackets(void)
             break;
 
         case PSV_CONSOLE_TEXT:
-            i = Msg_ReadLong();
-            Con_FPrintf(i, "%s", (char*)netBuffer.cursor);
+        {
+            uint32_t conFlags = Reader_ReadUInt32(msgReader);
+            uint16_t textLen = Reader_ReadUInt16(msgReader);
+            char* text = M_Malloc(textLen + 1);
+            Reader_Read(msgReader, text, textLen);
+            text[textLen] = 0;
+            Con_FPrintf(conFlags, "%s", text);
+            M_Free(text);
             break;
+        }
 
         case PKT_LOGIN:
             // Server responds to our login request. Let's see if we
             // were successful.
-            netLoggedIn = Msg_ReadByte();
+            netLoggedIn = Reader_ReadByte(msgReader);
             break;
 
         default:
@@ -363,6 +377,8 @@ void Cl_GetPackets(void)
 #endif
             }
         }
+
+        Msg_EndRead();
     }
 }
 
@@ -468,9 +484,20 @@ D_CMD(Login)
     Msg_Begin(PKT_LOGIN);
     // Write the password.
     if(argc == 1)
-        Msg_WriteByte(0); // No password given!
+    {
+        Writer_WriteByte(msgWriter, 0); // No password given!
+    }
+    else if(strlen(argv[1]) <= 255)
+    {
+        Writer_WriteByte(msgWriter, strlen(argv[1]));
+        Writer_Write(msgWriter, argv[1], strlen(argv[1]));
+    }
     else
-        Msg_Write(argv[1], strlen(argv[1]) + 1);
+    {
+        Msg_End();
+        return false;
+    }
+    Msg_End();
     Net_SendBuffer(0, 0);
     return true;
 }

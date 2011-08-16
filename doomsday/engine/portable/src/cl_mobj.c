@@ -738,16 +738,16 @@ void ClMobj_ReadDelta2(boolean skip)
     int         df = 0;
     byte        moreFlags = 0, fastMom = false;
     short       mom;
-    thid_t      id = Msg_ReadUnsignedShort();   // Read the ID.
+    thid_t      id = Reader_ReadUInt16(msgReader);   // Read the ID.
     boolean     onFloor = false;
 
     // Flags.
-    df = Msg_ReadUnsignedShort();
+    df = Reader_ReadUInt16(msgReader);
 
     // More flags?
     if(df & MDF_MORE_FLAGS)
     {
-        moreFlags = Msg_ReadByte();
+        moreFlags = Reader_ReadByte(msgReader);
 
         // Fast momentum uses 10.6 fixed point instead of the normal 8.8.
         if(moreFlags & MDFE_FAST_MOM)
@@ -815,13 +815,13 @@ void ClMobj_ReadDelta2(boolean skip)
     // Coordinates with three bytes.
     if(df & MDF_POS_X)
     {
-        d->pos[VX] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+        d->pos[VX] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
         if(info)
             info->flags |= CLMF_KNOWN_X;
     }
     if(df & MDF_POS_Y)
     {
-        d->pos[VY] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+        d->pos[VY] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
         if(info)
             info->flags |= CLMF_KNOWN_Y;
     }
@@ -829,7 +829,7 @@ void ClMobj_ReadDelta2(boolean skip)
     {
         if(!(moreFlags & MDFE_Z_FLOOR))
         {
-            d->pos[VZ] = FIX2FLT((Msg_ReadShort() << FRACBITS) | (Msg_ReadByte() << 8));
+            d->pos[VZ] = FIX2FLT((Reader_ReadInt16(msgReader) << FRACBITS) | (Reader_ReadByte(msgReader) << 8));
             if(info)
             {
                 info->flags |= CLMF_KNOWN_Z;
@@ -837,22 +837,22 @@ void ClMobj_ReadDelta2(boolean skip)
                 // The mobj won't stick if an explicit coordinate is supplied.
                 info->flags &= ~(CLMF_STICK_FLOOR | CLMF_STICK_CEILING);
             }
-            d->floorZ = Msg_ReadFloat();
+            d->floorZ = Reader_ReadFloat(msgReader);
         }
         else
         {
             onFloor = true;
 
             // Ignore these.
-            Msg_ReadShort();
-            Msg_ReadByte();
-            Msg_ReadFloat();
+            Reader_ReadInt16(msgReader);
+            Reader_ReadByte(msgReader);
+            Reader_ReadFloat(msgReader);
 
             info->flags |= CLMF_KNOWN_Z;
             //d->pos[VZ] = d->floorZ;
         }
 
-        d->ceilingZ = Msg_ReadFloat();
+        d->ceilingZ = Reader_ReadFloat(msgReader);
     }
 
 /*#if _DEBUG
@@ -882,33 +882,33 @@ void ClMobj_ReadDelta2(boolean skip)
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
-        mom = Msg_ReadShort();
+        mom = Reader_ReadInt16(msgReader);
         d->mom[MX] = FIX2FLT(fastMom? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Y)
     {
-        mom = Msg_ReadShort();
+        mom = Reader_ReadInt16(msgReader);
         d->mom[MY] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
     if(df & MDF_MOM_Z)
     {
-        mom = Msg_ReadShort();
+        mom = Reader_ReadInt16(msgReader);
         d->mom[MZ] = FIX2FLT(fastMom ? UNFIXED10_6(mom) : UNFIXED8_8(mom));
     }
 
     // Angles with 16-bit accuracy.
     if(df & MDF_ANGLE)
-        d->angle = Msg_ReadShort() << 16;
+        d->angle = Reader_ReadInt16(msgReader) << 16;
 
     // MDF_SELSPEC is never used without MDF_SELECTOR.
     if(df & MDF_SELECTOR)
-        d->selector = Msg_ReadPackedShort();
+        d->selector = Reader_ReadPackedUInt16(msgReader);
     if(df & MDF_SELSPEC)
-        d->selector |= Msg_ReadByte() << 24;
+        d->selector |= Reader_ReadByte(msgReader) << 24;
 
     if(df & MDF_STATE)
     {
-        int stateIdx = Msg_ReadPackedShort();
+        int stateIdx = Reader_ReadPackedUInt16(msgReader);
         if(!skip)
         {
             ClMobj_SetState(d, stateIdx);
@@ -920,11 +920,11 @@ void ClMobj_ReadDelta2(boolean skip)
     {
         // Only the flags in the pack mask are affected.
         d->ddFlags &= ~DDMF_PACK_MASK;
-        d->ddFlags |= DDMF_REMOTE | (Msg_ReadLong() & DDMF_PACK_MASK);
+        d->ddFlags |= DDMF_REMOTE | (Reader_ReadUInt32(msgReader) & DDMF_PACK_MASK);
 
-        d->flags = Msg_ReadLong();
-        d->flags2 = Msg_ReadLong();
-        d->flags3 = Msg_ReadLong();
+        d->flags = Reader_ReadUInt32(msgReader);
+        d->flags2 = Reader_ReadUInt32(msgReader);
+        d->flags3 = Reader_ReadUInt32(msgReader);
 
 /*#ifdef _DEBUG
         Con_Message("ClMobj_ReadDelta2: Mobj%i: Flags %x\n", id, d->flags & 0x1c000000);
@@ -932,26 +932,31 @@ void ClMobj_ReadDelta2(boolean skip)
     }
 
     if(df & MDF_HEALTH)
-        d->health = Msg_ReadLong();
+        d->health = Reader_ReadInt32(msgReader);
 
     if(df & MDF_RADIUS)
-        d->radius = Msg_ReadFloat();
+        d->radius = Reader_ReadFloat(msgReader);
 
     if(df & MDF_HEIGHT)
-        d->height = Msg_ReadFloat();
+        d->height = Reader_ReadFloat(msgReader);
 
     if(df & MDF_FLOORCLIP)
-        d->floorClip = Msg_ReadFloat();
+        d->floorClip = Reader_ReadFloat(msgReader);
 
     if(moreFlags & MDFE_TRANSLUCENCY)
-        d->translucency = Msg_ReadByte();
+        d->translucency = Reader_ReadByte(msgReader);
 
     if(moreFlags & MDFE_FADETARGET)
-        d->visTarget = ((short)Msg_ReadByte()) - 1;
+        d->visTarget = ((short)Reader_ReadByte(msgReader)) - 1;
 
     if(moreFlags & MDFE_TYPE)
     {
-        d->type = Msg_ReadLong();
+        d->type = Reader_ReadInt32(msgReader);
+        if(d->type < 0 || d->type >= defs.count.mobjs.num)
+        {
+            // The specified type is invalid.
+            d->type = 0;
+        }
         d->info = &mobjInfo[d->type]; /// @todo check validity of d->type
 
         assert(d->info);
@@ -1028,7 +1033,7 @@ void ClMobj_ReadNullDelta2(boolean skip)
     thid_t  id;
 
     // The delta only contains an ID.
-    id = Msg_ReadUnsignedShort();
+    id = Reader_ReadUInt16(msgReader);
 
     if(skip)
         return;

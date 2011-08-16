@@ -274,13 +274,13 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
 #endif
 
     // First the mobj ID number and flags.
-    Msg_WriteShort(delta->delta.id);
-    Msg_WriteShort(df & 0xffff);
+    Writer_WriteUInt16(msgWriter, delta->delta.id);
+    Writer_WriteUInt16(msgWriter, df & 0xffff);
 
     // More flags?
     if(df & MDF_MORE_FLAGS)
     {
-        Msg_WriteByte(moreFlags);
+        Writer_WriteByte(msgWriter, moreFlags);
     }
 
     // Coordinates with three bytes.
@@ -288,88 +288,88 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     {
         fixed_t vx = FLT2FIX(d->pos[VX]);
 
-        Msg_WriteShort(vx >> FRACBITS);
-        Msg_WriteByte(vx >> 8);
+        Writer_WriteInt16(msgWriter, vx >> FRACBITS);
+        Writer_WriteByte(msgWriter, vx >> 8);
     }
     if(df & MDF_POS_Y)
     {
         fixed_t vy = FLT2FIX(d->pos[VY]);
 
-        Msg_WriteShort(vy >> FRACBITS);
-        Msg_WriteByte(vy >> 8);
+        Writer_WriteInt16(msgWriter, vy >> FRACBITS);
+        Writer_WriteByte(msgWriter, vy >> 8);
     }
 
     if(df & MDF_POS_Z)
     {
         fixed_t vz = FLT2FIX(d->pos[VZ]);
-        Msg_WriteShort(vz >> FRACBITS);
-        Msg_WriteByte(vz >> 8);
+        Writer_WriteInt16(msgWriter, vz >> FRACBITS);
+        Writer_WriteByte(msgWriter, vz >> 8);
 
-        Msg_WriteFloat(d->floorZ);
-        Msg_WriteFloat(d->ceilingZ);
+        Writer_WriteFloat(msgWriter, d->floorZ);
+        Writer_WriteFloat(msgWriter, d->ceilingZ);
     }
 
     // Momentum using 8.8 fixed point.
     if(df & MDF_MOM_X)
     {
         fixed_t mx = FLT2FIX(d->mom[MX]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) : FIXED8_8(mx));
+        Writer_WriteInt16(msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(mx) : FIXED8_8(mx));
     }
 
     if(df & MDF_MOM_Y)
     {
         fixed_t my = FLT2FIX(d->mom[MY]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) : FIXED8_8(my));
+        Writer_WriteInt16(msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(my) : FIXED8_8(my));
     }
 
     if(df & MDF_MOM_Z)
     {
         fixed_t mz = FLT2FIX(d->mom[MZ]);
-        Msg_WriteShort(moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) : FIXED8_8(mz));
+        Writer_WriteInt16(msgWriter, moreFlags & MDFE_FAST_MOM ? FIXED10_6(mz) : FIXED8_8(mz));
     }
 
     // Angles with 16-bit accuracy.
     if(df & MDF_ANGLE)
-        Msg_WriteShort(d->angle >> 16);
+        Writer_WriteInt16(msgWriter, d->angle >> 16);
 
     if(df & MDF_SELECTOR)
-        Msg_WritePackedShort(d->selector);
+        Writer_WritePackedUInt16(msgWriter, d->selector);
     if(df & MDF_SELSPEC)
-        Msg_WriteByte(d->selector >> 24);
+        Writer_WriteByte(msgWriter, d->selector >> 24);
 
     if((df & MDF_STATE) && d->state)
     {
-        Msg_WritePackedShort(d->state - states);
+        Writer_WritePackedUInt16(msgWriter, d->state - states);
     }
 
     if(df & MDF_FLAGS)
     {
-        Msg_WriteLong(d->ddFlags & DDMF_PACK_MASK);
-        Msg_WriteLong(d->flags);
-        Msg_WriteLong(d->flags2);
-        Msg_WriteLong(d->flags3);
+        Writer_WriteUInt32(msgWriter, d->ddFlags & DDMF_PACK_MASK);
+        Writer_WriteUInt32(msgWriter, d->flags);
+        Writer_WriteUInt32(msgWriter, d->flags2);
+        Writer_WriteUInt32(msgWriter, d->flags3);
     }
 
     if(df & MDF_HEALTH)
-        Msg_WriteLong(d->health);
+        Writer_WriteUInt32(msgWriter, d->health);
 
     if(df & MDF_RADIUS)
-        Msg_WriteFloat(d->radius);
+        Writer_WriteFloat(msgWriter, d->radius);
 
     if(df & MDF_HEIGHT)
-        Msg_WriteFloat(d->height);
+        Writer_WriteFloat(msgWriter, d->height);
 
     if(df & MDF_FLOORCLIP)
-        Msg_WriteFloat(d->floorClip);
+        Writer_WriteFloat(msgWriter, d->floorClip);
 
     if(df & MDFC_TRANSLUCENCY)
-        Msg_WriteByte(d->translucency);
+        Writer_WriteByte(msgWriter, d->translucency);
 
     if(df & MDFC_FADETARGET)
-        Msg_WriteByte((byte)(d->visTarget +1));
+        Writer_WriteByte(msgWriter, (byte)(d->visTarget +1));
 
     if(df & MDFC_TYPE)
-        Msg_WriteLong(d->type);
+        Writer_WriteInt32(msgWriter, d->type);
 }
 
 /**
@@ -384,23 +384,23 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
     int                 psdf, i, k;
 
     // First the player number. Upper three bits contain flags.
-    Msg_WriteByte(delta->delta.id | (df >> 8));
+    Writer_WriteByte(msgWriter, delta->delta.id | (df >> 8));
 
     // Flags. What elements are included in the delta?
-    Msg_WriteByte(df & 0xff);
+    Writer_WriteByte(msgWriter, df & 0xff);
 
     if(df & PDF_MOBJ)
-        Msg_WriteShort(d->mobj);
+        Writer_WriteInt16(msgWriter, d->mobj);
     if(df & PDF_FORWARDMOVE)
-        Msg_WriteByte(d->forwardMove);
+        Writer_WriteByte(msgWriter, d->forwardMove);
     if(df & PDF_SIDEMOVE)
-        Msg_WriteByte(d->sideMove);
+        Writer_WriteByte(msgWriter, d->sideMove);
     /*if(df & PDF_ANGLE)
-        Msg_WriteByte(d->angle >> 24);*/
+        Writer_WriteByte(msgWriter, d->angle >> 24);*/
     if(df & PDF_TURNDELTA)
-        Msg_WriteByte((d->turnDelta * 16) >> 24);
+        Writer_WriteByte(msgWriter, (d->turnDelta * 16) >> 24);
     if(df & PDF_FRICTION)
-        Msg_WriteByte(FLT2FIX(d->friction) >> 8);
+        Writer_WriteByte(msgWriter, FLT2FIX(d->friction) >> 8);
     if(df & PDF_EXTRALIGHT)
     {
         // Three bits is enough for fixedcolormap.
@@ -410,14 +410,10 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
         if(i > 7)
             i = 7;
         // Write the five upper bytes of extraLight.
-        Msg_WriteByte(i | (d->extraLight & 0xf8));
+        Writer_WriteByte(msgWriter, i | (d->extraLight & 0xf8));
     }
     if(df & PDF_FILTER)
-        Msg_WriteLong(d->filter);
-/*    if(df & PDF_CLYAW)
-        Msg_WriteShort(d->clYaw >> 16);
-    if(df & PDF_CLPITCH)
-        Msg_WriteShort(d->clPitch / 110 * DDMAXSHORT);*/ /* $unifiedangles */
+        Writer_WriteUInt32(msgWriter, d->filter);
     if(df & PDF_PSPRITES)       // Only set if there's something to write.
     {
         for(i = 0; i < 2; ++i)
@@ -425,13 +421,10 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
             psdf = df >> (16 + i * 8);
             psp = d->psp + i;
             // First the flags.
-            Msg_WriteByte(psdf);
+            Writer_WriteByte(msgWriter, psdf);
             if(psdf & PSDF_STATEPTR)
             {
-                if(psp->statePtr)
-                    Msg_WritePackedShort(psp->statePtr - states + 1);
-                else
-                    Msg_WritePackedShort(0);
+                Writer_WritePackedUInt16(msgWriter, psp->statePtr? (psp->statePtr - states + 1) : 0);
             }
             /*if(psdf & PSDF_LIGHT)
             {
@@ -440,7 +433,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
                     k = 0;
                 if(k > 255)
                     k = 255;
-                Msg_WriteByte(k);
+                Writer_WriteByte(msgWriter, k);
             }*/
             if(psdf & PSDF_ALPHA)
             {
@@ -449,16 +442,16 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
                     k = 0;
                 if(k > 255)
                     k = 255;
-                Msg_WriteByte(k);
+                Writer_WriteByte(msgWriter, k);
             }
             if(psdf & PSDF_STATE)
             {
-                Msg_WriteByte(psp->state);
+                Writer_WriteByte(msgWriter, psp->state);
             }
             if(psdf & PSDF_OFFSET)
             {
-                Msg_WriteByte(CLAMPED_CHAR(psp->offset[VX] / 2));
-                Msg_WriteByte(CLAMPED_CHAR(psp->offset[VY] / 2));
+                Writer_WriteByte(msgWriter, CLAMPED_CHAR(psp->offset[VX] / 2));
+                Writer_WriteByte(msgWriter, CLAMPED_CHAR(psp->offset[VY] / 2));
             }
         }
     }
@@ -498,81 +491,79 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     }
 
     // Sector number first.
-    Msg_WriteShort(delta->delta.id);
+    Writer_WriteUInt16(msgWriter, delta->delta.id);
 
     // Flags.
-    Msg_WritePackedLong(df);
+    Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Msg_WritePackedShort(P_ToMaterialNum(d->planes[PLN_FLOOR].surface.material));
+        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Msg_WritePackedShort(P_ToMaterialNum(d->planes[PLN_CEILING].surface.material));
+        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
-        int                 lightlevel = (int) (255.0f * d->lightLevel);
+        int lightlevel = (int) (255.0f * d->lightLevel);
+        lightlevel = (lightlevel < 0 ? 0 : lightlevel > 255 ? 255 : lightlevel);
 
-        lightlevel = (lightlevel < 0 ? 0 : lightlevel >
-                      255 ? 255 : lightlevel);
-
-        Msg_WriteByte((byte) lightlevel);
+        Writer_WriteByte(msgWriter, (byte) lightlevel);
     }
     if(df & SDF_FLOOR_HEIGHT)
     {
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].height) >> 16);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_FLOOR].height) >> 16);
     }
     if(df & SDF_CEILING_HEIGHT)
     {
 #ifdef _DEBUG
-VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
+        VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
                     delta->delta.id, d->planes[PLN_CEILING].height) );
 #endif
 
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_CEILING].height) >> 16);
     }
     if(df & SDF_FLOOR_TARGET)
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_FLOOR].target) >> 16);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_FLOOR].target) >> 16);
     if(df & SDF_FLOOR_SPEED)    // 7.1/4.4 fixed-point
-        Msg_WriteByte(floorspd);
+        Writer_WriteByte(msgWriter, floorspd);
     if(df & SDF_CEILING_TARGET)
-        Msg_WriteShort(FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->planes[PLN_CEILING].target) >> 16);
     if(df & SDF_CEILING_SPEED)  // 7.1/4.4 fixed-point
-        Msg_WriteByte(ceilspd);
+        Writer_WriteByte(msgWriter, ceilspd);
     if(df & SDF_COLOR_RED)
-        Msg_WriteByte((byte) (255 * d->rgb[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->rgb[0]));
     if(df & SDF_COLOR_GREEN)
-        Msg_WriteByte((byte) (255 * d->rgb[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->rgb[1]));
     if(df & SDF_COLOR_BLUE)
-        Msg_WriteByte((byte) (255 * d->rgb[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->rgb[2]));
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].surface.rgba[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].surface.rgba[0]));
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].surface.rgba[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].surface.rgba[1]));
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].surface.rgba[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].surface.rgba[2]));
 
     if(df & SDF_CEIL_COLOR_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[0]));
     if(df & SDF_CEIL_COLOR_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[1]));
     if(df & SDF_CEIL_COLOR_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
 
     /*
     if(df & SDF_FLOOR_GLOW_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
     if(df & SDF_FLOOR_GLOW_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[1]));
     if(df & SDF_FLOOR_GLOW_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[2]));
 
     if(df & SDF_CEIL_GLOW_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[0]));
     if(df & SDF_CEIL_GLOW_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[1]));
     if(df & SDF_CEIL_GLOW_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[2]));
 
     if(df & SDF_FLOOR_GLOW)
         Msg_WriteShort(d->planes[PLN_FLOOR].glow < 0 ? 0 :
@@ -595,49 +586,49 @@ void Sv_WriteSideDelta(const void* deltaPtr)
     int                 df = delta->delta.flags;
 
     // Side number first.
-    Msg_WriteShort(delta->delta.id);
+    Writer_WriteUInt16(msgWriter, delta->delta.id);
 
     // Flags.
-    Msg_WritePackedLong(df);
+    Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Msg_WritePackedShort(P_ToMaterialNum(d->top.material));
+        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Msg_WritePackedShort(P_ToMaterialNum(d->middle.material));
+        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Msg_WritePackedShort(P_ToMaterialNum(d->bottom.material));
+        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
-        Msg_WriteByte(d->lineFlags);
+        Writer_WriteByte(msgWriter, d->lineFlags);
 
     if(df & SIDF_TOP_COLOR_RED)
-        Msg_WriteByte((byte) (255 * d->top.rgba[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->top.rgba[0]));
     if(df & SIDF_TOP_COLOR_GREEN)
-        Msg_WriteByte((byte) (255 * d->top.rgba[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->top.rgba[1]));
     if(df & SIDF_TOP_COLOR_BLUE)
-        Msg_WriteByte((byte) (255 * d->top.rgba[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->top.rgba[2]));
 
     if(df & SIDF_MID_COLOR_RED)
-        Msg_WriteByte((byte) (255 * d->middle.rgba[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[0]));
     if(df & SIDF_MID_COLOR_GREEN)
-        Msg_WriteByte((byte) (255 * d->middle.rgba[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[1]));
     if(df & SIDF_MID_COLOR_BLUE)
-        Msg_WriteByte((byte) (255 * d->middle.rgba[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[2]));
     if(df & SIDF_MID_COLOR_ALPHA)
-        Msg_WriteByte((byte) (255 * d->middle.rgba[3]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->middle.rgba[3]));
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Msg_WriteByte((byte) (255 * d->bottom.rgba[0]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->bottom.rgba[0]));
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Msg_WriteByte((byte) (255 * d->bottom.rgba[1]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->bottom.rgba[1]));
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Msg_WriteByte((byte) (255 * d->bottom.rgba[2]));
+        Writer_WriteByte(msgWriter, (byte) (255 * d->bottom.rgba[2]));
 
     if(df & SIDF_MID_BLENDMODE)
-        Msg_WriteShort(d->middle.blendMode >> 16);
+        Writer_WriteInt32(msgWriter, d->middle.blendMode);
 
     if(df & SIDF_FLAGS)
-        Msg_WriteByte(d->flags);
+        Writer_WriteByte(msgWriter, d->flags);
 }
 
 /**
@@ -657,27 +648,27 @@ void Sv_WritePolyDelta(const void* deltaPtr)
     }
 
     // Poly number first.
-    Msg_WritePackedShort(delta->delta.id);
+    Writer_WritePackedUInt16(msgWriter, delta->delta.id);
 
     // Flags.
-    Msg_WriteByte(df & 0xff);
+    Writer_WriteByte(msgWriter, df & 0xff);
 
     if(df & PODF_DEST_X)
     {
-        Msg_WriteShort(FLT2FIX(d->dest.pos[VX]) >> 16);
-        Msg_WriteByte(FLT2FIX(d->dest.pos[VX]) >> 8);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->dest.pos[VX]) >> 16);
+        Writer_WriteByte(msgWriter, FLT2FIX(d->dest.pos[VX]) >> 8);
     }
     if(df & PODF_DEST_Y)
     {
-        Msg_WriteShort(FLT2FIX(d->dest.pos[VY]) >> 16);
-        Msg_WriteByte(FLT2FIX(d->dest.pos[VY]) >> 8);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->dest.pos[VY]) >> 16);
+        Writer_WriteByte(msgWriter, FLT2FIX(d->dest.pos[VY]) >> 8);
     }
     if(df & PODF_SPEED)
-        Msg_WriteShort(FLT2FIX(d->speed) >> 8);
+        Writer_WriteInt16(msgWriter, FLT2FIX(d->speed) >> 8);
     if(df & PODF_DEST_ANGLE)
-        Msg_WriteShort(d->destAngle >> 16);
+        Writer_WriteInt16(msgWriter, d->destAngle >> 16);
     if(df & PODF_ANGSPEED)
-        Msg_WriteShort(d->angleSpeed >> 16);
+        Writer_WriteInt16(msgWriter, d->angleSpeed >> 16);
 }
 
 /**
@@ -689,10 +680,10 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
     int                 df = delta->delta.flags;
 
     // This is either the sound ID, emitter ID or sector index.
-    Msg_WriteShort(delta->delta.id);
+    Writer_WriteUInt16(msgWriter, delta->delta.id);
 
     // First the flags byte.
-    Msg_WriteByte(df & 0xff);
+    Writer_WriteByte(msgWriter, df & 0xff);
 
     switch(delta->delta.type)
     {
@@ -700,7 +691,7 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
     case DT_SECTOR_SOUND:
     case DT_POLY_SOUND:
         // The sound ID.
-        Msg_WriteShort(delta->sound);
+        Writer_WriteUInt16(msgWriter, delta->sound);
         break;
 
     default:
@@ -713,16 +704,16 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
         if(delta->volume > 1)
         {
             // Very loud indeed.
-            Msg_WriteByte(255);
+            Writer_WriteByte(msgWriter, 255);
         }
         else if(delta->volume <= 0)
         {
             // Silence.
-            Msg_WriteByte(0);
+            Writer_WriteByte(msgWriter, 0);
         }
         else
         {
-            Msg_WriteByte(delta->volume * 127 + 0.5f);
+            Writer_WriteByte(msgWriter, delta->volume * 127 + 0.5f);
         }
     }
 }
@@ -750,7 +741,7 @@ if(type >= NUM_DELTA_TYPES)
         type |= DT_RESENT;
     }
 
-    Msg_WriteByte(type);
+    Writer_WriteByte(msgWriter, type);
 
     // Include the set number?
     if(type & DT_RESENT)
@@ -759,12 +750,12 @@ if(type >= NUM_DELTA_TYPES)
         // received the set this delta belongs to, it means the delta has
         // already been received. This is needed in the situation where the
         // ack is lost or delayed.
-        Msg_WriteByte(delta->set);
+        Writer_WriteByte(msgWriter, delta->set);
 
         // Also send the unique ID of this delta. If the client has already
         // received a delta with this ID, the delta is discarded. This is
         // needed in the situation where the set is lost.
-        Msg_WriteByte(delta->resend);
+        Writer_WriteByte(msgWriter, delta->resend);
     }
 }
 
@@ -792,7 +783,7 @@ void Sv_WriteDelta(const delta_t* delta)
         {
             // This'll be the entire delta. No more data is needed.
             Sv_WriteDeltaHeader(DT_NULL_MOBJ, delta);
-            Msg_WriteShort(delta->id);
+            Writer_WriteUInt16(msgWriter, delta->id);
 #ifdef _NETDEBUG
             goto writeDeltaLength;
 #else
@@ -923,13 +914,13 @@ void Sv_SendFrame(int plrNum)
     Msg_Begin(pool->isFirst ? PSV_FIRST_FRAME2 : PSV_FRAME2);
 
     // First send the gameTime of this frame.
-    Msg_WriteFloat(gameTime);
+    Writer_WriteFloat(msgWriter, gameTime);
 
     /*
     // The first byte contains the set number, which identifies this
     // frame. The client will keep track of the numbers to detect
     // duplicates.
-    Msg_WriteByte(pool->setDealer);
+    Writer_WriteByte(msgWriter, pool->setDealer);
     */
 
     // The number of deltas in the packet will be here.
@@ -947,7 +938,7 @@ Con_Printf("set%i\n", pool->setDealer);
 */
     // Keep writing until the maximum size is reached.
     while((delta = Sv_PoolQueueExtract(pool)) != NULL &&
-          (lastStart = Msg_Offset()) < maxFrameSize)
+          (lastStart = Writer_Size(msgWriter)) < maxFrameSize)
     {
         oldResend = pool->resendDealer;
 
@@ -962,7 +953,7 @@ Con_Printf("set%i\n", pool->setDealer);
         Sv_WriteDelta(delta);
 
         // Did we go over the limit?
-        if(Msg_Offset() > maxFrameSize)
+        if(Writer_Size(msgWriter) > maxFrameSize)
         {
             /*
             // Time to see if BWR needs to be adjusted.
@@ -973,7 +964,7 @@ Con_Printf("set%i\n", pool->setDealer);
             */
 
             // Cancel the last delta.
-            Msg_SetOffset(lastStart);
+            Writer_SetPos(msgWriter, lastStart);
 
             // Restore the resend dealer.
             if(oldResend)
@@ -1013,6 +1004,8 @@ if(delta->state == DELTA_UNACKED)
     Msg_SetOffset(endOffset);
 #endif
 */
+
+    Msg_End();
 
     Net_SendBuffer(plrNum, 0);
 

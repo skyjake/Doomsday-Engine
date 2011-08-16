@@ -222,12 +222,12 @@ ident_t Net_GetPlayerID(int player)
  */
 void Net_SendBuffer(int toPlayer, int spFlags)
 {
+    assert(!Msg_BeingWritten()); // Must finish writing before calling this.
+
     // Don't send anything during demo playback.
     if(playback)
         return;
 
-    // Update the length of the message.
-    netBuffer.length = netBuffer.cursor - netBuffer.msg.data;
     netBuffer.player = toPlayer;
 
     // A rebound packet?
@@ -257,7 +257,7 @@ boolean Net_GetPacket(void)
     {
         netBuffer = reboundStore;
         netBuffer.player = consolePlayer;
-        netBuffer.cursor = netBuffer.msg.data;
+        //netBuffer.cursor = netBuffer.msg.data;
         reboundPacket = false;
         return true;
     }
@@ -280,7 +280,7 @@ boolean Net_GetPacket(void)
         Demo_WritePacket(consolePlayer);
 
     // Reset the cursor for Msg_* routines.
-    netBuffer.cursor = netBuffer.msg.data;
+    //netBuffer.cursor = netBuffer.msg.data;
 
     return true;
 }
@@ -301,19 +301,11 @@ Smoother* Net_PlayerSmoother(int player)
  */
 void Net_SendPacket(int to_player, int type, void *data, size_t length)
 {
-    int                 flags = 0;
-
-    /*
-    // What kind of delivery to use?
-    if(to_player & DDSP_CONFIRM)
-        flags |= SPF_CONFIRM;
-    if(to_player & DDSP_ORDERED)
-        flags |= SPF_ORDERED;
-    */
+    unsigned int flags = 0;
 
     Msg_Begin(type);
-    if(data)
-        Msg_Write(data, length);
+    if(data) Writer_Write(msgWriter, data, length);
+    Msg_End();
 
     if(isClient)
     {   // As a client we can only send messages to the server.
@@ -445,46 +437,6 @@ static void Net_DoUpdate(void)
 
     lastTime = nowTime;
 
-#if 0
-    // Build new ticcmds for console player.
-    for(i = 0; i < newtics; ++i)
-    {
-        DD_ProcessEvents();
-
-        /*Con_Printf("mktic:%i gt:%i newtics:%i >> %i\n",
-           maketic, gametic, newtics, maketic-gametic); */
-
-        if(playback)
-        {
-            numlocal = 0;
-            if(availableTics < LOCALTICS)
-                availableTics++;
-        }
-        else if(!isDedicated && !ui_active)
-        {
-            // Place the new ticcmd in the local ticcmds buffer.
-            ticcmd_t *cmd = Net_LocalCmd();
-
-            if(cmd)
-            {
-                gx.BuildTicCmd(cmd);
-
-                // Set the time stamp. Only the lowest byte is stored.
-                //cmd->time = gametic + availableTics;
-
-                // Availabletics counts the tics that have cmds.
-                availableTics++;
-                if(isClient)
-                {
-                    // When not playing a demo, this is the last command.
-                    // It is used in local movement prediction.
-                    memcpy(clients[consolePlayer].lastCmd, cmd, sizeof(*cmd));
-                }
-            }
-        }
-    }
-#endif
-
     // This is as far as dedicated servers go.
     if(isDedicated)
         return;
@@ -505,31 +457,29 @@ static void Net_DoUpdate(void)
         mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
 
         coordTimer = 1; //netCoordTime; // 35/2
+
         Msg_Begin(PKT_COORDS);
-        Msg_WriteFloat(gameTime);
-        Msg_WriteFloat(mo->pos[VX]);
-        Msg_WriteFloat(mo->pos[VY]);
+        Writer_WriteFloat(msgWriter, gameTime);
+        Writer_WriteFloat(msgWriter, mo->pos[VX]);
+        Writer_WriteFloat(msgWriter, mo->pos[VY]);
         if(mo->pos[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
-            Msg_WriteLong(DDMININT);
+            Writer_WriteInt32(msgWriter, DDMININT);
         }
         else
         {
-            Msg_WriteLong(FLT2FIX(mo->pos[VZ]));
+            Writer_WriteInt32(msgWriter, FLT2FIX(mo->pos[VZ]));
         }
-        /*
-        Msg_WriteShort((short) (mo->mom[VX] * 256));
-        Msg_WriteShort((short) (mo->mom[VY] * 256));
-        Msg_WriteShort((short) (mo->mom[VZ] * 256));
-        */
         // Also include angles.
-        Msg_WriteShort(mo->angle >> 16);
-        Msg_WriteShort(P_LookDirToShort(ddPlayers[consolePlayer].shared.lookDir));
+        Writer_WriteInt16(msgWriter, mo->angle >> 16);
+        Writer_WriteInt16(msgWriter, P_LookDirToShort(ddPlayers[consolePlayer].shared.lookDir));
         // Control state.
-        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
-        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
-        Net_SendBuffer(0, 0);       
+        Writer_WriteByte(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
+        Writer_WriteByte(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
+        Msg_End();
+
+        Net_SendBuffer(0, 0);
     }
 }
 
@@ -1118,10 +1068,13 @@ D_CMD(Chat)
         Con_Error("CCMD_Chat: Invalid value, mode = %i.", mode);
         break;
     }
+
     Msg_Begin(PKT_CHAT);
-    Msg_WriteByte(consolePlayer);
-    Msg_WriteShort(mask);
-    Msg_Write(buffer, strlen(buffer) + 1);
+    Writer_WriteByte(msgWriter, consolePlayer);
+    Writer_WriteUInt16(msgWriter, mask);
+    Writer_WriteUInt16(msgWriter, strlen(buffer));
+    Writer_Write(msgWriter, buffer, strlen(buffer));
+    Msg_End();
 
     if(!isClient)
     {

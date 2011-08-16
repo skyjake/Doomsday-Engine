@@ -66,6 +66,12 @@ size_t Reader_Pos(const Reader* reader);
 size_t Reader_Size(const Reader* reader);
 
 /**
+ * Determines whether the reader is in the end of buffer, i.e., there is nothing
+ * more to read.
+ */
+boolean Reader_AtEnd(const Reader* reader);
+
+/**
  * Sets the position of the reading cursor in the buffer.
  *
  * @param reader  Reader.

@@ -471,7 +471,7 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
  */
 int Cl_ReadLumpDelta(void)
 {
-    lumpnum_t           num = (lumpnum_t) Msg_ReadPackedShort();
+    lumpnum_t           num = (lumpnum_t) Reader_ReadPackedUInt16(msgReader);
     char                name[9];
 
     if(!num)
@@ -479,7 +479,7 @@ int Cl_ReadLumpDelta(void)
 
     // Read the name of the lump.
     memset(name, 0, sizeof(name));
-    Msg_Read(name, 8);
+    Reader_Read(msgReader, name, 8);
 
     VERBOSE(Con_Printf("LumpTranslate: %i => %s\n", num, name));
 
@@ -509,18 +509,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     dummy.planes = dummyPlaneArray;
 
     // Sector index number.
-    num = Msg_ReadUnsignedShort();
+    num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    if(deltaType == DT_SECTOR_R6)
+    /*if(deltaType == DT_SECTOR_R6)
     {
         // The R6 protocol reserves two bytes for the flags.
-        df = Msg_ReadUnsignedShort();
+        df = Reader_ReadUInt16(msgReader);
     }
-    else
-    {
-        df = Msg_ReadPackedLong();
-    }
+    else*/
+    //{
+    df = Reader_ReadPackedUInt32(msgReader);
+    //}
 
     if(!skip)
     {
@@ -546,7 +546,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = P_ToMaterial(Msg_ReadPackedShort());
+        mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
         Surface_SetMaterial(&sec->SP_floorsurface, mat);
     }
     if(df & SDF_CEILING_MATERIAL)
@@ -556,15 +556,15 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = P_ToMaterial(Msg_ReadPackedShort());
+        mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
         Surface_SetMaterial(&sec->SP_ceilsurface, mat);
     }
 
     if(df & SDF_LIGHT)
-        sec->lightLevel = Msg_ReadByte() / 255.0f;
+        sec->lightLevel = Reader_ReadByte(msgReader) / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
     {
-        P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_HEIGHT, FIX2FLT(Msg_ReadShort() << 16));
+        P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_HEIGHT, FIX2FLT(Reader_ReadInt16(msgReader) << 16));
         wasChanged = true;
 
         /*
@@ -577,7 +577,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_CEILING_HEIGHT)
     {
-        fixed_t height = Msg_ReadShort() << 16;
+        fixed_t height = Reader_ReadInt16(msgReader) << 16;
         P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_HEIGHT, FIX2FLT(height));
         wasChanged = true;
 
@@ -588,7 +588,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_FLOOR_TARGET)
     {
-        fixed_t height = Msg_ReadShort() << 16;
+        fixed_t height = Reader_ReadInt16(msgReader) << 16;
         P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_TARGET_HEIGHT, FIX2FLT(height));
 
         /*if(!skip)
@@ -601,7 +601,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_FLOOR_SPEED)
     {
-        fixed_t speed = Msg_ReadByte();
+        fixed_t speed = Reader_ReadByte(msgReader);
         //if(!skip)
         {
             P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_SPEED,
@@ -620,7 +620,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 #endif
     if(df & SDF_CEILING_TARGET)
     {
-        fixed_t target = Msg_ReadShort() << 16;
+        fixed_t target = Reader_ReadInt16(msgReader) << 16;
 /*#ifdef _DEBUG
         Con_Message("Cl_ReadSectorDelta2: Ceiling target %f for sector %i\n", FIX2FLT(target), num);
 #endif*/
@@ -635,7 +635,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     }
     if(df & SDF_CEILING_SPEED)
     {
-        byte speed = Msg_ReadByte();
+        byte speed = Reader_ReadByte(msgReader);
         //if(!skip)
         {
             P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_SPEED,
@@ -645,45 +645,47 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
                                 num, sec->planes[PLN_CEILING]->speed) );*/
         }
     }
+#if 0
     if(df & SDF_CEILING_TEXMOVE)
     {   // Old clients might include these.
         /*fixed_t moveX = */ Msg_ReadShort() /*<< 8*/;
         /*fixed_t moveY = */ Msg_ReadShort() /*<< 8*/;
     }
+#endif
     if(df & SDF_COLOR_RED)
-        sec->rgb[0] = Msg_ReadByte() / 255.f;
+        sec->rgb[0] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_COLOR_GREEN)
-        sec->rgb[1] = Msg_ReadByte() / 255.f;
+        sec->rgb[1] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_COLOR_BLUE)
-        sec->rgb[2] = Msg_ReadByte() / 255.f;
+        sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorR(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorR(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorG(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorB(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorR(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorR(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorG(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorB(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
 /*
     if(df & SDF_FLOOR_GLOW_RED)
-        sec->planes[PLN_FLOOR]->glowRGB[0] = Msg_ReadByte() / 255.f;
+        sec->planes[PLN_FLOOR]->glowRGB[0] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->planes[PLN_FLOOR]->glowRGB[1] = Msg_ReadByte() / 255.f;
+        sec->planes[PLN_FLOOR]->glowRGB[1] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->planes[PLN_FLOOR]->glowRGB[2] = Msg_ReadByte() / 255.f;
+        sec->planes[PLN_FLOOR]->glowRGB[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_CEIL_GLOW_RED)
-        sec->planes[PLN_CEILING]->glowRGB[0] = Msg_ReadByte() / 255.f;
+        sec->planes[PLN_CEILING]->glowRGB[0] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_CEIL_GLOW_GREEN)
-        sec->planes[PLN_CEILING]->glowRGB[1] = Msg_ReadByte() / 255.f;
+        sec->planes[PLN_CEILING]->glowRGB[1] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_CEIL_GLOW_BLUE)
-        sec->planes[PLN_CEILING]->glowRGB[2] = Msg_ReadByte() / 255.f;
+        sec->planes[PLN_CEILING]->glowRGB[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_GLOW)
         sec->planes[PLN_FLOOR]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
@@ -731,56 +733,56 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     sidedef_t          *sid;
 
     // First read all the data.
-    num = Msg_ReadUnsignedShort();
+    num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    if(deltaType == DT_SIDE_R6)
+    /*if(deltaType == DT_SIDE_R6)
     {
         // The R6 protocol reserves a single byte for a side delta.
-        df = Msg_ReadByte();
+        df = Reader_ReadByte(msgReader);
     }
-    else
+    else*/
     {
-        df = Msg_ReadPackedLong();
+        df = Reader_ReadPackedUInt32(msgReader);
     }
 
     if(df & SIDF_TOP_MATERIAL)
-        topMat = Msg_ReadPackedShort();
+        topMat = Reader_ReadPackedUInt16(msgReader);
     if(df & SIDF_MID_MATERIAL)
-        midMat = Msg_ReadPackedShort();
+        midMat = Reader_ReadPackedUInt16(msgReader);
     if(df & SIDF_BOTTOM_MATERIAL)
-        botMat = Msg_ReadPackedShort();
+        botMat = Reader_ReadPackedUInt16(msgReader);
     if(df & SIDF_LINE_FLAGS)
-        lineFlags = Msg_ReadByte();
+        lineFlags = Reader_ReadByte(msgReader);
 
     if(df & SIDF_TOP_COLOR_RED)
-        toprgb[CR] = Msg_ReadByte() / 255.f;
+        toprgb[CR] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_TOP_COLOR_GREEN)
-        toprgb[CG] = Msg_ReadByte() / 255.f;
+        toprgb[CG] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_TOP_COLOR_BLUE)
-        toprgb[CB] = Msg_ReadByte() / 255.f;
+        toprgb[CB] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SIDF_MID_COLOR_RED)
-        midrgba[CR] = Msg_ReadByte() / 255.f;
+        midrgba[CR] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_MID_COLOR_GREEN)
-        midrgba[CG] = Msg_ReadByte() / 255.f;
+        midrgba[CG] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_MID_COLOR_BLUE)
-        midrgba[CB] = Msg_ReadByte() / 255.f;
+        midrgba[CB] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_MID_COLOR_ALPHA)
-        midrgba[CA] = Msg_ReadByte() / 255.f;
+        midrgba[CA] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        bottomrgb[CR] = Msg_ReadByte() / 255.f;
+        bottomrgb[CR] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        bottomrgb[CG] = Msg_ReadByte() / 255.f;
+        bottomrgb[CG] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        bottomrgb[CB] = Msg_ReadByte() / 255.f;
+        bottomrgb[CB] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SIDF_MID_BLENDMODE)
-        blendmode = Msg_ReadShort() << 16;
+        blendmode = Reader_ReadInt32(msgReader);
 
     if(df & SIDF_FLAGS)
-        sideFlags = Msg_ReadByte();
+        sideFlags = Reader_ReadByte(msgReader);
 
     // Must we skip this?
     if(skip)
@@ -890,21 +892,21 @@ void Cl_ReadPolyDelta2(boolean skip)
     float               speed = 0;
     int                 destAngle = 0, angleSpeed = 0;
 
-    num = Msg_ReadPackedShort();
+    num = Reader_ReadPackedUInt16(msgReader);
 
     // Flags.
-    df = Msg_ReadByte();
+    df = Reader_ReadByte(msgReader);
 
     if(df & PODF_DEST_X)
-        destX = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
+        destX = FIX2FLT((Reader_ReadInt16(msgReader) << 16) + ((char) Reader_ReadByte(msgReader) << 8));
     if(df & PODF_DEST_Y)
-        destY = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
+        destY = FIX2FLT((Reader_ReadInt16(msgReader) << 16) + ((char) Reader_ReadByte(msgReader) << 8));
     if(df & PODF_SPEED)
-        speed = FIX2FLT(Msg_ReadShort() << 8);
+        speed = FIX2FLT(Reader_ReadInt16(msgReader) << 8);
     if(df & PODF_DEST_ANGLE)
-        destAngle = Msg_ReadShort() << 16;
+        destAngle = Reader_ReadInt16(msgReader) << 16;
     if(df & PODF_ANGSPEED)
-        angleSpeed = Msg_ReadShort() << 16;
+        angleSpeed = Reader_ReadInt16(msgReader) << 16;
 
 /*#ifdef _DEBUG
     Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f\n", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));

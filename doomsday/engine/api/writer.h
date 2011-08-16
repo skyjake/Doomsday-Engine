@@ -46,18 +46,30 @@ Writer* Writer_New(void);
  * with Writer_Destruct() after it is not needed any more.
  *
  * @param buffer  Buffer to use for reading.
- * @param len     Length of the buffer.
+ * @param maxLen  Maximum length of the buffer.
  */
-Writer* Writer_NewWithBuffer(byte* buffer, size_t len);
+Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen);
 
 /**
  * Destroys the writer.
  */
 void Writer_Destruct(Writer* writer);
 
-size_t Writer_Pos(const Writer* writer);
-
+/**
+ * Returns the current output size of the writer, i.e., how much has been written
+ * so far.
+ */
 size_t Writer_Size(const Writer* writer);
+
+/**
+ * Returns the maximum size of the writing buffer.
+ */
+size_t Writer_TotalBufferSize(const Writer* writer);
+
+/**
+ * Returns the number of bytes left for writing.
+ */
+size_t Writer_BytesLeft(const Writer* writer);
 
 /**
  * Sets the position of the writing cursor in the buffer.
@@ -72,7 +84,7 @@ void Writer_WriteByte(Writer* writer, byte v);
 void Writer_WriteInt16(Writer* writer, int16_t v);
 void Writer_WriteUInt16(Writer* writer, uint16_t v);
 void Writer_WriteInt32(Writer* writer, int32_t v);
-void Writer_WriteUInt16(Writer* writer, uint16_t v);
+void Writer_WriteUInt32(Writer* writer, uint32_t v);
 void Writer_WriteFloat(Writer* writer, float v);
 
 /**

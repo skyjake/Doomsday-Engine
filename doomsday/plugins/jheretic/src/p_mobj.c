@@ -1262,7 +1262,12 @@ boolean P_HitFloor(mobj_t* thing)
     mobj_t*             mo;
     const terraintype_t* tt;
 
-    if(IS_CLIENT) return false;
+    if(IS_CLIENT && thing->player)
+    {
+        // The client notifies the server, which will handle the splash.
+        NetCl_FloorHitRequest();
+        return false;
+    }
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {

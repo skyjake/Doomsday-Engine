@@ -457,15 +457,21 @@ void Con_SetFont(ddfont_t* cfont)
  */
 static void Con_Send(const char *command, byte src, int silent)
 {
-    ushort          len = (ushort) (strlen(command) + 1);
+    ushort len = (ushort) strlen(command);
+
+    if(len >= 0x8000)
+    {
+        Con_Message("Con_Send: Command is too long, length=%i.\n", len);
+        return;
+    }
 
     Msg_Begin(PKT_COMMAND2);
     // Mark high bit for silent commands.
-    Msg_WriteShort(len | (silent ? 0x8000 : 0));
-    Msg_WriteShort(0); // flags. Unused at present.
-    Msg_WriteByte(src);
-    Msg_Write(command, len);
-    // Send it reliably.
+    Writer_WriteUInt16(msgWriter, len | (silent ? 0x8000 : 0));
+    Writer_WriteUInt16(msgWriter, 0); // flags. Unused at present.
+    Writer_WriteByte(msgWriter, src);
+    Writer_Write(msgWriter, command, len);
+    Msg_End();
     Net_SendBuffer(0, 0);
 }
 

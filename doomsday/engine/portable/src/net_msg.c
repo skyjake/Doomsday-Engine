@@ -41,217 +41,63 @@
 #  include "de_console.h"
 #endif
 
-// MACROS ------------------------------------------------------------------
-
-#ifdef _DEBUG
-#  define CHECK_OVERFLOW(s)    if(Msg_Offset() >= NETBUFFER_ACTUALSIZE - s) Con_Error("net_msg: Buffer about to overflow!\n");
-#else
-#  define CHECK_OVERFLOW(s)
-#endif
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+Writer* msgWriter;
+Reader* msgReader;
 
 void Msg_Begin(int type)
 {
-    netBuffer.cursor = netBuffer.msg.data;
-    netBuffer.length = 0;
+    if(msgReader)
+    {
+        // End reading the netbuffer automatically.
+        Msg_EndRead();
+    }
+
+    // The previous write must have been ended by now.
+    assert(msgWriter == NULL);
+
+    // Allocate a new writer.
+    msgWriter = Writer_New();
     netBuffer.msg.type = type;
 }
 
-void Msg_WriteByte(byte b)
+boolean Msg_BeingWritten(void)
 {
-    CHECK_OVERFLOW(1);
-    *netBuffer.cursor++ = b;
+    return msgWriter != NULL;
 }
 
-byte Msg_ReadByte(void)
+void Msg_End(void)
 {
-#ifdef _DEBUG
-    if(Msg_Offset() >= netBuffer.length)
-        Con_Error("Msg_ReadByte: Packet read overflow!\n");
-#endif
-    return *netBuffer.cursor++;
-}
-
-void Msg_WriteShort(short w)
-{
-    CHECK_OVERFLOW(2);
-    *(short *) netBuffer.cursor = SHORT(w);
-    netBuffer.cursor += 2;
-}
-
-short Msg_ReadShort(void)
-{
-#ifdef _DEBUG
-    if(Msg_Offset() >= netBuffer.length)
-        Con_Error("Msg_ReadShort: Packet read overflow!\n");
-#endif
-    netBuffer.cursor += 2;
-    return SHORT( *(short *) (netBuffer.cursor - 2) );
-}
-
-unsigned short Msg_ReadUnsignedShort(void)
-{
-    return (unsigned short) Msg_ReadShort();
-}
-
-/**
- * Only 15 bits can be used for the number because the high bit of the
- * lower byte is used to determine whether the upper byte follows or not.
- */
-void Msg_WritePackedShort(short w)
-{
-    CHECK_OVERFLOW(2);
-
-    if(w < 0)
+    if(msgWriter)
     {
-        Con_Error("Msg_WritePackedShort: Cannot write %i.\n", w);
-    }
-
-    // Can the number be represented with 7 bits?
-    if(w < 0x80)
-    {
-        Msg_WriteByte(w);
+        // Finalize the netbuffer.
+        netBuffer.length = Writer_Size(msgWriter);
+        Writer_Destruct(msgWriter);
+        msgWriter = 0;
     }
     else
     {
-        Msg_WriteByte(0x80 | (w & 0x7f));
-        Msg_WriteByte(w >> 7);  // Highest bit is lost.
+        Con_Error("Msg_End: No message being written.\n");
     }
 }
 
-/**
- * Only 15 bits can be used for the number because the high bit of the
- * lower byte is used to determine whether the upper byte follows or not.
- */
-short Msg_ReadPackedShort(void)
+void Msg_Read(void)
 {
-    ushort          pack = *netBuffer.cursor++;
-
-    if(pack & 0x80)
+    if(msgWriter)
     {
-        pack &= ~0x80;
-        pack |= (*netBuffer.cursor++) << 7;
+        // End writing the netbuffer automatically.
+        Msg_End();
     }
-    return pack;
+
+    // Start reading from the netbuffer.
+    assert(msgReader == NULL);
+    msgReader = Reader_New();
 }
 
-void Msg_WriteLong(int l)
+void Msg_EndRead(void)
 {
-    CHECK_OVERFLOW(4);
-    *(int*) netBuffer.cursor = LONG(l);
-    netBuffer.cursor += 4;
-}
-
-int Msg_ReadLong(void)
-{
-#ifdef _DEBUG
-    if(Msg_Offset() >= netBuffer.length)
-        Con_Error("Msg_ReadLong: Packet read overflow!\n");
-#endif
-    netBuffer.cursor += 4;
-    return LONG( *(int *) (netBuffer.cursor - 4) );
-}
-
-void Msg_WriteFloat(float f)
-{
-    Msg_WriteLong(*(int*)&f);
-}
-
-float Msg_ReadFloat(void)
-{
-    int v = Msg_ReadLong();
-    return *(float*) &v;
-}
-
-void Msg_WritePackedLong(uint l)
-{
-    CHECK_OVERFLOW(5);
-
-    while(l >= 0x80)
+    if(msgReader)
     {
-        // Write the lowest 7 bits, and set the high bit to indicate that
-        // at least one more byte will follow.
-        Msg_WriteByte(0x80 | (l & 0x7f));
-
-        l >>= 7;
+        Reader_Destruct(msgReader);
+        msgReader = 0;
     }
-    // Write the last byte, with the high bit clear.
-    Msg_WriteByte(l);
-}
-
-uint Msg_ReadPackedLong(void)
-{
-    byte            pack = 0;
-    int             pos = 0;
-    uint            value = 0;
-
-    do
-    {
-#ifdef _DEBUG
-        if(Msg_Offset() >= netBuffer.length)
-            Con_Error("Msg_ReadPackedLong: Packet read overflow!\n");
-#endif
-
-        pack = *netBuffer.cursor++;
-        value |= ((pack & 0x7f) << pos);
-        pos += 7;
-    } while(pack & 0x80);
-
-    return value;
-}
-
-void Msg_Write(const void *src, size_t len)
-{
-    CHECK_OVERFLOW(len);
-
-    memcpy(netBuffer.cursor, src, len);
-    netBuffer.cursor += len;
-}
-
-void Msg_Read(void *dest, size_t len)
-{
-#ifdef _DEBUG
-    if(Msg_Offset() >= netBuffer.length)
-        Con_Error("Msg_Read: Packet read overflow!\n");
-#endif
-    memcpy(dest, netBuffer.cursor, len);
-    netBuffer.cursor += len;
-}
-
-size_t Msg_Offset(void)
-{
-    return netBuffer.cursor - netBuffer.msg.data;
-}
-
-void Msg_SetOffset(size_t offset)
-{
-    netBuffer.cursor = netBuffer.msg.data + offset;
-}
-
-size_t Msg_MemoryLeft(void)
-{
-    return NETBUFFER_MAXDATA - (netBuffer.cursor - netBuffer.msg.data);
-}
-
-boolean Msg_End(void)
-{
-    if((size_t) (netBuffer.cursor - netBuffer.msg.data) >= netBuffer.length)
-        return true;
-
-    return false;
 }

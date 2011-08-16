@@ -682,10 +682,6 @@ boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
     }
     if(r->filter != s->filter)
         df |= PDF_FILTER;
-/*    if(r->clYaw != s->clYaw)
-        df |= PDF_CLYAW;
-    if(r->clPitch != s->clPitch)
-        df |= PDF_CLPITCH;*/
 
     /*
     // The player sprites are a bit more complicated to check.
@@ -1356,10 +1352,6 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         }
         if(sf & PDF_FILTER)
             d->filter = s->filter;
-/*        if(sf & PDF_CLYAW)
-            d->clYaw = s->clYaw;
-        if(sf & PDF_CLPITCH)
-            d->clPitch = s->clPitch; */ /* $unifiedangles */
         if(sf & PDF_PSPRITES)
         {
             uint                i;

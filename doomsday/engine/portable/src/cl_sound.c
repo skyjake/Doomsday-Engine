@@ -70,11 +70,11 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     if(type == DT_SOUND)
     {
         // Delta ID is the sound ID.
-        sound = Msg_ReadUnsignedShort();
+        sound = Reader_ReadUInt16(msgReader);
     }
     else if(type == DT_MOBJ_SOUND)
     {
-        if((cmo = ClMobj_Find(mobjId = Msg_ReadUnsignedShort())) != NULL)
+        if((cmo = ClMobj_Find(mobjId = Reader_ReadUInt16(msgReader))) != NULL)
         {
             clmoinfo_t* info = ClMobj_GetInfo(cmo);
             if(info->flags & CLMF_HIDDEN)
@@ -91,7 +91,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else if(type == DT_SECTOR_SOUND)
     {
-        uint index = Msg_ReadUnsignedShort();
+        uint index = Reader_ReadUInt16(msgReader);
 
         if(index < numSectors)
         {
@@ -106,7 +106,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     }
     else                        /* DT_POLY_SOUND */
     {
-        uint index = Msg_ReadUnsignedShort();
+        uint index = Reader_ReadUInt16(msgReader);
 
         if(index < numPolyObjs)
         {
@@ -121,12 +121,12 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 		}
     }
 
-    flags = Msg_ReadByte();
+    flags = Reader_ReadByte(msgReader);
 
     if(type != DT_SOUND)
     {
         // The sound ID.
-        sound = Msg_ReadUnsignedShort();
+        sound = Reader_ReadUInt16(msgReader);
     }
 
     if(type == DT_SECTOR_SOUND)
@@ -142,7 +142,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 
     if(flags & SNDDF_VOLUME)
     {
-        byte b = Msg_ReadByte();
+        byte b = Reader_ReadByte(msgReader);
 
         if(b == 255)
         {
@@ -259,16 +259,16 @@ void Cl_Sound(void)
     uint        num;
     mobj_t     *mo = NULL;
 
-    flags = Msg_ReadByte();
+    flags = Reader_ReadByte(msgReader);
 
     // Sound ID.
     if(flags & SNDF_SHORT_SOUND_ID)
     {
-        sound = Msg_ReadUnsignedShort();
+        sound = Reader_ReadUInt16(msgReader);
     }
     else
     {
-        sound = Msg_ReadByte();
+        sound = Reader_ReadByte(msgReader);
     }
 
     // Is the ID valid?
@@ -283,7 +283,7 @@ void Cl_Sound(void)
 
     if(flags & SNDF_VOLUME)
     {
-        volume = Msg_ReadByte();
+        volume = Reader_ReadByte(msgReader);
         if(volume > 127)
         {
             volume = 127;
@@ -292,7 +292,7 @@ void Cl_Sound(void)
     }
     if(flags & SNDF_ID)
     {
-        thid_t  sourceId = Msg_ReadUnsignedShort();
+        thid_t  sourceId = Reader_ReadUInt16(msgReader);
         mobj_t *cmo = ClMobj_Find(sourceId);
         if(cmo)
         {
@@ -301,7 +301,7 @@ void Cl_Sound(void)
     }
     else if(flags & SNDF_SECTOR)
     {
-        num = (ushort) Msg_ReadPackedShort();
+        num = Reader_ReadPackedUInt16(msgReader);
         if(num >= numSectors)
         {
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
@@ -313,9 +313,9 @@ void Cl_Sound(void)
     }
     else if(flags & SNDF_ORIGIN)
     {
-        pos[VX] = Msg_ReadShort();
-        pos[VY] = Msg_ReadShort();
-        pos[VZ] = Msg_ReadShort();
+        pos[VX] = Reader_ReadInt16(msgReader);
+        pos[VY] = Reader_ReadInt16(msgReader);
+        pos[VZ] = Reader_ReadInt16(msgReader);
         S_LocalSoundAtVolumeFrom(sound, NULL, pos, volume / 127.0f);
     }
     else if(flags & SNDF_PLAYER)
