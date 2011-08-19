@@ -1513,10 +1513,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\stringpool.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sv_def.h"
 				>
 			</File>
@@ -2219,6 +2215,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\doomsday.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\stringpool.h"
 				>
 			</File>
 			<File

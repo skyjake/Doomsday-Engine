@@ -152,6 +152,7 @@
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
+		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_mus.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_sfx.h" />
@@ -346,7 +347,6 @@
 		<Unit filename="..\..\engine\portable\include\s_mus.h" />
 		<Unit filename="..\..\engine\portable\include\s_sfx.h" />
 		<Unit filename="..\..\engine\portable\include\s_wav.h" />
-		<Unit filename="..\..\engine\portable\include\stringpool.h" />
 		<Unit filename="..\..\engine\portable\include\sv_def.h" />
 		<Unit filename="..\..\engine\portable\include\sv_frame.h" />
 		<Unit filename="..\..\engine\portable\include\sv_infine.h" />

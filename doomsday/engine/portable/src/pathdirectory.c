@@ -30,7 +30,7 @@
 #include "m_misc.h"
 
 typedef struct pathdirectory_node_userdatapair_s {
-    stringpool_internid_t internId;
+    StringPoolInternId internId;
     void* data;
 } pathdirectory_node_userdatapair_t;
 
@@ -53,7 +53,7 @@ typedef struct pathdirectory_node_s {
 
 static pathdirectory_node_t* PathDirectoryNode_New(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
-    stringpool_internid_t internId, void* userData);
+    StringPoolInternId internId, void* userData);
 
 static void PathDirectoryNode_Delete(pathdirectory_node_t* node);
 
@@ -210,7 +210,7 @@ static size_t countNodes(pathdirectory_t* pd, int flags)
 }
 
 static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t* parent,
-    pathdirectory_nodetype_t nodeType, stringpool_internid_t internId)
+    pathdirectory_nodetype_t nodeType, StringPoolInternId internId)
 {
     assert(NULL != pd && 0 != internId);
     {
@@ -229,7 +229,7 @@ static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t*
     }
 }
 
-static ushort hashForInternId(pathdirectory_t* pd, stringpool_internid_t internId)
+static ushort hashForInternId(pathdirectory_t* pd, StringPoolInternId internId)
 {
     assert(NULL != pd);
     if(0 == internId)
@@ -237,13 +237,13 @@ static ushort hashForInternId(pathdirectory_t* pd, stringpool_internid_t internI
     return pd->_internPool.idHashMap[internId-1];
 }
 
-static stringpool_internid_t internNameAndUpdateIdHashMap(pathdirectory_t* pd,
+static StringPoolInternId internNameAndUpdateIdHashMap(pathdirectory_t* pd,
     const ddstring_t* name, ushort hash)
 {
     assert(NULL != pd);
     {
-    stringpool_t* pool = pd->_internPool.strings;
-    stringpool_internid_t internId;
+    StringPool* pool = pd->_internPool.strings;
+    StringPoolInternId internId;
     uint oldSize;
 
     if(NULL == pool)
@@ -279,7 +279,7 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
 {
     assert(NULL != pd && NULL != name);
     {
-    stringpool_internid_t internId = 0;
+    StringPoolInternId internId = 0;
     pathdirectory_node_t* node;
     ushort hash;
 
@@ -1233,7 +1233,7 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
 
 static pathdirectory_node_t* PathDirectoryNode_New(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
-    stringpool_internid_t internId, void* userData)
+    StringPoolInternId internId, void* userData)
 {
     assert(NULL != directory);
     {
@@ -1275,7 +1275,7 @@ pathdirectory_nodetype_t PathDirectoryNode_Type(const pathdirectory_node_t* node
     return node->_type;
 }
 
-stringpool_internid_t PathDirectoryNode_InternId(const pathdirectory_node_t* node)
+StringPoolInternId PathDirectoryNode_InternId(const pathdirectory_node_t* node)
 {
     assert(NULL != node);
     return node->_pair.internId;

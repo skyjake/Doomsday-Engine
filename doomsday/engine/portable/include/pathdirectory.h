@@ -93,8 +93,8 @@ typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH
 typedef struct pathdirectory_s {
     /// Path name fragment intern pool.
     struct pathdirectory_internpool_s {
-        stringpool_t* strings;
-        ushort* idHashMap; // Index by @c stringpool_internid_t-1
+        StringPool* strings;
+        ushort* idHashMap; // Index by @c StringPoolInternId-1
     } _internPool;
     /// Path hash map.
     pathdirectory_pathhash_t* _pathHash;
@@ -212,7 +212,7 @@ struct pathdirectory_node_s* PathDirectoryNode_Parent(const struct pathdirectory
 pathdirectory_nodetype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
-stringpool_internid_t PathDirectoryNode_InternId(const struct pathdirectory_node_s* node);
+StringPoolInternId PathDirectoryNode_InternId(const struct pathdirectory_node_s* node);
 
 /**
  * @param node  Right-most node in path.

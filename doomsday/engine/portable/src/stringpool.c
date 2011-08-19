@@ -26,12 +26,26 @@
 
 #include "stringpool.h"
 
+/**
+ * @todo Performance is presently suboptimal due to the representation of the
+ * intern list. A better implementation would use a binary search tree.
+ */
+struct stringpool_s
+{
+    /// Intern list (StringPool::_internsCount size).
+    struct stringpool_intern_s* _interns;
+    uint _internsCount;
+
+    /// Sorted redirection table.
+    StringPoolInternId* _sortedInternTable;
+};
+
 // Intern string record.
 typedef struct stringpool_intern_s {
     ddstring_t string;
 } stringpool_intern_t;
 
-static stringpool_intern_t* internById(stringpool_t* pool, stringpool_internid_t internId)
+static stringpool_intern_t* internById(StringPool* pool, StringPoolInternId internId)
 {
     assert(NULL != pool);
     if(0 != internId && internId <= pool->_internsCount)
@@ -40,11 +54,11 @@ static stringpool_intern_t* internById(stringpool_t* pool, stringpool_internid_t
     exit(1); // Unreachable.
 }
 
-static stringpool_internid_t findInternId(stringpool_t* pool, const ddstring_t* string)
+static StringPoolInternId findInternId(StringPool* pool, const ddstring_t* string)
 {
     assert(NULL != pool && NULL != string);
     {
-    stringpool_internid_t internId = 0; // Not a valid id.
+    StringPoolInternId internId = 0; // Not a valid id.
     if(0 != pool->_internsCount)
     {
         uint bottomIdx = 0, topIdx = pool->_internsCount - 1, pivot;
@@ -79,7 +93,7 @@ static stringpool_internid_t findInternId(stringpool_t* pool, const ddstring_t* 
     }
 }
 
-static stringpool_internid_t intern(stringpool_t* pool, const ddstring_t* string)
+static StringPoolInternId intern(StringPool* pool, const ddstring_t* string)
 {
     assert(NULL != pool && NULL != string);
     {
@@ -101,7 +115,7 @@ static stringpool_internid_t intern(stringpool_t* pool, const ddstring_t* string
     Str_Set(&intern->string, Str_Text(string));
 
     // Update the intern string identifier map.
-    pool->_sortedInternTable = (stringpool_internid_t*) realloc(pool->_sortedInternTable,
+    pool->_sortedInternTable = (StringPoolInternId*) realloc(pool->_sortedInternTable,
         sizeof(*pool->_sortedInternTable) * pool->_internsCount);
     if(NULL == pool->_sortedInternTable)
         Con_Error("StringPool::intern: Failed on (re)allocation of %lu bytes for "
@@ -128,9 +142,9 @@ static stringpool_internid_t intern(stringpool_t* pool, const ddstring_t* string
     }
 }
 
-stringpool_t* StringPool_New(void)
+StringPool* StringPool_New(void)
 {
-    stringpool_t* pool = (stringpool_t*) malloc(sizeof(*pool));
+    StringPool* pool = (StringPool*) malloc(sizeof(*pool));
     if(NULL == pool)
         Con_Error("StringPool::ConstructDefault: Failed on allocation of %lu bytes for "
             "new StringPool.", (unsigned long) sizeof(*pool));
@@ -140,9 +154,9 @@ stringpool_t* StringPool_New(void)
     return pool;
 }
 
-stringpool_t* StringPool_NewWithStrings(ddstring_t** strings, uint count)
+StringPool* StringPool_NewWithStrings(ddstring_t** strings, uint count)
 {
-    stringpool_t* pool = StringPool_New();
+    StringPool* pool = StringPool_New();
     uint i;
     if(NULL == strings || 0 == count) return pool;
 
@@ -153,16 +167,16 @@ stringpool_t* StringPool_NewWithStrings(ddstring_t** strings, uint count)
     return pool;
 }
 
-void StringPool_Delete(stringpool_t* pool)
+void StringPool_Delete(StringPool* pool)
 {
-    assert(NULL != pool);
+    if(!pool) Con_Error("StringPool::Delete: Invalid StringPool");
     StringPool_Clear(pool);
     free(pool);
 }
 
-void StringPool_Clear(stringpool_t* pool)
+void StringPool_Clear(StringPool* pool)
 {
-    assert(NULL != pool);
+    if(!pool) Con_Error("StringPool::Clear: Invalid StringPool");
     if(0 != pool->_internsCount)
     {
         uint i;
@@ -177,32 +191,36 @@ void StringPool_Clear(stringpool_t* pool)
     }
 }
 
-uint StringPool_Size(stringpool_t* pool)
+uint StringPool_Size(StringPool* pool)
 {
-    assert(pool);
+    if(!pool) Con_Error("StringPool::Size: Invalid StringPool");
     return pool->_internsCount;
 }
 
-boolean StringPool_Empty(stringpool_t* pool)
+boolean StringPool_Empty(StringPool* pool)
 {
+    if(!pool) Con_Error("StringPool::Emtpy: Invalid StringPool");
     return (0 == StringPool_Size(pool));
 }
 
-stringpool_internid_t StringPool_IsInterned(stringpool_t* pool, const ddstring_t* str)
+StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str)
 {
+    if(!pool) Con_Error("StringPool::isInterned: Invalid StringPool");
     return findInternId(pool, str);
 }
 
-const ddstring_t* StringPool_String(stringpool_t* pool, stringpool_internid_t internId)
+const ddstring_t* StringPool_String(StringPool* pool, StringPoolInternId internId)
 {
+    if(!pool) Con_Error("StringPool::String: Invalid StringPool");
     return &internById(pool, internId)->string;
 }
 
-stringpool_internid_t StringPool_Intern(stringpool_t* pool, const ddstring_t* str)
+StringPoolInternId StringPool_Intern(StringPool* pool, const ddstring_t* str)
 {
+    if(!pool) Con_Error("StringPool::Intern: Invalid StringPool");
     if(!(NULL == str || Str_IsEmpty(str)))
     {
-        stringpool_internid_t internId = StringPool_IsInterned(pool, str);
+        StringPoolInternId internId = StringPool_IsInterned(pool, str);
         if(0 == internId)
         {
             return intern(pool, str);
@@ -210,10 +228,10 @@ stringpool_internid_t StringPool_Intern(stringpool_t* pool, const ddstring_t* st
         return internId;
     }
     Con_Error("StringPool::Intern: Attempted with zero-length/null string.");
-    exit(1); // Unreachable.
 }
 
-const ddstring_t* StringPool_InternAndRetrieve(stringpool_t* pool, const ddstring_t* str)
+const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_t* str)
 {
+    if(!pool) Con_Error("StringPool::InternAndRetrieve: Invalid StringPool");
     return StringPool_String(pool, StringPool_Intern(pool, str));
 }
