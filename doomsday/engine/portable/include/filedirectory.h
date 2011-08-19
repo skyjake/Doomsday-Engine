@@ -51,11 +51,11 @@ typedef struct filedirectory_s {
     pathdirectory_t* _pathDirectory;
 } filedirectory_t;
 
-filedirectory_t* FileDirectory_ConstructDefault(void);
-filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList);
-filedirectory_t* FileDirectory_Construct(const char* pathList);
+filedirectory_t* FileDirectory_New(void);
+filedirectory_t* FileDirectory_NewWithPathListStr(const ddstring_t* pathList);
+filedirectory_t* FileDirectory_NewWithPathList(const char* pathList);
 
-void FileDirectory_Destruct(filedirectory_t* fd);
+void FileDirectory_Delete(filedirectory_t* fd);
 
 /**
  * Clear the directory contents.

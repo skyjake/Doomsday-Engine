@@ -51,11 +51,11 @@ typedef struct pathdirectory_node_s {
     pathdirectory_node_userdatapair_t _pair;
 } pathdirectory_node_t;
 
-static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
+static pathdirectory_node_t* PathDirectoryNode_New(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
     stringpool_internid_t internId, void* userData);
 
-static void PathDirectoryNode_Destruct(pathdirectory_node_t* node);
+static void PathDirectoryNode_Delete(pathdirectory_node_t* node);
 
 static volatile int numInstances = 0;
 // A mutex is used to protect access to the shared fragment info buffer and search state.
@@ -166,7 +166,7 @@ static void clearNodeList(pathdirectory_node_t** list)
             exit(1); // Unreachable.
         }
 #endif
-        PathDirectoryNode_Destruct(*list);
+        PathDirectoryNode_Delete(*list);
     } while(NULL != (*list = next));
 }
 
@@ -314,7 +314,7 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
     if(0 == internId)
         return NULL;
 
-    node = PathDirectoryNode_Construct(pd, nodeType, parent, internId, userData);
+    node = PathDirectoryNode_New(pd, nodeType, parent, internId, userData);
 
     // Do we need to init the path hash?
     if(NULL == pd->_pathHash)
@@ -466,7 +466,7 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
     }
 }
 
-pathdirectory_t* PathDirectory_Construct(void)
+pathdirectory_t* PathDirectory_New(void)
 {
     pathdirectory_t* pd = (pathdirectory_t*) malloc(sizeof(*pd));
     if(NULL == pd)
@@ -484,7 +484,7 @@ pathdirectory_t* PathDirectory_Construct(void)
     return pd;
 }
 
-void PathDirectory_Destruct(pathdirectory_t* pd)
+void PathDirectory_Delete(pathdirectory_t* pd)
 {
     assert(NULL != pd);
     clearPathHash(pd->_pathHash);
@@ -1231,7 +1231,7 @@ void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
     }
 }
 
-static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
+static pathdirectory_node_t* PathDirectoryNode_New(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
     stringpool_internid_t internId, void* userData)
 {
@@ -1251,7 +1251,7 @@ static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* direct
     }
 }
 
-static void PathDirectoryNode_Destruct(pathdirectory_node_t* node)
+static void PathDirectoryNode_Delete(pathdirectory_node_t* node)
 {
     assert(NULL != node);
     free(node);

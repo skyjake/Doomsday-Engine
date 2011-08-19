@@ -183,7 +183,7 @@ static void destroyAllNamespaces(void)
         resourcenamespace_t* rnamespace = namespaces[i];
         if(NULL != ResourceNamespace_Directory(rnamespace))
         {
-            FileDirectory_Destruct(ResourceNamespace_Directory(rnamespace));
+            FileDirectory_Delete(ResourceNamespace_Directory(rnamespace));
         }
         ResourceNamespace_Delete(rnamespace);
     }}
@@ -508,7 +508,7 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    directory = FileDirectory_ConstructDefault();
+    directory = FileDirectory_New();
     rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, directory,
         F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, 0);
 
@@ -570,7 +570,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, defaultPathCount;
         struct namespacedef_s* def = &defs[i];
-        filedirectory_t* directory = FileDirectory_ConstructDefault();
+        filedirectory_t* directory = FileDirectory_New();
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 

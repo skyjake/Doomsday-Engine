@@ -144,7 +144,7 @@ static void clearVariables(void)
     int flags = PCF_NO_BRANCH;
 #endif
     PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearVariable);
-    PathDirectory_Destruct(cvarDirectory), cvarDirectory = NULL;
+    PathDirectory_Delete(cvarDirectory), cvarDirectory = NULL;
     cvarCount = 0;
 }
 
@@ -1294,7 +1294,7 @@ void Con_InitDatabases(void)
     if(inited) return;
 
     // Create the empty variable directory now.
-    cvarDirectory = PathDirectory_Construct();
+    cvarDirectory = PathDirectory_New();
     cvarCount = 0;
 
     ccmdListHead = 0;

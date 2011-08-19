@@ -100,9 +100,9 @@ typedef struct pathdirectory_s {
     pathdirectory_pathhash_t* _pathHash;
 } pathdirectory_t;
 
-pathdirectory_t* PathDirectory_Construct(void);
+pathdirectory_t* PathDirectory_New(void);
 
-void PathDirectory_Destruct(pathdirectory_t* pd);
+void PathDirectory_Delete(pathdirectory_t* pd);
 
 /// @return  Print-ready name for node @a type.
 const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type);

@@ -214,14 +214,14 @@ static void printPaths(const dduri_t* const* paths, size_t pathsCount)
     }
 }
 
-filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList)
+filedirectory_t* FileDirectory_NewWithPathListStr(const ddstring_t* pathList)
 {
     filedirectory_t* fd = (filedirectory_t*) malloc(sizeof(*fd));
     if(NULL == fd)
         Con_Error("FileDirectory::Construct: Failed on allocation of %lu bytes for "
             "new FileDirectory.", (unsigned long) sizeof(*fd));
 
-    fd->_pathDirectory = PathDirectory_Construct();
+    fd->_pathDirectory = PathDirectory_New();
     if(NULL != pathList)
     {
         size_t count;
@@ -232,7 +232,7 @@ filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList)
     return fd;
 }
 
-filedirectory_t* FileDirectory_Construct(const char* pathList)
+filedirectory_t* FileDirectory_NewWithPathList(const char* pathList)
 {
     filedirectory_t* fd;
     ddstring_t _pathList, *paths = NULL;
@@ -243,7 +243,7 @@ filedirectory_t* FileDirectory_Construct(const char* pathList)
         Str_Set(&_pathList, pathList);
         paths = &_pathList;
     }
-    fd = FileDirectory_ConstructStr(paths);
+    fd = FileDirectory_NewWithPathListStr(paths);
     if(len != 0)
         Str_Free(paths);
     return fd;
@@ -251,10 +251,10 @@ filedirectory_t* FileDirectory_Construct(const char* pathList)
 
 filedirectory_t* FileDirectory_ConstructEmpty(void)
 {
-    return FileDirectory_ConstructStr(NULL);
+    return FileDirectory_NewWithPathListStr(NULL);
 }
 
-filedirectory_t* FileDirectory_ConstructDefault(void)
+filedirectory_t* FileDirectory_New(void)
 {
     return FileDirectory_ConstructEmpty();
 }
@@ -277,12 +277,12 @@ static void clearNodeInfo(filedirectory_t* fd)
     PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, PATHDIRECTORY_PATHHASH_SIZE, freeNodeInfo);
 }
 
-void FileDirectory_Destruct(filedirectory_t* fd)
+void FileDirectory_Delete(filedirectory_t* fd)
 {
     assert(NULL != fd);
     clearNodeInfo(fd);
     if(NULL != fd->_pathDirectory)
-        PathDirectory_Destruct(fd->_pathDirectory);
+        PathDirectory_Delete(fd->_pathDirectory);
     free(fd);
 }
 
