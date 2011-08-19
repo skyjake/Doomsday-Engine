@@ -823,7 +823,7 @@ void F_Release(DFILE* file)
 /**
  * Zip data is buffered like lump data.
  */
-DFILE* F_OpenZip(lumpnum_t zipIndex, boolean dontBuffer)
+DFILE* F_OpenZip(lumpnum_t lumpNum, boolean dontBuffer)
 {
     DFILE* file = F_GetFreeFile();
 
@@ -833,15 +833,15 @@ DFILE* F_OpenZip(lumpnum_t zipIndex, boolean dontBuffer)
     // Init and load in the lump data.
     file->flags.open = true;
     file->flags.file = false;
-    file->lastModified = Zip_LastModified(zipIndex);
+    file->lastModified = Zip_LastModified(lumpNum);
     if(!dontBuffer)
     {
-        file->size = Zip_GetSize(zipIndex);
-        file->pos = file->data = malloc(file->size);
+        file->size = Zip_GetSize(lumpNum);
+        file->pos = file->data = (char*)malloc(file->size);
         if(NULL == file->data)
             Con_Error("F_OpenZip: Failed on allocation of %lu bytes for buffered data.",
                 (unsigned long) file->size);
-        Zip_ReadFile(zipIndex, (char*)file->data);
+        Zip_ReadFile(lumpNum, (char*)file->data);
     }
 
     return file;
