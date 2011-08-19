@@ -62,7 +62,7 @@ static ddstring_t* buildSearchPathList(resourcerecord_t* rec)
     }
 }
 
-resourcerecord_t* ResourceRecord_Construct2(resourceclass_t rclass, int rflags,
+resourcerecord_t* ResourceRecord_NewWithName(resourceclass_t rclass, int rflags,
     const ddstring_t* name)
 {
     resourcerecord_t* rec = malloc(sizeof(*rec));
@@ -78,12 +78,12 @@ resourcerecord_t* ResourceRecord_Construct2(resourceclass_t rclass, int rflags,
     return rec;
 }
 
-resourcerecord_t* ResourceRecord_Construct(resourceclass_t rclass, int rflags)
+resourcerecord_t* ResourceRecord_New(resourceclass_t rclass, int rflags)
 {
-    return ResourceRecord_Construct2(rclass, rflags, 0);
+    return ResourceRecord_NewWithName(rclass, rflags, 0);
 }
 
-void ResourceRecord_Destruct(resourcerecord_t* rec)
+void ResourceRecord_Delete(resourcerecord_t* rec)
 {
     assert(rec);
     if(rec->_namesCount != 0)

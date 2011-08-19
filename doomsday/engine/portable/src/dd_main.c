@@ -336,7 +336,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Invalid name argument.");
 
-    if(0 == (rec = ResourceRecord_Construct(rclass, rflags)))
+    if(0 == (rec = ResourceRecord_New(rclass, rflags)))
         Con_Error("DD_AddGameResource: Unknown error occured during ResourceRecord::Construct.");
 
     // Add a name list to the info record.
