@@ -59,10 +59,10 @@ typedef struct texturevariant_s {
  * @param spec  Specification used to derive this variant. Ownership of
  *      specifcation is NOT given to the resultant TextureVariant
  */
-texturevariant_t* TextureVariant_Construct(struct texture_s* generalCase,
+texturevariant_t* TextureVariant_New(struct texture_s* generalCase,
     DGLuint glName, texturevariantspecification_t* spec);
 
-void TextureVariant_Destruct(texturevariant_t* tex);
+void TextureVariant_Delete(texturevariant_t* tex);
 
 /// @return  Superior Texture of which this is a derivative.
 struct texture_s* TextureVariant_GeneralCase(const texturevariant_t* tex);

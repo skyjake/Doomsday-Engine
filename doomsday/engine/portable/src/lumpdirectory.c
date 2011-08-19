@@ -78,7 +78,7 @@ static uint hashLumpShortName(const lumpname_t lumpName)
     return hash;
 }
 
-lumpdirectory_t* LumpDirectory_Construct(void)
+lumpdirectory_t* LumpDirectory_New(void)
 {
     lumpdirectory_t* ld = (lumpdirectory_t*)malloc(sizeof(lumpdirectory_t));
     ld->_numRecords = 0;
@@ -87,7 +87,7 @@ lumpdirectory_t* LumpDirectory_Construct(void)
     return ld;
 }
 
-void LumpDirectory_Destruct(lumpdirectory_t* ld)
+void LumpDirectory_Delete(lumpdirectory_t* ld)
 {
     assert(NULL != ld);
     LumpDirectory_Clear(ld);

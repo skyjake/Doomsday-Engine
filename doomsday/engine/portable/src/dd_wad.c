@@ -151,20 +151,20 @@ static filelist_node_t* findFileListNodeForName(const char* path)
 
 static zipfile_t* newZipFile(DFILE* handle, const char* absolutePath, lumpdirectory_t* directory)
 {
-    return (zipfile_t*) linkFile((abstractfile_t*)ZipFile_Construct(handle, absolutePath, directory),
+    return (zipfile_t*) linkFile((abstractfile_t*)ZipFile_New(handle, absolutePath, directory),
         loadingForStartup);
 }
 
 static wadfile_t* newWadFile(DFILE* handle, const char* absolutePath, lumpdirectory_t* directory)
 {
-    return (wadfile_t*) linkFile((abstractfile_t*)WadFile_Construct(handle, absolutePath, directory),
+    return (wadfile_t*) linkFile((abstractfile_t*)WadFile_New(handle, absolutePath, directory),
         loadingForStartup);
 }
 
 static lumpfile_t* newLumpFile(DFILE* handle, const char* absolutePath, lumpdirectory_t* directory,
     lumpname_t name, size_t lumpSize)
 {
-    return (lumpfile_t*) linkFile((abstractfile_t*)LumpFile_Construct(handle, absolutePath, directory, name, lumpSize),
+    return (lumpfile_t*) linkFile((abstractfile_t*)LumpFile_New(handle, absolutePath, directory, name, lumpSize),
         loadingForStartup);
 }
 
@@ -247,7 +247,7 @@ static boolean removeFile(filelist_node_t* node)
         unlinkFile(node);
         // Close the file; we don't need it any more.
         ZipFile_Close(zip);
-        ZipFile_Destruct(zip);
+        ZipFile_Delete(zip);
         break;
       }
     case FT_WADFILE: {
@@ -258,7 +258,7 @@ static boolean removeFile(filelist_node_t* node)
         unlinkFile(node);
         // Close the file; we don't need it any more.
         WadFile_Close(wad);
-        WadFile_Destruct(wad);
+        WadFile_Delete(wad);
         break;
       }
     case FT_LUMPFILE: {
@@ -269,7 +269,7 @@ static boolean removeFile(filelist_node_t* node)
         unlinkFile(node);
         // Close the file; we don't need it any more.
         LumpFile_Close(lump);
-        LumpFile_Destruct(lump);
+        LumpFile_Delete(lump);
         break;
       }
     default:
@@ -340,10 +340,10 @@ void W_Init(void)
     loadingForStartup = true;
 
     fileList = NULL;
-    zipLumpDirectory = LumpDirectory_Construct();
+    zipLumpDirectory = LumpDirectory_New();
 
-    primaryWadLumpDirectory   = LumpDirectory_Construct();
-    auxiliaryWadLumpDirectory = LumpDirectory_Construct();
+    primaryWadLumpDirectory   = LumpDirectory_New();
+    auxiliaryWadLumpDirectory = LumpDirectory_New();
     auxiliaryWadLumpDirectoryInUse = false;
 
     ActiveWadLumpDirectory = primaryWadLumpDirectory;
@@ -358,11 +358,11 @@ void W_Shutdown(void)
     W_CloseAuxiliary();
     clearFileList(0);
 
-    LumpDirectory_Destruct(primaryWadLumpDirectory), primaryWadLumpDirectory = NULL;
-    LumpDirectory_Destruct(auxiliaryWadLumpDirectory), auxiliaryWadLumpDirectory = NULL;
+    LumpDirectory_Delete(primaryWadLumpDirectory), primaryWadLumpDirectory = NULL;
+    LumpDirectory_Delete(auxiliaryWadLumpDirectory), auxiliaryWadLumpDirectory = NULL;
     ActiveWadLumpDirectory = NULL;
 
-    LumpDirectory_Destruct(zipLumpDirectory), zipLumpDirectory = NULL;
+    LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
 
     inited = false;
 }

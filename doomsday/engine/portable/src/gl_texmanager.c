@@ -752,7 +752,7 @@ static void destroyTexture(texture_t* tex)
 {
     GL_ReleaseGLTexturesForTexture(tex);
     unlinkTexture(tex);
-    Texture_Destruct(tex);
+    Texture_Delete(tex);
 }
 
 static void destroyTextures(texturenamespaceid_t texNamespace)
@@ -3320,7 +3320,7 @@ const texture_t* GL_CreateTexture2(const char* name, uint index,
      * A new texture.
      */
 
-    tex = Texture_Construct2(texturesCount+1/*1-based index*/, name,
+    tex = Texture_NewWithDimensions(texturesCount+1/*1-based index*/, name,
         index, width, height);
 
     // We hash the name for faster searching.
@@ -3552,7 +3552,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(NULL == variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        variant = TextureVariant_Construct(tex, newGLName, spec);
+        variant = TextureVariant_New(tex, newGLName, spec);
         Texture_AddVariant(tex, variant);
     }
     // Are we re-preparing a released texture?

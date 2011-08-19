@@ -72,10 +72,10 @@ typedef struct texture_s {
     char _name[9];
 } texture_t;
 
-texture_t* Texture_Construct(textureid_t id, const char name[9], int index);
-texture_t* Texture_Construct2(textureid_t id, const char name[9], int index, int width, int height);
+texture_t* Texture_New(textureid_t id, const char name[9], int index);
+texture_t* Texture_NewWithDimensions(textureid_t id, const char name[9], int index, int width, int height);
 
-void Texture_Destruct(texture_t* tex);
+void Texture_Delete(texture_t* tex);
 
 /// Destroy all prepared variants owned by this texture.
 void Texture_ClearVariants(texture_t* tex);

@@ -393,7 +393,7 @@ static void ZipFile_ReadArchiveLumpDirectory(zipfile_t* file)
     }
 }
 
-zipfile_t* ZipFile_Construct(DFILE* handle, const char* absolutePath, lumpdirectory_t* directory)
+zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath, lumpdirectory_t* directory)
 {
     zipfile_t* file = (zipfile_t*)malloc(sizeof(*file));
     if(NULL == file)
@@ -411,7 +411,7 @@ zipfile_t* ZipFile_Construct(DFILE* handle, const char* absolutePath, lumpdirect
     return file;
 }
 
-void ZipFile_Destruct(zipfile_t* file)
+void ZipFile_Delete(zipfile_t* file)
 {
     assert(NULL != file);
     ZipFile_ClearLumpCache(file);

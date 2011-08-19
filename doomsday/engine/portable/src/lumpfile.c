@@ -28,7 +28,7 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-lumpfile_t* LumpFile_Construct(DFILE* handle, const char* absolutePath,
+lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath,
     lumpdirectory_t* directory, lumpname_t lumpName, size_t lumpSize)
 {
     assert(NULL != handle && NULL != directory);
@@ -55,7 +55,7 @@ lumpfile_t* LumpFile_Construct(DFILE* handle, const char* absolutePath,
     }
 }
 
-void LumpFile_Destruct(lumpfile_t* file)
+void LumpFile_Delete(lumpfile_t* file)
 {
     assert(NULL != file);
     LumpFile_ClearLumpCache(file);

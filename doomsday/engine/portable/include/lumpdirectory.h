@@ -41,8 +41,8 @@ typedef struct lumpdirectory_s {
     struct lumpdirectory_lumprecord_s* _records;
 } lumpdirectory_t;
 
-lumpdirectory_t* LumpDirectory_Construct(void);
-void LumpDirectory_Destruct(lumpdirectory_t* ld);
+lumpdirectory_t* LumpDirectory_New(void);
+void LumpDirectory_Delete(lumpdirectory_t* ld);
 
 /// Number of lumps in the directory.
 int LumpDirectory_NumLumps(lumpdirectory_t* ld);

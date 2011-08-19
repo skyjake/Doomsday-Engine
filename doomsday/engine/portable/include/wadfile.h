@@ -45,8 +45,8 @@ typedef struct wadfile_s {
     void** _lumpCache;
 } wadfile_t;
 
-wadfile_t* WadFile_Construct(DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory);
-void WadFile_Destruct(wadfile_t* wad);
+wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory);
+void WadFile_Delete(wadfile_t* wad);
 
 /// Close this file if open and release any acquired file identifiers.
 void WadFile_Close(wadfile_t* wad);

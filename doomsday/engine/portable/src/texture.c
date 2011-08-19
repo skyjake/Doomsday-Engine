@@ -38,7 +38,7 @@ typedef struct texture_variantlist_node_s {
     texturevariant_t* variant;
 } texture_variantlist_node_t;
 
-texture_t* Texture_Construct(textureid_t id, const char name[9], int index)
+texture_t* Texture_New(textureid_t id, const char name[9], int index)
 {
     assert(name && name[0]);
     {
@@ -60,10 +60,10 @@ texture_t* Texture_Construct(textureid_t id, const char name[9], int index)
     }
 }
 
-texture_t* Texture_Construct2(textureid_t id, const char rawName[9],
+texture_t* Texture_NewWithDimensions(textureid_t id, const char rawName[9],
     int index, int width, int height)
 {
-    texture_t* tex = Texture_Construct(id, rawName, index);
+    texture_t* tex = Texture_New(id, rawName, index);
     Texture_SetDimensions(tex, width, height);
     return tex;
 }
@@ -85,7 +85,7 @@ static void destroyVariants(texture_t* tex)
             GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
         }
 #endif
-        TextureVariant_Destruct(variant);
+        TextureVariant_Delete(variant);
         free(tex->_variants);
         tex->_variants = next;
     }
@@ -101,7 +101,7 @@ static void destroyAnalyses(texture_t* tex)
     }
 }
 
-void Texture_Destruct(texture_t* tex)
+void Texture_Delete(texture_t* tex)
 {
     assert(tex);
     destroyVariants(tex);

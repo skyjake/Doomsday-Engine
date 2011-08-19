@@ -125,7 +125,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     }
 }
 
-wadfile_t* WadFile_Construct(DFILE* handle, const char* absolutePath,
+wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath,
     lumpdirectory_t* directory)
 {
     assert(NULL != handle && NULL != absolutePath && NULL != directory);
@@ -156,7 +156,7 @@ wadfile_t* WadFile_Construct(DFILE* handle, const char* absolutePath,
     }
 }
 
-void WadFile_Destruct(wadfile_t* file)
+void WadFile_Delete(wadfile_t* file)
 {
     assert(NULL != file);
     WadFile_ClearLumpCache(file);
