@@ -242,6 +242,7 @@ static boolean removeFile(filelist_node_t* node)
     case FT_ZIPFILE: {
         zipfile_t* zip = (zipfile_t*)node->fsObject;
 
+        ZipFile_ClearLumpCache(zip);
         LumpDirectory_PruneByFile(AbstractFile_Directory(node->fsObject), node->fsObject);
         unlinkFile(node);
         // Close the file; we don't need it any more.
