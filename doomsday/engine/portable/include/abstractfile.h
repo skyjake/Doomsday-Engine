@@ -59,7 +59,7 @@ filetype_t AbstractFile_Type(const abstractfile_t* file);
 /**
  * Accessors:
  */
-/// @return  PathDirectory lumps in this file have been added to else @c NULL
+/// @return  LumpDirectory lumps in this file have been added to else @c NULL
 struct lumpdirectory_s* AbstractFile_Directory(abstractfile_t* file);
 
 /// @return  File handle acquired for this resource else @c NULL
