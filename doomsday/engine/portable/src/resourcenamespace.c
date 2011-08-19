@@ -209,7 +209,7 @@ static void rebuild(resourcenamespace_t* rn)
     }
 }
 
-resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
+resourcenamespace_t* ResourceNamespace_New2(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
 {
@@ -244,14 +244,14 @@ resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
     }
 }
 
-resourcenamespace_t* ResourceNamespace_Construct(const char* name,
+resourcenamespace_t* ResourceNamespace_New(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name))
 {
-    return ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, 0);
+    return ResourceNamespace_New2(name, directory, composeHashNameFunc, hashNameFunc, 0);
 }
 
-void ResourceNamespace_Destruct(resourcenamespace_t* rn)
+void ResourceNamespace_Delete(resourcenamespace_t* rn)
 {
     assert(rn);
     ResourceNamespace_ClearSearchPaths(rn, SPG_OVERRIDE);

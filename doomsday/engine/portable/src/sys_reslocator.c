@@ -185,7 +185,7 @@ static void destroyAllNamespaces(void)
         {
             FileDirectory_Destruct(ResourceNamespace_Directory(rnamespace));
         }
-        ResourceNamespace_Destruct(rnamespace);
+        ResourceNamespace_Delete(rnamespace);
     }}
     free(namespaces);
     namespaces = 0;
@@ -676,7 +676,7 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name,
     assert(name);
     errorIfNotInited("F_CreateResourceNamespace");
     {
-    resourcenamespace_t* rn = ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, flags);
+    resourcenamespace_t* rn = ResourceNamespace_New2(name, directory, composeHashNameFunc, hashNameFunc, flags);
 
     // Add this new namespace to the global list.
     namespaces = (resourcenamespace_t**) realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);

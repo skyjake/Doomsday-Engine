@@ -221,8 +221,8 @@ static font_t* constructFont(fonttype_t type)
 {
     switch(type)
     {
-    case FT_BITMAP:             return BitmapFont_Construct();
-    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_Construct();
+    case FT_BITMAP:             return BitmapFont_New();
+    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_New();
     default:
         Con_Error("Fonts::ConstructFont: Unknown font type %i.", (int)type);
         exit(1); // Unreachable.
@@ -257,8 +257,8 @@ static void destroyFont(font_t* font)
 {
     switch(Font_Type(font))
     {
-    case FT_BITMAP:             BitmapFont_Destruct(font); return;
-    case FT_BITMAPCOMPOSITE:    BitmapCompositeFont_Destruct(font); return;
+    case FT_BITMAP:             BitmapFont_Delete(font); return;
+    case FT_BITMAPCOMPOSITE:    BitmapCompositeFont_Delete(font); return;
     default:
         Con_Error("Fonts::DestroyFont: Invalid font type %i.", (int) Font_Type(font));
         exit(1); // Unreachable.

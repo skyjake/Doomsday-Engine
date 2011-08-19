@@ -338,7 +338,7 @@ static void* readFormat2(font_t* font, DFILE* file)
     }
 }
 
-font_t* BitmapFont_Construct(void)
+font_t* BitmapFont_New(void)
 {
     bitmapfont_t* bf = (bitmapfont_t*)malloc(sizeof(*bf));
     if(NULL == bf)
@@ -353,7 +353,7 @@ font_t* BitmapFont_Construct(void)
     return (font_t*)bf;
 }
 
-void BitmapFont_Destruct(font_t* font)
+void BitmapFont_Delete(font_t* font)
 {
     BitmapFont_DeleteGLTexture(font);
     BitmapFont_DeleteGLDisplayLists(font);
@@ -563,7 +563,7 @@ void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
     }
 }
 
-font_t* BitmapCompositeFont_Construct(void)
+font_t* BitmapCompositeFont_New(void)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)malloc(sizeof(*cf));
     font_t* font = (font_t*)cf;
@@ -580,7 +580,7 @@ font_t* BitmapCompositeFont_Construct(void)
     return font;
 }
 
-void BitmapCompositeFont_Destruct(font_t* font)
+void BitmapCompositeFont_Delete(font_t* font)
 {
     BitmapCompositeFont_DeleteGLTextures(font);
     BitmapCompositeFont_DeleteGLDisplayLists(font);

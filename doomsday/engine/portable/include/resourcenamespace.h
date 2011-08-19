@@ -91,14 +91,14 @@ typedef struct resourcenamespace_s {
     resourcenamespace_namehash_t _pathHash;
 } resourcenamespace_t;
 
-resourcenamespace_t* ResourceNamespace_Construct(const char* name,
+resourcenamespace_t* ResourceNamespace_New(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name));
-resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
+resourcenamespace_t* ResourceNamespace_New2(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
-void ResourceNamespace_Destruct(resourcenamespace_t* rn);
+void ResourceNamespace_Delete(resourcenamespace_t* rn);
 
 /**
  * Reset the namespace back to it's "empty" state (i.e., no known symbols).
