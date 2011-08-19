@@ -695,7 +695,7 @@ void P_MobjThinker(mobj_t *mobj)
 #endif
 
     // Handle X and Y momentums.
-    if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || (mobj->flags & MF_SKULLFLY))
+    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
 
@@ -716,7 +716,7 @@ void P_MobjThinker(mobj_t *mobj)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(mobj->pos[VZ] != mobj->floorZ || mobj->mom[MZ] != 0)
+    else if(!FEQUAL(mobj->pos[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
     {
         P_MobjMoveZ(mobj);
         if(mobj->thinker.function != P_MobjThinker) // Must've been removed.

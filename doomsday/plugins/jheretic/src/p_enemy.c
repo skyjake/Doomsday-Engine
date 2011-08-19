@@ -413,7 +413,7 @@ static float P_AvoidDropoff(mobj_t *actor)
     P_MobjLinesIterator(actor, PIT_AvoidDropoff, 0);
 
     // Non-zero if movement prescribed.
-    return !(dropoffDelta[VX] == 0 || dropoffDelta[VY] == 0);
+    return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));
 }
 
 void P_NewChaseDir(mobj_t *actor)

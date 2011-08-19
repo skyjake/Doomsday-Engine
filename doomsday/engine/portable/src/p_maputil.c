@@ -292,7 +292,7 @@ int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
     double              x2 = (double)bbox[BOXRIGHT]  + IFFY_LEN * 1.5;
     double              y2 = (double)bbox[BOXTOP]    + IFFY_LEN * 1.5;
 
-    if(lineDX == 0)
+    if(FEQUAL(lineDX, 0))
     {   // Horizontal.
         p1 = (x1 > lineSX? +1 : -1);
         p2 = (x2 > lineSX? +1 : -1);
@@ -303,7 +303,7 @@ int P_BoxOnLineSide3(const int bbox[4], double lineSX, double lineSY,
             p2 = -p2;
         }
     }
-    else if(lineDY == 0)
+    else if(FEQUAL(lineDY, 0))
     {   // Vertical.
         p1 = (y1 < lineSY? +1 : -1);
         p2 = (y2 < lineSY? +1 : -1);

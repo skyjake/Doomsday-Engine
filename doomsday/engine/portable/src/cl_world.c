@@ -343,7 +343,7 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         dx = poly->dest[VX] - poly->pos[VX];
         dy = poly->dest[VY] - poly->pos[VY];
         dist = P_ApproxDistance(dx, dy);
-        if(dist <= poly->speed || poly->speed == 0)
+        if(dist <= poly->speed || FEQUAL(poly->speed, 0))
         {
             // We'll arrive at the destination.
             mover->move = false;
@@ -362,20 +362,31 @@ void Cl_PolyMoverThinker(polymover_t* mover)
     if(mover->rotate)
     {
         // How much to go?
-        dist = FIX2FLT(poly->destAngle - poly->angle);
-        if((abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)
-            /* && poly->destAngle != -1*/) || !poly->angleSpeed)
+        int dist = poly->destAngle - poly->angle;
+        int speed = poly->angleSpeed;
+
+        //dist = FIX2FLT(poly->destAngle - poly->angle);
+        //if(!poly->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)*/
+        //    /* && poly->destAngle != -1*/) || !poly->angleSpeed)
+        if(!poly->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
+#ifdef _DEBUG
+            Con_Message("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n", mover->number, poly->destAngle);
+#endif
             // We'll arrive at the destination.
             mover->rotate = false;
         }
         else
         {
             // Adjust to speed.
-            dist = FIX2FLT((int)poly->angleSpeed);
+            dist = /*FIX2FLT((int)*/ poly->angleSpeed;
         }
 
-        P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), FLT2FIX(dist));
+/*#ifdef _DEBUG
+        Con_Message("%f\n", dist);
+#endif*/
+
+        P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), dist);
     }
 
     // Can we get rid of this mover?
@@ -898,15 +909,15 @@ void Cl_ReadPolyDelta2(boolean skip)
     df = Reader_ReadByte(msgReader);
 
     if(df & PODF_DEST_X)
-        destX = FIX2FLT((Reader_ReadInt16(msgReader) << 16) + ((char) Reader_ReadByte(msgReader) << 8));
+        destX = Reader_ReadFloat(msgReader);
     if(df & PODF_DEST_Y)
-        destY = FIX2FLT((Reader_ReadInt16(msgReader) << 16) + ((char) Reader_ReadByte(msgReader) << 8));
+        destY = Reader_ReadFloat(msgReader);
     if(df & PODF_SPEED)
-        speed = FIX2FLT(Reader_ReadInt16(msgReader) << 8);
+        speed = Reader_ReadFloat(msgReader);
     if(df & PODF_DEST_ANGLE)
-        destAngle = Reader_ReadInt16(msgReader) << 16;
+        destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     if(df & PODF_ANGSPEED)
-        angleSpeed = Reader_ReadInt16(msgReader) << 16;
+        angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
 
 /*#ifdef _DEBUG
     Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f\n", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));

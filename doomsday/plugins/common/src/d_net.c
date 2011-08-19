@@ -439,6 +439,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
             NetSv_DoCheat(fromplayer, reader);
             break;
 
+        case GPT_FLOOR_HIT_REQUEST:
+            NetSv_DoFloorHit(fromplayer, reader);
+            break;
+
         case GPT_ACTION_REQUEST:
             NetSv_DoAction(fromplayer, reader);
             break;

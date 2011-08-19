@@ -1431,7 +1431,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         // Must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
            (tmFloorMaterial != P_GetPtrp(thing->subsector, DMU_FLOOR_MATERIAL) ||
-            tmFloorZ - thing->pos[VZ] != 0))
+            !FEQUAL(tmFloorZ, thing->pos[VZ])))
         {
             return false;
         }
@@ -3032,14 +3032,14 @@ static void P_FakeZMovement(mobj_t* mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -(P_GetGravity() / 32) * 2;
         else
             mo->mom[MZ] -= P_GetGravity() / 32;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -P_GetGravity() * 2;
         else
             mo->mom[MZ] -= P_GetGravity();

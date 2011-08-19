@@ -390,7 +390,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 {
     int i;
-    player_t* pl = &players[plrNum];
+    player_t* pl = 0;
     byte b;
     int flags, s;
 
@@ -401,6 +401,8 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
     {
         plrNum = Reader_ReadByte(msg);
     }
+    pl = &players[plrNum];
+
     flags = Reader_ReadUInt16(msg);
 
     /*

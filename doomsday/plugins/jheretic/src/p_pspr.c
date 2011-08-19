@@ -1178,7 +1178,7 @@ void C_DECL A_MaceBallImpact(mobj_t *ball)
     }
 
     if(ball->special3 != MAGIC_JUNK && ball->pos[VZ] <= ball->floorZ &&
-       ball->mom[MZ] != 0)
+       !FEQUAL(ball->mom[MZ], 0))
     {   // Bounce.
         ball->special3 = MAGIC_JUNK;
         ball->mom[MZ] = FIX2FLT(FLT2FIX(ball->mom[MZ] * 192) >> 8);
@@ -1280,7 +1280,7 @@ void C_DECL A_DeathBallImpact(mobj_t *ball)
         return;
     }
 
-    if(ball->pos[VZ] <= ball->floorZ && ball->mom[MZ] != 0)
+    if(ball->pos[VZ] <= ball->floorZ && !FEQUAL(ball->mom[MZ], 0))
     {   // Bounce.
         newAngle = false;
         target = ball->tracer;

@@ -925,8 +925,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
  * More player state information. Had to be separate because of backwards
  * compatibility.
  */
-void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
-                            boolean reliable)
+void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
 {
     int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE2 : GPT_PLAYER_STATE2);
     player_t   *pl = &players[srcPlrNum];
@@ -973,8 +972,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
-                           boolean reliable)
+void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
 {
     int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE : GPT_PLAYER_STATE);
     player_t   *pl = &players[srcPlrNum];
@@ -1380,14 +1378,95 @@ void NetSv_ExecuteCheat(int player, const char* command)
 /**
  * Process the requested cheat command, if possible.
  */
-void NetSv_DoCheat(int player, Reader* reader)
+void NetSv_DoCheat(int player, Reader* msg)
 {
-    size_t len = Reader_ReadUInt16(reader);
+    size_t len = Reader_ReadUInt16(msg);
     char* command = Z_Calloc(len + 1, PU_STATIC, 0);
 
-    Reader_Read(reader, command, len);
+    Reader_Read(msg, command, len);
     NetSv_ExecuteCheat(player, command);
     Z_Free(command);
+}
+
+/**
+ * Calls @a callback on @a thing while it is temporarily placed at the
+ * specified position and angle. Afterwards the thing's old position is restored.
+ */
+void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, float temporaryPos[3],
+                                   angle_t angle, void (*callback)(mobj_t*,void*))
+{
+    float oldPos[3] = { thing->pos[VX], thing->pos[VY], thing->pos[VZ] };
+    float oldFloorZ = thing->floorZ;
+    float oldCeilingZ = thing->ceilingZ;
+    angle_t oldAngle = thing->angle;
+
+    // We will temporarily move the object to the temp coords.
+    if(P_CheckPosition3fv(thing, temporaryPos))
+    {
+        P_MobjUnlink(thing);
+        thing->pos[VX] = temporaryPos[VX];
+        thing->pos[VY] = temporaryPos[VY];
+        thing->pos[VZ] = temporaryPos[VZ];
+        P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        thing->floorZ = tmFloorZ;
+        thing->ceilingZ = tmCeilingZ;
+    }
+    thing->angle = angle;
+
+    callback(thing, param);
+
+    // Restore the old position.
+    P_MobjUnlink(thing);
+    thing->pos[VX] = oldPos[VX];
+    thing->pos[VY] = oldPos[VY];
+    thing->pos[VZ] = oldPos[VZ];
+    P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+    thing->floorZ = oldFloorZ;
+    thing->ceilingZ = oldCeilingZ;
+    thing->angle = oldAngle;
+}
+
+static void NetSv_UseActionCallback(mobj_t* mo, void* param)
+{
+    P_UseLines((player_t*)param);
+}
+
+static void NetSv_FireWeaponCallback(mobj_t* mo, void* param)
+{
+    P_FireWeapon((player_t*)param);
+}
+
+static void NetSv_HitFloorCallback(mobj_t* mo, void* param)
+{
+#ifdef _DEBUG
+    Con_Message("NetSv_HitFloorCallback: mo %i\n", mo->thinker.id);
+#endif
+    P_HitFloor(mo);
+}
+
+void NetSv_DoFloorHit(int player, Reader* msg)
+{
+    player_t* plr = &players[player];
+    mobj_t* mo;
+    float pos[3];
+    float mom[3];
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    mo = plr->plr->mo;
+    if(!mo) return;
+
+    pos[VX] = Reader_ReadFloat(msg);
+    pos[VY] = Reader_ReadFloat(msg);
+    pos[VZ] = Reader_ReadFloat(msg);
+
+    // The momentum is included, although we don't really need it.
+    mom[MX] = Reader_ReadFloat(msg);
+    mom[MY] = Reader_ReadFloat(msg);
+    mom[MZ] = Reader_ReadFloat(msg);
+
+    NetSv_TemporaryPlacedCallback(mo, 0, pos, mo->angle, NetSv_HitFloorCallback);
 }
 
 /**
@@ -1445,6 +1524,12 @@ void NetSv_DoAction(int player, Reader* msg)
     case GPA_FIRE:
         if(pl->plr->mo)
         {
+            // Update lookdir.
+            pl->plr->lookDir = lookDir;
+
+            NetSv_TemporaryPlacedCallback(pl->plr->mo, pl, pos, angle,
+                                          type == GPA_USE? NetSv_UseActionCallback : NetSv_FireWeaponCallback);
+            /*
             mobj_t* mo = pl->plr->mo;
             float oldPos[3] = { mo->pos[VX], mo->pos[VY], mo->pos[VZ] };
             float oldFloorZ = mo->floorZ;
@@ -1462,7 +1547,6 @@ void NetSv_DoAction(int player, Reader* msg)
                 mo->ceilingZ = tmCeilingZ;
             }
             mo->angle = angle;
-            pl->plr->lookDir = lookDir;
 
             if(type == GPA_USE)
                 P_UseLines(pl);
@@ -1476,7 +1560,7 @@ void NetSv_DoAction(int player, Reader* msg)
             mo->pos[VZ] = oldPos[VZ];
             P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
             mo->floorZ = oldFloorZ;
-            mo->ceilingZ = oldCeilingZ;
+            mo->ceilingZ = oldCeilingZ;*/
         }
         break;
 
