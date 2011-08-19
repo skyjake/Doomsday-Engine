@@ -666,20 +666,20 @@ font_t* Fonts_LoadExternal(const char* name, const char* searchPath)
     {
     fontnum_t fontNum;
     font_t* font = NULL;
-    dduri_t* uri = Uri_Construct2(name, RC_NULL);
+    dduri_t* uri = Uri_NewWithPath2(name, RC_NULL);
 
     errorIfNotInited("Fonts::LoadExternal");
 
     fontNum = Fonts_CheckNumForPath(uri);
     if(fontNum != 0)
     {
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
         return Fonts_ToFont(fontNum);
     }
 
     if(0 == F_Access(searchPath))
     {   
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
         return font; // Error.
     }
 
@@ -693,10 +693,10 @@ font_t* Fonts_LoadExternal(const char* name, const char* searchPath)
     if(NULL == font)
     {
         Con_Message("Warning: Unknown format for %s\n", searchPath);
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
         return 0; // Error.
     }
-    Uri_Destruct(uri);
+    Uri_Delete(uri);
 
     return font;
     }
@@ -715,9 +715,9 @@ fontnum_t Fonts_IndexForName(const char* path)
 {
     if(path && path[0])
     {
-        dduri_t* uri = Uri_Construct2(path, RC_NULL);
+        dduri_t* uri = Uri_NewWithPath2(path, RC_NULL);
         fontnum_t result = Fonts_IndexForUri(uri);
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
         return result;
     }
     return 0;
@@ -757,7 +757,7 @@ dduri_t* Fonts_GetUri(font_t* font)
         Str_Appendf(&path, "%s:%s", Str_Text(nameForFontNamespaceId(FontBind_Namespace(fb))),
             Str_Text(Fonts_GetSymbolicName(font)));
     }
-    uri = Uri_Construct2(Str_Text(&path), RC_NULL);
+    uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
     Str_Free(&path);
     return uri;
 }

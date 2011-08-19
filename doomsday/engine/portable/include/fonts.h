@@ -99,7 +99,7 @@ fontnum_t Fonts_IndexForName(const char* path);
 /// @return  Symbolic name associated with specified font.
 const ddstring_t* Fonts_GetSymbolicName(font_t* font);
 
-/// @return  New Uri composed for the specified font (release with Uri_Destruct).
+/// @return  New Uri composed for the specified font (release with Uri_Delete).
 dduri_t* Fonts_GetUri(font_t* font);
 
 /// Load an external font from a local file.

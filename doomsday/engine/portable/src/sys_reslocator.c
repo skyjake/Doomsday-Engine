@@ -486,8 +486,8 @@ static void createPackagesResourceNamespace(void)
 
     idx = 0;
     // Add the default paths.
-    searchPaths[idx++] = Uri_Construct2("$(GameInfo.DataPath)/", RC_NULL);
-    searchPaths[idx++] = Uri_Construct2("$(App.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(GameInfo.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)
@@ -495,7 +495,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < doomWadPathsCount; ++i)
         {
-            searchPaths[idx++] = Uri_Construct2(Str_Text(doomWadPaths[i]), RC_NULL);
+            searchPaths[idx++] = Uri_NewWithPath2(Str_Text(doomWadPaths[i]), RC_NULL);
             Str_Delete(doomWadPaths[i]);
         }
         free(doomWadPaths);
@@ -504,7 +504,7 @@ static void createPackagesResourceNamespace(void)
     // Add the path from the DOOMWADDIR environment variable.
     if(doomWadDir != 0)
     {
-        searchPaths[idx++] = Uri_Construct2(Str_Text(doomWadDir), RC_NULL);
+        searchPaths[idx++] = Uri_NewWithPath2(Str_Text(doomWadDir), RC_NULL);
         Str_Delete(doomWadDir);
     }
 
@@ -522,7 +522,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     for(idx = 0; idx < searchPathsCount; ++idx)
-        Uri_Destruct(searchPaths[idx]);
+        Uri_Delete(searchPaths[idx]);
     free(searchPaths);
 }
 
@@ -559,7 +559,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
             { "$(GameInfo.DataPath)/fonts/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
         { NULL }
     };
-    dduri_t* uri = Uri_ConstructDefault();
+    dduri_t* uri = Uri_New();
 
     // Setup of the Packages namespace is somewhat more involved...
     createPackagesResourceNamespace();
@@ -608,7 +608,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         }
     }}
 
-    Uri_Destruct(uri);
+    Uri_Delete(uri);
 
 #undef NAMESPACEDEF_MAX_SEARCHPATHS
 }
@@ -731,7 +731,7 @@ dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
                 memcpy(list + (numPaths - FIXEDSIZE), localFixedList, sizeof(*list) * FIXEDSIZE);
                 n = 0;
             }
-            localFixedList[n++] = Uri_Construct2(Str_Text(&buf), rclass);
+            localFixedList[n++] = Uri_NewWithPath2(Str_Text(&buf), rclass);
             ++numPaths;
         }
     } while(*p);
@@ -789,7 +789,7 @@ void F_DestroyUriList(dduri_t** list)
     {
         dduri_t** ptr;
         for(ptr = list; *ptr; ptr++)
-            Uri_Destruct(*ptr);
+            Uri_Delete(*ptr);
         free(list);
     }
 }

@@ -40,7 +40,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
         SC_ScriptError("Missing string.");
     }
 
-    path = Uri_ConstructDefault();
+    path = Uri_New();
     Uri_SetScheme(path, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
     Uri_SetPath(path, sc_String);
     if((texNumBase = GL_TextureIndexForUri2(path, !isCustom)) != 0)
@@ -76,7 +76,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
                 }
                 else
                 {
-                    Uri_Destruct(path);
+                    Uri_Delete(path);
                     SC_ScriptError(0);
                 }
 
@@ -99,7 +99,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
         }
     } while(!done);
 
-    Uri_Destruct(path);
+    Uri_Delete(path);
 }
 
 void P_InitPicAnims(void)

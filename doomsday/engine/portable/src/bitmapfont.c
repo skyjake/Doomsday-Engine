@@ -420,7 +420,7 @@ void BitmapFont_Prepare(font_t* font)
                 ddstring_t* path = Uri_ToString(uri);
                 Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
                 Str_Delete(path);
-                Uri_Destruct(uri)
+                Uri_Delete(uri)
             )
 
             bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texWidth,

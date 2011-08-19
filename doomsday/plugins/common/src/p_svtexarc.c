@@ -64,7 +64,7 @@ static void destroy(materialarchive_t* mArc)
     {
         uint i;
         for(i = 0; i < mArc->count; ++i)
-            Uri_Destruct(mArc->table[i].path);
+            Uri_Delete(mArc->table[i].path);
         free(mArc->table);
     }
     free(mArc);
@@ -88,7 +88,7 @@ static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t s
     mArc->table = realloc(mArc->table, ++mArc->count * sizeof(materialarchive_record_t));
     rec = &mArc->table[mArc->count-1];
 
-    rec->path = Uri_ConstructCopy(path);
+    rec->path = Uri_NewCopy(path);
     rec->material = material;
     }
 }
@@ -103,7 +103,7 @@ static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* m
     {
         // Insert a new element in the index.
         insertSerialId(mArc, mArc->count+1, path, mat);
-        Uri_Destruct(path);
+        Uri_Delete(path);
         return mArc->count; // 1-based index.
     }
     return 0; // Should never happen.
@@ -129,7 +129,7 @@ static materialarchive_serialid_t getSerialIdForMaterial(materialarchive_t* mArc
                 break;
             }
         }
-        Uri_Destruct(path);
+        Uri_Delete(path);
     }
     return id;
     }
@@ -169,9 +169,9 @@ static material_t* materialForSerialId(const materialarchive_t* mArc,
  */
 static void populate(materialarchive_t* mArc)
 {
-    dduri_t* unknownMaterial = Uri_Construct2(UNKNOWN_MATERIALNAME, RC_NULL);
+    dduri_t* unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
     insertSerialId(mArc, 1, unknownMaterial, 0);
-    Uri_Destruct(unknownMaterial);
+    Uri_Delete(unknownMaterial);
 
     { uint i, num = nummaterials;
     for(i = 1; i < num+1; ++i)
@@ -199,7 +199,7 @@ static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
         buf[length] = 0;
         SV_Read(buf, length);
         if(!rec->path)
-            rec->path = Uri_ConstructDefault();
+            rec->path = Uri_New();
         Uri_SetUri3(rec->path, buf, RC_NULL);
         free(buf);
     }
@@ -212,7 +212,7 @@ static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
         name[8] = 0;
 
         if(!rec->path)
-            rec->path = Uri_ConstructDefault();
+            rec->path = Uri_New();
 
         oldMNI = SV_ReadByte();
         switch(oldMNI % 4)
@@ -238,7 +238,7 @@ static int readRecord_v186(materialarchive_record_t* rec, const char* mnamespace
     SV_Read(buf, 8);
     buf[8] = 0;
     if(!rec->path)
-        rec->path = Uri_ConstructDefault();
+        rec->path = Uri_New();
     Str_Init(&path);
     Str_Appendf(&path, "%s:%s", mnamespace, buf);
     Uri_SetUri(rec->path, &path);
@@ -264,7 +264,7 @@ static void readMaterialGroup(materialarchive_t* mArc, const char* defaultNamesp
 
         insertSerialId(mArc, mArc->count+1, temp.path, 0);
         if(temp.path)
-            Uri_Destruct(temp.path);
+            Uri_Delete(temp.path);
     }}
 }
 

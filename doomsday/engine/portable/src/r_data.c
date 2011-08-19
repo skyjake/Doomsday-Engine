@@ -1010,7 +1010,7 @@ void R_InitSystemTextures(void)
     
         sysTex = malloc(sizeof(*sysTex));
         sysTex->id = Texture_Id(glTex);
-        sysTex->external = Uri_Construct(defs[i].path);
+        sysTex->external = Uri_NewWithPath(defs[i].path);
 
         // Add it to the list.
         sysTextures = realloc(sysTextures, sizeof(systex_t*) * ++sysTexturesCount);
@@ -1024,7 +1024,7 @@ void R_DestroySystemTextures(void)
     for(i = 0; i < sysTexturesCount; ++i)
     {
         systex_t* rec = sysTextures[i];
-        Uri_Destruct(rec->external);
+        Uri_Delete(rec->external);
         free(rec);
     }}
 
@@ -1046,10 +1046,10 @@ static patchid_t findPatchTextureByName(const char* name)
     assert(name && name[0]);
     {
     const texture_t* glTex;
-    dduri_t* uri = Uri_Construct2(name, RC_NULL);
+    dduri_t* uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
     glTex = GL_TextureByUri(uri);
-    Uri_Destruct(uri);
+    Uri_Delete(uri);
     if(glTex == NULL)
         return 0;
     return (patchid_t) Texture_TypeIndex(glTex);
@@ -2272,7 +2272,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
 
-    st->path = Uri_ConstructCopy(skin);
+    st->path = Uri_NewCopy(skin);
     st->id = Texture_Id(glTex);
 
     if(verbose)
@@ -2328,9 +2328,9 @@ uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn
             Str_Init(&buf);
         if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
         {
-            dduri_t* uri = Uri_Construct2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
+            dduri_t* uri = Uri_NewWithPath2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
             result = R_CreateSkinTex(uri, isShinySkin);
-            Uri_Destruct(uri);
+            Uri_Delete(uri);
         }
         if(!foundPath)
             Str_Free(&buf);
@@ -2365,7 +2365,7 @@ void R_DestroySkins(void)
 
     { uint i;
     for(i = 0; i < numSkinNames; ++i)
-        Uri_Destruct(skinNames[i].path);
+        Uri_Delete(skinNames[i].path);
     }
     M_Free(skinNames);
     skinNames = NULL;

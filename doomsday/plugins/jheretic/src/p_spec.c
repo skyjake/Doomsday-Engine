@@ -279,8 +279,8 @@ static animdef_t anims[] = {
  */
 static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
-    dduri_t* startPath = Uri_ConstructDefault();
-    dduri_t* endPath = Uri_ConstructDefault();
+    dduri_t* startPath = Uri_New();
+    dduri_t* endPath = Uri_New();
     boolean lastIsTexture;
     int i;
 
@@ -362,8 +362,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         }
     }
 
-    Uri_Destruct(startPath);
-    Uri_Destruct(endPath);
+    Uri_Delete(startPath);
+    Uri_Delete(endPath);
 }
 
 void P_InitPicAnims(void)

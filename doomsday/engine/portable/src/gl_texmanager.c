@@ -3372,7 +3372,7 @@ dduri_t* GL_ConstructUriForTexture(struct texture_s* tex)
 {
     assert(tex);
     {
-    dduri_t* uri = Uri_Construct2(Texture_Name(tex), RC_NULL);
+    dduri_t* uri = Uri_NewWithPath2(Texture_Name(tex), RC_NULL);
     Uri_SetScheme(uri, Str_Text(DD_TextureNamespaceNameForId(Texture_Namespace(tex))));
     return uri;
     }

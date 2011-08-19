@@ -821,11 +821,11 @@ void R_InitRefresh(void)
     { dduri_t* paths[9];
     uint i;
     for(i = 0; i < 9; ++i)
-        paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_Construct2(borderGraphics[i], RC_NULL) : 0);
+        paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
     R_SetBorderGfx((const dduri_t**)paths);
     for(i = 0; i < 9; ++i)
         if(paths[i])
-            Uri_Destruct(paths[i]);
+            Uri_Delete(paths[i]);
     }
     R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 

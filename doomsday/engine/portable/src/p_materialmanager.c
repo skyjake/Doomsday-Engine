@@ -1001,9 +1001,9 @@ materialnum_t Materials_IndexForName(const char* path)
 {
     if(path && path[0])
     {
-        dduri_t* uri = Uri_Construct2(path, RC_NULL);
+        dduri_t* uri = Uri_NewWithPath2(path, RC_NULL);
         materialnum_t result = Materials_IndexForUri(uri);
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
         return result;
     }
     return 0;
@@ -1043,7 +1043,7 @@ dduri_t* Materials_GetUri(material_t* mat)
         Str_Appendf(&path, "%s:%s", Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))),
             Str_Text(Materials_GetSymbolicName(mat)));
     }
-    uri = Uri_Construct2(Str_Text(&path), RC_NULL);
+    uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
     Str_Free(&path);
     return uri;
 }
@@ -1538,7 +1538,7 @@ static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
         Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialClassName(Material_EnvironmentClass(mat)),
         Material_IsCustom(mat)? "addon" : "iwad");
 
-    Uri_Destruct(uri);
+    Uri_Delete(uri);
     if(printNamespace)
         Str_Delete((ddstring_t*)path);
 }
@@ -2035,7 +2035,7 @@ D_CMD(ListMaterials)
     // "listmaterials [namespace] [name]"
     if(argc > 2)
     {
-        uri = Uri_ConstructDefault();
+        uri = Uri_New();
         Uri_SetScheme(uri, argv[1]);
         Uri_SetPath(uri, argv[2]);
 
@@ -2043,7 +2043,7 @@ D_CMD(ListMaterials)
         if(!VALID_MATERIALNAMESPACEID(namespaceId))
         {
             Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-            Uri_Destruct(uri);
+            Uri_Delete(uri);
             return false;
         }
         like = Str_Text(Uri_Path(uri));
@@ -2051,14 +2051,14 @@ D_CMD(ListMaterials)
     // "listmaterials [namespace:name]" i.e., a partial Uri
     else if(argc > 1)
     {
-        uri = Uri_Construct2(argv[1], RC_NULL);
+        uri = Uri_NewWithPath2(argv[1], RC_NULL);
         if(!Str_IsEmpty(Uri_Scheme(uri)))
         {
             namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
             if(!VALID_MATERIALNAMESPACEID(namespaceId))
             {
                 Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-                Uri_Destruct(uri);
+                Uri_Delete(uri);
                 return false;
             }
 
@@ -2080,6 +2080,6 @@ D_CMD(ListMaterials)
     printMaterials(namespaceId, like);
 
     if(uri != NULL)
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
     return true;
 }

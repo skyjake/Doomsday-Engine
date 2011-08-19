@@ -75,12 +75,12 @@ EXPORTS
     Str_PrependChar             @336 NONAME
 
     ; Uri.
-    Uri_ConstructDefault        @238 NONAME
-    Uri_Construct2              @497 NONAME
-    Uri_Construct               @244 NONAME
-    Uri_ConstructCopy           @249 NONAME
+    Uri_New                     @238 NONAME
+    Uri_NewWithPath2            @497 NONAME
+    Uri_NewWithPath             @244 NONAME
+    Uri_NewCopy                 @249 NONAME
     Uri_Copy                    @250 NONAME
-    Uri_Destruct                @255 NONAME
+    Uri_Delete                  @255 NONAME
     Uri_SetUri                  @326 NONAME
     Uri_SetUri2                 @328 NONAME
     Uri_SetUri3                 @332 NONAME

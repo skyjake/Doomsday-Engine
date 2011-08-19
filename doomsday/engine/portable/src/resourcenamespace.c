@@ -299,7 +299,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* 
     if(rn->_searchPathsCount[group] > 1)
         memmove(rn->_searchPaths[group] + 1, rn->_searchPaths[group],
             sizeof(*rn->_searchPaths[group]) * (rn->_searchPathsCount[group]-1));
-    rn->_searchPaths[group][0] = Uri_ConstructCopy(newUri);
+    rn->_searchPaths[group][0] = Uri_NewCopy(newUri);
 
     rn->_flags |= RNF_IS_DIRTY;
     return true;
@@ -312,7 +312,7 @@ void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespa
         return;
     { uint i;
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
-        Uri_Destruct(rn->_searchPaths[group][i]);
+        Uri_Delete(rn->_searchPaths[group][i]);
     }
     free(rn->_searchPaths[group]);
     rn->_searchPaths[group] = 0;

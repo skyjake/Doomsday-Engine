@@ -2289,11 +2289,11 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     if(index != 0 && (tex = GL_TextureByIndex(index-1, texNamespace)))
     {
         materialnum_t result;
-        dduri_t* path = Uri_ConstructDefault();
+        dduri_t* path = Uri_New();
         Uri_SetPath(path, Texture_Name(tex));
         Uri_SetScheme(path, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
         result = Materials_IndexForUri(path);
-        Uri_Destruct(path);
+        Uri_Delete(path);
         return result;
     }
     return 0;

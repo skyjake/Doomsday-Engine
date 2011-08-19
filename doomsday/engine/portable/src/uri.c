@@ -202,22 +202,22 @@ void Uri_Clear(dduri_t* uri)
     Str_Clear(&uri->_path);
 }
 
-dduri_t* Uri_Construct2(const char* path, resourceclass_t defaultResourceClass)
+dduri_t* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass)
 {
     return allocUri(path, defaultResourceClass);
 }
 
-dduri_t* Uri_Construct(const char* path)
+dduri_t* Uri_NewWithPath(const char* path)
 {
     return allocUri(path, RC_UNKNOWN);
 }
 
-dduri_t* Uri_ConstructDefault(void)
+dduri_t* Uri_New(void)
 {
     return allocUri(0, RC_UNKNOWN);
 }
 
-dduri_t* Uri_ConstructCopy(const dduri_t* other)
+dduri_t* Uri_NewCopy(const dduri_t* other)
 {
     if(!other)
     {
@@ -231,7 +231,7 @@ dduri_t* Uri_ConstructCopy(const dduri_t* other)
     }
 }
 
-void Uri_Destruct(dduri_t* uri)
+void Uri_Delete(dduri_t* uri)
 {
     if(!uri)
     {
