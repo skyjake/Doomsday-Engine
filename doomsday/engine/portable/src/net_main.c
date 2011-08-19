@@ -469,11 +469,11 @@ static void Net_DoUpdate(void)
             Writer_WriteInt32(msgWriter, FLT2FIX(mo->pos[VZ]));
         }
         // Also include angles.
-        Writer_WriteInt16(msgWriter, mo->angle >> 16);
+        Writer_WriteUInt16(msgWriter, mo->angle >> 16);
         Writer_WriteInt16(msgWriter, P_LookDirToShort(ddPlayers[consolePlayer].shared.lookDir));
         // Control state.
-        Writer_WriteByte(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
-        Writer_WriteByte(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
+        Writer_WriteChar(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
+        Writer_WriteChar(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
         Msg_End();
 
         Net_SendBuffer(0, 0);

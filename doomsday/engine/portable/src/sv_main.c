@@ -1201,12 +1201,12 @@ void Sv_ClientCoords(int plrNum)
     }
 
     // The angles.
-    clientAngle = ((angle_t) Reader_ReadInt16(msgReader)) << 16;
+    clientAngle = ((angle_t) Reader_ReadUInt16(msgReader)) << 16;
     clientLookDir = P_ShortToLookDir(Reader_ReadInt16(msgReader));
 
     // Movement intent.
-    ddpl->forwardMove = FIX2FLT(((char) Reader_ReadByte(msgReader)) << 13);
-    ddpl->sideMove = FIX2FLT(((char) Reader_ReadByte(msgReader)) << 13);
+    ddpl->forwardMove = FIX2FLT(Reader_ReadChar(msgReader) << 13);
+    ddpl->sideMove = FIX2FLT(Reader_ReadChar(msgReader) << 13);
 
     if(ddpl->fixCounter.angles == ddpl->fixAcked.angles && !(ddpl->flags & DDPF_FIXANGLES))
     {
