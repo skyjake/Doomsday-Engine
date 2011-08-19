@@ -1,4 +1,4 @@
-/**\file dd_uri.h
+/**\file uri.h
  *\section License
  * License: GPL
  * Online License Link: http://www.trolltech.com/gpl/

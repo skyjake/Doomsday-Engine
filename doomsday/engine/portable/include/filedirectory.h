@@ -26,7 +26,7 @@
 #define LIBDENG_FILEDIRECTORY_H
 
 #include "dd_string.h"
-#include "dd_uri.h"
+#include "uri.h"
 
 #include "pathdirectory.h"
 

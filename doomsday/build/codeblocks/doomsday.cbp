@@ -155,6 +155,7 @@
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_mus.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_sfx.h" />
+		<Unit filename="..\..\engine\api\uri.h" />
 		<Unit filename="..\..\engine\mac\include\DoomsdayRunner.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

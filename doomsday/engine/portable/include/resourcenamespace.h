@@ -26,7 +26,7 @@
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
 #include "dd_string.h"
-#include "dd_uri.h"
+#include "uri.h"
 
 typedef struct resourcenamespace_namehash_node_s {
     struct resourcenamespace_namehash_node_s* next;

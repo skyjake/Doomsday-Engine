@@ -2210,10 +2210,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_uri.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\api\dd_vectorgraphic.h"
 				>
 			</File>
@@ -2235,6 +2231,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\uri.h"
 				>
 			</File>
 			<Filter

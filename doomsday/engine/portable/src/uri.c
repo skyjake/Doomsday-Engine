@@ -28,7 +28,7 @@
 #include "m_args.h"
 #include "sys_reslocator.h"
 #include "resourcenamespace.h"
-#include "dd_uri.h"
+#include "uri.h"
 
 struct uri_s
 {
