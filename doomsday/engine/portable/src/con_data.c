@@ -201,7 +201,7 @@ static void clearAliases(void)
 static void clearCommands(void)
 {
     if(ccmdBlockSet)
-        BlockSet_Destruct(ccmdBlockSet);
+        BlockSet_Delete(ccmdBlockSet);
     ccmdBlockSet = 0;
     ccmdListHead = 0;
     numUniqueNamedCCmds = 0;
@@ -887,7 +887,7 @@ if(ccmd->args == NULL)
     }}
 
     if(!ccmdBlockSet)
-        ccmdBlockSet = BlockSet_Construct(sizeof(ccmd_t), 32);
+        ccmdBlockSet = BlockSet_New(sizeof(ccmd_t), 32);
     newCCmd = BlockSet_Allocate(ccmdBlockSet);
     // Make a static copy of the name in the zone (this allows the source
     // data to change in case of dynamic registrations).

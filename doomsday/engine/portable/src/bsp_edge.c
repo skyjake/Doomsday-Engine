@@ -105,7 +105,7 @@ void BSP_InitHEdgeAllocator(void)
     if(hEdgeAllocatorInited)
         return; // Already been here.
 
-    hEdgeBlockSet = ZBlockSet_Construct(sizeof(hedge_t), 512, PU_APPSTATIC);
+    hEdgeBlockSet = ZBlockSet_New(sizeof(hedge_t), 512, PU_APPSTATIC);
     hEdgeAllocatorInited = true;
 }
 
@@ -116,7 +116,7 @@ void BSP_ShutdownHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited)
     {
-        ZBlockSet_Destruct(hEdgeBlockSet);
+        ZBlockSet_Delete(hEdgeBlockSet);
         hEdgeBlockSet = NULL;
 
         hEdgeAllocatorInited = false;

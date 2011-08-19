@@ -322,8 +322,8 @@ static void buildSpriteRotations(void)
 
     numSpriteRecords = 0;
     spriteRecords = 0;
-    spriteRecordBlockSet = BlockSet_Construct(sizeof(spriterecord_t), 64),
-    spriteRecordFrameBlockSet = BlockSet_Construct(sizeof(spriterecord_frame_t), 256);
+    spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
+    spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
     { int i, numSpriteTextures = R_SpriteTextureCount();
     for(i = 0; i < numSpriteTextures; ++i)
@@ -556,9 +556,9 @@ void R_InitSprites(void)
     /// \kludge end
 
     // We are now done with the sprite records.
-    BlockSet_Destruct(spriteRecordBlockSet);
+    BlockSet_Delete(spriteRecordBlockSet);
     spriteRecordBlockSet = NULL;
-    BlockSet_Destruct(spriteRecordFrameBlockSet);
+    BlockSet_Delete(spriteRecordFrameBlockSet);
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 

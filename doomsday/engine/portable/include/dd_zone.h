@@ -111,16 +111,16 @@ typedef struct zblockset_s {
  *
  * @return  Ptr to the newly created blockset.
  */
-zblockset_t* ZBlockSet_Construct(size_t sizeOfElement, uint batchSize, int tag);
+zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint batchSize, int tag);
 
 /**
- * Free an entire blockset.
+ * Destroy the entire blockset.
  * All memory allocated is released for all elements in all blocks and any
  * used for the blockset itself.
  *
  * @param set  The blockset to be freed.
  */
-void ZBlockSet_Destruct(zblockset_t* set);
+void ZBlockSet_Delete(zblockset_t* set);
 
 /**
  * Return a ptr to the next unused element in the blockset.

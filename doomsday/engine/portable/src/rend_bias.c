@@ -334,9 +334,9 @@ void SB_InitForMap(const char* uniqueID)
     numSources = 0;
 
     if(biasSurfaceBlockSet)
-        ZBlockSet_Destruct(biasSurfaceBlockSet);
+        ZBlockSet_Delete(biasSurfaceBlockSet);
 
-    biasSurfaceBlockSet = ZBlockSet_Construct(sizeof(biassurface_t), 512, PU_APPSTATIC);
+    biasSurfaceBlockSet = ZBlockSet_New(sizeof(biassurface_t), 512, PU_APPSTATIC);
     surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.

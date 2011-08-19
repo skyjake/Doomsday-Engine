@@ -558,7 +558,7 @@ void Materials_Initialize(void)
     bindings = NULL;
     bindingsCount = bindingsMax = 0;
 
-    materialsBlockSet = BlockSet_Construct(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
+    materialsBlockSet = BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
     materials = NULL;
 
     // Clear the name bind hash tables.
@@ -588,7 +588,7 @@ static void destroyMaterials(void)
         free(materials);
         materials = next;
     }
-    BlockSet_Destruct(materialsBlockSet);
+    BlockSet_Delete(materialsBlockSet);
     materialsBlockSet = NULL;
 }
 

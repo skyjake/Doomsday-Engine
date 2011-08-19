@@ -91,7 +91,7 @@ void* BlockSet_Allocate(blockset_t* set)
     }
 }
 
-blockset_t* BlockSet_Construct(size_t sizeOfElement, size_t batchSize)
+blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize)
 {
     blockset_t* set;
 
@@ -119,7 +119,7 @@ size_t BlockSet_Count(blockset_t* set)
     return set->_elementsInUse;
 }
 
-void BlockSet_Destruct(blockset_t* set)
+void BlockSet_Delete(blockset_t* set)
 {
     assert(set);
 
