@@ -29,7 +29,7 @@
 #include "de_console.h"
 
 #include "lumpdirectory.h"
-#include "dd_zip.h"
+#include "zipfile.h"
 
 #define SIG_LOCAL_FILE_HEADER   0x04034b50
 #define SIG_CENTRAL_FILE_HEADER 0x02014b50

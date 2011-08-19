@@ -42,7 +42,7 @@
 #ifndef LIBDENG_FILESYS_WAD_H
 #define LIBDENG_FILESYS_WAD_H
 
-#include "dd_zip.h"
+#include "zipfile.h"
 #include "wadfile.h"
 #include "lumpfile.h"
 

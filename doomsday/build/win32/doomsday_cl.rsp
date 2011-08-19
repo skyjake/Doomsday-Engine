@@ -163,13 +163,13 @@
  .\..\..\engine\portable\src\con_config.c
  .\..\..\engine\portable\src\con_bar.c
  .\..\..\engine\portable\src\dd_zone.c
- .\..\..\engine\portable\src\dd_zip.c
  .\..\..\engine\win32\src\dd_winit.c
  .\..\..\engine\win32\src\sys_window.c
  .\..\..\engine\portable\src\lumpdirectory.c
  .\..\..\engine\portable\src\abstractfile.c
  .\..\..\engine\portable\src\lumpfile.c
  .\..\..\engine\portable\src\wadfile.c
+ .\..\..\engine\portable\src\zipfile.c
  .\..\..\engine\portable\src\dd_wad.c
  .\..\..\engine\portable\src\dd_plugin.c
  .\..\..\engine\portable\src\dd_pinit.c

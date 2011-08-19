@@ -1009,10 +1009,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\dd_zip.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_zone.h"
 				>
 			</File>
@@ -1654,6 +1650,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\wadfile.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\zipfile.h"
 				>
 			</File>
 			<Filter
@@ -2415,42 +2415,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\dd_zip.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CallingConvention="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CallingConvention="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug x64|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CallingConvention="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug x64|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CallingConvention="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dd_zone.c"
 				>
 			</File>
@@ -3092,6 +3056,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\wadfile.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\zipfile.c"
 				>
 			</File>
 			<Filter
