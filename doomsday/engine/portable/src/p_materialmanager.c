@@ -574,7 +574,7 @@ void Materials_Initialize(void)
 
 static int destroyVariant(materialvariant_t* variant, void* paramaters)
 {
-    MaterialVariant_Destruct(variant);
+    MaterialVariant_Delete(variant);
     return 1; // Continue iteration.
 }
 
@@ -1251,7 +1251,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     variant = Materials_ChooseVariant(mat, spec);
     if(NULL == variant)
     {   // We need to create at least one variant.
-        variant = Material_AddVariant(mat, MaterialVariant_Construct(mat, spec));
+        variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
 
         // Create all other required variants for any Materials in all linked groups.
         if(Material_IsGroupAnimated(mat))
@@ -1267,7 +1267,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
                     material_t* other = group->frames[k].mat;
                     if(mat != other && NULL == Materials_ChooseVariant(other, spec))
                     {
-                        Material_AddVariant(other, MaterialVariant_Construct(other, spec));
+                        Material_AddVariant(other, MaterialVariant_New(other, spec));
                     }
                 }
             }

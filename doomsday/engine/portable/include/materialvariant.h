@@ -131,10 +131,10 @@ typedef struct materialvariant_s {
     materialvariantspecification_t* _spec;
 } materialvariant_t;
 
-materialvariant_t* MaterialVariant_Construct(struct material_s* generalCase,
+materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
     materialvariantspecification_t* spec);
 
-void MaterialVariant_Destruct(materialvariant_t* mat);
+void MaterialVariant_Delete(materialvariant_t* mat);
 
 /**
  * Process a system tick event.

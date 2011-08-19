@@ -42,7 +42,7 @@ static void destroyVariants(material_t* mat)
     while(mat->_variants)
     {
         material_variantlist_node_t* next = mat->_variants->next;
-        MaterialVariant_Destruct(mat->_variants->variant);
+        MaterialVariant_Delete(mat->_variants->variant);
         free(mat->_variants);
         mat->_variants = next;
     }
