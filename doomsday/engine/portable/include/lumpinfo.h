@@ -1,10 +1,10 @@
-/**\file
+/**\file lumpinfo.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,27 +22,22 @@
  * Boston, MA  02110-1301  USA
  */
 
+#ifndef LIBDENG_FILESYS_LUMPINFO_H
+#define LIBDENG_FILESYS_LUMPINFO_H
+
+#include "dd_string.h"
+
 /**
- * Engine Core.
+ * LumpInfo record. POD.
+ * @ingroup fs
  */
+typedef struct {
+    lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
+    ddstring_t path; /// Full variable-length path. Used with ZipFile/LumpFile
+    size_t baseOffset; /// Offset from start of owning package.
+    size_t size; /// Size of the uncompressed file.
+    size_t compressedSize; /// Size of the original file compressed.
+    uint lastModified; /// Unix timestamp.
+} lumpinfo_t;
 
-#ifndef LIBDENG_BASE_H
-#define LIBDENG_BASE_H
-
-// System headers needed everywhere.
-#include <assert.h>
-
-#include "de_platform.h"
-
-#include "dd_def.h"
-#include "dd_share.h"
-#include "dd_api.h"
-#include "dd_plugin.h"
-#include "dd_wad.h"
-#include "dd_zone.h"
-#include "dd_main.h"
-#include "dd_input.h"
-#include "dd_loop.h"
-#include "dd_help.h"
-
-#endif /* LIBDENG_BASE_H */
+#endif /* LIBDENG_FILESYS_LUMPINFO_H */

@@ -1,4 +1,4 @@
-/**\file zipfile.h
+/**\file lumpfile_h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILESYS_ZIPFILE_H
-#define LIBDENG_FILESYS_ZIPFILE_H
+#ifndef LIBDENG_FILESYS_LUMPFILE_H
+#define LIBDENG_FILESYS_LUMPFILE_H
 
 #include "lumpinfo.h"
 #include "abstractfile.h"
@@ -31,35 +31,32 @@
 struct lumpdirectory_s;
 
 /**
- * ZipFile. Runtime representation of Zip files.
- *
- * Uses zlib for decompression of "Deflated" files.
+ * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
  *
  * @ingroup FS
  */
-typedef struct {
+typedef struct lumpfile_s {
     // Base file.
     abstractfile_t _base;
-    int _lumpCount;
-    lumpinfo_t* _lumpInfo;
-    void** _lumpCache;
-} zipfile_t;
+    lumpinfo_t _info;
+    void* _cacheData;
+} lumpfile_t;
 
-zipfile_t* ZipFile_Construct(DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory);
-void ZipFile_Destruct(zipfile_t* zip);
+lumpfile_t* LumpFile_Construct(DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory, lumpname_t name, size_t lumpSize);
+void LumpFile_Destruct(lumpfile_t* lump);
 
 /// Close this file if open and release any acquired file identifiers.
-void ZipFile_Close(zipfile_t* zip);
+void LumpFile_Close(lumpfile_t* lump);
 
 /**
  * Read the data associated with @a lumpNum into @a buffer.
  *
  * @param lumpNum  Logical lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  */
-void ZipFile_ReadLump2(zipfile_t* zip, lumpnum_t lumpNum, char* buffer, boolean tryCache);
-void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, char* buffer);
+void LumpFile_ReadLump2(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer, boolean tryCache);
+void LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -70,9 +67,9 @@ void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, char* buffer);
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
  */
-void ZipFile_ReadLumpSection2(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
+void LumpFile_ReadLumpSection2(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
+void LumpFile_ReadLumpSection(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -82,7 +79,7 @@ void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const char* ZipFile_CacheLump(zipfile_t* zip, lumpnum_t lumpNum, int tag);
+const char* LumpFile_CacheLump(lumpfile_t* lump, lumpnum_t lumpNum, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.
@@ -90,28 +87,18 @@ const char* ZipFile_CacheLump(zipfile_t* zip, lumpnum_t lumpNum, int tag);
  * @param lumpNum  Logical lump index associated with the data.
  * @param tag  Zone purge level/cache tag to use.
  */
-void ZipFile_ChangeLumpCacheTag(zipfile_t* zip, lumpnum_t lumpNum, int tag);
+void LumpFile_ChangeLumpCacheTag(lumpfile_t* lump, lumpnum_t lumpNum, int tag);
 
-void ZipFile_ClearLumpCache(zipfile_t* zip);
+void LumpFile_ClearLumpCache(lumpfile_t* lump);
 
 /**
  * Accessors:
  */
 
 /// @return  Number of lumps contained within this file.
-int ZipFile_LumpCount(zipfile_t* zip);
+int LumpFile_LumpCount(lumpfile_t* lump);
 
 /// @return  @c true if the file is marked as an "IWAD".
-boolean ZipFile_IsIWAD(zipfile_t* zip);
+boolean LumpFile_IsIWAD(lumpfile_t* lump);
 
-/**
- * Static members:
- */
-
-/**
- * Does the specified file appear to be in Zip format.
- * @return  @c true iff this is a file that can be represented using ZipFile.
- */
-boolean ZipFile_Recognise(DFILE* file);
-
-#endif
+#endif /* LIBDENG_FILESYS_LUMPFILE_H */

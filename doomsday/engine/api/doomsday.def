@@ -106,7 +106,7 @@ EXPORTS
 ; Base: File system.
     F_Access                    @245 NONAME
     F_FileExists                @139 NONAME
-    F_LastModified              @246 NONAME
+    F_GetLastModified           @246 NONAME
     F_MakePath                  @138 NONAME
 
     M_ReadFile                  @134 NONAME

@@ -116,11 +116,13 @@ typedef uint32_t        ident_t;
 typedef int             gameid_t;
 typedef uint32_t        patchid_t;
 typedef uint32_t        materialnum_t;
-typedef int             lumpnum_t;
 typedef int             spritenum_t;
 typedef unsigned short  nodeindex_t;
 typedef unsigned short  thid_t;
 typedef double          timespan_t;
+
+/// \todo Should be a public typedef of a type defined by de::LumpDirectory.
+typedef int             lumpnum_t;
 
 /**
  * Unique identifier allocated by this subsystem and associated to each

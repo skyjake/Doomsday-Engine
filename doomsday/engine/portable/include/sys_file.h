@@ -119,6 +119,11 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
 size_t F_Length(DFILE* file);
 
 /**
+ * @return  "Last modified" timestamp of the file.
+ */
+unsigned int F_LastModified(DFILE* file);
+
+/**
  * @return  Number of bytes read (at most @a count bytes will be read).
  */
 size_t F_Read(DFILE* file, void* dest, size_t count);
@@ -137,7 +142,7 @@ void F_Rewind(DFILE* file);
  * @return  The time when the file was last modified, as seconds since
  * the Epoch else zero if the file is not found.
  */
-unsigned int F_LastModified(const char* fileName);
+unsigned int F_GetLastModified(const char* fileName);
 
 /**
  * Reset known fileId records so that the next time F_CheckFileId() is
@@ -168,7 +173,7 @@ boolean F_ReleaseFileId(const char* path);
  *
  * @return  @c true, if the string matches the pattern.
  */
-int F_MatchName(const char* string, const char* pattern);
+int F_MatchFileName(const char* string, const char* pattern);
 
 void F_InitializeResourcePathMap(void);
 

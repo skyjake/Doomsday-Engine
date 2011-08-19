@@ -181,6 +181,7 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\include\abstractfile.h" />
 		<Unit filename="..\..\engine\portable\include\b_command.h" />
 		<Unit filename="..\..\engine\portable\include\b_context.h" />
 		<Unit filename="..\..\engine\portable\include\b_device.h" />
@@ -260,6 +261,8 @@
 		<Unit filename="..\..\engine\portable\include\gl_tga.h" />
 		<Unit filename="..\..\engine\portable\include\image.h" />
 		<Unit filename="..\..\engine\portable\include\lumpdirectory.h" />
+		<Unit filename="..\..\engine\portable\include\lumpfile.h" />
+		<Unit filename="..\..\engine\portable\include\lumpinfo.h" />
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />
@@ -376,6 +379,8 @@
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
 		<Unit filename="..\..\engine\portable\include\ui2_main.h" />
+		<Unit filename="..\..\engine\portable\include\wadfile.h" />
+		<Unit filename="..\..\engine\portable\src\abstractfile.c" />
 		<Unit filename="..\..\engine\portable\src\animator.c" />
 		<Unit filename="..\..\engine\portable\src\b_command.c">
 			<Option compilerVar="CC" />
@@ -551,6 +556,7 @@
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\image.c" />
 		<Unit filename="..\..\engine\portable\src\lumpdirectory.c" />
+		<Unit filename="..\..\engine\portable\src\lumpfile.c" />
 		<Unit filename="..\..\engine\portable\src\m_args.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -851,6 +857,7 @@
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\ui2_main.c" />
 		<Unit filename="..\..\engine\portable\src\uri.c" />
+		<Unit filename="..\..\engine\portable\src\wadfile.c" />
 		<Unit filename="..\..\engine\unix\include\dd_uinit.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

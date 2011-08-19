@@ -174,10 +174,11 @@ static void clearPathHash(pathdirectory_pathhash_t* ph)
 {
     if(NULL != ph)
     {
-        pathdirectory_nodetype_t type = PATHDIRECTORY_NODETYPES_FIRST;
+        pathdirectory_nodetype_t type;
         ushort hash = 0;
         for(; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
-        for(; type < PATHDIRECTORY_NODETYPES_COUNT-PATHDIRECTORY_NODETYPES_FIRST; ++type)
+        for(type = PATHDIRECTORY_NODETYPES_FIRST;
+            type < PATHDIRECTORY_NODETYPES_COUNT-PATHDIRECTORY_NODETYPES_FIRST; ++type)
         {
             clearNodeList((*ph)[hash].head + type);
         }
@@ -902,7 +903,7 @@ static void printDistributionOverview(pathdirectory_t* pd,
         countSum += nodeCountSum[i];
         countTotal += nodeCountTotal[i];
     }
-    nodeCountDigits = M_NumDigits(countTotal);
+    nodeCountDigits = M_NumDigits((int)countTotal);
 
     // Calculate minimum field widths:
     col = colWidths;

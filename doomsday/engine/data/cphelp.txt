@@ -381,8 +381,8 @@ desc = List all event binding classes.
 [listcmds]
 desc = List all console commands.
 
-[listwadfiles]
-desc = List all loaded WAD data files.
+[listfiles]
+desc = List all loaded resource data files.
 
 [listfonts]
 desc = List all known fonts.

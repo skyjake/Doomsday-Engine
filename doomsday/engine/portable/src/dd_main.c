@@ -1694,14 +1694,15 @@ static int DD_StartupWorker(void* parm)
 
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) != 0)
-        F_AddFile(Str_Text(&foundPath), false);
-    else
+    if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
+       !F_AddFile(Str_Text(&foundPath), false))
+    {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
+    }
     Str_Free(&foundPath);
     }
 
-    // No more files/packages will be loaded in startup mode after this point.
+    // No more lumps/packages will be loaded in startup mode after this point.
     F_EndStartup();
 
     // Load engine help resources.

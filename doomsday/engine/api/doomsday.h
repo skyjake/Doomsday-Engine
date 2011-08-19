@@ -151,7 +151,7 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     // Base: File system.
     int             F_Access(const char* path);
     int             F_FileExists(const char* path);
-    unsigned int    F_LastModified(const char* path);
+    unsigned int    F_GetLastModified(const char* path);
     boolean         F_MakePath(const char* path);
 
     size_t          M_ReadFile(const char* path, char** buffer);

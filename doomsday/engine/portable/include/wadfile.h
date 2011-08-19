@@ -1,10 +1,10 @@
-/**\file zipfile.h
+/**\file wadfile.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILESYS_ZIPFILE_H
-#define LIBDENG_FILESYS_ZIPFILE_H
+#ifndef LIBDENG_FILESYS_WADFILE_H
+#define LIBDENG_FILESYS_WADFILE_H
 
 #include "lumpinfo.h"
 #include "abstractfile.h"
@@ -31,25 +31,25 @@
 struct lumpdirectory_s;
 
 /**
- * ZipFile. Runtime representation of Zip files.
- *
- * Uses zlib for decompression of "Deflated" files.
+ * WadFile. Runtime representation of a WAD file.
  *
  * @ingroup FS
  */
-typedef struct {
+typedef struct wadfile_s {
     // Base file.
     abstractfile_t _base;
+    int _flags; /// @see wadFileFlags
     int _lumpCount;
+    size_t _lumpRecordsOffset;
     lumpinfo_t* _lumpInfo;
     void** _lumpCache;
-} zipfile_t;
+} wadfile_t;
 
-zipfile_t* ZipFile_Construct(DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory);
-void ZipFile_Destruct(zipfile_t* zip);
+wadfile_t* WadFile_Construct(DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory);
+void WadFile_Destruct(wadfile_t* wad);
 
 /// Close this file if open and release any acquired file identifiers.
-void ZipFile_Close(zipfile_t* zip);
+void WadFile_Close(wadfile_t* wad);
 
 /**
  * Read the data associated with @a lumpNum into @a buffer.
@@ -58,8 +58,8 @@ void ZipFile_Close(zipfile_t* zip);
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  */
-void ZipFile_ReadLump2(zipfile_t* zip, lumpnum_t lumpNum, char* buffer, boolean tryCache);
-void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, char* buffer);
+void WadFile_ReadLump2(wadfile_t* wad, lumpnum_t lumpNum, char* dest, boolean tryCache);
+void WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, char* dest);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -70,9 +70,9 @@ void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, char* buffer);
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
  */
-void ZipFile_ReadLumpSection2(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
+void WadFile_ReadLumpSection2(wadfile_t* wad, lumpnum_t lumpNum, char* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
+void WadFile_ReadLumpSection(wadfile_t* wad, lumpnum_t lumpNum, char* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -82,7 +82,7 @@ void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const char* ZipFile_CacheLump(zipfile_t* zip, lumpnum_t lumpNum, int tag);
+const char* WadFile_CacheLump(wadfile_t* wad, lumpnum_t lumpNum, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.
@@ -90,28 +90,34 @@ const char* ZipFile_CacheLump(zipfile_t* zip, lumpnum_t lumpNum, int tag);
  * @param lumpNum  Logical lump index associated with the data.
  * @param tag  Zone purge level/cache tag to use.
  */
-void ZipFile_ChangeLumpCacheTag(zipfile_t* zip, lumpnum_t lumpNum, int tag);
+void WadFile_ChangeLumpCacheTag(wadfile_t* wad, lumpnum_t lumpNum, int tag);
 
-void ZipFile_ClearLumpCache(zipfile_t* zip);
+void WadFile_ClearLumpCache(wadfile_t* wad);
+
+/**
+ * An extremely simple formula. Does not conform to any CRC standard.
+ * (So why's it called CRC, then?)
+ */
+uint WadFile_CalculateCRC(const wadfile_t* wad);
 
 /**
  * Accessors:
  */
 
 /// @return  Number of lumps contained within this file.
-int ZipFile_LumpCount(zipfile_t* zip);
+int WadFile_LumpCount(wadfile_t* wad);
 
 /// @return  @c true if the file is marked as an "IWAD".
-boolean ZipFile_IsIWAD(zipfile_t* zip);
+boolean WadFile_IsIWAD(wadfile_t* wad);
 
 /**
  * Static members:
  */
 
 /**
- * Does the specified file appear to be in Zip format.
- * @return  @c true iff this is a file that can be represented using ZipFile.
+ * Does the specified file appear to be in WAD format.
+ * @return  @c true iff this is file that can be represented using WadFile.
  */
-boolean ZipFile_Recognise(DFILE* file);
+boolean WadFile_Recognise(DFILE* file);
 
-#endif
+#endif /* LIBDENG_FILESYS_WADFILE_H */

@@ -42,50 +42,11 @@
 #ifndef LIBDENG_FILESYS_WAD_H
 #define LIBDENG_FILESYS_WAD_H
 
-#include "sys_file.h"
+#include "dd_zip.h"
+#include "wadfile.h"
+#include "lumpfile.h"
 
 #define AUXILIARY_BASE      100000000
-
-struct lumpdirectory_s;
-
-// LumpInfo record. POD.
-typedef struct {
-    lumpname_t name; /// Ends in '\0'.
-    size_t position; /// Offset from start of WAD file.
-    size_t size;
-} wadfile_lumpinfo_t;
-
-/**
- * @defgroup wadFileFlags  Wad file flags.
- */
-/*@{*/
-#define WFF_IWAD                    0x1 // File is marked IWAD (else its a PWAD).
-#define WFF_RUNTIME                 0x2 // Loaded at runtime (for reset).
-/*@}*/
-
-/**
- * WadFile. Runtime representation of a WAD file.
- *
- * @ingroup FS
- */
-typedef struct wadfile_s {
-    int _flags; /// @see wadFileFlags
-    size_t _numLumps;
-    wadfile_lumpinfo_t* _lumpInfo;
-    void** _lumpCache;
-    DFILE* _handle;
-    struct lumpdirectory_s* _directory; // All lumps from this file go into the same LumpDirectory
-    ddstring_t _absolutePath;
-
-    struct wadfile_s* next;
-} wadfile_t;
-
-struct lumpdirectory_s* WadFile_Directory(wadfile_t* fr);
-size_t WadFile_NumLumps(wadfile_t* fr);
-/// @return  @see wadFileFlags
-int WadFile_Flags(wadfile_t* fr);
-DFILE* WadFile_Handle(wadfile_t* fr);
-const ddstring_t* WadFile_AbsolutePath(wadfile_t* fr);
 
 /// Register the console commands, variables, etc..., of this module.
 void W_Register(void);
@@ -108,10 +69,10 @@ void W_EndStartup(void);
  */
 int W_Reset(void);
 
-wadfile_t* W_AddArchive(const char* fileName, DFILE* handle);
-wadfile_t* W_AddFile(const char* fileName, DFILE* handle, boolean isDehackedPatch);
+zipfile_t* W_AddZipFile(const char* fileName, DFILE* handle);
+wadfile_t* W_AddWadFile(const char* fileName, DFILE* handle);
+lumpfile_t* W_AddLumpFile(const char* fileName, DFILE* handle, boolean isDehackedPatch);
 
-/// \note Also used with archives.
 boolean W_RemoveFile(const char* fileName);
 
 /**
@@ -137,39 +98,10 @@ lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent);
 /// \note As per W_CheckLumpNumForName but results in a fatal error if not found.
 lumpnum_t W_GetLumpNumForName(const char* name);
 
-/**
- * Read the data associated with @a lumpNum into buffer @a dest.
- *
- * @param lumpNum  Logical lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
- */
 void W_ReadLump(lumpnum_t lumpNum, char* dest);
-
-/**
- * Read a subsection of the data associated with @a lumpNum into buffer @a dest.
- *
- * @param lumpNum  Logical lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
- * @param startOffset  Offset from the beginning of the lump to start reading.
- * @param length  Number of bytes to be read.
- */
-void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
-
-/**
- * Read the data associated with @a lumpNum into the cache.
- *
- * @param lumpNum  Logical lump index associated with the data being read.
- * @param tag  Zone purge level/cache tag to use.
- * @return  Ptr to the cached copy of the associated data.
- */
+void W_ReadLumpSection(lumpnum_t lumpNum, char* dest, size_t startOffset, size_t length);
 const char* W_CacheLump(lumpnum_t lumpNum, int tag);
 
-/**
- * Change the Zone purge level/cache tag associated with a cached data lump.
- *
- * @param lumpNum  Logical lump index associated with the data.
- * @param tag  Zone purge level/cache tag to use.
- */
 void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
 
 /// @return  Name of the lump associated with @a lumpNum.
@@ -177,6 +109,11 @@ const char* W_LumpName(lumpnum_t lumpNum);
 
 /// @return  Buffer size needed to load the data associated with @a lumpNum in bytes.
 size_t W_LumpLength(lumpnum_t lumpNum);
+
+/**
+ * @return  "Last modified" timestamp of the zip entry.
+ */
+uint W_LumpLastModified(lumpnum_t lumpNum);
 
 /// @return  Name of the WAD file where the data associated with @a lumpNum resides.
 ///     Always returns a valid filename (or an empty string).
@@ -209,5 +146,38 @@ void W_PrintLumpDirectory(void);
  * @return  @c true iff successful.
  */
 boolean W_DumpLump(lumpnum_t lumpNum, const char* fileName);
+
+/// @return  Size of a zipentry specified by index.
+size_t Zip_GetSize(lumpnum_t lumpNum);
+
+/// @return  "Last modified" timestamp of the zip entry.
+uint Zip_LastModified(lumpnum_t lumpNum);
+
+/// @return  The name of the Zip archive where the referenced file resides.
+const char* Zip_SourceFile(lumpnum_t lumpNum);
+
+void Zip_ReadFile(lumpnum_t lumpNum, char* buffer);
+void Zip_ReadFileSection(lumpnum_t lumpNum, char* buffer, size_t startOffset, size_t length);
+
+/**
+ * Find a specific path in the Zip LumpDirectory.
+ *
+ * @param searchPath  Path to search for. Relative paths are converted are made absolute.
+ *
+ * @return  Non-zero if something is found.
+ */
+lumpnum_t Zip_Find(const char* searchPath);
+
+/**
+ * Iterate over nodes in the Zip LumpDirectory making a callback for each.
+ * Iteration ends when all nodes have been visited or a callback returns non-zero.
+ *
+ * @param callback  Callback function ptr.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int Zip_Iterate2(int (*callback) (const lumpinfo_t*, void*), void* paramaters);
+int Zip_Iterate(int (*callback) (const lumpinfo_t*, void*));
 
 #endif /* LIBDENG_FILESYS_WAD_H */

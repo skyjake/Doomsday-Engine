@@ -294,16 +294,77 @@ static filehandle_t* getFileHandle(void)
     return fhdl;
 }
 
+static abstractfile_t* tryAddZipFile(const char* absolutePath, DFILE* handle)
+{
+    return (abstractfile_t*)W_AddZipFile(absolutePath, handle);
+}
+
+static abstractfile_t* tryAddWadFile(const char* absolutePath, DFILE* handle)
+{
+    return (abstractfile_t*)W_AddWadFile(absolutePath, handle);
+}
+
+static abstractfile_t* tryAddLumpFile(const char* absolutePath, DFILE* handle)
+{
+    return (abstractfile_t*)W_AddLumpFile(absolutePath, handle, false);
+}
+
+static boolean F_AddFile2(const char* absolutePath, DFILE* handle)
+{
+    assert(NULL != absolutePath && absolutePath[0] && NULL != handle);
+    {
+    struct filehandler_s {
+        resourcetype_t resourceType;
+        abstractfile_t* (*tryLoadFile)(const char* absolutePath, DFILE* handle);
+    } static const handlers[] = {
+        { RT_ZIP,  tryAddZipFile },
+        { RT_WAD,  tryAddWadFile },
+        { RT_NONE, tryAddLumpFile },
+        { RT_NONE, NULL }
+    }, *hdlr = NULL;
+    resourcetype_t resourceType = F_GuessResourceTypeByName(absolutePath);
+    abstractfile_t* fsObject = NULL;
+
+    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(absolutePath)) )
+
+    if(RT_DEH == resourceType)
+    {
+        // DeHackEd patch files require special handling.
+        return (NULL != W_AddLumpFile(absolutePath, handle, true));
+    }
+
+    // Firstly try the expected format given the file name.
+    for(hdlr = handlers; NULL != hdlr->tryLoadFile; hdlr++)
+    {
+        if(hdlr->resourceType != resourceType) continue;
+
+        fsObject = hdlr->tryLoadFile(absolutePath, handle);
+        break;
+    }
+
+    // If not yet loaded; try each recognisable format.
+    /// \todo Order here should be determined by the resource locator.
+    { int n = 0;
+    while(NULL == fsObject && NULL != handlers[n].tryLoadFile)
+    {
+        if(hdlr == &handlers[n]) continue; // We already know its not in this format.
+        
+        fsObject = handlers[n++].tryLoadFile(absolutePath, handle);
+    }}
+    return (NULL != fsObject);
+    }
+}
+
 boolean F_AddFile(const char* fileName, boolean allowDuplicate)
 {
-    resourcetype_t resourceType;
     DFILE* handle;
 
     // Filename given?
     if(!fileName || !fileName[0])
         return false;
 
-    if(!(handle = F_Open(fileName, "rb")))
+    handle = F_Open(fileName, "rb");
+    if(NULL == handle)
     {
         Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
         return false;
@@ -317,16 +378,7 @@ boolean F_AddFile(const char* fileName, boolean allowDuplicate)
         return false;
     }
 
-    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(fileName)) )
-
-    /// \todo Do not guess, try in order: ZIP > WAD > other
-    resourceType = F_GuessResourceTypeByName(fileName);
-    switch(resourceType)
-    {
-    case RT_ZIP:    return Zip_Open2(fileName, handle);
-    case RT_WAD:    return (NULL != W_AddArchive(fileName, handle));
-    default:        return (NULL != W_AddFile(fileName, handle, (resourceType == RT_DEH)));
-    }
+    return F_AddFile2(fileName, handle);
 }
 
 boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
@@ -355,14 +407,6 @@ boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplic
 static boolean removeFile(const char* path)
 {
     VERBOSE( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path)) )
-
-    // Is it a zip/pk3 package?
-    if(F_GuessResourceTypeByName(path) == RT_ZIP)
-    {
-        return Zip_Close(path);
-    }
-
-    // Perhaps its a WAD archive or a single lump?
     return W_RemoveFile(path);
 }
 
@@ -475,7 +519,7 @@ boolean F_ReleaseFileId(const char* path)
     return false;
 }
 
-int F_MatchName(const char* string, const char* pattern)
+int F_MatchFileName(const char* string, const char* pattern)
 {
     const char* in = string, *st = pattern;
 
@@ -776,6 +820,33 @@ void F_Release(DFILE* file)
     free(file);
 }
 
+/**
+ * Zip data is buffered like lump data.
+ */
+DFILE* F_OpenZip(lumpnum_t zipIndex, boolean dontBuffer)
+{
+    DFILE* file = F_GetFreeFile();
+
+    if(!file)
+        return NULL;
+
+    // Init and load in the lump data.
+    file->flags.open = true;
+    file->flags.file = false;
+    file->lastModified = Zip_LastModified(zipIndex);
+    if(!dontBuffer)
+    {
+        file->size = Zip_GetSize(zipIndex);
+        file->pos = file->data = malloc(file->size);
+        if(NULL == file->data)
+            Con_Error("F_OpenZip: Failed on allocation of %lu bytes for buffered data.",
+                (unsigned long) file->size);
+        Zip_ReadFile(zipIndex, (char*)file->data);
+    }
+
+    return file;
+}
+
 DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
 {
     DFILE* file;
@@ -787,23 +858,18 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
     if(!file)
         return NULL;
 
-    // Init and load in the lumpNum data.
+    // Init and load in the lump data.
     file->flags.open = true;
     file->flags.file = false;
-    file->lastModified = time(NULL); // So I'm lazy...
+    file->lastModified = W_LumpLastModified(lumpNum);
     if(!dontBuffer)
     {
-        const char* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
-
         file->size = W_LumpLength(lumpNum);
-        file->data = (void*) malloc(file->size);
+        file->pos = file->data = (void*) malloc(file->size);
         if(NULL == file->data)
-            Con_Error("F_OpenLump: Failed on allocation of %lu bytes for buffered lump.",
+            Con_Error("F_OpenLump: Failed on allocation of %lu bytes for buffered data.",
                 (unsigned long) file->size);
-
-        memcpy(file->data, (const void*)lump, file->size);
-        file->pos = (char*) file->data;
-        W_CacheChangeTag(lumpNum, PU_CACHE);
+        W_ReadLump(lumpNum, (char*)file->data);
     }
 
     return file;
@@ -812,7 +878,7 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
 /**
  * This only works on real files.
  */
-static unsigned int F_GetLastModified(const char* path)
+static unsigned int readLastModified(const char* path)
 {
 #ifdef UNIX
     struct stat s;
@@ -895,31 +961,7 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
 
     file->flags.open = true;
     file->flags.file = true;
-    file->lastModified = F_GetLastModified(path);
-    return file;
-}
-
-/**
- * Zip data is buffered like lump data.
- */
-DFILE* F_OpenZip(zipindex_t zipIndex, boolean dontBuffer)
-{
-    DFILE* file = F_GetFreeFile();
-
-    if(!file)
-        return NULL;
-
-    // Init and load in the lump data.
-    file->flags.open = true;
-    file->flags.file = false;
-    file->lastModified = Zip_GetLastModified(zipIndex);
-    if(!dontBuffer)
-    {
-        file->size = Zip_GetSize(zipIndex);
-        file->pos = file->data = malloc(file->size);
-        Zip_Read(zipIndex, file->data);
-    }
-
+    file->lastModified = readLastModified(path);
     return file;
 }
 
@@ -945,10 +987,10 @@ DFILE* F_Open(const char* path, const char* mode)
     // Shall we first check the Zip directory?
     if(!reqRealFile)
     {
-        zipindex_t zipIndex = Zip_Find(Str_Text(&searchPath));
-        if(0 != zipIndex)
+        lumpnum_t lumpNum = Zip_Find(Str_Text(&searchPath));
+        if(-1 != lumpNum)
         {
-            file = F_OpenZip(zipIndex, dontBuffer);
+            file = F_OpenZip(lumpNum, dontBuffer);
             if(NULL != file)
             {
                 Str_Free(&searchPath);
@@ -1012,6 +1054,8 @@ void F_Close(DFILE* file)
 
 size_t F_Read(DFILE* file, void* dest, size_t count)
 {
+    assert(NULL != file);
+    {
     size_t bytesleft;
 
     if(!file->flags.open)
@@ -1040,20 +1084,24 @@ size_t F_Read(DFILE* file, void* dest, size_t count)
     }
 
     return count;
+    }
 }
 
 unsigned char F_GetC(DFILE* file)
 {
-    unsigned char ch = 0;
-
-    if(!file->flags.open)
-        return 0;
-    F_Read(file, &ch, 1);
-    return ch;
+    assert(NULL != file);
+    if(file->flags.open)
+    {
+        unsigned char ch = 0;
+        F_Read(file, &ch, 1);
+        return ch;
+    }
+    return 0;
 }
 
 size_t F_Tell(DFILE* file)
 {
+    assert(NULL != file);
     if(!file->flags.open)
         return 0;
     if(file->flags.file)
@@ -1104,7 +1152,14 @@ size_t F_Length(DFILE* file)
     return length;
 }
 
-unsigned int F_LastModified(const char* fileName)
+unsigned int F_LastModified(DFILE* file)
+{
+    if(!file)
+        return 0;
+    return file->lastModified;
+}
+
+unsigned int F_GetLastModified(const char* fileName)
 {
     // Try to open the file, but don't buffer any contents.
     DFILE* file = F_Open(fileName, "rx");
@@ -1113,33 +1168,30 @@ unsigned int F_LastModified(const char* fileName)
     if(!file)
         return 0;
 
-    modified = file->lastModified;
+    modified = F_LastModified(file);
     F_Close(file);
     return modified;
 }
 
 void F_Init(void)
 {
-    Zip_Init();
     W_Init();
 }
 
 void F_Shutdown(void)
 {
-    Zip_Shutdown();
     W_Shutdown();
 }
 
 void F_EndStartup(void)
 {
-    Zip_EndStartup();
     W_EndStartup();
 }
 
 int F_Reset(void)
 {
     Z_FreeTags(PU_CACHE, PU_CACHE);
-    return Zip_Reset() + W_Reset();
+    return W_Reset();
 }
 
 typedef struct {
@@ -1252,7 +1304,7 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
                 Str_Appendf(&path, "%s%s", Str_Text(searchPath), Str_Text(&foundPaths[i].path));
 
                 // Does this match the pattern?
-                if(F_MatchName(Str_Text(&path), Str_Text(&localPattern)))
+                if(F_MatchFileName(Str_Text(&path), Str_Text(&localPattern)))
                 {
                     // Pass this path to the caller.
                     result = callback(&path, (foundPaths[i].attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, paramaters);
@@ -1271,14 +1323,14 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
     }
 }
 
-static int findZipFileWorker(const ddstring_t* zipFileName, void* paramaters)
+static int findZipFileWorker(const lumpinfo_t* lumpInfo, void* paramaters)
 {
-    assert(zipFileName && paramaters);
+    assert(NULL != lumpInfo && NULL != paramaters);
     {
-    findzipfileworker_paramaters_t* info = (findzipfileworker_paramaters_t*)paramaters;
-    if(F_MatchName(Str_Text(zipFileName), Str_Text(info->pattern)))
+    findzipfileworker_paramaters_t* p = (findzipfileworker_paramaters_t*)paramaters;
+    if(F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(p->pattern)))
     {
-        return info->callback(zipFileName, PT_LEAF, info->paramaters);
+        return p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
     }
     return 0; // Continue search.
     }
@@ -1317,7 +1369,7 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
     for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
     {
         lumpdirectory_record_t* rec = &lumpDirectory[i];
-        if(!F_MatchName(Str_Text(&rec->path), Str_Text(&searchPattern)))
+        if(!F_MatchFileName(Str_Text(&rec->path), Str_Text(&searchPattern)))
             continue;
         result = callback(&rec->path, PT_LEAF, paramaters);
         if(0 != result)
