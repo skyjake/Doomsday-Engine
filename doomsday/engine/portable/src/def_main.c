@@ -911,7 +911,7 @@ void Def_GenerateAutoMaterials(void)
 
         stage = DED_AddMaterialLayerStage(&mat->layers[0]);
         st = &mat->layers[0].stages[stage];
-        st->texture = GL_ConstructUriForTexture(tex);
+        st->texture = GL_NewUriForTexture(tex);
     }}
 
     // Flats.
@@ -939,7 +939,7 @@ void Def_GenerateAutoMaterials(void)
 
         stage = DED_AddMaterialLayerStage(&mat->layers[0]);
         st = &mat->layers[0].stages[stage];
-        st->texture = GL_ConstructUriForTexture(tex);
+        st->texture = GL_NewUriForTexture(tex);
     }}
 
     // Sprites.
@@ -967,7 +967,7 @@ void Def_GenerateAutoMaterials(void)
 
         stage = DED_AddMaterialLayerStage(&mat->layers[0]);
         st = &mat->layers[0].stages[stage];
-        st->texture = GL_ConstructUriForTexture(tex);
+        st->texture = GL_NewUriForTexture(tex);
         st->texOrigin[0] = sprTex->offX;
         st->texOrigin[1] = sprTex->offY;
     }}

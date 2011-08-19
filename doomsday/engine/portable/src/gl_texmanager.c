@@ -3368,7 +3368,7 @@ uint GL_TextureIndexForUri(const dduri_t* uri)
     return GL_TextureIndexForUri2(uri, false);
 }
 
-dduri_t* GL_ConstructUriForTexture(struct texture_s* tex)
+dduri_t* GL_NewUriForTexture(struct texture_s* tex)
 {
     assert(tex);
     {
