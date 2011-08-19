@@ -358,6 +358,10 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
     Net_SendPlayerInfo(console, DDSP_ALL_PLAYERS);
 }
 
+/**
+ * Handles a server-specific network message. Assumes that Msg_BeginRead()
+ * has already been called to begin reading the message.
+ */
 void Sv_HandlePacket(void)
 {
     ident_t             id;
@@ -370,12 +374,12 @@ void Sv_HandlePacket(void)
     char                buf[17];
     size_t              len;
 
+    /*
 #ifdef _DEBUG
     Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
     Con_Message("Sv_HandlePacket: length=%li\n", netBuffer.length);
 #endif
-
-    Msg_BeginRead();
+    */
 
     switch(netBuffer.msg.type)
     {
@@ -475,7 +479,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         // The first byte contains the sender.
         msgfrom = Reader_ReadByte(msgReader);
         // Is the message for us?
-        mask = Reader_ReadUInt16(msgReader);
+        mask = Reader_ReadUInt32(msgReader);
         // Copy the message into a buffer.
         len = Reader_ReadUInt16(msgReader);
         msg = M_Malloc(len + 1);
@@ -484,17 +488,12 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         // Message for us? Show it locally.
         if(mask & 1)
         {
-            Net_ShowChatMessage();
+            Net_ShowChatMessage(msgfrom, msg);
             gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
         }
 
         // Servers relay chat messages to all the recipients.
-        Msg_Begin(PKT_CHAT);
-        Writer_WriteByte(msgWriter, msgfrom);
-        Writer_WriteUInt16(msgWriter, mask);
-        Writer_WriteUInt16(msgWriter, strlen(msg));
-        Writer_Write(msgWriter, msg, strlen(msg));
-        Msg_End();
+        Net_WriteChatMessage(msgfrom, mask, msg);
         for(i = 1; i < DDMAXPLAYERS; ++i)
             if(ddPlayers[i].shared.inGame && (mask & (1 << i)) && i != from)
             {
@@ -512,8 +511,6 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
                   (int) netBuffer.msg.type);
         break;
     }
-
-    Msg_EndRead();
 }
 
 /**
@@ -611,6 +608,7 @@ void Sv_GetPackets(void)
 
     while(Net_GetPacket())
     {
+        Msg_BeginRead();
         switch(netBuffer.msg.type)
         {
         case PCL_GOODBYE:
@@ -626,17 +624,17 @@ void Sv_GetPackets(void)
             // The client has acknowledged our handshake.
             // Note the time (this isn't perfectly accurate, though).
             netconsole = netBuffer.player;
-            if(netconsole < 0 || netconsole >= DDMAXPLAYERS)
-                continue;
+            if(netconsole >= 0 && netconsole < DDMAXPLAYERS)
+            {
+                sender = &clients[netconsole];
+                sender->shakePing = Sys_GetRealTime() - sender->shakePing;
+                Con_Printf("Cl%i handshake ping: %i ms\n", netconsole,
+                           sender->shakePing);
 
-            sender = &clients[netconsole];
-            sender->shakePing = Sys_GetRealTime() - sender->shakePing;
-            Con_Printf("Cl%i handshake ping: %i ms\n", netconsole,
-                       sender->shakePing);
-
-            // Update the initial ack time accordingly. Since the ping
-            // fluctuates, assume the a poor case.
-            Net_SetInitialAckTime(netconsole, 2 * sender->shakePing);
+                // Update the initial ack time accordingly. Since the ping
+                // fluctuates, assume the a poor case.
+                Net_SetInitialAckTime(netconsole, 2 * sender->shakePing);
+            }
             break;
 
         case PCL_ACK_PLAYER_FIX:
@@ -645,9 +643,9 @@ void Sv_GetPackets(void)
             ddplayer_t             *ddpl = &plr->shared;
             fixcounters_t          *acked = &ddpl->fixAcked;
 
-            acked->angles = Reader_ReadUInt32(msgReader);
-            acked->pos = Reader_ReadUInt32(msgReader);
-            acked->mom = Reader_ReadUInt32(msgReader);
+            acked->angles = Reader_ReadInt32(msgReader);
+            acked->pos = Reader_ReadInt32(msgReader);
+            acked->mom = Reader_ReadInt32(msgReader);
 #ifdef _DEBUG
             Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\n",
                         netBuffer.player,
@@ -689,7 +687,9 @@ void Sv_GetPackets(void)
                 gx.HandlePacket(netBuffer.player, netBuffer.msg.type,
                                 netBuffer.msg.data, netBuffer.length);
             }
+            break;
         }
+        Msg_EndRead();
     }
 }
 
@@ -990,7 +990,7 @@ void Sv_SendPlayerFixes(int plrNum)
     // Increment counters.
     if(ddpl->flags & DDPF_FIXANGLES)
     {
-        Writer_WriteUInt32(msgWriter, ++ddpl->fixCounter.angles);
+        Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.angles);
         Writer_WriteUInt32(msgWriter, ddpl->mo->angle);
         Writer_WriteFloat(msgWriter, ddpl->lookDir);
 
@@ -1003,7 +1003,7 @@ Con_Message("Sv_SendPlayerFixes: Sent angles (%i): angle=%f lookdir=%f\n",
 
     if(ddpl->flags & DDPF_FIXPOS)
     {
-        Writer_WriteUInt32(msgWriter, ++ddpl->fixCounter.pos);
+        Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.pos);
         Writer_WriteFloat(msgWriter, ddpl->mo->pos[VX]);
         Writer_WriteFloat(msgWriter, ddpl->mo->pos[VY]);
         Writer_WriteFloat(msgWriter, ddpl->mo->pos[VZ]);
@@ -1017,7 +1017,7 @@ Con_Message("Sv_SendPlayerFixes: Sent position (%i): %f, %f, %f\n",
 
     if(ddpl->flags & DDPF_FIXMOM)
     {
-        Writer_WriteUInt32(msgWriter, ++ddpl->fixCounter.mom);
+        Writer_WriteInt32(msgWriter, ++ddpl->fixCounter.mom);
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MX]);
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MY]);
         Writer_WriteFloat(msgWriter, ddpl->mo->mom[MZ]);
@@ -1175,7 +1175,6 @@ void Sv_ClientCoords(int plrNum)
     int                 clz;
     float               clientGameTime;
     float               clientPos[3];
-    //float               clientMom[3];
     angle_t             clientAngle;
     float               clientLookDir;
     boolean             onFloor = false;

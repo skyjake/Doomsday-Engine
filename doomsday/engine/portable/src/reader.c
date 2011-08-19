@@ -48,7 +48,13 @@ static boolean Reader_Check(const Reader* reader, size_t len)
     if(len) len++;
 #endif
 
-    if(!reader || !reader->data) return false;
+    if(!reader || !reader->data)
+    {
+#ifdef _DEBUG
+        Con_Error("Reader_Check: Reader %p is invalid.\n", reader);
+#endif
+        return false;
+    }
     if(reader->pos > reader->size - len)
     {
         Con_Error("Reader_Check: Position %lu[+%lu] out of bounds, size=%lu.\n",

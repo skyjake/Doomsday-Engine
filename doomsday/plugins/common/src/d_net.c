@@ -474,19 +474,33 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     case GPT_MESSAGE:
+#if __JHEXEN__ || __JSTRIFE__
+    case GPT_YELLOW_MESSAGE:
+#endif
+    {
+        size_t len = 0;
+        char *msg = 0;
 #ifdef _DEBUG
         Con_Message("D_HandlePacket: GPT_MESSAGE\n");
 #endif
-        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
-        P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
-        break;
+        len = Reader_ReadUInt16(reader);
+        msg = Z_Malloc(len + 1, PU_STATIC, 0);
+        Reader_Read(reader, msg, len);
+        msg[len] = 0;
 
 #if __JHEXEN__ || __JSTRIFE__
-    case GPT_YELLOW_MESSAGE:
-        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
-        P_SetYellowMessage(&players[CONSOLEPLAYER], msgBuff, false);
-        break;
+        if(type == GPT_YELLOW_MESSAGE)
+        {
+            P_SetYellowMessage(&players[CONSOLEPLAYER], msg, false);
+        }
+        else
 #endif
+        {
+            P_SetMessage(&players[CONSOLEPLAYER], msg, false);
+        }
+        Z_Free(msg);
+        break;
+    }
 
     case GPT_CONSOLEPLAYER_STATE:
         NetCl_UpdatePlayerState(reader, CONSOLEPLAYER);

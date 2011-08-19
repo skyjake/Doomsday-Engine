@@ -366,12 +366,9 @@ void Net_SendPacket(int to_player, int type, const void *data, size_t length)
 /**
  * Prints the message in the console.
  */
-void Net_ShowChatMessage(void)
+void Net_ShowChatMessage(int plrNum, const char* message)
 {
-    // The current packet in the netBuffer is a chat message, let's unwrap
-    // and show it.
-    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[netBuffer.msg.data[0]].name,
-                netBuffer.msg.data + 3);
+    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[plrNum].name, message);
 }
 
 /**
@@ -972,6 +969,22 @@ void Net_PrintServerInfo(int index, serverinfo_t *info)
 }
 
 /**
+ * Composes a PKT_CHAT network message.
+ */
+void Net_WriteChatMessage(int from, int toMask, const char* message)
+{
+    size_t len = strlen(message);
+    len = MIN_OF(len, 0xffff);
+
+    Msg_Begin(PKT_CHAT);
+    Writer_WriteByte(msgWriter, from);
+    Writer_WriteUInt32(msgWriter, toMask);
+    Writer_WriteUInt16(msgWriter, len);
+    Writer_Write(msgWriter, message, len);
+    Msg_End();
+}
+
+/**
  * All arguments are sent out as a chat message.
  */
 D_CMD(Chat)
@@ -1039,12 +1052,7 @@ D_CMD(Chat)
         break;
     }
 
-    Msg_Begin(PKT_CHAT);
-    Writer_WriteByte(msgWriter, consolePlayer);
-    Writer_WriteUInt16(msgWriter, mask);
-    Writer_WriteUInt16(msgWriter, strlen(buffer));
-    Writer_Write(msgWriter, buffer, strlen(buffer));
-    Msg_End();
+    Net_WriteChatMessage(consolePlayer, mask, buffer);
 
     if(!isClient)
     {
@@ -1065,7 +1073,7 @@ D_CMD(Chat)
     }
 
     // Show the message locally.
-    Net_ShowChatMessage();
+    Net_ShowChatMessage(consolePlayer, buffer);
 
     // Inform the game, too.
     gx.NetPlayerEvent(consolePlayer, DDPE_CHAT_MESSAGE, buffer);

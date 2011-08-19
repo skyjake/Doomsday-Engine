@@ -194,7 +194,7 @@ void Cl_AnswerHandshake(void)
     gameReady = false;
     Cl_InitFrame();
 
-    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%i.\n",
+    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%f.\n",
                 myConsole, remoteGameTime);
 
     /**
@@ -345,10 +345,18 @@ void Cl_GetPackets(void)
             break;
 
         case PKT_CHAT:
-            Net_ShowChatMessage();
-            gx.NetPlayerEvent(netBuffer.msg.data[0], DDPE_CHAT_MESSAGE,
-                              netBuffer.msg.data + 3);
+        {
+            int msgfrom = Reader_ReadByte(msgReader);
+            int mask = Reader_ReadUInt32(msgReader); // ignored
+            size_t len = Reader_ReadUInt16(msgReader);
+            char* msg = M_Malloc(len + 1);
+            Reader_Read(msgReader, msg, len);
+            msg[len] = 0;
+            Net_ShowChatMessage(msgfrom, msg);
+            gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
+            M_Free(msg);
             break;
+        }
 
         case PSV_SERVER_CLOSE:  // We should quit?
             netLoggedIn = false;

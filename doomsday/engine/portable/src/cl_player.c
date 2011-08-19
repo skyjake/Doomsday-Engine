@@ -243,9 +243,9 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
     {
         // Send an acknowledgement.
         Msg_Begin(PCL_ACK_PLAYER_FIX);
-        Writer_WriteUInt32(msgWriter, ddpl->fixAcked.angles);
-        Writer_WriteUInt32(msgWriter, ddpl->fixAcked.pos);
-        Writer_WriteUInt32(msgWriter, ddpl->fixAcked.mom);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.angles);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.pos);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.mom);
         Msg_End();
         Net_SendBuffer(0, 0);
     }
@@ -272,7 +272,7 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 1) // fix angles?
     {
-        ddpl->fixCounter.angles = Reader_ReadUInt32(msgReader);
+        ddpl->fixCounter.angles = Reader_ReadInt32(msgReader);
         state->pendingAngleFix = Reader_ReadUInt32(msgReader);
         state->pendingLookDirFix = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXANGLES;
@@ -285,7 +285,7 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 2) // fix pos?
     {
-        ddpl->fixCounter.pos = Reader_ReadUInt32(msgReader);
+        ddpl->fixCounter.pos = Reader_ReadInt32(msgReader);
         state->pendingPosFix[VX] = Reader_ReadFloat(msgReader);
         state->pendingPosFix[VY] = Reader_ReadFloat(msgReader);
         state->pendingPosFix[VZ] = Reader_ReadFloat(msgReader);
@@ -299,7 +299,7 @@ void ClPlayer_HandleFix(void)
 
     if(fixes & 4) // fix momentum?
     {
-        ddpl->fixCounter.mom = Reader_ReadUInt32(msgReader);
+        ddpl->fixCounter.mom = Reader_ReadInt32(msgReader);
         state->pendingMomFix[VX] = Reader_ReadFloat(msgReader);
         state->pendingMomFix[VY] = Reader_ReadFloat(msgReader);
         state->pendingMomFix[VZ] = Reader_ReadFloat(msgReader);
