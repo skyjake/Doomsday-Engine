@@ -71,7 +71,7 @@ void Msg_End(void)
     {
         // Finalize the netbuffer.
         netBuffer.length = Writer_Size(msgWriter);
-        Writer_Destruct(msgWriter);
+        Writer_Delete(msgWriter);
         msgWriter = 0;
     }
     else
@@ -97,7 +97,7 @@ void Msg_EndRead(void)
 {
     if(msgReader)
     {
-        Reader_Destruct(msgReader);
+        Reader_Delete(msgReader);
         msgReader = 0;
     }
 }

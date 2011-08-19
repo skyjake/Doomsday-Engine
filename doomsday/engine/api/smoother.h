@@ -42,7 +42,7 @@ Smoother* Smoother_New();
  * Destructs a smoother. This must be called when the smoother is no
  * longer needed.
  */
-void Smoother_Destruct(Smoother* sm);
+void Smoother_Delete(Smoother* sm);
 
 /**
  * Resets the smoother instance.

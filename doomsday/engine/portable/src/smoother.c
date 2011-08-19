@@ -69,7 +69,7 @@ Smoother* Smoother_New()
     return sm;
 }
 
-void Smoother_Destruct(Smoother* sm)
+void Smoother_Delete(Smoother* sm)
 {
     free(sm);
 }

@@ -53,7 +53,7 @@ Reader* Reader_NewWithBuffer(const byte* buffer, size_t len);
 /**
  * Destroys the reader.
  */
-void Reader_Destruct(Reader* reader);
+void Reader_Delete(Reader* reader);
 
 /**
  * Returns the current position of the reader.

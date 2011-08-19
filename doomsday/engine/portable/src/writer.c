@@ -105,7 +105,7 @@ Writer* Writer_NewWithDynamicBuffer(size_t maxLen)
     return w;
 }
 
-void Writer_Destruct(Writer* writer)
+void Writer_Delete(Writer* writer)
 {
     if(writer->isDynamic)
     {
