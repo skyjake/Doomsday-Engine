@@ -1377,9 +1377,9 @@ D_CMD(AxisChangeOption)
 
 D_CMD(AxisChangeValue)
 {
-    uint        deviceID, axisID;
-    inputdev_t *device;
-    inputdevaxis_t *axis;
+    uint deviceID, axisID;
+    inputdevaxis_t* axis;
+    inputdev_t* device;
 
     if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
     {
@@ -1389,22 +1389,24 @@ D_CMD(AxisChangeValue)
 
     device = I_GetDevice(deviceID, false);
     axis   = I_GetAxisByID(device, axisID);
+    if(NULL != axis)
+    {
+        // Values:
+        if(!stricmp(argv[2], "filter"))
+        {
+            axis->filter = strtod(argv[3], 0);
+        }
+        else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
+        {
+            axis->deadZone = strtod(argv[3], 0);
+        }
+        else if(!stricmp(argv[2], "scale"))
+        {
+            axis->scale = strtod(argv[3], 0);
+        }
+    }
 
-    // Values:
-    if(!stricmp(argv[2], "filter"))
-    {
-        axis->filter = strtod(argv[3], 0);
-    }
-    else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
-    {
-        axis->deadZone = strtod(argv[3], 0);
-    }
-    else if(!stricmp(argv[2], "scale"))
-    {
-        axis->scale = strtod(argv[3], 0);
-    }
-
-    // Unknown value name.
+    // Unknown value name?
     return true;
 }
 
