@@ -323,12 +323,12 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
     }
 }
 
-lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name)
+lumpnum_t LumpDirectory_IndexForPath(lumpdirectory_t* ld, const char* name)
 {
     return LumpDirectory_IndexForName2(ld, name, false);
 }
 
-lumpnum_t LumpDirectory_IndexForShortName(lumpdirectory_t* ld, const char* name)
+lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name)
 {
     return LumpDirectory_IndexForName2(ld, name, true);
 }

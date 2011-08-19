@@ -62,11 +62,11 @@ void LumpDirectory_Clear(lumpdirectory_t* ld);
 int LumpDirectory_Iterate2(lumpdirectory_t* ld, int (*callback) (const lumpinfo_t*, void*), void* paramaters);
 int LumpDirectory_Iterate(lumpdirectory_t* ld, int (*callback) (const lumpinfo_t*, void*));
 
-/// @return  Index associated with the last lump with short-name @a name if found else @c -1
-lumpnum_t LumpDirectory_IndexForShortName(lumpdirectory_t* ld, const char* name);
-
-/// @return  Index associated with the last lump with variable-length name @a name if found else @c -1
+/// @return  Index associated with the last lump with @a name if found else @c -1
 lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name);
+
+/// @return  Index associated with the last lump with variable-length @a path if found else @c -1
+lumpnum_t LumpDirectory_IndexForPath(lumpdirectory_t* ld, const char* path);
 
 /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
 boolean LumpDirectory_IsValidIndex(lumpdirectory_t* ld, lumpnum_t lumpNum);
@@ -78,7 +78,7 @@ boolean LumpDirectory_IsValidIndex(lumpdirectory_t* ld, lumpnum_t lumpNum);
  *
  * @param lumpInfo  Metadata for each lump. Must be at least @a lumpInfoCount elements.
  * @param numLumpInfo  Number of elements pointed to by @a lumpInfo.
- * @param fsObject  File system record object for the file from which added lumps are being added.
+ * @param fsObject  File system record object for the file from which lumps are being added.
  */
 void LumpDirectory_Append(lumpdirectory_t* ld, const lumpinfo_t* lumpInfo,
     int lumpInfoCount, abstractfile_t* fsObject);

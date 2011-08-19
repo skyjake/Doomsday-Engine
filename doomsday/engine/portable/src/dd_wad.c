@@ -494,13 +494,13 @@ lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent)
     // the auxiliary lumps because they take precedence.
     if(useAuxiliaryDirectory())
     {
-        idx = LumpDirectory_IndexForShortName(ActiveWadLumpDirectory, name);
+        idx = LumpDirectory_IndexForName(ActiveWadLumpDirectory, name);
         if(idx != -1)
             return idx;
     }
 
     usePrimaryDirectory();
-    idx = LumpDirectory_IndexForShortName(ActiveWadLumpDirectory, name);
+    idx = LumpDirectory_IndexForName(ActiveWadLumpDirectory, name);
 
     if(idx == -1 && !silent)
         VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
@@ -792,7 +792,7 @@ lumpnum_t Zip_Find(const char* searchPath)
         F_PrependBasePath(&absSearchPath, &absSearchPath);
 
         // Perform the search.
-        result = LumpDirectory_IndexForName(zipLumpDirectory, Str_Text(&absSearchPath));
+        result = LumpDirectory_IndexForPath(zipLumpDirectory, Str_Text(&absSearchPath));
         Str_Free(&absSearchPath);
     }
     return result;

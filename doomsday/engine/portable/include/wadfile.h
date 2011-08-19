@@ -116,7 +116,7 @@ boolean WadFile_IsIWAD(wadfile_t* wad);
 
 /**
  * Does the specified file appear to be in WAD format.
- * @return  @c true iff this is file that can be represented using WadFile.
+ * @return  @c true iff this is a file that can be represented using WadFile.
  */
 boolean WadFile_Recognise(DFILE* file);
 
