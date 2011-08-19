@@ -55,7 +55,7 @@ static lumpdirectory_t* zipLumpDirectory;
 static lumpdirectory_t* primaryWadLumpDirectory;
 static lumpdirectory_t* auxiliaryWadLumpDirectory;
 // @c true = one or more files have been opened using the auxiliary directory.
-static boolean auxiliaryLumpDirectoryInUse;
+static boolean auxiliaryWadLumpDirectoryInUse;
 
 // Currently selected lump directory.
 static lumpdirectory_t* ActiveWadLumpDirectory;
@@ -294,7 +294,7 @@ static void usePrimaryDirectory(void)
 
 static boolean useAuxiliaryDirectory(void)
 {
-    if(!auxiliaryLumpDirectoryInUse)
+    if(!auxiliaryWadLumpDirectoryInUse)
         return false;
     ActiveWadLumpDirectory = auxiliaryWadLumpDirectory;
     return true;
@@ -344,7 +344,7 @@ void W_Init(void)
 
     primaryWadLumpDirectory   = LumpDirectory_Construct();
     auxiliaryWadLumpDirectory = LumpDirectory_Construct();
-    auxiliaryLumpDirectoryInUse = false;
+    auxiliaryWadLumpDirectoryInUse = false;
 
     ActiveWadLumpDirectory = primaryWadLumpDirectory;
 
@@ -437,12 +437,12 @@ lumpnum_t W_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
 
     if(WadFile_Recognise(handle))
     {
-        if(auxiliaryLumpDirectoryInUse)
+        if(auxiliaryWadLumpDirectoryInUse)
         {
             W_CloseAuxiliary();
         }
         ActiveWadLumpDirectory = auxiliaryWadLumpDirectory;
-        auxiliaryLumpDirectoryInUse = true;
+        auxiliaryWadLumpDirectoryInUse = true;
 
         // Get a new file record.
         newWadFile(handle, path, ActiveWadLumpDirectory);
@@ -472,7 +472,7 @@ void W_CloseAuxiliary(void)
     if(useAuxiliaryDirectory())
     {
         clearFileList(auxiliaryWadLumpDirectory);
-        auxiliaryLumpDirectoryInUse = false;
+        auxiliaryWadLumpDirectoryInUse = false;
     }
     usePrimaryDirectory();
 }

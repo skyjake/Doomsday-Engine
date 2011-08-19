@@ -372,9 +372,6 @@ void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpN
     for(i = 0; i < ld->_numRecords; ++i)
         ld->_records[i].presortIndex = i;
 
-    // We'll sort then prune in a two pass approach but can we sort in-place?
-    sortedNumRecords = ld->_numRecords;
-
     // Sort entries in descending load order for pruning.
     qsort(ld->_records, ld->_numRecords, sizeof(*ld->_records),
         (matchLumpName? LumpDirectory_CompareRecordName : LumpDirectory_CompareRecordPath));
@@ -387,7 +384,7 @@ void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpN
         j = i;
         while(j < sortedNumRecords &&
               (matchLumpName? !strnicmp(ld->_records[j-1].info->name,
-                                         ld->_records[j  ].info->name, LUMPNAME_T_MAXLEN) :
+                                        ld->_records[j  ].info->name, LUMPNAME_T_MAXLEN) :
                                !Str_CompareIgnoreCase(         &ld->_records[j-1].info->path,
                                                       Str_Text(&ld->_records[j  ].info->path))))
         { ++j; }
