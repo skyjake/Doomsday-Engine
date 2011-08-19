@@ -249,14 +249,9 @@ filedirectory_t* FileDirectory_NewWithPathList(const char* pathList)
     return fd;
 }
 
-filedirectory_t* FileDirectory_ConstructEmpty(void)
-{
-    return FileDirectory_NewWithPathListStr(NULL);
-}
-
 filedirectory_t* FileDirectory_New(void)
 {
-    return FileDirectory_ConstructEmpty();
+    return FileDirectory_NewWithPathListStr(NULL);
 }
 
 static int freeNodeInfo(struct pathdirectory_node_s* node, void* paramaters)
