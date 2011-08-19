@@ -25,6 +25,7 @@
 #ifndef __D_NETSV_H__
 #define __D_NETSV_H__
 
+#include "reader.h"
 #include "common.h"
 
 extern char     cyclingMaps, mapCycleNoExit;
@@ -54,7 +55,7 @@ void            NetSv_Intermission(int flags, int state, int time);
 void            NetSv_Finale(int flags, const char* script, const boolean* conds,
                              byte numConds);
 void            NetSv_SendPlayerInfo(int whose, int to_whom);
-void            NetSv_ChangePlayerInfo(int from, byte *data);
+void            NetSv_ChangePlayerInfo(int from, Reader* reader);
 void            NetSv_Ticker(void);
 void            NetSv_SaveGame(unsigned int game_id);
 void            NetSv_LoadGame(unsigned int game_id);
@@ -64,9 +65,10 @@ void            NetSv_KillMessage(player_t *killer, player_t *fragged,
                                   boolean stomping);
 void            NetSv_UpdateGameConfig(void);
 void            NetSv_Paused(boolean isPaused);
-void            NetSv_DoCheat(int player, const char *data);
-void            NetSv_DoAction(int player, const char *data);
-void            NetSv_DoDamage(int player, const char *data);
+void            NetSv_DoCheat(int player, Reader *reader);
+void            NetSv_ExecuteCheat(int player, const char* command);
+void            NetSv_DoAction(int player, Reader *reader);
+void            NetSv_DoDamage(int player, Reader *reader);
 void            NetSv_SendJumpPower(int target, float power);
 
 DEFCC(CCmdMapCycle);

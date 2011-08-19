@@ -60,10 +60,11 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static byte *readbuffer;
+//static byte *readbuffer;
 
 // CODE --------------------------------------------------------------------
 
+/*
 // Mini-Msg routines.
 void NetCl_SetReadBuffer(byte *data)
 {
@@ -105,6 +106,7 @@ void NetCl_Read(byte *buf, int len)
     memcpy(buf, readbuffer, len);
     readbuffer += len;
 }
+*/
 
 #if __JDOOM__
 int NetCl_IsCompatible(int other, int us)
@@ -126,33 +128,35 @@ int NetCl_IsCompatible(int other, int us)
 }
 #endif
 
-void NetCl_UpdateGameState(byte *data)
+void NetCl_UpdateGameState(Reader* msg)
 {
-    byte                gsGameMode = 0;
-    byte                gsFlags = 0;
-    byte                gsEpisode = 0;
-    byte                gsMap = 0;
-    byte                gsDeathmatch = 0;
-    byte                gsMonsters = 0;
-    byte                gsRespawn = 0;
-    byte                gsJumping = 0;
-    byte                gsSkill = 0;
-    float               gsGravity = 0;
+    byte gsGameMode = 0;
+    byte gsFlags = 0;
+    byte gsEpisode = 0;
+    byte gsMap = 0;
+    byte flags = 0;
+    byte gsDeathmatch = 0;
+    byte gsMonsters = 0;
+    byte gsRespawn = 0;
+    byte gsJumping = 0;
+    byte gsSkill = 0;
+    float gsGravity = 0;
 
-    gsGameMode = data[0];
-    gsFlags = data[1];
-    gsEpisode = data[2]-1;
-    gsMap = data[3]-1;
-    gsDeathmatch = data[4] & 0x3;
-    gsMonsters = (data[4] & 0x4? true : false);
-    gsRespawn = (data[4] & 0x8? true : false);
-    gsJumping = (data[4] & 0x10? true : false);
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    gsSkill = (data[4] >> 5);
-#else
-    gsSkill = data[5] & 0x7;
-#endif
-    gsGravity = FIX2FLT((data[6] << 8) | (data[7] << 16));
+    gsGameMode = Reader_ReadByte(msg);
+    gsFlags = Reader_ReadByte(msg);
+    gsEpisode = Reader_ReadByte(msg) - 1;
+    gsMap = Reader_ReadByte(msg) - 1;
+    flags = Reader_ReadByte(msg);
+    gsDeathmatch = flags & 0x3;
+    gsMonsters = (flags & 0x4? true : false);
+    gsRespawn = (flags & 0x8? true : false);
+    gsJumping = (flags & 0x10? true : false);
+//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+//    gsSkill = (flags >> 5);
+//#else
+    gsSkill = Reader_ReadByte(msg);
+//#endif
+    gsGravity = Reader_ReadFloat(msg);
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
@@ -196,12 +200,14 @@ void NetCl_UpdateGameState(byte *data)
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
+    /*
     // Start reading after the GS packet.
 #if __JHEXEN__ || __JSTRIFE__
     NetCl_SetReadBuffer(data + 16);
 #else
     NetCl_SetReadBuffer(data + 8);
 #endif
+    */
 
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
@@ -228,11 +234,11 @@ void NetCl_UpdateGameState(byte *data)
         if(mo)
         {
             P_MobjUnsetPosition(mo);
-            mo->pos[VX] = (float) NetCl_ReadShort();
-            mo->pos[VY] = (float) NetCl_ReadShort();
-            mo->pos[VZ] = (float) NetCl_ReadShort();
+            mo->pos[VX] = Reader_ReadFloat(msg);
+            mo->pos[VY] = Reader_ReadFloat(msg);
+            mo->pos[VZ] = Reader_ReadFloat(msg);
             P_MobjSetPosition(mo);
-            mo->angle = NetCl_ReadShort() << 16; /* $unifiedangles */
+            mo->angle = Reader_ReadUInt32(msg);
             // Update floorz and ceilingz.
 #if __JDOOM__ || __JDOOM64__
             P_CheckPosition3fv(mo, mo->pos);
@@ -244,18 +250,20 @@ void NetCl_UpdateGameState(byte *data)
         }
         else // mo == NULL
         {
+            float mx = Reader_ReadFloat(msg);
+            float my = Reader_ReadFloat(msg);
+            float mz = Reader_ReadFloat(msg);
+            angle_t angle = Reader_ReadUInt32(msg);
             Con_Message("NetCl_UpdateGameState: Got camera init, but player has no mobj.\n");
-            Con_Message("  Pos=%i,%i,%i Angle=%i\n",
-                        NetCl_ReadShort(), NetCl_ReadShort(), NetCl_ReadShort(),
-                        NetCl_ReadShort());
+            Con_Message("  Pos=%f,%f,%f Angle=%x\n", mx, my, mz, angle);
         }
     }
 
     // Tell the server we're ready to begin receiving frames.
-    Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
+    Net_SendPacket(DDSP_CONFIRM, DDPT_OK, 0, 0);
 }
 
-void NetCl_MobjImpulse(byte* data)
+void NetCl_MobjImpulse(Reader* msg)
 {
     mobj_t* mo = players[CONSOLEPLAYER].plr->mo;
     mobj_t* clmo = ClPlayer_ClMobj(CONSOLEPLAYER);
@@ -263,9 +271,7 @@ void NetCl_MobjImpulse(byte* data)
 
     if(!mo) return;
 
-    NetCl_SetReadBuffer(data);
-
-    id = NetCl_ReadUShort();
+    id = Reader_ReadUInt16(msg);
     if(id != clmo->thinker.id)
     {
         // Not applicable; wrong mobj.
@@ -277,24 +283,22 @@ void NetCl_MobjImpulse(byte* data)
 #endif
 
     // Apply to the local mobj.
-    mo->mom[MX] += NetCl_ReadFloat();
-    mo->mom[MY] += NetCl_ReadFloat();
-    mo->mom[MZ] += NetCl_ReadFloat();
+    mo->mom[MX] += Reader_ReadFloat(msg);
+    mo->mom[MY] += Reader_ReadFloat(msg);
+    mo->mom[MZ] += Reader_ReadFloat(msg);
 }
 
-void NetCl_PlayerSpawnPosition(byte* data)
+void NetCl_PlayerSpawnPosition(Reader* msg)
 {
     player_t* p = &players[CONSOLEPLAYER];
     mobj_t* mo;
     float x, y, z;
-    int angle;
+    angle_t angle;
 
-    NetCl_SetReadBuffer(data);
-
-    x = NetCl_ReadFloat();
-    y = NetCl_ReadFloat();
-    z = NetCl_ReadFloat();
-    angle = NetCl_ReadLong();
+    x = Reader_ReadFloat(msg);
+    y = Reader_ReadFloat(msg);
+    z = Reader_ReadFloat(msg);
+    angle = Reader_ReadUInt32(msg);
 
 #ifdef _DEBUG
     Con_Message("NetCl_PlayerSpawnPosition: Got spawn position %f, %f, %f facing %x\n",
@@ -308,7 +312,7 @@ void NetCl_PlayerSpawnPosition(byte* data)
     mo->angle = angle;
 }
 
-void NetCl_UpdatePlayerState2(byte *data, int plrNum)
+void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 {
     player_t *pl = &players[plrNum];
     unsigned int flags;
@@ -324,14 +328,18 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
         return;
     }
 
-    NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadLong();
+    if(plrNum < 0)
+    {
+        // Player number included in the message.
+        plrNum = Reader_ReadByte(msg);
+    }
+    flags = Reader_ReadUInt32(msg);
 
     if(flags & PSF2_OWNED_WEAPONS)
     {
         boolean val;
 
-        k = NetCl_ReadShort();
+        k = Reader_ReadUInt16(msg);
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
             val = (k & (1 << i)) != 0;
@@ -346,7 +354,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 
     if(flags & PSF2_STATE)
     {
-        b = NetCl_ReadByte();
+        b = Reader_ReadByte(msg);
         pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
@@ -369,7 +377,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
             P_SetupPsprites(pl);
         }
 
-        pl->cheats = NetCl_ReadByte();
+        pl->cheats = Reader_ReadByte(msg);
 
         // Set or clear the NOCLIP flag.
         if(P_GetPlayerCheats(pl) & CF_NOCLIP)
@@ -379,7 +387,7 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
     }
 }
 
-void NetCl_UpdatePlayerState(byte *data, int plrNum)
+void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 {
     int i;
     player_t* pl = &players[plrNum];
@@ -389,8 +397,11 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     if(!Get(DD_GAME_READY))
         return;
 
-    NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadUShort();
+    if(plrNum < 0)
+    {
+        plrNum = Reader_ReadByte(msg);
+    }
+    flags = Reader_ReadUInt16(msg);
 
     /*
 #ifdef _DEBUG
@@ -400,7 +411,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_STATE)       // and armor type (the same bit)
     {
-        b = NetCl_ReadByte();
+        b = Reader_ReadByte(msg);
         pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         pl->armorType = b >> 4;
@@ -419,7 +430,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_HEALTH)
     {
-        int health = NetCl_ReadByte();
+        int health = Reader_ReadByte(msg);
 
         if(health < pl->health)
             ST_HUDUnHide(plrNum, HUE_ON_DAMAGE);
@@ -434,7 +445,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 #if __JHEXEN__
         for(i = 0; i < NUMARMOR; ++i)
         {
-            ap = NetCl_ReadByte();
+            ap = Reader_ReadByte(msg);
 
             // Maybe unhide the HUD?
             if(ap >= pl->armorPoints[i] &&
@@ -444,7 +455,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
             pl->armorPoints[i] = ap;
         }
 #else
-        ap = NetCl_ReadByte();
+        ap = Reader_ReadByte(msg);
 
         // Maybe unhide the HUD?
         if(ap >= pl->armorPoints)
@@ -458,7 +469,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     if(flags & PSF_INVENTORY)
     {
-        uint                i, count;
+        uint i, count;
 
         for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
         {
@@ -469,13 +480,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                 P_InventoryTake(plrNum, type, true);
         }
 
-        count = NetCl_ReadByte();
+        count = Reader_ReadByte(msg);
         for(i = 0; i < count; ++i)
         {
             inventoryitemtype_t type;
-            uint                j, num;
+            uint j, num;
 
-            s = NetCl_ReadShort();
+            s = Reader_ReadUInt16(msg);
             type = s & 0xff;
             num = s >> 8;
 
@@ -487,12 +498,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_POWERS)
     {
-        b = NetCl_ReadByte();
+        b = Reader_ReadByte(msg);
+
         // Only the non-zero powers are included in the message.
 #if __JHEXEN__ || __JSTRIFE__
         for(i = 0; i < NUM_POWER_TYPES - 1; ++i)
         {
-            byte val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
+            byte val = ((b & (1 << i))? (Reader_ReadByte(msg) * 35) : 0);
 
             // Maybe unhide the HUD?
             if(val > pl->powers[i])
@@ -508,7 +520,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
                 continue;
 #  endif
             {
-                int val = ((b & (1 << i))? (NetCl_ReadByte() * 35) : 0);
+                int val = ((b & (1 << i))? (Reader_ReadByte(msg) * 35) : 0);
 
                 // Maybe unhide the HUD?
                 if(val > pl->powers[i])
@@ -531,7 +543,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_KEYS)
     {
-        b = NetCl_ReadByte();
+        b = Reader_ReadByte(msg);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         for(i = 0; i < NUM_KEY_TYPES; ++i)
         {
@@ -550,24 +562,18 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         memset(pl->frags, 0, sizeof(pl->frags));
         // First comes the number of frag counts included.
-        for(i = NetCl_ReadByte(); i > 0; i--)
+        for(i = Reader_ReadByte(msg); i > 0; i--)
         {
-            s = NetCl_ReadShort();
+            s = Reader_ReadUInt16(msg);
             pl->frags[s >> 12] = s & 0xfff;
         }
-
-        /*// A test...
-           Con_Printf("Frags update: ");
-           for(i=0; i<4; i++)
-           Con_Printf("%i ", pl->frags[i]);
-           Con_Printf("\n"); */
     }
 
     if(flags & PSF_OWNED_WEAPONS)
     {
         boolean val;
 
-        b = NetCl_ReadByte();
+        b = Reader_ReadByte(msg);
         for(i = 0; i < NUM_WEAPON_TYPES; ++i)
         {
             val = (b & (1 << i)) != 0;
@@ -584,11 +590,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-#if __JHEXEN__ || __JSTRIFE__
-            int val = (int) NetCl_ReadByte();
-#else
-            int val = NetCl_ReadShort();
-#endif
+            int val = Reader_ReadInt16(msg);
+
             // Maybe unhide the HUD?
             if(val > pl->ammo[i].owned)
                 ST_HUDUnHide(plrNum, HUE_ON_PICKUP_AMMO);
@@ -601,23 +604,20 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; i++)
-            pl->ammo[i].max = NetCl_ReadShort();
+            pl->ammo[i].max = Reader_ReadInt16(msg);
 #endif
     }
 
     if(flags & PSF_COUNTERS)
     {
-        pl->killCount = NetCl_ReadShort();
-        pl->itemCount = NetCl_ReadByte();
-        pl->secretCount = NetCl_ReadByte();
-
-        /*Con_Printf( "plr%i: kills=%i items=%i secret=%i\n", pl-players,
-           pl->killCount, pl->itemCount, pl->secretCount); */
+        pl->killCount = Reader_ReadInt16(msg);
+        pl->itemCount = Reader_ReadByte(msg);
+        pl->secretCount = Reader_ReadByte(msg);
     }
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
     {
-        b = NetCl_ReadByte();
+        b = Reader_ReadByte(msg);
         if(flags & PSF_PENDING_WEAPON)
         {
             pl->pendingWeapon = b & 0xf;
@@ -637,13 +637,13 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_VIEW_HEIGHT)
     {
-        pl->viewHeight = (float) NetCl_ReadByte();
+        pl->viewHeight = (float) Reader_ReadByte(msg);
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_MORPH_TIME)
     {
-        pl->morphTics = NetCl_ReadByte() * 35;
+        pl->morphTics = Reader_ReadByte(msg) * 35;
 #ifdef _DEBUG
         Con_Message("NetCl_UpdatePlayerState: Player %i morphtics = %i\n", plrNum, pl->morphTics);
 #endif
@@ -653,12 +653,12 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 #if __JHEXEN__ || __JSTRIFE__
     if(flags & PSF_LOCAL_QUAKE)
     {
-        localQuakeHappening[plrNum] = NetCl_ReadByte();
+        localQuakeHappening[plrNum] = Reader_ReadByte(msg);
     }
 #endif
 }
 
-void NetCl_UpdatePSpriteState(byte *data)
+void NetCl_UpdatePSpriteState(Reader *msg)
 {
     // Not used.
     /*
@@ -670,14 +670,9 @@ void NetCl_UpdatePSpriteState(byte *data)
      */
 }
 
-void NetCl_Intermission(byte* data)
+void NetCl_Intermission(Reader* msg)
 {
-    int flags;
-
-    NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadByte();
-
-    //Con_Printf( "NetCl_Intermission: flags=%x\n", flags);
+    int flags = Reader_ReadByte(msg);
 
     if(flags & IMF_BEGIN)
     {
@@ -695,20 +690,20 @@ void NetCl_Intermission(byte* data)
 
         // @fixme jHeretic does not transmit the intermission info!
 #if __JDOOM__ || __JDOOM64__
-        wmInfo.maxKills = NetCl_ReadShort();
-        wmInfo.maxItems = NetCl_ReadShort();
-        wmInfo.maxSecret = NetCl_ReadShort();
-        wmInfo.nextMap = NetCl_ReadByte();
-        wmInfo.currentMap = NetCl_ReadByte();
-        wmInfo.didSecret = NetCl_ReadByte();
+        wmInfo.maxKills = Reader_ReadUInt16(msg);
+        wmInfo.maxItems = Reader_ReadUInt16(msg);
+        wmInfo.maxSecret = Reader_ReadUInt16(msg);
+        wmInfo.nextMap = Reader_ReadByte(msg);
+        wmInfo.currentMap = Reader_ReadByte(msg);
+        wmInfo.didSecret = Reader_ReadByte(msg);
         wmInfo.episode = gameEpisode;
 
         G_PrepareWIData();
 #elif __JHERETIC__
         wmInfo.episode = gameEpisode;
 #elif __JHEXEN__
-        nextMap = NetCl_ReadByte();
-        nextMapEntryPoint = NetCl_ReadByte();
+        nextMap = Reader_ReadByte(msg);
+        nextMapEntryPoint = Reader_ReadByte(msg);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -742,45 +737,45 @@ void NetCl_Intermission(byte* data)
     if(flags & IMF_STATE)
     {
 #if __JDOOM__ || __JDOOM64__
-        WI_SetState(NetCl_ReadByte());
+        WI_SetState(Reader_ReadByte(msg));
 #elif __JHERETIC__ || __JHEXEN__
-        interState = (int) NetCl_ReadByte();
+        interState = (int) Reader_ReadByte(msg);
 #endif
     }
 
 #if __JHERETIC__
     if(flags & IMF_TIME)
-        interTime = NetCl_ReadShort();
+        interTime = Reader_ReadUInt16(msg);
 #endif
 }
 
 /**
  * This is where clients start their InFine interludes.
  */
-void NetCl_Finale(int packetType, byte *data)
+void NetCl_Finale(int packetType, Reader* msg)
 {
     int         flags, len, numConds, i;
     byte       *script = NULL;
 
-    NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadByte();
+    flags = Reader_ReadByte(msg);
     if(flags & FINF_SCRIPT)
     {
         // First read the values of the conditions.
         if(packetType == GPT_FINALE2)
         {
-            numConds = NetCl_ReadByte();
+            numConds = Reader_ReadByte(msg);
             for(i = 0; i < numConds; ++i)
             {
-                FI_SetCondition(i, NetCl_ReadByte());
+                FI_SetCondition(i, Reader_ReadByte(msg));
             }
         }
 
         // Read the script into map-scope memory. It will be freed
         // when the next map is loaded.
-        len = strlen((char*)readbuffer);
+        len = Reader_ReadUInt32(msg);
         script = Z_Malloc(len + 1, PU_MAP, 0);
-        strcpy((char*)script, (char*)readbuffer);
+        Reader_Read(msg, script, len);
+        script[len] = 0;
     }
 
     if(flags & FINF_BEGIN && script)
@@ -805,15 +800,14 @@ void NetCl_Finale(int packetType, byte *data)
 /**
  * Clients have other players' info, but it's only "FYI"; they don't really need it.
  */
-void NetCl_UpdatePlayerInfo(byte *data)
+void NetCl_UpdatePlayerInfo(Reader *msg)
 {
-    int                 num;
+    int num;
 
-    NetCl_SetReadBuffer(data);
-    num = NetCl_ReadByte();
-    cfg.playerColor[num] = NetCl_ReadByte();
+    num = Reader_ReadByte(msg);
+    cfg.playerColor[num] = Reader_ReadByte(msg);
 #if __JHEXEN__ || __JHERETIC__
-    cfg.playerClass[num] = NetCl_ReadByte();
+    cfg.playerClass[num] = Reader_ReadByte(msg);
     players[num].class_ = cfg.playerClass[num];
 #endif
 
@@ -831,40 +825,42 @@ void NetCl_UpdatePlayerInfo(byte *data)
  */
 void NetCl_SendPlayerInfo()
 {
-    byte buffer[10], *ptr = buffer;
+    Writer* msg;
 
     if(!IS_CLIENT)
         return;
 
-    *ptr++ = cfg.netColor;
+    msg = D_NetWrite();
+
+    Writer_WriteByte(msg, cfg.netColor);
 #if __JHEXEN__
-    *ptr++ = cfg.netClass;
+    Writer_WriteByte(msg, cfg.netClass);
 #elif __JHERETIC__
-    *ptr++ = PCLASS_PLAYER;
+    Writer_WriteByte(msg, PCLASS_PLAYER);
 #endif
 
-    Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, buffer, ptr - buffer);
+    Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
 }
 
-void NetCl_SaveGame(void *data)
+void NetCl_SaveGame(Reader* msg)
 {
     if(Get(DD_PLAYBACK))
         return;
 
-    SV_SaveClient(*(unsigned int *) data);
+    SV_SaveClient(Reader_ReadUInt32(msg));
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 #endif
 }
 
-void NetCl_LoadGame(void *data)
+void NetCl_LoadGame(Reader* msg)
 {
     if(!IS_CLIENT)
         return;
     if(Get(DD_PLAYBACK))
         return;
 
-    SV_LoadClient(*(unsigned int *) data);
+    SV_LoadClient(Reader_ReadUInt32(msg));
     //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
@@ -874,10 +870,9 @@ void NetCl_LoadGame(void *data)
 /**
  * Pause or unpause the game.
  */
-void NetCl_Paused(boolean setPause)
+void NetCl_Paused(Reader* msg)
 {
-    paused = (setPause != 0);
-    DD_SetInteger(DD_CLIENT_PAUSED, paused);
+    DD_SetInteger(DD_CLIENT_PAUSED, Reader_ReadByte(msg));
 }
 
 /**
@@ -886,44 +881,52 @@ void NetCl_Paused(boolean setPause)
  */
 void NetCl_CheatRequest(const char *command)
 {
-    char                msg[40];
+    Writer* msg = D_NetWrite();
 
-    // Copy the cheat command into a NULL-terminated buffer.
-    memset(msg, 0, sizeof(msg));
-    strncpy(msg, command, sizeof(msg) - 1);
+    Writer_WriteUInt16(msg, strlen(command));
+    Writer_Write(msg, command, strlen(command));
 
     if(IS_CLIENT)
-        Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, msg, strlen(msg) + 1);
+        Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
     else
-        NetSv_DoCheat(CONSOLEPLAYER, msg);
+        NetSv_ExecuteCheat(CONSOLEPLAYER, command);
 }
 
 /**
  * Set the jump power used in client mode.
  */
-void NetCl_UpdateJumpPower(void *data)
+void NetCl_UpdateJumpPower(Reader* msg)
 {
-    netJumpPower = FLOAT( *(float *) data );
+    netJumpPower = Reader_ReadFloat(msg);
 #ifdef _DEBUG
-    Con_Printf("NetCl_UpdateJumpPower: %g\n", netJumpPower);
+    Con_Message("NetCl_UpdateJumpPower: %g\n", netJumpPower);
 #endif
 }
 
 void NetCl_FloorHitRequest(player_t* player)
 {
-    char msg[40];
-    char *ptr = msg;
+    Writer* msg;
+    mobj_t* mo;
 
-    if(!IS_CLIENT)
+    if(!IS_CLIENT || !player->plr->mo)
         return;
+
+    mo = player->plr->mo;
+    msg = D_NetWrite();
 
 #ifdef _DEBUG
     Con_Message("NetCl_FloorHitRequest: Player %i.\n", player - players);
 #endif
 
-    // Include the position of the hit.
+    // Include the position and momentum of the hit.
+    Writer_WriteFloat(msg, mo->pos[VX]);
+    Writer_WriteFloat(msg, mo->pos[VY]);
+    Writer_WriteFloat(msg, mo->pos[VZ]);
+    Writer_WriteFloat(msg, mo->mom[MX]);
+    Writer_WriteFloat(msg, mo->mom[MY]);
+    Writer_WriteFloat(msg, mo->mom[MZ]);
 
-    Net_SendPacket(0, GPT_FLOOR_HIT_REQUEST, msg, size);
+    Net_SendPacket(0, GPT_FLOOR_HIT_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }
 
 /**
@@ -935,13 +938,12 @@ void NetCl_FloorHitRequest(player_t* player)
  */
 void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam)
 {
-#define MSG_SIZE        (28)
-
-    char msg[MSG_SIZE];
-    int* ptr = (int*) msg;
+    Writer* msg;
 
     if(!IS_CLIENT)
         return;
+
+    msg = D_NetWrite();
 
 #ifdef _DEBUG
     Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n",
@@ -949,48 +951,49 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
 #endif
 
     // Type of the request.
-    *ptr++ = LONG(actionType);
+    Writer_WriteInt32(msg, actionType);
 
     // Position of the action.
     if(G_GetGameState() == GS_MAP)
     {
-        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VX]));
-        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VY]));
-        *ptr++ = LONG(FLT2FIX(player->plr->mo->pos[VZ]));
+        Writer_WriteFloat(msg, player->plr->mo->pos[VX]);
+        Writer_WriteFloat(msg, player->plr->mo->pos[VY]);
+        Writer_WriteFloat(msg, player->plr->mo->pos[VZ]);
 
         // Which way is the player looking at?
-        *ptr++ = LONG(player->plr->mo->angle);
-        *ptr++ = LONG(FLT2FIX(player->plr->lookDir));
+        Writer_WriteUInt32(msg, player->plr->mo->angle);
+        Writer_WriteFloat(msg, player->plr->lookDir);
     }
     else
     {
         // Not in a map, so can't provide position/direction.
-        int i;
-        for(i = 0; i < 5; ++i) *ptr++ = 0;
+        Writer_WriteFloat(msg, 0);
+        Writer_WriteFloat(msg, 0);
+        Writer_WriteFloat(msg, 0);
+        Writer_WriteUInt32(msg, 0);
+        Writer_WriteFloat(msg, 0);
     }
 
     if(actionType == GPA_CHANGE_WEAPON || actionType == GPA_USE_FROM_INVENTORY)
     {
-        *ptr++ = LONG(actionParam);
+        Writer_WriteInt32(msg, actionParam);
     }
     else
     {
         // Currently active weapon.
-        *ptr++ = LONG(player->readyWeapon);
+        Writer_WriteInt32(msg, player->readyWeapon);
     }
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, msg, MSG_SIZE);
-
-#undef MSG_SIZE
+    Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }
 
 void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
 {
-#define MSG_SIZE 16
-    char msg[MSG_SIZE];
-    int* ptr = (int*) msg;
+    Writer* msg;
 
     if(!IS_CLIENT || !target) return;
+
+    msg = D_NetWrite();
 
 #ifdef _DEBUG
     Con_Message("NetCl_DamageRequest: Damage %i on target=%i via inflictor=%i by source=%i.\n",
@@ -999,22 +1002,12 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
 #endif
 
     // Amount of damage.
-    *ptr++ = LONG(damage);
+    Writer_WriteInt32(msg, damage);
 
     // Mobjs.
-    *ptr++ = LONG(target->thinker.id);
+    Writer_WriteUInt16(msg, target->thinker.id);
+    Writer_WriteUInt16(msg, inflictor? inflictor->thinker.id : 0);
+    Writer_WriteUInt16(msg, source? source->thinker.id : 0);
 
-    if(inflictor)
-        *ptr++ = LONG(inflictor->thinker.id);
-    else
-        *ptr++ = 0;
-
-    if(source)
-        *ptr++ = LONG(source->thinker.id);
-    else
-        *ptr++ = 0;
-
-    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE, msg, MSG_SIZE);
-
-#undef MSG_SIZE
+    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }

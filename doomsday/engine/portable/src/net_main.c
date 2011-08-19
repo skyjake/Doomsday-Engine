@@ -224,6 +224,23 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 {
     assert(!Msg_BeingWritten()); // Must finish writing before calling this.
 
+    /*
+#ifdef _DEBUG
+    {
+        char* buf = M_Calloc(netBuffer.length * 3 + 1);
+        int i;
+        for(i = 0; i < netBuffer.length; ++i)
+        {
+            char tmp[10];
+            sprintf(tmp, "%02x ", netBuffer.msg.data[i]);
+            strcat(buf, tmp);
+        }
+        Con_Message("Net_SendBuffer: [%i] %s\n", netBuffer.length, buf);
+        M_Free(buf);
+    }
+#endif
+    */
+
     // Don't send anything during demo playback.
     if(playback)
         return;
@@ -299,13 +316,20 @@ Smoother* Net_PlayerSmoother(int player)
 /**
  * This is the public interface of the message sender.
  */
-void Net_SendPacket(int to_player, int type, void *data, size_t length)
+void Net_SendPacket(int to_player, int type, const void *data, size_t length)
 {
     unsigned int flags = 0;
 
+#ifndef DENG_WRITER_TYPECHECK
     Msg_Begin(type);
     if(data) Writer_Write(msgWriter, data, length);
     Msg_End();
+#else
+    assert(length <= NETBUFFER_MAXDATA);
+    netBuffer.msg.type = type;
+    netBuffer.length = length;
+    if(data) memcpy(netBuffer.msg.data, data, length);
+#endif
 
     if(isClient)
     {   // As a client we can only send messages to the server.
@@ -362,53 +386,6 @@ boolean Net_IsLocalPlayer(int plrNum)
  */
 void Net_SendCommands(void)
 {
-#if 0
-    uint                i;
-    byte               *msg;
-    ticcmd_t           *cmd;
-
-    if(isDedicated)
-        return;
-
-    // Send the commands of all local players.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(!Net_IsLocalPlayer(i))
-            continue;
-
-        /**
-         * Clients send their ticcmds to the server at regular intervals,
-         * but significantly less often than new ticcmds are built.
-         * Therefore they need to send a combination of all the cmds built
-         * during the wait period.
-         */
-
-        cmd = clients[i].aggregateCmd;
-
-        /**
-         * The game will pack the commands into a buffer. The returned
-         * pointer points to a buffer that contains its size and the
-         * packed commands.
-         */
-
-        msg = gx.NetWriteCommands(1, cmd);
-
-        Msg_Begin(PCL_COMMANDS);
-        Msg_Write(msg + 2, *(ushort *) msg);
-
-        /**
-         * Send the packet to the server, i.e. player zero.
-         * Player commands are sent over TCP so their integrity and order
-         * are guaranteed.
-         */
-
-        Net_SendBuffer(0, (isClient ? 0 : SPF_REBOUND) | SPF_ORDERED);
-
-        // Clients will begin composing a new aggregate now that this one
-        // has been sent.
-        memset(cmd, 0, TICCMD_SIZE);
-    }
-#endif
 }
 
 static void Net_DoUpdate(void)
@@ -506,35 +483,6 @@ void Net_Update(void)
  */
 void Net_BuildLocalCommands(timespan_t time)
 {
-#if 0
-    uint        i;
-    ticcmd_t   *cmd;
-
-    if(isDedicated)
-        return;
-
-    // Generate ticcmds for local players.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(!Net_IsLocalPlayer(i))
-            continue;
-
-        cmd = clients[i].lastCmd;
-
-        // The command will stay 'empty' if no controls are active.
-        memset(cmd, 0, sizeof(*cmd));
-        // No actions can be undertaken during demo playback or when
-        // in UI mode.
-        if(!(playback || UI_IsActive()))
-        {
-            P_BuildCommand(cmd, i);
-        }
-
-        // Be sure to merge each built command into the aggregate that
-        // will be sent periodically to the server.
-        P_MergeCommand(clients[i].aggregateCmd, cmd);
-    }
-#endif
 }
 
 /**
@@ -603,6 +551,7 @@ void Net_StopGame(void)
         // This means we should inform all the connected clients that the
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
+        Msg_End();
         Net_SendBuffer(NSP_BROADCAST, 0);
 #if 0
         N_FlushOutgoing();
@@ -611,6 +560,7 @@ void Net_StopGame(void)
     else
     {   // We are a connected client.
         Msg_Begin(PCL_GOODBYE);
+        Msg_End();
         Net_SendBuffer(0, 0);
 
         // Must stop recording, we're disconnecting.

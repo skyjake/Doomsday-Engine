@@ -207,8 +207,7 @@ extern          "C" {
                                              const char* propName, valuetype_t type);
 
     // Network.
-    void            Net_SendPacket(int to_player, int type, void* data,
-                                   size_t length);
+    void            Net_SendPacket(int to_player, int type, const void* data, size_t length);
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);

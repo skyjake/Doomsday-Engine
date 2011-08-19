@@ -274,8 +274,7 @@ void            Net_Init(void);
 void            Net_Shutdown(void);
 void            Net_AllocArrays(void);
 void            Net_DestroyArrays(void);
-void            Net_SendPacket(int to_player, int type, void *data,
-                               size_t length);
+void            Net_SendPacket(int to_player, int type, const void *data, size_t length);
 boolean         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
 void            Net_InitGame(void);

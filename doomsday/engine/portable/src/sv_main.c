@@ -780,6 +780,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
         // Inform other clients about this.
         Msg_Begin(PSV_PLAYER_EXIT);
         Writer_WriteByte(msgWriter, plrNum);
+        Msg_End();
         Net_SendBuffer(NSP_BROADCAST, 0);
     }
 
@@ -1259,6 +1260,7 @@ D_CMD(Logout)
     // Send a logout packet.
     Msg_Begin(PKT_LOGIN);
     Writer_WriteByte(msgWriter, false);       // You're outta here.
+    Msg_End();
     Net_SendBuffer(netRemoteUser, 0);
     netRemoteUser = 0;
     return true;

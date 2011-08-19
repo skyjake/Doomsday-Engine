@@ -30,6 +30,21 @@ extern "C" {
 
 #include "dd_types.h"
 
+#ifdef DENG_WRITER_TYPECHECK
+// Writer Type Check Codes.
+enum
+{
+    WTCC_CHAR = 0x13,
+    WTCC_BYTE = 0xf6,
+    WTCC_INT16 = 0x55,
+    WTCC_UINT16 = 0xab,
+    WTCC_INT32 = 0x3f,
+    WTCC_UINT32 = 0xbb,
+    WTCC_FLOAT = 0x71,
+    WTCC_BLOCK = 0x6e
+};
+#endif
+
 struct writer_s; // The writer instance (opaque).
 typedef struct writer_s Writer;
 
@@ -41,7 +56,7 @@ typedef struct writer_s Writer;
 Writer* Writer_New(void);
 
 /**
- * Initializes the writer. The writer will use @a buffer as the writing buffer.
+ * Constructs a new writer. The writer will use @a buffer as the writing buffer.
  * The buffer will use network byte order. The writer has to be destroyed
  * with Writer_Destruct() after it is not needed any more.
  *
@@ -49,6 +64,14 @@ Writer* Writer_New(void);
  * @param maxLen  Maximum length of the buffer.
  */
 Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen);
+
+/**
+ * Constructs a new writer. The writer will allocate memory for the buffer while
+ * more data gets written.
+ *
+ * @param maxLen  Maximum size for the buffer. Use zero for unlimited size.
+ */
+Writer* Writer_NewWithDynamicBuffer(size_t maxLen);
 
 /**
  * Destroys the writer.
@@ -60,6 +83,12 @@ void Writer_Destruct(Writer* writer);
  * so far.
  */
 size_t Writer_Size(const Writer* writer);
+
+/**
+ * Returns a pointer to the beginning of the written data.
+ * @see Writer_Size()
+ */
+const byte* Writer_Data(const Writer* writer);
 
 /**
  * Returns the maximum size of the writing buffer.

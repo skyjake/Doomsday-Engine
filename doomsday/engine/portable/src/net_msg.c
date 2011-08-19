@@ -80,7 +80,7 @@ void Msg_End(void)
     }
 }
 
-void Msg_Read(void)
+void Msg_BeginRead(void)
 {
     if(msgWriter)
     {

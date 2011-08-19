@@ -127,7 +127,7 @@ void Cl_CleanUp(void)
  */
 void Cl_SendHello(void)
 {
-    char                buf[256];
+    char buf[256];
 
     Msg_Begin(PCL_HELLO2);
     Writer_WriteUInt32(msgWriter, clientID);

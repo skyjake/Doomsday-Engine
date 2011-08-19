@@ -31,22 +31,24 @@
 
 #include "d_net.h"
 
-void            NetCl_UpdateGameState(byte* data);
-void            NetCl_PlayerSpawnPosition(byte* data);
-void            NetCl_CheatRequest(const char* command);
-void            NetCl_UpdatePlayerState(byte* data, int plrNum);
-void            NetCl_UpdatePlayerState2(byte* data, int plrNum);
-void            NetCl_UpdatePSpriteState(byte* data);
-void            NetCl_UpdateJumpPower(void* data);
-void            NetCl_Intermission(byte* data);
-void            NetCl_Finale(int packetType, byte* data);
-void            NetCl_UpdatePlayerInfo(byte* data);
+void            NetCl_UpdateGameState(Reader* msg);
+void            NetCl_PlayerSpawnPosition(Reader* msg);
+void            NetCl_UpdatePlayerState(Reader* msg, int plrNum);
+void            NetCl_UpdatePlayerState2(Reader* msg, int plrNum);
+void            NetCl_UpdatePSpriteState(Reader* msg);
+void            NetCl_UpdateJumpPower(Reader* msg);
+void            NetCl_Intermission(Reader* msg);
+void            NetCl_Finale(int packetType, Reader* msg);
+void            NetCl_UpdatePlayerInfo(Reader* msg);
+void            NetCl_SaveGame(Reader* msg);
+void            NetCl_LoadGame(Reader* msg);
+void            NetCl_Paused(Reader* msg);
+void            NetCl_MobjImpulse(Reader* msg);
+
 void            NetCl_SendPlayerInfo(void);
-void            NetCl_SaveGame(void* data);
-void            NetCl_LoadGame(void* data);
-void            NetCl_Paused(boolean setPause);
 void            NetCl_PlayerActionRequest(player_t* player, int actionType, int actionParam);
 void            NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage);
-void            NetCl_MobjImpulse(byte* data);
+void            NetCl_CheatRequest(const char* command);
+void            NetCl_FloorHitRequest(player_t* player);
 
 #endif

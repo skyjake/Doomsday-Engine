@@ -33,6 +33,7 @@
 
 #include "jheretic.h"
 
+#include "d_netcl.h"
 #include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "g_common.h"
@@ -1265,7 +1266,7 @@ boolean P_HitFloor(mobj_t* thing)
     if(IS_CLIENT && thing->player)
     {
         // The client notifies the server, which will handle the splash.
-        NetCl_FloorHitRequest();
+        NetCl_FloorHitRequest(thing->player);
         return false;
     }
 

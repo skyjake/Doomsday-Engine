@@ -26,15 +26,28 @@
 #include "net_buf.h"
 #include "writer.h"
 
+#ifdef DENG_WRITER_TYPECHECK
+#  define Writer_TypeCheck(w, code)  w->data[w->pos++] = code;
+#else
+#  define Writer_TypeCheck(w, code)
+#endif
+
 struct writer_s
 {
     byte* data;             // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
+    bool isDynamic;         // The buffer will be reallocated when needed.
+    size_t maxDynamicSize;  // Zero for unlimited.
 };
 
 static boolean Writer_Check(const Writer* writer, size_t len)
 {
+#ifdef DENG_WRITER_TYPECHECK
+    // One extra byte for the check code.
+    len++;
+#endif
+
     if(!writer || !writer->data)
     {
         Con_Message("Writer_Check: Invalid Writer!\n");
@@ -42,10 +55,26 @@ static boolean Writer_Check(const Writer* writer, size_t len)
     }
     if(writer->pos > writer->size - len)
     {
-        Con_Error("Writer_Check: Position %lu[+%lu] out of bounds, size=%lu.\n",
+        // Dynamic buffers will expand.
+        if(writer->isDynamic)
+        {
+            Writer* modWriter = (Writer*) writer;
+            modWriter->size *= 2;
+            if(writer->maxDynamicSize)
+            {
+                modWriter->size = MIN_OF(writer->maxDynamicSize, writer->size);
+            }
+            modWriter->data = M_Realloc(writer->data, writer->size);
+
+            // OK now?
+            if(writer->pos <= writer->size - len)
+                return true;
+        }
+        Con_Error("Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",
                   (unsigned long) writer->pos,
                   (unsigned long) len,
-                  (unsigned long) writer->size);
+                  (unsigned long) writer->size,
+                  writer->isDynamic);
     }
     return true;
 }
@@ -66,8 +95,23 @@ Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen)
     return w;
 }
 
+Writer* Writer_NewWithDynamicBuffer(size_t maxLen)
+{
+    Writer* w = M_Calloc(sizeof(Writer));
+    w->isDynamic = true;
+    w->maxDynamicSize = maxLen;
+    w->size = 256;
+    w->data = M_Calloc(w->size);
+    return w;
+}
+
 void Writer_Destruct(Writer* writer)
 {
+    if(writer->isDynamic)
+    {
+        // The buffer was allocated by us.
+        M_Free(writer->data);
+    }
     M_Free(writer);
 }
 
@@ -88,6 +132,15 @@ size_t Writer_BytesLeft(const Writer* writer)
     return Writer_TotalBufferSize(writer) - Writer_Size(writer);
 }
 
+const byte* Writer_Data(const Writer* writer)
+{
+    if(Writer_Check(writer, 0))
+    {
+        return writer->data;
+    }
+    return 0;
+}
+
 void Writer_SetPos(Writer* writer, size_t newPos)
 {
     if(!writer) return;
@@ -98,12 +151,14 @@ void Writer_SetPos(Writer* writer, size_t newPos)
 void Writer_WriteChar(Writer* writer, char v)
 {
     if(!Writer_Check(writer, 1)) return;
+    Writer_TypeCheck(writer, WTCC_CHAR);
     ((int8_t*)writer->data)[writer->pos++] = v;
 }
 
 void Writer_WriteByte(Writer* writer, byte v)
 {
     if(!Writer_Check(writer, 1)) return;
+    Writer_TypeCheck(writer, WTCC_BYTE);
     writer->data[writer->pos++] = v;
 }
 
@@ -111,6 +166,7 @@ void Writer_WriteInt16(Writer* writer, int16_t v)
 {
     if(Writer_Check(writer, 2))
     {
+        Writer_TypeCheck(writer, WTCC_INT16);
         *(int16_t*) (writer->data + writer->pos) = SHORT(v);
         writer->pos += 2;
     }
@@ -120,6 +176,7 @@ void Writer_WriteUInt16(Writer* writer, uint16_t v)
 {
     if(Writer_Check(writer, 2))
     {
+        Writer_TypeCheck(writer, WTCC_UINT16);
         *(uint16_t*) (writer->data + writer->pos) = USHORT(v);
         writer->pos += 2;
     }
@@ -129,6 +186,7 @@ void Writer_WriteInt32(Writer* writer, int32_t v)
 {
     if(Writer_Check(writer, 4))
     {
+        Writer_TypeCheck(writer, WTCC_INT32);
         *(int32_t*) (writer->data + writer->pos) = LONG(v);
         writer->pos += 4;
     }
@@ -138,6 +196,7 @@ void Writer_WriteUInt32(Writer* writer, uint32_t v)
 {
     if(Writer_Check(writer, 4))
     {
+        Writer_TypeCheck(writer, WTCC_UINT32);
         *(uint32_t*) (writer->data + writer->pos) = ULONG(v);
         writer->pos += 4;
     }
@@ -145,13 +204,19 @@ void Writer_WriteUInt32(Writer* writer, uint32_t v)
 
 void Writer_WriteFloat(Writer* writer, float v)
 {
-    Writer_WriteUInt32(writer, *(uint32_t*) &v);
+    if(Writer_Check(writer, 4))
+    {
+        Writer_TypeCheck(writer, WTCC_FLOAT);
+        *(float*) (writer->data + writer->pos) = FLOAT(v);
+        writer->pos += 4;
+    }
 }
 
 void Writer_Write(Writer* writer, const void* buffer, size_t len)
 {
     if(Writer_Check(writer, len))
     {
+        Writer_TypeCheck(writer, WTCC_BLOCK);
         memcpy(writer->data + writer->pos, buffer, len);
         writer->pos += len;
     }

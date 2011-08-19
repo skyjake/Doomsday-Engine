@@ -76,6 +76,8 @@ IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     MESSAGE( FATAL_ERROR "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
 ENDIF ()
 
+ADD_DEFINITIONS ( -DDENG_WRITER_TYPECHECK )
+
 ################################################################################
 ######################## Doomsday Paths  #######################################
 ## Default Install Prefix on *NIX is /usr/local
