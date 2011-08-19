@@ -313,6 +313,26 @@ Smoother* Net_PlayerSmoother(int player)
     return clients[player].smoother;
 }
 
+void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
+{
+    size_t nameLen;
+
+    assert(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
+    nameLen = strlen(clients[srcPlrNum].name);
+
+#ifdef _DEBUG
+    Con_Message("Net_SendPlayerInfo: src=%i dest=%i name=%s\n",
+                srcPlrNum, destPlrNum, clients[srcPlrNum].name);
+#endif
+
+    Msg_Begin(PKT_PLAYER_INFO);
+    Writer_WriteByte(msgWriter, srcPlrNum);
+    Writer_WriteUInt16(msgWriter, nameLen);
+    Writer_Write(msgWriter, clients[srcPlrNum].name, nameLen);
+    Msg_End();
+    Net_SendBuffer(destPlrNum, 0);
+}
+
 /**
  * This is the public interface of the message sender.
  */
@@ -1086,24 +1106,18 @@ D_CMD(Kick)
 }
 
 D_CMD(SetName)
-{
-    playerinfo_packet_t info;
-
+{    
     Con_SetString("net-name", argv[1], false);
     if(!netGame)
         return true;
 
-    // In netgames, a notification is sent to other players.
-    memset(&info, 0, sizeof(info));
-    info.console = consolePlayer;
-    strncpy(info.name, argv[1], PLAYERNAMELEN - 1);
+    // The server does not have a name.
+    if(!isClient) return false;
 
-    // Serverplayers can update their name right away.
-    if(!isClient)
-        strcpy(clients[consolePlayer].name, info.name);
+    memset(clients[consolePlayer].name, 0, sizeof(clients[consolePlayer].name));
+    strncpy(clients[consolePlayer].name, argv[1], PLAYERNAMELEN - 1);
 
-    Net_SendPacket(DDSP_CONFIRM | (isClient ? consolePlayer : DDSP_ALL_PLAYERS),
-                   PKT_PLAYER_INFO, &info, sizeof(info));
+    Net_SendPlayerInfo(consolePlayer, 0);
     return true;
 }
 

@@ -55,7 +55,6 @@ void            Sv_PlayerLeaves(unsigned int nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
 void            Sv_SendText(int to, int conFlags, char* text);
-//void            Sv_FixLocalAngles(boolean clearFixAnglesFlag);
 void            Sv_Ticker(timespan_t ticLength);
 int             Sv_Latency(byte cmdTime);
 void            Sv_Kick(int who);

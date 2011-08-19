@@ -45,7 +45,7 @@ static boolean Reader_Check(const Reader* reader, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One byte for the code.
-    len++;
+    if(len) len++;
 #endif
 
     if(!reader || !reader->data) return false;

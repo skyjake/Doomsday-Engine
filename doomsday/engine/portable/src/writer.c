@@ -45,7 +45,7 @@ static boolean Writer_Check(const Writer* writer, size_t len)
 {
 #ifdef DENG_WRITER_TYPECHECK
     // One extra byte for the check code.
-    len++;
+    if(len) len++;
 #endif
 
     if(!writer || !writer->data)

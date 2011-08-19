@@ -351,7 +351,7 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     }
 
     if(df & MDF_HEALTH)
-        Writer_WriteUInt32(msgWriter, d->health);
+        Writer_WriteInt32(msgWriter, d->health);
 
     if(df & MDF_RADIUS)
         Writer_WriteFloat(msgWriter, d->radius);
@@ -390,7 +390,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
     Writer_WriteByte(msgWriter, df & 0xff);
 
     if(df & PDF_MOBJ)
-        Writer_WriteInt16(msgWriter, d->mobj);
+        Writer_WriteUInt16(msgWriter, d->mobj);
     if(df & PDF_FORWARDMOVE)
         Writer_WriteByte(msgWriter, d->forwardMove);
     if(df & PDF_SIDEMOVE)

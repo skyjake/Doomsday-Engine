@@ -471,10 +471,4 @@ void DD_RunTics(void)
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);
     }
-
-    // Clients send commands periodically, not on every frame.
-    if(!isClient)
-    {
-        Net_SendCommands();
-    }
 }

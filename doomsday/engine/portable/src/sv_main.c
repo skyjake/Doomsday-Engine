@@ -334,6 +334,30 @@ void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
 }
 */
 
+void Sv_HandlePlayerInfoFromClient(client_t* sender)
+{
+    int console = Reader_ReadByte(msgReader); // ignored
+    char oldName[PLAYERNAMELEN];
+    size_t len;
+
+    assert(netBuffer.player == (sender - clients));
+#ifdef _DEBUG
+    Con_Message("Sv_HandlePlayerInfoFromClient: from=%i, console=%i\n", netBuffer.player, console);
+#endif
+    console = netBuffer.player;
+
+    strcpy(oldName, sender->name);
+
+    len = Reader_ReadUInt16(msgReader);
+    len = MIN_OF(PLAYERNAMELEN - 1, len); // there is a maximum size
+    Reader_Read(msgReader, sender->name, len);
+    sender->name[len] = 0;
+    Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, "%s renamed to %s.\n", oldName, sender->name);
+
+    // Relay to others.
+    Net_SendPlayerInfo(console, DDSP_ALL_PLAYERS);
+}
+
 void Sv_HandlePacket(void)
 {
     ident_t             id;
@@ -341,7 +365,6 @@ void Sv_HandlePacket(void)
     player_t           *plr = &ddPlayers[from];
     ddplayer_t         *ddpl = &plr->shared;
     client_t           *sender = &clients[from];
-    playerinfo_packet_t info;
     int                 msgfrom;
     char               *msg;
     char                buf[17];
@@ -481,11 +504,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
         break;
 
     case PKT_PLAYER_INFO:
-        Reader_Read(msgReader, &info, sizeof(info));
-        Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, "%s renamed to %s.\n", sender->name, info.name);
-        strcpy(sender->name, info.name);
-        Net_SendPacket(DDSP_CONFIRM | DDSP_ALL_PLAYERS, PKT_PLAYER_INFO,
-                       &info, sizeof(info));
+        Sv_HandlePlayerInfoFromClient(sender);
         break;
 
     default:
@@ -793,28 +812,33 @@ void Sv_PlayerLeaves(unsigned int nodeID)
  */
 void Sv_Handshake(int plrNum, boolean newPlayer)
 {
-    int                 i;
-    handshake_packet_t  shake;
-    playerinfo_packet_t info;
+    int i;
+    uint playersInGame = 0;
 
-    Con_Printf("Sv_Handshake: Shaking hands with player %i.\n", plrNum);
-
-    shake.version = SV_VERSION; // byte
-    shake.yourConsole = plrNum; // byte
-    shake.playerMask = 0;
-    shake.gameTime = LONG(gameTime * 100);
+#ifdef _DEBUG
+    Con_Message("Sv_Handshake: Shaking hands with player %i.\n", plrNum);
+#endif
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
         if(clients[i].connected)
-            shake.playerMask |= 1 << i;
+            playersInGame |= 1 << i;
 
-    shake.playerMask = USHORT(shake.playerMask);
-    Net_SendPacket(plrNum | DDSP_ORDERED, PSV_HANDSHAKE, &shake,
-                   sizeof(shake));
+    Msg_Begin(PSV_HANDSHAKE);
+    Writer_WriteByte(msgWriter, SV_VERSION);
+    Writer_WriteByte(msgWriter, plrNum);
+    Writer_WriteUInt32(msgWriter, playersInGame);
+    Writer_WriteFloat(msgWriter, gameTime);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
 
-#if _DEBUG
-Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
-#endif
+    //shake.version = SV_VERSION; // byte
+    //shake.yourConsole = plrNum; // byte
+    //shake.playerMask = 0;
+    //shake.gameTime = LONG(gameTime * 100);
+
+    //shake.playerMask = USHORT(shake.playerMask);
+    /*Net_SendPacket(plrNum | DDSP_ORDERED, PSV_HANDSHAKE, &shake,
+                   sizeof(shake));*/
 
     if(newPlayer)
     {
@@ -830,19 +854,13 @@ Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
     {
         if(clients[i].connected)
         {
-            info.console = i;
-            strcpy(info.name, clients[i].name);
-            Net_SendPacket(plrNum | DDSP_ORDERED, PKT_PLAYER_INFO, &info,
-                           sizeof(info));
+            Net_SendPlayerInfo(i, plrNum);
         }
 
         // Send the new player's info to other players.
         if(newPlayer && i != 0 && i != plrNum && clients[i].connected)
         {
-            info.console = plrNum;
-            strcpy(info.name, clients[plrNum].name);
-            Net_SendPacket(i | DDSP_CONFIRM, PKT_PLAYER_INFO, &info,
-                           sizeof(info));
+            Net_SendPlayerInfo(plrNum, i);
         }
     }
 

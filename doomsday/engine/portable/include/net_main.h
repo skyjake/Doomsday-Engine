@@ -236,6 +236,7 @@ typedef struct {
     int             viewConsole;
 } client_t;
 
+/*
 // Packets.
 typedef struct {
     byte            version;
@@ -243,11 +244,13 @@ typedef struct {
     byte            yourConsole;   // Which one's you?
     int             gameTime;
 } handshake_packet_t;
-
+*/
+/*
 typedef struct {
     byte            console;
     char            name[PLAYERNAMELEN];
 } playerinfo_packet_t;
+*/
 
 //---------------------------------------------------------------------------
 // Variables
@@ -277,17 +280,15 @@ void            Net_DestroyArrays(void);
 void            Net_SendPacket(int to_player, int type, const void *data, size_t length);
 boolean         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
+void            Net_SendPlayerInfo(int srcPlrNum, int destPlrNum);
 void            Net_InitGame(void);
 void            Net_StartGame(void);
 void            Net_StopGame(void);
-void            Net_BuildLocalCommands(timespan_t time);
-void            Net_SendCommands(void);
 void            Net_SendPing(int player, int count);
 void            Net_PingResponse(void);
 void            Net_ShowPingSummary(int player);
 void            Net_ShowChatMessage(void);
 int             Net_TimeDelta(byte now, byte then);
-int             Net_GetTicCmd(void *cmd, int player);
 void            Net_Update(void);
 void            Net_Ticker(timespan_t time);
 void            Net_Drawer(void);

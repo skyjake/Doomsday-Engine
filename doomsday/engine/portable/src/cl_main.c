@@ -146,26 +146,25 @@ void Cl_SendHello(void)
     Net_SendBuffer(0, 0);
 }
 
-void Cl_AnswerHandshake(handshake_packet_t* pShake)
+void Cl_AnswerHandshake(void)
 {
-    int                 i;
-    handshake_packet_t  shake;
+    byte remoteVersion = Reader_ReadByte(msgReader);
+    byte myConsole = Reader_ReadByte(msgReader);
+    uint playersInGame = Reader_ReadUInt32(msgReader);
+    float remoteGameTime = Reader_ReadFloat(msgReader);
+    int i;
 
-    // Copy the data to a buffer of our own.
-    memcpy(&shake, pShake, sizeof(shake));
-    shake.playerMask = USHORT(shake.playerMask);
-    shake.gameTime = LONG(shake.gameTime);
-
-    // Immediately send an acknowledgement.
+    // Immediately send an acknowledgement. This lets the server evaluate
+    // an approximate ping time.
     Msg_Begin(PCL_ACK_SHAKE);
     Msg_End();
     Net_SendBuffer(0, 0);
 
     // Check the version number.
-    if(shake.version != SV_VERSION)
+    if(remoteVersion != SV_VERSION)
     {
         Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
-                    SV_VERSION, shake.version);
+                    SV_VERSION, remoteVersion);
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
@@ -173,14 +172,12 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     }
 
     // Update time and player ingame status.
-    gameTime = shake.gameTime / 100.0;
+    gameTime = remoteGameTime;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ddPlayers[i].shared.inGame = (shake.playerMask & (1 << i)) != 0;
+        ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
     }
-    consolePlayer = displayPlayer = shake.yourConsole;
-    //clients[consolePlayer].numTics = 0;
-    //clients[consolePlayer].firstTic = 0;
+    consolePlayer = displayPlayer = myConsole;
 
     isClient = true;
     isServer = false;
@@ -197,8 +194,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     gameReady = false;
     Cl_InitFrame();
 
-    Con_Printf("Cl_AnswerHandshake: myConsole:%i, gameTime:%i.\n",
-               shake.yourConsole, shake.gameTime);
+    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%i.\n",
+                myConsole, remoteGameTime);
 
     /**
      * Tell the game that we have arrived. The map will be changed when the
@@ -216,30 +213,38 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     Con_Executef(CMDS_DDAY, true, "setcon %i", consolePlayer);
 }
 
-void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
+void Cl_HandlePlayerInfo(void)
 {
-    player_t*           plr;
-    boolean             present;
+    player_t* plr;
+    boolean present;
+    byte console = Reader_ReadByte(msgReader);
+    size_t len = Reader_ReadUInt16(msgReader);
+    char name[PLAYERNAMELEN];
 
-    Con_Printf("Cl_HandlePlayerInfo: console:%i name:%s\n", info->console,
-               info->name);
+    len = MIN_OF(PLAYERNAMELEN - 1, len);
+    memset(name, 0, sizeof(name));
+    Reader_Read(msgReader, name, len);
+
+#ifdef _DEBUG
+    Con_Message("Cl_HandlePlayerInfo: console:%i name:%s\n", console, name);
+#endif
 
     // Is the console number valid?
-    if(info->console >= DDMAXPLAYERS)
+    if(console >= DDMAXPLAYERS)
         return;
 
-    plr = &ddPlayers[info->console];
+    plr = &ddPlayers[console];
     present = plr->shared.inGame;
     plr->shared.inGame = true;
 
-    strcpy(clients[info->console].name, info->name);
+    strcpy(clients[console].name, name);
 
     if(!present)
     {
         // This is a new player! Let the game know about this.
-        gx.NetPlayerEvent(info->console, DDPE_ARRIVAL, 0);
+        gx.NetPlayerEvent(console, DDPE_ARRIVAL, 0);
 
-        Smoother_Clear(clients[info->console].smoother);
+        Smoother_Clear(clients[console].smoother);
     }
 }
 
@@ -295,8 +300,12 @@ void Cl_GetPackets(void)
             default:
                 handled = false;
             }
+
             if(handled)
+            {
+                Msg_EndRead();
                 continue; // Get the next packet.
+            }
         }
 
         // How about the rest?
@@ -324,11 +333,11 @@ void Cl_GetPackets(void)
             break;
 
         case PSV_HANDSHAKE:
-            Cl_AnswerHandshake((handshake_packet_t *) netBuffer.msg.data);
+            Cl_AnswerHandshake();
             break;
 
         case PKT_PLAYER_INFO:
-            Cl_HandlePlayerInfo((playerinfo_packet_t *) netBuffer.msg.data);
+            Cl_HandlePlayerInfo();
             break;
 
         case PSV_PLAYER_EXIT:
