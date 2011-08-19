@@ -45,7 +45,7 @@ typedef struct colorpalette_s {
     int* _18To8LUT;
 } colorpalette_t;
 
-colorpalette_t* ColorPalette_ConstructDefault(void);
+colorpalette_t* ColorPalette_New(void);
 
 /**
  * @param compOrder  Component order. Examples:
@@ -55,10 +55,10 @@ colorpalette_t* ColorPalette_ConstructDefault(void);
  * @param colorData  Color triplets (at least @a numColors * 3).
  * @param colorCount  Number of color triplets.
  */
-colorpalette_t* ColorPalette_Construct(const int compOrder[3],
+colorpalette_t* ColorPalette_NewWithColorTable(const int compOrder[3],
     const uint8_t compBits[3], const uint8_t* colorData, int colorCount);
 
-void ColorPalette_Destruct(colorpalette_t* pal);
+void ColorPalette_Delete(colorpalette_t* pal);
 
 /// @return  Number of colors in the palette.
 ushort ColorPalette_Size(colorpalette_t* pal);

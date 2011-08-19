@@ -179,7 +179,7 @@ static int createColorPalette(const int compOrder[3], const uint8_t compSize[3],
 {
     assert(initedColorPalettes && compOrder && compSize && data);
     {
-    colorpalette_t* pal = ColorPalette_Construct(compOrder, compSize, data, num);
+    colorpalette_t* pal = ColorPalette_NewWithColorTable(compOrder, compSize, data, num);
 
     colorPalettes = (colorpalette_t**) realloc(colorPalettes, (numColorPalettes + 1) * sizeof(*colorPalettes));
     if(NULL == colorPalettes)
@@ -204,7 +204,7 @@ static void deleteColorPalettes(size_t n, const int* palettes)
         if(palettes[i] > 0 && palettes[i] - 1 < numColorPalettes)
         {
             int idx = palettes[i]-1;
-            ColorPalette_Destruct(colorPalettes[idx]);
+            ColorPalette_Delete(colorPalettes[idx]);
             memmove(&colorPalettes[idx], &colorPalettes[idx+1], sizeof(colorpalette_t*));
             numColorPalettes -= 1;
         }
@@ -249,7 +249,7 @@ void R_DestroyColorPalettes(void)
     {
         int i;
         for(i = 0; i < numColorPalettes; ++i)
-            ColorPalette_Destruct(colorPalettes[i]);
+            ColorPalette_Delete(colorPalettes[i]);
         free(colorPalettes); colorPalettes = NULL;
         numColorPalettes = 0;
     }
