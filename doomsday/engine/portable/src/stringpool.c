@@ -128,7 +128,7 @@ static stringpool_internid_t intern(stringpool_t* pool, const ddstring_t* string
     }
 }
 
-stringpool_t* StringPool_ConstructDefault(void)
+stringpool_t* StringPool_New(void)
 {
     stringpool_t* pool = (stringpool_t*) malloc(sizeof(*pool));
     if(NULL == pool)
@@ -140,9 +140,9 @@ stringpool_t* StringPool_ConstructDefault(void)
     return pool;
 }
 
-stringpool_t* StringPool_Construct(ddstring_t** strings, uint count)
+stringpool_t* StringPool_NewWithStrings(ddstring_t** strings, uint count)
 {
-    stringpool_t* pool = StringPool_ConstructDefault();
+    stringpool_t* pool = StringPool_New();
     uint i;
     if(NULL == strings || 0 == count) return pool;
 
@@ -153,7 +153,7 @@ stringpool_t* StringPool_Construct(ddstring_t** strings, uint count)
     return pool;
 }
 
-void StringPool_Destruct(stringpool_t* pool)
+void StringPool_Delete(stringpool_t* pool)
 {
     assert(NULL != pool);
     StringPool_Clear(pool);

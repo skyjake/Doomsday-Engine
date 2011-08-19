@@ -145,7 +145,7 @@ static void clearInternPool(pathdirectory_t* pd)
     assert(NULL != pd);
     if(NULL != pd->_internPool.strings)
     {
-        StringPool_Destruct(pd->_internPool.strings), pd->_internPool.strings = NULL;
+        StringPool_Delete(pd->_internPool.strings), pd->_internPool.strings = NULL;
         free(pd->_internPool.idHashMap), pd->_internPool.idHashMap = NULL;
     }
 }
@@ -248,7 +248,7 @@ static stringpool_internid_t internNameAndUpdateIdHashMap(pathdirectory_t* pd,
 
     if(NULL == pool)
     {
-        pool = pd->_internPool.strings = StringPool_ConstructDefault();
+        pool = pd->_internPool.strings = StringPool_New();
     }
     oldSize = StringPool_Size(pool);
 

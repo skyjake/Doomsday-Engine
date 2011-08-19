@@ -53,9 +53,9 @@ typedef struct stringpool_s {
  * @param strings  Array of strings to be interned (must contain at least @a count strings!)
  * @param count  Number of strings to be interned.
  */
-stringpool_t* StringPool_Construct(ddstring_t** strings, uint count);
-stringpool_t* StringPool_ConstructDefault(void);
-void StringPool_Destruct(stringpool_t* pool);
+stringpool_t* StringPool_New(void);
+stringpool_t* StringPool_NewWithStrings(ddstring_t** strings, uint count);
+void StringPool_Delete(stringpool_t* pool);
 
 /// Clear the string pool (reset to default initial state).
 void StringPool_Clear(stringpool_t* pool);
