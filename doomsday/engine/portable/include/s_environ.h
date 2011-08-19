@@ -38,7 +38,7 @@ void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
 const char* S_MaterialClassName(material_env_class_t mclass);
 
 /// @return  Environment class associated with material @a path else @c MEC_UNKNOWN.
-material_env_class_t S_MaterialClassForName(const dduri_t* path);
+material_env_class_t S_MaterialClassForName(const Uri* path);
 
 #endif /* LIBDENG_SOUND_ENVIRON_H */
 

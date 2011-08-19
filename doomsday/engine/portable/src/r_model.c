@@ -439,7 +439,7 @@ static void R_RegisterModelSkin(model_t* mdl, int index)
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(const dduri_t* uri)
+static int R_LoadModel(const Uri* uri)
 {
     const char* searchPath;
     ddstring_t foundPath;
@@ -856,7 +856,7 @@ float R_GetModelVisualRadius(modeldef_t* mf)
  * Allocate room for a new skin file name. This allows using more than
  * the maximum number of skins.
  */
-static short R_NewModelSkin(model_t* mdl, const dduri_t* path)
+static short R_NewModelSkin(model_t* mdl, const Uri* path)
 {
     int added = mdl->info.numSkins, i;
     const char* fileName = Str_Text(Uri_Path(path));

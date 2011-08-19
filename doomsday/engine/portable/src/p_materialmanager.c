@@ -828,7 +828,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     {
     materialnamespaceid_t namespaceId = MN_ANY;
     int width = def->width, height = def->height;
-    const dduri_t* rawName = def->id;
+    const Uri* rawName = def->id;
     const texture_t* tex = NULL;
     byte flags = def->flags;
     material_t* mat;
@@ -919,7 +919,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 }
 
-static materialnum_t Materials_CheckNumForPath2(const dduri_t* uri)
+static materialnum_t Materials_CheckNumForPath2(const Uri* uri)
 {
     assert(initedOk && uri);
     {
@@ -972,7 +972,7 @@ Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
     }
 }
 
-static materialnum_t Materials_NumForPath2(const dduri_t* path)
+static materialnum_t Materials_NumForPath2(const Uri* path)
 {
     materialnum_t result;
     if(!initedOk)
@@ -988,7 +988,7 @@ static materialnum_t Materials_NumForPath2(const dduri_t* path)
     return result;
 }
 
-materialnum_t Materials_IndexForUri(const dduri_t* path)
+materialnum_t Materials_IndexForUri(const Uri* path)
 {
     if(path)
     {
@@ -1001,7 +1001,7 @@ materialnum_t Materials_IndexForName(const char* path)
 {
     if(path && path[0])
     {
-        dduri_t* uri = Uri_NewWithPath2(path, RC_NULL);
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
         materialnum_t result = Materials_IndexForUri(uri);
         Uri_Delete(uri);
         return result;
@@ -1022,10 +1022,10 @@ const ddstring_t* Materials_GetSymbolicName(material_t* mat)
     return MaterialBind_Name(&bindings[num-1]);
 }
 
-dduri_t* Materials_GetUri(material_t* mat)
+Uri* Materials_GetUri(material_t* mat)
 {
     materialbind_t* mb;
-    dduri_t* uri;
+    Uri* uri;
     ddstring_t path;
 
     if(!mat)
@@ -1529,7 +1529,7 @@ static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
     int numDigits = M_NumDigits(bindingsCount);
     material_t* mat = MaterialBind_Material(mb);
-    dduri_t* uri = Materials_GetUri(mat);
+    Uri* uri = Materials_GetUri(mat);
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
     Con_Printf(" %*u: %-*s %5d x %-5d %-8s %s\n", numDigits, (unsigned int) Material_BindId(mat),
@@ -2030,7 +2030,7 @@ D_CMD(ListMaterials)
 {
     materialnamespaceid_t namespaceId = MN_ANY;
     const char* like = NULL;
-    dduri_t* uri = NULL;
+    Uri* uri = NULL;
 
     // "listmaterials [namespace] [name]"
     if(argc > 2)

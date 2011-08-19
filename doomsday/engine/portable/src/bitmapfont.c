@@ -416,7 +416,7 @@ void BitmapFont_Prepare(font_t* font)
         if(!novideo && !isDedicated)
         {
             VERBOSE2(
-                dduri_t* uri = Fonts_GetUri(font);
+                Uri* uri = Fonts_GetUri(font);
                 ddstring_t* path = Uri_ToString(uri);
                 Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
                 Str_Delete(path);

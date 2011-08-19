@@ -272,7 +272,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rn)
     rn->_flags |= RNF_IS_DIRTY;
 }
 
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* newUri,
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* newUri,
     resourcenamespace_searchpathgroup_t group)
 {
     assert(rn && newUri && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
@@ -289,7 +289,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* 
             return true;
     }}
 
-    rn->_searchPaths[group] = (dduri_t**) realloc(rn->_searchPaths[group],
+    rn->_searchPaths[group] = (Uri**) realloc(rn->_searchPaths[group],
         sizeof(*rn->_searchPaths[group]) * ++rn->_searchPathsCount[group]);
     if(NULL == rn->_searchPaths[group])
         Con_Error("ResourceNamespace::AddExtraSearchPath: Failed on reallocation of %lu bytes for "

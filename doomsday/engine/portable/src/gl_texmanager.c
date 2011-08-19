@@ -829,7 +829,7 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     uploadContent(uploadMethod, content);
 }
 
-static const dduri_t* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
+static const Uri* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
 {
     switch(texNamespace)
     {
@@ -3020,7 +3020,7 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
     return 0;
 }
 
-DGLuint GL_GetLightMapTexture(const dduri_t* uri)
+DGLuint GL_GetLightMapTexture(const Uri* uri)
 {
     if(uri)
     {
@@ -3040,7 +3040,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
-DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
+DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
 {
     if(uri)
     {
@@ -3349,7 +3349,7 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
     return GL_CreateTexture2(rawName, index, texNamespace, 0, 0);
 }
 
-uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent)
+uint GL_TextureIndexForUri2(const Uri* uri, boolean silent)
 {
     const texture_t* glTex;
     if((glTex = GL_TextureByUri2(uri, silent)))
@@ -3363,16 +3363,16 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent)
     return 0;
 }
 
-uint GL_TextureIndexForUri(const dduri_t* uri)
+uint GL_TextureIndexForUri(const Uri* uri)
 {
     return GL_TextureIndexForUri2(uri, false);
 }
 
-dduri_t* GL_NewUriForTexture(struct texture_s* tex)
+Uri* GL_NewUriForTexture(struct texture_s* tex)
 {
     assert(tex);
     {
-    dduri_t* uri = Uri_NewWithPath2(Texture_Name(tex), RC_NULL);
+    Uri* uri = Uri_NewWithPath2(Texture_Name(tex), RC_NULL);
     Uri_SetScheme(uri, Str_Text(DD_TextureNamespaceNameForId(Texture_Namespace(tex))));
     return uri;
     }
@@ -3715,7 +3715,7 @@ texture_t* GL_ToTexture(textureid_t id)
     return tex;
 }
 
-const texture_t* GL_TextureByUri2(const dduri_t* uri, boolean silent)
+const texture_t* GL_TextureByUri2(const Uri* uri, boolean silent)
 {
     ddstring_t* path;
     if(uri && NULL != (path = Uri_Resolved(uri)))
@@ -3742,7 +3742,7 @@ const texture_t* GL_TextureByUri2(const dduri_t* uri, boolean silent)
     return NULL;
 }
 
-const texture_t* GL_TextureByUri(const dduri_t* uri)
+const texture_t* GL_TextureByUri(const Uri* uri)
 {
     return GL_TextureByUri2(uri, false);
 }

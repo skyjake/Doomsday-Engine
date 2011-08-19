@@ -91,7 +91,7 @@ font_t* Fonts_ToFont(fontnum_t num);
 fontnum_t Fonts_ToIndex(font_t* font);
 
 /// @return  Unique name associated with the found Font.
-fontnum_t Fonts_IndexForUri(const dduri_t* uri);
+fontnum_t Fonts_IndexForUri(const Uri* uri);
 
 /// @return  Unique name associated with the found Font.
 fontnum_t Fonts_IndexForName(const char* path);
@@ -100,7 +100,7 @@ fontnum_t Fonts_IndexForName(const char* path);
 const ddstring_t* Fonts_GetSymbolicName(font_t* font);
 
 /// @return  New Uri composed for the specified font (release with Uri_Delete).
-dduri_t* Fonts_GetUri(font_t* font);
+Uri* Fonts_GetUri(font_t* font);
 
 /// Load an external font from a local file.
 font_t* Fonts_LoadExternal(const char* name, const char* filepath);

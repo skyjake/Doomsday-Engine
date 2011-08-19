@@ -81,7 +81,7 @@ typedef struct resourcenamespace_s {
 
     /// Sets of search paths known by this namespace.
     /// Each set is in order of greatest-importance, right to left.
-    dduri_t** _searchPaths[SEARCHPATHGROUP_COUNT];
+    Uri** _searchPaths[SEARCHPATHGROUP_COUNT];
     uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
     /// Path hash table.
@@ -112,7 +112,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rnamespace);
  * @param group  Group to add this path to. @see resourcenamespace_searchpathgroup_t
  * @return  @c true if the path is correctly formed and present in the namespace.
  */
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* path,
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* path,
     resourcenamespace_searchpathgroup_t group);
 
 /**

@@ -418,7 +418,7 @@ static int ReadAnyString(char** dest)
     return true;
 }
 
-static int ReadUri(dduri_t** dest, const char* defaultScheme)
+static int ReadUri(Uri** dest, const char* defaultScheme)
 {
     char* buf = 0;
     int result;
@@ -816,7 +816,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
         {
             READSTR(label);
             CHECKSC;
-            { dduri_t* newUri = Uri_NewWithPath2(label, RC_NULL);
+            { Uri* newUri = Uri_NewWithPath2(label, RC_NULL);
             ResourceNamespace_AddSearchPath(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)), newUri, SPG_EXTRA);
             Uri_Delete(newUri);
             }
@@ -1048,7 +1048,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             }
             else if(!bCopyNext)
             {
-                dduri_t* otherMat = NULL;
+                Uri* otherMat = NULL;
 
                 READURI(&otherMat, NULL);
                 ReadToken();
@@ -1085,7 +1085,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
                 const ded_material_t* prevMaterial = ded->materials + prevMaterialDefIdx;
-                dduri_t* uri = mat->id;
+                Uri* uri = mat->id;
 
                 memcpy(mat, prevMaterial, sizeof(*mat));
                 mat->id = uri;
@@ -1600,7 +1600,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 FINDBEGIN;
                 for(;;)
                 {
-                    dduri_t** mn;
+                    Uri** mn;
 
                     READLABEL;
                     RV_STR("ID", tenv->id)

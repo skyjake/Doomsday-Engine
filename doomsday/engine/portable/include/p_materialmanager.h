@@ -135,7 +135,7 @@ struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
  *
  * @return  Unique identifier of the found material, else zero.
  */
-materialnum_t Materials_IndexForUri(const dduri_t* uri);
+materialnum_t Materials_IndexForUri(const Uri* uri);
 materialnum_t Materials_IndexForName(const char* path);
 
 /**
@@ -148,7 +148,7 @@ materialnum_t Materials_IndexForName(const char* path);
  */
 const ddstring_t* Materials_GetSymbolicName(struct material_s* mat);
 
-dduri_t* Materials_GetUri(struct material_s* mat);
+Uri* Materials_GetUri(struct material_s* mat);
 
 uint Materials_Count(void);
 

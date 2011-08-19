@@ -818,11 +818,11 @@ void R_InitRefresh(void)
  
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
-    { dduri_t* paths[9];
+    { Uri* paths[9];
     uint i;
     for(i = 0; i < 9; ++i)
         paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
-    R_SetBorderGfx((const dduri_t**)paths);
+    R_SetBorderGfx((const Uri**)paths);
     for(i = 0; i < 9; ++i)
         if(paths[i])
             Uri_Delete(paths[i]);

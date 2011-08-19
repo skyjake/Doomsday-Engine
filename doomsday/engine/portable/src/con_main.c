@@ -2396,7 +2396,7 @@ D_CMD(Font)
         fontnum_t newFont = Fonts_IndexForName(argv[2]);
         if(0 != newFont)
         {
-            dduri_t* uri = Fonts_GetUri(Fonts_ToFont(newFont));
+            Uri* uri = Fonts_GetUri(Fonts_ToFont(newFont));
             Con_SetFont(newFont);
             if(!Str_CompareIgnoreCase(Uri_Scheme(uri), FN_GAME_NAME))
             {

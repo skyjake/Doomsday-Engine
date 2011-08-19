@@ -145,7 +145,7 @@ void ResourceRecord_AddIdentityKey(resourcerecord_t* rec, const ddstring_t* iden
     }
 }
 
-const dduri_t* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
+const Uri* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
 {
     assert(rec);
     if(rec->_searchPaths)

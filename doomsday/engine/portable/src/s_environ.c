@@ -84,7 +84,7 @@ const char* S_MaterialClassName(material_env_class_t mclass)
     return "";
 }
 
-material_env_class_t S_MaterialClassForName(const dduri_t* path)
+material_env_class_t S_MaterialClassForName(const Uri* path)
 {
     ded_tenviron_t* env;
     int i;
@@ -93,7 +93,7 @@ material_env_class_t S_MaterialClassForName(const dduri_t* path)
         int j;
         for(j = 0; j < env->count.num; ++j)
         {
-            dduri_t* ref = env->materials[j];
+            Uri* ref = env->materials[j];
 
             if(!ref) continue;
 

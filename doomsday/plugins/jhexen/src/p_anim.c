@@ -33,7 +33,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
     boolean ignore = true, done;
     int groupNumber = 0;
     uint texNumBase = 0;
-    dduri_t* path;
+    Uri* path;
 
     if(!SC_GetString()) // Name.
     {

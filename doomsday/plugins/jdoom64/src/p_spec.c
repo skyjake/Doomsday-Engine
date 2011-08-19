@@ -130,8 +130,8 @@ static animdef_t animsShared[] = {
  */
 static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
-    dduri_t* startPath = Uri_New();
-    dduri_t* endPath = Uri_New();
+    Uri* startPath = Uri_New();
+    Uri* endPath = Uri_New();
     boolean lastIsTexture;
     int i;
 

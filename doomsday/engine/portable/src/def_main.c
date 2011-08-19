@@ -366,7 +366,7 @@ ded_sky_t* Def_GetSky(const char* id)
     return NULL;
 }
 
-static ded_material_t* findMaterialDef(const dduri_t* uri)
+static ded_material_t* findMaterialDef(const Uri* uri)
 {
     int i;
     for(i = defs.count.materials.num - 1; i >= 0; i--)
@@ -381,14 +381,14 @@ static ded_material_t* findMaterialDef(const dduri_t* uri)
     return NULL;
 }
 
-ded_material_t* Def_GetMaterial(const dduri_t* uri)
+ded_material_t* Def_GetMaterial(const Uri* uri)
 {
     ded_material_t* def = NULL;
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
         if(Str_IsEmpty(Uri_Scheme(uri)))
         {   // Caller doesn't care which namespace - use a priority search order.
-            dduri_t* temp = Uri_NewWithPath2(Str_Text(Uri_Path(uri)), RC_NULL);
+            Uri* temp = Uri_NewWithPath2(Str_Text(Uri_Path(uri)), RC_NULL);
 
             Uri_SetScheme(temp, MN_SPRITES_NAME);
             def = findMaterialDef(temp);
@@ -411,7 +411,7 @@ ded_material_t* Def_GetMaterial(const dduri_t* uri)
     return def;
 }
 
-static ded_compositefont_t* findCompositeFontDef(const dduri_t* uri)
+static ded_compositefont_t* findCompositeFontDef(const Uri* uri)
 {
     int i;
     for(i = defs.count.compositeFonts.num - 1; i >= 0; i--)
@@ -426,14 +426,14 @@ static ded_compositefont_t* findCompositeFontDef(const dduri_t* uri)
     return NULL;
 }
 
-ded_compositefont_t* Def_GetCompositeFont(const dduri_t* uri)
+ded_compositefont_t* Def_GetCompositeFont(const Uri* uri)
 {
     ded_compositefont_t* def = NULL;
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
         if(Str_IsEmpty(Uri_Scheme(uri)))
         {   // Caller doesn't care which namespace - use a priority search order.
-            dduri_t* temp = Uri_NewWithPath2(Str_Text(Uri_Path(uri)), RC_NULL);
+            Uri* temp = Uri_NewWithPath2(Str_Text(Uri_Path(uri)), RC_NULL);
 
             Uri_SetScheme(temp, FN_GAME_NAME);
             def = findCompositeFontDef(temp);

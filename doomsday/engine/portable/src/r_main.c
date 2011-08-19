@@ -169,7 +169,7 @@ static fontnum_t loadSystemFont(const char* name)
     {
     ddstring_t searchPath, *filepath;
     font_t* font;
-    dduri_t* path;
+    Uri* path;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
     path = Uri_NewWithPath2(Str_Text(&searchPath), RC_NULL);

@@ -44,7 +44,7 @@ typedef struct resourcerecord_s {
     ddstring_t** _identityKeys;
 
     /// Paths to use when attempting to locate this resource.
-    dduri_t** _searchPaths;
+    Uri** _searchPaths;
 
     /// Id+1 of the search path used to locate this resource (in _searchPaths) if found. Set during resource location.
     uint _searchPathUsed;
@@ -98,6 +98,6 @@ int ResourceRecord_ResourceFlags(resourcerecord_t* rec);
 /// @return  Array of IdentityKey(s) associated with subrecords of this resource.
 const ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec);
 
-const dduri_t* const* ResourceRecord_SearchPaths(resourcerecord_t* rec);
+const Uri* const* ResourceRecord_SearchPaths(resourcerecord_t* rec);
 
 #endif /* LIBDENG_RESOURCERECORD_H */

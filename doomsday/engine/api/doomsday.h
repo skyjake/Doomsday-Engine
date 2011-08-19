@@ -430,9 +430,9 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Materials.
-    materialnum_t   Materials_IndexForUri(const dduri_t* uri);
+    materialnum_t   Materials_IndexForUri(const Uri* uri);
     materialnum_t   Materials_IndexForName(const char* path);
-    dduri_t*        Materials_GetUri(struct material_s* mat);
+    Uri*        Materials_GetUri(struct material_s* mat);
 
     const ddstring_t* Materials_GetSymbolicName(struct material_s* mat);
     int             Materials_CreateAnimGroup(int flags);
@@ -453,9 +453,9 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 //
 //------------------------------------------------------------------------
 
-fontnum_t Fonts_IndexForUri(const dduri_t* uri);
+fontnum_t Fonts_IndexForUri(const Uri* uri);
 fontnum_t Fonts_IndexForName(const char* path);
-dduri_t* Fonts_GetUri(struct font_s* font);
+Uri* Fonts_GetUri(struct font_s* font);
 const ddstring_t* Fonts_GetSymbolicName(struct font_s* font);
 
 //------------------------------------------------------------------------
@@ -482,7 +482,7 @@ boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
-    void            R_SetBorderGfx(const dduri_t* const* paths);
+    void            R_SetBorderGfx(const Uri* const* paths);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 const ddstring_t* R_GetPatchName(patchid_t id);
@@ -521,8 +521,8 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, in
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 
-uint GL_TextureIndexForUri(const dduri_t* uri);
-uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
+uint GL_TextureIndexForUri(const Uri* uri);
+uint GL_TextureIndexForUri2(const Uri* uri, boolean silent);
 
 //------------------------------------------------------------------------
 //

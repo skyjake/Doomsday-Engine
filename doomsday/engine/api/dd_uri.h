@@ -6,7 +6,7 @@
  *\author Daniel Swanson <danij@dengine.net>
  *\author Copyright (C) 1992-2000 Trolltech AS.  All rights reserved.
  *
- * This file is based on the semantics defined for the QUrl class, a component
+ * This class is based on the semantics defined for the QUrl class, a component
  * of the Qt GUI Toolkit.
  *
  * \todo Derive from Qt::QUrl
@@ -15,44 +15,52 @@
 #ifndef LIBDENG_API_URI_H
 #define LIBDENG_API_URI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "dd_string.h"
 
 /**
  * Uri. Convenient interface class designed to assist working with URIs
  *      (Universal Resource Identifier) to engine-managed resources.
  */
-#define URI_MINSCHEMELENGTH 2
-typedef struct dduri_s {
-    ddstring_t _scheme;
-    ddstring_t _path;
-} dduri_t;
+struct uri_s; // The uri instance (opaque).
+typedef struct uri_s Uri;
 
-dduri_t* Uri_New(void);
-dduri_t* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass);
-dduri_t* Uri_NewWithPath(const char* path);
-dduri_t* Uri_NewCopy(const dduri_t* other);
+/// Schemes must be at least this many characters.
+#define URI_MINSCHEMELENGTH         2
 
-void Uri_Delete(dduri_t* uri);
+Uri* Uri_New(void);
+Uri* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass);
+Uri* Uri_NewWithPath(const char* path);
+Uri* Uri_NewCopy(const Uri* other);
 
-void Uri_Clear(dduri_t* uri);
-dduri_t* Uri_Copy(dduri_t* uri, const dduri_t* other);
+void Uri_Delete(Uri* uri);
 
-ddstring_t* Uri_Resolved(const dduri_t* uri);
+void Uri_Clear(Uri* uri);
+Uri* Uri_Copy(Uri* uri, const Uri* other);
 
-const ddstring_t* Uri_Scheme(const dduri_t* uri);
-const ddstring_t* Uri_Path(const dduri_t* uri);
+ddstring_t* Uri_Resolved(const Uri* uri);
 
-void Uri_SetScheme(dduri_t* uri, const char* scheme);
-void Uri_SetPath(dduri_t* uri, const char* path);
+const ddstring_t* Uri_Scheme(const Uri* uri);
+const ddstring_t* Uri_Path(const Uri* uri);
 
-void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResourceClass);
-void Uri_SetUri2(dduri_t* uri, const char* path);
-void Uri_SetUri(dduri_t* uri, const ddstring_t* path);
+void Uri_SetScheme(Uri* uri, const char* scheme);
+void Uri_SetPath(Uri* uri, const char* path);
 
-ddstring_t* Uri_ComposePath(const dduri_t* uri);
+void Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass);
+void Uri_SetUri2(Uri* uri, const char* path);
+void Uri_SetUri(Uri* uri, const ddstring_t* path);
 
-ddstring_t* Uri_ToString(const dduri_t* uri);
+ddstring_t* Uri_ComposePath(const Uri* uri);
 
-boolean Uri_Equality(const dduri_t* uri, const dduri_t* other);
+ddstring_t* Uri_ToString(const Uri* uri);
+
+boolean Uri_Equality(const Uri* uri, const Uri* other);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_URI_H */

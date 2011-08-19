@@ -1046,7 +1046,7 @@ static patchid_t findPatchTextureByName(const char* name)
     assert(name && name[0]);
     {
     const texture_t* glTex;
-    dduri_t* uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
     glTex = GL_TextureByUri(uri);
     Uri_Delete(uri);
@@ -2236,7 +2236,7 @@ void R_InitSpriteTextures(void)
             (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-uint R_CreateSkinTex(const dduri_t* skin, boolean isShinySkin)
+uint R_CreateSkinTex(const Uri* skin, boolean isShinySkin)
 {
     assert(skin);
     {
@@ -2301,7 +2301,7 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         directory_t* mydir = Dir_ConstructFromPathDir(modelfn);
         Str_Appendf(&searchPath, "%s%s", mydir->path, skin);
         found = 0 != F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath);
-        Dir_Destruct(mydir);
+        Dir_Delete(mydir);
     }
 
     if(!found)
@@ -2328,7 +2328,7 @@ uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn
             Str_Init(&buf);
         if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
         {
-            dduri_t* uri = Uri_NewWithPath2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
+            Uri* uri = Uri_NewWithPath2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
             result = R_CreateSkinTex(uri, isShinySkin);
             Uri_Delete(uri);
         }
@@ -2347,7 +2347,7 @@ const skinname_t* R_GetSkinNameByIndex(uint id)
     return &skinNames[id-1];
 }
 
-uint R_GetSkinNumForName(const dduri_t* path)
+uint R_GetSkinNumForName(const Uri* path)
 {
     uint i;
     for(i = 0; i < numSkinNames; ++i)
@@ -2680,7 +2680,7 @@ detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     return dTex;
 }
 
-detailtex_t* R_FindDetailTextureForName(const dduri_t* filePath, boolean isExternal)
+detailtex_t* R_FindDetailTextureForName(const Uri* filePath, boolean isExternal)
 {
     if(!filePath)
         return 0;
@@ -2721,7 +2721,7 @@ void R_DestroyDetailTextures(void)
     detailTexturesCount = 0;
 }
 
-lightmap_t* R_CreateLightMap(const dduri_t* path)
+lightmap_t* R_CreateLightMap(const Uri* path)
 {
     const texture_t* glTex;
     lightmap_t* lmap;
@@ -2760,7 +2760,7 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
     return lmap;
 }
 
-lightmap_t* R_GetLightMap(const dduri_t* uri)
+lightmap_t* R_GetLightMap(const Uri* uri)
 {
     if(uri && Str_CompareIgnoreCase(Uri_Path(uri), "-"))
     {
@@ -2795,7 +2795,7 @@ void R_DestroyLightMaps(void)
     lightmapTexturesCount = 0;
 }
 
-flaretex_t* R_CreateFlareTexture(const dduri_t* path)
+flaretex_t* R_CreateFlareTexture(const Uri* path)
 {
     const texture_t* glTex;
     flaretex_t* fTex;
@@ -2838,7 +2838,7 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
     return fTex;
 }
 
-flaretex_t* R_GetFlareTexture(const dduri_t* uri)
+flaretex_t* R_GetFlareTexture(const Uri* uri)
 {
     if(uri && Str_CompareIgnoreCase(Uri_Path(uri), "-"))
     {
@@ -2873,7 +2873,7 @@ void R_DestroyFlareTextures(void)
     flareTexturesCount = 0;
 }
 
-shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
+shinytex_t* R_CreateShinyTexture(const Uri* uri)
 {
     const texture_t* glTex;
     shinytex_t* sTex;
@@ -2909,7 +2909,7 @@ shinytex_t* R_CreateShinyTexture(const dduri_t* uri)
     return sTex;
 }
 
-shinytex_t* R_FindShinyTextureForName(const dduri_t* uri)
+shinytex_t* R_FindShinyTextureForName(const Uri* uri)
 {
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
@@ -2944,7 +2944,7 @@ void R_DestroyShinyTextures(void)
     shinyTexturesCount = 0;
 }
 
-masktex_t* R_CreateMaskTexture(const dduri_t* uri, int width, int height)
+masktex_t* R_CreateMaskTexture(const Uri* uri, int width, int height)
 {
     const texture_t* glTex;
     masktex_t* mTex;
@@ -2987,7 +2987,7 @@ masktex_t* R_CreateMaskTexture(const dduri_t* uri, int width, int height)
     return mTex;
 }
 
-masktex_t* R_FindMaskTextureForName(const dduri_t* uri)
+masktex_t* R_FindMaskTextureForName(const Uri* uri)
 {
     if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {

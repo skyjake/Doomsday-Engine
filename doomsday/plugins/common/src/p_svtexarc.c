@@ -49,7 +49,7 @@
 #define UNKNOWN_MATERIALNAME    "DD_BADTX"  
 
 typedef struct materialarchive_record_s {
-    dduri_t* path;
+    Uri* path;
     material_t* material;
 } materialarchive_record_t;
 
@@ -79,7 +79,7 @@ static void init(materialarchive_t* mArc)
 }
 
 static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t serialId,
-    const dduri_t* path, material_t* material)
+    const Uri* path, material_t* material)
 {
     assert(path);
     {
@@ -98,7 +98,7 @@ static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* m
 {
     assert(mat);
     {
-    dduri_t* path = Materials_GetUri(mat);
+    Uri* path = Materials_GetUri(mat);
     if(NULL != path)
     {
         // Insert a new element in the index.
@@ -116,7 +116,7 @@ static materialarchive_serialid_t getSerialIdForMaterial(materialarchive_t* mArc
     assert(mat);
     {
     materialarchive_serialid_t id = 0;
-    dduri_t* path = Materials_GetUri(mat);
+    Uri* path = Materials_GetUri(mat);
     if(NULL != path)
     {
         uint i;
@@ -169,7 +169,7 @@ static material_t* materialForSerialId(const materialarchive_t* mArc,
  */
 static void populate(materialarchive_t* mArc)
 {
-    dduri_t* unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
+    Uri* unknownMaterial = Uri_NewWithPath2(UNKNOWN_MATERIALNAME, RC_NULL);
     insertSerialId(mArc, 1, unknownMaterial, 0);
     Uri_Delete(unknownMaterial);
 

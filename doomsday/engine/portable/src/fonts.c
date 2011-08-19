@@ -464,7 +464,7 @@ font_t* Fonts_CreateBitmapCompositeFromDef(ded_compositefont_t* def)
     assert(def);
     {
     fontnamespaceid_t namespaceId = FN_ANY;
-    const dduri_t* uri = def->id;
+    const Uri* uri = def->id;
     font_t* font;
     uint hash;
 
@@ -535,7 +535,7 @@ font_t* Fonts_CreateBitmapCompositeFromDef(ded_compositefont_t* def)
 /**
  * Creates a new font record for a file and attempts to prepare it.
  */
-static font_t* loadExternalFont(const dduri_t* uri, const char* path)
+static font_t* loadExternalFont(const Uri* uri, const char* path)
 {
     fontnamespaceid_t namespaceId = FN_ANY;
     font_t* font;
@@ -590,7 +590,7 @@ static font_t* loadExternalFont(const dduri_t* uri, const char* path)
     return font;
 }
 
-static fontnum_t Fonts_CheckNumForPath(const dduri_t* uri)
+static fontnum_t Fonts_CheckNumForPath(const Uri* uri)
 {
     assert(inited && uri);
     {
@@ -630,7 +630,7 @@ static fontnum_t Fonts_CheckNumForPath(const dduri_t* uri)
     }
 }
 
-static fontnum_t Fonts_NumForPath(const dduri_t* path)
+static fontnum_t Fonts_NumForPath(const Uri* path)
 {
     fontnum_t result;
     if(!inited)
@@ -666,7 +666,7 @@ font_t* Fonts_LoadExternal(const char* name, const char* searchPath)
     {
     fontnum_t fontNum;
     font_t* font = NULL;
-    dduri_t* uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
 
     errorIfNotInited("Fonts::LoadExternal");
 
@@ -702,7 +702,7 @@ font_t* Fonts_LoadExternal(const char* name, const char* searchPath)
     }
 }
 
-fontnum_t Fonts_IndexForUri(const dduri_t* path)
+fontnum_t Fonts_IndexForUri(const Uri* path)
 {
     if(path)
     {
@@ -715,7 +715,7 @@ fontnum_t Fonts_IndexForName(const char* path)
 {
     if(path && path[0])
     {
-        dduri_t* uri = Uri_NewWithPath2(path, RC_NULL);
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
         fontnum_t result = Fonts_IndexForUri(uri);
         Uri_Delete(uri);
         return result;
@@ -736,10 +736,10 @@ const ddstring_t* Fonts_GetSymbolicName(font_t* font)
     return FontBind_Name(&bindings[num-1]);
 }
 
-dduri_t* Fonts_GetUri(font_t* font)
+Uri* Fonts_GetUri(font_t* font)
 {
     fontbind_t* fb;
-    dduri_t* uri;
+    Uri* uri;
     ddstring_t path;
 
     if(!font)

@@ -40,10 +40,10 @@ typedef struct directory_s {
 } directory_t;
 
 /// Construct using the specified path.
-directory_t* Dir_Construct(const char* path);
+directory_t* Dir_New(const char* path);
 
 /// Construct using the current working directory path.
-directory_t* Dir_ConstructFromCurrentDir(void);
+directory_t* Dir_NewFromCWD(void);
 
 /**
  * Construct by extracting the path from @a path.
@@ -52,7 +52,7 @@ directory_t* Dir_ConstructFromCurrentDir(void);
  */
 directory_t* Dir_ConstructFromPathDir(const char* path);
 
-void Dir_Destruct(directory_t* dir);
+void Dir_Delete(directory_t* dir);
 
 /**
  * @return  @c true if the directories @a a and @a b are considered equal

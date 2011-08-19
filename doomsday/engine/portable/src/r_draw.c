@@ -70,7 +70,7 @@ int bwidth;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean inited = false;
-static dduri_t* borderGraphicsNames[9];
+static Uri* borderGraphicsNames[9];
 static patchid_t borderPatches[9];
 
 // CODE --------------------------------------------------------------------
@@ -98,7 +98,7 @@ static void loadViewBorderPatches(void)
     bwidth = info.height;
 }
 
-void R_SetBorderGfx(const dduri_t* const* paths)
+void R_SetBorderGfx(const Uri* const* paths)
 {
     assert(inited);
     {
