@@ -524,7 +524,7 @@ void Net_DestroyArrays(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        Smoother_Destruct(clients[i].smoother);
+        Smoother_Delete(clients[i].smoother);
     }
 
     memset(clients, 0, sizeof(clients));

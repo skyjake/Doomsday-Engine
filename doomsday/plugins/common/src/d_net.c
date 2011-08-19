@@ -117,7 +117,7 @@ Writer* D_NetWrite(void)
 {
     if(netWriter)
     {
-        Writer_Destruct(netWriter);
+        Writer_Delete(netWriter);
     }
     netWriter = Writer_NewWithDynamicBuffer(0 /*unlimited*/);
     return netWriter;
@@ -128,7 +128,7 @@ Reader* D_NetRead(const byte* buffer, size_t len)
     // Get rid of the old reader.
     if(netReader)
     {
-        Reader_Destruct(netReader);
+        Reader_Delete(netReader);
     }
     netReader = Reader_NewWithBuffer(buffer, len);
     return netReader;
@@ -136,8 +136,8 @@ Reader* D_NetRead(const byte* buffer, size_t len)
 
 void D_NetClearBuffer(void)
 {
-    if(netReader) Reader_Destruct(netReader);
-    if(netWriter) Writer_Destruct(netWriter);
+    if(netReader) Reader_Delete(netReader);
+    if(netWriter) Writer_Delete(netWriter);
 
     netReader = 0;
     netWriter = 0;

@@ -76,7 +76,7 @@ Writer* Writer_NewWithDynamicBuffer(size_t maxLen);
 /**
  * Destroys the writer.
  */
-void Writer_Destruct(Writer* writer);
+void Writer_Delete(Writer* writer);
 
 /**
  * Returns the current output size of the writer, i.e., how much has been written

@@ -81,7 +81,7 @@ Reader* Reader_NewWithBuffer(const byte* buffer, size_t len)
     return rd;
 }
 
-void Reader_Destruct(Reader* reader)
+void Reader_Delete(Reader* reader)
 {
     M_Free(reader);
 }
