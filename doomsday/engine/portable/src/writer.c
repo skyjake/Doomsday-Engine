@@ -82,7 +82,7 @@ static boolean Writer_Check(const Writer* writer, size_t len)
 Writer* Writer_New(void)
 {
     Writer* w = M_Calloc(sizeof(Writer));
-    w->size = NETBUFFER_MAXDATA;
+    w->size = NETBUFFER_ACTUALSIZE;
     w->data = netBuffer.msg.data;
     return w;
 }
