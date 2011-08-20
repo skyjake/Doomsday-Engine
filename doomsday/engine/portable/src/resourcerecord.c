@@ -145,7 +145,7 @@ void ResourceRecord_AddIdentityKey(resourcerecord_t* rec, const ddstring_t* iden
     }
 }
 
-const Uri* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
+const Uri** ResourceRecord_SearchPaths(resourcerecord_t* rec)
 {
     assert(rec);
     if(rec->_searchPaths)
@@ -187,7 +187,7 @@ int ResourceRecord_ResourceFlags(resourcerecord_t* rec)
     return rec->_rflags;
 }
 
-const ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec)
+const ddstring_t** ResourceRecord_IdentityKeys(resourcerecord_t* rec)
 {
     assert(rec);
     return rec->_identityKeys;

@@ -2334,6 +2334,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
         case DGL_RGBA:              loadFormat = GL_RGBA; break;
         default:
             Con_Error("GL_UploadTextureContent: Unknown format %i.", (int) dglFormat);
+            exit(1);
         }
 
         glFormat = ChooseTextureFormat(dglFormat, allowCompression);

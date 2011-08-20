@@ -63,8 +63,9 @@ extern          "C" {
     typedef struct sector_s { int type; } sector_t;
     typedef struct plane_s { int type; } plane_t;
     typedef struct material_s { int type; } material_t;
-    typedef struct font_s { int type; } font_t;
 #endif
+
+struct font_s;
 
 #include "dd_share.h"
 #include "dd_plugin.h"

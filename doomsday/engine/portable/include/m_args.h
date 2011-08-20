@@ -35,7 +35,7 @@ void            ArgAbbreviate(const char* longname, const char* shortname);
 
 int             Argc(void);
 const char*     Argv(int i);
-const char* const* ArgvPtr(int i);
+const char**    ArgvPtr(int i);
 const char*     ArgNext(void);
 int             ArgCheck(const char* check);
 int             ArgCheckWith(const char* check, int num);

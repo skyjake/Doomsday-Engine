@@ -289,11 +289,11 @@ const char* Argv(int i)
 /**
  * @return              Pointer to the i'th argument's pointer.
  */
-const char* const* ArgvPtr(int i)
+const char** ArgvPtr(int i)
 {
     if(i < 0 || i >= numArgs)
         Con_Error("ArgvPtr: There is no arg %i.\n", i);
-    return &args[i];
+    return (const char**) &args[i];
 }
 
 const char* ArgNext(void)
