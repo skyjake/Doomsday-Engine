@@ -68,6 +68,8 @@ extern          "C" {
 
 #include "dd_share.h"
 #include "dd_plugin.h"
+#include "stringpool.h"
+#include "uri.h"
 
 //------------------------------------------------------------------------
 //

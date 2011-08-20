@@ -56,7 +56,6 @@ extern "C" {
 #include "dd_gl.h"
 #include "dd_ui.h"
 #include "dd_infine.h"
-#include "uri.h"
 #include "../portable/include/p_think.h" // \todo Not officially a public header file!
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
 
