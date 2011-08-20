@@ -1028,7 +1028,7 @@ void P_MobjThinker(mobj_t* mobj)
 
         // Handle movement.
         if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
-           FEQUAL(mobj->pos[VZ], mobj->floorZ))
+           !FEQUAL(mobj->pos[VZ], mobj->floorZ))
         {
             frac[VX] = mobj->mom[MX] / 8;
             frac[VY] = mobj->mom[MY] / 8;
