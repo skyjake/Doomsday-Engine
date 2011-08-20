@@ -37,7 +37,7 @@ struct writer_s
     byte* data;             // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
-    bool isDynamic;         // The buffer will be reallocated when needed.
+    boolean isDynamic;         // The buffer will be reallocated when needed.
     size_t maxDynamicSize;  // Zero for unlimited.
 };
 

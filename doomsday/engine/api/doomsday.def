@@ -534,8 +534,46 @@ EXPORTS
     DED_NewEntry                @193 NONAME
     DED_DelEntry                @194 NONAME
     DED_DelArray                @195 NONAME
+    
+; Reader.
+    Reader_NewWithBuffer        @1000 NONAME
+    Reader_Delete               @1001 NONAME
+    Reader_ReadChar             @1002 NONAME
+    Reader_ReadByte             @1003 NONAME
+    Reader_ReadInt16            @1004 NONAME    
+    Reader_ReadUInt16           @1005 NONAME    
+    Reader_ReadInt32            @1006 NONAME    
+    Reader_ReadUInt32           @1007 NONAME    
+    Reader_ReadFloat            @1008 NONAME
+    Reader_ReadPackedUInt16     @1009 NONAME
+    Reader_ReadPackedUInt32     @1010 NONAME
+    Reader_Read                 @1011 NONAME
+    Reader_AtEnd                @1012 NONAME
+    Reader_Pos                  @1013 NONAME
+    Reader_SetPos               @1014 NONAME
+    Reader_Size                 @1015 NONAME
+
+; Writer.
+    Writer_NewWithBuffer        @1050 NONAME
+    Writer_NewWithDynamicBuffer @1051 NONAME
+    Writer_Delete               @1052 NONAME
+    Writer_Size                 @1053 NONAME
+    Writer_Data                 @1054 NONAME
+    Writer_TotalBufferSize      @1055 NONAME
+    Writer_BytesLeft            @1056 NONAME
+    Writer_SetPos               @1057 NONAME
+    Writer_WriteChar            @1058 NONAME
+    Writer_WriteByte            @1059 NONAME
+    Writer_WriteInt16           @1060 NONAME
+    Writer_WriteUInt16          @1061 NONAME
+    Writer_WriteInt32           @1062 NONAME
+    Writer_WriteUInt32          @1063 NONAME
+    Writer_WriteFloat           @1064 NONAME
+    Writer_WritePackedUInt16    @1065 NONAME
+    Writer_WritePackedUInt32    @1066 NONAME
+    Writer_Write                @1067 NONAME
 
 ; Smoother.
-    Smoother_IsOnFloor          @453 NONAME
-    Smoother_Evaluate           @454 NONAME
-    Smoother_Clear              @457 NONAME
+    Smoother_IsOnFloor          @1100 NONAME
+    Smoother_Evaluate           @1101 NONAME
+    Smoother_Clear              @1102 NONAME

@@ -157,4 +157,6 @@
  .\..\..\engine\portable\src\dgl_draw.c
  .\..\..\engine\portable\src\dgl_texture.c
  .\..\..\engine\portable\src\smoother.c
+ .\..\..\engine\portable\src\reader.c
+ .\..\..\engine\portable\src\writer.c
   
