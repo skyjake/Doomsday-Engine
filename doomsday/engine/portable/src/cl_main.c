@@ -261,8 +261,6 @@ void Cl_PlayerLeaves(int plrNum)
  */
 void Cl_GetPackets(void)
 {
-    int                 i;
-
     // All messages come from the server.
     while(Net_GetPacket())
     {
@@ -276,22 +274,10 @@ void Cl_GetPackets(void)
 
             switch(netBuffer.msg.type)
             {
-            /*
-            case PSV_FRAME:
-                Cl_FrameReceived();
-                break;
-                */
-
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
                 Cl_Frame2Received(netBuffer.msg.type);
                 break;
-
-                /*
-            case PKT_COORDS:
-                ClPlayer_CoordsReceived();
-                break;
-                */
 
             case PSV_SOUND:
                 Cl_Sound();
