@@ -322,8 +322,8 @@ static void buildSpriteRotations(void)
 
     numSpriteRecords = 0;
     spriteRecords = 0;
-    spriteRecordBlockSet = BlockSet_Construct(sizeof(spriterecord_t), 64),
-    spriteRecordFrameBlockSet = BlockSet_Construct(sizeof(spriterecord_frame_t), 256);
+    spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
+    spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
     { int i, numSpriteTextures = R_SpriteTextureCount();
     for(i = 0; i < numSpriteTextures; ++i)
@@ -556,9 +556,9 @@ void R_InitSprites(void)
     /// \kludge end
 
     // We are now done with the sprite records.
-    BlockSet_Destruct(spriteRecordBlockSet);
+    BlockSet_Delete(spriteRecordBlockSet);
     spriteRecordBlockSet = NULL;
-    BlockSet_Destruct(spriteRecordFrameBlockSet);
+    BlockSet_Delete(spriteRecordFrameBlockSet);
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
@@ -573,7 +573,7 @@ material_t* R_GetMaterialForSprite(int sprite, int frame)
         if(frame < sprDef->numFrames)
             return sprDef->spriteFrames[frame].mats[0];
     }
-    //Con_Message("Warning::R_GetMaterialForSprite: Invalid sprite %i and/or frame %i.\n", sprite, frame);
+    //Con_Message("Warning:R_GetMaterialForSprite: Invalid sprite %i and/or frame %i.\n", sprite, frame);
     return NULL;
 }
 
@@ -588,7 +588,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     if((unsigned) sprite >= (unsigned) numSprites)
     {
-        Con_Message("Warning::R_GetSpriteInfo: Invalid sprite number %i.\n", sprite);
+        Con_Message("Warning:R_GetSpriteInfo: Invalid sprite number %i.\n", sprite);
         return false;
     }
 
@@ -597,7 +597,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     if(frame >= sprDef->numFrames)
     {
         // We have no information to return.
-        Con_Message("Warning::R_GetSpriteInfo: Invalid sprite frame %i.\n", frame);
+        Con_Message("Warning:R_GetSpriteInfo: Invalid sprite frame %i.\n", frame);
         memset(info, 0, sizeof(*info));
         return false;
     }

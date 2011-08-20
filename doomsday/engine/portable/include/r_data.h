@@ -52,38 +52,38 @@
 
 typedef struct systex_s {
     textureid_t id;
-    dduri_t* external;
+    Uri* external;
 } systex_t;
 
 typedef struct detailtex_s {
     textureid_t id;
     boolean isExternal;
-    const dduri_t* filePath;
+    const Uri* filePath;
 } detailtex_t;
 
 typedef struct lightmap_s {
     textureid_t id;
-    const dduri_t* external;
+    const Uri* external;
 } lightmap_t;
 
 typedef struct flaretex_s {
     textureid_t id;
-    const dduri_t* external;
+    const Uri* external;
 } flaretex_t;
 
 typedef struct shinytex_s {
     textureid_t id;
-    const dduri_t* external;
+    const Uri* external;
 } shinytex_t;
 
 typedef struct masktex_s {
-    const dduri_t* external;
+    const Uri* external;
     textureid_t id;
 } masktex_t;
 
 typedef struct skinname_s {
     textureid_t id;
-    dduri_t* path;
+    Uri* path;
 } skinname_t;
 
 typedef enum {
@@ -414,7 +414,7 @@ void R_PrecacheForMap(void);
  */
 void R_PrecacheMobjNum(int mobjtypeNum);
 
-uint            R_GetSkinNumForName(const dduri_t* path);
+uint            R_GetSkinNumForName(const Uri* path);
 const skinname_t* R_GetSkinNameByIndex(uint id);
 uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
 void            R_DestroySkins(void);
@@ -442,7 +442,7 @@ detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def);
  * @param isExternal  @c true= @a path is an "external" path, else a WAD lump name.
  * @return  DetailTexture associated to this path if found else @c NULL.
  */
-detailtex_t* R_FindDetailTextureForName(const dduri_t* path, boolean isExternal);
+detailtex_t* R_FindDetailTextureForName(const Uri* path, boolean isExternal);
 
 /// @return  DetailTexture associated with the specified index.
 detailtex_t* R_DetailTextureByIndex(int idx);
@@ -455,20 +455,20 @@ int R_DetailTextureCount(void);
  */
 void R_DestroyDetailTextures(void);
 
-lightmap_t*     R_CreateLightMap(const dduri_t* uri);
-lightmap_t*     R_GetLightMap(const dduri_t* uri);
+lightmap_t*     R_CreateLightMap(const Uri* uri);
+lightmap_t*     R_GetLightMap(const Uri* uri);
 void            R_DestroyLightMaps(void);
 
-flaretex_t*     R_CreateFlareTexture(const dduri_t* uri);
-flaretex_t*     R_GetFlareTexture(const dduri_t* uri);
+flaretex_t*     R_CreateFlareTexture(const Uri* uri);
+flaretex_t*     R_GetFlareTexture(const Uri* uri);
 void            R_DestroyFlareTextures(void);
 
-shinytex_t*     R_CreateShinyTexture(const dduri_t* uri);
-shinytex_t*     R_FindShinyTextureForName(const dduri_t* uri);
+shinytex_t*     R_CreateShinyTexture(const Uri* uri);
+shinytex_t*     R_FindShinyTextureForName(const Uri* uri);
 void            R_DestroyShinyTextures(void);
 
-masktex_t*      R_CreateMaskTexture(const dduri_t* uri, int logicalWidth, int logicalHeight);
-masktex_t*      R_FindMaskTextureForName(const dduri_t* uri);
+masktex_t*      R_CreateMaskTexture(const Uri* uri, int logicalWidth, int logicalHeight);
+masktex_t*      R_FindMaskTextureForName(const Uri* uri);
 void            R_DestroyMaskTextures(void);
 
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);

@@ -46,8 +46,8 @@ typedef enum {
  * @defgroup pathComparisonFlags  Path Comparison Flags
  * @{
  */
-#define PCF_NO_LEAF         0x1 /// Do not consider leaves as possible candidates.
-#define PCF_NO_BRANCH       0x2 /// Do not consider branches as possible candidates.
+#define PCF_NO_BRANCH       0x1 /// Do not consider branches as possible candidates.
+#define PCF_NO_LEAF         0x2 /// Do not consider leaves as possible candidates.
 #define PCF_MATCH_PARENT    0x4 /// Only consider nodes whose parent matches that referenced.
 #define PCF_MATCH_FULL      0x8 /// Whole path must match completely (i.e., path begins
                                 /// from the same root point) otherwise allow partial
@@ -73,6 +73,10 @@ typedef struct {
     struct pathdirectory_node_s* resultNode;
 } pathdirectory_search_t;
 
+typedef struct {
+    struct pathdirectory_node_s* head[PATHDIRECTORY_NODETYPES_COUNT];
+} pathdirectory_nodelist_t;
+
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship tree of
  * string+value data pairs.
@@ -84,21 +88,24 @@ typedef struct {
  */
 // Number of entries in the hash table.
 #define PATHDIRECTORY_PATHHASH_SIZE 512
-typedef struct pathdirectory_node_s* pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
+typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
 
 typedef struct pathdirectory_s {
     /// Path name fragment intern pool.
     struct pathdirectory_internpool_s {
-        stringpool_t* strings;
-        ushort* idHashMap; // Index by @c stringpool_internid_t-1
+        StringPool* strings;
+        ushort* idHashMap; // Index by @c StringPoolInternId-1
     } _internPool;
     /// Path hash map.
     pathdirectory_pathhash_t* _pathHash;
 } pathdirectory_t;
 
-pathdirectory_t* PathDirectory_Construct(void);
+pathdirectory_t* PathDirectory_New(void);
 
-void PathDirectory_Destruct(pathdirectory_t* pd);
+void PathDirectory_Delete(pathdirectory_t* pd);
+
+/// @return  Print-ready name for node @a type.
+const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type);
 
 /**
  * Clear the directory contents.
@@ -192,9 +199,8 @@ ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const struct pathdire
  */
 ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char delimiter, size_t* count);
 
-#if _DEBUG
 void PathDirectory_Print(pathdirectory_t* pd, char delimiter);
-#endif 
+void PathDirectory_PrintHashDistribution(pathdirectory_t* pd);
 
 /// @return  PathDirectory which owns this node.
 pathdirectory_t* PathDirectoryNode_Directory(const struct pathdirectory_node_s* node);
@@ -206,7 +212,7 @@ struct pathdirectory_node_s* PathDirectoryNode_Parent(const struct pathdirectory
 pathdirectory_nodetype_t PathDirectoryNode_Type(const struct pathdirectory_node_s* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
-stringpool_internid_t PathDirectoryNode_InternId(const struct pathdirectory_node_s* node);
+StringPoolInternId PathDirectoryNode_InternId(const struct pathdirectory_node_s* node);
 
 /**
  * @param node  Right-most node in path.

@@ -77,16 +77,14 @@ static ownernode_t *unusedNodeList = NULL;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Given a texture/flat name, look up the associated material type.
- *
- * @param name          Name of the texture/flat to look up.
- * @param mnamespace    Material namespace (MG_* e.g. MN_FLATS).
- *
- * @return              If found; material type associated to the texture,
- *                      else @c MEC_UNKNOWN.
- */
-material_env_class_t S_MaterialClassForName(const dduri_t* path)
+const char* S_MaterialClassName(material_env_class_t mclass)
+{
+    if(VALID_MATERIAL_ENV_CLASS(mclass))
+        return matInfo[mclass - MEC_FIRST].name;
+    return "";
+}
+
+material_env_class_t S_MaterialClassForName(const Uri* path)
 {
     ded_tenviron_t* env;
     int i;
@@ -95,7 +93,7 @@ material_env_class_t S_MaterialClassForName(const dduri_t* path)
         int j;
         for(j = 0; j < env->count.num; ++j)
         {
-            dduri_t* ref = env->materials[j];
+            Uri* ref = env->materials[j];
 
             if(!ref) continue;
 

@@ -28,7 +28,7 @@
 #include "texture.h"
 #include "texturevariant.h"
 
-texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
+texturevariant_t* TextureVariant_New(texture_t* generalCase,
     DGLuint glName, texturevariantspecification_t* spec)
 {
     assert(generalCase && spec);
@@ -46,7 +46,7 @@ texturevariant_t* TextureVariant_Construct(texture_t* generalCase,
     }
 }
 
-void TextureVariant_Destruct(texturevariant_t* tex)
+void TextureVariant_Delete(texturevariant_t* tex)
 {
     assert(tex);
     free(tex);

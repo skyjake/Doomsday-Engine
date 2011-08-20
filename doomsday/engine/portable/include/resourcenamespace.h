@@ -26,7 +26,7 @@
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
 #include "dd_string.h"
-#include "dd_uri.h"
+#include "uri.h"
 
 typedef struct resourcenamespace_namehash_node_s {
     struct resourcenamespace_namehash_node_s* next;
@@ -81,7 +81,7 @@ typedef struct resourcenamespace_s {
 
     /// Sets of search paths known by this namespace.
     /// Each set is in order of greatest-importance, right to left.
-    dduri_t** _searchPaths[SEARCHPATHGROUP_COUNT];
+    Uri** _searchPaths[SEARCHPATHGROUP_COUNT];
     uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
     /// Path hash table.
@@ -91,14 +91,14 @@ typedef struct resourcenamespace_s {
     resourcenamespace_namehash_t _pathHash;
 } resourcenamespace_t;
 
-resourcenamespace_t* ResourceNamespace_Construct(const char* name,
+resourcenamespace_t* ResourceNamespace_New(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name));
-resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
+resourcenamespace_t* ResourceNamespace_New2(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
-void ResourceNamespace_Destruct(resourcenamespace_t* rn);
+void ResourceNamespace_Delete(resourcenamespace_t* rn);
 
 /**
  * Reset the namespace back to it's "empty" state (i.e., no known symbols).
@@ -112,7 +112,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rnamespace);
  * @param group  Group to add this path to. @see resourcenamespace_searchpathgroup_t
  * @return  @c true if the path is correctly formed and present in the namespace.
  */
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* path,
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* path,
     resourcenamespace_searchpathgroup_t group);
 
 /**

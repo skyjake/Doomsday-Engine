@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 542 <--
-; Other free ordinals: -
+; Highest ordinal is currently: --> 546 <--
+; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -74,13 +74,25 @@ EXPORTS
     Str_Truncate                @498 NONAME
     Str_PrependChar             @336 NONAME
 
+    ; StringPool.
+    StringPool_New              @537 NONAME
+    StringPool_NewWithStrings   @538 NONAME
+    StringPool_Delete           @539 NONAME
+    StringPool_Clear            @540 NONAME
+    StringPool_Empty            @541 NONAME
+    StringPool_Size             @542 NONAME
+    StringPool_Intern           @543 NONAME
+    StringPool_InternAndRetrieve @544 NONAME
+    StringPool_IsInterned       @545 NONAME
+    StringPool_String           @546 NONAME
+
     ; Uri.
-    Uri_ConstructDefault        @238 NONAME
-    Uri_Construct2              @497 NONAME
-    Uri_Construct               @244 NONAME
-    Uri_ConstructCopy           @249 NONAME
+    Uri_New                     @238 NONAME
+    Uri_NewWithPath2            @497 NONAME
+    Uri_NewWithPath             @244 NONAME
+    Uri_NewCopy                 @249 NONAME
     Uri_Copy                    @250 NONAME
-    Uri_Destruct                @255 NONAME
+    Uri_Delete                  @255 NONAME
     Uri_SetUri                  @326 NONAME
     Uri_SetUri2                 @328 NONAME
     Uri_SetUri3                 @332 NONAME
@@ -106,7 +118,7 @@ EXPORTS
 ; Base: File system.
     F_Access                    @245 NONAME
     F_FileExists                @139 NONAME
-    F_LastModified              @246 NONAME
+    F_GetLastModified           @246 NONAME
     F_MakePath                  @138 NONAME
 
     M_ReadFile                  @134 NONAME
@@ -655,44 +667,44 @@ EXPORTS
     DED_DelArray                @195 NONAME
     
 ; Reader.
-    Reader_NewWithBuffer        @1000 NONAME
-    Reader_Delete               @1001 NONAME
-    Reader_ReadChar             @1002 NONAME
-    Reader_ReadByte             @1003 NONAME
-    Reader_ReadInt16            @1004 NONAME    
-    Reader_ReadUInt16           @1005 NONAME    
-    Reader_ReadInt32            @1006 NONAME    
-    Reader_ReadUInt32           @1007 NONAME    
-    Reader_ReadFloat            @1008 NONAME
-    Reader_ReadPackedUInt16     @1009 NONAME
-    Reader_ReadPackedUInt32     @1010 NONAME
-    Reader_Read                 @1011 NONAME
-    Reader_AtEnd                @1012 NONAME
-    Reader_Pos                  @1013 NONAME
-    Reader_SetPos               @1014 NONAME
-    Reader_Size                 @1015 NONAME
+    Reader_NewWithBuffer        @547 NONAME
+    Reader_Delete               @548 NONAME
+    Reader_ReadChar             @549 NONAME
+    Reader_ReadByte             @550 NONAME
+    Reader_ReadInt16            @551 NONAME
+    Reader_ReadUInt16           @552 NONAME
+    Reader_ReadInt32            @553 NONAME
+    Reader_ReadUInt32           @554 NONAME
+    Reader_ReadFloat            @555 NONAME
+    Reader_ReadPackedUInt16     @556 NONAME
+    Reader_ReadPackedUInt32     @557 NONAME
+    Reader_Read                 @558 NONAME
+    Reader_AtEnd                @559 NONAME
+    Reader_Pos                  @560 NONAME
+    Reader_SetPos               @561 NONAME
+    Reader_Size                 @562 NONAME
 
 ; Writer.
-    Writer_NewWithBuffer        @1050 NONAME
-    Writer_NewWithDynamicBuffer @1051 NONAME
-    Writer_Delete               @1052 NONAME
-    Writer_Size                 @1053 NONAME
-    Writer_Data                 @1054 NONAME
-    Writer_TotalBufferSize      @1055 NONAME
-    Writer_BytesLeft            @1056 NONAME
-    Writer_SetPos               @1057 NONAME
-    Writer_WriteChar            @1058 NONAME
-    Writer_WriteByte            @1059 NONAME
-    Writer_WriteInt16           @1060 NONAME
-    Writer_WriteUInt16          @1061 NONAME
-    Writer_WriteInt32           @1062 NONAME
-    Writer_WriteUInt32          @1063 NONAME
-    Writer_WriteFloat           @1064 NONAME
-    Writer_WritePackedUInt16    @1065 NONAME
-    Writer_WritePackedUInt32    @1066 NONAME
-    Writer_Write                @1067 NONAME
+    Writer_NewWithBuffer        @563 NONAME
+    Writer_NewWithDynamicBuffer @564 NONAME
+    Writer_Delete               @565 NONAME
+    Writer_Size                 @566 NONAME
+    Writer_Data                 @567 NONAME
+    Writer_TotalBufferSize      @568 NONAME
+    Writer_BytesLeft            @569 NONAME
+    Writer_SetPos               @570 NONAME
+    Writer_WriteChar            @571 NONAME
+    Writer_WriteByte            @572 NONAME
+    Writer_WriteInt16           @573 NONAME
+    Writer_WriteUInt16          @574 NONAME
+    Writer_WriteInt32           @575 NONAME
+    Writer_WriteUInt32          @576 NONAME
+    Writer_WriteFloat           @577 NONAME
+    Writer_WritePackedUInt16    @578 NONAME
+    Writer_WritePackedUInt32    @579 NONAME
+    Writer_Write                @580 NONAME
 
 ; Smoother.
-    Smoother_IsOnFloor          @1100 NONAME
-    Smoother_Evaluate           @1101 NONAME
-    Smoother_Clear              @1102 NONAME
+    Smoother_IsOnFloor          @581 NONAME
+    Smoother_Evaluate           @582 NONAME
+    Smoother_Clear              @583 NONAME

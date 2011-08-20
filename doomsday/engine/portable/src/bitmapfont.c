@@ -176,7 +176,7 @@ static byte inByte(DFILE* f)
     assert(f);
     {
     byte b;
-    F_Read(&b, sizeof(b), f);
+    F_Read(f, &b, sizeof(b));
     return b;
     }
 }
@@ -186,7 +186,7 @@ static unsigned short inShort(DFILE* f)
     assert(f);
     {
     unsigned short s;
-    F_Read(&s, sizeof(s), f);
+    F_Read(f, &s, sizeof(s));
     return USHORT(s);
     }
 }
@@ -338,7 +338,7 @@ static void* readFormat2(font_t* font, DFILE* file)
     }
 }
 
-font_t* BitmapFont_Construct(void)
+font_t* BitmapFont_New(void)
 {
     bitmapfont_t* bf = (bitmapfont_t*)malloc(sizeof(*bf));
     if(NULL == bf)
@@ -353,7 +353,7 @@ font_t* BitmapFont_Construct(void)
     return (font_t*)bf;
 }
 
-void BitmapFont_Destruct(font_t* font)
+void BitmapFont_Delete(font_t* font)
 {
     BitmapFont_DeleteGLTexture(font);
     BitmapFont_DeleteGLDisplayLists(font);
@@ -416,11 +416,11 @@ void BitmapFont_Prepare(font_t* font)
         if(!novideo && !isDedicated)
         {
             VERBOSE2(
-                dduri_t* uri = Fonts_GetUri(font);
+                Uri* uri = Fonts_GetUri(font);
                 ddstring_t* path = Uri_ToString(uri);
                 Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
                 Str_Delete(path);
-                Uri_Destruct(uri)
+                Uri_Delete(uri)
             )
 
             bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texWidth,
@@ -563,7 +563,7 @@ void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
     }
 }
 
-font_t* BitmapCompositeFont_Construct(void)
+font_t* BitmapCompositeFont_New(void)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)malloc(sizeof(*cf));
     font_t* font = (font_t*)cf;
@@ -580,7 +580,7 @@ font_t* BitmapCompositeFont_Construct(void)
     return font;
 }
 
-void BitmapCompositeFont_Destruct(font_t* font)
+void BitmapCompositeFont_Delete(font_t* font)
 {
     BitmapCompositeFont_DeleteGLTextures(font);
     BitmapCompositeFont_DeleteGLDisplayLists(font);
@@ -794,7 +794,6 @@ void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1,
 {
     assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
     {
-    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     if(!s0 && !s1 && !t0 && !t1)
         return;
     BitmapCompositeFont_Prepare(font);

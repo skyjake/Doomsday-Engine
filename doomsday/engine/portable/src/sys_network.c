@@ -548,8 +548,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
                           (unsigned long) (size + 2), result) );
 #endif
-
-    if(result != size + 2)
+    if(result < 0 || (unsigned) result != size + 2)
     {
         perror("Socket error");
     }

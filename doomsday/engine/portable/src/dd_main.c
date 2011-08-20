@@ -128,7 +128,7 @@ void DD_Register(void)
 {
     DD_RegisterLoop();
     DD_RegisterInput();
-    DD_RegisterVFS();
+    F_Register();
     B_Register(); // for control bindings
     Con_Register();
     DH_Register();
@@ -225,7 +225,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        W_AddFile(token, false);
+        F_AddFile(token, false);
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -336,7 +336,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Invalid name argument.");
 
-    if(0 == (rec = ResourceRecord_Construct(rclass, rflags)))
+    if(0 == (rec = ResourceRecord_New(rclass, rflags)))
         Con_Error("DD_AddGameResource: Unknown error occured during ResourceRecord::Construct.");
 
     // Add a name list to the info record.
@@ -378,7 +378,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     default:
         break;
     }
-    
+
     GameInfo_AddResource(info, rclass, rec);
 
     Str_Free(&str);
@@ -443,7 +443,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     Str_Free(&cmdlineFlag);
     Str_Free(&defsPath);
     Str_Free(&dataPath);
-    
+
     return (gameid_t)gameInfoIndex(info);
     }
 }
@@ -497,36 +497,29 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    if(!F_FileExists(filePath))
+    lumpnum_t auxLumpBase = W_OpenAuxiliary3(filePath, NULL, true);
+    boolean result;
+
+    if(auxLumpBase == -1)
         return false;
 
-    { FILE* file;
-    if((file = fopen(filePath, "rb")))
+    // Ensure all identity lumps are present.
+    result = true;
+    if(data)
     {
-        char id[4];
-        if(fread(id, 4, 1, file) != 1)
+        const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
+        for(; result && *lumpNames; lumpNames++)
         {
-            fclose(file);
-            return false;
-        }
-        if(!(!strncmp(id, "IWAD", 4) || !strncmp(id, "PWAD", 4)))
-        {
-            fclose(file);
-            return false;
-        }
-        /*if(data)
-        {
-            /// \todo dj: Open this using the auxillary features of the WAD loader
-            /// and check all the specified lumps are present.
-            const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
-            for(; *lumpNames; lumpNames++)
+            lumpnum_t lumpNum = W_CheckLumpNumForName(Str_Text(*lumpNames));
+            if(lumpNum == -1)
             {
-                if(W_CheckLumpNumForName2(Str_Text(*lumpNames), true) == -1)
-                    return false;
+                result = false;
             }
-        }*/
-    }}
-    return true;
+        }
+    }
+
+    W_CloseAuxiliary();
+    return result;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
@@ -673,7 +666,7 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass)
                 { const ddstring_t* path;
                 if(0 != (path = ResourceRecord_ResolvedPath(*records, false)))
                 {
-                    W_AddFile(Str_Text(path), false);
+                    F_AddFile(Str_Text(path), false);
                 }}
                 break;
             default:
@@ -775,7 +768,7 @@ static int autoDataAdder(const ddstring_t* fileName, pathdirectory_nodetype_t ty
         autoload_t* data = (autoload_t*)paramaters;
         if(data->loadFiles)
         {
-            if(W_AddFile(Str_Text(fileName), false))
+            if(F_AddFile(Str_Text(fileName), false))
                 ++data->count;
         }
         else
@@ -936,7 +929,7 @@ static int DD_ChangeGameWorker(void* paramaters)
                 resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(gameResourceFileList[i]));
                 if((pass == 0 && resType == RT_ZIP) ||
                    (pass == 1 && resType == RT_WAD))
-                    W_AddFile(Str_Text(gameResourceFileList[i]), false);
+                    F_AddFile(Str_Text(gameResourceFileList[i]), false);
             }
         }
 
@@ -950,7 +943,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_ResetAllResourceNamespaces();
     Cl_InitTranslations();
 
-    Con_SetProgress(60);
+    Con_SetProgress(100);
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
     if(!isDedicated && !DD_IsNullGameInfo(p->info))
@@ -972,7 +965,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     Def_Read();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(140);
+        Con_SetProgress(130);
 
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
@@ -999,14 +992,13 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_ResetViewer();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(170);
+        Con_SetProgress(160);
 
     // Invalidate old cmds and init player values.
     { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t* plr = &ddPlayers[i];
-        ddplayer_t* ddpl = &plr->shared;
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
@@ -1088,7 +1080,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         P_PtcShutdown();
         P_ControlShutdown();
-        Con_Execute(CMDS_DDAY, "clearbindings", true, false); 
+        Con_Execute(CMDS_DDAY, "clearbindings", true, false);
 
         { uint i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -1143,6 +1135,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         R_InitVectorGraphics();
         R_InitViewWindow();
+
+        /// \fixme Assumes we only cache lumps from non-startup wads.
+        Z_FreeTags(PU_CACHE, PU_CACHE);
 
         W_Reset();
     }
@@ -1508,7 +1503,7 @@ int DD_Main(void)
             continue;
 
         while(++p != Argc() && !ArgIsOption(p))
-            W_AddFile(Argv(p), false);
+            F_AddFile(Argv(p), false);
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }}
@@ -1526,7 +1521,9 @@ int DD_Main(void)
             W_DumpLump(lumpNum, 0);
     }
     if(ArgCheck("-dumpwaddir"))
+    {
         W_PrintLumpDirectory();
+    }
 
     // Try to load the autoexec file. This is done here to make sure everything is
     // initialized: the user can do here anything that s/he'd be able to do in-game
@@ -1633,7 +1630,7 @@ int DD_Main(void)
     return exitCode;
 }
 
-static DD_InitResourceSystem(void)
+static void DD_InitResourceSystem(void)
 {
     Con_Message("Initializing Resource subsystem...\n");
 
@@ -1697,14 +1694,15 @@ static int DD_StartupWorker(void* parm)
 
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) != 0)
-        W_AddFile(Str_Text(&foundPath), false);
-    else
+    if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
+       !F_AddFile(Str_Text(&foundPath), false))
+    {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
+    }
     Str_Free(&foundPath);
     }
 
-    // No more files/packages will be loaded in startup mode after this point.
+    // No more lumps/packages will be loaded in startup mode after this point.
     F_EndStartup();
 
     // Load engine help resources.
@@ -2288,11 +2286,11 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     if(index != 0 && (tex = GL_TextureByIndex(index-1, texNamespace)))
     {
         materialnum_t result;
-        dduri_t* path = Uri_ConstructDefault();
+        Uri* path = Uri_New();
         Uri_SetPath(path, Texture_Name(tex));
         Uri_SetScheme(path, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
         result = Materials_IndexForUri(path);
-        Uri_Destruct(path);
+        Uri_Delete(path);
         return result;
     }
     return 0;
@@ -2422,7 +2420,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
-           W_AddFile(Str_Text(&foundPath), false))
+           F_AddFile(Str_Text(&foundPath), false))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
@@ -2499,7 +2497,7 @@ D_CMD(Unload)
         }
 
         // We can safely remove this file.
-        if(W_RemoveFile(Str_Text(&foundPath)))
+        if(F_RemoveFile(Str_Text(&foundPath)))
         {
             result = 1;
         }

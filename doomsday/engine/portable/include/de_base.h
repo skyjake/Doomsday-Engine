@@ -44,8 +44,11 @@
 #include "dd_input.h"
 #include "dd_loop.h"
 #include "dd_help.h"
+<<<<<<< HEAD
 #include "dd_zip.h"
 #include "reader.h"
 #include "writer.h"
+=======
+>>>>>>> beta6-ringzero
 
 #endif /* LIBDENG_BASE_H */

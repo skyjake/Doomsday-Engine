@@ -29,7 +29,7 @@
 
 #include "materialvariant.h"
 
-materialvariant_t* MaterialVariant_Construct(material_t* generalCase,
+materialvariant_t* MaterialVariant_New(material_t* generalCase,
     materialvariantspecification_t* spec)
 {
     assert(generalCase && spec);
@@ -62,7 +62,7 @@ materialvariant_t* MaterialVariant_Construct(material_t* generalCase,
     }
 }
 
-void MaterialVariant_Destruct(materialvariant_t* mat)
+void MaterialVariant_Delete(materialvariant_t* mat)
 {
     assert(mat);
     free(mat);

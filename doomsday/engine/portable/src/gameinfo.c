@@ -120,7 +120,7 @@ void P_DestroyGameInfo(gameinfo_t* info)
 
         { resourcerecord_t** rec;
         for(rec = rset->records; *rec; rec++)
-            ResourceRecord_Destruct(*rec);
+            ResourceRecord_Delete(*rec);
         }
         free(rset->records);
         rset->records = 0;

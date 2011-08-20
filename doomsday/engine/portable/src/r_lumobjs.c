@@ -179,7 +179,7 @@ void LO_InitForMap(void)
 void LO_Clear(void)
 {
     if(luminousBlockSet)
-        ZBlockSet_Destruct(luminousBlockSet);
+        ZBlockSet_Delete(luminousBlockSet);
     luminousBlockSet = 0;
 
     if(luminousList)
@@ -248,7 +248,7 @@ static lumobj_t* allocLumobj(void)
         if(!luminousBlockSet)
         {
             luminousBlockSet =
-                ZBlockSet_Construct(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
+                ZBlockSet_New(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
         }
 
         luminousList =

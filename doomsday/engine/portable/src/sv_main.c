@@ -124,7 +124,6 @@ void Sv_GetInfo(serverinfo_t *info)
     }
 
     // Some WAD names.
-    W_GetIWADFileName(info->iwad, sizeof(info->iwad) - 1);
     W_GetPWADFileNames(info->pwads, sizeof(info->pwads), ';');
 
     // This should be a CRC number that describes all the loaded data.
@@ -145,7 +144,6 @@ size_t Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
     Str_Appendf(msg, "game:%s\n", info->plugin);
     Str_Appendf(msg, "mode:%s\n", info->gameIdentityKey);
     Str_Appendf(msg, "setup:%s\n", info->gameConfig);
-    Str_Appendf(msg, "iwad:%s\n", info->iwad);
     Str_Appendf(msg, "wcrc:%i\n", info->wadNumber);
     Str_Appendf(msg, "pwads:%s\n", info->pwads);
     Str_Appendf(msg, "map:%s\n", info->map);
@@ -250,10 +248,6 @@ boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
     else if(!strcmp(label, "setup"))
     {
         strncpy(info->gameConfig, value, sizeof(info->gameConfig) - 1);
-    }
-    else if(!strcmp(label, "iwad"))
-    {
-        strncpy(info->iwad, value, sizeof(info->iwad) - 1);
     }
     else if(!strcmp(label, "wcrc"))
     {

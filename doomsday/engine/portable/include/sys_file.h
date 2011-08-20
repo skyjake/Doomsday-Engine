@@ -50,6 +50,9 @@ typedef struct {
     unsigned int lastModified;
 } DFILE;
 
+/// Register the console commands, variables, etc..., of this module.
+void F_Register(void);
+
 /**
  * Initialize the file system databases.
  */
@@ -64,6 +67,21 @@ void F_Shutdown(void);
  * \post No more files will be loaded in startup mode.
  */
 void F_EndStartup(void);
+
+/**
+ * Files with a .wad extension are archived data files with multiple 'lumps',
+ * other files are single lumps whose base filename will become the lump name.
+ *
+ * \note Lump names can appear multiple times. The name searcher looks backwards,
+ * so a later file can override an earlier one.
+ *
+ * @return  @c true, if the operation is successful.
+ */
+boolean F_AddFile(const char* fileName, boolean allowDuplicate);
+boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
+
+boolean F_RemoveFile(const char* fileName);
+boolean F_RemoveFiles(const char* const* filenames, size_t num);
 
 /**
  * Remove all file records flagged Runtime.
@@ -101,9 +119,14 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
 size_t F_Length(DFILE* file);
 
 /**
+ * @return  "Last modified" timestamp of the file.
+ */
+unsigned int F_LastModified(DFILE* file);
+
+/**
  * @return  Number of bytes read (at most @a count bytes will be read).
  */
-size_t F_Read(void* dest, size_t count, DFILE* file);
+size_t F_Read(DFILE* file, void* dest, size_t count);
 
 unsigned char F_GetC(DFILE* file);
 size_t F_Tell(DFILE* file);
@@ -119,7 +142,7 @@ void F_Rewind(DFILE* file);
  * @return  The time when the file was last modified, as seconds since
  * the Epoch else zero if the file is not found.
  */
-unsigned int F_LastModified(const char* fileName);
+unsigned int F_GetLastModified(const char* fileName);
 
 /**
  * Reset known fileId records so that the next time F_CheckFileId() is
@@ -150,7 +173,7 @@ boolean F_ReleaseFileId(const char* path);
  *
  * @return  @c true, if the string matches the pattern.
  */
-int F_MatchName(const char* string, const char* pattern);
+int F_MatchFileName(const char* string, const char* pattern);
 
 void F_InitializeResourcePathMap(void);
 

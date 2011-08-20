@@ -56,6 +56,7 @@ D_CMD(HelpWhat);
 D_CMD(ListAliases);
 D_CMD(ListCmds);
 D_CMD(ListVars);
+D_CMD(VarStats);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -97,6 +98,7 @@ void Con_DataRegister(void)
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
+    C_CMD("varstats",       NULL,   VarStats);
 }
 
 static int markStringVariableFreed(struct pathdirectory_node_s* node, void* paramaters)
@@ -118,12 +120,13 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
     cvar_t* var = PathDirectoryNode_DetachUserData(node);
     if(NULL != var)
     {
+        assert(PT_LEAF == PathDirectoryNode_Type(node));
         if((var->flags & CVF_CAN_FREE) && var->type == CVT_CHARPTR)
         {
             char** ptr = (char**) var->ptr;
             // \note Multiple vars could be using the same pointer (so ensure
             // that we attempt to free only once).
-            PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, -1, markStringVariableFreed, ptr);
+            PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, markStringVariableFreed, ptr);
             free(*ptr);
             *ptr = emptyString;
         }
@@ -134,8 +137,14 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 
 static void clearVariables(void)
 {
-    PathDirectory_Iterate(cvarDirectory, PCF_NO_BRANCH, NULL, -1, clearVariable);
-    PathDirectory_Destruct(cvarDirectory); cvarDirectory = NULL;
+    /// If _DEBUG we'll traverse all nodes and verify our clear logic.
+#if _DEBUG
+    int flags = 0;
+#else
+    int flags = PCF_NO_BRANCH;
+#endif
+    PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearVariable);
+    PathDirectory_Delete(cvarDirectory), cvarDirectory = NULL;
     cvarCount = 0;
 }
 
@@ -192,7 +201,7 @@ static void clearAliases(void)
 static void clearCommands(void)
 {
     if(ccmdBlockSet)
-        BlockSet_Destruct(ccmdBlockSet);
+        BlockSet_Delete(ccmdBlockSet);
     ccmdBlockSet = 0;
     ccmdListHead = 0;
     numUniqueNamedCCmds = 0;
@@ -224,6 +233,9 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         textA = Str_Text(textAString);
         break;
     case WT_GAMEINFO: textA = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wA->data)); break;
+    default:
+        Con_Error("compareKnownWordByName: Invalid type %i for word A.", wA->type);
+        exit(1); // Unreachable
     }
 
     switch(wB->type)
@@ -235,6 +247,9 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         textB = Str_Text(textBString);
         break;
     case WT_GAMEINFO: textB = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wB->data)); break;
+    default:
+        Con_Error("compareKnownWordByName: Invalid type %i for word B.", wB->type);
+        exit(1); // Unreachable
     }
 
     result = stricmp(textA, textB);
@@ -273,14 +288,32 @@ static boolean removeFromKnownWords(knownwordtype_t type, void* data)
     return false;
 }
 
+typedef struct {
+    uint count;
+    cvartype_t type;
+    boolean hidden;
+    boolean ignoreHidden;
+} countvariableparams_t;
+
 static int countVariable(const struct pathdirectory_node_s* node, void* paramaters)
 {
     assert(NULL != node && NULL != paramaters);
     {
+    countvariableparams_t* p = (countvariableparams_t*) paramaters;
     cvar_t* var = PathDirectoryNode_UserData(node);
-    uint* count = (uint*) paramaters;
-    if(NULL != var && !(var->flags & CVF_HIDE))
-        ++(*count);
+    if(!(p->ignoreHidden && (var->flags & CVF_HIDE)))
+    {
+        if(!VALID_CVARTYPE(p->type) && !p->hidden)
+        {
+            if(!p->ignoreHidden || !(var->flags & CVF_HIDE))
+                ++(p->count);
+        }
+        else if((p->hidden && (var->flags & CVF_HIDE)) ||
+                (VALID_CVARTYPE(p->type) && p->type == CVar_Type(var)))
+        {
+            ++(p->count);
+        }
+    }
     return 0; // Continue iteration.
     }
 }
@@ -307,15 +340,19 @@ static int addVariableToKnownWords(const struct pathdirectory_node_s* node, void
  */
 static void updateKnownWords(void)
 {
-    uint c, knownCVars, knownGames;
+    countvariableparams_t countCVarParams;
+    uint c, knownGames;
     size_t len;
 
     if(!knownWordsNeedUpdate)
         return;
 
     // Count the number of visible console variables.
-    knownCVars = 0;
-    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, -1, countVariable, &knownCVars);
+    countCVarParams.count = 0;
+    countCVarParams.type = -1;
+    countCVarParams.hidden = false;
+    countCVarParams.ignoreHidden = true;
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &countCVarParams);
 
     knownGames = 0;
     { int i, gameInfoCount = DD_GameInfoCount();
@@ -327,7 +364,7 @@ static void updateKnownWords(void)
     }}
 
     // Build the known words table.
-    numKnownWords = numUniqueNamedCCmds + knownCVars + numCAliases + knownGames;
+    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + knownGames;
     len = sizeof(knownword_t) * numKnownWords;
     knownWords = realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -346,10 +383,10 @@ static void updateKnownWords(void)
     }}
 
     // Add variables?
-    if(0 != knownCVars)
+    if(0 != countCVarParams.count)
     {
         /// \note cvars are NOT sorted.
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, -1, addVariableToKnownWords, &c);
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, addVariableToKnownWords, &c);
     }
 
     // Add aliases?
@@ -384,6 +421,18 @@ static void updateKnownWords(void)
     // Sort it so we get nice alphabetical word completions.
     qsort(knownWords, numKnownWords, sizeof(knownword_t), compareKnownWordByName);
     knownWordsNeedUpdate = false;
+}
+
+static const ddstring_t* CVar_TypeName(cvartype_t type)
+{
+    static const ddstring_t names[CVARTYPE_COUNT] = {
+        { "invalid" },
+        { "CVT_BYTE" },
+        { "CVT_INT" },
+        { "CVT_FLOAT" },
+        { "CVT_CHATPTR"},
+    };
+    return &names[(VALID_CVARTYPE(type)? type : 0)];
 }
 
 cvartype_t CVar_Type(const cvar_t* var)
@@ -844,7 +893,7 @@ if(ccmd->args == NULL)
     }}
 
     if(!ccmdBlockSet)
-        ccmdBlockSet = BlockSet_Construct(sizeof(ccmd_t), 32);
+        ccmdBlockSet = BlockSet_New(sizeof(ccmd_t), 32);
     newCCmd = BlockSet_Allocate(ccmdBlockSet);
     // Make a static copy of the name in the zone (this allows the source
     // data to change in case of dynamic registrations).
@@ -1172,6 +1221,9 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
                 text = Str_Text(textString);
                 break;
             case WT_GAMEINFO: text = Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data)); break;
+            default:
+                Con_Error("Con_IterateKnownWords: Invalid type %i for word.", word->type);
+                exit(1); // Unreachable
             }
 
             compareResult = strnicmp(text, pattern, patternLength);
@@ -1251,7 +1303,7 @@ void Con_InitDatabases(void)
     if(inited) return;
 
     // Create the empty variable directory now.
-    cvarDirectory = PathDirectory_Construct();
+    cvarDirectory = PathDirectory_New();
     cvarCount = 0;
 
     ccmdListHead = 0;
@@ -1374,9 +1426,11 @@ D_CMD(HelpWhat)
 static int printKnownWordWorker(const knownword_t* word, void* paramaters)
 {
     assert(word);
+    {
+    uint* numPrinted = (void*)paramaters;
     switch(word->type)
     {
-      case WT_CCMD: {
+    case WT_CCMD: {
         ccmd_t* ccmd = (ccmd_t*) word->data;
         char* str;
 
@@ -1389,7 +1443,7 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
             Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", ccmd->name);
         break;
       }
-      case WT_CVAR: {
+    case WT_CVAR: {
         cvar_t* cvar = (cvar_t*) word->data;
 
         if(cvar->flags & CVF_HIDE)
@@ -1398,18 +1452,20 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
         Con_PrintCVar(cvar, "  ");
         break;
       }
-      case WT_CALIAS: {
+    case WT_CALIAS: {
         calias_t* cal = (calias_t*) word->data;
         Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", cal->name, cal->command);
         break;
       }
-      case WT_GAMEINFO: {
+    case WT_GAMEINFO: {
         gameinfo_t* info = (gameinfo_t*) word->data;
         Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", Str_Text(GameInfo_IdentityKey(info)));
         break;
       }
     }
+    if(numPrinted) ++(*numPrinted);
     return 0; // Continue iteration.
+    }
 }
 
 /// \note Part of the Doomsday public API.
@@ -1488,21 +1544,51 @@ char* Con_GetString(const char* name)
 
 D_CMD(ListCmds)
 {
+    uint numPrinted = 0;
     Con_Printf("Console commands:\n");
-    Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CCMD, printKnownWordWorker, 0);
+    Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CCMD, printKnownWordWorker, &numPrinted);
+    Con_Printf("Found %u console commands.\n", numPrinted);
     return true;
 }
 
 D_CMD(ListVars)
 {
+    uint numPrinted = 0;
     Con_Printf("Console variables:\n");
-    Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CVAR, printKnownWordWorker, 0);
+    Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CVAR, printKnownWordWorker, &numPrinted);
+    Con_Printf("Found %u console variables.\n", numPrinted);
+    return true;
+}
+
+D_CMD(VarStats)
+{
+    cvartype_t type;
+    countvariableparams_t p;
+    Con_FPrintf(CBLF_YELLOW, "Console Variable Statistics:\n");
+    p.hidden = false;
+    p.ignoreHidden = false;
+    for(type = CVT_BYTE; type < CVARTYPE_COUNT; ++type)
+    {
+        p.count = 0;
+        p.type = type;
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
+        Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(type)), p.count);
+    }
+    p.count = 0;
+    p.type = -1;
+    p.hidden = true;
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
+    Con_Printf("       Total: %u\n      Hidden: %u\n\n", cvarCount, p.count);
+    PathDirectory_PrintHashDistribution(cvarDirectory);
+    PathDirectory_Print(cvarDirectory, CVARDIRECTORY_DELIMITER);
     return true;
 }
 
 D_CMD(ListAliases)
 {
+    uint numPrinted = 0;
     Con_Printf("Aliases:\n");
-    Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CALIAS, printKnownWordWorker, 0);
+    Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CALIAS, printKnownWordWorker, &numPrinted);
+    Con_Printf("Found %u aliases.\n", numPrinted);
     return true;
 }

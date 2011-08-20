@@ -381,8 +381,8 @@ desc = List all event binding classes.
 [listcmds]
 desc = List all console commands.
 
-[listwadfiles]
-desc = List all loaded WAD data files.
+[listfiles]
+desc = List all loaded resource data files.
 
 [listfonts]
 desc = List all known fonts.
@@ -532,6 +532,9 @@ inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 
 [unload]
 desc = Unload the current game or one or more data files.
 inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
+
+[varstats]
+desc = Show detailed statistics for console variables.
 
 [version]
 desc = Show detailed version information.

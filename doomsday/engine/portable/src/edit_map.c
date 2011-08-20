@@ -677,7 +677,7 @@ static void buildSectorLineLists(gamemap_t* map)
     VERBOSE( Con_Message(" Build line tables...\n") )
 
     // build line tables for each sector.
-    lineLinksBlockSet = ZBlockSet_Construct(sizeof(linelink_t), 512, PU_APPSTATIC);
+    lineLinksBlockSet = ZBlockSet_New(sizeof(linelink_t), 512, PU_APPSTATIC);
     sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
     totallinks = 0;
     for(i = 0, li = map->lineDefs; i < map->numLineDefs; ++i, li++)
@@ -764,7 +764,7 @@ static void buildSectorLineLists(gamemap_t* map)
     }
 
     // Free temporary storage.
-    ZBlockSet_Destruct(lineLinksBlockSet);
+    ZBlockSet_Delete(lineLinksBlockSet);
     M_Free(sectorLineLinks);
 }
 

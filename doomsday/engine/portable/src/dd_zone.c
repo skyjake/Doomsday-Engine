@@ -863,15 +863,15 @@ void* ZBlockSet_Allocate(zblockset_t* set)
     }
 }
 
-zblockset_t* ZBlockSet_Construct(size_t sizeOfElement, unsigned int batchSize, int tag)
+zblockset_t* ZBlockSet_New(size_t sizeOfElement, unsigned int batchSize, int tag)
 {
     zblockset_t* set;
 
     if(sizeOfElement == 0)
-        Con_Error("Attempted ZBlockSet_Construct with invalid sizeOfElement (==0).");
+        Con_Error("Attempted ZBlockSet_New with invalid sizeOfElement (==0).");
 
     if(batchSize == 0)
-        Con_Error("Attempted ZBlockSet_Construct with invalid batchSize (==0).");
+        Con_Error("Attempted ZBlockSet_New with invalid batchSize (==0).");
 
     // Allocate the blockset.
     set = Z_Calloc(sizeof(*set), tag, NULL);
@@ -885,7 +885,7 @@ zblockset_t* ZBlockSet_Construct(size_t sizeOfElement, unsigned int batchSize, i
     return set;
 }
 
-void ZBlockSet_Destruct(zblockset_t* set)
+void ZBlockSet_Delete(zblockset_t* set)
 {
     assert(set);
 

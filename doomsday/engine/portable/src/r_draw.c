@@ -70,7 +70,7 @@ int bwidth;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean inited = false;
-static dduri_t* borderGraphicsNames[9];
+static Uri* borderGraphicsNames[9];
 static patchid_t borderPatches[9];
 
 // CODE --------------------------------------------------------------------
@@ -98,7 +98,7 @@ static void loadViewBorderPatches(void)
     bwidth = info.height;
 }
 
-void R_SetBorderGfx(const dduri_t* const* paths)
+void R_SetBorderGfx(const Uri* const* paths)
 {
     assert(inited);
     {
@@ -111,14 +111,14 @@ void R_SetBorderGfx(const dduri_t* const* paths)
         if(paths[i])
         {
             if(!borderGraphicsNames[i])
-                borderGraphicsNames[i] = Uri_ConstructCopy(paths[i]);
+                borderGraphicsNames[i] = Uri_NewCopy(paths[i]);
             else
                 Uri_Copy(borderGraphicsNames[i], paths[i]);
         }
         else
         {
             if(borderGraphicsNames[i])
-                Uri_Destruct(borderGraphicsNames[i]);
+                Uri_Delete(borderGraphicsNames[i]);
             borderGraphicsNames[i] = 0;
         }
     }}
@@ -141,7 +141,7 @@ void R_InitViewWindow(void)
         for(i = 0; i < 9; ++i)
         {
             if(borderGraphicsNames[i])
-                Uri_Destruct(borderGraphicsNames[i]);
+                Uri_Delete(borderGraphicsNames[i]);
         }
     }
     memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
@@ -156,7 +156,7 @@ void R_ShutdownViewWindow(void)
     { uint i;
     for(i = 0; i < 9; ++i)
         if(borderGraphicsNames[i])
-            Uri_Destruct(borderGraphicsNames[i]);
+            Uri_Delete(borderGraphicsNames[i]);
     }
     memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
     inited = false;

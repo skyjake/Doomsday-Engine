@@ -223,6 +223,9 @@ static texturevariantspecification_t* unlinkVariantSpecification(texturevariants
         listHead = &detailVariantSpecs[hash];
         break;
       }
+    default:
+        Con_Error("unlinkVariantSpecification: Invalid spec type %i.", spec->type);
+        exit(1); // Unreachable.
     }
 
     if(*listHead)
@@ -457,6 +460,9 @@ static texturevariantspecification_t* findVariantSpecification(
         node = detailVariantSpecs[hash];
         break;
       }
+    default:
+        Con_Error("findVariantSpecification: Invalid spec type %i.", type);
+        exit(1); // Unreachable.
     }
 
     // Do we already have a concrete version of the template specification?
@@ -752,7 +758,7 @@ static void destroyTexture(texture_t* tex)
 {
     GL_ReleaseGLTexturesForTexture(tex);
     unlinkTexture(tex);
-    Texture_Destruct(tex);
+    Texture_Delete(tex);
 }
 
 static void destroyTextures(texturenamespaceid_t texNamespace)
@@ -829,7 +835,7 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     uploadContent(uploadMethod, content);
 }
 
-static const dduri_t* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
+static const Uri* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
 {
     switch(texNamespace)
     {
@@ -1067,7 +1073,6 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
         if(scaleSharp)
         {
             int scaleMethod = GL_ChooseSmartFilter(image->width, image->height, 0);
-            int numpels = image->width * image->height;
             boolean origMasked = (image->flags & IMGF_IS_MASKED) != 0;
             colorpaletteid_t origPaletteId = image->paletteId;
             uint8_t* newPixels;
@@ -2329,6 +2334,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
         case DGL_RGBA:              loadFormat = GL_RGBA; break;
         default:
             Con_Error("GL_UploadTextureContent: Unknown format %i.", (int) dglFormat);
+            exit(1);
         }
 
         glFormat = ChooseTextureFormat(dglFormat, allowCompression);
@@ -2350,6 +2356,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
         case DGL_RGB:               loadFormat = GL_RGB; break;
         default:
             Con_Error("GL_UploadTextureContent: Unknown format %i.", (int) dglFormat);
+            exit(1); // Unreachable.
         }
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, allowCompression);
@@ -2627,7 +2634,7 @@ byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
                 memset(image->pixels, 0, bufSize);
 
             // Load the raw image data.
-            F_Read(image->pixels, fileLength, file);
+            F_Read(file, image->pixels, fileLength);
             result = 1;
         }
         F_Close(file);
@@ -2672,7 +2679,7 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
                 memset(image->pixels, 0, bufSize);
 
             // Load the raw image data.
-            F_Read(image->pixels, fileLength, file);
+            F_Read(file, image->pixels, fileLength);
             result = 1;
 
 #undef FLAT_HEIGHT
@@ -2713,7 +2720,7 @@ static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tma
             if(NULL == buf)
                 Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
                     "temporary lump buffer.", (unsigned long) (fileLength));
-            F_Read(buf, fileLength, file);
+            F_Read(file, buf, fileLength);
             patch = (const doompatch_header_t*)buf;
 
             GL_InitImage(image);
@@ -2748,7 +2755,7 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
     if(1 == result && NULL != patchTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
-        const doompatch_header_t hdr;
+        doompatch_header_t hdr;
         W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
         patchTex->offX = -SHORT(hdr.leftOffset);
         patchTex->offY = -SHORT(hdr.topOffset);
@@ -2763,7 +2770,7 @@ byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
     if(1 == result && NULL != spriteTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
-        const doompatch_header_t hdr;
+        doompatch_header_t hdr;
         W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
         spriteTex->offX = SHORT(hdr.leftOffset);
         spriteTex->offY = SHORT(hdr.topOffset);
@@ -2940,7 +2947,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
                     memset(image->pixels, 0, bufSize);
 
                 // Load the raw image data.
-                F_Read(image->pixels, fileLength, file);
+                F_Read(file, image->pixels, fileLength);
                 image->width = RAW_WIDTH;
                 image->height = (int) (fileLength / image->width);
                 image->pixelSize = 1;
@@ -3020,7 +3027,7 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
     return 0;
 }
 
-DGLuint GL_GetLightMapTexture(const dduri_t* uri)
+DGLuint GL_GetLightMapTexture(const Uri* uri)
 {
     if(uri)
     {
@@ -3040,7 +3047,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
-DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
+DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
 {
     if(uri)
     {
@@ -3320,7 +3327,7 @@ const texture_t* GL_CreateTexture2(const char* name, uint index,
      * A new texture.
      */
 
-    tex = Texture_Construct2(texturesCount+1/*1-based index*/, name,
+    tex = Texture_NewWithDimensions(texturesCount+1/*1-based index*/, name,
         index, width, height);
 
     // We hash the name for faster searching.
@@ -3349,7 +3356,7 @@ const texture_t* GL_CreateTexture(const char* rawName, uint index,
     return GL_CreateTexture2(rawName, index, texNamespace, 0, 0);
 }
 
-uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent)
+uint GL_TextureIndexForUri2(const Uri* uri, boolean silent)
 {
     const texture_t* glTex;
     if((glTex = GL_TextureByUri2(uri, silent)))
@@ -3363,16 +3370,16 @@ uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent)
     return 0;
 }
 
-uint GL_TextureIndexForUri(const dduri_t* uri)
+uint GL_TextureIndexForUri(const Uri* uri)
 {
     return GL_TextureIndexForUri2(uri, false);
 }
 
-dduri_t* GL_ConstructUriForTexture(struct texture_s* tex)
+Uri* GL_NewUriForTexture(struct texture_s* tex)
 {
     assert(tex);
     {
-    dduri_t* uri = Uri_Construct2(Texture_Name(tex), RC_NULL);
+    Uri* uri = Uri_NewWithPath2(Texture_Name(tex), RC_NULL);
     Uri_SetScheme(uri, Str_Text(DD_TextureNamespaceNameForId(Texture_Namespace(tex))));
     return uri;
     }
@@ -3552,7 +3559,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(NULL == variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        variant = TextureVariant_Construct(tex, newGLName, spec);
+        variant = TextureVariant_New(tex, newGLName, spec);
         Texture_AddVariant(tex, variant);
     }
     // Are we re-preparing a released texture?
@@ -3567,6 +3574,9 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     {
     case TST_GENERAL: uploadMethod = prepareVariant(variant, &image); break;
     case TST_DETAIL:  uploadMethod = prepareDetailVariant(variant, &image); break;
+    default:
+        Con_Error("tryLoadImageAndPrepareVariant: Invalid spec type %i.", spec->type);
+        exit(1); // Unreachable.
     }
 
     // We're done with the image data.
@@ -3648,7 +3658,7 @@ const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariants
     return GL_PrepareTextureVariant2(tex, spec, NULL);
 }
 
-const DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
+DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
     const texturevariant_t* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
@@ -3657,7 +3667,7 @@ const DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecificat
     return 0;
 }
 
-const DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
+DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTexture2(tex, spec, NULL);
 }
@@ -3715,7 +3725,7 @@ texture_t* GL_ToTexture(textureid_t id)
     return tex;
 }
 
-const texture_t* GL_TextureByUri2(const dduri_t* uri, boolean silent)
+const texture_t* GL_TextureByUri2(const Uri* uri, boolean silent)
 {
     ddstring_t* path;
     if(uri && NULL != (path = Uri_Resolved(uri)))
@@ -3742,7 +3752,7 @@ const texture_t* GL_TextureByUri2(const dduri_t* uri, boolean silent)
     return NULL;
 }
 
-const texture_t* GL_TextureByUri(const dduri_t* uri)
+const texture_t* GL_TextureByUri(const Uri* uri)
 {
     return GL_TextureByUri2(uri, false);
 }

@@ -24,47 +24,40 @@
 #ifndef LIBDENG_STRINGPOOL_H
 #define LIBDENG_STRINGPOOL_H
 
-#include "dd_string.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-struct stringpool_intern_s;
-
-// Intern string identifier.
-typedef uint stringpool_internid_t;
+#include "dd_types.h"
 
 /**
  * String Pool.  Simple data structure for managing a set of unique strings
  * with integral interning mechanism.
  *
  * @ingroup data
- *
- * @todo Performance is presently suboptimal due to the representation of the
- * intern list. A better implementation would use a binary search tree.
  */
-typedef struct stringpool_s {
-    /// Intern list (StringPool::_internsCount size).
-    struct stringpool_intern_s* _interns;
-    uint _internsCount;
+struct stringpool_s; // The stringpool instance (opaque).
+typedef struct stringpool_s StringPool;
 
-    /// Sorted redirection table.
-    stringpool_internid_t* _sortedInternTable;
-} stringpool_t;
+// Interned string identifier.
+typedef uint StringPoolInternId;
 
 /**
  * @param strings  Array of strings to be interned (must contain at least @a count strings!)
  * @param count  Number of strings to be interned.
  */
-stringpool_t* StringPool_Construct(ddstring_t** strings, uint count);
-stringpool_t* StringPool_ConstructDefault(void);
-void StringPool_Destruct(stringpool_t* pool);
+StringPool* StringPool_New(void);
+StringPool* StringPool_NewWithStrings(ddstring_t** strings, uint count);
+void StringPool_Delete(StringPool* pool);
 
 /// Clear the string pool (reset to default initial state).
-void StringPool_Clear(stringpool_t* pool);
+void StringPool_Clear(StringPool* pool);
 
 /// @return  @c true if there are no strings present in the pool.
-boolean StringPool_Empty(stringpool_t* pool);
+boolean StringPool_Empty(StringPool* pool);
 
 /// @return  Number of strings in the pool.
-uint StringPool_Size(stringpool_t* pool);
+uint StringPool_Size(StringPool* pool);
 
 /**
  * Intern string @a str into the pool. If this is not a previously known string
@@ -75,20 +68,20 @@ uint StringPool_Size(stringpool_t* pool);
  * @param str  String to be interned (must not be of zero-length).
  * @return  Unique Id associated with the interned copy of @a str.
  */
-stringpool_internid_t StringPool_Intern(stringpool_t* pool, const ddstring_t* str);
+StringPoolInternId StringPool_Intern(StringPool* pool, const ddstring_t* str);
 
 /**
  * Same as StringPool::Intern execpt the interned copy of the string is returned
  * rather than the intern Id.
  */
-const ddstring_t* StringPool_InternAndRetrieve(stringpool_t* pool, const ddstring_t* str);
+const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_t* str);
 
 /**
  * Have we already interned @a str?
  * @param str  Candidate string to look for.
  * @return  Id associated with the interned copy of @a str if found, else @c 0
  */
-stringpool_internid_t StringPool_IsInterned(stringpool_t* pool, const ddstring_t* str);
+StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str);
 
 /**
  * Retrieve an immutable copy of the interned string associated with @a internId.
@@ -98,6 +91,10 @@ stringpool_internid_t StringPool_IsInterned(stringpool_t* pool, const ddstring_t
  * @param internId  Id of the interned string to retrieve.
  * @return  Interned string associated with @a internId.
  */
-const ddstring_t* StringPool_String(stringpool_t* pool, stringpool_internid_t internId);
+const ddstring_t* StringPool_String(StringPool* pool, StringPoolInternId internId);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_STRINGPOOL_H */

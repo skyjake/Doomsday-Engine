@@ -28,11 +28,17 @@
 #include "m_args.h"
 #include "sys_reslocator.h"
 #include "resourcenamespace.h"
-#include "dd_uri.h"
+#include "uri.h"
 
-static __inline dduri_t* allocUri(const char* path, resourceclass_t defaultResourceClass)
+struct uri_s
 {
-    dduri_t* uri;
+    ddstring_t _scheme;
+    ddstring_t _path;
+};
+
+static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceClass)
+{
+    Uri* uri;
     if((uri = malloc(sizeof(*uri))) == 0)
     {
         Con_Error("Uri::allocUri: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*uri));
@@ -45,7 +51,7 @@ static __inline dduri_t* allocUri(const char* path, resourceclass_t defaultResou
     return uri;
 }
 
-static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
+static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
 {
     Str_Clear(&uri->_scheme);
 
@@ -82,7 +88,7 @@ static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
  * Substitute known symbols in the possibly templated path.
  * Resulting path is a well-formed, sys_filein-compatible file path (perhaps base-relative).
  */
-static ddstring_t* resolveUri(const dduri_t* uri)
+static ddstring_t* resolveUri(const Uri* uri)
 {
     assert(uri);
     {
@@ -156,8 +162,8 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                Con_Message("Invalid character '%c' in \"%s\" at %i (Uri::resolveUri).\n",
-                            *p, Str_Text(&uri->_path), p - Str_Text(&uri->_path));
+                Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
+                    *p, Str_Text(&uri->_path), (unsigned long) (p - Str_Text(&uri->_path)));
                 goto parseEnded;
             }
             // Skip over the opening brace.
@@ -191,7 +197,7 @@ parseEnded:
     }
 }
 
-void Uri_Clear(dduri_t* uri)
+void Uri_Clear(Uri* uri)
 {
     if(!uri)
     {
@@ -202,36 +208,36 @@ void Uri_Clear(dduri_t* uri)
     Str_Clear(&uri->_path);
 }
 
-dduri_t* Uri_Construct2(const char* path, resourceclass_t defaultResourceClass)
+Uri* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass)
 {
     return allocUri(path, defaultResourceClass);
 }
 
-dduri_t* Uri_Construct(const char* path)
+Uri* Uri_NewWithPath(const char* path)
 {
     return allocUri(path, RC_UNKNOWN);
 }
 
-dduri_t* Uri_ConstructDefault(void)
+Uri* Uri_New(void)
 {
     return allocUri(0, RC_UNKNOWN);
 }
 
-dduri_t* Uri_ConstructCopy(const dduri_t* other)
+Uri* Uri_NewCopy(const Uri* other)
 {
     if(!other)
     {
         Con_Error("Attempted Uri::ConstructCopy with invalid reference (other==0).");
         return 0; // Unreachable.
     }
-    { dduri_t* uri = allocUri(0, RC_NULL);
+    { Uri* uri = allocUri(0, RC_NULL);
     Str_Copy(&uri->_scheme, Uri_Scheme(other));
     Str_Copy(&uri->_path, Uri_Path(other));
     return uri;
     }
 }
 
-void Uri_Destruct(dduri_t* uri)
+void Uri_Delete(Uri* uri)
 {
     if(!uri)
     {
@@ -243,7 +249,7 @@ void Uri_Destruct(dduri_t* uri)
     free(uri);
 }
 
-dduri_t* Uri_Copy(dduri_t* uri, const dduri_t* other)
+Uri* Uri_Copy(Uri* uri, const Uri* other)
 {
     if(!uri)
     {
@@ -260,7 +266,7 @@ dduri_t* Uri_Copy(dduri_t* uri, const dduri_t* other)
     return uri;
 }
 
-const ddstring_t* Uri_Scheme(const dduri_t* uri)
+const ddstring_t* Uri_Scheme(const Uri* uri)
 {
     if(!uri)
     {
@@ -270,7 +276,7 @@ const ddstring_t* Uri_Scheme(const dduri_t* uri)
     return &uri->_scheme;
 }
 
-const ddstring_t* Uri_Path(const dduri_t* uri)
+const ddstring_t* Uri_Path(const Uri* uri)
 {
     if(!uri)
     {
@@ -280,7 +286,7 @@ const ddstring_t* Uri_Path(const dduri_t* uri)
     return &uri->_path;
 }
 
-ddstring_t* Uri_Resolved(const dduri_t* uri)
+ddstring_t* Uri_Resolved(const Uri* uri)
 {
     if(!uri)
     {
@@ -290,7 +296,7 @@ ddstring_t* Uri_Resolved(const dduri_t* uri)
     return resolveUri(uri);
 }
 
-void Uri_SetScheme(dduri_t* uri, const char* scheme)
+void Uri_SetScheme(Uri* uri, const char* scheme)
 {
     if(!uri)
     {
@@ -300,7 +306,7 @@ void Uri_SetScheme(dduri_t* uri, const char* scheme)
     Str_Set(&uri->_scheme, scheme);
 }
 
-void Uri_SetPath(dduri_t* uri, const char* path)
+void Uri_SetPath(Uri* uri, const char* path)
 {
     if(!uri)
     {
@@ -310,7 +316,7 @@ void Uri_SetPath(dduri_t* uri, const char* path)
     Str_Set(&uri->_path, path);
 }
 
-void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResourceClass)
+void Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass)
 {
     if(!uri)
     {
@@ -333,17 +339,17 @@ void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResource
     parseScheme(uri, defaultResourceClass);
 }
 
-void Uri_SetUri2(dduri_t* uri, const char* path)
+void Uri_SetUri2(Uri* uri, const char* path)
 {
     Uri_SetUri3(uri, path, RC_UNKNOWN);
 }
 
-void Uri_SetUri(dduri_t* uri, const ddstring_t* path)
+void Uri_SetUri(Uri* uri, const ddstring_t* path)
 {
     Uri_SetUri2(uri, path != 0? Str_Text(path) : 0);
 }
 
-ddstring_t* Uri_ComposePath(const dduri_t* uri)
+ddstring_t* Uri_ComposePath(const Uri* uri)
 {
     if(!uri)
     {
@@ -358,13 +364,13 @@ ddstring_t* Uri_ComposePath(const dduri_t* uri)
     }
 }
 
-ddstring_t* Uri_ToString(const dduri_t* uri)
+ddstring_t* Uri_ToString(const Uri* uri)
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
     return Uri_ComposePath(uri);
 }
 
-boolean Uri_Equality(const dduri_t* uri, const dduri_t* other)
+boolean Uri_Equality(const Uri* uri, const Uri* other)
 {
     assert(uri && other);
     { ddstring_t* thisPath, *otherPath;

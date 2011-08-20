@@ -37,6 +37,7 @@ extern          "C" {
 
 #include "def_share.h"
 #include "p_mapdata.h"
+#include "uri.h"
 
     // Version 6 does not require semicolons.
 #define DED_VERSION         6
@@ -124,14 +125,14 @@ typedef struct {
     float           color[3]; // Red Green Blue (0,1)
     float           lightLevel[2]; // Min/max lightlevel for bias
     ded_flags_t     flags;
-    dduri_t*        up, *down, *sides;
-    dduri_t*        flare;
+    Uri*            up, *down, *sides;
+    Uri*            flare;
     float           haloRadius; // Halo radius (zero = no halo).
 } ded_light_t;
 
 typedef struct {
-    dduri_t*        filename;
-    dduri_t*        skinFilename; // Optional; override model's skin.
+    Uri*            filename;
+    Uri*            skinFilename; // Optional; override model's skin.
     ded_string_t    frame;
     int             frameRange;
     ded_flags_t     flags; // ASCII string of the flags.
@@ -172,7 +173,7 @@ typedef struct {
     ded_soundid_t   id; // ID of this sound, refered to by others.
     ded_string_t    name; // A tag name for the sound.
     ded_string_t    lumpName; // Actual lump name of the sound ("DS" not included).
-    dduri_t*        ext; // External sound file (WAV).
+    Uri*            ext; // External sound file (WAV).
     ded_soundid_t   link; // Link to another sound.
     int             linkPitch;
     int             linkVolume;
@@ -185,13 +186,13 @@ typedef struct {
 typedef struct {
     ded_musicid_t   id; // ID of this piece of music.
     ded_string_t    lumpName; // Lump name.
-    dduri_t*        path; // External file (not a normal MUS file).
+    Uri*            path; // External file (not a normal MUS file).
     int             cdTrack; // 0 = no track.
 } ded_music_t;
 
 typedef struct {
     ded_flags_t     flags;
-    dduri_t*        material;
+    Uri*            material;
     float           offset;
     float           colorLimit;
 } ded_skylayer_t;
@@ -247,7 +248,7 @@ typedef struct {
 typedef struct {
     ded_stringid_t  id;
     ded_count_t     count;
-    dduri_t**       materials;
+    Uri**           materials;
 } ded_tenviron_t;
 
 typedef struct {
@@ -285,8 +286,8 @@ typedef struct {
     int             actLineType;
     int             deactLineType;
     ded_flags_t     wallSection;
-    dduri_t*        actMaterial;
-    dduri_t*        deactMaterial;
+    Uri*            actMaterial;
+    Uri*            deactMaterial;
     char            actMsg[128];
     char            deactMsg[128];
     float           materialMoveAngle;
@@ -330,10 +331,10 @@ typedef struct {
 } ded_sectortype_t;
 
 typedef struct ded_detailtexture_s {
-    dduri_t*        material1;
-    dduri_t*        material2;
+    Uri*            material1;
+    Uri*            material2;
     ded_flags_t     flags;
-    dduri_t*        detailTex; // The file/lump with the detail texture.
+    Uri*            detailTex; // The file/lump with the detail texture.
     boolean         isExternal; // @c true if detailTex is external.
     float           scale;
     float           strength;
@@ -371,7 +372,7 @@ typedef struct {
 typedef struct ded_ptcgen_s {
     struct ded_ptcgen_s* stateNext; // List of generators for a state.
     ded_stateid_t   state; // Triggered by this state (if mobj-gen).
-    dduri_t*        material;
+    Uri*            material;
     ded_mobjid_t    type; // Triggered by this type of mobjs.
     ded_mobjid_t    type2; // Also triggered by this type.
     int             typeNum;
@@ -417,33 +418,33 @@ typedef struct ded_decorlight_s {
     int             patternSkip[2];
     float           lightLevels[2]; // Fade by sector lightlevel.
     int             flareTexture;
-    dduri_t*        up, *down, *sides;
-    dduri_t*        flare; // Overrides flare_texture
+    Uri*            up, *down, *sides;
+    Uri*            flare; // Overrides flare_texture
 } ded_decorlight_t;
 
 // There is a fixed number of light decorations in each decoration.
 #define DED_DECOR_NUM_LIGHTS    16
 
 typedef struct ded_decor_s {
-    dduri_t*        material;
+    Uri*            material;
     ded_flags_t     flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 } ded_decor_t;
 
 typedef struct ded_reflection_s {
-    dduri_t*        material;
+    Uri*            material;
     ded_flags_t     flags;
     blendmode_t     blendMode; // Blend mode flags (bm_*).
     float           shininess;
     float           minColor[3];
-    dduri_t*        shinyMap;
-    dduri_t*        maskMap;
+    Uri*            shinyMap;
+    Uri*            maskMap;
     float           maskWidth;
     float           maskHeight;
 } ded_reflection_t;
 
 typedef struct ded_group_member_s {
-    dduri_t*        material;
+    Uri*            material;
     float           tics;
     float           randomTics;
 } ded_group_member_t;
@@ -455,7 +456,7 @@ typedef struct ded_group_s {
 } ded_group_t;
 
 typedef struct ded_material_layer_stage_s {
-    dduri_t*        texture;
+    Uri*            texture;
     int             tics;
     float           variance; // Stage variance (time).
     float           glow;
@@ -468,7 +469,7 @@ typedef struct ded_material_layer_s {
 } ded_material_layer_t;
 
 typedef struct ded_material_s {
-    dduri_t*        id;
+    Uri*            id;
     boolean         autoGenerated;
     ded_flags_t     flags;
     float           width, height; // In world units.
@@ -477,11 +478,11 @@ typedef struct ded_material_s {
 
 typedef struct {
     unsigned char   ch;
-    dduri_t*        path;
+    Uri*            path;
 } ded_compositefont_mappedcharacter_t;
 
 typedef struct ded_compositefont_s {
-    dduri_t*        id;
+    Uri*            id;
     ded_count_t     charMapCount;
     ded_compositefont_mappedcharacter_t* charMap;
 } ded_compositefont_t;

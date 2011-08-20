@@ -27,9 +27,10 @@
 
 #include "stringpool.h"
 #include "pathdirectory.h"
+#include "m_misc.h"
 
 typedef struct pathdirectory_node_userdatapair_s {
-    stringpool_internid_t internId;
+    StringPoolInternId internId;
     void* data;
 } pathdirectory_node_userdatapair_t;
 
@@ -50,11 +51,11 @@ typedef struct pathdirectory_node_s {
     pathdirectory_node_userdatapair_t _pair;
 } pathdirectory_node_t;
 
-static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
+static pathdirectory_node_t* PathDirectoryNode_New(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
-    stringpool_internid_t internId, void* userData);
+    StringPoolInternId internId, void* userData);
 
-static void PathDirectoryNode_Destruct(pathdirectory_node_t* node);
+static void PathDirectoryNode_Delete(pathdirectory_node_t* node);
 
 static volatile int numInstances = 0;
 // A mutex is used to protect access to the shared fragment info buffer and search state.
@@ -144,23 +145,43 @@ static void clearInternPool(pathdirectory_t* pd)
     assert(NULL != pd);
     if(NULL != pd->_internPool.strings)
     {
-        StringPool_Destruct(pd->_internPool.strings), pd->_internPool.strings = NULL;
+        StringPool_Delete(pd->_internPool.strings), pd->_internPool.strings = NULL;
         free(pd->_internPool.idHashMap), pd->_internPool.idHashMap = NULL;
     }
 }
 
+static void clearNodeList(pathdirectory_node_t** list)
+{
+    pathdirectory_node_t* next;
+
+    if(NULL == *list) return;
+
+    do
+    {
+        next = (*list)->next;
+#if _DEBUG
+        if(NULL != PathDirectoryNode_UserData(*list))
+        {
+            Con_Error("PathDirectory::clearNodeList: Node %p has non-NULL user data.", *list);
+            exit(1); // Unreachable.
+        }
+#endif
+        PathDirectoryNode_Delete(*list);
+    } while(NULL != (*list = next));
+}
+
 static void clearPathHash(pathdirectory_pathhash_t* ph)
 {
-    ushort i;
-
-    if(NULL == ph) return;
-
-    for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-    while(NULL != (*ph)[i])
+    if(NULL != ph)
     {
-        pathdirectory_node_t* next = (*ph)[i]->next;
-        PathDirectoryNode_Destruct((*ph)[i]);
-        (*ph)[i] = next;
+        pathdirectory_nodetype_t type;
+        ushort hash = 0;
+        for(; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+        for(type = PATHDIRECTORY_NODETYPES_FIRST;
+            type < PATHDIRECTORY_NODETYPES_COUNT-PATHDIRECTORY_NODETYPES_FIRST; ++type)
+        {
+            clearNodeList((*ph)[hash].head + type);
+        }
     }
 }
 
@@ -171,16 +192,16 @@ static size_t countNodes(pathdirectory_t* pd, int flags)
     size_t count = 0;
     if(NULL != pd->_pathHash)
     {
+        pathdirectory_nodetype_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
+        pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
-        ushort i;
+        ushort hash;
 
-        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-        for(node = (pathdirectory_node_t*) (*pd->_pathHash)[i];
+        for(; type <= lastType; ++type)
+        for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+        for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
             NULL != node; node = node->next)
         {
-            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                continue;
             ++count;
         }
     }
@@ -189,7 +210,7 @@ static size_t countNodes(pathdirectory_t* pd, int flags)
 }
 
 static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t* parent,
-    pathdirectory_nodetype_t nodeType, stringpool_internid_t internId)
+    pathdirectory_nodetype_t nodeType, StringPoolInternId internId)
 {
     assert(NULL != pd && 0 != internId);
     {
@@ -197,11 +218,9 @@ static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t*
     if(NULL != pd->_pathHash)
     {
         ushort hash = pd->_internPool.idHashMap[internId-1];
-        for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
+        for(node = (*pd->_pathHash)[hash].head[nodeType]; NULL != node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
-            if(nodeType != PathDirectoryNode_Type(node)) continue;
-
             if(internId == PathDirectoryNode_InternId(node))
                 return node;
         }
@@ -210,7 +229,7 @@ static pathdirectory_node_t* findNode(pathdirectory_t* pd, pathdirectory_node_t*
     }
 }
 
-static ushort hashForInternId(pathdirectory_t* pd, stringpool_internid_t internId)
+static ushort hashForInternId(pathdirectory_t* pd, StringPoolInternId internId)
 {
     assert(NULL != pd);
     if(0 == internId)
@@ -218,18 +237,18 @@ static ushort hashForInternId(pathdirectory_t* pd, stringpool_internid_t internI
     return pd->_internPool.idHashMap[internId-1];
 }
 
-static stringpool_internid_t internNameAndUpdateIdHashMap(pathdirectory_t* pd,
+static StringPoolInternId internNameAndUpdateIdHashMap(pathdirectory_t* pd,
     const ddstring_t* name, ushort hash)
 {
     assert(NULL != pd);
     {
-    stringpool_t* pool = pd->_internPool.strings;
-    stringpool_internid_t internId;
+    StringPool* pool = pd->_internPool.strings;
+    StringPoolInternId internId;
     uint oldSize;
 
     if(NULL == pool)
     {
-        pool = pd->_internPool.strings = StringPool_ConstructDefault();
+        pool = pd->_internPool.strings = StringPool_New();
     }
     oldSize = StringPool_Size(pool);
 
@@ -260,7 +279,7 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
 {
     assert(NULL != pd && NULL != name);
     {
-    stringpool_internid_t internId = 0;
+    StringPoolInternId internId = 0;
     pathdirectory_node_t* node;
     ushort hash;
 
@@ -295,15 +314,15 @@ static pathdirectory_node_t* direcNode(pathdirectory_t* pd, pathdirectory_node_t
     if(0 == internId)
         return NULL;
 
-    node = PathDirectoryNode_Construct(pd, nodeType, parent, internId, userData);
+    node = PathDirectoryNode_New(pd, nodeType, parent, internId, userData);
 
     // Do we need to init the path hash?
     if(NULL == pd->_pathHash)
         initPathHash(pd);
 
     // Insert the new node into the path hash.
-    node->next = (*pd->_pathHash)[hash];
-    (*pd->_pathHash)[hash] = node;
+    node->next = (*pd->_pathHash)[hash].head[nodeType];
+    (*pd->_pathHash)[hash].head[nodeType] = node;
 
     return node;
     }
@@ -371,33 +390,31 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
     int result = 0;
     if(NULL != pd->_pathHash)
     {
+        pathdirectory_nodetype_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
+        pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
-        ushort i;
-        if(parent == NULL && hash < PATHDIRECTORY_PATHHASH_SIZE)
+
+        if(hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
-            for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
+            for(; type <= lastType; ++type)
+            for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
+                NULL != node; node = node->next)
             {
-                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                    continue;
                 if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
                     continue;
-
                 if(0 != (result = callback(node, paramaters)))
                     break;
             }
         }
         else
         {
-            for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+            for(; type <= lastType; ++type)
+            for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+            for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
+                NULL != node; node = node->next)
             {
-                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                    continue;
                 if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
                     continue;
-
                 if(0 != (result = callback(node, paramaters)))
                     break;
             }
@@ -415,33 +432,31 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
     int result = 0;
     if(NULL != pd->_pathHash)
     {
+        pathdirectory_nodetype_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
+        pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
-        ushort i;
-        if(parent == NULL && hash < PATHDIRECTORY_PATHHASH_SIZE)
+
+        if(hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
-            for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
+            for(; type <= lastType; ++type)
+            for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
+                NULL != node; node = node->next)
             {
-                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                    continue;
                 if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
                     continue;
-
                 if(0 != (result = callback(node, paramaters)))
                     break;
             }
         }
         else
         {
-            for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-            for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
+            for(; type <= lastType; ++type)
+            for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+            for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
+                NULL != node; node = node->next)
             {
-                if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-                   ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                    continue;
                 if((flags & PCF_MATCH_PARENT) && parent != PathDirectoryNode_Parent(node))
                     continue;
-
                 if(0 != (result = callback(node, paramaters)))
                     break;
             }
@@ -451,7 +466,7 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
     }
 }
 
-pathdirectory_t* PathDirectory_Construct(void)
+pathdirectory_t* PathDirectory_New(void)
 {
     pathdirectory_t* pd = (pathdirectory_t*) malloc(sizeof(*pd));
     if(NULL == pd)
@@ -469,7 +484,7 @@ pathdirectory_t* PathDirectory_Construct(void)
     return pd;
 }
 
-void PathDirectory_Destruct(pathdirectory_t* pd)
+void PathDirectory_Delete(pathdirectory_t* pd)
 {
     assert(NULL != pd);
     clearPathHash(pd->_pathHash);
@@ -483,6 +498,16 @@ void PathDirectory_Destruct(pathdirectory_t* pd)
         Sys_DestroyMutex(fragmentBuffer_Mutex);
         fragmentBuffer_Mutex = 0;
     }
+}
+
+const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type)
+{
+    static const ddstring_t nodeNames[PATHDIRECTORY_NODETYPES_COUNT] = {
+        { "branch" },
+        { "leaf" },
+    };
+    assert(VALID_PATHDIRECTORY_NODETYPE(type));
+    return &nodeNames[type - PATHDIRECTORY_NODETYPES_FIRST];
 }
 
 void PathDirectory_Clear(pathdirectory_t* pd)
@@ -766,23 +791,23 @@ ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char deli
     size_t count = countNodes(pd, flags);
     if(0 != count)
     {
+        pathdirectory_nodetype_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
+        pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
         ddstring_t** pathPtr;
-        ushort i;
+        ushort hash;
 
         paths = (ddstring_t*) malloc(sizeof(*paths) * (count + 1));
         if(NULL == paths)
             Con_Error("PathDirectory::AllPaths: Failed on allocation of %lu bytes for "
                 "new path list.", (unsigned long) sizeof(*paths));
-
         pathPtr = &paths;
-        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-        for(node = (*pd->_pathHash)[i]; NULL != node; node = node->next)
-        {
-            if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-               ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
-                continue;
 
+        for(; type <= lastType; ++type)
+        for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+        for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
+            NULL != node; node = node->next)
+        {
             Str_Init(*pathPtr);
             PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, *pathPtr, NULL, delimiter);
             pathPtr++;
@@ -795,7 +820,6 @@ ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char deli
     }
 }
 
-#if _DEBUG
 static int C_DECL comparePaths(const void* a, const void* b)
 {
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
@@ -808,7 +832,7 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
     size_t numLeafs, n = 0;
     ddstring_t* pathList;
 
-    Con_Printf("PathDirectory:\n");
+    Con_Printf("PathDirectory: %p\n", pd);
     if(NULL != (pathList = PathDirectory_CollectPaths(pd, PT_LEAF, delimiter, &numLeafs)))
     {
         qsort(pathList, numLeafs, sizeof(*pathList), comparePaths);
@@ -822,11 +846,394 @@ void PathDirectory_Print(pathdirectory_t* pd, char delimiter)
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numLeafs, (numLeafs==1? "path":"paths"));
     }
 }
-#endif
 
-static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* directory,
+static void printDistributionOverviewElement(const int* colWidths, const char* name,
+    size_t numEmpty, size_t maxHeight, size_t numCollisions, size_t maxCollisions,
+    size_t sum, size_t total)
+{
+    float coverage, collision, variance;
+    const int* col;
+
+    if(0 != total)
+    {
+        size_t sumSqr = sum*sum;
+        float mean = (signed)sum / total;
+        variance = ((signed)sumSqr - (signed)sum * mean) / (((signed)total)-1);
+
+        coverage  = 100 / (float)PATHDIRECTORY_PATHHASH_SIZE * (PATHDIRECTORY_PATHHASH_SIZE - numEmpty);
+        collision = 100 / (float) total * numCollisions;
+    }
+    else
+    {
+        variance = coverage = collision = 0;
+    }
+
+    assert(NULL != colWidths);
+    col = colWidths;
+    Con_Printf("%*s ",    *col++, name);
+    Con_Printf("%*lu ",   *col++, (unsigned long)total);
+    Con_Printf("%*lu",    *col++, PATHDIRECTORY_PATHHASH_SIZE - (unsigned long)numEmpty);
+    Con_Printf(":%-*lu ", *col++, (unsigned long)numEmpty);
+    Con_Printf("%*lu ",   *col++, (unsigned long)maxCollisions);
+    Con_Printf("%*lu ",   *col++, (unsigned long)numCollisions);
+    Con_Printf("%*.2f ",  *col++, collision);
+    Con_Printf("%*.2f ",  *col++, coverage);
+    Con_Printf("%*.2f ",  *col++, variance);
+    Con_Printf("%*lu\n",  *col++, (unsigned long)maxHeight);
+}
+
+static void printDistributionOverview(pathdirectory_t* pd,
+    size_t nodeCountSum[PATHDIRECTORY_NODETYPES_COUNT],
+    size_t nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT],
+    size_t nodeBucketCollisions[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketCollisionsTotal,
+    size_t nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketCollisionsMaxTotal,
+    size_t nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], size_t nodeBucketEmptyTotal, size_t nodeBucketHeight,
+    size_t nodeCount[PATHDIRECTORY_NODETYPES_COUNT])
+{
+#define NUMCOLS             10/*type+count+used:+empty+collideMax+collideCount+collidePercent+coverage+variance+maxheight*/
+    assert(NULL != pd);
+    {
+    size_t collisionsMax = 0, countSum = 0, countTotal = 0;
+    int i, nodeCountDigits, colWidths[NUMCOLS], spans[4][2], *span, *col;
+
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+    {
+        if(nodeBucketCollisionsMax[i] > collisionsMax)
+            collisionsMax = nodeBucketCollisionsMax[i];
+        countSum += nodeCountSum[i];
+        countTotal += nodeCountTotal[i];
+    }
+    nodeCountDigits = M_NumDigits((int)countTotal);
+
+    // Calculate minimum field widths:
+    col = colWidths;
+    *col = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+    {
+        if(Str_Length(PathDirectory_NodeTypeName(i)) > *col)
+            *col = Str_Length(PathDirectory_NodeTypeName(i));
+    }
+    col++;
+    *col++ = MAX_OF(nodeCountDigits, 1); /*#*/
+    *col++ = MAX_OF(nodeCountDigits, 4); /*used*/
+    *col++ = MAX_OF(nodeCountDigits, 5); /*empty*/
+    *col++ = MAX_OF(nodeCountDigits, 3); /*max*/
+    *col++ = MAX_OF(nodeCountDigits, 4); /*num*/
+    *col++ = MAX_OF(3+1+2, 8);           /*percent*/
+    *col++ = MAX_OF(3+1+2, 9);           /*coverage*/
+    *col++ = MAX_OF(nodeCountDigits, 8); /*variance*/
+    *col   = MAX_OF(nodeCountDigits, 9); /*maxheight*/
+
+    // Calculate span widths:
+    spans[0][0] = colWidths[0] + 1/* */ + colWidths[1];
+    spans[1][0] = colWidths[2] + 1/*:*/ + colWidths[3];
+    spans[2][0] = colWidths[4] + 1/* */ + colWidths[5] + 1/* */ + colWidths[6];
+    spans[3][0] = colWidths[7] + 1/* */ + colWidths[8] + 1/* */ + colWidths[9];
+    for(i = 0; i < 4; ++i)
+    {
+        int remainder = spans[i][0] % 2;
+        spans[i][1] = remainder + (spans[i][0] /= 2);
+    }
+
+    Con_FPrintf(CBLF_YELLOW, "Directory Distribution (p:%p):\n", pd);
+
+    // Level1 headings:
+    span = &spans[0][0];
+    Con_Printf("%*s%-*s|",  *span++ +  5/2, "nodes",      *span++ -  5/2, "");
+    Con_Printf("%*s%-*s|",  *span++ +  4/2, "hash",       *span++ -  4/2, "");
+    Con_Printf("%*s%-*s|",  *span++ + 10/2, "collisions", *span++ - 10/2, "");
+    Con_Printf("%*s%-*s\n", *span++ +  5/2, "other",      *span++ -  5/2, "");
+
+    // Level2 headings:
+    col = colWidths;
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "type");
+    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "#");
+    Con_FPrintf(CBLF_LIGHT, "%*s:",   *col++, "used");
+    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "empty");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "max");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "num#");
+    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "percent%");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "coverage%");
+    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "variance");
+    Con_FPrintf(CBLF_LIGHT, "%-*s\n", *col++, "maxheight");
+
+    if(countTotal != 0)
+    {
+        for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        {
+            printDistributionOverviewElement(colWidths, Str_Text(PathDirectory_NodeTypeName(i)),
+                nodeBucketEmpty[i], (i == PT_LEAF? nodeBucketHeight : 0),
+                nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
+                nodeCountSum[i], nodeCountTotal[i]);
+        }
+        Con_FPrintf(CBLF_RULER, "");
+    }
+
+    printDistributionOverviewElement(colWidths, "total", 
+        nodeBucketEmptyTotal, nodeBucketHeight,
+        nodeBucketCollisionsTotal, collisionsMax,
+        countSum / PATHDIRECTORY_NODETYPES_COUNT, countTotal);
+    }
+#undef NUMCOLS
+}
+
+void printDistributionHistogram(pathdirectory_t* pd, ushort size,
+    size_t nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT])
+{
+#define NUMCOLS             4/*range+total+PATHDIRECTORY_NODETYPES_COUNT*/
+    assert(NULL != pd);
+    {
+    size_t totalForRange, total, nodeCount[PATHDIRECTORY_NODETYPES_COUNT];
+    int hashIndexDigits, col, colWidths[2+/*range+total*/PATHDIRECTORY_NODETYPES_COUNT];
+    pathdirectory_node_t* node;
+    int i, j;
+
+    total = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        total += nodeCountTotal[i];
+    if(0 == total) return;
+
+    // Calculate minimum field widths:
+    hashIndexDigits = M_NumDigits(PATHDIRECTORY_PATHHASH_SIZE);
+    col = 0;
+    if(size != 0)
+        colWidths[col] = 2/*braces*/+hashIndexDigits*2+3/*elipses*/;
+    else
+        colWidths[col] = 2/*braces*/+hashIndexDigits;
+    colWidths[col] = MAX_OF(colWidths[col], 5/*range*/);
+    ++col;
+
+    { size_t max = 0;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        if(nodeCountTotal[i] > max)
+            max = nodeCountTotal[i];
+    colWidths[col++] = MAX_OF(M_NumDigits((int)max), 5/*total*/);
+    }
+
+    { int i;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i, ++col)
+        colWidths[col] = Str_Length(PathDirectory_NodeTypeName(i));
+    }
+
+    // Apply formatting:
+    for(i = 1; i < NUMCOLS; ++i) { colWidths[i] += 1; }
+
+    Con_FPrintf(CBLF_YELLOW, "Histogram (p:%p):\n", pd);
+    // Print heading:
+    col = 0;
+    Con_Printf("%*s", colWidths[col++], "range");
+    Con_Printf("%*s", colWidths[col++], "total");
+    { int i;
+    for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i)
+        Con_Printf("%*s", colWidths[col++], Str_Text(PathDirectory_NodeTypeName(i)));
+    }
+    Con_Printf("\n");
+    Con_FPrintf(CBLF_RULER, "");
+
+    { ushort i, from = 0, n = 0, range = (size != 0? PATHDIRECTORY_PATHHASH_SIZE / size: 0);
+    memset(nodeCount, 0, sizeof(nodeCount));
+
+    for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+    {
+        if(NULL != pd->_pathHash)
+        {
+            for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+                for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
+                    ++nodeCount[j];
+        }
+
+        if(size != 0 && (++n != range && i != PATHDIRECTORY_PATHHASH_SIZE-1))
+            continue;
+
+        totalForRange = 0;
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+            totalForRange += nodeCount[j];
+
+        col = 0;
+        if(size != 0)
+        {
+            ddstring_t range; Str_Init(&range);
+            Str_Appendf(&range, "%*u...%*u", hashIndexDigits, from, hashIndexDigits, from+n-1);
+            Con_Printf("[%*s]", colWidths[col++]-2/*braces*/, Str_Text(&range));
+            Str_Free(&range);
+        }
+        else
+        {
+            Con_Printf("[%*u]", colWidths[col++]-2/*braces*/, i);
+        }
+
+        Con_Printf("%*lu", colWidths[col++], (unsigned long) totalForRange);
+        if(0 != totalForRange)
+        {
+            for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j, ++col)
+            {
+                if(0 != nodeCount[j])
+                {
+                    Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCount[j]);
+                }
+                else if(j < PATHDIRECTORY_NODETYPES_COUNT-1 || 0 == size)
+                {
+                    Con_Printf("%*s", colWidths[col], "");
+                }
+            }
+        }
+
+        // Are we printing a "graphical" representation?
+        if(0 != totalForRange)
+        {
+            size_t max = MAX_OF(1, ROUND(total/(float)size/10));
+            size_t scale = totalForRange / (float)max;
+            
+            scale = MAX_OF(scale, 1);
+            Con_Printf(" ");
+            for(n = 0; n < scale; ++n)
+                Con_Printf("*");
+        }
+
+        Con_Printf("\n");
+        from = i+1;
+        n = 0;
+        memset(nodeCount, 0, sizeof(nodeCount));
+    }}
+    Con_FPrintf(CBLF_RULER, "");
+
+    // Sums:
+    col = 0;
+    Con_Printf("%*s",  colWidths[col++], "Sum");
+    Con_Printf("%*lu", colWidths[col++], (unsigned long) total);
+    if(0 != total)
+    {
+        int i;
+        for(i = 0; i < PATHDIRECTORY_NODETYPES_COUNT; ++i, ++col)
+        {
+            if(0 != nodeCountTotal[i])
+            {
+                Con_Printf("%*lu", colWidths[col], (unsigned long) nodeCountTotal[i]);
+            }
+            else if(i < PATHDIRECTORY_NODETYPES_COUNT-1)
+            {
+                Con_Printf("%*s", colWidths[col], "");
+            }
+        }
+    }
+    Con_Printf("\n");
+    }
+#undef NUMCOLS
+}
+
+void PathDirectory_PrintHashDistribution(pathdirectory_t* pd)
+{
+    assert(NULL != pd);
+    {
+    size_t nodeCountSum[PATHDIRECTORY_NODETYPES_COUNT],
+           nodeCountTotal[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketHeight = 0,
+           nodeBucketCollisions[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketCollisionsTotal = 0,
+           nodeBucketCollisionsMax[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketCollisionsMaxTotal = 0,
+           nodeBucketEmpty[PATHDIRECTORY_NODETYPES_COUNT], nodeBucketEmptyTotal = 0,
+           nodeCount[PATHDIRECTORY_NODETYPES_COUNT];
+    size_t totalForRange;
+    pathdirectory_node_t* node;
+    int j;
+
+    memset(nodeCountTotal, 0, sizeof(nodeCountTotal));
+    if(NULL != pd->_pathHash)
+    {
+        ushort i;
+        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+        for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
+            ++nodeCountTotal[j];
+    }
+
+    memset(nodeCountSum, 0, sizeof(nodeCountSum));
+    memset(nodeBucketCollisions, 0, sizeof(nodeBucketCollisions));
+    memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
+    memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
+
+    { ushort i;
+    for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
+    {
+        memset(nodeCount, 0, sizeof(nodeCount));
+        totalForRange = 0;
+        if(NULL != pd->_pathHash)
+        {
+            size_t chainHeight = 0;
+
+            for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+            for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
+                ++nodeCount[j];
+
+            for(node = (*pd->_pathHash)[i].head[PT_LEAF]; NULL != node; node = node->next)
+            {
+                size_t height = 0;
+                pathdirectory_node_t* other = node;
+                while(NULL != (other = PathDirectoryNode_Parent(other)))
+                { ++height; }
+
+                if(height > chainHeight)
+                    chainHeight = height;
+            }
+
+            if(chainHeight > nodeBucketHeight)
+                nodeBucketHeight = chainHeight;
+
+            for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+            {
+                totalForRange += nodeCount[j];
+                nodeCountSum[j] += nodeCount[j];
+            }
+        }
+
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+        {
+            if(nodeCount[j] != 0)
+            {
+                if(nodeCount[j] > 1)
+                    nodeBucketCollisions[j] += nodeCount[j]-1;
+            }
+            else
+            {
+                ++(nodeBucketEmpty[j]);
+            }
+            if(nodeCount[j] > nodeBucketCollisionsMax[j])
+                nodeBucketCollisionsMax[j] = nodeCount[j];
+        }
+
+        { size_t max = 0;
+        for(j = 0; j < PATHDIRECTORY_NODETYPES_COUNT; ++j)
+        {
+            max += nodeCount[j];
+        }
+        if(max > nodeBucketCollisionsMaxTotal)
+            nodeBucketCollisionsMaxTotal = max;        
+        }
+
+        if(totalForRange != 0)
+        {
+            if(totalForRange > 1)
+                nodeBucketCollisionsTotal += totalForRange-1;
+        }
+        else
+        {
+            ++nodeBucketEmptyTotal;
+        }
+        if(totalForRange > nodeBucketCollisionsMaxTotal)
+            nodeBucketCollisionsMaxTotal = totalForRange;
+    }}
+
+    printDistributionOverview(pd, nodeCountSum, nodeCountTotal,
+        nodeBucketCollisions,    nodeBucketCollisionsTotal,
+        nodeBucketCollisionsMax, nodeBucketCollisionsMaxTotal,
+        nodeBucketEmpty, nodeBucketEmptyTotal,
+        nodeBucketHeight, nodeCount);
+    Con_Printf("\n");
+    printDistributionHistogram(pd, 16, nodeCountTotal);
+    }
+}
+
+static pathdirectory_node_t* PathDirectoryNode_New(pathdirectory_t* directory,
     pathdirectory_nodetype_t type, pathdirectory_node_t* parent,
-    stringpool_internid_t internId, void* userData)
+    StringPoolInternId internId, void* userData)
 {
     assert(NULL != directory);
     {
@@ -844,7 +1251,7 @@ static pathdirectory_node_t* PathDirectoryNode_Construct(pathdirectory_t* direct
     }
 }
 
-static void PathDirectoryNode_Destruct(pathdirectory_node_t* node)
+static void PathDirectoryNode_Delete(pathdirectory_node_t* node)
 {
     assert(NULL != node);
     free(node);
@@ -868,7 +1275,7 @@ pathdirectory_nodetype_t PathDirectoryNode_Type(const pathdirectory_node_t* node
     return node->_type;
 }
 
-stringpool_internid_t PathDirectoryNode_InternId(const pathdirectory_node_t* node)
+StringPoolInternId PathDirectoryNode_InternId(const pathdirectory_node_t* node)
 {
     assert(NULL != node);
     return node->_pair.internId;

@@ -225,7 +225,7 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
     size = F_Tell(file);
     F_Rewind(file);
     data = M_Malloc(size);
-    F_Read(data, size, file);
+    F_Read(file, data, size);
     F_Close(file);
 
     // Parse the RIFF data.

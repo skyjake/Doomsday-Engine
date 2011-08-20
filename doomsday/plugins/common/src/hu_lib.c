@@ -175,7 +175,12 @@ static void clearWidgets(void)
     {
         uiwidget_t* obj = &widgets[i];
         if(obj->type == GUI_GROUP)
-            free(obj->typedata);
+        {
+            guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+            if(grp->widgetIds)
+                free(grp->widgetIds);
+            free(grp);
+        }
     }}
     free(widgets);
     widgets = NULL;

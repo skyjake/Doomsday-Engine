@@ -239,7 +239,7 @@ DGLuint GL_PreparePatch(patchtex_t* patch);
  */
 DGLuint GL_PrepareRawTex(rawtex_t* rawTex);
 
-DGLuint GL_GetLightMapTexture(const dduri_t* path);
+DGLuint GL_GetLightMapTexture(const Uri* path);
 
 /**
  * Attempt to locate and prepare a flare texture.
@@ -249,7 +249,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* path);
  * @param name  Name of a flare texture or "0" to "4".
  * @param oldIdx  Old method of flare texture selection, by id.
  */
-DGLuint GL_GetFlareTexture(const dduri_t* path, int oldIdx);
+DGLuint GL_GetFlareTexture(const Uri* path, int oldIdx);
 
 /**
  * Determine the optimal size for a texture. Usually the dimensions are
@@ -342,9 +342,9 @@ typedef enum {
  *
  * @return  GL-name of the prepared variant if successful else @c 0
  */
-const DGLuint GL_PrepareTexture2(struct texture_s* tex,
+DGLuint GL_PrepareTexture2(struct texture_s* tex,
     texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const DGLuint GL_PrepareTexture(struct texture_s* tex,
+DGLuint GL_PrepareTexture(struct texture_s* tex,
     texturevariantspecification_t* spec);
 
 /**
@@ -361,19 +361,19 @@ const struct texture_s* GL_CreateTexture2(const char* name, uint index,
 const struct texture_s* GL_CreateTexture(const char* name, uint index,
     texturenamespaceid_t texNamespace);
 
-const struct texture_s* GL_TextureByUri2(const dduri_t* uri, boolean silent);
-const struct texture_s* GL_TextureByUri(const dduri_t* uri);
+const struct texture_s* GL_TextureByUri2(const Uri* uri, boolean silent);
+const struct texture_s* GL_TextureByUri(const Uri* uri);
 const struct texture_s* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace);
 
-uint GL_TextureIndexForUri2(const dduri_t* uri, boolean silent);
-uint GL_TextureIndexForUri(const dduri_t* uri);
+uint GL_TextureIndexForUri2(const Uri* uri, boolean silent);
+uint GL_TextureIndexForUri(const Uri* uri);
 
 /**
  * Given a Texture construct a new Uri reference to it.
  * \todo Do not construct. Store into a resource namespace and return a reference.
  * @return  Associated Uri.
  */
-dduri_t* GL_ConstructUriForTexture(struct texture_s* tex);
+Uri* GL_NewUriForTexture(struct texture_s* tex);
 
 /**
  * Change the GL minification filter for all prepared TextureVariants.

@@ -176,7 +176,7 @@ static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
 
 static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 {
-    dictentry_t*e = &dict->table[idx];
+//    dictentry_t*e = &dict->table[idx];
 //    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
         return NULL;
 //    return Materials_ToMaterial(Materials_IndexForName(Str_Text(&e->path), e->mnamespace));
@@ -1259,8 +1259,8 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
 {
     if(NULL != cachedMapPath && !cachedMapPath[0] && markerLumpNum >= 0)
     {
-        uint sourceTime = F_LastModified(W_LumpSourceFile(markerLumpNum));
-        uint buildTime = F_LastModified(cachedMapPath);
+        uint sourceTime = F_GetLastModified(W_LumpSourceFile(markerLumpNum));
+        uint buildTime = F_GetLastModified(cachedMapPath);
 
         if(F_Access(cachedMapPath) && !(buildTime < sourceTime))
         {   // Ok, lets check the header.

@@ -23,30 +23,40 @@
  */
 
 /**
- * WAD Files and Data Lump Cache.
+ * WAD Files and Data Lump Cache
+ *
+ * This version supports runtime (un)loading.
+ *
+ * Internally, the cache has two parts: the Primary cache, which is loaded
+ * from data files, and the Auxiliary cache, which is generated at runtime.
+ * To outsiders, there is no difference between these two caches. The
+ * only visible difference is that lumps in the auxiliary cache use indices
+ * starting from AUXILIARY_BASE.
+ *
+ * The W_Select() function is responsible for activating the right cache
+ * when a lump index is provided. Functions that don't know the lump index
+ * will have to check both the primary and the auxiliary caches (e.g.,
+ * W_CheckLumpNumForName()).
  */
 
-#ifndef LIBDENG_WAD_H
-#define LIBDENG_WAD_H
+#ifndef LIBDENG_FILESYS_WAD_H
+#define LIBDENG_FILESYS_WAD_H
 
-void DD_RegisterVFS(void);
+#include "zipfile.h"
+#include "wadfile.h"
+#include "lumpfile.h"
 
-/**
- * Initializes the file system.
- */
+#define AUXILIARY_BASE      100000000
+
+/// Register the console commands, variables, etc..., of this module.
+void W_Register(void);
+
+/// Initialize this module. Cannot be re-initialized, must shutdown first.
 void W_Init(void);
 
+void W_Shutdown(void);
+
 int W_LumpCount(void);
-
-/**
- * Calculated using the lumps of the main IWAD.
- */
-uint W_CRCNumber(void);
-
-/**
- * @return  @c true iff the file exists and appears to be an IWAD.
- */
-int W_IsIWAD(const char* fn);
 
 /**
  * \post No more WADs will be loaded in startup mode.
@@ -59,34 +69,25 @@ void W_EndStartup(void);
  */
 int W_Reset(void);
 
-/**
- * Copies the file name of the IWAD to the given buffer.
- */
-void W_GetIWADFileName(char* buf, size_t bufSize);
-
-/**
- * Compiles a list of PWAD file names, separated by the specified character.
- */
-void W_GetPWADFileNames(char* buf, size_t bufSize, char separator);
-
-void W_PrintLumpDirectory(void);
-
-/**
- * Files with a .wad extension are archived date files with multiple 'lumps',
- * other files are single lumps whose base filename will become the lump name.
- *
- * \note Lump names can appear multiple times. The name searcher looks backwards,
- * so a later file can override an earlier one.
- *
- * @return  @c true, if the operation is successful.
- */
-boolean W_AddFile(const char* fileName, boolean allowDuplicate);
-boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
+zipfile_t* W_AddZipFile(const char* fileName, DFILE* handle);
+wadfile_t* W_AddWadFile(const char* fileName, DFILE* handle);
+lumpfile_t* W_AddLumpFile(const char* fileName, DFILE* handle, boolean isDehackedPatch);
 
 boolean W_RemoveFile(const char* fileName);
-boolean W_RemoveFiles(const char* const* filenames, size_t num);
 
+/**
+ * Try to open the specified WAD archive into the auxiliary lump cache.
+ *
+ * @param prevOpened  If not @c NULL re-use this previously opened file rather
+ *      than opening a new one. WAD loader takes ownership of the file.
+ *      Release with W_CloseAuxiliary.
+ * @return  Base index for lumps in this archive.
+ */
+lumpnum_t W_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
+lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
 lumpnum_t W_OpenAuxiliary(const char* fileName);
+
+void W_CloseAuxiliary(void);
 
 /**
  * @return  @c -1, if name not found, else lump num.
@@ -94,45 +95,89 @@ lumpnum_t W_OpenAuxiliary(const char* fileName);
 lumpnum_t W_CheckLumpNumForName(const char* name);
 lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent);
 
-/**
- * Calls W_CheckLumpNumForName, but bombs out if not found.
- */
+/// \note As per W_CheckLumpNumForName but results in a fatal error if not found.
 lumpnum_t W_GetLumpNumForName(const char* name);
 
-/**
- * Get the name of the given lump.
- */
-const char* W_LumpName(lumpnum_t lumpNum);
-
-/**
- * @return  The buffer size needed to load the given lump.
- */
-size_t W_LumpLength(lumpnum_t lumpNum);
-
-/**
- * @return  The name of the WAD file where the given lump resides. Always
- *      returns a valid filename (or an empty string).
- */
-const char* W_LumpSourceFile(lumpnum_t lumpNum);
-
-/**
- * @return  @ true, if the specified lump is in an IWAD. Otherwise it's from a PWAD.
- */
-boolean W_LumpIsFromIWAD(lumpnum_t lumpNum);
-
-/**
- * Loads the lump into the given buffer, which must be >= W_LumpLength().
- */
 void W_ReadLump(lumpnum_t lumpNum, char* dest);
-void W_ReadLumpSection(lumpnum_t lumpNum, void* dest, size_t startOffset, size_t length);
-
+void W_ReadLumpSection(lumpnum_t lumpNum, char* dest, size_t startOffset, size_t length);
 const char* W_CacheLump(lumpnum_t lumpNum, int tag);
 
 void W_CacheChangeTag(lumpnum_t lumpNum, int tag);
 
+/// @return  Name of the lump associated with @a lumpNum.
+const char* W_LumpName(lumpnum_t lumpNum);
+
+/// @return  Buffer size needed to load the data associated with @a lumpNum in bytes.
+size_t W_LumpLength(lumpnum_t lumpNum);
+
 /**
- * Writes the specifed lump to file with the given name.
+ * @return  "Last modified" timestamp of the zip entry.
+ */
+uint W_LumpLastModified(lumpnum_t lumpNum);
+
+/// @return  Name of the WAD file where the data associated with @a lumpNum resides.
+///     Always returns a valid filename (or an empty string).
+const char* W_LumpSourceFile(lumpnum_t lumpNum);
+
+/// @return  @c true iff the data associated with @a lumpNum resides in an IWAD.
+boolean W_LumpIsFromIWAD(lumpnum_t lumpNum);
+
+/**
+ * Compiles a list of PWAD file names, separated by @a delimiter.
+ */
+void W_GetPWADFileNames(char* buf, size_t bufSize, char delimiter);
+
+/**
+ * Calculated using the lumps of the main IWAD.
+ */
+uint W_CRCNumber(void);
+
+/**
+ * Print the contents of the primary lump directory to stdout.
+ */
+void W_PrintLumpDirectory(void);
+
+/**
+ * Write the data associated with @a lumpNum to @a fileName.
+ *
+ * @param lumpNum  Logical lump index associated with the data being dumped.
+ * @param fileName  If not @c NULL write the associated data to this path.
+ *      Can be @c NULL in which case the fileName will be chosen automatically.
+ * @return  @c true iff successful.
  */
 boolean W_DumpLump(lumpnum_t lumpNum, const char* fileName);
 
-#endif /* LIBDENG_WAD_H */
+/// @return  Size of a zipentry specified by index.
+size_t Zip_GetSize(lumpnum_t lumpNum);
+
+/// @return  "Last modified" timestamp of the zip entry.
+uint Zip_LastModified(lumpnum_t lumpNum);
+
+/// @return  The name of the Zip archive where the referenced file resides.
+const char* Zip_SourceFile(lumpnum_t lumpNum);
+
+void Zip_ReadFile(lumpnum_t lumpNum, char* buffer);
+void Zip_ReadFileSection(lumpnum_t lumpNum, char* buffer, size_t startOffset, size_t length);
+
+/**
+ * Find a specific path in the Zip LumpDirectory.
+ *
+ * @param searchPath  Path to search for. Relative paths are converted are made absolute.
+ *
+ * @return  Non-zero if something is found.
+ */
+lumpnum_t Zip_Find(const char* searchPath);
+
+/**
+ * Iterate over nodes in the Zip LumpDirectory making a callback for each.
+ * Iteration ends when all nodes have been visited or a callback returns non-zero.
+ *
+ * @param callback  Callback function ptr.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int Zip_Iterate2(int (*callback) (const lumpinfo_t*, void*), void* paramaters);
+int Zip_Iterate(int (*callback) (const lumpinfo_t*, void*));
+
+#endif /* LIBDENG_FILESYS_WAD_H */

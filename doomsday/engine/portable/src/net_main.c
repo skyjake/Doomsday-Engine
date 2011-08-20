@@ -953,10 +953,8 @@ void Net_PrintServerInfo(int index, serverinfo_t *info)
                    info->name, info->numPlayers, info->maxPlayers,
                    info->canJoin ? ' ' : '*', info->version, info->plugin,
                    info->address, info->port);
-        Con_Printf("    %s (%s:%x) p:%ims %-40s\n", info->map, info->iwad,
-                   info->wadNumber, info->ping, info->description);
-
-        Con_Printf("    %s %s\n", info->gameIdentityKey, info->gameConfig);
+        Con_Printf("    %s p:%ims %-40s\n", info->map, info->ping, info->description);
+        Con_Printf("    %s (crc:%x) %s\n", info->gameIdentityKey, info->wadNumber, info->gameConfig);
 
         // Optional: PWADs in use.
         if(info->pwads[0])

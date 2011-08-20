@@ -3489,7 +3489,6 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         vec3_t edgeDeltasXY[4];
         seg_t* seg = *segPtr;
         linedef_t* lineDef = seg->lineDef;
-        sidedef_t* sideDef = lineDef? lineDef->L_side(seg->side) : 0;
         sector_t* frontsec = seg->SG_frontsector;
         sector_t* backsec  = seg->SG_backsector;
         vertex_t* from = seg->SG_v(0);
@@ -3585,7 +3584,6 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         vec3_t edgeDeltasXY[4];
         seg_t* seg = *segPtr;
         linedef_t* lineDef = seg->lineDef;
-        sidedef_t* sideDef = lineDef? lineDef->L_side(seg->side) : 0;
         sector_t* frontsec = seg->SG_frontsector;
         sector_t* backsec  = seg->SG_backsector;
         vertex_t* from = seg->SG_v(0);

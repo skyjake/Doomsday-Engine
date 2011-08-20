@@ -184,9 +184,9 @@ static void destroyAllNamespaces(void)
         resourcenamespace_t* rnamespace = namespaces[i];
         if(NULL != ResourceNamespace_Directory(rnamespace))
         {
-            FileDirectory_Destruct(ResourceNamespace_Directory(rnamespace));
+            FileDirectory_Delete(ResourceNamespace_Directory(rnamespace));
         }
-        ResourceNamespace_Destruct(rnamespace);
+        ResourceNamespace_Delete(rnamespace);
     }}
     free(namespaces);
     namespaces = 0;
@@ -320,17 +320,17 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
     }
 }
 
-static int findResource(resourceclass_t rclass, const dduri_t* const* list,
+static int findResource(resourceclass_t rclass, const Uri* const* list,
     const ddstring_t* optionalSuffix, ddstring_t* foundPath)
 {
     assert(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
     {
     uint result = 0, n = 1;
-    const dduri_t* const* ptr;
+    const Uri* const* ptr;
 
     for(ptr = list; *ptr; ptr++, n++)
     {
-        const dduri_t* searchPath = *ptr;
+        const Uri* searchPath = *ptr;
         ddstring_t* resolvedPath;
 
         if((resolvedPath = Uri_Resolved(searchPath)) == 0)
@@ -405,7 +405,7 @@ static void createPackagesResourceNamespace(void)
     uint doomWadPathsCount = 0, searchPathsCount, idx;
     resourcenamespace_t* rnamespace;
     filedirectory_t* directory;
-    dduri_t** searchPaths;
+    Uri** searchPaths;
 
     // Is the DOOMWADPATH environment variable in use?
     if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
@@ -462,8 +462,6 @@ static void createPackagesResourceNamespace(void)
     // Is the DOOMWADDIR environment variable in use?
     if(!ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
-        boolean pathIsGood = false;
-
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
         if(Str_IsEmpty(doomWadDir) || !F_IsAbsolute(doomWadDir))
@@ -487,8 +485,8 @@ static void createPackagesResourceNamespace(void)
 
     idx = 0;
     // Add the default paths.
-    searchPaths[idx++] = Uri_Construct2("$(GameInfo.DataPath)/", RC_NULL);
-    searchPaths[idx++] = Uri_Construct2("$(App.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(GameInfo.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)
@@ -496,7 +494,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < doomWadPathsCount; ++i)
         {
-            searchPaths[idx++] = Uri_Construct2(Str_Text(doomWadPaths[i]), RC_NULL);
+            searchPaths[idx++] = Uri_NewWithPath2(Str_Text(doomWadPaths[i]), RC_NULL);
             Str_Delete(doomWadPaths[i]);
         }
         free(doomWadPaths);
@@ -505,11 +503,11 @@ static void createPackagesResourceNamespace(void)
     // Add the path from the DOOMWADDIR environment variable.
     if(doomWadDir != 0)
     {
-        searchPaths[idx++] = Uri_Construct2(Str_Text(doomWadDir), RC_NULL);
+        searchPaths[idx++] = Uri_NewWithPath2(Str_Text(doomWadDir), RC_NULL);
         Str_Delete(doomWadDir);
     }
 
-    directory = FileDirectory_ConstructDefault();
+    directory = FileDirectory_New();
     rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, directory,
         F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, 0);
 
@@ -523,7 +521,7 @@ static void createPackagesResourceNamespace(void)
     }
 
     for(idx = 0; idx < searchPathsCount; ++idx)
-        Uri_Destruct(searchPaths[idx]);
+        Uri_Delete(searchPaths[idx]);
     free(searchPaths);
 }
 
@@ -560,7 +558,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
             { "$(GameInfo.DataPath)/fonts/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
         { NULL }
     };
-    dduri_t* uri = Uri_ConstructDefault();
+    Uri* uri = Uri_New();
 
     // Setup of the Packages namespace is somewhat more involved...
     createPackagesResourceNamespace();
@@ -571,7 +569,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, defaultPathCount;
         struct namespacedef_s* def = &defs[i];
-        filedirectory_t* directory = FileDirectory_ConstructDefault();
+        filedirectory_t* directory = FileDirectory_New();
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 
@@ -609,7 +607,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         }
     }}
 
-    Uri_Destruct(uri);
+    Uri_Delete(uri);
 
 #undef NAMESPACEDEF_MAX_SEARCHPATHS
 }
@@ -677,7 +675,7 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name,
     assert(name);
     errorIfNotInited("F_CreateResourceNamespace");
     {
-    resourcenamespace_t* rn = ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, flags);
+    resourcenamespace_t* rn = ResourceNamespace_New2(name, directory, composeHashNameFunc, hashNameFunc, flags);
 
     // Add this new namespace to the global list.
     namespaces = (resourcenamespace_t**) realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);
@@ -689,12 +687,12 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name,
     }
 }
 
-dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
+Uri** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
     size_t* count)
 {
 #define FIXEDSIZE           (8)
 
-    dduri_t** list = 0, *localFixedList[FIXEDSIZE];
+    Uri** list = 0, *localFixedList[FIXEDSIZE];
     size_t numPaths = 0, n = 0;
     ddstring_t buf;
     const char* p;
@@ -732,7 +730,7 @@ dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
                 memcpy(list + (numPaths - FIXEDSIZE), localFixedList, sizeof(*list) * FIXEDSIZE);
                 n = 0;
             }
-            localFixedList[n++] = Uri_Construct2(Str_Text(&buf), rclass);
+            localFixedList[n++] = Uri_NewWithPath2(Str_Text(&buf), rclass);
             ++numPaths;
         }
     } while(*p);
@@ -762,12 +760,12 @@ dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
 #undef FIXEDSIZE
 }
 
-dduri_t** F_CreateUriList(resourceclass_t rclass, const char* searchPaths)
+Uri** F_CreateUriList(resourceclass_t rclass, const char* searchPaths)
 {
     return F_CreateUriList2(rclass, searchPaths, 0);
 }
 
-dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths,
+Uri** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths,
     size_t* count)
 {
     if(!searchPaths)
@@ -779,18 +777,18 @@ dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPa
     return F_CreateUriList2(rclass, Str_Text(searchPaths), count);
 }
 
-dduri_t** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths)
+Uri** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths)
 {
     return F_CreateUriListStr2(rclass, searchPaths, 0);
 }
 
-void F_DestroyUriList(dduri_t** list)
+void F_DestroyUriList(Uri** list)
 {
     if(list)
     {
-        dduri_t** ptr;
+        Uri** ptr;
         for(ptr = list; *ptr; ptr++)
-            Uri_Destruct(*ptr);
+            Uri_Delete(*ptr);
         free(list);
     }
 }
@@ -798,13 +796,13 @@ void F_DestroyUriList(dduri_t** list)
 ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
     const ddstring_t* pathList, size_t* count, char delimiter)
 {
-    {dduri_t** uris;
+    {Uri** uris;
     if((uris = F_CreateUriListStr(RC_NULL, pathList)) != 0)
     {
         ddstring_t** paths = 0;
         size_t numResolvedPaths = 0;
 
-        { dduri_t** ptr;
+        { Uri** ptr;
         for(ptr = uris; *ptr; ++ptr)
         {
             if(Uri_Resolved(*ptr) != 0) // Ignore incomplete paths.
@@ -815,7 +813,7 @@ ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
         {
             uint n = 0;
             paths = malloc(sizeof(*paths) * (numResolvedPaths+1));
-            { dduri_t** ptr;
+            { Uri** ptr;
             for(ptr = uris; *ptr; ++ptr)
             {
                 ddstring_t* resolvedPath;
@@ -868,7 +866,7 @@ void F_PrintStringList(const ddstring_t** strings, size_t stringsCount)
 }
 #endif
 
-uint F_FindResource4(resourceclass_t rclass, const dduri_t** searchPaths,
+uint F_FindResource4(resourceclass_t rclass, const Uri** searchPaths,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix)
 {
     errorIfNotInited("F_FindResource4");
@@ -882,7 +880,7 @@ uint F_FindResource4(resourceclass_t rclass, const dduri_t** searchPaths,
 uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix)
 {
-    dduri_t** list;
+    Uri** list;
     int result = 0;
 
     errorIfNotInited("F_FindResourceStr3");
@@ -899,7 +897,7 @@ uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
 
     if((list = F_CreateUriListStr(rclass, searchPaths)) != 0)
     {
-        result = findResource(rclass, (const dduri_t**)list, optionalSuffix, foundPath);
+        result = findResource(rclass, (const Uri**)list, optionalSuffix, foundPath);
         F_DestroyUriList(list);
     }
     return result;
@@ -1029,7 +1027,7 @@ void F_FileDir(ddstring_t* dst, const ddstring_t* src)
     /// \fixme Potentially truncates @a src to FILENAME_T_MAXLEN
     directory_t* dir = Dir_ConstructFromPathDir(Str_Text(src));
     Str_Set(dst, Dir_Path(dir));
-    Dir_Destruct(dir);
+    Dir_Delete(dir);
     }
 }
 
@@ -1127,7 +1125,7 @@ boolean F_MakePath(const char* path)
 }
 
 /// \todo dj: Find a suitable home for this.
-const char* F_ParseSearchPath2(dduri_t* dst, const char* src, char delim,
+const char* F_ParseSearchPath2(Uri* dst, const char* src, char delim,
     resourceclass_t defaultResourceClass)
 {
     Uri_Clear(dst);
@@ -1147,7 +1145,7 @@ const char* F_ParseSearchPath2(dduri_t* dst, const char* src, char delim,
     return src + 1;
 }
 
-const char* F_ParseSearchPath(dduri_t* dst, const char* src, char delim)
+const char* F_ParseSearchPath(Uri* dst, const char* src, char delim)
 {
     return F_ParseSearchPath2(dst, src, delim, RC_UNKNOWN);
 }

@@ -56,7 +56,6 @@ extern "C" {
 #include "dd_gl.h"
 #include "dd_ui.h"
 #include "dd_infine.h"
-#include "dd_uri.h"
 #include "../portable/include/p_think.h" // \todo Not officially a public header file!
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
 
@@ -1270,8 +1269,11 @@ typedef enum {
     CVT_BYTE,
     CVT_INT,
     CVT_FLOAT,
-    CVT_CHARPTR // ptr points to a char*, which points to the string.
+    CVT_CHARPTR, // ptr points to a char*, which points to the string.
+    CVARTYPE_COUNT
 } cvartype_t;
+
+#define VALID_CVARTYPE(val) ((val) >= CVT_NULL && (val) <= CVARTYPE_COUNT)
 
 /**
  * Console variable template. Used with Con_AddVariable.
@@ -1384,7 +1386,6 @@ typedef struct ticcmd_s {
         char            map[20];
         char            clientNames[128];
         unsigned int    wadNumber;
-        char            iwad[32];
         char            pwads[128];
         int             data[3];
     } serverinfo_t;

@@ -30,8 +30,9 @@
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
 
+struct resourcerecord_s;
 struct filedirectory_s;
-struct dduri_s;
+struct uri_s;
 
 #define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
 #define DEFINITIONS_RESOURCE_NAMESPACE_NAME "Defs"
@@ -239,9 +240,9 @@ int F_FileExists(const char* file);
  */
 boolean F_MakePath(const char* path);
 
-const char* F_ParseSearchPath2(struct dduri_s* dst, const char* src, char delim,
+const char* F_ParseSearchPath2(struct uri_s* dst, const char* src, char delim,
     resourceclass_t defaultResourceClass);
-const char* F_ParseSearchPath(struct dduri_s* dst, const char* src, char delim);
+const char* F_ParseSearchPath(struct uri_s* dst, const char* src, char delim);
 
 /**
  * Converts directory slashes to the correct type of slash.
@@ -331,13 +332,13 @@ const char* F_ResourceClassStr(resourceclass_t rclass);
 /**
  * Construct a new NULL terminated Uri list from the specified search path list.
  */
-dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths, size_t* count);
-dduri_t** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths);
+Uri** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths, size_t* count);
+Uri** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths);
 
-dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths, size_t* count);
-dduri_t** F_CreateUriList(resourceclass_t rclass, const char* searchPaths);
+Uri** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths, size_t* count);
+Uri** F_CreateUriList(resourceclass_t rclass, const char* searchPaths);
 
-void F_DestroyUriList(dduri_t** list);
+void F_DestroyUriList(Uri** list);
 
 ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
     const ddstring_t* pathList, size_t* count, char delimiter);

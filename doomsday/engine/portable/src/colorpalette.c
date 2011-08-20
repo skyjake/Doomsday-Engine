@@ -34,7 +34,7 @@ static void prepareNearestLUT(colorpalette_t* pal);
 static void prepareColorTable(colorpalette_t* pal, const int compOrder[3],
     const uint8_t compBits[3], const uint8_t* colorData, int colorCount);
 
-colorpalette_t* ColorPalette_ConstructDefault(void)
+colorpalette_t* ColorPalette_New(void)
 {
     colorpalette_t* pal = (colorpalette_t*) malloc(sizeof(*pal));
     if(NULL == pal)
@@ -48,19 +48,19 @@ colorpalette_t* ColorPalette_ConstructDefault(void)
     return pal;
 }
 
-colorpalette_t* ColorPalette_Construct(const int compOrder[3],
+colorpalette_t* ColorPalette_NewWithColorTable(const int compOrder[3],
     const uint8_t compBits[3], const uint8_t* colorData, int colorCount)
 {
     assert(compOrder && compBits);
     {
-    colorpalette_t* pal = ColorPalette_ConstructDefault();
+    colorpalette_t* pal = ColorPalette_New();
     if(colorCount > 0 && NULL != colorData)
         prepareColorTable(pal, compOrder, compBits, colorData, colorCount);
     return pal;
     }
 }
 
-void ColorPalette_Destruct(colorpalette_t* pal)
+void ColorPalette_Delete(colorpalette_t* pal)
 {
     assert(pal);
     if(pal->_colorData)

@@ -289,7 +289,7 @@ static void determineGlobalPaths(application_t* app)
     Dir_MakeAbsolutePath(path);
     temp = Dir_ConstructFromPathDir(path);
     strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
-    Dir_Destruct(temp);
+    Dir_Delete(temp);
     }
 #else
     { filename_t path;
@@ -298,7 +298,7 @@ static void determineGlobalPaths(application_t* app)
 
     temp = Dir_ConstructFromPathDir(path);
     strncpy(ddBinPath, Dir_Path(temp), FILENAME_T_MAXLEN);
-    Dir_Destruct(temp);
+    Dir_Delete(temp);
     }
 #endif
 
@@ -311,16 +311,16 @@ static void determineGlobalPaths(application_t* app)
         {
             strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
         }
-        Dir_Destruct(temp);
+        Dir_Delete(temp);
     }
 
     if(!app->usingUserDir)
     {
         // The current working directory is the runtime dir.
-        directory_t* temp = Dir_ConstructFromCurrentDir();
+        directory_t* temp = Dir_NewFromCWD();
         Dir_SetCurrent(Dir_Path(temp));
         strncpy(ddRuntimePath, Dir_Path(temp), FILENAME_T_MAXLEN);
-        Dir_Destruct(temp);
+        Dir_Delete(temp);
     }
 
     if(ArgCheckWith("-basedir", 1))

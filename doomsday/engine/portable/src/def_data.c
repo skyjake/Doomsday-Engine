@@ -146,13 +146,13 @@ void DED_Clear(ded_t* ded)
         {
             ded_light_t* li = &ded->lights[i];
             if(li->up)
-                Uri_Destruct(li->up);
+                Uri_Delete(li->up);
             if(li->down)
-                Uri_Destruct(li->down);
+                Uri_Delete(li->down);
             if(li->sides)
-                Uri_Destruct(li->sides);
+                Uri_Delete(li->sides);
             if(li->flare)
-                Uri_Destruct(li->flare);
+                Uri_Delete(li->flare);
         }}
         M_Free(ded->lights);
         ded->lights = 0;
@@ -169,9 +169,9 @@ void DED_Clear(ded_t* ded)
             {
                 ded_submodel_t* sub = &mdl->sub[j];
                 if(sub->filename)
-                    Uri_Destruct(sub->filename);
+                    Uri_Delete(sub->filename);
                 if(sub->skinFilename)
-                    Uri_Destruct(sub->skinFilename);
+                    Uri_Delete(sub->skinFilename);
             }
         }}
         M_Free(ded->models);
@@ -185,7 +185,7 @@ void DED_Clear(ded_t* ded)
         {
             ded_sound_t* snd = &ded->sounds[i];
             if(snd->ext)
-                Uri_Destruct(snd->ext);
+                Uri_Delete(snd->ext);
         }}
         M_Free(ded->sounds);
         ded->sounds = 0;
@@ -198,7 +198,7 @@ void DED_Clear(ded_t* ded)
         {
             ded_music_t* song = &ded->music[i];
             if(song->path)
-                Uri_Destruct(song->path);
+                Uri_Delete(song->path);
         }}
         M_Free(ded->music);
         ded->music = 0;
@@ -217,7 +217,7 @@ void DED_Clear(ded_t* ded)
             {
                 ded_skylayer_t* sl = &info->sky.layers[j];
                 if(sl->material)
-                    Uri_Destruct(sl->material);
+                    Uri_Delete(sl->material);
             }
             for(j = 0; j < NUM_SKY_MODELS; ++j)
             {
@@ -241,7 +241,7 @@ void DED_Clear(ded_t* ded)
             {
                 ded_skylayer_t* sl = &sky->layers[j];
                 if(sl->material)
-                    Uri_Destruct(sl->material);
+                    Uri_Delete(sl->material);
             }
             for(j = 0; j < NUM_SKY_MODELS; ++j)
             {
@@ -261,11 +261,11 @@ void DED_Clear(ded_t* ded)
         {
             ded_detailtexture_t* dtex = &ded->details[i];
             if(dtex->material1)
-                Uri_Destruct(dtex->material1);
+                Uri_Delete(dtex->material1);
             if(dtex->material2)
-                Uri_Destruct(dtex->material2);
+                Uri_Delete(dtex->material2);
             if(dtex->detailTex)
-                Uri_Destruct(dtex->detailTex);
+                Uri_Delete(dtex->detailTex);
         }}
         M_Free(ded->details);
         ded->details = 0;
@@ -278,12 +278,12 @@ void DED_Clear(ded_t* ded)
         {
             ded_material_t* mat = &ded->materials[i];
             if(mat->id)
-                Uri_Destruct(mat->id);
+                Uri_Delete(mat->id);
             for(j = 0; j < DED_MAX_MATERIAL_LAYERS; ++j)
             {
                 for(k = 0; k < mat->layers[j].stageCount.num; ++k)
                     if(mat->layers[j].stages[k].texture)
-                        Uri_Destruct(mat->layers[j].stages[k].texture);
+                        Uri_Delete(mat->layers[j].stages[k].texture);
                 free(mat->layers[j].stages);
             }
         }
@@ -312,7 +312,7 @@ void DED_Clear(ded_t* ded)
             for(j = 0; j < tenv->count.num; ++j)
             {
                 if(tenv->materials[j])
-                    Uri_Destruct(tenv->materials[j]);
+                    Uri_Delete(tenv->materials[j]);
             }}
             M_Free(tenv->materials);
         }}
@@ -327,12 +327,12 @@ void DED_Clear(ded_t* ded)
         {
             ded_compositefont_t* cfont = &ded->compositeFonts[i];
             if(cfont->id)
-                Uri_Destruct(cfont->id);
+                Uri_Delete(cfont->id);
             { int j;
             for(j = 0; j < cfont->charMapCount.num; ++j)
             {
                 if(cfont->charMap[j].path)
-                    Uri_Destruct(cfont->charMap[j].path);
+                    Uri_Delete(cfont->charMap[j].path);
             }}
             M_Free(cfont->charMap);
         }}
@@ -359,19 +359,19 @@ void DED_Clear(ded_t* ded)
         {
             ded_decor_t* dec = &ded->decorations[i];
             if(dec->material)
-                Uri_Destruct(dec->material);
+                Uri_Delete(dec->material);
             { int j;
             for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
             {
                 ded_decorlight_t* li = &dec->lights[j];
                 if(li->up)
-                    Uri_Destruct(li->up);
+                    Uri_Delete(li->up);
                 if(li->down)
-                    Uri_Destruct(li->down);
+                    Uri_Delete(li->down);
                 if(li->sides)
-                    Uri_Destruct(li->sides);
+                    Uri_Delete(li->sides);
                 if(li->flare)
-                    Uri_Destruct(li->flare);
+                    Uri_Delete(li->flare);
             }}
         }}
         M_Free(ded->decorations);
@@ -385,11 +385,11 @@ void DED_Clear(ded_t* ded)
         {
             ded_reflection_t* ref = &ded->reflections[i];
             if(ref->material)
-                Uri_Destruct(ref->material);
+                Uri_Delete(ref->material);
             if(ref->shinyMap)
-                Uri_Destruct(ref->shinyMap);
+                Uri_Delete(ref->shinyMap);
             if(ref->maskMap)
-                Uri_Destruct(ref->maskMap);
+                Uri_Delete(ref->maskMap);
         }}
         free(ded->reflections);
         ded->reflections = 0;
@@ -404,7 +404,7 @@ void DED_Clear(ded_t* ded)
             int j;
             for(j = 0; j < group->count.num; ++j)
                 if(group->members[j].material)
-                    Uri_Destruct(group->members[j].material);
+                    Uri_Delete(group->members[j].material);
             M_Free(group->members);
         }}
         M_Free(ded->groups);
@@ -424,9 +424,9 @@ void DED_Clear(ded_t* ded)
         {
             ded_linetype_t* lt = &ded->lineTypes[i];
             if(lt->actMaterial)
-                Uri_Destruct(lt->actMaterial);
+                Uri_Delete(lt->actMaterial);
             if(lt->deactMaterial)
-                Uri_Destruct(lt->deactMaterial);
+                Uri_Delete(lt->deactMaterial);
         }}
         M_Free(ded->lineTypes);
         ded->lineTypes = 0;
@@ -439,7 +439,7 @@ void DED_Clear(ded_t* ded)
         {
             ded_ptcgen_t* gen = &ded->ptcGens[i];
             if(gen->material)
-                Uri_Destruct(gen->material);
+                Uri_Delete(gen->material);
             if(gen->stages)
                 M_Free(gen->stages);
         }}
@@ -545,7 +545,7 @@ void DED_RemoveSky(ded_t* ded, int index)
     {
         ded_skylayer_t* sl = &ded->skies[index].layers[i];
         if(sl->material)
-            Uri_Destruct(sl->material);
+            Uri_Delete(sl->material);
     }
     DED_DelEntry(index, (void **) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
 }
@@ -600,7 +600,7 @@ int DED_AddMaterial(ded_t* ded, const char* path)
     ded_material_t* mat = DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
 
     if(NULL != path)
-        mat->id = Uri_Construct2(path, RC_NULL);
+        mat->id = Uri_NewWithPath2(path, RC_NULL);
 
     return mat - ded->materials;
 }
@@ -716,7 +716,7 @@ void DED_RemoveTextureEnv(ded_t *ded, int index)
     for(i = 0; i < ded->textureEnv[index].count.num; ++i)
     {
         if(ded->textureEnv[index].materials[i])
-            Uri_Destruct(ded->textureEnv[index].materials[i]);
+            Uri_Delete(ded->textureEnv[index].materials[i]);
     }}
     M_Free(ded->textureEnv[index].materials);
 
@@ -729,7 +729,7 @@ int DED_AddCompositeFont(ded_t* ded, const char* path)
         &ded->count.compositeFonts, sizeof(ded_compositefont_t));
 
     if(NULL != path)
-        cfont->id = Uri_Construct2(path, RC_NULL);
+        cfont->id = Uri_NewWithPath2(path, RC_NULL);
 
     return cfont - ded->compositeFonts;
 }
@@ -739,12 +739,12 @@ void DED_RemoveCompositeFont(ded_t* ded, int index)
     ded_compositefont_t* cfont = ded->compositeFonts + index;
 
     if(cfont->id)
-        Uri_Destruct(cfont->id);
+        Uri_Delete(cfont->id);
     { int i;
     for(i = 0; i < cfont->charMapCount.num; ++i)
     {
         if(cfont->charMap[i].path)
-            Uri_Destruct(cfont->charMap[i].path);
+            Uri_Delete(cfont->charMap[i].path);
     }}
     M_Free(cfont->charMap);
 
@@ -777,7 +777,7 @@ int DED_AddDetail(ded_t* ded, const char* lumpname)
     ded_detailtexture_t* dtl = DED_NewEntry((void**) &ded->details, &ded->count.details, sizeof(ded_detailtexture_t));
 
     if(lumpname && lumpname[0])
-        dtl->detailTex = Uri_Construct2(lumpname, RC_NULL);
+        dtl->detailTex = Uri_NewWithPath2(lumpname, RC_NULL);
     dtl->scale = 1;
     dtl->strength = 1;
     return dtl - ded->details;
@@ -897,7 +897,7 @@ void DED_RemoveGroup(ded_t* ded, int index)
         int i;
         for(i = 0; i < ded->groups[index].count.num; ++i)
             if(ded->groups[index].members[i].material)
-                Uri_Destruct(ded->groups[index].members[i].material);
+                Uri_Delete(ded->groups[index].members[i].material);
         M_Free(ded->groups[index].members);
     }
     DED_DelEntry(index, (void**) &ded->groups, &ded->count.groups, sizeof(ded_group_t));

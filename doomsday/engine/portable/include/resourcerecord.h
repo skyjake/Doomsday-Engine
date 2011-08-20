@@ -44,7 +44,7 @@ typedef struct resourcerecord_s {
     ddstring_t** _identityKeys;
 
     /// Paths to use when attempting to locate this resource.
-    dduri_t** _searchPaths;
+    Uri** _searchPaths;
 
     /// Id+1 of the search path used to locate this resource (in _searchPaths) if found. Set during resource location.
     uint _searchPathUsed;
@@ -53,9 +53,9 @@ typedef struct resourcerecord_s {
     ddstring_t _foundPath;
 } resourcerecord_t;
 
-resourcerecord_t* ResourceRecord_Construct2(resourceclass_t rclass, int rflags, const ddstring_t* name);
-resourcerecord_t* ResourceRecord_Construct(resourceclass_t rclass, int rflags);
-void ResourceRecord_Destruct(resourcerecord_t* rec);
+resourcerecord_t* ResourceRecord_NewWithName(resourceclass_t rclass, int rflags, const ddstring_t* name);
+resourcerecord_t* ResourceRecord_New(resourceclass_t rclass, int rflags);
+void ResourceRecord_Delete(resourcerecord_t* rec);
 
 /**
  * Add a new name to the list of known names for this resource.
@@ -96,8 +96,8 @@ resourceclass_t ResourceRecord_ResourceClass(resourcerecord_t* rec);
 int ResourceRecord_ResourceFlags(resourcerecord_t* rec);
 
 /// @return  Array of IdentityKey(s) associated with subrecords of this resource.
-const ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec);
+const ddstring_t** ResourceRecord_IdentityKeys(resourcerecord_t* rec);
 
-const dduri_t* const* ResourceRecord_SearchPaths(resourcerecord_t* rec);
+const Uri** ResourceRecord_SearchPaths(resourcerecord_t* rec);
 
 #endif /* LIBDENG_RESOURCERECORD_H */

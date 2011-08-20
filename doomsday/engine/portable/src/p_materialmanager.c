@@ -558,7 +558,7 @@ void Materials_Initialize(void)
     bindings = NULL;
     bindingsCount = bindingsMax = 0;
 
-    materialsBlockSet = BlockSet_Construct(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
+    materialsBlockSet = BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
     materials = NULL;
 
     // Clear the name bind hash tables.
@@ -574,7 +574,7 @@ void Materials_Initialize(void)
 
 static int destroyVariant(materialvariant_t* variant, void* paramaters)
 {
-    MaterialVariant_Destruct(variant);
+    MaterialVariant_Delete(variant);
     return 1; // Continue iteration.
 }
 
@@ -588,7 +588,7 @@ static void destroyMaterials(void)
         free(materials);
         materials = next;
     }
-    BlockSet_Destruct(materialsBlockSet);
+    BlockSet_Delete(materialsBlockSet);
     materialsBlockSet = NULL;
 }
 
@@ -828,7 +828,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     {
     materialnamespaceid_t namespaceId = MN_ANY;
     int width = def->width, height = def->height;
-    const dduri_t* rawName = def->id;
+    const Uri* rawName = def->id;
     const texture_t* tex = NULL;
     byte flags = def->flags;
     material_t* mat;
@@ -919,7 +919,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 }
 
-static materialnum_t Materials_CheckNumForPath2(const dduri_t* uri)
+static materialnum_t Materials_CheckNumForPath2(const Uri* uri)
 {
     assert(initedOk && uri);
     {
@@ -972,7 +972,7 @@ Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
     }
 }
 
-static materialnum_t Materials_NumForPath2(const dduri_t* path)
+static materialnum_t Materials_NumForPath2(const Uri* path)
 {
     materialnum_t result;
     if(!initedOk)
@@ -988,7 +988,7 @@ static materialnum_t Materials_NumForPath2(const dduri_t* path)
     return result;
 }
 
-materialnum_t Materials_IndexForUri(const dduri_t* path)
+materialnum_t Materials_IndexForUri(const Uri* path)
 {
     if(path)
     {
@@ -1001,9 +1001,9 @@ materialnum_t Materials_IndexForName(const char* path)
 {
     if(path && path[0])
     {
-        dduri_t* uri = Uri_Construct2(path, RC_NULL);
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
         materialnum_t result = Materials_IndexForUri(uri);
-        Uri_Destruct(uri);
+        Uri_Delete(uri);
         return result;
     }
     return 0;
@@ -1022,10 +1022,10 @@ const ddstring_t* Materials_GetSymbolicName(material_t* mat)
     return MaterialBind_Name(&bindings[num-1]);
 }
 
-dduri_t* Materials_GetUri(material_t* mat)
+Uri* Materials_GetUri(material_t* mat)
 {
     materialbind_t* mb;
-    dduri_t* uri;
+    Uri* uri;
     ddstring_t path;
 
     if(!mat)
@@ -1043,7 +1043,7 @@ dduri_t* Materials_GetUri(material_t* mat)
         Str_Appendf(&path, "%s:%s", Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))),
             Str_Text(Materials_GetSymbolicName(mat)));
     }
-    uri = Uri_Construct2(Str_Text(&path), RC_NULL);
+    uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
     Str_Free(&path);
     return uri;
 }
@@ -1249,7 +1249,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     variant = Materials_ChooseVariant(mat, spec);
     if(NULL == variant)
     {   // We need to create at least one variant.
-        variant = Material_AddVariant(mat, MaterialVariant_Construct(mat, spec));
+        variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
 
         // Create all other required variants for any Materials in all linked groups.
         if(Material_IsGroupAnimated(mat))
@@ -1265,7 +1265,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
                     material_t* other = group->frames[k].mat;
                     if(mat != other && NULL == Materials_ChooseVariant(other, spec))
                     {
-                        Material_AddVariant(other, MaterialVariant_Construct(other, spec));
+                        Material_AddVariant(other, MaterialVariant_New(other, spec));
                     }
                 }
             }
@@ -1532,13 +1532,19 @@ materialvariant_t* Materials_ChooseVariant(material_t* mat,
 static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
     int numDigits = M_NumDigits(bindingsCount);
-    const material_t* mat = MaterialBind_Material(mb);
+    material_t* mat = MaterialBind_Material(mb);
+    Uri* uri = Materials_GetUri(mat);
+    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
-    Con_Printf(" %*u: \"", numDigits, (unsigned int) Material_BindId(mat));
+    Con_Printf(" %*u: %-*s %5d x %-5d %-8s %s\n", numDigits, (unsigned int) Material_BindId(mat),
+        printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+        Material_Width(mat), Material_Height(mat),
+        Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialClassName(Material_EnvironmentClass(mat)),
+        Material_IsCustom(mat)? "addon" : "iwad");
+
+    Uri_Delete(uri);
     if(printNamespace)
-        Con_Printf("%s:", Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))));
-    Con_Printf("%s\" [%i, %i]", Str_Text(MaterialBind_Name(mb)), Material_Width(mat), Material_Height(mat));
-    Con_Printf("\n");
+        Str_Delete((ddstring_t*)path);
 }
 
 static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
@@ -1607,33 +1613,30 @@ static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
     return collectMaterials(namespaceId, like, count, storage);
 }
 
-static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like)
+static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like,
+    boolean printNamespace)
 {
+    int numDigits = M_NumDigits(bindingsCount);
     size_t count = 0;
     materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, 0);
 
-    if(VALID_MATERIALNAMESPACEID(namespaceId))
-        Con_FPrintf(CBLF_YELLOW, "Known Materials in \"%s\":\n", Str_Text(nameForMaterialNamespaceId(namespaceId)));
+    if(!printNamespace)
+        Con_FPrintf(CBLF_YELLOW, "Known materials in namespace '%s'", Str_Text(nameForMaterialNamespaceId(namespaceId)));
     else // Any namespace.
-        Con_FPrintf(CBLF_YELLOW, "Known Materials:\n");
+        Con_FPrintf(CBLF_YELLOW, "Known materials");
+
+    if(like && like[0])
+        Con_FPrintf(CBLF_YELLOW, " like \"%s\"", like);
+    Con_FPrintf(CBLF_YELLOW, ":\n");
 
     if(!foundMaterials)
-    {
-        Con_Printf(" None found.\n");
         return 0;
-    }
 
     // Print the result index key.
-    if(VALID_MATERIALNAMESPACEID(namespaceId))
-    {
-        Con_Printf(" uid: \"name\" [width, height]\n");
-        Con_FPrintf(CBLF_RULER, "");
-    }
-    else
-    {   // Any namespace.
-        Con_Printf(" uid: \"(namespace:)name\" [width, height]\n");
-        Con_FPrintf(CBLF_RULER, "");
-    }
+    Con_Printf(" %*s: %-*s %12s  envclass origin\n", numDigits, "uid",
+        printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
+        "dimensions");
+    Con_FPrintf(CBLF_RULER, "");
 
     // Sort and print the index.
     qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByName);
@@ -1642,7 +1645,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     for(ptr = foundMaterials; *ptr; ++ptr)
     {
         const materialbind_t* mb = *ptr;
-        printMaterialInfo(mb, (namespaceId == MN_ANY));
+        printMaterialInfo(mb, printNamespace);
     }}
 
     free(foundMaterials);
@@ -1652,10 +1655,16 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
 static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 {
     size_t printTotal = 0;
-    // Only one namespace to print?
-    if(VALID_MATERIALNAMESPACEID(namespaceId))
+    // Do we care which namespace?
+    if(namespaceId == MN_ANY && like && like[0])
     {
-        printTotal = printMaterials2(namespaceId, like);
+        printTotal = printMaterials2(namespaceId, like, true);
+        Con_FPrintf(CBLF_RULER, "");
+    }
+    // Only one namespace to print?
+    else if(VALID_MATERIALNAMESPACEID(namespaceId))
+    {
+        printTotal = printMaterials2(namespaceId, like, false);
         Con_FPrintf(CBLF_RULER, "");
     }
     else
@@ -1664,7 +1673,7 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
         int i;
         for(i = MATERIALNAMESPACE_FIRST; i <= MATERIALNAMESPACE_LAST; ++i)
         {
-            size_t printed = printMaterials2((materialnamespaceid_t)i, like);
+            size_t printed = printMaterials2((materialnamespaceid_t)i, like, false);
             if(printed != 0)
             {
                 printTotal += printed;
@@ -1672,7 +1681,7 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
             }
         }
     }
-    Con_Message("Found %lu Materials.\n", (unsigned long) printTotal);
+    Con_Message("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Material" : "Materials");
 }
 
 boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)
@@ -2023,12 +2032,58 @@ ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
 
 D_CMD(ListMaterials)
 {
-    materialnamespaceid_t namespaceId = (argc > 1? DD_ParseMaterialNamespace(argv[1]) : MN_ANY);
-    if(argc > 2 && !VALID_MATERIALNAMESPACEID(namespaceId))
+    materialnamespaceid_t namespaceId = MN_ANY;
+    const char* like = NULL;
+    Uri* uri = NULL;
+
+    // "listmaterials [namespace] [name]"
+    if(argc > 2)
     {
-        Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
-        return false;
+        uri = Uri_New();
+        Uri_SetScheme(uri, argv[1]);
+        Uri_SetPath(uri, argv[2]);
+
+        namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+        if(!VALID_MATERIALNAMESPACEID(namespaceId))
+        {
+            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
+            Uri_Delete(uri);
+            return false;
+        }
+        like = Str_Text(Uri_Path(uri));
     }
-    printMaterials(namespaceId, (argc > 2? argv[2] : (argc > 1 && !VALID_MATERIALNAMESPACEID(namespaceId)? argv[1] : NULL)));
+    // "listmaterials [namespace:name]" i.e., a partial Uri
+    else if(argc > 1)
+    {
+        uri = Uri_NewWithPath2(argv[1], RC_NULL);
+        if(!Str_IsEmpty(Uri_Scheme(uri)))
+        {
+            namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+            if(!VALID_MATERIALNAMESPACEID(namespaceId))
+            {
+                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
+                Uri_Delete(uri);
+                return false;
+            }
+
+            if(!Str_IsEmpty(Uri_Path(uri)))
+                like = Str_Text(Uri_Path(uri));
+        }
+        else
+        {
+            namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Path(uri)));
+
+            if(!VALID_MATERIALNAMESPACEID(namespaceId))
+            {
+                namespaceId = MN_ANY;
+                like = argv[1];
+            }
+        }
+    }
+
+    printMaterials(namespaceId, like);
+
+    if(uri != NULL)
+        Uri_Delete(uri);
     return true;
 }

@@ -123,7 +123,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
             {
                 if(PT_BRANCH == PathDirectoryNode_Type(node))
                 {
-                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, -1, callback, paramaters);
+                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, PATHDIRECTORY_PATHHASH_SIZE, callback, paramaters);
                 }
                 else
                 {
@@ -171,7 +171,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
 }
 
 static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
-    const dduri_t* const* searchPaths, uint searchPathsCount,
+    const Uri* const* searchPaths, uint searchPathsCount,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters),
     void* paramaters)
 {
@@ -192,15 +192,15 @@ static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
     }}
 }
 
-static void printPaths(const dduri_t* const* paths, size_t pathsCount)
+static void printPaths(const Uri* const* paths, size_t pathsCount)
 {
     assert(NULL != paths);
     {
-    const dduri_t* const* ptr = paths;
+    const Uri* const* ptr = paths;
     size_t i;
     for(i = 0; i < pathsCount && NULL != *ptr; ++i, ptr++)
     {
-        const dduri_t* path = *ptr;
+        const Uri* path = *ptr;
         ddstring_t* rawPath = Uri_ToString(path);
         ddstring_t* resolvedPath = Uri_Resolved(path);
 
@@ -214,25 +214,25 @@ static void printPaths(const dduri_t* const* paths, size_t pathsCount)
     }
 }
 
-filedirectory_t* FileDirectory_ConstructStr(const ddstring_t* pathList)
+filedirectory_t* FileDirectory_NewWithPathListStr(const ddstring_t* pathList)
 {
     filedirectory_t* fd = (filedirectory_t*) malloc(sizeof(*fd));
     if(NULL == fd)
         Con_Error("FileDirectory::Construct: Failed on allocation of %lu bytes for "
             "new FileDirectory.", (unsigned long) sizeof(*fd));
 
-    fd->_pathDirectory = PathDirectory_Construct();
+    fd->_pathDirectory = PathDirectory_New();
     if(NULL != pathList)
     {
         size_t count;
-        dduri_t** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        resolveAndAddSearchPathsToDirectory(fd, (const dduri_t**)uris, (uint)count, 0, 0);
+        Uri** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
+        resolveAndAddSearchPathsToDirectory(fd, (const Uri**)uris, (uint)count, 0, 0);
         F_DestroyUriList(uris);
     }
     return fd;
 }
 
-filedirectory_t* FileDirectory_Construct(const char* pathList)
+filedirectory_t* FileDirectory_NewWithPathList(const char* pathList)
 {
     filedirectory_t* fd;
     ddstring_t _pathList, *paths = NULL;
@@ -243,20 +243,15 @@ filedirectory_t* FileDirectory_Construct(const char* pathList)
         Str_Set(&_pathList, pathList);
         paths = &_pathList;
     }
-    fd = FileDirectory_ConstructStr(paths);
+    fd = FileDirectory_NewWithPathListStr(paths);
     if(len != 0)
         Str_Free(paths);
     return fd;
 }
 
-filedirectory_t* FileDirectory_ConstructEmpty(void)
+filedirectory_t* FileDirectory_New(void)
 {
-    return FileDirectory_ConstructStr(NULL);
-}
-
-filedirectory_t* FileDirectory_ConstructDefault(void)
-{
-    return FileDirectory_ConstructEmpty();
+    return FileDirectory_NewWithPathListStr(NULL);
 }
 
 static int freeNodeInfo(struct pathdirectory_node_s* node, void* paramaters)
@@ -274,15 +269,15 @@ static void clearNodeInfo(filedirectory_t* fd)
 {
     assert(NULL != fd);
     if(NULL == fd->_pathDirectory) return;
-    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, -1, freeNodeInfo);
+    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, PATHDIRECTORY_PATHHASH_SIZE, freeNodeInfo);
 }
 
-void FileDirectory_Destruct(filedirectory_t* fd)
+void FileDirectory_Delete(filedirectory_t* fd)
 {
     assert(NULL != fd);
     clearNodeInfo(fd);
     if(NULL != fd->_pathDirectory)
-        PathDirectory_Destruct(fd->_pathDirectory);
+        PathDirectory_Delete(fd->_pathDirectory);
     free(fd);
 }
 
@@ -293,7 +288,7 @@ void FileDirectory_Clear(filedirectory_t* fd)
     PathDirectory_Clear(fd->_pathDirectory);
 }
 
-void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
+void FileDirectory_AddPaths3(filedirectory_t* fd, const Uri* const* paths, uint pathsCount,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters), void* paramaters)
 {
     assert(NULL != fd);
@@ -312,13 +307,13 @@ void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, u
     resolveAndAddSearchPathsToDirectory(fd, paths, pathsCount, callback, paramaters);
 }
 
-void FileDirectory_AddPaths2(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
+void FileDirectory_AddPaths2(filedirectory_t* fd, const Uri* const* paths, uint pathsCount,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters))
 {
     FileDirectory_AddPaths3(fd, paths, pathsCount, callback, NULL);
 }
 
-void FileDirectory_AddPaths(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount)
+void FileDirectory_AddPaths(filedirectory_t* fd, const Uri* const* paths, uint pathsCount)
 {
     FileDirectory_AddPaths2(fd, paths, pathsCount, NULL);
 }
@@ -328,11 +323,11 @@ void FileDirectory_AddPathList3(filedirectory_t* fd, const char* pathList,
 {
     assert(NULL != fd);
     {
-    dduri_t** paths = NULL;
+    Uri** paths = NULL;
     size_t pathsCount = 0;
     if(NULL != pathList && pathList[0])
         paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);
-    FileDirectory_AddPaths3(fd, (const dduri_t**)paths, (uint)pathsCount, callback, paramaters);
+    FileDirectory_AddPaths3(fd, (const Uri**)paths, (uint)pathsCount, callback, paramaters);
     if(NULL != paths)
         F_DestroyUriList(paths);
     }
@@ -421,7 +416,6 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeTyp
     }
 }
 
-#if _DEBUG
 static int C_DECL comparePaths(const void* a, const void* b)
 {
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
@@ -448,4 +442,9 @@ void FileDirectory_Print(filedirectory_t* fd)
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "file":"files"));
     }
 }
-#endif
+
+void FileDirectory_PrintHashDistribution(filedirectory_t* fd)
+{
+    assert(NULL != fd);
+    PathDirectory_PrintHashDistribution(fd->_pathDirectory);
+}

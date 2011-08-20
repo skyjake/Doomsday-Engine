@@ -118,7 +118,7 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
         pathdirectory_t* pd = PathDirectoryNode_Directory(node->data);
         pathdirectory_search_t* search = PathDirectory_BeginSearchStr(pd, 0, searchPath, FILEDIRECTORY_DELIMITER);
         {
-            while(NULL != node && !DD_SearchPathDirectoryCompare(node->data, PathDirectory_Search(pd)))
+            while(NULL != node && !DD_SearchPathDirectoryCompare(node->data, search))
                 node = node->next;
         }
         PathDirectory_EndSearch2(pd, &resultNode);
@@ -209,7 +209,7 @@ static void rebuild(resourcenamespace_t* rn)
     }
 }
 
-resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
+resourcenamespace_t* ResourceNamespace_New2(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
 {
@@ -244,14 +244,14 @@ resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
     }
 }
 
-resourcenamespace_t* ResourceNamespace_Construct(const char* name,
+resourcenamespace_t* ResourceNamespace_New(const char* name,
     filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name))
 {
-    return ResourceNamespace_Construct2(name, directory, composeHashNameFunc, hashNameFunc, 0);
+    return ResourceNamespace_New2(name, directory, composeHashNameFunc, hashNameFunc, 0);
 }
 
-void ResourceNamespace_Destruct(resourcenamespace_t* rn)
+void ResourceNamespace_Delete(resourcenamespace_t* rn)
 {
     assert(rn);
     ResourceNamespace_ClearSearchPaths(rn, SPG_OVERRIDE);
@@ -272,7 +272,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rn)
     rn->_flags |= RNF_IS_DIRTY;
 }
 
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* newUri,
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* newUri,
     resourcenamespace_searchpathgroup_t group)
 {
     assert(rn && newUri && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
@@ -289,7 +289,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* 
             return true;
     }}
 
-    rn->_searchPaths[group] = (dduri_t**) realloc(rn->_searchPaths[group],
+    rn->_searchPaths[group] = (Uri**) realloc(rn->_searchPaths[group],
         sizeof(*rn->_searchPaths[group]) * ++rn->_searchPathsCount[group]);
     if(NULL == rn->_searchPaths[group])
         Con_Error("ResourceNamespace::AddExtraSearchPath: Failed on reallocation of %lu bytes for "
@@ -299,7 +299,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const dduri_t* 
     if(rn->_searchPathsCount[group] > 1)
         memmove(rn->_searchPaths[group] + 1, rn->_searchPaths[group],
             sizeof(*rn->_searchPaths[group]) * (rn->_searchPathsCount[group]-1));
-    rn->_searchPaths[group][0] = Uri_ConstructCopy(newUri);
+    rn->_searchPaths[group][0] = Uri_NewCopy(newUri);
 
     rn->_flags |= RNF_IS_DIRTY;
     return true;
@@ -312,7 +312,7 @@ void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespa
         return;
     { uint i;
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
-        Uri_Destruct(rn->_searchPaths[group][i]);
+        Uri_Delete(rn->_searchPaths[group][i]);
     }
     free(rn->_searchPaths[group]);
     rn->_searchPaths[group] = 0;

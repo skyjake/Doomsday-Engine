@@ -52,7 +52,7 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen);
 #endif
 static void resolvePathRelativeDirectives(char* path);
 
-directory_t* Dir_Construct(const char* path)
+directory_t* Dir_New(const char* path)
 {
     directory_t* dir = (directory_t*) malloc(sizeof(*dir));
     if(NULL == dir)
@@ -61,7 +61,7 @@ directory_t* Dir_Construct(const char* path)
     return dir;
 }
 
-directory_t* Dir_ConstructFromCurrentDir(void)
+directory_t* Dir_NewFromCWD(void)
 {
     directory_t* dir = (directory_t*) malloc(sizeof(*dir));
     size_t lastIndex;
@@ -85,7 +85,7 @@ directory_t* Dir_ConstructFromPathDir(const char* path)
 {
     directory_t* dir;
     if(NULL == path || !path[0])
-        return Dir_ConstructFromCurrentDir();
+        return Dir_NewFromCWD();
 
     dir = (directory_t*) malloc(sizeof(*dir));
     if(NULL == dir)
@@ -94,7 +94,7 @@ directory_t* Dir_ConstructFromPathDir(const char* path)
     return dir;
 }
 
-void Dir_Destruct(directory_t* dir)
+void Dir_Delete(directory_t* dir)
 {
     assert(NULL != dir);
     free(dir);

@@ -61,7 +61,7 @@ void PNGAPI user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
 
 void PNGAPI my_read_data(png_structp read_ptr, png_bytep data, png_size_t length)
 {
-    F_Read(data, length, png_get_io_ptr(read_ptr));
+    F_Read(png_get_io_ptr(read_ptr), data, length);
 }
 
 const char* PNG_LastError(void)

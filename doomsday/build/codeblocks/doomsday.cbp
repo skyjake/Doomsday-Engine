@@ -152,9 +152,11 @@
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
+		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_mus.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_sfx.h" />
+		<Unit filename="..\..\engine\api\uri.h" />
 		<Unit filename="..\..\engine\mac\include\DoomsdayRunner.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -181,6 +183,7 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\include\abstractfile.h" />
 		<Unit filename="..\..\engine\portable\include\b_command.h" />
 		<Unit filename="..\..\engine\portable\include\b_context.h" />
 		<Unit filename="..\..\engine\portable\include\b_device.h" />
@@ -218,7 +221,6 @@
 		<Unit filename="..\..\engine\portable\include\dd_pinit.h" />
 		<Unit filename="..\..\engine\portable\include\dd_version.h" />
 		<Unit filename="..\..\engine\portable\include\dd_wad.h" />
-		<Unit filename="..\..\engine\portable\include\dd_zip.h" />
 		<Unit filename="..\..\engine\portable\include\dd_zone.h" />
 		<Unit filename="..\..\engine\portable\include\de_audio.h" />
 		<Unit filename="..\..\engine\portable\include\de_base.h" />
@@ -259,6 +261,9 @@
 		<Unit filename="..\..\engine\portable\include\gl_texmanager.h" />
 		<Unit filename="..\..\engine\portable\include\gl_tga.h" />
 		<Unit filename="..\..\engine\portable\include\image.h" />
+		<Unit filename="..\..\engine\portable\include\lumpdirectory.h" />
+		<Unit filename="..\..\engine\portable\include\lumpfile.h" />
+		<Unit filename="..\..\engine\portable\include\lumpinfo.h" />
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />
@@ -342,7 +347,6 @@
 		<Unit filename="..\..\engine\portable\include\s_mus.h" />
 		<Unit filename="..\..\engine\portable\include\s_sfx.h" />
 		<Unit filename="..\..\engine\portable\include\s_wav.h" />
-		<Unit filename="..\..\engine\portable\include\stringpool.h" />
 		<Unit filename="..\..\engine\portable\include\sv_def.h" />
 		<Unit filename="..\..\engine\portable\include\sv_frame.h" />
 		<Unit filename="..\..\engine\portable\include\sv_infine.h" />
@@ -375,6 +379,9 @@
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
 		<Unit filename="..\..\engine\portable\include\ui2_main.h" />
+		<Unit filename="..\..\engine\portable\include\wadfile.h" />
+		<Unit filename="..\..\engine\portable\include\zipfile.h" />
+		<Unit filename="..\..\engine\portable\src\abstractfile.c" />
 		<Unit filename="..\..\engine\portable\src\animator.c" />
 		<Unit filename="..\..\engine\portable\src\b_command.c">
 			<Option compilerVar="CC" />
@@ -492,9 +499,6 @@
 		<Unit filename="..\..\engine\portable\src\dd_wad.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\dd_zip.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\engine\portable\src\dd_zone.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -549,6 +553,8 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\image.c" />
+		<Unit filename="..\..\engine\portable\src\lumpdirectory.c" />
+		<Unit filename="..\..\engine\portable\src\lumpfile.c" />
 		<Unit filename="..\..\engine\portable\src\m_args.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -849,6 +855,8 @@
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\ui2_main.c" />
 		<Unit filename="..\..\engine\portable\src\uri.c" />
+		<Unit filename="..\..\engine\portable\src\wadfile.c" />
+		<Unit filename="..\..\engine\portable\src\zipfile.c" />
 		<Unit filename="..\..\engine\unix\include\dd_uinit.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

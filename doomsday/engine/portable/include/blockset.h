@@ -63,7 +63,7 @@ typedef struct blockset_s {
  *
  * @return  Ptr to the newly created blockset.
  */
-blockset_t* BlockSet_Construct(size_t sizeOfElement, size_t batchSize);
+blockset_t* BlockSet_New(size_t sizeOfElement, size_t batchSize);
 
 /**
  * Free an entire blockset.
@@ -72,7 +72,7 @@ blockset_t* BlockSet_Construct(size_t sizeOfElement, size_t batchSize);
  *
  * @param set  The blockset to be freed.
  */
-void BlockSet_Destruct(blockset_t* set);
+void BlockSet_Delete(blockset_t* set);
 
 /**
  * Return a ptr to the next unused element in the blockset.

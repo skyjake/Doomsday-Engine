@@ -31,6 +31,7 @@
 
 #include "r_main.h"
 
+struct colorpalette_s;
 struct material_s;
 struct colorpalette_s;
 

@@ -364,7 +364,7 @@ int Sys_ChangeVideoMode(int width, int height, int bpp)
     int                 res, i;
     DEVMODE             current, testMode, newMode;
 
-    if(!winManagerInited)
+    if(!winManagerInited || width < 0 || height < 0)
         return 0;
 
     Sys_GetDesktopBPP(&screenBPP);
@@ -382,8 +382,10 @@ int Sys_ChangeVideoMode(int width, int height, int bpp)
         bpp = 16;
     }
 
-    if(width == current.dmPelsWidth && height == current.dmPelsHeight &&
-       bpp == current.dmBitsPerPel)
+    if(bpp < 0) return 0;
+
+    if((unsigned)width == current.dmPelsWidth && (unsigned)height == current.dmPelsHeight &&
+       (unsigned)bpp == current.dmBitsPerPel)
        return 1; // No need to change, so success!
 
     // Override refresh rate?
