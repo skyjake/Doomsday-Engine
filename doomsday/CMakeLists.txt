@@ -65,18 +65,18 @@ OPTION (ENABLENETDEBUG "Turn on internal network debugging features. Default OFF
 OPTION (ENABLERANGECHECKING "Turn on internal range checking features. Default OFF" OFF)
 OPTION (ENABLEPROFILE "Turn on internal profiling features. Default OFF" OFF)
 OPTION (INSTALLSNOWBERRY "Include Snowberry and associated files in installation." ON)
+OPTION (WRITERTYPECHECK "Check that Reader/Writer types are correct." OFF)
 
 #MARK_AS_ADVANCED (BUILDJDOOM64)
 MARK_AS_ADVANCED (ENABLEMAO)
 MARK_AS_ADVANCED (ENABLENETDEBUG)
 MARK_AS_ADVANCED (ENABLEPROFILE)
 MARK_AS_ADVANCED (ENABLERANGECHECKING)
+MARK_AS_ADVANCED (WRITERTYPECHECK)
 
 IF (${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     MESSAGE( FATAL_ERROR "In-tree Builds are NOT supported. cd ${CMAKE_SOURCE_DIR}/build and try again")
 ENDIF ()
-
-ADD_DEFINITIONS ( -DDENG_WRITER_TYPECHECK )
 
 ################################################################################
 ######################## Doomsday Paths  #######################################
@@ -473,6 +473,10 @@ ELSE()
     MESSAGE(STATUS "Doomsday build text not defined.")
 ENDIF()
 
+IF(WRITERTYPECHECK)
+    ADD_DEFINITIONS( -DDENG_WRITER_TYPECHECK )
+ENDIF()
+
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/engine/api ${CMAKE_SOURCE_DIR}/engine/portable/include )
 
 FILE(GLOB DENG_PORTABLE_SOURCES
@@ -611,6 +615,7 @@ MESSAGE( STATUS "BUILDDEDICATED:               " ${BUILDDEDICATED} )
 MESSAGE( STATUS "BUILDDOX:                     " ${BUILDDOX} )
 MESSAGE( STATUS "BUILDFIXEDASM:                " ${BUILDFIXEDASM} )
 MESSAGE( STATUS "BUILDSYSTEM:                  " ${BUILDSYSTEM} )
+MESSAGE( STATUS "WRITERTYPECHECK:              " ${WRITERTYPECHECK} )
 MESSAGE( STATUS "CMAKE_INSTALL_PREFIX          " ${CMAKE_INSTALL_PREFIX} )
 MESSAGE( STATUS "DENG_BASE_DIR                 " ${datadir} )
 MESSAGE( STATUS "DENG_LIBRARY_DIR              " ${libdir} )
