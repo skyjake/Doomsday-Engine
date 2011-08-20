@@ -176,7 +176,7 @@ static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
 
 static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 {
-    dictentry_t*e = &dict->table[idx];
+//    dictentry_t*e = &dict->table[idx];
 //    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
         return NULL;
 //    return Materials_ToMaterial(Materials_IndexForName(Str_Text(&e->path), e->mnamespace));

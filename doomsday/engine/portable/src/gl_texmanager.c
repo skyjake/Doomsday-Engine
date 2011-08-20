@@ -223,6 +223,9 @@ static texturevariantspecification_t* unlinkVariantSpecification(texturevariants
         listHead = &detailVariantSpecs[hash];
         break;
       }
+    default:
+        Con_Error("unlinkVariantSpecification: Invalid spec type %i.", spec->type);
+        exit(1); // Unreachable.
     }
 
     if(*listHead)
@@ -457,6 +460,9 @@ static texturevariantspecification_t* findVariantSpecification(
         node = detailVariantSpecs[hash];
         break;
       }
+    default:
+        Con_Error("findVariantSpecification: Invalid spec type %i.", type);
+        exit(1); // Unreachable.
     }
 
     // Do we already have a concrete version of the template specification?
@@ -1067,7 +1073,6 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
         if(scaleSharp)
         {
             int scaleMethod = GL_ChooseSmartFilter(image->width, image->height, 0);
-            int numpels = image->width * image->height;
             boolean origMasked = (image->flags & IMGF_IS_MASKED) != 0;
             colorpaletteid_t origPaletteId = image->paletteId;
             uint8_t* newPixels;
@@ -2350,6 +2355,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
         case DGL_RGB:               loadFormat = GL_RGB; break;
         default:
             Con_Error("GL_UploadTextureContent: Unknown format %i.", (int) dglFormat);
+            exit(1); // Unreachable.
         }
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, allowCompression);
@@ -2748,7 +2754,7 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
     if(1 == result && NULL != patchTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
-        const doompatch_header_t hdr;
+        doompatch_header_t hdr;
         W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
         patchTex->offX = -SHORT(hdr.leftOffset);
         patchTex->offY = -SHORT(hdr.topOffset);
@@ -2763,7 +2769,7 @@ byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
     if(1 == result && NULL != spriteTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
-        const doompatch_header_t hdr;
+        doompatch_header_t hdr;
         W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
         spriteTex->offX = SHORT(hdr.leftOffset);
         spriteTex->offY = SHORT(hdr.topOffset);
@@ -3567,6 +3573,9 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     {
     case TST_GENERAL: uploadMethod = prepareVariant(variant, &image); break;
     case TST_DETAIL:  uploadMethod = prepareDetailVariant(variant, &image); break;
+    default:
+        Con_Error("tryLoadImageAndPrepareVariant: Invalid spec type %i.", spec->type);
+        exit(1); // Unreachable.
     }
 
     // We're done with the image data.
@@ -3648,7 +3657,7 @@ const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariants
     return GL_PrepareTextureVariant2(tex, spec, NULL);
 }
 
-const DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
+DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
     const texturevariant_t* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
@@ -3657,7 +3666,7 @@ const DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecificat
     return 0;
 }
 
-const DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
+DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTexture2(tex, spec, NULL);
 }

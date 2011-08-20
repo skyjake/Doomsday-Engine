@@ -442,7 +442,6 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 
     player_t*           plr = &ddPlayers[number];
     ddplayer_t*         ddpl = &plr->shared;
-    client_t*           c = &clients[number];
 
     reg->mobj = (ddpl->mo ? ddpl->mo->thinker.id : 0);
     reg->forwardMove = 0;//c->lastCmd->forwardMove;

@@ -634,7 +634,7 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     {
         boolean requiredOperands;
         fi_operand_t* ops = NULL;
-        uint numOps;
+        uint numOps = 0;
 
         // Is this command supported for this directive?
         if(directive != 0 && cmd->excludeDirectives != 0 &&

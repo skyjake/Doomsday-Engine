@@ -492,15 +492,11 @@ void P_FreeBadTexList(void)
  * @param identifer     If objName is @c NULL, compare using this unique identifier.
  * @param objName       If not @c NULL, compare using this unique name.
  */
-gamemapobjdef_t *P_GetGameMapObjDef(int identifier, const char *objName,
-                                    boolean canCreate)
+gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char* objName, boolean canCreate)
 {
-    uint                i;
-    size_t              len;
-    gamemapobjdef_t    *def;
-
-    if(objName)
-        len = strlen(objName);
+    size_t len = (objName? strlen(objName) : 0);
+    gamemapobjdef_t* def;
+    uint i;
 
     // Is this a known game object?
     for(i = 0; i < numGameMapObjDefs; ++i)

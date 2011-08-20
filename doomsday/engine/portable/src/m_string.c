@@ -176,7 +176,9 @@ ddstring_t* Str_Append(ddstring_t* str, const char* append)
 
 ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
 {
-    char append[2] = { ch, 0 };
+    char append[2];
+    append[0] = ch;
+    append[1] = '\0';
     return Str_Append(str, append);
 }
 
@@ -261,7 +263,9 @@ ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
 
 ddstring_t* Str_PrependChar(ddstring_t* str, char ch)
 {
-    char prepend[2] = { ch, 0 };
+    char prepend[2];
+    prepend[0] = ch;
+    prepend[1] = '\0';
     return Str_Prepend(str, prepend);
 }
 

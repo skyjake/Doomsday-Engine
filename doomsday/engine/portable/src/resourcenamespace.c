@@ -118,7 +118,7 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
         pathdirectory_t* pd = PathDirectoryNode_Directory(node->data);
         pathdirectory_search_t* search = PathDirectory_BeginSearchStr(pd, 0, searchPath, FILEDIRECTORY_DELIMITER);
         {
-            while(NULL != node && !DD_SearchPathDirectoryCompare(node->data, PathDirectory_Search(pd)))
+            while(NULL != node && !DD_SearchPathDirectoryCompare(node->data, search))
                 node = node->next;
         }
         PathDirectory_EndSearch2(pd, &resultNode);

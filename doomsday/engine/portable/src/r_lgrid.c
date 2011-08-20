@@ -980,7 +980,7 @@ void LG_Debug(void)
     gridblock_t*        block;
     int                 x, y;
     int                 vx, vy;
-    size_t              vIdx, blockIdx;
+    size_t              vIdx = 0, blockIdx;
     ddplayer_t*         ddpl = (viewPlayer? &viewPlayer->shared : NULL);
 
     if(!lgInited || !lgShowDebug)

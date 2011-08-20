@@ -29,6 +29,7 @@
 
 #include "resourcenamespace.h"
 
+struct resourcerecord_s;
 struct filedirectory_s;
 struct uri_s;
 

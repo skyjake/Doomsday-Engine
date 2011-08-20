@@ -794,7 +794,6 @@ void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1,
 {
     assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
     {
-    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     if(!s0 && !s1 && !t0 && !t1)
         return;
     BitmapCompositeFont_Prepare(font);

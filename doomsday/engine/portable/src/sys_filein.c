@@ -157,7 +157,6 @@ static int toLumpDirectoryId(const char* path)
         int i;
         for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
         {
-            lumpdirectory_record_t* rec = &lumpDirectory[i];
             if(!Str_CompareIgnoreCase(&lumpDirectory[i].path, path))
                 return i;
         }
@@ -194,7 +193,6 @@ static void addLumpDirectoryMapping(const char* lumpName, const ddstring_t* symb
 {
     assert(lumpName && symbolicPath);
     {
-    size_t symbolicPathLength = Str_Length(symbolicPath);
     lumpdirectory_record_t* rec;
     ddstring_t fullPath, path;
 

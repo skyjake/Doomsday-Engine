@@ -1691,6 +1691,11 @@ typedef struct {
                     patch++;
                 }
             }
+            else
+            {
+                Con_Error("R_ReadTextureDefs: Invalid gameDataFormat=%i.", gameDataFormat);
+                exit(1); // Unreachable.
+            }
 
             /**
              * Vanilla DOOM's implementation of the texture collection has a flaw which

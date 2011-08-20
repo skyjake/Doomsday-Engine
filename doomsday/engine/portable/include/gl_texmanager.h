@@ -342,9 +342,9 @@ typedef enum {
  *
  * @return  GL-name of the prepared variant if successful else @c 0
  */
-const DGLuint GL_PrepareTexture2(struct texture_s* tex,
+DGLuint GL_PrepareTexture2(struct texture_s* tex,
     texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const DGLuint GL_PrepareTexture(struct texture_s* tex,
+DGLuint GL_PrepareTexture(struct texture_s* tex,
     texturevariantspecification_t* spec);
 
 /**

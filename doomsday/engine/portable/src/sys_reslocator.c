@@ -461,8 +461,6 @@ static void createPackagesResourceNamespace(void)
     // Is the DOOMWADDIR environment variable in use?
     if(!ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
-        boolean pathIsGood = false;
-
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
         if(Str_IsEmpty(doomWadDir) || !F_IsAbsolute(doomWadDir))

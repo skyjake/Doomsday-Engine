@@ -431,7 +431,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
     if(numSprites)
     {
         spriteframe_t sprTemp[MAX_FRAMES];
-        int maxFrame, n, idx = 0;
+        int maxFrame, n;
 
         sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_APPSTATIC, NULL);
 

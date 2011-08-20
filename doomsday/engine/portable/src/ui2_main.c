@@ -484,6 +484,7 @@ fi_object_t* FI_NewObject(fi_obtype_e type, const char* name)
     case FI_PIC:  obj = (fi_object_t*) P_CreatePic(objectsUniqueId(&objects), name);       break;
     default:
         Con_Error("FI_NewObject: Unknown type %i.", type);
+        exit(1); // Unreachable.
     }
     return objectsAdd(&objects, obj);
 }
@@ -866,7 +867,7 @@ void FIData_PicThink(fi_object_t* obj)
         {
             fidata_pic_frame_t* f;
             // Advance the sequence position. k = next pos.
-            int next = p->curFrame + 1;
+            uint next = p->curFrame + 1;
 
             if(next == p->numFrames)
             {   // This is the end.

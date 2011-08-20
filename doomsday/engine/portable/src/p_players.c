@@ -89,7 +89,6 @@ int P_ConsoleToLocal(int playerNum)
 {
     int                 i, count = 0;
     player_t*           plr = &ddPlayers[playerNum];
-    int                 console = consolePlayer;
 
     if(playerNum == consolePlayer)
     {

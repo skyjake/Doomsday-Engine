@@ -233,6 +233,9 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         textA = Str_Text(textAString);
         break;
     case WT_GAMEINFO: textA = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wA->data)); break;
+    default:
+        Con_Error("compareKnownWordByName: Invalid type %i for word A.", wA->type);
+        exit(1); // Unreachable
     }
 
     switch(wB->type)
@@ -244,6 +247,9 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         textB = Str_Text(textBString);
         break;
     case WT_GAMEINFO: textB = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wB->data)); break;
+    default:
+        Con_Error("compareKnownWordByName: Invalid type %i for word B.", wB->type);
+        exit(1); // Unreachable
     }
 
     result = stricmp(textA, textB);
@@ -1215,6 +1221,9 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
                 text = Str_Text(textString);
                 break;
             case WT_GAMEINFO: text = Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data)); break;
+            default:
+                Con_Error("Con_IterateKnownWords: Invalid type %i for word.", word->type);
+                exit(1); // Unreachable
             }
 
             compareResult = strnicmp(text, pattern, patternLength);

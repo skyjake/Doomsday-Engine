@@ -1620,7 +1620,6 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        sidedef_t* front = NULL, *back = NULL;
         subsector_t** ssecp;
 
         // Check if there are any camera players in this sector. If their

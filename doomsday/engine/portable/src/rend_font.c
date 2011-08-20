@@ -728,7 +728,9 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 /// \note Member of the Doomsday public API.
 void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
 {
-    char str[2] = { ch, '\0' };
+    char str[2];
+    str[0] = ch;
+    str[1] = '\0';
     FR_DrawText3(str, x, y, alignFlags, textFlags);
 }
 
@@ -748,7 +750,6 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     int alignFlags, short textFlags)
 {
     float x = (float) posX, y = (float) posY;
-    DGLuint tex = 0;
 
     if(alignFlags & ALIGN_RIGHT)
         x -= Fonts_CharWidth(font, ch);
@@ -1129,7 +1130,7 @@ static void freeTextBuffer(void)
 /// \note Member of the Doomsday public API.
 void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlags)
 {
-    float cx = (float) x, cy = (float) y, width = 0, extraScale;
+    float cx = (float) x, cy = (float) y, extraScale;
     const char* fragment;
     char* str, *end;
     fontnum_t origFont = FR_Font();

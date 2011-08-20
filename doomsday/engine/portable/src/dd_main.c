@@ -999,7 +999,6 @@ static int DD_ChangeGameWorker(void* paramaters)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t* plr = &ddPlayers[i];
-        ddplayer_t* ddpl = &plr->shared;
 
         plr->extraLight = plr->targetExtraLight = 0;
         plr->extraLightCounter = 0;
@@ -1630,7 +1629,7 @@ int DD_Main(void)
     return exitCode;
 }
 
-static DD_InitResourceSystem(void)
+static void DD_InitResourceSystem(void)
 {
     Con_Message("Initializing Resource subsystem...\n");
 

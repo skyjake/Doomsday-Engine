@@ -532,8 +532,6 @@ float DGL_GetFloat(int name)
     default:
         return 0;
     }
-
-    return 1;
 }
 
 boolean DGL_SetFloat(int name, float value)

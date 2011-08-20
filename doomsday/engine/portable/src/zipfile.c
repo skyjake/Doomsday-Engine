@@ -239,7 +239,7 @@ static void ZipFile_ReadArchiveLumpDirectory(zipfile_t* file)
     int index, entryCount, pass;
     ddstring_t entryPath;
     centralend_t summary;
-    lumpinfo_t* info;
+    lumpinfo_t* info = NULL;
     void* centralDirectory;
     char* pos;
 
@@ -484,7 +484,7 @@ static boolean ZipFile_InflateLump(char* in, size_t inSize, char* out, size_t ou
     stream.avail_in = (uInt) inSize;
     stream.zalloc = Z_NULL;
     stream.zfree = Z_NULL;
-    stream.next_out = out;
+    stream.next_out = (Bytef*) out;
     stream.avail_out = (uInt) outSize;
 
     if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
