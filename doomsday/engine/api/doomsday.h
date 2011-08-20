@@ -69,6 +69,8 @@ extern          "C" {
 #include "dd_share.h"
 #include "dd_plugin.h"
 #include "smoother.h"
+#include "reader.h"
+#include "writer.h"
 
 //------------------------------------------------------------------------
 //

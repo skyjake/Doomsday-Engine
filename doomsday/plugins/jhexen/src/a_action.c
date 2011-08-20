@@ -275,7 +275,7 @@ void C_DECL A_LeafCheck(mobj_t *actor)
 
     if(P_Random() > 64)
     {
-        if(actor->mom[MX] == 0 && actor->mom[MY] == 0)
+        if(FEQUAL(actor->mom[MX], 0) && FEQUAL(actor->mom[MY], 0))
         {
             P_ThrustMobj(actor, actor->target->angle,
                         FIX2FLT(P_Random() << 9) + 1);

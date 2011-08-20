@@ -84,7 +84,7 @@ enum {
     PCL_ACK_SHAKE = 12,
     PSV_SYNC = 13,
     //PSV_FILTER = 14,                // unused?
-    PKT_COMMAND = 15,               // obsolete
+    //PKT_COMMAND = 15,               // obsolete
     PKT_LOGIN = 16,
     PCL_ACK_SETS = 17,
     PKT_COORDS = 18,
@@ -96,11 +96,13 @@ enum {
     PSV_SOUND2 = 24,                // unused?
     PSV_STOP_SOUND = 25,
     PCL_ACKS = 26,
-    PSV_PLAYER_FIX = 27,            // Fix angles/pos/mom.
+    PSV_PLAYER_FIX_OBSOLETE = 27,   // Fix angles/pos/mom (without console number).
     PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
     PKT_COMMAND2 = 29,
+    PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
+    PCL_GOODBYE = 31,
 
-    PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
+    //PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
@@ -234,6 +236,7 @@ typedef struct {
     int             viewConsole;
 } client_t;
 
+/*
 // Packets.
 typedef struct {
     byte            version;
@@ -241,11 +244,13 @@ typedef struct {
     byte            yourConsole;   // Which one's you?
     int             gameTime;
 } handshake_packet_t;
-
+*/
+/*
 typedef struct {
     byte            console;
     char            name[PLAYERNAMELEN];
 } playerinfo_packet_t;
+*/
 
 extern boolean  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics
@@ -266,23 +271,21 @@ void            Net_Init(void);
 void            Net_Shutdown(void);
 void            Net_DestroyArrays(void);
 void            Net_AllocClientBuffers(int clientId);
-void            Net_SendPacket(int to_player, int type, const void* data,
-                               size_t length);
+void            Net_SendPacket(int to_player, int type, const void *data, size_t length);
 boolean         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
+void            Net_SendPlayerInfo(int srcPlrNum, int destPlrNum);
 void            Net_InitGame(void);
 void            Net_StartGame(void);
 void            Net_StopGame(void);
-void            Net_BuildLocalCommands(timespan_t time);
-void            Net_SendCommands(void);
 void            Net_SendPing(int player, int count);
 void            Net_PingResponse(void);
 void            Net_ShowPingSummary(int player);
-void            Net_ShowChatMessage(void);
+void            Net_WriteChatMessage(int from, int toMask, const char* message);
+void            Net_ShowChatMessage(int plrNum, const char* message);
 int             Net_TimeDelta(byte now, byte then);
-int             Net_GetTicCmd(void *cmd, int player);
 void            Net_Update(void);
-void            Net_Ticker(void/*timespan_t time*/);
+void            Net_Ticker(timespan_t time);
 void            Net_Drawer(void);
 
 boolean         Net_IsLocalPlayer(int pNum);

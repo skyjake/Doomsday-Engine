@@ -37,6 +37,7 @@
 
 #include "d_netsv.h"
 #include "m_argv.h"
+#include "p_map.h"
 #include "p_saveg.h"
 #include "am_map.h"
 #include "g_defs.h"
@@ -157,6 +158,12 @@ void* H_GetVariable(int id)
     case DD_PSPRITE_BOB_Y:
         R_GetWeaponBob(DISPLAYPLAYER, NULL, &bob[1]);
         return &bob[1];
+
+    case DD_TM_FLOOR_Z:
+        return (void*) &tmFloorZ;
+
+    case DD_TM_CEILING_Z:
+        return (void*) &tmCeilingZ;
 
     default:
         break;

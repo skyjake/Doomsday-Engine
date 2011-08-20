@@ -112,10 +112,6 @@ void Sys_Init(void)
     VERBOSE( Con_Message("Initializing Audio subsystem...\n") )
     S_Init();
 
-    VERBOSE( Con_Message("Initializing Network subsystem...\n") )
-    Huff_Init();
-    N_Init();
-
 #if defined(WIN32) && !defined(_DEBUG)
     // Register handler for abnormal situations (in release build).
     signal(SIGSEGV, handler);
@@ -131,6 +127,10 @@ void Sys_Init(void)
     // we prefer to receive an error code instead of a signal.
     signal(SIGPIPE, SIG_IGN);
 #endif
+
+    VERBOSE( Con_Message("Initializing Network subsystem...\n") )
+    Huff_Init();
+    N_Init();
 
     VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }

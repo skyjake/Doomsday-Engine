@@ -355,6 +355,7 @@ void P_CheckPlayerJump(player_t *player)
 void P_PlayerRemoteMove(player_t* player)
 {
     int plrNum = player - players;
+    ddplayer_t* ddpl = player->plr;
     Smoother* smoother = Net_PlayerSmoother(plrNum);
     mobj_t* mo = player->plr->mo;
     float xyz[3];
@@ -377,11 +378,15 @@ void P_PlayerRemoteMove(player_t* player)
     if(IS_SERVER && !Sv_CanTrustClientPos(plrNum))
         return;
 
-    // As the mobj is being moved by the smoother, it has no momentum in the regular
-    // physics sense.
-    mo->mom[VX] = 0;
-    mo->mom[VY] = 0;
-    mo->mom[VZ] = 0;
+    // Unless there is a pending momentum fix, clear the mobj's momentum.
+    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
+    {
+        // As the mobj is being moved by the smoother, it has no momentum in the regular
+        // physics sense.
+        mo->mom[VX] = 0;
+        mo->mom[VY] = 0;
+        mo->mom[VZ] = 0;
+    }
 
     if(!Smoother_Evaluate(smoother, xyz))
     {
@@ -397,22 +402,33 @@ void P_PlayerRemoteMove(player_t* player)
         if(P_TryMove3f(mo, xyz[VX], xyz[VY], xyz[VZ]))
         {
             if(INRANGE_OF(mo->pos[VX], xyz[VX], .001f) &&
-               INRANGE_OF(mo->pos[VY], xyz[VY], .001f) &&
-               Smoother_IsOnFloor(smoother))
+               INRANGE_OF(mo->pos[VY], xyz[VY], .001f))
             {
-                // It successfully moved to the right XY coords.
-                mo->pos[VZ] = mo->floorZ;
-    #ifdef _DEBUG
-                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
-                                     plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
-    #endif
+                if(Smoother_IsOnFloor(smoother))
+                {
+                    // It successfully moved to the right XY coords.
+                    mo->pos[VZ] = mo->floorZ;
+#ifdef _DEBUG
+                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f (floorz)\n",
+                                         plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+#endif
+                }
+                else
+                {
+#ifdef _DEBUG
+                    VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
+                                          plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
+#endif
+                }
             }
-            else
+
+            if(players[plrNum].plr->flags & DDPF_FIXPOS)
             {
-    #ifdef _DEBUG
-                VERBOSE2( Con_Message("P_PlayerRemoteMove: Player %i: Smooth move to %f, %f, %f\n",
-                                      plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ]) );
-    #endif
+                // The player must have teleported.
+#ifdef _DEBUG
+                Con_Message("P_PlayerRemoteMove: Player %i: Clearing smoother because of FIXPOS.\n", plrNum);
+#endif
+                Smoother_Clear(smoother);
             }
         }
         else
@@ -460,12 +476,12 @@ void P_MovePlayer(player_t *player)
     if(IS_NETGAME && IS_SERVER)
     {
         // Server starts the walking animation for remote players.
-        if((dp->forwardMove != 0 || dp->sideMove != 0) &&
+        if((!FEQUAL(dp->forwardMove, 0) || !FEQUAL(dp->sideMove, 0)) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
         }
-        else if(P_PlayerInWalkState(player) && !dp->forwardMove && !dp->sideMove)
+        else if(P_PlayerInWalkState(player) && FEQUAL(dp->forwardMove, 0) && FEQUAL(dp->sideMove, 0))
         {
             // If in a walking frame, stop moving.
             P_MobjChangeState(plrmo, pClassInfo->normalState);
@@ -550,17 +566,17 @@ void P_MovePlayer(player_t *player)
             sideMove = 0;
         }
 
-        if(forwardMove != 0 && movemul)
+        if(!FEQUAL(forwardMove, 0) && movemul)
         {
             P_Thrust(player, plrmo->angle, forwardMove * movemul);
         }
 
-        if(sideMove != 0 && movemul)
+        if(!FEQUAL(sideMove, 0) && movemul)
         {
             P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul);
         }
 
-        if((forwardMove != 0 || sideMove != 0) &&
+        if((!FEQUAL(forwardMove, 0) || !FEQUAL(sideMove, 0)) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
@@ -773,8 +789,7 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(INRANGE_OF(pmo->mom[MX], 0, NOMOM_THRESHOLD) &&
-       INRANGE_OF(pmo->mom[MY], 0, NOMOM_THRESHOLD) && P_Random() < 64)
+    if(FEQUAL(pmo->mom[MX], 0) && FEQUAL(pmo->mom[MY], 0) && P_Random() < 64)
     {   // Snout sniff
         P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
@@ -809,8 +824,7 @@ void P_MorphThink(player_t *player)
 
     if(!IS_NETGAME || IS_CLIENT)
     {
-        //// \fixme: Replace equality to zero checks with mom in-range.
-        if(pmo->mom[MX] == 0 && pmo->mom[MY] == 0 && P_Random() < 160)
+        if(FEQUAL(pmo->mom[MX], 0) && FEQUAL(pmo->mom[MY], 0) && P_Random() < 160)
         {   // Twitch view angle
             pmo->angle += (P_Random() - P_Random()) << 19;
         }
@@ -1128,7 +1142,7 @@ void P_PlayerThinkFly(player_t *player)
         plrmo->flags2 &= ~MF2_FLY;
         plrmo->flags &= ~MF_NOGRAVITY;
     }
-    else if(player->brain.upMove != 0 && player->powers[PT_FLIGHT])
+    else if(!FEQUAL(player->brain.upMove, 0) && player->powers[PT_FLIGHT])
     {
         player->flyHeight = player->brain.upMove * 10;
         if(!(plrmo->flags2 & MF2_FLY))
@@ -1663,7 +1677,7 @@ void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if((vel != 0) ^ (cfg.alwaysRun != 0))
+    if((!FEQUAL(vel, 0)) ^ (cfg.alwaysRun != 0))
     {   // Hurry, good man!
         turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
     }
@@ -1730,11 +1744,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
-    brain->speed = (vel != 0);
+    brain->speed = (!FEQUAL(vel, 0));
 
     // Check for strafe.
     P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
-    strafe = (vel != 0);
+    strafe = (!FEQUAL(vel, 0));
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);

@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "smoother.h"
 
 /**
@@ -69,7 +70,7 @@ Smoother* Smoother_New()
     return sm;
 }
 
-void Smoother_Destruct(Smoother* sm)
+void Smoother_Delete(Smoother* sm)
 {
     free(sm);
 }

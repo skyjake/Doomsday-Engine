@@ -71,6 +71,9 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void Cl_MoverThinker(mover_t *mover);
+void Cl_PolyMoverThinker(polymover_t* mover);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -129,6 +132,18 @@ lumpnum_t Cl_TranslateLump(lumpnum_t lumpNum)
     return xlat_lump[lumpNum];
 }
 
+static boolean Cl_IsMoverValid(int i)
+{
+    if(!activemovers[i]) return false;
+    return (activemovers[i]->thinker.function == Cl_MoverThinker);
+}
+
+static boolean Cl_IsPolyValid(int i)
+{
+    if(!activepolys[i]) return false;
+    return (activepolys[i]->thinker.function == Cl_PolyMoverThinker);
+}
+
 /**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
@@ -145,10 +160,16 @@ void Cl_RemoveActiveMover(mover_t *mover)
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activemovers[i] == mover)
         {
+#ifdef _DEBUG
+            Con_Message("Cl_RemoveActiveMover: Removing mover [%i] in sector %i.\n", i, mover->sectornum);
+#endif
             P_ThinkerRemove(&mover->thinker);
-            activemovers[i] = NULL;
-            break;
+            return;
         }
+
+#ifdef _DEBUG
+    Con_Message("Cl_RemoveActiveMover: Mover in sector %i not removed!\n", mover->sectornum);
+#endif
 }
 
 /**
@@ -162,7 +183,6 @@ void Cl_RemoveActivePoly(polymover_t *mover)
         if(activepolys[i] == mover)
         {
             P_ThinkerRemove(&mover->thinker);
-            activepolys[i] = NULL;
             break;
         }
 }
@@ -172,7 +192,6 @@ void Cl_RemoveActivePoly(polymover_t *mover)
  */
 void Cl_MoverThinker(mover_t *mover)
 {
-    //float              *current = mover->current, original = *current;
     float               original;
     boolean             remove = false;
     boolean             freeMove;
@@ -180,6 +199,19 @@ void Cl_MoverThinker(mover_t *mover)
 
     if(!Cl_GameReady())
         return; // Can we think yet?
+
+#ifdef _DEBUG
+    {
+        int i, gotIt = false;
+        for(i = 0; i < MAX_MOVERS; ++i)
+        {
+            if(activemovers[i] == mover)
+                gotIt = true;
+        }
+        if(!gotIt)
+            Con_Message("Cl_MoverThinker: Running a mover that is not in activemovers!\n");
+    }
+#endif
 
     // The move is cancelled if the consolePlayer becomes obstructed.
     freeMove = ClPlayer_IsFreeToMove(consolePlayer);
@@ -228,9 +260,9 @@ void Cl_MoverThinker(mover_t *mover)
         // Can we remove this thinker?
         if(remove)
         {
-    #ifdef _DEBUG
-            Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum);
-    #endif
+#ifdef _DEBUG
+            /*VERBOSE2*/( Con_Message("Cl_MoverThinker: finished in %i\n", mover->sectornum) );
+#endif
             // It stops.
             P_SetFloat(DMU_SECTOR, mover->sectornum, mover->dmuPlane | DMU_SPEED, 0);
 
@@ -246,9 +278,9 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     int                 dmuPlane = (type == MVT_FLOOR ? DMU_FLOOR_OF_SECTOR
                                                       : DMU_CEILING_OF_SECTOR);
 #ifdef _DEBUG
-    Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
-                sectornum, type==MVT_FLOOR? "floor" : "ceiling",
-                dest, speed);
+    /*VERBOSE2*/( Con_Message("Cl_AddMover: Sector=%i, type=%s, dest=%f, speed=%f\n",
+                          sectornum, type==MVT_FLOOR? "floor" : "ceiling",
+                          dest, speed) );
 #endif
 
     if(sectornum >= numSectors)
@@ -257,21 +289,27 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
     // Remove any existing movers for the same plane.
     for(i = 0; i < MAX_MOVERS; ++i)
     {
-        if(activemovers[i]
-                && activemovers[i]->sectornum == sectornum
-                && activemovers[i]->type == type)
+        if(Cl_IsMoverValid(i) &&
+           activemovers[i]->sectornum == sectornum &&
+           activemovers[i]->type == type)
         {
+#ifdef _DEBUG
+            Con_Message("Cl_AddMover: Removing existing mover [%i] in sector %i, type %s\n", i, sectornum,
+                        type == MVT_FLOOR? "floor" : "ceiling");
+#endif
             Cl_RemoveActiveMover(activemovers[i]);
         }
     }
 
     // Add a new mover.
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] == NULL)
+        if(!activemovers[i])
         {
+#ifdef _DEBUG
+            Con_Message("Cl_AddMover: ...new mover [%i]\n", i);
+#endif
             // Allocate a new mover_t thinker.
-            mov = activemovers[i] = Z_Malloc(sizeof(mover_t), PU_MAP, 0);
-            memset(mov, 0, sizeof(mover_t));
+            mov = activemovers[i] = Z_Calloc(sizeof(mover_t), PU_MAP, &activemovers[i]);
             mov->thinker.function = Cl_MoverThinker;
             mov->type = type;
             mov->sectornum = sectornum;
@@ -288,9 +326,6 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_TARGET_HEIGHT, dest);
             P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_SPEED, speed);
 
-#ifdef _DEBUG
-            Con_Message("Cl_AddMover: Adding thinker %p\n", &mov->thinker);
-#endif
             P_ThinkerAdd(&mov->thinker, false /*not public*/);
             break;
         }
@@ -308,7 +343,7 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         dx = poly->dest[VX] - poly->pos[VX];
         dy = poly->dest[VY] - poly->pos[VY];
         dist = P_ApproxDistance(dx, dy);
-        if(dist <= poly->speed || poly->speed == 0)
+        if(dist <= poly->speed || FEQUAL(poly->speed, 0))
         {
             // We'll arrive at the destination.
             mover->move = false;
@@ -327,20 +362,31 @@ void Cl_PolyMoverThinker(polymover_t* mover)
     if(mover->rotate)
     {
         // How much to go?
-        dist = FIX2FLT(poly->destAngle - poly->angle);
-        if((abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)
-            /* && poly->destAngle != -1*/) || !poly->angleSpeed)
+        int dist = poly->destAngle - poly->angle;
+        int speed = poly->angleSpeed;
+
+        //dist = FIX2FLT(poly->destAngle - poly->angle);
+        //if(!poly->angleSpeed || dist > 0   /*(abs(FLT2FIX(dist) >> 4) <= abs(((signed) poly->angleSpeed) >> 4)*/
+        //    /* && poly->destAngle != -1*/) || !poly->angleSpeed)
+        if(!poly->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
+#ifdef _DEBUG
+            Con_Message("Cl_PolyMoverThinker: Mover %i reached end of turn, destAngle=%x.\n", mover->number, poly->destAngle);
+#endif
             // We'll arrive at the destination.
             mover->rotate = false;
         }
         else
         {
             // Adjust to speed.
-            dist = FIX2FLT((int)poly->angleSpeed);
+            dist = /*FIX2FLT((int)*/ poly->angleSpeed;
         }
 
-        P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), FLT2FIX(dist));
+/*#ifdef _DEBUG
+        Con_Message("%f\n", dist);
+#endif*/
+
+        P_PolyobjRotate(P_GetPolyobj(mover->number | 0x80000000), dist);
     }
 
     // Can we get rid of this mover?
@@ -348,38 +394,47 @@ void Cl_PolyMoverThinker(polymover_t* mover)
         Cl_RemoveActivePoly(mover);
 }
 
-polymover_t* Cl_FindActivePoly(uint number)
+polymover_t* Cl_FindOrMakeActivePoly(uint number)
 {
-    uint                i;
+    int i;
+    int available = -1;
+    polymover_t* mover;
 
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activepolys[i] && activepolys[i]->number == number)
+    {
+        if(available < 0 && !activepolys[i])
+            available = i;
+
+        if(Cl_IsPolyValid(i) && activepolys[i]->number == number)
             return activepolys[i];
+    }
+
+    // Not found, make a new one.
+    if(available >= 0)
+    {
+#ifdef _DEBUG
+        Con_Message("Cl_FindOrMakeActivePoly: New polymover [%i] in polyobj %i.\n", available, number);
+#endif
+        activepolys[available] = mover = Z_Calloc(sizeof(polymover_t), PU_MAP, &activepolys[available]);
+        mover->thinker.function = Cl_PolyMoverThinker;
+        mover->poly = polyObjs[number];
+        mover->number = number;
+        P_ThinkerAdd(&mover->thinker, false /*not public*/);
+        return mover;
+    }
+
+    // Not successful.
     return NULL;
-}
-
-polymover_t* Cl_NewPolyMover(uint number)
-{
-    polymover_t*        mover;
-    polyobj_t*          poly = polyObjs[number];
-
-    mover = Z_Malloc(sizeof(polymover_t), PU_MAP, 0);
-    memset(mover, 0, sizeof(*mover));
-    mover->thinker.function = Cl_PolyMoverThinker;
-    mover->poly = poly;
-    mover->number = number;
-    P_ThinkerAdd(&mover->thinker, false /*not public*/);
-    return mover;
 }
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
-    polymover_t*        mover;
-
-    // Try to find an existing mover.
-    mover = Cl_FindActivePoly(number);
+    polymover_t* mover = Cl_FindOrMakeActivePoly(number);
     if(!mover)
-        mover = Cl_NewPolyMover(number);
+    {
+        Con_Message("Cl_SetPolyMover: Out of polymovers.\n");
+        return;
+    }
     // Flag for moving.
     if(move)
         mover->move = true;
@@ -396,15 +451,13 @@ void Cl_RemoveMovers(void)
 
     for(i = 0; i < MAX_MOVERS; ++i)
     {
-        if(activemovers[i])
+        if(Cl_IsMoverValid(i))
         {
             P_ThinkerRemove(&activemovers[i]->thinker);
-            activemovers[i] = NULL;
         }
-        if(activepolys[i])
+        if(Cl_IsPolyValid(i))
         {
             P_ThinkerRemove(&activepolys[i]->thinker);
-            activepolys[i] = NULL;
         }
     }
 }
@@ -414,7 +467,8 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
     int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] && activemovers[i]->sectornum == sectornum &&
+        if(Cl_IsMoverValid(i) &&
+           activemovers[i]->sectornum == sectornum &&
            activemovers[i]->type == type)
         {
             return activemovers[i];
@@ -428,7 +482,7 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
  */
 int Cl_ReadLumpDelta(void)
 {
-    lumpnum_t           num = (lumpnum_t) Msg_ReadPackedShort();
+    lumpnum_t           num = (lumpnum_t) Reader_ReadPackedUInt16(msgReader);
     char                name[9];
 
     if(!num)
@@ -436,7 +490,7 @@ int Cl_ReadLumpDelta(void)
 
     // Read the name of the lump.
     memset(name, 0, sizeof(name));
-    Msg_Read(name, 8);
+    Reader_Read(msgReader, name, 8);
 
     VERBOSE(Con_Printf("LumpTranslate: %i => %s\n", num, name));
 
@@ -466,18 +520,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     dummy.planes = dummyPlaneArray;
 
     // Sector index number.
-    num = Msg_ReadShort();
+    num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    if(deltaType == DT_SECTOR_R6)
+    /*if(deltaType == DT_SECTOR_R6)
     {
         // The R6 protocol reserves two bytes for the flags.
-        df = Msg_ReadShort();
+        df = Reader_ReadUInt16(msgReader);
     }
-    else
-    {
-        df = Msg_ReadPackedLong();
-    }
+    else*/
+    //{
+    df = Reader_ReadPackedUInt32(msgReader);
+    //}
 
     if(!skip)
     {
@@ -503,7 +557,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = Materials_ToMaterial(Msg_ReadPackedShort());
+        mat = Materials_ToMaterial(Reader_ReadPackedUInt16(msgReader));
         Surface_SetMaterial(&sec->SP_floorsurface, mat);
     }
     if(df & SDF_CEILING_MATERIAL)
@@ -513,116 +567,122 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = Materials_ToMaterial(Msg_ReadPackedShort());
+        mat = Materials_ToMaterial(Reader_ReadPackedUInt16(msgReader));
         Surface_SetMaterial(&sec->SP_ceilsurface, mat);
     }
 
     if(df & SDF_LIGHT)
-        sec->lightLevel = Msg_ReadByte() / 255.0f;
+        sec->lightLevel = Reader_ReadByte(msgReader) / 255.0f;
     if(df & SDF_FLOOR_HEIGHT)
     {
-        sec->planes[PLN_FLOOR]->height = FIX2FLT(Msg_ReadShort() << 16);
+        P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_HEIGHT, FIX2FLT(Reader_ReadInt16(msgReader) << 16));
         wasChanged = true;
 
+        /*
         if(!skip)
         {
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute floor height=%f\n",
                                 num, sec->SP_floorheight) );
         }
+        */
     }
     if(df & SDF_CEILING_HEIGHT)
     {
-        fixed_t height = Msg_ReadShort() << 16;
+        fixed_t height = Reader_ReadInt16(msgReader) << 16;
+        P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_HEIGHT, FIX2FLT(height));
+        wasChanged = true;
 
-        if(!skip)
-        {
-            sec->planes[PLN_CEILING]->height = FIX2FLT(height);
-            wasChanged = true;
-
+        /*
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Absolute ceiling height=%f%s\n",
                                 num, sec->SP_ceilheight, skip? " --SKIPPED!--" : "") );
-        }
+        }*/
     }
     if(df & SDF_FLOOR_TARGET)
     {
-        fixed_t height = Msg_ReadShort() << 16;
-        if(!skip)
+        fixed_t height = Reader_ReadInt16(msgReader) << 16;
+        P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_TARGET_HEIGHT, FIX2FLT(height));
+
+        /*if(!skip)
         {
             sec->planes[PLN_FLOOR]->target = FIX2FLT(height);
 
             VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor target=%f\n",
                                 num, sec->planes[PLN_FLOOR]->target) );
-        }
+        }*/
     }
     if(df & SDF_FLOOR_SPEED)
     {
-        fixed_t speed = Msg_ReadByte();
-        if(!skip)
+        fixed_t speed = Reader_ReadByte(msgReader);
+        //if(!skip)
         {
-            sec->planes[PLN_FLOOR]->speed =
-                FIX2FLT(speed << (df & SDF_FLOOR_SPEED_44 ? 12 : 15));
+            P_SetFloatp(sec, DMU_FLOOR_OF_SECTOR | DMU_SPEED,
+                        FIX2FLT(speed << (df & SDF_FLOOR_SPEED_44 ? 12 : 15)));
 
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n",
-                                num, sec->planes[PLN_FLOOR]->speed) );
+            /*VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Floor speed=%f\n",
+                                num, sec->planes[PLN_FLOOR]->speed) );*/
         }
     }
+#if 0
     if(df & SDF_FLOOR_TEXMOVE)
     {   // Old clients might include these.
         /*fixed_t moveX = */ Msg_ReadShort() /* << 8*/;
         /*fixed_t moveY = */ Msg_ReadShort() /* << 8*/;
     }
+#endif
     if(df & SDF_CEILING_TARGET)
     {
-        fixed_t target = Msg_ReadShort() << 16;
-#ifdef _DEBUG
+        fixed_t target = Reader_ReadInt16(msgReader) << 16;
+/*#ifdef _DEBUG
         Con_Message("Cl_ReadSectorDelta2: Ceiling target %f for sector %i\n", FIX2FLT(target), num);
-#endif
+#endif*/
 
-        if(!skip)
+        //if(!skip)
         {
-            sec->planes[PLN_CEILING]->target = FIX2FLT(target);
+            P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_TARGET_HEIGHT, FIX2FLT(target));
 
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n",
-                                num, sec->planes[PLN_CEILING]->target) );
+          /*  VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling target=%f\n",
+                                num, sec->planes[PLN_CEILING]->target) );*/
         }
     }
     if(df & SDF_CEILING_SPEED)
     {
-        byte speed = Msg_ReadByte();
-        if(!skip)
+        byte speed = Reader_ReadByte(msgReader);
+        //if(!skip)
         {
-            sec->planes[PLN_CEILING]->speed =
-                FIX2FLT(speed << (df & SDF_CEILING_SPEED_44 ? 12 : 15));
+            P_SetFloatp(sec, DMU_CEILING_OF_SECTOR | DMU_SPEED,
+                        FIX2FLT(speed << (df & SDF_CEILING_SPEED_44 ? 12 : 15)));
 
-            VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n",
-                                num, sec->planes[PLN_CEILING]->speed) );
+            /*VERBOSE( Con_Printf("Cl_ReadSectorDelta2: (%i) Ceiling speed=%f\n",
+                                num, sec->planes[PLN_CEILING]->speed) );*/
         }
     }
+#if 0
     if(df & SDF_CEILING_TEXMOVE)
     {   // Old clients might include these.
         /*fixed_t moveX = */ Msg_ReadShort() /*<< 8*/;
         /*fixed_t moveY = */ Msg_ReadShort() /*<< 8*/;
     }
+#endif
     if(df & SDF_COLOR_RED)
-        sec->rgb[0] = Msg_ReadByte() / 255.f;
+        sec->rgb[0] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_COLOR_GREEN)
-        sec->rgb[1] = Msg_ReadByte() / 255.f;
+        sec->rgb[1] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SDF_COLOR_BLUE)
-        sec->rgb[2] = Msg_ReadByte() / 255.f;
+        sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorR(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorR(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorG(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_floorsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorB(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorR(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorR(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorG(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
+        Surface_SetColorB(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -632,9 +692,9 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     // the sector.
     if(wasChanged)
     {
-#ifdef _DEBUG
-        Con_Message("Cl_ReadSectorDelta2: WARNING: Plane height changed bypassing DMU!\n");
-#endif
+        // Let the game know we made some changes.
+        if(gx.SectorHeightChangeNotification)
+            gx.SectorHeightChangeNotification(num);
     }
 
     // Do we need to start any moving planes?
@@ -665,56 +725,56 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     sidedef_t          *sid;
 
     // First read all the data.
-    num = Msg_ReadShort();
+    num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    if(deltaType == DT_SIDE_R6)
+    /*if(deltaType == DT_SIDE_R6)
     {
         // The R6 protocol reserves a single byte for a side delta.
-        df = Msg_ReadByte();
+        df = Reader_ReadByte(msgReader);
     }
-    else
+    else*/
     {
-        df = Msg_ReadPackedLong();
+        df = Reader_ReadPackedUInt32(msgReader);
     }
 
     if(df & SIDF_TOP_MATERIAL)
-        topMat = Msg_ReadPackedShort();
+        topMat = Reader_ReadPackedUInt16(msgReader);
     if(df & SIDF_MID_MATERIAL)
-        midMat = Msg_ReadPackedShort();
+        midMat = Reader_ReadPackedUInt16(msgReader);
     if(df & SIDF_BOTTOM_MATERIAL)
-        botMat = Msg_ReadPackedShort();
+        botMat = Reader_ReadPackedUInt16(msgReader);
     if(df & SIDF_LINE_FLAGS)
-        lineFlags = Msg_ReadByte();
+        lineFlags = Reader_ReadByte(msgReader);
 
     if(df & SIDF_TOP_COLOR_RED)
-        toprgb[CR] = Msg_ReadByte() / 255.f;
+        toprgb[CR] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_TOP_COLOR_GREEN)
-        toprgb[CG] = Msg_ReadByte() / 255.f;
+        toprgb[CG] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_TOP_COLOR_BLUE)
-        toprgb[CB] = Msg_ReadByte() / 255.f;
+        toprgb[CB] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SIDF_MID_COLOR_RED)
-        midrgba[CR] = Msg_ReadByte() / 255.f;
+        midrgba[CR] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_MID_COLOR_GREEN)
-        midrgba[CG] = Msg_ReadByte() / 255.f;
+        midrgba[CG] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_MID_COLOR_BLUE)
-        midrgba[CB] = Msg_ReadByte() / 255.f;
+        midrgba[CB] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_MID_COLOR_ALPHA)
-        midrgba[CA] = Msg_ReadByte() / 255.f;
+        midrgba[CA] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        bottomrgb[CR] = Msg_ReadByte() / 255.f;
+        bottomrgb[CR] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        bottomrgb[CG] = Msg_ReadByte() / 255.f;
+        bottomrgb[CG] = Reader_ReadByte(msgReader) / 255.f;
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        bottomrgb[CB] = Msg_ReadByte() / 255.f;
+        bottomrgb[CB] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SIDF_MID_BLENDMODE)
-        blendmode = Msg_ReadShort() << 16;
+        blendmode = Reader_ReadInt32(msgReader);
 
     if(df & SIDF_FLAGS)
-        sideFlags = Msg_ReadByte();
+        sideFlags = Reader_ReadByte(msgReader);
 
     // Must we skip this?
     if(skip)
@@ -823,21 +883,21 @@ void Cl_ReadPolyDelta2(boolean skip)
     float               speed = 0;
     int                 destAngle = 0, angleSpeed = 0;
 
-    num = Msg_ReadPackedShort();
+    num = Reader_ReadPackedUInt16(msgReader);
 
     // Flags.
-    df = Msg_ReadByte();
+    df = Reader_ReadByte(msgReader);
 
     if(df & PODF_DEST_X)
-        destX = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
+        destX = Reader_ReadFloat(msgReader);
     if(df & PODF_DEST_Y)
-        destY = FIX2FLT((Msg_ReadShort() << 16) + ((char) Msg_ReadByte() << 8));
+        destY = Reader_ReadFloat(msgReader);
     if(df & PODF_SPEED)
-        speed = FIX2FLT(Msg_ReadShort() << 8);
+        speed = Reader_ReadFloat(msgReader);
     if(df & PODF_DEST_ANGLE)
-        destAngle = Msg_ReadShort() << 16;
+        destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     if(df & PODF_ANGSPEED)
-        angleSpeed = Msg_ReadShort() << 16;
+        angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
 
 /*#ifdef _DEBUG
     Con_Message("Cl_ReadPolyDelta2: PO %i, angle %f, speed %f\n", num, FIX2FLT(destAngle), FIX2FLT(angleSpeed));

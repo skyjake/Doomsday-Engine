@@ -617,6 +617,24 @@ static void loadMapSpots(void)
     }
 
     P_DealPlayerStarts(0);
+
+    if(deathmatch)
+    {
+        int i;
+        uint numDMStarts = P_GetNumPlayerStarts(true);
+        uint playerCount = 0;
+
+        for(i = 0; i < MAXPLAYERS; ++i)
+        {
+            if(players[i].plr->inGame)
+                playerCount++;
+        }
+
+        if(numDMStarts < playerCount)
+        {
+            Con_Message("P_SetupMap: Player count (%i) exceeds deathmatch spots (%i).\n", playerCount, numDMStarts);
+        }
+    }
 }
 
 static void spawnMapObjects(void)
@@ -740,6 +758,11 @@ int P_SetupMapWorker(void* ptr)
     S_MapChange();
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
+
+#if __JHERETIC__ || __JHEXEN__
+    // The pointers in the body queue just became invalid.
+    P_ClearBodyQueue();
+#endif
 
     P_MapId(param->episode, param->map, mapID);
     if(!P_LoadMap(mapID))

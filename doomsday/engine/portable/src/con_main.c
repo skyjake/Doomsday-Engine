@@ -116,6 +116,8 @@ D_CMD(Repeat);
 D_CMD(Toggle);
 D_CMD(Version);
 D_CMD(Wait);
+D_CMD(InspectMobj);
+D_CMD(DebugCrash);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -197,6 +199,7 @@ void Con_Register(void)
     C_CMD("listmobjtypes",  "",     ListMobjs);
     C_CMD("load",           "s*",   Load);
     C_CMD("quit",           "",     Quit);
+    C_CMD("inspectmobj",    "i",    InspectMobj);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
     C_CMD("reset",          "",     Reset);
@@ -206,6 +209,9 @@ void Con_Register(void)
     C_CMD("unload",         "*",    Unload);
     C_CMD("version",        "",     Version);
     C_CMD("write",          "s",    WriteConsole);
+#ifdef _DEBUG
+    C_CMD("crash",          NULL,   DebugCrash);
+#endif
 
     // Console
     C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
@@ -533,16 +539,22 @@ void Con_SetFontTracking(int value)
  */
 static void Con_Send(const char *command, byte src, int silent)
 {
-    ushort          len = (ushort) (strlen(command) + 1);
+    ushort len = (ushort) strlen(command);
+
+    if(len >= 0x8000)
+    {
+        Con_Message("Con_Send: Command is too long, length=%i.\n", len);
+        return;
+    }
 
     Msg_Begin(PKT_COMMAND2);
     // Mark high bit for silent commands.
-    Msg_WriteShort(len | (silent ? 0x8000 : 0));
-    Msg_WriteShort(0); // flags. Unused at present.
-    Msg_WriteByte(src);
-    Msg_Write(command, len);
-    // Send it reliably.
-    Net_SendBuffer(0, SPF_ORDERED);
+    Writer_WriteUInt16(msgWriter, len | (silent ? 0x8000 : 0));
+    Writer_WriteUInt16(msgWriter, 0); // flags. Unused at present.
+    Writer_WriteByte(msgWriter, src);
+    Writer_Write(msgWriter, command, len);
+    Msg_End();
+    Net_SendBuffer(0, 0);
 }
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
@@ -2457,4 +2469,13 @@ D_CMD(Font)
     }
 
     return false;
+}
+
+D_CMD(DebugCrash)
+{
+    int* ptr = (int*) 0x123;
+
+    // Goodbye cruel world.
+    *ptr = 0;
+    return true;
 }

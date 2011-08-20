@@ -1071,11 +1071,13 @@ void G_DeathMatchSpawnPlayer(int playerNum)
         Con_Error("G_DeathMatchSpawnPlayer: Error, minimum of two "
                   "(deathmatch) mapspots required for deathmatch.");
 
-    for(i = 0; i < 20; ++i)
+#define NUM_TRIES 20
+    for(i = 0; i < NUM_TRIES; ++i)
     {
         const mapspot_t* spot = &mapSpots[deathmatchStarts[P_Random() % numPlayerDMStarts].spot];
 
-        if(P_CheckSpot(spot->pos[VX], spot->pos[VY]))
+        // Last attempt will succeed even though blocked.
+        if(P_CheckSpot(spot->pos[VX], spot->pos[VY]) || i == NUM_TRIES-1)
         {
             spawnPlayer(playerNum, pClass, spot->pos[VX], spot->pos[VY],
                         spot->pos[VZ], spot->angle, spot->flags, false,
@@ -1083,9 +1085,6 @@ void G_DeathMatchSpawnPlayer(int playerNum)
             return;
         }
     }
-
-    Con_Error("G_DeathMatchSpawnPlayer: Failed to spawn player %i.",
-              playerNum);
 }
 
 typedef struct {

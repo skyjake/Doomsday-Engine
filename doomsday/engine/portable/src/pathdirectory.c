@@ -373,7 +373,7 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
     {
         pathdirectory_node_t* node;
         ushort i;
-        if(parent == NULL && hash >= 0 && hash < PATHDIRECTORY_PATHHASH_SIZE)
+        if(parent == NULL && hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
             for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
             {
@@ -417,7 +417,7 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
     {
         pathdirectory_node_t* node;
         ushort i;
-        if(parent == NULL && hash >= 0 && hash < PATHDIRECTORY_PATHHASH_SIZE)
+        if(parent == NULL && hash < PATHDIRECTORY_PATHHASH_SIZE)
         {
             for(node = (*pd->_pathHash)[hash]; NULL != node; node = node->next)
             {

@@ -373,7 +373,7 @@ void C_DECL A_Punch(player_t *player, pspdef_t *psp)
     // Turn to face target.
     if(lineTarget)
     {
-        S_StartSoundEx(SFX_PUNCH, player->plr->mo);
+        S_StartSound(SFX_PUNCH, player->plr->mo);
 
         player->plr->mo->angle =
             R_PointToAngle2(player->plr->mo->pos[VX],

@@ -32,6 +32,7 @@
 #include "r_main.h"
 
 struct material_s;
+struct colorpalette_s;
 
 #define MAX_TEX_UNITS           2 // More won't be used.
 

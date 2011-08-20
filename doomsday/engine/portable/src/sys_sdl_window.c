@@ -114,9 +114,8 @@ static void setAttrib(int flags)
  * Writes the text in winText at (cx,cy).
  */
 static void writeText(const char *line, int len)
-{
-    wmove(mainWindow.console.winText,
-          mainWindow.console.cy, mainWindow.console.cx);
+{  
+    wmove(mainWindow.console.winText, mainWindow.console.cy, mainWindow.console.cx);
     waddnstr(mainWindow.console.winText, line, len);
     wclrtoeol(mainWindow.console.winText);
 }
@@ -157,7 +156,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         // Need to make some room.
         win->console.cx = 0;
         win->console.cy++;
-        if(win->console.cy >= maxPos[VY])
+        while(win->console.cy >= maxPos[VY])
         {
             win->console.cy--;
             scroll(win->console.winText);
@@ -191,7 +190,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
                 win->console.needNewLine = false;
                 win->console.cx = 0;
                 win->console.cy++;
-                if(win->console.cy == maxPos[VY])
+                while(win->console.cy >= maxPos[VY])
                 {
                     scroll(win->console.winText);
                     win->console.cy--;

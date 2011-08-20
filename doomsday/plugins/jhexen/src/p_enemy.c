@@ -132,6 +132,12 @@ int bodyqueslot;
 
 // CODE --------------------------------------------------------------------
 
+void P_ClearBodyQueue(void)
+{
+    memset(bodyque, 0, sizeof(bodyque));
+    bodyqueslot = 0;
+}
+
 /**
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
@@ -4226,7 +4232,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
     mobj_t*             pmo;
     float               pos[3];
 
-    if(mo->mom[MX] != 0 || mo->mom[MY] != 0 || mo->mom[MZ] != 0)
+    if(!FEQUAL(mo->mom[MX], 0) || !FEQUAL(mo->mom[MY], 0) || !FEQUAL(mo->mom[MZ], 0))
     {
         mo->tics = 105;
         return;

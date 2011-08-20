@@ -40,6 +40,7 @@
 #define MASTER_QUEUE_LEN    16
 #define NETEVENT_QUEUE_LEN  32
 #define MASTER_HEARTBEAT    120 // seconds
+#define MASTER_UPDATETIME   3 // seconds
 
 // TYPES -------------------------------------------------------------------
 
@@ -62,6 +63,9 @@ static int mqHead, mqTail;
 // The net event queue (player arrive/leave).
 static netevent_t netEventQueue[NETEVENT_QUEUE_LEN];
 static int neqHead, neqTail;
+
+// Countdown for master updates.
+static timespan_t masterHeartbeat = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -155,17 +159,19 @@ boolean N_NEGet(netevent_t *nev)
 /**
  * Handles low-level net tick stuff: communication with the master server.
  */
-void N_NETicker(void)
+void N_NETicker(timespan_t time)
 {
     masteraction_t act;
-    int         i, num;
+    int i, num;
 
     if(netGame)
     {
+        masterHeartbeat -= time;
+
         // Update master every 2 minutes.
-        if(masterAware && N_UsingInternet() &&
-           !(SECONDS_TO_TICKS(sysTime) % (MASTER_HEARTBEAT * TICRATE)))
+        if(masterAware && N_UsingInternet() && masterHeartbeat < 0)
         {
+            masterHeartbeat = MASTER_HEARTBEAT;
             N_MasterAnnounceServer(true);
         }
     }
@@ -191,25 +197,15 @@ void N_NETicker(void)
             break;
 
         case MAC_LIST:
-            //Con_Printf("    %-20s P/M  L Ver:  Game:            Location:\n", "Name:");
             Net_PrintServerInfo(0, NULL);
             num = i = N_MasterGet(0, 0);
             while(--i >= 0)
             {
                 serverinfo_t info;
-
                 N_MasterGet(i, &info);
-                /*Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n",
-                 * i, info.name,
-                 * info.players, info.maxPlayers,
-                 * info.canJoin? ' ':'*', info.version, info.game,
-                 * info.address, info.port);
-                 * Con_Printf("    %s (%x) %s\n", info.map, info.data[0],
-                 * info.description); */
                 Net_PrintServerInfo(i, &info);
             }
-            Con_Printf("%i server%s found.\n", num,
-                       num != 1 ? "s were" : " was");
+            Con_Printf("%i server%s found.\n", num, num != 1 ? "s were" : " was");
             N_MARemove();
             break;
 
@@ -241,10 +237,21 @@ void N_Update(void)
 
             // Assign a console to the new player.
             Sv_PlayerArrives(nevent.id, name);
+
+            // Update the master.
+            masterHeartbeat = MASTER_UPDATETIME;
             break;
 
         case NE_CLIENT_EXIT:
             Sv_PlayerLeaves(nevent.id);
+
+            // Update the master.
+            masterHeartbeat = MASTER_UPDATETIME;
+            break;
+
+        case NE_TERMINATE_NODE:
+            // The server receives this event when a client's connection is broken.
+            N_TerminateNode(nevent.id);
             break;
 
         case NE_END_CONNECTION:
@@ -279,4 +286,7 @@ void N_TerminateClient(int console)
                 clients[console].name, console);
 
     N_TerminateNode(clients[console].nodeID);
+
+    // Update the master.
+    masterHeartbeat = MASTER_UPDATETIME;
 }

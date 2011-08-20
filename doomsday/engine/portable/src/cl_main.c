@@ -130,39 +130,41 @@ void Cl_SendHello(void)
     char buf[256];
 
     Msg_Begin(PCL_HELLO2);
-    Msg_WriteLong(clientID);
+    Writer_WriteUInt32(msgWriter, clientID);
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
     strncpy(buf, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), sizeof(buf) - 1);
 
 #ifdef _DEBUG
-Con_Message("Cl_SendHello: game mode = %s\n", buf);
+    Con_Message("Cl_SendHello: game mode = %s\n", buf);
 #endif
 
-    Msg_Write(buf, 16);
-    Net_SendBuffer(0, SPF_ORDERED);
+    Writer_Write(msgWriter, buf, 16);
+    Msg_End();
+
+    Net_SendBuffer(0, 0);
 }
 
-void Cl_AnswerHandshake(handshake_packet_t* pShake)
+void Cl_AnswerHandshake(void)
 {
-    int                 i;
-    handshake_packet_t  shake;
+    byte remoteVersion = Reader_ReadByte(msgReader);
+    byte myConsole = Reader_ReadByte(msgReader);
+    uint playersInGame = Reader_ReadUInt32(msgReader);
+    float remoteGameTime = Reader_ReadFloat(msgReader);
+    int i;
 
-    // Copy the data to a buffer of our own.
-    memcpy(&shake, pShake, sizeof(shake));
-    shake.playerMask = USHORT(shake.playerMask);
-    shake.gameTime = LONG(shake.gameTime);
-
-    // Immediately send an acknowledgement.
+    // Immediately send an acknowledgement. This lets the server evaluate
+    // an approximate ping time.
     Msg_Begin(PCL_ACK_SHAKE);
-    Net_SendBuffer(0, SPF_ORDERED);
+    Msg_End();
+    Net_SendBuffer(0, 0);
 
     // Check the version number.
-    if(shake.version != SV_VERSION)
+    if(remoteVersion != SV_VERSION)
     {
         Con_Message("Cl_AnswerHandshake: Version conflict! (you:%i, server:%i)\n",
-                    SV_VERSION, shake.version);
+                    SV_VERSION, remoteVersion);
         Con_Execute(CMDS_DDAY, "net disconnect", false, false);
         Demo_StopPlayback();
         Con_Open(true);
@@ -170,14 +172,12 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     }
 
     // Update time and player ingame status.
-    gameTime = shake.gameTime / 100.0;
+    gameTime = remoteGameTime;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ddPlayers[i].shared.inGame = (shake.playerMask & (1 << i)) != 0;
+        ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
     }
-    consolePlayer = displayPlayer = shake.yourConsole;
-    //clients[consolePlayer].numTics = 0;
-    //clients[consolePlayer].firstTic = 0;
+    consolePlayer = displayPlayer = myConsole;
 
     Net_AllocClientBuffers(consolePlayer);
 
@@ -196,8 +196,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     gameReady = false;
     Cl_InitFrame();
 
-    Con_Printf("Cl_AnswerHandshake: myConsole:%i, gameTime:%i.\n",
-               shake.yourConsole, shake.gameTime);
+    Con_Message("Cl_AnswerHandshake: myConsole:%i, remoteGameTime:%f.\n",
+                myConsole, remoteGameTime);
 
     /**
      * Tell the game that we have arrived. The map will be changed when the
@@ -215,30 +215,38 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     Con_Executef(CMDS_DDAY, true, "setcon %i", consolePlayer);
 }
 
-void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
+void Cl_HandlePlayerInfo(void)
 {
-    player_t*           plr;
-    boolean             present;
+    player_t* plr;
+    boolean present;
+    byte console = Reader_ReadByte(msgReader);
+    size_t len = Reader_ReadUInt16(msgReader);
+    char name[PLAYERNAMELEN];
 
-    Con_Printf("Cl_HandlePlayerInfo: console:%i name:%s\n", info->console,
-               info->name);
+    len = MIN_OF(PLAYERNAMELEN - 1, len);
+    memset(name, 0, sizeof(name));
+    Reader_Read(msgReader, name, len);
+
+#ifdef _DEBUG
+    Con_Message("Cl_HandlePlayerInfo: console:%i name:%s\n", console, name);
+#endif
 
     // Is the console number valid?
-    if(info->console >= DDMAXPLAYERS)
+    if(console >= DDMAXPLAYERS)
         return;
 
-    plr = &ddPlayers[info->console];
+    plr = &ddPlayers[console];
     present = plr->shared.inGame;
     plr->shared.inGame = true;
 
-    strcpy(clients[info->console].name, info->name);
+    strcpy(clients[console].name, name);
 
     if(!present)
     {
         // This is a new player! Let the game know about this.
-        gx.NetPlayerEvent(info->console, DDPE_ARRIVAL, 0);
+        gx.NetPlayerEvent(console, DDPE_ARRIVAL, 0);
 
-        Smoother_Clear(clients[info->console].smoother);
+        Smoother_Clear(clients[console].smoother);
     }
 }
 
@@ -255,32 +263,22 @@ void Cl_PlayerLeaves(int plrNum)
  */
 void Cl_GetPackets(void)
 {
-    int                 i;
-
     // All messages come from the server.
     while(Net_GetPacket())
     {
+        Msg_BeginRead();
+
         // First check for packets that are only valid when
         // a game is in progress.
         if(Cl_GameReady())
         {
-            boolean             handled = true;
+            boolean handled = true;
 
             switch(netBuffer.msg.type)
             {
-            /*
-            case PSV_FRAME:
-                Cl_FrameReceived();
-                break;
-                */
-
             case PSV_FIRST_FRAME2:
             case PSV_FRAME2:
                 Cl_Frame2Received(netBuffer.msg.type);
-                break;
-
-            case PKT_COORDS:
-                ClPlayer_CoordsReceived();
                 break;
 
             case PSV_SOUND:
@@ -290,8 +288,12 @@ void Cl_GetPackets(void)
             default:
                 handled = false;
             }
+
             if(handled)
+            {
+                Msg_EndRead();
                 continue; // Get the next packet.
+            }
         }
 
         // How about the rest?
@@ -313,28 +315,36 @@ void Cl_GetPackets(void)
         case PSV_SYNC:
             // The server updates our time. Latency has been taken into
             // account, so...
-            gameTime = Msg_ReadLong() / 100.0;
+            gameTime = Reader_ReadFloat(msgReader);
             Con_Printf("PSV_SYNC: gameTime=%.3f\n", gameTime);
             DD_ResetTimer();
             break;
 
         case PSV_HANDSHAKE:
-            Cl_AnswerHandshake((handshake_packet_t *) netBuffer.msg.data);
+            Cl_AnswerHandshake();
             break;
 
         case PKT_PLAYER_INFO:
-            Cl_HandlePlayerInfo((playerinfo_packet_t *) netBuffer.msg.data);
+            Cl_HandlePlayerInfo();
             break;
 
         case PSV_PLAYER_EXIT:
-            Cl_PlayerLeaves(Msg_ReadByte());
+            Cl_PlayerLeaves(Reader_ReadByte(msgReader));
             break;
 
         case PKT_CHAT:
-            Net_ShowChatMessage();
-            gx.NetPlayerEvent(netBuffer.msg.data[0], DDPE_CHAT_MESSAGE,
-                              netBuffer.msg.data + 3);
+        {
+            int msgfrom = Reader_ReadByte(msgReader);
+            int mask = Reader_ReadUInt32(msgReader); // ignored
+            size_t len = Reader_ReadUInt16(msgReader);
+            char* msg = M_Malloc(len + 1);
+            Reader_Read(msgReader, msg, len);
+            msg[len] = 0;
+            Net_ShowChatMessage(msgfrom, msg);
+            gx.NetPlayerEvent(msgfrom, DDPE_CHAT_MESSAGE, msg);
+            M_Free(msg);
             break;
+        }
 
         case PSV_SERVER_CLOSE:  // We should quit?
             netLoggedIn = false;
@@ -342,14 +352,21 @@ void Cl_GetPackets(void)
             break;
 
         case PSV_CONSOLE_TEXT:
-            i = Msg_ReadLong();
-            Con_FPrintf(i, "%s", (char*)netBuffer.cursor);
+        {
+            uint32_t conFlags = Reader_ReadUInt32(msgReader);
+            uint16_t textLen = Reader_ReadUInt16(msgReader);
+            char* text = M_Malloc(textLen + 1);
+            Reader_Read(msgReader, text, textLen);
+            text[textLen] = 0;
+            Con_FPrintf(conFlags, "%s", text);
+            M_Free(text);
             break;
+        }
 
         case PKT_LOGIN:
             // Server responds to our login request. Let's see if we
             // were successful.
-            netLoggedIn = Msg_ReadByte();
+            netLoggedIn = Reader_ReadByte(msgReader);
             break;
 
         case PSV_FINALE:
@@ -370,6 +387,8 @@ void Cl_GetPackets(void)
 #endif
             }
         }
+
+        Msg_EndRead();
     }
 }
 
@@ -394,6 +413,11 @@ void Cl_Assertions(int plrNum)
         return;
 
     clmo = ClMobj_Find(s->clMobjId);
+    if(!clmo)
+    {
+        Con_Message("Cl_Assertions: client %i does not have a clmobj yet [%i].\n", plrNum, s->clMobjId);
+        return;
+    }
     mo = plr->shared.mo;
 
     /*
@@ -454,6 +478,8 @@ void Cl_Ticker(timespan_t ticLength)
         Cl_Assertions(i);
 #endif
     }
+
+    Cl_ExpireMobjs();
 }
 
 /**
@@ -468,9 +494,20 @@ D_CMD(Login)
     Msg_Begin(PKT_LOGIN);
     // Write the password.
     if(argc == 1)
-        Msg_WriteByte(0); // No password given!
+    {
+        Writer_WriteByte(msgWriter, 0); // No password given!
+    }
+    else if(strlen(argv[1]) <= 255)
+    {
+        Writer_WriteByte(msgWriter, strlen(argv[1]));
+        Writer_Write(msgWriter, argv[1], strlen(argv[1]));
+    }
     else
-        Msg_Write(argv[1], strlen(argv[1]) + 1);
-    Net_SendBuffer(0, SPF_ORDERED);
+    {
+        Msg_End();
+        return false;
+    }
+    Msg_End();
+    Net_SendBuffer(0, 0);
     return true;
 }

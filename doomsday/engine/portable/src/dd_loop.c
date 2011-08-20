@@ -396,7 +396,7 @@ void DD_Ticker(timespan_t time)
     DD_CallHooks(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
-    Net_Ticker(/*ticLength*/);
+    Net_Ticker(time);
 }
 
 /**
@@ -485,11 +485,5 @@ void DD_RunTics(void)
 
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);
-    }
-
-    // Clients send commands periodically, not on every frame.
-    if(!isClient)
-    {
-        Net_SendCommands();
     }
 }

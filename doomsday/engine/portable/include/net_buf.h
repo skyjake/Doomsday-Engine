@@ -32,10 +32,9 @@
 // Send Packet flags:
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
 #define SPF_DONT_SEND   0x00040000 // Don't really send out anything
-#define SPF_CONFIRM     0x40000000 // Make sure it's received
-#define SPF_ORDERED     0x80000000 // Send in order & confirm
 
-#define NETBUFFER_MAXDATA   0x40000 // 256 KB
+#define NETBUFFER_MAXDATA   (0x7fff - 8) // 32 KB
+#define NETBUFFER_ACTUALSIZE    0xffff  // 64 KB
 
 // Each network node is identified by a number.
 typedef unsigned int nodeid_t;
@@ -57,7 +56,7 @@ typedef unsigned short msgid_t;
 typedef struct {
     msgid_t         id;             // Unused.
     byte            type;           // Type of the message.
-    byte            data[NETBUFFER_MAXDATA];
+    byte            data[NETBUFFER_ACTUALSIZE];
 } netdata_t;
 #pragma pack()
 
@@ -65,8 +64,6 @@ typedef struct netbuffer_s {
     int             player;         // Recipient or sender.
     size_t          length;         // Number of bytes in the data buffer.
     size_t          headerLength;   // 1 byte at the moment.
-
-    byte           *cursor;         // Points into the data buffer.
 
     netdata_t       msg;            // The data buffer for sending and
                                     // receiving packets.

@@ -28,6 +28,34 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_misc.h"
+
+static void* zoneAlloc(size_t n) {
+    return Z_Malloc(n, PU_APPSTATIC, 0);
+}
+
+static void* zoneCalloc(size_t n) {
+    return Z_Calloc(n, PU_APPSTATIC, 0);
+}
+
+static void* stdCalloc(size_t n) {
+    return calloc(1, n);
+}
+
+static void autoselectMemoryManagement(ddstring_t* str)
+{
+    if(!str->memFree && !str->memAlloc && !str->memCalloc)
+    {
+        // If the memory model is unspecified, default to the standard,
+        // it is safer for threading.
+        str->memFree = free;
+        str->memAlloc = malloc;
+        str->memCalloc = stdCalloc;
+    }
+    assert(str->memFree);
+    assert(str->memAlloc);
+    assert(str->memCalloc);
+}
 
 static void allocateString(ddstring_t *str, size_t for_length, int preserve)
 {
@@ -40,6 +68,8 @@ static void allocateString(ddstring_t *str, size_t for_length, int preserve)
     if(str->size >= for_length)
         return; // We're OK.
 
+    autoselectMemoryManagement(str);
+
     // Already some memory allocated?
     if(str->size)
         old_data = true;
@@ -48,18 +78,28 @@ static void allocateString(ddstring_t *str, size_t for_length, int preserve)
 
     while(str->size < for_length)
         str->size *= 2;
-    buf = Z_Calloc(str->size, PU_APPSTATIC, 0);
+
+    assert(str->memCalloc);
+    buf = str->memCalloc(str->size);
 
     if(preserve && str->str)
         strncpy(buf, str->str, str->size - 1);
 
     // Replace the old string with the new buffer.
     if(old_data)
-        Z_Free(str->str);
+    {
+        assert(str->memFree);
+        str->memFree(str->str);
+    }
     str->str = buf;
 }
 
-void Str_Init(ddstring_t* str)
+/**
+ * Call this for uninitialized strings. Global variables are
+ * automatically cleared, so they don't need initialization.
+ * The string will use the memory zone.
+ */
+void Str_Init(ddstring_t *str)
 {
     if(!str)
     {
@@ -67,6 +107,24 @@ void Str_Init(ddstring_t* str)
         return; // Unreachable.
     }
     memset(str, 0, sizeof(*str));
+
+    // Init the memory management.
+    str->memFree = Z_Free;
+    str->memAlloc = zoneAlloc;
+    str->memCalloc = zoneCalloc;
+}
+
+/**
+ * The string will use standard memory allocation.
+ */
+void Str_InitStd(ddstring_t *str)
+{
+    memset(str, 0, sizeof(*str));
+
+    // Init the memory management.
+    str->memFree = free;
+    str->memAlloc = malloc;
+    str->memCalloc = stdCalloc;
 }
 
 void Str_Free(ddstring_t* str)
@@ -76,22 +134,32 @@ void Str_Free(ddstring_t* str)
         Con_Error("Attempted String::Free with invalid reference (this==0).");
         return; // Unreachable.
     }
+
+    autoselectMemoryManagement(str);
+
     if(str->size)
     {
         // The string has memory allocated, free it.
-        Z_Free(str->str);
+        str->memFree(str->str);
     }
-    memset(str, 0, sizeof(*str));
+
+    // Memory model left unchanged.
+    str->length = 0;
+    str->size = 0;
+    str->str = 0;
+}
+
+ddstring_t *Str_NewStd(void)
+{
+    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    Str_InitStd(str);
+    return str;
 }
 
 ddstring_t* Str_New(void)
 {
-    ddstring_t* str;
-    if((str = Z_Calloc(sizeof(*str), PU_APPSTATIC, 0)) == 0)
-    {
-        Con_Error("String::New failed on allocation of %lu bytes.", (unsigned long) sizeof(*str));
-        return 0; // Unreachable.
-    }
+    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    Str_Init(str);
     return str;
 }
 
@@ -103,7 +171,7 @@ void Str_Delete(ddstring_t* str)
         return; // Unreachable.
     }
     Str_Free(str);
-    Z_Free(str);
+    M_Free(str);
 }
 
 void Str_Clear(ddstring_t* str)
@@ -130,48 +198,41 @@ ddstring_t* Str_Set(ddstring_t* str, const char* text)
         Con_Error("Attempted String::Set with invalid reference (this==0).");
         return str; // Unreachable.
     }
-    { size_t incoming = strlen(text);
-    if(incoming > DDSTRING_MAX_LENGTH)
+
     {
-#if _DEBUG
-        Con_Message("Warning: Resultant string would be longer than String::MAX_LENGTH "
-                    "(%lu), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
-#endif
-        incoming = DDSTRING_MAX_LENGTH;
-    }   
+    size_t incoming = strlen(text);
+    char* copied = M_Malloc(incoming + 1); // take a copy in case text points to (a part of) str->str
+    strcpy(copied, text);
     allocateString(str, incoming, false);
-    strcpy(str->str, text);
-    str->length = (int)incoming;
-    return str;
+    strcpy(str->str, copied);
+    str->length = incoming;
+    M_Free(copied);
     }
 }
 
 ddstring_t* Str_Append(ddstring_t* str, const char* append)
 {
     size_t incoming;
+    char* copied;
+
     if(!str)
     {
         Con_Error("Attempted String::Append with invalid reference (this==0).");
         return str; // Unreachable.
     }
-    // Don't allow extremely long strings.
+
     incoming = strlen(append);
-    if(incoming == 0)
-        return str;
-    if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
-    {
-#if _DEBUG
-        Con_Message("Warning: Resultant string would be longer than String::MAX_LENGTH "
-                    "(%lu), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
-#endif
-        incoming = DDSTRING_MAX_LENGTH - str->length;
-        if(incoming == 0)
-            return str;
-    }   
-    allocateString(str, (unsigned)str->length + incoming, true);
-    strcpy(str->str + str->length, append);
-    str->length += (int)incoming;
-    return str;
+
+    // Take a copy in case append_text points to (a part of) ds->str, which may
+    // be invalidated by allocateString.
+    copied = M_Malloc(incoming + 1);
+
+    strcpy(copied, append);
+    allocateString(str, str->length + incoming, true);
+    strcpy(str->str + str->length, copied);
+    str->length += incoming;
+
+    M_Free(copied);
 }
 
 ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
@@ -187,7 +248,8 @@ ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
         Con_Error("Attempted String::Appendf with invalid reference (this==0).");
         return str; // Unreachable.
     }
-    { char buf[1024];
+
+    { char buf[4096];
     va_list args;
 
     // Print the message into the buffer.
@@ -201,6 +263,8 @@ ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
 
 ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 {
+    char* copied;
+
     if(!str)
     {
         Con_Error("Attempted String::PartAppend with invalid reference (this==0).");
@@ -216,17 +280,24 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     if(start < 0 || count <= 0)
         return str;
 
+    copied = M_Malloc(count);
+
+    memcpy(copied, append + start, count);
+
     allocateString(str, str->length + count + 1, true);
-    memcpy(str->str + str->length, append + start, count);
+    memcpy(str->str + str->length, copied, count);
     str->length += count;
 
     // Terminate the appended part.
     str->str[str->length] = 0;
+
+    M_Free(copied);
     return str;
 }
 
 ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
 {
+    char* copied;
     size_t incoming;
     if(!str)
     {
@@ -243,19 +314,16 @@ ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
     incoming = strlen(prepend);
     if(incoming == 0)
         return str;
-    // Don't allow extremely long strings.
-    if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
-    {
-#if _DEBUG
-        Con_Message("Resultant string would be longer than String::MAX_LENGTH (%lu).\n",
-                    (unsigned long) DDSTRING_MAX_LENGTH);
-#endif
-        return str;
-    }
-    allocateString(str, (unsigned)str->length + incoming, true);
+
+    copied = M_Malloc(incoming);
+    memcpy(copied, prepend, incoming);
+
+    allocateString(str, str->length + incoming, true);
     memmove(str->str + incoming, str->str, str->length + 1);
-    memcpy(str->str, prepend, incoming);
-    str->length += (int)incoming;
+    memcpy(str->str, copied, incoming);
+    str->length += incoming;
+
+    M_Free(copied);
     return str;
 }
 
@@ -309,7 +377,8 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     }
     str->size = other->size;
     str->length = other->length;
-    str->str = Z_Malloc(other->size, PU_APPSTATIC, 0);
+    assert(str->memAlloc);
+    str->str = str->memAlloc(other->size);
     memcpy(str->str, other->str, other->size);
     return str;
 }

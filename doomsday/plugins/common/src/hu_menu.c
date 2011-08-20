@@ -1417,12 +1417,12 @@ mn_page_t GameplayMenu = {
 #endif
 };
 
-mndata_button_t btn_multiplayer_player_setup = { false, NULL, "Player Setup" };
 mndata_button_t btn_multiplayer_join_game = { false, NULL, "Join Game" };
+mndata_button_t btn_multiplayer_player_setup = { false, NULL, "Player Setup" };
 
 mn_object_t MultiplayerMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  's',MENU_FONT2, MENU_COLOR1, MNButton_UpdateDimensions, MNButton_Drawer, { NULL, Hu_MenuSelectPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_player_setup },
     { MN_BUTTON,    0,  0,  'j',MENU_FONT2, MENU_COLOR1, MNButton_UpdateDimensions, MNButton_Drawer, { NULL, Hu_MenuSelectJoinGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_join_game },
+    { MN_BUTTON,    0,  0,  's',MENU_FONT2, MENU_COLOR1, MNButton_UpdateDimensions, MNButton_Drawer, { NULL, Hu_MenuSelectPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_player_setup },
     { MN_NONE }
 };
 

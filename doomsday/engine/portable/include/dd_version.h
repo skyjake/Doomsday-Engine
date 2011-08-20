@@ -66,7 +66,7 @@
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
  */
-#define DOOMSDAY_VERSION        10900 // Don't touch; see above.
+#define DOOMSDAY_VERSION        10907 // Don't touch; see above.
 
 #if defined(DOOMSDAY_BUILD_TEXT)
 /** The build number is included only for non-Stable builds. */

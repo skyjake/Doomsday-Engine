@@ -429,7 +429,7 @@ boolean Demo_ReadPacket(void)
     netBuffer.msg.id = 0;
     netBuffer.msg.type = lzGetC(playdemo);
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
-    netBuffer.cursor = netBuffer.msg.data;
+    //netBuffer.cursor = netBuffer.msg.data;
 
 /*#if _DEBUG
 Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
@@ -467,28 +467,29 @@ void Demo_WriteLocalCamera(int plrNum)
         flags &= ~LCAMF_ONGROUND;
         flags |= LCAMF_CAMERA;
     }
-    Msg_WriteByte(flags);
+    Writer_WriteByte(msgWriter, flags);
 
     // Coordinates.
     x = FLT2FIX(mo->pos[VX]);
     y = FLT2FIX(mo->pos[VY]);
-    Msg_WriteShort(x >> 16);
-    Msg_WriteByte(x >> 8);
-    Msg_WriteShort(y >> 16);
-    Msg_WriteByte(y >> 8);
+    Writer_WriteInt16(msgWriter, x >> 16);
+    Writer_WriteByte(msgWriter, x >> 8);
+    Writer_WriteInt16(msgWriter, y >> 16);
+    Writer_WriteByte(msgWriter, y >> 8);
 
     z = FLT2FIX(mo->pos[VZ] + viewData->current.pos[VZ]);
-    Msg_WriteShort(z >> 16);
-    Msg_WriteByte(z >> 8);
+    Writer_WriteInt16(msgWriter, z >> 16);
+    Writer_WriteByte(msgWriter, z >> 8);
 
-    Msg_WriteShort(mo->angle /*ddpl->clAngle*/ >> 16); /* $unifiedangles */
-    Msg_WriteShort(ddpl->lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
+    Writer_WriteInt16(msgWriter, mo->angle /*ddpl->clAngle*/ >> 16); /* $unifiedangles */
+    Writer_WriteInt16(msgWriter, ddpl->lookDir / 110 * DDMAXSHORT /* $unifiedangles */);
     // Field of view is optional.
     if(incfov)
     {
-        Msg_WriteShort(fieldOfView / 180 * DDMAXSHORT);
+        Writer_WriteInt16(msgWriter, fieldOfView / 180 * DDMAXSHORT);
         writeInfo[plrNum].fov = fieldOfView;
     }
+    Msg_End();
     Net_SendBuffer(plrNum, SPF_DONT_SEND);
 }
 
@@ -517,7 +518,7 @@ void Demo_ReadLocalCamera(void)
     // Framez keeps track of the current camera Z.
     demoFrameZ += demoZ;
 
-    flags = Msg_ReadByte();
+    flags = Reader_ReadByte(msgReader);
     demoOnGround = (flags & LCAMF_ONGROUND) != 0;
     if(flags & LCAMF_CAMERA)
         pl->flags |= DDPF_CAMERA;
@@ -526,22 +527,22 @@ void Demo_ReadLocalCamera(void)
 
     // X and Y coordinates are easy. Calculate deltas to the new coords.
     posDelta[VX] =
-        (FIX2FLT((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8)) - mo->pos[VX]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VX]) / intertics;
     posDelta[VY] =
-        (FIX2FLT((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8)) - mo->pos[VY]) / intertics;
+        (FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8)) - mo->pos[VY]) / intertics;
 
     // The Z coordinate is a bit trickier. We are tracking the *camera's*
     // Z coordinate (z+viewheight), not the player mobj's Z.
-    z = FIX2FLT((Msg_ReadShort() << 16) + (Msg_ReadByte() << 8));
+    z = FIX2FLT((Reader_ReadInt16(msgReader) << 16) + (Reader_ReadByte(msgReader) << 8));
     posDelta[VZ] = (z - demoFrameZ) / LOCALCAM_WRITE_TICS;
 
     // View angles.
-    dang = Msg_ReadShort() << 16;
-    dlook = Msg_ReadShort() * 110.0f / DDMAXSHORT;
+    dang = Reader_ReadInt16(msgReader) << 16;
+    dlook = Reader_ReadInt16(msgReader) * 110.0f / DDMAXSHORT;
 
     // FOV included?
     if(flags & LCAMF_FOV)
-        fieldOfView = Msg_ReadShort() * 180.0f / DDMAXSHORT;
+        fieldOfView = Reader_ReadInt16(msgReader) * 180.0f / DDMAXSHORT;
 
     if(intertics == 1 || demoFrameZ == 1)
     {

@@ -32,7 +32,8 @@
 typedef enum neteventtype_e {
 	NE_CLIENT_ENTRY,
 	NE_CLIENT_EXIT,
-	NE_END_CONNECTION
+	NE_END_CONNECTION,
+	NE_TERMINATE_NODE
 } neteventtype_t;
 
 typedef struct netevent_s {
@@ -46,7 +47,7 @@ void            N_MAClear(void);
 
 void            N_NEPost(netevent_t * nev);
 boolean         N_NEPending(void);
-void            N_NETicker(void);
+void            N_NETicker(timespan_t time);
 
 void            N_TerminateClient(int console);
 void            N_Update(void);

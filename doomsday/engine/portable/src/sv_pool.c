@@ -677,10 +677,6 @@ boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
     }
     if(r->filter != s->filter)
         df |= PDF_FILTER;
-/*    if(r->clYaw != s->clYaw)
-        df |= PDF_CLYAW;
-    if(r->clPitch != s->clPitch)
-        df |= PDF_CLPITCH;*/
 
     /*
     // The player sprites are a bit more complicated to check.
@@ -1330,10 +1326,6 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         }
         if(sf & PDF_FILTER)
             d->filter = s->filter;
-/*        if(sf & PDF_CLYAW)
-            d->clYaw = s->clYaw;
-        if(sf & PDF_CLPITCH)
-            d->clPitch = s->clPitch; */ /* $unifiedangles */
         if(sf & PDF_PSPRITES)
         {
             uint                i;
@@ -1835,18 +1827,18 @@ int Sv_ExcludeDelta(pool_t* pool, const void* deltaPtr)
         // information.
         if(mobjDelta->mo.ddFlags & DDMF_MISSILE)
         {
-            if(!Sv_IsCreateMobjDelta(delta))
+            if(Sv_IsNullMobjDelta(delta))
+            {
+                // The missile is being removed entirely.
+                // Remove the entry from the missile record.
+                Sv_MRRemove(pool, delta->id);
+            }
+            else if(!Sv_IsCreateMobjDelta(delta))
             {
                 // This'll might exclude the coordinates.
                 // The missile is put on record when the client acknowledges
                 // the Create Mobj delta.
                 flags &= ~Sv_MRCheck(pool, mobjDelta);
-            }
-            else if(Sv_IsNullMobjDelta(delta))
-            {
-                // The missile is being removed entirely.
-                // Remove the entry from the missile record.
-                Sv_MRRemove(pool, delta->id);
             }
         }
     }
@@ -2377,7 +2369,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
 #ifdef _DEBUG
-Con_Printf("Sv_NewPolyDeltas: Change in %i\n", i);
+            VERBOSE( Con_Message("Sv_NewPolyDeltas: Change in %i\n", i) );
 #endif
             Sv_AddDeltaToPools(&delta, targets);
         }

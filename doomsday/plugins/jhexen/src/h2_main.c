@@ -43,6 +43,7 @@
 #include "p_inventory.h"
 #include "p_player.h"
 #include "p_saveg.h"
+#include "p_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -160,6 +161,12 @@ void* X_GetVariable(int id)
     case DD_PSPRITE_BOB_Y:
         R_GetWeaponBob(DISPLAYPLAYER, 0, &bob[1]);
         return &bob[1];
+
+    case DD_TM_FLOOR_Z:
+        return (void*) &tmFloorZ;
+
+    case DD_TM_CEILING_Z:
+        return (void*) &tmCeilingZ;
 
     default:
         break;

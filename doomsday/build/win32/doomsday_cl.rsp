@@ -177,3 +177,5 @@
  .\..\..\engine\portable\src\resourcerecord.c
  .\..\..\engine\portable\src\uri.c
  .\..\..\engine\portable\src\smoother.c
+ .\..\..\engine\portable\src\reader.c
+ .\..\..\engine\portable\src\writer.c

@@ -69,6 +69,7 @@ typedef struct clmoinfo_s {
 void            Cl_InitClientMobjs(void);
 void            Cl_Reset(void);
 void            Cl_DestroyClientMobjs(void);
+void            Cl_ExpireMobjs(void);
 void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor);
 
 mobj_t         *ClMobj_Create(thid_t id);

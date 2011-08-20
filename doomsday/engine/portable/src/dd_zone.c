@@ -290,6 +290,7 @@ void Z_Free(void *ptr)
 #ifdef FAKE_MEMORY_ZONE
     M_Free(block->area);
     block->area = NULL;
+    block->areaSize = 0;
 #endif
 
     /**
@@ -490,12 +491,17 @@ void *Z_Malloc(size_t size, int tag, void *user)
                     new->next = base->next;
                     new->next->prev = new;
                     new->seqFirst = new->seqLast = NULL;
+#ifdef FAKE_MEMORY_ZONE
+                    new->area = 0;
+                    new->areaSize = 0;
+#endif
                     base->next = new;
                     base->size = size;
                 }
 
 #ifdef FAKE_MEMORY_ZONE
-                base->area = M_Malloc(size - sizeof(memblock_t));
+                base->areaSize = size - sizeof(memblock_t);
+                base->area = M_Malloc(base->areaSize);
 #endif
 
                 if(user)
@@ -559,16 +565,22 @@ void *Z_Malloc(size_t size, int tag, void *user)
 void *Z_Realloc(void *ptr, size_t n, int mallocTag)
 {
     int     tag = ptr ? Z_GetTag(ptr) : mallocTag;
-    void   *p = Z_Malloc(n, tag, 0);    // User always 0
+    void   *p;
+
+    n = ALIGNED(n);
+    p = Z_Malloc(n, tag, 0);    // User always 0;
 
     if(ptr)
     {
-        size_t  bsize;
+        size_t bsize;
 
         // Has old data; copy it.
         memblock_t *block = Z_GetBlock(ptr);
-
+#ifdef FAKE_MEMORY_ZONE
+        bsize = block->areaSize;
+#else
         bsize = block->size - sizeof(memblock_t);
+#endif
         memcpy(p, ptr, MIN_OF(n, bsize));
         Z_Free(ptr);
     }
@@ -725,7 +737,7 @@ int Z_GetTag(void *ptr)
  */
 void *Z_Calloc(size_t size, int tag, void *user)
 {
-    void           *ptr = Z_Malloc(size, tag, user);
+    void *ptr = Z_Malloc(size, tag, user);
 
     memset(ptr, 0, ALIGNED(size));
     return ptr;
@@ -740,11 +752,17 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     void           *p;
     size_t          bsize;
 
+    n = ALIGNED(n);
+
     if(ptr)                     // Has old data.
     {
         p = Z_Malloc(n, Z_GetTag(ptr), NULL);
         block = Z_GetBlock(ptr);
+#ifdef FAKE_MEMORY_ZONE
+        bsize = block->areaSize;
+#else
         bsize = block->size - sizeof(memblock_t);
+#endif
         if(bsize <= n)
         {
             memcpy(p, ptr, bsize);

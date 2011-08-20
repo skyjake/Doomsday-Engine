@@ -795,8 +795,9 @@ static void shootSpecialLine(mobj_t *thing, linedef_t *line)
  */
 void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t*           sector =
-        P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+
+    if(IS_CLIENT) return;
 
     // Falling, not all the way down yet?
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))

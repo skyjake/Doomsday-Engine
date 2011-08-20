@@ -3,8 +3,10 @@ REM Modify and save as "vcconfig.bat".
 
 SET ROOT_DIR=D:\deng\svn\trunk\doomsday
 
-SET BIN_DIR=.\bin\release
-SET OBJ_DIR=.\obj\release
+SET RELEASE_BIN_DIR=.\bin\release
+SET RELEASE_OBJ_DIR=.\obj\release
+SET DEBUG_BIN_DIR=.\bin\debug
+SET DEBUG_OBJ_DIR=.\obj\debug
 
 REM -=- Requirements for Doomsday.exe -=-
 REM

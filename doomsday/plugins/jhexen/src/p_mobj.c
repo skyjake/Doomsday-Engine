@@ -390,8 +390,7 @@ void P_MobjMoveXY(mobj_t* mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    if(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD))
+    if(FEQUAL(mo->mom[MX], 0) && FEQUAL(mo->mom[MY], 0))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // A flying mobj slammed into something
@@ -903,14 +902,14 @@ void P_MobjMoveZ(mobj_t *mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -(gravity / 8) * 2;
         else
             mo->mom[MZ] -= gravity / 8;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -gravity * 2;
         else
             mo->mom[MZ] -= gravity;
@@ -1023,13 +1022,13 @@ void P_MobjThinker(mobj_t* mobj)
         boolean             changexy;
 
         // Handle movement.
-        if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
-           mobj->pos[VZ] != mobj->floorZ)
+        if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
+           !FEQUAL(mobj->pos[VZ], mobj->floorZ))
         {
             frac[VX] = mobj->mom[MX] / 8;
             frac[VY] = mobj->mom[MY] / 8;
             frac[VZ] = mobj->mom[MZ] / 8;
-            changexy = (frac[VX] != 0 || frac[VY] != 0);
+            changexy = (!FEQUAL(frac[VX], 0) || !FEQUAL(frac[VY], 0));
 
             for(i = 0; i < 8; ++i)
             {
@@ -1107,7 +1106,7 @@ void P_MobjThinker(mobj_t* mobj)
 
     // Handle X and Y momentums
     blockingMobj = NULL;
-    if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 ||
+    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
        (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
@@ -1134,7 +1133,7 @@ void P_MobjThinker(mobj_t* mobj)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(mobj->pos[VZ] != mobj->floorZ || mobj->mom[MZ] != 0 || blockingMobj)
+    else if(!FEQUAL(mobj->pos[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || blockingMobj)
     {   // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
@@ -1495,6 +1494,13 @@ boolean P_HitFloor(mobj_t *thing)
     const terraintype_t* tt;
 
     if(!thing->info) return false;
+
+    if(IS_CLIENT && thing->player)
+    {
+        // The client notifies the server, which will handle the splash.
+        NetCl_FloorHitRequest(thing->player);
+        return false;
+    }
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {   // Don't splash if landing on the edge above water/lava/etc....

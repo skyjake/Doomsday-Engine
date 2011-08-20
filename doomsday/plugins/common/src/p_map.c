@@ -638,8 +638,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             thing->mom[MX] += tmThing->mom[MX];
             thing->mom[MY] += tmThing->mom[MY];
 
-            if(thing->dPlayer)
-                thing->dPlayer->flags |= DDPF_FIXMOM;
+            NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX], tmThing->mom[VY], 0);
 
             if((thing->mom[MX] + thing->mom[MY]) > 3)
             {
@@ -693,8 +692,8 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 {
                     thing->mom[MX] += tmThing->mom[MX] / 16;
                     thing->mom[MY] += tmThing->mom[MY] / 16;
-                    if(thing->dPlayer)
-                        thing->dPlayer->flags |= DDPF_FIXMOM;
+
+                    NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX] / 16, tmThing->mom[MY] / 16, 0);
                 }
 
                 if((!thing->player && !(thing->flags2 & MF2_BOSS)) ||
@@ -859,8 +858,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             {   // Push thing
                 thing->mom[MX] += tmThing->mom[MX] / 4;
                 thing->mom[MY] += tmThing->mom[MY] / 4;
-                if(thing->dPlayer)
-                    thing->dPlayer->flags |= DDPF_FIXMOM;
+                NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
             }
             IterList_Empty(spechit);
             return true;
@@ -905,8 +903,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     {   // Push thing
         thing->mom[MX] += tmThing->mom[MX] / 4;
         thing->mom[MY] += tmThing->mom[MY] / 4;
-        if(thing->dPlayer)
-            thing->dPlayer->flags |= DDPF_FIXMOM;
+        NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
     }
 
     // \kludge: Always treat blood as a solid.
@@ -1434,7 +1431,7 @@ static boolean P_TryMove2(mobj_t* thing, float x, float y, boolean dropoff)
         // Must stay within a sector of a certain floor type?
         if((thing->flags2 & MF2_CANTLEAVEFLOORPIC) &&
            (tmFloorMaterial != P_GetPtrp(thing->subsector, DMU_FLOOR_MATERIAL) ||
-            tmFloorZ - thing->pos[VZ] != 0))
+            !FEQUAL(tmFloorZ, thing->pos[VZ])))
         {
             return false;
         }
@@ -2524,6 +2521,7 @@ boolean PTR_SlideTraverse(intercept_t* in)
  */
 void P_SlideMove(mobj_t* mo)
 {
+    float oldPos[2] = { mo->pos[VX], mo->pos[VY] };
     int hitcount = 3;
 
     slideMo = mo;
@@ -2639,6 +2637,14 @@ void P_SlideMove(mobj_t* mo)
     } while(!P_TryMove(mo, mo->pos[VX] + tmMove[MX],
                            mo->pos[VY] + tmMove[MY], true, true));
 #endif
+
+#ifdef _DEBUG
+    // Didn't move?
+    if(mo->player && mo->pos[VX] == oldPos[VX] && mo->pos[VY] == oldPos[VY])
+    {
+        Con_Message("P_SlideMove: Mobj pos stays the same.\n");
+    }
+#endif
 }
 
 /**
@@ -2659,6 +2665,9 @@ void P_SlideMove(mobj_t* mo)
 boolean PIT_ChangeSector(mobj_t* thing, void* data)
 {
     mobj_t*             mo;
+
+    if(!thing->info)
+        return true; // Invalid thing?
 
     // Don't check things that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
@@ -2817,8 +2826,7 @@ static void CheckMissileImpact(mobj_t* mobj)
     int                 size;
     linedef_t*          ld;
 
-    if(!mobj->target || !mobj->target->player ||
-       !(mobj->flags & MF_MISSILE))
+    if(IS_CLIENT || !mobj->target || !mobj->target->player || !(mobj->flags & MF_MISSILE))
         return;
 
     if(!(size = IterList_Size(spechit)))
@@ -3014,14 +3022,14 @@ static void P_FakeZMovement(mobj_t* mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -(P_GetGravity() / 32) * 2;
         else
             mo->mom[MZ] -= P_GetGravity() / 32;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -P_GetGravity() * 2;
         else
             mo->mom[MZ] -= P_GetGravity();
@@ -3118,6 +3126,7 @@ void P_BounceWall(mobj_t* mo)
     else
         leadPos[VY] -= mo->radius;
 
+    bestSlideLine = NULL;
     bestSlideFrac = 1;
     P_PathTraverse(leadPos[VX], leadPos[VY],
                    leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],

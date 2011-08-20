@@ -38,8 +38,8 @@
 typedef enum {
     DT_MOBJ = 0,
     DT_PLAYER = 1,
-    DT_SECTOR_R6 = 2, // 2 bytes for flags.
-    DT_SIDE_R6 = 3, // 1 byte for flags.
+    //DT_SECTOR_R6 = 2, // 2 bytes for flags.
+    //DT_SIDE_R6 = 3, // 1 byte for flags.
     DT_POLY = 4,
     DT_LUMP = 5,
     DT_SOUND = 6, // No emitter
@@ -113,8 +113,8 @@ typedef enum {
 #define PDF_FRICTION            0x0020
 #define PDF_EXTRALIGHT          0x0040 // Plus fixedcolormap (same byte).
 #define PDF_FILTER              0x0080
-#define PDF_CLYAW               0x1000 // Sent in the player num byte.
-#define PDF_CLPITCH             0x2000 // Sent in the player num byte.
+//#define PDF_CLYAW               0x1000 // Sent in the player num byte.
+//#define PDF_CLPITCH             0x2000 // Sent in the player num byte.
 #define PDF_PSPRITES            0x4000 // Sent in the player num byte.
 
 // Written separately, stored in playerdelta flags 2 highest bytes.
@@ -138,7 +138,7 @@ typedef enum {
 #define SDF_CEILING_TARGET      0x00000020
 #define SDF_CEILING_SPEED       0x00000040
 #define SDF_FLOOR_TEXMOVE       0x00000080
-#define SDF_CEILING_TEXMOVE     0x00000100
+//#define SDF_CEILING_TEXMOVE     0x00000100 // obsolete
 #define SDF_COLOR_RED           0x00000200
 #define SDF_COLOR_GREEN         0x00000400
 #define SDF_COLOR_BLUE          0x00000800

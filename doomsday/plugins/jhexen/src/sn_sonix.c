@@ -279,7 +279,7 @@ void SN_StartSequence(mobj_t* mobj, int sequence)
     seqnode_t*          node;
 
     SN_StopSequence(mobj); // Stop any previous sequence
-    node = Z_Malloc(sizeof(seqnode_t), PU_GAMESTATIC, NULL);
+    node = Z_Calloc(sizeof(seqnode_t), PU_GAMESTATIC, NULL);
     node->sequencePtr = SequenceData[SequenceTranslate[sequence].scriptNum];
     node->sequence = sequence;
     node->mobj = mobj;
@@ -329,10 +329,13 @@ void SN_StartSequenceName(mobj_t* mobj, const char* name)
 
 void SN_StopSequence(mobj_t* mobj)
 {
-    seqnode_t*          node;
+    seqnode_t* node;
+    seqnode_t* next = 0;
 
-    for(node = SequenceListHead; node; node = node->next)
+    for(node = SequenceListHead; node; node = next)
     {
+        next = node->next;
+
         if(node->mobj == mobj)
         {
             S_StopSound(0, mobj);
@@ -469,10 +472,12 @@ Con_Printf("REPT: id=%i, %s: %p\n", node->currentSoundID,
 
 void SN_StopAllSequences(void)
 {
-    seqnode_t*          node;
+    seqnode_t* node;
+    seqnode_t* next = 0;
 
-    for(node = SequenceListHead; node; node = node->next)
+    for(node = SequenceListHead; node; node = next)
     {
+        next = node->next;
         node->stopSound = 0;    // don't play any stop sounds
         SN_StopSequence(node->mobj);
     }

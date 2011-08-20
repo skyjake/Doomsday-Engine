@@ -39,6 +39,7 @@ enum {
 // Generic driver interface. All other interfaces are based on this.
 typedef struct audiointerface_music_generic_s {
     int             (*Init) (void);
+    void            (*Shutdown) (void);
     void            (*Update) (void);
     void            (*Set) (int prop, float value);
     int             (*Get) (int prop, void *value);

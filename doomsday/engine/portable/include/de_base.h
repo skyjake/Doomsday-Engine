@@ -45,5 +45,7 @@
 #include "dd_loop.h"
 #include "dd_help.h"
 #include "dd_zip.h"
+#include "reader.h"
+#include "writer.h"
 
 #endif /* LIBDENG_BASE_H */

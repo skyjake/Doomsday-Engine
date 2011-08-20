@@ -71,6 +71,7 @@ typedef struct memblock_s {
     struct memblock_s* seqLast, *seqFirst;
 #ifdef FAKE_MEMORY_ZONE
     void*           area; // The real memory area.
+    size_t          areaSize; // Size of the allocated memory area.
 #endif
 } memblock_t;
 

@@ -117,6 +117,12 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
 {
     int                 result = 0;
 
+    if(novideo)
+    {
+        // Don't bother to go into busy mode.
+        return worker(workerData);
+    }
+
     if(!busyInited)
     {
         busy_Mutex = Sys_CreateMutex("BUSY_MUTEX");

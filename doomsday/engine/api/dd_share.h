@@ -141,6 +141,7 @@ float           FloatSwap(float);
 #define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
 #define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
 #define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
+#define FEQUAL(x, y)        (INRANGE_OF(x, y, .000001f))
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)              ((x) >= 0 ? (x) : -(x))
 /// Ceiling of integer quotient of A divided by B
@@ -302,7 +303,9 @@ enum {
     DD_TORCH_RED,
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
-    DD_TORCH_ADDITIVE
+    DD_TORCH_ADDITIVE,
+    DD_TM_FLOOR_Z,  // output from P_CheckPosition
+    DD_TM_CEILING_Z // output from P_CheckPosition
 };
 
 // Bounding box coordinates.
@@ -1402,7 +1405,6 @@ typedef struct ticcmd_s {
 #define DDPT_HELLO              0
 #define DDPT_OK                 1
 #define DDPT_CANCEL             2
-#define DDPT_COMMANDS_OBSOLETE  32
 #define DDPT_FIRST_GAME_EVENT   64
 #define DDPT_MESSAGE            67
 

@@ -98,6 +98,12 @@ static float dropoffDelta[2], floorZ;
 
 // CODE --------------------------------------------------------------------
 
+void P_ClearBodyQueue(void)
+{
+    memset(bodyque, 0, sizeof(bodyque));
+    bodyqueslot = 0;
+}
+
 /**
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
@@ -408,7 +414,7 @@ static float P_AvoidDropoff(mobj_t *actor)
     P_MobjLinesIterator(actor, PIT_AvoidDropoff, 0);
 
     // Non-zero if movement prescribed.
-    return !(dropoffDelta[VX] == 0 || dropoffDelta[VY] == 0);
+    return !(FEQUAL(dropoffDelta[VX], 0) || FEQUAL(dropoffDelta[VY], 0));
 }
 
 void P_NewChaseDir(mobj_t *actor)
@@ -2336,7 +2342,7 @@ void C_DECL A_SkullPop(mobj_t* actor)
     if((mo = P_SpawnMobj3f(MT_BLOODYSKULL, actor->pos[VX], actor->pos[VY],
                            actor->pos[VZ] + 48, actor->angle, 0)))
     {
-        player_t*           player;
+        player_t* player;
 
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 9);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 9);
@@ -2349,12 +2355,15 @@ void C_DECL A_SkullPop(mobj_t* actor)
         actor->flags &= ~MF_SOLID;
 
         mo->player = player;
-        mo->dPlayer = player->plr;
+        mo->dPlayer = (player? player->plr : 0);
         mo->health = actor->health;
 
-        player->plr->mo = mo;
-        player->plr->lookDir = 0;
-        player->damageCount = 32;
+        if(player)
+        {
+            player->plr->mo = mo;
+            player->plr->lookDir = 0;
+            player->damageCount = 32;
+        }
     }
 }
 

@@ -55,15 +55,17 @@
 
 #define SOUND_VICTORY           SOUND_COUNTDOWN
 
-#define UPD_BUFFER_LEN          500
+//#define UPD_BUFFER_LEN          500
 
 // How long is the largest possible sector update?
-#define MAX_SECTORUPD           20
-#define MAX_SIDEUPD             9
+//#define MAX_SECTORUPD           20
+//#define MAX_SIDEUPD             9
 
+/*
 #define WRITE_SHORT(byteptr, val)   {(*(short*)(byteptr) = SHORT(val)); byteptr += 2;}
 #define WRITE_LONG(byteptr, val)    {(*(int*)(byteptr) = LONG(val)); byteptr += 4;}
 #define WRITE_FLOAT(byteptr, val)   {(*(int*)(byteptr) = LONG(*(int*)&val)); byteptr += 4;}
+*/
 
 // TYPES -------------------------------------------------------------------
 
@@ -149,101 +151,6 @@ void NetSv_UpdateGameConfig(void)
     if(cfg.jumpEnabled)
         strcat(gameConfigString, " jump");
 }
-
-#if 0
-/**
- * \kludge Unravel a DDPT_COMMANDS (32) packet. Returns a pointer to a static
- * buffer that contains the ticcmds (kludge to work around the parameter
- * passing from the engine).
- */
-void *NetSv_ReadCommands(byte *msg, uint size)
-{
-#define MAX_COMMANDS 30
-    static byte data[2 + sizeof(ticcmd_t) * MAX_COMMANDS];
-    ticcmd_t   *cmd;
-    byte       *end = msg + size, flags;
-    ushort     *count = (ushort *) data;
-
-    memset(data, 0, sizeof(data));
-
-    // The first two bytes of the data contain the number of commands.
-    *count = 0;
-
-    // The first command.
-    cmd = (void *) (data + 2);
-
-    while(msg < end)
-    {
-        // One more command.
-        *count += 1;
-
-        // Only act on up to MAX_COMMANDS, and discard the rest to prevent
-        // buffer overflows its a fugly hack - we really need to replace
-        // the netcode - Yagisan
-        if(*msg <= MAX_COMMANDS)
-        {
-            // First the flags.
-            flags = *msg++;
-
-            if(flags & CMDF_FORWARDMOVE)
-                cmd->forwardMove = *msg++;
-            if(flags & CMDF_SIDEMOVE)
-                cmd->sideMove = *msg++;
-            if(flags & CMDF_ANGLE)
-            {
-                cmd->angle = SHORT( *(short *) msg );
-                msg += 2;
-            }
-            if(flags & CMDF_LOOKDIR)
-            {
-                cmd->pitch = SHORT( *(short *) msg );
-                msg += 2;
-            }
-            if(flags & CMDF_BUTTONS)
-                cmd->actions = *msg++;
-/*
-            if(flags & CMDF_BUTTONS)
-            {
-                byte buttons = *msg++;
-                cmd->attack = ((buttons & CMDF_BTN_ATTACK) != 0);
-                cmd->use = ((buttons & CMDF_BTN_USE) != 0);
-                cmd->jump = ((buttons & CMDF_BTN_JUMP) != 0);
-                cmd->pause = ((buttons & CMDF_BTN_PAUSE) != 0);
-            }
-            else
-            {
-                cmd->attack = cmd->use = cmd->jump = cmd->pause = false;
-            }
-            if(flags & CMDF_LOOKFLY)
-                cmd->fly = *msg++;
-            if(flags & CMDF_ARTI)
-                cmd->arti = *msg++;
-            if(flags & CMDF_CHANGE_WEAPON)
-            {
-                cmd->changeWeapon = SHORT( *(short *) msg );
-                msg += 2;
-            }
-*/
-            // Copy to next command (only differences have been written).
-            memcpy(cmd + 1, cmd, sizeof(ticcmd_t));
-        }
-        /**
-         * We reached MAX_COMMANDS, start discarding now to prevent buffer
-         * overflows.
-         * Its a fugly hack - we really need to replace the netcode - Yagisan
-         */
-        else
-        {
-            msg++;
-        }
-
-        // Move to next command.
-        cmd++;
-    }
-
-    return data;
-}
-#endif
 
 /**
  * Sharp ticker, i.e., called at 35 Hz.
@@ -826,51 +733,94 @@ void NetSv_NewPlayerEnters(int plrNum)
 
 void NetSv_Intermission(int flags, int state, int time)
 {
-    byte                buffer[32], *ptr = buffer;
+    Writer* msg;
 
     if(IS_CLIENT)
         return;
 
-    *ptr++ = flags;
+    msg = D_NetWrite();
+    Writer_WriteByte(msg, flags);
 
 #if __JDOOM__ || __JDOOM64__
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
-        WRITE_SHORT(ptr, wmInfo.maxKills);
-        WRITE_SHORT(ptr, wmInfo.maxItems);
-        WRITE_SHORT(ptr, wmInfo.maxSecret);
-        *ptr++ = wmInfo.nextMap;
-        *ptr++ = wmInfo.currentMap;
-        *ptr++ = wmInfo.didSecret;
+        Writer_WriteUInt16(msg, wmInfo.maxKills);
+        Writer_WriteUInt16(msg, wmInfo.maxItems);
+        Writer_WriteUInt16(msg, wmInfo.maxSecret);
+        Writer_WriteByte(msg, wmInfo.nextMap);
+        Writer_WriteByte(msg, wmInfo.currentMap);
+        Writer_WriteByte(msg, wmInfo.didSecret);
     }
 #endif
 
 #if __JHEXEN__ || __JSTRIFE__
     if(flags & IMF_BEGIN)
     {
-        *ptr++ = state; // LeaveMap
-        *ptr++ = time; // LeavePosition
+        Writer_WriteByte(msg, state); // LeaveMap
+        Writer_WriteByte(msg, time); // LeavePosition
     }
 #endif
 
     if(flags & IMF_STATE)
-        *ptr++ = state;
+        Writer_WriteByte(msg, state);
     if(flags & IMF_TIME)
-        WRITE_SHORT(ptr, time);
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION, buffer, ptr - buffer);
+        Writer_WriteUInt16(msg, time);
+
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_INTERMISSION, Writer_Data(msg), Writer_Size(msg));
 }
 
-void NetSv_SendGameState(int flags, int to)
+#if 0
+/**
+ * The actual script is sent to the clients. 'script' can be NULL.
+ */
+void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numConds)
 {
-    byte buffer[256], *ptr;
-    fixed_t gravity;
-    int i;
+    size_t scriptLen = 0;
+    Writer* writer;
 
     if(IS_CLIENT)
         return;
 
-    gravity = FLT2FIX(P_GetGravity());
+    writer = D_NetWrite();
+
+    // How much memory do we need?
+    if(script)
+    {
+        flags |= FINF_SCRIPT;
+        scriptLen = strlen(script);
+    }
+
+    // First the flags.
+    Writer_WriteByte(writer, flags);
+
+    if(script)
+    {
+        int i;
+
+        // The conditions.
+        Writer_WriteByte(writer, numConds);
+        for(i = 0; i < numConds; ++i)
+        {
+            Writer_WriteByte(writer, conds[i]);
+        }
+
+        // Then the script itself.
+        Writer_WriteUInt32(writer, scriptLen);
+        Writer_Write(writer, script, scriptLen);
+    }
+
+    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, Writer_Data(writer), Writer_Size(writer));
+}
+#endif
+
+void NetSv_SendGameState(int flags, int to)
+{
+    int i;
+    Writer* writer;
+
+    if(IS_CLIENT)
+        return;
 
     // Print a short message that describes the game state.
     Con_Message("NetSv_SendGameState: Game setup: ep%u map%u %s\n",
@@ -879,67 +829,73 @@ void NetSv_SendGameState(int flags, int to)
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-#if __JHEXEN__ || __JSTRIFE__
-        int gameStateSize = 16;
-#else
-        int gameStateSize = 8;
-#endif
-        //int k;
-
         if(!players[i].plr->inGame || (to != DDSP_ALL_PLAYERS && to != i))
             continue;
 
-        ptr = buffer;
-
-        // The contents of the game state package are a bit messy
-        // due to compatibility with older versions.
+        writer = D_NetWrite();
 
 #if __JDOOM__ || __JDOOM64__
-        ptr[0] = gameMode;
+        Writer_WriteByte(writer, gameMode);
 #else
-        ptr[0] = 0;
+        Writer_WriteByte(writer, 0);
 #endif
-        ptr[1] = flags;
-        ptr[2] = gameEpisode+1;
-        ptr[3] = gameMap+1;
-        ptr[4] = (deathmatch & 0x3)
+        Writer_WriteByte(writer, flags);
+        Writer_WriteByte(writer, gameEpisode + 1);
+        Writer_WriteByte(writer, gameMap + 1);
+        Writer_WriteByte(writer, (deathmatch & 0x3)
             | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__
             | (respawnMonsters? 0x8 : 0)
 #else
             | 0
 #endif
-            | (cfg.jumpEnabled? 0x10 : 0)
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-            | (gameSkill << 5);
-#else
-        ;
-#endif
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        ptr[5] = 0;
-
-#else
-        ptr[5] = gameSkill & 0x7;
-#endif
-        ptr[6] = (gravity >> 8) & 0xff; // low byte
-        ptr[7] = (gravity >> 16) & 0xff; // high byte
-        memset(ptr + 8, 0, 8);
-
-        ptr += gameStateSize;
+                         | (cfg.jumpEnabled? 0x10 : 0));
+//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+//            | (gameSkill << 5));
+//#else
+//            );
+//#endif
+//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+//        Writer_WriteByte(writer, 0);
+//#else
+        Writer_WriteByte(writer, gameSkill & 0x7);
+//#endif
+        Writer_WriteFloat(writer, P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
         {
             mobj_t *mo = players[i].plr->mo;
-
-            WRITE_SHORT(ptr, (int) mo->pos[VX]);
-            WRITE_SHORT(ptr, (int) mo->pos[VY]);
-            WRITE_SHORT(ptr, (int) mo->pos[VZ]);
-            WRITE_SHORT(ptr, mo->angle >> 16);
+            Writer_WriteFloat(writer, mo->pos[VX]);
+            Writer_WriteFloat(writer, mo->pos[VY]);
+            Writer_WriteFloat(writer, mo->pos[VZ]);
+            Writer_WriteUInt32(writer, mo->angle);
         }
 
         // Send the packet.
-        Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, buffer, ptr - buffer);
+        Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
     }
+}
+
+/**
+ * Informs a player of an impulse momentum that needs to be applied to the player's mobj.
+ */
+void NetSv_PlayerMobjImpulse(mobj_t* mobj, float mx, float my, float mz)
+{
+    int plrNum = 0;
+    Writer* writer;
+
+    if(!IS_SERVER || !mobj || !mobj->player) return;
+
+    // Which player?
+    plrNum = mobj->player - players;
+
+    writer = D_NetWrite();
+    Writer_WriteUInt16(writer, mobj->thinker.id);
+    Writer_WriteFloat(writer, mx);
+    Writer_WriteFloat(writer, my);
+    Writer_WriteFloat(writer, mz);
+
+    Net_SendPacket(plrNum, GPT_MOBJ_IMPULSE, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -949,35 +905,33 @@ void NetSv_SendGameState(int flags, int to)
  */
 void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle)
 {
-    byte buffer[200];
-    byte *ptr = buffer;
+    Writer* writer;
 
     if(!IS_SERVER) return;
 
     Con_Message("NetSv_SendPlayerSpawnPosition: player %i at %f, %f, %f facing %x\n",
                 plrNum, x, y, z, angle);
 
-    WRITE_FLOAT(ptr, x);
-    WRITE_FLOAT(ptr, y);
-    WRITE_FLOAT(ptr, z);
-    WRITE_LONG(ptr, angle);
+    writer = D_NetWrite();
+    Writer_WriteFloat(writer, x);
+    Writer_WriteFloat(writer, y);
+    Writer_WriteFloat(writer, z);
+    Writer_WriteUInt32(writer, angle);
 
-    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION, buffer, ptr - buffer);
+    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
+                   Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
  * More player state information. Had to be separate because of backwards
  * compatibility.
  */
-void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
-                            boolean reliable)
+void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
 {
-    int         pType =
-        (srcPlrNum ==
-         destPlrNum ? GPT_CONSOLEPLAYER_STATE2 : GPT_PLAYER_STATE2);
+    int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE2 : GPT_PLAYER_STATE2);
     player_t   *pl = &players[srcPlrNum];
-    byte        buffer[UPD_BUFFER_LEN], *ptr = buffer;
     int         i, fl;
+    Writer*     writer;
 
     // Check that this is a valid call.
     if(IS_CLIENT || !pl->plr->inGame ||
@@ -985,10 +939,14 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
         !players[destPlrNum].plr->inGame))
         return;
 
+    writer = D_NetWrite();
+
     // Include the player number if necessary.
     if(pType == GPT_PLAYER_STATE2)
-        *ptr++ = srcPlrNum;
-    WRITE_LONG(ptr, flags);
+    {
+        Writer_WriteByte(writer, srcPlrNum);
+    }
+    Writer_WriteUInt32(writer, flags);
 
     if(flags & PSF2_OWNED_WEAPONS)
     {
@@ -996,68 +954,72 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags,
         for(fl = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
             if(pl->weapons[i].owned)
                 fl |= 1 << i;
-        WRITE_SHORT(ptr, fl);
+        Writer_WriteUInt16(writer, fl);
     }
 
     if(flags & PSF2_STATE)
     {
-        *ptr++ = pl->playerState |
+        Writer_WriteByte(writer, pl->playerState |
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
-            (pl->armorType << 4);
+            (pl->armorType << 4));
 #else
-            0;
+            0);
 #endif
-        *ptr++ = pl->cheats;
+        Writer_WriteByte(writer, pl->cheats);
     }
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType, buffer,
-                   ptr - buffer);
+    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+                   Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
-                           boolean reliable)
+void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean reliable)
 {
     int         pType = (srcPlrNum == destPlrNum ? GPT_CONSOLEPLAYER_STATE : GPT_PLAYER_STATE);
     player_t   *pl = &players[srcPlrNum];
-    byte        buffer[UPD_BUFFER_LEN], *ptr = buffer, fl;
+    byte        fl;
     int         i, k;
+    Writer*     writer;
 
     if(IS_CLIENT || !pl->plr->inGame ||
-       (destPlrNum >= 0 && destPlrNum < MAXPLAYERS &&
-        !players[destPlrNum].plr->inGame))
+       (destPlrNum >= 0 && destPlrNum < MAXPLAYERS && !players[destPlrNum].plr->inGame))
         return;
 
 #ifdef _DEBUG
     Con_Message("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x\n", srcPlrNum, destPlrNum, flags);
 #endif
 
+    writer = D_NetWrite();
+
     // Include the player number if necessary.
     if(pType == GPT_PLAYER_STATE)
-        *ptr++ = srcPlrNum;
+    {
+        Writer_WriteByte(writer, srcPlrNum);
+    }
 
     // The first bytes contain the flags.
-    WRITE_SHORT(ptr, flags);
+    Writer_WriteUInt16(writer, flags);
     if(flags & PSF_STATE)
     {
-        *ptr++ = pl->playerState |
+        Writer_WriteByte(writer, pl->playerState |
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen doesn't have armortype.
-            (pl->armorType << 4);
+            (pl->armorType << 4));
 #else
-            0;
+            0);
 #endif
-
     }
+
     if(flags & PSF_HEALTH)
-        *ptr++ = pl->health;
+        Writer_WriteByte(writer, pl->health);
+
     if(flags & PSF_ARMOR_POINTS)
     {
 #if __JHEXEN__
         // Hexen has many types of armor points, send them all.
         for(i = 0; i < NUMARMOR; ++i)
-            *ptr++ = pl->armorPoints[i];
+            Writer_WriteByte(writer, pl->armorPoints[i]);
 #else
-        *ptr++ = pl->armorPoints;
+        Writer_WriteByte(writer, pl->armorPoints);
 #endif
     }
 
@@ -1069,7 +1031,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
             count += (P_InventoryCount(srcPlrNum, IIT_FIRST + i)? 1 : 0);
 
-        *ptr++ = count;
+        Writer_WriteByte(writer, count);
         if(count)
         {
             for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
@@ -1079,7 +1041,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 
                 if(num)
                 {
-                    WRITE_SHORT(ptr, (type & 0xff) | ((num & 0xff) << 8));
+                    Writer_WriteUInt16(writer, (type & 0xff) | ((num & 0xff) << 8));
                 }
             }
         }
@@ -1088,29 +1050,13 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 
     if(flags & PSF_POWERS)
     {
-        // First see which powers should be sent.
-#if __JHEXEN__ || __JSTRIFE__
-        for(i = 1, *ptr = 0; i < NUM_POWER_TYPES; ++i)
-            if(pl->powers[i])
-                *ptr |= 1 << (i - 1);
-#else
-        for(i = 0, *ptr = 0; i < NUM_POWER_TYPES; ++i)
-        {
-#  if __JDOOM__ || __JDOOM64__
-            if(i == PT_IRONFEET || i == PT_STRENGTH)
-                continue;
-#  endif
-            if(pl->powers[i])
-                *ptr |= 1 << i;
-        }
-#endif
-        ptr++;
+        byte powers = 0;
 
-        // Send the non-zero powers.
+        // First see which powers should be sent.
 #if __JHEXEN__ || __JSTRIFE__
         for(i = 1; i < NUM_POWER_TYPES; ++i)
             if(pl->powers[i])
-                *ptr++ = (pl->powers[i] + 34) / 35;
+                powers |= 1 << (i - 1);
 #else
         for(i = 0; i < NUM_POWER_TYPES; ++i)
         {
@@ -1119,36 +1065,55 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
                 continue;
 #  endif
             if(pl->powers[i])
-                *ptr++ = (pl->powers[i] + 34) / 35; // Send as seconds.
+                powers |= 1 << i;
+        }
+#endif
+        Writer_WriteByte(writer, powers);
+
+        // Send the non-zero powers.
+#if __JHEXEN__ || __JSTRIFE__
+        for(i = 1; i < NUM_POWER_TYPES; ++i)
+            if(pl->powers[i])
+                Writer_WriteByte(writer, (pl->powers[i] + 34) / 35);
+#else
+        for(i = 0; i < NUM_POWER_TYPES; ++i)
+        {
+#  if __JDOOM__ || __JDOOM64__
+            if(i == PT_IRONFEET || i == PT_STRENGTH)
+                continue;
+#  endif
+            if(pl->powers[i])
+                Writer_WriteByte(writer, (pl->powers[i] + 34) / 35); // Send as seconds.
         }
 #endif
     }
 
     if(flags & PSF_KEYS)
     {
-        *ptr = 0;
+        byte keys = 0;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             if(pl->keys[i])
-                *ptr |= 1 << i;
+                keys |= 1 << i;
 #endif
 
-        ptr++;
+        Writer_WriteByte(writer, keys);
     }
 
     if(flags & PSF_FRAGS)
     {
-        byte   *count = ptr++;
+        byte count = 0;
+
+        // How many are there?
+        for(i = 0; i < MAXPLAYERS; ++i) if(pl->frags[i] > 0) count++;
+        Writer_WriteByte(writer, count);
 
         // We'll send all non-zero frags. The topmost four bits of
         // the word define the player number.
-        for(i = 0, *count = 0; i < MAXPLAYERS; ++i)
-            if(pl->frags[i])
-            {
-                WRITE_SHORT(ptr, (i << 12) | pl->frags[i]);
-                (*count)++;
-            }
+        for(i = 0; i < MAXPLAYERS; ++i)
+            if(pl->frags[i] > 0)
+                Writer_WriteUInt16(writer, (i << 12) | pl->frags[i]);
     }
 
     if(flags & PSF_OWNED_WEAPONS)
@@ -1156,32 +1121,28 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         for(k = 0, i = 0; i < NUM_WEAPON_TYPES; ++i)
             if(pl->weapons[i].owned)
                 k |= 1 << i;
-        *ptr++ = k;
+        Writer_WriteByte(writer, k);
     }
 
     if(flags & PSF_AMMO)
     {
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
-#if __JHEXEN__ || __JSTRIFE__
-            *ptr++ = pl->ammo[i].owned;
-#else
-            WRITE_SHORT(ptr, pl->ammo[i].owned);
-#endif
+            Writer_WriteInt16(writer, pl->ammo[i].owned);
     }
 
     if(flags & PSF_MAX_AMMO)
     {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ // Hexen has no use for max ammo.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
-            WRITE_SHORT(ptr, pl->ammo[i].max);
+            Writer_WriteInt16(writer, pl->ammo[i].max);
 #endif
     }
 
     if(flags & PSF_COUNTERS)
     {
-        WRITE_SHORT(ptr, pl->killCount);
-        *ptr++ = pl->itemCount;
-        *ptr++ = pl->secretCount;
+        Writer_WriteInt16(writer, pl->killCount);
+        Writer_WriteByte(writer, pl->itemCount);
+        Writer_WriteByte(writer, pl->secretCount);
     }
 
     if((flags & PSF_PENDING_WEAPON) || (flags & PSF_READY_WEAPON))
@@ -1192,13 +1153,13 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
             fl |= pl->pendingWeapon & 0xf;
         if(flags & PSF_READY_WEAPON)
             fl |= (pl->readyWeapon & 0xf) << 4;
-        *ptr++ = fl;
+        Writer_WriteByte(writer, fl);
     }
 
     if(flags & PSF_VIEW_HEIGHT)
     {
         // @todo Do clients really need to know this?
-        *ptr++ = (byte) pl->viewHeight;
+        Writer_WriteByte(writer, (byte) pl->viewHeight);
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
@@ -1208,7 +1169,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
         Con_Message("NetSv_SendPlayerState: Player %i, sending morph tics as %i seconds.\n", srcPlrNum, (pl->morphTics + 34) / 35);
 #endif
         // Send as seconds.
-        *ptr++ = (pl->morphTics + 34) / 35;
+        Writer_WriteByte(writer, (pl->morphTics + 34) / 35);
     }
 #endif
 
@@ -1216,42 +1177,45 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
     if(flags & PSF_LOCAL_QUAKE)
     {
         // Send the "quaking" state.
-        *ptr++ = localQuakeHappening[srcPlrNum];
+        Writer_WriteByte(writer, localQuakeHappening[srcPlrNum]);
     }
 #endif
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType, buffer, ptr - buffer);
+    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+                   Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_SendPlayerInfo(int whose, int to_whom)
 {
-    byte        buffer[10], *ptr = buffer;
+    Writer* writer;
 
     if(IS_CLIENT)
         return;
 
-    *ptr++ = whose;
-    *ptr++ = cfg.playerColor[whose];
+    writer = D_NetWrite();
+    Writer_WriteByte(writer, whose);
+    Writer_WriteByte(writer, cfg.playerColor[whose]);
 /*#ifdef _DEBUG
     Con_Message("NetSv_SendPlayerInfo: To %i, player %i's color is %i.\n", to_whom, whose, cfg.playerColor[whose]);
 #endif*/
 #if __JHERETIC__ || __JHEXEN__
-    *ptr++ = cfg.playerClass[whose];
+    Writer_WriteByte(writer, cfg.playerClass[whose]);
 #endif
-    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO, buffer, ptr - buffer);
+    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO,
+                   Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_ChangePlayerInfo(int from, byte* data)
+void NetSv_ChangePlayerInfo(int from, Reader* msg)
 {
     int                 col;
     player_t*           pl = &players[from];
 
     // Color is first.
-    col = *data++;
+    col = Reader_ReadByte(msg);
     cfg.playerColor[from] = PLR_COLOR(from, col);
 #if __JHERETIC__ || __JHEXEN__
-    cfg.playerClass[from] = *data++;
+    cfg.playerClass[from] = Reader_ReadByte(msg);
     Con_Printf("NetSv_ChangePlayerInfo: pl%i, col=%i, class=%i\n", from,
                cfg.playerColor[from], cfg.playerClass[from]);
 #else
@@ -1325,7 +1289,7 @@ int NetSv_GetFrags(int pl)
 void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 {
 #if __JDOOM__ || __JDOOM64__
-    char        buf[160], *in, tmp[2];
+    char buf[500], *in, tmp[2];
 
     if(!cfg.killMessages || !deathmatch)
         return;
@@ -1369,10 +1333,14 @@ void NetSv_KillMessage(player_t *killer, player_t *fragged, boolean stomping)
 
 void NetSv_SendPlayerClass(int plrNum, char cls)
 {
+    Writer* writer;
+
 #ifdef _DEBUG
     Con_Message("NetSv_SendPlayerClass: Player %i has class %i.\n", plrNum, cls);
 #endif
-    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, &cls, 1);
+    writer = D_NetWrite();
+    Writer_WriteByte(writer, cls);
+    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1380,51 +1348,133 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
  */
 void NetSv_SendJumpPower(int target, float power)
 {
-    char        msg[50];
+    Writer* writer;
 
     if(!IS_SERVER)
         return;
 
-    power = FLOAT(power);
-    memcpy((void *) msg, &power, 4);
-    Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, msg, 4);
+    writer = D_NetWrite();
+    Writer_WriteFloat(writer, power);
+    Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
+}
+
+void NetSv_ExecuteCheat(int player, const char* command)
+{
+    // Killing self is always allowed.
+    if(!strnicmp(command, "suicide", 7))
+    {
+        DD_Executef(false, "suicide %i", player);
+    }
+    else if(netSvAllowCheats) // If cheating is not allowed, we ain't doing nuthin'.
+    {
+        if(!strnicmp(command, "god", 3) ||
+           !strnicmp(command, "noclip", 6) ||
+           !strnicmp(command, "give", 4))
+        {
+            DD_Executef(false, "%s %i", command, player);
+        }
+    }
 }
 
 /**
  * Process the requested cheat command, if possible.
  */
-void NetSv_DoCheat(int player, const char* data)
+void NetSv_DoCheat(int player, Reader* msg)
 {
-    char command[40];
+    size_t len = Reader_ReadUInt16(msg);
+    char* command = Z_Calloc(len + 1, PU_GAMESTATIC, 0);
 
-    memset(command, 0, sizeof(command));
-    strncpy(command, data, sizeof(command) - 1);
+    Reader_Read(msg, command, len);
+    NetSv_ExecuteCheat(player, command);
+    Z_Free(command);
+}
 
-    // Killing self is always allowed.
-    if(!strnicmp(command, "suicide", 7))
+/**
+ * Calls @a callback on @a thing while it is temporarily placed at the
+ * specified position and angle. Afterwards the thing's old position is restored.
+ */
+void NetSv_TemporaryPlacedCallback(mobj_t* thing, void* param, float temporaryPos[3],
+                                   angle_t angle, void (*callback)(mobj_t*,void*))
+{
+    float oldPos[3] = { thing->pos[VX], thing->pos[VY], thing->pos[VZ] };
+    float oldFloorZ = thing->floorZ;
+    float oldCeilingZ = thing->ceilingZ;
+    angle_t oldAngle = thing->angle;
+
+    // We will temporarily move the object to the temp coords.
+    if(P_CheckPosition3fv(thing, temporaryPos))
     {
-        DD_Executef(false, "suicide %i", player);
-        return;
+        P_MobjUnlink(thing);
+        thing->pos[VX] = temporaryPos[VX];
+        thing->pos[VY] = temporaryPos[VY];
+        thing->pos[VZ] = temporaryPos[VZ];
+        P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+        thing->floorZ = tmFloorZ;
+        thing->ceilingZ = tmCeilingZ;
     }
+    thing->angle = angle;
 
-    // If cheating is not allowed, we ain't doing nuthin'.
-    if(!netSvAllowCheats)
+    callback(thing, param);
+
+    // Restore the old position.
+    P_MobjUnlink(thing);
+    thing->pos[VX] = oldPos[VX];
+    thing->pos[VY] = oldPos[VY];
+    thing->pos[VZ] = oldPos[VZ];
+    P_MobjLink(thing, DDLINK_SECTOR | DDLINK_BLOCKMAP);
+    thing->floorZ = oldFloorZ;
+    thing->ceilingZ = oldCeilingZ;
+    thing->angle = oldAngle;
+}
+
+static void NetSv_UseActionCallback(mobj_t* mo, void* param)
+{
+    P_UseLines((player_t*)param);
+}
+
+static void NetSv_FireWeaponCallback(mobj_t* mo, void* param)
+{
+    P_FireWeapon((player_t*)param);
+}
+
+static void NetSv_HitFloorCallback(mobj_t* mo, void* param)
+{
+#ifdef _DEBUG
+    Con_Message("NetSv_HitFloorCallback: mo %i\n", mo->thinker.id);
+#endif
+    P_HitFloor(mo);
+}
+
+void NetSv_DoFloorHit(int player, Reader* msg)
+{
+    player_t* plr = &players[player];
+    mobj_t* mo;
+    float pos[3];
+    float mom[3];
+
+    if(player < 0 || player >= MAXPLAYERS)
         return;
 
-    if(!strnicmp(command, "god", 3) ||
-       !strnicmp(command, "noclip", 6) ||
-       !strnicmp(command, "give", 4))
-    {
-        DD_Executef(false, "%s %i", command, player);
-    }
+    mo = plr->plr->mo;
+    if(!mo) return;
+
+    pos[VX] = Reader_ReadFloat(msg);
+    pos[VY] = Reader_ReadFloat(msg);
+    pos[VZ] = Reader_ReadFloat(msg);
+
+    // The momentum is included, although we don't really need it.
+    mom[MX] = Reader_ReadFloat(msg);
+    mom[MY] = Reader_ReadFloat(msg);
+    mom[MZ] = Reader_ReadFloat(msg);
+
+    NetSv_TemporaryPlacedCallback(mo, 0, pos, mo->angle, NetSv_HitFloorCallback);
 }
 
 /**
  * Process the requested player action, if possible.
  */
-void NetSv_DoAction(int player, const char *data)
+void NetSv_DoAction(int player, Reader* msg)
 {
-    const int *ptr = (const int*) data;
     int         type = 0;
     float       pos[3];
     angle_t     angle = 0;
@@ -1432,13 +1482,13 @@ void NetSv_DoAction(int player, const char *data)
     int         actionParam = 0;
     player_t   *pl = &players[player];
 
-    type = LONG(*ptr++);
-    pos[VX] = FIX2FLT(LONG(*ptr++));
-    pos[VY] = FIX2FLT(LONG(*ptr++));
-    pos[VZ] = FIX2FLT(LONG(*ptr++));
-    angle = LONG(*ptr++);
-    lookDir = FIX2FLT( LONG(*ptr++) );
-    actionParam = LONG(*ptr++);
+    type = Reader_ReadInt32(msg);
+    pos[VX] = Reader_ReadFloat(msg);
+    pos[VY] = Reader_ReadFloat(msg);
+    pos[VZ] = Reader_ReadFloat(msg);
+    angle = Reader_ReadUInt32(msg);
+    lookDir = Reader_ReadFloat(msg);
+    actionParam = Reader_ReadInt32(msg);
 
 #ifdef _DEBUG
     Con_Message("NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
@@ -1475,6 +1525,12 @@ void NetSv_DoAction(int player, const char *data)
     case GPA_FIRE:
         if(pl->plr->mo)
         {
+            // Update lookdir.
+            pl->plr->lookDir = lookDir;
+
+            NetSv_TemporaryPlacedCallback(pl->plr->mo, pl, pos, angle,
+                                          type == GPA_USE? NetSv_UseActionCallback : NetSv_FireWeaponCallback);
+            /*
             mobj_t* mo = pl->plr->mo;
             float oldPos[3] = { mo->pos[VX], mo->pos[VY], mo->pos[VZ] };
             float oldFloorZ = mo->floorZ;
@@ -1492,7 +1548,6 @@ void NetSv_DoAction(int player, const char *data)
                 mo->ceilingZ = tmCeilingZ;
             }
             mo->angle = angle;
-            lookDir = lookDir;
 
             if(type == GPA_USE)
                 P_UseLines(pl);
@@ -1506,7 +1561,7 @@ void NetSv_DoAction(int player, const char *data)
             mo->pos[VZ] = oldPos[VZ];
             P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
             mo->floorZ = oldFloorZ;
-            mo->ceilingZ = oldCeilingZ;
+            mo->ceilingZ = oldCeilingZ;*/
         }
         break;
 
@@ -1522,18 +1577,12 @@ void NetSv_DoAction(int player, const char *data)
     }
 }
 
-void NetSv_DoDamage(int player, const char *data)
+void NetSv_DoDamage(int player, Reader* msg)
 {
-    const int *ptr = (const int*) data;
-    int damage = 0;
-    int target = 0;
-    int inflictor = 0;
-    int source = 0;
-
-    damage = LONG(*ptr++);
-    target = LONG(*ptr++);
-    inflictor = LONG(*ptr++);
-    source = LONG(*ptr++);
+    int damage = Reader_ReadInt32(msg);
+    thid_t target = Reader_ReadUInt16(msg);
+    thid_t inflictor = Reader_ReadUInt16(msg);
+    thid_t source = Reader_ReadUInt16(msg);
 
 #ifdef _DEBUG
     Con_Message("NetSv_DoDamage: Client %i requests damage %i on %i via %i by %i.\n",
@@ -1546,20 +1595,27 @@ void NetSv_DoDamage(int player, const char *data)
 
 void NetSv_SaveGame(unsigned int game_id)
 {
+    Writer* writer;
+
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
     // This will make the clients save their games.
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_SAVE, &game_id, 4);
+    writer = D_NetWrite();
+    Writer_WriteUInt32(writer, game_id);
+    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_LoadGame(unsigned int game_id)
 {
+    Writer* writer;
+
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
-    // The clients must tell their old console numbers.
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_LOAD, &game_id, 4);
+    writer = D_NetWrite();
+    Writer_WriteUInt32(writer, game_id);
+    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1567,16 +1623,20 @@ void NetSv_LoadGame(unsigned int game_id)
  */
 void NetSv_Paused(boolean isPaused)
 {
-    char        setPause = (isPaused != false);
+    Writer* writer;
 
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE, &setPause, 1);
+    writer = D_NetWrite();
+    Writer_WriteByte(writer, (isPaused != false));
+    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_SendMessageEx(int plrNum, const char* msg, boolean yellow)
 {
+    Writer* writer;
+
     if(IS_CLIENT || !netSvAllowSendMsg)
         return;
 
@@ -1594,9 +1654,12 @@ void NetSv_SendMessageEx(int plrNum, const char* msg, boolean yellow)
         D_NetMessageNoSound(CONSOLEPLAYER, msg);
     }
 
+    writer = D_NetWrite();
+    Writer_WriteUInt16(writer, strlen(msg));
+    Writer_Write(writer, msg, strlen(msg));
     Net_SendPacket(plrNum | DDSP_ORDERED,
-                   yellow ? GPT_YELLOW_MESSAGE : GPT_MESSAGE, msg,
-                   strlen(msg) + 1);
+                   yellow ? GPT_YELLOW_MESSAGE : GPT_MESSAGE,
+                   Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_SendMessage(int plrNum, const char* msg)

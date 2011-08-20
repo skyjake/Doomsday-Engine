@@ -32,4 +32,6 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+void P_ClearBodyQueue(void);
+
 #endif

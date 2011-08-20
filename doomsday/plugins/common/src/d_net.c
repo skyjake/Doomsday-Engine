@@ -38,6 +38,7 @@
 #include "p_player.h"
 #include "hu_menu.h"
 #include "p_start.h"
+#include "doomsday.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -95,6 +96,9 @@ cvartemplate_t netCVars[] = {
 
 // PRIVATE DATA -------------------------------------------------------------
 
+static Writer* netWriter;
+static Reader* netReader;
+
 // CODE ---------------------------------------------------------------------
 
 /**
@@ -107,6 +111,36 @@ void D_NetConsoleRegistration(void)
         Con_AddCommand(netCCmds + i);
     for(i = 0; netCVars[i].name; ++i)
         Con_AddVariable(netCVars + i);
+}
+
+Writer* D_NetWrite(void)
+{
+    if(netWriter)
+    {
+        Writer_Delete(netWriter);
+    }
+    netWriter = Writer_NewWithDynamicBuffer(0 /*unlimited*/);
+    return netWriter;
+}
+
+Reader* D_NetRead(const byte* buffer, size_t len)
+{
+    // Get rid of the old reader.
+    if(netReader)
+    {
+        Reader_Delete(netReader);
+    }
+    netReader = Reader_NewWithBuffer(buffer, len);
+    return netReader;
+}
+
+void D_NetClearBuffer(void)
+{
+    if(netReader) Reader_Delete(netReader);
+    if(netWriter) Writer_Delete(netWriter);
+
+    netReader = 0;
+    netWriter = 0;
 }
 
 /**
@@ -184,6 +218,8 @@ int D_NetServerClose(int before)
         randomClassParm = false;
 #endif
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
+
+        D_NetClearBuffer();
     }
     return true;
 }
@@ -214,6 +250,8 @@ int D_NetDisconnect(int before)
 #if __JHEXEN__
     randomClassParm = false;
 #endif
+
+    D_NetClearBuffer();
 
     // Start demo.
     G_StartTitle();
@@ -380,7 +418,7 @@ int D_NetWorldEvent(int type, int parm, void* data)
 
 void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 {
-    byte           *bData = data;
+    Reader* reader = D_NetRead(data, length);
 
     //
     // Server events.
@@ -391,19 +429,23 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         {
         case GPT_PLAYER_INFO:
             // A player has changed color or other settings.
-            NetSv_ChangePlayerInfo(fromplayer, data);
+            NetSv_ChangePlayerInfo(fromplayer, reader);
             break;
 
         case GPT_CHEAT_REQUEST:
-            NetSv_DoCheat(fromplayer, data);
+            NetSv_DoCheat(fromplayer, reader);
+            break;
+
+        case GPT_FLOOR_HIT_REQUEST:
+            NetSv_DoFloorHit(fromplayer, reader);
             break;
 
         case GPT_ACTION_REQUEST:
-            NetSv_DoAction(fromplayer, data);
+            NetSv_DoAction(fromplayer, reader);
             break;
 
-        case GPT_DAMAGE:
-            NetSv_DoDamage(fromplayer, data);
+        case GPT_DAMAGE_REQUEST:
+            NetSv_DoDamage(fromplayer, reader);
             break;
         }
         return;
@@ -417,7 +459,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 #ifdef _DEBUG
         Con_Message("Received GTP_GAME_STATE\n");
 #endif
-        NetCl_UpdateGameState(data);
+        NetCl_UpdateGameState(reader);
 
         // Tell the engine we're ready to proceed. It'll start handling
         // the world updates after this variable is set.
@@ -425,57 +467,82 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
 
     case GPT_PLAYER_SPAWN_POSITION:
-        NetCl_PlayerSpawnPosition(data);
+        NetCl_PlayerSpawnPosition(reader);
+        break;
+
+    case GPT_MOBJ_IMPULSE:
+        NetCl_MobjImpulse(reader);
         break;
 
     case GPT_MESSAGE:
+#if __JHEXEN__ || __JSTRIFE__
+    case GPT_YELLOW_MESSAGE:
+#endif
+    {
+        size_t len = 0;
+        char *msg = 0;
 #ifdef _DEBUG
         Con_Message("D_HandlePacket: GPT_MESSAGE\n");
 #endif
-        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
-        P_SetMessage(&players[CONSOLEPLAYER], msgBuff, false);
-        break;
+        len = Reader_ReadUInt16(reader);
+        msg = Z_Malloc(len + 1, PU_GAMESTATIC, 0);
+        Reader_Read(reader, msg, len);
+        msg[len] = 0;
 
 #if __JHEXEN__ || __JSTRIFE__
-    case GPT_YELLOW_MESSAGE:
-        dd_snprintf(msgBuff,  NETBUFFER_MAXMESSAGE, "%s", (char*) data);
-        P_SetYellowMessage(&players[CONSOLEPLAYER], msgBuff, false);
-        break;
+        if(type == GPT_YELLOW_MESSAGE)
+        {
+            P_SetYellowMessage(&players[CONSOLEPLAYER], msg, false);
+        }
+        else
 #endif
+        {
+            P_SetMessage(&players[CONSOLEPLAYER], msg, false);
+        }
+        Z_Free(msg);
+        break;
+    }
 
     case GPT_CONSOLEPLAYER_STATE:
-        NetCl_UpdatePlayerState(data, CONSOLEPLAYER);
+        NetCl_UpdatePlayerState(reader, CONSOLEPLAYER);
         break;
 
     case GPT_CONSOLEPLAYER_STATE2:
-        NetCl_UpdatePlayerState2(data, CONSOLEPLAYER);
+        NetCl_UpdatePlayerState2(reader, CONSOLEPLAYER);
         break;
 
     case GPT_PLAYER_STATE:
-        NetCl_UpdatePlayerState(bData + 1, bData[0]);
+        NetCl_UpdatePlayerState(reader, -1);
         break;
 
     case GPT_PLAYER_STATE2:
-        NetCl_UpdatePlayerState2(bData + 1, bData[0]);
+        NetCl_UpdatePlayerState2(reader, -1);
         break;
 
     case GPT_PSPRITE_STATE:
-        NetCl_UpdatePSpriteState(data);
+        NetCl_UpdatePSpriteState(reader);
         break;
 
     case GPT_INTERMISSION:
-        NetCl_Intermission(data);
+        NetCl_Intermission(reader);
         break;
 
+/*
+    case GPT_FINALE:
+    case GPT_FINALE2:
+        NetCl_Finale(type, reader);
+        break;
+*/
+
     case GPT_PLAYER_INFO:
-        NetCl_UpdatePlayerInfo(data);
+        NetCl_UpdatePlayerInfo(reader);
         break;
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     case GPT_CLASS:
     {
         player_t* plr = &players[CONSOLEPLAYER];
-        int newClass = bData[0];
+        int newClass = Reader_ReadByte(reader);
         int oldClass = plr->class_;
         plr->class_ = newClass;
 #ifdef _DEBUG
@@ -506,24 +573,23 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 #endif
 
     case GPT_SAVE:
-        NetCl_SaveGame(data);
+        NetCl_SaveGame(reader);
         break;
 
     case GPT_LOAD:
-        NetCl_LoadGame(data);
+        NetCl_LoadGame(reader);
         break;
 
     case GPT_PAUSE:
-        NetCl_Paused(bData[0]);
+        NetCl_Paused(reader);
         break;
 
     case GPT_JUMP_POWER:
-        NetCl_UpdateJumpPower(data);
+        NetCl_UpdateJumpPower(reader);
         break;
 
     default:
-        Con_Message("H_HandlePacket: Received unknown packet, " "type=%i.\n",
-                    type);
+        Con_Message("H_HandlePacket: Received unknown packet, type=%i.\n", type);
     }
 }
 

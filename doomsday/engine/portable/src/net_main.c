@@ -191,7 +191,6 @@ void Net_Init(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         memset(clients + i, 0, sizeof(clients[i]));
-        clients[i].runTime = -1;
         clients[i].viewConsole = -1;
     }}
 
@@ -236,12 +235,29 @@ ident_t Net_GetPlayerID(int player)
  */
 void Net_SendBuffer(int toPlayer, int spFlags)
 {
+    assert(!Msg_BeingWritten()); // Must finish writing before calling this.
+
+    /*
+#ifdef _DEBUG
+    {
+        char* buf = M_Calloc(netBuffer.length * 3 + 1);
+        int i;
+        for(i = 0; i < netBuffer.length; ++i)
+        {
+            char tmp[10];
+            sprintf(tmp, "%02x ", netBuffer.msg.data[i]);
+            strcat(buf, tmp);
+        }
+        Con_Message("Net_SendBuffer: [%i] %s\n", netBuffer.length, buf);
+        M_Free(buf);
+    }
+#endif
+    */
+
     // Don't send anything during demo playback.
     if(playback)
         return;
 
-    // Update the length of the message.
-    netBuffer.length = netBuffer.cursor - netBuffer.msg.data;
     netBuffer.player = toPlayer;
 
     // A rebound packet?
@@ -271,7 +287,7 @@ boolean Net_GetPacket(void)
     {
         netBuffer = reboundStore;
         netBuffer.player = consolePlayer;
-        netBuffer.cursor = netBuffer.msg.data;
+        //netBuffer.cursor = netBuffer.msg.data;
         reboundPacket = false;
         return true;
     }
@@ -294,7 +310,7 @@ boolean Net_GetPacket(void)
         Demo_WritePacket(consolePlayer);
 
     // Reset the cursor for Msg_* routines.
-    netBuffer.cursor = netBuffer.msg.data;
+    //netBuffer.cursor = netBuffer.msg.data;
 
     return true;
 }
@@ -310,22 +326,43 @@ Smoother* Net_PlayerSmoother(int player)
     return clients[player].smoother;
 }
 
+void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
+{
+    size_t nameLen;
+
+    assert(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
+    nameLen = strlen(clients[srcPlrNum].name);
+
+#ifdef _DEBUG
+    Con_Message("Net_SendPlayerInfo: src=%i dest=%i name=%s\n",
+                srcPlrNum, destPlrNum, clients[srcPlrNum].name);
+#endif
+
+    Msg_Begin(PKT_PLAYER_INFO);
+    Writer_WriteByte(msgWriter, srcPlrNum);
+    Writer_WriteUInt16(msgWriter, nameLen);
+    Writer_Write(msgWriter, clients[srcPlrNum].name, nameLen);
+    Msg_End();
+    Net_SendBuffer(destPlrNum, 0);
+}
+
 /**
  * This is the public interface of the message sender.
  */
 void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 {
-    int                 flags = 0;
+    unsigned int flags = 0;
 
-    // What kind of delivery to use?
-    if(to_player & DDSP_CONFIRM)
-        flags |= SPF_CONFIRM;
-    if(to_player & DDSP_ORDERED)
-        flags |= SPF_ORDERED;
-
+#ifndef DENG_WRITER_TYPECHECK
     Msg_Begin(type);
-    if(data)
-        Msg_Write(data, length);
+    if(data) Writer_Write(msgWriter, data, length);
+    Msg_End();
+#else
+    assert(length <= NETBUFFER_MAXDATA);
+    netBuffer.msg.type = type;
+    netBuffer.length = length;
+    if(data) memcpy(netBuffer.msg.data, data, length);
+#endif
 
     if(isClient)
     {   // As a client we can only send messages to the server.
@@ -342,12 +379,9 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 /**
  * Prints the message in the console.
  */
-void Net_ShowChatMessage(void)
+void Net_ShowChatMessage(int plrNum, const char* message)
 {
-    // The current packet in the netBuffer is a chat message, let's unwrap
-    // and show it.
-    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[netBuffer.msg.data[0]].name,
-                netBuffer.msg.data + 3);
+    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[plrNum].name, message);
 }
 
 /**
@@ -382,56 +416,6 @@ boolean Net_IsLocalPlayer(int plrNum)
  */
 void Net_SendCommands(void)
 {
-#if 0
-    uint                i;
-    byte               *msg;
-    ticcmd_t           *cmd;
-
-    if(isDedicated)
-        return;
-
-    // Send the commands of all local players.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(!Net_IsLocalPlayer(i))
-            continue;
-
-        if(!clients[i].aggregateCmd)
-            continue;
-
-        /**
-         * Clients send their ticcmds to the server at regular intervals,
-         * but significantly less often than new ticcmds are built.
-         * Therefore they need to send a combination of all the cmds built
-         * during the wait period.
-         */
-
-        cmd = clients[i].aggregateCmd;
-
-        /**
-         * The game will pack the commands into a buffer. The returned
-         * pointer points to a buffer that contains its size and the
-         * packed commands.
-         */
-
-        msg = gx.NetWriteCommands(1, cmd);
-
-        Msg_Begin(PCL_COMMANDS);
-        Msg_Write(msg + 2, *(ushort *) msg);
-
-        /**
-         * Send the packet to the server, i.e. player zero.
-         * Player commands are sent over TCP so their integrity and order
-         * are guaranteed.
-         */
-
-        Net_SendBuffer(0, (isClient ? 0 : SPF_REBOUND) | SPF_ORDERED);
-
-        // Clients will begin composing a new aggregate now that this one
-        // has been sent.
-        memset(cmd, 0, TICCMD_SIZE);
-    }
-#endif
 }
 
 static void Net_DoUpdate(void)
@@ -460,46 +444,6 @@ static void Net_DoUpdate(void)
 
     lastTime = nowTime;
 
-#if 0
-    // Build new ticcmds for console player.
-    for(i = 0; i < newtics; ++i)
-    {
-        DD_ProcessEvents();
-
-        /*Con_Printf("mktic:%i gt:%i newtics:%i >> %i\n",
-           maketic, gametic, newtics, maketic-gametic); */
-
-        if(playback)
-        {
-            numlocal = 0;
-            if(availableTics < LOCALTICS)
-                availableTics++;
-        }
-        else if(!isDedicated && !ui_active)
-        {
-            // Place the new ticcmd in the local ticcmds buffer.
-            ticcmd_t *cmd = Net_LocalCmd();
-
-            if(cmd)
-            {
-                gx.BuildTicCmd(cmd);
-
-                // Set the time stamp. Only the lowest byte is stored.
-                //cmd->time = gametic + availableTics;
-
-                // Availabletics counts the tics that have cmds.
-                availableTics++;
-                if(isClient)
-                {
-                    // When not playing a demo, this is the last command.
-                    // It is used in local movement prediction.
-                    memcpy(clients[consolePlayer].lastCmd, cmd, sizeof(*cmd));
-                }
-            }
-        }
-    }
-#endif
-
     // This is as far as dedicated servers go.
     if(isDedicated)
         return;
@@ -520,28 +464,29 @@ static void Net_DoUpdate(void)
         mobj_t *mo = ddPlayers[consolePlayer].shared.mo;
 
         coordTimer = 1; //netCoordTime; // 35/2
+
         Msg_Begin(PKT_COORDS);
-        Msg_WriteFloat(gameTime);
-        Msg_WriteFloat(mo->pos[VX]);
-        Msg_WriteFloat(mo->pos[VY]);
+        Writer_WriteFloat(msgWriter, gameTime);
+        Writer_WriteFloat(msgWriter, mo->pos[VX]);
+        Writer_WriteFloat(msgWriter, mo->pos[VY]);
         if(mo->pos[VZ] == mo->floorZ)
         {
             // This'll keep us on the floor even in fast moving sectors.
-            Msg_WriteLong(DDMININT);
+            Writer_WriteInt32(msgWriter, DDMININT);
         }
         else
         {
-            Msg_WriteLong(FLT2FIX(mo->pos[VZ]));
+            Writer_WriteInt32(msgWriter, FLT2FIX(mo->pos[VZ]));
         }
-        // Also include momentum and angle.
-        Msg_WriteShort((short) (mo->mom[VX] * 256));
-        Msg_WriteShort((short) (mo->mom[VY] * 256));
-        Msg_WriteShort((short) (mo->mom[VZ] * 256));
-        Msg_WriteShort(mo->angle >> 16);
+        // Also include angles.
+        Writer_WriteUInt16(msgWriter, mo->angle >> 16);
+        Writer_WriteInt16(msgWriter, P_LookDirToShort(ddPlayers[consolePlayer].shared.lookDir));
         // Control state.
-        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
-        Msg_WriteByte(FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
-        Net_SendBuffer(0, 0);       
+        Writer_WriteChar(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.forwardMove) >> 13);
+        Writer_WriteChar(msgWriter, FLT2FIX(ddPlayers[consolePlayer].shared.sideMove) >> 13);
+        Msg_End();
+
+        Net_SendBuffer(0, 0);
     }
 }
 
@@ -553,11 +498,13 @@ void Net_Update(void)
 {
     Net_DoUpdate();
 
-    // Listen for packets. Call the correct packet handler.
-    N_Listen();
+    // Check for new arrivals and unjoined net commands.
+    N_ListenUnjoinedNodes();
+
+    // Check for received packets.
     if(isClient)
         Cl_GetPackets();
-    else // Single-player or server.
+    else
         Sv_GetPackets();
 }
 
@@ -566,38 +513,6 @@ void Net_Update(void)
  */
 void Net_BuildLocalCommands(timespan_t time)
 {
-#if 0
-    uint        i;
-    ticcmd_t   *cmd;
-
-    if(isDedicated)
-        return;
-
-    // Generate ticcmds for local players.
-    { int i;
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(!Net_IsLocalPlayer(i))
-            continue;
-
-        if(!clients[i].lastCmd)
-            continue;
-
-        // The command will stay 'empty' if no controls are active.
-        { ticcmd_t* cmd = clients[i].lastCmd;
-        memset(cmd, 0, sizeof(*cmd));
-
-        // No actions can be undertaken during demo playback or when in UI mode.
-        if(!(playback || UI_IsActive()))
-        {
-            P_BuildCommand(cmd, i);
-        }
-
-        // Be sure to merge each built command into the aggregate that
-        // will be sent periodically to the server.
-        P_MergeCommand(clients[i].aggregateCmd, cmd);
-    }
-#endif
 }
 
 void Net_AllocClientBuffers(int clientId)
@@ -619,7 +534,7 @@ void Net_DestroyArrays(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        Smoother_Destruct(clients[i].smoother);
+        Smoother_Delete(clients[i].smoother);
     }
 
     memset(clients, 0, sizeof(clients));
@@ -663,13 +578,18 @@ void Net_StopGame(void)
         // This means we should inform all the connected clients that the
         // server is about to close.
         Msg_Begin(PSV_SERVER_CLOSE);
-        Net_SendBuffer(NSP_BROADCAST, SPF_CONFIRM);
+        Msg_End();
+        Net_SendBuffer(NSP_BROADCAST, 0);
 #if 0
         N_FlushOutgoing();
 #endif
     }
     else
     {   // We are a connected client.
+        Msg_Begin(PCL_GOODBYE);
+        Msg_End();
+        Net_SendBuffer(0, 0);
+
         // Must stop recording, we're disconnecting.
         Demo_StopRecording(consolePlayer);
         Cl_CleanUp();
@@ -959,13 +879,13 @@ uint Net_GetAckThreshold(int clientNumber)
     return 0;
 }
 
-void Net_Ticker(void /*timespan_t time*/)
+void Net_Ticker(timespan_t time)
 {
     int         i;
     client_t   *cl;
 
     // Network event ticker.
-    N_NETicker();
+    N_NETicker(time);
 
     if(netDev)
     {
@@ -1056,6 +976,22 @@ void Net_PrintServerInfo(int index, serverinfo_t *info)
 }
 
 /**
+ * Composes a PKT_CHAT network message.
+ */
+void Net_WriteChatMessage(int from, int toMask, const char* message)
+{
+    size_t len = strlen(message);
+    len = MIN_OF(len, 0xffff);
+
+    Msg_Begin(PKT_CHAT);
+    Writer_WriteByte(msgWriter, from);
+    Writer_WriteUInt32(msgWriter, toMask);
+    Writer_WriteUInt16(msgWriter, len);
+    Writer_Write(msgWriter, message, len);
+    Msg_End();
+}
+
+/**
  * All arguments are sent out as a chat message.
  */
 D_CMD(Chat)
@@ -1122,31 +1058,29 @@ D_CMD(Chat)
         Con_Error("CCMD_Chat: Invalid value, mode = %i.", mode);
         break;
     }
-    Msg_Begin(PKT_CHAT);
-    Msg_WriteByte(consolePlayer);
-    Msg_WriteShort(mask);
-    Msg_Write(buffer, strlen(buffer) + 1);
+
+    Net_WriteChatMessage(consolePlayer, mask, buffer);
 
     if(!isClient)
     {
         if(mask == (unsigned short) ~0)
         {
-            Net_SendBuffer(NSP_BROADCAST, SPF_ORDERED);
+            Net_SendBuffer(NSP_BROADCAST, 0);
         }
         else
         {
             for(i = 1; i < DDMAXPLAYERS; ++i)
                 if(ddPlayers[i].shared.inGame && (mask & (1 << i)))
-                    Net_SendBuffer(i, SPF_ORDERED);
+                    Net_SendBuffer(i, 0);
         }
     }
     else
     {
-        Net_SendBuffer(0, SPF_ORDERED);
+        Net_SendBuffer(0, 0);
     }
 
     // Show the message locally.
-    Net_ShowChatMessage();
+    Net_ShowChatMessage(consolePlayer, buffer);
 
     // Inform the game, too.
     gx.NetPlayerEvent(consolePlayer, DDPE_CHAT_MESSAGE, buffer);
@@ -1187,24 +1121,19 @@ D_CMD(Kick)
 }
 
 D_CMD(SetName)
-{
-    playerinfo_packet_t info;
-
+{    
     Con_SetString("net-name", argv[1]);
+
     if(!netGame)
         return true;
 
-    // In netgames, a notification is sent to other players.
-    memset(&info, 0, sizeof(info));
-    info.console = consolePlayer;
-    strncpy(info.name, argv[1], PLAYERNAMELEN - 1);
+    // The server does not have a name.
+    if(!isClient) return false;
 
-    // Serverplayers can update their name right away.
-    if(!isClient)
-        strcpy(clients[consolePlayer].name, info.name);
+    memset(clients[consolePlayer].name, 0, sizeof(clients[consolePlayer].name));
+    strncpy(clients[consolePlayer].name, argv[1], PLAYERNAMELEN - 1);
 
-    Net_SendPacket(DDSP_CONFIRM | (isClient ? consolePlayer : DDSP_ALL_PLAYERS),
-                   PKT_PLAYER_INFO, &info, sizeof(info));
+    Net_SendPlayerInfo(consolePlayer, 0);
     return true;
 }
 

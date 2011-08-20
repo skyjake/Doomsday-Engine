@@ -234,6 +234,7 @@ void N_ReleaseMessage(netmessage_t *msg)
     if(msg->handle)
     {
         N_ReturnBuffer(msg->handle);
+        msg->handle = 0;
     }
     M_Free(msg);
 }
@@ -315,7 +316,7 @@ void N_SendPacket(int flags)
     // This many bytes are actually sent.
     numSentBytes += size;
 
-    // All messages are send over a TCP connection.
+    // All messages are sent over a TCP connection.
     N_SendDataBufferReliably(data, size, dest);
 #if _DEBUG
     VERBOSE2(Con_Message("N_SendPacket: Sending %li bytes reliably to %i.\n", size, dest));
@@ -425,8 +426,19 @@ boolean N_GetPacket(void)
 */
     netBuffer.player = msg->player;
     netBuffer.length = msg->size - netBuffer.headerLength;
-    memcpy(&netBuffer.msg, msg->data,
-           MIN_OF(sizeof(netBuffer.msg), msg->size));
+
+    if(sizeof(netBuffer.msg) >= msg->size)
+    {
+        memcpy(&netBuffer.msg, msg->data, msg->size);
+    }
+    else
+    {
+#ifdef _DEBUG
+        Con_Error("N_GetPacket: Received a packet of size %lu.\n", msg->size);
+#endif
+        N_ReleaseMessage(msg);
+        return false;
+    }
 
     // The message can now be freed.
     N_ReleaseMessage(msg);

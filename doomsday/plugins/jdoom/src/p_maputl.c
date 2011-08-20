@@ -164,7 +164,7 @@ void P_ApplyTorque(mobj_t *mo)
 
     // If any momentum, mark object as 'falling' using engine-internal
     // flags.
-    if(mo->mom[MX] != 0 || mo->mom[MY] != 0)
+    if(!FEQUAL(mo->mom[MX], 0) || !FEQUAL(mo->mom[MY], 0))
         mo->intFlags |= MIF_FALLING;
     else
         // Clear the engine-internal flag indicating falling object.

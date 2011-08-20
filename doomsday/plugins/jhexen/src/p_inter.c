@@ -1765,6 +1765,8 @@ void P_AutoUseHealth(player_t* player, int saveHealth)
     int                 normalCount = P_InventoryCount(plrnum, IIT_HEALTH);
     int                 superCount = P_InventoryCount(plrnum, IIT_SUPERHEALTH);
 
+    if(!player->plr->mo) return;
+
     //// \todo Do this in the inventory code?
     if(gameSkill == SM_BABY && normalCount * 25 >= saveHealth)
     {
@@ -2128,12 +2130,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         an = angle >>ANGLETOFINESHIFT;
         target->mom[MX] += thrust * FIX2FLT(finecosine[an]);
         target->mom[MY] += thrust * FIX2FLT(finesine[an]);
-        if(target->dPlayer)
-        {
-            // Only fix momentum. Otherwise clients will find it difficult
-            // to escape from the damage inflictor.
-            target->dPlayer->flags |= DDPF_FIXMOM;
-        }
+        NetSv_PlayerMobjImpulse(target, thrust * FIX2FLT(finecosine[an]), thrust * FIX2FLT(finesine[an]), 0);
     }
 
     // Player specific.

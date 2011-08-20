@@ -243,6 +243,13 @@ int Def_GetMobjNumForName(const char* name)
     return -1;
 }
 
+const char* Def_GetMobjName(int num)
+{
+    if(num < 0) return "(<0)";
+    if(num >= defs.count.mobjs.num) return "(>mobjtypes)";
+    return defs.mobjs[num].id;
+}
+
 int Def_GetStateNum(const char* id)
 {
     int                 i;
@@ -1424,6 +1431,15 @@ boolean Def_SameStateSequence(state_t* snew, state_t* sold)
             break;
     }
     return false;
+}
+
+const char* Def_GetStateName(state_t* state)
+{
+    int idx = state - states;
+    if(!state) return "(nullptr)";
+    if(idx < 0) return "(<0)";
+    if(idx >= defs.count.states.num) return "(>states)";
+    return defs.states[idx].id;
 }
 
 static int Friendly(int num)

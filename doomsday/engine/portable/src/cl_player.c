@@ -59,9 +59,9 @@ clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int fixSpeed = 15;
-static float fixPos[3];
-static int fixTics;
+//static int fixSpeed = 15;
+//static float fixPos[3];
+//static int fixTics;
 static float pspY;
 
 // Console player demo momentum (used to smooth out abrupt momentum changes).
@@ -74,10 +74,10 @@ static float cpMom[3][LOCALCAM_WRITE_TICS];
  */
 void Cl_InitPlayers(void)
 {
-    fixTics = 0;
+    //fixTics = 0;
     pspY = 0;
     memset(&clPlayerStates, 0, sizeof(clPlayerStates));
-    memset(fixPos, 0, sizeof(fixPos));
+    //memset(fixPos, 0, sizeof(fixPos));
     memset(cpMom, 0, sizeof(cpMom));
 }
 
@@ -152,6 +152,7 @@ void ClPlayer_UpdatePos(int plrNum)
     remoteClientMobj->mom[MZ] = localMobj->mom[MZ];
 }
 
+/*
 void ClPlayer_CoordsReceived(void)
 {
     if(playback)
@@ -167,6 +168,7 @@ void ClPlayer_CoordsReceived(void)
     fixPos[VX] /= fixSpeed;
     fixPos[VY] /= fixSpeed;
 }
+*/
 
 void ClPlayer_ApplyPendingFixes(int plrNum)
 {
@@ -216,6 +218,7 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         // The position is now known.
         ddpl->flags &= ~DDPF_UNDEFINED_POS;
 
+        Smoother_Clear(clients[plrNum].smoother);
         ClPlayer_UpdatePos(plrNum);
     }
 
@@ -235,65 +238,75 @@ void ClPlayer_ApplyPendingFixes(int plrNum)
         mo->mom[MZ] = clmo->mom[VZ] = state->pendingMomFix[VZ];
     }
 
-    if(sendAck)
+    // We'll only need to ack fixes targeted to the consoleplayer.
+    if(sendAck && plrNum == consolePlayer)
     {
         // Send an acknowledgement.
         Msg_Begin(PCL_ACK_PLAYER_FIX);
-        Msg_WriteLong(ddpl->fixAcked.angles);
-        Msg_WriteLong(ddpl->fixAcked.pos);
-        Msg_WriteLong(ddpl->fixAcked.mom);
-        Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.angles);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.pos);
+        Writer_WriteInt32(msgWriter, ddpl->fixAcked.mom);
+        Msg_End();
+        Net_SendBuffer(0, 0);
     }
 }
 
 void ClPlayer_HandleFix(void)
 {
-    player_t           *plr = &ddPlayers[consolePlayer];
-    //mobj_t             *clmo = ClPlayer_ClMobj(consolePlayer);
-    ddplayer_t         *ddpl = &plr->shared;
-    //mobj_t             *mo = ddpl->mo;
-    int                 fixes = Msg_ReadLong();
-    clplayerstate_t    *state = ClPlayer_State(consolePlayer);
+    int plrNum = 0;
+    int fixes = 0;
+    player_t* plr;
+    ddplayer_t* ddpl;
+    clplayerstate_t* state;
 
-    state->pendingFixTargetClMobjId = Msg_ReadLong();
+    // Target player.
+    plrNum = Reader_ReadByte(msgReader);
+    plr = &ddPlayers[plrNum];
+    ddpl = &plr->shared;
+    state = ClPlayer_State(plrNum);
+
+    // What to fix?
+    fixes = Reader_ReadUInt32(msgReader);
+
+    state->pendingFixTargetClMobjId = Reader_ReadUInt16(msgReader);
 
     if(fixes & 1) // fix angles?
     {
-        ddpl->fixCounter.angles = Msg_ReadLong();
-        state->pendingAngleFix = Msg_ReadLong();
-        state->pendingLookDirFix = FIX2FLT(Msg_ReadLong());
+        ddpl->fixCounter.angles = Reader_ReadInt32(msgReader);
+        state->pendingAngleFix = Reader_ReadUInt32(msgReader);
+        state->pendingLookDirFix = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXANGLES;
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix angles %i. Angle=%f, lookdir=%f\n",
-                    ddpl->fixAcked.angles, FIX2FLT(state->pendingAngleFix), state->pendingLookDirFix);
+        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix angles %i. Angle=%x, lookdir=%f\n", plrNum,
+                    ddpl->fixAcked.angles, state->pendingAngleFix, state->pendingLookDirFix);
 #endif
     }
 
     if(fixes & 2) // fix pos?
     {
-        ddpl->fixCounter.pos = Msg_ReadLong();
-        state->pendingPosFix[VX] = FIX2FLT(Msg_ReadLong());
-        state->pendingPosFix[VY] = FIX2FLT(Msg_ReadLong());
-        state->pendingPosFix[VZ] = FIX2FLT(Msg_ReadLong());
+        ddpl->fixCounter.pos = Reader_ReadInt32(msgReader);
+        state->pendingPosFix[VX] = Reader_ReadFloat(msgReader);
+        state->pendingPosFix[VY] = Reader_ReadFloat(msgReader);
+        state->pendingPosFix[VZ] = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXPOS;
 
 #ifdef _DEBUG
-        Con_Message("Cl_HandlePlayerFix: Fix pos %i. Pos=%f, %f, %f\n",
+        Con_Message("Cl_HandlePlayerFix: [Plr %i] Fix pos %i. Pos=%f, %f, %f\n", plrNum,
                     ddpl->fixAcked.pos, state->pendingPosFix[VX], state->pendingPosFix[VY], state->pendingPosFix[VZ]);
 #endif
     }
 
     if(fixes & 4) // fix momentum?
     {
-        ddpl->fixCounter.mom = Msg_ReadLong();
-        state->pendingMomFix[VX] = FIX2FLT(Msg_ReadLong());
-        state->pendingMomFix[VY] = FIX2FLT(Msg_ReadLong());
-        state->pendingMomFix[VZ] = FIX2FLT(Msg_ReadLong());
+        ddpl->fixCounter.mom = Reader_ReadInt32(msgReader);
+        state->pendingMomFix[VX] = Reader_ReadFloat(msgReader);
+        state->pendingMomFix[VY] = Reader_ReadFloat(msgReader);
+        state->pendingMomFix[VZ] = Reader_ReadFloat(msgReader);
         state->pendingFixes |= DDPF_FIXMOM;
     }
 
-    ClPlayer_ApplyPendingFixes(consolePlayer);
+    ClPlayer_ApplyPendingFixes(plrNum);
 }
 
 /**
@@ -372,13 +385,13 @@ void ClPlayer_ReadDelta2(boolean skip)
     clplayerstate_t    *s;
     ddplayer_t         *ddpl;
     ddpsprite_t        *psp;
-    int                 num, newId;
+    unsigned short num, newId;
     short               junk;
 
     // The first byte consists of a player number and some flags.
-    num = Msg_ReadByte();
+    num = Reader_ReadByte(msgReader);
     df = (num & 0xf0) << 8;
-    df |= Msg_ReadByte(); // Second byte is just flags.
+    df |= Reader_ReadByte(msgReader); // Second byte is just flags.
     num &= 0xf; // Clear the upper bits of the number.
 
     if(!skip)
@@ -397,7 +410,7 @@ void ClPlayer_ReadDelta2(boolean skip)
     {
         mobj_t *old = ClMobj_Find(s->clMobjId);
 
-        newId = Msg_ReadShort();
+        newId = Reader_ReadUInt16(msgReader);
 
         // Make sure the 'new' mobj is different than the old one;
         // there will be linking problems otherwise.
@@ -485,27 +498,27 @@ void ClPlayer_ReadDelta2(boolean skip)
     }
 
     if(df & PDF_FORWARDMOVE)
-        s->forwardMove = (char) Msg_ReadByte() * 2048;
+        s->forwardMove = (char) Reader_ReadByte(msgReader) * 2048;
     if(df & PDF_SIDEMOVE)
-        s->sideMove = (char) Msg_ReadByte() * 2048;
+        s->sideMove = (char) Reader_ReadByte(msgReader) * 2048;
     if(df & PDF_ANGLE)
-        //s->angle = Msg_ReadByte() << 24;
-        junk = Msg_ReadByte();
+        //s->angle = Reader_ReadByte(msgReader) << 24;
+        junk = Reader_ReadByte(msgReader);
     if(df & PDF_TURNDELTA)
     {
-        s->turnDelta = ((char) Msg_ReadByte() << 24) / 16;
+        s->turnDelta = ((char) Reader_ReadByte(msgReader) << 24) / 16;
     }
     if(df & PDF_FRICTION)
-        s->friction = Msg_ReadByte() << 8;
+        s->friction = Reader_ReadByte(msgReader) << 8;
     if(df & PDF_EXTRALIGHT)
     {
-        i = Msg_ReadByte();
+        i = Reader_ReadByte(msgReader);
         ddpl->fixedColorMap = i & 7;
         ddpl->extraLight = i & 0xf8;
     }
     if(df & PDF_FILTER)
     {
-        unsigned int filter = Msg_ReadLong();
+        unsigned int filter = Reader_ReadUInt32(msgReader);
 
         ddpl->filterColor[CR] = (filter & 0xff) / 255.f;
         ddpl->filterColor[CG] = ((filter >> 8) & 0xff) / 255.f;
@@ -528,22 +541,16 @@ void ClPlayer_ReadDelta2(boolean skip)
                     ddpl->filterColor[CA]);
 #endif
     }
-    if(df & PDF_CLYAW) // Only sent when Fixangles is used.
-        //ddpl->clAngle = Msg_ReadShort() << 16; /* $unifiedangles */
-        junk = Msg_ReadShort();
-    if(df & PDF_CLPITCH) // Only sent when Fixangles is used.
-        //ddpl->clLookDir = Msg_ReadShort() * 110.0 / DDMAXSHORT; /* $unifiedangles */
-        junk = Msg_ReadShort();
     if(df & PDF_PSPRITES)
     {
         for(i = 0; i < 2; ++i)
         {
             // First the flags.
-            psdf = Msg_ReadByte();
+            psdf = Reader_ReadByte(msgReader);
             psp = ddpl->pSprites + i;
             if(psdf & PSDF_STATEPTR)
             {
-                idx = Msg_ReadPackedShort();
+                idx = Reader_ReadPackedUInt16(msgReader);
                 if(!idx)
                     psp->statePtr = 0;
                 else if(idx < countStates.num)
@@ -554,15 +561,15 @@ void ClPlayer_ReadDelta2(boolean skip)
             }
 
             /*if(psdf & PSDF_LIGHT)
-                psp->light = Msg_ReadByte() / 255.0f;*/
+                psp->light = Reader_ReadByte(msgReader) / 255.0f;*/
             if(psdf & PSDF_ALPHA)
-                psp->alpha = Msg_ReadByte() / 255.0f;
+                psp->alpha = Reader_ReadByte(msgReader) / 255.0f;
             if(psdf & PSDF_STATE)
-                psp->state = Msg_ReadByte();
+                psp->state = Reader_ReadByte(msgReader);
             if(psdf & PSDF_OFFSET)
             {
-                psp->offset[VX] = (char) Msg_ReadByte() * 2;
-                psp->offset[VY] = (char) Msg_ReadByte() * 2;
+                psp->offset[VX] = (char) Reader_ReadByte(msgReader) * 2;
+                psp->offset[VY] = (char) Reader_ReadByte(msgReader) * 2;
             }
         }
     }

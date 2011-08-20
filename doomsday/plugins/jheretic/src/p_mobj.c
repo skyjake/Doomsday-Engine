@@ -34,6 +34,7 @@
 
 #include "jheretic.h"
 
+#include "d_netcl.h"
 #include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "g_common.h"
@@ -359,8 +360,7 @@ void P_MobjMoveXY(mobj_t* mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    if(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD))
+    if(FEQUAL(mom[MX], 0) && FEQUAL(mom[MY], 0))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // A flying mobj slammed into something.
@@ -621,7 +621,7 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = 0;
         }
 
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->pos[VZ] = mo->onMobj->pos[VZ] + mo->onMobj->height;
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
@@ -734,14 +734,14 @@ void P_MobjMoveZ(mobj_t *mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -(gravity / 8) * 2;
         else
             mo->mom[MZ] -= gravity / 8;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(mo->mom[MZ] == 0)
+        if(FEQUAL(mo->mom[MZ], 0))
             mo->mom[MZ] = -gravity * 2;
         else
             mo->mom[MZ] -= gravity;
@@ -829,14 +829,14 @@ void P_MobjThinker(mobj_t *mobj)
         boolean             changexy;
 
         // Handle movement
-        if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 || mobj->mom[MZ] != 0 ||
-           (mobj->pos[VZ] != mobj->floorZ))
+        if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
+           !FEQUAL(mobj->pos[VZ], mobj->floorZ))
         {
             frac[MX] = mobj->mom[MX] / 8;
             frac[MY] = mobj->mom[MY] / 8;
             frac[MZ] = mobj->mom[MZ] / 8;
 
-            changexy = (frac[MX] != 0 || frac[MY] != 0);
+            changexy = (!FEQUAL(frac[MX], 0) || !FEQUAL(frac[MY], 0));
             for(i = 0; i < 8; ++i)
             {
                 if(changexy)
@@ -906,7 +906,7 @@ void P_MobjThinker(mobj_t *mobj)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums.
-    if(mobj->mom[MX] != 0 || mobj->mom[MY] != 0 ||
+    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
        (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
@@ -929,16 +929,15 @@ void P_MobjThinker(mobj_t *mobj)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(mobj->pos[VZ] != mobj->floorZ || mobj->mom[MZ] != 0)
+    else if(!FEQUAL(mobj->pos[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
     {
         P_MobjMoveZ(mobj);
         if(mobj->thinker.function != P_MobjThinker)
             return; // mobj was removed
     }
     // Non-sentient objects at rest.
-    else if(!(mobj->mom[MX] != 0 || mobj->mom[MY] != 0) && !sentient(mobj) &&
-            !(mobj->player) && !((mobj->flags & MF_CORPSE) &&
-            cfg.slidingCorpses))
+    else if(!(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0)) && !sentient(mobj) &&
+            !mobj->player && !((mobj->flags & MF_CORPSE) && cfg.slidingCorpses))
     {
         /**
          * Objects fall off ledges if they are hanging off slightly push off
@@ -1249,7 +1248,7 @@ void P_SpawnBloodSplatter(float x, float y, float z, mobj_t* originator)
     }
 }
 
-#define SMALLSPLASHCLIP 12;
+#define SMALLSPLASHCLIP 12
 
 /**
  * @return              @c true, if mobj contacted a non-solid floor.
@@ -1258,6 +1257,13 @@ boolean P_HitFloor(mobj_t* thing)
 {
     mobj_t*             mo;
     const terraintype_t* tt;
+
+    if(IS_CLIENT && thing->player)
+    {
+        // The client notifies the server, which will handle the splash.
+        NetCl_FloorHitRequest(thing->player);
+        return false;
+    }
 
     if(thing->floorZ != P_GetFloatp(thing->subsector, DMU_FLOOR_HEIGHT))
     {

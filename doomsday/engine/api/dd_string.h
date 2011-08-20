@@ -33,20 +33,28 @@
  * You can init with static string constants, for example:
  *      ddstring_t mystr = { "Hello world." };
  *
- * \note Presently uses de::Zone for memory allocation!
+ * \note Uses de::Zone or standard malloc for memory allocation, chosen during
+ *       initialization of a string. The string itself is always allocated with
+ *       malloc. The Zone is not thread-safe.
  *
  * \todo Derive from Qt::QString
+ * \todo Make this opaque for better forward compatibility -- prevents initialization
+ *       with static C strings, though.
  */
-#define DDSTRING_MAX_LENGTH  0x4000
 typedef struct ddstring_s {
     /// String buffer.
 	char* str;
 
     /// String length (no terminating nulls).
-    int length;
+    size_t length;
 
     /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
     size_t size;
+
+	// Memory management.
+	void (*memFree)(void*);
+	void* (*memAlloc)(size_t n);
+	void* (*memCalloc)(size_t n);
 } ddstring_t;
 
 // Format checking for Str_Appendf in GCC2
@@ -58,7 +66,7 @@ typedef struct ddstring_s {
 
 /**
  * Allocate a new uninitialized string. Use Str_Delete() to destroy
- * the returned string.
+ * the returned string. Memory for the string is allocated with de::Zone.
  *
  * @return New ddstring_t instance.
  *
@@ -67,10 +75,26 @@ typedef struct ddstring_s {
 ddstring_t* Str_New(void);
 
 /**
+ * Allocate a new uninitialized string. Use Str_Delete() to destroy
+ * the returned string. Memory for the string is allocated with malloc.
+ *
+ * @return New ddstring_t instance.
+ *
+ * @see Str_Delete
+ */
+ddstring_t* Str_NewStd(void);
+
+/**
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
 void Str_Init(ddstring_t* ds);
+
+/**
+ * Call this for uninitialized strings. Makes the string use standard
+ * malloc for memory allocations.
+ */
+void Str_InitStd(ddstring_t* ds);
 
 /**
  * Empty an existing string. After this the string is in the same
