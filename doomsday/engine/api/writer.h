@@ -50,7 +50,7 @@ typedef struct writer_s Writer;
 
 /**
  * Constructs a new writer. The writer will use the engine's netBuffer
- * as the writing buffer. The writer has to be destroyed with Writer_Destruct()
+ * as the writing buffer. The writer has to be destroyed with Writer_Delete()
  * after it is not needed any more.
  */
 Writer* Writer_New(void);
@@ -58,7 +58,7 @@ Writer* Writer_New(void);
 /**
  * Constructs a new writer. The writer will use @a buffer as the writing buffer.
  * The buffer will use network byte order. The writer has to be destroyed
- * with Writer_Destruct() after it is not needed any more.
+ * with Writer_Delete() after it is not needed any more.
  *
  * @param buffer  Buffer to use for reading.
  * @param maxLen  Maximum length of the buffer.

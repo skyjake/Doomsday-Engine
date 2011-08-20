@@ -35,7 +35,7 @@ typedef struct reader_s Reader;
 
 /**
  * Constructs a new reader. The reader will use the engine's netBuffer
- * as the reading buffer. The reader has to be destroyed with Reader_Destruct()
+ * as the reading buffer. The reader has to be destroyed with Reader_Delete()
  * after it is not needed any more.
  */
 Reader* Reader_New(void);
@@ -43,7 +43,7 @@ Reader* Reader_New(void);
 /**
  * Initializes the reader. The reader will use @a buffer as the reading buffer.
  * The buffer is expected to use network byte order. The reader has to be destroyed
- * with Reader_Destruct() after it is not needed any more.
+ * with Reader_Delete() after it is not needed any more.
  *
  * @param buffer  Buffer to use for reading.
  * @param len     Length of the buffer.
