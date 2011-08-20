@@ -200,7 +200,7 @@ uint StringPool_Size(StringPool* pool)
 boolean StringPool_Empty(StringPool* pool)
 {
     if(!pool) Con_Error("StringPool::Emtpy: Invalid StringPool");
-    return (0 == StringPool_Size(pool));
+    return ((0 == StringPool_Size(pool))? true:false);
 }
 
 StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str)

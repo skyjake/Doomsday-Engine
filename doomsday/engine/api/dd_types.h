@@ -134,7 +134,7 @@ typedef void (*con_textfilter_t) (char* text);
 
 #define LUMPNAME_T_MAXLEN 9
 #define LUMPNAME_T_LASTINDEX 8
-typedef signed char     lumpname_t[LUMPNAME_T_MAXLEN];
+typedef char            lumpname_t[LUMPNAME_T_MAXLEN];
 
 /**
  * Resource Class.
