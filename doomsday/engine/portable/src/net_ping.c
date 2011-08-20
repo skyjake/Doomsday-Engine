@@ -58,7 +58,7 @@ void Net_ShowPingSummary(int player)
 {
     client_t           *cl = clients + player;
     pinger_t           *ping = &cl->ping;
-    float               avgTime = 0, loss;
+    float               avgTime = 0;
     int                 i, goodCount = 0;
 
     if(player < 0 && ping->total > 0)
@@ -74,9 +74,7 @@ void Net_ShowPingSummary(int player)
     }
 
     avgTime /= goodCount;
-    loss = 1 - goodCount / (float) ping->total;
-    Con_Printf("Plr %i (%s): average ping %.0f ms, loss %.0f%%.\n", player,
-               cl->name, avgTime * 1000, loss * 100);
+    Con_Printf("Plr %i (%s): average ping %.0f ms.\n", player, cl->name, avgTime * 1000);
 }
 
 void Net_SendPing(int player, int count)
