@@ -1154,6 +1154,7 @@ typedef unsigned int colorpaletteid_t;
 #define CPF_YELLOW          0x00000040
 #define CPF_WHITE           0x00000080
 #define CPF_LIGHT           0x00000100
+#define CPF_UNUSED1         0x00000200
 #define CPF_CENTER          0x00000400
 #define CPF_TRANSMIT        0x80000000 /// If server, sent to all clients.
 /*@}*/
