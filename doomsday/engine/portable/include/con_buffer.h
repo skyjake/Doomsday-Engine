@@ -112,7 +112,7 @@ const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
 
 /**
  * @defgroup bufferLineFlags Buffer Line Flags.
- */ 
+ */
 /*@{*/
 #define BLF_OMIT_RULER      0x1 // Ignore rulers.
 #define BLF_OMIT_EMPTYLINE  0x2 // Ignore empty lines.
