@@ -664,9 +664,9 @@ void MNBindings_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
  */
 void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 {
-#if __JDOOM__ || __JDOOM64__
+/*#if __JDOOM__ || __JDOOM64__
     char buf[1024];
-#endif
+#endif*/
 
     DGL_Enable(DGL_TEXTURE_2D);
 

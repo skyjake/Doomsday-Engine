@@ -1005,7 +1005,7 @@ void R_RenderBlankView(void)
 void R_RenderPlayerView(int num)
 {
     extern boolean      firstFrameAfterLoad;
-    extern int          psp3d, modelTriCount;
+    extern int          psp3d;// modelTriCount;
 
     int oldFlags = 0;
     player_t* player;

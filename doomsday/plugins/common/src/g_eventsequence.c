@@ -46,11 +46,11 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct eventsequence_s {
-    unsigned char*  sequence;
-    int           (*callback) (const int* args, int);
-    size_t          length, pos;
-    int             args[2];
-    int             currentArg;
+    char* sequence;
+    int (*callback) (const int* args, int);
+    size_t length, pos;
+    int args[2];
+    int currentArg;
 } eventsequence_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -150,8 +150,7 @@ int G_EventSequenceResponder(event_t* ev)
     }
 }
 
-void G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
-    int (*callback) (const int*, int))
+void G_AddEventSequence(const char* sequence, size_t sequenceLength, int (*callback) (const int*, int))
 {
     assert(inited && sequence && sequenceLength > 0 && callback);
     {
@@ -160,7 +159,7 @@ void G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
     eventSequences = Z_Realloc(eventSequences, sizeof(eventsequence_t) * ++numEventSequences, PU_GAMESTATIC);
     es = &eventSequences[numEventSequences-1];
 
-    es->sequence = Z_Malloc(sizeof(unsigned char) * sequenceLength, PU_GAMESTATIC, 0);
+    es->sequence = Z_Malloc(sizeof(*es->sequence) * sequenceLength, PU_GAMESTATIC, 0);
     memcpy(es->sequence, sequence, sequenceLength);
     es->length = sequenceLength;
     es->callback = callback;

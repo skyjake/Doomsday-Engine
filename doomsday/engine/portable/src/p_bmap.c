@@ -412,13 +412,12 @@ void P_BlockmapLinkMobj(blockmap_t* blockmap, mobj_t* mo)
 {
     if(blockmap)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        uint                blockXY[2];
-        bmapblock_t*        block;
+        bmap_t* bmap = (bmap_t*) blockmap;
+        uint blockXY[2] = { 0, 0 };
+        bmapblock_t* block;
 
         P_ToBlockmapBlockIdx(BlockMap, blockXY, mo->pos);
-        block = (bmapblock_t*)
-            M_GridmapGetBlock(bmap->gridmap, blockXY[0], blockXY[1], true);
+        block = (bmapblock_t*) M_GridmapGetBlock(bmap->gridmap, blockXY[0], blockXY[1], true);
         if(block)
             P_MobjLinkToRing(mo, &block->mobjLinks);
     }
@@ -426,21 +425,18 @@ void P_BlockmapLinkMobj(blockmap_t* blockmap, mobj_t* mo)
 
 boolean P_BlockmapUnlinkMobj(blockmap_t* blockmap, mobj_t* mo)
 {
-    boolean             unlinked = false;
-
+    boolean unlinked = false;
     if(blockmap)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        uint                blockXY[2];
-        bmapblock_t*        block;
+        bmap_t* bmap = (bmap_t*) blockmap;
+        uint blockXY[2] = { 0, 0 };
+        bmapblock_t* block;
 
         P_ToBlockmapBlockIdx(BlockMap, blockXY, mo->pos);
-        block = (bmapblock_t*)
-            M_GridmapGetBlock(bmap->gridmap, blockXY[0], blockXY[1], false);
+        block = (bmapblock_t*) M_GridmapGetBlock(bmap->gridmap, blockXY[0], blockXY[1], false);
         if(block)
             unlinked = P_MobjUnlinkFromRing(mo, &block->mobjLinks);
     }
-
     return unlinked;
 }
 
@@ -448,12 +444,9 @@ void P_GetBlockmapBounds(blockmap_t* blockmap, pvec2_t min, pvec2_t max)
 {
     if(blockmap)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-
-        if(min)
-            V2_Copy(min, bmap->bBox[0]);
-        if(max)
-            V2_Copy(max, bmap->bBox[1]);
+        bmap_t* bmap = (bmap_t*) blockmap;
+        if(min) V2_Copy(min, bmap->bBox[0]);
+        if(max) V2_Copy(max, bmap->bBox[1]);
     }
 }
 
@@ -1265,11 +1258,11 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
                           void (*func) (void* blockPtr, void* param,
                                         float r, float g, float b, float a))
 {
-    bmap_t*             bmap = (bmap_t*) blockmap;
-    void*               block;
-    uint                x, y, vBlock[2], vBlockBox[4];
-    float               scale, radius;
-    vec2_t              start, end, box[2];
+    bmap_t* bmap = (bmap_t*) blockmap;
+    uint x, y, vBlock[2] = { 0, 0 }, vBlockBox[4] = { 0, 0, 0, 0 };
+    vec2_t start, end, box[2];
+    float scale, radius;
+    void* block;
 
     scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
 

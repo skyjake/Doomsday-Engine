@@ -37,6 +37,7 @@
 #  include <pwd.h>
 #  include <limits.h>
 #  include <unistd.h>
+#  include <sys/stat.h>
 #endif
 
 #include "de_base.h"

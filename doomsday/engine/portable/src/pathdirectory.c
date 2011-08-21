@@ -939,10 +939,10 @@ static void printDistributionOverview(pathdirectory_t* pd,
 
     // Level1 headings:
     span = &spans[0][0];
-    Con_Printf("%*s%-*s|",  *span++ +  5/2, "nodes",      *span++ -  5/2, "");
-    Con_Printf("%*s%-*s|",  *span++ +  4/2, "hash",       *span++ -  4/2, "");
-    Con_Printf("%*s%-*s|",  *span++ + 10/2, "collisions", *span++ - 10/2, "");
-    Con_Printf("%*s%-*s\n", *span++ +  5/2, "other",      *span++ -  5/2, "");
+    Con_Printf("%*s", *span++ +  5/2, "nodes"), Con_Printf("%-*s|",      *span++ -  5/2, "");
+    Con_Printf("%*s", *span++ +  4/2, "hash"), Con_Printf("%-*s|",       *span++ -  4/2, "");
+    Con_Printf("%*s", *span++ + 10/2, "collisions"), Con_Printf("%-*s|", *span++ - 10/2, "");
+    Con_Printf("%*s", *span++ +  5/2, "other"), Con_Printf("%-*s\n",     *span++ -  5/2, "");
 
     // Level2 headings:
     col = colWidths;

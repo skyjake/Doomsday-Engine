@@ -281,7 +281,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
     Uri* startPath = Uri_New();
     Uri* endPath = Uri_New();
-    boolean lastIsTexture;
+    boolean lastIsTexture = false; // Shut up compiler!
     int i;
 
     // Read structures until -1 is found

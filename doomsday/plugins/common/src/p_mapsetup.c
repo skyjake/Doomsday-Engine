@@ -428,7 +428,6 @@ static void initXLineDefs(void)
     for(i = 0; i < numlines; ++i)
     {
         xline_t* xl = &xlines[i];
-        xline_t* xline = &xlines[i];
 
         xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS) & ML_VALID_MASK;
 #if __JHEXEN__

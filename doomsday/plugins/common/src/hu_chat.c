@@ -228,7 +228,7 @@ boolean UIChat_AppendCharacter(uiwidget_t* obj, char ch)
 
     if(chat->buffer.shiftDown)
     {
-        ch = shiftXForm[ch];
+        ch = shiftXForm[(unsigned)ch];
     }
 
     chat->buffer.text[chat->buffer.length++] = ch;
@@ -355,11 +355,10 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
 {
     assert(NULL != obj && obj->type == GUI_CHAT);
     {
-    guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
+    //guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    //const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     const char* text = UIChat_Text(obj);
-    char buf[UICHAT_INPUTBUFFER_MAXLENGTH+1];
     int xOffset, textWidth, cursorWidth;
 
     if(!UIChat_IsActive(obj))
@@ -376,12 +375,12 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
     textWidth = FR_TextWidth(text);
     cursorWidth = FR_CharWidth('_');
 
-    if(cfg.msgAlign == 0)
-        xOffset = 0;
-    else if(cfg.msgAlign == 1)
+    if(cfg.msgAlign == 1)
         xOffset = -(textWidth + cursorWidth)/2;
     else if(cfg.msgAlign == 2)
         xOffset = -(textWidth + cursorWidth);
+    else
+        xOffset = 0;
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_DrawText(text, xOffset, 0);

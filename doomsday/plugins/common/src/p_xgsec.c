@@ -1947,7 +1947,7 @@ int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
 {
     linedef_t*          line = (linedef_t *) context;
     linetype_t*         info = context2;
-    int                 num, i = 0;
+    int                 num;
     float               usergb[3];
     float               lightLevel;
 

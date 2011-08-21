@@ -438,12 +438,12 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  * Check through the axes registered for the given device, see if there is
  * one identified by the given name.
  *
- * @return              @c false, if the string is invalid.
+ * @return  @c false, if the string is invalid.
  */
 boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
 {
-    char                name[30], *ptr;
-    inputdev_t*         device;
+    char name[30], *ptr;
+    inputdev_t* device;
 
     ptr = strchr(str, '-');
     if(!ptr)
@@ -455,16 +455,15 @@ boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
     device = I_GetDeviceByName(name, false);
     if(device == NULL)
         return false;
-    if(*deviceID)
+    if(deviceID)
         *deviceID = device - inputDevices;
 
     // The axis name.
-    if(*axis)
+    if(axis)
     {
-        int                 a = I_GetAxisByName(device, ptr + 1);
+        int a = I_GetAxisByName(device, ptr + 1);
         if((*axis = a) < 0)
             return false;
-
         *axis = a + 1; // Axis indices are base 1.
     }
 

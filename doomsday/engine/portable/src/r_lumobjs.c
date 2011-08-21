@@ -898,7 +898,7 @@ void LO_UnlinkMobjLumobjs(void)
 void LO_DrawLumobjs(void)
 {
     static const float  black[4] = { 0, 0, 0, 0 };
-    static const float  white[4] = { 1, 1, 1, 1 };
+    //static const float  white[4] = { 1, 1, 1, 1 };
     float               color[4];
     uint                i;
 

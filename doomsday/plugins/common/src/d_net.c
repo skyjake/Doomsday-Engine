@@ -627,10 +627,6 @@ Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
  */
 D_CMD(SetColor)
 {
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    int     numColors = 4;
-#endif
-
     cfg.netColor = atoi(argv[1]);
     if(IS_SERVER) // A local player?
     {

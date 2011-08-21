@@ -197,7 +197,7 @@ void UILog_Post(uiwidget_t* obj, byte flags, const char* text)
 
     assert(NULL != obj && obj->type == GUI_LOG && NULL != text);
     {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    //guidata_log_t* log = (guidata_log_t*)obj->typedata;
     char smallBuf[SMALLBUF_MAXLEN+1];
     char* bigBuf = NULL, *p;
     size_t requiredLen = strlen(text);
@@ -297,7 +297,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     const int alignFlags = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
     const short textFlags = DTF_NO_EFFECTS;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    //const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     int lineHeight;
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;

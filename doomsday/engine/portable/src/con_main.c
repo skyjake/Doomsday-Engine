@@ -1192,6 +1192,9 @@ static int completeWord(int mode)
                     Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", foundWord);
                 break;
               }
+            default:
+                Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
+                exit(1); // Unreachable.
             }
 
             if(!unambiguous[0])
@@ -1226,6 +1229,9 @@ static int completeWord(int mode)
             str = Str_Text(foundName);
             break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
+        default:
+            Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
+            exit(1); // Unreachable.
         }
 
         if(wordBegin - cmdLine + strlen(str) < CMDLINE_SIZE)
@@ -2035,7 +2041,7 @@ D_CMD(Clear)
 
 D_CMD(Version)
 {
-    Con_Printf("%s %s (" __TIME__ ") \n", DOOMSDAY_NICENAME, DOOMSDAY_VERSIONTEXT, DOOMSDAY_HOMEURL);
+    Con_Printf("%s %s %s (" __TIME__ ") \n", DOOMSDAY_NICENAME, DOOMSDAY_VERSIONTEXT, DOOMSDAY_HOMEURL);
     Con_Printf("%s\n", DENGPROJECT_HOMEURL);
     // Print the version info of the current game if loaded.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
@@ -2320,6 +2326,9 @@ D_CMD(If)
                                          comp <= 0);
         }
         break;
+    default:
+        Con_Error("CCmdIf: Invalid cvar type %i.", (int)var->type);
+        exit(1); // Unreachable.
     }
 
     // Should the command be executed?

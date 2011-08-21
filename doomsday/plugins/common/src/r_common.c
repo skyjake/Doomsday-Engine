@@ -114,13 +114,12 @@ static void resizeViewWindow(int player, const rectanglei_t* newDimensions,
 {
     assert(newDimensions != NULL);
     {
-    player_t* plr = players + player;
     rectanglei_t dims;
 
     if(player < 0 || player >= MAXPLAYERS)
     {
         Con_Error("resizeViewWindow: Invalid player #%i.", player);
-        exit(1);
+        exit(1); // Unreachable.
     }
 
     memcpy(&dims, newDimensions, sizeof(dims));

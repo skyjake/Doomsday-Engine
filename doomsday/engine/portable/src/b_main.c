@@ -774,8 +774,8 @@ boolean B_Responder(ddevent_t* ev)
         if(ev->type == E_AXIS)
         {
             float pos = I_TransformAxis(I_GetDevice(ev->device, false), ev->axis.id, ev->axis.pos);
-            if(ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f ||
-               ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f)
+            if((ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f ) ||
+               (ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
                 // Not significant enough for an echo.
                 return B_TryEvent(ev);

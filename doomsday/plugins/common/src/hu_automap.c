@@ -253,7 +253,7 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
-    automapcfg_t* mcfg = am->mcfg;
+    //automapcfg_t* mcfg = am->mcfg;
     float a[2], b[2];
     float length, dx, dy;
     float normal[2], unit[2];
@@ -700,8 +700,7 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    int player = UIWidget_Player(obj);
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     uint i;
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -847,7 +846,7 @@ static void rendPolyobjs(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     float aabb[4];
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -890,7 +889,7 @@ static void rendXGLinedefs(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     float aabb[4];
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
@@ -1097,7 +1096,7 @@ static void drawMarkedPoints(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
     float viewPoint[2], angle, stom;
@@ -1198,7 +1197,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_LoadIdentity();
 
         DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
-        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapBack[CA] * alpha);
+        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
 
         DGL_Translatef(UIWidget_Dimensions(obj)->x, UIWidget_Dimensions(obj)->y, 0);
 
@@ -1221,7 +1220,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     {
         // Nope just a solid color.
         DGL_SetNoMaterial();
-        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapBack[CA] * alpha);
+        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
         DGL_DrawRecti(UIWidget_Dimensions(obj));
     }
 
@@ -1320,7 +1319,7 @@ static void renderVertexes(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float v[2], oldPointSize;
     uint i;
@@ -1612,7 +1611,6 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const int player = UIWidget_Player(obj);
-    const player_t* plr = &players[player];
     const mobj_t* mo = UIAutomap_FollowMobj(obj);
     float panX[2], panY[2], zoomVel, zoomSpeed, width, height, scale;
 
@@ -1882,7 +1880,7 @@ void UIAutomap_SetOrigin(uiwidget_t* obj, int x, int y)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     // Already at this target?
     if(x == obj->dimensions.x && y == obj->dimensions.y)
         return;
@@ -1895,7 +1893,7 @@ void UIAutomap_SetDimensions(uiwidget_t* obj, int w, int h)
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     // Already at this target?
     if(w == obj->dimensions.width && h == obj->dimensions.height)
         return;

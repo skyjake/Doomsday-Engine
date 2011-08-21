@@ -105,7 +105,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 void P_InitPicAnims(void)
 {
     lumpnum_t lumpNum = W_CheckLumpNumForName("ANIMDEFS");
-    boolean isCustom, isTexture;
+    boolean isCustom, isTexture = false; // Shut up compiler!
 
     if(lumpNum == -1)
         return;

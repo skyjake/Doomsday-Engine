@@ -337,7 +337,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
     float armsBGX = ST_ARMSBGX + pArmsBackground.offset;
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     float cw, cw2, ch;
 
@@ -955,7 +955,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -1209,7 +1209,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -1386,7 +1386,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
     if(!deathmatch)
@@ -1698,7 +1698,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(deathmatch)
         return;
@@ -2410,7 +2410,7 @@ void Keys_Drawer(uiwidget_t* obj, int x, int y)
         SPR_RSKU
     };
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
-    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    //const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     int i, numDrawnKeys = 0;
 
@@ -2908,7 +2908,6 @@ void ST_Drawer(int player)
     hudstate_t* hud;
     player_t* plr;
     int fullscreen = fullscreenMode();
-    boolean blended = (fullscreen!=0);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;

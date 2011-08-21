@@ -144,5 +144,5 @@ int lt_dlclose(lt_dlhandle module)
 {
     if(!module)
         return 1;
-    dlclose(module);
+    return dlclose(module);
 }

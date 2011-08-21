@@ -273,7 +273,7 @@ static void unarchiveMap(void);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static inited = false;
+static boolean inited = false;
 
 static ddstring_t savePath; // e.g., "savegame/"
 #if !__JHEXEN__
@@ -2320,14 +2320,14 @@ static void SV_WriteSector(sector_t *sec)
  * Reads all versions of archived sectors.
  * Including the old Ver1.
  */
-static void SV_ReadSector(sector_t *sec)
+static void SV_ReadSector(sector_t* sec)
 {
-    int                 i, ver = 1;
-    int                 type = 0;
-    material_t*         floorMaterial, *ceilingMaterial;
-    byte                rgb[3], lightlevel;
-    xsector_t*          xsec = P_ToXSector(sec);
-    int                 fh, ch;
+    int i, ver = 1;
+    int type = 0;
+    material_t* floorMaterial = NULL, *ceilingMaterial = NULL;
+    byte rgb[3], lightlevel;
+    xsector_t* xsec = P_ToXSector(sec);
+    int fh, ch;
 
     // A type byte?
 #if __JHEXEN__
@@ -2544,14 +2544,14 @@ static void SV_WriteLine(linedef_t* li)
  * Reads all versions of archived lines.
  * Including the old Ver1.
  */
-static void SV_ReadLine(linedef_t *li)
+static void SV_ReadLine(linedef_t* li)
 {
-    int                 i, j;
-    lineclass_t         type;
-    int                 ver;
-    material_t*         topMaterial, *bottomMaterial, *middleMaterial;
-    short               flags;
-    xline_t*            xli = P_ToXLine(li);
+    int i, j;
+    lineclass_t type;
+    int ver;
+    material_t* topMaterial = NULL, *bottomMaterial = NULL, *middleMaterial = NULL;
+    short flags;
+    xline_t* xli = P_ToXLine(li);
 
     // A type byte?
 #if __JHEXEN__
@@ -4201,7 +4201,7 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
 static void P_UnArchiveThinkers(void)
 {
     uint        i;
-    byte        tClass;
+    byte        tClass = 0;
     thinker_t  *th = 0;
     thinkerinfo_t *thInfo = 0;
     boolean     found, knownThinker;

@@ -649,7 +649,7 @@ void SBarWeaponPieces_UpdateDimensions(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
-    guidata_weaponpieces_t* wpn = (guidata_weaponpieces_t*)obj->typedata;
+    //guidata_weaponpieces_t* wpn = (guidata_weaponpieces_t*)obj->typedata;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
@@ -1114,7 +1114,7 @@ void SBarInventory_Drawer(uiwidget_t* obj, int x, int y)
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(!Hu_InventoryIsOpen(obj->player))
@@ -1180,7 +1180,7 @@ void SBarKeys_Drawer(uiwidget_t* obj, int x, int y)
     {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     hudstate_t* hud = &hudStates[obj->player];
-    int i, numDrawn, pClass = cfg.playerClass[obj->player]; // Original player class (i.e. not pig).
+    int i, numDrawn;
     int fullscreen = fullscreenMode();
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
@@ -1413,7 +1413,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
     if(!deathmatch || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
@@ -1510,7 +1510,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     char buf[20];
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(deathmatch || Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
         return;
@@ -2035,7 +2035,7 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
@@ -3331,10 +3331,7 @@ void ST_loadData(void)
 
 static void initData(hudstate_t* hud)
 {
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     int i, player = hud - hudStates;
-    player_t* plr = &players[player];
 
     hud->statusbarActive = true;
     hud->stopped = true;
@@ -3443,7 +3440,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 {
     assert(NULL != obj);
     {
-    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
+    //hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     float lowX, hiX, lowY, hiY;
     automapcfg_t* mcfg;
 
@@ -4117,7 +4114,6 @@ void ST_Drawer(int player)
     hudstate_t* hud;
     player_t* plr;
     int fullscreen = fullscreenMode();
-    boolean blended = (fullscreen!=0);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;

@@ -1071,9 +1071,9 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
 #undef SEP
 }
 
-void R_InitLinks(gamemap_t *map)
+void R_InitLinks(gamemap_t* map)
 {
-    uint starttime;
+    uint starttime = 0;
 
     VERBOSE( Con_Message("R_InitLinks: Initializing...\n") )
     VERBOSE2( starttime = Sys_GetRealTime() )
@@ -1530,8 +1530,8 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
         sector_t* backSec = s->line->L_sector(sid^1);
         surface_t* suf;
 
-        if(backSec && ((section == SEG_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight)) ||
-                       (section == SEG_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight))
+        if(backSec && ((section == SEG_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
+                       (section == SEG_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
         {
             suf = &backSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
             if(suf->material && !R_IsSkySurface(suf))

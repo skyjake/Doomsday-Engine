@@ -86,10 +86,7 @@ boolean P_IsPaused(void)
  */
 void P_RunPlayers(timespan_t ticLength)
 {
-    uint                i;
-    boolean             isPaused = P_IsPaused();
-    //ticcmd_t            command;
-    //boolean             gotCommands;
+    uint i;
 
     // This is not for clients.
     if(IS_CLIENT)

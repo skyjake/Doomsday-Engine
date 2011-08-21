@@ -196,7 +196,10 @@ typedef struct mobj_s {
     int             lastLook; // player number last looked for
     short           tid; // thing identifier
     byte            special; // special
-    byte            args[5]; // special arguments
+    union {
+        byte        args[5]; // special arguments
+        uint        argsUInt; // used with minotaur
+    };
     int             turnTime; // $visangle-facetarget
     int             alpha; // $mobjalpha
 

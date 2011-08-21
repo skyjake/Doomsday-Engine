@@ -467,7 +467,7 @@ void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
         return; // Unreachable.
     }
 
-    if(!CV_CHARPTR(var) && strlen(text) != 0 || stricmp(text, CV_CHARPTR(var)))
+    if((!CV_CHARPTR(var) && strlen(text) != 0) || stricmp(text, CV_CHARPTR(var)))
         changed = true;
 
     // Free the old string, if one exists.
@@ -600,6 +600,7 @@ int CVar_Integer(const cvar_t* var)
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
+    default: break;
     }
     // Unreachable (hopefully).
     return 0;
@@ -614,6 +615,7 @@ float CVar_Float(const cvar_t* var)
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
+    default: break;
     }
     // Unreachable (hopefully).
     return 0;
@@ -628,6 +630,7 @@ byte CVar_Byte(const cvar_t* var)
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
+    default: break;
     }
     // Unreachable (hopefully).
     return 0;
@@ -1462,6 +1465,9 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
         Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", Str_Text(GameInfo_IdentityKey(info)));
         break;
       }
+    default:
+        Con_Error("printKnownWordWorker: Invalid word type %i.", (int)word->type);
+        exit(1); // Unreachable.
     }
     if(numPrinted) ++(*numPrinted);
     return 0; // Continue iteration.

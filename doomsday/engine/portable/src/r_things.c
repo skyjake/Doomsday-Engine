@@ -1612,12 +1612,6 @@ void R_SortVisSprites(void)
     }
 }
 
-static void scaleFloatRGB(float* out, const float* in, float mul)
-{
-    memset(out, 0, sizeof(float) * 3);
-    R_ScaleAmbientRGB(out, in, mul);
-}
-
 /**
  * Iterator for processing light sources around a vissprite.
  */

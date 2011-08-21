@@ -727,7 +727,7 @@ extern boolean usingFog;
 #else
         void           *data = NULL;
 #endif
-        boolean         hadFog;
+        boolean         hadFog = false;
 
         if(glIsInited)
         {

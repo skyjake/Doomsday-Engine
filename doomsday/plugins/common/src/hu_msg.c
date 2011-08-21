@@ -200,6 +200,7 @@ static void drawMessage(void)
     case MSG_YESNO:  questionString = yesNoMessage; break;
     default:
         Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
+        exit(1); // Unreachable.
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
