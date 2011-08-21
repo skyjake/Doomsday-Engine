@@ -218,10 +218,11 @@ void Con_SetFloat(const char* name, float value);
 
 void Con_SetString2(const char* name, const char* text, int svflags);
 void Con_SetString(const char* name, const char* text);
-    void            Con_Printf(const char* format, ...) PRINTF_F(1,2);
-    void            Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
-    void            Con_Message(const char* message, ...) PRINTF_F(1,2);
-    void            Con_Error(const char* error, ...) PRINTF_F(1,2);
+void Con_Printf(const char* format, ...) PRINTF_F(1,2);
+void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
+void Con_PrintRuler(void);
+void Con_Message(const char* message, ...) PRINTF_F(1,2);
+void Con_Error(const char* error, ...) PRINTF_F(1,2);
 
 void Con_SetPrintFilter(con_textfilter_t filter);
 

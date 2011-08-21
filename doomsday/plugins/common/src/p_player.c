@@ -748,7 +748,7 @@ void P_SetMessage(player_t* pl, const char* msg, boolean noHide)
     ST_LogPost(pl - players, flags, msg);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
-        Con_FPrintf(CBLF_CYAN, "%s\n", msg);
+        Con_FPrintf(CPF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
     NetSv_SendMessage(pl - players, msg);
@@ -782,7 +782,7 @@ void P_SetYellowMessage(player_t* pl, const char* msg, boolean noHide)
     ST_LogPost(pl - players, flags, Str_Text(&buf));
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
-        Con_FPrintf(CBLF_CYAN, "%s\n", msg);
+        Con_FPrintf(CPF_CYAN, "%s\n", msg);
 
     // Servers are responsible for sending these messages to the clients.
     /// \fixme We shouldn't need to send the format string along with every

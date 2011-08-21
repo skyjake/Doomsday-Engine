@@ -321,10 +321,13 @@ void Con_Message(const char* message, ...) PRINTF_F(1,2);
 
 /**
  * Print into the console.
- * @param flags             @see consoleBufferLineFlags
+ * @param flags  @see consolePrintFlags
  */
 void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
 void Con_Printf(const char* format, ...) PRINTF_F(1,2);
+
+/// Print a ruler into the console.
+void Con_PrintRuler(void);
 
 /**
  * @defgroup printPathFlags Print Path Flags

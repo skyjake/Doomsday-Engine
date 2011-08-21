@@ -935,7 +935,7 @@ static void printDistributionOverview(pathdirectory_t* pd,
         spans[i][1] = remainder + (spans[i][0] /= 2);
     }
 
-    Con_FPrintf(CBLF_YELLOW, "Directory Distribution (p:%p):\n", pd);
+    Con_FPrintf(CPF_YELLOW, "Directory Distribution (p:%p):\n", pd);
 
     // Level1 headings:
     span = &spans[0][0];
@@ -946,16 +946,16 @@ static void printDistributionOverview(pathdirectory_t* pd,
 
     // Level2 headings:
     col = colWidths;
-    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "type");
-    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "#");
-    Con_FPrintf(CBLF_LIGHT, "%*s:",   *col++, "used");
-    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "empty");
-    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "max");
-    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "num#");
-    Con_FPrintf(CBLF_LIGHT, "%-*s|",  *col++, "percent%");
-    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "coverage%");
-    Con_FPrintf(CBLF_LIGHT, "%*s ",   *col++, "variance");
-    Con_FPrintf(CBLF_LIGHT, "%-*s\n", *col++, "maxheight");
+    Con_FPrintf(CPF_LIGHT, "%*s ",   *col++, "type");
+    Con_FPrintf(CPF_LIGHT, "%-*s|",  *col++, "#");
+    Con_FPrintf(CPF_LIGHT, "%*s:",   *col++, "used");
+    Con_FPrintf(CPF_LIGHT, "%-*s|",  *col++, "empty");
+    Con_FPrintf(CPF_LIGHT, "%*s ",   *col++, "max");
+    Con_FPrintf(CPF_LIGHT, "%*s ",   *col++, "num#");
+    Con_FPrintf(CPF_LIGHT, "%-*s|",  *col++, "percent%");
+    Con_FPrintf(CPF_LIGHT, "%*s ",   *col++, "coverage%");
+    Con_FPrintf(CPF_LIGHT, "%*s ",   *col++, "variance");
+    Con_FPrintf(CPF_LIGHT, "%-*s\n", *col++, "maxheight");
 
     if(countTotal != 0)
     {
@@ -966,7 +966,7 @@ static void printDistributionOverview(pathdirectory_t* pd,
                 nodeBucketCollisions[i], nodeBucketCollisionsMax[i],
                 nodeCountSum[i], nodeCountTotal[i]);
         }
-        Con_FPrintf(CBLF_RULER, "");
+        Con_PrintRuler();
     }
 
     printDistributionOverviewElement(colWidths, "total", 
@@ -1018,7 +1018,7 @@ void printDistributionHistogram(pathdirectory_t* pd, ushort size,
     // Apply formatting:
     for(i = 1; i < NUMCOLS; ++i) { colWidths[i] += 1; }
 
-    Con_FPrintf(CBLF_YELLOW, "Histogram (p:%p):\n", pd);
+    Con_FPrintf(CPF_YELLOW, "Histogram (p:%p):\n", pd);
     // Print heading:
     col = 0;
     Con_Printf("%*s", colWidths[col++], "range");
@@ -1028,7 +1028,7 @@ void printDistributionHistogram(pathdirectory_t* pd, ushort size,
         Con_Printf("%*s", colWidths[col++], Str_Text(PathDirectory_NodeTypeName(i)));
     }
     Con_Printf("\n");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
 
     { ushort i, from = 0, n = 0, range = (size != 0? PATHDIRECTORY_PATHHASH_SIZE / size: 0);
     memset(nodeCount, 0, sizeof(nodeCount));
@@ -1095,7 +1095,7 @@ void printDistributionHistogram(pathdirectory_t* pd, ushort size,
         n = 0;
         memset(nodeCount, 0, sizeof(nodeCount));
     }}
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
 
     // Sums:
     col = 0;

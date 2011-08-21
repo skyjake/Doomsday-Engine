@@ -331,7 +331,7 @@ void Net_ShowChatMessage(void)
 {
     // The current packet in the netBuffer is a chat message, let's unwrap
     // and show it.
-    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[netBuffer.msg.data[0]].name,
+    Con_FPrintf(CPF_GREEN, "%s: %s\n", clients[netBuffer.msg.data[0]].name,
                 netBuffer.msg.data + 3);
 }
 

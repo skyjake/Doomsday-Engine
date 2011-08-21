@@ -1141,22 +1141,21 @@ typedef unsigned int colorpaletteid_t;
 #define BUSYF_TRANSITION    0x40 // Do a transition effect when busy mode ends.
 
 /**
- * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
+ * @defgroup consolePrintFlags Console Print Flags.
  */
 /*@{*/
 // These correspond the good old text mode VGA colors.
-#define CBLF_BLACK          0x00000001
-#define CBLF_BLUE           0x00000002
-#define CBLF_GREEN          0x00000004
-#define CBLF_CYAN           0x00000008
-#define CBLF_RED            0x00000010
-#define CBLF_MAGENTA        0x00000020
-#define CBLF_YELLOW         0x00000040
-#define CBLF_WHITE          0x00000080
-#define CBLF_LIGHT          0x00000100
-#define CBLF_RULER          0x00000200
-#define CBLF_CENTER         0x00000400
-#define CBLF_TRANSMIT       0x80000000 /// If server, sent to all clients.
+#define CPF_BLACK           0x00000001
+#define CPF_BLUE            0x00000002
+#define CPF_GREEN           0x00000004
+#define CPF_CYAN            0x00000008
+#define CPF_RED             0x00000010
+#define CPF_MAGENTA         0x00000020
+#define CPF_YELLOW          0x00000040
+#define CPF_WHITE           0x00000080
+#define CPF_LIGHT           0x00000100
+#define CPF_CENTER          0x00000400
+#define CPF_TRANSMIT        0x80000000 /// If server, sent to all clients.
 /*@}*/
 
 /// Argument type for B_BindingsForControl().

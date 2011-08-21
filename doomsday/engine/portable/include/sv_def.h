@@ -53,7 +53,12 @@ boolean         Sv_PlayerArrives(unsigned int nodeID, char* name);
 void            Sv_PlayerLeaves(unsigned int nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
-void            Sv_SendText(int to, int conFlags, const char* text);
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+void            Sv_SendText(int to, int flags, const char* text);
+
 //void            Sv_FixLocalAngles(boolean clearFixAnglesFlag);
 void            Sv_Ticker(void);
 int             Sv_Latency(byte cmdTime);

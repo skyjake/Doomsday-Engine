@@ -1049,7 +1049,7 @@ static void P_PrintMapBanner(uint episode, uint map)
         dd_snprintf(name, 64, "Map %u: %s", map+1, lname);
 #endif
 
-        Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "%s\n", name);
+        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "%s\n", name);
     }
 
 #if !__JHEXEN__
@@ -1061,9 +1061,8 @@ static void P_PrintMapBanner(uint episode, uint map)
     if(!lauthor)
         lauthor = unknownAuthorStr;
 
-    Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "Author: %s\n", lauthor);
+    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
     }
 #endif
-
     Con_Printf("\n");
 }

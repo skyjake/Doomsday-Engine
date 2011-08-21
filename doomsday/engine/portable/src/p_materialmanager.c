@@ -1617,13 +1617,13 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, 0);
 
     if(!printNamespace)
-        Con_FPrintf(CBLF_YELLOW, "Known materials in namespace '%s'", Str_Text(nameForMaterialNamespaceId(namespaceId)));
+        Con_FPrintf(CPF_YELLOW, "Known materials in namespace '%s'", Str_Text(nameForMaterialNamespaceId(namespaceId)));
     else // Any namespace.
-        Con_FPrintf(CBLF_YELLOW, "Known materials");
+        Con_FPrintf(CPF_YELLOW, "Known materials");
 
     if(like && like[0])
-        Con_FPrintf(CBLF_YELLOW, " like \"%s\"", like);
-    Con_FPrintf(CBLF_YELLOW, ":\n");
+        Con_FPrintf(CPF_YELLOW, " like \"%s\"", like);
+    Con_FPrintf(CPF_YELLOW, ":\n");
 
     if(!foundMaterials)
         return 0;
@@ -1632,7 +1632,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     Con_Printf(" %*s: %-*s %12s  envclass origin\n", numDigits, "uid",
         printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
         "dimensions");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
 
     // Sort and print the index.
     qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByName);
@@ -1655,13 +1655,13 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
     if(namespaceId == MN_ANY && like && like[0])
     {
         printTotal = printMaterials2(namespaceId, like, true);
-        Con_FPrintf(CBLF_RULER, "");
+        Con_PrintRuler();
     }
     // Only one namespace to print?
     else if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
         printTotal = printMaterials2(namespaceId, like, false);
-        Con_FPrintf(CBLF_RULER, "");
+        Con_PrintRuler();
     }
     else
     {
@@ -1673,11 +1673,11 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
             if(printed != 0)
             {
                 printTotal += printed;
-                Con_FPrintf(CBLF_RULER, "");
+                Con_PrintRuler();
             }
         }
     }
-    Con_Message("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Material" : "Materials");
+    Con_Printf("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Material" : "Materials");
 }
 
 boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)

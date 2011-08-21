@@ -97,7 +97,7 @@ static __inline ddwindow_t *getWindow(uint idx)
 #if defined(UNIX)
 static void setAttrib(int flags)
 {
-    if(flags & (CBLF_YELLOW | CBLF_LIGHT))
+    if(flags & (CPF_YELLOW | CPF_LIGHT))
         wattrset(mainWindow.console.winText, A_BOLD);
     else
         wattrset(mainWindow.console.winText, A_NORMAL);
@@ -208,19 +208,9 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     setConWindowCmdLine(1, NULL, 0, 0);
 }
 
-/**
- * Set the command line display of the specified console window.
- *
- * @param idx           Console window identifier.
- * @param text          Text string to copy.
- * @param cursorPos     Position to set the cursor on the command line.
- * @param flags         CLF_* flags control the appearance of the
- *                      command line.
- */
-void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
-                             int flags)
+void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
 {
-    ddwindow_t     *win;
+    ddwindow_t* win;
 
     if(!winManagerInited)
         return;

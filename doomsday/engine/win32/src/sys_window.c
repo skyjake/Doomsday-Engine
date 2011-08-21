@@ -134,27 +134,29 @@ static void scrollLine(ddwindow_t *win)
     ScrollConsoleScreenBuffer(win->console.hcScreen, &src, NULL, dest, &fill);
 }
 
-static void setAttrib(ddwindow_t *win, int flags)
+/**
+ * @param flags  @see consolePrintFlags
+ */
+static void setAttrib(ddwindow_t* win, int flags)
 {
     win->console.attrib = 0;
-    if(flags & CBLF_WHITE)
-        win->console.attrib =
-            FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-    if(flags & CBLF_BLUE)
+    if(flags & CPF_WHITE)
+        win->console.attrib = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    if(flags & CPF_BLUE)
         win->console.attrib = FOREGROUND_BLUE;
-    if(flags & CBLF_GREEN)
+    if(flags & CPF_GREEN)
         win->console.attrib = FOREGROUND_GREEN;
-    if(flags & CBLF_CYAN)
+    if(flags & CPF_CYAN)
         win->console.attrib = FOREGROUND_BLUE | FOREGROUND_GREEN;
-    if(flags & CBLF_RED)
+    if(flags & CPF_RED)
         win->console.attrib = FOREGROUND_RED;
-    if(flags & CBLF_MAGENTA)
+    if(flags & CPF_MAGENTA)
         win->console.attrib = FOREGROUND_RED | FOREGROUND_BLUE;
-    if(flags & CBLF_YELLOW)
+    if(flags & CPF_YELLOW)
         win->console.attrib = FOREGROUND_RED | FOREGROUND_GREEN;
-    if(flags & CBLF_LIGHT)
+    if(flags & CPF_LIGHT)
         win->console.attrib |= FOREGROUND_INTENSITY;
-    if((flags & CBLF_WHITE) != CBLF_WHITE)
+    if((flags & CPF_WHITE) != CBLF_WHITE)
         win->console.attrib |= FOREGROUND_INTENSITY;
 
     SetConsoleTextAttribute(win->console.hcScreen, win->console.attrib);
@@ -179,15 +181,15 @@ static void writeText(ddwindow_t *win, CHAR_INFO *line, int len)
     WriteConsoleOutput(win->console.hcScreen, line, linesize, from, &rect);
 }
 
-void Sys_ConPrint(uint idx, const char *text, int clflags)
+void Sys_ConPrint(uint idx, const char* text, int flags)
 {
-    ddwindow_t     *win;
-    unsigned int    i;
-    int             linestart, bpos;
-    const char     *ptr = text;
-    char            ch;
-    size_t          len;
-    CHAR_INFO       line[LINELEN];
+    ddwindow_t* win;
+    unsigned int i;
+    int linestart, bpos;
+    const char* ptr = text;
+    CHAR_INFO line[LINELEN];
+    size_t len;
+    char ch;
 
     if(!winManagerInited || !text)
         return;
@@ -209,7 +211,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     }
 
     bpos = linestart = win->console.cx;
-    setAttrib(win, clflags);
+    setAttrib(win, flags);
     len = strlen(text);
     for(i = 0; i < len; i++, ptr++)
     {
@@ -254,27 +256,14 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     }
 }
 
-/**
- * Set the command line display of the specified console window.
- *
- * @param idx           Console window identifier.
- * @param text          Text string to copy.
- * @param cursorPos     Position to set the cursor on the command line.
- * @param flags         CLF_* flags control the appearance of the
- *                      command line.
- */
-void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
-                             int flags)
+void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
 {
-    ddwindow_t     *win;
+    ddwindow_t* win;
 
-    if(!winManagerInited)
-        return;
+    if(!winManagerInited) return;
 
     win = getWindow(idx - 1);
-
-    if(!win || win->type != WT_CONSOLE)
-        return;
+    if(!win || win->type != WT_CONSOLE) return;
 
     setConWindowCmdLine(win, text, cursorPos, flags);
 }
