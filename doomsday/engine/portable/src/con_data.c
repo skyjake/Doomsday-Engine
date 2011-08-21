@@ -423,7 +423,7 @@ static void updateKnownWords(void)
     knownWordsNeedUpdate = false;
 }
 
-static const ddstring_t* CVar_TypeName(cvartype_t type)
+const ddstring_t* CVar_TypeName(cvartype_t type)
 {
     static const ddstring_t names[CVARTYPE_COUNT] = {
         { "invalid" },

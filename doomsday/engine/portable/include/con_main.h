@@ -97,7 +97,7 @@ typedef struct cvar_s {
     void (*notifyChanged)(void);
 } cvar_t;
 
-static const ddstring_t* CVar_TypeName(cvartype_t type);
+const ddstring_t* CVar_TypeName(cvartype_t type);
 
 /// @return  Type of the variable.
 cvartype_t CVar_Type(const cvar_t* var);
