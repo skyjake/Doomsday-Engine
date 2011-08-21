@@ -204,18 +204,18 @@ int Sys_CriticalMessagef(const char* format, ...)
     va_list args;
     int result;
 
-    va_start(args, format);
-    if(args && format && format[0])
+    if(format && format[0])
     {
+        va_start(args, format);
         buf = (char*) calloc(1, BUF_SIZE);
         dd_vsnprintf(buf, BUF_SIZE, format, args);
         msg = buf;
+        va_end(args);
     }
     else
     {
         msg = unknownMsg;
     }
-    va_end(args);
 
     result = showCriticalMessage(msg);
 

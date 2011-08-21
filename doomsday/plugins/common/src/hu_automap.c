@@ -251,7 +251,7 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
 {
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
-    guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     //automapcfg_t* mcfg = am->mcfg;
     float a[2], b[2];

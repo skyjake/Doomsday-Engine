@@ -1680,8 +1680,8 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     {
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     //int dis   = (obj->_flags & MNF_DISABLED) != 0;
-    int act   = (obj->_flags & MNF_ACTIVE)   != 0;
-    int click = (obj->_flags & MNF_CLICKED)  != 0;
+    //int act   = (obj->_flags & MNF_ACTIVE)   != 0;
+    //int click = (obj->_flags & MNF_CLICKED)  != 0;
     //boolean down = act || click;
     const fontnum_t fontNum = rs.textFonts[obj->_pageFontIdx];
     float color[4];
@@ -2102,7 +2102,7 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
 
     assert(NULL != obj && obj->_type == MN_SLIDER);
     {
-    const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
+    //const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
     float x, y;//, range = sldr->max - sldr->min;
     patchinfo_t middleInfo, leftInfo;
 

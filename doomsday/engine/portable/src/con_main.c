@@ -1088,8 +1088,8 @@ static int completeWord(int mode)
     int cp = (int) strlen(cmdLine) - 1;
     char word[100], *wordBegin;
     char unambiguous[256];
-    const knownword_t* completeWord = 0;
-    const knownword_t** matches;
+    const knownword_t* completeWord = NULL;
+    const knownword_t** matches = NULL;
     uint numMatches;
 
     if(mode == 1)
