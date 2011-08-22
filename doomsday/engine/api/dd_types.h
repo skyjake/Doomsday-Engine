@@ -162,15 +162,17 @@ typedef struct trigger_s {
     timespan_t      accum;
 } trigger_t;
 
-#ifdef __cplusplus
-#  define boolean           int
-#else                           // Plain C.
-#  ifndef __BYTEBOOL__
-#    define __BYTEBOOL__
+#ifndef __BYTEBOOL__
+#define __BYTEBOOL__
+#  ifdef __cplusplus
+typedef bool                ddboolean_t; // Use builtin type in C++
+#  else // Plain C.
+#  define false             0
+#  define true              (!false)
+typedef int                 ddboolean_t;
 #  endif
-typedef enum ddboolean_e { false, true } ddboolean_t;
-#  define boolean           ddboolean_t
 #endif
+#define boolean             ddboolean_t
 
 #define BAMS_BITS   16
 
