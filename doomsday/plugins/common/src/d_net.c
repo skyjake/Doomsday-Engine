@@ -712,10 +712,6 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
  */
 D_CMD(SetColor)
 {
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    int     numColors = 4;
-#endif
-
     cfg.netColor = atoi(argv[1]);
     if(IS_SERVER) // A local player?
     {

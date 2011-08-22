@@ -686,8 +686,9 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass)
 static void printGameInfoBanner(gameinfo_t* info)
 {
     assert(info);
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
+    Con_FPrintf(CPF_WHITE | CPF_CENTER, "%s\n", Str_Text(GameInfo_Title(info)));
+    Con_PrintRuler();
 }
 
 static void printGameInfoResources(gameinfo_t* info, boolean printStatus, int rflags)
@@ -2534,9 +2535,9 @@ D_CMD(ListGames)
     int i, numAvailableGames = 0, numCompleteGames = 0;
     gameinfo_t** infoPtrs;
 
-    Con_FPrintf(CBLF_YELLOW, "Registered Games:\n");
+    Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
     Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
 
     // Sort a copy of gameInfo so we get a nice alphabetical list.
     infoPtrs = malloc(sizeof(*infoPtrs) * gameInfoCount);
@@ -2555,7 +2556,7 @@ D_CMD(ListGames)
         if(allGameResourcesFound(info))
             numCompleteGames++;
     }
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
     Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
 
     free(infoPtrs);

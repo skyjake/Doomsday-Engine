@@ -92,15 +92,14 @@ static boolean cheatsEnabled(void)
 
 void Cht_Init(void)
 {
-    { unsigned char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
+    { char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
     G_AddEventSequence(seq, 8, Cht_MusicFunc); }
 
-    { unsigned char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd' };
-    G_AddEventSequence(seq, 8, Cht_PowerupMessage); }
+    G_AddEventSequence("idbehold", 8, Cht_PowerupMessage);
 
     if(gameMode == doom_chex)
     {
-        unsigned char seq[] = { 'l', 'e', 'e', 's', 'n', 'y', 'd', 'e', 'r', 1, 0, 0 };
+        char seq[] = { 'l', 'e', 'e', 's', 'n', 'y', 'd', 'e', 'r', 1, 0, 0 };
         G_AddEventSequence(seq, 12, Cht_WarpFunc);
 
         G_AddEventSequence("joelkoenigs",   11, Cht_ChoppersFunc);
@@ -119,10 +118,10 @@ void Cht_Init(void)
     }
     else
     {
-        { unsigned char seq[] = { 'i', 'd', 'c', 'l', 'e', 'v', 1, 0, 0 };
+        { char seq[] = { 'i', 'd', 'c', 'l', 'e', 'v', 1, 0, 0 };
         G_AddEventSequence(seq, 9, Cht_WarpFunc); }
 
-        { unsigned char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd', 1, 0 };
+        { char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd', 1, 0 };
         G_AddEventSequence(seq, 10, Cht_PowerupFunc); }
 
         G_AddEventSequence("iddt",          4,  Cht_Reveal);

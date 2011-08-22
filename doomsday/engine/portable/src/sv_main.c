@@ -343,7 +343,7 @@ void Sv_HandlePlayerInfoFromClient(client_t* sender)
     len = MIN_OF(PLAYERNAMELEN - 1, len); // there is a maximum size
     Reader_Read(msgReader, sender->name, len);
     sender->name[len] = 0;
-    Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS, "%s renamed to %s.\n", oldName, sender->name);
+    Con_FPrintf(CPF_TRANSMIT | SV_CONSOLE_PRINT_FLAGS, "%s renamed to %s.\n", oldName, sender->name);
 
     // Relay to others.
     Net_SendPlayerInfo(console, DDSP_ALL_PLAYERS);
@@ -389,7 +389,7 @@ void Sv_HandlePacket(void)
                 if(clients[i].connected && clients[i].id == id)
                 {
                     // Send a message to everybody.
-                    Con_FPrintf(CBLF_TRANSMIT | SV_CONSOLE_FLAGS,
+                    Con_FPrintf(CPF_TRANSMIT | SV_CONSOLE_PRINT_FLAGS,
                                 "New client connection refused: Duplicate ID "
                                 "(%08x). From=%i, i=%i\n", id, from, i);
                     N_TerminateClient(from);
@@ -462,7 +462,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
             Msg_End();
             Net_SendBuffer(from, 0);
             // Send welcome string.
-            Sv_SendText(from, SV_CONSOLE_FLAGS, SV_WELCOME_STRING "\n");
+            Sv_SendText(from, SV_CONSOLE_PRINT_FLAGS, SV_WELCOME_STRING "\n");
         }
         break;
 
@@ -515,7 +515,7 @@ void Sv_Login(void)
 
     if(netRemoteUser)
     {
-        Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
+        Sv_SendText(netBuffer.player, SV_CONSOLE_PRINT_FLAGS,
                     "Sv_Login: A client is already logged in.\n");
         return;
     }
@@ -525,7 +525,8 @@ void Sv_Login(void)
     Reader_Read(msgReader, password, passLen);
     if(strcmp(password, netPassword))
     {
-        Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS, "Sv_Login: Invalid password.\n");
+        Sv_SendText(netBuffer.player, SV_CONSOLE_PRINT_FLAGS,
+                    "Sv_Login: Invalid password.\n");
         return;
     }
 
@@ -927,7 +928,7 @@ void Sv_SendText(int to, int con_flags, const char* text)
     uint32_t len = MIN_OF(0xffff, strlen(text));
 
     Msg_Begin(PSV_CONSOLE_TEXT);
-    Writer_WriteUInt32(msgWriter, con_flags & ~CBLF_TRANSMIT);
+    Writer_WriteUInt32(msgWriter, con_flags & ~CPF_TRANSMIT);
     Writer_WriteUInt16(msgWriter, len);
     Writer_Write(msgWriter, text, len);
     Msg_End();
@@ -943,7 +944,7 @@ void Sv_Kick(int who)
     if(!clients[who].connected)
         return;
 
-    Sv_SendText(who, SV_CONSOLE_FLAGS, "You were kicked out!\n");
+    Sv_SendText(who, SV_CONSOLE_PRINT_FLAGS, "You were kicked out!\n");
     Msg_Begin(PSV_SERVER_CLOSE);
     Msg_End();
     Net_SendBuffer(who, 0);
@@ -1265,7 +1266,7 @@ D_CMD(Logout)
         return false;
     // Notice that the server WILL execute this command when a client
     // is logged in and types "logout".
-    Sv_SendText(netRemoteUser, SV_CONSOLE_FLAGS, "Goodbye...\n");
+    Sv_SendText(netRemoteUser, SV_CONSOLE_PRINT_FLAGS, "Goodbye...\n");
     // Send a logout packet.
     Msg_Begin(PKT_LOGIN);
     Writer_WriteByte(msgWriter, false);       // You're outta here.

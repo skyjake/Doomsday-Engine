@@ -44,7 +44,6 @@ void G_ShutdownEventSequences(void);
  */
 int G_EventSequenceResponder(event_t* ev);
 
-void G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
-                        int (*callback) (const int*, int));
+void G_AddEventSequence(const char* sequence, size_t sequenceLength, int (*callback) (const int*, int));
 
 #endif /* LIBCOMMON_EVENTSEQUENCE_H */

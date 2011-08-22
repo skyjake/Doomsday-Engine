@@ -31,8 +31,8 @@
 
 #include "dd_def.h"
 
-#define SV_VERSION          16
-#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R16)"
+#define SV_VERSION          17
+#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R17)"
 
 // Anything closer than this is always taken into consideration when
 // deltas are being generated.
@@ -53,7 +53,12 @@ boolean         Sv_PlayerArrives(unsigned int nodeID, char* name);
 void            Sv_PlayerLeaves(unsigned int nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
-void            Sv_SendText(int to, int conFlags, const char* text);
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+void            Sv_SendText(int to, int flags, const char* text);
+
 void            Sv_Ticker(timespan_t ticLength);
 int             Sv_Latency(byte cmdTime);
 void            Sv_Kick(int who);

@@ -266,7 +266,7 @@ void EV_LightTurnOn(linedef_t *line, float max)
 {
     sector_t           *sec = NULL;
     iterlist_t         *list;
-    float               lightLevel, otherLevel;
+    float               lightLevel = 0, otherLevel;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)

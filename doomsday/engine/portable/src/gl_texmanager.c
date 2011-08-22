@@ -1653,8 +1653,9 @@ void GL_ClearTextureMemory(void)
 
 void GL_PruneTextureVariantSpecifications(void)
 {
-    int numPruned = pruneUnusedVariantSpecifications(TST_GENERAL) +
-                    pruneUnusedVariantSpecifications(TST_DETAIL);
+    int numPruned = 0;
+    numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
+    numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
 #if _DEBUG
     Con_Message("Pruned %i unused texture variant %s.\n", numPruned, numPruned == 1? "specification" : "specifications");
 #endif

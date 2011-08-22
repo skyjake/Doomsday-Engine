@@ -43,7 +43,7 @@
 
 // Flags for console text from the server.
 // Change with server version?
-#define SV_CONSOLE_FLAGS    (CBLF_WHITE|CBLF_LIGHT|CBLF_GREEN)
+#define SV_CONSOLE_PRINT_FLAGS    (CPF_WHITE|CPF_LIGHT|CPF_GREEN)
 
 #define PING_TIMEOUT        1000   // Ping timeout (ms).
 #define MAX_PINGS           10

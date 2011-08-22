@@ -1679,10 +1679,10 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     assert(NULL != obj);
     {
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-    int dis   = (obj->_flags & MNF_DISABLED) != 0;
-    int act   = (obj->_flags & MNF_ACTIVE)   != 0;
-    int click = (obj->_flags & MNF_CLICKED)  != 0;
-    boolean down = act || click;
+    //int dis   = (obj->_flags & MNF_DISABLED) != 0;
+    //int act   = (obj->_flags & MNF_ACTIVE)   != 0;
+    //int click = (obj->_flags & MNF_CLICKED)  != 0;
+    //boolean down = act || click;
     const fontnum_t fontNum = rs.textFonts[obj->_pageFontIdx];
     float color[4];
 
@@ -1789,10 +1789,10 @@ void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     assert(NULL != obj);
     {
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-    int dis = (obj->_flags & MNF_DISABLED) != 0;
-    int act = (obj->_flags & MNF_ACTIVE)   != 0;
+    //int dis = (obj->_flags & MNF_DISABLED) != 0;
+    //int act = (obj->_flags & MNF_ACTIVE)   != 0;
     //int click = (obj->_flags & MNF_CLICKED) != 0;
-    boolean down = act /*|| click*/;
+    //boolean down = act || click;
     const char* text = btn->text;
 
     // @fixme What if patch replacement is disabled?
@@ -1842,7 +1842,7 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     assert(NULL != obj && obj->_type == MN_COLORBOX);
     {
-    mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    //mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     switch(cmd)
     {
     case MCMD_SELECT:
@@ -2011,7 +2011,7 @@ boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float gree
 {
     assert(NULL != obj && obj->_type == MN_COLORBOX);
     {
-    mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    //mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     int setComps = 0, setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
 
     if(MNColorBox_SetRedf(  obj, setCompFlags, red))   setComps |= 0x1;
@@ -2102,8 +2102,8 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
 
     assert(NULL != obj && obj->_type == MN_SLIDER);
     {
-    const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
-    float x, y, range = sldr->max - sldr->min;
+    //const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
+    float x, y;//, range = sldr->max - sldr->min;
     patchinfo_t middleInfo, leftInfo;
 
     if(!R_GetPatchInfo(pSliderMiddle, &middleInfo))
@@ -2260,7 +2260,6 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
     // Are we substituting the textual value into a template?
     if(haveTemplateString)
     {
-        size_t textualValueLen = strlen(textualValue);
         const char* c, *beginSubstring = NULL;
         ddstring_t compStr;
 

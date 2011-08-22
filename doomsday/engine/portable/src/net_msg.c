@@ -37,9 +37,7 @@
 
 #include "de_base.h"
 #include "de_network.h"
-#ifdef _DEBUG
-#  include "de_console.h"
-#endif
+#include "de_console.h"
 
 Writer* msgWriter;
 Reader* msgReader;

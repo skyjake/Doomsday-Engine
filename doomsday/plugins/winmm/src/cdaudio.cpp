@@ -230,7 +230,7 @@ void DM_CDAudio_Update(void)
  */
 int DM_CDAudio_Play(int track, int looped)
 {
-    int                 len;
+    int len;
 
     if(!cdInited)
         return false;
@@ -246,7 +246,7 @@ int DM_CDAudio_Play(int track, int looped)
         return false;
 
     // Success!
-    cdLooping = looped;
+    cdLooping = (looped? true:false);
     cdStartTime = Sys_GetSeconds();
     return cdCurrentTrack = track;
 }

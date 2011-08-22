@@ -1100,8 +1100,8 @@ static int completeWord(int mode)
     int cp = (int) strlen(cmdLine) - 1;
     char word[100], *wordBegin;
     char unambiguous[256];
-    const knownword_t* completeWord = 0;
-    const knownword_t** matches;
+    const knownword_t* completeWord = NULL;
+    const knownword_t** matches = NULL;
     uint numMatches;
 
     if(mode == 1)
@@ -1186,24 +1186,26 @@ static int completeWord(int mode)
                 ccmd_t* ccmd = (ccmd_t*)(*match)->data;
                 foundWord = ccmd->name;
                 if(printCompletions)
-                    Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", foundWord);
+                    Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s\n", foundWord);
                 break;
               }
             case WT_CALIAS: {
                 calias_t* calias = (calias_t*)(*match)->data;
                 foundWord = calias->name;
                 if(printCompletions)
-                    Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", foundWord,
-                                calias->command);
+                    Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s == %s\n", foundWord, calias->command);
                 break;
               }
             case WT_GAMEINFO: {
                 gameinfo_t* info = (gameinfo_t*)(*match)->data;
                 foundWord = Str_Text(GameInfo_IdentityKey(info));
                 if(printCompletions)
-                    Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", foundWord);
+                    Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", foundWord);
                 break;
               }
+            default:
+                Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
+                exit(1); // Unreachable.
             }
 
             if(!unambiguous[0])
@@ -1238,6 +1240,9 @@ static int completeWord(int mode)
             str = Str_Text(foundName);
             break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
+        default:
+            Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
+            exit(1); // Unreachable.
         }
 
         if(wordBegin - cmdLine + strlen(str) < CMDLINE_SIZE)
@@ -1539,7 +1544,7 @@ boolean Con_Responder(ddevent_t* ev)
         bLineOff = 0;
 
         // Print the command line with yellow text.
-        Con_FPrintf(CBLF_YELLOW, ">%s\n", cmdLine);
+        Con_FPrintf(CPF_YELLOW, ">%s\n", cmdLine);
         // Process the command line.
         processCmd(CMDS_CONSOLE);
         // Clear it.
@@ -1720,18 +1725,17 @@ boolean Con_Responder(ddevent_t* ev)
     return true;
 }
 
-/**
- * A ruler line will be added into the console.
- */
-void Con_AddRuler(void)
+void Con_PrintRuler(void)
 {
-    int         i;
+    if(!ConsoleInited || ConsoleSilent)
+        return;
 
     Con_BufferWrite(histBuf, CBLF_RULER, NULL);
 
     if(consoleDump)
     {
         // A 70 characters long line.
+        int i;
         for(i = 0; i < 7; ++i)
         {
             fprintf(outFile, "----------");
@@ -1744,15 +1748,10 @@ void Con_AddRuler(void)
     }
 }
 
+/// @param flags  @see consolePrintFlags
 static void conPrintf(int flags, const char* format, va_list args)
 {
     const char* text = 0;
-
-    if(flags & CBLF_RULER)
-    {
-        Con_AddRuler();
-        flags &= ~CBLF_RULER;
-    }
 
     if(format && format[0] && args)
     {
@@ -1772,10 +1771,10 @@ static void conPrintf(int flags, const char* format, va_list args)
     // Servers might have to send the text to a number of clients.
     if(isServer)
     {
-        if(flags & CBLF_TRANSMIT)
+        if(flags & CPF_TRANSMIT)
             Sv_SendText(NSP_BROADCAST, flags, text);
         else if(netRemoteUser) // Is somebody logged in?
-            Sv_SendText(netRemoteUser, flags | SV_CONSOLE_FLAGS, text);
+            Sv_SendText(netRemoteUser, flags | SV_CONSOLE_PRINT_FLAGS, text);
     }
 
     if(isDedicated)
@@ -1784,7 +1783,21 @@ static void conPrintf(int flags, const char* format, va_list args)
     }
     else
     {
-        Con_BufferWrite(histBuf, flags, text);
+        int cblFlags = 0;
+
+        // Translate print flags:
+        if(flags & CPF_BLACK)   cblFlags |= CBLF_BLACK;
+        if(flags & CPF_BLUE)    cblFlags |= CBLF_BLUE;
+        if(flags & CPF_GREEN)   cblFlags |= CBLF_GREEN;
+        if(flags & CPF_CYAN)    cblFlags |= CBLF_CYAN;
+        if(flags & CPF_RED)     cblFlags |= CBLF_RED;
+        if(flags & CPF_MAGENTA) cblFlags |= CBLF_MAGENTA;
+        if(flags & CPF_YELLOW)  cblFlags |= CBLF_YELLOW;
+        if(flags & CPF_WHITE)   cblFlags |= CBLF_WHITE;
+        if(flags & CPF_LIGHT)   cblFlags |= CBLF_LIGHT;
+        if(flags & CPF_CENTER)  cblFlags |= CBLF_CENTER;
+
+        Con_BufferWrite(histBuf, cblFlags, text);
 
         if(consoleSnapBackOnPrint)
         {
@@ -1802,7 +1815,7 @@ void Con_Printf(const char* format, ...)
     if(!format || !format[0])
         return;
     va_start(args, format);
-    conPrintf(CBLF_WHITE, format, args);
+    conPrintf(CPF_WHITE, format, args);
     va_end(args);
 }
 
@@ -1812,10 +1825,7 @@ void Con_FPrintf(int flags, const char* format, ...)
         return;
 
     if(!format || !format[0])
-    {
-        conPrintf(flags, 0, 0);
         return;
-    }
 
     {va_list args;
     va_start(args, format);
@@ -2017,8 +2027,8 @@ static void Con_Alias(char *aName, char *command)
 
 D_CMD(Help)
 {
-    Con_FPrintf(CBLF_RULER | CBLF_YELLOW | CBLF_CENTER,
-                "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
+    Con_PrintRuler();
+    Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
     Con_Printf("Tilde          Open/close the console.\n");
     Con_Printf("Shift-Tilde    Switch between half and full screen mode.\n");
@@ -2034,7 +2044,7 @@ D_CMD(Help)
     Con_Printf("\n");
     Con_Printf("Type \"listcmds\" to see a list of available commands.\n");
     Con_Printf("Type \"help (what)\" to see information about (what).\n");
-    Con_FPrintf(CBLF_RULER, "\n");
+    Con_PrintRuler();
     return true;
 }
 
@@ -2052,6 +2062,7 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
+        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
         Con_Printf("Game: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
     }
     return true;
@@ -2332,6 +2343,9 @@ D_CMD(If)
                                          comp <= 0);
         }
         break;
+    default:
+        Con_Error("CCmdIf: Invalid cvar type %i.", (int)var->type);
+        exit(1); // Unreachable.
     }
 
     // Should the command be executed?

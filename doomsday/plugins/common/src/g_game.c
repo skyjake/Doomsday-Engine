@@ -2346,8 +2346,6 @@ boolean G_IsSaveGamePossible(void)
 
 boolean G_SaveGame2(int slot, const char* name)
 {
-    player_t* player = &players[CONSOLEPLAYER];
-
     if(0 > slot || slot >= NUMSAVESLOTS) return false;
     if(!G_IsSaveGamePossible()) return false;
 

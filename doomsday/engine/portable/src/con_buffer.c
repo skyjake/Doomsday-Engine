@@ -555,17 +555,9 @@ void Con_BufferFlush(cbuffer_t* buf)
     Sys_Unlock(buf->mutex);
 }
 
-/**
- * Write the given text string (plus optional flags) to the buffer.
- *
- * @param buf               Ptr to the buffer to write to.
- * @param flags             CBLF_* flags in use for this write.
- * @param txt               Ptr to the text string to be written.
- */
 void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt)
 {
-    if(!buf)
-        return;
+    assert(buf);
 
     Sys_Lock(buf->mutex);
 
@@ -580,7 +572,7 @@ void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt)
 
     if(!(!txt || !strcmp(txt, "")))
     {
-        size_t                  i, len = strlen(txt);
+        size_t i, len = strlen(txt);
 
         // Copy the text into the write buffer and flush to the history
         // buffer when as necessary/required.

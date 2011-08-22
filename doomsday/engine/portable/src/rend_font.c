@@ -549,8 +549,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                          (Font_Flags(font) & FF_SHADOWED) != 0);
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
+    float flashColor[3] = { 0, 0, 0 };
     int w, h, cx, cy, count, yoff;
-    float flashColor[3];
     unsigned char c;
     const char* ch;
 

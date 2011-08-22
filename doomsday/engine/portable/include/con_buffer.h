@@ -31,6 +31,24 @@
 
 #include "sys_system.h"
 
+/**
+ * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
+ */
+/*@{*/
+// These correspond the good old text mode VGA colors.
+#define CBLF_BLACK          0x00000001
+#define CBLF_BLUE           0x00000002
+#define CBLF_GREEN          0x00000004
+#define CBLF_CYAN           0x00000008
+#define CBLF_RED            0x00000010
+#define CBLF_MAGENTA        0x00000020
+#define CBLF_YELLOW         0x00000040
+#define CBLF_WHITE          0x00000080
+#define CBLF_LIGHT          0x00000100
+#define CBLF_RULER          0x00000200
+#define CBLF_CENTER         0x00000400
+/*@}*/
+
 // A console buffer line.
 typedef struct cbline_s {
     uint            len; // This is the length of the line (no term).
@@ -64,7 +82,15 @@ typedef struct {
 cbuffer_t* Con_NewBuffer(uint maxNumLines, uint maxLineLength, int cbflags);
 void Con_DestroyBuffer(cbuffer_t* buf);
 
+/**
+ * Write the given text string (plus optional flags) to the buffer.
+ *
+ * @param buf  Ptr to the buffer to write to.
+ * @param flags  @see consoleBufferLineFlags
+ * @param txt  Ptr to the text string to be written.
+ */
 void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt);
+
 void Con_BufferFlush(cbuffer_t* buf);
 void Con_BufferClear(cbuffer_t* buf);
 
@@ -86,7 +112,7 @@ const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
 
 /**
  * @defgroup bufferLineFlags Buffer Line Flags.
- */ 
+ */
 /*@{*/
 #define BLF_OMIT_RULER      0x1 // Ignore rulers.
 #define BLF_OMIT_EMPTYLINE  0x2 // Ignore empty lines.

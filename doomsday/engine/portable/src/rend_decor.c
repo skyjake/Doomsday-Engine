@@ -583,7 +583,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
     int                 sid;
     float               offsetS = 0, offsetT = 0;
     boolean             visible = false;
-    const plane_t*      frontCeil, *frontFloor, *backCeil, *backFloor;
+    const plane_t*      frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     float               bottom, top;
 
     if(!side->segs || !side->segs[0])

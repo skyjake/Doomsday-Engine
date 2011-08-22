@@ -86,84 +86,84 @@ int Cht_RevealFunc(const int* args, int player);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Toggle god mode.
-static unsigned char cheatGodSeq[] = {
+static char cheatGodSeq[] = {
     'q', 'u', 'i', 'c', 'k', 'e', 'n'
 };
 
 // Toggle no clipping mode.
-static unsigned char cheatNoClipSeq[] = {
+static char cheatNoClipSeq[] = {
     'k', 'i', 't', 't', 'y'
 };
 
 // Get all weapons and ammo.
-static unsigned char cheatWeaponsSeq[] = {
+static char cheatWeaponsSeq[] = {
     'r', 'a', 'm', 'b', 'o'
 };
 
 // Toggle tome of power.
-static unsigned char cheatPowerSeq[] = {
+static char cheatPowerSeq[] = {
     's', 'h', 'a', 'z', 'a', 'm'
 };
 
 // Get full health.
-static unsigned char cheatHealthSeq[] = {
+static char cheatHealthSeq[] = {
     'p', 'o', 'n', 'c', 'e'
 };
 
 // Get all keys.
-static unsigned char cheatKeysSeq[] = {
+static char cheatKeysSeq[] = {
     's', 'k', 'e', 'l'
 };
 
 // Toggle sound debug info.
-static unsigned char cheatSoundSeq[] = {
+static char cheatSoundSeq[] = {
     'n', 'o', 'i', 's', 'e'
 };
 
 // Toggle ticker.
-static unsigned char cheatTickerSeq[] = {
+static char cheatTickerSeq[] = {
     't', 'i', 'c', 'k', 'e', 'r'
 };
 
 // Get an inventory item 1st stage (ask for type).
-static unsigned char cheatInvItem1Seq[] = {
+static char cheatInvItem1Seq[] = {
     'g', 'i', 'm', 'm', 'e'
 };
 
 // Get an inventory item 2nd stage (ask for count).
-static unsigned char cheatInvItem2Seq[] = {
+static char cheatInvItem2Seq[] = {
     'g', 'i', 'm', 'm', 'e', 1, 0
 };
 
 // Get an inventory item final stage.
-static unsigned char cheatInvItem3Seq[] = {
+static char cheatInvItem3Seq[] = {
     'g', 'i', 'm', 'm', 'e', 1, 0, 0
 };
 
 // Warp to new level.
-static unsigned char cheatWarpSeq[] = {
+static char cheatWarpSeq[] = {
     'e', 'n', 'g', 'a', 'g', 'e', 1, 0, 0
 };
 
 // Save a screenshot.
-static unsigned char cheatChickenSeq[] = {
+static char cheatChickenSeq[] = {
     'c', 'o', 'c', 'k', 'a', 'd', 'o', 'o', 'd', 'l', 'e', 'd', 'o', 'o'
 };
 
 // Kill all monsters.
-static unsigned char cheatMassacreSeq[] = {
+static char cheatMassacreSeq[] = {
     'm', 'a', 's', 's', 'a', 'c', 'r', 'e'
 };
 
-static unsigned char cheatIDKFASeq[] = {
+static char cheatIDKFASeq[] = {
     'i', 'd', 'k', 'f', 'a'
 };
 
-static unsigned char cheatIDDQDSeq[] = {
+static char cheatIDDQDSeq[] = {
     'i', 'd', 'd', 'q', 'd'
 };
 
-static unsigned char cheatAutomapSeq[] = {
+static char cheatAutomapSeq[] = {
     'r', 'a', 'v', 'm', 'a', 'p'
 };
 

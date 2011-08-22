@@ -1302,15 +1302,15 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 }
 
 typedef struct {
-    player_t*           master;
-    mobj_t*             foundMobj;
+    player_t* master;
+    mobj_t* foundMobj;
 } findactiveminotaurparams_t;
 
 static boolean findActiveMinotaur(thinker_t* th, void* context)
 {
     findactiveminotaurparams_t* params =
         (findactiveminotaurparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t* mo = (mobj_t*) th;
 
     if(mo->type != MT_MINOTAUR)
         return true; // Continue iteration.
@@ -1321,7 +1321,7 @@ static boolean findActiveMinotaur(thinker_t* th, void* context)
     if(mo->flags & MF_CORPSE)
         return true; // Continue iteration.
 
-    if((mapTime - *((unsigned int *) mo->args)) >= MAULATORTICS)
+    if(mapTime - mo->argsUInt >= MAULATORTICS)
         return true; // Continue iteration.
 
     if(mo->tracer->player == params->master)

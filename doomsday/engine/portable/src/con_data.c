@@ -423,7 +423,7 @@ static void updateKnownWords(void)
     knownWordsNeedUpdate = false;
 }
 
-static const ddstring_t* CVar_TypeName(cvartype_t type)
+const ddstring_t* CVar_TypeName(cvartype_t type)
 {
     static const ddstring_t names[CVARTYPE_COUNT] = {
         { "invalid" },
@@ -467,7 +467,7 @@ void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
         return; // Unreachable.
     }
 
-    if(!CV_CHARPTR(var) && strlen(text) != 0 || stricmp(text, CV_CHARPTR(var)))
+    if((!CV_CHARPTR(var) && strlen(text) != 0) || stricmp(text, CV_CHARPTR(var)))
         changed = true;
 
     // Free the old string, if one exists.
@@ -600,6 +600,7 @@ int CVar_Integer(const cvar_t* var)
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
+    default: break;
     }
     // Unreachable (hopefully).
     return 0;
@@ -614,6 +615,7 @@ float CVar_Float(const cvar_t* var)
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
+    default: break;
     }
     // Unreachable (hopefully).
     return 0;
@@ -628,6 +630,7 @@ byte CVar_Byte(const cvar_t* var)
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
+    default: break;
     }
     // Unreachable (hopefully).
     return 0;
@@ -1072,7 +1075,7 @@ void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo)
             infoCopy = infoCopyBuf;
             while(*(line = M_StrTok(&infoCopy, "\n")))
             {
-                Con_FPrintf(CBLF_LIGHT, "  %s\n", line);
+                Con_FPrintf(CPF_LIGHT, "  %s\n", line);
             }
             free(infoCopyBuf);
         }
@@ -1375,7 +1378,7 @@ D_CMD(HelpWhat)
             infoCopy = infoCopyBuf;
             while(*(line = M_StrTok(&infoCopy, "\n")))
             {
-                Con_FPrintf(CBLF_LIGHT, "  %s\n", line);
+                Con_FPrintf(CPF_LIGHT, "  %s\n", line);
             }
             free(infoCopyBuf);
         }
@@ -1438,9 +1441,9 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
             return 0; // Skip overloaded variants.
 
         if((str = DH_GetString(DH_Find(ccmd->name), HST_DESCRIPTION)))
-            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s (%s)\n", ccmd->name, str);
+            Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s (%s)\n", ccmd->name, str);
         else
-            Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s\n", ccmd->name);
+            Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s\n", ccmd->name);
         break;
       }
     case WT_CVAR: {
@@ -1454,14 +1457,17 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
       }
     case WT_CALIAS: {
         calias_t* cal = (calias_t*) word->data;
-        Con_FPrintf(CBLF_LIGHT|CBLF_YELLOW, "  %s == %s\n", cal->name, cal->command);
+        Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s == %s\n", cal->name, cal->command);
         break;
       }
     case WT_GAMEINFO: {
         gameinfo_t* info = (gameinfo_t*) word->data;
-        Con_FPrintf(CBLF_LIGHT|CBLF_BLUE, "  %s\n", Str_Text(GameInfo_IdentityKey(info)));
+        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", Str_Text(GameInfo_IdentityKey(info)));
         break;
       }
+    default:
+        Con_Error("printKnownWordWorker: Invalid word type %i.", (int)word->type);
+        exit(1); // Unreachable.
     }
     if(numPrinted) ++(*numPrinted);
     return 0; // Continue iteration.
@@ -1564,7 +1570,7 @@ D_CMD(VarStats)
 {
     cvartype_t type;
     countvariableparams_t p;
-    Con_FPrintf(CBLF_YELLOW, "Console Variable Statistics:\n");
+    Con_FPrintf(CPF_YELLOW, "Console Variable Statistics:\n");
     p.hidden = false;
     p.ignoreHidden = false;
     for(type = CVT_BYTE; type < CVARTYPE_COUNT; ++type)

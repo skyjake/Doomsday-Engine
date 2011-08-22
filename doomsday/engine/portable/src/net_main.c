@@ -381,7 +381,7 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length)
  */
 void Net_ShowChatMessage(int plrNum, const char* message)
 {
-    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[plrNum].name, message);
+    Con_FPrintf(CPF_GREEN, "%s: %s\n", clients[plrNum].name, message);
 }
 
 /**

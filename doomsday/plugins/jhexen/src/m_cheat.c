@@ -95,124 +95,111 @@ int Cht_WhereFunc(const int* args, int player);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Toggle god mode
-static unsigned char cheatGodSeq[] = {
+static char cheatGodSeq[] = {
     's', 'a', 't', 'a', 'n'
 };
 
 // Toggle no clipping mode
-static unsigned char cheatNoClipSeq[] = {
+static char cheatNoClipSeq[] = {
     'c', 'a', 's', 'p', 'e', 'r'
 };
 
 // Get all weapons and mana
-static unsigned char cheatWeaponsSeq[] = {
+static char cheatWeaponsSeq[] = {
     'n', 'r', 'a'
 };
 
 // Get full health
-static unsigned char cheatHealthSeq[] = {
+static char cheatHealthSeq[] = {
     'c', 'l', 'u', 'b', 'm', 'e', 'd'
 };
 
 // Get all keys
-static unsigned char cheatKeysSeq[] = {
+static char cheatKeysSeq[] = {
     'l', 'o', 'c', 'k', 's', 'm', 'i', 't', 'h'
 };
 
 // Toggle sound debug info
-static unsigned char cheatSoundSeq[] = {
+static char cheatSoundSeq[] = {
     'n', 'o', 'i', 's', 'e'
 };
 
-// Toggle ticker
-static unsigned char cheatTickerSeq[] = {
-    't', 'i', 'c', 'k', 'e', 'r'
-};
-
 // Get all inventory items
-static unsigned char cheatInventorySeq[] = {
+static char cheatInventorySeq[] = {
     'i', 'n', 'd', 'i', 'a', 'n', 'a'
 };
 
 // Get all puzzle pieces
-static unsigned char cheatPuzzleSeq[] = {
+static char cheatPuzzleSeq[] = {
     's', 'h', 'e', 'r', 'l', 'o', 'c', 'k'
 };
 
 // Warp to new map
-static unsigned char cheatWarpSeq[] = {
+static char cheatWarpSeq[] = {
     'v', 'i', 's', 'i', 't', 1, 0, 0
 };
 
 // Become a pig
-static unsigned char cheatPigSeq[] = {
+static char cheatPigSeq[] = {
     'd', 'e', 'l', 'i', 'v', 'e', 'r', 'a', 'n', 'c', 'e'
 };
 
 // Kill all monsters
-static unsigned char cheatMassacreSeq[] = {
+static char cheatMassacreSeq[] = {
     'b', 'u', 't', 'c', 'h', 'e', 'r'
 };
 
-static unsigned char cheatIDKFASeq[] = {
+static char cheatIDKFASeq[] = {
     'c', 'o', 'n', 'a', 'n'
 };
 
-static unsigned char cheatQuickenSeq1[] = {
+static char cheatQuickenSeq1[] = {
     'm', 'a', 'r', 't', 'e', 'k'
 };
 
-static unsigned char cheatQuickenSeq2[] = {
+static char cheatQuickenSeq2[] = {
     'm', 'a', 'r', 't', 'e', 'k', 'm', 'a', 'r', 't', 'e', 'k'
 };
 
-static unsigned char cheatQuickenSeq3[] = {
+static char cheatQuickenSeq3[] = {
     'm', 'a', 'r', 't', 'e', 'k', 'm', 'a', 'r', 't', 'e', 'k', 'm', 'a', 'r', 't', 'e', 'k'
 };
 
 // New class
-static unsigned char cheatClass1Seq[] = {
+static char cheatClass1Seq[] = {
     's', 'h', 'a', 'd', 'o', 'w', 'c', 'a', 's', 't', 'e', 'r'
 };
 
-static unsigned char cheatClass2Seq[] = {
+static char cheatClass2Seq[] = {
     's', 'h', 'a', 'd', 'o', 'w', 'c', 'a', 's', 't', 'e', 'r', 1, 0
 };
 
-static unsigned char cheatInitSeq[] = {
+static char cheatInitSeq[] = {
     'i', 'n', 'i', 't'
 };
 
-static unsigned char cheatVersionSeq[] = {
+static char cheatVersionSeq[] = {
     'm', 'r', 'j', 'o', 'n', 'e', 's'
 };
 
-static unsigned char cheatDebugSeq[] = {
+static char cheatDebugSeq[] = {
     'w', 'h', 'e', 'r', 'e'
 };
 
-static unsigned char cheatScriptSeq1[] = {
+static char cheatScriptSeq1[] = {
     'p', 'u', 'k', 'e'
 };
 
-static unsigned char cheatScriptSeq2[] = {
+static char cheatScriptSeq2[] = {
     'p', 'u', 'k', 'e', 1, 0
 };
 
-static unsigned char cheatScriptSeq3[] = {
+static char cheatScriptSeq3[] = {
     'p', 'u', 'k', 'e', 1, 0, 0
 };
 
-static unsigned char cheatRevealSeq[] = {
+static char cheatRevealSeq[] = {
     'm', 'a', 'p', 's', 'c', 'o'
-};
-
-static unsigned char cheatTrackSeq1[] = {
-    'c', 'd', 't'
-};
-
-static unsigned char cheatTrackSeq2[] = {
-    'c', 'd', 't', 1, 0, 0
 };
 
 // CODE --------------------------------------------------------------------

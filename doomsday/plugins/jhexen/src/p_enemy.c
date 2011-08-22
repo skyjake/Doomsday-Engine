@@ -973,12 +973,10 @@ void C_DECL A_MinotaurFade2(mobj_t *actor)
 
 void C_DECL A_MinotaurRoam(mobj_t *actor)
 {
-    unsigned int *startTime = (unsigned int *) actor->args;
-
     actor->flags &= ~MF_SHADOW; // In case pain caused him to
     actor->flags &= ~MF_ALTSHADOW; // Skip his fade in.
 
-    if((mapTime - *startTime) >= MAULATORTICS)
+    if((mapTime - actor->argsUInt) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -996,7 +994,7 @@ void C_DECL A_MinotaurRoam(mobj_t *actor)
     if(!P_Move(actor))
     {   // Turn
         if(P_Random() & 1)
-            actor->moveDir = (++actor->moveDir) % 8;
+            actor->moveDir = (actor->moveDir + 1) % 8;
         else
             actor->moveDir = (actor->moveDir + 7) % 8;
         FaceMovementDirection(actor);
@@ -1127,13 +1125,12 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
 
 void C_DECL A_MinotaurChase(mobj_t* actor)
 {
-    unsigned int*       startTime = (unsigned int *) actor->args;
-    statenum_t          state;
+    statenum_t state;
 
     actor->flags &= ~MF_SHADOW; // In case pain caused him to.
     actor->flags &= ~MF_ALTSHADOW;  // Skip his fade in.
 
-    if((mapTime - *startTime) >= MAULATORTICS)
+    if((mapTime - actor->argsUInt) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;

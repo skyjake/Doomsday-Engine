@@ -689,7 +689,7 @@ static void updateDeathmatchStats(void)
 
 static void drawDeathmatchStats(void)
 {
-    int i, j, x, y, w, lh = WI_SPACINGY; // Line height.
+    int i, j, x, y, w;// lh = WI_SPACINGY; // Line height.
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);

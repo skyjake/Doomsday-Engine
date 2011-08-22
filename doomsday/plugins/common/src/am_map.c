@@ -343,7 +343,7 @@ void AM_SetColor(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, floa
 
     default:
         Con_Error("AM_SetColor: Object %i does not use color.", (int) name);
-        break;
+        exit(1); // Unreachable.
     }
 
     info->rgba[0] = r;

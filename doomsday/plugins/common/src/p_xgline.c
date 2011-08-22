@@ -2533,7 +2533,7 @@ int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
 
 void XL_DoChain(linedef_t* lineDef, int chain, boolean activating, mobj_t* actThing)
 {
-    sidedef_t* dummyFrontSideDef, *dummyBackSideDef;
+    sidedef_t* dummyFrontSideDef, *dummyBackSideDef = NULL;
     linedef_t* dummyLineDef;
     xline_t* xdummyLineDef;
 

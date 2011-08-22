@@ -1834,7 +1834,7 @@ static int compareWeaponPriority(const void* _a, const void* _b)
             aIndex = i;
         if(cfg.weaponOrder[i] == b->data)
             bIndex = i;
-    } while(!(aIndex != -1 && bIndex != -1) && i++ < NUM_WEAPON_TYPES);
+    } while(!(aIndex != -1 && bIndex != -1) && ++i < NUM_WEAPON_TYPES);
     if(aIndex > bIndex)
         return 1;
     if(aIndex < bIndex)
@@ -3308,10 +3308,9 @@ void Hu_MenuDrawGameplayPage(mn_page_t* page, int x, int y)
 
 void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y)
 {
-    int i = 0;
-#if __JDOOM__ || __JDOOM64__
+/*#if __JDOOM__ || __JDOOM64__
     char buf[1024];
-#endif
+#endif*/
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -3360,9 +3359,9 @@ void Hu_MenuDrawInventoryPage(mn_page_t* page, int x, int y)
 
 void Hu_MenuDrawHUDPage(mn_page_t* page, int x, int y)
 {
-#if __JDOOM__ || __JDOOM64__
+/*#if __JDOOM__ || __JDOOM64__
     char buf[1024];
-#endif
+#endif*/
 
     DGL_Enable(DGL_TEXTURE_2D);
 

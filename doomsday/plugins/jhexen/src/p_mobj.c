@@ -70,8 +70,6 @@ void    P_BounceWall(mobj_t *mo);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern mobj_t lavaInflictor;

@@ -1037,9 +1037,9 @@ static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like)
     fontbind_t** foundFonts = collectFontBinds(namespaceId, like, &count, 0);
 
     if(VALID_FONTNAMESPACEID(namespaceId))
-        Con_FPrintf(CBLF_YELLOW, "Known Fonts in \"%s\":\n", Str_Text(nameForFontNamespaceId(namespaceId)));
+        Con_FPrintf(CPF_YELLOW, "Known Fonts in \"%s\":\n", Str_Text(nameForFontNamespaceId(namespaceId)));
     else // Any namespace.
-        Con_FPrintf(CBLF_YELLOW, "Known Fonts:\n");
+        Con_FPrintf(CPF_YELLOW, "Known Fonts:\n");
 
     if(!foundFonts)
     {
@@ -1055,7 +1055,7 @@ static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like)
         Con_Printf(" (<property-name>:<value>, ...)");
     }
     Con_Printf("\n");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_PrintRuler();
 
     // Sort and print the index.
     qsort(foundFonts, count, sizeof(*foundFonts), compareFontBindByName);
@@ -1083,7 +1083,7 @@ static void printFonts(fontnamespaceid_t namespaceId, const char* like)
     for(i = FONTNAMESPACE_FIRST; i <= FONTNAMESPACE_LAST; ++i)
     {
         if(printFonts2((fontnamespaceid_t)i, like) != 0)
-            Con_FPrintf(CBLF_RULER, "");
+            Con_PrintRuler();
     }}
 }
 

@@ -3245,23 +3245,24 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     assert(ffloor && fceil && bottom && top);
     *bottom = 0;
     *top = 0;
-    if(R_IsSkySurface(&frontsec->SP_floorsurface))
-        if(!P_IsInVoid(viewPlayer))
+    if(!R_IsSkySurface(&frontsec->SP_floorsurface)) return;
+
+    if(!P_IsInVoid(viewPlayer))
+    {
+        if(!(backsec && R_IsSkySurface(&bfloor->surface)) && ffloor->visHeight > skyFloor)
         {
-            if(!(backsec && R_IsSkySurface(&bfloor->surface)) && ffloor->visHeight > skyFloor)
-            {
-                *top    = MIN_OF(fceil->visHeight, ffloor->visHeight);
-                *bottom = skyFloor;
-            }
+            *top    = MIN_OF(fceil->visHeight, ffloor->visHeight);
+            *bottom = skyFloor;
         }
-        else if(!backsec || (R_IsSkySurface(&bfloor->surface) && bfloor->visHeight > skyFloor))
+    }
+    else if(!backsec || (R_IsSkySurface(&bfloor->surface) && bfloor->visHeight > skyFloor))
+    {
+        if(!(backsec && R_IsSkySurface(&bfloor->surface) && bfloor->visHeight <= ffloor->visHeight))
         {
-            if(!(backsec && R_IsSkySurface(&bfloor->surface) && bfloor->visHeight <= ffloor->visHeight))
-            {
-                *top    = MIN_OF(fceil->visHeight, (backsec? bfloor->visHeight : ffloor->visHeight));
-                *bottom = (backsec? ffloor->visHeight : skyFloor);
-            }
+            *top    = MIN_OF(fceil->visHeight, (backsec? bfloor->visHeight : ffloor->visHeight));
+            *bottom = (backsec? ffloor->visHeight : skyFloor);
         }
+    }
 }
 
 /*static*/ void getSkymaskBottomTop2(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
@@ -3272,23 +3273,24 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     assert(ffloor && fceil && bottom && top);
     *bottom = 0;
     *top = 0;
-    if(R_IsSkySurface(&fceil->surface))
-        if(!P_IsInVoid(viewPlayer))
+    if(!R_IsSkySurface(&fceil->surface)) return;
+
+    if(!P_IsInVoid(viewPlayer))
+    {
+        if(!(backsec && R_IsSkySurface(&bceil->surface)) && fceil->visHeight < skyCeil)
         {
-            if(!(backsec && R_IsSkySurface(&bceil->surface)) && fceil->visHeight < skyCeil)
-            {
-                *top    = skyCeil;
-                *bottom = MAX_OF(fceil->visHeight, ffloor->visHeight);
-            }
+            *top    = skyCeil;
+            *bottom = MAX_OF(fceil->visHeight, ffloor->visHeight);
         }
-        else if(!backsec || (R_IsSkySurface(&bceil->surface) && bceil->visHeight < skyCeil))
+    }
+    else if(!backsec || (R_IsSkySurface(&bceil->surface) && bceil->visHeight < skyCeil))
+    {
+        if(!(backsec && R_IsSkySurface(&bceil->surface) && bceil->visHeight >= fceil->visHeight))
         {
-            if(!(backsec && R_IsSkySurface(&bceil->surface) && bceil->visHeight >= fceil->visHeight))
-            {
-                *top    = (backsec? fceil->visHeight : skyCeil);
-                *bottom = MAX_OF(ffloor->visHeight, (backsec? bceil->visHeight : fceil->visHeight));
-            }
+            *top    = (backsec? fceil->visHeight : skyCeil);
+            *bottom = MAX_OF(ffloor->visHeight, (backsec? bceil->visHeight : fceil->visHeight));
         }
+    }
 }
 
 /*static*/ void getSkymaskBottomTop3(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,

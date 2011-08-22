@@ -343,7 +343,7 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     const hudstate_t* hud = &hudStates[obj->player];
     int chainYOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -479,7 +479,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
     {
     const hudstate_t* hud = &hudStates[obj->player];
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
@@ -603,14 +603,6 @@ void SBarBackground_UpdateDimensions(uiwidget_t* obj)
 #undef HEIGHT
 #undef WIDTH
 }
-
-/*
-void ST_updateWidgets(int player)
-{
-    hudstate_t* hud = &hudStates[player];
-
-}
-*/
 
 int ST_Responder(event_t* ev)
 {
@@ -748,7 +740,7 @@ void SBarInventory_Drawer(uiwidget_t* obj, int x, int y)
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(!Hu_InventoryIsOpen(obj->player))
@@ -1012,7 +1004,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
     if(Hu_InventoryIsOpen(obj->player))
@@ -1204,7 +1196,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
@@ -1310,7 +1302,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
-    const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(obj->player))
@@ -2996,7 +2988,6 @@ void ST_loadData(void)
 static void initData(hudstate_t* hud)
 {
     int player = hud - hudStates;
-    player_t* plr = &players[player];
 
     hud->statusbarActive = true;
     hud->stopped = true;

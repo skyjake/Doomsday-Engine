@@ -270,17 +270,20 @@ void R_SetupSky(ded_sky_t* sky)
         {
             R_SkyLayerEnable(i, true);
             R_SkyLayerMasked(i, (def->flags & SLF_MASKED) != 0);
-            { materialnum_t material;
-            if(def->material && (material = Materials_IndexForUri(def->material)) == 0)
+            if(def->material)
             {
-                ddstring_t* path = Uri_ToString(def->material);
-                Con_Message("Warning, unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
-                Str_Delete(path);
+                materialnum_t material = Materials_IndexForUri(def->material);
+                if(0 != material)
+                {
+                    R_SkyLayerSetMaterial(i, material);
+                }
+                else
+                {
+                    ddstring_t* path = Uri_ToString(def->material);
+                    Con_Message("Warning, unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
+                    Str_Delete(path);
+                }
             }
-            else
-            {
-                R_SkyLayerSetMaterial(i, material);
-            }}
             R_SkyLayerSetOffset(i, def->offset);
             R_SkyLayerSetFadeoutLimit(i, def->colorLimit);
         }

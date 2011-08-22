@@ -421,10 +421,10 @@ static boolean C_DECL clockwiseLeaf(binarytree_t *tree, void *data)
 {
     if(BinaryTree_IsLeaf(tree))
     {   // obj is a leaf.
-        size_t              total;
-        hedge_t            *hEdge;
-        bspleafdata_t      *leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
-        double              midPoint[2];
+        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
+        double midPoint[2] = { 0, 0 };
+        hedge_t* hEdge;
+        size_t total;
 
         getAveragedCoords(leaf->hEdges, &midPoint[VX], &midPoint[VY]);
 

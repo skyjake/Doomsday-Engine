@@ -256,7 +256,7 @@ void P_LoadACScripts(int lump)
 {
     size_t lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
     const acsheader_t* header;
-    const int* buffer;
+    const int* buffer = NULL;
     acsinfo_t* info;
     int i;
 
