@@ -1877,8 +1877,11 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
                                 image.pixels[idx * comps + c];
 
                             // We can setup part two at the same time.
-                            dat2[(k * 64 + i) * comps + c] =
-                                image.pixels[(idx + 256) * comps + c];
+                            if(i < 64)
+                            {
+                                dat2[(k * 64 + i) * comps + c] =
+                                    image.pixels[(idx + 256) * comps + c];
+                            }
                         }
                     }
                 }
