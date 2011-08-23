@@ -498,9 +498,6 @@
 		<Unit filename="..\..\engine\portable\src\dd_plugin.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\dd_wad.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\engine\portable\src\dd_zone.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -529,6 +526,7 @@
 		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
 		<Unit filename="..\..\engine\portable\src\fonts.c" />
+		<Unit filename="..\..\engine\portable\src\fs_main.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />

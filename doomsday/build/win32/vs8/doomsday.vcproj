@@ -2419,10 +2419,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\dd_wad.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\dd_zone.c"
 				>
 			</File>
@@ -2468,6 +2464,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\fonts.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\fs_main.c"
 				>
 			</File>
 			<File
