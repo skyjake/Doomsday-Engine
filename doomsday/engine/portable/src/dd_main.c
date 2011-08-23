@@ -498,7 +498,7 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    lumpnum_t auxLumpBase = W_OpenAuxiliary3(filePath, NULL, true);
+    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, NULL, true);
     boolean result;
 
     if(auxLumpBase == -1)
@@ -519,7 +519,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
         }
     }
 
-    W_CloseAuxiliary();
+    F_CloseAuxiliary();
     return result;
 }
 

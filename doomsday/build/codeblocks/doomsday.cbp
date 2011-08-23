@@ -501,6 +501,9 @@
 		<Unit filename="..\..\engine\portable\src\dd_zone.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\dd_wad.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\def_data.c">
 			<Option compilerVar="CC" />
 		</Unit>

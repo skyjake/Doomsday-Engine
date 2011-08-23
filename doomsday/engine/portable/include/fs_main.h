@@ -39,7 +39,7 @@
  * starting from AUXILIARY_BASE.
  *
  * Functions that don't know the lumpnum of file will have to check both
- * the primary and the auxiliary caches (e.g., W_CheckLumpNumForName()).
+ * the primary and the auxiliary caches (e.g., F_CheckLumpNumForName()).
  */
 
 #ifndef LIBDENG_FILESYS_MAIN_H
@@ -75,23 +75,42 @@ int F_Reset(void);
 /// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
 
-zipfile_t* W_AddZipFile(const char* fileName, DFILE* handle);
-wadfile_t* W_AddWadFile(const char* fileName, DFILE* handle);
-lumpfile_t* W_AddLumpFile(const char* fileName, DFILE* handle, boolean isDehackedPatch);
+boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
+
+boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum);
+
+size_t F_LumpLength(lumpnum_t absoluteLumpNum);
+
+/**
+ * Given a logical @a lumpnum retrieve the associated file object.
+ *
+ * \post The active LumpDirectory may have changed!
+ *
+ * @param absoluteLumpNum  Logical lumpnum associated to the file being looked up.
+ * @param lumpNum  If not @c NULL the translated lumpnum within the owning file object is written here.
+ * @return  Found file object else @c NULL
+ */
+abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, lumpnum_t* lumpNum);
+abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
+
+const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, lumpnum_t* lumpNum);
+const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
+
+lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
 
 /**
  * Try to open the specified WAD archive into the auxiliary lump cache.
  *
  * @param prevOpened  If not @c NULL re-use this previously opened file rather
  *      than opening a new one. WAD loader takes ownership of the file.
- *      Release with W_CloseAuxiliary.
+ *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t W_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
-lumpnum_t W_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
-lumpnum_t W_OpenAuxiliary(const char* fileName);
+lumpnum_t F_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
+lumpnum_t F_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
+lumpnum_t F_OpenAuxiliary(const char* fileName);
 
-void W_CloseAuxiliary(void);
+void F_CloseAuxiliary(void);
 
 /// @return  Size of a zipentry specified by index.
 size_t Zip_GetSize(lumpnum_t lumpNum);
@@ -187,6 +206,13 @@ uint F_CRCNumber(void);
  */
 void F_PrintLumpDirectory(void);
 
+size_t F_ReadLumpSection(abstractfile_t* fsObject, lumpnum_t lumpNum, uint8_t* buffer,
+    size_t startOffset, size_t length);
+
+const uint8_t* F_CacheLump(abstractfile_t* fsObject, lumpnum_t lumpNum, int tag);
+
+void F_CacheChangeTag(abstractfile_t* fsObject, lumpnum_t lumpNum, int tag);
+
 /**
  * Write the data associated with @a lumpNum to @a fileName.
  *
@@ -195,7 +221,7 @@ void F_PrintLumpDirectory(void);
  *      Can be @c NULL in which case the fileName will be chosen automatically.
  * @return  @c true iff successful.
  */
-boolean F_DumpLump(lumpnum_t lumpNum, const char* fileName);
+boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* fileName);
 
 /**
  * Parm is passed on to the callback, which is called for each file

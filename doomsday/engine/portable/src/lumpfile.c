@@ -73,6 +73,12 @@ int LumpFile_PublishLumpsToDirectory(lumpfile_t* file, lumpdirectory_t* director
     return 1;
 }
 
+const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* file, int lumpIdx)
+{
+    assert(NULL != file);
+    return &file->_info;
+}
+
 void LumpFile_ClearLumpCache(lumpfile_t* file)
 {
     assert(NULL != file);
@@ -86,7 +92,7 @@ void LumpFile_ClearLumpCache(lumpfile_t* file)
     }
 }
 
-void LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
@@ -103,8 +109,9 @@ void LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buf
         void** cachePtr = (void**)&file->_cacheData;
         if(isCached)
         {
-            memcpy(buffer, (char*)*cachePtr + startOffset, MIN_OF(info->size, length));
-            return;
+            readBytes = MIN_OF(info->size, length);
+            memcpy(buffer, (char*)*cachePtr + startOffset, readBytes);
+            return readBytes;
         }
     }
 
@@ -112,31 +119,33 @@ void LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buf
     readBytes = F_Read(file->_base._handle, buffer, length);
     if(readBytes < length)
     {
+        /// \todo Do not do this here.
         Con_Error("LumpFile::ReadLumpSection: Only read %lu of %lu bytes of lump #%i.",
                   (unsigned long) readBytes, (unsigned long) length, lumpNum);
     }
+    return readBytes;
     }
 }
 
-void LumpFile_ReadLumpSection(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
-    LumpFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
+    return LumpFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
 }
 
-void LumpFile_ReadLump2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
+size_t LumpFile_ReadLump2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
     const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
     assert(NULL != info);
-    LumpFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
+    return LumpFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
     }
 }
 
-void LumpFile_ReadLump(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
+size_t LumpFile_ReadLump(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
 {
-    LumpFile_ReadLump2(file, lumpNum, buffer, true);
+    return LumpFile_ReadLump2(file, lumpNum, buffer, true);
 }
 
 const uint8_t* LumpFile_CacheLump(lumpfile_t* file, lumpnum_t lumpNum, int tag)

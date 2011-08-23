@@ -424,6 +424,17 @@ int ZipFile_PublishLumpsToDirectory(zipfile_t* file, lumpdirectory_t* directory)
     }
 }
 
+const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* file, int lumpIdx)
+{
+    assert(NULL != file);
+    if(lumpIdx < 0 || lumpIdx >= file->_lumpCount)
+    {
+        Con_Error("ZipFile::LumpInfo: Invalid lump index %i (valid range: [0...%i)).", lumpIdx, file->_lumpCount);
+        exit(1); // Unreachable.
+    }
+    return file->_lumpInfo + lumpIdx;
+}
+
 void ZipFile_Delete(zipfile_t* file)
 {
     assert(NULL != file);
@@ -543,7 +554,7 @@ static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, ch
     return lumpInfo->size;
 }
 
-void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
+size_t ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
@@ -575,33 +586,34 @@ void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffe
 
         if(isCached)
         {
-            memcpy(buffer, (uint8_t*)*cachePtr + startOffset, MIN_OF(info->size, length));
-            return;
+            size_t readBytes = MIN_OF(info->size, length);
+            memcpy(buffer, (uint8_t*)*cachePtr + startOffset, readBytes);
+            return readBytes;
         }
     }
 
-    ZipFile_BufferLump(file, info, buffer);
+    return ZipFile_BufferLump(file, info, buffer);
     }
 }
 
-void ZipFile_ReadLumpSection(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
+size_t ZipFile_ReadLumpSection(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
-    ZipFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
+    return ZipFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
 }
 
-void ZipFile_ReadLump2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
+size_t ZipFile_ReadLump2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
     const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
-    ZipFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
+    return ZipFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
     }
 }
 
-void ZipFile_ReadLump(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
+size_t ZipFile_ReadLump(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
 {
-    ZipFile_ReadLump2(file, lumpNum, buffer, true);
+    return ZipFile_ReadLump2(file, lumpNum, buffer, true);
 }
 
 const uint8_t* ZipFile_CacheLump(zipfile_t* file, lumpnum_t lumpNum, int tag)

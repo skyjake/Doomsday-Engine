@@ -83,8 +83,9 @@ void AbstractFile_Close(abstractfile_t* file);
  *
  * @param lumpNum  Logical lump index associated with the data being read.
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @return  Number of bytes read.
  */
-void AbstractFile_ReadLump(abstractfile_t* file, lumpnum_t lumpNum, char* buffer);
+size_t AbstractFile_ReadLump(abstractfile_t* file, lumpnum_t lumpNum, uint8_t* buffer);
 
 /**
  * Accessors:

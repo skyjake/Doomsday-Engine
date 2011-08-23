@@ -172,6 +172,17 @@ int WadFile_PublishLumpsToDirectory(wadfile_t* file, lumpdirectory_t* directory)
     }
 }
 
+const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx)
+{
+    assert(NULL != file);
+    if(lumpIdx < 0 || lumpIdx >= file->_lumpCount)
+    {
+        Con_Error("WadFile::LumpInfo: Invalid lump index %i (valid range: [0...%i)).", lumpIdx, file->_lumpCount);
+        exit(1); // Unreachable.
+    }
+    return file->_lumpInfo + lumpIdx;
+}
+
 void WadFile_Delete(wadfile_t* file)
 {
     assert(NULL != file);
@@ -248,7 +259,7 @@ static __inline uint WadFile_CacheIndexForLump(const wadfile_t* file,
     return info - file->_lumpInfo;
 }
 
-void WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
+size_t WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
@@ -281,8 +292,9 @@ void WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffe
 
         if(isCached)
         {
-            memcpy(buffer, (char*)*cachePtr + startOffset, MIN_OF(info->size, length));
-            return;
+            readBytes = MIN_OF(info->size, length);
+            memcpy(buffer, (char*)*cachePtr + startOffset, readBytes);
+            return readBytes;
         }
     }
 
@@ -290,30 +302,32 @@ void WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffe
     readBytes = F_Read(file->_base._handle, buffer, length);
     if(readBytes < length)
     {
+        /// \todo Do not do this here.
         Con_Error("WadFile::ReadLump: Only read %lu of %lu bytes of lump #%i.",
                   (unsigned long) readBytes, (unsigned long) length, lumpNum);
     }
+    return readBytes;
     }
 }
 
-void WadFile_ReadLumpSection(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
+size_t WadFile_ReadLumpSection(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
-    WadFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
+    return WadFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
 }
 
-void WadFile_ReadLump2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
+size_t WadFile_ReadLump2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
     const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
-    WadFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
+    return WadFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
     }
 }
 
-void WadFile_ReadLump(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
+size_t WadFile_ReadLump(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
 {
-    WadFile_ReadLump2(file, lumpNum, buffer, true);
+    return WadFile_ReadLump2(file, lumpNum, buffer, true);
 }
 
 const uint8_t* WadFile_CacheLump(wadfile_t* file, lumpnum_t lumpNum, int tag)

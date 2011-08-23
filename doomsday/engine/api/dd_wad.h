@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,8 +57,8 @@ boolean W_LumpIsFromIWAD(lumpnum_t lumpNum);
  * @param silent  Do not print results to the console.
  * @return  Unique index of the found lump in the primary lump directory else @c -1 if not found.
  */
-lumpnum_t W_CheckLumpNumForName(const char* name);
 lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent);
+lumpnum_t W_CheckLumpNumForName(const char* name);
 
 /// \note As per W_CheckLumpNumForName but results in a fatal error if not found.
 lumpnum_t W_GetLumpNumForName(const char* name);
@@ -67,8 +68,9 @@ lumpnum_t W_GetLumpNumForName(const char* name);
  *
  * @param lumpNum  Logical lump index associated with the data being read.
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @return  Number of bytes read.
  */
-void W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer);
+size_t W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -77,8 +79,9 @@ void W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer);
  * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param startOffset  Offset from the beginning of the lump to start reading.
  * @param length  Number of bytes to be read.
+ * @return  Number of bytes read.
  */
-void W_ReadLumpSection(lumpnum_t lumpNum, uint8_t* buffer, size_t startOffset, size_t length);
+size_t W_ReadLumpSection(lumpnum_t lumpNum, uint8_t* buffer, size_t startOffset, size_t length);
 
 /**
  * Read the data associated with @a lumpNum into the cache.

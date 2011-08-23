@@ -53,15 +53,18 @@ void WadFile_Close(wadfile_t* wad);
 
 int WadFile_PublishLumpsToDirectory(wadfile_t* file, struct lumpdirectory_s* directory);
 
+const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx);
+
 /**
  * Read the data associated with @a lumpNum into @a buffer.
  *
  * @param lumpNum  Logical lump index associated with the data being read.
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
+ * @return  Number of bytes read.
  */
-void WadFile_ReadLump2(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest, boolean tryCache);
-void WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest);
+size_t WadFile_ReadLump2(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest, boolean tryCache);
+size_t WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -71,10 +74,11 @@ void WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest);
  * @param startOffset  Offset from the beginning of the lump to start reading.
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
+ * @return  Number of bytes read.
  */
-void WadFile_ReadLumpSection2(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* buffer,
+size_t WadFile_ReadLumpSection2(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void WadFile_ReadLumpSection(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* buffer,
+size_t WadFile_ReadLumpSection(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**

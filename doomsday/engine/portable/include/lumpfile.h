@@ -50,15 +50,18 @@ void LumpFile_Close(lumpfile_t* lump);
 
 int LumpFile_PublishLumpsToDirectory(lumpfile_t* file, struct lumpdirectory_s* directory);
 
+const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* file, int lumpIdx);
+
 /**
  * Read the data associated with @a lumpNum into @a buffer.
  *
  * @param lumpNum  Logical lump index associated with the data being read.
  * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
+ * @return  Number of bytes read.
  */
-void LumpFile_ReadLump2(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache);
-void LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer);
+size_t LumpFile_ReadLump2(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache);
+size_t LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -68,10 +71,11 @@ void LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer);
  * @param startOffset  Offset from the beginning of the lump to start reading.
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
+ * @return  Number of bytes read.
  */
-void LumpFile_ReadLumpSection2(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection2(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void LumpFile_ReadLumpSection(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**
