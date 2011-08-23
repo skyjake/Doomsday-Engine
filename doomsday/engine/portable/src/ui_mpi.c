@@ -33,6 +33,7 @@
 
 #include "de_base.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_console.h"
 #include "de_ui.h"
@@ -647,7 +648,7 @@ void DD_NetSetup(int serverMode)
         UI_FlagGroup(ob_client, 4, UIF_HIDDEN, searchMode == SEARCH_MASTER);
         lst_found.selection = -1;
         lst_found.count = 0;
-        myCrc = W_CRCNumber();
+        myCrc = F_CRCNumber();
         UI_FlagGroup(ob_client, 5, UIF_DISABLED, true); // warnings
         UI_FlagGroup(ob_client, UIG_CONNECT, UIF_DISABLED, true);
         MPIUpdateServerList();

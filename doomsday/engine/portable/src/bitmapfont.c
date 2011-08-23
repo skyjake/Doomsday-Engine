@@ -29,9 +29,11 @@
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_system.h"
-#include "m_misc.h"
+#include "de_filesys.h"
 
+#include "m_misc.h"
 #include "fonts.h"
+
 #include "bitmapfont.h"
 
 void Font_Init(font_t* font, fonttype_t type)

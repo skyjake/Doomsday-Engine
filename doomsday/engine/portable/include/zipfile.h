@@ -51,6 +51,8 @@ void ZipFile_Delete(zipfile_t* zip);
 /// Close this file if open and release any acquired file identifiers.
 void ZipFile_Close(zipfile_t* zip);
 
+int ZipFile_PublishLumpsToDirectory(zipfile_t* file, struct lumpdirectory_s* directory);
+
 /**
  * Read the data associated with @a lumpNum into @a buffer.
  *
@@ -58,8 +60,8 @@ void ZipFile_Close(zipfile_t* zip);
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  */
-void ZipFile_ReadLump2(zipfile_t* zip, lumpnum_t lumpNum, char* buffer, boolean tryCache);
-void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, char* buffer);
+void ZipFile_ReadLump2(zipfile_t* zip, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache);
+void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -70,9 +72,9 @@ void ZipFile_ReadLump(zipfile_t* zip, lumpnum_t lumpNum, char* buffer);
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
  */
-void ZipFile_ReadLumpSection2(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
+void ZipFile_ReadLumpSection2(zipfile_t* zip, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
+void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -82,7 +84,7 @@ void ZipFile_ReadLumpSection(zipfile_t* zip, lumpnum_t lumpNum, char* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const char* ZipFile_CacheLump(zipfile_t* zip, lumpnum_t lumpNum, int tag);
+const uint8_t* ZipFile_CacheLump(zipfile_t* zip, lumpnum_t lumpNum, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.

@@ -27,6 +27,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
 #include "lumpdirectory.h"
 #include "zipfile.h"
@@ -232,7 +233,7 @@ static boolean ZipFile_LocateCentralDirectory(zipfile_t* file)
     return false;
 }
 
-static void ZipFile_ReadArchiveLumpDirectory(zipfile_t* file)
+static void ZipFile_ReadLumpDirectory(zipfile_t* file)
 {
     assert(NULL != file);
     {
@@ -386,10 +387,6 @@ static void ZipFile_ReadArchiveLumpDirectory(zipfile_t* file)
     // The zip centralDirectory is no longer needed.
     free(centralDirectory);
     Str_Free(&entryPath);
-
-    // Populate the directory.
-    LumpDirectory_Append(AbstractFile_Directory((abstractfile_t*)file), file->_lumpInfo, file->_lumpCount, (abstractfile_t*)file);
-    LumpDirectory_PruneDuplicateRecords(AbstractFile_Directory((abstractfile_t*)file), false);
     }
 }
 
@@ -406,9 +403,25 @@ zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath, lumpdirectory_t*
     AbstractFile_Init((abstractfile_t*)file, FT_ZIPFILE, handle, absolutePath, directory);
 
     /// \todo Defer this operation.
-    ZipFile_ReadArchiveLumpDirectory(file);
-
+    //ZipFile_PublishLumpsToDirectory(file, AbstractFile_Directory((abstractfile_t*)file));
     return file;
+}
+
+int ZipFile_PublishLumpsToDirectory(zipfile_t* file, lumpdirectory_t* directory)
+{
+    assert(NULL != file && NULL != directory);
+    {
+    int numPublished = 0;
+    ZipFile_ReadLumpDirectory(file);
+    if(file->_lumpCount > 0)
+    {
+        // Insert the lumps into their rightful places in the directory.
+        LumpDirectory_Append(directory, file->_lumpInfo, file->_lumpCount, (abstractfile_t*)file);
+        LumpDirectory_PruneDuplicateRecords(directory, false);
+        numPublished += file->_lumpCount;
+    }
+    return numPublished;
+    }
 }
 
 void ZipFile_Delete(zipfile_t* file)
@@ -530,7 +543,7 @@ static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, ch
     return lumpInfo->size;
 }
 
-void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
+void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
@@ -562,7 +575,7 @@ void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
 
         if(isCached)
         {
-            memcpy(buffer, (char*)*cachePtr + startOffset, MIN_OF(info->size, length));
+            memcpy(buffer, (uint8_t*)*cachePtr + startOffset, MIN_OF(info->size, length));
             return;
         }
     }
@@ -571,13 +584,13 @@ void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
     }
 }
 
-void ZipFile_ReadLumpSection(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
+void ZipFile_ReadLumpSection(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     ZipFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
 }
 
-void ZipFile_ReadLump2(zipfile_t* file, lumpnum_t lumpNum, char* buffer, boolean tryCache)
+void ZipFile_ReadLump2(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
@@ -586,12 +599,12 @@ void ZipFile_ReadLump2(zipfile_t* file, lumpnum_t lumpNum, char* buffer, boolean
     }
 }
 
-void ZipFile_ReadLump(zipfile_t* file, lumpnum_t lumpNum, char* buffer)
+void ZipFile_ReadLump(zipfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
 {
     ZipFile_ReadLump2(file, lumpNum, buffer, true);
 }
 
-const char* ZipFile_CacheLump(zipfile_t* file, lumpnum_t lumpNum, int tag)
+const uint8_t* ZipFile_CacheLump(zipfile_t* file, lumpnum_t lumpNum, int tag)
 {
     assert(NULL != file);
     {
@@ -618,7 +631,7 @@ const char* ZipFile_CacheLump(zipfile_t* file, lumpnum_t lumpNum, int tag)
 
     if(!isCached)
     {
-        char* ptr = (char*)Z_Malloc(info->size, tag, cachePtr);
+        uint8_t* ptr = (uint8_t*)Z_Malloc(info->size, tag, cachePtr);
         if(NULL == ptr)
             Con_Error("ZipFile::CacheLump: Failed on allocation of %lu bytes for "
                 "cache copy of lump #%i.", (unsigned long) info->size, lumpNum);

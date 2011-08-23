@@ -229,6 +229,7 @@
 		<Unit filename="..\..\engine\portable\include\de_dam.h" />
 		<Unit filename="..\..\engine\portable\include\de_defs.h" />
 		<Unit filename="..\..\engine\portable\include\de_edit.h" />
+		<Unit filename="..\..\engine\portable\include\de_filesys.h" />
 		<Unit filename="..\..\engine\portable\include\de_graphics.h" />
 		<Unit filename="..\..\engine\portable\include\de_infine.h" />
 		<Unit filename="..\..\engine\portable\include\de_misc.h" />
@@ -249,6 +250,7 @@
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
 		<Unit filename="..\..\engine\portable\include\font.h" />
 		<Unit filename="..\..\engine\portable\include\fonts.h" />
+		<Unit filename="..\..\engine\portable\include\fs_main.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />

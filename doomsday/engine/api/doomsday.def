@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 546 <--
-; Other free ordinals: 97, 103
+; Other free ordinals: 103
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -124,6 +124,12 @@ EXPORTS
     M_ReadFile                  @134 NONAME
     M_WriteFile                 @135 NONAME
 
+    F_ExtractFileBase           @136 NONAME
+    F_FindFileExtension         @137 NONAME
+    F_TranslatePath             @140 NONAME
+    F_PrettyPath                @421 NONAME
+
+    ; WAD interface.
     W_CheckLumpNumForName       @14 NONAME
     W_CheckLumpNumForName2      @45 NONAME
     W_GetLumpNumForName         @15 NONAME
@@ -135,13 +141,9 @@ EXPORTS
 
     W_LumpLength                @16 NONAME
     W_LumpName                  @17 NONAME
+    W_LumpLastModified          @97 NONAME
     W_LumpSourceFile            @22 NONAME
     W_LumpIsFromIWAD            @239 NONAME
-
-    F_ExtractFileBase           @136 NONAME
-    F_FindFileExtension         @137 NONAME
-    F_TranslatePath             @140 NONAME
-    F_PrettyPath                @421 NONAME
 
 ; Base: Zone.
     Z_Malloc                    @24 NONAME

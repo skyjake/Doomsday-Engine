@@ -31,6 +31,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
 #include "lumpdirectory.h"
 

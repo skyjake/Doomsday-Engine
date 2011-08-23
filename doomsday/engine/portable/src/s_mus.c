@@ -36,6 +36,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
@@ -512,7 +513,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     {   // Music interface does not offer buffer playback.
                         // Write this lump to disk and play from there.
                         fileName = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
-                        if(!W_DumpLump(lumpNum, Str_Text(fileName)))
+                        if(!F_DumpLump(lumpNum, Str_Text(fileName)))
                         {
                             Str_Delete(fileName);
                             return false;

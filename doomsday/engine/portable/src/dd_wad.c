@@ -28,12 +28,16 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_misc.h" // For M_LimitedStrCat
 
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 #include "wadfile.h"
 
+#include "filedirectory.h"
+
+D_CMD(Dir);
 D_CMD(DumpLump);
 D_CMD(ListFiles);
 
@@ -43,6 +47,20 @@ typedef struct filelist_node_s {
     struct filelist_node_s* next;
 } filelist_node_t;
 typedef filelist_node_t* filelist_t;
+
+typedef int lumpdirectoryid_t;
+
+typedef struct {
+    lumpname_t lumpName;
+    ddstring_t path; // Full path name.
+} lumppathmapping_t;
+
+typedef lumppathmapping_t lumpdirectory_record_t;
+
+typedef struct {
+    ddstring_t* source; // Full path name.
+    ddstring_t* target; // Full path name.
+} vdmapping_t;
 
 static boolean inited = false;
 static boolean loadingForStartup;
@@ -60,8 +78,23 @@ static boolean auxiliaryWadLumpDirectoryInUse;
 // Currently selected lump directory.
 static lumpdirectory_t* ActiveWadLumpDirectory;
 
-void W_Register(void)
+static lumpdirectory_record_t* lumpDirectoryRecordForId(lumpdirectoryid_t id);
+static void resetVDirectoryMappings(void);
+static void clearLumpDirectory(void);
+
+#define LUMPDIRECTORY_MAXRECORDS    1024
+static lumpdirectory_record_t lumpDirectory[LUMPDIRECTORY_MAXRECORDS + 1];
+static vdmapping_t* vdMappings;
+static uint vdMappingsCount;
+static uint vdMappingsMax;
+
+void F_Register(void)
 {
+    C_CMD("dir", "", Dir);
+    C_CMD("ls", "", Dir); // Alias
+    C_CMD("dir", "s*", Dir);
+    C_CMD("ls", "s*", Dir); // Alias
+
     C_CMD("dump", "s", DumpLump);
     C_CMD("listfiles", "", ListFiles);
 }
@@ -190,11 +223,6 @@ wadfile_t* W_AddWadFile(const char* path, DFILE* handle)
     {
         // Get a new file record.
         wad = newWadFile(handle, path, ActiveWadLumpDirectory);
-
-        // Print the 'CRC' number of the IWAD, so it can be identified.
-        /// \todo Do not do this here.
-        if(WadFile_IsIWAD(wad))
-            Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
     }
     return wad;
 }
@@ -234,7 +262,7 @@ lumpfile_t* W_AddLumpFile(const char* path, DFILE* handle, boolean isDehackedPat
     return lump;
 }
 
-static boolean removeFile(filelist_node_t* node)
+static boolean removeListFile(filelist_node_t* node)
 {
     assert(NULL != node && NULL != node->fsObject);
     switch(AbstractFile_Type(node->fsObject))
@@ -279,6 +307,20 @@ static boolean removeFile(filelist_node_t* node)
     return true;
 }
 
+static void clearFileList(lumpdirectory_t* directory)
+{
+    filelist_node_t* next, *node = fileList;
+    while(node)
+    {
+        next = node->next;
+        if(NULL == directory || AbstractFile_Directory(node->fsObject) == directory)
+        {
+            removeListFile(node);
+        }
+        node = next;
+    }
+}
+
 /**
  * Handles conversion to a logical index that is independent of the lump directory currently in use.
  */
@@ -318,21 +360,7 @@ static lumpnum_t chooseDirectory(lumpnum_t lumpNum)
     return lumpNum;
 }
 
-static void clearFileList(lumpdirectory_t* directory)
-{
-    filelist_node_t* next, *node = fileList;
-    while(node)
-    {
-        next = node->next;
-        if(NULL == directory || AbstractFile_Directory(node->fsObject) == directory)
-        {
-            removeFile(node);
-        }
-        node = next;
-    }
-}
-
-void W_Init(void)
+void F_Init(void)
 {
     if(inited) return; // Already been here.
 
@@ -351,7 +379,7 @@ void W_Init(void)
     inited = true;
 }
 
-void W_Shutdown(void)
+void F_Shutdown(void)
 {
     if(!inited) return;
 
@@ -367,25 +395,41 @@ void W_Shutdown(void)
     inited = false;
 }
 
-void W_EndStartup(void)
+void F_EndStartup(void)
 {
-    errorIfNotInited("W_EndStartup");
+    errorIfNotInited("F_EndStartup");
     loadingForStartup = false;
     usePrimaryDirectory();
 }
 
-int W_Reset(void)
+static boolean removeFile2(const char* path)
+{
+    filelist_node_t* node;
+    errorIfNotInited("removeFile");
+    node = findFileListNodeForName(path);
+    if(NULL != node)
+        return removeListFile(node);
+    return false; // No such file loaded.
+}
+
+static boolean removeFile(const char* path)
+{
+    VERBOSE( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path)) )
+    return removeFile2(path);
+}
+
+int F_Reset(void)
 {
     int unloadedResources = 0;
     if(inited)
     {
-        filelist_node_t* node = fileList, *next;
+        filelist_node_t* next, *node = fileList;
         while(node)
         {
             next = node->next;
             if(!node->loadedForStartup)
             {
-                if(W_RemoveFile(Str_Text(AbstractFile_AbsolutePath(node->fsObject))))
+                if(removeFile2(Str_Text(AbstractFile_AbsolutePath(node->fsObject))))
                 {
                     ++unloadedResources;
                 }
@@ -396,21 +440,11 @@ int W_Reset(void)
     return unloadedResources;
 }
 
-int W_LumpCount(void)
+int F_LumpCount(void)
 {
     if(inited)
         return LumpDirectory_NumLumps(ActiveWadLumpDirectory);
     return 0;
-}
-
-boolean W_RemoveFile(const char* path)
-{
-    filelist_node_t* node;
-    errorIfNotInited("W_RemoveFile");
-    node = findFileListNodeForName(path);
-    if(NULL != node)
-        return removeFile(node);
-    return false; // No such file loaded.
 }
 
 lumpnum_t W_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
@@ -445,7 +479,11 @@ lumpnum_t W_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
         auxiliaryWadLumpDirectoryInUse = true;
 
         // Get a new file record.
-        newWadFile(handle, path, ActiveWadLumpDirectory);
+        { wadfile_t* wad = newWadFile(handle, path, ActiveWadLumpDirectory);
+        if(NULL != wad)
+        {
+            WadFile_PublishLumpsToDirectory(wad, ActiveWadLumpDirectory);
+        }}
         return AUXILIARY_BASE;
     }
 
@@ -537,7 +575,7 @@ const char* W_LumpName(lumpnum_t lumpNum)
     return LumpDirectory_LumpName(ActiveWadLumpDirectory, lumpNum);
 }
 
-void W_ReadLumpSection(lumpnum_t lumpNum, char* buffer, size_t startOffset, size_t length)
+void W_ReadLumpSection(lumpnum_t lumpNum, uint8_t* buffer, size_t startOffset, size_t length)
 {
     abstractfile_t* fsObject;
     errorIfNotInited("W_ReadLumpSection");
@@ -554,7 +592,7 @@ void W_ReadLumpSection(lumpnum_t lumpNum, char* buffer, size_t startOffset, size
     }
 }
 
-void W_ReadLump(lumpnum_t absoluteLumpNum, char* buffer)
+void W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
     lumpnum_t lumpNum;
     errorIfNotInited("W_ReadLump");
@@ -562,7 +600,7 @@ void W_ReadLump(lumpnum_t absoluteLumpNum, char* buffer)
     W_ReadLumpSection(absoluteLumpNum, buffer, 0, LumpDirectory_LumpSize(ActiveWadLumpDirectory, lumpNum));
 }
 
-boolean W_DumpLump(lumpnum_t lumpNum, const char* path)
+boolean F_DumpLump(lumpnum_t lumpNum, const char* path)
 {
     char buf[LUMPNAME_T_LASTINDEX + 4/*.ext*/ + 1];
     abstractfile_t* fsObject;
@@ -570,7 +608,7 @@ boolean W_DumpLump(lumpnum_t lumpNum, const char* path)
     const char* fname;
     FILE* file;
 
-    errorIfNotInited("W_DumpLump");
+    errorIfNotInited("F_DumpLump");
     lumpNum = chooseDirectory(lumpNum);
     if(LumpDirectory_IsValidIndex(ActiveWadLumpDirectory, lumpNum))
         return false;
@@ -608,7 +646,7 @@ boolean W_DumpLump(lumpnum_t lumpNum, const char* path)
         LumpFile_ChangeLumpCacheTag((lumpfile_t*)fsObject, lumpNum, PU_CACHE);
         break;
     default:
-        Con_Error("W_DumpLump: Invalid file type %i.", AbstractFile_Type(fsObject));
+        Con_Error("F_DumpLump: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
     }
 
@@ -616,7 +654,7 @@ boolean W_DumpLump(lumpnum_t lumpNum, const char* path)
     return true;
 }
 
-const char* W_CacheLump(lumpnum_t lumpNum, int tag)
+const uint8_t* W_CacheLump(lumpnum_t lumpNum, int tag)
 {
     abstractfile_t* fsObject;
     errorIfNotInited("W_CacheLump");
@@ -624,6 +662,7 @@ const char* W_CacheLump(lumpnum_t lumpNum, int tag)
     fsObject = LumpDirectory_SourceFile(ActiveWadLumpDirectory, lumpNum);
     switch(AbstractFile_Type(fsObject))
     {
+    case FT_ZIPFILE:    return  ZipFile_CacheLump( (zipfile_t*)fsObject, lumpNum, tag);
     case FT_WADFILE:    return  WadFile_CacheLump( (wadfile_t*)fsObject, lumpNum, tag);
     case FT_LUMPFILE:   return LumpFile_CacheLump((lumpfile_t*)fsObject, lumpNum, tag);
     default:
@@ -640,6 +679,7 @@ void W_CacheChangeTag(lumpnum_t lumpNum, int tag)
     fsObject = LumpDirectory_SourceFile(ActiveWadLumpDirectory, lumpNum);
     switch(AbstractFile_Type(fsObject))
     {
+    case FT_ZIPFILE:    ZipFile_ChangeLumpCacheTag( (zipfile_t*)fsObject, lumpNum, tag); break;
     case FT_WADFILE:    WadFile_ChangeLumpCacheTag( (wadfile_t*)fsObject, lumpNum, tag); break;
     case FT_LUMPFILE:  LumpFile_ChangeLumpCacheTag((lumpfile_t*)fsObject, lumpNum, tag); break;
     default:
@@ -686,11 +726,11 @@ boolean W_LumpIsFromIWAD(lumpnum_t lumpNum)
     return false;
 }
 
-uint W_CRCNumber(void)
+uint F_CRCNumber(void)
 {
     filelist_node_t* node;
     wadfile_t* wad;
-    errorIfNotInited("W_CRCNumber");
+    errorIfNotInited("F_CRCNumber");
     // Find the IWAD's record.
     for(node = fileList; NULL != node; node = node->next)
     {
@@ -703,7 +743,7 @@ uint W_CRCNumber(void)
     return 0;
 }
 
-void W_GetPWADFileNames(char* outBuf, size_t outBufSize, char delimiter)
+void F_GetPWADFileNames(char* outBuf, size_t outBufSize, char delimiter)
 {
     ddstring_t buf;
 
@@ -729,7 +769,7 @@ void W_GetPWADFileNames(char* outBuf, size_t outBufSize, char delimiter)
     Str_Free(&buf);
 }
 
-void W_PrintLumpDirectory(void)
+void F_PrintLumpDirectory(void)
 {
     if(!inited) return;
     // Always the primary directory.
@@ -799,6 +839,921 @@ lumpnum_t Zip_Find(const char* searchPath)
     return result;
 }
 
+unsigned int F_GetLastModified(const char* fileName)
+{
+    // Try to open the file, but don't buffer any contents.
+    DFILE* file = F_Open(fileName, "rx");
+    unsigned int modified = 0;
+
+    if(!file)
+        return 0;
+
+    modified = F_LastModified(file);
+    F_Close(file);
+    return modified;
+}
+
+/// @return  @c true, if the mapping matched the path.
+boolean F_MapPath(ddstring_t* path, vdmapping_t* vd)
+{
+    assert(NULL != path && NULL != vd);
+    if(!strnicmp(Str_Text(path), Str_Text(vd->target), Str_Length(vd->target)))
+    {
+        // Replace the beginning with the source path.
+        ddstring_t temp;
+        Str_Init(&temp);
+        Str_Set(&temp, Str_Text(vd->source));
+        Str_PartAppend(&temp, Str_Text(path), Str_Length(vd->target), Str_Length(path) - Str_Length(vd->target));
+        Str_Copy(path, &temp);
+        Str_Free(&temp);
+        return true;
+    }
+    return false;
+}
+
+typedef struct {
+    /// Callback to make for each processed node.
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters);
+
+    /// Data passed to the callback.
+    void* paramaters;
+
+    /// Current search pattern.
+    const ddstring_t* pattern;
+} findzipfileworker_paramaters_t;
+
+typedef struct foundentry_s {
+    ddstring_t path;
+    int attrib;
+} foundentry_t;
+
+static int C_DECL compareFoundEntryByPath(const void* a, const void* b)
+{
+    return Str_CompareIgnoreCase(&((const foundentry_t*)a)->path, Str_Text(&((const foundentry_t*)b)->path));
+}
+
+/// Collect a list of paths including those which have been mapped.
+static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCount)
+{
+    ddstring_t wildPath, origWildPath;
+    foundentry_t* found = NULL;
+    int count = 0, max = 0;
+    finddata_t fd;
+
+    Str_Init(&origWildPath);
+    Str_Appendf(&origWildPath, "%s*", Str_Text(searchPath));
+
+    Str_Init(&wildPath);
+    { int i;
+    for(i = -1; i < (int)vdMappingsCount; ++i)
+    {
+        Str_Copy(&wildPath, &origWildPath);
+
+        // Possible mapping?
+        if(i >= 0 && !F_MapPath(&wildPath, &vdMappings[i]))
+            continue; // Not mapped.
+
+        if(!myfindfirst(Str_Text(&wildPath), &fd))
+        {   // First path found.           
+            do
+            {
+                // Ignore relative directory symbolics.
+                if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
+                {
+                    if(count >= max)
+                    {
+                        if(0 == max)
+                            max = 16;
+                        else
+                            max *= 2;
+                        found = realloc(found, sizeof(*found) * max);
+                    }
+                    Str_Init(&found[count].path);
+                    Str_Set(&found[count].path, fd.name);
+                    if((fd.attrib & A_SUBDIR) && DIR_SEP_CHAR != Str_RAt(&found[count].path, 0))
+                        Str_AppendChar(&found[count].path, DIR_SEP_CHAR);
+                    found[count].attrib = fd.attrib;
+                    ++count;
+                }
+            } while(!myfindnext(&fd));
+        }
+        myfindend(&fd);
+    }}
+
+    Str_Free(&origWildPath);
+    Str_Free(&wildPath);
+
+    if(retCount)
+        *retCount = count;
+    if(0 != count)
+        return found;
+    return NULL;
+}
+
+static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* searchPath,
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters),
+    void* paramaters)
+{
+    assert(pattern && searchPath && !Str_IsEmpty(searchPath) && callback);
+    {
+    int result = 0, count;
+    foundentry_t* foundPaths = collectLocalPaths(searchPath, &count);
+
+    if(NULL != foundPaths)
+    {
+        ddstring_t path, localPattern;
+
+        // Sort all the foundPaths entries.
+        qsort(foundPaths, count, sizeof(foundentry_t), compareFoundEntryByPath);
+
+        Str_Init(&localPattern);
+        Str_Appendf(&localPattern, "%s%s", Str_Text(searchPath), Str_Text(pattern));
+
+        Str_Init(&path);
+        {int i;
+        for(i = 0; i < count; ++i)
+        {
+            // Is the caller's iteration still in progress?
+            if(0 == result)
+            {
+                // Compose the full path to the found file/directory.
+                Str_Clear(&path);
+                Str_Appendf(&path, "%s%s", Str_Text(searchPath), Str_Text(&foundPaths[i].path));
+
+                // Does this match the pattern?
+                if(F_MatchFileName(Str_Text(&path), Str_Text(&localPattern)))
+                {
+                    // Pass this path to the caller.
+                    result = callback(&path, (foundPaths[i].attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, paramaters);
+                }
+            }
+
+            // We're done with this path.
+            Str_Free(&foundPaths[i].path);
+        }}
+        Str_Free(&path);
+        Str_Free(&localPattern);
+        free(foundPaths);
+    }
+
+    return result;
+    }
+}
+
+static int findZipFileWorker(const lumpinfo_t* lumpInfo, void* paramaters)
+{
+    assert(NULL != lumpInfo && NULL != paramaters);
+    {
+    findzipfileworker_paramaters_t* p = (findzipfileworker_paramaters_t*)paramaters;
+    if(F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(p->pattern)))
+    {
+        return p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
+    }
+    return 0; // Continue search.
+    }
+}
+
+int F_AllResourcePaths2(const char* rawSearchPattern,
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters),
+    void* paramaters)
+{
+    ddstring_t searchPattern, searchName, searchDirectory;
+    int result = 0;
+
+    // First normalize the raw search pattern into one we can process.
+    Str_Init(&searchPattern); Str_Set(&searchPattern, rawSearchPattern);
+    Str_Strip(&searchPattern);
+    F_FixSlashes(&searchPattern, &searchPattern);
+    F_ExpandBasePath(&searchPattern, &searchPattern);
+
+    // An absolute path is required so resolve relative to the base path.
+    // if not already absolute.
+    F_PrependBasePath(&searchPattern, &searchPattern);
+
+    // Check the Zip directory.
+    { findzipfileworker_paramaters_t p;
+    p.callback = callback;
+    p.paramaters = paramaters;
+    p.pattern = &searchPattern;
+    result = Zip_Iterate2(findZipFileWorker, (void*)&p);
+    if(0 != result)
+    {   // Find didn't finish.
+        goto searchEnded;
+    }}
+
+    // Check the dir/WAD direcs.
+    { int i;
+    for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
+    {
+        lumpdirectory_record_t* rec = &lumpDirectory[i];
+        if(!F_MatchFileName(Str_Text(&rec->path), Str_Text(&searchPattern)))
+            continue;
+        result = callback(&rec->path, PT_LEAF, paramaters);
+        if(0 != result)
+            goto searchEnded;
+    }}
+
+    /**
+     * Check real files on the search path.
+     * Our existing normalized search pattern cannot be used as-is due to the
+     * interface of the search algorithm requiring that the name and directory of
+     * the pattern be specified separately.
+     */
+
+    // Extract just the name and/or extension.
+    Str_Init(&searchName);
+    F_FileNameAndExtension(&searchName, Str_Text(&searchPattern));
+
+    // Extract the directory path.
+    Str_Init(&searchDirectory);
+    F_FileDir(&searchDirectory, &searchPattern);
+
+    result = iterateLocalPaths(&searchName, &searchDirectory, callback, paramaters);
+
+    Str_Free(&searchName);
+    Str_Free(&searchDirectory);
+
+searchEnded:
+    Str_Free(&searchPattern);
+    return result;
+}
+
+int F_AllResourcePaths(const char* searchPath,
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters))
+{
+    return F_AllResourcePaths2(searchPath, callback, 0);
+}
+
+/**
+ * Prints the resource path to the console.
+ * This is a f_allresourcepaths_callback_t.
+ */
+int printResourcePath(const ddstring_t* fileNameStr, pathdirectory_nodetype_t type,
+    void* paramaters)
+{
+    assert(fileNameStr && VALID_PATHDIRECTORY_NODETYPE(type));
+    {
+    const char* fileName = Str_Text(fileNameStr);
+    boolean makePretty = F_IsRelativeToBasePath(fileName);
+    Con_Printf("  %s\n", makePretty? F_PrettyPath(fileName) : fileName);
+    return 0; // Continue the listing.
+    }
+}
+
+static void printDirectory(const ddstring_t* path)
+{
+    ddstring_t dir;
+
+    Str_Init(&dir); Str_Set(&dir, Str_Text(path));
+    Str_Strip(&dir);
+    F_FixSlashes(&dir, &dir);
+    // Make sure it ends in a directory separator character.
+    if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&dir, DIR_SEP_CHAR);
+    if(!F_ExpandBasePath(&dir, &dir))
+        F_PrependBasePath(&dir, &dir);
+
+    Con_Printf("Directory: %s\n", F_PrettyPath(Str_Text(&dir)));
+
+    // Make the pattern.
+    Str_AppendChar(&dir, '*');
+    F_AllResourcePaths(Str_Text(&dir), printResourcePath);
+
+    Str_Free(&dir);
+}
+
+DFILE* F_OpenFile(const char* path, const char* mymode)
+{
+    char mode[8];
+    FILE* file;
+
+    strcpy(mode, "r"); // Open for reading.
+    if(strchr(mymode, 't'))
+        strcat(mode, "t");
+    if(strchr(mymode, 'b'))
+        strcat(mode, "b");
+
+    // Try opening as a real file.
+    file = fopen(path, mode);
+    if(!file)
+    {
+        if(vdMappingsCount > 0)
+        {
+            ddstring_t mapped;
+            Str_Init(&mapped);
+            // Any applicable virtual directory mappings?
+            { uint i;
+            for(i = 0; i < vdMappingsCount; ++i)
+            {
+                Str_Set(&mapped, path);
+                if(!F_MapPath(&mapped, &vdMappings[i]))
+                    continue;
+                // The mapping was successful.
+                file = fopen(Str_Text(&mapped), mode);
+                if(file)
+                {
+                    VERBOSE( Con_Message("F_OpenFile: \"%s\" opened as %s.\n",
+                        F_PrettyPath(Str_Text(&mapped)), path) )
+                    break;
+                }
+            }}
+            Str_Free(&mapped);
+        }
+    }
+
+    if(file)
+    {
+        return F_OpenStreamFile(file, path);
+    }
+    return 0; // Not found.
+}
+
+DFILE* F_Open(const char* path, const char* mode)
+{
+    boolean dontBuffer, reqRealFile;
+    ddstring_t searchPath;
+    DFILE* file = NULL;
+
+    if(!path || !path[0])
+        return NULL;
+
+    if(NULL == mode) mode = "";
+
+    dontBuffer  = (strchr(mode, 'x') != NULL);
+    reqRealFile = (strchr(mode, 'f') != NULL);
+
+    // Make it a full path.
+    Str_Init(&searchPath); Str_Set(&searchPath, path);
+    F_FixSlashes(&searchPath, &searchPath);
+    F_ExpandBasePath(&searchPath, &searchPath);
+
+    // Shall we first check the Zip directory?
+    if(!reqRealFile)
+    {
+        lumpnum_t lumpNum = Zip_Find(Str_Text(&searchPath));
+        if(-1 != lumpNum)
+        {
+            file = F_OpenZip(lumpNum, dontBuffer);
+            if(NULL != file)
+            {
+                Str_Free(&searchPath);
+                return file;
+            }
+        }
+    }
+
+    // For the next stage we must have an absolute path, so prepend the current
+    // working directory if necessary.
+    F_PrependWorkPath(&searchPath, &searchPath);
+
+    // How about the dir/WAD redirects?
+    if(!reqRealFile)
+    {
+        lumpdirectory_record_t* rec;
+        int i = 0;
+        for(i = 0; !Str_IsEmpty(&lumpDirectory[i].path); ++i)
+        {
+            rec = &lumpDirectory[i];
+            if(!Str_CompareIgnoreCase(&rec->path, Str_Text(&searchPath)))
+            {
+                lumpnum_t lumpNum = W_CheckLumpNumForName(rec->lumpName);
+                if(lumpNum != -1)
+                {
+                    file = F_OpenLump(lumpNum, dontBuffer);
+                }
+                break;
+            }
+        }
+    }
+
+    // Try to open as a real file then?
+    if(NULL == file)
+    {
+        file = F_OpenFile(Str_Text(&searchPath), mode);
+    }
+
+    Str_Free(&searchPath);
+    return file;
+}
+
+static __inline void initLumpPathMapping(lumppathmapping_t* lpm)
+{
+    assert(lpm);
+    Str_Init(&lpm->path);
+    memset(lpm->lumpName, 0, sizeof(lpm->lumpName));
+}
+
+static __inline void clearLumpPathMapping(lumppathmapping_t* lpm)
+{
+    Str_Free(&lpm->path);
+    memset(lpm->lumpName, 0, sizeof(lpm->lumpName));
+}
+
+static lumpdirectoryid_t getUnusedLumpDirectoryId(void)
+{
+    lumpdirectoryid_t id;
+    // \fixme Why no dynamic allocation?
+    for(id = 0; Str_Length(&lumpDirectory[id].path) != 0 && id < LUMPDIRECTORY_MAXRECORDS; ++id);
+    if(id == LUMPDIRECTORY_MAXRECORDS)
+    {
+        Con_Error("getUnusedLumpDirectoryId: Not enough records.\n");
+    }
+    return id;
+}
+
+static int toLumpDirectoryId(const char* path)
+{
+    if(path && path[0])
+    {
+        int i;
+        for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
+        {
+            if(!Str_CompareIgnoreCase(&lumpDirectory[i].path, path))
+                return i;
+        }
+    }
+    return -1;
+}
+
+static lumpdirectory_record_t* newLumpDirectoryRecord(lumpdirectoryid_t id)
+{
+    return lumpDirectoryRecordForId(id);
+}
+
+static lumpdirectory_record_t* lumpDirectoryRecordForId(lumpdirectoryid_t id)
+{
+    if(id >= 0 && id < LUMPDIRECTORY_MAXRECORDS)
+        return &lumpDirectory[id];
+    return 0;
+}
+
+static void clearLumpDirectory(void)
+{
+    int i;
+    for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
+    {
+        lumpdirectory_record_t* rec = &lumpDirectory[i];
+        Str_Free(&rec->path);
+    }
+}
+
+/**
+ * The path names are converted to full paths before adding to the table.
+ */
+static void addLumpDirectoryMapping(const char* lumpName, const ddstring_t* symbolicPath)
+{
+    assert(lumpName && symbolicPath);
+    {
+    lumpdirectory_record_t* rec;
+    ddstring_t fullPath, path;
+
+    if(!lumpName[0] || Str_Length(symbolicPath) == 0)
+        return;
+
+    // Convert the symbolic path into a real path.
+    Str_Init(&path);
+    F_ResolveSymbolicPath(&path, symbolicPath);
+
+    // Since the path might be relative, let's explicitly make the path absolute.
+    { char* full;
+    Str_Init(&fullPath);
+    Str_Set(&fullPath, full = _fullpath(0, Str_Text(&path), 0)); free(full);
+    }
+
+    // If this path already exists, we'll just update the lump name.
+    rec = lumpDirectoryRecordForId(toLumpDirectoryId(Str_Text(&fullPath)));
+    if(!rec)
+    {   // Acquire a new record.
+        rec = newLumpDirectoryRecord(getUnusedLumpDirectoryId());
+        assert(rec);
+        Str_Copy(&rec->path, &fullPath);
+    }
+    memcpy(rec->lumpName, lumpName, sizeof(rec->lumpName));
+    rec->lumpName[LUMPNAME_T_LASTINDEX] = '\0';
+
+    Str_Free(&fullPath);
+    Str_Free(&path);
+
+    VERBOSE( Con_Message("addLumpDirectoryMapping: \"%s\" -> %s\n", rec->lumpName,
+        F_PrettyPath(Str_Text(&rec->path))) )
+    }
+}
+
+static void resetVDirectoryMappings(void)
+{
+    if(vdMappings)
+    {
+        // Free the allocated memory.
+        uint i;
+        for(i = 0; i < vdMappingsCount; ++i)
+        {
+            Str_Delete(vdMappings[i].source);
+            Str_Delete(vdMappings[i].target);
+        }
+        free(vdMappings); vdMappings = 0;
+    }
+    vdMappingsCount = vdMappingsMax = 0;
+}
+
+static abstractfile_t* tryAddZipFile(const char* absolutePath, DFILE* handle)
+{
+    return (abstractfile_t*)W_AddZipFile(absolutePath, handle);
+}
+
+static abstractfile_t* tryAddWadFile(const char* absolutePath, DFILE* handle)
+{
+    return (abstractfile_t*)W_AddWadFile(absolutePath, handle);
+}
+
+static abstractfile_t* tryAddLumpFile(const char* absolutePath, DFILE* handle)
+{
+    return (abstractfile_t*)W_AddLumpFile(absolutePath, handle, false);
+}
+
+static abstractfile_t* F_AddFile2(const char* absolutePath, DFILE* handle)
+{
+    assert(NULL != absolutePath && absolutePath[0] && NULL != handle);
+    {
+    struct filehandler_s {
+        resourcetype_t resourceType;
+        abstractfile_t* (*tryLoadFile)(const char* absolutePath, DFILE* handle);
+    } static const handlers[] = {
+        { RT_ZIP,  tryAddZipFile },
+        { RT_WAD,  tryAddWadFile },
+        { RT_NONE, tryAddLumpFile },
+        { RT_NONE, NULL }
+    }, *hdlr = NULL;
+    resourcetype_t resourceType = F_GuessResourceTypeByName(absolutePath);
+    abstractfile_t* fsObject = NULL;
+
+    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(absolutePath)) )
+
+    if(RT_DEH == resourceType)
+    {
+        // DeHackEd patch files require special handling.
+        return (abstractfile_t*)W_AddLumpFile(absolutePath, handle, true);
+    }
+
+    // Firstly try the expected format given the file name.
+    for(hdlr = handlers; NULL != hdlr->tryLoadFile; hdlr++)
+    {
+        if(hdlr->resourceType != resourceType) continue;
+
+        fsObject = hdlr->tryLoadFile(absolutePath, handle);
+        break;
+    }
+
+    // If not yet loaded; try each recognisable format.
+    /// \todo Order here should be determined by the resource locator.
+    { int n = 0;
+    while(NULL == fsObject && NULL != handlers[n].tryLoadFile)
+    {
+        if(hdlr == &handlers[n]) continue; // We already know its not in this format.
+        
+        fsObject = handlers[n++].tryLoadFile(absolutePath, handle);
+    }}
+    return fsObject;
+    }
+}
+
+boolean F_AddFile(const char* fileName, boolean allowDuplicate)
+{
+    DFILE* handle;
+
+    // Filename given?
+    if(!fileName || !fileName[0])
+        return false;
+
+    handle = F_Open(fileName, "rb");
+    if(NULL == handle)
+    {
+        Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
+        return false;
+    }
+
+    // Do not read files twice.
+    if(!allowDuplicate && !F_CheckFileId(fileName))
+    {
+        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
+        F_Close(handle); // The file is not used.
+        return false;
+    }
+
+    { abstractfile_t* fsObject = F_AddFile2(fileName, handle);
+    if(NULL != fsObject)
+    {
+        switch(AbstractFile_Type(fsObject))
+        {
+        case FT_ZIPFILE:
+            ZipFile_PublishLumpsToDirectory((zipfile_t*)fsObject, zipLumpDirectory);
+            break;
+        case FT_WADFILE: {
+            wadfile_t* wad = (wadfile_t*)fsObject;
+            WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
+            // Print the 'CRC' number of the IWAD, so it can be identified.
+            /// \todo Do not do this here.
+            if(WadFile_IsIWAD(wad))
+                Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
+            break;
+          }
+        case FT_LUMPFILE:
+            LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
+            break;
+        default:
+            Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
+            exit(1); // Unreachable.
+        }
+        return true;
+    }}
+    return false;
+}
+
+boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(F_AddFile(filenames[i], allowDuplicate))
+        {
+            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been loaded.
+        }
+        else
+            Con_Message("Warning: Errors occured while loading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
+}
+
+boolean F_RemoveFile(const char* path)
+{
+    boolean unloadedResources = removeFile(path);
+    if(unloadedResources)
+        DD_UpdateEngineState();
+    return unloadedResources;
+}
+
+boolean F_RemoveFiles(const char* const* filenames, size_t num)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(removeFile(filenames[i]))
+        {
+            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been unloaded.
+        }
+        else
+            Con_Message("Warning: Errors occured while unloading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
+}
+
+void F_AddResourcePathMapping(const char* source, const char* destination)
+{
+    ddstring_t* src, *dst;
+    vdmapping_t* vd;
+
+    // Convert to absolute path names.
+    src = Str_Set(Str_New(), source);
+    Str_Strip(src);
+    F_FixSlashes(src, src);
+    if(DIR_SEP_CHAR != Str_RAt(src, 0))
+        Str_AppendChar(src, DIR_SEP_CHAR);
+    F_ExpandBasePath(src, src);
+    F_PrependWorkPath(src, src);
+
+    dst = Str_Set(Str_New(), destination);
+    Str_Strip(dst);
+    F_FixSlashes(dst, dst);
+    if(DIR_SEP_CHAR != Str_RAt(dst, 0))
+        Str_AppendChar(dst, DIR_SEP_CHAR);
+    F_ExpandBasePath(dst, dst);
+    F_PrependWorkPath(dst, dst);
+
+    // Allocate more memory if necessary.
+    if(++vdMappingsCount > vdMappingsMax)
+    {
+        vdMappingsMax *= 2;
+        if(vdMappingsMax < vdMappingsCount)
+            vdMappingsMax = 2*vdMappingsCount;
+
+        vdMappings = (vdmapping_t*) realloc(vdMappings, sizeof(*vdMappings) * vdMappingsMax);
+        if(NULL == vdMappings)
+            Con_Error("F_AddResourcePathMapping: Failed on allocation of %lu bytes for mapping list.",
+                (unsigned long) (sizeof(*vdMappings) * vdMappingsMax));
+    }
+
+    // Fill in the info into the array.
+    vd = &vdMappings[vdMappingsCount - 1];
+    vd->source = src;
+    vd->target = dst;
+
+    VERBOSE( Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", Str_Text(vd->source), Str_Text(vd->target)) );
+}
+
+/// Skip all whitespace except newlines.
+static __inline const char* skipSpace(const char* ptr)
+{
+    assert(ptr);
+    while(*ptr && *ptr != '\n' && isspace(*ptr))
+        ptr++;
+    return ptr;
+}
+
+static boolean parseLumpPathMapping(lumppathmapping_t* lpm, const char* buffer)
+{
+    const char* ptr = buffer, *end;
+    size_t len;
+
+    // Find the start of the lump name.
+    ptr = skipSpace(ptr);
+    if(!*ptr || *ptr == '\n')
+    {   // Just whitespace??
+        return false;
+    }
+
+    // Find the end of the lump name.
+    end = M_FindWhite((char*)ptr);
+    if(!*end || *end == '\n')
+    {
+        return false;
+    }
+
+    len = end - ptr;
+    if(len > 8)
+    {   // Invalid lump name.
+        return false;
+    }
+
+    clearLumpPathMapping(lpm);
+    strncpy(lpm->lumpName, ptr, len);
+
+    // Find the start of the file path.
+    ptr = skipSpace(end);
+    if(!*ptr || *ptr == '\n')
+    {   // Missing file path.
+        return false;
+    }
+
+    // We're at the file path.
+    Str_Set(&lpm->path, ptr);
+    // Get rid of any extra whitespace on the end.
+    Str_StripRight(&lpm->path);
+    return true;
+}
+
+/**
+ * LUMPNAM0 \Path\In\The\Base.ext
+ * LUMPNAM1 Path\In\The\RuntimeDir.ext
+ *  :
+ */
+static boolean parseLumpDirectoryMap(const char* buffer)
+{
+    assert(buffer);
+    {
+    boolean successful = false;
+    lumppathmapping_t lpm;
+    ddstring_t line;
+    const char* ch;
+
+    initLumpPathMapping(&lpm);
+
+    Str_Init(&line);
+    ch = buffer;
+    do
+    {
+        ch = Str_GetLine(&line, ch);
+        if(!parseLumpPathMapping(&lpm, Str_Text(&line)))
+        {   // Failure parsing the mapping.
+            // Ignore errors in individual mappings and continue parsing.
+            //goto parseEnded;
+        }
+        else
+        {
+            strupr(lpm.lumpName);
+            F_FixSlashes(&lpm.path, &lpm.path);
+            addLumpDirectoryMapping(lpm.lumpName, &lpm.path);
+        }
+    } while(*ch);
+
+    // Success.
+    successful = true;
+
+//parseEnded:
+    clearLumpPathMapping(&lpm);
+    Str_Free(&line);
+    return successful;
+    }
+}
+
+void F_InitializeResourcePathMap(void)
+{
+    int argC = Argc();
+
+    resetVDirectoryMappings();
+
+    // Create virtual directory mappings by processing all -vdmap options.
+    { int i;
+    for(i = 0; i < argC; ++i)
+    {
+        if(strnicmp("-vdmap", Argv(i), 6))
+            continue; // This is not the option we're looking for.
+
+        if(i < argC - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
+        {
+            F_AddResourcePathMapping(Argv(i + 1), Argv(i + 2));
+            i += 2;
+        }
+    }}
+}
+
+void F_InitDirec(void)
+{
+    static boolean inited = false;
+    size_t bufSize = 0;
+    char* buf = NULL;
+
+    if(inited)
+    {   // Free old paths, if any.
+        clearLumpDirectory();
+        memset(lumpDirectory, 0, sizeof(lumpDirectory));
+    }
+
+    // Add the contents of all DD_DIREC lumps.
+    { lumpnum_t i;
+    for(i = 0; i < F_LumpCount(); ++i)
+    {
+        size_t lumpLength;
+
+        if(strnicmp(W_LumpName(i), "DD_DIREC", 8))
+            continue;
+
+        // Make a copy of it so we can ensure it ends in a null.
+        lumpLength = W_LumpLength(i);
+        if(bufSize < lumpLength + 1)
+        {
+            bufSize = lumpLength + 1;
+            buf = (char*) realloc(buf, bufSize);
+            if(NULL == buf)
+                Con_Error("F_InitDirec: Failed on (re)allocation of %lu bytes for temporary read buffer.", (unsigned long) bufSize);
+        }
+
+        W_ReadLump(i, buf);
+        buf[lumpLength] = 0;
+        parseLumpDirectoryMap(buf);
+    }}
+
+    if(NULL != buf)
+        free(buf);
+
+    inited = true;
+}
+
+void F_ShutdownDirec(void)
+{
+    resetVDirectoryMappings();
+    clearLumpDirectory();
+}
+
+/**
+ * Print contents of directories as Doomsday sees them.
+ */
+D_CMD(Dir)
+{
+    ddstring_t path;
+    Str_Init(&path);
+    if(argc > 1)
+    {
+        int i;
+        for(i = 1; i < argc; ++i)
+        {
+            Str_Set(&path, argv[i]);
+            printDirectory(&path);
+        }
+    }
+    else
+    {
+        Str_Set(&path, "/");
+        printDirectory(&path);
+    }
+    Str_Free(&path);
+    return true;
+}
+
 D_CMD(DumpLump)
 {
     if(inited)
@@ -806,7 +1761,7 @@ D_CMD(DumpLump)
         lumpnum_t lumpNum = W_CheckLumpNumForName(argv[1]);
         if(-1 != lumpNum)
         {
-            return W_DumpLump(lumpNum, NULL);
+            return F_DumpLump(lumpNum, NULL);
         }
         Con_Printf("No such lump.\n");
         return false;

@@ -27,6 +27,7 @@
 
 #include "dd_string.h"
 #include "uri.h"
+#include "filedirectory.h"
 
 typedef struct resourcenamespace_namehash_node_s {
     struct resourcenamespace_namehash_node_s* next;

@@ -26,6 +26,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
 #include "lumpdirectory.h"
 #include "wadfile.h"
@@ -150,9 +151,24 @@ wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath,
     AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, handle, absolutePath, directory);
 
     /// \todo Defer this operation.
-    WadFile_ReadLumpDirectory(file);
-
+    //WadFile_PublishLumpsToDirectory(file, AbstractFile_Directory((abstractfile_t*)file));
     return file;
+    }
+}
+
+int WadFile_PublishLumpsToDirectory(wadfile_t* file, lumpdirectory_t* directory)
+{
+    assert(NULL != file && NULL != directory);
+    {
+    int numPublished = 0;
+    WadFile_ReadLumpDirectory(file);
+    if(file->_lumpCount > 0)
+    {
+        // Insert the lumps into their rightful places in the directory.
+        LumpDirectory_Append(directory, file->_lumpInfo, file->_lumpCount, (abstractfile_t*)file);
+        numPublished += file->_lumpCount;
+    }
+    return numPublished;
     }
 }
 
@@ -232,7 +248,7 @@ static __inline uint WadFile_CacheIndexForLump(const wadfile_t* file,
     return info - file->_lumpInfo;
 }
 
-void WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, char* buffer,
+void WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
@@ -280,13 +296,13 @@ void WadFile_ReadLumpSection2(wadfile_t* file, lumpnum_t lumpNum, char* buffer,
     }
 }
 
-void WadFile_ReadLumpSection(wadfile_t* file, lumpnum_t lumpNum, char* buffer,
+void WadFile_ReadLumpSection(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     WadFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
 }
 
-void WadFile_ReadLump2(wadfile_t* file, lumpnum_t lumpNum, char* buffer, boolean tryCache)
+void WadFile_ReadLump2(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
@@ -295,12 +311,12 @@ void WadFile_ReadLump2(wadfile_t* file, lumpnum_t lumpNum, char* buffer, boolean
     }
 }
 
-void WadFile_ReadLump(wadfile_t* file, lumpnum_t lumpNum, char* buffer)
+void WadFile_ReadLump(wadfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
 {
     WadFile_ReadLump2(file, lumpNum, buffer, true);
 }
 
-const char* WadFile_CacheLump(wadfile_t* file, lumpnum_t lumpNum, int tag)
+const uint8_t* WadFile_CacheLump(wadfile_t* file, lumpnum_t lumpNum, int tag)
 {
     assert(NULL != file);
     {
@@ -327,7 +343,7 @@ const char* WadFile_CacheLump(wadfile_t* file, lumpnum_t lumpNum, int tag)
 
     if(!isCached)
     {
-        char* ptr = (char*)Z_Malloc(info->size, tag, cachePtr);
+        uint8_t* ptr = (uint8_t*)Z_Malloc(info->size, tag, cachePtr);
         if(NULL == ptr)
             Con_Error("WadFile::CacheLump: Failed on allocation of %lu bytes for "
                 "cache copy of lump #%i.", (unsigned long) info->size, lumpNum);
@@ -379,8 +395,6 @@ static void WadFile_ReadLumpDirectory(wadfile_t* file)
     {
         file->_lumpInfo = WadFile_ReadArchiveLumpDirectory(file, file->_lumpRecordsOffset,
             file->_lumpCount, &file->_lumpCount);
-        // Insert the lumps into their rightful places in the directory.
-        LumpDirectory_Append(file->_base._directory, file->_lumpInfo, file->_lumpCount, (abstractfile_t*)file);
     }
     else
     {

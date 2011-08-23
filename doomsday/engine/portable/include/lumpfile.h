@@ -48,6 +48,8 @@ void LumpFile_Delete(lumpfile_t* lump);
 /// Close this file if open and release any acquired file identifiers.
 void LumpFile_Close(lumpfile_t* lump);
 
+int LumpFile_PublishLumpsToDirectory(lumpfile_t* file, struct lumpdirectory_s* directory);
+
 /**
  * Read the data associated with @a lumpNum into @a buffer.
  *
@@ -55,8 +57,8 @@ void LumpFile_Close(lumpfile_t* lump);
  * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  */
-void LumpFile_ReadLump2(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer, boolean tryCache);
-void LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer);
+void LumpFile_ReadLump2(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache);
+void LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -67,9 +69,9 @@ void LumpFile_ReadLump(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer);
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
  */
-void LumpFile_ReadLumpSection2(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer,
+void LumpFile_ReadLumpSection2(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void LumpFile_ReadLumpSection(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer,
+void LumpFile_ReadLumpSection(lumpfile_t* lump, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -79,7 +81,7 @@ void LumpFile_ReadLumpSection(lumpfile_t* lump, lumpnum_t lumpNum, char* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const char* LumpFile_CacheLump(lumpfile_t* lump, lumpnum_t lumpNum, int tag);
+const uint8_t* LumpFile_CacheLump(lumpfile_t* lump, lumpnum_t lumpNum, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.

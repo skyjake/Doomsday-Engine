@@ -35,6 +35,7 @@
 #include "de_render.h"
 #include "de_refresh.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 
 #include "rend_bias.h"

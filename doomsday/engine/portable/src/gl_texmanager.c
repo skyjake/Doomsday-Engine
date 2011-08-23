@@ -41,10 +41,11 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_system.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_refresh.h"
-#include "de_system.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_ui.h"
@@ -2596,7 +2597,7 @@ byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
     {
     byte result = 0;
     DFILE* file;
-    if(NULL != (file = F_OpenLump(lumpNum, false)))
+    if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
     {
         if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
         {
@@ -2650,7 +2651,7 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
     {
     byte result = 0;
     DFILE* file;
-    if(NULL != (file = F_OpenLump(lumpNum, false)))
+    if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
     {
         if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
         {
@@ -2698,7 +2699,7 @@ static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tma
     {
     byte result = 0;
     DFILE* file;
-    if(NULL != (file = F_OpenLump(lumpNum, false)))
+    if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
     {
         if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
         {
@@ -2925,7 +2926,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     {   // "External" image loaded.
         result = 2;
     }
-    else
+    else if(r->lumpNum != -1)
     {
         DFILE* file;
         if(NULL != (file = F_OpenLump(r->lumpNum, false)))
@@ -2973,7 +2974,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
     if(!raw)
         return 0; // Wha?
 
-    if(raw->lumpNum < 0 || raw->lumpNum >= W_LumpCount())
+    if(raw->lumpNum < 0 || raw->lumpNum >= F_LumpCount())
     {
         GL_BindTexture(0, 0);
         return 0;

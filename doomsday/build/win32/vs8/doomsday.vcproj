@@ -1041,6 +1041,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\de_filesys.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\de_graphics.h"
 				>
 			</File>
@@ -1118,6 +1122,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\fonts.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\fs_main.h"
 				>
 			</File>
 			<File

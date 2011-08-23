@@ -27,9 +27,6 @@
 
 #include "sys_system.h"
 #include "sys_console.h"
-#include "sys_direc.h"
-#include "sys_file.h"
-#include "sys_reslocator.h"
 #include "sys_input.h"
 #include "sys_network.h"
 #include "sys_sock.h"

@@ -51,6 +51,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 #include "de_refresh.h"
 #include "de_defs.h"
@@ -2580,7 +2581,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
 {
     size_t lumpLength;
 
-    if(lumpNum < 0 || lumpNum >= W_LumpCount())
+    if(lumpNum < 0 || lumpNum >= F_LumpCount())
     {
         SetError("Bad lump number.");
         return false;

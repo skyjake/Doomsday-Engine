@@ -51,6 +51,8 @@ lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath,
     file->_cacheData = NULL;
     AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, handle, absolutePath, directory);
 
+    /// \todo Defer this operation.
+    //LumpFile_PublishLumpsToDirectory(file, AbstractFile_Directory((abstractfile_t*)file));
     return file;
     }
 }
@@ -61,6 +63,14 @@ void LumpFile_Delete(lumpfile_t* file)
     LumpFile_ClearLumpCache(file);
     Str_Free(&file->_base._absolutePath);
     free(file);
+}
+
+int LumpFile_PublishLumpsToDirectory(lumpfile_t* file, lumpdirectory_t* directory)
+{
+    assert(NULL != file && NULL != directory);
+    // Insert the lumps into their rightful places in the directory.
+    LumpDirectory_Append(directory, &file->_info, 1, (abstractfile_t*)file);
+    return 1;
 }
 
 void LumpFile_ClearLumpCache(lumpfile_t* file)
@@ -76,7 +86,7 @@ void LumpFile_ClearLumpCache(lumpfile_t* file)
     }
 }
 
-void LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, char* buffer,
+void LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
@@ -108,13 +118,13 @@ void LumpFile_ReadLumpSection2(lumpfile_t* file, lumpnum_t lumpNum, char* buffer
     }
 }
 
-void LumpFile_ReadLumpSection(lumpfile_t* file, lumpnum_t lumpNum, char* buffer,
+void LumpFile_ReadLumpSection(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     LumpFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
 }
 
-void LumpFile_ReadLump2(lumpfile_t* file, lumpnum_t lumpNum, char* buffer, boolean tryCache)
+void LumpFile_ReadLump2(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
@@ -124,12 +134,12 @@ void LumpFile_ReadLump2(lumpfile_t* file, lumpnum_t lumpNum, char* buffer, boole
     }
 }
 
-void LumpFile_ReadLump(lumpfile_t* file, lumpnum_t lumpNum, char* buffer)
+void LumpFile_ReadLump(lumpfile_t* file, lumpnum_t lumpNum, uint8_t* buffer)
 {
     LumpFile_ReadLump2(file, lumpNum, buffer, true);
 }
 
-const char* LumpFile_CacheLump(lumpfile_t* file, lumpnum_t lumpNum, int tag)
+const uint8_t* LumpFile_CacheLump(lumpfile_t* file, lumpnum_t lumpNum, int tag)
 {
     assert(NULL != file);
     {
@@ -139,9 +149,9 @@ const char* LumpFile_CacheLump(lumpfile_t* file, lumpnum_t lumpNum, int tag)
     if(!isCached)
     {
         const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
-        char* ptr;
+        uint8_t* ptr;
         assert(NULL != info);
-        ptr = (char*)Z_Malloc(info->size, tag, cachePtr);
+        ptr = (uint8_t*)Z_Malloc(info->size, tag, cachePtr);
         if(NULL == ptr)
             Con_Error("LumpFile::CacheLump: Failed on allocation of %lu bytes for "
                 "cache copy of lump #%i.", (unsigned long) info->size, lumpNum);
@@ -152,7 +162,7 @@ const char* LumpFile_CacheLump(lumpfile_t* file, lumpnum_t lumpNum, int tag)
         Z_ChangeTag(*cachePtr, tag);
     }
 
-    return (char*)(*cachePtr);
+    return (uint8_t*)(*cachePtr);
     }
 }
 

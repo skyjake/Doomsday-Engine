@@ -43,6 +43,7 @@
 #include "de_play.h"
 #include "de_network.h"
 #include "de_ui.h"
+#include "de_filesys.h"
 
 #include "m_args.h"
 #include "def_main.h"
@@ -263,6 +264,7 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_ShutdownDirec();
+    F_CloseAll();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();

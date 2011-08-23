@@ -31,6 +31,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#include "de_filesys.h"
 
 #include "sys_opengl.h"
 
@@ -808,7 +809,7 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
  */
 void DGL_DrawRawScreen(lumpnum_t lumpNum, int x, int y)
 {
-    if(lumpNum < 0 || lumpNum >= W_LumpCount())
+    if(lumpNum < 0 || lumpNum >= F_LumpCount())
         return;
 
     GL_SetRawImage(lumpNum, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);

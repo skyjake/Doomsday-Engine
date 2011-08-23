@@ -43,6 +43,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
@@ -1139,7 +1140,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         /// \fixme Assumes we only cache lumps from non-startup wads.
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
-        W_Reset();
+        F_Reset();
     }
 
     FI_Shutdown();
@@ -1518,11 +1519,11 @@ int DD_Main(void)
     {
         lumpnum_t lumpNum;
         if((lumpNum = W_CheckLumpNumForName(ArgNext())) != -1)
-            W_DumpLump(lumpNum, 0);
+            F_DumpLump(lumpNum, 0);
     }
     if(ArgCheck("-dumpwaddir"))
     {
-        W_PrintLumpDirectory();
+        F_PrintLumpDirectory();
     }
 
     // Try to load the autoexec file. This is done here to make sure everything is
@@ -1925,7 +1926,7 @@ int DD_GetInteger(int ddvalue)
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
     case DD_NUMLUMPS:
-        return W_LumpCount();
+        return F_LumpCount();
 
     case DD_MAP_MUSIC:
         { gamemap_t *map = P_GetCurrentMap();
@@ -2131,7 +2132,7 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_NUMLUMPS:
         { static int count;
-        count = W_LumpCount();
+        count = F_LumpCount();
         return &count;
         }
     default: break;

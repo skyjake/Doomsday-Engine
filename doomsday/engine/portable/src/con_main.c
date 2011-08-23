@@ -55,6 +55,7 @@
 #include "de_misc.h"
 #include "de_infine.h"
 #include "de_defs.h"
+#include "de_filesys.h"
 
 #include "font.h"
 

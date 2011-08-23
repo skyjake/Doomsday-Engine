@@ -31,7 +31,7 @@
 #ifndef LIBDENG_GRAPHICS_PCX_H
 #define LIBDENG_GRAPHICS_PCX_H
 
-struct DFILE;
+#include "sys_file.h"
 
 /**
  * Reads the given PCX image and returns a pointer to a planar 

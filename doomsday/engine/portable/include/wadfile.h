@@ -51,6 +51,8 @@ void WadFile_Delete(wadfile_t* wad);
 /// Close this file if open and release any acquired file identifiers.
 void WadFile_Close(wadfile_t* wad);
 
+int WadFile_PublishLumpsToDirectory(wadfile_t* file, struct lumpdirectory_s* directory);
+
 /**
  * Read the data associated with @a lumpNum into @a buffer.
  *
@@ -58,8 +60,8 @@ void WadFile_Close(wadfile_t* wad);
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  */
-void WadFile_ReadLump2(wadfile_t* wad, lumpnum_t lumpNum, char* dest, boolean tryCache);
-void WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, char* dest);
+void WadFile_ReadLump2(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest, boolean tryCache);
+void WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* dest);
 
 /**
  * Read a subsection of the data associated with @a lumpNum into @a buffer.
@@ -70,9 +72,9 @@ void WadFile_ReadLump(wadfile_t* wad, lumpnum_t lumpNum, char* dest);
  * @param length  Number of bytes to be read.
  * @param tryCache  @c true = try the lump cache first.
  */
-void WadFile_ReadLumpSection2(wadfile_t* wad, lumpnum_t lumpNum, char* buffer,
+void WadFile_ReadLumpSection2(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-void WadFile_ReadLumpSection(wadfile_t* wad, lumpnum_t lumpNum, char* buffer,
+void WadFile_ReadLumpSection(wadfile_t* wad, lumpnum_t lumpNum, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -82,7 +84,7 @@ void WadFile_ReadLumpSection(wadfile_t* wad, lumpnum_t lumpNum, char* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const char* WadFile_CacheLump(wadfile_t* wad, lumpnum_t lumpNum, int tag);
+const uint8_t* WadFile_CacheLump(wadfile_t* wad, lumpnum_t lumpNum, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.

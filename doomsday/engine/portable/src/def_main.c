@@ -41,6 +41,7 @@
 #include "de_misc.h"
 #include "de_graphics.h"
 #include "de_ui.h"
+#include "de_filesys.h"
 
 #include "r_data.h"
 
@@ -718,7 +719,7 @@ void Def_CountMsg(int count, const char* label)
 void Def_ReadLumpDefs(void)
 {
     int numProcessedLumps = 0;
-    int i, numLumps = W_LumpCount();
+    int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
         if(strnicmp(W_LumpName(i), "DD_DEFNS", 8))

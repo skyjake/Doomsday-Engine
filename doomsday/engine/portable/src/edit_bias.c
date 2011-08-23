@@ -39,6 +39,7 @@
 #include "de_ui.h"
 #include "de_console.h"
 #include "de_play.h"
+#include "de_filesys.h"
 
 #include <math.h>
 

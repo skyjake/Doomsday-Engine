@@ -33,6 +33,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
@@ -124,10 +125,10 @@ void Sv_GetInfo(serverinfo_t *info)
     }
 
     // Some WAD names.
-    W_GetPWADFileNames(info->pwads, sizeof(info->pwads), ';');
+    F_GetPWADFileNames(info->pwads, sizeof(info->pwads), ';');
 
     // This should be a CRC number that describes all the loaded data.
-    info->wadNumber = W_CRCNumber();
+    info->wadNumber = F_CRCNumber();
 }
 
 /**
