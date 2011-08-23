@@ -151,6 +151,7 @@
 		<Unit filename="..\..\engine\api\dd_types.h" />
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
+		<Unit filename="..\..\engine\api\dd_wad.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
 		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
@@ -220,7 +221,6 @@
 		<Unit filename="..\..\engine\portable\include\dd_main.h" />
 		<Unit filename="..\..\engine\portable\include\dd_pinit.h" />
 		<Unit filename="..\..\engine\portable\include\dd_version.h" />
-		<Unit filename="..\..\engine\portable\include\dd_wad.h" />
 		<Unit filename="..\..\engine\portable\include\dd_zone.h" />
 		<Unit filename="..\..\engine\portable\include\de_audio.h" />
 		<Unit filename="..\..\engine\portable\include\de_base.h" />

@@ -1005,10 +1005,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\dd_wad.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_zone.h"
 				>
 			</File>
@@ -2215,6 +2211,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\dd_vectorgraphic.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_wad.h"
 				>
 			</File>
 			<File
