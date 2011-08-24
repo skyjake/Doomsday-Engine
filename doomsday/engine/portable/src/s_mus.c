@@ -271,13 +271,12 @@ void Mus_Stop(void)
 }
 
 /**
- * @return:             @c true, if the specified lump contains a MUS song.
+ * @return: @c true, if the specified lump contains a MUS song.
  */
 boolean Mus_IsMUSLump(int lump)
 {
-    char                buf[4];
-
-    W_ReadLumpSection(lump, buf, 0, 4);
+    char buf[4];
+    W_ReadLumpSection(lump, (uint8_t*)buf, 0, 4);
 
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !strncmp(buf, "MUS\x01a", 4);

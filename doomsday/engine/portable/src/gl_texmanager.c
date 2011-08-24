@@ -2758,7 +2758,7 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
+        W_ReadLumpSection(lumpNum, (uint8_t*)&hdr, 0, sizeof(hdr));
         patchTex->offX = -SHORT(hdr.leftOffset);
         patchTex->offY = -SHORT(hdr.topOffset);
     }
@@ -2773,7 +2773,7 @@ byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        W_ReadLumpSection(lumpNum, (char*)&hdr, 0, sizeof(hdr));
+        W_ReadLumpSection(lumpNum, (uint8_t*)&hdr, 0, sizeof(hdr));
         spriteTex->offX = SHORT(hdr.leftOffset);
         spriteTex->offY = SHORT(hdr.topOffset);
     }

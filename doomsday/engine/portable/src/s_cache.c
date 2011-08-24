@@ -605,7 +605,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         if(W_LumpLength(info->lumpNum) <= 8)
             return NULL;
 
-        W_ReadLumpSection(info->lumpNum, hdr, 0, 12);
+        W_ReadLumpSection(info->lumpNum, (uint8_t*)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
