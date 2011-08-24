@@ -1005,10 +1005,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\dd_wad.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_zone.h"
 				>
 			</File>
@@ -1038,6 +1034,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\de_edit.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\de_filesys.h"
 				>
 			</File>
 			<File
@@ -1118,6 +1118,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\fonts.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\fs_main.h"
 				>
 			</File>
 			<File
@@ -2210,6 +2214,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dd_wad.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\api\dengproject.h"
 				>
 			</File>
@@ -2460,6 +2468,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\fonts.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\fs_main.c"
 				>
 			</File>
 			<File

@@ -34,6 +34,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "de_filesys.h"
 
 // MACROS ------------------------------------------------------------------
 

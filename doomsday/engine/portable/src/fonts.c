@@ -30,6 +30,7 @@
 #include "de_console.h"
 #include "de_render.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_ui.h"
 
 #include "m_misc.h"

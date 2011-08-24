@@ -168,6 +168,7 @@
  .\..\..\engine\portable\src\lumpfile.c
  .\..\..\engine\portable\src\wadfile.c
  .\..\..\engine\portable\src\zipfile.c
+ .\..\..\engine\portable\src\fs_main.c
  .\..\..\engine\portable\src\dd_wad.c
  .\..\..\engine\portable\src\dd_plugin.c
  .\..\..\engine\portable\src\dd_pinit.c

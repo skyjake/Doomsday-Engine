@@ -24,11 +24,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
-#include "sys_reslocator.h"
 #include "sys_timer.h"
-#include "sys_file.h"
-#include "sys_findfile.h"
 
 #include "filedirectory.h"
 

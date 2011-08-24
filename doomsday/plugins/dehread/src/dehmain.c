@@ -2370,7 +2370,7 @@ void ApplyDEH(char *patch, int length)
  */
 void ReadDehackedLump(lumpnum_t lumpNum)
 {
-    char* lump;
+    uint8_t* lump;
     size_t len;
 
     if(0 > lumpNum || lumpNum >= DD_GetInteger(DD_NUMLUMPS))
@@ -2380,18 +2380,19 @@ void ReadDehackedLump(lumpnum_t lumpNum)
     }
 
     len = W_LumpLength(lumpNum);
-    lump = (char*) calloc(1, (len + 1));
+    lump = (uint8_t*) malloc(len + 1);
     if(NULL == lump)
     {
         LPrintf("Warning:ReadDehackedLump: Failed on allocation of %lu bytes when attempting to "
-            "cache a copy of '%s(#%i)', aborting.\n", (unsigned long) (sizeof(*lump) * (len + 1)),
+            "cache a copy of '%s(#%i)', aborting.\n", (unsigned long) (len + 1),
             W_LumpName(lumpNum), lumpNum);
         return;
     }
     W_ReadLump(lumpNum, lump);
+    lump[len] = '\0';
 
     VERBOSE( Con_Message("Applying Dehacked patch '%s(#%i)'...\n", W_LumpName(lumpNum), lumpNum) );
-    ApplyDEH(lump, len);
+    ApplyDEH((char*)lump, len);
 
     free(lump);
 }

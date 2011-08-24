@@ -24,6 +24,7 @@
 #include "de_base.h"
 #include "dd_main.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
 #include "gameinfo.h"
 #include "resourcerecord.h"

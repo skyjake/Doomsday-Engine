@@ -34,6 +34,7 @@
 #define LIBDENG_FONTS_H
 
 #include "font.h"
+#include "uri.h"
 
 struct ded_compositefont_s;
 

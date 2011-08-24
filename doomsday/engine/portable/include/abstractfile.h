@@ -40,18 +40,16 @@ typedef enum {
  * Abstract File base. To be used as the basis for all types of files.
  * @ingroup fs
  */
-typedef struct {
+typedef struct abstractfile_s {
     filetype_t _type;
     DFILE* _handle;
-    struct lumpdirectory_s* _directory; // All lumps from this file go into the same LumpDirectory
     ddstring_t _absolutePath;
     /// Load order depth index.
     uint _order;
 } abstractfile_t;
 
 /// Initialize this file.
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, DFILE* handle,
-    const char* absolutePath, struct lumpdirectory_s* directory);
+void AbstractFile_Init(abstractfile_t* file, filetype_t type, DFILE* handle, const char* absolutePath);
 
 /// @return  Type of this file.
 filetype_t AbstractFile_Type(const abstractfile_t* file);
@@ -59,9 +57,6 @@ filetype_t AbstractFile_Type(const abstractfile_t* file);
 /**
  * Accessors:
  */
-/// @return  LumpDirectory lumps in this file have been added to else @c NULL
-struct lumpdirectory_s* AbstractFile_Directory(abstractfile_t* file);
-
 /// @return  File handle acquired for this resource else @c NULL
 DFILE* AbstractFile_Handle(abstractfile_t* file);
 
@@ -79,12 +74,13 @@ uint AbstractFile_LoadOrderIndex(abstractfile_t* file);
 void AbstractFile_Close(abstractfile_t* file);
 
 /**
- * Read the data associated with @a lumpNum into @a buffer.
+ * Read the data associated with the specified lump index into @a buffer.
  *
- * @param lumpNum  Logical lump index associated with the data being read.
+ * @param lumpIdx  Lump index associated with the data being read.
  * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @return  Number of bytes read.
  */
-void AbstractFile_ReadLump(abstractfile_t* file, lumpnum_t lumpNum, char* buffer);
+size_t AbstractFile_ReadLump(abstractfile_t* file, int lumpIdx, uint8_t* buffer);
 
 /**
  * Accessors:

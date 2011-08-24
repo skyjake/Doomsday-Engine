@@ -151,6 +151,7 @@
 		<Unit filename="..\..\engine\api\dd_types.h" />
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
+		<Unit filename="..\..\engine\api\dd_wad.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
 		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
@@ -220,7 +221,6 @@
 		<Unit filename="..\..\engine\portable\include\dd_main.h" />
 		<Unit filename="..\..\engine\portable\include\dd_pinit.h" />
 		<Unit filename="..\..\engine\portable\include\dd_version.h" />
-		<Unit filename="..\..\engine\portable\include\dd_wad.h" />
 		<Unit filename="..\..\engine\portable\include\dd_zone.h" />
 		<Unit filename="..\..\engine\portable\include\de_audio.h" />
 		<Unit filename="..\..\engine\portable\include\de_base.h" />
@@ -229,6 +229,7 @@
 		<Unit filename="..\..\engine\portable\include\de_dam.h" />
 		<Unit filename="..\..\engine\portable\include\de_defs.h" />
 		<Unit filename="..\..\engine\portable\include\de_edit.h" />
+		<Unit filename="..\..\engine\portable\include\de_filesys.h" />
 		<Unit filename="..\..\engine\portable\include\de_graphics.h" />
 		<Unit filename="..\..\engine\portable\include\de_infine.h" />
 		<Unit filename="..\..\engine\portable\include\de_misc.h" />
@@ -249,6 +250,7 @@
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
 		<Unit filename="..\..\engine\portable\include\font.h" />
 		<Unit filename="..\..\engine\portable\include\fonts.h" />
+		<Unit filename="..\..\engine\portable\include\fs_main.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
@@ -496,10 +498,10 @@
 		<Unit filename="..\..\engine\portable\src\dd_plugin.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\dd_wad.c">
+		<Unit filename="..\..\engine\portable\src\dd_zone.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\dd_zone.c">
+		<Unit filename="..\..\engine\portable\src\dd_wad.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\def_data.c">
@@ -527,6 +529,7 @@
 		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
 		<Unit filename="..\..\engine\portable\src\fonts.c" />
+		<Unit filename="..\..\engine\portable\src\fs_main.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />

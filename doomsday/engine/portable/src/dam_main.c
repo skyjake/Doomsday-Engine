@@ -35,6 +35,7 @@
 #include "de_render.h"
 #include "de_defs.h"
 #include "de_edit.h"
+#include "de_filesys.h"
 
 #include <math.h>
 
@@ -341,11 +342,11 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
 
     VERBOSE( Con_Message("collectMapLumps: Locating lumps...\n") )
 
-    if(startLump > 0 && startLump < W_LumpCount())
+    if(startLump > 0 && startLump < F_LumpCount())
     {
         // Keep checking lumps to see if its a map data lump.
         int i;
-        for(i = startLump; i < W_LumpCount(); ++i)
+        for(i = startLump; i < F_LumpCount(); ++i)
         {
             const char* lumpName;
             int lumpType;

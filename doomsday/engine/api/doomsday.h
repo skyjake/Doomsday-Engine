@@ -164,20 +164,6 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     size_t          M_ReadFile(const char* path, char** buffer);
     boolean         M_WriteFile(const char* path, const char* source, size_t length);
 
-    lumpnum_t       W_CheckLumpNumForName(const char* path);
-    lumpnum_t       W_CheckLumpNumForName2(const char* path, boolean silent);
-    lumpnum_t       W_GetLumpNumForName(const char* path);
-
-    void            W_ReadLump(lumpnum_t lumpNum, char* dest);
-    void            W_ReadLumpSection(lumpnum_t lumpNum, char* dest, size_t startOffset, size_t length);
-    const char*     W_CacheLump(lumpnum_t lumpNum, int tag);
-    void            W_CacheChangeTag(lumpnum_t lumpNum, int tag);
-
-    size_t          W_LumpLength(lumpnum_t lumpNum);
-    const char*     W_LumpName(lumpnum_t lumpNum);
-    const char*     W_LumpSourceFile(lumpnum_t lumpNum);
-    boolean         W_LumpIsFromIWAD(lumpnum_t lumpNum);
-
     // Base: File system path/name utilities.
     void            F_ExtractFileBase(char* dst, const char* path, size_t len);
     const char*     F_FindFileExtension(const char* path);

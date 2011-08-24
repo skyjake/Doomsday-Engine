@@ -34,6 +34,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
@@ -1249,11 +1250,11 @@ rawtex_t** R_CollectRawTexs(int* count)
  */
 rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
 {
-    if(-1 == lumpNum || lumpNum >= W_LumpCount())
+    if(-1 == lumpNum || lumpNum >= F_LumpCount())
     {
 #if _DEBUG
         Con_Message("Warning:R_FindRawTex: LumpNum #%i out of bounds (%i), returning NULL.\n",
-                lumpNum, W_LumpCount());
+                lumpNum, F_LumpCount());
 #endif
         return NULL;
     }
@@ -1276,11 +1277,11 @@ rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
     rawtexhash_t* hash = 0;
     rawtex_t* r;
 
-    if(-1 == lumpNum || lumpNum >= W_LumpCount())
+    if(-1 == lumpNum || lumpNum >= F_LumpCount())
     {
 #if _DEBUG
         Con_Message("Warning:R_GetRawTex: LumpNum #%i out of bounds (%i), returning NULL.\n",
-                lumpNum, W_LumpCount());
+                lumpNum, F_LumpCount());
 #endif
         return NULL;
     }
@@ -1341,7 +1342,7 @@ static void clearPatchComposites(void)
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     size_t lumpSize = W_LumpLength(lumpNum);
-    const char* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
+    const uint8_t* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
     patchname_t* names, *name;
     int numNames;
 
@@ -1353,7 +1354,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
         return NULL;
     }
 
-    numNames = LONG(*((int*) lump));
+    numNames = LONG(*((const int*) lump));
     if(numNames <= 0)
     {
         if(NULL != num) *num = 0;
@@ -1377,7 +1378,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
     for(i = 0; i < numNames; ++i)
     {
         /// \fixme Some filtering of invalid characters wouldn't go amiss...
-        strncpy(*name, lump + 4 + i * 8, 8);
+        strncpy(*name, (const char*) (lump + 4 + i * 8), 8);
         name++;
     }}
 
@@ -1462,7 +1463,7 @@ typedef struct {
     if(NULL == maptex1)
         Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of "
             "archived DOOM texture definitions.", (unsigned long) lumpSize);
-    W_ReadLump(lumpNum, (char*)maptex1);
+    W_ReadLump(lumpNum, (uint8_t*)maptex1);
 
     numTexDefs = LONG(*maptex1);
 
@@ -1767,7 +1768,7 @@ static void loadPatchCompositeDefs(void)
      * definition does not come from an IWAD lump.
      */
     firstNull = true;
-    for(i = 0; i < W_LumpCount(); ++i)
+    for(i = 0; i < F_LumpCount(); ++i)
     {
         char name[9];
 
@@ -2041,7 +2042,7 @@ void R_InitFlatTextures(void)
     assert(flatTexturesCount == 0);
 
     VERBOSE( Con_Message("Initializing Flats...\n") )
-    { int i, numLumps = W_LumpCount();
+    { int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
         const char* name = W_LumpName(i);
@@ -2135,7 +2136,7 @@ void R_InitSpriteTextures(void)
      * Step 1: Collection.
      */
     stack = Stack_New();
-    { int i, numLumps = W_LumpCount();
+    { int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
         const char* name = W_LumpName(i);

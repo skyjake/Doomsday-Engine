@@ -568,7 +568,7 @@ void R_LoadColorPalettes(void)
     // Record whether we are using a custom palette.
     customPal = !W_LumpIsFromIWAD(lumpNum);
 
-    W_ReadLumpSection(lumpNum, (char*)data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
+    W_ReadLumpSection(lumpNum, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
 
     /**
@@ -625,18 +625,16 @@ void R_LoadColorPalettes(void)
 #else // __JHEXEN__
     {
     int i;
-    byte* translationtables = (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    uint8_t* translationtables = (uint8_t*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    lumpnum_t lumpNum;
+    char name[9];
 
     for(i = 0; i < 3 * 7; ++i)
     {
-        char name[9];
-        lumpnum_t lumpNum;
-
         dd_snprintf(name, 9, "TRANTBL%X", i);
-
         if(-1 != (lumpNum = W_CheckLumpNumForName(name)))
         {
-            W_ReadLumpSection(lumpNum, (char*)&translationtables[i * 256], 0, 256);
+            W_ReadLumpSection(lumpNum, &translationtables[i * 256], 0, 256);
         }
     }
     }

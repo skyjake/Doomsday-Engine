@@ -43,6 +43,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
@@ -497,7 +498,7 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    lumpnum_t auxLumpBase = W_OpenAuxiliary3(filePath, NULL, true);
+    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, NULL, true);
     boolean result;
 
     if(auxLumpBase == -1)
@@ -518,7 +519,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
         }
     }
 
-    W_CloseAuxiliary();
+    F_CloseAuxiliary();
     return result;
 }
 
@@ -1140,7 +1141,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         /// \fixme Assumes we only cache lumps from non-startup wads.
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
-        W_Reset();
+        F_Reset();
     }
 
     FI_Shutdown();
@@ -1517,13 +1518,18 @@ int DD_Main(void)
     // One-time execution of various command line features available during startup.
     if(ArgCheckWith("-dumplump", 1))
     {
-        lumpnum_t lumpNum;
-        if((lumpNum = W_CheckLumpNumForName(ArgNext())) != -1)
-            W_DumpLump(lumpNum, 0);
+        const char* name = ArgNext();
+        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name, false);
+        if(absoluteLumpNum >= 0)
+        {
+            int lumpIdx;
+            abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+            F_DumpLump(fsObject, lumpIdx, NULL);
+        }
     }
     if(ArgCheck("-dumpwaddir"))
     {
-        W_PrintLumpDirectory();
+        F_PrintLumpDirectory();
     }
 
     // Try to load the autoexec file. This is done here to make sure everything is
@@ -1926,7 +1932,7 @@ int DD_GetInteger(int ddvalue)
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);
 
     case DD_NUMLUMPS:
-        return W_LumpCount();
+        return F_LumpCount();
 
     case DD_MAP_MUSIC:
         { gamemap_t *map = P_GetCurrentMap();
@@ -2129,7 +2135,7 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_NUMLUMPS:
         { static int count;
-        count = W_LumpCount();
+        count = F_LumpCount();
         return &count;
         }
     default: break;

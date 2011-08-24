@@ -36,6 +36,7 @@
 #include "de_play.h"
 #include "de_refresh.h"
 #include "dd_world.h"
+#include "de_filesys.h"
 
 #include "r_util.h"
 
@@ -103,7 +104,7 @@ void Cl_InitTranslations(void)
 {
     xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_APPSTATIC, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
-    { int i, numLumps = W_LumpCount();
+    { int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
         xlat_lump[i] = i; // Identity translation.
     }

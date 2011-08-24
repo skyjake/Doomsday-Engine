@@ -36,6 +36,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
@@ -283,13 +284,12 @@ void Mus_Stop(void)
 }
 
 /**
- * @return:             @c true, if the specified lump contains a MUS song.
+ * @return: @c true, if the specified lump contains a MUS song.
  */
 boolean Mus_IsMUSLump(int lump)
 {
-    char                buf[4];
-
-    W_ReadLumpSection(lump, buf, 0, 4);
+    char buf[4];
+    W_ReadLumpSection(lump, (uint8_t*)buf, 0, 4);
 
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
     return !strncmp(buf, "MUS\x01a", 4);
@@ -487,14 +487,14 @@ int Mus_Start(ded_music_t* def, boolean looped)
         case MUSP_MUS:
             if(iMusic)
             {
-                lumpnum_t lumpNum;
-                if(def->lumpName && -1 != (lumpNum = W_CheckLumpNumForName(def->lumpName)))
+                lumpnum_t absoluteLumpNum;
+                if(def->lumpName && -1 != (absoluteLumpNum = W_CheckLumpNumForName(def->lumpName)))
                 {
                     ddstring_t* fileName = NULL;
 
-                    if(Mus_IsMUSLump(lumpNum))
+                    if(Mus_IsMUSLump(absoluteLumpNum))
                     {   // Lump is in DOOM's MUS format.
-                        char* buf;
+                        uint8_t* buf;
                         size_t len;
 
                         if(!canPlayMUS)
@@ -507,8 +507,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         // any player which relies on the it for format recognition works as
                         // expected.
 
-                        len = W_LumpLength(lumpNum);
-                        buf = (char*) malloc(len);
+                        len = W_LumpLength(absoluteLumpNum);
+                        buf = (uint8_t*) malloc(len);
                         if(NULL == buf)
                         {
                             Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
@@ -516,7 +516,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                             Str_Delete(fileName);
                             return false;
                         }
-                        W_ReadLump(lumpNum, buf);
+                        W_ReadLump(absoluteLumpNum, buf);
 
                         M_Mus2Midi((void*)buf, len, Str_Text(fileName));
                         free(buf);
@@ -524,8 +524,11 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     else if(!iMusic->Play)
                     {   // Music interface does not offer buffer playback.
                         // Write this lump to disk and play from there.
+                        int lumpIdx;
+                        abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+
                         fileName = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
-                        if(!W_DumpLump(lumpNum, Str_Text(fileName)))
+                        if(!F_DumpLump(fsObject, lumpIdx, Str_Text(fileName)))
                         {
                             Str_Delete(fileName);
                             return false;
@@ -539,7 +542,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         return result;
                     }
 
-                    W_ReadLump(lumpNum, (char*)iMusic->SongBuffer(W_LumpLength(lumpNum)));
+                    W_ReadLump(absoluteLumpNum, (uint8_t*)iMusic->SongBuffer(W_LumpLength(absoluteLumpNum)));
                     return iMusic->Play(looped);
                 }
             }
@@ -590,7 +593,7 @@ D_CMD(PlayMusic)
         if(!stricmp(argv[1], "lump"))
         {
             lumpnum_t lumpNum = W_CheckLumpNumForName(argv[2]);
-            char* ptr;
+            uint8_t* ptr;
 
             if(0 > lumpNum)
                 return false; // No such lump.
@@ -602,7 +605,7 @@ D_CMD(PlayMusic)
             }
 
             Mus_Stop();
-            ptr = (char*) iMusic->SongBuffer(W_LumpLength(lumpNum));
+            ptr = (uint8_t*) iMusic->SongBuffer(W_LumpLength(lumpNum));
             W_ReadLump(lumpNum, ptr);
 
             return iMusic->Play(true);

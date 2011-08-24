@@ -28,14 +28,13 @@
 #include "abstractfile.h"
 
 void AbstractFile_Init(abstractfile_t* file, filetype_t type,
-    DFILE* handle, const char* absolutePath, struct lumpdirectory_s* directory)
+    DFILE* handle, const char* absolutePath)
 {
     // Used with to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    assert(NULL != file && NULL != handle && NULL != absolutePath && NULL != directory);
+    assert(NULL != file && NULL != handle && NULL != absolutePath);
     file->_order = fileCounter++;
     file->_type = type;
-    file->_directory = directory;
     file->_handle = handle;
     Str_Init(&file->_absolutePath);
     Str_Set(&file->_absolutePath, absolutePath);
@@ -47,12 +46,6 @@ filetype_t AbstractFile_Type(const abstractfile_t* file)
 {
     assert(NULL != file);
     return file->_type;
-}
-
-struct lumpdirectory_s* AbstractFile_Directory(abstractfile_t* file)
-{
-    assert(NULL != file);
-    return file->_directory;
 }
 
 DFILE* AbstractFile_Handle(abstractfile_t* file)

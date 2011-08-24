@@ -51,6 +51,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 #include "de_refresh.h"
 #include "de_defs.h"
@@ -2580,7 +2581,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
 {
     size_t lumpLength;
 
-    if(lumpNum < 0 || lumpNum >= W_LumpCount())
+    if(lumpNum < 0 || lumpNum >= F_LumpCount())
     {
         SetError("Bad lump number.");
         return false;
@@ -2589,7 +2590,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
     lumpLength = W_LumpLength(lumpNum);
     if(0 != lumpLength)
     {
-        const char* lumpPtr = W_CacheLump(lumpNum, PU_APPSTATIC);
+        const char* lumpPtr = (const char*)W_CacheLump(lumpNum, PU_APPSTATIC);
         int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lumpNum));
         W_CacheChangeTag(lumpNum, PU_CACHE);
         return result;

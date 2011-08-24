@@ -27,6 +27,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
 #include "lumpdirectory.h"
 #include "zipfile.h"
@@ -232,7 +233,7 @@ static boolean ZipFile_LocateCentralDirectory(zipfile_t* file)
     return false;
 }
 
-static void ZipFile_ReadArchiveLumpDirectory(zipfile_t* file)
+static void ZipFile_ReadLumpDirectory(zipfile_t* file)
 {
     assert(NULL != file);
     {
@@ -386,14 +387,10 @@ static void ZipFile_ReadArchiveLumpDirectory(zipfile_t* file)
     // The zip centralDirectory is no longer needed.
     free(centralDirectory);
     Str_Free(&entryPath);
-
-    // Populate the directory.
-    LumpDirectory_Append(AbstractFile_Directory((abstractfile_t*)file), file->_lumpInfo, file->_lumpCount, (abstractfile_t*)file);
-    LumpDirectory_PruneDuplicateRecords(AbstractFile_Directory((abstractfile_t*)file), false);
     }
 }
 
-zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath, lumpdirectory_t* directory)
+zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath)
 {
     zipfile_t* file = (zipfile_t*)malloc(sizeof(*file));
     if(NULL == file)
@@ -403,12 +400,37 @@ zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath, lumpdirectory_t*
     file->_lumpCount = 0;
     file->_lumpInfo = NULL;
     file->_lumpCache = NULL;
-    AbstractFile_Init((abstractfile_t*)file, FT_ZIPFILE, handle, absolutePath, directory);
-
-    /// \todo Defer this operation.
-    ZipFile_ReadArchiveLumpDirectory(file);
+    AbstractFile_Init((abstractfile_t*)file, FT_ZIPFILE, handle, absolutePath);
 
     return file;
+}
+
+int ZipFile_PublishLumpsToDirectory(zipfile_t* file, lumpdirectory_t* directory)
+{
+    assert(NULL != file && NULL != directory);
+    {
+    int numPublished = 0;
+    ZipFile_ReadLumpDirectory(file);
+    if(file->_lumpCount > 0)
+    {
+        // Insert the lumps into their rightful places in the directory.
+        LumpDirectory_Append(directory, (abstractfile_t*)file, 0, file->_lumpCount);
+        LumpDirectory_PruneDuplicateRecords(directory, false);
+        numPublished += file->_lumpCount;
+    }
+    return numPublished;
+    }
+}
+
+const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* file, int lumpIdx)
+{
+    assert(NULL != file);
+    if(lumpIdx < 0 || lumpIdx >= file->_lumpCount)
+    {
+        Con_Error("ZipFile::LumpInfo: Invalid lump index %i (valid range: [0...%i)).", lumpIdx, file->_lumpCount);
+        exit(1); // Unreachable.
+    }
+    return file->_lumpInfo + lumpIdx;
 }
 
 void ZipFile_Delete(zipfile_t* file)
@@ -474,7 +496,7 @@ static __inline uint ZipFile_CacheIndexForLump(const zipfile_t* file,
  * Use zlib to inflate a compressed lump.
  * @return  @c true if successful.
  */
-static boolean ZipFile_InflateLump(char* in, size_t inSize, char* out, size_t outSize)
+static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
     z_stream stream;
     int result;
@@ -504,19 +526,19 @@ static boolean ZipFile_InflateLump(char* in, size_t inSize, char* out, size_t ou
     return true;
 }
 
-static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, char* buffer)
+static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, uint8_t* buffer)
 {
     assert(NULL != file && NULL != lumpInfo && NULL != buffer);
     F_Seek(file->_base._handle, lumpInfo->baseOffset, SEEK_SET);
     if(lumpInfo->compressedSize != lumpInfo->size)
     {
         boolean result;
-        char* compressedData = (char*)malloc(lumpInfo->compressedSize);
+        uint8_t* compressedData = (uint8_t*)malloc(lumpInfo->compressedSize);
         if(NULL == compressedData)
             Con_Error("ZipFile::BufferLump: Failed on allocation of %lu bytes for decompression buffer.", lumpInfo->compressedSize);
 
         // Read the compressed data into a temporary buffer for decompression.
-        F_Read(file->_base._handle, compressedData, lumpInfo->compressedSize);
+        F_Read(file->_base._handle, (void*)compressedData, lumpInfo->compressedSize);
         result = ZipFile_InflateLump(compressedData, lumpInfo->compressedSize, buffer, lumpInfo->size);
         free(compressedData);
         if(!result)
@@ -525,26 +547,29 @@ static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, ch
     else
     {
         // Read the uncompressed data directly to the buffer provided by the caller.
-        F_Read(file->_base._handle, buffer, lumpInfo->size);
+        F_Read(file->_base._handle, (void*)buffer, lumpInfo->size);
     }
     return lumpInfo->size;
 }
 
-void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
+size_t ZipFile_ReadLumpSection2(zipfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     assert(NULL != file);
     {
-    const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
+    const lumpinfo_t* info = ZipFile_LumpInfo(file, lumpIdx);
 
     VERBOSE2(
-        Con_Message("ZipFile::ReadLump: \"%s:%s\" (%lu bytes%s)\n", F_PrettyPath(Str_Text(&file->_base._absolutePath)),
+        Con_Printf("ZipFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
+                F_PrettyPath(Str_Text(&file->_base._absolutePath)),
                 F_PrettyPath(Str_Text(&info->path)), (unsigned long) info->size,
-                (info->compressedSize != info->size? ", compressed" : "")) );
+                (info->compressedSize != info->size? ", compressed" : ""),
+                (unsigned long) startOffset, (unsigned long)length) )
 
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache && NULL != file->_lumpCache)
     {
+        size_t readBytes;
         boolean isCached;
         void** cachePtr;
 
@@ -562,45 +587,52 @@ void ZipFile_ReadLumpSection2(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
 
         if(isCached)
         {
-            memcpy(buffer, (char*)*cachePtr + startOffset, MIN_OF(info->size, length));
-            return;
+            VERBOSE2( Con_Printf(" from cache\n") )
+            readBytes = MIN_OF(info->size, length);
+            memcpy(buffer, (uint8_t*)*cachePtr + startOffset, readBytes);
+            return readBytes;
         }
     }
 
-    ZipFile_BufferLump(file, info, buffer);
+    VERBOSE2( Con_Printf("\n") )
+    return ZipFile_BufferLump(file, info, buffer);
     }
 }
 
-void ZipFile_ReadLumpSection(zipfile_t* file, lumpnum_t lumpNum, char* buffer,
+size_t ZipFile_ReadLumpSection(zipfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
-    ZipFile_ReadLumpSection2(file, lumpNum, buffer, startOffset, length, true);
+    return ZipFile_ReadLumpSection2(file, lumpIdx, buffer, startOffset, length, true);
 }
 
-void ZipFile_ReadLump2(zipfile_t* file, lumpnum_t lumpNum, char* buffer, boolean tryCache)
+size_t ZipFile_ReadLump2(zipfile_t* file, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
     assert(NULL != file);
     {
-    const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
-    ZipFile_ReadLumpSection2(file, lumpNum, buffer, 0, info->size, tryCache);
+    const lumpinfo_t* info = ZipFile_LumpInfo(file, lumpIdx);
+    return ZipFile_ReadLumpSection2(file, lumpIdx, buffer, 0, info->size, tryCache);
     }
 }
 
-void ZipFile_ReadLump(zipfile_t* file, lumpnum_t lumpNum, char* buffer)
+size_t ZipFile_ReadLump(zipfile_t* file, int lumpIdx, uint8_t* buffer)
 {
-    ZipFile_ReadLump2(file, lumpNum, buffer, true);
+    return ZipFile_ReadLump2(file, lumpIdx, buffer, true);
 }
 
-const char* ZipFile_CacheLump(zipfile_t* file, lumpnum_t lumpNum, int tag)
+const uint8_t* ZipFile_CacheLump(zipfile_t* file, int lumpIdx, int tag)
 {
     assert(NULL != file);
     {
-    const lumpinfo_t* info = LumpDirectory_LumpInfo(file->_base._directory, lumpNum);
+    const lumpinfo_t* info = ZipFile_LumpInfo(file, lumpIdx);
     uint cacheIdx = ZipFile_CacheIndexForLump(file, info);
     boolean isCached;
     void** cachePtr;
 
-    assert(NULL != info);
+    VERBOSE2(
+        Con_Printf("ZipFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
+                F_PrettyPath(Str_Text(&file->_base._absolutePath)),
+                F_PrettyPath(Str_Text(&info->path)), (unsigned long) info->size,
+                (info->compressedSize != info->size? ", compressed" : "")) )
 
     if(file->_lumpCount > 1)
     {
@@ -616,24 +648,26 @@ const char* ZipFile_CacheLump(zipfile_t* file, lumpnum_t lumpNum, int tag)
         isCached = (NULL != file->_lumpCache);
     }
 
+    VERBOSE2( Con_Printf(" %s\n", isCached? "hit":"miss") )
+
     if(!isCached)
     {
-        char* ptr = (char*)Z_Malloc(info->size, tag, cachePtr);
+        uint8_t* ptr = (uint8_t*)Z_Malloc(info->size, tag, cachePtr);
         if(NULL == ptr)
             Con_Error("ZipFile::CacheLump: Failed on allocation of %lu bytes for "
-                "cache copy of lump #%i.", (unsigned long) info->size, lumpNum);
-        ZipFile_ReadLump2(file, lumpNum, ptr, false);
+                "cache copy of lump #%i.", (unsigned long) info->size, lumpIdx);
+        ZipFile_ReadLump2(file, lumpIdx, ptr, false);
     }
     else
     {
         Z_ChangeTag(*cachePtr, tag);
     }
 
-    return (char*)(*cachePtr);
+    return (uint8_t*)(*cachePtr);
     }
 }
 
-void ZipFile_ChangeLumpCacheTag(zipfile_t* file, lumpnum_t lumpNum, int tag)
+void ZipFile_ChangeLumpCacheTag(zipfile_t* file, int lumpIdx, int tag)
 {
     assert(NULL != file);
     {
@@ -645,7 +679,7 @@ void ZipFile_ChangeLumpCacheTag(zipfile_t* file, lumpnum_t lumpNum, int tag)
         uint cacheIdx;
         if(NULL == file->_lumpCache) return; // Obviously not cached.
 
-        cacheIdx = ZipFile_CacheIndexForLump(file, LumpDirectory_LumpInfo(file->_base._directory, lumpNum));
+        cacheIdx = ZipFile_CacheIndexForLump(file, ZipFile_LumpInfo(file, lumpIdx));
         cachePtr = &file->_lumpCache[cacheIdx];
         isCached = (NULL != file->_lumpCache[cacheIdx]);
     }

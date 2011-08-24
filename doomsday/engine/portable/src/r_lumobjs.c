@@ -606,7 +606,7 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
  *
- * @param ssec          Ptr to the subsector to process.
+ * @param ssec  Ptr to the subsector to process.
  */
 static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 {
@@ -622,7 +622,8 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         lumobj_t* lum;
 
         // Only produce a light for sectors with open space.
-        if(sec->SP_floorvisheight >= sec->SP_ceilvisheight)
+        /// \todo Do not add surfaces from sectors with zero subsectors to the glowing list.
+        if(!sec->ssectorCount || sec->SP_floorvisheight >= sec->SP_ceilvisheight)
             return true; // Continue iteration.
 
         // Are we glowing at this moment in time?

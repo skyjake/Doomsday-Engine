@@ -36,6 +36,7 @@
 #include "de_misc.h"
 #include "de_edit.h"
 #include "de_dam.h"
+#include "de_filesys.h"
 
 #include "s_environ.h"
 

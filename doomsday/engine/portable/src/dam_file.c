@@ -36,6 +36,7 @@
 #include "de_defs.h"
 #include "de_misc.h"
 #include "de_refresh.h"
+#include "de_filesys.h"
 
 #include "p_mapdata.h"
 

@@ -1,10 +1,10 @@
-/**\file
+/**\file de_filesys.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,32 +22,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Engine Core.
- */
+#ifndef LIBDENG_FILESYS_H
+#define LIBDENG_FILESYS_H
 
-#ifndef LIBDENG_BASE_H
-#define LIBDENG_BASE_H
+#include "fs_main.h"
+#include "sys_reslocator.h" /// \todo Does not belong here (higher level abstraction).
+#include "sys_direc.h"
+#include "sys_file.h"
+#include "sys_findfile.h"
 
-// System headers needed everywhere.
-#include <assert.h>
+#ifdef UNIX
+// We use SDL for window management under *nix
+#  define USING_SDL_WINDOW
+#  include "../../unix/include/sys_path.h"
+#endif
 
-#include "de_platform.h"
-
-#include "dd_def.h"
-#include "dd_share.h"
-#include "dd_api.h"
-#include "dd_plugin.h"
-#include "dd_zone.h"
-#include "dd_main.h"
-#include "dd_input.h"
-#include "dd_loop.h"
-#include "dd_help.h"
-<<<<<<< HEAD
-#include "dd_zip.h"
-#include "reader.h"
-#include "writer.h"
-=======
->>>>>>> beta6-ringzero
-
-#endif /* LIBDENG_BASE_H */
+#endif /* LIBDENG_FILESYS_H */

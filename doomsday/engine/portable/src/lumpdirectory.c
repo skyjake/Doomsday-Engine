@@ -31,6 +31,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 
 #include "lumpdirectory.h"
 
@@ -47,7 +48,7 @@ typedef struct lumpdirectory_lumprecord_s {
     lumpnum_t hashRoot, hashNext;
     lumpnum_t presortIndex;
     abstractfile_t* fsObject;
-    const lumpinfo_t* info;
+    int fsLumpIdx;
 } lumpdirectory_lumprecord_t;
 
 /**
@@ -107,18 +108,24 @@ static const lumpdirectory_lumprecord_t* LumpDirectory_Record(lumpdirectory_t* l
     {
         return ld->_records + lumpNum;
     }
-    Con_Error("LumpDirectory::Record: Lump #%i >= numRecords.", lumpNum);
+    Con_Error("LumpDirectory::Record: Invalid lumpNum #%i (valid range: [0...%i).", lumpNum, ld->_numRecords);
     exit(1); // Unreachable.
 }
 
 const lumpinfo_t* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum)
 {
-    return LumpDirectory_Record(ld, lumpNum)->info;
+    const lumpdirectory_lumprecord_t* rec = LumpDirectory_Record(ld, lumpNum);
+    return F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
 }
 
 abstractfile_t* LumpDirectory_SourceFile(lumpdirectory_t* ld, lumpnum_t lumpNum)
 {
     return LumpDirectory_Record(ld, lumpNum)->fsObject;
+}
+
+int LumpDirectory_LumpIndex(lumpdirectory_t* ld, lumpnum_t lumpNum)
+{
+    return LumpDirectory_Record(ld, lumpNum)->fsLumpIdx;
 }
 
 int LumpDirectory_NumLumps(lumpdirectory_t* ld)
@@ -185,30 +192,29 @@ int LumpDirectory_PruneByFile(lumpdirectory_t* ld, abstractfile_t* fsObject)
     }
 }
 
-void LumpDirectory_Append(lumpdirectory_t* ld, const lumpinfo_t* lumpInfo,
-    int numLumpInfo, abstractfile_t* fsObject)
+void LumpDirectory_Append(lumpdirectory_t* ld, abstractfile_t* fsObject,
+    int lumpIdxBase, int lumpIdxCount)
 {
     assert(NULL != ld && NULL != fsObject);
     {
-    int maxRecords = ld->_numRecords + numLumpInfo; // This must be enough.
+    int maxRecords = ld->_numRecords + lumpIdxCount; // This must be enough.
     int newRecordBase = ld->_numRecords;
 
-    if(NULL == lumpInfo || 0 == numLumpInfo)
+    if(0 == lumpIdxCount)
         return;
 
     // Allocate more memory for the new records.
     LumpDirectory_Resize(ld, maxRecords);
 
     { int i;
-    const lumpinfo_t* info = lumpInfo;
-    for(i = 0; i < numLumpInfo; ++i, info++)
+    for(i = 0; i < lumpIdxCount; ++i)
     {
         lumpdirectory_lumprecord_t* record = ld->_records + newRecordBase + i;
         record->fsObject = fsObject;
-        record->info = info;
+        record->fsLumpIdx = lumpIdxBase + i;
     }}
 
-    ld->_numRecords += numLumpInfo;
+    ld->_numRecords += lumpIdxCount;
 
     // It may be that all lumps weren't added. Make sure we don't have
     // excess memory allocated (=synchronize the storage size with the
@@ -239,7 +245,8 @@ static void LumpDirectory_BuildHash(lumpdirectory_t* ld)
     { int i;
     for(i = 0; i < ld->_numRecords; ++i)
     {
-        uint j = hashLumpShortName(ld->_records[i].info->name) % ld->_numRecords;
+        const lumpinfo_t* info = F_LumpInfo(ld->_records[i].fsObject, ld->_records[i].fsLumpIdx);
+        uint j = hashLumpShortName(info->name) % ld->_numRecords;
         ld->_records[i].hashNext = ld->_records[j].hashRoot; // Prepend to list
         ld->_records[j].hashRoot = i;
     }}
@@ -261,24 +268,34 @@ void LumpDirectory_Clear(lumpdirectory_t* ld)
     ld->_flags &= ~LDF_RECORDS_HASHDIRTY;
 }
 
-int LumpDirectory_Iterate2(lumpdirectory_t* ld, int (*callback) (const lumpinfo_t*, void*), void* paramaters)
+int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
+    int (*callback) (const lumpinfo_t*, void*), void* paramaters)
 {
     assert(NULL != ld && callback);
     {
+    lumpdirectory_lumprecord_t* record;
+    const lumpinfo_t* info;
     int i, result = 0;
     for(i = 0; i < ld->_numRecords; ++i)
     {
-        lumpdirectory_lumprecord_t* record = &ld->_records[i];
-        if(0 != (result = callback(record->info, paramaters)))
+        record = ld->_records + i;
+
+        // Are we only interested in the lumps from a particular file?
+        if(NULL != fsObject && record->fsObject != fsObject)
+            continue;
+
+        info = F_LumpInfo(record->fsObject, record->fsLumpIdx);
+        if(0 != (result = callback(info, paramaters)))
             break;
     }
     return result;
     }
 }
 
-int LumpDirectory_Iterate(lumpdirectory_t* ld, int (*callback) (const lumpinfo_t*, void*))
+int LumpDirectory_Iterate(lumpdirectory_t* ld, abstractfile_t* fsObject,
+    int (*callback) (const lumpinfo_t*, void*))
 {
-    return LumpDirectory_Iterate2(ld, callback, 0);
+    return LumpDirectory_Iterate2(ld, fsObject, callback, 0);
 }
 
 static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* name,
@@ -298,7 +315,7 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
         {
             const int hash = hashLumpShortName(name) % ld->_numRecords;
             idx = ld->_records[hash].hashRoot;
-            while(idx != -1 && strnicmp(ld->_records[idx].info->name, name, LUMPNAME_T_LASTINDEX))
+            while(idx != -1 && strnicmp(F_LumpInfo(ld->_records[idx].fsObject, ld->_records[idx].fsLumpIdx)->name, name, LUMPNAME_T_LASTINDEX))
                 idx = ld->_records[idx].hashNext;
             return idx;
         }
@@ -306,14 +323,15 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
         /// \todo Do not resort to a linear search.
         for(idx = ld->_numRecords; idx-- > 0 ; )
         {
+            const lumpinfo_t* info = F_LumpInfo(ld->_records[idx].fsObject, ld->_records[idx].fsLumpIdx);
             if(matchLumpName)
             {
-                if(!strnicmp(name, ld->_records[idx].info->name, LUMPNAME_T_LASTINDEX))
+                if(!strnicmp(name, info->name, LUMPNAME_T_LASTINDEX))
                     return idx;
             }
             else
             {
-                if(!stricmp(name, Str_Text(&ld->_records[idx].info->path)))
+                if(!stricmp(name, Str_Text(&info->path)))
                     return idx;
             }
         }
@@ -337,7 +355,9 @@ int C_DECL LumpDirectory_CompareRecordName(const void* a, const void* b)
 {
     const lumpdirectory_lumprecord_t* recordA = (const lumpdirectory_lumprecord_t*)a;
     const lumpdirectory_lumprecord_t* recordB = (const lumpdirectory_lumprecord_t*)b;
-    int result = strnicmp(recordA->info->name, recordB->info->name, LUMPNAME_T_LASTINDEX);
+    const lumpinfo_t* infoA = F_LumpInfo(recordA->fsObject, recordA->fsLumpIdx);
+    const lumpinfo_t* infoB = F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx);
+    int result = strnicmp(infoA->name, infoB->name, LUMPNAME_T_LASTINDEX);
     if(0 != result) return result;
     // Still matched; try the file load order indexes.
     result = (AbstractFile_LoadOrderIndex(recordA->fsObject) - AbstractFile_LoadOrderIndex(recordB->fsObject));
@@ -350,7 +370,9 @@ int C_DECL LumpDirectory_CompareRecordPath(const void* a, const void* b)
 {
     const lumpdirectory_lumprecord_t* recordA = (const lumpdirectory_lumprecord_t*)a;
     const lumpdirectory_lumprecord_t* recordB = (const lumpdirectory_lumprecord_t*)b;
-    int result = Str_CompareIgnoreCase(&recordA->info->path, Str_Text(&recordB->info->path));
+    const lumpinfo_t* infoA = F_LumpInfo(recordA->fsObject, recordA->fsLumpIdx);
+    const lumpinfo_t* infoB = F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx);
+    int result = Str_CompareIgnoreCase(&infoA->path, Str_Text(&infoB->path));
     if(0 != result) return result;
     // Still matched; try the file load order indexes.
     result = (AbstractFile_LoadOrderIndex(recordA->fsObject) - AbstractFile_LoadOrderIndex(recordB->fsObject));
@@ -383,10 +405,10 @@ void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpN
         // Is this entry equal to one or more of the next?
         j = i;
         while(j < sortedNumRecords &&
-              (matchLumpName? !strnicmp(ld->_records[j-1].info->name,
-                                        ld->_records[j  ].info->name, LUMPNAME_T_MAXLEN) :
-                               !Str_CompareIgnoreCase(         &ld->_records[j-1].info->path,
-                                                      Str_Text(&ld->_records[j  ].info->path))))
+              (matchLumpName? !strnicmp(F_LumpInfo(ld->_records[j-1].fsObject, ld->_records[j-1].fsLumpIdx)->name,
+                                        F_LumpInfo(ld->_records[j  ].fsObject, ld->_records[j  ].fsLumpIdx)->name, LUMPNAME_T_MAXLEN) :
+                              !Str_CompareIgnoreCase(         &F_LumpInfo(ld->_records[j-1].fsObject, ld->_records[j-1].fsLumpIdx)->path,
+                                                     Str_Text(&F_LumpInfo(ld->_records[j  ].fsObject, ld->_records[j  ].fsLumpIdx)->path))))
         { ++j; }
         if(j == i) continue; // No.
 
@@ -420,36 +442,6 @@ void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpN
     }
 }
 
-const char* LumpDirectory_LumpName(lumpdirectory_t* ld, lumpnum_t lumpNum)
-{
-    assert(NULL != ld);
-    if(LumpDirectory_IsValidIndex(ld, lumpNum))
-    {
-        return ld->_records[lumpNum].info->name;
-    }
-    return NULL; // The caller must be able to handle this...
-}
-
-const char* LumpDirectory_LumpPath(lumpdirectory_t* ld, lumpnum_t lumpNum)
-{
-    assert(NULL != ld);
-    if(LumpDirectory_IsValidIndex(ld, lumpNum))
-    {
-        return Str_Text(&ld->_records[lumpNum].info->path);
-    }
-    return NULL; // The caller must be able to handle this...
-}
-
-size_t LumpDirectory_LumpSize(lumpdirectory_t* ld, lumpnum_t lumpNum)
-{
-    return LumpDirectory_LumpInfo(ld, lumpNum)->size;
-}
-
-size_t LumpDirectory_LumpBaseOffset(lumpdirectory_t* ld, lumpnum_t lumpNum)
-{
-    return LumpDirectory_LumpInfo(ld, lumpNum)->baseOffset;
-}
-
 void LumpDirectory_Print(lumpdirectory_t* ld)
 {
     assert(NULL != ld);
@@ -458,11 +450,12 @@ void LumpDirectory_Print(lumpdirectory_t* ld)
     for(i = 0; i < ld->_numRecords; ++i)
     {
         lumpdirectory_lumprecord_t* rec = ld->_records + i;
+        const lumpinfo_t* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
         printf("%04i - \"%s:(%-8s | %s)\" (offset: %lu, size: %lu bytes%s)\n", i,
             F_PrettyPath(Str_Text(AbstractFile_AbsolutePath(rec->fsObject))),
-            (rec->info->name[0]? rec->info->name : "N/A"), F_PrettyPath(Str_Text(&rec->info->path)),
-            (unsigned long) rec->info->baseOffset, (unsigned long) rec->info->size,
-            (rec->info->compressedSize != rec->info->size? " compressed" : ""));
+            (info->name[0]? info->name : "N/A"), F_PrettyPath(Str_Text(&info->path)),
+            (unsigned long) info->baseOffset, (unsigned long) info->size,
+            (info->compressedSize != info->size? " compressed" : ""));
     }}
     printf("---End of lumps---\n");
 }

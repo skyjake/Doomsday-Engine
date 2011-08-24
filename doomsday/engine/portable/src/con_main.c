@@ -55,6 +55,7 @@
 #include "de_misc.h"
 #include "de_infine.h"
 #include "de_defs.h"
+#include "de_filesys.h"
 
 #include "font.h"
 
@@ -1847,7 +1848,7 @@ void Con_PrintPathList3(const char* pathList, const char* seperator, int flags)
         if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
             Con_Printf("%i: ", n++);
         Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(&path)) : Str_Text(&path));
-        if(seperator && strchr(p, ';') != 0)
+        if(seperator && !(flags & PPF_MULTILINE) && strchr(p, ';') != 0)
             Con_Printf("%s", seperator);
         if(flags & PPF_MULTILINE)
             Con_Printf("\n");

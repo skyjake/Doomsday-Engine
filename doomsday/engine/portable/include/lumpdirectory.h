@@ -54,13 +54,16 @@ void LumpDirectory_Clear(lumpdirectory_t* ld);
  * Iterate over LumpInfo records in the directory making a callback for each.
  * Iteration ends when all LumpInfos have been processed or a callback returns non-zero.
  *
+ * @param fsObject  If not @c NULL only consider lumps from this file.
  * @param callback  Callback to make for each iteration.
  * @param paramaters  User data to be passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int LumpDirectory_Iterate2(lumpdirectory_t* ld, int (*callback) (const lumpinfo_t*, void*), void* paramaters);
-int LumpDirectory_Iterate(lumpdirectory_t* ld, int (*callback) (const lumpinfo_t*, void*));
+int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
+    int (*callback) (const lumpinfo_t*, void*), void* paramaters);
+int LumpDirectory_Iterate(lumpdirectory_t* ld, abstractfile_t* fsObject,
+    int (*callback) (const lumpinfo_t*, void*));
 
 /// @return  Index associated with the last lump with @a name if found else @c -1
 lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name);
@@ -76,12 +79,12 @@ boolean LumpDirectory_IsValidIndex(lumpdirectory_t* ld, lumpnum_t lumpNum);
  *
  * \post Lump name hashes may be invalidated (will be rebuilt upon next search).
  *
- * @param lumpInfo  Metadata for each lump. Must be at least @a lumpInfoCount elements.
- * @param numLumpInfo  Number of elements pointed to by @a lumpInfo.
  * @param fsObject  File system record object for the file from which lumps are being added.
+ * @param lumpIdxBase  Base index for the range of lumps being added.
+ * @param lumpIdxCount  Number of lumps in the range being added.
  */
-void LumpDirectory_Append(lumpdirectory_t* ld, const lumpinfo_t* lumpInfo,
-    int lumpInfoCount, abstractfile_t* fsObject);
+void LumpDirectory_Append(lumpdirectory_t* ld, abstractfile_t* fsObject,
+    int lumpIdxBase, int lumpIdxCount);
 
 /**
  * Prune all lumps in the directory originating from @a fsObject.
@@ -95,23 +98,18 @@ int LumpDirectory_PruneByFile(lumpdirectory_t* ld, abstractfile_t* fsObject);
  */
 void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpName);
 
-/// @return  Info associated to the lump with index @a lumpNum.
+/// @return  Info associated to the lump with id @a lumpNum.
 const lumpinfo_t* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum);
 
-/// @return  File system object associated to the lump with index @a lumpNum.
+/// @return  File system object associated to the lump with id @a lumpNum.
 abstractfile_t* LumpDirectory_SourceFile(lumpdirectory_t* ld, lumpnum_t lumpNum);
+
+/// @return  File system object's lump index for the lump wih id @a lumpNum.
+int LumpDirectory_LumpIndex(lumpdirectory_t* ld, lumpnum_t lumpNum);
 
 /**
  * Print a content listing of lumps in this directory to stdout (for debug).
  */
 void LumpDirectory_Print(lumpdirectory_t* ld);
-
-/**
- * Accessors (for convenience):
- */
-const char* LumpDirectory_LumpName(lumpdirectory_t* ld, lumpnum_t lumpNum);
-const char* LumpDirectory_LumpPath(lumpdirectory_t* ld, lumpnum_t lumpNum);
-size_t LumpDirectory_LumpSize(lumpdirectory_t* ld, lumpnum_t lumpNum);
-size_t LumpDirectory_LumpBaseOffset(lumpdirectory_t* ld, lumpnum_t lumpNum);
 
 #endif /* LIBDENG_FILESYS_LUMPDIRECTORY_H */
