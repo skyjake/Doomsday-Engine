@@ -33,6 +33,7 @@
 #include "gameinfo.h"
 #include "sys_direc.h"
 
+struct pathdirectory_s;
 struct pathdirectory_node_s;
 
 // Verbose messages.
