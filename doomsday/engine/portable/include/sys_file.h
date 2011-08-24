@@ -40,6 +40,8 @@
 
 #define deof(file) ((file)->flags.eof != 0)
 
+struct abstractfile_s;
+
 typedef struct {
     struct DFILE_flags_s {
         unsigned char open:1;
@@ -101,11 +103,6 @@ size_t F_Length(DFILE* file);
 unsigned int F_LastModified(DFILE* file);
 
 /**
- * Zip data is buffered like lump data.
- */
-DFILE* F_OpenZip(lumpnum_t lumpNum, boolean dontBuffer);
-
-/**
  * Try to locate the specified lump for reading.
  *
  * @param lump  Index of the lump to open.
@@ -114,6 +111,17 @@ DFILE* F_OpenZip(lumpnum_t lumpNum, boolean dontBuffer);
  * @return  Non-zero if a lump was found and opened successfully.
  */
 DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
+
+/**
+ * Open a new stream on the specified lump for reading.
+ *
+ * @param fsObject  File system record for the file containing the lump to be read.
+ * @param lump  Index of the lump to open.
+ * @param dontBuffer  Just test for access (don't buffer anything).
+ *
+ * @return  Non-zero if a lump was found and opened successfully.
+ */
+DFILE* F_OpenStreamLump(struct abstractfile_s* fsObject, int lumpIdx, boolean dontBuffer);
 
 DFILE* F_OpenStreamFile(FILE* hndl, const char* path);
 

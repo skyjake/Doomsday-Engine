@@ -90,10 +90,10 @@ size_t F_LumpLength(lumpnum_t absoluteLumpNum);
  * @param lumpNum  If not @c NULL the translated lumpnum within the owning file object is written here.
  * @return  Found file object else @c NULL
  */
-abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, lumpnum_t* lumpNum);
+abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
 
-const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, lumpnum_t* lumpNum);
+const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
@@ -112,17 +112,8 @@ lumpnum_t F_OpenAuxiliary(const char* fileName);
 
 void F_CloseAuxiliary(void);
 
-/// @return  Size of a zipentry specified by index.
-size_t Zip_GetSize(lumpnum_t lumpNum);
-
-/// @return  "Last modified" timestamp of the zip entry.
-uint Zip_LastModified(lumpnum_t lumpNum);
-
 /// @return  The name of the Zip archive where the referenced file resides.
 const char* Zip_SourceFile(lumpnum_t lumpNum);
-
-void Zip_ReadFile(lumpnum_t lumpNum, char* buffer);
-void Zip_ReadFileSection(lumpnum_t lumpNum, char* buffer, size_t startOffset, size_t length);
 
 /**
  * Find a specific path in the Zip LumpDirectory.
@@ -132,18 +123,6 @@ void Zip_ReadFileSection(lumpnum_t lumpNum, char* buffer, size_t startOffset, si
  * @return  Non-zero if something is found.
  */
 lumpnum_t Zip_Find(const char* searchPath);
-
-/**
- * Iterate over nodes in the Zip LumpDirectory making a callback for each.
- * Iteration ends when all nodes have been visited or a callback returns non-zero.
- *
- * @param callback  Callback function ptr.
- * @param paramaters  Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
- */
-int Zip_Iterate2(int (*callback) (const lumpinfo_t*, void*), void* paramaters);
-int Zip_Iterate(int (*callback) (const lumpinfo_t*, void*));
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
@@ -206,22 +185,24 @@ uint F_CRCNumber(void);
  */
 void F_PrintLumpDirectory(void);
 
-size_t F_ReadLumpSection(abstractfile_t* fsObject, lumpnum_t lumpNum, uint8_t* buffer,
+const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx);
+
+size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
-const uint8_t* F_CacheLump(abstractfile_t* fsObject, lumpnum_t lumpNum, int tag);
+const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag);
 
-void F_CacheChangeTag(abstractfile_t* fsObject, lumpnum_t lumpNum, int tag);
+void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag);
 
 /**
- * Write the data associated with @a lumpNum to @a fileName.
+ * Write the data associated with the specified lump index to @a fileName.
  *
- * @param lumpNum  Logical lump index associated with the data being dumped.
+ * @param lumpIdx  Index of the lump data being dumped.
  * @param fileName  If not @c NULL write the associated data to this path.
  *      Can be @c NULL in which case the fileName will be chosen automatically.
  * @return  @c true iff successful.
  */
-boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* fileName);
+boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* fileName);
 
 /**
  * Parm is passed on to the callback, which is called for each file

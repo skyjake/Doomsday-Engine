@@ -121,48 +121,48 @@ lumpnum_t W_GetLumpNumForName(const char* name)
 
 size_t W_ReadLumpSection(lumpnum_t absoluteLumpNum, uint8_t* buffer, size_t startOffset, size_t length)
 {
-    lumpnum_t lumpNum;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpNum);
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_ReadLumpSection: Invalid lumpnum %i.", absoluteLumpNum);
         return 0;
     }
-    return F_ReadLumpSection(fsObject, lumpNum, buffer, startOffset, length);
+    return F_ReadLumpSection(fsObject, lumpIdx, buffer, startOffset, length);
 }
 
 size_t W_ReadLump(lumpnum_t absoluteLumpNum, uint8_t* buffer)
 {
-    lumpnum_t lumpNum;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpNum);
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_ReadLump: Invalid lumpnum %i.", absoluteLumpNum);
         return 0;
     }
-    return F_ReadLumpSection(fsObject, lumpNum, buffer, 0, F_LumpLength(absoluteLumpNum));
+    return F_ReadLumpSection(fsObject, lumpIdx, buffer, 0, F_LumpLength(absoluteLumpNum));
 }
 
 const uint8_t* W_CacheLump(lumpnum_t absoluteLumpNum, int tag)
 {
-    lumpnum_t lumpNum;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpNum);
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_CacheLump: Invalid lumpnum %i.", absoluteLumpNum);
         return NULL;
     }
-    return F_CacheLump(fsObject, lumpNum, tag);
+    return F_CacheLump(fsObject, lumpIdx, tag);
 }
 
 void W_CacheChangeTag(lumpnum_t absoluteLumpNum, int tag)
 {
-    lumpnum_t lumpNum;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpNum);
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(!fsObject)
     {
         W_Error("W_ChacheChangeTag: Invalid lumpnum %i.", absoluteLumpNum);
         return;
     }
-    F_CacheChangeTag(fsObject, lumpNum, tag);
+    F_CacheChangeTag(fsObject, lumpIdx, tag);
 }

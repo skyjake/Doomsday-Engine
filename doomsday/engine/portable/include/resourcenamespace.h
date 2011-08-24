@@ -50,12 +50,12 @@ typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMES
 typedef enum {
     SPG_OVERRIDE = 0, // Override paths
     SPG_EXTRA, // Extra/runtime paths
-    SPG_DEFAULT = 0, // Default paths
+    SPG_DEFAULT, // Default paths
     SPG_FALLBACK, // Last-resort paths
     SEARCHPATHGROUP_COUNT
 } resourcenamespace_searchpathgroup_t;
 
-#define VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(g) ((g) >= SPG_DEFAULT && (g) < SEARCHPATHGROUP_COUNT)
+#define VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(g) ((g) >= SPG_OVERRIDE && (g) < SEARCHPATHGROUP_COUNT)
 
 /**
  * @defGroup ResourceNamespaceFlags Resource Namespace Flags

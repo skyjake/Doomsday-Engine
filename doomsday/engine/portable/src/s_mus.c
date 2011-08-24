@@ -475,12 +475,12 @@ int Mus_Start(ded_music_t* def, boolean looped)
         case MUSP_MUS:
             if(iMusic)
             {
-                lumpnum_t lumpNum;
-                if(def->lumpName && -1 != (lumpNum = W_CheckLumpNumForName(def->lumpName)))
+                lumpnum_t absoluteLumpNum;
+                if(def->lumpName && -1 != (absoluteLumpNum = W_CheckLumpNumForName(def->lumpName)))
                 {
                     ddstring_t* fileName = NULL;
 
-                    if(Mus_IsMUSLump(lumpNum))
+                    if(Mus_IsMUSLump(absoluteLumpNum))
                     {   // Lump is in DOOM's MUS format.
                         char* buf;
                         size_t len;
@@ -495,7 +495,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         // any player which relies on the it for format recognition works as
                         // expected.
 
-                        len = W_LumpLength(lumpNum);
+                        len = W_LumpLength(absoluteLumpNum);
                         buf = (char*) malloc(len);
                         if(NULL == buf)
                         {
@@ -504,7 +504,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                             Str_Delete(fileName);
                             return false;
                         }
-                        W_ReadLump(lumpNum, buf);
+                        W_ReadLump(absoluteLumpNum, buf);
 
                         M_Mus2Midi((void*)buf, len, Str_Text(fileName));
                         free(buf);
@@ -512,8 +512,11 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     else if(!iMusic->Play)
                     {   // Music interface does not offer buffer playback.
                         // Write this lump to disk and play from there.
+                        int lumpIdx;
+                        abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+
                         fileName = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
-                        if(!F_DumpLump(lumpNum, Str_Text(fileName)))
+                        if(!F_DumpLump(fsObject, lumpIdx, Str_Text(fileName)))
                         {
                             Str_Delete(fileName);
                             return false;
@@ -527,7 +530,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         return result;
                     }
 
-                    W_ReadLump(lumpNum, (char*)iMusic->SongBuffer(W_LumpLength(lumpNum)));
+                    W_ReadLump(absoluteLumpNum, (char*)iMusic->SongBuffer(W_LumpLength(absoluteLumpNum)));
                     return iMusic->Play(looped);
                 }
             }

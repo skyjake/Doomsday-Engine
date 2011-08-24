@@ -486,8 +486,8 @@ static void createPackagesResourceNamespace(void)
 
     idx = 0;
     // Add the default paths.
-    searchPaths[idx++] = Uri_NewWithPath2("$(GameInfo.DataPath)/", RC_NULL);
     searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(GameInfo.DataPath)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)

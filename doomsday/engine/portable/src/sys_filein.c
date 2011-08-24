@@ -303,30 +303,6 @@ static unsigned int readLastModified(const char* path)
 #endif
 }
 
-DFILE* F_OpenZip(lumpnum_t lumpNum, boolean dontBuffer)
-{
-    DFILE* file = getFreeFile();
-
-    if(!file)
-        return NULL;
-
-    // Init and load in the lump data.
-    file->flags.open = true;
-    file->flags.file = false;
-    file->lastModified = Zip_LastModified(lumpNum);
-    if(!dontBuffer)
-    {
-        file->size = Zip_GetSize(lumpNum);
-        file->pos = file->data = (char*)malloc(file->size);
-        if(NULL == file->data)
-            Con_Error("F_OpenZip: Failed on allocation of %lu bytes for buffered data.",
-                (unsigned long) file->size);
-        Zip_ReadFile(lumpNum, (char*)file->data);
-    }
-
-    return file;
-}
-
 DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
 {
     DFILE* file = getFreeFile();
@@ -345,9 +321,40 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
         if(NULL == file->data)
             Con_Error("F_OpenLump: Failed on allocation of %lu bytes for buffered data.",
                 (unsigned long) file->size);
+#if _DEBUG
+        VERBOSE2( Con_Printf("Next FILE read from F_OpenLump.\n") )
+#endif
         W_ReadLump(lumpNum, (char*)file->data);
     }
 
+    return file;
+}
+
+DFILE* F_OpenStreamLump(abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
+{
+    const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
+    DFILE* file;
+
+    if(!info) return NULL;
+    file = getFreeFile();
+    if(!file) return NULL;
+
+    // Init and load in the lump data.
+    file->flags.open = true;
+    file->flags.file = false;
+    file->lastModified = info->lastModified;
+    if(!dontBuffer)
+    {
+        file->size = info->size;
+        file->pos = file->data = (char*)malloc(file->size);
+        if(NULL == file->data)
+            Con_Error("F_OpenZip: Failed on allocation of %lu bytes for buffered data.",
+                (unsigned long) file->size);
+#if _DEBUG
+        VERBOSE2( Con_Printf("Next FILE read from F_OpenStreamLump.\n") )
+#endif
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)file->data, 0, info->size);
+    }
     return file;
 }
 

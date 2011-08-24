@@ -1517,9 +1517,14 @@ int DD_Main(void)
     // One-time execution of various command line features available during startup.
     if(ArgCheckWith("-dumplump", 1))
     {
-        lumpnum_t lumpNum;
-        if((lumpNum = W_CheckLumpNumForName(ArgNext())) != -1)
-            F_DumpLump(lumpNum, 0);
+        const char* name = ArgNext();
+        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name, false);
+        if(absoluteLumpNum >= 0)
+        {
+            int lumpIdx;
+            abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+            F_DumpLump(fsObject, lumpIdx, NULL);
+        }
     }
     if(ArgCheck("-dumpwaddir"))
     {
