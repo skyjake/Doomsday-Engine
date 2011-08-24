@@ -33,6 +33,8 @@
 #include "gameinfo.h"
 #include "sys_direc.h"
 
+struct pathdirectory_node_s;
+
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
