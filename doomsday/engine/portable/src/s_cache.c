@@ -611,7 +611,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
         if(WAV_CheckFormat(hdr))
         {
             size_t lumpSize = W_LumpLength(info->lumpNum);
-            const char* sp = W_CacheLump(info->lumpNum, PU_APPSTATIC);
+            const uint8_t* sp = W_CacheLump(info->lumpNum, PU_APPSTATIC);
 
             // Load as WAV, then.
             data = WAV_MemoryLoad((const byte*) sp, lumpSize, &bytesPer, &rate, &numSamples);
@@ -644,14 +644,14 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
          * We can use the sample data as-is, so make use of the lump cache
          * by loading from it directly.
          */
-        const char* sp = W_CacheLump(info->lumpNum, PU_APPSTATIC);
+        const uint8_t* sp = W_CacheLump(info->lumpNum, PU_APPSTATIC);
         const void* data;
         sfxcache_t* node;
 
         data = sp + 8; // Eight byte header.
         bytesPer = 1; // 8-bit.
-        rate = SHORT(*(short*) (sp + 2));
-        numSamples = LONG(*(int*) (sp + 4));
+        rate = SHORT(*(const short*) (sp + 2));
+        numSamples = LONG(*(const int*) (sp + 4));
 
         // Insert a copy of this into the cache.
         node = Sfx_CacheInsert(id, data, bytesPer * numSamples, numSamples,

@@ -89,7 +89,7 @@ static void openScriptLump(lumpnum_t lumpNum)
 {
     SC_Close();
 
-    ScriptBuffer = W_CacheLump(lumpNum, PU_GAMESTATIC);
+    ScriptBuffer = (const char*)W_CacheLump(lumpNum, PU_GAMESTATIC);
     if(NULL == ScriptBuffer)
     {
         Con_Message("Warning:SC_OpenLump: Failed caching lump index #%i, ignoring.\n", lumpNum);

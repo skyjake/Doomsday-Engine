@@ -481,7 +481,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                     if(Mus_IsMUSLump(absoluteLumpNum))
                     {   // Lump is in DOOM's MUS format.
-                        char* buf;
+                        uint8_t* buf;
                         size_t len;
 
                         if(!canPlayMUS)
@@ -495,7 +495,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         // expected.
 
                         len = W_LumpLength(absoluteLumpNum);
-                        buf = (char*) malloc(len);
+                        buf = (uint8_t*) malloc(len);
                         if(NULL == buf)
                         {
                             Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
@@ -529,7 +529,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         return result;
                     }
 
-                    W_ReadLump(absoluteLumpNum, (char*)iMusic->SongBuffer(W_LumpLength(absoluteLumpNum)));
+                    W_ReadLump(absoluteLumpNum, (uint8_t*)iMusic->SongBuffer(W_LumpLength(absoluteLumpNum)));
                     return iMusic->Play(looped);
                 }
             }
@@ -580,7 +580,7 @@ D_CMD(PlayMusic)
         if(!stricmp(argv[1], "lump"))
         {
             lumpnum_t lumpNum = W_CheckLumpNumForName(argv[2]);
-            char* ptr;
+            uint8_t* ptr;
 
             if(0 > lumpNum)
                 return false; // No such lump.
@@ -592,7 +592,7 @@ D_CMD(PlayMusic)
             }
 
             Mus_Stop();
-            ptr = (char*) iMusic->SongBuffer(W_LumpLength(lumpNum));
+            ptr = (uint8_t*) iMusic->SongBuffer(W_LumpLength(lumpNum));
             W_ReadLump(lumpNum, ptr);
 
             return iMusic->Play(true);

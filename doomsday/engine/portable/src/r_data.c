@@ -1342,7 +1342,7 @@ static void clearPatchComposites(void)
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     size_t lumpSize = W_LumpLength(lumpNum);
-    const char* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
+    const uint8_t* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
     patchname_t* names, *name;
     int numNames;
 
@@ -1354,7 +1354,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
         return NULL;
     }
 
-    numNames = LONG(*((int*) lump));
+    numNames = LONG(*((const int*) lump));
     if(numNames <= 0)
     {
         if(NULL != num) *num = 0;
@@ -1378,7 +1378,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
     for(i = 0; i < numNames; ++i)
     {
         /// \fixme Some filtering of invalid characters wouldn't go amiss...
-        strncpy(*name, lump + 4 + i * 8, 8);
+        strncpy(*name, (const char*) (lump + 4 + i * 8), 8);
         name++;
     }}
 
@@ -1463,7 +1463,7 @@ typedef struct {
     if(NULL == maptex1)
         Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of "
             "archived DOOM texture definitions.", (unsigned long) lumpSize);
-    W_ReadLump(lumpNum, (char*)maptex1);
+    W_ReadLump(lumpNum, (uint8_t*)maptex1);
 
     numTexDefs = LONG(*maptex1);
 

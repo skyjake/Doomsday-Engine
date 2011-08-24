@@ -1650,7 +1650,7 @@ void F_InitDirec(void)
         fsObject = F_FindFileForLumpNum2(i, &lumpIdx);
         F_ReadLumpSection(fsObject, lumpIdx, buf, 0, lumpLength);
         buf[lumpLength] = 0;
-        parseLumpDirectoryMap(buf);
+        parseLumpDirectoryMap((const char*)buf);
     }}
 
     if(NULL != buf)

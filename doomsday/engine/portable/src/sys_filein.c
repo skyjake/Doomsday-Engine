@@ -324,7 +324,7 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
 #if _DEBUG
         VERBOSE2( Con_Printf("Next FILE read from F_OpenLump.\n") )
 #endif
-        W_ReadLump(lumpNum, (char*)file->data);
+        W_ReadLump(lumpNum, (uint8_t*)file->data);
     }
 
     return file;

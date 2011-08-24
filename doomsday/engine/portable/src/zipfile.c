@@ -496,7 +496,7 @@ static __inline uint ZipFile_CacheIndexForLump(const zipfile_t* file,
  * Use zlib to inflate a compressed lump.
  * @return  @c true if successful.
  */
-static boolean ZipFile_InflateLump(char* in, size_t inSize, char* out, size_t outSize)
+static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
     z_stream stream;
     int result;
@@ -526,19 +526,19 @@ static boolean ZipFile_InflateLump(char* in, size_t inSize, char* out, size_t ou
     return true;
 }
 
-static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, char* buffer)
+static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, uint8_t* buffer)
 {
     assert(NULL != file && NULL != lumpInfo && NULL != buffer);
     F_Seek(file->_base._handle, lumpInfo->baseOffset, SEEK_SET);
     if(lumpInfo->compressedSize != lumpInfo->size)
     {
         boolean result;
-        char* compressedData = (char*)malloc(lumpInfo->compressedSize);
+        uint8_t* compressedData = (uint8_t*)malloc(lumpInfo->compressedSize);
         if(NULL == compressedData)
             Con_Error("ZipFile::BufferLump: Failed on allocation of %lu bytes for decompression buffer.", lumpInfo->compressedSize);
 
         // Read the compressed data into a temporary buffer for decompression.
-        F_Read(file->_base._handle, compressedData, lumpInfo->compressedSize);
+        F_Read(file->_base._handle, (void*)compressedData, lumpInfo->compressedSize);
         result = ZipFile_InflateLump(compressedData, lumpInfo->compressedSize, buffer, lumpInfo->size);
         free(compressedData);
         if(!result)
@@ -547,7 +547,7 @@ static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, ch
     else
     {
         // Read the uncompressed data directly to the buffer provided by the caller.
-        F_Read(file->_base._handle, buffer, lumpInfo->size);
+        F_Read(file->_base._handle, (void*)buffer, lumpInfo->size);
     }
     return lumpInfo->size;
 }

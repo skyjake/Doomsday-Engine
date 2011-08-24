@@ -1038,11 +1038,11 @@ static void freeMapData(void)
     map->flats = NULL;
 }
 
-static boolean loadVertexes(const char* buf, size_t len)
+static boolean loadVertexes(const uint8_t* buf, size_t len)
 {
     uint num, n;
     size_t elmSize;
-    const char* ptr;
+    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadVertexes: Processing...\n") )
 
@@ -1134,11 +1134,11 @@ static void interpretLineDefFlags(mline_t* l)
 #undef DOOM_VALIDMASK
 }
 
-static boolean loadLinedefs(const char* buf, size_t len)
+static boolean loadLinedefs(const uint8_t* buf, size_t len)
 {
     uint num, n;
     size_t elmSize;
-    const char* ptr;
+    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadLinedefs: Processing...\n") )
 
@@ -1268,11 +1268,11 @@ static boolean loadLinedefs(const char* buf, size_t len)
     return true;
 }
 
-static boolean loadSidedefs(const char* buf, size_t len)
+static boolean loadSidedefs(const uint8_t* buf, size_t len)
 {
     uint num, n;
     size_t elmSize;
-    const char* ptr;
+    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadSidedefs: Processing...\n") )
 
@@ -1334,11 +1334,11 @@ static boolean loadSidedefs(const char* buf, size_t len)
     return true;
 }
 
-static boolean loadSectors(const char* buf, size_t len)
+static boolean loadSectors(const uint8_t* buf, size_t len)
 {
     uint num, n;
     size_t elmSize;
-    const char* ptr;
+    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadSectors: Processing...\n") )
 
@@ -1395,7 +1395,7 @@ static boolean loadSectors(const char* buf, size_t len)
     return true;
 }
 
-static boolean loadThings(const char* buf, size_t len)
+static boolean loadThings(const uint8_t* buf, size_t len)
 {
 // New flags: \todo get these from a game api header.
 #define MTF_Z_FLOOR         0x20000000 // Spawn relative to floor height.
@@ -1405,7 +1405,7 @@ static boolean loadThings(const char* buf, size_t len)
 #define ANG45               0x20000000
     uint num, n;
     size_t elmSize;
-    const char* ptr;
+    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadThings: Processing...\n") )
 
@@ -1625,11 +1625,11 @@ static boolean loadThings(const char* buf, size_t len)
 #undef MTF_Z_RANDOM
 }
 
-static boolean loadLights(const char* buf, size_t len)
+static boolean loadLights(const uint8_t* buf, size_t len)
 {
     uint num, n;
     size_t elmSize;
-    const char* ptr;
+    const uint8_t* ptr;
 
     VERBOSE2( Con_Message("WadMapConverter::loadLights: Processing...\n") )
 
@@ -1650,14 +1650,14 @@ static boolean loadLights(const char* buf, size_t len)
     return true;
 }
 
-static void bufferLump(int lumpNum, char** buf, size_t* len, size_t* oldLen)
+static void bufferLump(int lumpNum, uint8_t** buf, size_t* len, size_t* oldLen)
 {
     *len = W_LumpLength(lumpNum);
 
     // Need to enlarge our buffer?
     if(*len > *oldLen)
     {
-        *buf = (char*)realloc(*buf, *len);
+        *buf = (uint8_t*)realloc(*buf, *len);
         if(NULL == *buf)
             Con_Error("WadMapConverter::bufferLump: Failed on (re)allocation of %lu bytes for "
                 "temporary lump buffer.", (unsigned long) *len);
@@ -1670,7 +1670,7 @@ static void bufferLump(int lumpNum, char** buf, size_t* len, size_t* oldLen)
 
 boolean LoadMap(const int* lumpList, int numLumps)
 {
-    char* buf = NULL;
+    uint8_t* buf = NULL;
     size_t oldLen = 0;
 
     // Allocate the data structure arrays.

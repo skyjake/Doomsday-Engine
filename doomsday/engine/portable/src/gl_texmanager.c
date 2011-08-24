@@ -2826,7 +2826,7 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const char* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
+        const uint8_t* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
 
         // Draw the patch in the buffer.
         loadDoomPatch(image->pixels, image->width, image->height,
@@ -2861,7 +2861,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     height = texDef->height;
     if(texDef->patchCount == 1)
     {
-        const char* patch = W_CacheLump(texDef->patches[0].lumpNum, PU_APPSTATIC);
+        const uint8_t* patch = W_CacheLump(texDef->patches[0].lumpNum, PU_APPSTATIC);
         const doompatch_header_t* hdr = (const doompatch_header_t*) patch;
         int bufHeight = SHORT(hdr->height) > height ? SHORT(hdr->height) : height;
         if(bufHeight > height)
@@ -2886,7 +2886,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const char* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
+        const uint8_t* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
 
         if(texDef->patchCount != 1)
         {

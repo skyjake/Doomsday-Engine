@@ -1906,7 +1906,7 @@ DEFFC(TextFromLump)
     else
     {
         size_t lumpSize = W_LumpLength(lumpNum);
-        const char* data = W_CacheLump(lumpNum, PU_APPSTATIC);
+        const uint8_t* data = W_CacheLump(lumpNum, PU_APPSTATIC);
         size_t bufSize = 2 * lumpSize + 1;
         char* str, *out;
 
@@ -1918,14 +1918,14 @@ DEFFC(TextFromLump)
         { size_t i;
         for(i = 0, out = str; i < lumpSize; ++i)
         {
-            if(data[i] == '\n')
+            if((const char)data[i] == '\n')
             {
                 *out++ = '\\';
                 *out++ = 'n';
             }
             else
             {
-                *out++ = data[i];
+                *out++ = (const char)data[i];
             }
         }}
         W_CacheChangeTag(lumpNum, PU_CACHE);
