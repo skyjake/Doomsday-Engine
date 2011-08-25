@@ -1674,7 +1674,6 @@ void N_ListenUnjoinedNodes(void)
     }
 
     // Any incoming connections on the listening socket?
-    // \fixme Include this in the set of sockets?
     while((sock = SDLNet_TCP_Accept(serverSock)) != NULL)
     {
         // A new client is attempting to connect. Let's try to
