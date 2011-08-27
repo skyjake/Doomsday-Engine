@@ -1971,7 +1971,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkView(player);
     P_PlayerThinkSpecial(player);
 
-    if(!IS_CLIENT) // Locally only.
+    if(IS_CLIENT) // Locally only.
     {
         P_PlayerThinkSounds(player);
     }
