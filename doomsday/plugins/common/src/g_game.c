@@ -1608,9 +1608,13 @@ void G_PlayerReborn(int player)
         p->ammo[i].max = maxAmmo[i];
 #endif
 
+    // Reset viewheight.
+    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeightDelta = 0;
+
     // We'll need to update almost everything.
 #if __JHERETIC__
-    p->update |=
+    p->update |= PSF_VIEW_HEIGHT |
         PSF_STATE | PSF_HEALTH | PSF_ARMOR_TYPE | PSF_ARMOR_POINTS |
         PSF_INVENTORY | PSF_POWERS | PSF_KEYS | PSF_OWNED_WEAPONS | PSF_AMMO |
         PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON | PSF_MORPH_TIME;
