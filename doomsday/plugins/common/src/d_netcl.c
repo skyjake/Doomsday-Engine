@@ -269,7 +269,7 @@ void NetCl_MobjImpulse(Reader* msg)
     mobj_t* clmo = ClPlayer_ClMobj(CONSOLEPLAYER);
     thid_t id = 0;
 
-    if(!mo) return;
+    if(!mo || !clmo) return;
 
     id = Reader_ReadUInt16(msg);
     if(id != clmo->thinker.id)
