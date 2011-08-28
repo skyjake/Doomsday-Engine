@@ -128,6 +128,25 @@ void P_CalcHeight(player_t* plr)
     else
         step = 4.0f;
 
+    // Foot clipping (interpolated).
+    if(!( Get(DD_PLAYBACK) || P_MobjIsCamera(pmo) || (ddplr->flags & DDPF_CHASECAM) ))
+    {
+        if(morphed)
+        {   // Chicken or pig.
+            target /*plr->viewZ*/ -= 20;
+        }
+
+        // Foot clipping is done for living players.
+        if(plr->playerState != PST_DEAD)
+        {
+            if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
+            {
+                target /*plr->viewZ*/ -= pmo->floorClip;
+            }
+        }
+    }
+
+    // viewOffset is used for bobbing the view (applied to plr->viewZ).
     if(plr->viewOffset[VZ] > target)
     {
         if(plr->viewOffset[VZ] - target > step)
@@ -169,6 +188,7 @@ void P_CalcHeight(player_t* plr)
                     plr->viewHeightDelta = 1;
             }
 
+            /// @todo What is the purpose of this? -skyjake
             if(plr->viewHeightDelta)
             {
                 plr->viewHeightDelta += 0.25f;
@@ -180,24 +200,4 @@ void P_CalcHeight(player_t* plr)
 
     // Set the plr's eye-level Z coordinate.
     plr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
-
-    // During demo playback (or camera mode) the viewz will not be modified
-    // any further.
-    if(!(Get(DD_PLAYBACK) || P_MobjIsCamera(pmo) ||
-       (ddplr->flags & DDPF_CHASECAM)))
-    {
-        if(morphed)
-        {   // Chicken or pig.
-            plr->viewZ -= 20;
-        }
-
-        // Foot clipping is done for living players.
-        if(plr->playerState != PST_DEAD)
-        {
-            if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
-            {
-                plr->viewZ -= pmo->floorClip;
-            }
-        }
-    }
 }
