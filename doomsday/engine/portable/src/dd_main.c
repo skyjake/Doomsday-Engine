@@ -879,6 +879,9 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_InitializeResourcePathMap();
     F_ResetAllResourceNamespaces();
 
+    if(p->initiatedBusyMode)
+        Con_SetProgress(30);
+
     /**
      * Open all the files, load headers, count lumps, etc, etc...
      * \note duplicate processing of the same file is automatically guarded against by
@@ -938,6 +941,9 @@ static int DD_ChangeGameWorker(void* paramaters)
         // Final autoload round.
         DD_AutoLoad();
     }
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(60);
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
