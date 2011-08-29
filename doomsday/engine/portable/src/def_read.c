@@ -2577,24 +2577,20 @@ int DED_Read(ded_t* ded, const char* path)
 /**
  * Reads definitions from the given lump.
  */
-int DED_ReadLump(ded_t* ded, lumpnum_t lumpNum)
+int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
 {
-    size_t lumpLength;
-
-    if(lumpNum < 0 || lumpNum >= F_LumpCount())
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(fsObject)
     {
-        SetError("Bad lump number.");
-        return false;
+        if(F_LumpLength(absoluteLumpNum) != 0)
+        {
+            const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+            int result = DED_ReadData(ded, lumpPtr, Str_Text(AbstractFile_AbsolutePath(fsObject)));
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+        }
+        return true;
     }
-
-    lumpLength = W_LumpLength(lumpNum);
-    if(0 != lumpLength)
-    {
-        const char* lumpPtr = (const char*)W_CacheLump(lumpNum, PU_APPSTATIC);
-        int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lumpNum));
-        W_CacheChangeTag(lumpNum, PU_CACHE);
-        return result;
-    }
-
+    SetError("Bad lump number.");
     return false;
 }

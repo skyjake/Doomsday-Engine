@@ -45,6 +45,7 @@
 #include "de_misc.h"
 #include "de_infine.h"
 #include "de_ui.h"
+#include "de_filesys.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1895,18 +1896,17 @@ DEFFC(TextFromDef)
 DEFFC(TextFromLump)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    lumpnum_t lumpNum;
+    lumpnum_t absoluteLumpNum;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    lumpNum = W_CheckLumpNumForName(OP_CSTRING(3));
-    if(0 > lumpNum)
+
+    absoluteLumpNum = F_CheckLumpNumForName(OP_CSTRING(3), true);
+    if(absoluteLumpNum >= 0)
     {
-        FIData_TextCopy(obj, "(not found)");
-    }
-    else
-    {
-        size_t lumpSize = W_LumpLength(lumpNum);
-        const uint8_t* data = W_CacheLump(lumpNum, PU_APPSTATIC);
+        int lumpIdx;
+        size_t lumpSize = F_LumpLength(absoluteLumpNum);
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+        const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
         size_t bufSize = 2 * lumpSize + 1;
         char* str, *out;
 
@@ -1918,20 +1918,24 @@ DEFFC(TextFromLump)
         { size_t i;
         for(i = 0, out = str; i < lumpSize; ++i)
         {
-            if((const char)data[i] == '\n')
+            if((const char)lumpPtr[i] == '\n')
             {
                 *out++ = '\\';
                 *out++ = 'n';
             }
             else
             {
-                *out++ = (const char)data[i];
+                *out++ = (const char)lumpPtr[i];
             }
         }}
-        W_CacheChangeTag(lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         FIData_TextCopy(obj, str);
         free(str);
+    }
+    else
+    {
+        FIData_TextCopy(obj, "(not found)");
     }
     ((fidata_text_t*)obj)->cursorPos = 0; // Restart.
 }

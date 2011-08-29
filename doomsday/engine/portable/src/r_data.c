@@ -2207,10 +2207,12 @@ void R_InitSpriteTextures(void)
     {
         spritetex_t* sprTex = spriteTextures[i];
         const doompatch_header_t* patch;
+        abstractfile_t* fsObject;
         const texture_t* tex;
+        int lumpIdx;
 
         /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
-        if(W_LumpLength(sprTex->lumpNum) < sizeof(doompatch_header_t))
+        if(F_LumpLength(sprTex->lumpNum) < sizeof(doompatch_header_t))
         {
             Con_Message("Warning, sprite frame lump %s (#%i) does not appear to be a valid Patch.\n",
                 Str_Text(&sprTex->name), sprTex->lumpNum);
@@ -2219,7 +2221,8 @@ void R_InitSpriteTextures(void)
             continue;
         }
 
-        patch = (const doompatch_header_t*) W_CacheLump(sprTex->lumpNum, PU_APPSTATIC);
+        fsObject = F_FindFileForLumpNum2(sprTex->lumpNum, &lumpIdx);
+        patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
         tex = GL_CreateTexture2(Str_Text(&sprTex->name), i, TN_SPRITES, SHORT(patch->width), SHORT(patch->height));
         if(NULL == tex)
@@ -2228,13 +2231,13 @@ void R_InitSpriteTextures(void)
                 Str_Text(&sprTex->name), sprTex->lumpNum);
             sprTex->offX = sprTex->offY = 0;
             sprTex->lumpNum = -1;
-            W_CacheChangeTag(sprTex->lumpNum, PU_CACHE);
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
             continue;
         }
         sprTex->texId = Texture_Id(tex);
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
-        W_CacheChangeTag(sprTex->lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
     VERBOSE2(
