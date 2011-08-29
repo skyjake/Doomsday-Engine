@@ -643,6 +643,7 @@ void P_DeathThink(player_t* player)
                 }
                 player->plr->lookDir += lookDelta;
                 player->plr->flags |= DDPF_INTERPITCH;
+                player->plr->flags |= DDPF_FIXANGLES;
             }
         }
     }
@@ -670,6 +671,7 @@ void P_DeathThink(player_t* player)
             player->plr->lookDir = 0;
 #endif
         player->plr->flags |= DDPF_INTERPITCH;
+        player->plr->flags |= DDPF_FIXANGLES;
     }
 
 #if __JHEXEN__
@@ -678,12 +680,8 @@ void P_DeathThink(player_t* player)
 
     P_CalcHeight(player);
 
-    // In netgames we won't keep tracking the killer.
-    if(
-#if !__JHEXEN__
-        !IS_NETGAME &&
-#endif
-        player->attacker && player->attacker != player->plr->mo)
+    // Keep track of the killer.
+    if(player->attacker && player->attacker != player->plr->mo)
     {
 #if __JHEXEN__
         int dir = P_FaceMobj(player->plr->mo, player->attacker, &delta);
@@ -728,6 +726,9 @@ void P_DeathThink(player_t* player)
 
         player->plr->flags |= DDPF_INTERYAW;
 #endif
+
+        // Update client.
+        player->plr->flags |= DDPF_FIXANGLES;
     }
     else
     {
