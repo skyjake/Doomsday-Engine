@@ -780,9 +780,9 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(!r->planes[PLN_FLOOR].speed && !s->planes[PLN_FLOOR]->speed)
+    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->planes[PLN_FLOOR]->speed, 0))
     {
-        if(r->planes[PLN_FLOOR].height != s->planes[PLN_FLOOR]->height)
+        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->planes[PLN_FLOOR]->height))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
@@ -792,9 +792,9 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
 
     // How about the ceiling?
-    if(!r->planes[PLN_CEILING].speed && !s->planes[PLN_CEILING]->speed)
+    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->planes[PLN_CEILING]->speed, 0))
     {
-        if(r->planes[PLN_CEILING].height != s->planes[PLN_CEILING]->height)
+        if(!FEQUAL(r->planes[PLN_CEILING].height, s->planes[PLN_CEILING]->height))
             df |= SDF_CEILING_HEIGHT;
     }
     else
@@ -804,22 +804,22 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
 
     // Check planes, too.
-    if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR]->target)
+    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->planes[PLN_FLOOR]->target))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(r->planes[PLN_FLOOR].speed != s->planes[PLN_FLOOR]->speed)
+    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->planes[PLN_FLOOR]->speed))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING]->target)
+    if(!FEQUAL(r->planes[PLN_CEILING].target, s->planes[PLN_CEILING]->target))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(r->planes[PLN_CEILING].speed != s->planes[PLN_CEILING]->speed)
+    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->planes[PLN_CEILING]->speed))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;
