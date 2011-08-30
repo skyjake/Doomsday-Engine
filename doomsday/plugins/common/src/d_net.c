@@ -705,12 +705,12 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
         {
             // Clients are allowed to damage themselves.
             NetCl_DamageRequest(ClPlayer_ClMobj(CONSOLEPLAYER), inflictor, source, damage);
+
+            // No further processing of this damage is needed.
             return true;
         }
     }
-
-    // We're done.
-    return true;
+    return false;
 }
 
 /**
