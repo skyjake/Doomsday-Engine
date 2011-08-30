@@ -557,29 +557,21 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec = &dummy;
     }
 
+    /// @todo What if client and server materialnums differ?
+
     if(df & SDF_FLOOR_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * @todo What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        Surface_SetMaterial(&sec->SP_floorsurface, mat);
+        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
+        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL, mat);
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * @todo What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        Surface_SetMaterial(&sec->SP_ceilsurface, mat);
+        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
+        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL, mat);
     }
 
     if(df & SDF_LIGHT)
-        sec->lightLevel = Reader_ReadByte(msgReader) / 255.0f;
+        P_SetFloatp(sec, DMU_LIGHT_LEVEL, Reader_ReadByte(msgReader) / 255.0f);
 
     if(df & SDF_FLOOR_HEIGHT)
         height[PLN_FLOOR] = FIX2FLT(Reader_ReadInt16(msgReader) << 16);
