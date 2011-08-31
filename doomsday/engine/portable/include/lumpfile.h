@@ -29,7 +29,6 @@
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
-struct lumpcache_s;
 
 /**
  * LumpFile. Runtime representation of a lump-file for use with LumpDirectory
@@ -40,7 +39,7 @@ typedef struct lumpfile_s {
     // Base file.
     abstractfile_t _base;
     lumpinfo_t _info;
-    struct lumpcache_s* _lumpCache;
+    void** _lumpCache;
 } lumpfile_t;
 
 lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath, lumpname_t name, size_t lumpSize);

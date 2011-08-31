@@ -29,7 +29,6 @@
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
-struct lumpcache_s;
 
 /**
  * WadFile. Runtime representation of a WAD file.
@@ -43,7 +42,7 @@ typedef struct wadfile_s {
     int _lumpCount;
     size_t _lumpRecordsOffset;
     lumpinfo_t* _lumpInfo;
-    struct lumpcache_s* _lumpCache;
+    void** _lumpCache;
 } wadfile_t;
 
 wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath);

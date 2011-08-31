@@ -29,7 +29,6 @@
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
-struct lumpcache_s;
 
 /**
  * ZipFile. Runtime representation of Zip files.
@@ -43,7 +42,7 @@ typedef struct {
     abstractfile_t _base;
     int _lumpCount;
     lumpinfo_t* _lumpInfo;
-    struct lumpcache_s* _lumpCache;
+    void** _lumpCache;
 } zipfile_t;
 
 zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath);
