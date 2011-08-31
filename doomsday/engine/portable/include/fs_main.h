@@ -79,7 +79,13 @@ boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
 boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum);
 
+const char* F_LumpName(lumpnum_t absoluteLumpNum);
+
 size_t F_LumpLength(lumpnum_t absoluteLumpNum);
+
+const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum);
+
+uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 
 /**
  * Given a logical @a lumpnum retrieve the associated file object.

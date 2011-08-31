@@ -174,10 +174,10 @@ typedef struct map_s {
 extern map_t* map;
 extern boolean verbose;
 
-boolean         IsSupportedFormat(const int* lumpList, int numLumps);
+boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps);
 
-boolean         LoadMap(const int* lumpList, int numLumps);
-void            AnalyzeMap(void);
-boolean         TransferMap();
+boolean LoadMap(const lumpnum_t* lumpList, int numLumps);
+void AnalyzeMap(void);
+boolean TransferMap();
 
 #endif

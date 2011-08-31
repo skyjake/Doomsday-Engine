@@ -575,7 +575,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
          * external resource (probably a custom sound).
          * \fixme should be a cvar.
          */
-        if(info->lumpNum < 0 || W_LumpIsFromIWAD(info->lumpNum))
+        if(info->lumpNum < 0 || F_LumpIsFromIWAD(info->lumpNum))
         {
             ddstring_t foundPath; Str_Init(&foundPath);
 
@@ -592,6 +592,9 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
     // No sample loaded yet?
     if(!data)
     {
+        abstractfile_t* fsObject;
+        size_t lumpLength;
+        int lumpIdx;
         char hdr[12];
 
         // Try loading from the lump.
@@ -602,20 +605,20 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
             return NULL;
         }
 
-        if(W_LumpLength(info->lumpNum) <= 8)
+        lumpLength = F_LumpLength(info->lumpNum);
+        if(lumpLength <= 8)
             return NULL;
 
-        W_ReadLumpSection(info->lumpNum, (uint8_t*)hdr, 0, 12);
+        fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)hdr, 0, 12);
 
         // Is this perhaps a WAV sound?
         if(WAV_CheckFormat(hdr))
         {
-            size_t lumpSize = W_LumpLength(info->lumpNum);
-            const uint8_t* sp = W_CacheLump(info->lumpNum, PU_APPSTATIC);
-
             // Load as WAV, then.
-            data = WAV_MemoryLoad((const byte*) sp, lumpSize, &bytesPer, &rate, &numSamples);
-            W_CacheChangeTag(info->lumpNum, PU_CACHE);
+            const uint8_t* sp = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+            data = WAV_MemoryLoad((const byte*) sp, lumpLength, &bytesPer, &rate, &numSamples);
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
             if(NULL == data)
             {
@@ -644,7 +647,9 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
          * We can use the sample data as-is, so make use of the lump cache
          * by loading from it directly.
          */
-        const uint8_t* sp = W_CacheLump(info->lumpNum, PU_APPSTATIC);
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(info->lumpNum, &lumpIdx);
+        const uint8_t* sp = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
         const void* data;
         sfxcache_t* node;
 
@@ -658,7 +663,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
             bytesPer, rate, info->group);
 
         // We don't need the temporary sample any more, clean up.
-        W_CacheChangeTag(info->lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         return &node->sample;
     }

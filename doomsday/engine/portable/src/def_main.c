@@ -722,12 +722,12 @@ void Def_ReadLumpDefs(void)
     int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
-        if(strnicmp(W_LumpName(i), "DD_DEFNS", 8))
+        if(strnicmp(F_LumpName(i), "DD_DEFNS", 8))
             continue;
         numProcessedLumps++;
         if(!DED_ReadLump(&defs, i))
         {
-            Con_Error("DD_ReadLumpDefs: Parse error when reading %s::DD_DEFNS.\n", W_LumpSourceFile(i));
+            Con_Error("DD_ReadLumpDefs: Parse error when reading %s::DD_DEFNS.\n", F_LumpSourceFile(i));
         }
     }
 
@@ -1147,7 +1147,7 @@ void Def_Read(void)
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckLumpNumForName2(snd->lumpName, true) : -1);
+        si->lumpNum = (strlen(snd->lumpName) > 0? F_CheckLumpNumForName(snd->lumpName, true) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
         si->link = (k >= 0 ? sounds + k : 0);
@@ -1807,7 +1807,7 @@ int Def_Set(int type, int index, int value, const void* ptr)
         case DD_LUMP:
             S_StopSound(index, 0);
             strcpy(sounds[index].lumpName, ptr);
-            sounds[index].lumpNum = W_CheckLumpNumForName(sounds[index].lumpName);
+            sounds[index].lumpNum = F_CheckLumpNumForName(sounds[index].lumpName, false);
             break;
 
         default:

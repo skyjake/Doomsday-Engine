@@ -1003,7 +1003,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         else
         {
-            lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(Uri_Path(dTex->filePath)), true);
             loadResult = GL_LoadDetailTextureLump(image, lumpNum);
         }
         break;
@@ -2599,7 +2599,7 @@ byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
     DFILE* file;
     if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
     {
-        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
+        if(0 != GL_LoadImageDFile(image, file, F_LumpName(lumpNum)))
         {
             result = 1;
         }
@@ -2653,7 +2653,7 @@ byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
     DFILE* file;
     if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
     {
-        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
+        if(0 != GL_LoadImageDFile(image, file, F_LumpName(lumpNum)))
         {
             result = 1;
         }
@@ -2701,7 +2701,7 @@ static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tma
     DFILE* file;
     if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
     {
-        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
+        if(0 != GL_LoadImageDFile(image, file, F_LumpName(lumpNum)))
         {
             result = 2;
         }
@@ -2714,7 +2714,7 @@ static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tma
             if(fileLength < sizeof(doompatch_header_t))
             {
                 //Con_Message("Warning, lump %s (#%i) does not appear to be a valid Patch.\n",
-                //    W_LumpName(lumpNum), lumpNum);
+                //    F_LumpName(lumpNum), lumpNum);
                 return result;
             }
 
@@ -2758,7 +2758,9 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        W_ReadLumpSection(lumpNum, (uint8_t*)&hdr, 0, sizeof(hdr));
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)&hdr, 0, sizeof(hdr));
         patchTex->offX = -SHORT(hdr.leftOffset);
         patchTex->offY = -SHORT(hdr.topOffset);
     }
@@ -2773,7 +2775,9 @@ byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        W_ReadLumpSection(lumpNum, (uint8_t*)&hdr, 0, sizeof(hdr));
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)&hdr, 0, sizeof(hdr));
         spriteTex->offX = SHORT(hdr.leftOffset);
         spriteTex->offY = SHORT(hdr.topOffset);
     }
@@ -2826,13 +2830,15 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const uint8_t* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const uint8_t* patch = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
         // Draw the patch in the buffer.
         loadDoomPatch(image->pixels, image->width, image->height,
             (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
 
-        W_CacheChangeTag(patchDef->lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
     if(palettedIsMasked(image->pixels, image->width, image->height))
@@ -2861,8 +2867,9 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     height = texDef->height;
     if(texDef->patchCount == 1)
     {
-        const uint8_t* patch = W_CacheLump(texDef->patches[0].lumpNum, PU_APPSTATIC);
-        const doompatch_header_t* hdr = (const doompatch_header_t*) patch;
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(texDef->patches[0].lumpNum, &lumpIdx);
+        const doompatch_header_t* hdr = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
         int bufHeight = SHORT(hdr->height) > height ? SHORT(hdr->height) : height;
         if(bufHeight > height)
         {
@@ -2870,7 +2877,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
             if(height > 200)
                 height = 200;
         }
-        W_CacheChangeTag(texDef->patches[0].lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }
 
     GL_InitImage(image);
@@ -2886,7 +2893,9 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const uint8_t* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
         if(texDef->patchCount != 1)
         {
@@ -2898,9 +2907,8 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
             offX = offY = 0;
         }
 
-        loadDoomPatch(image->pixels, image->width, image->height, (const doompatch_header_t*) patch,
-            offX, offY, 0, 0, zeroMask);
-        W_CacheChangeTag(patchDef->lumpNum, PU_CACHE);
+        loadDoomPatch(image->pixels, image->width, image->height, patch, offX, offY, 0, 0, zeroMask);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
     if(zeroMask)

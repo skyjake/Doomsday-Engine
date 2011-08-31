@@ -196,13 +196,13 @@ static void freeMapLumpInfoList(listnode_t* headPtr)
 /**
  * Create a new map lump info record.
  */
-static maplumpinfo_t* createMapLumpInfo(int lumpNum, int lumpClass)
+static maplumpinfo_t* createMapLumpInfo(lumpnum_t lumpNum, int lumpClass)
 {
-    maplumpinfo_t*      info = allocMapLumpInfo();
+    maplumpinfo_t* info = allocMapLumpInfo();
 
     info->lumpNum = lumpNum;
     info->lumpClass = lumpClass;
-    info->length = W_LumpLength(lumpNum);
+    info->length = F_LumpLength(lumpNum);
     info->format = NULL;
     info->startOffset = 0;
 
@@ -259,7 +259,7 @@ static archivedmap_t* createArchivedMap(const char* mapID, listnode_t* headPtr,
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
-    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), W_GetLumpNumForName(dam->identifier)))
+    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_CheckLumpNumForName(dam->identifier, true)))
         dam->cachedMapFound = true;
 
     // Count the number of source data lumps.
@@ -336,7 +336,7 @@ static void addArchivedMap(archivedmap_t* dam)
  *
  * @return              The number of collected lumps.
  */
-static uint collectMapLumps(listnode_t** headPtr, int startLump)
+static uint collectMapLumps(listnode_t** headPtr, lumpnum_t startLump)
 {
     uint numCollectedLumps = 0;
 
@@ -345,19 +345,19 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
     if(startLump > 0 && startLump < F_LumpCount())
     {
         // Keep checking lumps to see if its a map data lump.
-        int i;
+        lumpnum_t i;
         for(i = startLump; i < F_LumpCount(); ++i)
         {
             const char* lumpName;
             int lumpType;
 
             // Lookup the lump name in our list of known map lump names.
-            lumpName = W_LumpName(i);
+            lumpName = F_LumpName(i);
             lumpType = mapLumpTypeForName(lumpName);
 
             if(lumpType != ML_INVALID)
             {   // Its a known map lump.
-                maplumpinfo_t *info = createMapLumpInfo(i, lumpType);
+                maplumpinfo_t* info = createMapLumpInfo(i, lumpType);
 
                 addLumpInfoToList(headPtr, info);
                 numCollectedLumps++;
@@ -457,7 +457,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
     dam = findArchivedMap(mapID);
     if(NULL == dam)
     {   // We've not yet attempted to load this map.
-        int markerLump = W_CheckLumpNumForName(mapID);
+        lumpnum_t markerLump = F_CheckLumpNumForName(mapID, true);
         listnode_t* sourceLumpListHead = NULL;
         ddstring_t* cachedMapDir;
         ddstring_t cachedMapPath;
@@ -472,12 +472,12 @@ boolean DAM_AttemptMapLoad(const char* mapID)
         collectMapLumps(&sourceLumpListHead, markerLump + 1);
 
         // Compose the cache directory path and ensure it exists.
-        cachedMapDir = DAM_ComposeCacheDir(W_LumpSourceFile(markerLump));
+        cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLump));
         F_MakePath(Str_Text(cachedMapDir));
 
         // Compose the full path to the cached map data file.
         Str_Init(&cachedMapPath);
-        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), W_LumpName(markerLump));
+        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), F_LumpName(markerLump));
 
         // Create an archived map record for this.
         dam = createArchivedMap(mapID, sourceLumpListHead, &cachedMapPath);

@@ -39,6 +39,7 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "de_filesys.h"
 
 #include "r_util.h"
 
@@ -84,13 +85,13 @@ int Cl_ReadSectorDelta(void)
 
     if(df & SDF_FLOOR_MATERIAL)
     {
-        lumpnum_t lumpNum;
         // A bit convoluted; the delta is a server-side (flat) lump number.
-        if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
+        lumpnum_t lumpNum = Cl_TranslateLump(Msg_ReadPackedShort());
+        if(lumpNum >= 0)
         {
             material_t* mat;
             ddstring_t path; Str_Init(&path);
-            Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(lumpNum));
+            Str_Appendf(&path, MN_FLATS_NAME":%s", F_LumpName(lumpNum));
             mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
             Str_Free(&path);
 #if _DEBUG
@@ -103,14 +104,13 @@ if(!mat)
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        lumpnum_t lumpNum;
-
         // A bit convoluted; the delta is a server-side (flat) lump number.
-        if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
+        lumpnum_t lumpNum = Cl_TranslateLump(Msg_ReadPackedShort());
+        if(lumpNum >= 0)
         {
             material_t* mat;
             ddstring_t path; Str_Init(&path);
-            Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(lumpNum));
+            Str_Appendf(&path, MN_FLATS_NAME":%s", F_LumpName(lumpNum));
             mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
             Str_Free(&path);
 #if _DEBUG

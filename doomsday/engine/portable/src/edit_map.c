@@ -1895,12 +1895,12 @@ boolean MPE_End(void)
      */
     if(gamemap->mapID && gamemap->mapID[0])
     {   // Yes, write the cached map data file.
-        lumpnum_t markerLumpNum = W_GetLumpNumForName(gamemap->mapID);
-        ddstring_t* cachedMapDir = DAM_ComposeCacheDir(W_LumpSourceFile(markerLumpNum));
+        lumpnum_t markerLumpNum = F_CheckLumpNumForName(gamemap->mapID, true);
+        ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
         ddstring_t cachedMapPath;
 
         Str_Init(&cachedMapPath);
-        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), W_LumpName(markerLumpNum));
+        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), F_LumpName(markerLumpNum));
         F_ExpandBasePath(&cachedMapPath, &cachedMapPath);
 
         // Ensure the destination directory exists.

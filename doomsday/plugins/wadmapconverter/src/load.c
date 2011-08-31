@@ -879,7 +879,7 @@ void AnalyzeMap(void)
         findPolyobjs();
 }
 
-boolean IsSupportedFormat(const int* lumpList, int numLumps)
+boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps)
 {
     boolean supported = false;
     int i;
@@ -1650,7 +1650,7 @@ static boolean loadLights(const uint8_t* buf, size_t len)
     return true;
 }
 
-static void bufferLump(int lumpNum, uint8_t** buf, size_t* len, size_t* oldLen)
+static void bufferLump(lumpnum_t lumpNum, uint8_t** buf, size_t* len, size_t* oldLen)
 {
     *len = W_LumpLength(lumpNum);
 
@@ -1668,7 +1668,7 @@ static void bufferLump(int lumpNum, uint8_t** buf, size_t* len, size_t* oldLen)
     W_ReadLump(lumpNum, *buf);
 }
 
-boolean LoadMap(const int* lumpList, int numLumps)
+boolean LoadMap(const lumpnum_t* lumpList, int numLumps)
 {
     uint8_t* buf = NULL;
     size_t oldLen = 0;

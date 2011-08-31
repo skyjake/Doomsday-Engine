@@ -33,7 +33,7 @@
 
 typedef struct sfxinfo_s {
     void* data; /// Pointer to sound data.
-    int lumpNum;
+    lumpnum_t lumpNum;
     char lumpName[9]; /// Actual lump name of the sound (full name).
     char id[32]; /// Identifier name (from the def).
     char name[32]; /// Long name.

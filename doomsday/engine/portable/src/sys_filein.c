@@ -313,10 +313,13 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
     // Init and load in the lump data.
     file->flags.open = true;
     file->flags.file = false;
-    file->lastModified = W_LumpLastModified(lumpNum);
+    file->lastModified = F_LumpLastModified(lumpNum);
     if(!dontBuffer)
     {
-        file->size = W_LumpLength(lumpNum);
+        int lumpIdx;
+        abstractfile_t* fsObject;
+
+        file->size = F_LumpLength(lumpNum);
         file->pos = file->data = (void*) malloc(file->size);
         if(NULL == file->data)
             Con_Error("F_OpenLump: Failed on allocation of %lu bytes for buffered data.",
@@ -324,7 +327,8 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
 #if _DEBUG
         VERBOSE2( Con_Printf("Next FILE read from F_OpenLump.\n") )
 #endif
-        W_ReadLump(lumpNum, (uint8_t*)file->data);
+        fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)file->data, 0, file->size);
     }
 
     return file;

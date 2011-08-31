@@ -532,10 +532,31 @@ const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum)
     return F_FindInfoForLumpNum2(absoluteLumpNum, NULL);
 }
 
+const char* F_LumpName(lumpnum_t absoluteLumpNum)
+{
+    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    if(info) return info->name;
+    return "";
+}
+
 size_t F_LumpLength(lumpnum_t absoluteLumpNum)
 {
     const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
     if(info) return info->size;
+    return 0;
+}
+
+const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
+{
+    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
+    if(fsObject) return Str_Text(AbstractFile_AbsolutePath(fsObject));
+    return "";
+}
+
+uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
+{
+    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    if(info) return info->lastModified;
     return 0;
 }
 
