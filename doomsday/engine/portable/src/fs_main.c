@@ -31,6 +31,7 @@
 #include "de_filesys.h"
 #include "de_misc.h" // For M_LimitedStrCat
 
+#include "m_md5.h"
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 #include "wadfile.h"
@@ -62,8 +63,27 @@ typedef struct {
     ddstring_t* target; // Full path name.
 } vdmapping_t;
 
+typedef struct {
+    DFILE* file;
+} filehandle_t;
+
+#define FILEIDENTIFIERID_T_MAXLEN 16
+#define FILEIDENTIFIERID_T_LASTINDEX 15
+typedef byte fileidentifierid_t[FILEIDENTIFIERID_T_MAXLEN];
+
+typedef struct fileidentifier_s {
+    fileidentifierid_t hash;
+} fileidentifier_t;
+
 static boolean inited = false;
 static boolean loadingForStartup;
+
+static filehandle_t* files;
+static uint filesCount;
+
+static uint numReadFiles = 0;
+static uint maxReadFiles = 0;
+static fileidentifier_t* readFiles = 0;
 
 // Head of the llist of wadfile nodes.
 static filelist_t fileList;
@@ -105,6 +125,64 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: WAD module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
+}
+
+static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
+{
+    uint i = 0;
+    while(i < numReadFiles)
+    {
+        if(!memcmp(readFiles[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
+            return &readFiles[i];
+        ++i;
+    }
+    return 0;
+}
+
+static filehandle_t* findUsedFileHandle(void)
+{
+    uint i;
+    for(i = 0; i < filesCount; ++i)
+    {
+        filehandle_t* fhdl = &files[i];
+        if(!fhdl->file)
+            return fhdl;
+    }
+    return 0;
+}
+
+static filehandle_t* getFileHandle(void)
+{
+    filehandle_t* fhdl = findUsedFileHandle();
+    if(!fhdl)
+    {
+        uint firstNewFile = filesCount;
+
+        filesCount *= 2;
+        if(filesCount < 16)
+            filesCount = 16;
+
+        // Allocate more memory.
+        files = (filehandle_t*)realloc(files, sizeof(*files) * filesCount);
+        if(!files)
+            Con_Error("getFileHandle: Failed on (re)allocation of %lu bytes for file list.",
+                (unsigned long) (sizeof(*files) * filesCount));
+
+        // Clear the new handles.
+        memset(files + firstNewFile, 0, sizeof(*files) * (filesCount - firstNewFile));
+
+        fhdl = files + firstNewFile;
+    }
+    return fhdl;
+}
+
+static DFILE* getFreeFile(void)
+{
+    filehandle_t* fhdl = getFileHandle();
+    fhdl->file = (DFILE*)calloc(1, sizeof(*fhdl->file));
+    if(!fhdl)
+        Con_Error("getFreeFile: Failed on allocation of %lu bytes for new DFILE.", (unsigned long) sizeof(*fhdl->file));
+    return fhdl->file;
 }
 
 static filelist_node_t* allocFileNode(void)
@@ -447,6 +525,119 @@ int F_Reset(void)
         }
     }
     return unloadedResources;
+}
+
+void F_GenerateFileId(const char* str, byte identifier[16])
+{
+    md5_ctx_t context;
+    ddstring_t absPath;
+
+    // First normalize the name.
+    Str_Init(&absPath); Str_Set(&absPath, str);
+    F_MakeAbsolute(&absPath, &absPath);
+    F_FixSlashes(&absPath, &absPath);
+
+#if defined(WIN32) || defined(MACOSX)
+    // This is a case insensitive operation.
+    strupr(Str_Text(&absPath));
+#endif
+
+    md5_init(&context);
+    md5_update(&context, (byte*) Str_Text(&absPath), (unsigned int) Str_Length(&absPath));
+    md5_final(&context, identifier);
+
+    Str_Free(&absPath);
+}
+
+boolean F_CheckFileId(const char* path)
+{
+    assert(path);
+    {
+    fileidentifierid_t id;
+
+    if(!F_Access(path))
+        return false;
+
+    // Calculate the identifier.
+    F_GenerateFileId(path, id);
+
+    if(findFileIdentifierForId(id))
+        return false;
+
+    // Allocate a new entry.
+    numReadFiles++;
+    if(numReadFiles > maxReadFiles)
+    {
+        if(!maxReadFiles)
+            maxReadFiles = 16;
+        else
+            maxReadFiles *= 2;
+
+        readFiles = realloc(readFiles, sizeof(*readFiles) * maxReadFiles);
+        memset(readFiles + numReadFiles, 0, sizeof(*readFiles) * (maxReadFiles - numReadFiles));
+    }
+
+    memcpy(readFiles[numReadFiles - 1].hash, id, sizeof(id));
+    return true;
+    }
+}
+
+boolean F_ReleaseFileId(const char* path)
+{
+    fileidentifierid_t id;
+    fileidentifier_t* fileIdentifier;
+
+    F_GenerateFileId(path, id);
+
+    fileIdentifier = findFileIdentifierForId(id);
+    if(fileIdentifier != 0)
+    {
+        size_t index = fileIdentifier - readFiles;
+        if(index < numReadFiles)
+            memmove(readFiles + index, readFiles + index + 1, numReadFiles - index - 1);
+        memset(readFiles + numReadFiles, 0, sizeof(*readFiles));
+        --numReadFiles;
+        return true;
+    }
+    return false;
+}
+
+void F_ResetFileIds(void)
+{
+    numReadFiles = 0;
+}
+
+void F_CloseAll(void)
+{
+    if(files)
+    {
+        uint i;
+        for(i = 0; i < filesCount; ++i)
+        {
+            if(files[i].file)
+                F_Close(files[i].file);
+        }
+        free(files); files = 0;
+    }
+    filesCount = 0;
+}
+
+void F_Release(DFILE* file)
+{
+    assert(NULL != file);
+
+    if(files)
+    {   // Clear references to the handle.
+        uint i;
+        for(i = 0; i < filesCount; ++i)
+        {
+            if(files[i].file == file)
+                files[i].file = NULL;
+        }
+    }
+
+    // File was allocated in getFreeFile.
+    free(file);
 }
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
@@ -1086,9 +1277,20 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
 
     if(file)
     {
-        return F_OpenStreamFile(file, path);
+        return F_OpenStreamFile(getFreeFile(), file, path);
     }
     return 0; // Not found.
+}
+
+DFILE* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
+{
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(fsObject)
+    {
+        return F_OpenStreamLump(getFreeFile(), fsObject, lumpIdx, dontBuffer);
+    }
+    return 0;
 }
 
 DFILE* F_Open(const char* path, const char* mode)
@@ -1128,7 +1330,7 @@ DFILE* F_Open(const char* path, const char* mode)
         {
             abstractfile_t* fsObject = LumpDirectory_SourceFile(zipLumpDirectory, lumpNum);
             int lumpIdx = LumpDirectory_LumpIndex(zipLumpDirectory, lumpNum);
-            file = F_OpenStreamLump(fsObject, lumpIdx, dontBuffer);
+            file = F_OpenStreamLump(getFreeFile(), fsObject, lumpIdx, dontBuffer);
             if(file)
             {
                 Str_Free(&searchPath);
@@ -1172,7 +1374,7 @@ DFILE* F_Open(const char* path, const char* mode)
                 {
                     abstractfile_t* fsObject = LumpDirectory_SourceFile(ActiveWadLumpDirectory, lumpNum);
                     int lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, lumpNum);
-                    file = F_OpenStreamLump(fsObject, lumpIdx, dontBuffer);
+                    file = F_OpenStreamLump(getFreeFile(), fsObject, lumpIdx, dontBuffer);
                 }
                 break;
             }

@@ -72,6 +72,36 @@ void F_EndStartup(void);
  */
 int F_Reset(void);
 
+void F_CloseAll(void);
+
+/**
+ * Reset known fileId records so that the next time F_CheckFileId() is
+ * called on a file, it will pass.
+ */
+void F_ResetFileIds(void);
+
+/**
+ * Calculate an identifier for the file based on its full path name.
+ * The identifier is the MD5 hash of the path.
+ */
+void F_GenerateFileId(const char* str, byte identifier[16]);
+
+/**
+ * Maintains a list of identifiers already seen.
+ *
+ * @return @c true if the given file can be read, or
+ *         @c false, if it has already been read.
+ */
+boolean F_CheckFileId(const char* path);
+
+/// @return  @c true if the FileId associated with @a path was released.
+boolean F_ReleaseFileId(const char* path);
+
+/**
+ * Frees the memory allocated to the handle.
+ */
+void F_Release(DFILE* file);
+
 /// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
 
@@ -153,6 +183,16 @@ boolean F_RemoveFiles(const char* const* filenames, size_t num);
  * "x" = just test for access (don't buffer anything)
  */
 DFILE* F_Open(const char* path, const char* mode);
+
+/**
+ * Try to locate the specified lump for reading.
+ *
+ * @param lumpNum  Absolute index of the lump to open.
+ * @param dontBuffer  Just test for access (don't buffer anything).
+ *
+ * @return  Handle to the opened file if found.
+ */
+DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
 
 /**
  * @return  The time when the file was last modified, as seconds since
