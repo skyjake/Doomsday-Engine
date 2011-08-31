@@ -115,7 +115,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
         dst->size = dst->compressedSize = (size_t)LONG(src->size);
 
         // The modification date is inherited from the real file (note recursion).
-        dst->lastModified = file->_base._handle->lastModified;
+        dst->lastModified = F_LastModified(file->_base._handle);
     }
     // We are finished with the temporary lump records.
     free(lumpRecords);

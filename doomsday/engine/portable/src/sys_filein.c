@@ -32,6 +32,28 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
+#define deof(file)          ((file)->flags.eof != 0)
+
+struct dfile_s
+{
+    struct DFILE_flags_s {
+        unsigned char open:1;
+        unsigned char file:1;
+        unsigned char eof:1;
+    } flags;
+    size_t size;
+    void* data;
+    char* pos;
+    unsigned int lastModified;
+};
+
+DFILE* F_NewFile(void)
+{
+    DFILE* file = (DFILE*)calloc(1, sizeof(*file));
+    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new DFILE.", (unsigned long) sizeof(*file));
+    return file;
+}
+
 int F_MatchFileName(const char* string, const char* pattern)
 {
     const char* in = string, *st = pattern;
@@ -202,6 +224,12 @@ size_t F_Read(DFILE* file, void* dest, size_t count)
 
     return count;
     }
+}
+
+boolean F_AtEnd(DFILE* file)
+{
+    assert(NULL != file);
+    return deof(file);
 }
 
 unsigned char F_GetC(DFILE* file)

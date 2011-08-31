@@ -38,21 +38,12 @@
 
 #include "dd_types.h"
 
-#define deof(file) ((file)->flags.eof != 0)
-
 struct abstractfile_s;
 
-typedef struct {
-    struct DFILE_flags_s {
-        unsigned char open:1;
-        unsigned char file:1;
-        unsigned char eof:1;
-    } flags;
-    size_t size;
-    void* data;
-    char* pos;
-    unsigned int lastModified;
-} DFILE;
+struct dfile_s; // The file instance (opaque).
+typedef struct dfile_s DFILE;
+
+DFILE* F_NewFile(void);
 
 /**
  * @return  @c true if the file can be opened for reading.
@@ -76,6 +67,11 @@ size_t F_Read(DFILE* file, void* dest, size_t count);
  * Read a character from the stream, advancing the read position in the process.
  */
 unsigned char F_GetC(DFILE* file);
+
+/**
+ * @return  @c true iff the stream has reached the end of the file.
+ */
+boolean F_AtEnd(DFILE* file);
 
 /**
  * @return  Current position in the stream as an offset from the beginning of the file.
@@ -109,7 +105,6 @@ DFILE* F_OpenStreamLump(DFILE* file, struct abstractfile_s* fsObject, int lumpId
  *
  * @param fsObject  File system record for the file containing the lump to be read.
  * @param lump  Index of the lump to open.
- * @param dontBuffer  Just test for access (don't buffer anything).
  *
  * @return  Same as @a file for convenience.
  */

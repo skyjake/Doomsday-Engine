@@ -179,10 +179,7 @@ static filehandle_t* getFileHandle(void)
 static DFILE* getFreeFile(void)
 {
     filehandle_t* fhdl = getFileHandle();
-    fhdl->file = (DFILE*)calloc(1, sizeof(*fhdl->file));
-    if(!fhdl)
-        Con_Error("getFreeFile: Failed on allocation of %lu bytes for new DFILE.", (unsigned long) sizeof(*fhdl->file));
-    return fhdl->file;
+    return (fhdl->file = F_NewFile());
 }
 
 static filelist_node_t* allocFileNode(void)

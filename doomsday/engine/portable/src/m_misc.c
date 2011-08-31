@@ -188,11 +188,11 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     return buf;
 }
 
-void M_ReadLine(char* buffer, size_t len, DFILE *file)
+void M_ReadLine(char* buffer, size_t len, DFILE* file)
 {
-    size_t              p;
-    char                ch;
-    boolean             isDone;
+    size_t p;
+    char ch;
+    boolean isDone;
 
     memset(buffer, 0, len);
     p = 0;
@@ -202,7 +202,7 @@ void M_ReadLine(char* buffer, size_t len, DFILE *file)
         ch = F_GetC(file);
         if(ch != '\r')
         {
-            if(deof(file) || ch == '\n')
+            if(F_AtEnd(file) || ch == '\n')
                 isDone = true;
             else
                 buffer[p++] = ch;
@@ -212,7 +212,7 @@ void M_ReadLine(char* buffer, size_t len, DFILE *file)
 
 boolean M_IsComment(const char* buffer)
 {
-    int                 i = 0;
+    int i = 0;
 
     while(isspace((unsigned char) buffer[i]) && buffer[i])
         i++;

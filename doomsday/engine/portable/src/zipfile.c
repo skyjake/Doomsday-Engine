@@ -371,7 +371,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
             }
 
             // The modification date is inherited from the real file (note recursion).
-            info->lastModified = file->_base._handle->lastModified;
+            info->lastModified = F_LastModified(file->_base._handle);
 
             // Read the local file header, which contains the extra field size (Info-ZIP!).
             F_Seek(file->_base._handle, ULONG(header->relOffset), SEEK_SET);

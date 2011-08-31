@@ -204,7 +204,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
                 Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
         }
-        if(deof(file))
+        if(F_AtEnd(file))
             break;
         line++;
     }}
