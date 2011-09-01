@@ -286,3 +286,9 @@ void F_Rewind(DFILE* file)
 {
     F_Seek(file, 0, SEEK_SET);
 }
+
+FILE* F_Handle(DFILE* file)
+{
+    assert(NULL != file);
+    return file->hndl;
+}

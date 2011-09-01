@@ -25,6 +25,8 @@
 #ifndef LIBDENG_FILESYS_WADFILE_H
 #define LIBDENG_FILESYS_WADFILE_H
 
+#include <stdio.h>
+
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
@@ -124,6 +126,6 @@ boolean WadFile_IsIWAD(wadfile_t* wad);
  * Does the specified file appear to be in WAD format.
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
-boolean WadFile_Recognise(DFILE* file);
+boolean WadFile_Recognise(FILE* file);
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

@@ -110,6 +110,9 @@ DFILE* F_OpenStreamLump(DFILE* file, struct abstractfile_s* fsObject, int lumpId
  */
 DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path);
 
+/// \note deprecated
+FILE* F_Handle(DFILE* file);
+
 /**
  * This is a case-insensitive test.
  * I do hope this algorithm works like it should...

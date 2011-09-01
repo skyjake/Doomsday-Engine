@@ -717,22 +717,23 @@ boolean ZipFile_IsIWAD(zipfile_t* file)
     return false; // Never.
 }
 
-boolean ZipFile_Recognise(DFILE* handle)
+boolean ZipFile_Recognise(FILE* handle)
 {
     boolean knownFormat = false;
-    size_t initPos = F_Tell(handle);
-    if(F_Length(handle) >= sizeof(localfileheader_t))
+    localfileheader_t hdr;
+    size_t readBytes;
+    long initPos = ftell(handle);
+    fseek(handle, 0, SEEK_SET);
+    readBytes = fread(&hdr, 1, sizeof(hdr), handle);
+    if(!(readBytes < sizeof(hdr)))
     {
-        uint32_t signature;
         // Seek to the start of the signature.
-        F_Rewind(handle);
-        F_Read(handle, (uint8_t*)&signature, 4);
-        if(ULONG(signature) == SIG_LOCAL_FILE_HEADER)
+        if(ULONG(hdr.signature) == SIG_LOCAL_FILE_HEADER)
         {
             knownFormat = true;
         }
     }
     // Reposition the file stream in case another handler needs to process this file.
-    F_Seek(handle, initPos, SEEK_SET);
+    fseek(handle, initPos, SEEK_SET);
     return knownFormat;
 }
