@@ -427,7 +427,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     if(NULL != outFile)
                     {
                         int result;
-                        char* buf = (char*) malloc(len);
+                        uint8_t* buf = (uint8_t*)malloc(len);
                         if(NULL == buf)
                         {
                             Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
@@ -463,7 +463,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         def->id, F_PrettyPath(Str_Text(&path)), (unsigned long) len) )
 
                     ptr = iMusic->SongBuffer(len);
-                    F_Read(file, ptr, len);
+                    F_Read(file, (uint8_t*)ptr, len);
                     F_Close(file);
 
                     return iMusic->Play(looped);

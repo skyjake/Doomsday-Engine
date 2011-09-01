@@ -60,7 +60,7 @@ static boolean WadFile_ReadArchiveHeader(DFILE* handle, wadheader_t* hdr)
     assert(NULL != handle && NULL != hdr);
     // Seek to the start of the header.
     F_Rewind(handle);
-    if(!(F_Read(handle, hdr, sizeof(wadheader_t)) < sizeof(wadheader_t)))
+    if(!(F_Read(handle, (uint8_t*)hdr, sizeof(wadheader_t)) < sizeof(wadheader_t)))
     {
         hdr->lumpRecordsCount  = LONG(hdr->lumpRecordsCount);
         hdr->lumpRecordsOffset = LONG(hdr->lumpRecordsOffset);
@@ -89,7 +89,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
 
     // Buffer the archived lump directory.
     F_Seek(handle, lumpRecordOffset, SEEK_SET);
-    F_Read(handle, lumpRecords, lumpRecordsSize);
+    F_Read(handle, (uint8_t*)lumpRecords, lumpRecordsSize);
 
     // Allocate and populate the final lump info list.
     lumpInfo = (lumpinfo_t*)malloc(lumpRecordCount * sizeof(*lumpInfo));

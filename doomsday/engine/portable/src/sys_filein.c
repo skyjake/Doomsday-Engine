@@ -38,12 +38,12 @@ struct dfile_s
 {
     struct DFILE_flags_s {
         unsigned char open:1;
-        unsigned char file:1;
         unsigned char eof:1;
     } flags;
     size_t size;
-    void* data;
-    char* pos;
+    FILE* hndl;
+    uint8_t* data;
+    uint8_t* pos;
     unsigned int lastModified;
 };
 
@@ -142,12 +142,12 @@ DFILE* F_OpenStreamLump(DFILE* file, abstractfile_t* fsObject, int lumpIdx, bool
 
     // Init and load in the lump data.
     file->flags.open = true;
-    file->flags.file = false;
+    file->hndl = NULL;
     file->lastModified = info->lastModified;
     if(!dontBuffer)
     {
         file->size = info->size;
-        file->pos = file->data = (char*)malloc(file->size);
+        file->pos = file->data = (uint8_t*)malloc(file->size);
         if(NULL == file->data)
             Con_Error("F_OpenStreamLump: Failed on allocation of %lu bytes for buffered data.",
                 (unsigned long) file->size);
@@ -163,9 +163,9 @@ DFILE* F_OpenStreamLump(DFILE* file, abstractfile_t* fsObject, int lumpIdx, bool
 DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path)
 {
     assert(file && hndl && path && path[0]);
-    file->data = (void*)hndl;
+    file->hndl = hndl;
+    file->data = NULL;
     file->flags.open = true;
-    file->flags.file = true;
     file->lastModified = readLastModified(path);
     return file;
 }
@@ -177,9 +177,9 @@ void F_Close(DFILE* file)
     if(!file->flags.open)
         return;
 
-    if(file->flags.file)
+    if(file->hndl)
     {
-        fclose(file->data);
+        fclose(file->hndl);
     }
     else
     {   // Free the stored data.
@@ -191,7 +191,7 @@ void F_Close(DFILE* file)
     F_Release(file);
 }
 
-size_t F_Read(DFILE* file, void* dest, size_t count)
+size_t F_Read(DFILE* file, uint8_t* buffer, size_t count)
 {
     assert(NULL != file);
     {
@@ -200,16 +200,16 @@ size_t F_Read(DFILE* file, void* dest, size_t count)
     if(!file->flags.open)
         return 0;
 
-    if(file->flags.file)
+    if(file->hndl)
     {   // Normal file.
-        count = fread(dest, 1, count, file->data);
-        if(feof((FILE*) file->data))
+        count = fread(buffer, 1, count, file->hndl);
+        if(feof(file->hndl))
             file->flags.eof = true;
         return count;
     }
 
     // Is there enough room in the file?
-    bytesleft = file->size - (file->pos - (char*) file->data);
+    bytesleft = file->size - (file->pos - file->data);
     if(count > bytesleft)
     {
         count = bytesleft;
@@ -218,7 +218,7 @@ size_t F_Read(DFILE* file, void* dest, size_t count)
 
     if(count)
     {
-        memcpy(dest, file->pos, count);
+        memcpy(buffer, file->pos, count);
         file->pos += count;
     }
 
@@ -238,7 +238,7 @@ unsigned char F_GetC(DFILE* file)
     if(file->flags.open)
     {
         unsigned char ch = 0;
-        F_Read(file, &ch, 1);
+        F_Read(file, (uint8_t*)&ch, 1);
         return ch;
     }
     return 0;
@@ -249,9 +249,9 @@ size_t F_Tell(DFILE* file)
     assert(NULL != file);
     if(!file->flags.open)
         return 0;
-    if(file->flags.file)
-        return (size_t) ftell(file->data);
-    return file->pos - (char*) file->data;
+    if(file->hndl)
+        return (size_t) ftell(file->hndl);
+    return file->pos - file->data;
 }
 
 size_t F_Seek(DFILE* file, size_t offset, int whence)
@@ -264,16 +264,16 @@ size_t F_Seek(DFILE* file, size_t offset, int whence)
         return 0;
 
     file->flags.eof = false;
-    if(file->flags.file)
+    if(file->hndl)
     {
-        fseek(file->data, (long) offset, whence);
+        fseek(file->hndl, (long) offset, whence);
     }
     else
     {
         if(whence == SEEK_SET)
-            file->pos = (char *) file->data + offset;
+            file->pos = file->data + offset;
         else if(whence == SEEK_END)
-            file->pos = (char *) file->data + (file->size + offset);
+            file->pos = file->data + (file->size + offset);
         else if(whence == SEEK_CUR)
             file->pos += offset;
     }

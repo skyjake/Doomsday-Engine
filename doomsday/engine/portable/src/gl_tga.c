@@ -122,7 +122,7 @@ static uint8_t readByte(DFILE* f)
 static int16_t readShort(DFILE* f)
 {
     int16_t v;
-    F_Read(f, &v, sizeof(v));
+    F_Read(f, (uint8_t*)&v, sizeof(v));
     return SHORT(v);
 }
 

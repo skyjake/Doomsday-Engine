@@ -61,7 +61,7 @@ unsigned int F_LastModified(DFILE* file);
 /**
  * @return  Number of bytes read (at most @a count bytes will be read).
  */
-size_t F_Read(DFILE* file, void* dest, size_t count);
+size_t F_Read(DFILE* file, uint8_t* buffer, size_t count);
 
 /**
  * Read a character from the stream, advancing the read position in the process.
