@@ -212,31 +212,30 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
 
 void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 {
-    DFILE*          file;
-    byte*           data;
-    size_t          size;
-    void*           sampledata;
+    DFILE* file;
+    uint8_t* data;
+    size_t size;
+    void* sampledata;
 
     // Try to open the file.
     if((file = F_Open(filename, "b")) == NULL)
         return NULL;
 
     // Read in the whole thing.
-    F_Seek(file, 0, SEEK_END);
-    size = F_Tell(file);
-    F_Rewind(file);
-    data = M_Malloc(size);
+    size = F_Length(file);
+    data = (uint8_t*)malloc(size);
+    if(!data)
+        Con_Error("WAV_Load: Failed on allocation of %lu bytes for sample load buffer.", (unsigned long) size);
     F_Read(file, data, size);
     F_Close(file);
 
     // Parse the RIFF data.
-    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate,
-                                samples);
+    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
     if(!sampledata)
     {
         Con_Message("WAV_Load: Failed to load %s.\n", filename);
     }
 
-    M_Free(data);
+    free(data);
     return sampledata;
 }

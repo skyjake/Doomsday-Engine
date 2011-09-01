@@ -55,18 +55,25 @@ typedef struct {
 
 static void WadFile_ReadLumpDirectory(wadfile_t* file);
 
-static boolean WadFile_ReadArchiveHeader(DFILE* handle, wadheader_t* hdr)
+static boolean WadFile_ReadArchiveHeader(FILE* handle, wadheader_t* hdr)
 {
     assert(NULL != handle && NULL != hdr);
+    {
+    size_t readBytes;
+    long initPos = ftell(handle);
     // Seek to the start of the header.
-    F_Rewind(handle);
-    if(!(F_Read(handle, hdr, sizeof(wadheader_t)) < sizeof(wadheader_t)))
+    fseek(handle, 0, SEEK_SET);
+    readBytes = fread(hdr, 1, sizeof(wadheader_t), handle);
+    // Return the stream to its original position.
+    fseek(handle, initPos, SEEK_SET);
+    if(!(readBytes < sizeof(wadheader_t)))
     {
         hdr->lumpRecordsCount  = LONG(hdr->lumpRecordsCount);
         hdr->lumpRecordsOffset = LONG(hdr->lumpRecordsOffset);
         return true;
     }
     return false;
+    }
 }
 
 // We'll load the lump directory using one continous read into a temporary
@@ -89,7 +96,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
 
     // Buffer the archived lump directory.
     F_Seek(handle, lumpRecordOffset, SEEK_SET);
-    F_Read(handle, lumpRecords, lumpRecordsSize);
+    F_Read(handle, (uint8_t*)lumpRecords, lumpRecordsSize);
 
     // Allocate and populate the final lump info list.
     lumpInfo = (lumpinfo_t*)malloc(lumpRecordCount * sizeof(*lumpInfo));
@@ -115,7 +122,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
         dst->size = dst->compressedSize = (size_t)LONG(src->size);
 
         // The modification date is inherited from the real file (note recursion).
-        dst->lastModified = file->_base._handle->lastModified;
+        dst->lastModified = F_LastModified(file->_base._handle);
     }
     // We are finished with the temporary lump records.
     free(lumpRecords);
@@ -133,7 +140,7 @@ wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath)
     wadfile_t* file;
     wadheader_t hdr;
 
-    if(!WadFile_ReadArchiveHeader(handle, &hdr))
+    if(!WadFile_ReadArchiveHeader(F_Handle(handle), &hdr))
         Con_Error("WadFile::Construct: File %s does not appear to be of WAD format."
             " Missing a call to WadFile::Recognise?", absolutePath);
 
@@ -446,17 +453,14 @@ boolean WadFile_IsIWAD(wadfile_t* file)
     return ((file->_flags & WFF_IWAD) != 0);
 }
 
-boolean WadFile_Recognise(DFILE* handle)
+boolean WadFile_Recognise(FILE* handle)
 {
     boolean knownFormat = false;
-    size_t initPos = F_Tell(handle);
     wadheader_t hdr;
     if(WadFile_ReadArchiveHeader(handle, &hdr) &&
        !(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)))
     {
         knownFormat = true;
     }
-    // Reposition the file stream in case another handler needs to process this file.
-    F_Seek(handle, initPos, SEEK_SET);
     return knownFormat;
 }

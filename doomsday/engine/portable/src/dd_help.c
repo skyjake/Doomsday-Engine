@@ -135,7 +135,7 @@ static int DH_ReadStrings(const char* fileName)
         return false;
     }
 
-    while(!deof(file))
+    while(!F_AtEnd(file))
     {
         M_ReadLine(line, sizeof(line), file);
         if(M_IsComment(line))

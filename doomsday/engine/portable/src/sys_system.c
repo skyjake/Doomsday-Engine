@@ -375,11 +375,6 @@ void Sys_Unlock(mutex_t handle)
     SDL_mutexV((SDL_mutex *) handle);
 }
 
-/**
- * Create a new semaphore.
- *
- * @return              New handle.
- */
 sem_t Sem_Create(uint32_t initialValue)
 {
     return (sem_t) SDL_CreateSemaphore(initialValue);
@@ -393,9 +388,6 @@ void Sem_Destroy(sem_t semaphore)
     }
 }
 
-/**
- * "Proberen" a semaphore. Blocks until the successful.
- */
 void Sem_P(sem_t semaphore)
 {
     if(semaphore)
@@ -404,13 +396,19 @@ void Sem_P(sem_t semaphore)
     }
 }
 
-/**
- * "Verhogen" a semaphore. Returns immediately.
- */
 void Sem_V(sem_t semaphore)
 {
     if(semaphore)
     {
         SDL_SemPost((SDL_sem *) semaphore);
     }
+}
+
+uint32_t Sem_Value(sem_t semaphore)
+{
+    if(semaphore)
+    {
+        return (uint32_t)SDL_SemValue((SDL_sem*)semaphore);
+    }
+    return 0;
 }

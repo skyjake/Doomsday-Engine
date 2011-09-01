@@ -511,7 +511,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
         const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
         for(; result && *lumpNames; lumpNames++)
         {
-            lumpnum_t lumpNum = W_CheckLumpNumForName(Str_Text(*lumpNames));
+            lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(*lumpNames), true);
             if(lumpNum == -1)
             {
                 result = false;
@@ -879,6 +879,9 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_InitializeResourcePathMap();
     F_ResetAllResourceNamespaces();
 
+    if(p->initiatedBusyMode)
+        Con_SetProgress(30);
+
     /**
      * Open all the files, load headers, count lumps, etc, etc...
      * \note duplicate processing of the same file is automatically guarded against by
@@ -938,6 +941,9 @@ static int DD_ChangeGameWorker(void* paramaters)
         // Final autoload round.
         DD_AutoLoad();
     }
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(60);
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).

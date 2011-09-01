@@ -25,6 +25,8 @@
 #ifndef LIBDENG_FILESYS_ZIPFILE_H
 #define LIBDENG_FILESYS_ZIPFILE_H
 
+#include <stdio.h>
+
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
@@ -118,6 +120,6 @@ boolean ZipFile_IsIWAD(zipfile_t* zip);
  * Does the specified file appear to be in Zip format.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(DFILE* file);
+boolean ZipFile_Recognise(FILE* file);
 
 #endif

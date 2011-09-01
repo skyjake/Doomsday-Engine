@@ -220,7 +220,7 @@ static boolean ZipFile_LocateCentralDirectory(zipfile_t* file)
         F_Seek(handle, -pos, SEEK_END);
 
         // Is this the signature?
-        F_Read(handle, &signature, 4);
+        F_Read(handle, (uint8_t*)&signature, 4);
         if(ULONG(signature) == SIG_END_OF_CENTRAL_DIR)
         {
             // This is it!
@@ -264,7 +264,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     }
 
     // Read the central centralDirectory end record.
-    F_Read(file->_base._handle, &summary, sizeof(summary));
+    F_Read(file->_base._handle, (uint8_t*)&summary, sizeof(summary));
 
     // Does the summary say something we don't like?
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
@@ -277,7 +277,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     if(NULL == centralDirectory)
         Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for temporary copy of the central centralDirectory.", (unsigned long) ULONG(summary.size));
     F_Seek(file->_base._handle, ULONG(summary.offset), SEEK_SET);
-    F_Read(file->_base._handle, centralDirectory, ULONG(summary.size));
+    F_Read(file->_base._handle, (uint8_t*)centralDirectory, ULONG(summary.size));
 
     /**
      * Pass 1: Validate support and count the number of file entries we need.
@@ -371,11 +371,11 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
             }
 
             // The modification date is inherited from the real file (note recursion).
-            info->lastModified = file->_base._handle->lastModified;
+            info->lastModified = F_LastModified(file->_base._handle);
 
             // Read the local file header, which contains the extra field size (Info-ZIP!).
             F_Seek(file->_base._handle, ULONG(header->relOffset), SEEK_SET);
-            F_Read(file->_base._handle, &localHeader, sizeof(localHeader));
+            F_Read(file->_base._handle, (uint8_t*)&localHeader, sizeof(localHeader));
 
             info->baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t) + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
 
@@ -538,7 +538,7 @@ static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, ui
             Con_Error("ZipFile::BufferLump: Failed on allocation of %lu bytes for decompression buffer.", lumpInfo->compressedSize);
 
         // Read the compressed data into a temporary buffer for decompression.
-        F_Read(file->_base._handle, (void*)compressedData, lumpInfo->compressedSize);
+        F_Read(file->_base._handle, compressedData, lumpInfo->compressedSize);
         result = ZipFile_InflateLump(compressedData, lumpInfo->compressedSize, buffer, lumpInfo->size);
         free(compressedData);
         if(!result)
@@ -547,7 +547,7 @@ static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, ui
     else
     {
         // Read the uncompressed data directly to the buffer provided by the caller.
-        F_Read(file->_base._handle, (void*)buffer, lumpInfo->size);
+        F_Read(file->_base._handle, buffer, lumpInfo->size);
     }
     return lumpInfo->size;
 }
@@ -717,22 +717,23 @@ boolean ZipFile_IsIWAD(zipfile_t* file)
     return false; // Never.
 }
 
-boolean ZipFile_Recognise(DFILE* handle)
+boolean ZipFile_Recognise(FILE* handle)
 {
     boolean knownFormat = false;
-    size_t initPos = F_Tell(handle);
-    if(F_Length(handle) >= sizeof(localfileheader_t))
+    localfileheader_t hdr;
+    size_t readBytes;
+    long initPos = ftell(handle);
+    fseek(handle, 0, SEEK_SET);
+    readBytes = fread(&hdr, 1, sizeof(hdr), handle);
+    if(!(readBytes < sizeof(hdr)))
     {
-        uint32_t signature;
         // Seek to the start of the signature.
-        F_Rewind(handle);
-        F_Read(handle, &signature, 4);
-        if(ULONG(signature) == SIG_LOCAL_FILE_HEADER)
+        if(ULONG(hdr.signature) == SIG_LOCAL_FILE_HEADER)
         {
             knownFormat = true;
         }
     }
     // Reposition the file stream in case another handler needs to process this file.
-    F_Seek(handle, initPos, SEEK_SET);
+    fseek(handle, initPos, SEEK_SET);
     return knownFormat;
 }

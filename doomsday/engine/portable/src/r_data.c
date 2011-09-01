@@ -1090,9 +1090,11 @@ patchid_t R_RegisterPatch(const char* name)
     assert(name);
     {
     const doompatch_header_t* patch;
+    abstractfile_t* fsObject;
     lumpnum_t lumpNum;
-    patchid_t id;
     patchtex_t* p;
+    patchid_t id;
+    int lumpIdx;
 
     if(!name[0])
         return 0;
@@ -1101,14 +1103,15 @@ patchid_t R_RegisterPatch(const char* name)
     if(0 != (id = findPatchTextureByName(name)))
         return id;
 
-    if(-1 == (lumpNum = W_CheckLumpNumForName2(name, true)))
+    if(-1 == (lumpNum = F_CheckLumpNumForName(name, true)))
     {
         Con_Message("Warning:R_RegisterPatch: Failed to locate lump for patch '%s'.\n", name);
         return 0;
     }
-
+    
+    fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     /// \fixme What about min lumpNum size?
-    patch = (const doompatch_header_t*) W_CacheLump(lumpNum, PU_APPSTATIC);
+    patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
     // An entirely new patch.
     p = Z_Calloc(sizeof(*p), PU_PATCH, NULL);
@@ -1121,7 +1124,7 @@ patchid_t R_RegisterPatch(const char* name)
      */
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
-    p->isCustom = !W_LumpIsFromIWAD(lumpNum);
+    p->isCustom = !F_LumpIsFromIWAD(lumpNum);
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
@@ -1140,7 +1143,7 @@ patchid_t R_RegisterPatch(const char* name)
     patchTextures = Z_Realloc(patchTextures, sizeof(patchtex_t*) * patchTexturesCount, PU_PATCH);
     patchTextures[patchTexturesCount-1] = p;
 
-    W_CacheChangeTag(lumpNum, PU_CACHE);
+    F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     return patchTexturesCount;
     }
 }
@@ -1293,7 +1296,7 @@ rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
     // Hmm, this is an entirely new rawtex.
     r = Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
     Str_Init(&r->name);
-    Str_Set(&r->name, W_LumpName(lumpNum));
+    Str_Set(&r->name, F_LumpName(lumpNum));
     r->lumpNum = lumpNum;
 
     // Link to the hash.
@@ -1341,15 +1344,17 @@ static void clearPatchComposites(void)
 
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
-    size_t lumpSize = W_LumpLength(lumpNum);
-    const uint8_t* lump = W_CacheLump(lumpNum, PU_APPSTATIC);
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    size_t lumpSize = F_LumpLength(lumpNum);
+    const uint8_t* lump = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
     patchname_t* names, *name;
     int numNames;
 
     if(lumpSize < 4)
     {
         Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) is not valid PNAMES data.\n",
-            W_LumpName(lumpNum), lumpNum);
+            F_LumpName(lumpNum), lumpNum);
         if(NULL != num) *num = 0;
         return NULL;
     }
@@ -1364,7 +1369,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
     if((unsigned)numNames > (lumpSize - 4) / 8)
     {   // Lump is truncated.
         Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) truncated (%lu bytes, expected %lu).\n",
-            W_LumpName(lumpNum), lumpNum, (unsigned long) lumpSize, (unsigned long) (numNames * 8 + 4));
+            F_LumpName(lumpNum), lumpNum, (unsigned long) lumpSize, (unsigned long) (numNames * 8 + 4));
         numNames = (int) ((lumpSize - 4) / 8);
     }
 
@@ -1382,7 +1387,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
         name++;
     }}
 
-    W_CacheChangeTag(lumpNum, PU_CACHE);
+    F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
     if(NULL != num)
         *num = numNames;
@@ -1445,12 +1450,14 @@ typedef struct {
     patchcompositetex_t** texDefs = NULL;
     size_t lumpSize, offset, n, numValidPatchRefs;
     int numTexDefs, numValidTexDefs;
+    abstractfile_t* fsObject;
     short* texDefNumPatches;
     patchinfo_t* patchInfo;
     byte* validTexDefs;
     int* directory;
     void* storage;
     int* maptex1;
+    int lumpIdx;
     int i;
 
     patchInfo = (patchinfo_t*)calloc(1, sizeof(*patchInfo) * numPatchNames);
@@ -1458,16 +1465,17 @@ typedef struct {
         Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for patch info.",
             (unsigned long) (sizeof(*patchInfo) * numPatchNames));
 
-    lumpSize = W_LumpLength(lumpNum);
+    lumpSize = F_LumpLength(lumpNum);
     maptex1 = (int*) malloc(lumpSize);
     if(NULL == maptex1)
         Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of "
             "archived DOOM texture definitions.", (unsigned long) lumpSize);
-    W_ReadLump(lumpNum, (uint8_t*)maptex1);
+    fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)maptex1, 0, lumpSize);
 
     numTexDefs = LONG(*maptex1);
 
-    VERBOSE( Con_Message("  Processing lump \"%s\"...\n", W_LumpName(lumpNum)) )
+    VERBOSE( Con_Message("  Processing lump \"%s\"...\n", F_LumpName(lumpNum)) )
 
     validTexDefs = (byte*) calloc(1, numTexDefs * sizeof(*validTexDefs));
     if(NULL == validTexDefs)
@@ -1493,7 +1501,7 @@ typedef struct {
         if(offset > lumpSize)
         {
             Con_Message("Warning:R_ReadTextureDefs: Bad offset %lu for definition %i in lump \"%s\".\n",
-                (unsigned long) offset, i, W_LumpName(lumpNum));
+                (unsigned long) offset, i, F_LumpName(lumpNum));
             continue;
         }
 
@@ -1522,7 +1530,7 @@ typedef struct {
 
                     if(!pinfo->flags.processed)
                     {
-                        pinfo->lumpNum = W_CheckLumpNumForName2(*(patchNames + patchNum), true);
+                        pinfo->lumpNum = F_CheckLumpNumForName(*(patchNames + patchNum), true);
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
@@ -1572,7 +1580,7 @@ typedef struct {
 
                     if(!pinfo->flags.processed)
                     {
-                        pinfo->lumpNum = W_CheckLumpNumForName2(*(patchNames + patchNum), true);
+                        pinfo->lumpNum = F_CheckLumpNumForName(*(patchNames + patchNum), true);
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
@@ -1714,7 +1722,7 @@ typedef struct {
             j = 0;
             while(j < texDef->patchCount && (texDef->flags & TXDF_IWAD))
             {
-                if(!W_LumpIsFromIWAD(texDef->patches[j].lumpNum))
+                if(!F_LumpIsFromIWAD(texDef->patches[j].lumpNum))
                     texDef->flags &= ~TXDF_IWAD;
                 else
                     j++;
@@ -1748,7 +1756,7 @@ static void loadPatchCompositeDefs(void)
     int numPatchNames;
     boolean firstNull;
 
-    if(-1 == (pnamesLump = W_CheckLumpNumForName2("PNAMES", true)))
+    if(-1 == (pnamesLump = F_CheckLumpNumForName("PNAMES", true)))
         return;
 
     // Load the patch names from the PNAMES lump.
@@ -1773,12 +1781,12 @@ static void loadPatchCompositeDefs(void)
         char name[9];
 
         memset(name, 0, sizeof(name));
-        strncpy(name, W_LumpName(i), 8);
+        strncpy(name, F_LumpName(i), 8);
         strupr(name); // Case insensitive.
 
         if(!strncmp(name, "TEXTURE1", 8) || !strncmp(name, "TEXTURE2", 8))
         {
-            boolean isFromIWAD = W_LumpIsFromIWAD(i);
+            boolean isFromIWAD = F_LumpIsFromIWAD(i);
             int newNumTexDefs;
             patchcompositetex_t** newTexDefs;
 
@@ -2045,7 +2053,7 @@ void R_InitFlatTextures(void)
     { int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
-        const char* name = W_LumpName(i);
+        const char* name = F_LumpName(i);
 
         if(name[0] == 'F')
         {
@@ -2068,7 +2076,7 @@ void R_InitFlatTextures(void)
         if(!Stack_Height(stack))
             continue;
 
-        R_NewFlat(name, (lumpnum_t)i, !W_LumpIsFromIWAD(i));
+        R_NewFlat(name, (lumpnum_t)i, !F_LumpIsFromIWAD(i));
     }}
 
     while(Stack_Height(stack))
@@ -2139,7 +2147,7 @@ void R_InitSpriteTextures(void)
     { int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
-        const char* name = W_LumpName(i);
+        const char* name = F_LumpName(i);
         spritetex_t* sprTex = NULL;
 
         if(name[0] == 'S')
@@ -2170,7 +2178,7 @@ void R_InitSpriteTextures(void)
             if(!Str_CompareIgnoreCase(&spriteTextures[j]->name, name))
             {
                 // Update metadata and move the sprite to the end (relative indices must be respected).
-                spriteTextures[j]->isCustom = W_LumpIsFromIWAD(i);
+                spriteTextures[j]->isCustom = F_LumpIsFromIWAD(i);
                 spriteTextures[j]->lumpNum = (lumpnum_t) i;
                 if(j != spriteTexturesCount-1)
                 {
@@ -2192,7 +2200,7 @@ void R_InitSpriteTextures(void)
         Str_Init(&sprTex->name);
         Str_Set(&sprTex->name, name);
         sprTex->lumpNum = (lumpnum_t)i;
-        sprTex->isCustom = !W_LumpIsFromIWAD(i);
+        sprTex->isCustom = !F_LumpIsFromIWAD(i);
     }}
 
     while(Stack_Height(stack))
@@ -2207,10 +2215,12 @@ void R_InitSpriteTextures(void)
     {
         spritetex_t* sprTex = spriteTextures[i];
         const doompatch_header_t* patch;
+        abstractfile_t* fsObject;
         const texture_t* tex;
+        int lumpIdx;
 
         /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
-        if(W_LumpLength(sprTex->lumpNum) < sizeof(doompatch_header_t))
+        if(F_LumpLength(sprTex->lumpNum) < sizeof(doompatch_header_t))
         {
             Con_Message("Warning, sprite frame lump %s (#%i) does not appear to be a valid Patch.\n",
                 Str_Text(&sprTex->name), sprTex->lumpNum);
@@ -2219,7 +2229,8 @@ void R_InitSpriteTextures(void)
             continue;
         }
 
-        patch = (const doompatch_header_t*) W_CacheLump(sprTex->lumpNum, PU_APPSTATIC);
+        fsObject = F_FindFileForLumpNum2(sprTex->lumpNum, &lumpIdx);
+        patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
         tex = GL_CreateTexture2(Str_Text(&sprTex->name), i, TN_SPRITES, SHORT(patch->width), SHORT(patch->height));
         if(NULL == tex)
@@ -2228,13 +2239,13 @@ void R_InitSpriteTextures(void)
                 Str_Text(&sprTex->name), sprTex->lumpNum);
             sprTex->offX = sprTex->offY = 0;
             sprTex->lumpNum = -1;
-            W_CacheChangeTag(sprTex->lumpNum, PU_CACHE);
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
             continue;
         }
         sprTex->texId = Texture_Id(tex);
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
-        W_CacheChangeTag(sprTex->lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
     VERBOSE2(

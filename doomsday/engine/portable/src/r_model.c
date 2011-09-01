@@ -199,10 +199,11 @@ static void R_VertexNormals(model_t *mdl)
 }
 #endif
 
-static void *AllocAndLoad(DFILE *file, int offset, int len)
+static void* AllocAndLoad(DFILE* file, int offset, int len)
 {
-    void       *ptr = M_Malloc(len);
-
+    uint8_t* ptr = (uint8_t*)malloc(len);
+    if(!ptr)
+        Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
     F_Seek(file, offset, SEEK_SET);
     F_Read(file, ptr, len);
     return ptr;
@@ -225,7 +226,7 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
     const int           axis[3] = { 0, 2, 1 };
 
     // Read the header.
-    F_Read(file, &oldhd, sizeof(oldhd));
+    F_Read(file, (uint8_t*)&oldhd, sizeof(oldhd));
 
     // Convert it to DMD.
     hd->magic = MD2_MAGIC;
@@ -305,7 +306,7 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
 
     F_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(file, mdl->skins[i].name, 64);
+        F_Read(file, (uint8_t*)mdl->skins[i].name, 64);
 }
 
 static void R_LoadModelDMD(DFILE *file, model_t *mo)
@@ -319,14 +320,14 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
     const int           axis[3] = { 0, 2, 1 };
 
     // Read the chunks.
-    F_Read(file, &chunk, sizeof(chunk));
+    F_Read(file, (uint8_t*)&chunk, sizeof(chunk));
 
     while(LONG(chunk.type) != DMC_END)
     {
         switch (LONG(chunk.type))
         {
         case DMC_INFO:          // Standard DMD information chunk.
-            F_Read(file, inf, LONG(chunk.length));
+            F_Read(file, (uint8_t*)inf, LONG(chunk.length));
             inf->skinWidth = LONG(inf->skinWidth);
             inf->skinHeight = LONG(inf->skinHeight);
             inf->frameSize = LONG(inf->frameSize);
@@ -345,18 +346,18 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
         default:
             // Just skip all unknown chunks.
             temp = M_Malloc(LONG(chunk.length));
-            F_Read(file, temp, LONG(chunk.length));
+            F_Read(file, (uint8_t*)temp, LONG(chunk.length));
             free(temp);
         }
         // Read the next chunk header.
-        F_Read(file, &chunk, sizeof(chunk));
+        F_Read(file, (uint8_t*)&chunk, sizeof(chunk));
     }
 
     // Allocate and load in the data.
     mo->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
     F_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(file, mo->skins[i].name, 64);
+        F_Read(file, (uint8_t*)mo->skins[i].name, 64);
 
     temp = AllocAndLoad(file, inf->offsetFrames,
         inf->frameSize * inf->numFrames);
@@ -396,7 +397,7 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
     M_Free(temp);
 
     F_Seek(file, inf->offsetLODs, SEEK_SET);
-    F_Read(file, mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
+    F_Read(file, (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
 
     for(i = 0; i < inf->numLODs; ++i)
     {
@@ -494,7 +495,7 @@ static int R_LoadModel(const Uri* uri)
     }
 
     // Now we can load in the data.
-    F_Read(file, &mdl->header, sizeof(mdl->header));
+    F_Read(file, (uint8_t*)&mdl->header, sizeof(mdl->header));
     if(LONG(mdl->header.magic) == MD2_MAGIC)
     {   // Load as MD2.
         F_Rewind(file);

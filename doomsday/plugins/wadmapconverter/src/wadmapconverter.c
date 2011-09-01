@@ -50,7 +50,7 @@ boolean verbose;
  */
 int ConvertMapHook(int hookType, int param, void *data)
 {
-    int* lumpList = (int*) data;
+    lumpnum_t* lumpList = (int*) data;
 
     verbose = ArgExists("-verbose");
 

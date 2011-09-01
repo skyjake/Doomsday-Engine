@@ -132,7 +132,7 @@ uint8_t* PCX_Load(DFILE* file, int* width, int* height, int* pixelSize)
     {
     header_t hdr;
     size_t initPos = F_Tell(file);
-    size_t readBytes = F_Read(file, &hdr, sizeof(hdr));
+    size_t readBytes = F_Read(file, (uint8_t*)&hdr, sizeof(hdr));
     uint8_t* dstBuf = 0;
     if(!(readBytes < sizeof(hdr)))
     {

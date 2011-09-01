@@ -1260,7 +1260,7 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
 {
     if(NULL != cachedMapPath && !cachedMapPath[0] && markerLumpNum >= 0)
     {
-        uint sourceTime = F_GetLastModified(W_LumpSourceFile(markerLumpNum));
+        uint sourceTime = F_GetLastModified(F_LumpSourceFile(markerLumpNum));
         uint buildTime = F_GetLastModified(cachedMapPath);
 
         if(F_Access(cachedMapPath) && !(buildTime < sourceTime))

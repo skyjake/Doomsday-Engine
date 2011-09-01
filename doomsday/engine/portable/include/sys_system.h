@@ -64,7 +64,17 @@ void Sys_Unlock(mutex_t mutexHandle);
 
 sem_t Sem_Create(uint32_t initialValue);
 void Sem_Destroy(sem_t semaphore);
+
+/**
+ * "Proberen" a semaphore. Blocks until the successful.
+ */
 void Sem_P(sem_t semaphore);
+
+/**
+ * "Verhogen" a semaphore. Returns immediately.
+ */
 void Sem_V(sem_t semaphore);
+
+uint32_t Sem_Value(sem_t semaphore);
 
 #endif /* LIBDENG_FILESYS_SYSTEM_H */

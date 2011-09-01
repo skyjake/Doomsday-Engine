@@ -178,7 +178,7 @@ static byte inByte(DFILE* f)
     assert(f);
     {
     byte b;
-    F_Read(f, &b, sizeof(b));
+    F_Read(f, (uint8_t*)&b, sizeof(b));
     return b;
     }
 }
@@ -188,7 +188,7 @@ static unsigned short inShort(DFILE* f)
     assert(f);
     {
     unsigned short s;
-    F_Read(f, &s, sizeof(s));
+    F_Read(f, (uint8_t*)&s, sizeof(s));
     return USHORT(s);
     }
 }

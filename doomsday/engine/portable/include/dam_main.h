@@ -51,28 +51,28 @@ enum {
 
 typedef struct maplumpformat_s {
     int         hversion;
-    char       *formatName;
+    char*       formatName;
     int         lumpClass;
 } maplumpformat_t;
 
 typedef struct maplumpinfo_s {
-    int         lumpNum;
-    maplumpformat_t *format;
+    lumpnum_t   lumpNum;
+    maplumpformat_t* format;
     int         lumpClass;
-    int         startOffset;
+    size_t      startOffset;
     uint        elements;
     size_t      length;
 } maplumpinfo_t;
 
 typedef struct listnode_s {
-    void       *data;
-    struct listnode_s *next;
+    void*       data;
+    struct listnode_s* next;
 } listnode_t;
 
 typedef struct archivedmap_s {
     char        identifier[9];
     int         numLumps;
-    int        *lumpList;
+    lumpnum_t*  lumpList;
     ddstring_t  cachedMapPath;
     boolean     cachedMapFound;
     boolean     lastLoadAttemptFailed;

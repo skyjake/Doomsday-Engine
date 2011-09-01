@@ -917,7 +917,11 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         if(0 == loadResult)
         {
-            loadResult = GL_LoadFlatLump(image, flat->lumpNum);
+            if(flat->lumpNum >= 0)
+            {
+                DFILE* file = F_OpenLump(flat->lumpNum, false);
+                loadResult = GL_LoadFlatLump(image, file, F_LumpName(flat->lumpNum));
+            }
         }
         break;
       }
@@ -947,7 +951,11 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         if(0 == loadResult)
         {
-            loadResult = GL_LoadPatchLumpAsPatch(image, pTex->lumpNum, tclass, tmap, spec->border, pTex);
+            if(pTex->lumpNum >= 0)
+            {
+                DFILE* file = F_OpenLump(pTex->lumpNum, false);
+                loadResult = GL_LoadPatchLumpAsPatch(image, file, pTex->lumpNum, tclass, tmap, spec->border, pTex);
+            }
         }
         break;
       }
@@ -987,7 +995,11 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         if(0 == loadResult)
         {
-            loadResult = GL_LoadPatchLumpAsSprite(image, sprTex->lumpNum, tclass, tmap, spec->border, sprTex);
+            if(sprTex->lumpNum >= 0)
+            {
+                DFILE* file = F_OpenLump(sprTex->lumpNum, false);
+                loadResult = GL_LoadPatchLumpAsSprite(image, file, sprTex->lumpNum, tclass, tmap, spec->border, sprTex);
+            }
         }
         break;
       }
@@ -1003,8 +1015,12 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         else
         {
-            lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
-            loadResult = GL_LoadDetailTextureLump(image, lumpNum);
+            lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(Uri_Path(dTex->filePath)), true);
+            if(lumpNum >= 0)
+            {
+                DFILE* file = F_OpenLump(lumpNum, false);
+                loadResult = GL_LoadDetailTextureLump(image, file, F_LumpName(lumpNum));
+            }
         }
         break;
       }
@@ -2591,193 +2607,193 @@ static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
     return false;
 }
 
-byte GL_LoadDetailTextureLump(image_t* image, lumpnum_t lumpNum)
+byte GL_LoadDetailTextureLump(image_t* image, DFILE* file, const char* lumpName)
 {
-    assert(image);
+    assert(image && file);
     {
     byte result = 0;
-    DFILE* file;
-    if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
+    if(0 != GL_LoadImageDFile(image, file, lumpName))
     {
-        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
-        {
-            result = 1;
-        }
-        else
-        {   // It must be an old-fashioned "raw" image.
-            size_t bufSize, fileLength = F_Length(file);
-
-            GL_InitImage(image);
-
-            /**
-             * \fixme Do not fatal error here if the not a known format!
-             * Perform this check much earlier, when the definitions are
-             * read and mark which are valid.
-             */
-
-            // How big is it?
-            switch(fileLength)
-            {
-            case 256 * 256: image->width = image->height = 256; break;
-            case 128 * 128: image->width = image->height = 128; break;
-            case  64 *  64: image->width = image->height =  64; break;
-            default:
-                Con_Error("GL_LoadDetailTextureLump: Must be 256x256, 128x128 or 64x64.\n");
-                return 0; // Unreachable.
-            }
-
-            image->pixelSize = 1;
-            bufSize = (size_t)image->width * image->height;
-            image->pixels = (uint8_t*) malloc(bufSize);
-            if(NULL == image->pixels)
-                Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for "
-                    "image pixel buffer.", (unsigned long) bufSize);
-            if(fileLength < bufSize)
-                memset(image->pixels, 0, bufSize);
-
-            // Load the raw image data.
-            F_Read(file, image->pixels, fileLength);
-            result = 1;
-        }
-        F_Close(file);
+        result = 1;
     }
+    else
+    {   // It must be an old-fashioned "raw" image.
+        size_t bufSize, fileLength = F_Length(file);
+
+        GL_InitImage(image);
+
+        /**
+         * \fixme Do not fatal error here if the not a known format!
+         * Perform this check much earlier, when the definitions are
+         * read and mark which are valid.
+         */
+
+        // How big is it?
+        switch(fileLength)
+        {
+        case 256 * 256: image->width = image->height = 256; break;
+        case 128 * 128: image->width = image->height = 128; break;
+        case  64 *  64: image->width = image->height =  64; break;
+        default:
+            Con_Error("GL_LoadDetailTextureLump: Must be 256x256, 128x128 or 64x64.\n");
+            return 0; // Unreachable.
+        }
+
+        image->pixelSize = 1;
+        bufSize = (size_t)image->width * image->height;
+        image->pixels = (uint8_t*) malloc(bufSize);
+        if(NULL == image->pixels)
+            Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for "
+                "image pixel buffer.", (unsigned long) bufSize);
+        if(fileLength < bufSize)
+            memset(image->pixels, 0, bufSize);
+
+        // Load the raw image data.
+        F_Read(file, image->pixels, fileLength);
+        result = 1;
+    }
+    F_Close(file);
     return result;
     }
 }
 
-byte GL_LoadFlatLump(image_t* image, lumpnum_t lumpNum)
+byte GL_LoadFlatLump(image_t* image, DFILE* file, const char* lumpName)
 {
-    assert(image);
+    assert(image && file);
     {
     byte result = 0;
-    DFILE* file;
-    if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
+    if(0 != GL_LoadImageDFile(image, file, lumpName))
     {
-        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
-        {
-            result = 1;
-        }
-        else
-        {   // A DOOM flat.
+        result = 1;
+    }
+    else
+    {   // A DOOM flat.
 #define FLAT_WIDTH          64
 #define FLAT_HEIGHT         64
 
-            size_t bufSize, fileLength = F_Length(file);
+        size_t bufSize, fileLength = F_Length(file);
 
-            GL_InitImage(image);
+        GL_InitImage(image);
 
-            /// \fixme not all flats are 64x64!
-            image->width  = FLAT_WIDTH;
-            image->height = FLAT_HEIGHT;
-            image->pixelSize = 1;
-            image->paletteId = defaultColorPalette;
+        /// \fixme not all flats are 64x64!
+        image->width  = FLAT_WIDTH;
+        image->height = FLAT_HEIGHT;
+        image->pixelSize = 1;
+        image->paletteId = defaultColorPalette;
 
-            bufSize = MAX_OF(fileLength, (size_t)image->width * image->height);
-            image->pixels = (uint8_t*) malloc(bufSize);
-            if(NULL == image->pixels)
-                Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for "
-                    "image pixel buffer.", (unsigned long) bufSize);
-            if(fileLength < bufSize)
-                memset(image->pixels, 0, bufSize);
+        bufSize = MAX_OF(fileLength, (size_t)image->width * image->height);
+        image->pixels = (uint8_t*) malloc(bufSize);
+        if(NULL == image->pixels)
+            Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for "
+                "image pixel buffer.", (unsigned long) bufSize);
+        if(fileLength < bufSize)
+            memset(image->pixels, 0, bufSize);
 
-            // Load the raw image data.
-            F_Read(file, image->pixels, fileLength);
-            result = 1;
+        // Load the raw image data.
+        F_Read(file, image->pixels, fileLength);
+        result = 1;
 
 #undef FLAT_HEIGHT
 #undef FLAT_WIDTH
-        }
-        F_Close(file);
     }
+
+    F_Close(file);
     return result;
     }
 }
 
-static byte loadPatchLump(image_t* image, lumpnum_t lumpNum, int tclass, int tmap, int border)
+static byte loadPatchLump(image_t* image, DFILE* file, const char* lumpName,
+    int tclass, int tmap, int border)
 {
-    assert(image);
+    assert(image && file);
     {
     byte result = 0;
-    DFILE* file;
-    if(lumpNum != -1 && NULL != (file = F_OpenLump(lumpNum, false)))
+    if(0 != GL_LoadImageDFile(image, file, lumpName))
     {
-        if(0 != GL_LoadImageDFile(image, file, W_LumpName(lumpNum)))
-        {
-            result = 2;
-        }
-        else
-        {   // A DOOM patch.
-            const doompatch_header_t* patch;
-            size_t fileLength = F_Length(file);
-            uint8_t* buf;
-
-            if(fileLength < sizeof(doompatch_header_t))
-            {
-                //Con_Message("Warning, lump %s (#%i) does not appear to be a valid Patch.\n",
-                //    W_LumpName(lumpNum), lumpNum);
-                return result;
-            }
-
-            buf = (uint8_t*) malloc(fileLength);
-            if(NULL == buf)
-                Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                    "temporary lump buffer.", (unsigned long) (fileLength));
-            F_Read(file, buf, fileLength);
-            patch = (const doompatch_header_t*)buf;
-
-            GL_InitImage(image);
-
-            image->width  = SHORT(patch->width)  + border*2;
-            image->height = SHORT(patch->height) + border*2;
-            image->pixelSize = 1;
-            image->paletteId = defaultColorPalette;
-            image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
-            if(NULL == image->pixels)
-                Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                    "image pixel buffer.", (unsigned long) (2 * image->width * image->height));
-
-            loadDoomPatch(image->pixels, image->width, image->height, patch,
-                border, border, tclass, tmap, false);
-            if(palettedIsMasked(image->pixels, image->width, image->height))
-                image->flags |= IMGF_IS_MASKED;
-
-            free(buf);
-            result = 1;
-        }
-        F_Close(file);
+        result = 2;
     }
+    else
+    {   // A DOOM patch.
+        const doompatch_header_t* patch;
+        size_t fileLength = F_Length(file);
+        uint8_t* buf;
+
+        if(fileLength < sizeof(doompatch_header_t))
+        {
+            //Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", lumpName);
+            return result;
+        }
+
+        buf = (uint8_t*) malloc(fileLength);
+        if(NULL == buf)
+            Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
+                "temporary lump buffer.", (unsigned long) (fileLength));
+        F_Read(file, buf, fileLength);
+        patch = (const doompatch_header_t*)buf;
+
+        GL_InitImage(image);
+
+        image->width  = SHORT(patch->width)  + border*2;
+        image->height = SHORT(patch->height) + border*2;
+        image->pixelSize = 1;
+        image->paletteId = defaultColorPalette;
+        image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+        if(NULL == image->pixels)
+            Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
+                "image pixel buffer.", (unsigned long) (2 * image->width * image->height));
+
+        loadDoomPatch(image->pixels, image->width, image->height, patch,
+            border, border, tclass, tmap, false);
+        if(palettedIsMasked(image->pixels, image->width, image->height))
+            image->flags |= IMGF_IS_MASKED;
+
+        free(buf);
+        result = 1;
+    }
+
+    F_Close(file);
     return result;
     }
 }
 
-byte GL_LoadPatchLumpAsPatch(image_t* image, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsPatch(image_t* image, DFILE* file, lumpnum_t lumpNum, int tclass,
     int tmap, int border, patchtex_t* patchTex)
 {
-    byte result = loadPatchLump(image, lumpNum, tclass, tmap, border);
+    assert(file && lumpNum >= 0);
+    {
+    byte result = loadPatchLump(image, file, F_LumpName(lumpNum), tclass, tmap, border);
     if(1 == result && NULL != patchTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        W_ReadLumpSection(lumpNum, (uint8_t*)&hdr, 0, sizeof(hdr));
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)&hdr, 0, sizeof(hdr));
         patchTex->offX = -SHORT(hdr.leftOffset);
         patchTex->offY = -SHORT(hdr.topOffset);
     }
     return MIN_OF(1, result);
+    }
 }
 
-byte GL_LoadPatchLumpAsSprite(image_t* image, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsSprite(image_t* image, DFILE* file, lumpnum_t lumpNum, int tclass,
     int tmap, int border, spritetex_t* spriteTex)
 {
-    byte result = loadPatchLump(image, lumpNum, tclass, tmap, border);
+    assert(file && lumpNum >= 0);
+    {
+    byte result = loadPatchLump(image, file, F_LumpName(lumpNum), tclass, tmap, border);
     if(1 == result && NULL != spriteTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        W_ReadLumpSection(lumpNum, (uint8_t*)&hdr, 0, sizeof(hdr));
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)&hdr, 0, sizeof(hdr));
         spriteTex->offX = SHORT(hdr.leftOffset);
         spriteTex->offY = SHORT(hdr.topOffset);
     }
     return MIN_OF(1, result);
+    }
 }
 
 DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
@@ -2826,13 +2842,15 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const uint8_t* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const uint8_t* patch = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
         // Draw the patch in the buffer.
         loadDoomPatch(image->pixels, image->width, image->height,
             (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
 
-        W_CacheChangeTag(patchDef->lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
     if(palettedIsMasked(image->pixels, image->width, image->height))
@@ -2861,8 +2879,9 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     height = texDef->height;
     if(texDef->patchCount == 1)
     {
-        const uint8_t* patch = W_CacheLump(texDef->patches[0].lumpNum, PU_APPSTATIC);
-        const doompatch_header_t* hdr = (const doompatch_header_t*) patch;
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(texDef->patches[0].lumpNum, &lumpIdx);
+        const doompatch_header_t* hdr = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
         int bufHeight = SHORT(hdr->height) > height ? SHORT(hdr->height) : height;
         if(bufHeight > height)
         {
@@ -2870,7 +2889,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
             if(height > 200)
                 height = 200;
         }
-        W_CacheChangeTag(texDef->patches[0].lumpNum, PU_CACHE);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }
 
     GL_InitImage(image);
@@ -2886,7 +2905,9 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
-        const uint8_t* patch = W_CacheLump(patchDef->lumpNum, PU_APPSTATIC);
+        int lumpIdx;
+        abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
+        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
         if(texDef->patchCount != 1)
         {
@@ -2898,9 +2919,8 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
             offX = offY = 0;
         }
 
-        loadDoomPatch(image->pixels, image->width, image->height, (const doompatch_header_t*) patch,
-            offX, offY, 0, 0, zeroMask);
-        W_CacheChangeTag(patchDef->lumpNum, PU_CACHE);
+        loadDoomPatch(image->pixels, image->width, image->height, patch, offX, offY, 0, 0, zeroMask);
+        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
     if(zeroMask)
@@ -2926,10 +2946,10 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     {   // "External" image loaded.
         result = 2;
     }
-    else if(r->lumpNum != -1)
+    else if(r->lumpNum >= 0)
     {
-        DFILE* file;
-        if(NULL != (file = F_OpenLump(r->lumpNum, false)))
+        DFILE* file = F_OpenLump(r->lumpNum, false);
+        if(file)
         {
             if(0 != GL_LoadImageDFile(image, file, Str_Text(&r->name)))
             {

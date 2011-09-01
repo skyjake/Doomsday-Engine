@@ -32,178 +32,26 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "m_md5.h"
+#define deof(file)          ((file)->flags.eof != 0)
 
-typedef struct {
-    DFILE* file;
-} filehandle_t;
-
-#define FILEIDENTIFIERID_T_MAXLEN 16
-#define FILEIDENTIFIERID_T_LASTINDEX 15
-typedef byte fileidentifierid_t[FILEIDENTIFIERID_T_MAXLEN];
-
-typedef struct fileidentifier_s {
-    fileidentifierid_t hash;
-} fileidentifier_t;
-
-static filehandle_t* files;
-static uint filesCount;
-
-static uint numReadFiles = 0;
-static uint maxReadFiles = 0;
-static fileidentifier_t* readFiles = 0;
-
-static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
+struct dfile_s
 {
-    uint i = 0;
-    while(i < numReadFiles)
-    {
-        if(!memcmp(readFiles[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
-            return &readFiles[i];
-        ++i;
-    }
-    return 0;
-}
+    struct DFILE_flags_s {
+        unsigned char open:1;
+        unsigned char eof:1;
+    } flags;
+    size_t size;
+    FILE* hndl;
+    uint8_t* data;
+    uint8_t* pos;
+    unsigned int lastModified;
+};
 
-static filehandle_t* findUsedFileHandle(void)
+DFILE* F_NewFile(void)
 {
-    uint i;
-    for(i = 0; i < filesCount; ++i)
-    {
-        filehandle_t* fhdl = &files[i];
-        if(!fhdl->file)
-            return fhdl;
-    }
-    return 0;
-}
-
-static filehandle_t* getFileHandle(void)
-{
-    filehandle_t* fhdl = findUsedFileHandle();
-    if(!fhdl)
-    {
-        uint firstNewFile = filesCount;
-
-        filesCount *= 2;
-        if(filesCount < 16)
-            filesCount = 16;
-
-        // Allocate more memory.
-        files = (filehandle_t*)realloc(files, sizeof(*files) * filesCount);
-        if(!files)
-            Con_Error("getFileHandle: Failed on (re)allocation of %lu bytes for file list.",
-                (unsigned long) (sizeof(*files) * filesCount));
-
-        // Clear the new handles.
-        memset(files + firstNewFile, 0, sizeof(*files) * (filesCount - firstNewFile));
-
-        fhdl = files + firstNewFile;
-    }
-    return fhdl;
-}
-
-static DFILE* getFreeFile(void)
-{
-    filehandle_t* fhdl = getFileHandle();
-    fhdl->file = (DFILE*)calloc(1, sizeof(*fhdl->file));
-    if(!fhdl)
-        Con_Error("getFreeFile: Failed on allocation of %lu bytes for new DFILE.", (unsigned long) sizeof(*fhdl->file));
-    return fhdl->file;
-}
-
-void F_GenerateFileId(const char* str, byte identifier[16])
-{
-    md5_ctx_t context;
-    ddstring_t absPath;
-
-    // First normalize the name.
-    Str_Init(&absPath); Str_Set(&absPath, str);
-    F_MakeAbsolute(&absPath, &absPath);
-    F_FixSlashes(&absPath, &absPath);
-
-#if defined(WIN32) || defined(MACOSX)
-    // This is a case insensitive operation.
-    strupr(Str_Text(&absPath));
-#endif
-
-    md5_init(&context);
-    md5_update(&context, (byte*) Str_Text(&absPath), (unsigned int) Str_Length(&absPath));
-    md5_final(&context, identifier);
-
-    Str_Free(&absPath);
-}
-
-boolean F_CheckFileId(const char* path)
-{
-    assert(path);
-    {
-    fileidentifierid_t id;
-
-    if(!F_Access(path))
-        return false;
-
-    // Calculate the identifier.
-    F_GenerateFileId(path, id);
-
-    if(findFileIdentifierForId(id))
-        return false;
-
-    // Allocate a new entry.
-    numReadFiles++;
-    if(numReadFiles > maxReadFiles)
-    {
-        if(!maxReadFiles)
-            maxReadFiles = 16;
-        else
-            maxReadFiles *= 2;
-
-        readFiles = realloc(readFiles, sizeof(*readFiles) * maxReadFiles);
-        memset(readFiles + numReadFiles, 0, sizeof(*readFiles) * (maxReadFiles - numReadFiles));
-    }
-
-    memcpy(readFiles[numReadFiles - 1].hash, id, sizeof(id));
-    return true;
-    }
-}
-
-boolean F_ReleaseFileId(const char* path)
-{
-    fileidentifierid_t id;
-    fileidentifier_t* fileIdentifier;
-
-    F_GenerateFileId(path, id);
-
-    fileIdentifier = findFileIdentifierForId(id);
-    if(fileIdentifier != 0)
-    {
-        size_t index = fileIdentifier - readFiles;
-        if(index < numReadFiles)
-            memmove(readFiles + index, readFiles + index + 1, numReadFiles - index - 1);
-        memset(readFiles + numReadFiles, 0, sizeof(*readFiles));
-        --numReadFiles;
-        return true;
-    }
-    return false;
-}
-
-void F_ResetFileIds(void)
-{
-    numReadFiles = 0;
-}
-
-void F_CloseAll(void)
-{
-    if(files)
-    {
-        uint i;
-        for(i = 0; i < filesCount; ++i)
-        {
-            if(files[i].file)
-                F_Close(files[i].file);
-        }
-        free(files); files = 0;
-    }
-    filesCount = 0;
+    DFILE* file = (DFILE*)calloc(1, sizeof(*file));
+    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new DFILE.", (unsigned long) sizeof(*file));
+    return file;
 }
 
 int F_MatchFileName(const char* string, const char* pattern)
@@ -269,24 +117,6 @@ unsigned int F_LastModified(DFILE* file)
     return file->lastModified;
 }
 
-void F_Release(DFILE* file)
-{
-    assert(NULL != file);
-
-    if(files)
-    {   // Clear references to the handle.
-        uint i;
-        for(i = 0; i < filesCount; ++i)
-        {
-            if(files[i].file == file)
-                files[i].file = NULL;
-        }
-    }
-
-    // File was allocated in getFreeFile.
-    free(file);
-}
-
 /// \note This only works on real files.
 static unsigned int readLastModified(const char* path)
 {
@@ -303,52 +133,23 @@ static unsigned int readLastModified(const char* path)
 #endif
 }
 
-DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer)
+DFILE* F_OpenStreamLump(DFILE* file, abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
 {
-    DFILE* file = getFreeFile();
-
-    if(!file)
-        return NULL;
-
-    // Init and load in the lump data.
-    file->flags.open = true;
-    file->flags.file = false;
-    file->lastModified = W_LumpLastModified(lumpNum);
-    if(!dontBuffer)
+    assert(NULL != file);
     {
-        file->size = W_LumpLength(lumpNum);
-        file->pos = file->data = (void*) malloc(file->size);
-        if(NULL == file->data)
-            Con_Error("F_OpenLump: Failed on allocation of %lu bytes for buffered data.",
-                (unsigned long) file->size);
-#if _DEBUG
-        VERBOSE2( Con_Printf("Next FILE read from F_OpenLump.\n") )
-#endif
-        W_ReadLump(lumpNum, (uint8_t*)file->data);
-    }
-
-    return file;
-}
-
-DFILE* F_OpenStreamLump(abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
-{
     const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
-    DFILE* file;
-
-    if(!info) return NULL;
-    file = getFreeFile();
-    if(!file) return NULL;
+    assert(info);
 
     // Init and load in the lump data.
     file->flags.open = true;
-    file->flags.file = false;
+    file->hndl = NULL;
     file->lastModified = info->lastModified;
     if(!dontBuffer)
     {
         file->size = info->size;
-        file->pos = file->data = (char*)malloc(file->size);
+        file->pos = file->data = (uint8_t*)malloc(file->size);
         if(NULL == file->data)
-            Con_Error("F_OpenZip: Failed on allocation of %lu bytes for buffered data.",
+            Con_Error("F_OpenStreamLump: Failed on allocation of %lu bytes for buffered data.",
                 (unsigned long) file->size);
 #if _DEBUG
         VERBOSE2( Con_Printf("Next FILE read from F_OpenStreamLump.\n") )
@@ -356,17 +157,17 @@ DFILE* F_OpenStreamLump(abstractfile_t* fsObject, int lumpIdx, boolean dontBuffe
         F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)file->data, 0, info->size);
     }
     return file;
+    }
 }
 
-DFILE* F_OpenStreamFile(FILE* hndl, const char* path)
+DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path)
 {
-    assert(hndl && path && path[0]);
-    { DFILE* file = getFreeFile();
-    file->data = (void*)hndl;
+    assert(file && hndl && path && path[0]);
+    file->hndl = hndl;
+    file->data = NULL;
     file->flags.open = true;
-    file->flags.file = true;
     file->lastModified = readLastModified(path);
-    return file;}
+    return file;
 }
 
 void F_Close(DFILE* file)
@@ -376,9 +177,9 @@ void F_Close(DFILE* file)
     if(!file->flags.open)
         return;
 
-    if(file->flags.file)
+    if(file->hndl)
     {
-        fclose(file->data);
+        fclose(file->hndl);
     }
     else
     {   // Free the stored data.
@@ -390,7 +191,7 @@ void F_Close(DFILE* file)
     F_Release(file);
 }
 
-size_t F_Read(DFILE* file, void* dest, size_t count)
+size_t F_Read(DFILE* file, uint8_t* buffer, size_t count)
 {
     assert(NULL != file);
     {
@@ -399,16 +200,16 @@ size_t F_Read(DFILE* file, void* dest, size_t count)
     if(!file->flags.open)
         return 0;
 
-    if(file->flags.file)
+    if(file->hndl)
     {   // Normal file.
-        count = fread(dest, 1, count, file->data);
-        if(feof((FILE*) file->data))
+        count = fread(buffer, 1, count, file->hndl);
+        if(feof(file->hndl))
             file->flags.eof = true;
         return count;
     }
 
     // Is there enough room in the file?
-    bytesleft = file->size - (file->pos - (char*) file->data);
+    bytesleft = file->size - (file->pos - file->data);
     if(count > bytesleft)
     {
         count = bytesleft;
@@ -417,12 +218,18 @@ size_t F_Read(DFILE* file, void* dest, size_t count)
 
     if(count)
     {
-        memcpy(dest, file->pos, count);
+        memcpy(buffer, file->pos, count);
         file->pos += count;
     }
 
     return count;
     }
+}
+
+boolean F_AtEnd(DFILE* file)
+{
+    assert(NULL != file);
+    return deof(file);
 }
 
 unsigned char F_GetC(DFILE* file)
@@ -431,7 +238,7 @@ unsigned char F_GetC(DFILE* file)
     if(file->flags.open)
     {
         unsigned char ch = 0;
-        F_Read(file, &ch, 1);
+        F_Read(file, (uint8_t*)&ch, 1);
         return ch;
     }
     return 0;
@@ -442,9 +249,9 @@ size_t F_Tell(DFILE* file)
     assert(NULL != file);
     if(!file->flags.open)
         return 0;
-    if(file->flags.file)
-        return (size_t) ftell(file->data);
-    return file->pos - (char*) file->data;
+    if(file->hndl)
+        return (size_t) ftell(file->hndl);
+    return file->pos - file->data;
 }
 
 size_t F_Seek(DFILE* file, size_t offset, int whence)
@@ -457,16 +264,16 @@ size_t F_Seek(DFILE* file, size_t offset, int whence)
         return 0;
 
     file->flags.eof = false;
-    if(file->flags.file)
+    if(file->hndl)
     {
-        fseek(file->data, (long) offset, whence);
+        fseek(file->hndl, (long) offset, whence);
     }
     else
     {
         if(whence == SEEK_SET)
-            file->pos = (char *) file->data + offset;
+            file->pos = file->data + offset;
         else if(whence == SEEK_END)
-            file->pos = (char *) file->data + (file->size + offset);
+            file->pos = file->data + (file->size + offset);
         else if(whence == SEEK_CUR)
             file->pos += offset;
     }
@@ -478,4 +285,10 @@ size_t F_Seek(DFILE* file, size_t offset, int whence)
 void F_Rewind(DFILE* file)
 {
     F_Seek(file, 0, SEEK_SET);
+}
+
+FILE* F_Handle(DFILE* file)
+{
+    assert(NULL != file);
+    return file->hndl;
 }

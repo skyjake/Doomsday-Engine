@@ -38,79 +38,56 @@
 
 #include "dd_types.h"
 
-#define deof(file) ((file)->flags.eof != 0)
-
 struct abstractfile_s;
 
-typedef struct {
-    struct DFILE_flags_s {
-        unsigned char open:1;
-        unsigned char file:1;
-        unsigned char eof:1;
-    } flags;
-    size_t size;
-    void* data;
-    char* pos;
-    unsigned int lastModified;
-} DFILE;
+struct dfile_s; // The file instance (opaque).
+typedef struct dfile_s DFILE;
 
-void F_CloseAll(void);
-
-/**
- * Reset known fileId records so that the next time F_CheckFileId() is
- * called on a file, it will pass.
- */
-void F_ResetFileIds(void);
-
-/**
- * Calculate an identifier for the file based on its full path name.
- * The identifier is the MD5 hash of the path.
- */
-void F_GenerateFileId(const char* str, byte identifier[16]);
-
-/**
- * Maintains a list of identifiers already seen.
- *
- * @return @c true if the given file can be read, or
- *         @c false, if it has already been read.
- */
-boolean F_CheckFileId(const char* path);
-
-/// @return  @c true if the FileId associated with @a path was released.
-boolean F_ReleaseFileId(const char* path);
+DFILE* F_NewFile(void);
 
 /**
  * @return  @c true if the file can be opened for reading.
  */
 int F_Access(const char* path);
 
-/**
- * Frees the memory allocated to the handle.
- */
-void F_Release(DFILE* file);
-
 void F_Close(DFILE* file);
 
-/**
- * \note Stream position is not affected.
- * @return  The length of the file, in bytes.
- */
+/// @return  The length of the file, in bytes.
 size_t F_Length(DFILE* file);
 
-/**
- * @return  "Last modified" timestamp of the file.
- */
+/// @return  "Last modified" timestamp of the file.
 unsigned int F_LastModified(DFILE* file);
 
 /**
- * Try to locate the specified lump for reading.
- *
- * @param lump  Index of the lump to open.
- * @param dontBuffer  Just test for access (don't buffer anything).
- *
- * @return  Non-zero if a lump was found and opened successfully.
+ * @return  Number of bytes read (at most @a count bytes will be read).
  */
-DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
+size_t F_Read(DFILE* file, uint8_t* buffer, size_t count);
+
+/**
+ * Read a character from the stream, advancing the read position in the process.
+ */
+unsigned char F_GetC(DFILE* file);
+
+/**
+ * @return  @c true iff the stream has reached the end of the file.
+ */
+boolean F_AtEnd(DFILE* file);
+
+/**
+ * @return  Current position in the stream as an offset from the beginning of the file.
+ */
+size_t F_Tell(DFILE* file);
+
+/**
+ * @return  The current position in the file, before the move, as an
+ *      offset from the beginning of the file.
+ */
+size_t F_Seek(DFILE* file, size_t offset, int whence);
+
+/**
+ * Rewind the stream to the start of the file.
+ */
+void F_Rewind(DFILE* file);
 
 /**
  * Open a new stream on the specified lump for reading.
@@ -119,26 +96,22 @@ DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
  * @param lump  Index of the lump to open.
  * @param dontBuffer  Just test for access (don't buffer anything).
  *
- * @return  Non-zero if a lump was found and opened successfully.
+ * @return  Same as @a file for convenience.
  */
-DFILE* F_OpenStreamLump(struct abstractfile_s* fsObject, int lumpIdx, boolean dontBuffer);
-
-DFILE* F_OpenStreamFile(FILE* hndl, const char* path);
+DFILE* F_OpenStreamLump(DFILE* file, struct abstractfile_s* fsObject, int lumpIdx, boolean dontBuffer);
 
 /**
- * @return  Number of bytes read (at most @a count bytes will be read).
+ * Open a new stream on the specified lump for reading.
+ *
+ * @param fsObject  File system record for the file containing the lump to be read.
+ * @param lump  Index of the lump to open.
+ *
+ * @return  Same as @a file for convenience.
  */
-size_t F_Read(DFILE* file, void* dest, size_t count);
+DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path);
 
-unsigned char F_GetC(DFILE* file);
-size_t F_Tell(DFILE* file);
-
-/**
- * @return  The current position in the file, before the move, as an
- * offset from the beginning of the file.
- */
-size_t F_Seek(DFILE* file, size_t offset, int whence);
-void F_Rewind(DFILE* file);
+/// \note deprecated
+FILE* F_Handle(DFILE* file);
 
 /**
  * This is a case-insensitive test.

@@ -31,6 +31,7 @@
 #include "de_filesys.h"
 #include "de_misc.h" // For M_LimitedStrCat
 
+#include "m_md5.h"
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 #include "wadfile.h"
@@ -62,8 +63,27 @@ typedef struct {
     ddstring_t* target; // Full path name.
 } vdmapping_t;
 
+typedef struct {
+    DFILE* file;
+} filehandle_t;
+
+#define FILEIDENTIFIERID_T_MAXLEN 16
+#define FILEIDENTIFIERID_T_LASTINDEX 15
+typedef byte fileidentifierid_t[FILEIDENTIFIERID_T_MAXLEN];
+
+typedef struct fileidentifier_s {
+    fileidentifierid_t hash;
+} fileidentifier_t;
+
 static boolean inited = false;
 static boolean loadingForStartup;
+
+static filehandle_t* files;
+static uint filesCount;
+
+static uint numReadFiles = 0;
+static uint maxReadFiles = 0;
+static fileidentifier_t* readFiles = 0;
 
 // Head of the llist of wadfile nodes.
 static filelist_t fileList;
@@ -105,6 +125,61 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: WAD module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
+}
+
+static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
+{
+    uint i = 0;
+    while(i < numReadFiles)
+    {
+        if(!memcmp(readFiles[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
+            return &readFiles[i];
+        ++i;
+    }
+    return 0;
+}
+
+static filehandle_t* findUsedFileHandle(void)
+{
+    uint i;
+    for(i = 0; i < filesCount; ++i)
+    {
+        filehandle_t* fhdl = &files[i];
+        if(!fhdl->file)
+            return fhdl;
+    }
+    return 0;
+}
+
+static filehandle_t* getFileHandle(void)
+{
+    filehandle_t* fhdl = findUsedFileHandle();
+    if(!fhdl)
+    {
+        uint firstNewFile = filesCount;
+
+        filesCount *= 2;
+        if(filesCount < 16)
+            filesCount = 16;
+
+        // Allocate more memory.
+        files = (filehandle_t*)realloc(files, sizeof(*files) * filesCount);
+        if(!files)
+            Con_Error("getFileHandle: Failed on (re)allocation of %lu bytes for file list.",
+                (unsigned long) (sizeof(*files) * filesCount));
+
+        // Clear the new handles.
+        memset(files + firstNewFile, 0, sizeof(*files) * (filesCount - firstNewFile));
+
+        fhdl = files + firstNewFile;
+    }
+    return fhdl;
+}
+
+static DFILE* getFreeFile(void)
+{
+    filehandle_t* fhdl = getFileHandle();
+    return (fhdl->file = F_NewFile());
 }
 
 static filelist_node_t* allocFileNode(void)
@@ -182,14 +257,16 @@ static filelist_node_t* findFileListNodeForName(const char* path)
     return found;
 }
 
-static zipfile_t* newZipFile(DFILE* handle, const char* absolutePath)
+static zipfile_t* newZipFile(FILE* file, const char* absolutePath)
 {
+    DFILE* handle = F_OpenStreamFile(getFreeFile(), file, absolutePath);
     return (zipfile_t*) linkFile((abstractfile_t*)ZipFile_New(handle, absolutePath),
         loadingForStartup);
 }
 
-static wadfile_t* newWadFile(DFILE* handle, const char* absolutePath)
+static wadfile_t* newWadFile(FILE* file, const char* absolutePath)
 {
+    DFILE* handle = F_OpenStreamFile(getFreeFile(), file, absolutePath);
     return (wadfile_t*) linkFile((abstractfile_t*)WadFile_New(handle, absolutePath),
         loadingForStartup);
 }
@@ -199,61 +276,6 @@ static lumpfile_t* newLumpFile(DFILE* handle, const char* absolutePath,
 {
     return (lumpfile_t*) linkFile((abstractfile_t*)LumpFile_New(handle, absolutePath, name, lumpSize),
         loadingForStartup);
-}
-
-zipfile_t* F_AddZipFile(const char* path, DFILE* handle)
-{
-    zipfile_t* zip = NULL;
-    errorIfNotInited("F_AddZipFile");
-    if(ZipFile_Recognise(handle))
-    {
-        // Get a new file record.
-        zip = newZipFile(handle, path);
-    }
-    return zip;
-}
-
-wadfile_t* F_AddWadFile(const char* path, DFILE* handle)
-{
-    wadfile_t* wad = NULL;
-    errorIfNotInited("F_AddWadFile");
-    if(WadFile_Recognise(handle))
-    {
-        // Get a new file record.
-        wad = newWadFile(handle, path);
-    }
-    return wad;
-}
-
-lumpfile_t* F_AddLumpFile(const char* path, DFILE* handle, boolean isDehackedPatch)
-{
-    lumpfile_t* lump = NULL;
-    lumpname_t name;
-    errorIfNotInited("F_AddWadFile");
-    // Prepare the name of this single-file lump.
-    if(isDehackedPatch)
-    {
-        strncpy(name, "DEHACKED", LUMPNAME_T_MAXLEN);
-    }
-    else
-    {
-        // Is there a prefix to be omitted in the name?
-        char* slash = strrchr(path, DIR_SEP_CHAR);
-        int offset = 0;
-        // The slash must not be too early in the string.
-        if(slash && slash >= path + 2)
-        {
-            // Good old negative indices.
-            if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
-            {
-                offset = slash[-1] - '1' + 1;
-            }
-        }
-        F_ExtractFileBase2(name, path, LUMPNAME_T_MAXLEN, offset);
-    }
-
-    lump = newLumpFile(handle, path, name, F_Length(handle));
-    return lump;
 }
 
 static void pruneLumpDirectorysByFile(abstractfile_t* fsObject)
@@ -449,6 +471,119 @@ int F_Reset(void)
     return unloadedResources;
 }
 
+void F_GenerateFileId(const char* str, byte identifier[16])
+{
+    md5_ctx_t context;
+    ddstring_t absPath;
+
+    // First normalize the name.
+    Str_Init(&absPath); Str_Set(&absPath, str);
+    F_MakeAbsolute(&absPath, &absPath);
+    F_FixSlashes(&absPath, &absPath);
+
+#if defined(WIN32) || defined(MACOSX)
+    // This is a case insensitive operation.
+    strupr(Str_Text(&absPath));
+#endif
+
+    md5_init(&context);
+    md5_update(&context, (byte*) Str_Text(&absPath), (unsigned int) Str_Length(&absPath));
+    md5_final(&context, identifier);
+
+    Str_Free(&absPath);
+}
+
+boolean F_CheckFileId(const char* path)
+{
+    assert(path);
+    {
+    fileidentifierid_t id;
+
+    if(!F_Access(path))
+        return false;
+
+    // Calculate the identifier.
+    F_GenerateFileId(path, id);
+
+    if(findFileIdentifierForId(id))
+        return false;
+
+    // Allocate a new entry.
+    numReadFiles++;
+    if(numReadFiles > maxReadFiles)
+    {
+        if(!maxReadFiles)
+            maxReadFiles = 16;
+        else
+            maxReadFiles *= 2;
+
+        readFiles = realloc(readFiles, sizeof(*readFiles) * maxReadFiles);
+        memset(readFiles + numReadFiles, 0, sizeof(*readFiles) * (maxReadFiles - numReadFiles));
+    }
+
+    memcpy(readFiles[numReadFiles - 1].hash, id, sizeof(id));
+    return true;
+    }
+}
+
+boolean F_ReleaseFileId(const char* path)
+{
+    fileidentifierid_t id;
+    fileidentifier_t* fileIdentifier;
+
+    F_GenerateFileId(path, id);
+
+    fileIdentifier = findFileIdentifierForId(id);
+    if(fileIdentifier != 0)
+    {
+        size_t index = fileIdentifier - readFiles;
+        if(index < numReadFiles)
+            memmove(readFiles + index, readFiles + index + 1, numReadFiles - index - 1);
+        memset(readFiles + numReadFiles, 0, sizeof(*readFiles));
+        --numReadFiles;
+        return true;
+    }
+    return false;
+}
+
+void F_ResetFileIds(void)
+{
+    numReadFiles = 0;
+}
+
+void F_CloseAll(void)
+{
+    if(files)
+    {
+        uint i;
+        for(i = 0; i < filesCount; ++i)
+        {
+            if(files[i].file)
+                F_Close(files[i].file);
+        }
+        free(files); files = 0;
+    }
+    filesCount = 0;
+}
+
+void F_Release(DFILE* file)
+{
+    assert(NULL != file);
+
+    if(files)
+    {   // Clear references to the handle.
+        uint i;
+        for(i = 0; i < filesCount; ++i)
+        {
+            if(files[i].file == file)
+                files[i].file = NULL;
+        }
+    }
+
+    // File was allocated in getFreeFile.
+    free(file);
+}
+
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
 {
     errorIfNotInited("F_IsValidLumpNum");
@@ -532,10 +667,31 @@ const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum)
     return F_FindInfoForLumpNum2(absoluteLumpNum, NULL);
 }
 
+const char* F_LumpName(lumpnum_t absoluteLumpNum)
+{
+    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    if(info) return info->name;
+    return "";
+}
+
 size_t F_LumpLength(lumpnum_t absoluteLumpNum)
 {
     const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
     if(info) return info->size;
+    return 0;
+}
+
+const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
+{
+    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
+    if(fsObject) return Str_Text(AbstractFile_AbsolutePath(fsObject));
+    return "";
+}
+
+uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
+{
+    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    if(info) return info->lastModified;
     return 0;
 }
 
@@ -568,8 +724,10 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
         handle = prevOpened;
     }
 
-    if(WadFile_Recognise(handle))
+    if(WadFile_Recognise(F_Handle(handle)))
     {
+        wadfile_t* wad;
+
         if(auxiliaryWadLumpDirectoryInUse)
         {
             F_CloseAuxiliary();
@@ -578,11 +736,8 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
         auxiliaryWadLumpDirectoryInUse = true;
 
         // Get a new file record.
-        { wadfile_t* wad = newWadFile(handle, path);
-        if(NULL != wad)
-        {
-            WadFile_PublishLumpsToDirectory(wad, ActiveWadLumpDirectory);
-        }}
+        wad = (wadfile_t*) linkFile((abstractfile_t*)WadFile_New(handle, path), loadingForStartup);
+        WadFile_PublishLumpsToDirectory(wad, ActiveWadLumpDirectory);
         return AUXILIARY_BASE;
     }
 
@@ -853,7 +1008,7 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
             continue; // Not mapped.
 
         if(!myfindfirst(Str_Text(&wildPath), &fd))
-        {   // First path found.           
+        {   // First path found.
             do
             {
                 // Ignore relative directory symbolics.
@@ -974,7 +1129,7 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
     p.callback = callback;
     p.paramaters = paramaters;
     p.pattern = &searchPattern;
-    
+
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findZipFileWorker, (void*)&p);
     if(0 != result)
     {   // Find didn't finish.
@@ -1024,8 +1179,9 @@ int F_AllResourcePaths(const char* searchPath,
     return F_AllResourcePaths2(searchPath, callback, 0);
 }
 
-DFILE* F_OpenFile(const char* path, const char* mymode)
+static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** foundPath)
 {
+    ddstring_t* mapped;
     char mode[8];
     FILE* file;
 
@@ -1037,44 +1193,130 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
 
     // Try opening as a real file.
     file = fopen(path, mode);
-    if(!file)
-    {
-        if(vdMappingsCount > 0)
-        {
-            ddstring_t mapped;
-            Str_Init(&mapped);
-            // Any applicable virtual directory mappings?
-            { uint i;
-            for(i = 0; i < vdMappingsCount; ++i)
-            {
-                Str_Set(&mapped, path);
-                if(!F_MapPath(&mapped, &vdMappings[i]))
-                    continue;
-                // The mapping was successful.
-                file = fopen(Str_Text(&mapped), mode);
-                if(file)
-                {
-                    VERBOSE( Con_Message("F_OpenFile: \"%s\" opened as %s.\n",
-                        F_PrettyPath(Str_Text(&mapped)), path) )
-                    break;
-                }
-            }}
-            Str_Free(&mapped);
-        }
-    }
-
     if(file)
     {
-        return F_OpenStreamFile(file, path);
+        if(foundPath)
+        {
+            *foundPath = Str_New();
+            Str_Set(*foundPath, path);
+        }
+        return file;
     }
-    return 0; // Not found.
+
+    // Any applicable virtual directory mappings?
+    if(vdMappingsCount == 0)
+        return NULL;
+
+    mapped = Str_New();
+    { uint i;
+    for(i = 0; i < vdMappingsCount; ++i)
+    {
+        Str_Set(mapped, path);
+        if(!F_MapPath(mapped, &vdMappings[i]))
+            continue;
+        // The mapping was successful.
+        file = fopen(Str_Text(mapped), mode);
+        if(file)
+        {
+            VERBOSE( Con_Message("F_OpenFile: \"%s\" opened as %s.\n", F_PrettyPath(Str_Text(mapped)), path) )
+            if(foundPath)
+                *foundPath = mapped;
+            else
+                Str_Delete(mapped);
+            return file;
+        }
+    }}
+    Str_Delete(mapped);
+    return NULL;
+}
+
+static boolean findLumpFile(const char* path, abstractfile_t** fsObject, int* lumpIdx)
+{
+    ddstring_t absSearchPath;
+    lumpnum_t lumpNum;
+
+    if(!path || !path[0] || !inited)
+        return false;
+
+    /**
+     * First check the Zip directory.
+     */
+
+    // Convert to an absolute path.
+    Str_Init(&absSearchPath); Str_Set(&absSearchPath, path);
+    F_PrependBasePath(&absSearchPath, &absSearchPath);
+
+    // Perform the search.
+    lumpNum = LumpDirectory_IndexForPath(zipLumpDirectory, Str_Text(&absSearchPath));
+    if(lumpNum >= 0)
+    {
+        *fsObject = LumpDirectory_SourceFile(zipLumpDirectory, lumpNum);
+        *lumpIdx = LumpDirectory_LumpIndex(zipLumpDirectory, lumpNum);
+        Str_Free(&absSearchPath);
+        return true;
+    }
+
+    /**
+     * Next try the dir/WAD redirects.
+     */
+
+    // We must have an absolute path, so prepend the current
+    // working directory if necessary.
+    Str_Set(&absSearchPath, path);
+    F_PrependWorkPath(&absSearchPath, &absSearchPath);
+    { int i = 0;
+    for(i = 0; !Str_IsEmpty(&lumpDirectory[i].path); ++i)
+    {
+        lumpdirectory_record_t* rec = &lumpDirectory[i];
+        if(!Str_CompareIgnoreCase(&rec->path, Str_Text(&absSearchPath)))
+        {
+            lumpnum_t lumpNum = -1;
+
+            // We have to check both the primary and auxiliary caches because
+            // we've only got a name and don't know where it is located. Start with
+            // the auxiliary lumps because they take precedence.
+            if(useAuxiliaryDirectory())
+            {
+                lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, rec->lumpName);
+            }
+
+            // Found it yet?
+            if(lumpNum < 0)
+            {
+                usePrimaryDirectory();
+                lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, rec->lumpName);
+            }
+
+            if(lumpNum >= 0)
+            {
+                *fsObject = LumpDirectory_SourceFile(ActiveWadLumpDirectory, lumpNum);
+                *lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, lumpNum);
+                Str_Free(&absSearchPath);
+                return true;
+            }
+        }
+    }}
+
+    Str_Free(&absSearchPath);
+    return false;
+}
+
+DFILE* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
+{
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(fsObject)
+    {
+        return F_OpenStreamLump(getFreeFile(), fsObject, lumpIdx, dontBuffer);
+    }
+    return 0;
 }
 
 DFILE* F_Open(const char* path, const char* mode)
 {
+    ddstring_t searchPath, *foundPath;
     boolean dontBuffer, reqRealFile;
-    ddstring_t searchPath;
-    DFILE* file = NULL;
+    FILE* file = NULL;
 
     if(!path || !path[0])
         return NULL;
@@ -1089,83 +1331,31 @@ DFILE* F_Open(const char* path, const char* mode)
     F_FixSlashes(&searchPath, &searchPath);
     F_ExpandBasePath(&searchPath, &searchPath);
 
-    // Shall we first check the Zip directory?
-    if(!reqRealFile && inited)
+    // First check for lumps?
+    if(!reqRealFile)
     {
-        lumpnum_t lumpNum = -1;
-        ddstring_t absSearchPath;
-
-        // Convert to an absolute path.
-        Str_Init(&absSearchPath); Str_Set(&absSearchPath, Str_Text(&searchPath));
-        F_PrependBasePath(&absSearchPath, &absSearchPath);
-
-        // Perform the search.
-        lumpNum = LumpDirectory_IndexForPath(zipLumpDirectory, Str_Text(&absSearchPath));
-        Str_Free(&absSearchPath);
-
-        if(lumpNum >= 0)
+        abstractfile_t* fsObject;
+        int lumpIdx;
+        if(findLumpFile(Str_Text(&searchPath), &fsObject, &lumpIdx))
         {
-            abstractfile_t* fsObject = LumpDirectory_SourceFile(zipLumpDirectory, lumpNum);
-            int lumpIdx = LumpDirectory_LumpIndex(zipLumpDirectory, lumpNum);
-            file = F_OpenStreamLump(fsObject, lumpIdx, dontBuffer);
-            if(file)
-            {
-                Str_Free(&searchPath);
-                return file;
-            }
+            Str_Free(&searchPath);
+            return F_OpenStreamLump(getFreeFile(), fsObject, lumpIdx, dontBuffer);
         }
     }
 
-    // For the next stage we must have an absolute path, so prepend the current
-    // working directory if necessary.
+    // Try to open as a real file then.
+    // We must have an absolute path, so prepend the current working directory if necessary.
     F_PrependWorkPath(&searchPath, &searchPath);
-
-    // How about the dir/WAD redirects?
-    if(!reqRealFile && inited)
-    {
-        lumpdirectory_record_t* rec;
-        int i = 0;
-        for(i = 0; !Str_IsEmpty(&lumpDirectory[i].path); ++i)
-        {
-            rec = &lumpDirectory[i];
-            if(!Str_CompareIgnoreCase(&rec->path, Str_Text(&searchPath)))
-            {
-                lumpnum_t lumpNum = -1;
-
-                // We have to check both the primary and auxiliary caches because
-                // we've only got a name and don't know where it is located. Start with
-                // the auxiliary lumps because they take precedence.
-                if(useAuxiliaryDirectory())
-                {
-                    lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, rec->lumpName);
-                }
-
-                // Found it yet?
-                if(lumpNum < 0)
-                {
-                    usePrimaryDirectory();
-                    lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, rec->lumpName);
-                }
-
-                if(lumpNum >= 0)
-                {
-                    abstractfile_t* fsObject = LumpDirectory_SourceFile(ActiveWadLumpDirectory, lumpNum);
-                    int lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, lumpNum);
-                    file = F_OpenStreamLump(fsObject, lumpIdx, dontBuffer);
-                }
-                break;
-            }
-        }
-    }
-
-    // Try to open as a real file then?
-    if(NULL == file)
-    {
-        file = F_OpenFile(Str_Text(&searchPath), mode);
-    }
-
+    file = findRealFile(Str_Text(&searchPath), mode, &foundPath);
     Str_Free(&searchPath);
-    return file;
+    if(file)
+    {
+        DFILE* dfile = F_OpenStreamFile(getFreeFile(), file, Str_Text(foundPath));
+        Str_Delete(foundPath);
+        return dfile;
+    }
+    // Not found.
+    return NULL;
 }
 
 static __inline void initLumpPathMapping(lumppathmapping_t* lpm)
@@ -1287,32 +1477,74 @@ static void resetVDirectoryMappings(void)
     vdMappingsCount = vdMappingsMax = 0;
 }
 
-static abstractfile_t* tryAddZipFile(const char* absolutePath, DFILE* handle)
+static abstractfile_t* tryAddZipFile(FILE* file, const char* absolutePath)
 {
-    return (abstractfile_t*)F_AddZipFile(absolutePath, handle);
+    zipfile_t* zip = NULL;
+    errorIfNotInited("tryAddZipFile");
+    if(ZipFile_Recognise(file))
+    {
+        // Get a new file record.
+        zip = newZipFile(file, absolutePath);
+    }
+    return (abstractfile_t*)zip;
 }
 
-static abstractfile_t* tryAddWadFile(const char* absolutePath, DFILE* handle)
+static abstractfile_t* tryAddWadFile(FILE* file, const char* absolutePath)
 {
-    return (abstractfile_t*)F_AddWadFile(absolutePath, handle);
+    wadfile_t* wad = NULL;
+    errorIfNotInited("tryAddWadFile");
+    if(WadFile_Recognise(file))
+    {
+        // Get a new file record.
+        wad = newWadFile(file, absolutePath);
+    }
+    return (abstractfile_t*)wad;
 }
 
-static abstractfile_t* tryAddLumpFile(const char* absolutePath, DFILE* handle)
+static abstractfile_t* addLumpFile(abstractfile_t* fsObject, int lumpIdx,
+    const char* absolutePath, boolean isDehackedPatch)
 {
-    return (abstractfile_t*)F_AddLumpFile(absolutePath, handle, false);
+    lumpname_t name;
+    DFILE* handle;
+
+    errorIfNotInited("tryAddLumpFile");
+
+    // Prepare the name of this single-file lump.
+    if(isDehackedPatch)
+    {
+        strncpy(name, "DEHACKED", LUMPNAME_T_MAXLEN);
+    }
+    else
+    {
+        // Is there a prefix to be omitted in the name?
+        char* slash = strrchr(absolutePath, DIR_SEP_CHAR);
+        int offset = 0;
+        // The slash must not be too early in the string.
+        if(slash && slash >= absolutePath + 2)
+        {
+            // Good old negative indices.
+            if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
+            {
+                offset = slash[-1] - '1' + 1;
+            }
+        }
+        F_ExtractFileBase2(name, absolutePath, LUMPNAME_T_MAXLEN, offset);
+    }
+
+    handle = F_OpenStreamLump(getFreeFile(), fsObject, lumpIdx, false);
+    return (abstractfile_t*)newLumpFile(handle, absolutePath, name, F_Length(handle));
 }
 
-static abstractfile_t* F_AddFile2(const char* absolutePath, DFILE* handle)
+static abstractfile_t* F_AddFile2(FILE* handle, const char* absolutePath)
 {
-    assert(NULL != absolutePath && absolutePath[0] && NULL != handle);
+    assert(NULL != handle && NULL != absolutePath && absolutePath[0]);
     {
     struct filehandler_s {
         resourcetype_t resourceType;
-        abstractfile_t* (*tryLoadFile)(const char* absolutePath, DFILE* handle);
+        abstractfile_t* (*tryLoadFile)(FILE* handle, const char* absolutePath);
     } static const handlers[] = {
         { RT_ZIP,  tryAddZipFile },
         { RT_WAD,  tryAddWadFile },
-        { RT_NONE, tryAddLumpFile },
         { RT_NONE, NULL }
     }, *hdlr = NULL;
     resourcetype_t resourceType = F_GuessResourceTypeByName(absolutePath);
@@ -1320,18 +1552,12 @@ static abstractfile_t* F_AddFile2(const char* absolutePath, DFILE* handle)
 
     VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(absolutePath)) )
 
-    if(RT_DEH == resourceType)
-    {
-        // DeHackEd patch files require special handling.
-        return (abstractfile_t*)F_AddLumpFile(absolutePath, handle, true);
-    }
-
     // Firstly try the expected format given the file name.
     for(hdlr = handlers; NULL != hdlr->tryLoadFile; hdlr++)
     {
         if(hdlr->resourceType != resourceType) continue;
 
-        fsObject = hdlr->tryLoadFile(absolutePath, handle);
+        fsObject = hdlr->tryLoadFile(handle, absolutePath);
         break;
     }
 
@@ -1341,8 +1567,8 @@ static abstractfile_t* F_AddFile2(const char* absolutePath, DFILE* handle)
     while(NULL == fsObject && NULL != handlers[n].tryLoadFile)
     {
         if(hdlr == &handlers[n]) continue; // We already know its not in this format.
-        
-        fsObject = handlers[n++].tryLoadFile(absolutePath, handle);
+
+        fsObject = handlers[n++].tryLoadFile(handle, absolutePath);
     }}
     return fsObject;
     }
@@ -1350,54 +1576,81 @@ static abstractfile_t* F_AddFile2(const char* absolutePath, DFILE* handle)
 
 boolean F_AddFile(const char* fileName, boolean allowDuplicate)
 {
-    DFILE* handle;
+    abstractfile_t* fsObject;
+    ddstring_t searchPath, *foundPath;
+    int lumpIdx;
+    FILE* file;
 
     // Filename given?
     if(!fileName || !fileName[0])
         return false;
 
-    handle = F_Open(fileName, "rb");
-    if(NULL == handle)
+    // Make it a full fileName.
+    Str_Init(&searchPath); Str_Set(&searchPath, fileName);
+    F_FixSlashes(&searchPath, &searchPath);
+    F_ExpandBasePath(&searchPath, &searchPath);
+
+    // First check for lumps?
+    if(findLumpFile(Str_Text(&searchPath), &fsObject, &lumpIdx))
+    {
+        resourcetype_t type;
+
+        // Do not read files twice.
+        if(!allowDuplicate && !F_CheckFileId(fileName))
+        {
+            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
+            return false;
+        }
+
+        // DeHackEd patch files require special handling...
+        type = F_GuessResourceTypeByName(fileName);
+
+        fsObject = (abstractfile_t*)addLumpFile(fsObject, lumpIdx, Str_Text(&searchPath), (type == RT_DEH));
+        LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
+        Str_Free(&searchPath);
+        return true;
+    }
+
+    // Try to open as a real file then.   
+    // We must have an absolute path, so prepend the current working directory if necessary.
+    F_PrependWorkPath(&searchPath, &searchPath);
+    file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
+    Str_Free(&searchPath);
+    if(!file)
     {
         Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
         return false;
     }
 
     // Do not read files twice.
-    if(!allowDuplicate && !F_CheckFileId(fileName))
+    if(!allowDuplicate && !F_CheckFileId(Str_Text(foundPath)))
     {
-        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
-        F_Close(handle); // The file is not used.
+        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(Str_Text(foundPath)));
         return false;
     }
 
-    { abstractfile_t* fsObject = F_AddFile2(fileName, handle);
-    if(NULL != fsObject)
+    fsObject = F_AddFile2(file, Str_Text(foundPath));
+    Str_Delete(foundPath);
+
+    switch(AbstractFile_Type(fsObject))
     {
-        switch(AbstractFile_Type(fsObject))
-        {
-        case FT_ZIPFILE:
-            ZipFile_PublishLumpsToDirectory((zipfile_t*)fsObject, zipLumpDirectory);
-            break;
-        case FT_WADFILE: {
-            wadfile_t* wad = (wadfile_t*)fsObject;
-            WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
-            // Print the 'CRC' number of the IWAD, so it can be identified.
-            /// \todo Do not do this here.
-            if(WadFile_IsIWAD(wad))
-                Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
-            break;
-          }
-        case FT_LUMPFILE:
-            LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
-            break;
-        default:
-            Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
-            exit(1); // Unreachable.
-        }
-        return true;
-    }}
-    return false;
+    case FT_ZIPFILE:
+        ZipFile_PublishLumpsToDirectory((zipfile_t*)fsObject, zipLumpDirectory);
+        break;
+    case FT_WADFILE: {
+        wadfile_t* wad = (wadfile_t*)fsObject;
+        WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
+        // Print the 'CRC' number of the IWAD, so it can be identified.
+        /// \todo Do not do this here.
+        if(WadFile_IsIWAD(wad))
+            Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
+        break;
+      }
+    default:
+        Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
+        exit(1); // Unreachable.
+    }
+    return true;
 }
 
 boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)

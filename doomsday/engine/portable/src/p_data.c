@@ -147,13 +147,13 @@ void P_PolyobjChanged(polyobj_t* po)
 const char* P_GenerateUniqueMapID(const char* mapID)
 {
     static char uid[255];
-    lumpnum_t lumpNum = W_GetLumpNumForName(mapID);
+    lumpnum_t lumpNum = F_CheckLumpNumForName(mapID, true);
     ddstring_t fileName;
 
     Str_Init(&fileName);
-    F_FileName(&fileName, W_LumpSourceFile(lumpNum));
+    F_FileName(&fileName, F_LumpSourceFile(lumpNum));
     dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
-        (W_LumpIsFromIWAD(lumpNum) ? "iwad" : "pwad"), Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
+        (F_LumpIsFromIWAD(lumpNum) ? "iwad" : "pwad"), Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
     strlwr(uid);
 
     Str_Free(&fileName);
