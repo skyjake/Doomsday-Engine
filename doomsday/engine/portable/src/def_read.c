@@ -2586,7 +2586,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
         if(F_LumpLength(absoluteLumpNum) != 0)
         {
             const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-            int result = DED_ReadData(ded, lumpPtr, Str_Text(AbstractFile_AbsolutePath(fsObject)));
+            int result = DED_ReadData(ded, (const char*)lumpPtr, Str_Text(AbstractFile_AbsolutePath(fsObject)));
             F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
         }
         return true;

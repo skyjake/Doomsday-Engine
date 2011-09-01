@@ -2225,7 +2225,7 @@ mobj_t* UIAutomap_FollowMobj(uiwidget_t* obj)
     assert(NULL != obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    if(am->followPlayer >= 0 && players[am->followPlayer].plr->inGame)
+    if(players[am->followPlayer].plr->inGame)
     {
         return players[am->followPlayer].plr->mo;
     }

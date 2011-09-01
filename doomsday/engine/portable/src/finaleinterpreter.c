@@ -1918,14 +1918,14 @@ DEFFC(TextFromLump)
         { size_t i;
         for(i = 0, out = str; i < lumpSize; ++i)
         {
-            if((const char)lumpPtr[i] == '\n')
+            if((char)(lumpPtr[i]) == '\n')
             {
                 *out++ = '\\';
                 *out++ = 'n';
             }
             else
             {
-                *out++ = (const char)lumpPtr[i];
+                *out++ = (char)(lumpPtr[i]);
             }
         }}
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);

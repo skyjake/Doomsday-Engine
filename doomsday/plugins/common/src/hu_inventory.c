@@ -246,7 +246,7 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
             }
             else
             {
-                from = MAX_OF(0, cursor - (unsigned)inv->selected);
+                from = MAX_OF(0, cursor - (signed)inv->selected);
                 to = maxVisSlots;
             }
         }

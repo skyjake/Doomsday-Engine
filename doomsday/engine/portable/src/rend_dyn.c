@@ -376,7 +376,7 @@ static void buildUpRight(pvec3_t up, pvec3_t right, const pvec3_t normal)
     }
     else
     {   // Can use a cross product of the surface normal.
-        V3_CrossProduct(right, (const pvec3_t) rotm[axis], normal);
+        V3_CrossProduct(right, (pvec3_t) rotm[axis], normal);
         V3_Normalize(right);
     }
 

@@ -462,8 +462,11 @@ boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
     if(axis)
     {
         int a = I_GetAxisByName(device, ptr + 1);
-        if((*axis = a) < 0)
+        if(a < 0)
+        {
+            *axis = 0;
             return false;
+        }
         *axis = a + 1; // Axis indices are base 1.
     }
 
