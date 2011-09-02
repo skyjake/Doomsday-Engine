@@ -415,7 +415,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             {   // Its an external file.
                 // The song may be in a virtual file, so we must buffer
                 // it ourselves.
-                DFILE* file = F_Open(Str_Text(&path), "rb");
+                abstractfile_t* file = F_Open(Str_Text(&path), "rb");
                 size_t len = F_Length(file);
 
                 if(!iMusic->Play)
@@ -440,7 +440,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         F_Read(file, buf, len);
                         fwrite(buf, 1, len, outFile);
                         fclose(outFile);
-                        F_Close(file);
+                        F_Delete(file);
                         free(buf);
 
                         // Music maestro, if you please!
@@ -451,7 +451,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                     Con_Message("Mus_Start: Failed opening \"%s\" for writing (%s).\n",
                         Str_Text(fileName), strerror(errno));
-                    F_Close(file);
+                    F_Delete(file);
                     Str_Delete(fileName);
                     return false;
                 }
@@ -464,7 +464,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                     ptr = iMusic->SongBuffer(len);
                     F_Read(file, (uint8_t*)ptr, len);
-                    F_Close(file);
+                    F_Delete(file);
 
                     return iMusic->Play(looped);
                 }

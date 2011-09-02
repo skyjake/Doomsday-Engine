@@ -36,82 +36,74 @@
 
 #include <stdio.h>
 
-#include "dd_types.h"
+#include "abstractfile.h"
 
-struct abstractfile_s;
-
-struct dfile_s; // The file instance (opaque).
-typedef struct dfile_s DFILE;
-
-DFILE* F_NewFile(void);
+abstractfile_t* F_NewFile(const char* absolutePath);
+void F_Delete(abstractfile_t* file);
 
 /**
- * @return  @c true if the file can be opened for reading.
+ * Close the current file if open, removing all references to it in the open file list.
  */
-int F_Access(const char* path);
-
-void F_Close(DFILE* file);
+void F_Close(abstractfile_t* file);
 
 /// @return  The length of the file, in bytes.
-size_t F_Length(DFILE* file);
+size_t F_Length(abstractfile_t* file);
 
 /// @return  "Last modified" timestamp of the file.
-unsigned int F_LastModified(DFILE* file);
+unsigned int F_LastModified(abstractfile_t* file);
 
 /**
  * @return  Number of bytes read (at most @a count bytes will be read).
  */
-size_t F_Read(DFILE* file, uint8_t* buffer, size_t count);
+size_t F_Read(abstractfile_t* file, uint8_t* buffer, size_t count);
 
 /**
  * Read a character from the stream, advancing the read position in the process.
  */
-unsigned char F_GetC(DFILE* file);
+unsigned char F_GetC(abstractfile_t* file);
 
 /**
  * @return  @c true iff the stream has reached the end of the file.
  */
-boolean F_AtEnd(DFILE* file);
+boolean F_AtEnd(abstractfile_t* file);
 
 /**
  * @return  Current position in the stream as an offset from the beginning of the file.
  */
-size_t F_Tell(DFILE* file);
+size_t F_Tell(abstractfile_t* file);
 
 /**
  * @return  The current position in the file, before the move, as an
  *      offset from the beginning of the file.
  */
-size_t F_Seek(DFILE* file, size_t offset, int whence);
+size_t F_Seek(abstractfile_t* file, size_t offset, int whence);
 
 /**
  * Rewind the stream to the start of the file.
  */
-void F_Rewind(DFILE* file);
+void F_Rewind(abstractfile_t* file);
 
 /**
  * Open a new stream on the specified lump for reading.
  *
- * @param fsObject  File system record for the file containing the lump to be read.
+ * @param file  File system handle used to reference the lump once read.
+ * @param container  File system record for the file containing the lump to be read.
  * @param lump  Index of the lump to open.
  * @param dontBuffer  Just test for access (don't buffer anything).
  *
  * @return  Same as @a file for convenience.
  */
-DFILE* F_OpenStreamLump(DFILE* file, struct abstractfile_s* fsObject, int lumpIdx, boolean dontBuffer);
+abstractfile_t* F_OpenStreamLump(abstractfile_t* file, abstractfile_t* container, int lumpIdx, boolean dontBuffer);
 
 /**
  * Open a new stream on the specified lump for reading.
  *
- * @param fsObject  File system record for the file containing the lump to be read.
- * @param lump  Index of the lump to open.
+ * @param file  File system handle used to reference the file once read.
+ * @param hndl  Handle to the file containing the data to be read.
  *
  * @return  Same as @a file for convenience.
  */
-DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path);
-
-/// \note deprecated
-FILE* F_Handle(DFILE* file);
+abstractfile_t* F_OpenStreamFile(abstractfile_t* file, FILE* hndl, const char* path);
 
 /**
  * This is a case-insensitive test.

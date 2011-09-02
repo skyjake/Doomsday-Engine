@@ -188,7 +188,7 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     return buf;
 }
 
-void M_ReadLine(char* buffer, size_t len, DFILE* file)
+void M_ReadLine(char* buffer, size_t len, abstractfile_t* file)
 {
     size_t p;
     char ch;

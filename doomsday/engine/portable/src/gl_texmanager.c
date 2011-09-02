@@ -67,7 +67,7 @@ typedef enum {
 typedef struct {
     const char* name; // Format/handler name.
     const char* ext; // Expected file extension.
-    boolean (*loadFunc)(image_t* img, DFILE* file);
+    boolean (*loadFunc)(image_t* img, abstractfile_t* file);
     const char* (*getLastErrorFunc) (void);
 } imagehandler_t;
 
@@ -102,9 +102,9 @@ void GL_DoResetDetailTextures(void);
 
 static void calcGammaTable(void);
 
-static boolean tryLoadPCX(image_t* img, DFILE* file);
-static boolean tryLoadPNG(image_t* img, DFILE* file);
-static boolean tryLoadTGA(image_t* img, DFILE* file);
+static boolean tryLoadPCX(image_t* img, abstractfile_t* file);
+static boolean tryLoadPNG(image_t* img, abstractfile_t* file);
+static boolean tryLoadTGA(image_t* img, abstractfile_t* file);
 
 int ratioLimit = 0; // Zero if none.
 boolean fillOutlines = true;
@@ -919,8 +919,9 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         {
             if(flat->lumpNum >= 0)
             {
-                DFILE* file = F_OpenLump(flat->lumpNum, false);
-                loadResult = GL_LoadFlatLump(image, file, F_LumpName(flat->lumpNum));
+                abstractfile_t* file = F_OpenLump(flat->lumpNum, false);
+                loadResult = GL_LoadFlatLump(image, file);
+                F_Delete(file);
             }
         }
         break;
@@ -953,8 +954,9 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         {
             if(pTex->lumpNum >= 0)
             {
-                DFILE* file = F_OpenLump(pTex->lumpNum, false);
-                loadResult = GL_LoadPatchLumpAsPatch(image, file, pTex->lumpNum, tclass, tmap, spec->border, pTex);
+                abstractfile_t* file = F_OpenLump(pTex->lumpNum, false);
+                loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, pTex);
+                F_Delete(file);
             }
         }
         break;
@@ -997,8 +999,9 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         {
             if(sprTex->lumpNum >= 0)
             {
-                DFILE* file = F_OpenLump(sprTex->lumpNum, false);
-                loadResult = GL_LoadPatchLumpAsSprite(image, file, sprTex->lumpNum, tclass, tmap, spec->border, sprTex);
+                abstractfile_t* file = F_OpenLump(sprTex->lumpNum, false);
+                loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, sprTex);
+                F_Delete(file);
             }
         }
         break;
@@ -1018,8 +1021,9 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
             lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(Uri_Path(dTex->filePath)), true);
             if(lumpNum >= 0)
             {
-                DFILE* file = F_OpenLump(lumpNum, false);
-                loadResult = GL_LoadDetailTextureLump(image, file, F_LumpName(lumpNum));
+                abstractfile_t* file = F_OpenLump(lumpNum, false);
+                loadResult = GL_LoadDetailTextureLump(image, file);
+                F_Delete(file);
             }
         }
         break;
@@ -1697,7 +1701,7 @@ void GL_PrintImageMetadata(const image_t* image)
         0 != image->paletteId? image->paletteId : image->pixelSize);
 }
 
-static boolean tryLoadPCX(image_t* img, DFILE* file)
+static boolean tryLoadPCX(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     GL_InitImage(img);
@@ -1705,7 +1709,7 @@ static boolean tryLoadPCX(image_t* img, DFILE* file)
     return (0 != img->pixels);
 }
 
-static boolean tryLoadPNG(image_t* img, DFILE* file)
+static boolean tryLoadPNG(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     GL_InitImage(img);
@@ -1713,7 +1717,7 @@ static boolean tryLoadPNG(image_t* img, DFILE* file)
     return (0 != img->pixels);
 }
 
-static boolean tryLoadTGA(image_t* img, DFILE* file)
+static boolean tryLoadTGA(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     GL_InitImage(img);
@@ -1757,16 +1761,17 @@ static boolean isColorKeyed(const char* path)
 
 /// \todo Remove the filePath argument by obtaining the path via the
 /// File Stream Abstraction Layer. This method can then be made public.
-static uint8_t* GL_LoadImageDFile(image_t* img, DFILE* file, const char* filePath)
+static uint8_t* GL_LoadImageDFile(image_t* img, abstractfile_t* file)
 {
-    assert(img && file && filePath);
+    assert(img && file);
     {
     const imagehandler_t* hdlr;
 
     GL_InitImage(img);
 
     // Firstly try the expected format given the file name.
-    if(0 != (hdlr = findHandlerFromFileName(filePath)))
+    hdlr = findHandlerFromFileName(Str_Text(AbstractFile_AbsolutePath(file)));
+    if(hdlr)
     {
         hdlr->loadFunc(img, file);
     }
@@ -1783,10 +1788,10 @@ static uint8_t* GL_LoadImageDFile(image_t* img, DFILE* file, const char* filePat
     if(0 == img->pixels)
         return 0; // Not a recogniseable format.
 
-    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n", F_PrettyPath(filePath), img->width, img->height) );
+    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n", F_PrettyPath(Str_Text(AbstractFile_AbsolutePath(file))), img->width, img->height) );
 
     // How about some color-keying?
-    if(isColorKeyed(filePath))
+    if(isColorKeyed(Str_Text(AbstractFile_AbsolutePath(file))))
     {
         uint8_t* out = ApplyColorKeying(img->pixels, img->width, img->height, img->pixelSize);
         if(out != img->pixels)
@@ -1812,11 +1817,11 @@ uint8_t* GL_LoadImage(image_t* img, const char* filePath)
     assert(img);
     {
     byte* result = 0;
-    DFILE* file;
-    if(NULL != (file = F_Open(filePath, "rb")))
+    abstractfile_t* file = F_Open(filePath, "rb");
+    if(file)
     {
-        result = GL_LoadImageDFile(img, file, filePath);
-        F_Close(file);
+        result = GL_LoadImageDFile(img, file);
+        F_Delete(file);
     }
     return result;
     }
@@ -2607,12 +2612,12 @@ static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
     return false;
 }
 
-byte GL_LoadDetailTextureLump(image_t* image, DFILE* file, const char* lumpName)
+byte GL_LoadDetailTextureLump(image_t* image, abstractfile_t* file)
 {
     assert(image && file);
     {
     byte result = 0;
-    if(0 != GL_LoadImageDFile(image, file, lumpName))
+    if(0 != GL_LoadImageDFile(image, file))
     {
         result = 1;
     }
@@ -2652,17 +2657,16 @@ byte GL_LoadDetailTextureLump(image_t* image, DFILE* file, const char* lumpName)
         F_Read(file, image->pixels, fileLength);
         result = 1;
     }
-    F_Close(file);
     return result;
     }
 }
 
-byte GL_LoadFlatLump(image_t* image, DFILE* file, const char* lumpName)
+byte GL_LoadFlatLump(image_t* image, abstractfile_t* file)
 {
     assert(image && file);
     {
     byte result = 0;
-    if(0 != GL_LoadImageDFile(image, file, lumpName))
+    if(0 != GL_LoadImageDFile(image, file))
     {
         result = 1;
     }
@@ -2696,19 +2700,16 @@ byte GL_LoadFlatLump(image_t* image, DFILE* file, const char* lumpName)
 #undef FLAT_HEIGHT
 #undef FLAT_WIDTH
     }
-
-    F_Close(file);
     return result;
     }
 }
 
-static byte loadPatchLump(image_t* image, DFILE* file, const char* lumpName,
-    int tclass, int tmap, int border)
+static byte loadPatchLump(image_t* image, abstractfile_t* file, int tclass, int tmap, int border)
 {
     assert(image && file);
     {
     byte result = 0;
-    if(0 != GL_LoadImageDFile(image, file, lumpName))
+    if(0 != GL_LoadImageDFile(image, file))
     {
         result = 2;
     }
@@ -2720,7 +2721,7 @@ static byte loadPatchLump(image_t* image, DFILE* file, const char* lumpName,
 
         if(fileLength < sizeof(doompatch_header_t))
         {
-            //Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", lumpName);
+            Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_AbsolutePath(file))));
             return result;
         }
 
@@ -2750,25 +2751,21 @@ static byte loadPatchLump(image_t* image, DFILE* file, const char* lumpName,
         free(buf);
         result = 1;
     }
-
-    F_Close(file);
     return result;
     }
 }
 
-byte GL_LoadPatchLumpAsPatch(image_t* image, DFILE* file, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsPatch(image_t* image, abstractfile_t* file, int tclass,
     int tmap, int border, patchtex_t* patchTex)
 {
-    assert(file && lumpNum >= 0);
+    assert(file);
     {
-    byte result = loadPatchLump(image, file, F_LumpName(lumpNum), tclass, tmap, border);
+    byte result = loadPatchLump(image, file, tclass, tmap, border);
     if(1 == result && NULL != patchTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)&hdr, 0, sizeof(hdr));
+        F_ReadLumpSection(file, 0, (uint8_t*)&hdr, 0, sizeof(hdr));
         patchTex->offX = -SHORT(hdr.leftOffset);
         patchTex->offY = -SHORT(hdr.topOffset);
     }
@@ -2776,19 +2773,17 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, DFILE* file, lumpnum_t lumpNum, int
     }
 }
 
-byte GL_LoadPatchLumpAsSprite(image_t* image, DFILE* file, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsSprite(image_t* image, abstractfile_t* file, int tclass,
     int tmap, int border, spritetex_t* spriteTex)
 {
-    assert(file && lumpNum >= 0);
+    assert(file);
     {
-    byte result = loadPatchLump(image, file, F_LumpName(lumpNum), tclass, tmap, border);
+    byte result = loadPatchLump(image, file, tclass, tmap, border);
     if(1 == result && NULL != spriteTex)
     {   // Loaded from a lump assumed to be in DOOM's Patch format.
         // Load the extended metadata from the lump.
         doompatch_header_t hdr;
-        int lumpIdx;
-        abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)&hdr, 0, sizeof(hdr));
+        F_ReadLumpSection(file, 0, (uint8_t*)&hdr, 0, sizeof(hdr));
         spriteTex->offX = SHORT(hdr.leftOffset);
         spriteTex->offY = SHORT(hdr.topOffset);
     }
@@ -2948,10 +2943,10 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     }
     else if(r->lumpNum >= 0)
     {
-        DFILE* file = F_OpenLump(r->lumpNum, false);
+        abstractfile_t* file = F_OpenLump(r->lumpNum, false);
         if(file)
         {
-            if(0 != GL_LoadImageDFile(image, file, Str_Text(&r->name)))
+            if(0 != GL_LoadImageDFile(image, file))
             {
                 result = 1;
             }
@@ -2978,7 +2973,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
             }
-            F_Close(file);
+            F_Delete(file);
         }
     }
 

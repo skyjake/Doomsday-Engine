@@ -201,18 +201,17 @@ byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
     const char* optionalSuffix, boolean silent);
 
-byte GL_LoadFlatLump(struct image_s* image, DFILE* file, const char* lumpName);
+byte GL_LoadFlatLump(struct image_s* image, abstractfile_t* file);
 
-byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFILE* file, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsPatch(struct image_s* image, abstractfile_t* file, int tclass,
     int tmap, int border, patchtex_t* patchTex);
-byte GL_LoadPatchLumpAsSprite(struct image_s* image, DFILE* file, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsSprite(struct image_s* image, abstractfile_t* file, int tclass,
     int tmap, int border, spritetex_t* spriteTex);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, DFILE* file, const char* lumpName);
+byte GL_LoadDetailTextureLump(struct image_s* image, abstractfile_t* file);
 
 byte GL_LoadPatchComposite(struct image_s* image, const struct texture_s* tex);
-byte GL_LoadPatchCompositeAsSky(struct image_s* image, const struct texture_s* tex,
-    boolean zeroMask);
+byte GL_LoadPatchCompositeAsSky(struct image_s* image, const struct texture_s* tex, boolean zeroMask);
 
 /**
  * Set mode to 2 to include an alpha channel. Set to 3 to make the

@@ -42,7 +42,7 @@ typedef struct lumpfile_s {
     void** _cacheData;
 } lumpfile_t;
 
-lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath, lumpname_t name, size_t lumpSize);
+lumpfile_t* LumpFile_New(const char* absolutePath, const lumpname_t name, size_t lumpSize);
 void LumpFile_Delete(lumpfile_t* lump);
 
 /// Close this file if open and release any acquired file identifiers.

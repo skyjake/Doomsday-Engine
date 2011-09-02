@@ -34,23 +34,11 @@
 
 #define deof(file)          ((file)->flags.eof != 0)
 
-struct dfile_s
+abstractfile_t* F_NewFile(const char* absolutePath)
 {
-    struct DFILE_flags_s {
-        unsigned char open:1;
-        unsigned char eof:1;
-    } flags;
-    size_t size;
-    FILE* hndl;
-    uint8_t* data;
-    uint8_t* pos;
-    unsigned int lastModified;
-};
-
-DFILE* F_NewFile(void)
-{
-    DFILE* file = (DFILE*)calloc(1, sizeof(*file));
-    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new DFILE.", (unsigned long) sizeof(*file));
+    abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
+    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
+    AbstractFile_Init(file, FT_UNKNOWNFILE, NULL, absolutePath);
     return file;
 }
 
@@ -88,19 +76,7 @@ int F_MatchFileName(const char* string, const char* pattern)
     return *st == 0;
 }
 
-int F_Access(const char* path)
-{
-    // Open for reading, but don't buffer anything.
-    DFILE* file = F_Open(path, "rx");
-    if(file)
-    {
-        F_Close(file);
-        return true;
-    }
-    return false;
-}
-
-size_t F_Length(DFILE* file)
+size_t F_Length(abstractfile_t* file)
 {
     assert(NULL != file);
     {
@@ -111,7 +87,7 @@ size_t F_Length(DFILE* file)
     }
 }
 
-unsigned int F_LastModified(DFILE* file)
+unsigned int F_LastModified(abstractfile_t* file)
 {
     assert(NULL != file);
     return file->lastModified;
@@ -133,11 +109,11 @@ static unsigned int readLastModified(const char* path)
 #endif
 }
 
-DFILE* F_OpenStreamLump(DFILE* file, abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
+abstractfile_t* F_OpenStreamLump(abstractfile_t* file, abstractfile_t* container, int lumpIdx, boolean dontBuffer)
 {
-    assert(NULL != file);
+    assert(NULL != file && NULL != container);
     {
-    const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
+    const lumpinfo_t* info = F_LumpInfo(container, lumpIdx);
     assert(info);
 
     // Init and load in the lump data.
@@ -154,13 +130,13 @@ DFILE* F_OpenStreamLump(DFILE* file, abstractfile_t* fsObject, int lumpIdx, bool
 #if _DEBUG
         VERBOSE2( Con_Printf("Next FILE read from F_OpenStreamLump.\n") )
 #endif
-        F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)file->data, 0, info->size);
+        F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->data, 0, info->size);
     }
     return file;
     }
 }
 
-DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path)
+abstractfile_t* F_OpenStreamFile(abstractfile_t* file, FILE* hndl, const char* path)
 {
     assert(file && hndl && path && path[0]);
     file->hndl = hndl;
@@ -170,7 +146,7 @@ DFILE* F_OpenStreamFile(DFILE* file, FILE* hndl, const char* path)
     return file;
 }
 
-void F_Close(DFILE* file)
+void F_Close(abstractfile_t* file)
 {
     assert(NULL != file);
 
@@ -180,18 +156,27 @@ void F_Close(DFILE* file)
     if(file->hndl)
     {
         fclose(file->hndl);
+        file->hndl = NULL;
     }
     else
     {   // Free the stored data.
         if(file->data)
-            free(file->data);
+        {
+            free(file->data), file->data = NULL;
+        }
     }
-    memset(file, 0, sizeof(*file));
-
+    file->pos = NULL;
     F_Release(file);
 }
 
-size_t F_Read(DFILE* file, uint8_t* buffer, size_t count)
+void F_Delete(abstractfile_t* file)
+{
+    assert(NULL != file);
+    F_Close(file);
+    free(file);
+}
+
+size_t F_Read(abstractfile_t* file, uint8_t* buffer, size_t count)
 {
     assert(NULL != file);
     {
@@ -226,13 +211,13 @@ size_t F_Read(DFILE* file, uint8_t* buffer, size_t count)
     }
 }
 
-boolean F_AtEnd(DFILE* file)
+boolean F_AtEnd(abstractfile_t* file)
 {
     assert(NULL != file);
     return deof(file);
 }
 
-unsigned char F_GetC(DFILE* file)
+unsigned char F_GetC(abstractfile_t* file)
 {
     assert(NULL != file);
     if(file->flags.open)
@@ -244,7 +229,7 @@ unsigned char F_GetC(DFILE* file)
     return 0;
 }
 
-size_t F_Tell(DFILE* file)
+size_t F_Tell(abstractfile_t* file)
 {
     assert(NULL != file);
     if(!file->flags.open)
@@ -254,7 +239,7 @@ size_t F_Tell(DFILE* file)
     return file->pos - file->data;
 }
 
-size_t F_Seek(DFILE* file, size_t offset, int whence)
+size_t F_Seek(abstractfile_t* file, size_t offset, int whence)
 {
     assert(NULL != file);
     {
@@ -282,13 +267,7 @@ size_t F_Seek(DFILE* file, size_t offset, int whence)
     }
 }
 
-void F_Rewind(DFILE* file)
+void F_Rewind(abstractfile_t* file)
 {
     F_Seek(file, 0, SEEK_SET);
-}
-
-FILE* F_Handle(DFILE* file)
-{
-    assert(NULL != file);
-    return file->hndl;
 }

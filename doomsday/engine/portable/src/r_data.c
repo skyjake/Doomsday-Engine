@@ -1100,10 +1100,12 @@ patchid_t R_RegisterPatch(const char* name)
         return 0;
 
     // Already defined as a patch?
-    if(0 != (id = findPatchTextureByName(name)))
+    id = findPatchTextureByName(name);
+    if(0 != id)
         return id;
 
-    if(-1 == (lumpNum = F_CheckLumpNumForName(name, true)))
+    lumpNum = F_CheckLumpNumForName(name, true);
+    if(lumpNum < 0)
     {
         Con_Message("Warning:R_RegisterPatch: Failed to locate lump for patch '%s'.\n", name);
         return 0;

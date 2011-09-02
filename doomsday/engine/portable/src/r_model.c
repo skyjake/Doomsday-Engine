@@ -199,7 +199,7 @@ static void R_VertexNormals(model_t *mdl)
 }
 #endif
 
-static void* AllocAndLoad(DFILE* file, int offset, int len)
+static void* AllocAndLoad(abstractfile_t* file, int offset, int len)
 {
     uint8_t* ptr = (uint8_t*)malloc(len);
     if(!ptr)
@@ -215,7 +215,7 @@ static void R_MissingModel(const char* fn)
     Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
 }
 
-static void R_LoadModelMD2(DFILE *file, model_t *mdl)
+static void R_LoadModelMD2(abstractfile_t *file, model_t *mdl)
 {
     md2_header_t        oldhd;
     dmd_header_t       *hd = &mdl->header;
@@ -309,7 +309,7 @@ static void R_LoadModelMD2(DFILE *file, model_t *mdl)
         F_Read(file, (uint8_t*)mdl->skins[i].name, 64);
 }
 
-static void R_LoadModelDMD(DFILE *file, model_t *mo)
+static void R_LoadModelDMD(abstractfile_t *file, model_t *mo)
 {
     dmd_chunk_t         chunk;
     char               *temp;
@@ -445,7 +445,7 @@ static int R_LoadModel(const Uri* uri)
 {
     const char* searchPath;
     ddstring_t foundPath;
-    DFILE* file = 0;
+    abstractfile_t* file = 0;
     model_t* mdl;
     int index;
 
@@ -472,7 +472,7 @@ static int R_LoadModel(const Uri* uri)
             // Allocate a new model_t.
             if((index = R_NewModelFor(/*Str_Text(&foundPath)*/)) < 0)
             {
-                F_Close(file);
+                F_Delete(file);
                 Str_Free(&foundPath);
                 return 0;
             }
@@ -489,7 +489,7 @@ static int R_LoadModel(const Uri* uri)
     if(mdl->loaded)
     {
         if(file)
-            F_Close(file);
+            F_Delete(file);
         Str_Free(&foundPath);
         return index; // Already loaded.
     }
@@ -510,7 +510,7 @@ static int R_LoadModel(const Uri* uri)
         // Cancel the loading.
         M_Free(mdl);
         modellist[index] = 0;
-        F_Close(file);
+        F_Delete(file);
         Str_Free(&foundPath);
         return 0;
     }
@@ -518,7 +518,7 @@ static int R_LoadModel(const Uri* uri)
     // We're done.
     mdl->loaded = true;
     mdl->allowTexComp = true;
-    F_Close(file);
+    F_Delete(file);
     strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
 
     // Determine the actual (full) paths.

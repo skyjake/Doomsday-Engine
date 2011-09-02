@@ -85,7 +85,6 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     {
     size_t lumpRecordsSize = lumpRecordCount * sizeof(wadlumprecord_t);
     wadlumprecord_t* lumpRecords = (wadlumprecord_t*)malloc(lumpRecordsSize);
-    DFILE* handle = file->_base._handle;
     lumpinfo_t* lumpInfo, *dst;
     const wadlumprecord_t* src;
     int i, j;
@@ -95,8 +94,8 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
             "temporary lump directory buffer.\n", (unsigned long) lumpRecordsSize);
 
     // Buffer the archived lump directory.
-    F_Seek(handle, lumpRecordOffset, SEEK_SET);
-    F_Read(handle, (uint8_t*)lumpRecords, lumpRecordsSize);
+    F_Seek((abstractfile_t*)file, lumpRecordOffset, SEEK_SET);
+    F_Read((abstractfile_t*)file, (uint8_t*)lumpRecords, lumpRecordsSize);
 
     // Allocate and populate the final lump info list.
     lumpInfo = (lumpinfo_t*)malloc(lumpRecordCount * sizeof(*lumpInfo));
@@ -122,7 +121,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
         dst->size = dst->compressedSize = (size_t)LONG(src->size);
 
         // The modification date is inherited from the real file (note recursion).
-        dst->lastModified = F_LastModified(file->_base._handle);
+        dst->lastModified = F_LastModified((abstractfile_t*)file);
     }
     // We are finished with the temporary lump records.
     free(lumpRecords);
@@ -133,14 +132,14 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     }
 }
 
-wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath)
+wadfile_t* WadFile_New(FILE* handle, const char* absolutePath)
 {
-    assert(NULL != handle && NULL != absolutePath);
+    assert(NULL != absolutePath);
     {
     wadfile_t* file;
     wadheader_t hdr;
 
-    if(!WadFile_ReadArchiveHeader(F_Handle(handle), &hdr))
+    if(!WadFile_ReadArchiveHeader(handle, &hdr))
         Con_Error("WadFile::Construct: File %s does not appear to be of WAD format."
             " Missing a call to WadFile::Recognise?", absolutePath);
 
@@ -306,8 +305,8 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(file->_base._handle, info->baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read(file->_base._handle, buffer, length);
+    F_Seek((abstractfile_t*)file, info->baseOffset + startOffset, SEEK_SET);
+    readBytes = F_Read((abstractfile_t*)file, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -434,10 +433,7 @@ static void WadFile_ReadLumpDirectory(wadfile_t* file)
 void WadFile_Close(wadfile_t* file)
 {
     assert(NULL != file);
-    if(NULL != file->_base._handle)
-    {
-        F_Close(file->_base._handle), file->_base._handle = NULL;
-    }
+    F_Close((abstractfile_t*)file);
     F_ReleaseFileId(Str_Text(&file->_base._absolutePath));
 }
 

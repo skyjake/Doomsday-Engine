@@ -73,7 +73,7 @@ void            M_Strip(char* str, size_t len);
 char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
-void            M_ReadLine(char* buffer, size_t len, DFILE* file);
+void            M_ReadLine(char* buffer, size_t len, abstractfile_t* file);
 
 boolean         M_IsComment(const char* text);
 

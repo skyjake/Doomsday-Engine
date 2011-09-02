@@ -39,7 +39,7 @@
  * The caller must free the allocated buffer with Z_Free.
  * Width, height and pixelSize can't be NULL.
  */
-uint8_t* PCX_Load(DFILE* file, int* width, int* height, int* pixelSize);
+uint8_t* PCX_Load(abstractfile_t* file, int* width, int* height, int* pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.

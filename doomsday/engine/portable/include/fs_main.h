@@ -45,6 +45,8 @@
 #ifndef LIBDENG_FILESYS_MAIN_H
 #define LIBDENG_FILESYS_MAIN_H
 
+#include <stdio.h>
+
 #include "zipfile.h"
 #include "wadfile.h"
 #include "lumpfile.h"
@@ -100,7 +102,7 @@ boolean F_ReleaseFileId(const char* path);
 /**
  * Frees the memory allocated to the handle.
  */
-void F_Release(DFILE* file);
+void F_Release(abstractfile_t* file);
 
 /// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
@@ -142,8 +144,8 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
  *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t F_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
-lumpnum_t F_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
+lumpnum_t F_OpenAuxiliary3(const char* fileName, FILE* prevOpened, boolean silent);
+lumpnum_t F_OpenAuxiliary2(const char* fileName, FILE* prevOpened);
 lumpnum_t F_OpenAuxiliary(const char* fileName);
 
 void F_CloseAuxiliary(void);
@@ -176,13 +178,18 @@ boolean F_RemoveFile(const char* fileName);
 boolean F_RemoveFiles(const char* const* filenames, size_t num);
 
 /**
+ * @return  @c true if the file can be opened for reading.
+ */
+int F_Access(const char* path);
+
+/**
  * Opens the given file (will be translated) for reading.
  * "t" = text mode (with real files, lumps are always binary)
  * "b" = binary
  * "f" = must be a real file in the local file system.
  * "x" = just test for access (don't buffer anything)
  */
-DFILE* F_Open(const char* path, const char* mode);
+abstractfile_t* F_Open(const char* path, const char* mode);
 
 /**
  * Try to locate the specified lump for reading.
@@ -192,7 +199,7 @@ DFILE* F_Open(const char* path, const char* mode);
  *
  * @return  Handle to the opened file if found.
  */
-DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
+abstractfile_t* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
 
 /**
  * @return  The time when the file was last modified, as seconds since

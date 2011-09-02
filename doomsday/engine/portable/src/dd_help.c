@@ -124,7 +124,7 @@ static void DH_DeleteNode(helpnode_t* node)
  */
 static int DH_ReadStrings(const char* fileName)
 {
-    DFILE* file = F_Open(fileName, "rt");
+    abstractfile_t* file = F_Open(fileName, "rt");
     char line[2048], *ptr, *eol, *end;
     helpnode_t* node = 0;
     int count = 0, length;
@@ -217,8 +217,8 @@ static int DH_ReadStrings(const char* fileName)
         }
     }
 
+    F_Delete(file);
     // The file was read successfully.
-    F_Close(file);
     return true;
 }
 

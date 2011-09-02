@@ -33,7 +33,7 @@
  */
 typedef struct {
     lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
-    ddstring_t path; /// Full variable-length path. Used with ZipFile/LumpFile
+    ddstring_t path; /// Full variable-length path.
     size_t baseOffset; /// Offset from start of owning package.
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.

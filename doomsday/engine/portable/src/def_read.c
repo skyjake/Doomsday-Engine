@@ -2533,7 +2533,7 @@ int DED_Read(ded_t* ded, const char* path)
     ddstring_t transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
-    DFILE* file;
+    abstractfile_t* file;
     int result;
 
     // Compose the (possibly-translated) path.
@@ -2565,7 +2565,7 @@ int DED_Read(ded_t* ded, const char* path)
 
     // Copy the file into the local buffer and parse definitions.
     F_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
-    F_Close(file);
+    F_Delete(file);
     result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 
     // Done. Release temporary storage and return the result.

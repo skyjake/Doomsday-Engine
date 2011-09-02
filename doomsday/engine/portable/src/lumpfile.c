@@ -29,11 +29,8 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath,
-    lumpname_t lumpName, size_t lumpSize)
+lumpfile_t* LumpFile_New(const char* absolutePath, const lumpname_t lumpName, size_t lumpSize)
 {
-    assert(NULL != handle);
-    {
     lumpfile_t* file = (lumpfile_t*)malloc(sizeof(*file));
     if(NULL == file)
         Con_Error("LumpFile::Construct:: Failed on allocation of %lu bytes for new LumpFile.",
@@ -50,10 +47,9 @@ lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath,
     file->_info.baseOffset = 0;
     file->_info.lastModified = 0; /// \fixme Get real value.
     file->_cacheData = NULL;
-    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, handle, absolutePath);
+    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, NULL, absolutePath);
 
     return file;
-    }
 }
 
 void LumpFile_Delete(lumpfile_t* file)
@@ -121,8 +117,8 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(file->_base._handle, info->baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read(file->_base._handle, buffer, length);
+    F_Seek((abstractfile_t*)file, info->baseOffset + startOffset, SEEK_SET);
+    readBytes = F_Read((abstractfile_t*)file, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -204,7 +200,7 @@ void LumpFile_ChangeLumpCacheTag(lumpfile_t* file, int lumpIdx, int tag)
 void LumpFile_Close(lumpfile_t* file)
 {
     assert(NULL != file);
-    F_Close(file->_base._handle), file->_base._handle = NULL;
+    F_Close((abstractfile_t*)file);
     F_ReleaseFileId(Str_Text(&file->_base._absolutePath));
 }
 

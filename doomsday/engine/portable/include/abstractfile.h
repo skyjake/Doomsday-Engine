@@ -25,12 +25,13 @@
 #ifndef LIBDENG_FILESYS_ABSTRACTFILE_H
 #define LIBDENG_FILESYS_ABSTRACTFILE_H
 
-#include "sys_file.h"
+#include <stdio.h>
 
 struct lumpdirectory_s;
 
 // File types.
 typedef enum {
+    FT_UNKNOWNFILE,
     FT_ZIPFILE,
     FT_WADFILE,
     FT_LUMPFILE
@@ -42,14 +43,22 @@ typedef enum {
  */
 typedef struct abstractfile_s {
     filetype_t _type;
-    DFILE* _handle;
+    struct abstractfile_flags_s {
+        unsigned char open:1;
+        unsigned char eof:1;
+    } flags;
+    size_t size;
+    FILE* hndl;
+    uint8_t* data;
+    uint8_t* pos;
+    unsigned int lastModified;
     ddstring_t _absolutePath;
     /// Load order depth index.
     uint _order;
 } abstractfile_t;
 
 /// Initialize this file.
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, DFILE* handle, const char* absolutePath);
+void AbstractFile_Init(abstractfile_t* file, filetype_t type, FILE* handle, const char* absolutePath);
 
 /// @return  Type of this file.
 filetype_t AbstractFile_Type(const abstractfile_t* file);
@@ -58,7 +67,7 @@ filetype_t AbstractFile_Type(const abstractfile_t* file);
  * Accessors:
  */
 /// @return  File handle acquired for this resource else @c NULL
-DFILE* AbstractFile_Handle(abstractfile_t* file);
+FILE* AbstractFile_Handle(abstractfile_t* file);
 
 /// @return  Resolved (possibly virtual/mapped) path to this file.
 const ddstring_t* AbstractFile_AbsolutePath(abstractfile_t* file);

@@ -176,7 +176,7 @@ static boolean writeBindingsState(const char* fileName)
 
 boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 {
-    DFILE* file;
+    abstractfile_t* file;
     char buff[512];   
 
     // Is this supposed to be the default?
@@ -209,7 +209,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
         line++;
     }}
 
-    F_Close(file);
+    F_Delete(file);
     return true;
 }
 

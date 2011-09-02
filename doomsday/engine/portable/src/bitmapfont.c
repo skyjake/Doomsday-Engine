@@ -173,7 +173,7 @@ static void drawCharacter(unsigned char ch, font_t* font)
     glEnd();
 }
 
-static byte inByte(DFILE* f)
+static byte inByte(abstractfile_t* f)
 {
     assert(f);
     {
@@ -183,7 +183,7 @@ static byte inByte(DFILE* f)
     }
 }
 
-static unsigned short inShort(DFILE* f)
+static unsigned short inShort(abstractfile_t* f)
 {
     assert(f);
     {
@@ -193,7 +193,7 @@ static unsigned short inShort(DFILE* f)
     }
 }
 
-static void* readFormat0(font_t* font, DFILE* file)
+static void* readFormat0(font_t* font, abstractfile_t* file)
 {
     assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
     {
@@ -256,7 +256,7 @@ static void* readFormat0(font_t* font, DFILE* file)
     }
 }
 
-static void* readFormat2(font_t* font, DFILE* file)
+static void* readFormat2(font_t* font, abstractfile_t* file)
 {
     assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
     {
@@ -312,7 +312,10 @@ static void* readFormat2(font_t* font, DFILE* file)
 
     // Read the bitmap.
     numPels = bf->_texWidth * bf->_texHeight;
-    image = ptr = calloc(1, numPels * 4);
+    image = ptr = (uint32_t*)calloc(1, numPels * 4);
+    if(!image)
+        Con_Error("FR_ReadFormat2: Failed on allocation of %lu bytes for font bitmap buffer.\n", (unsigned long) (numPels*4));
+
     if(bitmapFormat == 0)
     {
         for(i = 0; i < numPels; ++i)
@@ -388,7 +391,7 @@ void BitmapFont_Prepare(font_t* font)
     assert(NULL != font && font->_type == FT_BITMAP);
     {
     bitmapfont_t* bf = (bitmapfont_t*)font;
-    DFILE* file;
+    abstractfile_t* file;
     void* image = 0;
     int version;
 
@@ -448,7 +451,7 @@ void BitmapFont_Prepare(font_t* font)
         }
 
         free(image);
-        F_Close(file);
+        F_Delete(file);
     }
     }
 }
