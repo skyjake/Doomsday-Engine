@@ -91,8 +91,8 @@ void F_GenerateFileId(const char* str, byte identifier[16]);
 /**
  * Maintains a list of identifiers already seen.
  *
- * @return @c true if the given file can be read, or
- *         @c false, if it has already been read.
+ * @return @c true if the given file can be opened, or
+ *         @c false, if it has already been opened.
  */
 boolean F_CheckFileId(const char* path);
 
@@ -144,8 +144,8 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
  *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t F_OpenAuxiliary3(const char* fileName, FILE* prevOpened, boolean silent);
-lumpnum_t F_OpenAuxiliary2(const char* fileName, FILE* prevOpened);
+lumpnum_t F_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
+lumpnum_t F_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
 lumpnum_t F_OpenAuxiliary(const char* fileName);
 
 void F_CloseAuxiliary(void);

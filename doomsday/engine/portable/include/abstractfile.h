@@ -29,8 +29,6 @@
 
 #include "sys_file.h"
 
-struct lumpdirectory_s;
-
 // File types.
 typedef enum {
     FT_UNKNOWNFILE,
@@ -40,48 +38,56 @@ typedef enum {
 } filetype_t;
 
 /**
- * Abstract File base. To be used as the basis for all types of files.
+ * Abstract File.  Abstract File is core component of the filesystem
+ * intended for use as the base for all types of (pseudo-)file resources.
+ *
  * @ingroup fs
  */
 typedef struct abstractfile_s {
+    /// @see filetype_t
     filetype_t _type;
+
+    /// File stream abstraction wrapper/handle for this resource.
     DFILE _dfile;
-    ddstring_t _absolutePath;
+
+    /// Absolute path to this resource in the vfs.
+    ddstring_t _path;
+
     /// Load order depth index.
     uint _order;
 } abstractfile_t;
 
-/// Initialize this file.
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, FILE* handle, const char* absolutePath);
+/// Initialize this resource.
+void AbstractFile_Init(abstractfile_t* file, filetype_t type, const char* absolutePath);
 
-/// @return  Type of this file.
+/// @return  Type of this resource @see filetype_t
 filetype_t AbstractFile_Type(const abstractfile_t* file);
 
 /**
  * Accessors:
  */
 
-/// @return  Resolved (possibly virtual/mapped) path to this file.
-const ddstring_t* AbstractFile_AbsolutePath(abstractfile_t* file);
+/// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
+const ddstring_t* AbstractFile_Path(abstractfile_t* file);
 
-/// @return  Load order index for this file.
+/// @return  Load order index for this resource.
 uint AbstractFile_LoadOrderIndex(abstractfile_t* file);
 
-/// @return  "Last modified" timestamp of the file.
+/// @return  "Last modified" timestamp of the resource.
 uint AbstractFile_LastModified(abstractfile_t* file);
 
 /**
  * Abstract interface (minimal, data caching interface not expected):
  */
 
-/// Close this file if open and release any acquired file identifiers.
+/// Close this resource if open and release any acquired identifiers.
 void AbstractFile_Close(abstractfile_t* file);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.
  *
  * @param lumpIdx  Lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @return  Number of bytes read.
  */
 size_t AbstractFile_ReadLump(abstractfile_t* file, int lumpIdx, uint8_t* buffer);
@@ -97,10 +103,10 @@ DFILE* AbstractFile_Handle(abstractfile_t* file);
  * Accessors:
  */
 
-/// @return  Number of lumps contained within this file.
+/// @return  Number of "lumps" contained within this resource.
 int AbstractFile_LumpCount(abstractfile_t* file);
 
-/// @return  @c true if the file is marked as an "IWAD".
+/// @return  @c true if the resource is marked as an "IWAD".
 boolean AbstractFile_IsIWAD(abstractfile_t* file);
 
 /**
@@ -109,27 +115,5 @@ boolean AbstractFile_IsIWAD(abstractfile_t* file);
 
 abstractfile_t* F_NewFile(const char* absolutePath);
 void F_Delete(abstractfile_t* file);
-
-/**
- * Open a new stream on the specified lump for reading.
- *
- * @param file  File system handle used to reference the lump once read.
- * @param container  File system record for the file containing the lump to be read.
- * @param lump  Index of the lump to open.
- * @param dontBuffer  Just test for access (don't buffer anything).
- *
- * @return  Same as @a file for convenience.
- */
-abstractfile_t* F_OpenStreamLump(abstractfile_t* file, abstractfile_t* container, int lumpIdx, boolean dontBuffer);
-
-/**
- * Open a new stream on the specified lump for reading.
- *
- * @param file  File system handle used to reference the file once read.
- * @param hndl  Handle to the file containing the data to be read.
- *
- * @return  Same as @a file for convenience.
- */
-abstractfile_t* F_OpenStreamFile(abstractfile_t* file, FILE* hndl, const char* path);
 
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */

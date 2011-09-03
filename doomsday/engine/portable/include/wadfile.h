@@ -47,7 +47,7 @@ typedef struct wadfile_s {
     void** _lumpCache;
 } wadfile_t;
 
-wadfile_t* WadFile_New(FILE* handle, const char* absolutePath);
+wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath);
 void WadFile_Delete(wadfile_t* wad);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -126,6 +126,6 @@ boolean WadFile_IsIWAD(wadfile_t* wad);
  * Does the specified file appear to be in WAD format.
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
-boolean WadFile_Recognise(FILE* file);
+boolean WadFile_Recognise(DFILE* handle);
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

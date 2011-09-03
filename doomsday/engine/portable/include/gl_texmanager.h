@@ -184,6 +184,9 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
 
+uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
+uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
+
 /**
  * @return  The outcome:
  *     0 = not prepared

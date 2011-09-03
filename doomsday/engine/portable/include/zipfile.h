@@ -47,7 +47,7 @@ typedef struct {
     void** _lumpCache;
 } zipfile_t;
 
-zipfile_t* ZipFile_New(FILE* handle, const char* absolutePath);
+zipfile_t* ZipFile_New(DFILE* hndl, const char* absolutePath);
 void ZipFile_Delete(zipfile_t* zip);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -120,6 +120,6 @@ boolean ZipFile_IsIWAD(zipfile_t* zip);
  * Does the specified file appear to be in Zip format.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(FILE* file);
+boolean ZipFile_Recognise(DFILE* file);
 
 #endif

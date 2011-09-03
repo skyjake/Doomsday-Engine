@@ -27,25 +27,23 @@
 #include "sys_reslocator.h"
 #include "abstractfile.h"
 
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, FILE* handle,
-    const char* absolutePath)
+void AbstractFile_Init(abstractfile_t* file, filetype_t type, const char* absolutePath)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    assert(NULL != file);
+    assert(NULL != file && NULL != absolutePath);
+
     file->_order = fileCounter++;
     file->_type = type;
-    Str_Init(&file->_absolutePath);
-    if(absolutePath)
-    {
-        Str_Set(&file->_absolutePath, absolutePath);
-        Str_Strip(&file->_absolutePath);
-        F_FixSlashes(&file->_absolutePath, &file->_absolutePath);
-    }
-    file->_dfile.hndl = handle;
-    file->_dfile.flags.eof = 0;
-    file->_dfile.flags.open = 0;
+    Str_Init(&file->_path);
+    Str_Set(&file->_path, absolutePath);
+    Str_Strip(&file->_path);
+    F_FixSlashes(&file->_path, &file->_path);
+
+    file->_dfile.flags.eof = false;
+    file->_dfile.flags.open = false;
     file->_dfile.size = 0;
+    file->_dfile.hndl = NULL;
     file->_dfile.data = NULL;
     file->_dfile.pos = 0;
     file->_dfile.lastModified = 0;
@@ -57,10 +55,10 @@ filetype_t AbstractFile_Type(const abstractfile_t* file)
     return file->_type;
 }
 
-const ddstring_t* AbstractFile_AbsolutePath(abstractfile_t* file)
+const ddstring_t* AbstractFile_Path(abstractfile_t* file)
 {
     assert(NULL != file);
-    return &file->_absolutePath;
+    return &file->_path;
 }
 
 uint AbstractFile_LoadOrderIndex(abstractfile_t* file)

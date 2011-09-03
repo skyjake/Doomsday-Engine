@@ -1759,9 +1759,7 @@ static boolean isColorKeyed(const char* path)
     return result;
 }
 
-/// \todo Remove the filePath argument by obtaining the path via the
-/// File Stream Abstraction Layer. This method can then be made public.
-static uint8_t* GL_LoadImageDFile(image_t* img, abstractfile_t* file)
+uint8_t* GL_LoadImageFromFile(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     {
@@ -1770,7 +1768,7 @@ static uint8_t* GL_LoadImageDFile(image_t* img, abstractfile_t* file)
     GL_InitImage(img);
 
     // Firstly try the expected format given the file name.
-    hdlr = findHandlerFromFileName(Str_Text(AbstractFile_AbsolutePath(file)));
+    hdlr = findHandlerFromFileName(Str_Text(AbstractFile_Path(file)));
     if(hdlr)
     {
         hdlr->loadFunc(img, file);
@@ -1788,10 +1786,10 @@ static uint8_t* GL_LoadImageDFile(image_t* img, abstractfile_t* file)
     if(0 == img->pixels)
         return 0; // Not a recogniseable format.
 
-    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n", F_PrettyPath(Str_Text(AbstractFile_AbsolutePath(file))), img->width, img->height) );
+    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n", F_PrettyPath(Str_Text(AbstractFile_Path(file))), img->width, img->height) );
 
     // How about some color-keying?
-    if(isColorKeyed(Str_Text(AbstractFile_AbsolutePath(file))))
+    if(isColorKeyed(Str_Text(AbstractFile_Path(file))))
     {
         uint8_t* out = ApplyColorKeying(img->pixels, img->width, img->height, img->pixelSize);
         if(out != img->pixels)
@@ -1820,7 +1818,7 @@ uint8_t* GL_LoadImage(image_t* img, const char* filePath)
     abstractfile_t* file = F_Open(filePath, "rb");
     if(file)
     {
-        result = GL_LoadImageDFile(img, file);
+        result = GL_LoadImageFromFile(img, file);
         F_Delete(file);
     }
     return result;
@@ -2617,7 +2615,7 @@ byte GL_LoadDetailTextureLump(image_t* image, abstractfile_t* file)
     assert(image && file);
     {
     byte result = 0;
-    if(0 != GL_LoadImageDFile(image, file))
+    if(0 != GL_LoadImageFromFile(image, file))
     {
         result = 1;
     }
@@ -2666,7 +2664,7 @@ byte GL_LoadFlatLump(image_t* image, abstractfile_t* file)
     assert(image && file);
     {
     byte result = 0;
-    if(0 != GL_LoadImageDFile(image, file))
+    if(0 != GL_LoadImageFromFile(image, file))
     {
         result = 1;
     }
@@ -2709,7 +2707,7 @@ static byte loadPatchLump(image_t* image, abstractfile_t* file, int tclass, int 
     assert(image && file);
     {
     byte result = 0;
-    if(0 != GL_LoadImageDFile(image, file))
+    if(0 != GL_LoadImageFromFile(image, file))
     {
         result = 2;
     }
@@ -2721,7 +2719,7 @@ static byte loadPatchLump(image_t* image, abstractfile_t* file, int tclass, int 
 
         if(fileLength < sizeof(doompatch_header_t))
         {
-            Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_AbsolutePath(file))));
+            Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_Path(file))));
             return result;
         }
 
@@ -2946,7 +2944,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
         abstractfile_t* file = F_OpenLump(r->lumpNum, false);
         if(file)
         {
-            if(0 != GL_LoadImageDFile(image, file))
+            if(0 != GL_LoadImageFromFile(image, file))
             {
                 result = 1;
             }

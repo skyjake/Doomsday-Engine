@@ -55,17 +55,16 @@ typedef struct {
 
 static void WadFile_ReadLumpDirectory(wadfile_t* file);
 
-static boolean WadFile_ReadArchiveHeader(FILE* handle, wadheader_t* hdr)
+static boolean WadFile_ReadArchiveHeader(DFILE* handle, wadheader_t* hdr)
 {
     assert(NULL != handle && NULL != hdr);
     {
-    size_t readBytes;
-    long initPos = ftell(handle);
+    size_t readBytes, initPos = F_Tell(handle);
     // Seek to the start of the header.
-    fseek(handle, 0, SEEK_SET);
-    readBytes = fread(hdr, 1, sizeof(wadheader_t), handle);
+    F_Seek(handle, 0, SEEK_SET);
+    readBytes = F_Read(handle, (uint8_t*)hdr, sizeof(wadheader_t));
     // Return the stream to its original position.
-    fseek(handle, initPos, SEEK_SET);
+    F_Seek(handle, initPos, SEEK_SET);
     if(!(readBytes < sizeof(wadheader_t)))
     {
         hdr->lumpRecordsCount  = LONG(hdr->lumpRecordsCount);
@@ -132,14 +131,14 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     }
 }
 
-wadfile_t* WadFile_New(FILE* handle, const char* absolutePath)
+wadfile_t* WadFile_New(DFILE* hndl, const char* absolutePath)
 {
-    assert(NULL != absolutePath);
+    assert(NULL != hndl && NULL != absolutePath);
     {
     wadfile_t* file;
     wadheader_t hdr;
 
-    if(!WadFile_ReadArchiveHeader(handle, &hdr))
+    if(!WadFile_ReadArchiveHeader(hndl, &hdr))
         Con_Error("WadFile::Construct: File %s does not appear to be of WAD format."
             " Missing a call to WadFile::Recognise?", absolutePath);
 
@@ -148,13 +147,15 @@ wadfile_t* WadFile_New(FILE* handle, const char* absolutePath)
         Con_Error("WadFile::Construct:: Failed on allocation of %lu bytes for new WadFile.",
             (unsigned long) sizeof(*file));
 
+    AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, absolutePath);
     file->_lumpCount = hdr.lumpRecordsCount;
     file->_lumpRecordsOffset = hdr.lumpRecordsOffset;
     file->_flags = (!strncmp(hdr.identification, "IWAD", 4)? WFF_IWAD : 0); // Found an IWAD.
     file->_lumpInfo = NULL;
     file->_lumpCache = NULL;
-    AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, handle, absolutePath);
 
+    // Copy the handle.
+    memcpy(&file->_base._dfile, hndl, sizeof(file->_base._dfile));
     return file;
     }
 }
@@ -201,7 +202,7 @@ void WadFile_Delete(wadfile_t* file)
             Str_Free(&file->_lumpInfo[i].path);
         free(file->_lumpInfo);
     }
-    Str_Free(&file->_base._absolutePath);
+    Str_Free(&file->_base._path);
     free(file);
 }
 
@@ -272,7 +273,7 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
 
     VERBOSE2(
         Con_Printf("WadFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(&file->_base._absolutePath)),
+                F_PrettyPath(Str_Text(&file->_base._path)),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length) )
@@ -348,7 +349,7 @@ const uint8_t* WadFile_CacheLump(wadfile_t* file, int lumpIdx, int tag)
 
     VERBOSE2(
         Con_Printf("WadFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
-                F_PrettyPath(Str_Text(&file->_base._absolutePath)),
+                F_PrettyPath(Str_Text(&file->_base._path)),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : "")) )
 
@@ -435,7 +436,7 @@ void WadFile_Close(wadfile_t* file)
     assert(NULL != file);
     F_Close(&file->_base._dfile);
     F_Release((abstractfile_t*)file);
-    F_ReleaseFileId(Str_Text(&file->_base._absolutePath));
+    F_ReleaseFileId(Str_Text(&file->_base._path));
 }
 
 int WadFile_LumpCount(wadfile_t* file)
@@ -450,7 +451,7 @@ boolean WadFile_IsIWAD(wadfile_t* file)
     return ((file->_flags & WFF_IWAD) != 0);
 }
 
-boolean WadFile_Recognise(FILE* handle)
+boolean WadFile_Recognise(DFILE* handle)
 {
     boolean knownFormat = false;
     wadheader_t hdr;

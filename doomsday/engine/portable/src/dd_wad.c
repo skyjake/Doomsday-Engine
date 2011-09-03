@@ -76,7 +76,7 @@ const char* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
         return "";
     }
-    return Str_Text(AbstractFile_AbsolutePath(fsObject));
+    return Str_Text(AbstractFile_Path(fsObject));
 }
 
 boolean W_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
