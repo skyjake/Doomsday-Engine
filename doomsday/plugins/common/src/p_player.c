@@ -770,7 +770,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
  * @param noHide        @c true = show message even if messages have been
  *                      disabled by the player.
  */
-void P_SetMessage(player_t* pl, char *msg, boolean noHide)
+void P_SetMessage(player_t* pl, const char *msg, boolean noHide)
 {
     byte flags = (noHide? LMF_NOHIDE : 0);
 

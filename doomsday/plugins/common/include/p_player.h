@@ -78,7 +78,7 @@ void            P_ShotAmmo(player_t* plr);
 void            P_PlayerChangeClass(player_t* plr, playerclass_t newClass);
 #endif
 
-void            P_SetMessage(player_t* plr, char* msg, boolean noHide);
+void            P_SetMessage(player_t* plr, const char* msg, boolean noHide);
 #if __JHEXEN__
 void            P_SetYellowMessage(player_t* plr, char* msg, boolean noHide);
 #endif

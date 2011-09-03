@@ -869,7 +869,7 @@ DEFCC(CCmdCheatGive)
                 idx = ((int) buf[i+1]) - 48;
                 if(idx >= 0 && idx < NUM_WEAPON_TYPES)
                 {   // Give one specific weapon.
-                    P_GiveWeapon(plr, idx, false);
+                    P_GiveWeapon(plr, idx, false, NULL, SFX_WPNUP);
                     giveAll = false;
                     i++;
                 }

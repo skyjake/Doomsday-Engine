@@ -1632,7 +1632,7 @@ void NetSv_Paused(boolean isPaused)
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
+void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
 {
     Writer* writer;
 
@@ -1661,12 +1661,12 @@ void NetSv_SendMessageEx(int plrNum, char *msg, boolean yellow)
                    Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessage(int plrNum, char *msg)
+void NetSv_SendMessage(int plrNum, const char *msg)
 {
     NetSv_SendMessageEx(plrNum, msg, false);
 }
 
-void NetSv_SendYellowMessage(int plrNum, char *msg)
+void NetSv_SendYellowMessage(int plrNum, const char *msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
 }

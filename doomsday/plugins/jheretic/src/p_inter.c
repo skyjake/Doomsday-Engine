@@ -119,7 +119,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 /**
  * @return              @c true, if the weapon or its ammo was accepted.
  */
-boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
+boolean P_GiveWeapon(player_t *player, weapontype_t weapon, const char* pickupMessage, int pickupSound)
 {
     int                 i;
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -152,7 +152,12 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
-        S_ConsoleSound(SFX_WPNUP, NULL, player - players);
+        // Notify the player.
+        S_ConsoleSound(pickupSound, NULL, player - players);
+        if(pickupMessage)
+        {
+            P_SetMessage(player, pickupMessage, false);
+        }
         return false;
     }
     else
@@ -181,8 +186,19 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
 
         // Maybe unhide the HUD?
         if(gaveWeapon)
+        {
             ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
+        }
 
+        if(gaveWeapon || gaveAmmo)
+        {
+            // Notify the player.
+            S_ConsoleSound(pickupSound, NULL, player - players);
+            if(pickupMessage)
+            {
+                P_SetMessage(player, pickupMessage, false);
+            }
+        }
         return (gaveWeapon || gaveAmmo);
     }
 }
@@ -775,57 +791,33 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         break;
 
     case IT_WEAPON_MACE:
-        if(!P_GiveWeapon(plr, WT_SEVENTH))
+        if(!P_GiveWeapon(plr, WT_SEVENTH, TXT_WPNMACE, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, TXT_WPNMACE, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CROSSBOW:
-        if(!P_GiveWeapon(plr, WT_THIRD))
+        if(!P_GiveWeapon(plr, WT_THIRD, TXT_WPNCROSSBOW, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, TXT_WPNCROSSBOW, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_BLASTER:
-        if(!P_GiveWeapon(plr, WT_FOURTH))
+        if(!P_GiveWeapon(plr, WT_FOURTH, TXT_WPNBLASTER, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, TXT_WPNBLASTER, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SKULLROD:
-        if(!P_GiveWeapon(plr, WT_FIFTH))
+        if(!P_GiveWeapon(plr, WT_FIFTH, TXT_WPNSKULLROD, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, TXT_WPNSKULLROD, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_PHOENIXROD:
-        if(!P_GiveWeapon(plr, WT_SIXTH))
+        if(!P_GiveWeapon(plr, WT_SIXTH, TXT_WPNPHOENIXROD, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, TXT_WPNPHOENIXROD, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_GAUNTLETS:
-        if(!P_GiveWeapon(plr, WT_EIGHTH))
+        if(!P_GiveWeapon(plr, WT_EIGHTH, TXT_WPNGAUNTLETS, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, TXT_WPNGAUNTLETS, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     default:
