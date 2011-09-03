@@ -31,6 +31,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <assert.h>
 #include <string.h>
 #include <math.h>
 
@@ -1448,7 +1449,7 @@ void G_PlayerLeaveMap(int player)
 
     // Clear filter.
     p->plr->flags &= ~DDPF_VIEW_FILTER;
-    p->plr->flags |= DDPF_FILTER; // Server: Send the change to the client.
+    //p->plr->flags |= DDPF_FILTER; // Server: Send the change to the client.
     p->damageCount = 0; // No palette changes.
     p->bonusCount = 0;
 
@@ -1497,16 +1498,6 @@ void ClearPlayer(player_t *p)
     ddplayer->fixCounter.angles++;
     ddplayer->fixCounter.pos++;
     ddplayer->fixCounter.mom++;
-
-/*    ddplayer->fixAcked.angles =
-        ddplayer->fixAcked.pos =
-        ddplayer->fixAcked.mom = -1;
-#ifdef _DEBUG
-    Con_Message("ClearPlayer: fixacked set to -1 (counts:%i, %i, %i)\n",
-                ddplayer->fixCounter.angles,
-                ddplayer->fixCounter.pos,
-                ddplayer->fixCounter.mom);
-#endif*/
 }
 
 /**

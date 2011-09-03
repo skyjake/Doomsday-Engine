@@ -670,45 +670,14 @@ boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
         df |= PDF_FORWARDMOVE;
     if(r->sideMove != s->sideMove)
         df |= PDF_SIDEMOVE;
-    /*if(r->angle != s->angle)
-        df |= PDF_ANGLE;*/
     if(r->turnDelta != s->turnDelta)
         df |= PDF_TURNDELTA;
     if(r->friction != s->friction)
         df |= PDF_FRICTION;
     if(r->extraLight != s->extraLight || r->fixedColorMap != s->fixedColorMap)
-    {
         df |= PDF_EXTRALIGHT;
-    }
     if(r->filter != s->filter)
         df |= PDF_FILTER;
-
-    /*
-    // The player sprites are a bit more complicated to check.
-    for(i = 0; i < 2; ++i)
-    {
-        int     off = 16 + i * 8;
-        const ddpsprite_t *rps = r->psp + i;
-        const ddpsprite_t *sps = s->psp + i;
-
-        if(rps->statePtr != sps->statePtr)
-            df |= PSDF_STATEPTR << off;
-
-        if(rps->light != sps->light)
-            df |= PSDF_LIGHT << off;
-        if(rps->alpha != sps->alpha)
-            df |= PSDF_ALPHA << off;
-        if(rps->state != sps->state)
-            df |= PSDF_STATE << off;
-        if((rps->offX != sps->offX || rps->offY != sps->offY) && !i)
-        {
-            df |= PSDF_OFFSET << off;
-        }
-    }
-    // Check for any psprite flags.
-    if(df & 0xffff0000)
-        df |= PDF_PSPRITES;
-    */
 
     d->delta.flags = df;
     return !Sv_IsVoidDelta(d);
@@ -751,27 +720,6 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
         df |= SDF_CEIL_COLOR_GREEN;
     if(r->planes[PLN_CEILING].surface.rgba[2] != s->SP_ceilrgb[2])
         df |= SDF_CEIL_COLOR_BLUE;
-
-    /*
-    if(r->planes[PLN_FLOOR].glowRGB[0] != s->SP_floorglowrgb[0])
-        df |= SDF_FLOOR_GLOW_RED;
-    if(r->planes[PLN_FLOOR].glowRGB[1] != s->SP_floorglowrgb[1])
-        df |= SDF_FLOOR_GLOW_GREEN;
-    if(r->planes[PLN_FLOOR].glowRGB[2] != s->SP_floorglowrgb[2])
-        df |= SDF_FLOOR_GLOW_BLUE;
-
-    if(r->planes[PLN_CEILING].glowRGB[0] != s->SP_ceilglowrgb[0])
-        df |= SDF_CEIL_GLOW_RED;
-    if(r->planes[PLN_CEILING].glowRGB[1] != s->SP_ceilglowrgb[1])
-        df |= SDF_CEIL_GLOW_GREEN;
-    if(r->planes[PLN_CEILING].glowRGB[2] != s->SP_ceilglowrgb[2])
-        df |= SDF_CEIL_GLOW_BLUE;
-
-    if(r->planes[PLN_FLOOR].glow != s->planes[PLN_FLOOR]->glow)
-        df |= SDF_FLOOR_GLOW;
-    if(r->planes[PLN_CEILING].glow != s->planes[PLN_CEILING]->glow)
-        df |= SDF_CEIL_GLOW;
-        */
 
     // The cases where an immediate change to a plane's height is needed:
     // 1) Plane is not moving, but the heights are different. This means

@@ -239,7 +239,7 @@ void NetSv_Ticker(void)
         {   // The filter changes.
             R_GetFilterColor(plr->plr->filterColor, palette);
             // If we are the server, we'll need inform the client.
-            plr->plr->flags |= DDPF_FILTER;
+            //plr->plr->flags |= DDPF_FILTER;
             oldPals[i] = palette;
         }
     }

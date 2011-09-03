@@ -1280,7 +1280,7 @@ typedef struct ticcmd_s {
 
     // Player flags.
 #define DDPF_FIXANGLES          0x0001 // Server: send angle/pitch to client.
-#define DDPF_FILTER             0x0002 // Server: send filter to client.
+//#define DDPF_FILTER             0x0002 // Server: send filter to client.
 #define DDPF_FIXPOS             0x0004 // Server: send coords to client.
 #define DDPF_DEAD               0x0008 // Cl & Sv: player is dead.
 #define DDPF_CAMERA             0x0010 // Player is a cameraman.
