@@ -104,7 +104,4 @@ void LumpFile_ClearLumpCache(lumpfile_t* lump);
 /// @return  Number of lumps contained within this file.
 int LumpFile_LumpCount(lumpfile_t* lump);
 
-/// @return  @c true if the file is marked as an "IWAD".
-boolean LumpFile_IsIWAD(lumpfile_t* lump);
-
 #endif /* LIBDENG_FILESYS_LUMPFILE_H */

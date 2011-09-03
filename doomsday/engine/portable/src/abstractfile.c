@@ -35,6 +35,8 @@ void AbstractFile_Init(abstractfile_t* file, filetype_t type, const char* absolu
 
     file->_order = fileCounter++;
     file->_type = type;
+    file->_flags.startup = false;
+    file->_flags.iwad = false;
     Str_Init(&file->_path);
     Str_Set(&file->_path, absolutePath);
     Str_Strip(&file->_path);
@@ -77,4 +79,28 @@ DFILE* AbstractFile_Handle(abstractfile_t* file)
 {
     assert(NULL != file);
     return &file->_dfile;
+}
+
+boolean AbstractFile_HasStartup(abstractfile_t* file)
+{
+    assert(NULL != file);
+    return (file->_flags.startup != 0);
+}
+
+void AbstractFile_SetStartup(abstractfile_t* file, boolean yes)
+{
+    assert(NULL != file);
+    file->_flags.startup = true;
+}
+
+boolean AbstractFile_HasIWAD(abstractfile_t* file)
+{
+    assert(NULL != file);
+    return (file->_flags.iwad != 0);
+}
+
+void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes)
+{
+    assert(NULL != file);
+    file->_flags.iwad = true;
 }

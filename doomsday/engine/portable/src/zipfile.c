@@ -703,11 +703,6 @@ int ZipFile_LumpCount(zipfile_t* file)
     return file->_lumpCount;
 }
 
-boolean ZipFile_IsIWAD(zipfile_t* file)
-{
-    return false; // Never.
-}
-
 boolean ZipFile_Recognise(DFILE* handle)
 {
     boolean knownFormat = false;

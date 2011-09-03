@@ -47,6 +47,11 @@ typedef struct abstractfile_s {
     /// @see filetype_t
     filetype_t _type;
 
+    struct abstractfile_flags_s {
+        uint startup:1; // Loaded during the startup process.
+        uint iwad:1; // Owned by or is an "iwad" resource.
+    } _flags;
+
     /// File stream abstraction wrapper/handle for this resource.
     DFILE _dfile;
 
@@ -75,6 +80,18 @@ uint AbstractFile_LoadOrderIndex(abstractfile_t* file);
 
 /// @return  "Last modified" timestamp of the resource.
 uint AbstractFile_LastModified(abstractfile_t* file);
+
+/// @return  @c true if the resource is marked "startup".
+boolean AbstractFile_HasStartup(abstractfile_t* file);
+
+/// Mark this resource as "startup".
+void AbstractFile_SetStartup(abstractfile_t* file, boolean yes);
+
+/// @return  @c true if the resource is marked "IWAD".
+boolean AbstractFile_HasIWAD(abstractfile_t* file);
+
+/// Mark this resource as "IWAD".
+void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes);
 
 /**
  * Abstract interface (minimal, data caching interface not expected):
@@ -105,9 +122,6 @@ DFILE* AbstractFile_Handle(abstractfile_t* file);
 
 /// @return  Number of "lumps" contained within this resource.
 int AbstractFile_LumpCount(abstractfile_t* file);
-
-/// @return  @c true if the resource is marked as an "IWAD".
-boolean AbstractFile_IsIWAD(abstractfile_t* file);
 
 /**
  * \todo The following function declarations do not belong here:

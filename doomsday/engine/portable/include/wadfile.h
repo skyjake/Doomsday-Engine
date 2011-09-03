@@ -40,7 +40,6 @@ struct lumpdirectory_s;
 typedef struct wadfile_s {
     // Base file.
     abstractfile_t _base;
-    int _flags; /// @see wadFileFlags
     int _lumpCount;
     size_t _lumpRecordsOffset;
     lumpinfo_t* _lumpInfo;
@@ -114,9 +113,6 @@ uint WadFile_CalculateCRC(const wadfile_t* wad);
 
 /// @return  Number of lumps contained within this file.
 int WadFile_LumpCount(wadfile_t* wad);
-
-/// @return  @c true if the file is marked as an "IWAD".
-boolean WadFile_IsIWAD(wadfile_t* wad);
 
 /**
  * Static members:

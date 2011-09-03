@@ -31,13 +31,6 @@
 #include "lumpdirectory.h"
 #include "wadfile.h"
 
-/**
- * @defgroup wadFileFlags  Wad file flags.
- */
-/*@{*/
-#define WFF_IWAD                    0x1 // File is marked IWAD (else its a PWAD).
-/*@}*/
-
 /// The following structures are used to read data directly from WAD files.
 #pragma pack(1)
 typedef struct {
@@ -150,9 +143,11 @@ wadfile_t* WadFile_New(DFILE* hndl, const char* absolutePath)
     AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, absolutePath);
     file->_lumpCount = hdr.lumpRecordsCount;
     file->_lumpRecordsOffset = hdr.lumpRecordsOffset;
-    file->_flags = (!strncmp(hdr.identification, "IWAD", 4)? WFF_IWAD : 0); // Found an IWAD.
     file->_lumpInfo = NULL;
     file->_lumpCache = NULL;
+
+    if(!strncmp(hdr.identification, "IWAD", 4))
+        AbstractFile_SetIWAD((abstractfile_t*)file, true); // Found an IWAD!
 
     // Copy the handle.
     memcpy(&file->_base._dfile, hndl, sizeof(file->_base._dfile));
@@ -443,12 +438,6 @@ int WadFile_LumpCount(wadfile_t* file)
 {
     assert(NULL != file);
     return file->_lumpCount;
-}
-
-boolean WadFile_IsIWAD(wadfile_t* file)
-{
-    assert(NULL != file);
-    return ((file->_flags & WFF_IWAD) != 0);
 }
 
 boolean WadFile_Recognise(DFILE* handle)

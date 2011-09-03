@@ -109,9 +109,6 @@ void ZipFile_ClearLumpCache(zipfile_t* zip);
 /// @return  Number of lumps contained within this file.
 int ZipFile_LumpCount(zipfile_t* zip);
 
-/// @return  @c true if the file is marked as an "IWAD".
-boolean ZipFile_IsIWAD(zipfile_t* zip);
-
 /**
  * Static members:
  */

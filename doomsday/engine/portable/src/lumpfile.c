@@ -209,8 +209,3 @@ int LumpFile_LumpCount(lumpfile_t* file)
 {
     return 1; // Always.
 }
-
-boolean LumpFile_IsIWAD(lumpfile_t* file)
-{
-    return false; // Never.
-}

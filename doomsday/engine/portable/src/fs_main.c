@@ -45,7 +45,6 @@ D_CMD(DumpLump);
 D_CMD(ListFiles);
 
 typedef struct filelist_node_s {
-    boolean loadedForStartup; // For reset.
     abstractfile_t* fsObject;
     struct filelist_node_s* next;
 } filelist_node_t;
@@ -218,9 +217,12 @@ static abstractfile_t* linkFile(abstractfile_t* fsObject, boolean isStartupFile)
 {
     filelist_node_t* node = allocFileNode();
     node->fsObject = fsObject;
-    node->loadedForStartup = isStartupFile;
     node->next = fileList;
     fileList = node;
+
+    if(isStartupFile)
+        AbstractFile_SetStartup(fsObject, true);
+
     return fsObject;
 }
 
@@ -289,8 +291,8 @@ static filelist_node_t* findFileListNodeForName(const char* path)
  *
  * @return  Same as @a file for convenience.
  */
-static abstractfile_t* openFromLump(abstractfile_t* file, FILE* hndl,
-    abstractfile_t* container, int lumpIdx, boolean dontBuffer)
+static abstractfile_t* openFromLump(abstractfile_t* file, abstractfile_t* container,
+    int lumpIdx, boolean dontBuffer)
 {
     assert(NULL != file && NULL != container);
     {
@@ -300,7 +302,6 @@ static abstractfile_t* openFromLump(abstractfile_t* file, FILE* hndl,
 
     // Init and load in the lump data.
     dfile->flags.open = true;
-    dfile->hndl = hndl;
     dfile->lastModified = info->lastModified;
     if(!dontBuffer)
     {
@@ -355,7 +356,7 @@ static lumpfile_t* newLumpFile(DFILE* hndl, abstractfile_t* fsObject, int lumpId
 {
     /// \note We don't create a filehandle_t for lump files.
     return (lumpfile_t*) linkFile(
-        openFromLump((abstractfile_t*)LumpFile_New(absolutePath, name, lumpSize), NULL, fsObject, lumpIdx, false),
+        openFromLump((abstractfile_t*)LumpFile_New(absolutePath, name, lumpSize), fsObject, lumpIdx, false),
         loadingForStartup);
 }
 
@@ -548,7 +549,7 @@ int F_Reset(void)
         while(node)
         {
             next = node->next;
-            if(!node->loadedForStartup)
+            if(!AbstractFile_HasStartup(node->fsObject))
             {
                 if(removeFile2(Str_Text(AbstractFile_Path(node->fsObject))))
                 {
@@ -730,16 +731,7 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent)
 boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
 {
     abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
-    if(fsObject)
-    switch(AbstractFile_Type(fsObject))
-    {
-    case FT_ZIPFILE:     return  ZipFile_IsIWAD( (zipfile_t*)fsObject);
-    case FT_WADFILE:     return  WadFile_IsIWAD( (wadfile_t*)fsObject);
-    case FT_LUMPFILE:    return LumpFile_IsIWAD((lumpfile_t*)fsObject);
-    default:
-        Con_Error("F_LumpIsFromIWAD: Invalid file type %i.", AbstractFile_Type(fsObject));
-        exit(1); // Unreachable.
-    }
+    if(fsObject) AbstractFile_HasIWAD(fsObject);
     return false;
 }
 
@@ -1005,7 +997,7 @@ uint F_CRCNumber(void)
         if(FT_WADFILE != AbstractFile_Type(node->fsObject)) continue;
 
         wad = (wadfile_t*)node->fsObject;
-        if(WadFile_IsIWAD(wad))
+        if(AbstractFile_HasIWAD((abstractfile_t*)wad))
             return WadFile_CalculateCRC(wad);
     }
     return 0;
@@ -1026,8 +1018,7 @@ void F_GetPWADFileNames(char* outBuf, size_t outBufSize, char delimiter)
     { filelist_node_t* node;
     for(node = fileList; NULL != node; node = node->next)
     {
-        if(FT_WADFILE != AbstractFile_Type(node->fsObject) ||
-           WadFile_IsIWAD((wadfile_t*)node->fsObject)) continue;
+        if(AbstractFile_HasIWAD(node->fsObject)) continue;
 
         Str_Clear(&buf);
         F_FileNameAndExtension(&buf, Str_Text(AbstractFile_Path(node->fsObject)));
@@ -1446,7 +1437,7 @@ abstractfile_t* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
         /// \todo All lumps should be attributed with an absolute file path not just those from Zips.
         /// \note We don't create a filehandle_t for lump files.
         return openFromLump((abstractfile_t*)LumpFile_New(Str_Text(&info->path), info->name, info->size),
-            NULL, fsObject, lumpIdx, dontBuffer);
+            fsObject, lumpIdx, dontBuffer);
     }
     return 0;
 }
@@ -1479,7 +1470,7 @@ abstractfile_t* F_Open(const char* path, const char* mode)
         {
             const lumpinfo_t* info = F_LumpInfo(fsContainer, lumpIdx);
             Str_Free(&searchPath);
-            return openFromLump(getFreeFile(Str_Text(&info->path)), NULL, fsContainer, lumpIdx, dontBuffer);
+            return openFromLump(getFreeFile(Str_Text(&info->path)), fsContainer, lumpIdx, dontBuffer);
         }
     }
 
@@ -1814,7 +1805,7 @@ boolean F_AddFile(const char* fileName, boolean allowDuplicate)
         WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
         // Print the 'CRC' number of the IWAD, so it can be identified.
         /// \todo Do not do this here.
-        if(WadFile_IsIWAD(wad))
+        if(AbstractFile_HasIWAD(fsObject))
             Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
         break;
       }
@@ -2274,7 +2265,7 @@ D_CMD(ListFiles)
                 break;
             case FT_WADFILE: {
                 wadfile_t* wad = (wadfile_t*)node->fsObject;
-                crc = (WadFile_IsIWAD(wad)? WadFile_CalculateCRC(wad) : 0);
+                crc = (AbstractFile_HasIWAD(node->fsObject)? WadFile_CalculateCRC(wad) : 0);
                 fileCount = WadFile_LumpCount(wad);
                 break;
               }
@@ -2289,7 +2280,7 @@ D_CMD(ListFiles)
 
             Con_Printf("\"%s\" (%lu %s%s)", F_PrettyPath(Str_Text(AbstractFile_Path(node->fsObject))),
                 (unsigned long) fileCount, fileCount != 1 ? "files" : "file",
-                (node->loadedForStartup? ", startup" : ""));
+                (AbstractFile_HasStartup(node->fsObject)? ", startup" : ""));
             if(0 != crc)
                 Con_Printf(" [%08x]", crc);
             Con_Printf("\n");
