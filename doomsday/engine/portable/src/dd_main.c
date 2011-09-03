@@ -565,11 +565,11 @@ static boolean isRequiredResource(gameinfo_t* info, const char* absolutePath)
     if(records)
     {
         // Is this resource from an archive?
-        const char* archivePath = Zip_SourceFile(Zip_Find(absolutePath));
-        if(archivePath[0])
+        lumpnum_t lumpNum = Zip_Find(absolutePath);
+        if(lumpNum >= 0)
         {
-            // Yes. Use the archive path instead.
-            absolutePath = archivePath;
+            // Yes; use the archive path instead.
+            absolutePath = Zip_SourceFile(lumpNum);
         }
 
         do
