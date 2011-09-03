@@ -844,7 +844,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
         }
 
         memset(&temp, 0, sizeof(temp));
-        temp.flags._open = true;
+        temp.flags.open = true;
         temp.lastModified = readLastModified(Str_Text(foundPath));
         temp.hndl = file;
         prevOpened = &temp;
@@ -1785,7 +1785,7 @@ static abstractfile_t* F_AddFile2(const char* fileName, boolean allowDuplicate)
     }
 
     memset(&temp, 0, sizeof(temp));
-    temp.flags._open = true;
+    temp.flags.open = true;
     temp.hndl = file;
     temp.lastModified = readLastModified(Str_Text(foundPath));
 
