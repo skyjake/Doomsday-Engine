@@ -1525,6 +1525,7 @@ void G_PlayerReborn(int player)
 
     p = &players[player];
 
+    assert(sizeof(p->frags) == sizeof(frags));
     memcpy(frags, p->frags, sizeof(frags));
     killcount = p->killCount;
     itemcount = p->itemCount;
@@ -1586,6 +1587,16 @@ void G_PlayerReborn(int player)
     {
         p->didSecret = true;
     }
+
+#ifdef _DEBUG
+    {
+        int k;
+        for(k = 0; k < NUM_WEAPON_TYPES; ++k)
+        {
+            Con_Message("Player %i owns wpn %i: %i\n", player, k, p->weapons[k].owned);
+        }
+    }
+#endif
 
 #else
     p->readyWeapon = p->pendingWeapon = WT_FIRST;
