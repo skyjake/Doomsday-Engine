@@ -204,8 +204,8 @@ static void* AllocAndLoad(abstractfile_t* file, int offset, int len)
     uint8_t* ptr = (uint8_t*)malloc(len);
     if(!ptr)
         Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
-    F_Seek(file, offset, SEEK_SET);
-    F_Read(file, ptr, len);
+    F_Seek(AbstractFile_Handle(file), offset, SEEK_SET);
+    F_Read(AbstractFile_Handle(file), ptr, len);
     return ptr;
 }
 
@@ -215,18 +215,18 @@ static void R_MissingModel(const char* fn)
     Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
 }
 
-static void R_LoadModelMD2(abstractfile_t *file, model_t *mdl)
+static void R_LoadModelMD2(abstractfile_t* file, model_t* mdl)
 {
-    md2_header_t        oldhd;
-    dmd_header_t       *hd = &mdl->header;
-    dmd_info_t         *inf = &mdl->info;
-    model_frame_t      *frame;
-    byte               *frames;
-    int                 i, k, c;
-    const int           axis[3] = { 0, 2, 1 };
+    md2_header_t oldhd;
+    dmd_header_t* hd = &mdl->header;
+    dmd_info_t* inf = &mdl->info;
+    model_frame_t* frame;
+    byte* frames;
+    int i, k, c;
+    const int axis[3] = { 0, 2, 1 };
 
     // Read the header.
-    F_Read(file, (uint8_t*)&oldhd, sizeof(oldhd));
+    F_Read(AbstractFile_Handle(file), (uint8_t*)&oldhd, sizeof(oldhd));
 
     // Convert it to DMD.
     hd->magic = MD2_MAGIC;
@@ -304,30 +304,30 @@ static void R_LoadModelMD2(abstractfile_t *file, model_t *mdl)
         Con_Error("R_LoadModelMD2: Failed on allocation of %lu bytes for skin list.",
             (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
 
-    F_Seek(file, inf->offsetSkins, SEEK_SET);
+    F_Seek(AbstractFile_Handle(file), inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(file, (uint8_t*)mdl->skins[i].name, 64);
+        F_Read(AbstractFile_Handle(file), (uint8_t*)mdl->skins[i].name, 64);
 }
 
-static void R_LoadModelDMD(abstractfile_t *file, model_t *mo)
+static void R_LoadModelDMD(abstractfile_t* file, model_t* mo)
 {
-    dmd_chunk_t         chunk;
-    char               *temp;
-    dmd_info_t         *inf = &mo->info;
-    model_frame_t      *frame;
-    int                 i, k, c;
-    dmd_triangle_t     *triangles[MAX_LODS];
-    const int           axis[3] = { 0, 2, 1 };
+    dmd_chunk_t chunk;
+    char* temp;
+    dmd_info_t* inf = &mo->info;
+    model_frame_t* frame;
+    int i, k, c;
+    dmd_triangle_t* triangles[MAX_LODS];
+    const int axis[3] = { 0, 2, 1 };
 
     // Read the chunks.
-    F_Read(file, (uint8_t*)&chunk, sizeof(chunk));
+    F_Read(AbstractFile_Handle(file), (uint8_t*)&chunk, sizeof(chunk));
 
     while(LONG(chunk.type) != DMC_END)
     {
         switch (LONG(chunk.type))
         {
         case DMC_INFO:          // Standard DMD information chunk.
-            F_Read(file, (uint8_t*)inf, LONG(chunk.length));
+            F_Read(AbstractFile_Handle(file), (uint8_t*)inf, LONG(chunk.length));
             inf->skinWidth = LONG(inf->skinWidth);
             inf->skinHeight = LONG(inf->skinHeight);
             inf->frameSize = LONG(inf->frameSize);
@@ -346,18 +346,18 @@ static void R_LoadModelDMD(abstractfile_t *file, model_t *mo)
         default:
             // Just skip all unknown chunks.
             temp = M_Malloc(LONG(chunk.length));
-            F_Read(file, (uint8_t*)temp, LONG(chunk.length));
+            F_Read(AbstractFile_Handle(file), (uint8_t*)temp, LONG(chunk.length));
             free(temp);
         }
         // Read the next chunk header.
-        F_Read(file, (uint8_t*)&chunk, sizeof(chunk));
+        F_Read(AbstractFile_Handle(file), (uint8_t*)&chunk, sizeof(chunk));
     }
 
     // Allocate and load in the data.
     mo->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
-    F_Seek(file, inf->offsetSkins, SEEK_SET);
+    F_Seek(AbstractFile_Handle(file), inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(file, (uint8_t*)mo->skins[i].name, 64);
+        F_Read(AbstractFile_Handle(file), (uint8_t*)mo->skins[i].name, 64);
 
     temp = AllocAndLoad(file, inf->offsetFrames,
         inf->frameSize * inf->numFrames);
@@ -396,8 +396,8 @@ static void R_LoadModelDMD(abstractfile_t *file, model_t *mo)
     }
     M_Free(temp);
 
-    F_Seek(file, inf->offsetLODs, SEEK_SET);
-    F_Read(file, (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
+    F_Seek(AbstractFile_Handle(file), inf->offsetLODs, SEEK_SET);
+    F_Read(AbstractFile_Handle(file), (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
 
     for(i = 0; i < inf->numLODs; ++i)
     {
@@ -495,10 +495,10 @@ static int R_LoadModel(const Uri* uri)
     }
 
     // Now we can load in the data.
-    F_Read(file, (uint8_t*)&mdl->header, sizeof(mdl->header));
+    F_Read(AbstractFile_Handle(file), (uint8_t*)&mdl->header, sizeof(mdl->header));
     if(LONG(mdl->header.magic) == MD2_MAGIC)
     {   // Load as MD2.
-        F_Rewind(file);
+        F_Rewind(AbstractFile_Handle(file));
         R_LoadModelMD2(file, mdl);
     }
     else if(LONG(mdl->header.magic) == DMD_MAGIC)

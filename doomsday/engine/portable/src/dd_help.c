@@ -128,6 +128,7 @@ static int DH_ReadStrings(const char* fileName)
     char line[2048], *ptr, *eol, *end;
     helpnode_t* node = 0;
     int count = 0, length;
+    DFILE* hndl;
 
     if(!file)
     {
@@ -135,9 +136,10 @@ static int DH_ReadStrings(const char* fileName)
         return false;
     }
 
-    while(!F_AtEnd(file))
+    hndl = AbstractFile_Handle(file);
+    while(!F_AtEnd(hndl))
     {
-        M_ReadLine(line, sizeof(line), file);
+        M_ReadLine(line, sizeof(line), hndl);
         if(M_IsComment(line))
             continue;
 
@@ -189,7 +191,7 @@ static int DH_ReadStrings(const char* fileName)
                     if(!*M_SkipWhite(ptr + 1))
                     {
                         // Read the next line.
-                        M_ReadLine(line, sizeof(line), file);
+                        M_ReadLine(line, sizeof(line), hndl);
                         ptr = M_SkipWhite(line);
                     }
                     else // \ is not the last char on the line.

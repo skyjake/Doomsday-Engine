@@ -24,6 +24,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 
 #include "de_base.h"
@@ -300,7 +302,8 @@ static boolean removeListFile(filelist_node_t* node)
         pruneLumpDirectorysByFile(node->fsObject);
         unlinkFile(node);
         // Close the file; we don't need it any more.
-        F_Close(node->fsObject);
+        F_Close(AbstractFile_Handle(node->fsObject));
+        F_Release(node->fsObject);
         F_Delete(node->fsObject);
         break;
       }
@@ -586,13 +589,86 @@ void F_Release(abstractfile_t* file)
 {
     assert(NULL != file);
     if(files)
-    {   // Clear references to the handle.
+    {   // Clear references to the file.
         uint i;
         for(i = 0; i < filesCount; ++i)
         {
             if(files[i].file == file)
                 files[i].file = NULL;
         }
+    }
+}
+
+abstractfile_t* F_NewFile(const char* absolutePath)
+{
+    abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
+    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
+    AbstractFile_Init(file, FT_UNKNOWNFILE, NULL, absolutePath);
+    return file;
+}
+
+void F_Delete(abstractfile_t* file)
+{
+    assert(NULL != file);
+    F_Close(&file->_dfile);
+    F_Release(file);
+    free(file);
+}
+
+/// \note This only works on real files.
+static unsigned int readLastModified(const char* path)
+{
+#ifdef UNIX
+    struct stat s;
+    stat(path, &s);
+    return s.st_mtime;
+#endif
+
+#ifdef WIN32
+    struct _stat s;
+    _stat(path, &s);
+    return s.st_mtime;
+#endif
+}
+
+abstractfile_t* F_OpenStreamLump(abstractfile_t* file, abstractfile_t* container, int lumpIdx, boolean dontBuffer)
+{
+    assert(NULL != file && NULL != container);
+    {
+    DFILE* hndl = &file->_dfile;
+    const lumpinfo_t* info = F_LumpInfo(container, lumpIdx);
+    assert(info);
+
+    // Init and load in the lump data.
+    hndl->flags.open = true;
+    hndl->hndl = NULL;
+    hndl->lastModified = info->lastModified;
+    if(!dontBuffer)
+    {
+        hndl->size = info->size;
+        hndl->pos = hndl->data = (uint8_t*)malloc(hndl->size);
+        if(NULL == hndl->data)
+            Con_Error("F_OpenStreamLump: Failed on allocation of %lu bytes for buffered data.",
+                (unsigned long) hndl->size);
+#if _DEBUG
+        VERBOSE2( Con_Printf("Next FILE read from F_OpenStreamLump.\n") )
+#endif
+        F_ReadLumpSection(container, lumpIdx, (uint8_t*)hndl->data, 0, info->size);
+    }
+    return file;
+    }
+}
+
+abstractfile_t* F_OpenStreamFile(abstractfile_t* file, FILE* sysHndl, const char* path)
+{
+    assert(file && sysHndl && path && path[0]);
+    {
+    DFILE* hndl = &file->_dfile;
+    hndl->hndl = sysHndl;
+    hndl->data = NULL;
+    hndl->flags.open = true;
+    hndl->lastModified = readLastModified(path);
+    return file;
     }
 }
 
@@ -965,7 +1041,7 @@ lumpnum_t Zip_Find(const char* searchPath)
     return result;
 }
 
-unsigned int F_GetLastModified(const char* fileName)
+uint F_GetLastModified(const char* fileName)
 {
     // Try to open the file, but don't buffer any contents.
     abstractfile_t* file = F_Open(fileName, "rx");
@@ -974,7 +1050,7 @@ unsigned int F_GetLastModified(const char* fileName)
     if(!file)
         return 0;
 
-    modified = F_LastModified(file);
+    modified = AbstractFile_LastModified(file);
     F_Delete(file);
     return modified;
 }
@@ -1559,7 +1635,7 @@ static abstractfile_t* addLumpFile(abstractfile_t* fsObject, int lumpIdx,
 
     errorIfNotInited("addLumpFile");
 
-    // Prepare the name of this single-file lump.
+    // Prepare the name of this single-lump file.
     if(isDehackedPatch)
     {
         strncpy(name, "DEHACKED", LUMPNAME_T_MAXLEN);
@@ -1661,13 +1737,13 @@ boolean F_AddFile(const char* fileName, boolean allowDuplicate)
         return true;
     }
 
-    // Try to open as a real file then.   
-    // We must have an absolute path, so prepend the current working directory if necessary.
+    // Try to open as a real file then. We must have an absolute path, so
+    // prepend the current working directory if necessary.
     F_PrependWorkPath(&searchPath, &searchPath);
     file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
-    Str_Free(&searchPath);
     if(!file)
     {
+        Str_Free(&searchPath);
         Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
         return false;
     }
@@ -1675,11 +1751,16 @@ boolean F_AddFile(const char* fileName, boolean allowDuplicate)
     // Do not read files twice.
     if(!allowDuplicate && !F_CheckFileId(Str_Text(foundPath)))
     {
+        Str_Free(&searchPath);
         Con_Message("\"%s\" already loaded.\n", F_PrettyPath(Str_Text(foundPath)));
         return false;
     }
 
-    fsObject = F_AddFile2(file, Str_Text(foundPath));
+    // Search path is used here rather than found path as the latter may have
+    // been mapped to another location. We want the file to be attributed with
+    // the path it is to be known by throughout the virtual file system.
+    fsObject = F_AddFile2(file, Str_Text(&searchPath));
+    Str_Free(&searchPath);
     Str_Delete(foundPath);
 
     switch(AbstractFile_Type(fsObject))
@@ -1966,6 +2047,40 @@ void F_ShutdownDirec(void)
 {
     resetVDirectoryMappings();
     clearLumpDirectory();
+}
+
+int F_MatchFileName(const char* string, const char* pattern)
+{
+    const char* in = string, *st = pattern;
+
+    while(*in)
+    {
+        if(*st == '*')
+        {
+            st++;
+            continue;
+        }
+
+        if(*st != '?' && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
+        {
+            // A mismatch. Hmm. Go back to a previous '*'.
+            while(st >= pattern && *st != '*')
+                st--;
+            if(st < pattern)
+                return false; // No match!
+            // The asterisk lets us continue.
+        }
+
+        // This character of the pattern is OK.
+        st++;
+        in++;
+    }
+
+    // Match is good if the end of the pattern was reached.
+    while(*st == '*')
+        st++; // Skip remaining asterisks.
+
+    return *st == 0;
 }
 
 static int C_DECL compareFileNodeByFilePath(const void* a_, const void* b_)

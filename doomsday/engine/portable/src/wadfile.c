@@ -94,8 +94,8 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
             "temporary lump directory buffer.\n", (unsigned long) lumpRecordsSize);
 
     // Buffer the archived lump directory.
-    F_Seek((abstractfile_t*)file, lumpRecordOffset, SEEK_SET);
-    F_Read((abstractfile_t*)file, (uint8_t*)lumpRecords, lumpRecordsSize);
+    F_Seek(&file->_base._dfile, lumpRecordOffset, SEEK_SET);
+    F_Read(&file->_base._dfile, (uint8_t*)lumpRecords, lumpRecordsSize);
 
     // Allocate and populate the final lump info list.
     lumpInfo = (lumpinfo_t*)malloc(lumpRecordCount * sizeof(*lumpInfo));
@@ -121,7 +121,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
         dst->size = dst->compressedSize = (size_t)LONG(src->size);
 
         // The modification date is inherited from the real file (note recursion).
-        dst->lastModified = F_LastModified((abstractfile_t*)file);
+        dst->lastModified = AbstractFile_LastModified((abstractfile_t*)file);
     }
     // We are finished with the temporary lump records.
     free(lumpRecords);
@@ -305,8 +305,8 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek((abstractfile_t*)file, info->baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read((abstractfile_t*)file, buffer, length);
+    F_Seek(&file->_base._dfile, info->baseOffset + startOffset, SEEK_SET);
+    readBytes = F_Read(&file->_base._dfile, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -433,7 +433,8 @@ static void WadFile_ReadLumpDirectory(wadfile_t* file)
 void WadFile_Close(wadfile_t* file)
 {
     assert(NULL != file);
-    F_Close((abstractfile_t*)file);
+    F_Close(&file->_base._dfile);
+    F_Release((abstractfile_t*)file);
     F_ReleaseFileId(Str_Text(&file->_base._absolutePath));
 }
 

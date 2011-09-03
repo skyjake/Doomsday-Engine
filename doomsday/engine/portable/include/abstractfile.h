@@ -27,6 +27,8 @@
 
 #include <stdio.h>
 
+#include "sys_file.h"
+
 struct lumpdirectory_s;
 
 // File types.
@@ -43,15 +45,7 @@ typedef enum {
  */
 typedef struct abstractfile_s {
     filetype_t _type;
-    struct abstractfile_flags_s {
-        unsigned char open:1;
-        unsigned char eof:1;
-    } flags;
-    size_t size;
-    FILE* hndl;
-    uint8_t* data;
-    uint8_t* pos;
-    unsigned int lastModified;
+    DFILE _dfile;
     ddstring_t _absolutePath;
     /// Load order depth index.
     uint _order;
@@ -66,14 +60,15 @@ filetype_t AbstractFile_Type(const abstractfile_t* file);
 /**
  * Accessors:
  */
-/// @return  File handle acquired for this resource else @c NULL
-FILE* AbstractFile_Handle(abstractfile_t* file);
 
 /// @return  Resolved (possibly virtual/mapped) path to this file.
 const ddstring_t* AbstractFile_AbsolutePath(abstractfile_t* file);
 
 /// @return  Load order index for this file.
 uint AbstractFile_LoadOrderIndex(abstractfile_t* file);
+
+/// @return  "Last modified" timestamp of the file.
+uint AbstractFile_LastModified(abstractfile_t* file);
 
 /**
  * Abstract interface (minimal, data caching interface not expected):
@@ -92,6 +87,13 @@ void AbstractFile_Close(abstractfile_t* file);
 size_t AbstractFile_ReadLump(abstractfile_t* file, int lumpIdx, uint8_t* buffer);
 
 /**
+ * Retrieve the low-level file handle used for direct manipulation of a stream.
+ * \note Higher-level derivatives of AbstractFile should not expose this method
+ *      publicly if they are designed to abstract access to the underlying stream.
+ */
+DFILE* AbstractFile_Handle(abstractfile_t* file);
+
+/**
  * Accessors:
  */
 
@@ -100,5 +102,34 @@ int AbstractFile_LumpCount(abstractfile_t* file);
 
 /// @return  @c true if the file is marked as an "IWAD".
 boolean AbstractFile_IsIWAD(abstractfile_t* file);
+
+/**
+ * \todo The following function declarations do not belong here:
+ */
+
+abstractfile_t* F_NewFile(const char* absolutePath);
+void F_Delete(abstractfile_t* file);
+
+/**
+ * Open a new stream on the specified lump for reading.
+ *
+ * @param file  File system handle used to reference the lump once read.
+ * @param container  File system record for the file containing the lump to be read.
+ * @param lump  Index of the lump to open.
+ * @param dontBuffer  Just test for access (don't buffer anything).
+ *
+ * @return  Same as @a file for convenience.
+ */
+abstractfile_t* F_OpenStreamLump(abstractfile_t* file, abstractfile_t* container, int lumpIdx, boolean dontBuffer);
+
+/**
+ * Open a new stream on the specified lump for reading.
+ *
+ * @param file  File system handle used to reference the file once read.
+ * @param hndl  Handle to the file containing the data to be read.
+ *
+ * @return  Same as @a file for convenience.
+ */
+abstractfile_t* F_OpenStreamFile(abstractfile_t* file, FILE* hndl, const char* path);
 
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */

@@ -112,14 +112,14 @@ static void writeShort(FILE* f, int16_t s)
     fwrite(&v, sizeof(v), 1, f);
 }
 
-static uint8_t readByte(abstractfile_t* f)
+static uint8_t readByte(DFILE* f)
 {
     uint8_t v;
     F_Read(f, &v, 1);
     return v;
 }
 
-static int16_t readShort(abstractfile_t* f)
+static int16_t readShort(DFILE* f)
 {
     int16_t v;
     F_Read(f, (uint8_t*)&v, sizeof(v));
@@ -150,7 +150,7 @@ static void writeHeader(uint8_t idLength, uint8_t colorMapType,
     writeByte(file, imageType);
 }
 
-static void readHeader(tga_header_t* dst, abstractfile_t* file)
+static void readHeader(tga_header_t* dst, DFILE* file)
 {
     dst->idLength = readByte(file);
     dst->colorMapType = readByte(file);
@@ -171,7 +171,7 @@ static void writeColorMapSpec(int16_t index, int16_t length,
     writeByte(file, entrySize);
 }
 
-static void readColorMapSpec(tga_colormapspec_t* dst, abstractfile_t* file)
+static void readColorMapSpec(tga_colormapspec_t* dst, DFILE* file)
 {
     dst->index = readShort(file);
     dst->length = readShort(file);
@@ -205,7 +205,7 @@ static void writeImageSpec(int16_t xOrigin, int16_t yOrigin,
     writeByte(file, 0);
 }
 
-static void readImageSpec(tga_imagespec_t* dst, abstractfile_t* file)
+static void readImageSpec(tga_imagespec_t* dst, DFILE* file)
 {
     uint8_t bits;
 
@@ -367,7 +367,7 @@ int TGA_Save16_rgb888(FILE* file, int w, int h, const uint8_t* buf)
     return 1; // Success.
 }
 
-uint8_t* TGA_Load(abstractfile_t* file, int* w, int* h, int* pixelSize)
+uint8_t* TGA_Load(DFILE* file, int* w, int* h, int* pixelSize)
 {
     assert(file && w && h && pixelSize);
     {

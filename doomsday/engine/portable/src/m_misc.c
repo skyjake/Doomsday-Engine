@@ -188,7 +188,7 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     return buf;
 }
 
-void M_ReadLine(char* buffer, size_t len, abstractfile_t* file)
+void M_ReadLine(char* buffer, size_t len, DFILE* hndl)
 {
     size_t p;
     char ch;
@@ -199,10 +199,10 @@ void M_ReadLine(char* buffer, size_t len, abstractfile_t* file)
     isDone = false;
     while(p < len - 1 && !isDone)    // Make the last null stay there.
     {
-        ch = F_GetC(file);
+        ch = F_GetC(hndl);
         if(ch != '\r')
         {
-            if(F_AtEnd(file) || ch == '\n')
+            if(F_AtEnd(hndl) || ch == '\n')
                 isDone = true;
             else
                 buffer[p++] = ch;

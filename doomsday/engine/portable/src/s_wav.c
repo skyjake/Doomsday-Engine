@@ -222,11 +222,11 @@ void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
         return NULL;
 
     // Read in the whole thing.
-    size = F_Length(file);
+    size = F_Length(AbstractFile_Handle(file));
     data = (uint8_t*)malloc(size);
     if(!data)
         Con_Error("WAV_Load: Failed on allocation of %lu bytes for sample load buffer.", (unsigned long) size);
-    F_Read(file, data, size);
+    F_Read(AbstractFile_Handle(file), data, size);
     F_Delete(file);
 
     // Parse the RIFF data.

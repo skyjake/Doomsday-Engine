@@ -70,7 +70,7 @@ const char* PNG_LastError(void)
     return 0;
 }
 
-uint8_t* PNG_Load(abstractfile_t* file, int* width, int* height, int* pixelSize)
+uint8_t* PNG_Load(DFILE* file, int* width, int* height, int* pixelSize)
 {
     assert(file && width && height && pixelSize);
     {

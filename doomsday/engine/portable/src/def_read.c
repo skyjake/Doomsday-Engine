@@ -2552,9 +2552,9 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    F_Seek(file, 0, SEEK_END);
-    bufferedDefSize = F_Tell(file);
-    F_Rewind(file);
+    F_Seek(AbstractFile_Handle(file), 0, SEEK_END);
+    bufferedDefSize = F_Tell(AbstractFile_Handle(file));
+    F_Rewind(AbstractFile_Handle(file));
     bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
     if(NULL == bufferedDef)
     {
@@ -2564,7 +2564,7 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // Copy the file into the local buffer and parse definitions.
-    F_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
+    F_Read(AbstractFile_Handle(file), (uint8_t*)bufferedDef, bufferedDefSize);
     F_Delete(file);
     result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 

@@ -32,7 +32,7 @@ void AbstractFile_Init(abstractfile_t* file, filetype_t type, FILE* handle,
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    assert(NULL != file && NULL != absolutePath);
+    assert(NULL != file);
     file->_order = fileCounter++;
     file->_type = type;
     Str_Init(&file->_absolutePath);
@@ -42,25 +42,19 @@ void AbstractFile_Init(abstractfile_t* file, filetype_t type, FILE* handle,
         Str_Strip(&file->_absolutePath);
         F_FixSlashes(&file->_absolutePath, &file->_absolutePath);
     }
-    file->hndl = handle;
-    file->flags.eof = 0;
-    file->flags.open = 0;
-    file->size = 0;
-    file->data = NULL;
-    file->pos = 0;
-    file->lastModified = 0;
+    file->_dfile.hndl = handle;
+    file->_dfile.flags.eof = 0;
+    file->_dfile.flags.open = 0;
+    file->_dfile.size = 0;
+    file->_dfile.data = NULL;
+    file->_dfile.pos = 0;
+    file->_dfile.lastModified = 0;
 }
 
 filetype_t AbstractFile_Type(const abstractfile_t* file)
 {
     assert(NULL != file);
     return file->_type;
-}
-
-FILE* AbstractFile_Handle(abstractfile_t* file)
-{
-    assert(NULL != file);
-    return file->hndl;
 }
 
 const ddstring_t* AbstractFile_AbsolutePath(abstractfile_t* file)
@@ -73,4 +67,16 @@ uint AbstractFile_LoadOrderIndex(abstractfile_t* file)
 {
     assert(NULL != file);
     return file->_order;
+}
+
+uint AbstractFile_LastModified(abstractfile_t* file)
+{
+    assert(NULL != file);
+    return file->_dfile.lastModified;
+}
+
+DFILE* AbstractFile_Handle(abstractfile_t* file)
+{
+    assert(NULL != file);
+    return &file->_dfile;
 }

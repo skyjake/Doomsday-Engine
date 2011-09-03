@@ -29,7 +29,7 @@
 #ifndef LIBDENG_TEXTURE_MANAGER_H
 #define LIBDENG_TEXTURE_MANAGER_H
 
-#include "sys_file.h"
+#include "abstractfile.h"
 #include "r_data.h"
 #include "r_model.h"
 #include "gl_model.h"

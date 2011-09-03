@@ -1705,7 +1705,7 @@ static boolean tryLoadPCX(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     GL_InitImage(img);
-    img->pixels = PCX_Load(file, &img->width, &img->height, &img->pixelSize);
+    img->pixels = PCX_Load(AbstractFile_Handle(file), &img->width, &img->height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
@@ -1713,7 +1713,7 @@ static boolean tryLoadPNG(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     GL_InitImage(img);
-    img->pixels = PNG_Load(file, &img->width, &img->height, &img->pixelSize);
+    img->pixels = PNG_Load(AbstractFile_Handle(file), &img->width, &img->height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
@@ -1721,7 +1721,7 @@ static boolean tryLoadTGA(image_t* img, abstractfile_t* file)
 {
     assert(img && file);
     GL_InitImage(img);
-    img->pixels = TGA_Load(file, &img->width, &img->height, &img->pixelSize);
+    img->pixels = TGA_Load(AbstractFile_Handle(file), &img->width, &img->height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
@@ -2623,7 +2623,7 @@ byte GL_LoadDetailTextureLump(image_t* image, abstractfile_t* file)
     }
     else
     {   // It must be an old-fashioned "raw" image.
-        size_t bufSize, fileLength = F_Length(file);
+        size_t bufSize, fileLength = F_Length(AbstractFile_Handle(file));
 
         GL_InitImage(image);
 
@@ -2654,7 +2654,7 @@ byte GL_LoadDetailTextureLump(image_t* image, abstractfile_t* file)
             memset(image->pixels, 0, bufSize);
 
         // Load the raw image data.
-        F_Read(file, image->pixels, fileLength);
+        F_Read(AbstractFile_Handle(file), image->pixels, fileLength);
         result = 1;
     }
     return result;
@@ -2675,7 +2675,7 @@ byte GL_LoadFlatLump(image_t* image, abstractfile_t* file)
 #define FLAT_WIDTH          64
 #define FLAT_HEIGHT         64
 
-        size_t bufSize, fileLength = F_Length(file);
+        size_t bufSize, fileLength = F_Length(AbstractFile_Handle(file));
 
         GL_InitImage(image);
 
@@ -2694,7 +2694,7 @@ byte GL_LoadFlatLump(image_t* image, abstractfile_t* file)
             memset(image->pixels, 0, bufSize);
 
         // Load the raw image data.
-        F_Read(file, image->pixels, fileLength);
+        F_Read(AbstractFile_Handle(file), image->pixels, fileLength);
         result = 1;
 
 #undef FLAT_HEIGHT
@@ -2716,7 +2716,7 @@ static byte loadPatchLump(image_t* image, abstractfile_t* file, int tclass, int 
     else
     {   // A DOOM patch.
         const doompatch_header_t* patch;
-        size_t fileLength = F_Length(file);
+        size_t fileLength = F_Length(AbstractFile_Handle(file));
         uint8_t* buf;
 
         if(fileLength < sizeof(doompatch_header_t))
@@ -2729,7 +2729,7 @@ static byte loadPatchLump(image_t* image, abstractfile_t* file, int tclass, int 
         if(NULL == buf)
             Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
                 "temporary lump buffer.", (unsigned long) (fileLength));
-        F_Read(file, buf, fileLength);
+        F_Read(AbstractFile_Handle(file), buf, fileLength);
         patch = (const doompatch_header_t*)buf;
 
         GL_InitImage(image);
@@ -2955,7 +2955,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-                size_t fileLength = F_Length(file);
+                size_t fileLength = F_Length(AbstractFile_Handle(file));
                 size_t bufSize = 3 * RAW_WIDTH * RAW_HEIGHT;
 
                 GL_InitImage(image);
@@ -2964,7 +2964,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
                     memset(image->pixels, 0, bufSize);
 
                 // Load the raw image data.
-                F_Read(file, image->pixels, fileLength);
+                F_Read(AbstractFile_Handle(file), image->pixels, fileLength);
                 image->width = RAW_WIDTH;
                 image->height = (int) (fileLength / image->width);
                 image->pixelSize = 1;

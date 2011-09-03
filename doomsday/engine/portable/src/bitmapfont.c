@@ -173,7 +173,7 @@ static void drawCharacter(unsigned char ch, font_t* font)
     glEnd();
 }
 
-static byte inByte(abstractfile_t* f)
+static byte inByte(DFILE* f)
 {
     assert(f);
     {
@@ -183,7 +183,7 @@ static byte inByte(abstractfile_t* f)
     }
 }
 
-static unsigned short inShort(abstractfile_t* f)
+static unsigned short inShort(DFILE* f)
 {
     assert(f);
     {
@@ -193,7 +193,7 @@ static unsigned short inShort(abstractfile_t* f)
     }
 }
 
-static void* readFormat0(font_t* font, abstractfile_t* file)
+static void* readFormat0(font_t* font, DFILE* file)
 {
     assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
     {
@@ -256,7 +256,7 @@ static void* readFormat0(font_t* font, abstractfile_t* file)
     }
 }
 
-static void* readFormat2(font_t* font, abstractfile_t* file)
+static void* readFormat2(font_t* font, DFILE* file)
 {
     assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
     {
@@ -405,13 +405,13 @@ void BitmapFont_Prepare(font_t* font)
         BitmapFont_DeleteGLTexture(font);
 
         // Load the font glyph map from the file.
-        version = inByte(file);
+        version = inByte(AbstractFile_Handle(file));
         switch(version)
         {
         // Original format.
-        case 0: image = readFormat0(font, file); break;
+        case 0: image = readFormat0(font, AbstractFile_Handle(file)); break;
         // Enhanced format.
-        case 2: image = readFormat2(font, file); break;
+        case 2: image = readFormat2(font, AbstractFile_Handle(file)); break;
         default: break;
         }
         if(!image)

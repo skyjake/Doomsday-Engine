@@ -32,242 +32,134 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#define deof(file)          ((file)->flags.eof != 0)
+#define deof(hndl)              ((hndl)->flags.eof != 0)
 
-abstractfile_t* F_NewFile(const char* absolutePath)
+size_t F_Length(DFILE* hndl)
 {
-    abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
-    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
-    AbstractFile_Init(file, FT_UNKNOWNFILE, NULL, absolutePath);
-    return file;
-}
-
-int F_MatchFileName(const char* string, const char* pattern)
-{
-    const char* in = string, *st = pattern;
-
-    while(*in)
+    assert(NULL != hndl);
     {
-        if(*st == '*')
-        {
-            st++;
-            continue;
-        }
-
-        if(*st != '?' && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
-        {
-            // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != '*')
-                st--;
-            if(st < pattern)
-                return false; // No match!
-            // The asterisk lets us continue.
-        }
-
-        // This character of the pattern is OK.
-        st++;
-        in++;
-    }
-
-    // Match is good if the end of the pattern was reached.
-    while(*st == '*')
-        st++; // Skip remaining asterisks.
-
-    return *st == 0;
-}
-
-size_t F_Length(abstractfile_t* file)
-{
-    assert(NULL != file);
-    {
-    size_t currentPosition = F_Seek(file, 0, SEEK_END);
-    size_t length = F_Tell(file);
-    F_Seek(file, currentPosition, SEEK_SET);
+    size_t currentPosition = F_Seek(hndl, 0, SEEK_END);
+    size_t length = F_Tell(hndl);
+    F_Seek(hndl, currentPosition, SEEK_SET);
     return length;
     }
 }
 
-unsigned int F_LastModified(abstractfile_t* file)
+void F_Close(DFILE* hndl)
 {
-    assert(NULL != file);
-    return file->lastModified;
-}
+    assert(NULL != hndl);
 
-/// \note This only works on real files.
-static unsigned int readLastModified(const char* path)
-{
-#ifdef UNIX
-    struct stat s;
-    stat(path, &s);
-    return s.st_mtime;
-#endif
-
-#ifdef WIN32
-    struct _stat s;
-    _stat(path, &s);
-    return s.st_mtime;
-#endif
-}
-
-abstractfile_t* F_OpenStreamLump(abstractfile_t* file, abstractfile_t* container, int lumpIdx, boolean dontBuffer)
-{
-    assert(NULL != file && NULL != container);
-    {
-    const lumpinfo_t* info = F_LumpInfo(container, lumpIdx);
-    assert(info);
-
-    // Init and load in the lump data.
-    file->flags.open = true;
-    file->hndl = NULL;
-    file->lastModified = info->lastModified;
-    if(!dontBuffer)
-    {
-        file->size = info->size;
-        file->pos = file->data = (uint8_t*)malloc(file->size);
-        if(NULL == file->data)
-            Con_Error("F_OpenStreamLump: Failed on allocation of %lu bytes for buffered data.",
-                (unsigned long) file->size);
-#if _DEBUG
-        VERBOSE2( Con_Printf("Next FILE read from F_OpenStreamLump.\n") )
-#endif
-        F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->data, 0, info->size);
-    }
-    return file;
-    }
-}
-
-abstractfile_t* F_OpenStreamFile(abstractfile_t* file, FILE* hndl, const char* path)
-{
-    assert(file && hndl && path && path[0]);
-    file->hndl = hndl;
-    file->data = NULL;
-    file->flags.open = true;
-    file->lastModified = readLastModified(path);
-    return file;
-}
-
-void F_Close(abstractfile_t* file)
-{
-    assert(NULL != file);
-
-    if(!file->flags.open)
+    if(!hndl->flags.open)
         return;
 
-    if(file->hndl)
+    if(hndl->hndl)
     {
-        fclose(file->hndl);
-        file->hndl = NULL;
+        fclose(hndl->hndl);
+        hndl->hndl = NULL;
     }
     else
     {   // Free the stored data.
-        if(file->data)
+        if(hndl->data)
         {
-            free(file->data), file->data = NULL;
+            free(hndl->data), hndl->data = NULL;
         }
     }
-    file->pos = NULL;
-    F_Release(file);
+    hndl->pos = NULL;
+    hndl->flags.open = false;
 }
 
-void F_Delete(abstractfile_t* file)
+size_t F_Read(DFILE* hndl, uint8_t* buffer, size_t count)
 {
-    assert(NULL != file);
-    F_Close(file);
-    free(file);
-}
-
-size_t F_Read(abstractfile_t* file, uint8_t* buffer, size_t count)
-{
-    assert(NULL != file);
+    assert(NULL != hndl);
     {
     size_t bytesleft;
 
-    if(!file->flags.open)
+    if(!hndl->flags.open)
         return 0;
 
-    if(file->hndl)
+    if(hndl->hndl)
     {   // Normal file.
-        count = fread(buffer, 1, count, file->hndl);
-        if(feof(file->hndl))
-            file->flags.eof = true;
+        count = fread(buffer, 1, count, hndl->hndl);
+        if(feof(hndl->hndl))
+            hndl->flags.eof = true;
         return count;
     }
 
     // Is there enough room in the file?
-    bytesleft = file->size - (file->pos - file->data);
+    bytesleft = hndl->size - (hndl->pos - hndl->data);
     if(count > bytesleft)
     {
         count = bytesleft;
-        file->flags.eof = true;
+        hndl->flags.eof = true;
     }
 
     if(count)
     {
-        memcpy(buffer, file->pos, count);
-        file->pos += count;
+        memcpy(buffer, hndl->pos, count);
+        hndl->pos += count;
     }
 
     return count;
     }
 }
 
-boolean F_AtEnd(abstractfile_t* file)
+boolean F_AtEnd(DFILE* hndl)
 {
-    assert(NULL != file);
-    return deof(file);
+    assert(NULL != hndl);
+    return deof(hndl);
 }
 
-unsigned char F_GetC(abstractfile_t* file)
+unsigned char F_GetC(DFILE* hndl)
 {
-    assert(NULL != file);
-    if(file->flags.open)
+    assert(NULL != hndl);
+    if(hndl->flags.open)
     {
         unsigned char ch = 0;
-        F_Read(file, (uint8_t*)&ch, 1);
+        F_Read(hndl, (uint8_t*)&ch, 1);
         return ch;
     }
     return 0;
 }
 
-size_t F_Tell(abstractfile_t* file)
+size_t F_Tell(DFILE* hndl)
 {
-    assert(NULL != file);
-    if(!file->flags.open)
+    assert(NULL != hndl);
+    if(!hndl->flags.open)
         return 0;
-    if(file->hndl)
-        return (size_t) ftell(file->hndl);
-    return file->pos - file->data;
+    if(hndl->hndl)
+        return (size_t) ftell(hndl->hndl);
+    return hndl->pos - hndl->data;
 }
 
-size_t F_Seek(abstractfile_t* file, size_t offset, int whence)
+size_t F_Seek(DFILE* hndl, size_t offset, int whence)
 {
-    assert(NULL != file);
+    assert(NULL != hndl);
     {
-    size_t oldpos = F_Tell(file);
+    size_t oldpos = F_Tell(hndl);
 
-    if(!file->flags.open)
+    if(!hndl->flags.open)
         return 0;
 
-    file->flags.eof = false;
-    if(file->hndl)
+    hndl->flags.eof = false;
+    if(hndl->hndl)
     {
-        fseek(file->hndl, (long) offset, whence);
+        fseek(hndl->hndl, (long) offset, whence);
     }
     else
     {
         if(whence == SEEK_SET)
-            file->pos = file->data + offset;
+            hndl->pos = hndl->data + offset;
         else if(whence == SEEK_END)
-            file->pos = file->data + (file->size + offset);
+            hndl->pos = hndl->data + (hndl->size + offset);
         else if(whence == SEEK_CUR)
-            file->pos += offset;
+            hndl->pos += offset;
     }
 
     return oldpos;
     }
 }
 
-void F_Rewind(abstractfile_t* file)
+void F_Rewind(DFILE* hndl)
 {
-    F_Seek(file, 0, SEEK_SET);
+    F_Seek(hndl, 0, SEEK_SET);
 }

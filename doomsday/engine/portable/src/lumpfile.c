@@ -117,8 +117,8 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek((abstractfile_t*)file, info->baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read((abstractfile_t*)file, buffer, length);
+    F_Seek(&file->_base._dfile, info->baseOffset + startOffset, SEEK_SET);
+    readBytes = F_Read(&file->_base._dfile, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -200,7 +200,8 @@ void LumpFile_ChangeLumpCacheTag(lumpfile_t* file, int lumpIdx, int tag)
 void LumpFile_Close(lumpfile_t* file)
 {
     assert(NULL != file);
-    F_Close((abstractfile_t*)file);
+    F_Close(&file->_base._dfile);
+    F_Release((abstractfile_t*)file);
     F_ReleaseFileId(Str_Text(&file->_base._absolutePath));
 }
 

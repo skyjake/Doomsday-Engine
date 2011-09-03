@@ -205,7 +205,7 @@ abstractfile_t* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
  * @return  The time when the file was last modified, as seconds since
  * the Epoch else zero if the file is not found.
  */
-unsigned int F_GetLastModified(const char* fileName);
+uint F_GetLastModified(const char* fileName);
 
 void F_InitializeResourcePathMap(void);
 
@@ -267,5 +267,13 @@ int F_AllResourcePaths2(const char* searchPath,
     void* paramaters);
 int F_AllResourcePaths(const char* searchPath,
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters));
+
+/**
+ * This is a case-insensitive test.
+ * I do hope this algorithm works like it should...
+ *
+ * @return  @c true, if the string matches the pattern.
+ */
+int F_MatchFileName(const char* string, const char* pattern);
 
 #endif /* LIBDENG_FILESYS_MAIN_H */
