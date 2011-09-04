@@ -876,7 +876,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
-    F_InitializeResourcePathMap();
+    F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     if(p->initiatedBusyMode)
@@ -916,12 +916,12 @@ static int DD_ChangeGameWorker(void* paramaters)
         // Data class resources.
         Str_Init(&temp);
         Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(p->info)));
-        F_AddResourcePathMapping("auto", Str_Text(&temp));
+        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
 
         // Definition class resources.
         Str_Clear(&temp);
         Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(p->info)));
-        F_AddResourcePathMapping("auto", Str_Text(&temp));
+        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
         Str_Free(&temp);
 
         addFilesFromAutoData(false);
@@ -947,7 +947,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
-    F_InitDirec();
+    F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
     Cl_InitTranslations();
 
@@ -1136,8 +1136,8 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
         // Update the dir/WAD translations.
-        F_InitDirec();
-        F_InitializeResourcePathMap();
+        F_InitLumpDirectoryMappings();
+        F_InitVirtualDirectoryMappings();
         F_ResetAllResourceNamespaces();
 
         R_InitVectorGraphics();
@@ -1517,7 +1517,7 @@ int DD_Main(void)
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
-    F_InitDirec();
+    F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     // One-time execution of various command line features available during startup.
@@ -1604,8 +1604,8 @@ int DD_Main(void)
         // Ok, lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
-        F_InitDirec();
-        F_InitializeResourcePathMap();
+        F_InitLumpDirectoryMappings();
+        F_InitVirtualDirectoryMappings();
         F_ResetAllResourceNamespaces();
 
         R_InitPatchComposites();
@@ -1649,7 +1649,7 @@ static void DD_InitResourceSystem(void)
     F_Init();
     F_InitResourceLocator();
     F_CreateNamespacesForFileResourcePaths();
-    F_InitializeResourcePathMap();
+    F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     // Initialize the definition databases.
@@ -1838,8 +1838,8 @@ void DD_UpdateEngineState(void)
     //F_ResetFileIds();
 
     // Update the dir/WAD translations.
-    F_InitDirec();
-    F_InitializeResourcePathMap();
+    F_InitLumpDirectoryMappings();
+    F_InitVirtualDirectoryMappings();
     /// Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();
 

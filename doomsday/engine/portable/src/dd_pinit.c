@@ -262,7 +262,6 @@ void DD_ShutdownAll(void)
     Materials_Shutdown();
     Def_Destroy();
     F_ShutdownResourceLocator();
-    F_ShutdownDirec();
     F_Shutdown();
     ArgShutdown();
     Z_Shutdown();

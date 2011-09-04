@@ -74,8 +74,6 @@ void F_EndStartup(void);
  */
 int F_Reset(void);
 
-void F_CloseAll(void);
-
 /**
  * Reset known fileId records so that the next time F_CheckFileId() is
  * called on a file, it will pass.
@@ -209,21 +207,23 @@ abstractfile_t* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
  */
 uint F_GetLastModified(const char* fileName);
 
-void F_InitializeResourcePathMap(void);
+void F_InitVirtualDirectoryMappings(void);
 
 /**
- * The path names are converted to full paths before adding to the table.
- * Files in the source directory are mapped to the target directory.
+ * Add a new virtual directory mapping from source to destination in the vfs.
+ * \note Paths will be transformed into absolute paths if needed.
  */
-void F_AddResourcePathMapping(const char* source, const char* destination);
+void F_AddVirtualDirectoryMapping(const char* source, const char* destination);
+
+/// \note Should be called after WADs have been processed.
+void F_InitLumpDirectoryMappings(void);
 
 /**
- * Initialize the lump directory > vfs translations.
- * \note Should be called after WADs have been processed.
+ * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
+ * throughout the vfs.
+ * \note @a symbolicPath will be transformed into an absolute path if needed.
  */
-void F_InitDirec(void);
-
-void F_ShutdownDirec(void);
+void F_AddLumpDirectoryMapping(const char* lumpName, const char* symbolicPath);
 
 /**
  * Compiles a list of PWAD file names, separated by @a delimiter.
