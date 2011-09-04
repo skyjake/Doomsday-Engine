@@ -63,11 +63,6 @@ size_t F_Length(DFILE* file);
 size_t F_Read(DFILE* file, uint8_t* buffer, size_t count);
 
 /**
- * Close the file if open. Note that this clears any previously cached data.
- */
-void F_Close(DFILE* file);
-
-/**
  * Read a character from the stream, advancing the read position in the process.
  */
 unsigned char F_GetC(DFILE* file);

@@ -90,7 +90,7 @@ boolean AbstractFile_HasStartup(abstractfile_t* file)
 void AbstractFile_SetStartup(abstractfile_t* file, boolean yes)
 {
     assert(NULL != file);
-    file->_flags.startup = true;
+    file->_flags.startup = yes;
 }
 
 boolean AbstractFile_HasIWAD(abstractfile_t* file)
@@ -102,5 +102,5 @@ boolean AbstractFile_HasIWAD(abstractfile_t* file)
 void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes)
 {
     assert(NULL != file);
-    file->_flags.iwad = true;
+    file->_flags.iwad = yes;
 }

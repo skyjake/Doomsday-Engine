@@ -99,11 +99,6 @@ boolean F_CheckFileId(const char* path);
 /// @return  @c true if the FileId associated with @a path was released.
 boolean F_ReleaseFileId(const char* path);
 
-/**
- * Frees the memory allocated to the handle.
- */
-void F_Release(abstractfile_t* file);
-
 /// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
 
@@ -150,6 +145,13 @@ lumpnum_t F_OpenAuxiliary(const char* fileName);
 
 void F_CloseAuxiliary(void);
 
+/**
+ * Close the file if open. Note that this clears any previously cached data.
+ * \todo This really doesn't sit well in the object hierarchy. Why not move
+ *      this responsibility to AbstractFile derivatives?
+ */
+void F_CloseFile(DFILE* hndl);
+
 /// @return  The name of the Zip archive where the referenced file resides.
 const char* Zip_SourceFile(lumpnum_t lumpNum);
 
@@ -187,7 +189,7 @@ int F_Access(const char* path);
  * "t" = text mode (with real files, lumps are always binary)
  * "b" = binary
  * "f" = must be a real file in the local file system.
- * "x" = just test for access (don't buffer anything)
+ * "x" = don't buffer anything
  */
 abstractfile_t* F_Open(const char* path, const char* mode);
 
@@ -238,14 +240,23 @@ uint F_CRCNumber(void);
  */
 void F_PrintLumpDirectory(void);
 
-const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx);
+/// Clear all references to this file.
+void F_ReleaseFile(abstractfile_t* file);
 
-size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
+/// Close this file; clear references and any acquired identifiers.
+void F_Close(abstractfile_t* file);
+
+/// Completely destroy this file; close if open, clear references and any acquired identifiers.
+void F_Delete(abstractfile_t* file);
+
+const lumpinfo_t* F_LumpInfo(abstractfile_t* file, int lumpIdx);
+
+size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
-const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag);
+const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx, int tag);
 
-void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag);
+void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
 
 /**
  * Write the data associated with the specified lump index to @a fileName.
@@ -255,7 +266,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag);
  *      Can be @c NULL in which case the fileName will be chosen automatically.
  * @return  @c true iff successful.
  */
-boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* fileName);
+boolean F_DumpLump(abstractfile_t* file, int lumpIdx, const char* fileName);
 
 /**
  * Parm is passed on to the callback, which is called for each file

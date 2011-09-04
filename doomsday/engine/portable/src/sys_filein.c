@@ -45,29 +45,6 @@ size_t F_Length(DFILE* hndl)
     }
 }
 
-void F_Close(DFILE* hndl)
-{
-    assert(NULL != hndl);
-
-    if(!hndl->flags.open)
-        return;
-
-    if(hndl->hndl)
-    {
-        fclose(hndl->hndl);
-        hndl->hndl = NULL;
-    }
-    else
-    {   // Free the stored data.
-        if(hndl->data)
-        {
-            free(hndl->data), hndl->data = NULL;
-        }
-    }
-    hndl->pos = NULL;
-    hndl->flags.open = false;
-}
-
 size_t F_Read(DFILE* hndl, uint8_t* buffer, size_t count)
 {
     assert(NULL != hndl);

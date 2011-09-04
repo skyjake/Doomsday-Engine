@@ -429,8 +429,8 @@ static void WadFile_ReadLumpDirectory(wadfile_t* file)
 void WadFile_Close(wadfile_t* file)
 {
     assert(NULL != file);
-    F_Close(&file->_base._dfile);
-    F_Release((abstractfile_t*)file);
+    F_CloseFile(&file->_base._dfile);
+    F_ReleaseFile((abstractfile_t*)file);
     F_ReleaseFileId(Str_Text(&file->_base._path));
 }
 

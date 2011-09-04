@@ -692,8 +692,8 @@ void ZipFile_ChangeLumpCacheTag(zipfile_t* file, int lumpIdx, int tag)
 void ZipFile_Close(zipfile_t* file)
 {
     assert(NULL != file);
-    F_Close(&file->_base._dfile);
-    F_Release((abstractfile_t*)file);
+    F_CloseFile(&file->_base._dfile);
+    F_ReleaseFile((abstractfile_t*)file);
     F_ReleaseFileId(Str_Text(&file->_base._path));
 }
 

@@ -38,7 +38,7 @@ typedef enum {
 } filetype_t;
 
 /**
- * Abstract File.  Abstract File is core component of the filesystem
+ * Abstract File.  Abstract File is a core component of the filesystem
  * intended for use as the base for all types of (pseudo-)file resources.
  *
  * @ingroup fs
@@ -128,6 +128,5 @@ int AbstractFile_LumpCount(abstractfile_t* file);
  */
 
 abstractfile_t* F_NewFile(const char* absolutePath);
-void F_Delete(abstractfile_t* file);
 
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */

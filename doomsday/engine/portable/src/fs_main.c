@@ -79,12 +79,12 @@ typedef struct fileidentifier_s {
 static boolean inited = false;
 static boolean loadingForStartup;
 
-static filehandle_t* files;
 static uint filesCount;
+static filehandle_t* files;
 
-static uint numReadFiles = 0;
-static uint maxReadFiles = 0;
-static fileidentifier_t* readFiles = 0;
+static uint fileIdentifiersCount = 0;
+static uint fileIdentifiersMax = 0;
+static fileidentifier_t* fileIdentifiers = 0;
 
 // Head of the llist of file nodes.
 static filelist_t fileList;
@@ -149,14 +149,17 @@ static uint readLastModified(const char* path)
 
 static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
 {
-    uint i = 0;
-    while(i < numReadFiles)
+    fileidentifier_t* found = NULL;
+    if(fileIdentifiersCount)
     {
-        if(!memcmp(readFiles[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
-            return &readFiles[i];
-        ++i;
+        uint i = 0;
+        do
+        {
+            if(!memcmp(fileIdentifiers[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
+                found = &fileIdentifiers[i];
+        } while(!found && ++i < fileIdentifiersCount);
     }
-    return 0;
+    return found;
 }
 
 static filehandle_t* findUsedFileHandle(void)
@@ -360,66 +363,41 @@ static lumpfile_t* newLumpFile(DFILE* hndl, abstractfile_t* fsObject, int lumpId
         loadingForStartup);
 }
 
-static void pruneLumpDirectorysByFile(abstractfile_t* fsObject)
+static int pruneLumpDirectorysByFile(abstractfile_t* fsObject)
 {
-    LumpDirectory_PruneByFile(zipLumpDirectory, fsObject);
-    LumpDirectory_PruneByFile(primaryWadLumpDirectory, fsObject);
+    int pruned = LumpDirectory_PruneByFile(zipLumpDirectory, fsObject);
+    pruned += LumpDirectory_PruneByFile(primaryWadLumpDirectory, fsObject);
     if(auxiliaryWadLumpDirectoryInUse)
-        LumpDirectory_PruneByFile(auxiliaryWadLumpDirectory, fsObject);
+        pruned += LumpDirectory_PruneByFile(auxiliaryWadLumpDirectory, fsObject);
+    return pruned;
 }
 
 static boolean removeListFile(filelist_node_t* node)
 {
     assert(NULL != node && NULL != node->fsObject);
-    switch(AbstractFile_Type(node->fsObject))
     {
-    case FT_UNKNOWNFILE: {
-        pruneLumpDirectorysByFile(node->fsObject);
-        unlinkFile(node);
-        // Close the file; we don't need it any more.
-        F_Close(AbstractFile_Handle(node->fsObject));
-        F_Release(node->fsObject);
-        F_Delete(node->fsObject);
-        break;
-      }
-    case FT_ZIPFILE: {
-        zipfile_t* zip = (zipfile_t*)node->fsObject;
+    abstractfile_t* fsObject = node->fsObject;
 
-        ZipFile_ClearLumpCache(zip);
-        pruneLumpDirectorysByFile(node->fsObject);
-        unlinkFile(node);
-        // Close the file; we don't need it any more.
-        ZipFile_Close(zip);
-        ZipFile_Delete(zip);
-        break;
-      }
-    case FT_WADFILE: {
-        wadfile_t* wad = (wadfile_t*)node->fsObject;
+    switch(AbstractFile_Type(fsObject))
+    {
+    case FT_UNKNOWNFILE: break;
 
-        WadFile_ClearLumpCache(wad);
-        pruneLumpDirectorysByFile(node->fsObject);
-        unlinkFile(node);
-        // Close the file; we don't need it any more.
-        WadFile_Close(wad);
-        WadFile_Delete(wad);
-        break;
-      }
-    case FT_LUMPFILE: {
-        lumpfile_t* lump = (lumpfile_t*)node->fsObject;
+    case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( zipfile_t*)fsObject); break;
+    case FT_WADFILE:  WadFile_ClearLumpCache( ( wadfile_t*)fsObject); break;
+    case FT_LUMPFILE: LumpFile_ClearLumpCache((lumpfile_t*)fsObject); break;
 
-        LumpFile_ClearLumpCache(lump);
-        pruneLumpDirectorysByFile(node->fsObject);
-        unlinkFile(node);
-        // Close the file; we don't need it any more.
-        LumpFile_Close(lump);
-        LumpFile_Delete(lump);
-        break;
-      }
     default:
-        Con_Error("WadCollection::removeFile: Invalid file type %i.", AbstractFile_Type(node->fsObject));
+        Con_Error("WadCollection::removeListFile: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
     }
+
+    pruneLumpDirectorysByFile(fsObject);
+    unlinkFile(node);
+    // Close the file; we don't need it any more.
+    F_Close(fsObject);
+    F_Delete(fsObject);
     return true;
+    }
 }
 
 static int directoryContainsLumpsFromFile(const lumpinfo_t* info, void* paramaters)
@@ -494,6 +472,8 @@ void F_Shutdown(void)
     ActiveWadLumpDirectory = NULL;
 
     LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
+
+    F_CloseAll();
 
     inited = false;
 }
@@ -600,22 +580,22 @@ boolean F_CheckFileId(const char* path)
         return false;
 
     // Allocate a new entry.
-    numReadFiles++;
-    if(numReadFiles > maxReadFiles)
+    fileIdentifiersCount++;
+    if(fileIdentifiersCount > fileIdentifiersMax)
     {
-        if(!maxReadFiles)
-            maxReadFiles = 16;
+        if(!fileIdentifiersMax)
+            fileIdentifiersMax = 16;
         else
-            maxReadFiles *= 2;
+            fileIdentifiersMax *= 2;
 
-        readFiles = (fileidentifier_t*)realloc(readFiles, sizeof(*readFiles) * maxReadFiles);
-        if(!readFiles)
+        fileIdentifiers = (fileidentifier_t*)realloc(fileIdentifiers, sizeof(*fileIdentifiers) * fileIdentifiersMax);
+        if(!fileIdentifiers)
             Con_Error("F_CheckFileId: Failed on (re)allocation of %lu bytes while "
-                "enlarging readFiles.", (unsigned long) (sizeof(*readFiles) * maxReadFiles));
-        memset(readFiles + numReadFiles, 0, sizeof(*readFiles) * (maxReadFiles - numReadFiles));
+                "enlarging fileIdentifiers.", (unsigned long) (sizeof(*fileIdentifiers) * fileIdentifiersMax));
+        memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers) * (fileIdentifiersMax - fileIdentifiersCount));
     }
 
-    memcpy(readFiles[numReadFiles - 1].hash, id, sizeof(id));
+    memcpy(fileIdentifiers[fileIdentifiersCount - 1].hash, id, sizeof(id));
     return true;
     }
 }
@@ -630,11 +610,11 @@ boolean F_ReleaseFileId(const char* path)
     fileIdentifier = findFileIdentifierForId(id);
     if(fileIdentifier != 0)
     {
-        size_t index = fileIdentifier - readFiles;
-        if(index < numReadFiles)
-            memmove(readFiles + index, readFiles + index + 1, numReadFiles - index - 1);
-        memset(readFiles + numReadFiles, 0, sizeof(*readFiles));
-        --numReadFiles;
+        size_t index = fileIdentifier - fileIdentifiers;
+        if(index < fileIdentifiersCount)
+            memmove(fileIdentifiers + index, fileIdentifiers + index + 1, fileIdentifiersCount - index - 1);
+        memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers));
+        --fileIdentifiersCount;
         return true;
     }
     return false;
@@ -642,7 +622,30 @@ boolean F_ReleaseFileId(const char* path)
 
 void F_ResetFileIds(void)
 {
-    numReadFiles = 0;
+    fileIdentifiersCount = 0;
+}
+
+void F_CloseFile(DFILE* hndl)
+{
+    assert(NULL != hndl);
+
+    if(!hndl->flags.open)
+        return;
+
+    if(hndl->hndl)
+    {
+        fclose(hndl->hndl);
+        hndl->hndl = NULL;
+    }
+    else
+    {   // Free the stored data.
+        if(hndl->data)
+        {
+            free(hndl->data), hndl->data = NULL;
+        }
+    }
+    hndl->pos = NULL;
+    hndl->flags.open = false;
 }
 
 void F_CloseAll(void)
@@ -660,34 +663,12 @@ void F_CloseAll(void)
     filesCount = 0;
 }
 
-void F_Release(abstractfile_t* file)
-{
-    assert(NULL != file);
-    if(files)
-    {   // Clear references to the file.
-        uint i;
-        for(i = 0; i < filesCount; ++i)
-        {
-            if(files[i].file == file)
-                files[i].file = NULL;
-        }
-    }
-}
-
 abstractfile_t* F_NewFile(const char* absolutePath)
 {
     abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
     if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
     AbstractFile_Init(file, FT_UNKNOWNFILE, absolutePath);
     return file;
-}
-
-void F_Delete(abstractfile_t* file)
-{
-    assert(NULL != file);
-    F_Close(&file->_dfile);
-    F_Release(file);
-    free(file);
 }
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
@@ -731,7 +712,7 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent)
 boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
 {
     abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
-    if(fsObject) AbstractFile_HasIWAD(fsObject);
+    if(fsObject) return AbstractFile_HasIWAD(fsObject);
     return false;
 }
 
@@ -892,6 +873,59 @@ void F_CloseAuxiliary(void)
         auxiliaryWadLumpDirectoryInUse = false;
     }
     usePrimaryDirectory();
+}
+
+void F_ReleaseFile(abstractfile_t* fsObject)
+{
+    assert(fsObject);
+    if(files)
+    {
+        uint i;
+        for(i = 0; i < filesCount; ++i)
+        {
+            if(files[i].file == fsObject)
+                files[i].file = NULL;
+        }
+    }
+}
+
+void F_Close(abstractfile_t* fsObject)
+{
+    assert(fsObject);
+    switch(AbstractFile_Type(fsObject))
+    {
+    case FT_UNKNOWNFILE:
+        F_CloseFile(AbstractFile_Handle(fsObject));
+        break;
+
+    case FT_ZIPFILE:     ZipFile_Close( ( zipfile_t*)fsObject); break;
+    case FT_WADFILE:     WadFile_Close( ( wadfile_t*)fsObject); break;
+    case FT_LUMPFILE:    LumpFile_Close((lumpfile_t*)fsObject); break;
+    default:
+        Con_Error("F_Close: Invalid file type %i.", AbstractFile_Type(fsObject));
+        exit(1); // Unreachable.
+    }
+}
+
+void F_Delete(abstractfile_t* fsObject)
+{
+    assert(fsObject);
+    switch(AbstractFile_Type(fsObject))
+    {
+    case FT_UNKNOWNFILE:
+        F_CloseFile(AbstractFile_Handle(fsObject));
+        F_ReleaseFile(fsObject);
+        Str_Free(&fsObject->_path);
+        free(fsObject);
+        break;
+
+    case FT_ZIPFILE:  ZipFile_Delete( ( zipfile_t*)fsObject); break;
+    case FT_WADFILE:  WadFile_Delete( ( wadfile_t*)fsObject); break;
+    case FT_LUMPFILE: LumpFile_Delete((lumpfile_t*)fsObject); break;
+    default:
+        Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(fsObject));
+        exit(1); // Unreachable.
+    }
 }
 
 const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
