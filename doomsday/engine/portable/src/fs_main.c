@@ -353,7 +353,7 @@ static lumpfile_t* newLumpFile(DFILE* hndl, abstractfile_t* fsObject, int lumpId
     return (lumpfile_t*) linkFile(openFromLump(file, fsObject, lumpIdx, false), loadingForStartup);
 }
 
-static int pruneLumpDirectorysByFile(abstractfile_t* fsObject)
+static int pruneLumpsFromDirectorysByFile(abstractfile_t* fsObject)
 {
     int pruned = LumpDirectory_PruneByFile(zipLumpDirectory, fsObject);
     pruned += LumpDirectory_PruneByFile(primaryWadLumpDirectory, fsObject);
@@ -381,7 +381,7 @@ static boolean removeListFile(filelist_node_t* node)
         exit(1); // Unreachable.
     }
 
-    pruneLumpDirectorysByFile(fsObject);
+    pruneLumpsFromDirectorysByFile(fsObject);
     unlinkFile(node);
     // Close the file; we don't need it any more.
     F_Close(fsObject);
@@ -483,10 +483,10 @@ void F_Shutdown(void)
     clearVDMappings();
     clearLDMappings();
 
-    clearLumpDirectorys();
-
     clearFileList(0);
     clearOpenFiles();
+
+    clearLumpDirectorys();
 
     inited = false;
 }
