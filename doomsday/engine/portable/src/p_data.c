@@ -147,7 +147,7 @@ void P_PolyobjChanged(polyobj_t* po)
 const char* P_GenerateUniqueMapID(const char* mapID)
 {
     static char uid[255];
-    lumpnum_t lumpNum = F_CheckLumpNumForName(mapID, true);
+    lumpnum_t lumpNum = F_CheckLumpNumForName2(mapID, true);
     ddstring_t fileName;
 
     Str_Init(&fileName);

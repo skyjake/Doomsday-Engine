@@ -251,6 +251,7 @@
 		<Unit filename="..\..\engine\portable\include\font.h" />
 		<Unit filename="..\..\engine\portable\include\fonts.h" />
 		<Unit filename="..\..\engine\portable\include\fs_main.h" />
+		<Unit filename="..\..\engine\portable\include\fs_util.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
@@ -530,6 +531,7 @@
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
 		<Unit filename="..\..\engine\portable\src\fonts.c" />
 		<Unit filename="..\..\engine\portable\src\fs_main.c" />
+		<Unit filename="..\..\engine\portable\src\fs_util.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />

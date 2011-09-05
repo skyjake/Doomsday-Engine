@@ -24,8 +24,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdlib.h>
 
 #include "de_base.h"
@@ -116,6 +114,7 @@ static vdmapping_t* vdMappings = NULL;
 
 static void clearLDMappings(void);
 static void clearVDMappings(void);
+static boolean applyVDMapping(ddstring_t* path, vdmapping_t* vdm);
 
 static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** foundPath);
 static abstractfile_t* findLumpFile(const char* path, int* lumpIdx);
@@ -137,22 +136,6 @@ static void errorIfNotInited(const char* callerName)
     Con_Error("%s: WAD module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
-}
-
-/// \note This only works on real files.
-static uint readLastModified(const char* path)
-{
-#ifdef UNIX
-    struct stat s;
-    stat(path, &s);
-    return s.st_mtime;
-#endif
-
-#ifdef WIN32
-    struct _stat s;
-    _stat(path, &s);
-    return s.st_mtime;
-#endif
 }
 
 static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
@@ -366,9 +349,8 @@ static lumpfile_t* newLumpFile(DFILE* hndl, abstractfile_t* fsObject, int lumpId
     const char* absolutePath, lumpname_t name, size_t lumpSize)
 {
     /// \note We don't create a filehandle_t for lump files.
-    return (lumpfile_t*) linkFile(
-        openFromLump((abstractfile_t*)LumpFile_New(absolutePath, name, lumpSize), fsObject, lumpIdx, false),
-        loadingForStartup);
+    abstractfile_t* file = (abstractfile_t*)LumpFile_New(absolutePath, name, lumpSize);
+    return (lumpfile_t*) linkFile(openFromLump(file, fsObject, lumpIdx, false), loadingForStartup);
 }
 
 static int pruneLumpDirectorysByFile(abstractfile_t* fsObject)
@@ -436,17 +418,26 @@ static __inline lumpnum_t logicalLumpNum(lumpnum_t lumpNum)
             ActiveWadLumpDirectory == auxiliaryWadLumpDirectory? lumpNum += AUXILIARY_BASE : lumpNum);
 }
 
-static void usePrimaryDirectory(void)
+static void usePrimaryWadLumpDirectory(void)
 {
     ActiveWadLumpDirectory = primaryWadLumpDirectory;
 }
 
-static boolean useAuxiliaryDirectory(void)
+static boolean useAuxiliaryWadLumpDirectory(void)
 {
     if(!auxiliaryWadLumpDirectoryInUse)
         return false;
     ActiveWadLumpDirectory = auxiliaryWadLumpDirectory;
     return true;
+}
+
+static void clearLumpDirectorys(void)
+{
+    LumpDirectory_Delete(primaryWadLumpDirectory), primaryWadLumpDirectory = NULL;
+    LumpDirectory_Delete(auxiliaryWadLumpDirectory), auxiliaryWadLumpDirectory = NULL;
+    ActiveWadLumpDirectory = NULL;
+
+    LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
 }
 
 static void clearOpenFiles(void)
@@ -487,18 +478,14 @@ void F_Shutdown(void)
 {
     if(!inited) return;
 
+    F_CloseAuxiliary();
+
     clearVDMappings();
     clearLDMappings();
 
-    F_CloseAuxiliary();
+    clearLumpDirectorys();
+
     clearFileList(0);
-
-    LumpDirectory_Delete(primaryWadLumpDirectory), primaryWadLumpDirectory = NULL;
-    LumpDirectory_Delete(auxiliaryWadLumpDirectory), auxiliaryWadLumpDirectory = NULL;
-    ActiveWadLumpDirectory = NULL;
-
-    LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
-
     clearOpenFiles();
 
     inited = false;
@@ -508,17 +495,17 @@ void F_Shutdown(void)
  * Selects which lump directory to use, given a logical lump index.
  * This should be called in all functions that access directories by lump index.
  */
-static lumpnum_t chooseDirectory(lumpnum_t lumpNum)
+static lumpnum_t chooseWadLumpDirectory(lumpnum_t lumpNum)
 {
-    errorIfNotInited("chooseDirectory");
+    errorIfNotInited("chooseWadLumpDirectory");
     if(lumpNum >= AUXILIARY_BASE)
     {
-        useAuxiliaryDirectory();
+        useAuxiliaryWadLumpDirectory();
         lumpNum -= AUXILIARY_BASE;
     }
     else
     {
-        usePrimaryDirectory();
+        usePrimaryWadLumpDirectory();
     }
     return lumpNum;
 }
@@ -527,13 +514,13 @@ void F_EndStartup(void)
 {
     errorIfNotInited("F_EndStartup");
     loadingForStartup = false;
-    usePrimaryDirectory();
+    usePrimaryWadLumpDirectory();
 }
 
 static boolean removeFile2(const char* path)
 {
     filelist_node_t* node;
-    errorIfNotInited("removeFile");
+    errorIfNotInited("removeFile2");
     node = findFileListNodeForName(path);
     if(NULL != node)
         return removeListFile(node);
@@ -685,11 +672,11 @@ abstractfile_t* F_NewFile(const char* absolutePath)
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
 {
     errorIfNotInited("F_IsValidLumpNum");
-    { lumpnum_t lumpNum = chooseDirectory(absoluteLumpNum);
+    { lumpnum_t lumpNum = chooseWadLumpDirectory(absoluteLumpNum);
     return LumpDirectory_IsValidIndex(ActiveWadLumpDirectory, lumpNum); }
 }
 
-lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent)
+lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
 {
     lumpnum_t lumpNum = -1;
     errorIfNotInited("F_CheckLumpNumForName");
@@ -698,7 +685,7 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent)
         // We have to check both the primary and auxiliary caches because
         // we've only got a name and don't know where it is located. Start with
         // the auxiliary lumps because they take precedence.
-        if(useAuxiliaryDirectory())
+        if(useAuxiliaryWadLumpDirectory())
         {
             lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, name);
         }
@@ -706,7 +693,7 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent)
         // Found it yet?
         if(lumpNum < 0)
         {
-            usePrimaryDirectory();
+            usePrimaryWadLumpDirectory();
             lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, name);
         }
 
@@ -720,25 +707,9 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent)
     return logicalLumpNum(lumpNum);
 }
 
-boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
+lumpnum_t F_CheckLumpNumForName(const char* name)
 {
-    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
-    if(fsObject) return AbstractFile_HasIWAD(fsObject);
-    return false;
-}
-
-abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
-{
-    errorIfNotInited("F_FindFileForLumpNum2");
-    { lumpnum_t translated = chooseDirectory(absoluteLumpNum);
-    if(lumpIdx) *lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, translated);
-    return LumpDirectory_SourceFile(ActiveWadLumpDirectory, translated);
-    }
-}
-
-abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
-{
-    return F_FindFileForLumpNum2(absoluteLumpNum, NULL);
+    return F_CheckLumpNumForName2(name, false); 
 }
 
 const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx_)
@@ -770,6 +741,27 @@ size_t F_LumpLength(lumpnum_t absoluteLumpNum)
     return 0;
 }
 
+uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
+{
+    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    if(info) return info->lastModified;
+    return 0;
+}
+
+abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
+{
+    errorIfNotInited("F_FindFileForLumpNum2");
+    { lumpnum_t translated = chooseWadLumpDirectory(absoluteLumpNum);
+    if(lumpIdx) *lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, translated);
+    return LumpDirectory_SourceFile(ActiveWadLumpDirectory, translated);
+    }
+}
+
+abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
+{
+    return F_FindFileForLumpNum2(absoluteLumpNum, NULL);
+}
+
 const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
 {
     abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
@@ -777,11 +769,11 @@ const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
     return "";
 }
 
-uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
+boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
 {
-    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
-    if(info) return info->lastModified;
-    return 0;
+    abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
+    if(fsObject) return AbstractFile_HasIWAD(fsObject);
+    return false;
 }
 
 int F_LumpCount(void)
@@ -815,7 +807,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
         F_PrependWorkPath(&searchPath, &searchPath);
 
         /// \todo Allow opening WAD/ZIP files from lumps in other containers.
-        file = findRealFile(Str_Text(&searchPath), "rbx", &foundPath);
+        file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
         Str_Free(&searchPath);
         if(!file)
         {
@@ -829,7 +821,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
 
         memset(&temp, 0, sizeof(temp));
         temp.flags.open = true;
-        temp.lastModified = readLastModified(Str_Text(foundPath));
+        temp.lastModified = F_LastModified(Str_Text(foundPath));
         temp.hndl = file;
         prevOpened = &temp;
     }
@@ -878,12 +870,12 @@ lumpnum_t F_OpenAuxiliary(const char* path)
 void F_CloseAuxiliary(void)
 {
     errorIfNotInited("F_CloseAuxiliary");
-    if(useAuxiliaryDirectory())
+    if(useAuxiliaryWadLumpDirectory())
     {
         clearFileList(auxiliaryWadLumpDirectory);
         auxiliaryWadLumpDirectoryInUse = false;
     }
-    usePrimaryDirectory();
+    usePrimaryWadLumpDirectory();
 }
 
 void F_ReleaseFile(abstractfile_t* fsObject)
@@ -1116,35 +1108,6 @@ uint F_GetLastModified(const char* fileName)
     return modified;
 }
 
-/// @return  @c true, if the mapping matched the path.
-boolean F_MapPath(ddstring_t* path, vdmapping_t* vdm)
-{
-    assert(NULL != path && NULL != vdm);
-    if(!strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
-    {
-        // Replace the beginning with the source path.
-        ddstring_t temp;
-        Str_Init(&temp);
-        Str_Set(&temp, Str_Text(&vdm->source));
-        Str_PartAppend(&temp, Str_Text(path), Str_Length(&vdm->destination), Str_Length(path) - Str_Length(&vdm->destination));
-        Str_Copy(path, &temp);
-        Str_Free(&temp);
-        return true;
-    }
-    return false;
-}
-
-typedef struct {
-    /// Callback to make for each processed node.
-    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters);
-
-    /// Data passed to the callback.
-    void* paramaters;
-
-    /// Current search pattern.
-    const ddstring_t* pattern;
-} findzipfileworker_paramaters_t;
-
 typedef struct foundentry_s {
     ddstring_t path;
     int attrib;
@@ -1173,7 +1136,7 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
         Str_Copy(&wildPath, &origWildPath);
 
         // Possible mapping?
-        if(i >= 0 && !F_MapPath(&wildPath, &vdMappings[i]))
+        if(i >= 0 && !applyVDMapping(&wildPath, &vdMappings[i]))
             continue; // Not mapped.
 
         if(!myfindfirst(Str_Text(&wildPath), &fd))
@@ -1263,11 +1226,22 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
     }
 }
 
-static int findZipFileWorker(const lumpinfo_t* lumpInfo, void* paramaters)
+typedef struct {
+    /// Callback to make for each processed node.
+    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters);
+
+    /// Data passed to the callback.
+    void* paramaters;
+
+    /// Current search pattern.
+    const ddstring_t* pattern;
+} findziplumpworker_paramaters_t;
+
+static int findZipLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
 {
     assert(NULL != lumpInfo && NULL != paramaters);
     {
-    findzipfileworker_paramaters_t* p = (findzipfileworker_paramaters_t*)paramaters;
+    findziplumpworker_paramaters_t* p = (findziplumpworker_paramaters_t*)paramaters;
     if(F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(p->pattern)))
     {
         return p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
@@ -1294,12 +1268,12 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
     F_PrependBasePath(&searchPattern, &searchPattern);
 
     // Check the Zip directory.
-    { findzipfileworker_paramaters_t p;
+    { findziplumpworker_paramaters_t p;
     p.callback = callback;
     p.paramaters = paramaters;
     p.pattern = &searchPattern;
 
-    result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findZipFileWorker, (void*)&p);
+    result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findZipLumpWorker, (void*)&p);
     if(0 != result)
     {   // Find didn't finish.
         goto searchEnded;
@@ -1384,7 +1358,7 @@ static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** fou
     for(i = 0; i < vdMappingsCount; ++i)
     {
         Str_Set(mapped, path);
-        if(!F_MapPath(mapped, &vdMappings[i]))
+        if(!applyVDMapping(mapped, &vdMappings[i]))
             continue;
         // The mapping was successful.
         file = fopen(Str_Text(mapped), mode);
@@ -1443,34 +1417,15 @@ static abstractfile_t* findLumpFile(const char* path, int* lumpIdx)
         for(i = 0; i < ldMappingsCount; ++i)
         {
             ldmapping_t* rec = &ldMappings[i];
-            if(!Str_CompareIgnoreCase(&rec->path, Str_Text(&absSearchPath)))
-            {
-                lumpnum_t lumpNum = -1;
+            lumpnum_t absoluteLumpNum;
 
-                // We have to check both the primary and auxiliary caches because
-                // we've only got a name and don't know where it is located. Start with
-                // the auxiliary lumps because they take precedence.
-                if(useAuxiliaryDirectory())
-                {
-                    lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, rec->lumpName);
-                }
+            if(Str_CompareIgnoreCase(&rec->path, Str_Text(&absSearchPath))) continue;
 
-                // Found it yet?
-                if(lumpNum < 0)
-                {
-                    usePrimaryDirectory();
-                    lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, rec->lumpName);
-                }
+            absoluteLumpNum = F_CheckLumpNumForName2(rec->lumpName, true);
+            if(absoluteLumpNum < 0) continue;
 
-                if(lumpNum >= 0)
-                {
-                    abstractfile_t* fsObject = LumpDirectory_SourceFile(ActiveWadLumpDirectory, lumpNum);
-                    if(lumpIdx)
-                        *lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, lumpNum);
-                    Str_Free(&absSearchPath);
-                    return fsObject;
-                }
-            }
+            Str_Free(&absSearchPath);
+            return F_FindFileForLumpNum2(absoluteLumpNum, lumpIdx);
         }
     }
 
@@ -1532,7 +1487,7 @@ abstractfile_t* F_Open(const char* path, const char* mode)
     Str_Free(&searchPath);
     if(file)
     {
-        abstractfile_t* fsObject = openFromFile(getFreeFile(Str_Text(foundPath)), file, readLastModified(Str_Text(foundPath)));
+        abstractfile_t* fsObject = openFromFile(getFreeFile(Str_Text(foundPath)), file, F_LastModified(Str_Text(foundPath)));
         Str_Delete(foundPath);
         return fsObject;
     }
@@ -1550,6 +1505,259 @@ int F_Access(const char* path)
         return true;
     }
     return false;
+}
+
+static abstractfile_t* tryAddLump(abstractfile_t* fsObject, int lumpIdx,
+    const char* absolutePath, boolean isDehackedPatch)
+{
+    const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
+    lumpname_t name;
+
+    errorIfNotInited("tryAddLump");
+
+    // Prepare the name of this single-lump file.
+    if(isDehackedPatch)
+    {
+        strncpy(name, "DEHACKED", LUMPNAME_T_MAXLEN);
+    }
+    else
+    {
+        // Is there a prefix to be omitted in the name?
+        char* slash = strrchr(absolutePath, DIR_SEP_CHAR);
+        int offset = 0;
+        // The slash must not be too early in the string.
+        if(slash && slash >= absolutePath + 2)
+        {
+            // Good old negative indices.
+            if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
+            {
+                offset = slash[-1] - '1' + 1;
+            }
+        }
+        F_ExtractFileBase2(name, absolutePath, LUMPNAME_T_MAXLEN, offset);
+    }
+
+    return (abstractfile_t*)newLumpFile(NULL, fsObject, lumpIdx, absolutePath, name, info->size);
+}
+
+static abstractfile_t* tryAddZipFile(DFILE* handle, const char* absolutePath)
+{
+    zipfile_t* zip = NULL;
+    errorIfNotInited("tryAddZipFile");
+    if(ZipFile_Recognise(handle))
+    {
+        // Get a new file record.
+        zip = newZipFile(handle, absolutePath);
+    }
+    return (abstractfile_t*)zip;
+}
+
+static abstractfile_t* tryAddWadFile(DFILE* handle, const char* absolutePath)
+{
+    wadfile_t* wad = NULL;
+    errorIfNotInited("tryAddWadFile");
+    if(WadFile_Recognise(handle))
+    {
+        // Get a new file record.
+        wad = newWadFile(handle, absolutePath);
+    }
+    return (abstractfile_t*)wad;
+}
+
+static abstractfile_t* tryAddFile(DFILE* handle, const char* absolutePath)
+{
+    assert(NULL != handle && NULL != absolutePath && absolutePath[0]);
+    {
+    struct filehandler_s {
+        resourcetype_t resourceType;
+        abstractfile_t* (*tryAddFile)(DFILE* handle, const char* absolutePath);
+    } static const handlers[] = {
+        { RT_ZIP,  tryAddZipFile },
+        { RT_WAD,  tryAddWadFile },
+        { RT_NONE, NULL }
+    }, *hdlr = NULL;
+    resourcetype_t resourceType = F_GuessResourceTypeByName(absolutePath);
+    abstractfile_t* fsObject = NULL;
+
+    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(absolutePath)) )
+
+    // Firstly try the expected format given the file name.
+    for(hdlr = handlers; NULL != hdlr->tryAddFile; hdlr++)
+    {
+        if(hdlr->resourceType != resourceType) continue;
+
+        fsObject = hdlr->tryAddFile(handle, absolutePath);
+        break;
+    }
+
+    // If not yet loaded; try each recognisable format.
+    /// \todo Order here should be determined by the resource locator.
+    { int n = 0;
+    while(NULL == fsObject && NULL != handlers[n].tryAddFile)
+    {
+        if(hdlr != &handlers[n]) // We already know its not in this format.
+        {
+            fsObject = handlers[n].tryAddFile(handle, absolutePath);
+        }
+        ++n;
+    }}
+    return fsObject;
+    }
+}
+
+static abstractfile_t* F_AddFile2(const char* fileName, boolean allowDuplicate)
+{
+    abstractfile_t* fsObject;
+    ddstring_t searchPath, *foundPath;
+    int lumpIdx;
+    DFILE temp;
+    FILE* file;
+
+    // Filename given?
+    if(!fileName || !fileName[0])
+        return NULL;
+
+    // Make it a full fileName.
+    Str_Init(&searchPath); Str_Set(&searchPath, fileName);
+    F_FixSlashes(&searchPath, &searchPath);
+    F_ExpandBasePath(&searchPath, &searchPath);
+
+    // First check for lumps?
+    fsObject = findLumpFile(Str_Text(&searchPath), &lumpIdx);
+    if(fsObject)
+    {
+        resourcetype_t type;
+
+        // Do not read files twice.
+        if(!allowDuplicate && !F_CheckFileId(fileName))
+        {
+            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
+            return NULL;
+        }
+
+        // DeHackEd patch files require special handling...
+        type = F_GuessResourceTypeByName(fileName);
+
+        fsObject = (abstractfile_t*)tryAddLump(fsObject, lumpIdx, Str_Text(&searchPath), (type == RT_DEH));
+        Str_Free(&searchPath);
+        return fsObject;
+    }
+
+    // Try to open as a real file then. We must have an absolute path, so
+    // prepend the current working directory if necessary.
+    F_PrependWorkPath(&searchPath, &searchPath);
+    file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
+    if(!file)
+    {
+        Str_Free(&searchPath);
+        Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
+        return NULL;
+    }
+
+    // Do not read files twice.
+    if(!allowDuplicate && !F_CheckFileId(Str_Text(foundPath)))
+    {
+        Str_Free(&searchPath);
+        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(Str_Text(foundPath)));
+        return NULL;
+    }
+
+    memset(&temp, 0, sizeof(temp));
+    temp.flags.open = true;
+    temp.hndl = file;
+    temp.lastModified = F_LastModified(Str_Text(foundPath));
+
+    // Search path is used here rather than found path as the latter may have
+    // been mapped to another location. We want the file to be attributed with
+    // the path it is to be known by throughout the virtual file system.
+    fsObject = tryAddFile(&temp, Str_Text(&searchPath));
+    Str_Free(&searchPath);
+    Str_Delete(foundPath);
+    return fsObject;
+}
+
+boolean F_AddFile(const char* fileName, boolean allowDuplicate)
+{
+    abstractfile_t* fsObject = F_AddFile2(fileName, allowDuplicate);
+    if(!fsObject) return false;
+
+    // Publish lumps to one or more LumpDirectorys.
+    switch(AbstractFile_Type(fsObject))
+    {
+    case FT_ZIPFILE:
+        ZipFile_PublishLumpsToDirectory((zipfile_t*)fsObject, zipLumpDirectory);
+        break;
+    case FT_WADFILE: {
+        wadfile_t* wad = (wadfile_t*)fsObject;
+        WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
+        // Print the 'CRC' number of the IWAD, so it can be identified.
+        /// \todo Do not do this here.
+        if(AbstractFile_HasIWAD(fsObject))
+            Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
+        break;
+      }
+    case FT_LUMPFILE:
+        LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
+        break;
+    default:
+        Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
+        exit(1); // Unreachable.
+    }
+    return true;
+}
+
+boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(F_AddFile(filenames[i], allowDuplicate))
+        {
+            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been loaded.
+        }
+        else
+            Con_Message("Warning: Errors occured while loading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
+}
+
+boolean F_RemoveFile(const char* path)
+{
+    boolean unloadedResources = removeFile(path);
+    if(unloadedResources)
+        DD_UpdateEngineState();
+    return unloadedResources;
+}
+
+boolean F_RemoveFiles(const char* const* filenames, size_t num)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(removeFile(filenames[i]))
+        {
+            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been unloaded.
+        }
+        else
+            Con_Message("Warning: Errors occured while unloading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
 }
 
 static void clearLDMappings(void)
@@ -1771,259 +1979,6 @@ void F_InitLumpDirectoryMappings(void)
     inited = true;
 }
 
-static abstractfile_t* tryAddLump(abstractfile_t* fsObject, int lumpIdx,
-    const char* absolutePath, boolean isDehackedPatch)
-{
-    const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
-    lumpname_t name;
-
-    errorIfNotInited("tryAddLump");
-
-    // Prepare the name of this single-lump file.
-    if(isDehackedPatch)
-    {
-        strncpy(name, "DEHACKED", LUMPNAME_T_MAXLEN);
-    }
-    else
-    {
-        // Is there a prefix to be omitted in the name?
-        char* slash = strrchr(absolutePath, DIR_SEP_CHAR);
-        int offset = 0;
-        // The slash must not be too early in the string.
-        if(slash && slash >= absolutePath + 2)
-        {
-            // Good old negative indices.
-            if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
-            {
-                offset = slash[-1] - '1' + 1;
-            }
-        }
-        F_ExtractFileBase2(name, absolutePath, LUMPNAME_T_MAXLEN, offset);
-    }
-
-    return (abstractfile_t*)newLumpFile(NULL, fsObject, lumpIdx, absolutePath, name, info->size);
-}
-
-static abstractfile_t* tryAddZipFile(DFILE* handle, const char* absolutePath)
-{
-    zipfile_t* zip = NULL;
-    errorIfNotInited("tryAddZipFile");
-    if(ZipFile_Recognise(handle))
-    {
-        // Get a new file record.
-        zip = newZipFile(handle, absolutePath);
-    }
-    return (abstractfile_t*)zip;
-}
-
-static abstractfile_t* tryAddWadFile(DFILE* handle, const char* absolutePath)
-{
-    wadfile_t* wad = NULL;
-    errorIfNotInited("tryAddWadFile");
-    if(WadFile_Recognise(handle))
-    {
-        // Get a new file record.
-        wad = newWadFile(handle, absolutePath);
-    }
-    return (abstractfile_t*)wad;
-}
-
-static abstractfile_t* tryAddFile(DFILE* handle, const char* absolutePath)
-{
-    assert(NULL != handle && NULL != absolutePath && absolutePath[0]);
-    {
-    struct filehandler_s {
-        resourcetype_t resourceType;
-        abstractfile_t* (*tryAddFile)(DFILE* handle, const char* absolutePath);
-    } static const handlers[] = {
-        { RT_ZIP,  tryAddZipFile },
-        { RT_WAD,  tryAddWadFile },
-        { RT_NONE, NULL }
-    }, *hdlr = NULL;
-    resourcetype_t resourceType = F_GuessResourceTypeByName(absolutePath);
-    abstractfile_t* fsObject = NULL;
-
-    VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(absolutePath)) )
-
-    // Firstly try the expected format given the file name.
-    for(hdlr = handlers; NULL != hdlr->tryAddFile; hdlr++)
-    {
-        if(hdlr->resourceType != resourceType) continue;
-
-        fsObject = hdlr->tryAddFile(handle, absolutePath);
-        break;
-    }
-
-    // If not yet loaded; try each recognisable format.
-    /// \todo Order here should be determined by the resource locator.
-    { int n = 0;
-    while(NULL == fsObject && NULL != handlers[n].tryAddFile)
-    {
-        if(hdlr != &handlers[n]) // We already know its not in this format.
-        {
-            fsObject = handlers[n].tryAddFile(handle, absolutePath);
-        }
-        ++n;
-    }}
-    return fsObject;
-    }
-}
-
-static abstractfile_t* F_AddFile2(const char* fileName, boolean allowDuplicate)
-{
-    abstractfile_t* fsObject;
-    ddstring_t searchPath, *foundPath;
-    int lumpIdx;
-    DFILE temp;
-    FILE* file;
-
-    // Filename given?
-    if(!fileName || !fileName[0])
-        return NULL;
-
-    // Make it a full fileName.
-    Str_Init(&searchPath); Str_Set(&searchPath, fileName);
-    F_FixSlashes(&searchPath, &searchPath);
-    F_ExpandBasePath(&searchPath, &searchPath);
-
-    // First check for lumps?
-    fsObject = findLumpFile(Str_Text(&searchPath), &lumpIdx);
-    if(fsObject)
-    {
-        resourcetype_t type;
-
-        // Do not read files twice.
-        if(!allowDuplicate && !F_CheckFileId(fileName))
-        {
-            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
-            return NULL;
-        }
-
-        // DeHackEd patch files require special handling...
-        type = F_GuessResourceTypeByName(fileName);
-
-        fsObject = (abstractfile_t*)tryAddLump(fsObject, lumpIdx, Str_Text(&searchPath), (type == RT_DEH));
-        Str_Free(&searchPath);
-        return fsObject;
-    }
-
-    // Try to open as a real file then. We must have an absolute path, so
-    // prepend the current working directory if necessary.
-    F_PrependWorkPath(&searchPath, &searchPath);
-    file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
-    if(!file)
-    {
-        Str_Free(&searchPath);
-        Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
-        return NULL;
-    }
-
-    // Do not read files twice.
-    if(!allowDuplicate && !F_CheckFileId(Str_Text(foundPath)))
-    {
-        Str_Free(&searchPath);
-        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(Str_Text(foundPath)));
-        return NULL;
-    }
-
-    memset(&temp, 0, sizeof(temp));
-    temp.flags.open = true;
-    temp.hndl = file;
-    temp.lastModified = readLastModified(Str_Text(foundPath));
-
-    // Search path is used here rather than found path as the latter may have
-    // been mapped to another location. We want the file to be attributed with
-    // the path it is to be known by throughout the virtual file system.
-    fsObject = tryAddFile(&temp, Str_Text(&searchPath));
-    Str_Free(&searchPath);
-    Str_Delete(foundPath);
-    return fsObject;
-}
-
-boolean F_AddFile(const char* fileName, boolean allowDuplicate)
-{
-    abstractfile_t* fsObject = F_AddFile2(fileName, allowDuplicate);
-    if(!fsObject) return false;
-
-    // Publish lumps to one or more LumpDirectorys.
-    switch(AbstractFile_Type(fsObject))
-    {
-    case FT_ZIPFILE:
-        ZipFile_PublishLumpsToDirectory((zipfile_t*)fsObject, zipLumpDirectory);
-        break;
-    case FT_WADFILE: {
-        wadfile_t* wad = (wadfile_t*)fsObject;
-        WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
-        // Print the 'CRC' number of the IWAD, so it can be identified.
-        /// \todo Do not do this here.
-        if(AbstractFile_HasIWAD(fsObject))
-            Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
-        break;
-      }
-    case FT_LUMPFILE:
-        LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
-        break;
-    default:
-        Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
-        exit(1); // Unreachable.
-    }
-    return true;
-}
-
-boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
-{
-    boolean succeeded = false;
-    { size_t i;
-    for(i = 0; i < num; ++i)
-    {
-        if(F_AddFile(filenames[i], allowDuplicate))
-        {
-            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(filenames[i])) );
-            succeeded = true; // At least one has been loaded.
-        }
-        else
-            Con_Message("Warning: Errors occured while loading %s\n", filenames[i]);
-    }}
-
-    // A changed file list may alter the main lump directory.
-    if(succeeded)
-    {
-        DD_UpdateEngineState();
-    }
-    return succeeded;
-}
-
-boolean F_RemoveFile(const char* path)
-{
-    boolean unloadedResources = removeFile(path);
-    if(unloadedResources)
-        DD_UpdateEngineState();
-    return unloadedResources;
-}
-
-boolean F_RemoveFiles(const char* const* filenames, size_t num)
-{
-    boolean succeeded = false;
-    { size_t i;
-    for(i = 0; i < num; ++i)
-    {
-        if(removeFile(filenames[i]))
-        {
-            VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) );
-            succeeded = true; // At least one has been unloaded.
-        }
-        else
-            Con_Message("Warning: Errors occured while unloading %s\n", filenames[i]);
-    }}
-
-    // A changed file list may alter the main lump directory.
-    if(succeeded)
-    {
-        DD_UpdateEngineState();
-    }
-    return succeeded;
-}
-
 static void clearVDMappings(void)
 {
     if(vdMappings)
@@ -2038,6 +1993,24 @@ static void clearVDMappings(void)
         free(vdMappings); vdMappings = 0;
     }
     vdMappingsCount = vdMappingsMax = 0;
+}
+
+/// @return  @c true, if the mapping matched the path.
+static boolean applyVDMapping(ddstring_t* path, vdmapping_t* vdm)
+{
+    assert(NULL != path && NULL != vdm);
+    if(!strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
+    {
+        // Replace the beginning with the source path.
+        ddstring_t temp;
+        Str_Init(&temp);
+        Str_Set(&temp, Str_Text(&vdm->source));
+        Str_PartAppend(&temp, Str_Text(path), Str_Length(&vdm->destination), Str_Length(path) - Str_Length(&vdm->destination));
+        Str_Copy(path, &temp);
+        Str_Free(&temp);
+        return true;
+    }
+    return false;
 }
 
 static vdmapping_t* findVDMappingForSourcePath(const char* source)
@@ -2126,40 +2099,6 @@ void F_InitVirtualDirectoryMappings(void)
             i += 2;
         }
     }}
-}
-
-int F_MatchFileName(const char* string, const char* pattern)
-{
-    const char* in = string, *st = pattern;
-
-    while(*in)
-    {
-        if(*st == '*')
-        {
-            st++;
-            continue;
-        }
-
-        if(*st != '?' && (tolower((unsigned char) *st) != tolower((unsigned char) *in)))
-        {
-            // A mismatch. Hmm. Go back to a previous '*'.
-            while(st >= pattern && *st != '*')
-                st--;
-            if(st < pattern)
-                return false; // No match!
-            // The asterisk lets us continue.
-        }
-
-        // This character of the pattern is OK.
-        st++;
-        in++;
-    }
-
-    // Match is good if the end of the pattern was reached.
-    while(*st == '*')
-        st++; // Skip remaining asterisks.
-
-    return *st == 0;
 }
 
 static int C_DECL compareFileNodeByFilePath(const void* a_, const void* b_)
@@ -2265,7 +2204,7 @@ D_CMD(DumpLump)
 {
     if(inited)
     {
-        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(argv[1], true);
+        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName2(argv[1], true);
         if(absoluteLumpNum >= 0)
         {
             int lumpIdx;

@@ -127,7 +127,8 @@ abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
 const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
 
-lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
+lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent);
+lumpnum_t F_CheckLumpNumForName(const char* name);
 
 /**
  * Try to open the specified WAD archive into the auxiliary lump cache.
@@ -278,13 +279,5 @@ int F_AllResourcePaths2(const char* searchPath,
     void* paramaters);
 int F_AllResourcePaths(const char* searchPath,
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters));
-
-/**
- * This is a case-insensitive test.
- * I do hope this algorithm works like it should...
- *
- * @return  @c true, if the string matches the pattern.
- */
-int F_MatchFileName(const char* string, const char* pattern);
 
 #endif /* LIBDENG_FILESYS_MAIN_H */

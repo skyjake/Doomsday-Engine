@@ -1018,7 +1018,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
         else
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(Uri_Path(dTex->filePath)), true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
             if(lumpNum >= 0)
             {
                 abstractfile_t* file = F_OpenLump(lumpNum, false);

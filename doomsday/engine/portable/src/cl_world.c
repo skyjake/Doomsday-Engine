@@ -109,7 +109,7 @@ void Cl_SetLumpTranslation(lumpnum_t lumpNum, char *name)
     if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
         return; // Can't do it, sir! We just don't the power!!
 
-    xlat_lump[lumpNum] = F_CheckLumpNumForName(name, true);
+    xlat_lump[lumpNum] = F_CheckLumpNumForName2(name, true);
     if(xlat_lump[lumpNum] < 0)
     {
         VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));

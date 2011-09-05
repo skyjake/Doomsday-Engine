@@ -511,7 +511,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
         const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
         for(; result && *lumpNames; lumpNames++)
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(*lumpNames), true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
             if(lumpNum == -1)
             {
                 result = false;
@@ -1524,7 +1524,7 @@ int DD_Main(void)
     if(ArgCheckWith("-dumplump", 1))
     {
         const char* name = ArgNext();
-        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name, false);
+        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
             int lumpIdx;

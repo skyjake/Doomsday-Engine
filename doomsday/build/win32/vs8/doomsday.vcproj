@@ -1125,6 +1125,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\fs_util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\gameinfo.h"
 				>
 			</File>
@@ -2472,6 +2476,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\fs_main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\fs_util.c"
 				>
 			</File>
 			<File

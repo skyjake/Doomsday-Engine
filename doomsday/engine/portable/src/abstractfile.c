@@ -23,8 +23,8 @@
  */
 
 #include "de_base.h"
+#include "de_filesys.h"
 
-#include "sys_reslocator.h"
 #include "abstractfile.h"
 
 void AbstractFile_Init(abstractfile_t* file, filetype_t type, const char* absolutePath)

@@ -98,7 +98,7 @@ lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent)
             VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") )
         return -1;
     }
-    lumpNum = F_CheckLumpNumForName(name, true);
+    lumpNum = F_CheckLumpNumForName2(name, true);
     if(!silent && lumpNum < 0)
         VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
     return lumpNum;

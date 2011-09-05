@@ -478,7 +478,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             if(iMusic)
             {
                 lumpnum_t absoluteLumpNum;
-                if(def->lumpName && -1 != (absoluteLumpNum = F_CheckLumpNumForName(def->lumpName, true)))
+                if(def->lumpName && -1 != (absoluteLumpNum = F_CheckLumpNumForName2(def->lumpName, true)))
                 {
                     ddstring_t* fileName = NULL;
                     abstractfile_t* fsObject;
@@ -586,7 +586,7 @@ D_CMD(PlayMusic)
     case 3:
         if(!stricmp(argv[1], "lump"))
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName(argv[2], true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(argv[2], true);
             abstractfile_t* fsObject;
             size_t lumpLength;
             uint8_t* ptr;

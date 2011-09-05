@@ -1104,7 +1104,7 @@ patchid_t R_RegisterPatch(const char* name)
     if(0 != id)
         return id;
 
-    lumpNum = F_CheckLumpNumForName(name, true);
+    lumpNum = F_CheckLumpNumForName2(name, true);
     if(lumpNum < 0)
     {
         Con_Message("Warning:R_RegisterPatch: Failed to locate lump for patch '%s'.\n", name);
@@ -1532,7 +1532,7 @@ typedef struct {
 
                     if(!pinfo->flags.processed)
                     {
-                        pinfo->lumpNum = F_CheckLumpNumForName(*(patchNames + patchNum), true);
+                        pinfo->lumpNum = F_CheckLumpNumForName2(*(patchNames + patchNum), true);
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
@@ -1582,7 +1582,7 @@ typedef struct {
 
                     if(!pinfo->flags.processed)
                     {
-                        pinfo->lumpNum = F_CheckLumpNumForName(*(patchNames + patchNum), true);
+                        pinfo->lumpNum = F_CheckLumpNumForName2(*(patchNames + patchNum), true);
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
@@ -1758,7 +1758,7 @@ static void loadPatchCompositeDefs(void)
     int numPatchNames;
     boolean firstNull;
 
-    if(-1 == (pnamesLump = F_CheckLumpNumForName("PNAMES", true)))
+    if(-1 == (pnamesLump = F_CheckLumpNumForName2("PNAMES", true)))
         return;
 
     // Load the patch names from the PNAMES lump.
