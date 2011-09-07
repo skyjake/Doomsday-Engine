@@ -468,11 +468,22 @@ void G_CommonPreInit(void)
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
     // Setup the players.
-    { int i;
+    { int i, j;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        players[i].plr = DD_GetPlayer(i);
-        players[i].plr->extraData = (void*) &players[i];
+        player_t* pl = players + i;
+
+        pl->plr = DD_GetPlayer(i);
+        pl->plr->extraData = (void*) &players[i];
+
+        /// \todo Only necessary because the engine does not yet unload game
+        /// plugins when they are not in use; thus a game change may leave
+        /// these pointers dangling.
+        for(j = 0; j < NUMPSPRITES; ++j)
+        {
+            pl->pSprites[j].state = NULL;
+            pl->plr->pSprites[j].statePtr = NULL;
+        }
     }}
 
     G_RegisterBindClasses();
