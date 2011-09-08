@@ -2429,7 +2429,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
-           F_AddFile(Str_Text(&foundPath), true))
+           F_AddFile(Str_Text(&foundPath), false))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
