@@ -456,42 +456,6 @@ static void clearOpenFiles(void)
     filesCount = 0;
 }
 
-void F_Init(void)
-{
-    if(inited) return; // Already been here.
-
-    // This'll force the loader NOT to flag new files as "runtime".
-    loadingForStartup = true;
-
-    fileList = NULL;
-    zipLumpDirectory = LumpDirectory_New();
-
-    primaryWadLumpDirectory   = LumpDirectory_New();
-    auxiliaryWadLumpDirectory = LumpDirectory_New();
-    auxiliaryWadLumpDirectoryInUse = false;
-
-    ActiveWadLumpDirectory = primaryWadLumpDirectory;
-
-    inited = true;
-}
-
-void F_Shutdown(void)
-{
-    if(!inited) return;
-
-    F_CloseAuxiliary();
-
-    clearVDMappings();
-    clearLDMappings();
-
-    clearFileList(0);
-    clearOpenFiles();
-
-    clearLumpDirectorys();
-
-    inited = false;
-}
-
 /**
  * Selects which lump directory to use, given a logical lump index.
  * This should be called in all functions that access directories by lump index.
@@ -511,13 +475,6 @@ static lumpnum_t chooseWadLumpDirectory(lumpnum_t lumpNum)
     return lumpNum;
 }
 
-void F_EndStartup(void)
-{
-    errorIfNotInited("F_EndStartup");
-    loadingForStartup = false;
-    usePrimaryWadLumpDirectory();
-}
-
 static boolean removeFile2(const char* path)
 {
     filelist_node_t* node;
@@ -534,86 +491,28 @@ static boolean removeFile(const char* path)
     return removeFile2(path);
 }
 
+static void clearFileIds(void)
+{
+    if(fileIdentifiers)
+    {
+        free(fileIdentifiers), fileIdentifiers = NULL;
+    }
+    if(fileIdentifiersCount)
+    {
+        fileIdentifiersCount = fileIdentifiersMax = 0;
+    }
+}
+
 #if _DEBUG
-static void printIdentifier(byte identifier[FILEIDENTIFIERID_T_MAXLEN])
+static void F_PrintFileId(byte identifier[16])
 {
     assert(identifier);
     { uint i;
-    for(i = 0; i < FILEIDENTIFIERID_T_MAXLEN; ++i)
+    for(i = 0; i < 16; ++i)
         Con_Printf("%02x", identifier[i]);
     }
 }
 #endif
-
-int F_Reset(void)
-{
-    int unloaded = 0;
-    if(inited)
-    {
-#if _DEBUG
-        // List all open files with their identifiers.
-        if(verbose >= 1)
-        {
-            uint i;
-            fileidentifierid_t id;
-            Con_Printf("Open files at reset:\n");
-            for(i = 0; i < filesCount; ++i)
-            {
-                filehandle_t* hndl = files + i;
-                if(!hndl->file) continue;
-                F_GenerateFileId(Str_Text(AbstractFile_Path(hndl->file)), id);
-                
-                Con_Printf(" %c%u: ", AbstractFile_HasStartup(hndl->file)? '*':' ', i);
-                printIdentifier(id);
-                Con_Printf(" - \"%s\"\n", F_PrettyPath(Str_Text(AbstractFile_Path(hndl->file))));
-            }
-            Con_Printf("End\n");
-        }
-#endif
-
-        // Perform non-startup file unloading...
-        { filelist_node_t* next, *node = fileList;
-        while(node)
-        {
-            next = node->next;
-            if(!AbstractFile_HasStartup(node->fsObject))
-            {
-                if(removeFile2(Str_Text(AbstractFile_Path(node->fsObject))))
-                {
-                    ++unloaded;
-                }
-            }
-            node = next;
-        }}
-
-#if _DEBUG
-        // Sanity check: look for dangling identifiers.
-        { uint i;
-        fileidentifierid_t nullId;
-        memset(nullId, 0, sizeof(nullId));
-        for(i = 0; i < fileIdentifiersCount; ++i)
-        {
-            fileidentifier_t* id = fileIdentifiers + i;
-            if(!memcmp(id->hash, &nullId, FILEIDENTIFIERID_T_LASTINDEX)) continue;
-
-            Con_Printf("Warning: Dangling file identifier: ");
-            printIdentifier(id->hash);
-            Con_Printf("\n");
-        }}
-#endif
-
-        // Reset file IDs so previously seen files can be processed again.
-        /// \fixme this releases the ID of startup files too but given the
-        /// only startup file is doomsday.pk3 which we never attempt to load
-        /// again post engine startup, this isn't an immediate problem.
-        F_ResetFileIds();
-
-        // Update the dir/WAD translations.
-        F_InitLumpDirectoryMappings();
-        F_InitVirtualDirectoryMappings();
-    }
-    return unloaded;
-}
 
 void F_GenerateFileId(const char* str, byte identifier[16])
 {
@@ -668,6 +567,12 @@ boolean F_CheckFileId(const char* path)
         memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers) * (fileIdentifiersMax - fileIdentifiersCount));
     }
 
+#if _DEBUG
+    VERBOSE(
+        Con_Printf("Added file identifier ");
+        F_PrintFileId(id);
+        Con_Printf(" - \"%s\"\n", F_PrettyPath(path)) )
+#endif
     memcpy(fileIdentifiers[fileIdentifiersCount - 1].hash, id, sizeof(id));
     return true;
     }
@@ -690,6 +595,13 @@ boolean F_ReleaseFileId(const char* path)
                 memmove(fileIdentifiers + index, fileIdentifiers + index + 1, fileIdentifiersCount - index - 1);
             memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers));
             --fileIdentifiersCount;
+
+#if _DEBUG
+            VERBOSE(
+                Con_Printf("Released file identifier ");
+                F_PrintFileId(id);
+                Con_Printf(" - \"%s\"\n", F_PrettyPath(path)) )
+#endif
             return true;
         }
     }
@@ -699,6 +611,120 @@ boolean F_ReleaseFileId(const char* path)
 void F_ResetFileIds(void)
 {
     fileIdentifiersCount = 0;
+}
+
+void F_Init(void)
+{
+    if(inited) return; // Already been here.
+
+    // This'll force the loader NOT to flag new files as "runtime".
+    loadingForStartup = true;
+
+    fileList = NULL;
+    zipLumpDirectory = LumpDirectory_New();
+
+    primaryWadLumpDirectory   = LumpDirectory_New();
+    auxiliaryWadLumpDirectory = LumpDirectory_New();
+    auxiliaryWadLumpDirectoryInUse = false;
+
+    ActiveWadLumpDirectory = primaryWadLumpDirectory;
+
+    inited = true;
+}
+
+void F_Shutdown(void)
+{
+    if(!inited) return;
+
+    F_CloseAuxiliary();
+
+    clearVDMappings();
+    clearLDMappings();
+
+    clearFileList(0);
+    clearOpenFiles();
+    clearFileIds(); // Should be null-op if bookkeeping is correct.
+
+    clearLumpDirectorys();
+
+    inited = false;
+}
+
+void F_EndStartup(void)
+{
+    errorIfNotInited("F_EndStartup");
+    loadingForStartup = false;
+    usePrimaryWadLumpDirectory();
+}
+
+int F_Reset(void)
+{
+    int unloaded = 0;
+    if(inited)
+    {
+#if _DEBUG
+        // List all open files with their identifiers.
+        if(verbose >= 1)
+        {
+            uint i;
+            fileidentifierid_t id;
+            Con_Printf("Open files at reset:\n");
+            for(i = 0; i < filesCount; ++i)
+            {
+                filehandle_t* hndl = files + i;
+                if(!hndl->file) continue;
+                F_GenerateFileId(Str_Text(AbstractFile_Path(hndl->file)), id);
+                
+                Con_Printf(" %c%u: ", AbstractFile_HasStartup(hndl->file)? '*':' ', i);
+                F_PrintFileId(id);
+                Con_Printf(" - \"%s\"\n", F_PrettyPath(Str_Text(AbstractFile_Path(hndl->file))));
+            }
+            Con_Printf("End\n");
+        }
+#endif
+
+        // Perform non-startup file unloading...
+        { filelist_node_t* next, *node = fileList;
+        while(node)
+        {
+            next = node->next;
+            if(!AbstractFile_HasStartup(node->fsObject))
+            {
+                if(removeFile2(Str_Text(AbstractFile_Path(node->fsObject))))
+                {
+                    ++unloaded;
+                }
+            }
+            node = next;
+        }}
+
+#if _DEBUG
+        // Sanity check: look for dangling identifiers.
+        { uint i;
+        fileidentifierid_t nullId;
+        memset(nullId, 0, sizeof(nullId));
+        for(i = 0; i < fileIdentifiersCount; ++i)
+        {
+            fileidentifier_t* id = fileIdentifiers + i;
+            if(!memcmp(id->hash, &nullId, FILEIDENTIFIERID_T_LASTINDEX)) continue;
+
+            Con_Printf("Warning: Dangling file identifier: ");
+            F_PrintFileId(id->hash);
+            Con_Printf("\n");
+        }}
+#endif
+
+        // Reset file IDs so previously seen files can be processed again.
+        /// \fixme this releases the ID of startup files too but given the
+        /// only startup file is doomsday.pk3 which we never attempt to load
+        /// again post engine startup, this isn't an immediate problem.
+        F_ResetFileIds();
+
+        // Update the dir/WAD translations.
+        F_InitLumpDirectoryMappings();
+        F_InitVirtualDirectoryMappings();
+    }
+    return unloaded;
 }
 
 void F_CloseFile(DFILE* hndl)
