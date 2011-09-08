@@ -192,7 +192,7 @@ int F_Access(const char* path);
  *      'b' = binary
  *      'f' = must be a real file in the local file system
  *      'x' = don't buffer anything
- * @param allowDuplicate  Only open if this file is not already opened.
+ * @param allowDuplicate  @c false = open only if not already opened.
  * @return  Opened file reference/handle else @c NULL.
  */
 abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplicate);
