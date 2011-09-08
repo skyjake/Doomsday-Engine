@@ -429,6 +429,8 @@ const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* file, int lumpIdx)
 void ZipFile_Delete(zipfile_t* file)
 {
     assert(NULL != file);
+    ZipFile_Close(file);
+    F_ReleaseFile((abstractfile_t*)file);
     ZipFile_ClearLumpCache(file);
     if(file->_lumpCount > 1 && NULL != file->_lumpCache)
     {
@@ -693,8 +695,6 @@ void ZipFile_Close(zipfile_t* file)
 {
     assert(NULL != file);
     F_CloseFile(&file->_base._dfile);
-    F_ReleaseFile((abstractfile_t*)file);
-    F_ReleaseFileId(Str_Text(&file->_base._path));
 }
 
 int ZipFile_LumpCount(zipfile_t* file)

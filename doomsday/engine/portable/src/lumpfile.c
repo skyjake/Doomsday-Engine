@@ -55,6 +55,8 @@ lumpfile_t* LumpFile_New(const char* absolutePath, const lumpname_t lumpName, si
 void LumpFile_Delete(lumpfile_t* file)
 {
     assert(NULL != file);
+    LumpFile_Close(file);
+    F_ReleaseFile((abstractfile_t*)file);
     LumpFile_ClearLumpCache(file);
     Str_Free(&file->_base._path);
     free(file);
@@ -201,8 +203,6 @@ void LumpFile_Close(lumpfile_t* file)
 {
     assert(NULL != file);
     F_CloseFile(&file->_base._dfile);
-    F_ReleaseFile((abstractfile_t*)file);
-    F_ReleaseFileId(Str_Text(&file->_base._path));
 }
 
 int LumpFile_LumpCount(lumpfile_t* file)

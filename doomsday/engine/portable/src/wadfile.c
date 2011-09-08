@@ -185,6 +185,8 @@ const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx)
 void WadFile_Delete(wadfile_t* file)
 {
     assert(NULL != file);
+    WadFile_Close(file);
+    F_ReleaseFile((abstractfile_t*)file);
     WadFile_ClearLumpCache(file);
     if(file->_lumpCount > 1 && NULL != file->_lumpCache)
     {
@@ -430,8 +432,6 @@ void WadFile_Close(wadfile_t* file)
 {
     assert(NULL != file);
     F_CloseFile(&file->_base._dfile);
-    F_ReleaseFile((abstractfile_t*)file);
-    F_ReleaseFileId(Str_Text(&file->_base._path));
 }
 
 int WadFile_LumpCount(wadfile_t* file)

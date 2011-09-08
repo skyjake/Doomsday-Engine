@@ -1133,13 +1133,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         DD_Register();
         I_InitVirtualInputDevices();
 
-        // Reset file IDs so previously seen files can be processed again.
-        F_ResetFileIds();
-        // Update the dir/WAD translations.
-        F_InitLumpDirectoryMappings();
-        F_InitVirtualDirectoryMappings();
-        F_ResetAllResourceNamespaces();
-
         R_InitVectorGraphics();
         R_InitViewWindow();
 
@@ -1147,6 +1140,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
         F_Reset();
+        F_ResetAllResourceNamespaces();
     }
 
     FI_Shutdown();
@@ -2435,7 +2429,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
-           F_AddFile(Str_Text(&foundPath), false))
+           F_AddFile(Str_Text(&foundPath), true))
             didLoadResource = true;
     }
     Str_Free(&foundPath);

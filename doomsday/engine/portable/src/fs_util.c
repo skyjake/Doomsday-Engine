@@ -221,15 +221,20 @@ const char* F_FindFileExtension(const char* path)
 
 void F_ExtractFileBase2(char* dest, const char* path, size_t max, int ignore)
 {
-    const char* src = path + strlen(path) - 1;
+    const char* src;
+
+    if(!dest || !path || max == 0)
+        return;
 
     // Back up until a \ or the start.
+    src = path + strlen(path) - 1;
     while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
     {
         src--;
     }
 
-    while(*src && *src != '.' && max-- > 0)
+    max += 1;
+    while(*src && *src != '.' && max-- > 1)
     {
         if(ignore-- > 0)
         {
@@ -240,7 +245,7 @@ void F_ExtractFileBase2(char* dest, const char* path, size_t max, int ignore)
             *dest++ = toupper((int) *src++);
     }
 
-    if(max > 0) // Room for a null?
+    if(max > 1) // Room for a null?
     {
         // End with a terminating null.
         *dest++ = 0;

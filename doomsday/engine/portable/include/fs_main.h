@@ -185,12 +185,18 @@ int F_Access(const char* path);
 
 /**
  * Opens the given file (will be translated) for reading.
- * "t" = text mode (with real files, lumps are always binary)
- * "b" = binary
- * "f" = must be a real file in the local file system.
- * "x" = don't buffer anything
+ *
+ * @param path  Possibly relative or mapped path to the resource being opened.
+ * @param mode
+ *      't' = text mode (with real files, lumps are always binary)
+ *      'b' = binary
+ *      'f' = must be a real file in the local file system
+ *      'x' = don't buffer anything
+ * @param allowDuplicate  Only open if this file is not already opened.
+ * @return  Opened file reference/handle else @c NULL.
  */
-abstractfile_t* F_Open(const char* path, const char* mode);
+abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplicate);
+abstractfile_t* F_Open(const char* path, const char* mode); /* allowDuplicate = true */
 
 /**
  * Try to locate the specified lump for reading.

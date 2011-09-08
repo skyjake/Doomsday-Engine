@@ -133,7 +133,7 @@ void F_Register(void)
 static void errorIfNotInited(const char* callerName)
 {
     if(inited) return;
-    Con_Error("%s: WAD module is not presently initialized.", callerName);
+    Con_Error("%s: VFS module is not presently initialized.", callerName);
     // Unreachable. Prevents static analysers from getting rather confused, poor things.
     exit(1);
 }
@@ -188,12 +188,6 @@ static filehandle_t* getFileHandle(void)
         fhdl = files + firstNewFile;
     }
     return fhdl;
-}
-
-static abstractfile_t* getFreeFile(const char* absolutePath)
-{
-    filehandle_t* fhdl = getFileHandle();
-    return (fhdl->file = F_NewFile(absolutePath));
 }
 
 static filelist_node_t* allocFileNode(void)
@@ -331,6 +325,14 @@ static abstractfile_t* openFromFile(abstractfile_t* file, FILE* hndl, uint lastM
     return file;
 }
 
+static abstractfile_t* newUnknownFile(DFILE* hndl, const char* absolutePath)
+{
+    abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
+    if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
+    AbstractFile_Init(file, FT_UNKNOWNFILE, absolutePath);
+    return openFromFile(file, hndl->hndl, hndl->lastModified);
+}
+
 static zipfile_t* newZipFile(DFILE* hndl, const char* absolutePath)
 {
     abstractfile_t* file = (abstractfile_t*)ZipFile_New(hndl, absolutePath);
@@ -344,10 +346,10 @@ static wadfile_t* newWadFile(DFILE* hndl, const char* absolutePath)
 }
 
 static lumpfile_t* newLumpFile(DFILE* hndl, abstractfile_t* fsObject, int lumpIdx,
-    const char* absolutePath, lumpname_t name, size_t lumpSize)
+    const char* absolutePath, lumpname_t name, size_t lumpSize, boolean dontBuffer)
 {
     abstractfile_t* file = (abstractfile_t*)LumpFile_New(absolutePath, name, lumpSize);
-    return (lumpfile_t*) openFromLump(file, fsObject, lumpIdx, false);
+    return (lumpfile_t*) openFromLump(file, fsObject, lumpIdx, dontBuffer);
 }
 
 static int pruneLumpsFromDirectorysByFile(abstractfile_t* fsObject)
@@ -377,6 +379,8 @@ static boolean removeListFile(filelist_node_t* node)
         Con_Error("WadCollection::removeListFile: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
     }
+
+    F_ReleaseFileId(Str_Text(AbstractFile_Path(fsObject)));
 
     pruneLumpsFromDirectorysByFile(fsObject);
     unlinkFile(node);
@@ -530,12 +534,45 @@ static boolean removeFile(const char* path)
     return removeFile2(path);
 }
 
+#if _DEBUG
+static void printIdentifier(byte identifier[FILEIDENTIFIERID_T_MAXLEN])
+{
+    assert(identifier);
+    { uint i;
+    for(i = 0; i < FILEIDENTIFIERID_T_MAXLEN; ++i)
+        Con_Printf("%02x", identifier[i]);
+    }
+}
+#endif
+
 int F_Reset(void)
 {
-    int unloadedResources = 0;
+    int unloaded = 0;
     if(inited)
     {
-        filelist_node_t* next, *node = fileList;
+#if _DEBUG
+        // List all open files with their identifiers.
+        if(verbose >= 1)
+        {
+            uint i;
+            fileidentifierid_t id;
+            Con_Printf("Open files at reset:\n");
+            for(i = 0; i < filesCount; ++i)
+            {
+                filehandle_t* hndl = files + i;
+                if(!hndl->file) continue;
+                F_GenerateFileId(Str_Text(AbstractFile_Path(hndl->file)), id);
+                
+                Con_Printf(" %c%u: ", AbstractFile_HasStartup(hndl->file)? '*':' ', i);
+                printIdentifier(id);
+                Con_Printf(" - \"%s\"\n", F_PrettyPath(Str_Text(AbstractFile_Path(hndl->file))));
+            }
+            Con_Printf("End\n");
+        }
+#endif
+
+        // Perform non-startup file unloading...
+        { filelist_node_t* next, *node = fileList;
         while(node)
         {
             next = node->next;
@@ -543,13 +580,39 @@ int F_Reset(void)
             {
                 if(removeFile2(Str_Text(AbstractFile_Path(node->fsObject))))
                 {
-                    ++unloadedResources;
+                    ++unloaded;
                 }
             }
             node = next;
-        }
+        }}
+
+#if _DEBUG
+        // Sanity check: look for dangling identifiers.
+        { uint i;
+        fileidentifierid_t nullId;
+        memset(nullId, 0, sizeof(nullId));
+        for(i = 0; i < fileIdentifiersCount; ++i)
+        {
+            fileidentifier_t* id = fileIdentifiers + i;
+            if(!memcmp(id->hash, &nullId, FILEIDENTIFIERID_T_LASTINDEX)) continue;
+
+            Con_Printf("Warning: Dangling file identifier: ");
+            printIdentifier(id->hash);
+            Con_Printf("\n");
+        }}
+#endif
+
+        // Reset file IDs so previously seen files can be processed again.
+        /// \fixme this releases the ID of startup files too but given the
+        /// only startup file is doomsday.pk3 which we never attempt to load
+        /// again post engine startup, this isn't an immediate problem.
+        F_ResetFileIds();
+
+        // Update the dir/WAD translations.
+        F_InitLumpDirectoryMappings();
+        F_InitVirtualDirectoryMappings();
     }
-    return unloadedResources;
+    return unloaded;
 }
 
 void F_GenerateFileId(const char* str, byte identifier[16])
@@ -612,20 +675,23 @@ boolean F_CheckFileId(const char* path)
 
 boolean F_ReleaseFileId(const char* path)
 {
-    fileidentifierid_t id;
-    fileidentifier_t* fileIdentifier;
-
-    F_GenerateFileId(path, id);
-
-    fileIdentifier = findFileIdentifierForId(id);
-    if(fileIdentifier != 0)
+    if(path && path[0])
     {
-        size_t index = fileIdentifier - fileIdentifiers;
-        if(index < fileIdentifiersCount)
-            memmove(fileIdentifiers + index, fileIdentifiers + index + 1, fileIdentifiersCount - index - 1);
-        memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers));
-        --fileIdentifiersCount;
-        return true;
+        fileidentifierid_t id;
+        fileidentifier_t* fileIdentifier;
+
+        F_GenerateFileId(path, id);
+
+        fileIdentifier = findFileIdentifierForId(id);
+        if(fileIdentifier)
+        {
+            size_t index = fileIdentifier - fileIdentifiers;
+            if(index < fileIdentifiersCount-1)
+                memmove(fileIdentifiers + index, fileIdentifiers + index + 1, fileIdentifiersCount - index - 1);
+            memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers));
+            --fileIdentifiersCount;
+            return true;
+        }
     }
     return false;
 }
@@ -656,14 +722,6 @@ void F_CloseFile(DFILE* hndl)
     }
     hndl->pos = NULL;
     hndl->flags.open = false;
-}
-
-abstractfile_t* F_NewFile(const char* absolutePath)
-{
-    abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
-    if(!file) Con_Error("F_NewFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
-    AbstractFile_Init(file, FT_UNKNOWNFILE, absolutePath);
-    return file;
 }
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
@@ -1436,82 +1494,8 @@ static abstractfile_t* findLumpFile(const char* path, int* lumpIdx)
     return NULL;
 }
 
-abstractfile_t* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
-{
-    int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(fsObject)
-    {
-        const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
-        /// \todo All lumps should be attributed with an absolute file path not just those from Zips.
-        /// \note We don't create a filehandle_t for lump files.
-        return openFromLump((abstractfile_t*)LumpFile_New(Str_Text(&info->path), info->name, info->size),
-            fsObject, lumpIdx, dontBuffer);
-    }
-    return 0;
-}
-
-abstractfile_t* F_Open(const char* path, const char* mode)
-{
-    ddstring_t searchPath, *foundPath = NULL;
-    boolean dontBuffer, reqRealFile;
-    FILE* file = NULL;
-
-    if(!path || !path[0])
-        return NULL;
-
-    if(NULL == mode) mode = "";
-
-    dontBuffer  = (strchr(mode, 'x') != NULL);
-    reqRealFile = (strchr(mode, 'f') != NULL);
-
-    // Make it a full path.
-    Str_Init(&searchPath); Str_Set(&searchPath, path);
-    F_FixSlashes(&searchPath, &searchPath);
-    F_ExpandBasePath(&searchPath, &searchPath);
-
-    // First check for lumps?
-    if(!reqRealFile)
-    {
-        int lumpIdx;
-        abstractfile_t* fsContainer = findLumpFile(Str_Text(&searchPath), &lumpIdx);
-        if(fsContainer)
-        {
-            const lumpinfo_t* info = F_LumpInfo(fsContainer, lumpIdx);
-            Str_Free(&searchPath);
-            return openFromLump(getFreeFile(Str_Text(&info->path)), fsContainer, lumpIdx, dontBuffer);
-        }
-    }
-
-    // Try to open as a real file then.
-    // We must have an absolute path, so prepend the current working directory if necessary.
-    F_PrependWorkPath(&searchPath, &searchPath);
-    file = findRealFile(Str_Text(&searchPath), mode, &foundPath);
-    Str_Free(&searchPath);
-    if(file)
-    {
-        abstractfile_t* fsObject = openFromFile(getFreeFile(Str_Text(foundPath)), file, F_LastModified(Str_Text(foundPath)));
-        Str_Delete(foundPath);
-        return fsObject;
-    }
-    // Not found.
-    return NULL;
-}
-
-int F_Access(const char* path)
-{
-    // Open for reading, but don't buffer anything.
-    abstractfile_t* file = F_Open(path, "rx");
-    if(file)
-    {
-        F_Delete(file);
-        return true;
-    }
-    return false;
-}
-
 static abstractfile_t* openAsLumpFile(abstractfile_t* fsObject, int lumpIdx,
-    const char* absolutePath, boolean isDehackedPatch)
+    const char* absolutePath, boolean isDehackedPatch, boolean dontBuffer)
 {
     const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
     lumpname_t name;
@@ -1537,17 +1521,17 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* fsObject, int lumpIdx,
                 offset = slash[-1] - '1' + 1;
             }
         }
-        F_ExtractFileBase2(name, absolutePath, LUMPNAME_T_MAXLEN, offset);
+        F_ExtractFileBase2(name, absolutePath, LUMPNAME_T_LASTINDEX, offset);
+        name[LUMPNAME_T_LASTINDEX] = '\0';
     }
 
-    return (abstractfile_t*)newLumpFile(NULL, fsObject, lumpIdx, absolutePath, name, info->size);
+    return (abstractfile_t*)newLumpFile(NULL, fsObject, lumpIdx, absolutePath, name, info->size, dontBuffer);
 }
 
 static abstractfile_t* tryOpenAsZipFile(DFILE* handle, const char* absolutePath)
 {
     zipfile_t* zip = NULL;
-    errorIfNotInited("tryOpenAsZipFile");
-    if(ZipFile_Recognise(handle))
+    if(inited && ZipFile_Recognise(handle))
     {
         zip = newZipFile(handle, absolutePath);
     }
@@ -1557,21 +1541,20 @@ static abstractfile_t* tryOpenAsZipFile(DFILE* handle, const char* absolutePath)
 static abstractfile_t* tryOpenAsWadFile(DFILE* handle, const char* absolutePath)
 {
     wadfile_t* wad = NULL;
-    errorIfNotInited("tryOpenAsWadFile");
-    if(WadFile_Recognise(handle))
+    if(inited && WadFile_Recognise(handle))
     {
         wad = newWadFile(handle, absolutePath);
     }
     return (abstractfile_t*)wad;
 }
 
-static abstractfile_t* tryOpenFile(DFILE* handle, const char* absolutePath)
+static abstractfile_t* tryOpenFile2(DFILE* hndl, const char* absolutePath)
 {
-    assert(NULL != handle && NULL != absolutePath && absolutePath[0]);
+    assert(NULL != hndl && NULL != absolutePath && absolutePath[0]);
     {
     struct filehandler_s {
         resourcetype_t resourceType;
-        abstractfile_t* (*tryOpenFile)(DFILE* handle, const char* absolutePath);
+        abstractfile_t* (*tryOpenFile)(DFILE* hndl, const char* absolutePath);
     } static const handlers[] = {
         { RT_ZIP,  tryOpenAsZipFile },
         { RT_WAD,  tryOpenAsWadFile },
@@ -1587,7 +1570,7 @@ static abstractfile_t* tryOpenFile(DFILE* handle, const char* absolutePath)
     {
         if(hdlr->resourceType != resourceType) continue;
 
-        fsObject = hdlr->tryOpenFile(handle, absolutePath);
+        fsObject = hdlr->tryOpenFile(hndl, absolutePath);
         break;
     }
 
@@ -1598,69 +1581,80 @@ static abstractfile_t* tryOpenFile(DFILE* handle, const char* absolutePath)
     {
         if(hdlr != &handlers[n]) // We already know its not in this format.
         {
-            fsObject = handlers[n].tryOpenFile(handle, absolutePath);
+            fsObject = handlers[n].tryOpenFile(hndl, absolutePath);
         }
         ++n;
     }}
+
+    // If still not loaded; this an unknown format.
+    if(!fsObject)
+    {
+        fsObject = newUnknownFile(hndl, absolutePath);
+    }
 
     return fsObject;
     }
 }
 
-static abstractfile_t* F_OpenAbstractFile(const char* fileName, boolean allowDuplicate)
+static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean allowDuplicate)
 {
+    ddstring_t searchPath, *foundPath = NULL;
+    boolean dontBuffer, reqRealFile;
     abstractfile_t* fsObject;
-    ddstring_t searchPath, *foundPath;
     int lumpIdx;
     DFILE temp;
     FILE* file;
 
-    // Filename given?
-    if(!fileName || !fileName[0])
+    if(!path || !path[0])
         return NULL;
 
-    // Make it a full fileName.
-    Str_Init(&searchPath); Str_Set(&searchPath, fileName);
+    if(NULL == mode) mode = "";
+    dontBuffer  = (strchr(mode, 'x') != NULL);
+    reqRealFile = (strchr(mode, 'f') != NULL);
+
+    // Make it a full path.
+    Str_Init(&searchPath); Str_Set(&searchPath, path);
     F_FixSlashes(&searchPath, &searchPath);
     F_ExpandBasePath(&searchPath, &searchPath);
 
     // First check for lumps?
-    fsObject = findLumpFile(Str_Text(&searchPath), &lumpIdx);
-    if(fsObject)
+    if(!reqRealFile)
     {
-        resourcetype_t type;
-
-        // Do not read files twice.
-        if(!allowDuplicate && !F_CheckFileId(fileName))
+        fsObject = findLumpFile(Str_Text(&searchPath), &lumpIdx);
+        if(fsObject)
         {
-            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(fileName));
-            return NULL;
+            resourcetype_t type;
+
+            // Do not read files twice.
+            if(!allowDuplicate && !F_CheckFileId(Str_Text(&searchPath)))
+            {
+                return NULL;
+            }
+
+            // DeHackEd patch files require special handling...
+            type = F_GuessResourceTypeByName(path);
+
+            fsObject = (abstractfile_t*)openAsLumpFile(fsObject, lumpIdx, Str_Text(&searchPath), (type == RT_DEH), dontBuffer);
+            Str_Free(&searchPath);
+            return fsObject;
         }
-
-        // DeHackEd patch files require special handling...
-        type = F_GuessResourceTypeByName(fileName);
-
-        fsObject = (abstractfile_t*)openAsLumpFile(fsObject, lumpIdx, Str_Text(&searchPath), (type == RT_DEH));
-        Str_Free(&searchPath);
-        return fsObject;
     }
 
     // Try to open as a real file then. We must have an absolute path, so
     // prepend the current working directory if necessary.
     F_PrependWorkPath(&searchPath, &searchPath);
-    file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
+    file = findRealFile(Str_Text(&searchPath), mode, &foundPath);
     if(!file)
     {
         Str_Free(&searchPath);
-        Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
         return NULL;
     }
 
     // Do not read files twice.
     if(!allowDuplicate && !F_CheckFileId(Str_Text(foundPath)))
     {
+        fclose(file);
         Str_Free(&searchPath);
-        Con_Message("\"%s\" already loaded.\n", F_PrettyPath(Str_Text(foundPath)));
         return NULL;
     }
 
@@ -1672,30 +1666,61 @@ static abstractfile_t* F_OpenAbstractFile(const char* fileName, boolean allowDup
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
-    fsObject = tryOpenFile(&temp, Str_Text(&searchPath));
+    fsObject = tryOpenFile2(&temp, Str_Text(&searchPath));
     Str_Free(&searchPath);
     Str_Delete(foundPath);
     return fsObject;
 }
 
-boolean F_AddFile(const char* fileName, boolean allowDuplicate)
+abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplicate)
 {
-    abstractfile_t* fsObject = F_OpenAbstractFile(fileName, allowDuplicate);
-    if(!fsObject) return false;
-
-    if(fsObject)
+    abstractfile_t* fsObject = tryOpenFile(path, mode, allowDuplicate);
+    /// \note We don't create a filehandle_t for lump files.
+    if(fsObject && AbstractFile_Type(fsObject) != FT_LUMPFILE)
     {
-        /// \note We don't create a filehandle_t for lump files.
-        if(AbstractFile_Type(fsObject) != FT_LUMPFILE)
-        {
-            // Get a new file record.
-            filehandle_t* fh = getFileHandle();
-            fh->file = fsObject;
-        }
-
-        // All files are linked into the open file list however.
-        linkFile(fsObject, loadingForStartup);
+        // Get a new file record.
+        filehandle_t* fh = getFileHandle();
+        fh->file = fsObject;
     }
+    return fsObject;
+}
+
+abstractfile_t* F_Open(const char* path, const char* mode)
+{
+    return F_Open2(path, mode, true);
+}
+
+int F_Access(const char* path)
+{
+    // Open for reading, but don't buffer anything.
+    abstractfile_t* file = F_Open(path, "rx");
+    if(file)
+    {
+        F_Delete(file);
+        return true;
+    }
+    return false;
+}
+
+boolean F_AddFile(const char* path, boolean allowDuplicate)
+{
+    abstractfile_t* fsObject = F_Open2(path, "rb", allowDuplicate);
+
+    if(!fsObject)
+    {
+        if(allowDuplicate)
+        {
+            Con_Message("Warning:F_AddFile: Resource \"%s\" not found, aborting.\n", path);
+        }
+        else if(F_Access(path))
+        {
+            Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
+        }
+        return false;
+    }
+
+    // All files are linked into the loaded file list however.
+    linkFile(fsObject, loadingForStartup);
 
     // Publish lumps to one or more LumpDirectorys.
     switch(AbstractFile_Type(fsObject))
@@ -1774,6 +1799,21 @@ boolean F_RemoveFiles(const char* const* filenames, size_t num)
         DD_UpdateEngineState();
     }
     return succeeded;
+}
+
+abstractfile_t* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
+{
+    int lumpIdx;
+    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
+    if(fsObject)
+    {
+        const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
+        /// \todo All lumps should be attributed with an absolute file path not just those from Zips.
+        /// \note We don't create a filehandle_t for lump files.
+        return openFromLump((abstractfile_t*)LumpFile_New(Str_Text(&info->path), info->name, info->size),
+            fsObject, lumpIdx, dontBuffer);
+    }
+    return 0;
 }
 
 static void clearLDMappings(void)

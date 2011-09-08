@@ -123,10 +123,4 @@ DFILE* AbstractFile_Handle(abstractfile_t* file);
 /// @return  Number of "lumps" contained within this resource.
 int AbstractFile_LumpCount(abstractfile_t* file);
 
-/**
- * \todo The following function declarations do not belong here:
- */
-
-abstractfile_t* F_NewFile(const char* absolutePath);
-
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */
