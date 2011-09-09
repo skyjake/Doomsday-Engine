@@ -978,14 +978,18 @@ void F_CloseAuxiliary(void)
 
 void F_ReleaseFile(abstractfile_t* fsObject)
 {
+    assert(fsObject);
     // File might be linked multiple times into the open file list.
-    filelist_node_t* next, *node = openFiles;
+    { filelist_node_t* next, *node = openFiles;
     while(node)
     {
         next = node->next;
-        unlinkFile(&openFiles, node, true/*recycle node*/);
+        if(node->fsObject == fsObject)
+        {
+            unlinkFile(&openFiles, node, true/*recycle node*/);
+        }
         node = next;
-    }
+    }}
 }
 
 void F_Close(abstractfile_t* fsObject)
