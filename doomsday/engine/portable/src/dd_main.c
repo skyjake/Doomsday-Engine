@@ -1431,9 +1431,10 @@ int DD_Main(void)
         }}
     }
 
+    // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
+    F_Init();
 
-    // Initialize the subsystems needed prior to entering busy mode.
     Fonts_Init();
     if(!isDedicated)
     {
@@ -1640,7 +1641,6 @@ static void DD_InitResourceSystem(void)
 {
     Con_Message("Initializing Resource subsystem...\n");
 
-    F_Init();
     F_InitResourceLocator();
     F_CreateNamespacesForFileResourcePaths();
     F_InitVirtualDirectoryMappings();
