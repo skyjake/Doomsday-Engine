@@ -137,6 +137,7 @@ static int DH_ReadStrings(const char* fileName)
     }
 
     hndl = AbstractFile_Handle(file);
+    assert(hndl);
     while(!F_AtEnd(hndl))
     {
         M_ReadLine(line, sizeof(line), hndl);

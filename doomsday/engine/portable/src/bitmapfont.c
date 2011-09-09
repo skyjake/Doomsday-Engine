@@ -401,17 +401,20 @@ void BitmapFont_Prepare(font_t* font)
     file = F_Open(Str_Text(&bf->_filePath), "rb");
     if(NULL != file)
     {
+        DFILE* hndl = AbstractFile_Handle(file);
+        assert(hndl);
+
         BitmapFont_DeleteGLDisplayLists(font);
         BitmapFont_DeleteGLTexture(font);
 
         // Load the font glyph map from the file.
-        version = inByte(AbstractFile_Handle(file));
+        version = inByte(hndl);
         switch(version)
         {
         // Original format.
-        case 0: image = readFormat0(font, AbstractFile_Handle(file)); break;
+        case 0: image = readFormat0(font, hndl); break;
         // Enhanced format.
-        case 2: image = readFormat2(font, AbstractFile_Handle(file)); break;
+        case 2: image = readFormat2(font, hndl); break;
         default: break;
         }
         if(!image)

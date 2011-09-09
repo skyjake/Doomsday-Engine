@@ -28,6 +28,7 @@
 #include <stdio.h>
 
 #include "sys_file.h"
+#include "lumpinfo.h"
 
 // File types.
 typedef enum {
@@ -48,25 +49,29 @@ typedef struct abstractfile_s {
     filetype_t _type;
 
     struct abstractfile_flags_s {
+        uint open:1; // Presently open.
         uint startup:1; // Loaded during the startup process.
         uint iwad:1; // Owned by or is an "iwad" resource.
     } _flags;
 
-    /// File stream abstraction wrapper/handle for this resource.
+    /// File stream abstraction wrapper/handle.
     DFILE _dfile;
 
-    /// Absolute path to this resource in the vfs.
-    ddstring_t _path;
+    /// Info descriptor (file metadata).
+    lumpinfo_t _info;
 
     /// Load order depth index.
     uint _order;
 } abstractfile_t;
 
 /// Initialize this resource.
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, const char* absolutePath);
+void AbstractFile_Init(abstractfile_t* file, filetype_t type, const lumpinfo_t* info);
 
 /// @return  Type of this resource @see filetype_t
 filetype_t AbstractFile_Type(const abstractfile_t* file);
+
+/// @return  Immutable copy of the info descriptor for this resource.
+const lumpinfo_t* AbstractFile_Info(abstractfile_t* file);
 
 /**
  * Accessors:

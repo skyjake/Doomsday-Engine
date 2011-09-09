@@ -29,24 +29,14 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-lumpfile_t* LumpFile_New(const char* absolutePath, const lumpname_t lumpName, size_t lumpSize)
+lumpfile_t* LumpFile_New(const lumpinfo_t* info)
 {
     lumpfile_t* file = (lumpfile_t*)malloc(sizeof(*file));
     if(NULL == file)
         Con_Error("LumpFile::Construct:: Failed on allocation of %lu bytes for new LumpFile.",
             (unsigned long) sizeof(*file));
 
-    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, absolutePath);
-    if(NULL != lumpName)
-        memcpy(file->_info.name, lumpName, sizeof(file->_info.name));
-    else
-        memset(file->_info.name, 0, sizeof(file->_info.name));
-    Str_Init(&file->_info.path);
-    if(NULL != absolutePath)
-        Str_Set(&file->_info.path, absolutePath);
-    file->_info.size = file->_info.compressedSize = lumpSize;
-    file->_info.baseOffset = 0;
-    file->_info.lastModified = 0; /// \fixme Get real value.
+    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, info);
     file->_cacheData = NULL;
 
     return file;
@@ -58,7 +48,7 @@ void LumpFile_Delete(lumpfile_t* file)
     LumpFile_Close(file);
     F_ReleaseFile((abstractfile_t*)file);
     LumpFile_ClearLumpCache(file);
-    Str_Free(&file->_base._path);
+    F_DestroyLumpInfo(&file->_base._info);
     free(file);
 }
 
@@ -73,7 +63,8 @@ int LumpFile_PublishLumpsToDirectory(lumpfile_t* file, lumpdirectory_t* director
 const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* file, int lumpIdx)
 {
     assert(NULL != file);
-    return &file->_info;
+    /// Lump files are special cases for this *is* the lump.
+    return AbstractFile_Info((abstractfile_t*)file);
 }
 
 void LumpFile_ClearLumpCache(lumpfile_t* file)
@@ -99,7 +90,7 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
 
     VERBOSE2(
         Con_Printf("LumpFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(&file->_base._path)),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length) )
@@ -162,7 +153,7 @@ const uint8_t* LumpFile_CacheLump(lumpfile_t* file, int lumpIdx, int tag)
 
     VERBOSE2(
         Con_Printf("LumpFile::CacheLump: \"%s:%s\" (%lu bytes%s) %s\n",
-                F_PrettyPath(Str_Text(&file->_base._path)),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 isCached? "hit":"miss") )
@@ -202,7 +193,9 @@ void LumpFile_ChangeLumpCacheTag(lumpfile_t* file, int lumpIdx, int tag)
 void LumpFile_Close(lumpfile_t* file)
 {
     assert(NULL != file);
-    F_CloseFile(&file->_base._dfile);
+    if(file->_base._flags.open)
+        F_CloseFile(&file->_base._dfile);
+    file->_base._flags.open = false;
 }
 
 int LumpFile_LumpCount(lumpfile_t* file)

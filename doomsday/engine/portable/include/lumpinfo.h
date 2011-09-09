@@ -33,11 +33,15 @@
  */
 typedef struct {
     lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
-    ddstring_t path; /// Full variable-length path.
+    ddstring_t path; /// Absolute variable-length path in the vfs.
     size_t baseOffset; /// Offset from start of owning package.
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.
     uint lastModified; /// Unix timestamp.
 } lumpinfo_t;
+
+void F_InitLumpInfo(lumpinfo_t* info);
+void F_CopyLumpInfo(lumpinfo_t* dst, const lumpinfo_t* src);
+void F_DestroyLumpInfo(lumpinfo_t* info);
 
 #endif /* LIBDENG_FILESYS_LUMPINFO_H */

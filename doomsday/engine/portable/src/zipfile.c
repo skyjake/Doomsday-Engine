@@ -243,12 +243,14 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     void* centralDirectory;
     char* pos;
 
-    VERBOSE( Con_Message("ZipFile::readArchiveFileDirectory: \"%s\"\n", F_PrettyPath(Str_Text(&file->_base._path))) );
+    VERBOSE( Con_Message("ZipFile::readArchiveFileDirectory: \"%s\"\n",
+        F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file)))) );
 
     // Scan the end of the file for the central centralDirectory end record.
     if(!ZipFile_LocateCentralDirectory(file))
     {
-        Con_Error("ZipFile::readArchiveFileDirectory: Central centralDirectory in %s not found!", Str_Text(&file->_base._path));
+        Con_Error("ZipFile::readArchiveFileDirectory: Central centralDirectory in %s not found!",
+            Str_Text(AbstractFile_Path((abstractfile_t*)file)));
     }
 
     // Read the central centralDirectory end record.
@@ -257,13 +259,15 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     // Does the summary say something we don't like?
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
     {
-        Con_Error("ZipFile::readArchiveFileDirectory: Multipart Zip file \"%s\" not supported.", Str_Text(&file->_base._path));
+        Con_Error("ZipFile::readArchiveFileDirectory: Multipart Zip file \"%s\" not supported.",
+            Str_Text(AbstractFile_Path((abstractfile_t*)file)));
     }
 
     // Read the entire central centralDirectory into memory.
     centralDirectory = malloc(ULONG(summary.size));
     if(NULL == centralDirectory)
-        Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for temporary copy of the central centralDirectory.", (unsigned long) ULONG(summary.size));
+        Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for "
+            "temporary copy of the central centralDirectory.", (unsigned long) ULONG(summary.size));
     F_Seek(&file->_base._dfile, ULONG(summary.offset), SEEK_SET);
     F_Read(&file->_base._dfile, (uint8_t*)centralDirectory, ULONG(summary.size));
 
@@ -283,7 +287,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
             // We can now allocate the zipentry list.
             file->_lumpInfo = (lumpinfo_t*)malloc(sizeof(*file->_lumpInfo) * entryCount);
             if(NULL == file->_lumpInfo)
-                Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for file file list.",
+                Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for file list.",
                     (unsigned long) (sizeof(*file->_lumpInfo) * entryCount));
             file->_lumpCount = entryCount;
 
@@ -318,14 +322,14 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
             {
                 if(pass != 0) continue;
                 Con_Message("Warning: Zip %s:'%s' uses an unsupported compression algorithm, ignoring.\n",
-                            Str_Text(&file->_base._path), Str_Text(&entryPath));
+                            Str_Text(AbstractFile_Path((abstractfile_t*)file)), Str_Text(&entryPath));
             }
 
             if(USHORT(header->flags) & ZFH_ENCRYPTED)
             {
                 if(pass != 0) continue;
                 Con_Message("Warning: Zip %s:'%s' is encrypted.\n  Encryption is not supported, ignoring.\n",
-                            Str_Text(&file->_base._path), Str_Text(&entryPath));
+                            Str_Text(AbstractFile_Path((abstractfile_t*)file)), Str_Text(&entryPath));
             }
 
             if(pass == 0)
@@ -378,16 +382,16 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     }
 }
 
-zipfile_t* ZipFile_New(DFILE* hndl, const char* absolutePath)
+zipfile_t* ZipFile_New(DFILE* hndl, const lumpinfo_t* info)
 {
-    assert(NULL != hndl && NULL != absolutePath);
+    assert(NULL != hndl && NULL != info);
     {
     zipfile_t* file = (zipfile_t*)malloc(sizeof(*file));
     if(NULL == file)
         Con_Error("ZipFile::Construct: Failed on allocation of %lu bytes for new ZipFile.",
             (unsigned long) sizeof(*file));
 
-    AbstractFile_Init((abstractfile_t*)file, FT_ZIPFILE, absolutePath);
+    AbstractFile_Init((abstractfile_t*)file, FT_ZIPFILE, info);
     file->_lumpCount = 0;
     file->_lumpInfo = NULL;
     file->_lumpCache = NULL;
@@ -443,7 +447,7 @@ void ZipFile_Delete(zipfile_t* file)
             Str_Free(&file->_lumpInfo[i].path);
         free(file->_lumpInfo);
     }
-    Str_Free(&file->_base._path);
+    F_DestroyLumpInfo(&file->_base._info);
     free(file);
 }
 
@@ -556,7 +560,7 @@ size_t ZipFile_ReadLumpSection2(zipfile_t* file, int lumpIdx, uint8_t* buffer,
 
     VERBOSE2(
         Con_Printf("ZipFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(&file->_base._path)),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
                 F_PrettyPath(Str_Text(&info->path)), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length) )
@@ -625,7 +629,7 @@ const uint8_t* ZipFile_CacheLump(zipfile_t* file, int lumpIdx, int tag)
 
     VERBOSE2(
         Con_Printf("ZipFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
-                F_PrettyPath(Str_Text(&file->_base._path)),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
                 F_PrettyPath(Str_Text(&info->path)), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : "")) )
 
@@ -694,7 +698,9 @@ void ZipFile_ChangeLumpCacheTag(zipfile_t* file, int lumpIdx, int tag)
 void ZipFile_Close(zipfile_t* file)
 {
     assert(NULL != file);
-    F_CloseFile(&file->_base._dfile);
+    if(file->_base._flags.open)
+        F_CloseFile(&file->_base._dfile);
+    file->_base._flags.open = false;
 }
 
 int ZipFile_LumpCount(zipfile_t* file)

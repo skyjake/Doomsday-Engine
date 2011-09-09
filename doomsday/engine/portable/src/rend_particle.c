@@ -157,7 +157,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
             TXCF_NO_COMPRESSION);
 
         // Free the buffer.
-        GL_DestroyImagePixels(&image);
+        GL_DestroyImage(&image);
     }
     else if(!silent)
     {

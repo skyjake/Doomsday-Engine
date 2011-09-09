@@ -282,7 +282,7 @@ void UI_LoadTextures(void)
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR,
                 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-            GL_DestroyImagePixels(&image);
+            GL_DestroyImage(&image);
         }
         else
             uiTextures[i] = 0;

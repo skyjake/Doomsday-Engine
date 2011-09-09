@@ -32,8 +32,6 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#define deof(hndl)              ((hndl)->flags.eof != 0)
-
 size_t F_Length(DFILE* hndl)
 {
     assert(NULL != hndl);
@@ -51,14 +49,11 @@ size_t F_Read(DFILE* hndl, uint8_t* buffer, size_t count)
     {
     size_t bytesleft;
 
-    if(!hndl->flags.open)
-        return 0;
-
     if(hndl->hndl)
     {   // Normal file.
         count = fread(buffer, 1, count, hndl->hndl);
         if(feof(hndl->hndl))
-            hndl->flags.eof = true;
+            hndl->eof = true;
         return count;
     }
 
@@ -67,7 +62,7 @@ size_t F_Read(DFILE* hndl, uint8_t* buffer, size_t count)
     if(count > bytesleft)
     {
         count = bytesleft;
-        hndl->flags.eof = true;
+        hndl->eof = true;
     }
 
     if(count)
@@ -83,26 +78,22 @@ size_t F_Read(DFILE* hndl, uint8_t* buffer, size_t count)
 boolean F_AtEnd(DFILE* hndl)
 {
     assert(NULL != hndl);
-    return deof(hndl);
+    return hndl->eof;
 }
 
 unsigned char F_GetC(DFILE* hndl)
 {
     assert(NULL != hndl);
-    if(hndl->flags.open)
     {
-        unsigned char ch = 0;
-        F_Read(hndl, (uint8_t*)&ch, 1);
-        return ch;
+    unsigned char ch = 0;
+    F_Read(hndl, (uint8_t*)&ch, 1);
+    return ch;
     }
-    return 0;
 }
 
 size_t F_Tell(DFILE* hndl)
 {
     assert(NULL != hndl);
-    if(!hndl->flags.open)
-        return 0;
     if(hndl->hndl)
         return (size_t) ftell(hndl->hndl);
     return hndl->pos - hndl->data;
@@ -114,10 +105,7 @@ size_t F_Seek(DFILE* hndl, size_t offset, int whence)
     {
     size_t oldpos = F_Tell(hndl);
 
-    if(!hndl->flags.open)
-        return 0;
-
-    hndl->flags.eof = false;
+    hndl->eof = false;
     if(hndl->hndl)
     {
         fseek(hndl->hndl, (long) offset, whence);

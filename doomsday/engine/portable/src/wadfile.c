@@ -124,23 +124,23 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     }
 }
 
-wadfile_t* WadFile_New(DFILE* hndl, const char* absolutePath)
+wadfile_t* WadFile_New(DFILE* hndl, const lumpinfo_t* info)
 {
-    assert(NULL != hndl && NULL != absolutePath);
+    assert(NULL != hndl && NULL != info);
     {
     wadfile_t* file;
     wadheader_t hdr;
 
     if(!WadFile_ReadArchiveHeader(hndl, &hdr))
         Con_Error("WadFile::Construct: File %s does not appear to be of WAD format."
-            " Missing a call to WadFile::Recognise?", absolutePath);
+            " Missing a call to WadFile::Recognise?", Str_Text(&info->path));
 
     file = (wadfile_t*)malloc(sizeof(*file));
     if(NULL == file)
         Con_Error("WadFile::Construct:: Failed on allocation of %lu bytes for new WadFile.",
             (unsigned long) sizeof(*file));
 
-    AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, absolutePath);
+    AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, info);
     file->_lumpCount = hdr.lumpRecordsCount;
     file->_lumpRecordsOffset = hdr.lumpRecordsOffset;
     file->_lumpInfo = NULL;
@@ -199,7 +199,7 @@ void WadFile_Delete(wadfile_t* file)
             Str_Free(&file->_lumpInfo[i].path);
         free(file->_lumpInfo);
     }
-    Str_Free(&file->_base._path);
+    F_DestroyLumpInfo(&file->_base._info);
     free(file);
 }
 
@@ -270,7 +270,7 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
 
     VERBOSE2(
         Con_Printf("WadFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(&file->_base._path)),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length) )
@@ -346,7 +346,7 @@ const uint8_t* WadFile_CacheLump(wadfile_t* file, int lumpIdx, int tag)
 
     VERBOSE2(
         Con_Printf("WadFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
-                F_PrettyPath(Str_Text(&file->_base._path)),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : "")) )
 
@@ -431,7 +431,9 @@ static void WadFile_ReadLumpDirectory(wadfile_t* file)
 void WadFile_Close(wadfile_t* file)
 {
     assert(NULL != file);
-    F_CloseFile(&file->_base._dfile);
+    if(file->_base._flags.open)
+        F_CloseFile(&file->_base._dfile);
+    file->_base._flags.open = false;
 }
 
 int WadFile_LumpCount(wadfile_t* file)

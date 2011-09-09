@@ -43,15 +43,11 @@
  * higher level abstractfile_t derived objects.
  */
 typedef struct {
-    struct DFILE_flags_s {
-        unsigned char open:1;
-        unsigned char eof:1;
-    } flags;
+    boolean eof;
     size_t size;
     FILE* hndl;
     uint8_t* data;
     uint8_t* pos;
-    uint lastModified;
 } DFILE;
 
 /// @return  The length of the file, in bytes.

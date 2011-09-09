@@ -1832,7 +1832,7 @@ uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath)
     return 0;
 }
 
-void GL_DestroyImagePixels(image_t* img)
+void GL_DestroyImage(image_t* img)
 {
     assert(img);
     if(NULL == img->pixels) return;
@@ -2809,7 +2809,7 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
             0, (useMipmap ? glmode[mipmapping] : GL_LINEAR),
             magFilter, texAniso, wrapS, wrapT);
 
-        GL_DestroyImagePixels(&image);
+        GL_DestroyImage(&image);
     }
 
     return texture;
@@ -3023,7 +3023,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 
         raw->width  = image.width;
         raw->height = image.height;
-        GL_DestroyImagePixels(&image);
+        GL_DestroyImage(&image);
     }
 
     return raw->tex;
@@ -3595,7 +3595,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     }
 
     // We're done with the image data.
-    GL_DestroyImagePixels(&image);
+    GL_DestroyImage(&image);
 
 #ifdef _DEBUG
     VERBOSE(

@@ -187,9 +187,8 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
     }
 
     // Open the file.
-    if(!(file = F_Open(fileName, "rt")))
-        return false;
-    
+    file = F_Open(fileName, "rt");
+    if(!file) return false;
 
     VERBOSE(Con_Printf("Con_ParseCommands: %s (def:%i)\n", F_PrettyPath(fileName), setdefault));
 
@@ -197,6 +196,7 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
     // Each line is a command.
     { int line = 1;
     DFILE* hndl = AbstractFile_Handle(file);
+    assert(hndl);
     for(;;)
     {
         M_ReadLine(buff, 512, hndl);

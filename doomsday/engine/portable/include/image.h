@@ -74,7 +74,7 @@ void GL_PrintImageMetadata(const image_t* image);
 uint8_t* GL_LoadImageFromFile(image_t* image, abstractfile_t* file);
 
 /// Release image pixel data.
-void GL_DestroyImagePixels(image_t* image);
+void GL_DestroyImage(image_t* image);
 
 /// @return  @c true if the image pixel data contains alpha information.
 boolean GL_ImageHasAlpha(const image_t* image);

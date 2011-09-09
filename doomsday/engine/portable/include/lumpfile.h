@@ -38,11 +38,10 @@ struct lumpdirectory_s;
 typedef struct lumpfile_s {
     // Base file.
     abstractfile_t _base;
-    lumpinfo_t _info;
     void** _cacheData;
 } lumpfile_t;
 
-lumpfile_t* LumpFile_New(const char* absolutePath, const lumpname_t name, size_t lumpSize);
+lumpfile_t* LumpFile_New(const lumpinfo_t* info);
 void LumpFile_Delete(lumpfile_t* lump);
 
 /// Close this file if open and release any acquired file identifiers.

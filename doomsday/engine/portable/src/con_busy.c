@@ -254,13 +254,13 @@ static void Con_BusyPrepareResources(void)
         if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
         {
             texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImagePixels(&image);
+            GL_DestroyImage(&image);
         }
 
         if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
         {
             texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImagePixels(&image);
+            GL_DestroyImage(&image);
         }
     }
 

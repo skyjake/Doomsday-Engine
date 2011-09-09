@@ -186,6 +186,10 @@ int F_Access(const char* path);
 /**
  * Opens the given file (will be translated) for reading.
  *
+ * \post If @a allowDuplicate = @c false a new file ID for this will have been
+ * added to the list of known file identifiers if this file hasn't yet been
+ * opened. It is the responsibility of the caller to release this identifier when done.
+ *
  * @param path  Possibly relative or mapped path to the resource being opened.
  * @param mode
  *      't' = text mode (with real files, lumps are always binary)
