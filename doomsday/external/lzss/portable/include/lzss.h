@@ -1,18 +1,17 @@
 #ifndef __LZSS_IO_COMPRESSION_H__
 #define __LZSS_IO_COMPRESSION_H_
 
-#ifdef UNIX
-#include <stdint.h>
-#endif
-
 #ifdef __cplusplus
 extern          "C" {
 #endif
 
 #ifdef WIN32
 #	define LZSSEXPORT __stdcall
+typedef short   int16_t;
+typedef int     int32_t;
 #elif defined(UNIX)
 #	define LZSSEXPORT
+#   include <stdint.h>
 #endif
 
 #ifndef EOF
