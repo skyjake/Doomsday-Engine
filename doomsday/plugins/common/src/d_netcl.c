@@ -917,7 +917,7 @@ void NetCl_FloorHitRequest(player_t* player)
     msg = D_NetWrite();
 
 #ifdef _DEBUG
-    Con_Message("NetCl_FloorHitRequest: Player %i.\n", player - players);
+    Con_Message("NetCl_FloorHitRequest: Player %i.\n", (int)(player - players));
 #endif
 
     // Include the position and momentum of the hit.
@@ -949,7 +949,7 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
 
 #ifdef _DEBUG
     Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n",
-                player - players, actionType);
+                (int)(player - players), actionType);
 #endif
 
     // Type of the request.

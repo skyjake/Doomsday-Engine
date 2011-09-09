@@ -461,7 +461,7 @@ void FI_NewState(const char *script)
 
 #ifdef _DEBUG
     // Is the stack leaking?
-    Con_Printf("FI_NewState: Assigned index %i.\n", fi - fiStateStack);
+    Con_Printf("FI_NewState: Assigned index %i.\n", (int)(fi - fiStateStack));
 #endif
 
     memset(fi, 0, sizeof(*fi));
@@ -488,7 +488,7 @@ void FI_PopState(void)
     int                 i;
 
 #ifdef _DEBUG
-    Con_Printf("FI_PopState: fi=%p (%i)\n", fi, fi - fiStateStack);
+    Con_Printf("FI_PopState: fi=%p (%i)\n", fi, (int)(fi - fiStateStack));
 #endif
     if(!fi)
     {

@@ -104,24 +104,30 @@ typedef unsigned long long   uintmax_t;
 #ifndef UNIX
 typedef unsigned int    uint;
 typedef unsigned short  ushort;
-
 #else
-
 typedef uint32_t        uint;
 typedef uint16_t        ushort;
-
 #endif
 
-typedef int             fixed_t;
-typedef unsigned int    angle_t;
-typedef int             spritenum_t;
-typedef int             lumpnum_t;
+typedef int32_t         fixed_t;
+typedef uint32_t        angle_t;
+typedef int32_t         spritenum_t;
+typedef int32_t         lumpnum_t;
 typedef uint32_t        materialnum_t;
 typedef uint32_t        ident_t;
-typedef unsigned short  nodeindex_t;
-typedef unsigned short  thid_t;
+typedef uint16_t        nodeindex_t;
+typedef uint16_t        thid_t;
 typedef unsigned char   byte;
 typedef double          timespan_t;
+
+// Pointer-integer conversion (used for legacy code).
+#ifdef __64BIT__
+typedef int64_t         int_from_pointer_t;
+#else
+typedef int32_t         int_from_pointer_t;
+#endif
+#define PTR2INT(x)      ( (int_from_pointer_t) ((void*)(x)) )
+#define INT2PTR(type,x) ( (type*) ((int_from_pointer_t)(x)) )
 
 #define FILENAME_T_MAXLEN 256
 typedef char            filename_t[FILENAME_T_MAXLEN];
@@ -151,23 +157,23 @@ typedef enum ddboolean_e { false, true } ddboolean_t;
 #define BAMS_BITS   16
 
 #if BAMS_BITS == 32
-typedef unsigned long binangle_t;
+typedef uint32_t binangle_t;
 #elif BAMS_BITS == 16
-typedef unsigned short binangle_t;
+typedef uint16_t binangle_t;
 #else
 typedef unsigned char binangle_t;
 #endif
 
 #define DDMAXCHAR   ((char)0x7f)
-#define DDMAXSHORT  ((short)0x7fff)
-#define DDMAXINT    ((int)0x7fffffff)   // max pos 32-bit int
-#define DDMAXLONG   ((long)0x7fffffff)
+#define DDMAXSHORT  ((int16_t)0x7fff)
+#define DDMAXINT    ((int32_t)0x7fffffff)   // max pos 32-bit int
+#define DDMAXLONG   ((int32_t)0x7fffffff)
 #define DDMAXFLOAT  ((float)1E+37)
 
 #define DDMINCHAR   ((char)0x80)
-#define DDMINSHORT  ((short)0x8000)
-#define DDMININT    ((int)0x80000000)   // max negative 32-bit integer
-#define DDMINLONG   ((long)0x80000000)
+#define DDMINSHORT  ((int16_t)0x8000)
+#define DDMININT    ((int32_t)0x80000000)   // max negative 32-bit integer
+#define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
 
 // Predeclarations for map data types. The contents of these structs is

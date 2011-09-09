@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_acs.c:
- *
- * \bug Not 64bit clean: In function 'P_LoadACScripts': cast from pointer to integer of different size, cast to pointer from integer of different size
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "jhexen.h"

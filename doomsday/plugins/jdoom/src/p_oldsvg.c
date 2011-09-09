@@ -21,10 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * \bug Not 64bit clean: In function 'SV_ReadMobj': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'P_v19_UnArchivePlayers': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'P_v19_UnArchiveThinkers': cast from pointer to integer of different size
  */
 
 /**
@@ -93,13 +89,13 @@ static void SV_Read(void* data, int len)
 static short SV_ReadShort(void)
 {
     savePtr += 2;
-    return *(short *) (savePtr - 2);
+    return *(int16_t *) (savePtr - 2);
 }
 
 static int SV_ReadLong(void)
 {
     savePtr += 4;
-    return *(int *) (savePtr - 4);
+    return *(int32_t *) (savePtr - 4);
 }
 
 static void SV_ReadPlayer(player_t* pl)
@@ -192,7 +188,7 @@ static void SV_ReadPlayer(player_t* pl)
     {
         pspdef_t       *psp = &pl->pSprites[i];
 
-        psp->state = (state_t*) SV_ReadLong();
+        psp->state = INT2PTR(state_t, SV_ReadLong());
         psp->pos[VX] = SV_ReadLong();
         psp->pos[VY] = SV_ReadLong();
         psp->tics = SV_ReadLong();
@@ -281,7 +277,7 @@ static void SV_ReadMobj(void)
     SV_ReadLong();              // &mobjinfo[mo->type]
 
     mo->tics = SV_ReadLong();   // state tic counter
-    mo->state = (state_t *) SV_ReadLong();
+    mo->state = INT2PTR(state_t, SV_ReadLong());
     mo->damage = DDMAXINT; // Use damage set in mo->info->damage
     mo->flags = SV_ReadLong();
     mo->health = SV_ReadLong();
@@ -304,7 +300,7 @@ static void SV_ReadMobj(void)
 
     // Additional info record for player avatars only.
     // Only valid if type == MT_PLAYER
-    mo->player = (player_t *) SV_ReadLong();
+    mo->player = INT2PTR(player_t, SV_ReadLong());
 
     // Player number last looked for.
     mo->lastLook = SV_ReadLong();
@@ -326,11 +322,11 @@ static void SV_ReadMobj(void)
 
     SV_UpdateReadMobjFlags(mo, 0);
 
-    mo->state = &STATES[(int) mo->state];
+    mo->state = &STATES[PTR2INT(mo->state)];
     mo->target = NULL;
     if(mo->player)
     {
-        int     pnum = (int) mo->player - 1;
+        int     pnum = PTR2INT(mo->player) - 1;
 
         mo->player = &players[pnum];
         mo->dPlayer = mo->player->plr;
@@ -368,7 +364,7 @@ void P_v19_UnArchivePlayers(void)
             if(players[i].pSprites[j].state)
             {
                 players[i].pSprites[j].state =
-                    &STATES[(int) players[i].pSprites[j].state];
+                    &STATES[PTR2INT(players[i].pSprites[j].state)];
             }
         }
     }

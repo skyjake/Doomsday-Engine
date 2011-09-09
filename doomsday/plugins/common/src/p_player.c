@@ -409,7 +409,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
 
 #ifdef _DEBUG
     Con_Message("P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i\n",
-                player - players, weapon, ammo, force);
+                (int)(player - players), weapon, ammo, force);
 #endif
 
     // Assume weapon power level zero.

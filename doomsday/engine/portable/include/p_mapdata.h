@@ -42,16 +42,16 @@
 #include "m_nodepile.h"
 #include "m_vector.h"
 
-#define GET_VERTEX_IDX(vtx) ((vtx) - vertexes)
-#define GET_LINE_IDX(li)    ((li) - lineDefs)
-#define GET_SIDE_IDX(si)    ((si) - sideDefs)
-#define GET_SECTOR_IDX(sec) ((sec) - sectors)
-#define GET_SUBSECTOR_IDX(sub) ((sub) - ssectors)
-#define GET_SEG_IDX(seg)    ((seg) - segs)
-#define GET_NODE_IDX(nd)    ((nd) - nodes)
+#define GET_VERTEX_IDX(vtx)     ( (int) ((vtx) - vertexes) )
+#define GET_LINE_IDX(li)        ( (int) ((li) - lineDefs) )
+#define GET_SIDE_IDX(si)        ( (int) ((si) - sideDefs) )
+#define GET_SECTOR_IDX(sec)     ( (int) ((sec) - sectors) )
+#define GET_SUBSECTOR_IDX(sub)  ( (int) ((sub) - ssectors) )
+#define GET_SEG_IDX(seg)        ( (int) ((seg) - segs) )
+#define GET_NODE_IDX(nd)        ( (int) ((nd) - nodes) )
 
 // Return the index of plane within a sector's planes array.
-#define GET_PLANE_IDX(pln)  ((pln) - (pln)->sector->planes[0])
+#define GET_PLANE_IDX(pln)      ( (int) ((pln) - (pln)->sector->planes[0]) )
 
 #define VERTEX_PTR(i)       (&vertexes[i])
 #define SEG_PTR(i)          (&segs[i])

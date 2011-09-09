@@ -983,7 +983,7 @@ boolean P_MorphPlayer(player_t* player)
     int                 oldFlags2;
 
 #ifdef _DEBUG
-    Con_Message("P_MorphPlayer: Player %i.\n", player - players);
+    Con_Message("P_MorphPlayer: Player %i.\n", (int)(player - players));
 #endif
 
     if(player->morphTics)

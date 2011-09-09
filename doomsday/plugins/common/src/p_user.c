@@ -1361,7 +1361,7 @@ void P_PlayerThinkWeapons(player_t* player)
             }
 #ifdef _DEBUG
             Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).\n",
-                        player - players, newweapon, brain->changeWeapon);
+                        (int)(player - players), newweapon, brain->changeWeapon);
 #endif
             player->pendingWeapon = newweapon;
             brain->changeWeapon = WT_NOCHANGE;

@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301 USA
  */
 
-/**
- * s_sound.c:
- *
- * \bug Not 64bit clean: In function 'S_ParseSndInfoLump': cast to pointer from integer of different size
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>

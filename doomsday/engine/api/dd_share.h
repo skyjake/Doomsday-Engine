@@ -92,8 +92,8 @@ int             dd_vsnprintf(char* str, size_t size, const char* format,
 #   define PRINTF_F(f,v)
 #endif
 
-short           ShortSwap(short);
-long            LongSwap(long);
+int16_t         ShortSwap(int16_t);
+int32_t         LongSwap(int32_t);
 float           FloatSwap(float);
 
 #ifdef __BIG_ENDIAN__
@@ -107,9 +107,9 @@ float           FloatSwap(float);
 
 // In these, x is evaluated multiple times, so increments and decrements
 // cannot be used.
-#define MACRO_SHORT(x)      ((short)(( ((short)(x)) & 0xff ) << 8) | (( ((short)(x)) & 0xff00) >> 8))
-#define MACRO_LONG(x)       ((long)((( ((long)(x)) & 0xff) << 24)    | (( ((long)(x)) & 0xff00) << 8) | \
-                                    (( ((long)(x)) & 0xff0000) >> 8) | (( ((long)(x)) & 0xff000000) >> 24) ))
+#define MACRO_SHORT(x)      ((int16_t)(( ((int16_t)(x)) & 0xff ) << 8) | (( ((int16_t)(x)) & 0xff00) >> 8))
+#define MACRO_LONG(x)       ((int32_t)((( ((int32_t)(x)) & 0xff) << 24) | (( ((int32_t)(x)) & 0xff00) << 8) | \
+                                       (( ((int32_t)(x)) & 0xff0000) >> 8) | (( ((int32_t)(x)) & 0xff000000) >> 24) ))
 #else
     // Little-endian.
 #define SHORT(x)            (x)
@@ -124,8 +124,8 @@ float           FloatSwap(float);
 #define MACRO_LONG(x)       (x)
 #endif
 
-#define USHORT(x)           ((unsigned short) SHORT(x))
-#define ULONG(x)            ((unsigned long) LONG(x))
+#define USHORT(x)           ((uint16_t) SHORT(x))
+#define ULONG(x)            ((uint32_t) LONG(x))
 
 #define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
 #define MIN_OF(x, y)        ((x) < (y)? (x) : (y))

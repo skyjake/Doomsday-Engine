@@ -235,11 +235,11 @@ D_CMD(InspectMobj)
 
     info = ClMobj_GetInfo(mo);
 
-    Con_Printf("%s %i [%p] State:%s (%i)\n", info? "CLMOBJ" : "Mobj", id, mo, Def_GetStateName(mo->state), mo->state - states);
+    Con_Printf("%s %i [%p] State:%s (%i)\n", info? "CLMOBJ" : "Mobj", id, mo, Def_GetStateName(mo->state), (int)(mo->state - states));
     Con_Printf("Type:%s (%i) Info:[%p]", Def_GetMobjName(mo->type), mo->type, mo->info);
     if(mo->info)
     {
-        Con_Printf(" (%i)\n", mo->info - mobjInfo);
+        Con_Printf(" (%i)\n", (int)(mo->info - mobjInfo));
     }
     else
     {

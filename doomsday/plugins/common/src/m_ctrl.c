@@ -402,10 +402,9 @@ void M_InitControlsMenu(void)
 
         cc->item = item;
 
-
-        if(cc->itemText && ((unsigned int) cc->itemText < NUMTEXT))
+        if(cc->itemText && (PTR2INT(cc->itemText) > 0 && PTR2INT(cc->itemText) < NUMTEXT))
         {
-            item->text = GET_TXT((unsigned int)cc->itemText);
+            item->text = GET_TXT(PTR2INT(cc->itemText));
         }
         else
         {

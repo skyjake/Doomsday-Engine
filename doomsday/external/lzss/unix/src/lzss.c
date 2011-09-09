@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /***************************************************
  ************ LZSS compression routines ************
  ***************************************************
@@ -30,7 +28,7 @@
    Later modified for use in the Allegro filesystem by Shawn Hargreaves.
 
    Later still, modified to function as a stand-alone Win32 DLL by
-   Jaakko Ker‰nen.  Currently used as a part of the Doomsday Engine:
+   Jaakko Ker√§nen.  Currently used as a part of the Doomsday Engine:
    http://sf.net/projects/deng/
  
 
@@ -595,12 +593,12 @@ long Encrypt(long x)
 /**
  *  Reads a 16 bit word from a file, using intel byte ordering.
  */
-int lzGetW(LZFILE * f)
+int16_t lzGetW(LZFILE * f)
 {
-	int     b1, b2;
+        int16_t b1, b2;
 
 	if((b1 = lzGetC(f)) != EOF)
-		if((b2 = lzGetC(f)) != EOF)
+                if((b2 = lzGetC(f)) != EOF)
 			return ((b2 << 8) | b1);
 
 	return EOF;
@@ -609,16 +607,16 @@ int lzGetW(LZFILE * f)
 /**
  *  Reads a 32 bit long from a file, using intel byte ordering.
  */
-long lzGetL(LZFILE * f)
+int32_t lzGetL(LZFILE * f)
 {
-	int     b1, b2, b3, b4;
+        int32_t b1, b2, b3, b4;
 
 	if((b1 = lzGetC(f)) != EOF)
 		if((b2 = lzGetC(f)) != EOF)
 			if((b3 = lzGetC(f)) != EOF)
 				if((b4 = lzGetC(f)) != EOF)
-					return (((long) b4 << 24) | ((long) b3 << 16) |
-							((long) b2 << 8) | (long) b1);
+                                        return (((int32_t) b4 << 24) | ((int32_t) b3 << 16) |
+                                                        ((int32_t) b2 << 8) | (int32_t) b1);
 
 	return EOF;
 }
@@ -626,9 +624,9 @@ long lzGetL(LZFILE * f)
 /**
  *  Writes a 16 bit int to a file, using intel byte ordering.
  */
-int lzPutW(int w, LZFILE * f)
+int16_t lzPutW(int16_t w, LZFILE * f)
 {
-	int     b1, b2;
+        int b1, b2;
 
 	b1 = (w & 0xFF00) >> 8;
 	b2 = w & 0x00FF;
@@ -643,7 +641,7 @@ int lzPutW(int w, LZFILE * f)
 /**
  *  Writes a 32 bit long to a file, using intel byte ordering.
  */
-long lzPutL(long l, LZFILE * f)
+int32_t lzPutL(int32_t l, LZFILE * f)
 {
 	int     b1, b2, b3, b4;
 

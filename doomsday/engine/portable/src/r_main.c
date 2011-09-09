@@ -631,7 +631,7 @@ void R_SetupFrame(player_t* player)
        V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
 #ifdef _DEBUG
-        Con_Message("R_SetupFrame: plr %i, resetNextViewer = %i\n", viewPlayer - ddPlayers, resetNextViewer);
+        Con_Message("R_SetupFrame: plr %i, resetNextViewer = %i\n", (int) (viewPlayer - ddPlayers), resetNextViewer);
 #endif
 
         // Keep reseting until a new sharp world has arrived.
