@@ -47,7 +47,7 @@ typedef struct {
     void** _lumpCache;
 } zipfile_t;
 
-zipfile_t* ZipFile_New(DFILE* hndl, const lumpinfo_t* info);
+zipfile_t* ZipFile_New(const lumpinfo_t* info, DFILE* hndl);
 void ZipFile_Delete(zipfile_t* zip);
 
 /// Close this file if open and release any acquired file identifiers.

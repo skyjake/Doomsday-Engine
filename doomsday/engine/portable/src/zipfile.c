@@ -382,9 +382,9 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     }
 }
 
-zipfile_t* ZipFile_New(DFILE* hndl, const lumpinfo_t* info)
+zipfile_t* ZipFile_New(const lumpinfo_t* info, DFILE* hndl)
 {
-    assert(NULL != hndl && NULL != info);
+    assert(NULL != info && NULL != hndl);
     {
     zipfile_t* file = (zipfile_t*)malloc(sizeof(*file));
     if(NULL == file)

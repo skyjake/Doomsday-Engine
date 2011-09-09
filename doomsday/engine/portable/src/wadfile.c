@@ -124,9 +124,9 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     }
 }
 
-wadfile_t* WadFile_New(DFILE* hndl, const lumpinfo_t* info)
+wadfile_t* WadFile_New(const lumpinfo_t* info, DFILE* hndl)
 {
-    assert(NULL != hndl && NULL != info);
+    assert(NULL != info && NULL != hndl);
     {
     wadfile_t* file;
     wadheader_t hdr;

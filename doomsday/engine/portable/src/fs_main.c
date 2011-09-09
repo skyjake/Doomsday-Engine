@@ -322,7 +322,7 @@ static abstractfile_t* openFromFile(abstractfile_t* file, FILE* hndl)
     return file;
 }
 
-static abstractfile_t* newUnknownFile(DFILE* hndl, const lumpinfo_t* info)
+static abstractfile_t* newUnknownFile(const lumpinfo_t* info, DFILE* hndl)
 {
     abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
     if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
@@ -330,19 +330,19 @@ static abstractfile_t* newUnknownFile(DFILE* hndl, const lumpinfo_t* info)
     return openFromFile(file, hndl->hndl);
 }
 
-static zipfile_t* newZipFile(DFILE* hndl, const lumpinfo_t* info)
+static zipfile_t* newZipFile(const lumpinfo_t* info, DFILE* hndl)
 {
-    abstractfile_t* file = (abstractfile_t*)ZipFile_New(hndl, info);
+    abstractfile_t* file = (abstractfile_t*)ZipFile_New(info, hndl);
     return (zipfile_t*) openFromFile(file, hndl->hndl);
 }
 
-static wadfile_t* newWadFile(DFILE* hndl, const lumpinfo_t* info)
+static wadfile_t* newWadFile(const lumpinfo_t* info, DFILE* hndl)
 {
-    abstractfile_t* file = (abstractfile_t*)WadFile_New(hndl, info);
+    abstractfile_t* file = (abstractfile_t*)WadFile_New(info, hndl);
     return (wadfile_t*) openFromFile(file, hndl->hndl);
 }
 
-static lumpfile_t* newLumpFile(DFILE* hndl, const lumpinfo_t* info,
+static lumpfile_t* newLumpFile(const lumpinfo_t* info, DFILE* hndl,
     abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
 {
     abstractfile_t* file = (abstractfile_t*)LumpFile_New(info);
@@ -955,7 +955,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
 
         // Get a new file record.
         fh = getFileHandle();
-        wad = (wadfile_t*)linkFile((abstractfile_t*)newWadFile(prevOpened, &info), loadingForStartup);
+        wad = (wadfile_t*)linkFile((abstractfile_t*)newWadFile(&info, prevOpened), loadingForStartup);
         fh->file = (abstractfile_t*)wad;
         WadFile_PublishLumpsToDirectory(wad, ActiveWadLumpDirectory);
 
@@ -1593,40 +1593,40 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
         info.name[LUMPNAME_T_LASTINDEX] = '\0';
     }
 
-    fsObject = (abstractfile_t*)newLumpFile(NULL, &info, container, lumpIdx, dontBuffer);
+    fsObject = (abstractfile_t*)newLumpFile(&info, NULL, container, lumpIdx, dontBuffer);
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
     return fsObject;
 }
 
-static abstractfile_t* tryOpenAsZipFile(DFILE* handle, const lumpinfo_t* info)
+static abstractfile_t* tryOpenAsZipFile(const lumpinfo_t* info, DFILE* hndl)
 {
     zipfile_t* zip = NULL;
-    if(inited && ZipFile_Recognise(handle))
+    if(inited && ZipFile_Recognise(hndl))
     {
-        zip = newZipFile(handle, info);
+        zip = newZipFile(info, hndl);
     }
     return (abstractfile_t*)zip;
 }
 
-static abstractfile_t* tryOpenAsWadFile(DFILE* handle, const lumpinfo_t* info)
+static abstractfile_t* tryOpenAsWadFile(const lumpinfo_t* info, DFILE* hndl)
 {
     wadfile_t* wad = NULL;
-    if(inited && WadFile_Recognise(handle))
+    if(inited && WadFile_Recognise(hndl))
     {
-        wad = newWadFile(handle, info);
+        wad = newWadFile(info, hndl);
     }
     return (abstractfile_t*)wad;
 }
 
-static abstractfile_t* tryOpenFile2(DFILE* hndl, const lumpinfo_t* info)
+static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, DFILE* hndl)
 {
     assert(NULL != hndl && NULL != info);
     {
     struct filehandler_s {
         resourcetype_t resourceType;
-        abstractfile_t* (*tryOpenFile)(DFILE* hndl, const lumpinfo_t* info);
+        abstractfile_t* (*tryOpenFile)(const lumpinfo_t* info, DFILE* hndl);
     } static const handlers[] = {
         { RT_ZIP,  tryOpenAsZipFile },
         { RT_WAD,  tryOpenAsWadFile },
@@ -1640,7 +1640,7 @@ static abstractfile_t* tryOpenFile2(DFILE* hndl, const lumpinfo_t* info)
     {
         if(hdlr->resourceType != resourceType) continue;
 
-        fsObject = hdlr->tryOpenFile(hndl, info);
+        fsObject = hdlr->tryOpenFile(info, hndl);
         break;
     }
 
@@ -1651,7 +1651,7 @@ static abstractfile_t* tryOpenFile2(DFILE* hndl, const lumpinfo_t* info)
     {
         if(hdlr != &handlers[n]) // We already know its not in this format.
         {
-            fsObject = handlers[n].tryOpenFile(hndl, info);
+            fsObject = handlers[n].tryOpenFile(info, hndl);
         }
         ++n;
     }}
@@ -1659,7 +1659,7 @@ static abstractfile_t* tryOpenFile2(DFILE* hndl, const lumpinfo_t* info)
     // If still not loaded; this an unknown format.
     if(!fsObject)
     {
-        fsObject = newUnknownFile(hndl, info);
+        fsObject = newUnknownFile(info, hndl);
     }
 
     return fsObject;
@@ -1745,7 +1745,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean a
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
-    fsObject = tryOpenFile2(&temp, &info);
+    fsObject = tryOpenFile2(&info, &temp);
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
