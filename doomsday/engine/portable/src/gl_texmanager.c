@@ -336,11 +336,12 @@ int GL_InitPalettedTexture(void)
  */
 void GL_LoadSystemTextures(void)
 {
-    struct ddtexdef_s {
+    static const struct ddtexdef_s {
         char            name[9];
         int             id;
         byte            flags; // MATF_* flags
-    } static const ddtexdefs[NUM_DD_TEXTURES] =
+    }
+    ddtexdefs[NUM_DD_TEXTURES] =
     {
         {"DDT_UNKN", DDT_UNKNOWN},
         {"DDT_MISS", DDT_MISSING},
@@ -1061,7 +1062,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         { "radioOE", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE }
     };
 
-    if(novideo || which < 0 || which >= NUM_LIGHTING_TEXTURES)
+    if(novideo || (int)which < 0 || which >= NUM_LIGHTING_TEXTURES)
         return 0;
 
     if(!lightingTextures[which].tex)

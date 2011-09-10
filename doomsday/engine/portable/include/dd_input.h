@@ -193,7 +193,7 @@ void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
-boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, uint *axis);
+boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, int *axis);
 inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
 int         I_GetAxisByName(inputdev_t *device, const char *name);
 int         I_GetKeyByName(inputdev_t* device, const char* name);

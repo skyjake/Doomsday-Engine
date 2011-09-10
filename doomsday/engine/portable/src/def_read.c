@@ -453,7 +453,7 @@ static int ReadInt(int* dest, int unsign)
         return false;
     }
 
-    *dest = unsign ? strtoul(token, 0, 0) : strtol(token, 0, 0);
+    *dest = unsign? (int)strtoul(token, 0, 0) : strtol(token, 0, 0);
     return true;
 }
 

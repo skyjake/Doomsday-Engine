@@ -125,7 +125,7 @@ void Net_SendPing(int player, int count)
 void Net_PingResponse(void)
 {
     client_t* cl = &clients[netBuffer.player];
-    unsigned int time = Reader_ReadUInt32(msgReader);
+    int time = Reader_ReadUInt32(msgReader);
 
     // Is this a response to our ping?
     if(time == cl->ping.sent)
