@@ -3,3 +3,4 @@
 
 /doomsday/build/win32/license.txt
 *.user.*
+*-build-*

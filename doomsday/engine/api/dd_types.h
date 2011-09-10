@@ -105,8 +105,9 @@ typedef unsigned long long   uintmax_t;
 typedef unsigned int    uint;
 typedef unsigned short  ushort;
 #else
-typedef uint32_t        uint;
-typedef uint16_t        ushort;
+#  include <sys/types.h>
+//typedef uint32_t        uint;
+//typedef uint16_t        ushort;
 #endif
 
 typedef int32_t         fixed_t;
