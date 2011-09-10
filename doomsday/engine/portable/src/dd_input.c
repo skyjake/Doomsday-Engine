@@ -436,7 +436,7 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  *
  * @return              @c false, if the string is invalid.
  */
-boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
+boolean I_ParseDeviceAxis(const char* str, uint* deviceID, int* axis)
 {
     char                name[30], *ptr;
     inputdev_t*         device;
@@ -457,7 +457,7 @@ boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
     // The axis name.
     if(*axis)
     {
-        int                 a = I_GetAxisByName(device, ptr + 1);
+        int a = I_GetAxisByName(device, ptr + 1);
         if((*axis = a) < 0)
             return false;
 
@@ -1324,7 +1324,8 @@ static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)
 
 D_CMD(AxisPrintConfig)
 {
-    uint        deviceID, axisID;
+    uint        deviceID;
+    int         axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
@@ -1343,7 +1344,8 @@ D_CMD(AxisPrintConfig)
 
 D_CMD(AxisChangeOption)
 {
-    uint        deviceID, axisID;
+    uint        deviceID;
+    int         axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
@@ -1376,7 +1378,8 @@ D_CMD(AxisChangeOption)
 
 D_CMD(AxisChangeValue)
 {
-    uint        deviceID, axisID;
+    uint        deviceID;
+    int         axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
