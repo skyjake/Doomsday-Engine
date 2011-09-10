@@ -5,17 +5,38 @@ TEMPLATE = app
 TARGET = doomsday
 QT -= core gui
 
+# Build Configuration --------------------------------------------------------
+
 VERSION = 1.9.7
 
-# Build configuration.
 # TODO: import deng config from a .pri file
 macx {
     DENG_CONFIG += snowleopard nofixedasm
+
+    # Select OS version.
+    contains(DENG_CONFIG, snowleopard) {
+        message("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
+        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+        CONFIG += x86 x86_64
+    }
+    else {
+        message("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
+        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
+        CONFIG += x86 ppc
+    }
 }
 
-include(../sdl.pri)
+# External Dependencies ------------------------------------------------------
 
-# Common definitions.
+include(../sdl.pri)
+include(../opengl.pri)
+include(../zlib.pri)
+include(../libpng.pri)
+include(../ncurses.pri)
+include(../curl.pri)
+
+# Common Definitions ---------------------------------------------------------
+
 DEFINES += __DOOMSDAY__
 contains(QMAKE_HOST.arch, x86_64) {
     message("64-bit architecture detected.")
@@ -32,7 +53,10 @@ unix {
     DEFINES += UNIX
 
     # We are not interested in unused parameters (there are quite a few).
-    QMAKE_CFLAGS_WARN_ON += -Wno-unused-parameter -Wno-unused-variable -Wno-missing-field-initializers
+    QMAKE_CFLAGS_WARN_ON += \
+        -Wno-unused-parameter \
+        -Wno-unused-variable \
+        -Wno-missing-field-initializers
 }
 macx {
     DEFINES += MACOSX
@@ -42,18 +66,6 @@ macx {
     QMAKE_CFLAGS += -undefined suppress
     QMAKE_CXXFLAGS += -undefined suppress
 
-    # Universal binary.
-    contains(DENG_CONFIG, snowleopard) {
-        message("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-        CONFIG += x86 x86_64
-    }
-    else {
-        message("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
-        CONFIG += x86 ppc
-    }
-
     INSTALLS += embedded_frameworks
     embedded_frameworks.path = $$OUT_PWD/doomsday.app/Contents/Frameworks
     embedded_frameworks.files = \
@@ -61,7 +73,8 @@ macx {
         $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework
 }
 
-# Configuration.
+# Engine Configuration -------------------------------------------------------
+
 contains(DENG_CONFIG, nofixedasm) {
     DEFINES += NO_FIXED_ASM
 
@@ -73,20 +86,16 @@ contains(DENG_CONFIG, writertypecheck) {
     DEFINES += DENG_WRITER_TYPECHECK
 }
 
-# External dependencies.
-include(../opengl.pri)
-include(../zlib.pri)
-include(../libpng.pri)
-include(../ncurses.pri)
-include(../curl.pri)
+# Directories ----------------------------------------------------------------
 
-# Directories.
 DENG_API_DIR = api
 DENG_INCLUDE_DIR = portable/include
 DENG_UNIX_INCLUDE_DIR = unix/include
 DENG_MAC_INCLUDE_DIR = mac/include
 DENG_WIN_INCLUDE_DIR = win32/include
 DENG_LZSS_DIR = ../external/lzss
+
+# Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
     api/dd_api.h \
