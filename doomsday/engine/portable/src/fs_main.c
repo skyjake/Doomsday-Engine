@@ -73,10 +73,7 @@ typedef struct fileidentifier_s {
 static boolean inited = false;
 static boolean loadingForStartup;
 
-// Head of the llist of open file nodes.
 static FileList* openFiles;
-
-// Head of the llist of loaded file nodes.
 static FileList* loadedFiles;
 
 static uint fileIdentifiersCount = 0;
