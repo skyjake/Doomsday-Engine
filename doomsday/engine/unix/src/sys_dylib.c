@@ -160,18 +160,10 @@ lt_dlhandle lt_dlopenext(const char *baseFileName)
 #ifdef MACOSX
     strcat(bundleName, "/");
     strcat(bundleName, baseFileName);
-    strcat(bundleName, "/Contents/MacOS/");
+    strcat(bundleName, "/");
 #endif
     strcat(bundleName, baseFileName);
-//#ifdef UNIX
-//#ifndef MACOSX
-//  strcat(bundleName, ".so");
-//#endif
-//#endif
 
-
-/*  sprintf(bundleName, "Bundles/%s/Contents/MacOS/%s", baseFileName,
-            baseFileName);*/
 #ifdef MACOSX
     // Get rid of the ".bundle" in the end.
     if((ptr = strrchr(bundleName, '.')) != NULL)

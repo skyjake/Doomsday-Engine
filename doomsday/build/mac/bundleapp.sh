@@ -21,5 +21,6 @@ rm -rf $BUILDDIR/*.bundle
 echo "Copying bundles from plugins..."
 $CP plugins/dehread/dpDehRead.bundle $BUILDDIR/dpDehRead.bundle
 $CP plugins/wadmapconverter/dpWadMapConverter.bundle $BUILDDIR/dpWadMapConverter.bundle
+$CP plugins/jdoom/jDoom.bundle $BUILDDIR/jDoom.bundle
 
 echo "Bundling done."

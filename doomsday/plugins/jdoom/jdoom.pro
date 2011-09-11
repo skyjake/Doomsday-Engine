@@ -9,7 +9,7 @@ TARGET = jdoom
 
 DEFINES += __JDOOM__
 
-VERSION = JDOOM_VERSION
+VERSION = $$JDOOM_VERSION
 
 macx {
     gamedata.files = $$OUT_PWD/../../jdoom.pk3
