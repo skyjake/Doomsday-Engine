@@ -29,7 +29,7 @@ typedef uint64_t      io_user_reference_t;
 #import "../include/DoomsdayRunner.h"
 
 /* Use this flag to determine whether we use SDLMain.nib or not */
-//#define		SDL_USE_NIB_FILE	0
+//#define SDL_USE_NIB_FILE
 
 
 int     gArgc;
@@ -96,7 +96,7 @@ static BOOL   gFinderLaunch;
     }
 }
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
 
 /* Fix menu to contain the real app name instead of "SDL App" */
 - (void)fixMenu:(NSMenu *)aMenu withAppName:(NSString *)appName
@@ -258,7 +258,7 @@ void CustomApplicationMain (int argc, char** argv)
     /* Set the working directory to the .app's parent directory */
     [self setupWorkingDirectory:gFinderLaunch];
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
     /* Set the main menu to contain the real app name instead of "SDL App" */
     [self fixMenu:[NSApp mainMenu] withAppName:[[NSProcessInfo processInfo] processName]];
 #endif
@@ -347,7 +347,7 @@ int main (int argc, char *argv[])
         gArgv[i] = argv[i];
     gArgv[i] = NULL;
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
     [SDLApplication poseAsClass:[NSApplication class]];
     NSApplicationMain (argc, argv);
 #else
