@@ -3,28 +3,12 @@
 
 TEMPLATE = app
 TARGET = doomsday
-QT -= core gui
 
 # Build Configuration --------------------------------------------------------
 
-VERSION = 1.9.7
+include(../config.pri)
 
-# TODO: import deng config from a .pri file
-macx {
-    DENG_CONFIG += snowleopard nofixedasm
-
-    # Select OS version.
-    contains(DENG_CONFIG, snowleopard) {
-        message("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-        CONFIG += x86 x86_64
-    }
-    else {
-        message("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
-        CONFIG += x86 ppc
-    }
-}
+VERSION = $$DENG_VERSION
 
 # External Dependencies ------------------------------------------------------
 
@@ -40,44 +24,15 @@ include(../curl.pri)
 DEFINES += __DOOMSDAY__
 contains(QMAKE_HOST.arch, x86_64) {
     message("64-bit architecture detected.")
-    #DEFINES += __x86_64__
-}
-debug {
-    message("Debug build.")
-    DEFINES += _DEBUG
-}
-win32 {
-    DEFINES += WIN32
-}
-unix {
-    DEFINES += UNIX
-
-    # We are not interested in unused parameters (there are quite a few).
-    QMAKE_CFLAGS_WARN_ON += \
-        -Wno-unused-parameter \
-        -Wno-unused-variable \
-        -Wno-missing-field-initializers
+    DEFINES += HOST_IS_64BIT
 }
 macx {
-    DEFINES += MACOSX
-
     LIBS += -framework Cocoa -framework QTKit
-
-    QMAKE_CFLAGS += -undefined suppress
-    QMAKE_CXXFLAGS += -undefined suppress
-
-    INSTALLS += embedded_frameworks
-    embedded_frameworks.path = $$OUT_PWD/doomsday.app/Contents/Frameworks
-    embedded_frameworks.files = \
-        $${SDL_FRAMEWORK_DIR}/SDL.framework \
-        $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework
 }
 
 # Engine Configuration -------------------------------------------------------
 
 contains(DENG_CONFIG, nofixedasm) {
-    DEFINES += NO_FIXED_ASM
-
     # Use the fixed-point math from libcommon.
     # TODO: Move it to the engine.
     SOURCES += ../plugins/common/src/m_fixed.c
@@ -85,15 +40,6 @@ contains(DENG_CONFIG, nofixedasm) {
 contains(DENG_CONFIG, writertypecheck) {
     DEFINES += DENG_WRITER_TYPECHECK
 }
-
-# Directories ----------------------------------------------------------------
-
-DENG_API_DIR = api
-DENG_INCLUDE_DIR = portable/include
-DENG_UNIX_INCLUDE_DIR = unix/include
-DENG_MAC_INCLUDE_DIR = mac/include
-DENG_WIN_INCLUDE_DIR = win32/include
-DENG_LZSS_DIR = ../external/lzss
 
 # Source Files ---------------------------------------------------------------
 
@@ -505,4 +451,26 @@ SOURCES += \
 
 unix {
     SOURCES += $$DENG_UNIX_SOURCES
+}
+
+# Resources ------------------------------------------------------------------
+
+macx {
+    sdl_frameworks.files = \
+        $${SDL_FRAMEWORK_DIR}/SDL.framework \
+        $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework
+    sdl_frameworks.path = Contents/Frameworks
+
+    res.files = \
+        mac/res/English.lproj \
+        mac/res/Startup.nib \
+        mac/res/deng.icns
+    res.path = Contents/Resources
+
+    packdata.files = $$OUT_PWD/../doomsday.pk3
+    packdata.path = Contents/Resources
+
+    QMAKE_BUNDLE_DATA += sdl_frameworks res packdata
+
+    QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
