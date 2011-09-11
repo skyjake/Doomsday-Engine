@@ -86,6 +86,8 @@ void F_ResetFileIds(void);
  */
 void F_GenerateFileId(const char* str, byte identifier[16]);
 
+void F_PrintFileId(byte identifier[16]);
+
 /**
  * Maintains a list of identifiers already seen.
  *
@@ -239,10 +241,10 @@ void F_AddLumpDirectoryMapping(const char* lumpName, const char* symbolicPath);
 /**
  * Compiles a list of PWAD file names, separated by @a delimiter.
  */
-void F_GetPWADFileNames(char* buf, size_t bufSize, char delimiter);
+void F_GetPWADFileNames(char* buf, size_t bufSize, const char* delimiter);
 
 /**
- * Calculated using the lumps of the main IWAD.
+ * Calculate a CRC for the loaded file list.
  */
 uint F_CRCNumber(void);
 

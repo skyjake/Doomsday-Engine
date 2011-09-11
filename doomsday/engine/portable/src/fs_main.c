@@ -37,17 +37,11 @@
 #include "lumpfile.h"
 #include "wadfile.h"
 #include "zipfile.h"
-#include "blockset.h"
+#include "filelist.h"
 
 D_CMD(Dir);
 D_CMD(DumpLump);
 D_CMD(ListFiles);
-
-typedef struct filelist_node_s {
-    abstractfile_t* fsObject;
-    struct filelist_node_s* next;
-} filelist_node_t;
-typedef filelist_node_t* filelist_t;
 
 /**
  * Lump Directory Mapping.  Maps lump to resource path.
@@ -79,17 +73,11 @@ typedef struct fileidentifier_s {
 static boolean inited = false;
 static boolean loadingForStartup;
 
-// File nodes are allocated by this block allocator.
-static blockset_t* fileNodeBlockSet;
-
-// Head of the llist of used file nodes, for recycling.
-static filelist_t usedFileNodes;
-
 // Head of the llist of open file nodes.
-static filelist_t openFiles;
+static FileList* openFiles;
 
 // Head of the llist of loaded file nodes.
-static filelist_t loadedFiles;
+static FileList* loadedFiles;
 
 static uint fileIdentifiersCount = 0;
 static uint fileIdentifiersMax = 0;
@@ -156,96 +144,30 @@ static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
     return found;
 }
 
-static filelist_node_t* allocFileNode(void)
+static int findFileNodeIndexForPath(FileList* list, const char* path_)
 {
-    filelist_node_t* node = usedFileNodes;
-    if(usedFileNodes)
+    int found = -1;
+    if(NULL != path_ && path_[0] && !FileList_Empty(list))
     {
-        node = usedFileNodes;
-        usedFileNodes = node->next;
-    }
-    else
-    {
-        node = BlockSet_Allocate(fileNodeBlockSet);
-    }
-    node->fsObject = NULL;
-    node->next = NULL;
-    return node;
-}
+        abstractfile_t* file;
+        ddstring_t path;
+        int i;
 
-static void freeFileNode(filelist_node_t* node, boolean recycle)
-{
-    assert(NULL != node);
-    if(!recycle)
-    {
-        // Memory for node will be free'd along with fileNodeBlockSet
-        return;
-    }
-    // Copy this node to the list used nodes for recycling.
-    node->fsObject = NULL;
-    node->next = usedFileNodes;
-    usedFileNodes = node;
-}
-
-static abstractfile_t* linkFile(filelist_t* list, abstractfile_t* fsObject)
-{
-    assert(list && fsObject);
-    {
-    filelist_node_t* node = allocFileNode();
-    node->fsObject = fsObject;
-    node->next = *list;
-    *list = node;
-    return fsObject;
-    }
-}
-
-static boolean unlinkFile(filelist_t* list, filelist_node_t* node, boolean recycle)
-{
-    assert(list && node);
-    if(!*list) return false; // Not linked.
-    if(node == *list)
-    {
-        filelist_node_t* next = (*list)->next;
-        freeFileNode(*list, recycle);
-        *list = next;
-    }
-    else
-    {
-        filelist_node_t* next, *prev = *list;
-        while(prev->next && prev->next != node) { prev = prev->next; }
-
-        if(!prev->next) return false; // Not linked.
-
-        next = prev->next->next;
-        freeFileNode(prev->next, recycle);
-        prev->next = next;
-    }
-    node->next = NULL;
-    return true; // Unlinked.
-}
-
-static filelist_node_t* findLoadedFileNodeForPath(const char* path)
-{
-    filelist_node_t* found = NULL;
-    if(NULL != path && path[0] && NULL != loadedFiles)
-    {
-        filelist_node_t* node;
-        ddstring_t buf;
-
-        // Transform the given path into one we can process.
-        Str_Init(&buf); Str_Set(&buf, path);
-        F_FixSlashes(&buf, &buf);
+        // Transform the path into one we can process.
+        Str_Init(&path); Str_Set(&path, path_);
+        F_FixSlashes(&path, &path);
 
         // Perform the search.
-        node = loadedFiles;
+        i = 0;
         do
         {
-            if(!Str_CompareIgnoreCase(AbstractFile_Path(node->fsObject), Str_Text(&buf)))
+            file = FileList_GetFile(list, i);
+            if(!Str_CompareIgnoreCase(AbstractFile_Path(file), Str_Text(&path)))
             {
-                found = node;
+                found = i;
             }
-        } while(found == NULL && NULL != (node = node->next));
-        Str_Free(&buf);
+        } while(found == -1 && ++i < FileList_Size(list));
+        Str_Free(&path);
     }
     return found;
 }
@@ -304,8 +226,8 @@ static abstractfile_t* openFromFile(abstractfile_t* file, FILE* hndl)
 
 static abstractfile_t* newUnknownFile(const lumpinfo_t* info, DFILE* hndl)
 {
-    abstractfile_t* file = (abstractfile_t*)malloc(sizeof(*file));
-    if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof(*file));
+    abstractfile_t* file = (abstractfile_t*)malloc(sizeof *file);
+    if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof *file);
     AbstractFile_Init(file, FT_UNKNOWNFILE, info);
     return openFromFile(file, hndl->hndl);
 }
@@ -338,12 +260,11 @@ static int pruneLumpsFromDirectorysByFile(abstractfile_t* fsObject)
     return pruned;
 }
 
-static boolean removeLoadedFile(filelist_node_t* node, boolean recycle)
+static boolean removeLoadedFile(int loadedFilesNodeIndex)
 {
-    assert(NULL != node && NULL != node->fsObject);
-    {
-    abstractfile_t* fsObject = node->fsObject;
-
+    FileListNode* node = FileList_Get(loadedFiles, loadedFilesNodeIndex);
+    abstractfile_t* fsObject = FileList_File(node);
+    assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
     case FT_UNKNOWNFILE: break;
@@ -360,12 +281,12 @@ static boolean removeLoadedFile(filelist_node_t* node, boolean recycle)
     F_ReleaseFileId(Str_Text(AbstractFile_Path(fsObject)));
 
     pruneLumpsFromDirectorysByFile(fsObject);
-    unlinkFile(&loadedFiles, node, recycle);
+    FileList_RemoveAt(loadedFiles, loadedFilesNodeIndex);
+
     // Close the file; we don't need it any more.
     F_Close(fsObject);
     F_Delete(fsObject);
     return true;
-    }
 }
 
 static int directoryContainsLumpsFromFile(const lumpinfo_t* info, void* paramaters)
@@ -373,17 +294,17 @@ static int directoryContainsLumpsFromFile(const lumpinfo_t* info, void* paramate
     return 1; // Stop iteration we need go no further.
 }
 
-static void clearLoadedFiles(lumpdirectory_t* directory, boolean recycle)
+static void clearLoadedFiles(lumpdirectory_t* directory)
 {
-    filelist_node_t* next, *node = loadedFiles;
-    while(node)
+    abstractfile_t* file;
+    int i;
+    for(i = FileList_Size(loadedFiles) - 1; i >= 0; i--)
     {
-        next = node->next;
-        if(NULL == directory || LumpDirectory_Iterate(directory, node->fsObject, directoryContainsLumpsFromFile))
+        file = FileList_GetFile(loadedFiles, i);
+        if(!directory || LumpDirectory_Iterate(directory, file, directoryContainsLumpsFromFile))
         {
-            removeLoadedFile(node, recycle);
+            removeLoadedFile(i);
         }
-        node = next;
     }
 }
 
@@ -418,16 +339,14 @@ static void clearLumpDirectorys(void)
     LumpDirectory_Delete(zipLumpDirectory), zipLumpDirectory = NULL;
 }
 
-static void clearOpenFiles(boolean recycle)
+static void clearOpenFiles(void)
 {
-    filelist_node_t* next, *node = openFiles;
-    while(node)
+    int i;
+    for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
     {
-        next = node->next;
-        F_Delete(node->fsObject);
-        unlinkFile(&openFiles, node, recycle);
-        node = next;
+        F_Delete(FileList_GetFile(openFiles, i));
     }
+    FileList_Clear(openFiles);
 }
 
 /**
@@ -451,11 +370,11 @@ static lumpnum_t chooseWadLumpDirectory(lumpnum_t lumpNum)
 
 static boolean unloadFile2(const char* path)
 {
-    filelist_node_t* node;
+    int idx;
     errorIfNotInited("unloadFile2");
-    node = findLoadedFileNodeForPath(path);
-    if(NULL != node)
-        return removeLoadedFile(node, true);
+    idx = findFileNodeIndexForPath(loadedFiles, path);
+    if(idx >= 0)
+        return removeLoadedFile(idx);
     return false; // No such file loaded.
 }
 
@@ -477,8 +396,7 @@ static void clearFileIds(void)
     }
 }
 
-#if _DEBUG
-static void F_PrintFileId(byte identifier[16])
+void F_PrintFileId(byte identifier[16])
 {
     assert(identifier);
     { uint i;
@@ -486,7 +404,6 @@ static void F_PrintFileId(byte identifier[16])
         Con_Printf("%02x", identifier[i]);
     }
 }
-#endif
 
 void F_GenerateFileId(const char* str, byte identifier[16])
 {
@@ -534,11 +451,11 @@ boolean F_CheckFileId(const char* path)
         else
             fileIdentifiersMax *= 2;
 
-        fileIdentifiers = (fileidentifier_t*)realloc(fileIdentifiers, sizeof(*fileIdentifiers) * fileIdentifiersMax);
+        fileIdentifiers = (fileidentifier_t*)realloc(fileIdentifiers, fileIdentifiersMax * sizeof *fileIdentifiers);
         if(!fileIdentifiers)
             Con_Error("F_CheckFileId: Failed on (re)allocation of %lu bytes while "
-                "enlarging fileIdentifiers.", (unsigned long) (sizeof(*fileIdentifiers) * fileIdentifiersMax));
-        memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers) * (fileIdentifiersMax - fileIdentifiersCount));
+                "enlarging fileIdentifiers.", (unsigned long) (fileIdentifiersMax * sizeof *fileIdentifiers));
+        memset(fileIdentifiers + fileIdentifiersCount, 0, (fileIdentifiersMax - fileIdentifiersCount) * sizeof *fileIdentifiers);
     }
 
 #if _DEBUG
@@ -567,7 +484,7 @@ boolean F_ReleaseFileId(const char* path)
             size_t index = fileIdentifier - fileIdentifiers;
             if(index < fileIdentifiersCount-1)
                 memmove(fileIdentifiers + index, fileIdentifiers + index + 1, fileIdentifiersCount - index - 1);
-            memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof(*fileIdentifiers));
+            memset(fileIdentifiers + fileIdentifiersCount, 0, sizeof *fileIdentifiers);
             --fileIdentifiersCount;
 
 #if _DEBUG
@@ -590,7 +507,7 @@ void F_ResetFileIds(void)
 void F_InitLumpInfo(lumpinfo_t* info)
 {
     assert(info);
-    memset(info->name, 0, sizeof(info->name));
+    memset(info->name, 0, sizeof info->name);
     Str_Init(&info->path);
     info->baseOffset = 0;
     info->size = 0;
@@ -601,7 +518,7 @@ void F_InitLumpInfo(lumpinfo_t* info)
 void F_CopyLumpInfo(lumpinfo_t* dst, const lumpinfo_t* src)
 {
     assert(dst && src);
-    memcpy(dst->name, src->name, sizeof(dst->name));
+    memcpy(dst->name, src->name, sizeof dst->name);
     Str_Init(&dst->path);
     if(!Str_IsEmpty(&src->path))
         Str_Set(&dst->path, Str_Text(&src->path));
@@ -624,10 +541,8 @@ void F_Init(void)
     // This'll force the loader NOT to flag new files as "runtime".
     loadingForStartup = true;
 
-    fileNodeBlockSet = BlockSet_New(sizeof(filelist_node_t), 64);
-    usedFileNodes = NULL;
-    openFiles = NULL;
-    loadedFiles = NULL;
+    openFiles     = FileList_New();
+    loadedFiles   = FileList_New();
 
     zipLumpDirectory          = LumpDirectory_New();
     primaryWadLumpDirectory   = LumpDirectory_New();
@@ -648,10 +563,10 @@ void F_Shutdown(void)
     clearVDMappings();
     clearLDMappings();
 
-    clearLoadedFiles(0, false/*no node recycling*/);
-    clearOpenFiles(false/*no node recycling*/);
-    BlockSet_Delete(fileNodeBlockSet), fileNodeBlockSet = NULL;
-    loadedFiles = openFiles = usedFileNodes = NULL;
+    clearLoadedFiles(0);
+    FileList_Delete(loadedFiles), loadedFiles = NULL;
+    clearOpenFiles();
+    FileList_Delete(openFiles), openFiles = NULL;
 
     clearFileIds(); // Should be null-op if bookkeeping is correct.
 
@@ -667,6 +582,27 @@ void F_EndStartup(void)
     usePrimaryWadLumpDirectory();
 }
 
+static int unloadListFiles(FileList* list, boolean nonStartup)
+{
+    assert(list);
+    {
+    abstractfile_t* file;
+    int i, unloaded = 0;
+    for(i = FileList_Size(list) - 1; i >= 0; i--)
+    {
+        file = FileList_GetFile(list, i);
+        if(!nonStartup || !AbstractFile_HasStartup(file))
+        {
+            if(unloadFile2(Str_Text(AbstractFile_Path(file))))
+            {
+                ++unloaded;
+            }
+        }
+    }
+    return unloaded;
+    }
+}
+
 int F_Reset(void)
 {
     int unloaded = 0;
@@ -674,43 +610,20 @@ int F_Reset(void)
     {
 #if _DEBUG
         // List all open files with their identifiers.
-        if(verbose >= 1)
-        {
-            filelist_node_t* node;
-            fileidentifierid_t id;
-            uint n = 0;
+        VERBOSE(
             Con_Printf("Open files at reset:\n");
-            for(node = openFiles; node; node = node->next, ++n)
-            {
-                F_GenerateFileId(Str_Text(AbstractFile_Path(node->fsObject)), id);               
-                Con_Printf(" %c%u: ", AbstractFile_HasStartup(node->fsObject)? '*':' ', n);
-                F_PrintFileId(id);
-                Con_Printf(" - \"%s\"\n", F_PrettyPath(Str_Text(AbstractFile_Path(node->fsObject))));
-            }
-            Con_Printf("End\n");
-        }
+            FileList_Print(openFiles);
+            Con_Printf("End\n") )
 #endif
 
         // Perform non-startup file unloading...
-        { filelist_node_t* next, *node = loadedFiles;
-        while(node)
-        {
-            next = node->next;
-            if(!AbstractFile_HasStartup(node->fsObject))
-            {
-                if(unloadFile2(Str_Text(AbstractFile_Path(node->fsObject))))
-                {
-                    ++unloaded;
-                }
-            }
-            node = next;
-        }}
+        unloaded = unloadListFiles(loadedFiles, true/*non-startup*/);
 
 #if _DEBUG
         // Sanity check: look for dangling identifiers.
         { uint i;
         fileidentifierid_t nullId;
-        memset(nullId, 0, sizeof(nullId));
+        memset(nullId, 0, sizeof nullId);
         for(i = 0; i < fileIdentifiersCount; ++i)
         {
             fileidentifier_t* id = fileIdentifiers + i;
@@ -903,7 +816,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
             return -1;
         }
 
-        memset(&temp, 0, sizeof(temp));
+        memset(&temp, 0, sizeof temp);
         temp.hndl = file;
         prevOpened = &temp;
     }
@@ -934,8 +847,8 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
         Str_Delete(foundPath);
 
         wad = newWadFile(&info, prevOpened);
-        linkFile(&loadedFiles, (abstractfile_t*)wad);
-        linkFile(&openFiles,   (abstractfile_t*)wad);
+        FileList_AddBack(loadedFiles, (abstractfile_t*)wad);
+        FileList_AddBack(openFiles,   (abstractfile_t*)wad);
         WadFile_PublishLumpsToDirectory(wad, ActiveWadLumpDirectory);
 
         // We're done with the descriptor.
@@ -970,7 +883,7 @@ void F_CloseAuxiliary(void)
     errorIfNotInited("F_CloseAuxiliary");
     if(useAuxiliaryWadLumpDirectory())
     {
-        clearLoadedFiles(auxiliaryWadLumpDirectory, true/*recycle nodes*/);
+        clearLoadedFiles(auxiliaryWadLumpDirectory);
         auxiliaryWadLumpDirectoryInUse = false;
     }
     usePrimaryWadLumpDirectory();
@@ -978,18 +891,17 @@ void F_CloseAuxiliary(void)
 
 void F_ReleaseFile(abstractfile_t* fsObject)
 {
-    assert(fsObject);
-    // File might be linked multiple times into the open file list.
-    { filelist_node_t* next, *node = openFiles;
-    while(node)
+    FileListNode* node;
+    int i;
+    if(!fsObject) return;
+    for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
     {
-        next = node->next;
-        if(node->fsObject == fsObject)
+        node = FileList_Get(openFiles, i);
+        if(FileList_File(node) == fsObject)
         {
-            unlinkFile(&openFiles, node, true/*recycle node*/);
+            FileList_RemoveAt(openFiles, i);
         }
-        node = next;
-    }}
+    }
 }
 
 void F_Close(abstractfile_t* fsObject)
@@ -1107,7 +1019,7 @@ boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* path)
     }
     else
     {
-        memset(buf, 0, sizeof(buf));
+        memset(buf, 0, sizeof buf);
         dd_snprintf(buf, 13, "%s.lmp", info->name);
         fname = buf;
     }
@@ -1129,44 +1041,66 @@ boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* path)
 
 uint F_CRCNumber(void)
 {
-    filelist_node_t* node;
-    wadfile_t* wad;
     errorIfNotInited("F_CRCNumber");
-    // Find the IWAD's record.
-    for(node = loadedFiles; NULL != node; node = node->next)
+    /**
+     * We define the CRC as that of the lump directory of the first loaded IWAD.
+     */
+    if(!FileList_Empty(loadedFiles))
     {
-        if(FT_WADFILE != AbstractFile_Type(node->fsObject)) continue;
-
-        wad = (wadfile_t*)node->fsObject;
-        if(AbstractFile_HasIWAD((abstractfile_t*)wad))
-            return WadFile_CalculateCRC(wad);
+        abstractfile_t* file, *found = NULL;
+        int i = 0;
+        do
+        {
+            file = FileList_GetFile(loadedFiles, i);
+            if(FT_WADFILE == AbstractFile_Type(file) && AbstractFile_HasIWAD(file))
+            {
+                found = file;
+            }
+        } while(!found && ++i < FileList_Size(loadedFiles));
+        if(found)
+        {
+            return WadFile_CalculateCRC((wadfile_t*)found);
+        }
     }
     return 0;
 }
 
-void F_GetPWADFileNames(char* outBuf, size_t outBufSize, char delimiter)
+typedef struct {
+    filetype_t type; // Only 
+    boolean includeIWAD;
+    boolean includeOther;
+} compositepathpredicateparamaters_t;
+
+boolean C_DECL compositePathPredicate(FileListNode* node, void* paramaters)
 {
-    ddstring_t buf;
-
-    if(NULL == outBuf || 0 == outBufSize) return;
-
-    memset(outBuf, 0, outBufSize);
-
-    if(!inited) return;
-
-    /// \fixme Do not use the global loadedFiles, pull records from LumpDirectory(s)
-    Str_Init(&buf);
-    { filelist_node_t* node;
-    for(node = loadedFiles; NULL != node; node = node->next)
+    assert(node && paramaters);
     {
-        if(AbstractFile_HasIWAD(node->fsObject)) continue;
+    compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)paramaters;
+    abstractfile_t* file = FileList_File(node);
+    if((!VALID_FILETYPE(p->type) || p->type == AbstractFile_Type(file)) &&
+       ((p->includeIWAD  &&  AbstractFile_HasIWAD(file)) ||
+        (p->includeOther && !AbstractFile_HasIWAD(file))))
+    {
+        const ddstring_t* path = AbstractFile_Path(file);
+        if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
+            return true; // Include this.
+    }
+    return false; // Not this.
+    }
+}
 
-        Str_Clear(&buf);
-        F_FileNameAndExtension(&buf, Str_Text(AbstractFile_Path(node->fsObject)));
-        if(stricmp(Str_Text(&buf) + Str_Length(&buf) - 3, "lmp"))
-            M_LimitedStrCat(outBuf, Str_Text(&buf), 64, delimiter, outBufSize);
-    }}
-    Str_Free(&buf);
+void F_GetPWADFileNames(char* outBuf, size_t outBufSize, const char* delimiter)
+{
+    if(NULL == outBuf || 0 == outBufSize) return;
+    memset(outBuf, 0, outBufSize);
+    if(inited)
+    {
+        compositepathpredicateparamaters_t p = { FT_WADFILE, false, true };
+        ddstring_t* str = FileList_ToString4(loadedFiles, PTSF_TRANSFORM_EXCLUDE_DIR,
+            delimiter, compositePathPredicate, (void*)&p);
+        strncpy(outBuf, Str_Text(str), outBufSize);
+        Str_Delete(str);
+    }
 }
 
 void F_PrintLumpDirectory(void)
@@ -1256,7 +1190,10 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
                             max = 16;
                         else
                             max *= 2;
-                        found = realloc(found, sizeof(*found) * max);
+                        found = (foundentry_t*)realloc(found, max * sizeof *found);
+                        if(!found)
+                            Con_Error("collectLocalPaths: Failed on (re)allocation of %lu bytes while "
+                                "resizing found path collection.", (unsigned long) (max * sizeof *found));
                     }
                     Str_Init(&found[count].path);
                     Str_Set(&found[count].path, fd.name);
@@ -1710,7 +1647,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean a
         return NULL;
     }
 
-    memset(&temp, 0, sizeof(temp));
+    memset(&temp, 0, sizeof temp);
     temp.hndl = file;
 
     // Prepare the temporary info descriptor.
@@ -1739,7 +1676,7 @@ abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplica
     /// \note We do not link lump files into the openFiles list.
     if(fsObject && AbstractFile_Type(fsObject) != FT_LUMPFILE)
     {
-        linkFile(&openFiles, fsObject);
+        FileList_AddBack(openFiles, fsObject);
     }
     return fsObject;
 }
@@ -1782,7 +1719,7 @@ boolean F_AddFile(const char* path, boolean allowDuplicate)
 
     if(loadingForStartup)
         AbstractFile_SetStartup(fsObject, true);
-    linkFile(&loadedFiles, fsObject);
+    FileList_AddBack(loadedFiles, fsObject);
 
     // Publish lumps to one or more LumpDirectorys.
     switch(AbstractFile_Type(fsObject))
@@ -1947,10 +1884,10 @@ void F_AddLumpDirectoryMapping(const char* lumpName, const char* symbolicPath)
             if(ldMappingsMax < ldMappingsCount)
                 ldMappingsMax = 2*ldMappingsCount;
 
-            ldMappings = (ldmapping_t*) realloc(ldMappings, sizeof(*ldMappings) * ldMappingsMax);
+            ldMappings = (ldmapping_t*) realloc(ldMappings, ldMappingsMax * sizeof *ldMappings);
             if(NULL == ldMappings)
                 Con_Error("F_AddLumpDirectoryMapping: Failed on allocation of %lu bytes for mapping list.",
-                    (unsigned long) (sizeof(*ldMappings) * ldMappingsMax));
+                    (unsigned long) (ldMappingsMax * sizeof *ldMappings));
         }
         ldm = &ldMappings[ldMappingsCount - 1];
 
@@ -1959,7 +1896,7 @@ void F_AddLumpDirectoryMapping(const char* lumpName, const char* symbolicPath)
     }
 
     // Set the lumpname.
-    memcpy(ldm->lumpName, lumpName, sizeof(ldm->lumpName));
+    memcpy(ldm->lumpName, lumpName, sizeof ldm->lumpName);
     ldm->lumpName[LUMPNAME_T_LASTINDEX] = '\0';
 
     VERBOSE( Con_Message("F_AddLumpDirectoryMapping: \"%s\" -> %s\n", ldm->lumpName, F_PrettyPath(Str_Text(&ldm->path))) )
@@ -2184,10 +2121,10 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
             if(vdMappingsMax < vdMappingsCount)
                 vdMappingsMax = 2*vdMappingsCount;
 
-            vdMappings = (vdmapping_t*) realloc(vdMappings, sizeof(*vdMappings) * vdMappingsMax);
+            vdMappings = (vdmapping_t*) realloc(vdMappings, vdMappingsMax * sizeof *vdMappings);
             if(NULL == vdMappings)
                 Con_Error("F_AddVirtualDirectoryMapping: Failed on allocation of %lu bytes for mapping list.",
-                    (unsigned long) (sizeof(*vdMappings) * vdMappingsMax));
+                    (unsigned long) (vdMappingsMax * sizeof *vdMappings));
         }
         vdm = &vdMappings[vdMappingsCount - 1];
 
@@ -2229,43 +2166,11 @@ void F_InitVirtualDirectoryMappings(void)
     }}
 }
 
-static int C_DECL compareFileNodeByFilePath(const void* a_, const void* b_)
+static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
 {
-    abstractfile_t* a = (*((const filelist_node_t**)a_))->fsObject;
-    abstractfile_t* b = (*((const filelist_node_t**)b_))->fsObject;
+    abstractfile_t* a = *((abstractfile_t* const*)a_);
+    abstractfile_t* b = *((abstractfile_t* const*)b_);
     return Str_CompareIgnoreCase(AbstractFile_Path(a), Str_Text(AbstractFile_Path(b)));
-}
-
-static filelist_node_t** collectFileNodes(filelist_t* list, size_t* count)
-{
-    assert(list);
-    {
-    filelist_node_t** collection, *node;
-    size_t numFiles;
-
-    errorIfNotInited("collectFileNodes");
-
-    // Count files.
-    numFiles = 0;
-    for(node = *list; NULL != node; node = node->next) { ++numFiles; };
-
-    // Allocate return array.
-    collection = (filelist_node_t**)malloc(sizeof(*collection) * (numFiles+1));
-    if(!collection)
-        Con_Error("collectOpenFiles: Failed on allocation of %lu bytes for file list.",
-            (unsigned long) (sizeof(*collection) * (numFiles+1)));
-
-    // Collect file pointers.
-    numFiles = 0;
-    for(node = *list; NULL != node; node = node->next)
-    {
-        collection[numFiles++] = node;
-    }
-    collection[numFiles] = NULL; // Terminate.
-    if(count)
-        *count = numFiles;
-    return collection;
-    }
 }
 
 /**
@@ -2284,7 +2189,7 @@ int printResourcePath(const ddstring_t* fileNameStr, pathdirectory_nodetype_t ty
     }
 }
 
-static void printDirectory(const ddstring_t* path)
+static void printVFDirectory(const ddstring_t* path)
 {
     ddstring_t dir;
 
@@ -2319,13 +2224,13 @@ D_CMD(Dir)
         for(i = 1; i < argc; ++i)
         {
             Str_Set(&path, argv[i]);
-            printDirectory(&path);
+            printVFDirectory(&path);
         }
     }
     else
     {
         Str_Set(&path, "/");
-        printDirectory(&path);
+        printVFDirectory(&path);
     }
     Str_Free(&path);
     return true;
@@ -2354,47 +2259,47 @@ D_CMD(ListFiles)
     size_t totalFiles = 0, totalPackages = 0;
     if(inited)
     {
-        size_t numNodes;
-        filelist_node_t** ptr, **list = collectFileNodes(&loadedFiles, &numNodes);
-        if(!list) return true;
+        uint fileCount, i;
+        abstractfile_t** ptr, **arr = FileList_ToArray(loadedFiles, &fileCount);
+        if(!arr) return true;
 
-        // Sort nodes so we get a nice alpha-numerical list.
-        qsort(list, numNodes, sizeof(filelist_node_t*), compareFileNodeByFilePath);
+        // Sort files so we get a nice alpha-numerical list.
+        qsort(arr, fileCount, sizeof *arr, compareFileByFilePath);
 
-        for(ptr = list; NULL != *ptr; ptr++)
+        ptr = arr;
+        for(i = 0; i < fileCount; ++i, ptr++)
         {
-            filelist_node_t* node = *ptr;
             size_t fileCount;
             uint crc;
 
-            switch(AbstractFile_Type(node->fsObject))
+            switch(AbstractFile_Type(*ptr))
             {
             case FT_UNKNOWNFILE:
                 fileCount = 1;
                 crc = 0;
                 break;
             case FT_ZIPFILE:
-                fileCount = ZipFile_LumpCount((zipfile_t*)node->fsObject);
+                fileCount = ZipFile_LumpCount((zipfile_t*)*ptr);
                 crc = 0;
                 break;
             case FT_WADFILE: {
-                wadfile_t* wad = (wadfile_t*)node->fsObject;
-                crc = (AbstractFile_HasIWAD(node->fsObject)? WadFile_CalculateCRC(wad) : 0);
+                wadfile_t* wad = (wadfile_t*)*ptr;
+                crc = (AbstractFile_HasIWAD(*ptr)? WadFile_CalculateCRC(wad) : 0);
                 fileCount = WadFile_LumpCount(wad);
                 break;
               }
             case FT_LUMPFILE:
-                fileCount = LumpFile_LumpCount((lumpfile_t*)node->fsObject);
+                fileCount = LumpFile_LumpCount((lumpfile_t*)*ptr);
                 crc = 0;
                 break;
             default:
-                Con_Error("CCmdListLumps: Invalid file type %i.", AbstractFile_Type(node->fsObject));
+                Con_Error("CCmdListLumps: Invalid file type %i.", AbstractFile_Type(*ptr));
                 exit(1); // Unreachable.
             }
 
-            Con_Printf("\"%s\" (%lu %s%s)", F_PrettyPath(Str_Text(AbstractFile_Path(node->fsObject))),
+            Con_Printf("\"%s\" (%lu %s%s)", F_PrettyPath(Str_Text(AbstractFile_Path(*ptr))),
                 (unsigned long) fileCount, fileCount != 1 ? "files" : "file",
-                (AbstractFile_HasStartup(node->fsObject)? ", startup" : ""));
+                (AbstractFile_HasStartup(*ptr)? ", startup" : ""));
             if(0 != crc)
                 Con_Printf(" [%08x]", crc);
             Con_Printf("\n");
@@ -2403,7 +2308,7 @@ D_CMD(ListFiles)
             ++totalPackages;
         }
 
-        free(list);
+        free(arr);
     }
     Con_Printf("Total: %lu files in %lu packages.\n", (unsigned long) totalFiles, (unsigned long)totalPackages);
     return true;

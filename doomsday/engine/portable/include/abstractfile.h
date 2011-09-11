@@ -35,8 +35,11 @@ typedef enum {
     FT_UNKNOWNFILE,
     FT_ZIPFILE,
     FT_WADFILE,
-    FT_LUMPFILE
+    FT_LUMPFILE,
+    FILETYPE_COUNT
 } filetype_t;
+
+#define VALID_FILETYPE(v)       ((v) >= FT_UNKNOWNFILE && (v) < FILETYPE_COUNT)
 
 /**
  * Abstract File.  Abstract File is a core component of the filesystem
