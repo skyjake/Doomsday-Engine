@@ -27,7 +27,12 @@ unix {
         -Wno-missing-field-initializers \
         -Wno-missing-braces
 }
+unix:!macx {
+    # Linux build options.
+    DENG_CONFIG += nofixedasm
+}
 macx {
+    # Mac OS X build options.
     DEFINES += MACOSX
 
     QMAKE_LFLAGS += -flat_namespace -undefined suppress
