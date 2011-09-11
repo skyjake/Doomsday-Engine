@@ -20,5 +20,3 @@ SUBDIRS += jdoom64
 win32 {
     SUBDIRS += directsound winmm
 }
-
-SUBDIRS -= jheretic jhexen jdoom64

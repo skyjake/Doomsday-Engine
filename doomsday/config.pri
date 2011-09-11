@@ -64,3 +64,7 @@ contains(DENG_CONFIG, nofixedasm) {
 !contains(DENG_CONFIG, rangecheck) {
     DEFINES += NORANGECHECKING
 }
+
+OTHER_FILES += \
+    ../plugins/jhexen/jhexen.pro
+
