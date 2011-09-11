@@ -203,7 +203,7 @@ void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
     if(printStatus)
         Con_Printf("%s", rec->_searchPathUsed == 0? " ! ":"   ");
 
-    Con_PrintPathList3(Str_Text(searchPaths), " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
+    Con_PrintPathList4(Str_Text(searchPaths), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
 
     if(printStatus)
     {

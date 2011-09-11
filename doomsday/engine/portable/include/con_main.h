@@ -338,18 +338,20 @@ void Con_PrintRuler(void);
 #define PPF_TRANSFORM_PATH_PRINTINDEX 0x4 // Print an index for each path.
 /*}@*/
 
+#define DEFAULT_PRINTPATHFLAGS (PPF_MULTILINE|PPF_TRANSFORM_PATH_MAKEPRETTY|PPF_TRANSFORM_PATH_PRINTINDEX)
+
 /**
  * Prints the passed path list to the console.
  *
  * \todo treat paths as URIs (i.e., resolve symbols).
  *
- * @param pathList          A series of textual file/resource names/paths separated
- *                          by semicolons.
- * @param flags             @see printPathFlags.
+ * @param pathList  A series of file/resource names/paths separated by @a delimiter.
+ * @param flags @see printPathFlags.
  */
-void Con_PrintPathList3(const char* pathList, const char* seperator, int flags);
-void Con_PrintPathList2(const char* pathList, const char* seperator);
-void Con_PrintPathList(const char* pathList);
+void Con_PrintPathList4(const char* pathList, char delimiter, const char* seperator, int flags);
+void Con_PrintPathList3(const char* pathList, char delimiter, const char* seperator); /* flags = DEFAULT_PRINTPATHFLAGS */
+void Con_PrintPathList2(const char* pathList, char delimiter); /* seperator = " " */
+void Con_PrintPathList(const char* pathList); /* delimiter = ';' */
 
 void Con_PrintCVar(cvar_t* cvar, char* prefix);
 
@@ -357,8 +359,8 @@ void Con_PrintCVar(cvar_t* cvar, char* prefix);
  * Outputs the usage information for the given ccmd to the console if the
  * ccmd's usage is validated by Doomsday.
  *
- * @param ccmd              Ptr to the ccmd to print the usage info for.
- * @param printInfo         If @c true, print any additional info we have.
+ * @param ccmd  Ptr to the ccmd to print the usage info for.
+ * @param printInfo  If @c true, print any additional info we have.
  */
 void Con_PrintCCmdUsage(ccmd_t* ccmd, boolean printInfo);
 
