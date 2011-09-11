@@ -2099,7 +2099,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
 
     case SPREF_LINE_ACT_TAGGED_FLOOR:
     case SPREF_LINE_ACT_TAGGED_CEILING:
-        if(info->actTag >= 0);
+        if(info->actTag >= 0)
             refdata = info->actTag;
         break;
 
