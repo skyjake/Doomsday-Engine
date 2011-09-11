@@ -78,22 +78,22 @@ const lumpinfo_t* AbstractFile_Info(abstractfile_t* file);
  */
 
 /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
-const ddstring_t* AbstractFile_Path(abstractfile_t* file);
+const ddstring_t* AbstractFile_Path(const abstractfile_t* file);
 
 /// @return  Load order index for this resource.
-uint AbstractFile_LoadOrderIndex(abstractfile_t* file);
+uint AbstractFile_LoadOrderIndex(const abstractfile_t* file);
 
 /// @return  "Last modified" timestamp of the resource.
-uint AbstractFile_LastModified(abstractfile_t* file);
+uint AbstractFile_LastModified(const abstractfile_t* file);
 
 /// @return  @c true if the resource is marked "startup".
-boolean AbstractFile_HasStartup(abstractfile_t* file);
+boolean AbstractFile_HasStartup(const abstractfile_t* file);
 
 /// Mark this resource as "startup".
 void AbstractFile_SetStartup(abstractfile_t* file, boolean yes);
 
 /// @return  @c true if the resource is marked "IWAD".
-boolean AbstractFile_HasIWAD(abstractfile_t* file);
+boolean AbstractFile_HasIWAD(const abstractfile_t* file);
 
 /// Mark this resource as "IWAD".
 void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes);

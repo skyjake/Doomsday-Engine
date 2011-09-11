@@ -60,19 +60,19 @@ const lumpinfo_t* AbstractFile_Info(abstractfile_t* file)
     return &file->_info;
 }
 
-const ddstring_t* AbstractFile_Path(abstractfile_t* file)
+const ddstring_t* AbstractFile_Path(const abstractfile_t* file)
 {
     assert(NULL != file);
     return &file->_info.path;
 }
 
-uint AbstractFile_LoadOrderIndex(abstractfile_t* file)
+uint AbstractFile_LoadOrderIndex(const abstractfile_t* file)
 {
     assert(NULL != file);
     return file->_order;
 }
 
-uint AbstractFile_LastModified(abstractfile_t* file)
+uint AbstractFile_LastModified(const abstractfile_t* file)
 {
     assert(NULL != file);
     return file->_info.lastModified;
@@ -85,7 +85,7 @@ DFILE* AbstractFile_Handle(abstractfile_t* file)
     return &file->_dfile;
 }
 
-boolean AbstractFile_HasStartup(abstractfile_t* file)
+boolean AbstractFile_HasStartup(const abstractfile_t* file)
 {
     assert(NULL != file);
     return (file->_flags.startup != 0);
@@ -97,7 +97,7 @@ void AbstractFile_SetStartup(abstractfile_t* file, boolean yes)
     file->_flags.startup = yes;
 }
 
-boolean AbstractFile_HasIWAD(abstractfile_t* file)
+boolean AbstractFile_HasIWAD(const abstractfile_t* file)
 {
     assert(NULL != file);
     return (file->_flags.iwad != 0);
