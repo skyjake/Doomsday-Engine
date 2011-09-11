@@ -30,7 +30,7 @@
 #ifndef __DOOMSDAY_TYPES_H__
 #define __DOOMSDAY_TYPES_H__
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
 #  define __64BIT__
 #endif
 

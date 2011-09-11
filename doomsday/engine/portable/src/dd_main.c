@@ -384,6 +384,18 @@ int DD_Main(void)
         return -1;
     }
 
+#ifdef _DEBUG
+    // 64-bit sanity check.
+    {
+        void* ptr = 0;
+#ifdef __64BIT__
+        ASSERT_64BIT(ptr);
+#else
+        ASSERT_NOT_64BIT(ptr);
+#endif
+    }
+#endif
+
     /**
      * \note This must be called from the main thread due to issues with
      * the devices we use via the WINAPI, MCI (cdaudio, mixer etc).
@@ -1241,14 +1253,14 @@ char *strlwr(char *string)
  */
 int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
 {
-    int                 result = vsnprintf(str, size, format, ap);
+    int result = vsnprintf(str, size, format, ap);
 
 #ifdef WIN32
     // Always terminate.
     str[size - 1] = 0;
     return result;
 #else
-    return result >= size? -1 : size;
+    return result >= (int)size? -1 : (int)size;
 #endif
 }
 
