@@ -1,8 +1,20 @@
 QT -= core gui
 
-# Check versions.
+# Directories ----------------------------------------------------------------
+
+DENG_API_DIR = $$PWD/engine/api
+DENG_INCLUDE_DIR = $$PWD/engine/portable/include
+DENG_UNIX_INCLUDE_DIR = $$PWD/engine/unix/include
+DENG_MAC_INCLUDE_DIR = $$PWD/engine/mac/include
+DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
+DENG_LZSS_DIR = $$PWD/external/lzss
+
+# Versions -------------------------------------------------------------------
+
 include(versions.pri)
 message(Doomsday version $${DENG_VERSION}.)
+
+# Build Options --------------------------------------------------------------
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
@@ -18,6 +30,7 @@ win32 {
     DEFINES += WIN32
 }
 unix {
+    # Unix/Mac build options.
     DEFINES += UNIX
 
     # We are not interested in unused parameters (there are quite a few).
@@ -61,11 +74,11 @@ unix:!macx {
 }
 macx {
     # Mac OS X build options.
+    DENG_CONFIG += snowleopard nofixedasm
+
     DEFINES += MACOSX
 
     QMAKE_LFLAGS += -flat_namespace -undefined suppress
-
-    DENG_CONFIG += snowleopard nofixedasm
 
     # Select OS version.
     contains(DENG_CONFIG, snowleopard) {
@@ -79,15 +92,6 @@ macx {
         CONFIG += x86 ppc
     }
 }
-
-# Directories ----------------------------------------------------------------
-
-DENG_API_DIR = $$PWD/engine/api
-DENG_INCLUDE_DIR = $$PWD/engine/portable/include
-DENG_UNIX_INCLUDE_DIR = $$PWD/engine/unix/include
-DENG_MAC_INCLUDE_DIR = $$PWD/engine/mac/include
-DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
-DENG_LZSS_DIR = $$PWD/external/lzss
 
 # Apply DENG_CONFIG ----------------------------------------------------------
 
