@@ -48,29 +48,33 @@ unix:!macx {
     PREFIX = /usr
 
     # Binary location.
-    BINDIR = $$PREFIX/bin
+    DENG_BIN_DIR = $$PREFIX/bin
 
     # Library location.
-    LIBDIR = $$PREFIX/lib
+    DENG_LIB_DIR = $$PREFIX/lib
 
     contains(QMAKE_HOST.arch, x86_64) {
         message(64-bit architecture detected.)
         DEFINES += HOST_IS_64BIT
 
         exists($$PREFIX/lib64) {
-            LIBDIR = $$PREFIX/lib64
+            DENG_LIB_DIR = $$PREFIX/lib64
         }
         exists($$PREFIX/lib/x86_64-linux-gnu) {
-            LIBDIR = $$PREFIX/lib/x86_64-linux-gnu
+            DENG_LIB_DIR = $$PREFIX/lib/x86_64-linux-gnu
         }
     }
+
+    DENG_BASE_DIR = $$PREFIX/share/doomsday
+    DENG_DATA_DIR = $$DENG_BASE_DIR/data
 
     # Link against standard math library.
     LIBS += -lm
 
     message(Install prefix: $$PREFIX)
-    message(Binary directory: $$BINDIR)
-    message(Library directory: $$LIBDIR)
+    message(Binary directory: $$DENG_BIN_DIR)
+    message(Library directory: $$DENG_LIB_DIR)
+    message(Doomsday base directory: $$DENG_BASE_DIR)
 }
 macx {
     # Mac OS X build options.

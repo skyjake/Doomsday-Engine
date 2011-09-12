@@ -24,9 +24,8 @@ include(../curl.pri)
 DEFINES += __DOOMSDAY__
 
 unix:!macx {
-    DATADIR = $$PREFIX/share/doomsday
-    DEFINES += DENG_BASE_DIR=\\\"$${DATADIR}\\\"
-    DEFINES += DENG_LIBRARY_DIR=\\\"$${LIBDIR}\\\"
+    DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}\\\"
+    DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}\\\"
 }
 macx {
     LIBS += -framework Cocoa -framework QTKit
@@ -483,11 +482,11 @@ unix:!macx {
     # Generic Unix installation.
     INSTALLS += target data startupgfx
 
-    target.path = $$BINDIR
+    target.path = $$DENG_BIN_DIR
 
     data.files = $$OUT_PWD/../doomsday.pk3
-    data.path = $$DATADIR/data
+    data.path = $$DENG_DATA_DIR
 
     startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
-    startupgfx.path = $$DATADIR/data/graphics
+    startupgfx.path = $$DENG_DATA_DIR/graphics
 }
