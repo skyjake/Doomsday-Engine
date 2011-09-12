@@ -41,11 +41,11 @@ void AbstractFile_Init(abstractfile_t* file, filetype_t type, const lumpinfo_t* 
 
     F_CopyLumpInfo(&file->_info, info);
 
-    file->_dfile.eof = false;
-    file->_dfile.size = 0;
-    file->_dfile.hndl = NULL;
-    file->_dfile.data = NULL;
-    file->_dfile.pos = 0;
+    file->_stream.eof = false;
+    file->_stream.size = 0;
+    file->_stream.hndl = NULL;
+    file->_stream.data = NULL;
+    file->_stream.pos = 0;
 }
 
 filetype_t AbstractFile_Type(const abstractfile_t* file)
@@ -78,11 +78,11 @@ uint AbstractFile_LastModified(const abstractfile_t* file)
     return file->_info.lastModified;
 }
 
-DFILE* AbstractFile_Handle(abstractfile_t* file)
+streamfile_t* AbstractFile_Handle(abstractfile_t* file)
 {
     assert(NULL != file);
     if(!file->_flags.open) return NULL;
-    return &file->_dfile;
+    return &file->_stream;
 }
 
 boolean AbstractFile_HasStartup(const abstractfile_t* file)

@@ -140,8 +140,8 @@ lumpnum_t F_CheckLumpNumForName(const char* name);
  *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t F_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
-lumpnum_t F_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
+lumpnum_t F_OpenAuxiliary3(const char* fileName, streamfile_t* prevOpened, boolean silent);
+lumpnum_t F_OpenAuxiliary2(const char* fileName, streamfile_t* prevOpened);
 lumpnum_t F_OpenAuxiliary(const char* fileName);
 
 void F_CloseAuxiliary(void);
@@ -151,7 +151,7 @@ void F_CloseAuxiliary(void);
  * \todo This really doesn't sit well in the object hierarchy. Why not move
  *      this responsibility to AbstractFile derivatives?
  */
-void F_CloseFile(DFILE* hndl);
+void F_CloseFile(streamfile_t* sf);
 
 /// @return  The name of the Zip archive where the referenced file resides.
 const char* Zip_SourceFile(lumpnum_t lumpNum);

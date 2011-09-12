@@ -128,7 +128,7 @@ static int DH_ReadStrings(const char* fileName)
     char line[2048], *ptr, *eol, *end;
     helpnode_t* node = 0;
     int count = 0, length;
-    DFILE* hndl;
+    streamfile_t* sf;
 
     if(!file)
     {
@@ -136,11 +136,11 @@ static int DH_ReadStrings(const char* fileName)
         return false;
     }
 
-    hndl = AbstractFile_Handle(file);
-    assert(hndl);
-    while(!F_AtEnd(hndl))
+    sf = AbstractFile_Handle(file);
+    assert(sf);
+    while(!F_AtEnd(sf))
     {
-        M_ReadLine(line, sizeof(line), hndl);
+        M_ReadLine(line, sizeof(line), sf);
         if(M_IsComment(line))
             continue;
 
@@ -163,7 +163,7 @@ static int DH_ReadStrings(const char* fileName)
         }
         else if(node && (end = strchr(ptr, '='))) // It must be a key?
         {
-            helpstring_t*           hst = node->str + count;
+            helpstring_t* hst = node->str + count;
 
             if(count == MAX_STRINGS)
                 continue; // No more room.
@@ -192,7 +192,7 @@ static int DH_ReadStrings(const char* fileName)
                     if(!*M_SkipWhite(ptr + 1))
                     {
                         // Read the next line.
-                        M_ReadLine(line, sizeof(line), hndl);
+                        M_ReadLine(line, sizeof(line), sf);
                         ptr = M_SkipWhite(line);
                     }
                     else // \ is not the last char on the line.

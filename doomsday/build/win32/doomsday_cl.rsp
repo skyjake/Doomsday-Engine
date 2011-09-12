@@ -32,6 +32,7 @@
  .\..\..\engine\portable\src\s_cache.c
  .\..\..\engine\portable\src\fi_main.c
  .\..\..\engine\portable\src\filedirectory.c
+ .\..\..\engine\portable\src\dfile.c
  .\..\..\engine\portable\src\filelist.c
  .\..\..\engine\portable\src\finaleinterpreter.c
  .\..\..\engine\portable\src\fonts.c

@@ -188,7 +188,7 @@ static abstractfile_t* openFromLump(abstractfile_t* file, abstractfile_t* contai
     file->_flags.open = true;
     if(!dontBuffer)
     {
-        DFILE* dfile = &file->_dfile;
+        streamfile_t* dfile = &file->_stream;
         const lumpinfo_t* info = F_LumpInfo(container, lumpIdx);
         assert(info);
         dfile->size = info->size;
@@ -216,32 +216,32 @@ static abstractfile_t* openFromFile(abstractfile_t* file, FILE* hndl)
 {
     assert(NULL != file && NULL != hndl);
     file->_flags.open = true;
-    file->_dfile.hndl = hndl;
-    file->_dfile.data = NULL;
+    file->_stream.hndl = hndl;
+    file->_stream.data = NULL;
     return file;
 }
 
-static abstractfile_t* newUnknownFile(const lumpinfo_t* info, DFILE* hndl)
+static abstractfile_t* newUnknownFile(const lumpinfo_t* info, streamfile_t* sf)
 {
     abstractfile_t* file = (abstractfile_t*)malloc(sizeof *file);
     if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof *file);
     AbstractFile_Init(file, FT_UNKNOWNFILE, info);
-    return openFromFile(file, hndl->hndl);
+    return openFromFile(file, sf->hndl);
 }
 
-static zipfile_t* newZipFile(const lumpinfo_t* info, DFILE* hndl)
+static zipfile_t* newZipFile(const lumpinfo_t* info, streamfile_t* sf)
 {
-    abstractfile_t* file = (abstractfile_t*)ZipFile_New(info, hndl);
-    return (zipfile_t*) openFromFile(file, hndl->hndl);
+    abstractfile_t* file = (abstractfile_t*)ZipFile_New(info, sf);
+    return (zipfile_t*) openFromFile(file, sf->hndl);
 }
 
-static wadfile_t* newWadFile(const lumpinfo_t* info, DFILE* hndl)
+static wadfile_t* newWadFile(const lumpinfo_t* info, streamfile_t* sf)
 {
-    abstractfile_t* file = (abstractfile_t*)WadFile_New(info, hndl);
-    return (wadfile_t*) openFromFile(file, hndl->hndl);
+    abstractfile_t* file = (abstractfile_t*)WadFile_New(info, sf);
+    return (wadfile_t*) openFromFile(file, sf->hndl);
 }
 
-static lumpfile_t* newLumpFile(const lumpinfo_t* info, DFILE* hndl,
+static lumpfile_t* newLumpFile(const lumpinfo_t* info, streamfile_t* sf,
     abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
 {
     abstractfile_t* file = (abstractfile_t*)LumpFile_New(info);
@@ -259,8 +259,8 @@ static int pruneLumpsFromDirectorysByFile(abstractfile_t* fsObject)
 
 static boolean removeLoadedFile(int loadedFilesNodeIndex)
 {
-    FileListNode* node = FileList_Get(loadedFiles, loadedFilesNodeIndex);
-    abstractfile_t* fsObject = FileList_File(node);
+    DFile* hndl = FileList_Get(loadedFiles, loadedFilesNodeIndex);
+    abstractfile_t* fsObject = DFile_File(hndl);
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
@@ -645,22 +645,22 @@ int F_Reset(void)
     return unloaded;
 }
 
-void F_CloseFile(DFILE* hndl)
+void F_CloseFile(streamfile_t* sf)
 {
-    assert(NULL != hndl);
-    if(hndl->hndl)
+    assert(NULL != sf);
+    if(sf->hndl)
     {
-        fclose(hndl->hndl);
-        hndl->hndl = NULL;
+        fclose(sf->hndl);
+        sf->hndl = NULL;
     }
     else
     {   // Free the stored data.
-        if(hndl->data)
+        if(sf->data)
         {
-            free(hndl->data), hndl->data = NULL;
+            free(sf->data), sf->data = NULL;
         }
     }
-    hndl->pos = NULL;
+    sf->pos = NULL;
 }
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
@@ -777,10 +777,10 @@ int F_LumpCount(void)
     return 0;
 }
 
-lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
+lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, boolean silent)
 {
     ddstring_t* foundPath = NULL;
-    DFILE temp;
+    streamfile_t temp;
 
     errorIfNotInited("F_OpenAuxiliary3");
 
@@ -865,7 +865,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, DFILE* prevOpened, boolean silent)
     return -1;
 }
 
-lumpnum_t F_OpenAuxiliary2(const char* path, DFILE* prevOpened)
+lumpnum_t F_OpenAuxiliary2(const char* path, streamfile_t* prevOpened)
 {
     return F_OpenAuxiliary3(path, prevOpened, false);
 }
@@ -888,13 +888,13 @@ void F_CloseAuxiliary(void)
 
 void F_ReleaseFile(abstractfile_t* fsObject)
 {
-    FileListNode* node;
+    DFile* hndl;
     int i;
     if(!fsObject) return;
     for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
     {
-        node = FileList_Get(openFiles, i);
-        if(FileList_File(node) == fsObject)
+        hndl = FileList_Get(openFiles, i);
+        if(DFile_File(hndl) == fsObject)
         {
             FileList_RemoveAt(openFiles, i);
         }
@@ -1068,12 +1068,12 @@ typedef struct {
     boolean includeOther;
 } compositepathpredicateparamaters_t;
 
-boolean C_DECL compositePathPredicate(FileListNode* node, void* paramaters)
+boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
 {
-    assert(node && paramaters);
+    assert(hndl && paramaters);
     {
     compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)paramaters;
-    abstractfile_t* file = FileList_File(node);
+    abstractfile_t* file = DFile_File(hndl);
     if((!VALID_FILETYPE(p->type) || p->type == AbstractFile_Type(file)) &&
        ((p->includeIWAD  &&  AbstractFile_HasIWAD(file)) ||
         (p->includeOther && !AbstractFile_HasIWAD(file))))
@@ -1265,7 +1265,7 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
 }
 
 typedef struct {
-    /// Callback to make for each processed node.
+    /// Callback to make for each processed file.
     int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters);
 
     /// Data passed to the callback.
@@ -1515,33 +1515,33 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     return fsObject;
 }
 
-static abstractfile_t* tryOpenAsZipFile(const lumpinfo_t* info, DFILE* hndl)
+static abstractfile_t* tryOpenAsZipFile(const lumpinfo_t* info, streamfile_t* sf)
 {
     zipfile_t* zip = NULL;
-    if(inited && ZipFile_Recognise(hndl))
+    if(inited && ZipFile_Recognise(sf))
     {
-        zip = newZipFile(info, hndl);
+        zip = newZipFile(info, sf);
     }
     return (abstractfile_t*)zip;
 }
 
-static abstractfile_t* tryOpenAsWadFile(const lumpinfo_t* info, DFILE* hndl)
+static abstractfile_t* tryOpenAsWadFile(const lumpinfo_t* info, streamfile_t* sf)
 {
     wadfile_t* wad = NULL;
-    if(inited && WadFile_Recognise(hndl))
+    if(inited && WadFile_Recognise(sf))
     {
-        wad = newWadFile(info, hndl);
+        wad = newWadFile(info, sf);
     }
     return (abstractfile_t*)wad;
 }
 
-static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, DFILE* hndl)
+static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, streamfile_t* sf)
 {
-    assert(NULL != hndl && NULL != info);
+    assert(NULL != sf && NULL != info);
     {
     struct filehandler_s {
         resourcetype_t resourceType;
-        abstractfile_t* (*tryOpenFile)(const lumpinfo_t* info, DFILE* hndl);
+        abstractfile_t* (*tryOpenFile)(const lumpinfo_t* info, streamfile_t* sf);
     } static const handlers[] = {
         { RT_ZIP,  tryOpenAsZipFile },
         { RT_WAD,  tryOpenAsWadFile },
@@ -1555,7 +1555,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, DFILE* hndl)
     {
         if(hdlr->resourceType != resourceType) continue;
 
-        fsObject = hdlr->tryOpenFile(info, hndl);
+        fsObject = hdlr->tryOpenFile(info, sf);
         break;
     }
 
@@ -1566,7 +1566,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, DFILE* hndl)
     {
         if(hdlr != &handlers[n]) // We already know its not in this format.
         {
-            fsObject = handlers[n].tryOpenFile(info, hndl);
+            fsObject = handlers[n].tryOpenFile(info, sf);
         }
         ++n;
     }}
@@ -1574,7 +1574,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, DFILE* hndl)
     // If still not loaded; this an unknown format.
     if(!fsObject)
     {
-        fsObject = newUnknownFile(info, hndl);
+        fsObject = newUnknownFile(info, sf);
     }
 
     return fsObject;
@@ -1588,7 +1588,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean a
     abstractfile_t* fsObject;
     lumpinfo_t info;
     int lumpIdx;
-    DFILE temp;
+    streamfile_t temp;
     FILE* file;
 
     if(!path || !path[0])

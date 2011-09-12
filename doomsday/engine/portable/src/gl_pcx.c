@@ -26,6 +26,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
 
 #include "m_misc.h"
@@ -64,7 +65,7 @@ static void setLastError(const char* msg)
     strcpy(lastErrorMsg, msg);
 }
 
-static int load(DFILE* file, int width, int height, uint8_t* dstBuf)
+static int load(streamfile_t* file, int width, int height, uint8_t* dstBuf)
 {
     assert(file && dstBuf);
     {
@@ -126,7 +127,7 @@ const char* PCX_LastError(void)
     return 0;
 }
 
-uint8_t* PCX_Load(DFILE* file, int* width, int* height, int* pixelSize)
+uint8_t* PCX_Load(streamfile_t* file, int* width, int* height, int* pixelSize)
 {
     assert(file && width && height && pixelSize);
     {

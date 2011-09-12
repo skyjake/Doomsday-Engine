@@ -195,18 +195,18 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
     // This file is filled with console commands.
     // Each line is a command.
     { int line = 1;
-    DFILE* hndl = AbstractFile_Handle(file);
-    assert(hndl);
+    streamfile_t* sf = AbstractFile_Handle(file);
+    assert(sf);
     for(;;)
     {
-        M_ReadLine(buff, 512, hndl);
+        M_ReadLine(buff, 512, sf);
         if(buff[0] && !M_IsComment(buff))
         {
             // Execute the commands silently.
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
                 Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
         }
-        if(F_AtEnd(hndl))
+        if(F_AtEnd(sf))
             break;
         line++;
     }}

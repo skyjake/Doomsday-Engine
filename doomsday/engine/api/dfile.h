@@ -1,9 +1,8 @@
-/**\file gl_png.h
+/**\file dfile.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,32 +17,37 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
+#ifndef LIBDENG_FILESYS_FILEHANDLE_H
+#define LIBDENG_FILESYS_FILEHANDLE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "dd_types.h"
+
 /**
- * PNG (Portable Network Graphics) image reader.
+ * DFile.  DFile Represents a unique (public) file reference in the
+ * engine's Virtual File System (vfs).
  *
- * Requires libpng and zlib.
+ * @ingroup fs
  */
+struct dfile_s; // The file handle instance (opaque).
+typedef struct dfile_s DFile;
 
-#ifndef LIBDENG_GRAPHICS_PNG_H
-#define LIBDENG_GRAPHICS_PNG_H
+/// @return  @c true iff this handle's internal state is valid.
+boolean DFile_IsValid(const DFile* hndl);
 
-struct streamfile_s;
+#if _DEBUG
+void DFile_Print(const DFile* hndl);
+#endif
 
-/**
- * Reads the given PNG image and returns a pointer to a planar RGB or
- * RGBA buffer. Width and height are set, and pixelSize is either 3 (RGB)
- * or 4 (RGBA). The caller must free the allocated buffer with Z_Free.
- * Width, height and pixelSize can't be NULL. Handles 1-4 channels.
- */
-uint8_t* PNG_Load(struct streamfile_s* file, int* width, int* height, int* pixelSize);
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
-/**
- * @return  Textual message detailing the last error encountered else @c 0.
- */
-const char* PNG_LastError(void);
-
-#endif /* LIBDENG_GRAPHICS_PNG_H */
+#endif /* LIBDENG_FILESYS_FILEHANDLE_H */

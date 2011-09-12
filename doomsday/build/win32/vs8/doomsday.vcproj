@@ -2230,6 +2230,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dfile.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\api\doomsday.h"
 				>
 			</File>
@@ -2444,6 +2448,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\def_read.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\dfile.c"
 				>
 			</File>
 			<File

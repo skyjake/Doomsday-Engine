@@ -24,15 +24,10 @@
 #ifndef LIBDENG_FILESYS_FILELIST_H
 #define LIBDENG_FILESYS_FILELIST_H
 
+#include "dfile.h"
+
 struct abstractfile_s;
 struct ddstring_s;
-
-/**
- * FileListNode.  Used to represent a file reference in FileList.
- * @ingroup fs
- */
-struct filelist_node_s; // The file list node instance (opaque).
-typedef struct filelist_node_s FileListNode;
 
 /**
  * FileList.  File system object designed to simplify the management of
@@ -73,13 +68,13 @@ int FileList_Size(FileList* fl);
 boolean FileList_Empty(FileList* fl);
 
 /// @return  @c NULL if empty else the reference at position @a idx.
-FileListNode* FileList_Get(FileList* fl, int idx);
+DFile* FileList_Get(FileList* fl, int idx);
 
 /// @return  @c NULL if empty else the reference at the front.
-FileListNode* FileList_Front(FileList* fl);
+DFile* FileList_Front(FileList* fl);
 
 /// @return  @c NULL if empty else the reference at the back.
-FileListNode* FileList_Back(FileList* fl);
+DFile* FileList_Back(FileList* fl);
 
 /// @return  @c NULL if empty else the file referenced at position @a idx.
 struct abstractfile_s* FileList_GetFile(FileList* fl, int idx);
@@ -159,7 +154,7 @@ abstractfile_t** FileList_ToArray(FileList* fl, int* size);
  *      no longer needed. Always returns a valid (but perhaps zero-length)
  *      string object.
  */
-struct ddstring_s* FileList_ToString4(FileList* fl, int flags, const char* delimiter, boolean (*predicate)(FileListNode* node, void* paramaters), void* paramaters);
+struct ddstring_s* FileList_ToString4(FileList* fl, int flags, const char* delimiter, boolean (*predicate)(DFile* hndl, void* paramaters), void* paramaters);
 struct ddstring_s* FileList_ToString3(FileList* fl, int flags, const char* delimiter); /* predicate = NULL, paramaters = NULL */
 struct ddstring_s* FileList_ToString2(FileList* fl, int flags); /* delimiter = " " */
 struct ddstring_s* FileList_ToString(FileList* fl); /* flags = DEFAULT_PATHTOSTRINGFLAGS */
@@ -168,17 +163,30 @@ struct ddstring_s* FileList_ToString(FileList* fl); /* flags = DEFAULT_PATHTOSTR
 void FileList_Print(FileList* fl);
 #endif
 
-/** 
- * Static members:
+/**
+ * Non-public methods of DFile. Placed here temporarily.
  */
 
-/// @return  FileList object which owns this node.
-FileList* FileList_List(FileListNode* node);
+void DFileBuilder_Init(void);
+void DFileBuilder_Shutdown(void);
 
-/// @return  File object represented by this node.
-struct abstractfile_s* FileList_File(FileListNode* node);
+DFile* DFileBuilder_CreateNew(struct abstractfile_s* file, FileList* list);
 
-/// @return  File object represented by this node.
-const struct abstractfile_s* FileList_File_Const(const FileListNode* node);
+DFile* DFile_New(void);
+
+void DFile_Delete(DFile* hndl, boolean recycle);
+
+/// @return  File object represented by this handle.
+struct abstractfile_s* DFile_File(DFile* hndl);
+
+void DFile_SetFile(DFile* hndl, struct abstractfile_s* file);
+
+/// @return  FileList object which owns this handle.
+FileList* DFile_List(DFile* hndl);
+
+void DFile_SetList(DFile* hndl, FileList* list);
+
+/// @return  File object represented by this handle.
+const struct abstractfile_s* DFile_File_Const(const DFile* hndl);
 
 #endif /* LIBDENG_FILESYS_FILELIST_H */

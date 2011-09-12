@@ -110,8 +110,8 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(&file->_base._dfile, info->baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read(&file->_base._dfile, buffer, length);
+    F_Seek(&file->_base._stream, info->baseOffset + startOffset, SEEK_SET);
+    readBytes = F_Read(&file->_base._stream, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -194,7 +194,7 @@ void LumpFile_Close(lumpfile_t* file)
 {
     assert(NULL != file);
     if(file->_base._flags.open)
-        F_CloseFile(&file->_base._dfile);
+        F_CloseFile(&file->_base._stream);
     file->_base._flags.open = false;
 }
 

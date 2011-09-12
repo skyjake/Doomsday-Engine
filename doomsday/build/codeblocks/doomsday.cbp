@@ -152,6 +152,7 @@
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
 		<Unit filename="..\..\engine\api\dd_wad.h" />
+		<Unit filename="..\..\engine\api\dfile.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
 		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
@@ -515,6 +516,7 @@
 		<Unit filename="..\..\engine\portable\src\def_read.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\dfile.c" />
 		<Unit filename="..\..\engine\portable\src\dgl_common.c">
 			<Option compilerVar="CC" />
 		</Unit>

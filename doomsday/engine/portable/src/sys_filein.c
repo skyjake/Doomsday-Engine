@@ -32,99 +32,99 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-size_t F_Length(DFILE* hndl)
+size_t F_Length(streamfile_t* sf)
 {
-    assert(NULL != hndl);
+    assert(NULL != sf);
     {
-    size_t currentPosition = F_Seek(hndl, 0, SEEK_END);
-    size_t length = F_Tell(hndl);
-    F_Seek(hndl, currentPosition, SEEK_SET);
+    size_t currentPosition = F_Seek(sf, 0, SEEK_END);
+    size_t length = F_Tell(sf);
+    F_Seek(sf, currentPosition, SEEK_SET);
     return length;
     }
 }
 
-size_t F_Read(DFILE* hndl, uint8_t* buffer, size_t count)
+size_t F_Read(streamfile_t* sf, uint8_t* buffer, size_t count)
 {
-    assert(NULL != hndl);
+    assert(NULL != sf);
     {
     size_t bytesleft;
 
-    if(hndl->hndl)
+    if(sf->hndl)
     {   // Normal file.
-        count = fread(buffer, 1, count, hndl->hndl);
-        if(feof(hndl->hndl))
-            hndl->eof = true;
+        count = fread(buffer, 1, count, sf->hndl);
+        if(feof(sf->hndl))
+            sf->eof = true;
         return count;
     }
 
     // Is there enough room in the file?
-    bytesleft = hndl->size - (hndl->pos - hndl->data);
+    bytesleft = sf->size - (sf->pos - sf->data);
     if(count > bytesleft)
     {
         count = bytesleft;
-        hndl->eof = true;
+        sf->eof = true;
     }
 
     if(count)
     {
-        memcpy(buffer, hndl->pos, count);
-        hndl->pos += count;
+        memcpy(buffer, sf->pos, count);
+        sf->pos += count;
     }
 
     return count;
     }
 }
 
-boolean F_AtEnd(DFILE* hndl)
+boolean F_AtEnd(streamfile_t* sf)
 {
-    assert(NULL != hndl);
-    return hndl->eof;
+    assert(NULL != sf);
+    return sf->eof;
 }
 
-unsigned char F_GetC(DFILE* hndl)
+unsigned char F_GetC(streamfile_t* sf)
 {
-    assert(NULL != hndl);
+    assert(NULL != sf);
     {
     unsigned char ch = 0;
-    F_Read(hndl, (uint8_t*)&ch, 1);
+    F_Read(sf, (uint8_t*)&ch, 1);
     return ch;
     }
 }
 
-size_t F_Tell(DFILE* hndl)
+size_t F_Tell(streamfile_t* sf)
 {
-    assert(NULL != hndl);
-    if(hndl->hndl)
-        return (size_t) ftell(hndl->hndl);
-    return hndl->pos - hndl->data;
+    assert(NULL != sf);
+    if(sf->hndl)
+        return (size_t) ftell(sf->hndl);
+    return sf->pos - sf->data;
 }
 
-size_t F_Seek(DFILE* hndl, size_t offset, int whence)
+size_t F_Seek(streamfile_t* sf, size_t offset, int whence)
 {
-    assert(NULL != hndl);
+    assert(NULL != sf);
     {
-    size_t oldpos = F_Tell(hndl);
+    size_t oldpos = F_Tell(sf);
 
-    hndl->eof = false;
-    if(hndl->hndl)
+    sf->eof = false;
+    if(sf->hndl)
     {
-        fseek(hndl->hndl, (long) offset, whence);
+        fseek(sf->hndl, (long) offset, whence);
     }
     else
     {
         if(whence == SEEK_SET)
-            hndl->pos = hndl->data + offset;
+            sf->pos = sf->data + offset;
         else if(whence == SEEK_END)
-            hndl->pos = hndl->data + (hndl->size + offset);
+            sf->pos = sf->data + (sf->size + offset);
         else if(whence == SEEK_CUR)
-            hndl->pos += offset;
+            sf->pos += offset;
     }
 
     return oldpos;
     }
 }
 
-void F_Rewind(DFILE* hndl)
+void F_Rewind(streamfile_t* sf)
 {
-    F_Seek(hndl, 0, SEEK_SET);
+    F_Seek(sf, 0, SEEK_SET);
 }

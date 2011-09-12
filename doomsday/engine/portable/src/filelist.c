@@ -26,19 +26,8 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
-#include "de_system.h"
 
-#include "dd_string.h"
-#include "blockset.h"
 #include "filelist.h"
-
-struct filelist_node_s
-{
-    /// The referenced file.
-    abstractfile_t* _file;
-    /// Either the FileList which owns this or the next FileListNode in the used node pool.
-    void* _list;
-};
 
 struct filelist_s
 {
@@ -47,58 +36,12 @@ struct filelist_s
     /// Current size of the reference table. Not necessarily equal to FileList::_size!
     int _tableSize;
     /// Reference pointer table.
-    FileListNode** _table;
+    DFile** _table;
 };
 
 static volatile int numInstances = 0;
 
-// A mutex is used to protect access to the shared node block allocator and object pool.
-static mutex_t mutex;
-// File nodes are allocated by this block allocator.
-static blockset_t* nodeBlockSet;
-// Head of the llist of used file nodes, for recycling.
-static FileListNode* usedNodes;
-
-static FileListNode* newNode(FileList* fl, abstractfile_t* file)
-{
-    FileListNode* node;
-    Sys_Lock(mutex);
-    if(usedNodes)
-    {
-        node = usedNodes;
-        usedNodes = node->_list;
-    }
-    else
-    {
-        if(!nodeBlockSet)
-        {
-            nodeBlockSet = BlockSet_New(sizeof(FileListNode), 64);
-        }
-        node = BlockSet_Allocate(nodeBlockSet);
-    }
-    Sys_Unlock(mutex);
-    node->_file = file;
-    node->_list = fl;
-    return node;
-}
-
-static void deleteNode(FileListNode* node, boolean recycle)
-{
-    assert(node);
-    if(!recycle)
-    {
-        // Memory for node will be free'd along with nodeBlockSet
-        return;
-    }
-    // Copy this node to the used object pool for recycling.
-    Sys_Lock(mutex);
-    node->_file = NULL;
-    node->_list = usedNodes;
-    usedNodes = node;
-    Sys_Unlock(mutex);
-}
-
-static void expandNodeTable(FileList* fl)
+static void expandHandleTable(FileList* fl)
 {
     assert(fl);
     if(!fl->_table || fl->_size > fl->_tableSize)
@@ -108,9 +51,9 @@ static void expandNodeTable(FileList* fl)
         else
             fl->_tableSize *= 2;
 
-        fl->_table = (FileListNode**)realloc(fl->_table, fl->_tableSize * sizeof *fl->_table);
+        fl->_table = (DFile**)realloc(fl->_table, fl->_tableSize * sizeof *fl->_table);
         if(!fl->_table)
-            Con_Error("FileList::expandNodeTable: Failed on (re)allocation of %lu bytes while "
+            Con_Error("FileList::expandHandleTable: Failed on (re)allocation of %lu bytes while "
                 "enlarging reference table.", (unsigned long) (fl->_tableSize * sizeof *fl->_table));
     }
 }
@@ -123,7 +66,7 @@ FileList* FileList_New(void)
             (unsigned long) sizeof *fl);
     if(numInstances == 0)
     {
-        mutex = Sys_CreateMutex("FileList_MUTEX");
+        DFileBuilder_Init();
     }
     ++numInstances;
     return fl;
@@ -152,7 +95,7 @@ FileList* FileList_NewCopy(FileList* fl)
     int i;
     for(i = 0; i < fl->_size; ++i)
     {
-        FileList_AddBack(clone, FileList_File(fl->_table[i]));
+        FileList_AddBack(clone, DFile_File(fl->_table[i]));
     }
     return clone;
     }
@@ -169,11 +112,7 @@ void FileList_Delete(FileList* fl)
     free(fl);
     if(numInstances == 1)
     {
-        Sys_Lock(mutex);
-        BlockSet_Delete(nodeBlockSet), nodeBlockSet = NULL;
-        usedNodes = NULL;
-        Sys_Unlock(mutex);
-        Sys_DestroyMutex(mutex), mutex = 0;
+        DFileBuilder_Shutdown();
     }
     --numInstances;
 }
@@ -185,55 +124,55 @@ void FileList_Clear(FileList* fl)
         int i;
         for(i = 0; i < fl->_size; ++i)
         {
-            deleteNode(fl->_table[i], true);
+            DFile_Delete(fl->_table[i], true);
         }
         memset(fl->_table, 0, fl->_tableSize * sizeof *fl->_table);
         fl->_size = 0;
     }
 }
 
-FileListNode* FileList_Get(FileList* fl, int idx)
+DFile* FileList_Get(FileList* fl, int idx)
 {
     assert(fl);
     {
-    FileListNode* node = NULL;
+    DFile* hndl = NULL;
     if(idx < 0) idx += fl->_size;
     if(idx >= 0 && idx < fl->_size)
     {
-        node = fl->_table[idx];
+        hndl = fl->_table[idx];
     }
-    return node;
+    return hndl;
     }
 }
 
-FileListNode* FileList_Front(FileList* fl)
+DFile* FileList_Front(FileList* fl)
 {
     return FileList_Get(fl, 0);
 }
 
-FileListNode* FileList_Back(FileList* fl)
+DFile* FileList_Back(FileList* fl)
 {
     return FileList_Get(fl, -1);
 }
 
 abstractfile_t* FileList_GetFile(FileList* fl, int idx)
 {
-    FileListNode* node = FileList_Get(fl, idx);
-    if(node) return FileList_File(node);
+    DFile* hndl = FileList_Get(fl, idx);
+    if(hndl) return DFile_File(hndl);
     return NULL;
 }
 
 abstractfile_t* FileList_FrontFile(FileList* fl)
 {
-    FileListNode* node = FileList_Front(fl);
-    if(node) return FileList_File(node);
+    DFile* hndl = FileList_Front(fl);
+    if(hndl) return DFile_File(hndl);
     return NULL;
 }
 
 abstractfile_t* FileList_BackFile(FileList* fl)
 {
-    FileListNode* node = FileList_Back(fl);
-    if(node) return FileList_File(node);
+    DFile* hndl = FileList_Back(fl);
+    if(hndl) return DFile_File(hndl);
     return NULL;
 }
 
@@ -245,8 +184,8 @@ abstractfile_t* FileList_RemoveAt(FileList* fl, int idx)
     if(idx < 0) idx += fl->_size;
     if(idx >= 0 && idx < fl->_size)
     {
-        file = FileList_File(fl->_table[idx]);
-        deleteNode(fl->_table[idx], true);
+        file = DFile_File(fl->_table[idx]);
+        DFile_Delete(fl->_table[idx], true);
         if(idx < fl->_size-1)
             memmove(fl->_table + idx, fl->_table + idx + 1, (fl->_size - 1) * sizeof *fl->_table);
         --fl->_size;
@@ -259,9 +198,9 @@ abstractfile_t* FileList_AddFront(FileList* fl, abstractfile_t* file)
 {
     assert(fl && file);
     ++fl->_size;
-    expandNodeTable(fl);
+    expandHandleTable(fl);
     memmove(fl->_table, fl->_table + 1, (fl->_size-1) * sizeof *fl->_table);
-    fl->_table[0] = newNode(fl, file);
+    fl->_table[0] = DFileBuilder_CreateNew(file, fl);
     return file;
 }
 
@@ -269,8 +208,8 @@ abstractfile_t* FileList_AddBack(FileList* fl, abstractfile_t* file)
 {
     assert(fl && file);
     ++fl->_size;
-    expandNodeTable(fl);
-    fl->_table[fl->_size-1] = newNode(fl, file);
+    expandHandleTable(fl);
+    fl->_table[fl->_size-1] = DFileBuilder_CreateNew(file, fl);
     return file;
 }
 
@@ -307,7 +246,7 @@ abstractfile_t** FileList_ToArray(FileList* fl, int* count)
         { int i = 0;
         for(i = 0; i < fl->_size; ++i)
         {
-            arr[i] = FileList_File(fl->_table[i]);
+            arr[i] = DFile_File(fl->_table[i]);
         }}
         if(count) *count = fl->_size;
         return arr;
@@ -318,7 +257,7 @@ abstractfile_t** FileList_ToArray(FileList* fl, int* count)
 }
 
 ddstring_t* FileList_ToString4(FileList* fl, int flags, const char* delimiter,
-    boolean (*predicate)(FileListNode* node, void* paramaters), void* paramaters)
+    boolean (*predicate)(DFile* hndl, void* paramaters), void* paramaters)
 {
     assert(fl);
     {
@@ -342,7 +281,7 @@ ddstring_t* FileList_ToString4(FileList* fl, int flags, const char* delimiter,
 
         // One more path will be composited.
         ++pathCount;
-        path = AbstractFile_Path(FileList_File_Const(fl->_table[i]));
+        path = AbstractFile_Path(DFile_File_Const(fl->_table[i]));
 
         if(!(flags & (PTSF_TRANSFORM_EXCLUDE_DIR|PTSF_TRANSFORM_EXCLUDE_EXT)))
         {
@@ -399,7 +338,7 @@ ddstring_t* FileList_ToString4(FileList* fl, int flags, const char* delimiter,
         if(predicate && !predicate(fl->_table[i], paramaters))
             continue; // Caller isn't interested in this...
 
-        path = AbstractFile_Path(FileList_File_Const(fl->_table[i]));
+        path = AbstractFile_Path(DFile_File_Const(fl->_table[i]));
 
         if(flags & PTSF_QUOTED)
             Str_AppendChar(str, '"');
@@ -479,34 +418,13 @@ ddstring_t* FileList_ToString(FileList* fl)
 #if _DEBUG
 void FileList_Print(FileList* fl)
 {
-    FileListNode* node;
-    byte id[16];
+    DFile* hndl;
     int i;
     for(i = 0; i < fl->_size; ++i)
     {
-        node = fl->_table[i];
-        F_GenerateFileId(Str_Text(AbstractFile_Path(FileList_File(node))), id);               
-        Con_Printf(" %c%u: ", AbstractFile_HasStartup(FileList_File(node))? '*':' ', i);
-        F_PrintFileId(id);
-        Con_Printf(" - \"%s\"\n", F_PrettyPath(Str_Text(AbstractFile_Path(FileList_File(node)))));
+        hndl = fl->_table[i];
+        Con_Printf(" %c%u: ", AbstractFile_HasStartup(DFile_File(hndl))? '*':' ', i);
+        DFile_Print(hndl);
     }
 }
 #endif
-
-FileList* FileList_List(FileListNode* node)
-{
-    assert(node);
-    return (FileList*)node->_list;
-}
-
-abstractfile_t* FileList_File(FileListNode* node)
-{
-    assert(node);
-    return node->_file;
-}
-
-const abstractfile_t* FileList_File_Const(const FileListNode* node)
-{
-    assert(node);
-    return node->_file;
-}

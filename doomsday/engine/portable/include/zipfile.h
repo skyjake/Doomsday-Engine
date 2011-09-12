@@ -47,7 +47,7 @@ typedef struct {
     void** _lumpCache;
 } zipfile_t;
 
-zipfile_t* ZipFile_New(const lumpinfo_t* info, DFILE* hndl);
+zipfile_t* ZipFile_New(const lumpinfo_t* info, streamfile_t* sf);
 void ZipFile_Delete(zipfile_t* zip);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -117,6 +117,6 @@ int ZipFile_LumpCount(zipfile_t* zip);
  * Does the specified file appear to be in Zip format.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(DFILE* file);
+boolean ZipFile_Recognise(streamfile_t* file);
 
 #endif

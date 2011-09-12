@@ -58,7 +58,7 @@ typedef struct abstractfile_s {
     } _flags;
 
     /// File stream abstraction wrapper/handle.
-    DFILE _dfile;
+    streamfile_t _stream;
 
     /// Info descriptor (file metadata).
     lumpinfo_t _info;
@@ -122,7 +122,7 @@ size_t AbstractFile_ReadLump(abstractfile_t* file, int lumpIdx, uint8_t* buffer)
  * \note Higher-level derivatives of AbstractFile should not expose this method
  *      publicly if they are designed to abstract access to the underlying stream.
  */
-DFILE* AbstractFile_Handle(abstractfile_t* file);
+streamfile_t* AbstractFile_Handle(abstractfile_t* file);
 
 /**
  * Accessors:
