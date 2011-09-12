@@ -44,6 +44,9 @@ unix:!macx {
     # Generic Unix build options.
     DENG_CONFIG += nofixedasm
 
+    # Link against standard math library.
+    LIBS += -lm
+
     # Install prefix.
     PREFIX = /usr
 
@@ -67,9 +70,6 @@ unix:!macx {
 
     DENG_BASE_DIR = $$PREFIX/share/doomsday
     DENG_DATA_DIR = $$DENG_BASE_DIR/data
-
-    # Link against standard math library.
-    LIBS += -lm
 
     message(Install prefix: $$PREFIX)
     message(Binary directory: $$DENG_BIN_DIR)
