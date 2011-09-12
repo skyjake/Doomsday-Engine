@@ -6,6 +6,8 @@ include(../pluginconfig.pri)
 TEMPLATE = lib
 TARGET = dpwadmapconverter
 
+VERSION = $$WADMAPCONVERTER_VERSION
+
 INCLUDEPATH += include
 
 HEADERS += \

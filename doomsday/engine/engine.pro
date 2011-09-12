@@ -22,9 +22,11 @@ include(../curl.pri)
 # Common Definitions ---------------------------------------------------------
 
 DEFINES += __DOOMSDAY__
-contains(QMAKE_HOST.arch, x86_64) {
-    message("64-bit architecture detected.")
-    DEFINES += HOST_IS_64BIT
+
+unix:!macx {
+    DATADIR = $$PREFIX/share/doomsday
+    DEFINES += DENG_BASE_DIR=\\\"$${DATADIR}\\\"
+    DEFINES += DENG_LIBRARY_DIR=\\\"$${LIBDIR}\\\"
 }
 macx {
     LIBS += -framework Cocoa -framework QTKit
@@ -473,4 +475,19 @@ macx {
     QMAKE_BUNDLE_DATA += sdl_frameworks res packdata
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
+}
+
+# Installation ---------------------------------------------------------------
+
+unix:!macx {
+    # Generic Unix installation.
+    INSTALLS += target data startupgfx
+
+    target.path = $$BINDIR
+
+    data.files = $$OUT_PWD/../doomsday.pk3
+    data.path = $$DATADIR/data
+
+    startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
+    startupgfx.path = $$DATADIR/data/graphics
 }

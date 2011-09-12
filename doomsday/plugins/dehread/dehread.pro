@@ -6,6 +6,8 @@ include(../pluginconfig.pri)
 TEMPLATE = lib
 TARGET = dpdehread
 
+VERSION = $$DEHREAD_VERSION
+
 HEADERS += include/version.h
 
 SOURCES += src/dehmain.c

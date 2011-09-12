@@ -1,10 +1,10 @@
 QT -= core gui
 
+# Check versions.
 include(versions.pri)
-
 message(Doomsday version $${DENG_VERSION}.)
 
-# Debug/release build selection.
+# Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
     message("Debug build.")
     DEFINES += _DEBUG
@@ -28,8 +28,36 @@ unix {
         -Wno-missing-braces
 }
 unix:!macx {
-    # Linux build options.
+    # Generic Unix build options.
     DENG_CONFIG += nofixedasm
+
+    # Install prefix.
+    PREFIX = /usr
+
+    # Binary location.
+    BINDIR = $$PREFIX/bin
+
+    # Library location.
+    LIBDIR = $$PREFIX/lib
+
+    contains(QMAKE_HOST.arch, x86_64) {
+        message(64-bit architecture detected.)
+        DEFINES += HOST_IS_64BIT
+
+        exists($$PREFIX/lib64) {
+            LIBDIR = $$PREFIX/lib64
+        }
+        exists($$PREFIX/lib/x86_64-linux-gnu) {
+            LIBDIR = $$PREFIX/lib/x86_64-linux-gnu
+        }
+    }
+
+    # Link against standard math library.
+    LIBS += -lm
+
+    message(Install prefix: $$PREFIX)
+    message(Binary directory: $$BINDIR)
+    message(Library directory: $$LIBDIR)
 }
 macx {
     # Mac OS X build options.
@@ -69,7 +97,3 @@ contains(DENG_CONFIG, nofixedasm) {
 !contains(DENG_CONFIG, rangecheck) {
     DEFINES += NORANGECHECKING
 }
-
-OTHER_FILES += \
-    ../plugins/jhexen/jhexen.pro
-
