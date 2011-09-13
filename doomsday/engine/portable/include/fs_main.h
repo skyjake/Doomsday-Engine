@@ -45,6 +45,8 @@
 #ifndef LIBDENG_FILESYS_MAIN_H
 #define LIBDENG_FILESYS_MAIN_H
 
+#include <stdio.h>
+
 #include "zipfile.h"
 #include "wadfile.h"
 #include "lumpfile.h"
@@ -72,8 +74,6 @@ void F_EndStartup(void);
  */
 int F_Reset(void);
 
-void F_CloseAll(void);
-
 /**
  * Reset known fileId records so that the next time F_CheckFileId() is
  * called on a file, it will pass.
@@ -86,21 +86,18 @@ void F_ResetFileIds(void);
  */
 void F_GenerateFileId(const char* str, byte identifier[16]);
 
+void F_PrintFileId(byte identifier[16]);
+
 /**
  * Maintains a list of identifiers already seen.
  *
- * @return @c true if the given file can be read, or
- *         @c false, if it has already been read.
+ * @return @c true if the given file can be opened, or
+ *         @c false, if it has already been opened.
  */
 boolean F_CheckFileId(const char* path);
 
 /// @return  @c true if the FileId associated with @a path was released.
 boolean F_ReleaseFileId(const char* path);
-
-/**
- * Frees the memory allocated to the handle.
- */
-void F_Release(DFILE* file);
 
 /// @return  Number of files in the currently active primary LumpDirectory.
 int F_LumpCount(void);
@@ -132,7 +129,8 @@ abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
 const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
 
-lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
+lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent);
+lumpnum_t F_CheckLumpNumForName(const char* name);
 
 /**
  * Try to open the specified WAD archive into the auxiliary lump cache.
@@ -142,11 +140,18 @@ lumpnum_t F_CheckLumpNumForName(const char* name, boolean silent);
  *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t F_OpenAuxiliary3(const char* fileName, DFILE* prevOpened, boolean silent);
-lumpnum_t F_OpenAuxiliary2(const char* fileName, DFILE* prevOpened);
+lumpnum_t F_OpenAuxiliary3(const char* fileName, streamfile_t* prevOpened, boolean silent);
+lumpnum_t F_OpenAuxiliary2(const char* fileName, streamfile_t* prevOpened);
 lumpnum_t F_OpenAuxiliary(const char* fileName);
 
 void F_CloseAuxiliary(void);
+
+/**
+ * Close the file if open. Note that this clears any previously cached data.
+ * \todo This really doesn't sit well in the object hierarchy. Why not move
+ *      this responsibility to AbstractFile derivatives?
+ */
+void F_CloseFile(streamfile_t* sf);
 
 /// @return  The name of the Zip archive where the referenced file resides.
 const char* Zip_SourceFile(lumpnum_t lumpNum);
@@ -176,13 +181,28 @@ boolean F_RemoveFile(const char* fileName);
 boolean F_RemoveFiles(const char* const* filenames, size_t num);
 
 /**
- * Opens the given file (will be translated) for reading.
- * "t" = text mode (with real files, lumps are always binary)
- * "b" = binary
- * "f" = must be a real file in the local file system.
- * "x" = just test for access (don't buffer anything)
+ * @return  @c true if the file can be opened for reading.
  */
-DFILE* F_Open(const char* path, const char* mode);
+int F_Access(const char* path);
+
+/**
+ * Opens the given file (will be translated) for reading.
+ *
+ * \post If @a allowDuplicate = @c false a new file ID for this will have been
+ * added to the list of known file identifiers if this file hasn't yet been
+ * opened. It is the responsibility of the caller to release this identifier when done.
+ *
+ * @param path  Possibly relative or mapped path to the resource being opened.
+ * @param mode
+ *      't' = text mode (with real files, lumps are always binary)
+ *      'b' = binary
+ *      'f' = must be a real file in the local file system
+ *      'x' = don't buffer anything
+ * @param allowDuplicate  @c false = open only if not already opened.
+ * @return  Opened file reference/handle else @c NULL.
+ */
+abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplicate);
+abstractfile_t* F_Open(const char* path, const char* mode); /* allowDuplicate = true */
 
 /**
  * Try to locate the specified lump for reading.
@@ -192,37 +212,39 @@ DFILE* F_Open(const char* path, const char* mode);
  *
  * @return  Handle to the opened file if found.
  */
-DFILE* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
+abstractfile_t* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
 
 /**
  * @return  The time when the file was last modified, as seconds since
  * the Epoch else zero if the file is not found.
  */
-unsigned int F_GetLastModified(const char* fileName);
+uint F_GetLastModified(const char* fileName);
 
-void F_InitializeResourcePathMap(void);
-
-/**
- * The path names are converted to full paths before adding to the table.
- * Files in the source directory are mapped to the target directory.
- */
-void F_AddResourcePathMapping(const char* source, const char* destination);
+void F_InitVirtualDirectoryMappings(void);
 
 /**
- * Initialize the lump directory > vfs translations.
- * \note Should be called after WADs have been processed.
+ * Add a new virtual directory mapping from source to destination in the vfs.
+ * \note Paths will be transformed into absolute paths if needed.
  */
-void F_InitDirec(void);
+void F_AddVirtualDirectoryMapping(const char* source, const char* destination);
 
-void F_ShutdownDirec(void);
+/// \note Should be called after WADs have been processed.
+void F_InitLumpDirectoryMappings(void);
+
+/**
+ * Add a new lump mapping so that @a lumpName becomes visible as @a symbolicPath
+ * throughout the vfs.
+ * \note @a symbolicPath will be transformed into an absolute path if needed.
+ */
+void F_AddLumpDirectoryMapping(const char* lumpName, const char* symbolicPath);
 
 /**
  * Compiles a list of PWAD file names, separated by @a delimiter.
  */
-void F_GetPWADFileNames(char* buf, size_t bufSize, char delimiter);
+void F_GetPWADFileNames(char* buf, size_t bufSize, const char* delimiter);
 
 /**
- * Calculated using the lumps of the main IWAD.
+ * Calculate a CRC for the loaded file list.
  */
 uint F_CRCNumber(void);
 
@@ -231,14 +253,23 @@ uint F_CRCNumber(void);
  */
 void F_PrintLumpDirectory(void);
 
-const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx);
+/// Clear all references to this file.
+void F_ReleaseFile(abstractfile_t* file);
 
-size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
+/// Close this file; clear references and any acquired identifiers.
+void F_Close(abstractfile_t* file);
+
+/// Completely destroy this file; close if open, clear references and any acquired identifiers.
+void F_Delete(abstractfile_t* file);
+
+const lumpinfo_t* F_LumpInfo(abstractfile_t* file, int lumpIdx);
+
+size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
-const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag);
+const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx, int tag);
 
-void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag);
+void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
 
 /**
  * Write the data associated with the specified lump index to @a fileName.
@@ -248,7 +279,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag);
  *      Can be @c NULL in which case the fileName will be chosen automatically.
  * @return  @c true iff successful.
  */
-boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* fileName);
+boolean F_DumpLump(abstractfile_t* file, int lumpIdx, const char* fileName);
 
 /**
  * Parm is passed on to the callback, which is called for each file

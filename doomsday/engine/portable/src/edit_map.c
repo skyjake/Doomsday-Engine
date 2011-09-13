@@ -1897,7 +1897,7 @@ boolean MPE_End(void)
      */
     if(gamemap->mapID && gamemap->mapID[0])
     {   // Yes, write the cached map data file.
-        lumpnum_t markerLumpNum = F_CheckLumpNumForName(gamemap->mapID, true);
+        lumpnum_t markerLumpNum = F_CheckLumpNumForName2(gamemap->mapID, true);
         ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
         ddstring_t cachedMapPath;
 

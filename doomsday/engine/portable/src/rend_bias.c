@@ -677,7 +677,7 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
 void SB_TrackerMark(biastracker_t* tracker, uint index)
 {
     // Assume 32-bit uint.
-    if(index >= 0)
+    //if(index >= 0)
     {
         tracker->changes[index >> 5] |= (1 << (index & 0x1f));
     }

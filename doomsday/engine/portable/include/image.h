@@ -25,6 +25,8 @@
 #ifndef LIBDENG_IMAGE_H
 #define LIBDENG_IMAGE_H
 
+#include "abstractfile.h"
+
 /**
  * @defgroup imageConversionFlags Image Conversion Flags.
  */
@@ -69,11 +71,10 @@ void GL_PrintImageMetadata(const image_t* image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t* GL_LoadImage(image_t* image, const char* filePath);
-uint8_t* GL_LoadImageStr(image_t* image, const ddstring_t* filePath);
+uint8_t* GL_LoadImageFromFile(image_t* image, abstractfile_t* file);
 
 /// Release image pixel data.
-void GL_DestroyImagePixels(image_t* image);
+void GL_DestroyImage(image_t* image);
 
 /// @return  @c true if the image pixel data contains alpha information.
 boolean GL_ImageHasAlpha(const image_t* image);

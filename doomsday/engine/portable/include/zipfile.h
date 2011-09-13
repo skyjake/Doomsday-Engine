@@ -47,7 +47,7 @@ typedef struct {
     void** _lumpCache;
 } zipfile_t;
 
-zipfile_t* ZipFile_New(DFILE* handle, const char* absolutePath);
+zipfile_t* ZipFile_New(const lumpinfo_t* info, streamfile_t* sf);
 void ZipFile_Delete(zipfile_t* zip);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -109,9 +109,6 @@ void ZipFile_ClearLumpCache(zipfile_t* zip);
 /// @return  Number of lumps contained within this file.
 int ZipFile_LumpCount(zipfile_t* zip);
 
-/// @return  @c true if the file is marked as an "IWAD".
-boolean ZipFile_IsIWAD(zipfile_t* zip);
-
 /**
  * Static members:
  */
@@ -120,6 +117,6 @@ boolean ZipFile_IsIWAD(zipfile_t* zip);
  * Does the specified file appear to be in Zip format.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(FILE* file);
+boolean ZipFile_Recognise(streamfile_t* file);
 
 #endif

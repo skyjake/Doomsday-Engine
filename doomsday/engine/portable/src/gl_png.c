@@ -27,6 +27,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
 #include "m_misc.h"
 
@@ -71,7 +72,7 @@ const char* PNG_LastError(void)
     return 0;
 }
 
-uint8_t* PNG_Load(DFILE* file, int* width, int* height, int* pixelSize)
+uint8_t* PNG_Load(streamfile_t* file, int* width, int* height, int* pixelSize)
 {
     assert(file && width && height && pixelSize);
     {

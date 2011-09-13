@@ -76,7 +76,7 @@ const char* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
         W_Error("W_LumpSourceFile: Invalid lumpnum %i.", absoluteLumpNum);
         return "";
     }
-    return Str_Text(AbstractFile_AbsolutePath(fsObject));
+    return Str_Text(AbstractFile_Path(fsObject));
 }
 
 boolean W_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
@@ -98,7 +98,7 @@ lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent)
             VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n") )
         return -1;
     }
-    lumpNum = F_CheckLumpNumForName(name, true);
+    lumpNum = F_CheckLumpNumForName2(name, true);
     if(!silent && lumpNum < 0)
         VERBOSE2( Con_Message("Warning:W_CheckLumpNumForName: Lump \"%s\" not found.\n", name) )
     return lumpNum;

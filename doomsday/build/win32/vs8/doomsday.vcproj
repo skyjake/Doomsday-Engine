@@ -1109,6 +1109,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\filelist.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\finaleinterpreter.h"
 				>
 			</File>
@@ -1122,6 +1126,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\fs_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\fs_util.h"
 				>
 			</File>
 			<File
@@ -2222,7 +2230,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dfile.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\api\doomsday.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\reader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\smoother.h"
 				>
 			</File>
 			<File
@@ -2243,6 +2263,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\uri.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\writer.h"
 				>
 			</File>
 			<Filter
@@ -2332,14 +2356,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\cl_mobj.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\cl_oldframe.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\cl_oldworld.c"
 				>
 			</File>
 			<File
@@ -2439,6 +2455,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\dfile.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\dgl_common.c"
 				>
 			</File>
@@ -2463,6 +2483,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\filelist.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\finaleinterpreter.c"
 				>
 			</File>
@@ -2472,6 +2496,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\fs_main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\fs_util.c"
 				>
 			</File>
 			<File
@@ -2767,6 +2795,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\reader.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\rend_bias.c"
 				>
 			</File>
@@ -2860,6 +2892,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\s_wav.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\smoother.c"
 				>
 			</File>
 			<File
@@ -3068,6 +3104,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\wadfile.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\writer.c"
 				>
 			</File>
 			<File

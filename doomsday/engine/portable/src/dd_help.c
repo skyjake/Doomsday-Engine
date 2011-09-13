@@ -124,10 +124,11 @@ static void DH_DeleteNode(helpnode_t* node)
  */
 static int DH_ReadStrings(const char* fileName)
 {
-    DFILE* file = F_Open(fileName, "rt");
+    abstractfile_t* file = F_Open(fileName, "rt");
     char line[2048], *ptr, *eol, *end;
     helpnode_t* node = 0;
     int count = 0, length;
+    streamfile_t* sf;
 
     if(!file)
     {
@@ -135,9 +136,11 @@ static int DH_ReadStrings(const char* fileName)
         return false;
     }
 
-    while(!F_AtEnd(file))
+    sf = AbstractFile_Handle(file);
+    assert(sf);
+    while(!F_AtEnd(sf))
     {
-        M_ReadLine(line, sizeof(line), file);
+        M_ReadLine(line, sizeof(line), sf);
         if(M_IsComment(line))
             continue;
 
@@ -160,7 +163,7 @@ static int DH_ReadStrings(const char* fileName)
         }
         else if(node && (end = strchr(ptr, '='))) // It must be a key?
         {
-            helpstring_t*           hst = node->str + count;
+            helpstring_t* hst = node->str + count;
 
             if(count == MAX_STRINGS)
                 continue; // No more room.
@@ -189,7 +192,7 @@ static int DH_ReadStrings(const char* fileName)
                     if(!*M_SkipWhite(ptr + 1))
                     {
                         // Read the next line.
-                        M_ReadLine(line, sizeof(line), file);
+                        M_ReadLine(line, sizeof(line), sf);
                         ptr = M_SkipWhite(line);
                     }
                     else // \ is not the last char on the line.
@@ -217,8 +220,8 @@ static int DH_ReadStrings(const char* fileName)
         }
     }
 
+    F_Delete(file);
     // The file was read successfully.
-    F_Close(file);
     return true;
 }
 

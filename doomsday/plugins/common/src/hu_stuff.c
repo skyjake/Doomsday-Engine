@@ -1591,8 +1591,9 @@ void Hu_DrawMapTitle(int x, int y, float scale)
 void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags,
     float r, float g, float b, float a)
 {
-    if(id < 0)
+    if(id == 0 || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
         return;
+
     DGL_Color4f(0, 0, 0, a * .4f);
     GL_DrawPatch3(id, x+2, y+2, alignFlags, patchFlags);
 

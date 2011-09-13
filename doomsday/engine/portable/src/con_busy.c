@@ -64,7 +64,7 @@
 
 static void Con_BusyLoop(void);
 static void Con_BusyDrawer(void);
-static void Con_BusyLoadTextures(void);
+static void Con_BusyPrepareResources(void);
 static void Con_BusyDeleteTextures(void);
 
 static void seedDoomWipeSine(void);
@@ -146,7 +146,7 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     Sys_Unlock(busy_Mutex);
 
     // Load any textures needed in this mode.
-    Con_BusyLoadTextures();
+    Con_BusyPrepareResources();
 
     // Activate the UI binding context so that any and all accumulated input
     // events are discarded when done.
@@ -239,10 +239,8 @@ boolean Con_IsBusy(void)
     return busyInited;
 }
 
-static void Con_BusyLoadTextures(void)
+static void Con_BusyPrepareResources(void)
 {
-    image_t             image;
-
     if(isDedicated || novideo)
         return;
 
@@ -255,20 +253,20 @@ static void Con_BusyLoadTextures(void)
     // Need to load the progress indicator?
     if(busyMode & (BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR))
     {
+        image_t image;
+
         // These must be real files in the base dir because virtual files haven't
         // been loaded yet when engine startup is done.
         if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
         {
-            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
-                                                    image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImagePixels(&image);
+            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, image.pixels, TXCF_NEVER_DEFER);
+            GL_DestroyImage(&image);
         }
 
         if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
         {
-            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height,
-                                                    image.pixels, TXCF_NEVER_DEFER);
-            GL_DestroyImagePixels(&image);
+            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, image.pixels, TXCF_NEVER_DEFER);
+            GL_DestroyImage(&image);
         }
     }
 

@@ -2533,7 +2533,7 @@ int DED_Read(ded_t* ded, const char* path)
     ddstring_t transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
-    DFILE* file;
+    abstractfile_t* file;
     int result;
 
     // Compose the (possibly-translated) path.
@@ -2552,9 +2552,9 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    F_Seek(file, 0, SEEK_END);
-    bufferedDefSize = F_Tell(file);
-    F_Rewind(file);
+    F_Seek(AbstractFile_Handle(file), 0, SEEK_END);
+    bufferedDefSize = F_Tell(AbstractFile_Handle(file));
+    F_Rewind(AbstractFile_Handle(file));
     bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
     if(NULL == bufferedDef)
     {
@@ -2564,8 +2564,8 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // Copy the file into the local buffer and parse definitions.
-    F_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
-    F_Close(file);
+    F_Read(AbstractFile_Handle(file), (uint8_t*)bufferedDef, bufferedDefSize);
+    F_Delete(file);
     result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 
     // Done. Release temporary storage and return the result.
@@ -2586,7 +2586,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t absoluteLumpNum)
         if(F_LumpLength(absoluteLumpNum) != 0)
         {
             const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-            int result = DED_ReadData(ded, lumpPtr, Str_Text(AbstractFile_AbsolutePath(fsObject)));
+            int result = DED_ReadData(ded, (const char*)lumpPtr, Str_Text(AbstractFile_Path(fsObject)));
             F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
         }
         return true;

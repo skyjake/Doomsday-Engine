@@ -29,7 +29,7 @@
 #ifndef LIBDENG_TEXTURE_MANAGER_H
 #define LIBDENG_TEXTURE_MANAGER_H
 
-#include "sys_file.h"
+#include "abstractfile.h"
 #include "r_data.h"
 #include "r_model.h"
 #include "gl_model.h"
@@ -184,6 +184,9 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
 
+uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
+uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
+
 /**
  * @return  The outcome:
  *     0 = not prepared
@@ -201,18 +204,17 @@ byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
     const char* optionalSuffix, boolean silent);
 
-byte GL_LoadFlatLump(struct image_s* image, DFILE* file, const char* lumpName);
+byte GL_LoadFlatLump(struct image_s* image, abstractfile_t* file);
 
-byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFILE* file, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsPatch(struct image_s* image, abstractfile_t* file, int tclass,
     int tmap, int border, patchtex_t* patchTex);
-byte GL_LoadPatchLumpAsSprite(struct image_s* image, DFILE* file, lumpnum_t lumpNum, int tclass,
+byte GL_LoadPatchLumpAsSprite(struct image_s* image, abstractfile_t* file, int tclass,
     int tmap, int border, spritetex_t* spriteTex);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, DFILE* file, const char* lumpName);
+byte GL_LoadDetailTextureLump(struct image_s* image, abstractfile_t* file);
 
 byte GL_LoadPatchComposite(struct image_s* image, const struct texture_s* tex);
-byte GL_LoadPatchCompositeAsSky(struct image_s* image, const struct texture_s* tex,
-    boolean zeroMask);
+byte GL_LoadPatchCompositeAsSky(struct image_s* image, const struct texture_s* tex, boolean zeroMask);
 
 /**
  * Set mode to 2 to include an alpha channel. Set to 3 to make the

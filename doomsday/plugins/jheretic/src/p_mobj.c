@@ -360,6 +360,11 @@ void P_MobjMoveXY(mobj_t* mo)
     if(P_CameraXYMovement(mo))
         return;
 
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
+
     if(FEQUAL(mom[MX], 0) && FEQUAL(mom[MY], 0))
     {
         if(mo->flags & MF_SKULLFLY)
@@ -370,11 +375,6 @@ void P_MobjMoveXY(mobj_t* mo)
         }
         return;
     }
-
-    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
-    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
-    mo->mom[MX] = mom[MX];
-    mo->mom[MY] = mom[MY];
 
     if(mo->flags2 & MF2_WINDTHRUST)
         P_WindThrust(mo);

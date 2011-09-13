@@ -1,10 +1,9 @@
-/**\file lumpinfo.h
+/**\file dfile.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,26 +21,33 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILESYS_LUMPINFO_H
-#define LIBDENG_FILESYS_LUMPINFO_H
+#ifndef LIBDENG_FILESYS_FILEHANDLE_H
+#define LIBDENG_FILESYS_FILEHANDLE_H
 
-#include "dd_string.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "dd_types.h"
 
 /**
- * LumpInfo record. POD.
+ * DFile.  DFile Represents a unique (public) file reference in the
+ * engine's Virtual File System (vfs).
+ *
  * @ingroup fs
  */
-typedef struct {
-    lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
-    ddstring_t path; /// Absolute variable-length path in the vfs.
-    size_t baseOffset; /// Offset from start of owning package.
-    size_t size; /// Size of the uncompressed file.
-    size_t compressedSize; /// Size of the original file compressed.
-    uint lastModified; /// Unix timestamp.
-} lumpinfo_t;
+struct dfile_s; // The file handle instance (opaque).
+typedef struct dfile_s DFile;
 
-void F_InitLumpInfo(lumpinfo_t* info);
-void F_CopyLumpInfo(lumpinfo_t* dst, const lumpinfo_t* src);
-void F_DestroyLumpInfo(lumpinfo_t* info);
+/// @return  @c true iff this handle's internal state is valid.
+boolean DFile_IsValid(const DFile* hndl);
 
-#endif /* LIBDENG_FILESYS_LUMPINFO_H */
+#if _DEBUG
+void DFile_Print(const DFile* hndl);
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
+#endif /* LIBDENG_FILESYS_FILEHANDLE_H */

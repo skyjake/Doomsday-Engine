@@ -152,6 +152,7 @@
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
 		<Unit filename="..\..\engine\api\dd_wad.h" />
+		<Unit filename="..\..\engine\api\dfile.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
 		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
@@ -247,10 +248,12 @@
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
 		<Unit filename="..\..\engine\portable\include\fi_main.h" />
 		<Unit filename="..\..\engine\portable\include\filedirectory.h" />
+		<Unit filename="..\..\engine\portable\include\filelist.h" />
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
 		<Unit filename="..\..\engine\portable\include\font.h" />
 		<Unit filename="..\..\engine\portable\include\fonts.h" />
 		<Unit filename="..\..\engine\portable\include\fs_main.h" />
+		<Unit filename="..\..\engine\portable\include\fs_util.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
@@ -513,6 +516,7 @@
 		<Unit filename="..\..\engine\portable\src\def_read.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\dfile.c" />
 		<Unit filename="..\..\engine\portable\src\dgl_common.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -527,9 +531,11 @@
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\fi_main.c" />
 		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
+		<Unit filename="..\..\engine\portable\src\filelist.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
 		<Unit filename="..\..\engine\portable\src\fonts.c" />
 		<Unit filename="..\..\engine\portable\src\fs_main.c" />
+		<Unit filename="..\..\engine\portable\src\fs_util.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />

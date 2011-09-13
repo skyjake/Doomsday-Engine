@@ -146,17 +146,17 @@ void ResourceRecord_AddIdentityKey(resourcerecord_t* rec, const ddstring_t* iden
     }
 }
 
-const Uri** ResourceRecord_SearchPaths(resourcerecord_t* rec)
+Uri* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
 {
     assert(rec);
     if(rec->_searchPaths)
-        return (const dduri_t* const*) rec->_searchPaths;
+        return (Uri* const*) rec->_searchPaths;
     { ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
     rec->_searchPaths = F_CreateUriListStr(rec->_rclass, searchPaths);
     if(searchPaths)
         Str_Delete(searchPaths);
     }
-    return (const dduri_t* const*) rec->_searchPaths;
+    return (Uri* const*) rec->_searchPaths;
 }
 
 ddstring_t* ResourceRecord_SearchPathsAsStringList(resourcerecord_t* rec)
@@ -188,10 +188,10 @@ int ResourceRecord_ResourceFlags(resourcerecord_t* rec)
     return rec->_rflags;
 }
 
-const ddstring_t** ResourceRecord_IdentityKeys(resourcerecord_t* rec)
+ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec)
 {
     assert(rec);
-    return (const ddstring_t* const*) rec->_identityKeys;
+    return (ddstring_t* const*) rec->_identityKeys;
 }
 
 void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
@@ -203,7 +203,7 @@ void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
     if(printStatus)
         Con_Printf("%s", rec->_searchPathUsed == 0? " ! ":"   ");
 
-    Con_PrintPathList3(Str_Text(searchPaths), " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
+    Con_PrintPathList4(Str_Text(searchPaths), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
 
     if(printStatus)
     {

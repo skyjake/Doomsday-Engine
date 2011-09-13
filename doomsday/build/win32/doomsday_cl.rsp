@@ -32,6 +32,8 @@
  .\..\..\engine\portable\src\s_cache.c
  .\..\..\engine\portable\src\fi_main.c
  .\..\..\engine\portable\src\filedirectory.c
+ .\..\..\engine\portable\src\dfile.c
+ .\..\..\engine\portable\src\filelist.c
  .\..\..\engine\portable\src\finaleinterpreter.c
  .\..\..\engine\portable\src\fonts.c
  .\..\..\engine\portable\src\gameinfo.c
@@ -169,6 +171,7 @@
  .\..\..\engine\portable\src\wadfile.c
  .\..\..\engine\portable\src\zipfile.c
  .\..\..\engine\portable\src\fs_main.c
+ .\..\..\engine\portable\src\fs_util.c
  .\..\..\engine\portable\src\dd_wad.c
  .\..\..\engine\portable\src\dd_plugin.c
  .\..\..\engine\portable\src\dd_pinit.c

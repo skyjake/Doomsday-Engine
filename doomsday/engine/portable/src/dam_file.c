@@ -734,13 +734,10 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     writeLong((long) s->flags);
     writeFloat(s->bBox[0].pos[VX]);
     writeFloat(s->bBox[0].pos[VY]);
-    writeFloat(s->bBox[0].pos[VZ]);
     writeFloat(s->bBox[1].pos[VX]);
     writeFloat(s->bBox[1].pos[VY]);
-    writeFloat(s->bBox[1].pos[VZ]);
     writeFloat(s->midPoint.pos[VX]);
     writeFloat(s->midPoint.pos[VY]);
-    writeFloat(s->midPoint.pos[VZ]);
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
 
@@ -763,13 +760,10 @@ static void readSubsector(const gamemap_t *map, uint idx)
     s->flags = (int) readLong();
     s->bBox[0].pos[VX] = readFloat();
     s->bBox[0].pos[VY] = readFloat();
-    s->bBox[0].pos[VZ] = readFloat();
     s->bBox[1].pos[VX] = readFloat();
     s->bBox[1].pos[VY] = readFloat();
-    s->bBox[1].pos[VZ] = readFloat();
     s->midPoint.pos[VX] = readFloat();
     s->midPoint.pos[VY] = readFloat();
-    s->midPoint.pos[VZ] = readFloat();
     obIdx = readLong();
     s->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();

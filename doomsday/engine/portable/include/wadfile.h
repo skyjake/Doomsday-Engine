@@ -40,14 +40,13 @@ struct lumpdirectory_s;
 typedef struct wadfile_s {
     // Base file.
     abstractfile_t _base;
-    int _flags; /// @see wadFileFlags
     int _lumpCount;
     size_t _lumpRecordsOffset;
     lumpinfo_t* _lumpInfo;
     void** _lumpCache;
 } wadfile_t;
 
-wadfile_t* WadFile_New(DFILE* handle, const char* absolutePath);
+wadfile_t* WadFile_New(const lumpinfo_t* info, streamfile_t* sf);
 void WadFile_Delete(wadfile_t* wad);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -115,9 +114,6 @@ uint WadFile_CalculateCRC(const wadfile_t* wad);
 /// @return  Number of lumps contained within this file.
 int WadFile_LumpCount(wadfile_t* wad);
 
-/// @return  @c true if the file is marked as an "IWAD".
-boolean WadFile_IsIWAD(wadfile_t* wad);
-
 /**
  * Static members:
  */
@@ -126,6 +122,6 @@ boolean WadFile_IsIWAD(wadfile_t* wad);
  * Does the specified file appear to be in WAD format.
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
-boolean WadFile_Recognise(FILE* file);
+boolean WadFile_Recognise(streamfile_t* sf);
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

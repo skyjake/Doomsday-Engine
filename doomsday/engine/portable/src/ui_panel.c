@@ -735,8 +735,8 @@ void CP_CvarList(ui_object_t *ob)
     cvar_t* var = Con_FindVariable(list->data);
     int value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
-    if(0 >= list->selection) return;
-    if(NULL == var) return;
+    if(list->selection < 0) return;
+    if(!var) return;
 
     CVar_SetInteger2(var, value, SVF_WRITE_OVERRIDE);
 }

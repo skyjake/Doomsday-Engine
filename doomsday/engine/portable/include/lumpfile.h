@@ -38,11 +38,10 @@ struct lumpdirectory_s;
 typedef struct lumpfile_s {
     // Base file.
     abstractfile_t _base;
-    lumpinfo_t _info;
     void** _cacheData;
 } lumpfile_t;
 
-lumpfile_t* LumpFile_New(DFILE* handle, const char* absolutePath, lumpname_t name, size_t lumpSize);
+lumpfile_t* LumpFile_New(const lumpinfo_t* info);
 void LumpFile_Delete(lumpfile_t* lump);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -103,8 +102,5 @@ void LumpFile_ClearLumpCache(lumpfile_t* lump);
 
 /// @return  Number of lumps contained within this file.
 int LumpFile_LumpCount(lumpfile_t* lump);
-
-/// @return  @c true if the file is marked as an "IWAD".
-boolean LumpFile_IsIWAD(lumpfile_t* lump);
 
 #endif /* LIBDENG_FILESYS_LUMPFILE_H */

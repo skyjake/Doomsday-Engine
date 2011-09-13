@@ -125,7 +125,7 @@ void Sv_GetInfo(serverinfo_t *info)
     }
 
     // Some WAD names.
-    F_GetPWADFileNames(info->pwads, sizeof(info->pwads), ';');
+    F_GetPWADFileNames(info->pwads, sizeof(info->pwads), ";");
 
     // This should be a CRC number that describes all the loaded data.
     info->wadNumber = F_CRCNumber();

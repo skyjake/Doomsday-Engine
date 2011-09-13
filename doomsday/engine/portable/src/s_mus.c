@@ -428,8 +428,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
             {   // Its an external file.
                 // The song may be in a virtual file, so we must buffer
                 // it ourselves.
-                DFILE* file = F_Open(Str_Text(&path), "rb");
-                size_t len = F_Length(file);
+                abstractfile_t* file = F_Open(Str_Text(&path), "rb");
+                size_t len = F_Length(AbstractFile_Handle(file));
 
                 if(!iMusic->Play)
                 {   // Music interface does not offer buffer playback.
@@ -450,10 +450,10 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         }
 
                         // Write the song into the buffer file.
-                        F_Read(file, buf, len);
+                        F_Read(AbstractFile_Handle(file), buf, len);
                         fwrite(buf, 1, len, outFile);
                         fclose(outFile);
-                        F_Close(file);
+                        F_Delete(file);
                         free(buf);
 
                         // Music maestro, if you please!
@@ -464,7 +464,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                     Con_Message("Mus_Start: Failed opening \"%s\" for writing (%s).\n",
                         Str_Text(fileName), strerror(errno));
-                    F_Close(file);
+                    F_Delete(file);
                     Str_Delete(fileName);
                     return false;
                 }
@@ -476,8 +476,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         def->id, F_PrettyPath(Str_Text(&path)), (unsigned long) len) )
 
                     ptr = iMusic->SongBuffer(len);
-                    F_Read(file, (uint8_t*)ptr, len);
-                    F_Close(file);
+                    F_Read(AbstractFile_Handle(file), (uint8_t*)ptr, len);
+                    F_Delete(file);
 
                     return iMusic->Play(looped);
                 }
@@ -491,7 +491,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
             if(iMusic)
             {
                 lumpnum_t absoluteLumpNum;
-                if(def->lumpName && -1 != (absoluteLumpNum = F_CheckLumpNumForName(def->lumpName, true)))
+                if(def->lumpName && -1 != (absoluteLumpNum = F_CheckLumpNumForName2(def->lumpName, true)))
                 {
                     ddstring_t* fileName = NULL;
                     abstractfile_t* fsObject;
@@ -599,7 +599,7 @@ D_CMD(PlayMusic)
     case 3:
         if(!stricmp(argv[1], "lump"))
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName(argv[2], true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(argv[2], true);
             abstractfile_t* fsObject;
             size_t lumpLength;
             uint8_t* ptr;

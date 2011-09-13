@@ -259,7 +259,7 @@ static archivedmap_t* createArchivedMap(const char* mapID, listnode_t* headPtr,
     Str_Init(&dam->cachedMapPath);
     Str_Set(&dam->cachedMapPath, Str_Text(cachedMapPath));
 
-    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_CheckLumpNumForName(dam->identifier, true)))
+    if(DAM_MapIsValid(Str_Text(&dam->cachedMapPath), F_CheckLumpNumForName2(dam->identifier, true)))
         dam->cachedMapFound = true;
 
     // Count the number of source data lumps.
@@ -457,7 +457,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
     dam = findArchivedMap(mapID);
     if(NULL == dam)
     {   // We've not yet attempted to load this map.
-        lumpnum_t markerLump = F_CheckLumpNumForName(mapID, true);
+        lumpnum_t markerLump = F_CheckLumpNumForName2(mapID, true);
         listnode_t* sourceLumpListHead = NULL;
         ddstring_t* cachedMapDir;
         ddstring_t cachedMapPath;

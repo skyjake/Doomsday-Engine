@@ -147,7 +147,7 @@ void P_PolyobjChanged(polyobj_t* po)
 const char* P_GenerateUniqueMapID(const char* mapID)
 {
     static char uid[255];
-    lumpnum_t lumpNum = F_CheckLumpNumForName(mapID, true);
+    lumpnum_t lumpNum = F_CheckLumpNumForName2(mapID, true);
     ddstring_t fileName;
 
     Str_Init(&fileName);
@@ -749,15 +749,15 @@ static uint insertIntoDB(valuedb_t *db, valuetype_t type, void *data)
     return tbl->numElms - 1;
 }
 
-static void* getPtrToDBElm(valuedb_t *db, valuetype_t type, uint elmIdx)
+static void* getPtrToDBElm(valuedb_t* db, valuetype_t type, uint elmIdx)
 {
-    valuetable_t       *tbl = getDBTable(db, type, false);
+    valuetable_t* tbl = getDBTable(db, type, false);
 
     if(!tbl)
         Con_Error("getPtrToDBElm: Table for type %i not found.", (int) type);
 
     // Sanity check: ensure the elmIdx is in bounds.
-    if(elmIdx < 0 || elmIdx >= tbl->numElms)
+    if(elmIdx >= tbl->numElms)
         Con_Error("P_GetGMOByte: valueIdx out of bounds.");
 
     switch(tbl->type)

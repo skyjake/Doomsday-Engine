@@ -23,23 +23,29 @@
  */
 
 #include "de_base.h"
+#include "de_filesys.h"
 
-#include "sys_reslocator.h"
 #include "abstractfile.h"
 
-void AbstractFile_Init(abstractfile_t* file, filetype_t type,
-    DFILE* handle, const char* absolutePath)
+void AbstractFile_Init(abstractfile_t* file, filetype_t type, const lumpinfo_t* info)
 {
-    // Used with to favor newer files when duplicates are pruned.
+    // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    assert(NULL != file && NULL != handle && NULL != absolutePath);
+    assert(NULL != file && NULL != info);
+
     file->_order = fileCounter++;
     file->_type = type;
-    file->_handle = handle;
-    Str_Init(&file->_absolutePath);
-    Str_Set(&file->_absolutePath, absolutePath);
-    Str_Strip(&file->_absolutePath);
-    F_FixSlashes(&file->_absolutePath, &file->_absolutePath);
+    file->_flags.open = false;
+    file->_flags.startup = false;
+    file->_flags.iwad = false;
+
+    F_CopyLumpInfo(&file->_info, info);
+
+    file->_stream.eof = false;
+    file->_stream.size = 0;
+    file->_stream.hndl = NULL;
+    file->_stream.data = NULL;
+    file->_stream.pos = 0;
 }
 
 filetype_t AbstractFile_Type(const abstractfile_t* file)
@@ -48,20 +54,57 @@ filetype_t AbstractFile_Type(const abstractfile_t* file)
     return file->_type;
 }
 
-DFILE* AbstractFile_Handle(abstractfile_t* file)
+const lumpinfo_t* AbstractFile_Info(abstractfile_t* file)
 {
     assert(NULL != file);
-    return file->_handle;
+    return &file->_info;
 }
 
-const ddstring_t* AbstractFile_AbsolutePath(abstractfile_t* file)
+const ddstring_t* AbstractFile_Path(const abstractfile_t* file)
 {
     assert(NULL != file);
-    return &file->_absolutePath;
+    return &file->_info.path;
 }
 
-uint AbstractFile_LoadOrderIndex(abstractfile_t* file)
+uint AbstractFile_LoadOrderIndex(const abstractfile_t* file)
 {
     assert(NULL != file);
     return file->_order;
+}
+
+uint AbstractFile_LastModified(const abstractfile_t* file)
+{
+    assert(NULL != file);
+    return file->_info.lastModified;
+}
+
+streamfile_t* AbstractFile_Handle(abstractfile_t* file)
+{
+    assert(NULL != file);
+    if(!file->_flags.open) return NULL;
+    return &file->_stream;
+}
+
+boolean AbstractFile_HasStartup(const abstractfile_t* file)
+{
+    assert(NULL != file);
+    return (file->_flags.startup != 0);
+}
+
+void AbstractFile_SetStartup(abstractfile_t* file, boolean yes)
+{
+    assert(NULL != file);
+    file->_flags.startup = yes;
+}
+
+boolean AbstractFile_HasIWAD(const abstractfile_t* file)
+{
+    assert(NULL != file);
+    return (file->_flags.iwad != 0);
+}
+
+void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes)
+{
+    assert(NULL != file);
+    file->_flags.iwad = yes;
 }

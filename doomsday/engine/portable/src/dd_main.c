@@ -511,7 +511,7 @@ static boolean recognizeWAD(const char* filePath, void* data)
         const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
         for(; result && *lumpNames; lumpNames++)
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName(Str_Text(*lumpNames), true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
             if(lumpNum == -1)
             {
                 result = false;
@@ -565,11 +565,11 @@ static boolean isRequiredResource(gameinfo_t* info, const char* absolutePath)
     if(records)
     {
         // Is this resource from an archive?
-        const char* archivePath = Zip_SourceFile(Zip_Find(absolutePath));
-        if(archivePath[0])
+        lumpnum_t lumpNum = Zip_Find(absolutePath);
+        if(lumpNum >= 0)
         {
-            // Yes. Use the archive path instead.
-            absolutePath = archivePath;
+            // Yes; use the archive path instead.
+            absolutePath = Zip_SourceFile(lumpNum);
         }
 
         do
@@ -876,7 +876,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
-    F_InitializeResourcePathMap();
+    F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     if(p->initiatedBusyMode)
@@ -916,12 +916,12 @@ static int DD_ChangeGameWorker(void* paramaters)
         // Data class resources.
         Str_Init(&temp);
         Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(p->info)));
-        F_AddResourcePathMapping("auto", Str_Text(&temp));
+        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
 
         // Definition class resources.
         Str_Clear(&temp);
         Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(p->info)));
-        F_AddResourcePathMapping("auto", Str_Text(&temp));
+        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
         Str_Free(&temp);
 
         addFilesFromAutoData(false);
@@ -947,7 +947,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
-    F_InitDirec();
+    F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
     Cl_InitTranslations();
 
@@ -1134,13 +1134,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         DD_Register();
         I_InitVirtualInputDevices();
 
-        // Reset file IDs so previously seen files can be processed again.
-        F_ResetFileIds();
-        // Update the dir/WAD translations.
-        F_InitDirec();
-        F_InitializeResourcePathMap();
-        F_ResetAllResourceNamespaces();
-
         R_InitVectorGraphics();
         R_InitViewWindow();
 
@@ -1148,6 +1141,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
         F_Reset();
+        F_ResetAllResourceNamespaces();
     }
 
     FI_Shutdown();
@@ -1438,9 +1432,10 @@ int DD_Main(void)
         }}
     }
 
+    // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
+    F_Init();
 
-    // Initialize the subsystems needed prior to entering busy mode.
     Fonts_Init();
     if(!isDedicated)
     {
@@ -1518,14 +1513,14 @@ int DD_Main(void)
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
-    F_InitDirec();
+    F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     // One-time execution of various command line features available during startup.
     if(ArgCheckWith("-dumplump", 1))
     {
         const char* name = ArgNext();
-        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name, false);
+        lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
             int lumpIdx;
@@ -1605,8 +1600,8 @@ int DD_Main(void)
         // Ok, lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
-        F_InitDirec();
-        F_InitializeResourcePathMap();
+        F_InitLumpDirectoryMappings();
+        F_InitVirtualDirectoryMappings();
         F_ResetAllResourceNamespaces();
 
         R_InitPatchComposites();
@@ -1647,10 +1642,9 @@ static void DD_InitResourceSystem(void)
 {
     Con_Message("Initializing Resource subsystem...\n");
 
-    F_Init();
     F_InitResourceLocator();
     F_CreateNamespacesForFileResourcePaths();
-    F_InitializeResourcePathMap();
+    F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
     // Initialize the definition databases.
@@ -1839,8 +1833,8 @@ void DD_UpdateEngineState(void)
     //F_ResetFileIds();
 
     // Update the dir/WAD translations.
-    F_InitDirec();
-    F_InitializeResourcePathMap();
+    F_InitLumpDirectoryMappings();
+    F_InitVirtualDirectoryMappings();
     /// Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();
 

@@ -207,6 +207,7 @@ ddstring_t* Str_Set(ddstring_t* str, const char* text)
     strcpy(str->str, copied);
     str->length = incoming;
     M_Free(copied);
+    return str;
     }
 }
 
@@ -233,6 +234,7 @@ ddstring_t* Str_Append(ddstring_t* str, const char* append)
     str->length += incoming;
 
     M_Free(copied);
+    return str;
 }
 
 ddstring_t* Str_AppendChar(ddstring_t* str, char ch)

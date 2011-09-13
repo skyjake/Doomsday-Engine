@@ -31,7 +31,7 @@
 #ifndef LIBDENG_GRAPHICS_PNG_H
 #define LIBDENG_GRAPHICS_PNG_H
 
-struct DFILE;
+struct streamfile_s;
 
 /**
  * Reads the given PNG image and returns a pointer to a planar RGB or
@@ -39,7 +39,7 @@ struct DFILE;
  * or 4 (RGBA). The caller must free the allocated buffer with Z_Free.
  * Width, height and pixelSize can't be NULL. Handles 1-4 channels.
  */
-uint8_t* PNG_Load(DFILE* file, int* width, int* height, int* pixelSize);
+uint8_t* PNG_Load(struct streamfile_s* file, int* width, int* height, int* pixelSize);
 
 /**
  * @return  Textual message detailing the last error encountered else @c 0.

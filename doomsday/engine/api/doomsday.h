@@ -69,10 +69,10 @@ struct font_s;
 
 #include "dd_share.h"
 #include "dd_plugin.h"
-
+#include "dfile.h"
+#include "reader.h"
 #include "smoother.h"
 #include "stringpool.h"
-#include "reader.h"
 #include "writer.h"
 #include "uri.h"
 
