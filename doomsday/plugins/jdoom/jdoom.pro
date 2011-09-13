@@ -11,11 +11,18 @@ DEFINES += __JDOOM__
 
 VERSION = $$JDOOM_VERSION
 
+gamedata.files = $$OUT_PWD/../../jdoom.pk3
+
 macx {
-    gamedata.files = $$OUT_PWD/../../jdoom.pk3
     gamedata.path = Contents/Resources
 
     QMAKE_BUNDLE_DATA += gamedata
+}
+unix:!macx {
+    target.path = $$DENG_LIB_DIR
+    gamedata.path = $$DENG_DATA_DIR/jdoom
+
+    INSTALLS += target gamedata
 }
 
 INCLUDEPATH += include

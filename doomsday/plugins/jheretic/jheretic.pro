@@ -11,11 +11,18 @@ DEFINES += __JHERETIC__
 
 VERSION = $$JHERETIC_VERSION
 
+gamedata.files = $$OUT_PWD/../../jheretic.pk3
+
 macx {
-    gamedata.files = $$OUT_PWD/../../jheretic.pk3
     gamedata.path = Contents/Resources
 
     QMAKE_BUNDLE_DATA += gamedata
+}
+unix:!macx {
+    target.path = $$DENG_LIB_DIR
+    gamedata.path = $$DENG_DATA_DIR/jheretic
+
+    INSTALLS += target gamedata
 }
 
 INCLUDEPATH += include

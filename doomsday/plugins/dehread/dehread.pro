@@ -11,3 +11,8 @@ VERSION = $$DEHREAD_VERSION
 HEADERS += include/version.h
 
 SOURCES += src/dehmain.c
+
+unix:!macx {
+    INSTALLS += target
+    target.path = $$DENG_LIB_DIR
+}

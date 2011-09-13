@@ -17,3 +17,8 @@ HEADERS += \
 SOURCES += \
     src/load.c \
     src/wadmapconverter.c
+
+unix:!macx {
+    INSTALLS += target
+    target.path = $$DENG_LIB_DIR
+}

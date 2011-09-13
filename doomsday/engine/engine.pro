@@ -480,7 +480,7 @@ macx {
 
 unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx
+    INSTALLS += target data startupgfx desktop aptrepo
 
     target.path = $$DENG_BIN_DIR
 
@@ -489,4 +489,11 @@ unix:!macx {
 
     startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
     startupgfx.path = $$DENG_DATA_DIR/graphics
+
+    desktop.files = ../../distrib/doomsday-engine.desktop
+    desktop.path = /usr/share/applications
+
+    # TODO: Choose the repository based on release type (Unstable/Stable).
+    aptrepo.files = ../../distrib/doomsday-builds.list
+    aptrepo.path = /etc/apt/sources.list.d
 }
