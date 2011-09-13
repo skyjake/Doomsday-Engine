@@ -442,11 +442,11 @@ int WadFile_LumpCount(wadfile_t* file)
     return file->_lumpCount;
 }
 
-boolean WadFile_Recognise(streamfile_t* handle)
+boolean WadFile_Recognise(streamfile_t* sf)
 {
     boolean knownFormat = false;
     wadheader_t hdr;
-    if(WadFile_ReadArchiveHeader(handle, &hdr) &&
+    if(WadFile_ReadArchiveHeader(sf, &hdr) &&
        !(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)))
     {
         knownFormat = true;

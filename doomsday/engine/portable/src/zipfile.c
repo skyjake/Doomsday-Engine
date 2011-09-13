@@ -709,13 +709,13 @@ int ZipFile_LumpCount(zipfile_t* file)
     return file->_lumpCount;
 }
 
-boolean ZipFile_Recognise(streamfile_t* handle)
+boolean ZipFile_Recognise(streamfile_t* sf)
 {
     boolean knownFormat = false;
     localfileheader_t hdr;
-    size_t readBytes, initPos = F_Tell(handle);
-    F_Seek(handle, 0, SEEK_SET);
-    readBytes = F_Read(handle, (uint8_t*)&hdr, sizeof(hdr));
+    size_t readBytes, initPos = F_Tell(sf);
+    F_Seek(sf, 0, SEEK_SET);
+    readBytes = F_Read(sf, (uint8_t*)&hdr, sizeof(hdr));
     if(!(readBytes < sizeof(hdr)))
     {
         // Seek to the start of the signature.
@@ -724,7 +724,7 @@ boolean ZipFile_Recognise(streamfile_t* handle)
             knownFormat = true;
         }
     }
-    // Reposition the file stream in case another handler needs to process this file.
-    F_Seek(handle, initPos, SEEK_SET);
+    // Reposition the stream in case another handler needs to process this file.
+    F_Seek(sf, initPos, SEEK_SET);
     return knownFormat;
 }
