@@ -156,7 +156,7 @@ static void setAttrib(ddwindow_t* win, int flags)
         win->console.attrib = FOREGROUND_RED | FOREGROUND_GREEN;
     if(flags & CPF_LIGHT)
         win->console.attrib |= FOREGROUND_INTENSITY;
-    if((flags & CPF_WHITE) != CBLF_WHITE)
+    if((flags & CPF_WHITE) != CPF_WHITE)
         win->console.attrib |= FOREGROUND_INTENSITY;
 
     SetConsoleTextAttribute(win->console.hcScreen, win->console.attrib);
