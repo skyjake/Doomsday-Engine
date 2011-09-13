@@ -127,7 +127,8 @@ int lt_dlforeachfile(const char *searchPath,
     {
 #ifndef MACOSX
         if(entry->d_type != DT_DIR &&
-           !strncmp(entry->d_name, "libdp", 5))
+           !strncmp(entry->d_name, "libdp", 5) &&
+           !strncmp(entry->d_name + strlen(entry->d_name) - 3, ".so", 3))
 #endif
 #ifdef MACOSX
         if(entry->d_type == DT_DIR &&
@@ -135,7 +136,6 @@ int lt_dlforeachfile(const char *searchPath,
 #endif
 
         {
-
             if(func(entry->d_name, data))
                 break;
         }
@@ -194,6 +194,6 @@ void lt_dlclose(lt_dlhandle module)
 {
     if(module)
     {
-    dlclose(module);
+        dlclose(module);
     }
 }
