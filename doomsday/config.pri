@@ -12,7 +12,6 @@ DENG_LZSS_DIR = $$PWD/external/lzss
 # Versions -------------------------------------------------------------------
 
 include(versions.pri)
-message(Doomsday version $${DENG_VERSION}.)
 
 # Build Options --------------------------------------------------------------
 
@@ -42,7 +41,7 @@ unix {
 }
 unix:!macx {
     # Generic Unix build options.
-    DENG_CONFIG += nofixedasm
+    DENG_CONFIG += nofixedasm installsb
 
     # Link against standard math library.
     LIBS += -lm
@@ -71,7 +70,6 @@ unix:!macx {
     DENG_BASE_DIR = $$PREFIX/share/doomsday
     DENG_DATA_DIR = $$DENG_BASE_DIR/data
 
-    message(Install prefix: $$PREFIX)
     message(Binary directory: $$DENG_BIN_DIR)
     message(Library directory: $$DENG_LIB_DIR)
     message(Doomsday base directory: $$DENG_BASE_DIR)

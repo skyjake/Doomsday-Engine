@@ -10,6 +10,8 @@ include(../config.pri)
 
 VERSION = $$DENG_VERSION
 
+message(Doomsday version $${DENG_VERSION}.)
+
 # External Dependencies ------------------------------------------------------
 
 include(../sdl.pri)
