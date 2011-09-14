@@ -2256,7 +2256,7 @@ D_CMD(ListFiles)
     size_t totalFiles = 0, totalPackages = 0;
     if(inited)
     {
-        uint fileCount, i;
+        int fileCount, i;
         abstractfile_t** ptr, **arr = FileList_ToArray(loadedFiles, &fileCount);
         if(!arr) return true;
 
