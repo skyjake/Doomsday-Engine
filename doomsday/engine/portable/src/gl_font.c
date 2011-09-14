@@ -639,7 +639,7 @@ int FR_PrepareGDIFont(HFONT hfont)
         }
 
         if(i)
-            TextOut(hdc, x + 1, y + 1, ch, 1);
+            TextOutA(hdc, x + 1, y + 1, ch, 1);
 
         fc->x = x + 1;
         fc->y = y + 1;

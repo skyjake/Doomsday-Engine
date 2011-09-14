@@ -81,9 +81,9 @@ application_t app;
 
 BOOL InitApplication(application_t *app)
 {
-    WNDCLASSEX          wcex;
+    WNDCLASSEXA wcex;
 
-    if(GetClassInfoEx(app->hInstance, app->className, &wcex))
+    if(GetClassInfoExA(app->hInstance, app->className, &wcex))
         return TRUE; // Already registered a window class.
 
     // Initialize a window class for our window.
@@ -104,7 +104,7 @@ BOOL InitApplication(application_t *app)
     wcex.lpszMenuName = NULL;
 
     // Register our window class.
-    return RegisterClassEx(&wcex);
+    return RegisterClassExA(&wcex);
 }
 
 static void determineGlobalPaths(application_t *app)
@@ -128,7 +128,7 @@ static void determineGlobalPaths(application_t *app)
 #else
     {
     char                path[256];
-    GetModuleFileName(app->hInstance, path, 255);
+    GetModuleFileNameA(app->hInstance, path, 255);
     Dir_FileDir(path, &ddBinDir);
     }
 #endif
@@ -165,7 +165,7 @@ static boolean loadGamePlugin(application_t *app, const char *libPath)
         return false;
 
     // Now, load the library and get the API/exports.
-    app->hInstGame = LoadLibrary(libPath);
+    app->hInstGame = LoadLibraryA(libPath);
     if(!app->hInstGame)
     {
         DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %i).\n",
@@ -202,7 +202,7 @@ static int loadPlugin(application_t *app, const char *filename)
     for(i = 0; app->hInstPlug[i]; ++i);
 
     // Try to load it.
-    if(!(app->hInstPlug[i] = LoadLibrary(filename)))
+    if(!(app->hInstPlug[i] = LoadLibraryA(filename)))
         return FALSE;           // Failed!
 
     // That was all; the plugin registered itself when it was loaded.
@@ -255,7 +255,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
-    app.className = TEXT(MAINWCLASS);
+    app.className = MAINWCLASS;
     app.userDirOk = true;
 
     if(!InitApplication(&app))
@@ -271,7 +271,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
-        DD_InitCommandLine(GetCommandLine());
+        DD_InitCommandLine(GetCommandLineA());
 
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
@@ -369,7 +369,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     CoUninitialize();
 
     // Unregister our window class.
-    UnregisterClass(app.className, app.hInstance);
+    UnregisterClassA(app.className, app.hInstance);
 
     // Bye!
     return exitCode;

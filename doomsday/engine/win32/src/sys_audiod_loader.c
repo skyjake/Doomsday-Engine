@@ -166,7 +166,7 @@ audiodriver_t* Sys_LoadAudioDriver(const char* name)
     sprintf(fn, "ds%s.dll", name);
 
     // Load the DLL.
-    hInstExt = LoadLibrary(fn);
+    hInstExt = LoadLibraryA(fn);
     if(!hInstExt)
     {   // Load failed.
         Con_Message("Sys_LoadAudioDriver: Loading of %s failed.\n", fn);

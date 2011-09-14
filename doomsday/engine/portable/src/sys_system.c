@@ -152,9 +152,9 @@ int Sys_CriticalMessage(char *msg)
     if(!hWnd)
     {
         suspendMsgPump = true;
-        MessageBox(HWND_DESKTOP,
-                   ("Sys_CriticalMessage: Main window not available."), NULL,
-                   MB_ICONERROR | MB_OK);
+        MessageBoxA(HWND_DESKTOP,
+                    ("Sys_CriticalMessage: Main window not available."), NULL,
+                    MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return false;
     }
@@ -162,10 +162,10 @@ int Sys_CriticalMessage(char *msg)
     ShowCursor(TRUE);
     ShowCursor(TRUE);
     suspendMsgPump = true;
-    GetWindowText(hWnd, buf, 255);
+    GetWindowTextA(hWnd, buf, 255);
     ret =
-        (MessageBox(hWnd, (msg), (buf),
-                    MB_OK | MB_ICONEXCLAMATION) ==
+        (MessageBoxA(hWnd, (msg), (buf),
+                     MB_OK | MB_ICONEXCLAMATION) ==
          IDYES);
     suspendMsgPump = false;
     ShowCursor(FALSE);
@@ -228,17 +228,17 @@ void Sys_MessageBox(const char *msg, boolean iserror)
     if(!hWnd)
     {
         suspendMsgPump = true;
-        MessageBox(HWND_DESKTOP,
-                   "Sys_MessageBox: Main window not available.", NULL,
-                   MB_ICONERROR | MB_OK);
+        MessageBoxA(HWND_DESKTOP,
+                    "Sys_MessageBox: Main window not available.", NULL,
+                    MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return;
     }
 
     suspendMsgPump = true;
-    GetWindowText(hWnd, title, 300);
-    MessageBox(hWnd, msg, title,
-               MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
+    GetWindowTextA(hWnd, title, 300);
+    MessageBoxA(hWnd, msg, title,
+                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
     suspendMsgPump = false;
 #endif
 #ifdef UNIX

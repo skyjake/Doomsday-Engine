@@ -385,9 +385,15 @@ int DD_Main(void)
     }
 
 #ifdef _DEBUG
-    // 64-bit sanity check.
+    // Type size check.
     {
         void* ptr = 0;
+        int32_t int32 = 0;
+        int16_t int16 = 0;
+        float float32 = 0;
+        ASSERT_32BIT(int32);
+        ASSERT_16BIT(int16);
+        ASSERT_32BIT(float32);
 #ifdef __64BIT__
         ASSERT_64BIT(ptr);
 #else

@@ -31,13 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef MACOSX
-#  include <SDL.h>
-#  include <SDL_mixer.h>
-#else
-#  include <SDL.h>
-#  include <SDL_mixer.h>
-#endif
+#include <SDL.h>
+#include <SDL_mixer.h>
 
 #include "de_base.h"
 #include "de_console.h"

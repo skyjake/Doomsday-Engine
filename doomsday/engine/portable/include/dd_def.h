@@ -78,9 +78,13 @@
 #ifdef _DEBUG
 #  define ASSERT_64BIT(p) {if(sizeof(p) != 8) Con_Error(#p" is not 64-bit in "__FILE__" at line %i.\n", __LINE__);}
 #  define ASSERT_NOT_64BIT(p) {if(sizeof(p) == 8) Con_Error(#p" is 64-bit in "__FILE__" at line %i.\n", __LINE__);}
+#  define ASSERT_32BIT(p) {if(sizeof(p) != 4) Con_Error(#p" is not 32-bit in "__FILE__" at line %i.\n", __LINE__);}
+#  define ASSERT_16BIT(p) {if(sizeof(p) != 2) Con_Error(#p" is not 16-bit in "__FILE__" at line %i.\n", __LINE__);}
 #else
 #  define ASSERT_64BIT(p)
 #  define ASSERT_NOT_64BIT(p)
+#  define ASSERT_32BIT(p)
+#  define ASSERT_16BIT(p)
 #endif
 
 #define MAXEVENTS       256

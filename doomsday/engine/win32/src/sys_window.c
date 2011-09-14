@@ -587,12 +587,12 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
 
     // Create the window.
     win->hWnd =
-        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, title,
-                       WINDOWEDSTYLE,
-                       CW_USEDEFAULT, CW_USEDEFAULT,
-                       CW_USEDEFAULT, CW_USEDEFAULT,
-                       phWnd, NULL,
-                       app->hInstance, NULL);
+        CreateWindowExA(WS_EX_APPWINDOW, MAINWCLASS, title,
+                        WINDOWEDSTYLE,
+                        CW_USEDEFAULT, CW_USEDEFAULT,
+                        CW_USEDEFAULT, CW_USEDEFAULT,
+                        phWnd, NULL,
+                        app->hInstance, NULL);
     if(!win->hWnd)
     {
         win->hWnd = NULL;
@@ -753,7 +753,7 @@ static ddwindow_t *createConsoleWindow(application_t *app, uint parentIDX,
     }
     else  // Initialize.
     {
-        if(!SetWindowText(win->hWnd, title))
+        if(!SetWindowTextA(win->hWnd, title))
             Con_Error("createWindow: Setting console title: error %i\n",
                       GetLastError());
 
@@ -1344,7 +1344,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
 
         if(window)
         {
-            return (SetWindowText(window->hWnd, (title))? true : false);
+            return (SetWindowTextA(window->hWnd, (title))? true : false);
         }
     }
 

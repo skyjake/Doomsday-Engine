@@ -878,7 +878,7 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 boolean N_InitService(boolean inServerMode)
 {
     IPaddress ip;
-    Uint16  port;
+    uint16_t  port;
 
     if(N_IsAvailable() && netServerMode == inServerMode)
     {
@@ -1585,7 +1585,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     TCPsocket sock = netNodes[node].sock;
     serverinfo_t info;
     ddstring_t msg;
-    Uint16  port;
+    uint16_t  port;
 
     // If the command is too long, it'll be considered invalid.
     if(length >= 80)

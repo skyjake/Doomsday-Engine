@@ -209,7 +209,7 @@ void Sys_ConInputInit(void)
      *
      * \todo Is this even necessary with virtualkeys?
      */
-    LoadKeyboardLayout("00000409", KLF_SUBSTITUTE_OK);
+    LoadKeyboardLayoutA("00000409", KLF_SUBSTITUTE_OK);
 
     // We'll be needing the VKey to DDKey translation table.
     initVKeyToDDKeyTlat();
