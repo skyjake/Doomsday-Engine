@@ -1,9 +1,11 @@
 # Build configuration for libpng.
-macx {
+win32 {
+    INCLUDEPATH += $$PWD/external/libpng/portable/include
+    LIBS += -L$$PWD/external/libpng/win32 -llibpng13
+}
+else:macx {
     INCLUDEPATH += $$QMAKE_MAC_SDK/usr/X11/include
     LIBS += -L$$QMAKE_MAC_SDK/usr/X11/lib -lpng
-}
-else:win32 {
 }
 else {
     # Generic Unix.

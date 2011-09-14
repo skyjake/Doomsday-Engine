@@ -3,6 +3,7 @@
 
 include(../pluginconfig.pri)
 include(../common/common.pri)
+include(../../lzss.pri)
 
 TEMPLATE = lib
 TARGET = jdoom

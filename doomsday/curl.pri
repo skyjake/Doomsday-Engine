@@ -1,8 +1,10 @@
 # Build configuration for cURL.
-macx {
-    LIBS += -lcurl
+win32 {
+    INCLUDEPATH += $$PWD/external/libcurl/portable/include
+    LIBS += -L$$PWD/external/libcurl/win32 -lcurllib
 }
-else:win32 {
+else:macx {
+    LIBS += -lcurl
 }
 else {
     # Generic Unix.

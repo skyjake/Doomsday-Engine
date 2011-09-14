@@ -18,6 +18,9 @@ SOURCES += \
     src/load.c \
     src/wadmapconverter.c
 
+win32 {
+    RC_FILE = res/wadmapconverter.rc
+}
 unix:!macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR

@@ -20,6 +20,10 @@ include(../zlib.pri)
 include(../libpng.pri)
 include(../ncurses.pri)
 include(../curl.pri)
+include(../lzss.pri)
+win32 {
+    include(../directinput.pri)
+}
 
 # Common Definitions ---------------------------------------------------------
 
@@ -34,14 +38,20 @@ unix:!macx {
 macx {
     LIBS += -framework Cocoa -framework QTKit
 }
+win32 {
+    DEFINES += WIN32_GAMMA
+
+    RC_FILE = win32/res/doomsday.rc
+
+    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt /DEF:$$DENG_API_DIR/doomsday.def /IMPLIB:$$DENG_EXPORT_LIB
+
+    LIBS += \
+        -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
+        -lopengl32 -lglu32
+}
 
 # Engine Configuration -------------------------------------------------------
 
-contains(DENG_CONFIG, nofixedasm) {
-    # Use the fixed-point math from libcommon.
-    # TODO: Move it to the engine.
-    SOURCES += ../plugins/common/src/m_fixed.c
-}
 contains(DENG_CONFIG, writertypecheck) {
     DEFINES += DENG_WRITER_TYPECHECK
 }
@@ -278,24 +288,30 @@ win32 {
 
 INCLUDEPATH += \
     $$DENG_INCLUDE_DIR \
-    $$DENG_API_DIR \
-    $$DENG_LZSS_DIR/portable/include
+    $$DENG_API_DIR
 
 HEADERS += \
     $$DENG_API_HEADERS \
     $$DENG_PLATFORM_HEADERS \
-    $$DENG_HEADERS \
-    $$DENG_LZSS_DIR/portable/include/lzss.h
+    $$DENG_HEADERS
 
 DENG_UNIX_SOURCES += \
+    portable/src/sys_sdl_window.c \
     unix/src/dd_uinit.c \
     unix/src/sys_audiod_loader.c \
     unix/src/sys_console.c \
     unix/src/sys_dylib.c \
     unix/src/sys_findfile.c \
     unix/src/sys_input.c \
-    unix/src/sys_path.c \
-    ../external/lzss/unix/src/lzss.c
+    unix/src/sys_path.c
+
+DENG_WIN32_SOURCES += \
+    win32/src/dd_winit.c \
+    win32/src/sys_audiod_loader.c \
+    win32/src/sys_console.c \
+    win32/src/sys_findfile.c \
+    win32/src/sys_input.c \
+    win32/src/sys_window.c
 
 SOURCES += \
     portable/src/b_command.c \
@@ -444,7 +460,6 @@ SOURCES += \
     portable/src/sys_master.c \
     portable/src/sys_network.c \
     portable/src/sys_opengl.c \
-    portable/src/sys_sdl_window.c \
     portable/src/sys_sock.c \
     portable/src/sys_system.c \
     portable/src/sys_timer.c \
@@ -457,6 +472,14 @@ SOURCES += \
 unix {
     SOURCES += $$DENG_UNIX_SOURCES
 }
+
+win32 {
+    SOURCES += $$DENG_WIN32_SOURCES
+}
+
+# Use the fixed-point math from libcommon.
+# TODO: Move it to the engine.
+SOURCES += ../plugins/common/src/m_fixed.c
 
 # Resources ------------------------------------------------------------------
 

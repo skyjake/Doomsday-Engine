@@ -7,7 +7,6 @@ DENG_INCLUDE_DIR = $$PWD/engine/portable/include
 DENG_UNIX_INCLUDE_DIR = $$PWD/engine/unix/include
 DENG_MAC_INCLUDE_DIR = $$PWD/engine/mac/include
 DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
-DENG_LZSS_DIR = $$PWD/external/lzss
 
 # Versions -------------------------------------------------------------------
 
@@ -26,7 +25,13 @@ CONFIG(debug, debug|release) {
 }
 
 win32 {
-    DEFINES += WIN32
+    win32-gcc* {
+        error("Sorry, GCC is not supported in the Windows build.")
+    }
+
+    DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
+
+    DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 }
 unix {
     # Unix/Mac build options.
