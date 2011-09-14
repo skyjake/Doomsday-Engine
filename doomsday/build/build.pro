@@ -27,7 +27,9 @@ contains(DENG_CONFIG, installsb) {
         $${SB_ROOT}/ui.py \
         $${SB_ROOT}/widgets.py \
         $${SB_ROOT}/graphics \
-        $${SB_ROOT}/lang
+        $${SB_ROOT}/lang \
+        $${SB_ROOT}/profiles \
+        $${SB_ROOT}/sb
     sb.path = $$SB_DIR
 
     conf.files = \
@@ -35,6 +37,26 @@ contains(DENG_CONFIG, installsb) {
         $${SB_ROOT}/conf/x-*.conf
     conf.path = $$SB_DIR/conf
 
+    plugins.files = \
+        $${SB_ROOT}/plugins/about.py \
+        $${SB_ROOT}/plugins/help.py \
+        $${SB_ROOT}/plugins/launcher.py \
+        $${SB_ROOT}/plugins/observer.py \
+        $${SB_ROOT}/plugins/preferences.py \
+        $${SB_ROOT}/plugins/profilelist.py \
+        $${SB_ROOT}/plugins/tab* \
+        $${SB_ROOT}/plugins/wizard.py
+    plugins.path = $$SB_DIR/plugins
 
-    INSTALLS += sb conf
+    # Include the launch script if it exists.
+    LAUNCHER = ../../distrib/linux/launch-doomsday
+    exists($$LAUNCHER) {
+        launch.files = $$LAUNCHER
+        launch.path = $$DENG_BIN_DIR
+        INSTALLS += launch
+
+        message(Installing the launch-doomsday script.)
+    }
+
+    INSTALLS += sb conf plugins
 }
