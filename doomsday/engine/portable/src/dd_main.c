@@ -1318,6 +1318,9 @@ int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
 
+    // Determine the requested degree of verbosity.
+    verbose = ArgExists("-verbose");
+
     // The memory zone must be online before the console module.
     if(!Z_Init())
     {
