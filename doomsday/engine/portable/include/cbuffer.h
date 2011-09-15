@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_CONSOLE_BUFFER2_H
-#define LIBDENG_CONSOLE_BUFFER2_H
+#ifndef LIBDENG_CONSOLE_BUFFER_H
+#define LIBDENG_CONSOLE_BUFFER_H
 
 #include "sys_system.h"
 
@@ -156,4 +156,4 @@ const cbline_t* CBuffer_GetLine(cbuffer_t* cb, uint idx);
  */
 uint CBuffer_GetLines2(cbuffer_t* cb, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
 uint CBuffer_GetLines(cbuffer_t* cb, uint reqCount, int firstIdx, cbline_t const** list); /* blflags = 0 */
-#endif /* LIBDENG_CONSOLE_BUFFER2_H */
+#endif /* LIBDENG_CONSOLE_BUFFER_H */
