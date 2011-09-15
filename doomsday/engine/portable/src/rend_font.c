@@ -44,6 +44,14 @@
 #include "bitmapfont.h"
 #include "m_misc.h"
 
+/**
+ * @ingroup drawTextFlags
+ * @{
+ */
+#define DTF_INTERNAL_MASK               0xff00
+#define DTF_NO_CHARACTER                0x8000 /// Only draw text decorations.
+/**@}*/
+
 typedef struct fr_state_attributes_s {
     int tracking;
     float leading;
@@ -547,6 +555,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     boolean noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
     boolean noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
                          (Font_Flags(font) & FF_SHADOWED) != 0);
+    boolean noCharacter = (textFlags & DTF_NO_CHARACTER) != 0;
     float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
     float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
     float flashColor[3] = { 0, 0, 0 };
@@ -587,7 +596,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 
     { int pass;
-    for(pass = (noShadow? 1 : 0); pass < 2; ++pass)
+    for(pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
     {
         count = initialCount;
         ch = fragment;
@@ -689,12 +698,16 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                 // A non-white-space character we have a glyph for.
                 if(pass)
                 {
-                    // The character itself.
-                    glColor4fv(sat->rgba);
-                    drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+                    if(!noCharacter)
+                    {
+                        // The character itself.
+                        glColor4fv(sat->rgba);
+                        drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+                    }
 
                     if(!noGlitter && glitter > 0)
-                    {   // Do something flashy.
+                    {
+                        // Do something flashy.
                         glColor4f(flashColor[CR], flashColor[CG], flashColor[CB], glitter * glitterMul);
                         drawFlash(cx, cy + yoff, w, h, true);
                     }
@@ -1128,177 +1141,198 @@ static void freeTextBuffer(void)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawText3(const char* text, int x, int y, int alignFlags, short textFlags)
+void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origTextFlags)
 {
-    float cx = (float) x, cy = (float) y, extraScale;
-    const char* fragment;
-    char* str, *end;
     fontnum_t origFont = FR_Font();
-    float origColor[4];
+    float cx, cy, extraScale;
     drawtextstate_t state;
-    size_t charCount = 0;
-    int curCase = -1;
+    const char* fragment;
+    int pass, curCase;
+    size_t charCount;
+    float origColor[4];
+    short textFlags;
+    char* str, *end;
 
     errorIfNotInited("FR_DrawText");
 
     if(!text || !text[0])
         return;
 
+    origTextFlags &= ~(DTF_INTERNAL_MASK);
+
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
 
-    // Apply defaults:
-    initDrawTextState(&state, textFlags);
-
-    str = (char*)text;
-    while(*str)
+    for(pass = ((origTextFlags & DTF_NO_SHADOW) != 0? 1 : 0); pass < 2; ++pass)
     {
-        if(*str == '{') // Paramaters included?
+        // Configure the next pass.
+        cx = (float) x;
+        cy = (float) y;
+        curCase = -1;
+        charCount = 0;
+        if(pass == 0)
         {
-            fontnum_t lastFont = state.fontNum;
-            int lastTracking = state.tracking;
-            float lastLeading = state.leading;
-            float lastShadowStrength = state.shadowStrength;
-            float lastGlitterStrength = state.glitterStrength;
-            boolean lastCaseScale = state.caseScale;
-            float lastRGBA[4];
-            int numBreaks = 0;
-            
-            lastRGBA[CR] = state.rgba[CR];
-            lastRGBA[CG] = state.rgba[CG];
-            lastRGBA[CB] = state.rgba[CB];
-            lastRGBA[CA] = state.rgba[CA];
-
-            parseParamaterBlock(&str, &state, &numBreaks);
-
-            if(numBreaks != 0)
-            {
-                do
-                {
-                    cx = (float) x;
-                    cy += state.lastLineHeight * (1+lastLeading);
-                } while(--numBreaks > 0);
-            }
-
-            if(state.fontNum != lastFont)
-                FR_SetFont(state.fontNum);
-            if(state.tracking != lastTracking)
-                FR_SetTracking(state.tracking);
-            if(state.leading != lastLeading)
-                FR_SetLeading(state.leading);
-            if(state.rgba[CR] != lastRGBA[CR] || state.rgba[CG] != lastRGBA[CG] || state.rgba[CB] != lastRGBA[CB] || state.rgba[CA] != lastRGBA[CA])
-                FR_SetColorAndAlphav(state.rgba);
-            if(state.shadowStrength != lastShadowStrength)
-                FR_SetShadowStrength(state.shadowStrength);
-            if(state.glitterStrength != lastGlitterStrength)
-                FR_SetGlitterStrength(state.glitterStrength);
-            if(state.caseScale != lastCaseScale)
-                FR_SetCaseScale(state.caseScale);
+            textFlags = origTextFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER);
+        }
+        else
+        {
+            textFlags = origTextFlags | (DTF_NO_SHADOW);
         }
 
-        for(end = str; *end && *end != '{';)
+        // Apply defaults.
+        initDrawTextState(&state, textFlags);
+
+        str = (char*)text;
+        while(*str)
         {
-            int newlines = 0, fragmentAlignFlags;
-            float alignx = 0;
-
-            // Find the end of the next fragment.
-            if(FR_CaseScale())
+            if(*str == '{') // Paramaters included?
             {
-                curCase = -1;
-                // Select a substring with characters of the same case (or whitespace).
-                for(; *end && *end != '{' && *end != '\n'; end++)
-                {
-                    // We can skip whitespace.
-                    if(isspace(*end))
-                        continue;
+                fontnum_t lastFont = state.fontNum;
+                int lastTracking = state.tracking;
+                float lastLeading = state.leading;
+                float lastShadowStrength = state.shadowStrength;
+                float lastGlitterStrength = state.glitterStrength;
+                boolean lastCaseScale = state.caseScale;
+                float lastRGBA[4];
+                int numBreaks = 0;
+                
+                lastRGBA[CR] = state.rgba[CR];
+                lastRGBA[CG] = state.rgba[CG];
+                lastRGBA[CB] = state.rgba[CB];
+                lastRGBA[CA] = state.rgba[CA];
 
-                    if(curCase < 0)
-                        curCase = (isupper(*end) != 0);
-                    else if(curCase != (isupper(*end) != 0))
-                        break;
+                parseParamaterBlock(&str, &state, &numBreaks);
+
+                if(numBreaks != 0)
+                {
+                    do
+                    {
+                        cx = (float) x;
+                        cy += state.lastLineHeight * (1+lastLeading);
+                    } while(--numBreaks > 0);
                 }
+
+                if(state.fontNum != lastFont)
+                    FR_SetFont(state.fontNum);
+                if(state.tracking != lastTracking)
+                    FR_SetTracking(state.tracking);
+                if(state.leading != lastLeading)
+                    FR_SetLeading(state.leading);
+                if(state.rgba[CR] != lastRGBA[CR] || state.rgba[CG] != lastRGBA[CG] || state.rgba[CB] != lastRGBA[CB] || state.rgba[CA] != lastRGBA[CA])
+                    FR_SetColorAndAlphav(state.rgba);
+                if(state.shadowStrength != lastShadowStrength)
+                    FR_SetShadowStrength(state.shadowStrength);
+                if(state.glitterStrength != lastGlitterStrength)
+                    FR_SetGlitterStrength(state.glitterStrength);
+                if(state.caseScale != lastCaseScale)
+                    FR_SetCaseScale(state.caseScale);
             }
-            else
+
+            for(end = str; *end && *end != '{';)
             {
-                curCase = 0;
-                for(; *end && *end != '{' && *end != '\n'; end++);
+                int newlines = 0, fragmentAlignFlags;
+                float alignx = 0;
+
+                // Find the end of the next fragment.
+                if(FR_CaseScale())
+                {
+                    curCase = -1;
+                    // Select a substring with characters of the same case (or whitespace).
+                    for(; *end && *end != '{' && *end != '\n'; end++)
+                    {
+                        // We can skip whitespace.
+                        if(isspace(*end))
+                            continue;
+
+                        if(curCase < 0)
+                            curCase = (isupper(*end) != 0);
+                        else if(curCase != (isupper(*end) != 0))
+                            break;
+                    }
+                }
+                else
+                {
+                    curCase = 0;
+                    for(; *end && *end != '{' && *end != '\n'; end++);
+                }
+
+                { char* buffer = enlargeTextBuffer(end - str);
+                memcpy(buffer, str, end - str);
+                buffer[end - str] = '\0';
+                fragment = buffer;
+                }
+
+                while(*end == '\n')
+                {
+                    newlines++;
+                    end++;
+                }
+
+                // Continue from here.
+                str = end;
+
+                if(!(alignFlags & (ALIGN_LEFT|ALIGN_RIGHT)))
+                {
+                    fragmentAlignFlags = alignFlags;
+                }
+                else
+                {
+                    // We'll take care of horizontal positioning of the fragment so align left.
+                    fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
+                    if(alignFlags & ALIGN_RIGHT)
+                        alignx = -textFragmentWidth(fragment) * state.scaleX;
+                }
+
+                // Setup the scaling.
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+
+                // Rotate.
+                if(state.angle != 0)
+                {
+                    // The origin is the specified (x,y) for the patch.
+                    // We'll undo the aspect ratio (otherwise the result would be skewed).
+                    /// \fixme Do not assume the aspect ratio and therefore whether
+                    // correction is even needed.
+                    glTranslatef((float)x, (float)y, 0);
+                    glScalef(1, 200.0f / 240.0f, 1);
+                    glRotatef(state.angle, 0, 0, 1);
+                    glScalef(1, 240.0f / 200.0f, 1);
+                    glTranslatef(-(float)x, -(float)y, 0);
+                }
+
+                glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
+                extraScale = (FR_CaseScale() ? state.caseMod[curCase].scale : 1);
+                glScalef(state.scaleX, state.scaleY * extraScale, 1);
+
+                // Draw it.
+                textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
+                charCount += strlen(fragment);
+
+                // Advance the current position?
+                if(newlines == 0)
+                {
+                    cx += ((float) textFragmentWidth(fragment) + currentAttribs()->tracking) * state.scaleX;
+                }
+                else
+                {
+                    if(strlen(fragment) > 0)
+                        state.lastLineHeight = textFragmentHeight(fragment);
+
+                    cx = (float) x;
+                    cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
+                }
+
+                glMatrixMode(GL_MODELVIEW);
+                glPopMatrix();
             }
-
-            { char* buffer = enlargeTextBuffer(end - str);
-            memcpy(buffer, str, end - str);
-            buffer[end - str] = '\0';
-            fragment = buffer;
-            }
-
-            while(*end == '\n')
-            {
-                newlines++;
-                end++;
-            }
-
-            // Continue from here.
-            str = end;
-
-            if(!(alignFlags & (ALIGN_LEFT|ALIGN_RIGHT)))
-            {
-                fragmentAlignFlags = alignFlags;
-            }
-            else
-            {
-                // We'll take care of horizontal positioning of the fragment so align left.
-                fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
-                if(alignFlags & ALIGN_RIGHT)
-                    alignx = -textFragmentWidth(fragment) * state.scaleX;
-            }
-
-            // Setup the scaling.
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-
-            // Rotate.
-            if(state.angle != 0)
-            {
-                // The origin is the specified (x,y) for the patch.
-                // We'll undo the aspect ratio (otherwise the result would be skewed).
-                /// \fixme Do not assume the aspect ratio and therefore whether
-                // correction is even needed.
-                glTranslatef((float)x, (float)y, 0);
-                glScalef(1, 200.0f / 240.0f, 1);
-                glRotatef(state.angle, 0, 0, 1);
-                glScalef(1, 240.0f / 200.0f, 1);
-                glTranslatef(-(float)x, -(float)y, 0);
-            }
-
-            glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
-            extraScale = (FR_CaseScale() ? state.caseMod[curCase].scale : 1);
-            glScalef(state.scaleX, state.scaleY * extraScale, 1);
-
-            // Draw it.
-            textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
-            charCount += strlen(fragment);
-
-            // Advance the current position?
-            if(newlines == 0)
-            {
-                cx += ((float) textFragmentWidth(fragment) + currentAttribs()->tracking) * state.scaleX;
-            }
-            else
-            {
-                if(strlen(fragment) > 0)
-                    state.lastLineHeight = textFragmentHeight(fragment);
-
-                cx = (float) x;
-                cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
-            }
-
-            glMatrixMode(GL_MODELVIEW);
-            glPopMatrix();
         }
+
+        FR_PopAttrib();
     }
 
     freeTextBuffer();
 
-    FR_PopAttrib();
     FR_SetFont(origFont);
     glColor4fv(origColor);
 }
