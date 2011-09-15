@@ -29,7 +29,6 @@
 #ifndef LIBDENG_CONSOLE
 #define LIBDENG_CONSOLE
 
-#include "con_buffer.h"
 #include "con_main.h"
 #include "con_config.h"
 #include "con_busy.h"

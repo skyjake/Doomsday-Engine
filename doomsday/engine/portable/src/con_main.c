@@ -57,6 +57,7 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
+#include "cbuffer.h"
 #include "font.h"
 
 // MACROS ------------------------------------------------------------------
@@ -254,7 +255,7 @@ void Con_ResizeHistoryBuffer(void)
         }
     }
 
-    Con_BufferSetMaxLineLength(Con_HistoryBuffer(), maxLength);
+    CBuffer_SetMaxLineLength(Con_HistoryBuffer(), maxLength);
 }
 
 static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
@@ -385,7 +386,7 @@ boolean Con_Init(void)
 {
     Con_Message("Initializing the console...\n");
 
-    histBuf = Con_NewBuffer(512, 70, 0);
+    histBuf = CBuffer_New(512, 70, 0);
     bLineOff = 0;
 
     oldCmds = NULL;
@@ -426,7 +427,7 @@ void Con_Shutdown(void)
     if(prbuff)
         M_Free(prbuff); // Free the print buffer.
 
-    Con_DestroyBuffer(histBuf); // The console history buffer.
+    CBuffer_Delete(histBuf); // The console history buffer.
     clearCommandHistory();
 }
 
@@ -1554,7 +1555,7 @@ boolean Con_Responder(ddevent_t* ev)
         if(conInputLock)
             break;
 
-        num = Con_BufferNumLines(histBuf);
+        num = CBuffer_NumLines(histBuf);
         if(num > 0)
         {
             bLineOff = MIN_OF(bLineOff + 3, num - 1);
@@ -1577,7 +1578,7 @@ boolean Con_Responder(ddevent_t* ev)
     case DDKEY_HOME:
         if(conInputLock)
             break;
-        bLineOff = Con_BufferNumLines(histBuf);
+        bLineOff = CBuffer_NumLines(histBuf);
         if(bLineOff != 0)
             bLineOff--;
         return true;
@@ -1773,7 +1774,7 @@ void Con_PrintRuler(void)
     if(!ConsoleInited || ConsoleSilent)
         return;
 
-    Con_BufferWrite(histBuf, CBLF_RULER, NULL);
+    CBuffer_Write(histBuf, CBLF_RULER, NULL);
 
     if(consoleDump)
     {
@@ -1840,7 +1841,7 @@ static void conPrintf(int flags, const char* format, va_list args)
         if(flags & CPF_LIGHT)   cblFlags |= CBLF_LIGHT;
         if(flags & CPF_CENTER)  cblFlags |= CBLF_CENTER;
 
-        Con_BufferWrite(histBuf, cblFlags, text);
+        CBuffer_Write(histBuf, cblFlags, text);
 
         if(consoleSnapBackOnPrint)
         {
@@ -1995,15 +1996,12 @@ void Con_Error(const char* error, ...)
     if(histBuf != NULL)
     {
         // Flush anything still in the write buffer.
-        Con_BufferFlush(histBuf);
-        numBufLines = Con_BufferNumLines(histBuf);
+        CBuffer_Flush(histBuf);
+        numBufLines = CBuffer_NumLines(histBuf);
         for(i = 5; i > 1; i--)
         {
-            const cbline_t *cbl =
-                Con_BufferGetLine(histBuf, numBufLines - i);
-
-            if(!cbl || !cbl->text)
-                continue;
+            const cbline_t* cbl = CBuffer_GetLine(histBuf, numBufLines - i);
+            if(!cbl || !cbl->text) continue;
             strcat(buff, cbl->text);
             strcat(buff, "\n");
         }
@@ -2111,7 +2109,7 @@ D_CMD(Help)
 
 D_CMD(Clear)
 {
-    Con_BufferClear(histBuf);
+    CBuffer_Clear(histBuf);
     bLineOff = 0;
     return true;
 }

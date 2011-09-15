@@ -47,6 +47,7 @@
 
 #include "image.h"
 #include "texturecontent.h"
+#include "cbuffer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -523,7 +524,7 @@ static int GetBufLines(cbuffer_t* buffer, cbline_t const **oldLines)
     int                 newCount = 0;
     int                 i, k;
 
-    count = Con_BufferGetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
+    count = CBuffer_GetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
     for(i = 0; i < count; ++i)
     {
         for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)

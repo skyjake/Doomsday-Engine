@@ -157,10 +157,10 @@
  .\..\..\engine\portable\src\b_device.c
  .\..\..\engine\portable\src\b_main.c
  .\..\..\engine\portable\src\b_util.c
+ .\..\..\engine\portable\src\cbuffer.c
  .\..\..\engine\portable\src\colorpalette.c
  .\..\..\engine\portable\src\con_busy.c
  .\..\..\engine\portable\src\con_data.c
- .\..\..\engine\portable\src\con_buffer.c
  .\..\..\engine\portable\src\con_main.c
  .\..\..\engine\portable\src\con_config.c
  .\..\..\engine\portable\src\con_bar.c

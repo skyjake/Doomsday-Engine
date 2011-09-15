@@ -36,8 +36,10 @@
 #include "de_ui.h"
 
 #include "math.h"
-#include "rend_console.h"
 #include "materialvariant.h"
+#include "cbuffer.h"
+
+#include "rend_console.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -634,7 +636,7 @@ static void drawConsole(float consoleAlpha)
     reqLines = MAX_OF(0, ceil(y / fontScaledY)+1);
     if(reqLines != 0)
     {
-        uint count, totalLines = Con_BufferNumLines(buffer);
+        uint count, totalLines = CBuffer_NumLines(buffer);
         int firstIdx;
 
         firstIdx = -((long)(reqLines + Con_HistoryOffset()));
@@ -648,7 +650,7 @@ static void drawConsole(float consoleAlpha)
             bufferSize = reqLines;
         }
 
-        count = Con_BufferGetLines2(buffer, reqLines, firstIdx, lines, BLF_OMIT_EMPTYLINE);
+        count = CBuffer_GetLines2(buffer, reqLines, firstIdx, lines, BLF_OMIT_EMPTYLINE);
         if(count != 0)
         {
             glEnable(GL_TEXTURE_2D);
@@ -713,7 +715,7 @@ static void drawConsole(float consoleAlpha)
     y = ConsoleY * gtosMulY - (lineHeight * scale[1]) - textOffsetY;
 
     cmdLineLength = (uint)strlen(cmdLine);
-    maxLineLength = Con_BufferMaxLineLength(buffer) - 1/*prompt length*/;
+    maxLineLength = CBuffer_MaxLineLength(buffer) - 1/*prompt length*/;
 
     if(cmdLineLength >= maxLineLength)
     {

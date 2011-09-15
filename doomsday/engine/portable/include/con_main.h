@@ -34,8 +34,6 @@
 #include "de_system.h"
 #include "dd_input.h"
 
-#include "con_buffer.h"
-
 #define CMDLINE_SIZE 256
 #define MAX_ARGS            256
 
@@ -46,6 +44,8 @@
 #define CV_BYTE(var)        (*(byte*) var->ptr)
 #define CV_FLOAT(var)       (*(float*) var->ptr)
 #define CV_CHARPTR(var)     (*(char**) var->ptr)
+
+struct cbuffer_s;
 
 typedef struct {
     char cmdLine[2048];
@@ -183,7 +183,7 @@ char* Con_CommandLine(void);
 
 uint Con_CommandLineCursorPosition(void);
 
-cbuffer_t* Con_HistoryBuffer(void);
+struct cbuffer_s* Con_HistoryBuffer(void);
 
 uint Con_HistoryOffset(void);
 

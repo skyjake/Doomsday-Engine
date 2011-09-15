@@ -909,6 +909,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\cbuffer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\cl_def.h"
 				>
 			</File>
@@ -942,10 +946,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\con_bar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\con_buffer.h"
 				>
 			</File>
 			<File
@@ -2331,6 +2331,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\cbuffer.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\cl_frame.c"
 				>
 			</File>
@@ -2372,10 +2376,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\con_bar.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\con_buffer.c"
 				>
 			</File>
 			<File

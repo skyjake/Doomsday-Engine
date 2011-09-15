@@ -198,6 +198,7 @@
 		<Unit filename="..\..\engine\portable\include\bsp_main.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_node.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_superblock.h" />
+		<Unit filename="..\..\engine\portable\include\cbuffer.h" />
 		<Unit filename="..\..\engine\portable\include\cl_def.h" />
 		<Unit filename="..\..\engine\portable\include\cl_frame.h" />
 		<Unit filename="..\..\engine\portable\include\cl_infine.h" />
@@ -206,7 +207,6 @@
 		<Unit filename="..\..\engine\portable\include\cl_sound.h" />
 		<Unit filename="..\..\engine\portable\include\cl_world.h" />
 		<Unit filename="..\..\engine\portable\include\con_bar.h" />
-		<Unit filename="..\..\engine\portable\include\con_buffer.h" />
 		<Unit filename="..\..\engine\portable\include\con_busy.h" />
 		<Unit filename="..\..\engine\portable\include\con_config.h" />
 		<Unit filename="..\..\engine\portable\include\con_main.h" />
@@ -423,6 +423,7 @@
 		<Unit filename="..\..\engine\portable\src\bsp_superblock.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\cbuffer.c" />
 		<Unit filename="..\..\engine\portable\src\cl_frame.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -451,9 +452,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\con_bar.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\con_buffer.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\con_busy.c">
