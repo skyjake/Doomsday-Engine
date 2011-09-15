@@ -589,7 +589,7 @@ static void drawConsole(float consoleAlpha)
     static const cbline_t** lines = 0;
     static int bufferSize = 0;
 
-    cbuffer_t* buffer = Con_HistoryBuffer();
+    CBuffer* buffer = Con_HistoryBuffer();
     uint cmdCursor = Con_CommandLineCursorPosition();
     char* cmdLine = Con_CommandLine();
     float scale[2], y, fontScaledY, gtosMulY = theWindow->height / 200.0f;

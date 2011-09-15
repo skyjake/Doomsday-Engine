@@ -25,8 +25,6 @@
 #ifndef LIBDENG_CONSOLE_BUFFER_H
 #define LIBDENG_CONSOLE_BUFFER_H
 
-#include "sys_system.h"
-
 /**
  * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
  *
@@ -59,32 +57,12 @@ typedef struct cbline_s {
 #define CBF_ALWAYSFLUSH  0x00000001 // don't leave data in the write buffer.
 /**@}*/
 
-struct cbnode_s;
-
 /**
  * CBuffer. Console text buffer.
- *
  * @ingroup console
  */
-typedef struct cbuffer_s {
-    mutex_t mutex;
-    int flags; /// @see consoleBufferFlags
-    uint numLines; /// Current number of lines.
-    uint maxLines; /// Maximum number of lines.
-    uint maxLineLen; /// Maximum length of a line.
-
-    struct cbnode_s* head;
-    struct cbnode_s* tail;
-    struct cbnode_s* used;
-
-    struct cbnode_s** index; /// Indexed list of line nodes.
-    uint indexSize;
-    boolean indexGood; // If the index needs updating.
-
-    char* writebuf; // write buffer.
-    uint wbc; // write buffer cursor.
-    int wbFlags; // write buffer line flags.
-} cbuffer_t;
+struct cbuffer_s; // The cbuffer instance (opaque).
+typedef struct cbuffer_s CBuffer;
 
 /**
  * Construct a new (empty) console buffer.
@@ -93,9 +71,9 @@ typedef struct cbuffer_s {
  * @param maxLineLength  Maximum length of a text line in characters.
  * @param flags  @see consoleBufferFlags
  */
-cbuffer_t* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags);
+CBuffer* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags);
 
-void CBuffer_Delete(cbuffer_t* cb);
+void CBuffer_Delete(CBuffer* cb);
 
 /**
  * Write the given text string (plus optional flags) to the buffer.
@@ -103,26 +81,26 @@ void CBuffer_Delete(cbuffer_t* cb);
  * @param flags  @see consoleBufferLineFlags
  * @param txt  Ptr to the text string to be written.
  */
-void CBuffer_Write(cbuffer_t* cb, int flags, const char* txt);
+void CBuffer_Write(CBuffer* cb, int flags, const char* txt);
 
 /// Flush the content of the write buffer.
-void CBuffer_Flush(cbuffer_t* cb);
+void CBuffer_Flush(CBuffer* cb);
 
 /// Clear the text content of the buffer.
-void CBuffer_Clear(cbuffer_t* cb);
+void CBuffer_Clear(CBuffer* cb);
 
 /// @return  Current maximum line length in characters.
-uint CBuffer_MaxLineLength(cbuffer_t* cb);
+uint CBuffer_MaxLineLength(CBuffer* cb);
 
 /**
  * Change the maximum line length.
  * \note Existing lines are unaffected, the change only impacts new lines.
  * @param length  New max line length, in characters.
  */
-void CBuffer_SetMaxLineLength(cbuffer_t* cb, uint length);
+void CBuffer_SetMaxLineLength(CBuffer* cb, uint length);
 
 /// @return  Number of lines present in the buffer.
-uint CBuffer_NumLines(cbuffer_t* cb);
+uint CBuffer_NumLines(CBuffer* cb);
 
 /**
  * Retrieve an immutable ptr to the text line at index @a idx.
@@ -130,7 +108,7 @@ uint CBuffer_NumLines(cbuffer_t* cb);
  * @param idx  Index of the line to retrieve.
  * @return  Text line at index @a idx, or @c NULL if invalid index.
  */
-const cbline_t* CBuffer_GetLine(cbuffer_t* cb, uint idx);
+const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);
 
 /**
  * @defgroup bufferLineFlags Buffer Line Flags.
@@ -154,6 +132,6 @@ const cbline_t* CBuffer_GetLine(cbuffer_t* cb, uint idx);
  *
  * @return              The number of elements written back to the buffer.
  */
-uint CBuffer_GetLines2(cbuffer_t* cb, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
-uint CBuffer_GetLines(cbuffer_t* cb, uint reqCount, int firstIdx, cbline_t const** list); /* blflags = 0 */
+uint CBuffer_GetLines2(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
+uint CBuffer_GetLines(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const** list); /* blflags = 0 */
 #endif /* LIBDENG_CONSOLE_BUFFER_H */

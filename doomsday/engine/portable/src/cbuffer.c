@@ -43,11 +43,31 @@ typedef struct cbnode_s {
     struct cbnode_s* next, *prev;
 } cbnode_t;
 
-static void insertNodeAtEnd(cbuffer_t* cb, cbnode_t* newnode);
-static void removeNode(cbuffer_t* cb, cbnode_t* node);
-static void moveNodeForReuse(cbuffer_t* cb, cbnode_t* node);
+struct cbuffer_s {
+    mutex_t mutex;
+    int flags; /// @see consoleBufferFlags
+    uint numLines; /// Current number of lines.
+    uint maxLines; /// Maximum number of lines.
+    uint maxLineLen; /// Maximum length of a line.
 
-static void lock(cbuffer_t* cb, boolean yes)
+    cbnode_t* head;
+    cbnode_t* tail;
+    cbnode_t* used;
+
+    cbnode_t** index; /// Indexed list of line nodes.
+    uint indexSize;
+    boolean indexGood; // If the index needs updating.
+
+    char* writebuf; // write buffer.
+    uint wbc; // write buffer cursor.
+    int wbFlags; // write buffer line flags.
+};
+
+static void insertNodeAtEnd(CBuffer* cb, cbnode_t* newnode);
+static void removeNode(CBuffer* cb, cbnode_t* node);
+static void moveNodeForReuse(CBuffer* cb, cbnode_t* node);
+
+static void lock(CBuffer* cb, boolean yes)
 {
     assert(cb);
     if(yes)
@@ -71,7 +91,7 @@ static void destroyNode(cbnode_t* node)
     }
 }
 
-static void insertNodeAfter(cbuffer_t* cb, cbnode_t* node, cbnode_t* newnode)
+static void insertNodeAfter(CBuffer* cb, cbnode_t* node, cbnode_t* newnode)
 {
     assert(node && newnode);
     newnode->prev = node;
@@ -89,7 +109,7 @@ static void insertNodeAfter(cbuffer_t* cb, cbnode_t* node, cbnode_t* newnode)
     cb->indexGood = false; // it will be updated when needed.
 }
 
-static void insertNodeBefore(cbuffer_t* cb, cbnode_t* node, cbnode_t* newnode)
+static void insertNodeBefore(CBuffer* cb, cbnode_t* node, cbnode_t* newnode)
 {
     assert(node && newnode);
     newnode->prev = node->prev;
@@ -107,7 +127,7 @@ static void insertNodeBefore(cbuffer_t* cb, cbnode_t* node, cbnode_t* newnode)
     cb->indexGood = false; // it will be updated when needed.
 }
 
-static void insertNodeAtStart(cbuffer_t* cb, cbnode_t* newnode)
+static void insertNodeAtStart(CBuffer* cb, cbnode_t* newnode)
 {
     assert(cb && newnode);
     if(!cb->head)
@@ -123,7 +143,7 @@ static void insertNodeAtStart(cbuffer_t* cb, cbnode_t* newnode)
     insertNodeBefore(cb, cb->head, newnode);
 }
 
-static void insertNodeAtEnd(cbuffer_t* cb, cbnode_t* newnode)
+static void insertNodeAtEnd(CBuffer* cb, cbnode_t* newnode)
 {
     assert(newnode);
     if(!cb->tail)
@@ -134,7 +154,7 @@ static void insertNodeAtEnd(cbuffer_t* cb, cbnode_t* newnode)
     insertNodeAfter(cb, cb->tail, newnode);
 }
 
-static void moveNodeForReuse(cbuffer_t* cb, cbnode_t* node)
+static void moveNodeForReuse(CBuffer* cb, cbnode_t* node)
 {
     cbline_t* line;
     assert(cb && node);
@@ -157,7 +177,7 @@ static void moveNodeForReuse(cbuffer_t* cb, cbnode_t* node)
         memset(line->text, 0, line->len);
 }
 
-static void removeNode(cbuffer_t* cb, cbnode_t* node)
+static void removeNode(CBuffer* cb, cbnode_t* node)
 {
     assert(cb && node);
     if(!node->prev)
@@ -182,15 +202,15 @@ static void removeNode(cbuffer_t* cb, cbnode_t* node)
     cb->indexGood = false; // it will be updated when needed.
 }
 
-cbuffer_t* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags)
+CBuffer* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags)
 {
     char name[32+1];
-    cbuffer_t* cb;
+    CBuffer* cb;
 
     if(maxNumLines < 1 || maxLineLength < 1)
         Con_Error("CBuffer::New: Odd buffer params");
 
-    cb = (cbuffer_t*)malloc(sizeof *cb);
+    cb = (CBuffer*)malloc(sizeof *cb);
     if(!cb) Con_Error("CBuffer::New: Failed on allocation of %lu bytes for new CBuffer.", (unsigned long) sizeof *cb);
 
     dd_snprintf(name, 33, "CBufferMutex%p", cb);
@@ -217,7 +237,7 @@ cbuffer_t* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags)
     return cb;
 }
 
-static void clear(cbuffer_t* cb, boolean recycle)
+static void clear(CBuffer* cb, boolean recycle)
 {
     cbnode_t* n, *np;
     assert(cb);
@@ -240,21 +260,21 @@ static void clear(cbuffer_t* cb, boolean recycle)
     cb->numLines = 0;
 }
 
-static void clearWriteBuffer(cbuffer_t* cb)
+static void clearWriteBuffer(CBuffer* cb)
 {
     assert(cb);
     memset(cb->writebuf, 0, cb->maxLineLen);
     cb->wbc = 0;
 }
 
-static void clearIndex(cbuffer_t* cb)
+static void clearIndex(CBuffer* cb)
 {
     assert(cb);
     if(!cb->index) return;
     free(cb->index);
 }
 
-static void clearUsedNodes(cbuffer_t* cb)
+static void clearUsedNodes(CBuffer* cb)
 {
     assert(cb);
     { cbnode_t* np, *n = cb->used;
@@ -266,14 +286,14 @@ static void clearUsedNodes(cbuffer_t* cb)
     }}
 }
 
-void CBuffer_Clear(cbuffer_t* cb)
+void CBuffer_Clear(CBuffer* cb)
 {
     lock(cb, true);
     clear(cb, true);
     lock(cb, false);
 }
 
-void CBuffer_Delete(cbuffer_t* cb)
+void CBuffer_Delete(CBuffer* cb)
 {
     assert(cb);
 
@@ -290,7 +310,7 @@ void CBuffer_Delete(cbuffer_t* cb)
     free(cb);
 }
 
-uint CBuffer_MaxLineLength(cbuffer_t* cb)
+uint CBuffer_MaxLineLength(CBuffer* cb)
 {
     assert(cb);
     {
@@ -302,7 +322,7 @@ uint CBuffer_MaxLineLength(cbuffer_t* cb)
     }
 }
 
-void CBuffer_SetMaxLineLength(cbuffer_t* cb, uint length)
+void CBuffer_SetMaxLineLength(CBuffer* cb, uint length)
 {
     assert(cb);
 
@@ -317,7 +337,7 @@ void CBuffer_SetMaxLineLength(cbuffer_t* cb, uint length)
     lock(cb, false);
 }
 
-uint CBuffer_NumLines(cbuffer_t* cb)
+uint CBuffer_NumLines(CBuffer* cb)
 {
     uint num;
     assert(cb);
@@ -327,7 +347,7 @@ uint CBuffer_NumLines(cbuffer_t* cb)
     return num;
 }
 
-static void expandIndex(cbuffer_t* cb)
+static void expandIndex(CBuffer* cb)
 {
     assert(cb);
     if(cb->indexSize < cb->numLines)
@@ -338,7 +358,7 @@ static void expandIndex(cbuffer_t* cb)
     }
 }
 
-static void rebuildIndex(cbuffer_t* cb)
+static void rebuildIndex(CBuffer* cb)
 {
     assert(cb);
 
@@ -356,7 +376,7 @@ static void rebuildIndex(cbuffer_t* cb)
     cb->indexGood = true;
 }
 
-static cbnode_t* bufferGetLine(cbuffer_t* cb, uint idx)
+static cbnode_t* bufferGetLine(CBuffer* cb, uint idx)
 {
     cbnode_t* node = NULL;
     assert(cb);
@@ -368,7 +388,7 @@ static cbnode_t* bufferGetLine(cbuffer_t* cb, uint idx)
     return node;
 }
 
-static uint bufferGetLines(cbuffer_t* cb, uint reqCount, int firstIdx,
+static uint bufferGetLines(CBuffer* cb, uint reqCount, int firstIdx,
     cbline_t const** list, int blflags)
 {
     assert(cb && list);
@@ -413,7 +433,7 @@ static uint bufferGetLines(cbuffer_t* cb, uint reqCount, int firstIdx,
     return 0;
 }
 
-uint CBuffer_GetLines2(cbuffer_t* cb, uint reqCount, int firstIdx,
+uint CBuffer_GetLines2(CBuffer* cb, uint reqCount, int firstIdx,
     cbline_t const** list, int blflags)
 {
     uint result;
@@ -423,13 +443,13 @@ uint CBuffer_GetLines2(cbuffer_t* cb, uint reqCount, int firstIdx,
     return result;
 }
 
-uint CBuffer_GetLines(cbuffer_t* cb, uint reqCount, int firstIdx,
+uint CBuffer_GetLines(CBuffer* cb, uint reqCount, int firstIdx,
     cbline_t const** list)
 {
     return CBuffer_GetLines2(cb, reqCount, firstIdx, list, 0);
 }
 
-const cbline_t* CBuffer_GetLine(cbuffer_t* cb, uint idx)
+const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx)
 {
     const cbline_t* line;
     cbnode_t* node;
@@ -440,7 +460,7 @@ const cbline_t* CBuffer_GetLine(cbuffer_t* cb, uint idx)
     return line;
 }
 
-static cbline_t* bufferNewLine(cbuffer_t* cb)
+static cbline_t* bufferNewLine(CBuffer* cb)
 {
     cbnode_t* node;
     cbline_t* line;
@@ -486,7 +506,7 @@ static cbline_t* bufferNewLine(cbuffer_t* cb)
     return line;
 }
 
-static void bufferFlush(cbuffer_t* cb)
+static void bufferFlush(CBuffer* cb)
 {
     uint len;
     cbline_t* line;
@@ -530,14 +550,14 @@ static void bufferFlush(cbuffer_t* cb)
     cb->wbFlags = 0;
 }
 
-void CBuffer_Flush(cbuffer_t* cb)
+void CBuffer_Flush(CBuffer* cb)
 {
     lock(cb, true);
     bufferFlush(cb);
     lock(cb, false);
 }
 
-void CBuffer_Write(cbuffer_t* cb, int flags, const char* txt)
+void CBuffer_Write(CBuffer* cb, int flags, const char* txt)
 {
     assert(cb);
     lock(cb, true);

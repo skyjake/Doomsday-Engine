@@ -147,7 +147,7 @@ char* prbuff = NULL; // Print buffer, used by conPrintf.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static cbuffer_t* histBuf = NULL; // The console history buffer (log).
+static CBuffer* histBuf = NULL; // The console history buffer (log).
 static uint bLineOff; // How many lines from the last in the histBuf?
 
 static char** oldCmds = NULL; // The old commands buffer.
@@ -451,7 +451,7 @@ char* Con_CommandLine(void)
     return cmdLine;
 }
 
-cbuffer_t* Con_HistoryBuffer(void)
+CBuffer* Con_HistoryBuffer(void)
 {
     return histBuf;
 }

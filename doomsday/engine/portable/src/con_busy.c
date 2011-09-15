@@ -517,7 +517,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 /**
  * @return              Number of new lines since the old ones.
  */
-static int GetBufLines(cbuffer_t* buffer, cbline_t const **oldLines)
+static int GetBufLines(CBuffer* buffer, cbline_t const **oldLines)
 {
     cbline_t const*     bufLines[LINE_COUNT + 1];
     int                 count;
@@ -554,7 +554,7 @@ lineIsNotNew:;
  */
 void Con_BusyDrawConsoleOutput(void)
 {
-    cbuffer_t*          buffer;
+    CBuffer*          buffer;
     static cbline_t const* visibleBusyLines[2 * LINE_COUNT];
     static float        scroll = 0;
     static float        scrollStartTime = 0;
