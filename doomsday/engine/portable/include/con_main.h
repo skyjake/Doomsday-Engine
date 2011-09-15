@@ -185,6 +185,8 @@ uint Con_CommandLineCursorPosition(void);
 
 cbuffer_t* Con_HistoryBuffer(void);
 
+uint Con_HistoryOffset(void);
+
 void Con_ResizeHistoryBuffer(void);
 
 fontnum_t Con_Font(void);

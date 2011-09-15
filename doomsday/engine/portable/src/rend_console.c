@@ -158,10 +158,10 @@ void Rend_ConsoleCursorResetBlink(void)
     ConsoleBlink = 0;
 }
 
-// Calculate the average of the given colors.
+// Calculate the average of the given color flags.
 static void calcAvgColor(int fl, float rgb[3])
 {
-    assert(inited && NULL != rgb);
+    assert(inited && rgb);
     {
     int count = 0;
     rgb[CR] = rgb[CG] = rgb[CB] = 0;
@@ -582,8 +582,6 @@ static void drawConsole(float consoleAlpha)
 #define PADDING             (2)
 #define LOCALBUFFSIZE       (CMDLINE_SIZE +1/*prompt length*/ +1/*terminator*/)
 
-    extern uint bLineOff;
-
     assert(inited);
     {
     static const cbline_t** lines = 0;
@@ -639,7 +637,7 @@ static void drawConsole(float consoleAlpha)
         uint count, totalLines = Con_BufferNumLines(buffer);
         int firstIdx;
 
-        firstIdx = -((long)(reqLines + bLineOff));
+        firstIdx = -((long)(reqLines + Con_HistoryOffset()));
         if(firstIdx < -((long)totalLines))
             firstIdx = -((long)totalLines);
 
