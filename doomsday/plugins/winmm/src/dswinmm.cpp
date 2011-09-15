@@ -309,7 +309,7 @@ void DS_Shutdown(void)
  * The Event function is called to tell the driver about certain critical
  * events like the beginning and end of an update cycle.
  */
-void DS_Event(int type)
+void DS_Event(int /*type*/)
 {
     // Do nothing...
 }
