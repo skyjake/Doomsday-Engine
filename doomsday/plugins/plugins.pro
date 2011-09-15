@@ -6,15 +6,15 @@ include(../config.pri)
 TEMPLATE = subdirs
 SUBDIRS = dehread wadmapconverter
 
-contains(DENG_PLUGINS, openal) {
-    SUBDIRS += openal
-}
-
 # Games.
 SUBDIRS += jdoom jheretic jhexen
 
 # Experimental games.
 SUBDIRS += jdoom64
+
+contains(DENG_PLUGINS, openal) {
+    SUBDIRS += openal
+}
 
 # Platform-specific plugins.
 win32 {

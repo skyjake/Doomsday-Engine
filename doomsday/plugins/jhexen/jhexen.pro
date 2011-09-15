@@ -1,8 +1,9 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 
-include(../pluginconfig.pri)
+include(../config_plugin.pri)
 include(../common/common.pri)
+include(../../dep_lzss.pri)
 
 TEMPLATE = lib
 TARGET = jhexen
@@ -13,12 +14,18 @@ VERSION = $$JHEXEN_VERSION
 
 gamedata.files = $$OUT_PWD/../../jhexen.pk3
 
-macx {
+win32 {
+    INSTALLS += target gamedata
+
+    target.path = $$DENG_WIN_PRODUCTS_DIR
+    gamedata.path = $$DENG_WIN_PRODUCTS_DIR
+}
+else:macx {
     gamedata.path = Contents/Resources
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-unix:!macx {
+else:unix:!macx {
     target.path = $$DENG_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jhexen
 
@@ -110,3 +117,10 @@ SOURCES += \
     src/st_stuff.c \
     src/tables.c \
     src/x_api.c
+
+win32 {
+    QMAKE_LFLAGS += /DEF:$$PWD/api/jhexen.def
+    OTHER_FILES += api/jhexen.def
+
+    RC_FILE = res/jhexen.rc
+}

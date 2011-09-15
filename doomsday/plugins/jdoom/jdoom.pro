@@ -1,9 +1,9 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 
-include(../pluginconfig.pri)
+include(../config_plugin.pri)
 include(../common/common.pri)
-include(../../lzss.pri)
+include(../../dep_lzss.pri)
 
 TEMPLATE = lib
 TARGET = jdoom
@@ -14,12 +14,18 @@ VERSION = $$JDOOM_VERSION
 
 gamedata.files = $$OUT_PWD/../../jdoom.pk3
 
-macx {
+win32 {
+    INSTALLS += target gamedata
+
+    target.path = $$DENG_WIN_PRODUCTS_DIR
+    gamedata.path = $$DENG_WIN_PRODUCTS_DIR
+}
+else:macx {
     gamedata.path = Contents/Resources
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-unix:!macx {
+else:unix:!macx {
     target.path = $$DENG_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jdoom
 
@@ -136,3 +142,10 @@ SOURCES += \
     src/st_stuff.c \
     src/tables.c \
     src/wi_stuff.c
+
+win32 {
+    QMAKE_LFLAGS += /DEF:$$PWD/api/jdoom.def
+    OTHER_FILES += api/jdoom.def
+
+    RC_FILE = res/jdoom.rc
+}

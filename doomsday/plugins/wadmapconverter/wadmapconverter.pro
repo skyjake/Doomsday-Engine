@@ -1,7 +1,7 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 
-include(../pluginconfig.pri)
+include(../config_plugin.pri)
 
 TEMPLATE = lib
 TARGET = dpwadmapconverter
@@ -20,6 +20,9 @@ SOURCES += \
 
 win32 {
     RC_FILE = res/wadmapconverter.rc
+
+    INSTALLS += target
+    target.path = $$DENG_WIN_PRODUCTS_DIR
 }
 unix:!macx {
     INSTALLS += target

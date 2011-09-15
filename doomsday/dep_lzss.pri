@@ -8,6 +8,11 @@ HEADERS += \
 
 win32 {
     LIBS += -L$$DENG_LZSS_DIR/win32 -llzss
+
+    # Installed shared libs.
+    INSTALLS += lzsslibs
+    lzsslibs.files = $$DENG_LZSS_DIR/win32/lzss.dll
+    lzsslibs.path = $$DENG_WIN_PRODUCTS_DIR
 }
 else {
     SOURCES += \

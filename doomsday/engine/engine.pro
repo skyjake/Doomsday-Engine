@@ -10,19 +10,19 @@ include(../config.pri)
 
 VERSION = $$DENG_VERSION
 
-message(Doomsday version $${DENG_VERSION}.)
+echo(Doomsday version $${DENG_VERSION}.)
 
 # External Dependencies ------------------------------------------------------
 
-include(../sdl.pri)
-include(../opengl.pri)
-include(../zlib.pri)
-include(../libpng.pri)
-include(../ncurses.pri)
-include(../curl.pri)
-include(../lzss.pri)
+include(../dep_sdl.pri)
+include(../dep_opengl.pri)
+include(../dep_zlib.pri)
+include(../dep_libpng.pri)
+include(../dep_curses.pri)
+include(../dep_curl.pri)
+include(../dep_lzss.pri)
 win32 {
-    include(../directinput.pri)
+    include(../dep_directx.pri)
 }
 
 # Common Definitions ---------------------------------------------------------
@@ -44,6 +44,7 @@ win32 {
     RC_FILE = win32/res/doomsday.rc
 
     QMAKE_LFLAGS += /NODEFAULTLIB:libcmt /DEF:$$DENG_API_DIR/doomsday.def /IMPLIB:$$DENG_EXPORT_LIB
+    OTHER_FILES += api/doomsday.def
 
     LIBS += \
         -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
@@ -505,13 +506,25 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
-unix:!macx {
+data.files = $$OUT_PWD/../doomsday.pk3
+
+win32 {
+    # Windows installation.
+    INSTALLS += target license data
+
+    target.path = $$DENG_WIN_PRODUCTS_DIR
+
+    license.files = doc/LICENSE
+    license.path = $$DENG_WIN_PRODUCTS_DIR
+
+    data.path = $$DENG_WIN_PRODUCTS_DIR
+}
+else:unix:!macx {
     # Generic Unix installation.
     INSTALLS += target data startupgfx desktop aptrepo
 
     target.path = $$DENG_BIN_DIR
 
-    data.files = $$OUT_PWD/../doomsday.pk3
     data.path = $$DENG_DATA_DIR
 
     startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png

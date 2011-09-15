@@ -2,23 +2,25 @@
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 include(../config_plugin.pri)
+include(../../dep_openal.pri)
 
 TEMPLATE = lib
-TARGET = dpdehread
+TARGET = dsopenal
 
-VERSION = $$DEHREAD_VERSION
+VERSION = $$OPENAL_VERSION
+
+INCLUDEPATH += include
 
 HEADERS += include/version.h
 
-SOURCES += src/dehmain.c
+SOURCES += src/driver_openal.c
 
 win32 {
-    RC_FILE = res/dehread.rc
+    RC_FILE = res/openal.rc
+
+    QMAKE_LFLAGS += /DEF:$$PWD/api/dsopenal.def
+    OTHER_FILES += api/dsopenal.def
 
     INSTALLS += target
     target.path = $$DENG_WIN_PRODUCTS_DIR
-}
-unix:!macx {
-    INSTALLS += target
-    target.path = $$DENG_LIB_DIR
 }

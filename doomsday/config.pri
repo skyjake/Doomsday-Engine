@@ -8,30 +8,45 @@ DENG_UNIX_INCLUDE_DIR = $$PWD/engine/unix/include
 DENG_MAC_INCLUDE_DIR = $$PWD/engine/mac/include
 DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
 
+DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
+
 # Versions -------------------------------------------------------------------
 
 include(versions.pri)
 
 # Build Options --------------------------------------------------------------
 
+defineTest(echo) {
+    !win32 {
+        message($$1)
+    } else {
+        # We don't want to get the printed messages after everything else,
+        # so print to stdout.
+        system(echo $$1)
+    }
+}
+
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
-    message("Debug build.")
+    echo(Debug build.)
     DEFINES += _DEBUG
     DENG_CONFIG += rangecheck
 } else {
-    message("Release build.")
+    echo(Release build.)
     DEFINES += NDEBUG
 }
 
 win32 {
     win32-gcc* {
-        error("Sorry, GCC is not supported in the Windows build.")
+        error("Sorry, gcc is not supported in the Windows build.")
     }
 
     DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
 
     DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
+
+    # Also build the OpenAL plugin.
+    DENG_PLUGINS += openal
 }
 unix {
     # Unix/Mac build options.
@@ -91,11 +106,13 @@ macx {
     contains(DENG_CONFIG, snowleopard) {
         message("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         CONFIG += x86 x86_64
     }
     else {
         message("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
         CONFIG += x86 ppc
     }
 }
