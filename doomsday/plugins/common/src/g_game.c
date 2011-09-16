@@ -31,6 +31,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <assert.h>
 #include <string.h>
 #include <math.h>
 #include <assert.h>
@@ -1762,7 +1763,7 @@ void G_PlayerLeaveMap(int player)
 
     // Clear filter.
     p->plr->flags &= ~DDPF_VIEW_FILTER;
-    p->plr->flags |= DDPF_FILTER; // Server: Send the change to the client.
+    //p->plr->flags |= DDPF_FILTER; // Server: Send the change to the client.
     p->damageCount = 0; // No palette changes.
     p->bonusCount = 0;
 
@@ -1811,16 +1812,6 @@ void ClearPlayer(player_t *p)
     ddplayer->fixCounter.angles++;
     ddplayer->fixCounter.pos++;
     ddplayer->fixCounter.mom++;
-
-/*    ddplayer->fixAcked.angles =
-        ddplayer->fixAcked.pos =
-        ddplayer->fixAcked.mom = -1;
-#ifdef _DEBUG
-    Con_Message("ClearPlayer: fixacked set to -1 (counts:%i, %i, %i)\n",
-                ddplayer->fixCounter.angles,
-                ddplayer->fixCounter.pos,
-                ddplayer->fixCounter.mom);
-#endif*/
 }
 
 /**
@@ -1848,6 +1839,7 @@ void G_PlayerReborn(int player)
 
     p = &players[player];
 
+    assert(sizeof(p->frags) == sizeof(frags));
     memcpy(frags, p->frags, sizeof(frags));
     killcount = p->killCount;
     itemcount = p->itemCount;
@@ -1910,6 +1902,16 @@ void G_PlayerReborn(int player)
         p->didSecret = true;
     }
 
+#ifdef _DEBUG
+    {
+        int k;
+        for(k = 0; k < NUM_WEAPON_TYPES; ++k)
+        {
+            Con_Message("Player %i owns wpn %i: %i\n", player, k, p->weapons[k].owned);
+        }
+    }
+#endif
+
 #else
     p->readyWeapon = p->pendingWeapon = WT_FIRST;
     p->weapons[WT_FIRST].owned = true;
@@ -1922,9 +1924,13 @@ void G_PlayerReborn(int player)
         p->ammo[i].max = maxAmmo[i];
 #endif
 
+    // Reset viewheight.
+    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeightDelta = 0;
+
     // We'll need to update almost everything.
 #if __JHERETIC__
-    p->update |=
+    p->update |= PSF_VIEW_HEIGHT |
         PSF_STATE | PSF_HEALTH | PSF_ARMOR_TYPE | PSF_ARMOR_POINTS |
         PSF_INVENTORY | PSF_POWERS | PSF_KEYS | PSF_OWNED_WEAPONS | PSF_AMMO |
         PSF_MAX_AMMO | PSF_PENDING_WEAPON | PSF_READY_WEAPON | PSF_MORPH_TIME;

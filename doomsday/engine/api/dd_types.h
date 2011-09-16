@@ -104,29 +104,41 @@ typedef unsigned long long   uintmax_t;
 #ifndef UNIX
 typedef unsigned int    uint;
 typedef unsigned short  ushort;
-
 #else
-
 typedef uint32_t        uint;
 typedef uint16_t        ushort;
-
 #endif
-
-typedef int             fixed_t;
-typedef unsigned int    angle_t;
 typedef unsigned char   byte;
+typedef int32_t         fixed_t;
+typedef uint32_t        angle_t;
 typedef uint32_t        ident_t;
+typedef int32_t         gameid_t;
 
-typedef int             gameid_t;
 typedef uint32_t        patchid_t;
 typedef uint32_t        materialnum_t;
-typedef int             spritenum_t;
-typedef unsigned short  nodeindex_t;
-typedef unsigned short  thid_t;
+typedef int32_t         spritenum_t;
+
+typedef uint16_t        nodeindex_t;
+typedef uint16_t        thid_t;
 typedef double          timespan_t;
 
 /// \todo Should be a public typedef of a type defined by de::LumpDirectory.
-typedef int             lumpnum_t;
+typedef int32_t         lumpnum_t;
+#define LUMPNAME_T_MAXLEN 9
+#define LUMPNAME_T_LASTINDEX 8
+typedef char            lumpname_t[LUMPNAME_T_MAXLEN];
+
+// Pointer-integer conversion (used for legacy code).
+#ifdef __64BIT__
+typedef int64_t         int_from_pointer_t;
+#else
+typedef int32_t         int_from_pointer_t;
+#endif
+#define PTR2INT(x)      ( (int_from_pointer_t) ((void*)(x)) )
+#define INT2PTR(type,x) ( (type*) ((int_from_pointer_t)(x)) )
+
+#define FILENAME_T_MAXLEN 256
+typedef char            filename_t[FILENAME_T_MAXLEN];
 
 /**
  * Unique identifier allocated by this subsystem and associated to each
@@ -135,10 +147,6 @@ typedef int             lumpnum_t;
 typedef uint32_t        fontnum_t;
 
 typedef void (*con_textfilter_t) (char* text);
-
-#define LUMPNAME_T_MAXLEN 9
-#define LUMPNAME_T_LASTINDEX 8
-typedef char            lumpname_t[LUMPNAME_T_MAXLEN];
 
 /**
  * Resource Class.
@@ -181,23 +189,23 @@ typedef int                 ddboolean_t;
 #define BAMS_BITS   16
 
 #if BAMS_BITS == 32
-typedef unsigned long binangle_t;
+typedef uint32_t binangle_t;
 #elif BAMS_BITS == 16
-typedef unsigned short binangle_t;
+typedef uint16_t binangle_t;
 #else
 typedef unsigned char binangle_t;
 #endif
 
 #define DDMAXCHAR   ((char)0x7f)
-#define DDMAXSHORT  ((short)0x7fff)
-#define DDMAXINT    ((int)0x7fffffff)   // max pos 32-bit int
-#define DDMAXLONG   ((long)0x7fffffff)
+#define DDMAXSHORT  ((int16_t)0x7fff)
+#define DDMAXINT    ((int32_t)0x7fffffff)   // max pos 32-bit int
+#define DDMAXLONG   ((int32_t)0x7fffffff)
 #define DDMAXFLOAT  ((float)1E+37)
 
 #define DDMINCHAR   ((char)0x80)
-#define DDMINSHORT  ((short)0x8000)
-#define DDMININT    ((int)0x80000000)   // max negative 32-bit integer
-#define DDMINLONG   ((long)0x80000000)
+#define DDMINSHORT  ((int16_t)0x8000)
+#define DDMININT    ((int32_t)0x80000000)   // max negative 32-bit integer
+#define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
 
 // Predeclarations for map data types. The contents of these structs is

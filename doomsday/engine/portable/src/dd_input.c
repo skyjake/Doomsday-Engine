@@ -1337,7 +1337,8 @@ static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)
 
 D_CMD(AxisPrintConfig)
 {
-    uint        deviceID, axisID;
+    uint        deviceID;
+    uint        axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
@@ -1356,7 +1357,8 @@ D_CMD(AxisPrintConfig)
 
 D_CMD(AxisChangeOption)
 {
-    uint        deviceID, axisID;
+    uint        deviceID;
+    uint        axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
@@ -1392,7 +1394,6 @@ D_CMD(AxisChangeValue)
     uint deviceID, axisID;
     inputdevaxis_t* axis;
     inputdev_t* device;
-
     if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
     {
         Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);

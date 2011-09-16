@@ -413,7 +413,12 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
         Writer_WriteByte(msgWriter, i | (d->extraLight & 0xf8));
     }
     if(df & PDF_FILTER)
+    {
         Writer_WriteUInt32(msgWriter, d->filter);
+#ifdef _DEBUG
+        Con_Message("Sv_WritePlayerDelta: Plr %i, filter %08x\n", delta->delta.id, d->filter);
+#endif
+    }
     if(df & PDF_PSPRITES)       // Only set if there's something to write.
     {
         for(i = 0; i < 2; ++i)

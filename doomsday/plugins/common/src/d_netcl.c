@@ -233,7 +233,7 @@ void NetCl_MobjImpulse(Reader* msg)
     mobj_t* clmo = ClPlayer_ClMobj(CONSOLEPLAYER);
     thid_t id = 0;
 
-    if(!mo) return;
+    if(!mo || !clmo) return;
 
     id = Reader_ReadUInt16(msg);
     if(id != clmo->thinker.id)
@@ -892,7 +892,7 @@ void NetCl_FloorHitRequest(player_t* player)
     msg = D_NetWrite();
 
 #ifdef _DEBUG
-    Con_Message("NetCl_FloorHitRequest: Player %i.\n", player - players);
+    Con_Message("NetCl_FloorHitRequest: Player %i.\n", (int)(player - players));
 #endif
 
     // Include the position and momentum of the hit.
@@ -923,7 +923,8 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     msg = D_NetWrite();
 
 #ifdef _DEBUG
-    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n", (int) (player - players), actionType);
+    Con_Message("NetCl_PlayerActionRequest: Player %i, action %i.\n",
+                (int)(player - players), actionType);
 #endif
 
     // Type of the request.

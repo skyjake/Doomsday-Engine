@@ -665,45 +665,14 @@ boolean Sv_RegisterComparePlayer(cregister_t* reg, uint number,
         df |= PDF_FORWARDMOVE;
     if(r->sideMove != s->sideMove)
         df |= PDF_SIDEMOVE;
-    /*if(r->angle != s->angle)
-        df |= PDF_ANGLE;*/
     if(r->turnDelta != s->turnDelta)
         df |= PDF_TURNDELTA;
     if(r->friction != s->friction)
         df |= PDF_FRICTION;
     if(r->extraLight != s->extraLight || r->fixedColorMap != s->fixedColorMap)
-    {
         df |= PDF_EXTRALIGHT;
-    }
     if(r->filter != s->filter)
         df |= PDF_FILTER;
-
-    /*
-    // The player sprites are a bit more complicated to check.
-    for(i = 0; i < 2; ++i)
-    {
-        int     off = 16 + i * 8;
-        const ddpsprite_t *rps = r->psp + i;
-        const ddpsprite_t *sps = s->psp + i;
-
-        if(rps->statePtr != sps->statePtr)
-            df |= PSDF_STATEPTR << off;
-
-        if(rps->light != sps->light)
-            df |= PSDF_LIGHT << off;
-        if(rps->alpha != sps->alpha)
-            df |= PSDF_ALPHA << off;
-        if(rps->state != sps->state)
-            df |= PSDF_STATE << off;
-        if((rps->offX != sps->offX || rps->offY != sps->offY) && !i)
-        {
-            df |= PSDF_OFFSET << off;
-        }
-    }
-    // Check for any psprite flags.
-    if(df & 0xffff0000)
-        df |= PDF_PSPRITES;
-    */
 
     d->delta.flags = df;
     return !Sv_IsVoidDelta(d);
@@ -754,9 +723,9 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     //    The clientside height should be fixed.
 
     // Should we make an immediate change in floor height?
-    if(!r->planes[PLN_FLOOR].speed && !s->planes[PLN_FLOOR]->speed)
+    if(FEQUAL(r->planes[PLN_FLOOR].speed, 0) && FEQUAL(s->planes[PLN_FLOOR]->speed, 0))
     {
-        if(r->planes[PLN_FLOOR].height != s->planes[PLN_FLOOR]->height)
+        if(!FEQUAL(r->planes[PLN_FLOOR].height, s->planes[PLN_FLOOR]->height))
             df |= SDF_FLOOR_HEIGHT;
     }
     else
@@ -766,9 +735,9 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
 
     // How about the ceiling?
-    if(!r->planes[PLN_CEILING].speed && !s->planes[PLN_CEILING]->speed)
+    if(FEQUAL(r->planes[PLN_CEILING].speed, 0) && FEQUAL(s->planes[PLN_CEILING]->speed, 0))
     {
-        if(r->planes[PLN_CEILING].height != s->planes[PLN_CEILING]->height)
+        if(!FEQUAL(r->planes[PLN_CEILING].height, s->planes[PLN_CEILING]->height))
             df |= SDF_CEILING_HEIGHT;
     }
     else
@@ -778,22 +747,22 @@ boolean Sv_RegisterCompareSector(cregister_t* reg, uint number,
     }
 
     // Check planes, too.
-    if(r->planes[PLN_FLOOR].target != s->planes[PLN_FLOOR]->target)
+    if(!FEQUAL(r->planes[PLN_FLOOR].target, s->planes[PLN_FLOOR]->target))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_TARGET | SDF_FLOOR_SPEED;
     }
-    if(r->planes[PLN_FLOOR].speed != s->planes[PLN_FLOOR]->speed)
+    if(!FEQUAL(r->planes[PLN_FLOOR].speed, s->planes[PLN_FLOOR]->speed))
     {
         // Target and speed are always sent together.
         df |= SDF_FLOOR_SPEED | SDF_FLOOR_TARGET;
     }
-    if(r->planes[PLN_CEILING].target != s->planes[PLN_CEILING]->target)
+    if(!FEQUAL(r->planes[PLN_CEILING].target, s->planes[PLN_CEILING]->target))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_TARGET | SDF_CEILING_SPEED;
     }
-    if(r->planes[PLN_CEILING].speed != s->planes[PLN_CEILING]->speed)
+    if(!FEQUAL(r->planes[PLN_CEILING].speed, s->planes[PLN_CEILING]->speed))
     {
         // Target and speed are always sent together.
         df |= SDF_CEILING_SPEED | SDF_CEILING_TARGET;

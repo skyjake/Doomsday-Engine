@@ -92,7 +92,7 @@ typedef struct player_s {
     boolean         keys[NUM_KEY_TYPES];
     boolean         backpack;
 
-    signed int      frags[MAXPLAYERS];
+    int             frags[MAXPLAYERS];
 
     weapontype_t    readyWeapon;
     weapontype_t    pendingWeapon; // Is wp_nochange if not changing.

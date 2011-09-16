@@ -7,8 +7,11 @@ extern          "C" {
 
 #ifdef WIN32
 #	define LZSSEXPORT __stdcall
+typedef short   int16_t;
+typedef int     int32_t;
 #elif defined(UNIX)
 #	define LZSSEXPORT
+#   include <stdint.h>
 #endif
 
 #ifndef EOF
@@ -54,10 +57,10 @@ extern          "C" {
 	LZFILE         *LZSSEXPORT lzOpenChunk(LZFILE * f, int pack);
 	LZFILE         *LZSSEXPORT lzCloseChunk(LZFILE * f);
 	int LZSSEXPORT  lzSeek(LZFILE * f, int offset);
-	int LZSSEXPORT  lzGetW(LZFILE * f);
-	long LZSSEXPORT lzGetL(LZFILE * f);
-	int LZSSEXPORT  lzPutW(int w, LZFILE * f);
-	long LZSSEXPORT lzPutL(long l, LZFILE * f);
+        int16_t LZSSEXPORT  lzGetW(LZFILE * f);
+        int32_t LZSSEXPORT lzGetL(LZFILE * f);
+        int16_t LZSSEXPORT  lzPutW(int16_t w, LZFILE * f);
+        int32_t LZSSEXPORT lzPutL(int32_t l, LZFILE * f);
 	int LZSSEXPORT  lzGetWm(LZFILE * f);
 	long LZSSEXPORT lzGetLm(LZFILE * f);
 	int LZSSEXPORT  lzPutWm(int w, LZFILE * f);

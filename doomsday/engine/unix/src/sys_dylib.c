@@ -98,10 +98,19 @@ int lt_dlforeachfile(const char* searchPath,
     dir = opendir(searchPath);
     while(NULL != (entry = readdir(dir)))
     {
-        if(DT_DIR == entry->d_type) continue;
-
-        if(func(entry->d_name, data))
-            break;
+#ifndef MACOSX
+        if(entry->d_type != DT_DIR &&
+           !strncmp(entry->d_name, "libdp", 5) &&
+           !strncmp(entry->d_name + strlen(entry->d_name) - 3, ".so", 3))
+#endif
+#ifdef MACOSX
+        if(entry->d_type == DT_DIR &&
+           !strncmp(entry->d_name, "dp", 2))
+#endif
+        {
+            if(func(entry->d_name, data))
+                break;
+        }
     }
     closedir(dir);
     return 0;

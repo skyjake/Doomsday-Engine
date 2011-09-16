@@ -537,11 +537,21 @@ void GL_Shutdown(void)
     if(!initGLOk)
         return; // Not yet initialized fully.
 
-    GL_ShutdownDeferredTask();
-    FR_Shutdown();
-    Rend_DestroySkySphere();
-    Rend_Reset();
-    GL_ShutdownRefresh();
+    // We won't be drawing anything further but we don't want to shutdown
+    // with the previous frame still visible as this can lead to unwanted
+    // artefacts during video context switches on some displays.
+    //
+    // Render a few black frames before we continue.
+    if(!novideo)
+    {
+        int i = 0;
+        do
+        {
+            glClear(GL_COLOR_BUFFER_BIT);
+            GL_DoUpdate();
+        } while(++i < 3);
+    }
+    GL_ShutdownDeferredTask();    FR_Shutdown();    Rend_DestroySkySphere();    Rend_Reset();    GL_ShutdownRefresh();
 
     // Shutdown OpenGL.
     Sys_GLShutdown();

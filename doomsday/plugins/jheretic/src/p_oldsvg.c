@@ -25,9 +25,6 @@
 
 /**
  * Original Heretic saved game loader.
- *
- * \bug Not 64bit clean: In function 'P_v13_UnArchivePlayers': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'P_v13_UnArchiveThinkers': cast from pointer to integer of different size
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -349,11 +346,11 @@ static void SV_v13_ReadMobj(void)
     mo->info = info;
     SV_UpdateReadMobjFlags(mo, 0);
 
-    mo->state = &STATES[(int) mo->state];
+    mo->state = &STATES[PTR2INT(mo->state)];
     mo->target = NULL;
     if(mo->player)
     {
-        mo->player = &players[(int) mo->player - 1];
+        mo->player = &players[PTR2INT(mo->player) - 1];
         mo->player->plr->mo = mo;
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
@@ -381,7 +378,7 @@ void P_v13_UnArchivePlayers(void)
             if(plr->pSprites[j].state)
             {
                 plr->pSprites[j].state =
-                    &STATES[(int) plr->pSprites[j].state];
+                    &STATES[PTR2INT(plr->pSprites[j].state)];
             }
         }
     }

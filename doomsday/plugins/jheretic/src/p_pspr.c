@@ -601,7 +601,7 @@ void P_FireWeapon(player_t *player)
     int                 lvl = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
 #ifdef _DEBUG
-    Con_Message("P_FireWeapon: player %i\n", player - players);
+    Con_Message("P_FireWeapon: player %i\n", (int)(player - players));
 #endif
 
     if(!P_CheckAmmo(player))
@@ -611,7 +611,7 @@ void P_FireWeapon(player_t *player)
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
 #ifdef _DEBUG
-    Con_Message("P_FireWeapon: Setting player %i to attack state.\n", player - players);
+    Con_Message("P_FireWeapon: Setting player %i to attack state.\n", (int)(player - players));
 #endif
 
     if(player->refire)

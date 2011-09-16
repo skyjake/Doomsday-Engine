@@ -365,9 +365,9 @@ void Hu_MenuInitControlsPage(void)
             mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
 
             labelObj->_type = MN_TEXT;
-            if(binds->text && ((unsigned int) binds->text < NUMTEXT))
+            if(binds->text && (PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT))
             {
-                txt->text = GET_TXT((unsigned int)binds->text);
+                txt->text = GET_TXT(PTR2INT(binds->text));
             }
             else
             {

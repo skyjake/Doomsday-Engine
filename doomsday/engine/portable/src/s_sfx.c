@@ -888,7 +888,6 @@ void Sfx_Update(void)
  */
 void Sfx_StartFrame(void)
 {
-    static int          old3DMode = false;
     static int          old16Bit = false;
     static int          oldRate = 11025;
     static double       lastUpdate = 0;
@@ -902,11 +901,7 @@ void Sfx_StartFrame(void)
     audioDriver->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
-    if(old3DMode != sfx3D)
-    {
-        Sfx_3DMode(sfx3D != 0);
-        old3DMode = sfx3D;
-    }
+    Sfx_3DMode(sfx3D);
 
     // Check that the rate is valid.
     if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
@@ -1095,6 +1090,7 @@ boolean Sfx_Init(void)
     // The Sfx module is now available.
     sfxAvail = true;
 
+    // Initialize reverb effects to off.
     Sfx_ListenerNoReverb();
 
     // Finally, start the refresh thread.
@@ -1157,14 +1153,20 @@ void Sfx_RecreateChannels(void)
  */
 void Sfx_3DMode(boolean activate)
 {
-    if(sfx3D == activate)
+    static int old3DMode = false;
+
+    if(old3DMode == activate)
         return; // No change; do nothing.
 
-    sfx3D = activate;
+    sfx3D = old3DMode = activate;
     // To make the change effective, re-create all channels.
     Sfx_RecreateChannels();
+
     // If going to 2D, make sure the reverb is off.
-    Sfx_ListenerNoReverb();
+    if(!sfx3D)
+    {
+        Sfx_ListenerNoReverb();
+    }
 }
 
 /**

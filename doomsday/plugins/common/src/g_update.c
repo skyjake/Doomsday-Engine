@@ -24,8 +24,6 @@
 
 /**
  * Routines to call when updating the state of the engine
- *
- * \bug Not 64bit clean: In function 'G_RestoreState': cast from pointer to integer of different size
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -56,8 +54,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MANGLE_STATE(x)     ((state_t*) ((x)? (x)-STATES : -1))
-#define RESTORE_STATE(x)    ((int)(x)==-1? NULL : &STATES[(int)(x)])
+#define MANGLE_STATE(x)     (INT2PTR(state_t, ((x)? (x)-STATES : -1)))
+#define RESTORE_STATE(x)    (PTR2INT(x) < 0? NULL : &STATES[PTR2INT(x)])
 
 // TYPES -------------------------------------------------------------------
 
@@ -80,7 +78,7 @@ static boolean mangleMobj(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     mo->state = MANGLE_STATE(mo->state);
-    mo->info = (mobjinfo_t *) (mo->info - MOBJINFO);
+    mo->info = INT2PTR(mobjinfo_t, mo->info - MOBJINFO);
 
     return true; // Continue iteration.
 }
@@ -90,7 +88,7 @@ static boolean restoreMobj(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     mo->state = RESTORE_STATE(mo->state);
-    mo->info = &MOBJINFO[(int) mo->info];
+    mo->info = &MOBJINFO[PTR2INT(mo->info)];
 
     return true; // Continue iteration.
 }

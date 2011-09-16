@@ -644,6 +644,7 @@ void P_DeathThink(player_t* player)
                 }
                 player->plr->lookDir += lookDelta;
                 player->plr->flags |= DDPF_INTERPITCH;
+                player->plr->flags |= DDPF_FIXANGLES;
             }
         }
     }
@@ -671,6 +672,7 @@ void P_DeathThink(player_t* player)
             player->plr->lookDir = 0;
 #endif
         player->plr->flags |= DDPF_INTERPITCH;
+        player->plr->flags |= DDPF_FIXANGLES;
     }
 
 #if __JHEXEN__
@@ -679,12 +681,8 @@ void P_DeathThink(player_t* player)
 
     P_CalcHeight(player);
 
-    // In netgames we won't keep tracking the killer.
-    if(
-#if !__JHEXEN__
-        !IS_NETGAME &&
-#endif
-        player->attacker && player->attacker != player->plr->mo)
+    // Keep track of the killer.
+    if(player->attacker && player->attacker != player->plr->mo)
     {
 #if __JHEXEN__
         int dir = P_FaceMobj(player->plr->mo, player->attacker, &delta);
@@ -729,6 +727,9 @@ void P_DeathThink(player_t* player)
 
         player->plr->flags |= DDPF_INTERYAW;
 #endif
+
+        // Update client.
+        player->plr->flags |= DDPF_FIXANGLES;
     }
     else
     {
@@ -1362,7 +1363,7 @@ void P_PlayerThinkWeapons(player_t* player)
             }
 #ifdef _DEBUG
             Con_Message("P_PlayerThinkWeapons: Player %i changing weapon to %i (brain thinks %i).\n",
-                        player - players, newweapon, brain->changeWeapon);
+                        (int)(player - players), newweapon, brain->changeWeapon);
 #endif
             player->pendingWeapon = newweapon;
             brain->changeWeapon = WT_NOCHANGE;
@@ -1981,7 +1982,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkView(player);
     P_PlayerThinkSpecial(player);
 
-    if(!IS_CLIENT) // Locally only.
+    if(IS_CLIENT) // Locally only.
     {
         P_PlayerThinkSounds(player);
     }

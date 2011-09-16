@@ -111,12 +111,12 @@ fixed_t FixedDiv(fixed_t a, fixed_t b)
     return (FixedDiv2(a, b));
 }
 
-short ShortSwap(short n)
+int16_t ShortSwap(int16_t n)
 {
     return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
 }
 
-long LongSwap(long n)
+int32_t LongSwap(int32_t n)
 {
     return (((n & 0xff) << 24) | ((n & 0xff00) << 8) |
             ((n & 0xff0000) >> 8) | ((n & 0xff000000) >> 24));
@@ -124,7 +124,7 @@ long LongSwap(long n)
 
 float FloatSwap(float f)
 {
-    long temp = 0;
+    int32_t temp = 0;
     float returnValue = 0;
 
     memcpy(&temp, &f, 4); // Must be 4.

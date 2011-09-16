@@ -675,14 +675,18 @@ void D_NetMessageNoSound(int player, const char* msg)
 boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
                         int damage)
 {
-    return false;
-#if 0
-    if(!source || !source->player)
+    int sourcePlrNum = -1;
+
+    if(source && source->player)
+        sourcePlrNum = source->player - players;
+
+    if(source && !source->player)
     {
+        // Not applicable: only damage from players.
         return false;
     }
 
-    if(IS_SERVER && source->player - players > 0)
+    if(IS_SERVER && sourcePlrNum > 0)
     {
         /*
          * A client is trying to do damage. However, it is not guaranteed
@@ -693,18 +697,19 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
          */
         return false;
     }
-    else if(IS_CLIENT && source->player - players == CONSOLEPLAYER)
+    else if(IS_CLIENT)
     {
-        NetCl_DamageRequest(target, inflictor, source, damage);
-        return true;
-    }
+        if((sourcePlrNum < 0 || sourcePlrNum == CONSOLEPLAYER) &&
+           target && target->player && target->player - players == CONSOLEPLAYER)
+        {
+            // Clients are allowed to damage themselves.
+            NetCl_DamageRequest(ClPlayer_ClMobj(CONSOLEPLAYER), inflictor, source, damage);
 
-#if _DEBUG
-    Con_Message("D_NetDamageMobj: Allowing normal damage in netgame.\n");
-#endif
-    // Process as normal damage.
+            // No further processing of this damage is needed.
+            return true;
+        }
+    }
     return false;
-#endif
 }
 
 /**

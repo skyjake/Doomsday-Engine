@@ -914,7 +914,7 @@ D_CMD(CheatGive)
                     }
 
                     // Give one specific weapon.
-                    P_GiveWeapon(plr, idx, false);
+                    P_GiveWeapon(plr, idx, false, NULL, SFX_WPNUP);
                     break;
                 }
             }

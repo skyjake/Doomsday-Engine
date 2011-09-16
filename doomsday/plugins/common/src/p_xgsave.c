@@ -26,8 +26,6 @@
  * p_xgsave.c: Extended Generalized Line Types.
  *
  * Implements: Saving and loading routines for the XG data.
- *
- * \bug Not 64bit clean: In function 'SV_ReadXGLine': cast to pointer from integer of different size
  */
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -121,7 +119,7 @@ void SV_ReadXGLine(linedef_t *li)
     xg->tickerTimer = SV_ReadLong();
 
     // Will be updated later.
-    xg->activator = (void *) (unsigned int) SV_ReadShort();
+    xg->activator = INT2PTR(void, SV_ReadShort());
 
     xg->idata = SV_ReadLong();
     xg->fdata = SV_ReadFloat();

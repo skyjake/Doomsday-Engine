@@ -631,6 +631,9 @@ void P_SpawnClient(int plrNum)
     // The server will fix the player's position and angles soon after.
     spawnPlayer(plrNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
 
+    players[plrNum].viewHeight = cfg.plrViewHeight;
+    players[plrNum].viewHeightDelta = 0;
+
     // The mobj was just spawned onto invalid coordinates. The view cannot
     // be drawn until we receive the right coords.
     players[plrNum].plr->flags |= DDPF_UNDEFINED_POS;

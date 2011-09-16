@@ -330,7 +330,13 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int fl
     localMobj->flags = (localMobj->flags & ~0x1c000000) |
                        (remoteClientMobj->flags & 0x1c000000); // color translation flags (MF_TRANSLATION)
     localMobj->height = remoteClientMobj->height;
-    localMobj->floorClip = remoteClientMobj->floorClip;
+/*#ifdef _DEBUG
+    if(localMobj->floorClip != remoteClientMobj->floorClip)
+    {
+        Con_Message("Cl_UpdateRealPlayerMobj: Floorclip=%f\n", remoteClientMobj->floorClip);
+    }
+#endif
+    localMobj->floorClip = remoteClientMobj->floorClip;*/
     localMobj->selector &= ~DDMOBJ_SELECTOR_MASK;
     localMobj->selector |= remoteClientMobj->selector & DDMOBJ_SELECTOR_MASK;
     localMobj->visAngle = remoteClientMobj->angle >> 16;

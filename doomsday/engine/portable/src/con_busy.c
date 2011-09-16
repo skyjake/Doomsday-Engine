@@ -100,6 +100,7 @@ static uint transitionStartTime = 0;
 static float transitionPosition;
 
 static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
+static float doomWipeSamples[SCREENWIDTH+1];
 
 // CODE --------------------------------------------------------------------
 
@@ -722,6 +723,13 @@ static float sampleDoomWipeSine(float point)
     return offset + (SCREENHEIGHT/2) * (transitionPosition + sample) * transitionPosition * transitionPosition;
 }
 
+static void sampleDoomWipe(void)
+{
+    int i;
+    for(i = 0; i <= SCREENWIDTH; ++i)
+        doomWipeSamples[i] = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+}
+
 void Con_DrawTransition(void)
 {
     if(isDedicated)
@@ -739,52 +747,67 @@ void Con_DrawTransition(void)
 
     switch(transitionStyle)
     {
-    case TS_DOOMSMOOTH:
-        {
-        float colWidth = .5f / SCREENSHOT_TEXTURE_SIZE;
-        int i;
+    case TS_DOOMSMOOTH: {
+        float topAlpha, s, div, colWidth = 1.f / SCREENWIDTH;
+        int x, y, h, i;
 
-        glColor3f(1, 1, 1);
+        sampleDoomWipe();
+        div = 1 - .25f * transitionPosition;
+        topAlpha = 1 - transitionPosition;
+        topAlpha *= topAlpha;
+
+        h = SCREENHEIGHT * (1 - div);
+        x = 0;
+        s = 0;
 
         glBegin(GL_QUAD_STRIP);
-            glTexCoord2f(0, 1); glVertex2f(0, MAX_OF(0, sampleDoomWipeSine(0)));
-            glTexCoord2f(0, 0); glVertex2f(0, MAX_OF(0, sampleDoomWipeSine(0))+SCREENHEIGHT);
-        for(i = 1; i <= SCREENWIDTH; ++i)
+        for(i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
-            float s = (float) i / SCREENWIDTH - colWidth;
-            float x = i - .5f;
-            float y = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+            y = doomWipeSamples[i];
 
-            glTexCoord2f(s, 1); glVertex2f(x, y);
-            glTexCoord2f(s, 0); glVertex2f(x, y+SCREENHEIGHT);
+            glColor4f(1, 1, 1, topAlpha);
+            glTexCoord2f(s, 1); glVertex2i(x, y);
+            glColor4f(1, 1, 1, 1);
+            glTexCoord2f(s, div); glVertex2i(x, y + h);
         }
-            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, MAX_OF(0, sampleDoomWipeSine(1)));
-            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, MAX_OF(0, sampleDoomWipeSine(1))+SCREENHEIGHT);
+        glEnd();
+
+        x = 0;
+        s = 0;
+
+        glColor4f(1, 1, 1, 1);
+        glBegin(GL_QUAD_STRIP);
+        for(i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
+        {
+            y = doomWipeSamples[i] + h;
+
+            glTexCoord2f(s, div); glVertex2i(x, y);
+            glTexCoord2f(s, 0); glVertex2i(x, y + (SCREENHEIGHT - h));
+        }
         glEnd();
         break;
-        }
-    case TS_DOOM:
-        { // As above but drawn with whole pixel columns.
-        float colWidth = 1.0f / SCREENSHOT_TEXTURE_SIZE;
-        int i;
+      }
+    case TS_DOOM: {
+        // As above but drawn with whole pixel columns.
+        float s = 0, colWidth = 1.f / SCREENWIDTH;
+        int x = 0, y, i;
 
-        glColor3f(1, 1, 1);
+        sampleDoomWipe();
 
+        glColor4f(1, 1, 1, 1);
         glBegin(GL_QUADS);
-        for(i = 0; i <= SCREENWIDTH; ++i)
+        for(i = 0; i <= SCREENWIDTH; ++i, x++, s+= colWidth)
         {
-            float s = (float) i / SCREENWIDTH;
-            float x = i;
-            float y = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+            y = doomWipeSamples[i];
 
-            glTexCoord2f(s, 1); glVertex2f(x, y);
-            glTexCoord2f(s+colWidth, 1); glVertex2f(x+1, y);
-            glTexCoord2f(s+colWidth, 0); glVertex2f(x+1, y+SCREENHEIGHT);
-            glTexCoord2f(s, 0); glVertex2f(x, y+SCREENHEIGHT);
+            glTexCoord2f(s, 1); glVertex2i(x, y);
+            glTexCoord2f(s+colWidth, 1); glVertex2i(x+1, y);
+            glTexCoord2f(s+colWidth, 0); glVertex2i(x+1, y+SCREENHEIGHT);
+            glTexCoord2f(s, 0); glVertex2i(x, y+SCREENHEIGHT);
         }
         glEnd();
         break;
-        }
+      }
     case TS_CROSSFADE:
         glColor4f(1, 1, 1, 1 - transitionPosition);
 

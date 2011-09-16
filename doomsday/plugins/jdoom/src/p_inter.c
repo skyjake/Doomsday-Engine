@@ -110,7 +110,8 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 /**
  * The weapon name may have a MF_DROPPED flag ored in.
  */
-boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped)
+boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped,
+                     const char* pickupMessage, int pickupSound)
 {
     int                 numClips;
     ammotype_t          i;
@@ -147,7 +148,12 @@ boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped)
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
 
-        S_ConsoleSound(SFX_WPNUP, NULL, player - players);
+        // Notify the player.
+        S_ConsoleSound(pickupSound, NULL, player - players);
+        if(pickupMessage)
+        {
+            P_SetMessage(player, pickupMessage, false);
+        }
         return false;
     }
     else
@@ -185,6 +191,16 @@ boolean P_GiveWeapon(player_t* player, weapontype_t weapon, boolean dropped)
         // Maybe unhide the HUD?
         if(gaveWeapon)
             ST_HUDUnHide(player - players, HUE_ON_PICKUP_WEAPON);
+
+        if(gaveWeapon || gaveAmmo)
+        {
+            // Notify the player.
+            S_ConsoleSound(pickupSound, NULL, player - players);
+            if(pickupMessage)
+            {
+                P_SetMessage(player, pickupMessage, false);
+            }
+        }
 
         return (gaveWeapon || gaveAmmo);
     }
@@ -776,66 +792,38 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_WEAPON_BFG:
-        if(!P_GiveWeapon(plr, WT_SEVENTH, dropped))
+        if(!P_GiveWeapon(plr, WT_SEVENTH, dropped, GOTBFG9000, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTBFG9000, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CHAINGUN:
-        if(!P_GiveWeapon(plr, WT_FOURTH, dropped))
+        if(!P_GiveWeapon(plr, WT_FOURTH, dropped, GOTCHAINGUN, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTCHAINGUN, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CHAINSAW:
-        if(!P_GiveWeapon(plr, WT_EIGHTH, dropped))
+        if(!P_GiveWeapon(plr, WT_EIGHTH, dropped, GOTCHAINSAW, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTCHAINSAW, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_RLAUNCHER:
-        if(!P_GiveWeapon(plr, WT_FIFTH, dropped))
+        if(!P_GiveWeapon(plr, WT_FIFTH, dropped, GOTLAUNCHER, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTLAUNCHER, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_PLASMARIFLE:
-        if(!P_GiveWeapon(plr, WT_SIXTH, dropped))
+        if(!P_GiveWeapon(plr, WT_SIXTH, dropped, GOTPLASMA, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTPLASMA, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SHOTGUN:
-        if(!P_GiveWeapon(plr, WT_THIRD, dropped))
+        if(!P_GiveWeapon(plr, WT_THIRD, dropped, GOTSHOTGUN, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTSHOTGUN, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SSHOTGUN:
-        if(!P_GiveWeapon(plr, WT_NINETH, dropped))
+        if(!P_GiveWeapon(plr, WT_NINETH, dropped, GOTSHOTGUN2, !mapSetup? SFX_WPNUP : 0))
             return false;
-
-        P_SetMessage(plr, GOTSHOTGUN2, false);
-        if(!mapSetup)
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     default:

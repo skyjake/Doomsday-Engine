@@ -233,7 +233,7 @@ void Demo_WritePacket(int playerNum)
     demotimer_t    *inf = writeInfo + playerNum;
     byte            ptime;
 
-    if(playerNum == NSP_BROADCAST)
+    if(playerNum < 0)
     {
         Demo_BroadcastPacket();
         return;

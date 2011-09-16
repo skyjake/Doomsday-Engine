@@ -24,14 +24,6 @@
 
 /**
  * Save Game I/O
- *
- * \bug Not 64bit clean: In function 'SV_ReadPlayer': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'SV_WriteMobj': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'RestoreMobj': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'SV_ReadMobj': cast to pointer from integer of different size
- * \bug Not 64bit clean: In function 'P_UnArchiveThinkers': cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'P_UnArchiveBrain': cast to pointer from integer of different size, cast from pointer to integer of different size
- * \bug Not 64bit clean: In function 'P_UnArchiveSoundTargets': cast to pointer from integer of different size, cast from pointer to integer of different size
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -804,7 +796,8 @@ void SV_WriteLong(long val)
 
 void SV_WriteFloat(float val)
 {
-    long temp = 0;
+    int32_t temp = 0;
+    assert(sizeof(val) == 4);
     errorIfNotInited("SV_WriteFloat");
     memcpy(&temp, &val, 4);
     lzPutL(temp, savefile);
@@ -855,7 +848,7 @@ float SV_ReadFloat(void)
 {
 #if !__JHEXEN__
     float returnValue = 0;
-    long val;
+    int32_t val;
 #endif
     errorIfNotInited("SV_ReadFloat");
 #if __JHEXEN__
@@ -863,6 +856,7 @@ float SV_ReadFloat(void)
 #else
     val = lzGetL(savefile);
     returnValue = 0;
+    assert(sizeof(float) == 4);
     memcpy(&returnValue, &val, 4);
     return returnValue;
 #endif
@@ -1164,7 +1158,7 @@ static void SV_WritePlayer(int playernum)
     {
         pspdef_t       *psp = &p->pSprites[i];
 
-        SV_WriteLong((int)psp->state);
+        SV_WriteLong(PTR2INT(psp->state));
         SV_WriteLong(psp->tics);
         SV_WriteLong(FLT2FIX(psp->pos[VX]));
         SV_WriteLong(FLT2FIX(psp->pos[VY]));
@@ -1433,7 +1427,7 @@ static void SV_ReadPlayer(player_t* p)
     for(i = 0; i < numPSprites; ++i)
         if(p->pSprites[i].state)
         {
-            p->pSprites[i].state = &STATES[(int) p->pSprites[i].state];
+            p->pSprites[i].state = &STATES[PTR2INT(p->pSprites[i].state)];
         }
 
     // Mark the player for fixpos and fixangles.
@@ -1535,7 +1529,7 @@ static void SV_WriteMobj(const mobj_t* original)
 
     SV_WriteLong(mo->type);
     SV_WriteLong(mo->tics); // State tic counter.
-    SV_WriteLong((int) mo->state);
+    SV_WriteLong(PTR2INT(mo->state));
 
 #if __JHEXEN__
     SV_WriteLong(mo->damage);
@@ -1560,7 +1554,7 @@ static void SV_WriteMobj(const mobj_t* original)
         if(mo->flags & MF_CORPSE)
             SV_WriteLong(0);
         else
-            SV_WriteLong(SV_ThingArchiveNum((mobj_t *) mo->special2));
+            SV_WriteLong(SV_ThingArchiveNum(INT2PTR(mobj_t, mo->special2)));
         break;
 
     default:
@@ -1590,7 +1584,7 @@ static void SV_WriteMobj(const mobj_t* original)
 
     // Additional info record for player avatars only (only valid if type
     // == MT_PLAYER).
-    SV_WriteLong((int) mo->player);
+    SV_WriteLong(PTR2INT(mo->player));
 
     // Player number last looked for.
     SV_WriteLong(mo->lastLook);
@@ -1652,11 +1646,11 @@ static void SV_WriteMobj(const mobj_t* original)
 if(mo->tracer != NULL)
 Con_Error("SV_WriteMobj: Mobj using tracer. Possibly saved incorrectly.");
 # endif
-        SV_WriteLong((int) mo->tracer);
+        SV_WriteLong(PTR2INT(mo->tracer));
         break;
     }
 
-    SV_WriteLong((int) mo->lastEnemy);
+    SV_WriteLong(PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
     // Ver 7 features: generator
     SV_WriteShort(SV_ThingArchiveNum(mo->generator));
@@ -1726,7 +1720,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
 {
     mo->info = &MOBJINFO[mo->type];
 
-    P_MobjSetState(mo, (int) mo->state);
+    P_MobjSetState(mo, PTR2INT(mo->state));
 #if __JHEXEN__
     if(mo->flags2 & MF2_DORMANT)
         mo->tics = -1;
@@ -1736,7 +1730,7 @@ static void RestoreMobj(mobj_t *mo, int ver)
     {
         // The player number translation table is used to find out the
         // *current* (actual) player number of the referenced player.
-        int     pNum = saveToRealPlayerNum[(int) mo->player - 1];
+        int     pNum = saveToRealPlayerNum[PTR2INT(mo->player) - 1];
 
 #if __JHEXEN__
         if(pNum < 0)
@@ -1804,7 +1798,7 @@ static int SV_ReadMobj(thinker_t *th)
     mo->target = NULL;
     if(ver >= 2)
     {
-        mo->target = (mobj_t*) (int) SV_ReadShort();
+        mo->target = INT2PTR(mobj_t, SV_ReadShort());
     }
 #endif
 
@@ -1813,7 +1807,7 @@ static int SV_ReadMobj(thinker_t *th)
     mo->tracer = NULL;
     if(ver >= 5)
     {
-        mo->tracer = (mobj_t*) (int) SV_ReadShort();
+        mo->tracer = INT2PTR(mobj_t, SV_ReadShort());
     }
 #endif
 
@@ -1825,7 +1819,7 @@ static int SV_ReadMobj(thinker_t *th)
     if(ver >= 5)
 #endif
     {
-        mo->onMobj = (mobj_t*) (int) SV_ReadShort();
+        mo->onMobj = INT2PTR(mobj_t, SV_ReadShort());
     }
 
     // Info for drawing: position.
@@ -2035,7 +2029,7 @@ static int SV_ReadMobj(thinker_t *th)
 
 #if __JHERETIC__
     if(ver >= 7)
-        mo->generator = (mobj_t *) (int) SV_ReadShort();
+        mo->generator = INT2PTR(mobj_t, SV_ReadShort());
     else
         mo->generator = NULL;
 #endif
@@ -3409,7 +3403,7 @@ static void SV_WriteScript(const acs_t* th)
     SV_WriteLong(th->stackPtr);
     for(i = 0; i < MAX_ACS_SCRIPT_VARS; ++i)
         SV_WriteLong(th->vars[i]);
-    SV_WriteLong((int) (th->ip) - (int) ActionCodeBase);
+    SV_WriteLong(((const byte*)th->ip) - ActionCodeBase);
 }
 
 static int SV_ReadScript(acs_t* th)
@@ -3423,7 +3417,7 @@ static int SV_ReadScript(acs_t* th)
         /*int ver =*/ SV_ReadByte(); // version byte.
 
         th->activator = (mobj_t*) SV_ReadLong();
-        th->activator = SV_GetArchiveThing((int) th->activator, &th->activator);
+        th->activator = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
         temp = SV_ReadLong();
         if(temp == -1)
             th->line = NULL;
@@ -3449,7 +3443,7 @@ static int SV_ReadScript(acs_t* th)
 
         // Start of used data members.
         th->activator = (mobj_t*) SV_ReadLong();
-        th->activator = SV_GetArchiveThing((int) th->activator, &th->activator);
+        th->activator = SV_GetArchiveThing(PTR2INT(th->activator), &th->activator);
         temp = SV_ReadLong();
         if(temp == -1)
             th->line = NULL;
@@ -4134,8 +4128,8 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
-    mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
-    mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
+    mo->target = SV_GetArchiveThing(PTR2INT(mo->target), &mo->target);
+    mo->onMobj = SV_GetArchiveThing(PTR2INT(mo->onMobj), &mo->onMobj);
 
 #if __JHEXEN__
     switch(mo->type)
@@ -4150,7 +4144,7 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
     case MT_SORCFX1:
         if(saveVersion >= 3)
         {
-            mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+            mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
         }
         else
         {
@@ -4162,7 +4156,7 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
     // Just special2
     case MT_LIGHTNING_FLOOR:
     case MT_LIGHTNING_ZAP:
-        mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
+        mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
         break;
 
     // Both tracer and special2
@@ -4170,14 +4164,14 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
     case MT_LIGHTNING_CEILING:
         if(saveVersion >= 3)
         {
-            mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+            mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
         }
         else
         {
             mo->tracer = SV_GetArchiveThing(mo->special1, &mo->tracer);
             mo->special1 = 0;
         }
-        mo->special2 = (int) SV_GetArchiveThing(mo->special2, &mo->special2);
+        mo->special2 = PTR2INT(SV_GetArchiveThing(mo->special2, &mo->special2));
         break;
 
     default:
@@ -4185,10 +4179,10 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
     }
 #else
 # if __JDOOM__ || __JDOOM64__
-    mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
+    mo->tracer = SV_GetArchiveThing(PTR2INT(mo->tracer), &mo->tracer);
 # endif
 # if __JHERETIC__
-    mo->generator = SV_GetArchiveThing((int) mo->generator, &mo->generator);
+    mo->generator = SV_GetArchiveThing(PTR2INT(mo->generator), &mo->generator);
 # endif
 #endif
 
@@ -4355,7 +4349,7 @@ static void P_UnArchiveThinkers(void)
             xline_t *xline = P_ToXLine(P_ToPtr(DMU_LINEDEF, i));
             if(xline->xg)
                 xline->xg->activator =
-                    SV_GetArchiveThing((int) xline->xg->activator,
+                    SV_GetArchiveThing(PTR2INT(xline->xg->activator),
                                        &xline->xg->activator);
         }
     }
@@ -4460,9 +4454,9 @@ static void P_UnArchiveSoundTargets(void)
             Con_Error("P_UnArchiveSoundTargets: bad sector number\n");
 
         xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, secid));
-        xsec->soundTarget = (mobj_t*) (int) SV_ReadShort();
+        xsec->soundTarget = INT2PTR(mobj_t, SV_ReadShort());
         xsec->soundTarget =
-            SV_GetArchiveThing((int) xsec->soundTarget, &xsec->soundTarget);
+            SV_GetArchiveThing(PTR2INT(xsec->soundTarget), &xsec->soundTarget);
     }
 }
 #endif
