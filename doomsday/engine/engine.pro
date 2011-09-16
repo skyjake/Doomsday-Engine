@@ -53,7 +53,7 @@ win32 {
 
 # Engine Configuration -------------------------------------------------------
 
-contains(DENG_CONFIG, writertypecheck) {
+deng_writertypecheck {
     DEFINES += DENG_WRITER_TYPECHECK
 }
 

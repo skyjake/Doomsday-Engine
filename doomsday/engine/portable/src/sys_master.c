@@ -35,9 +35,6 @@
 
 #include "de_platform.h"
 
-#ifdef WIN32
-# define CURL_STATICLIB
-#endif
 #include <curl/curl.h>
 
 #include "de_base.h"

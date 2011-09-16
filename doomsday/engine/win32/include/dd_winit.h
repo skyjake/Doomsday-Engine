@@ -32,11 +32,15 @@
 #include "dd_pinit.h"
 #include <windows.h>
 
-#define MAINWCLASS          "DoomsdayMainWClass"
+#define MAINWCLASS          TEXT("DoomsdayMainWClass")
 
 typedef struct {
     HINSTANCE       hInstance;
+#ifdef UNICODE
+    LPCWSTR         className;
+#else
     LPCSTR          className;
+#endif
     BOOL            suspendMsgPump; // Set to true to disable checking windows msgs.
     BOOL            userDirOk;
 
@@ -47,6 +51,16 @@ typedef struct {
 
 extern uint windowIDX; // Main window.
 extern application_t app;
+
+#ifdef UNICODE
+LPCWSTR         ToWideString(const char* str);
+LPCSTR          ToAnsiString(const wchar_t* wstr);
+#  define WIN_STRING(s)     (ToWideString(s))
+#  define UTF_STRING(ws)    (ToAnsiString(ws))
+#else
+#  define WIN_STRING(s)     (s)
+#  define UTF_STRING(ws)    (ws)
+#endif
 
 void            DD_Shutdown(void);
 

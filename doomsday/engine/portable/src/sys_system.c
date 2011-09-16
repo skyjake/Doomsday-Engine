@@ -145,16 +145,20 @@ void Sys_Shutdown(void)
 int Sys_CriticalMessage(char *msg)
 {
 #ifdef WIN32
+#ifdef UNICODE
+    wchar_t     buf[256];
+#else
     char        buf[256];
+#endif
     int         ret;
     HWND        hWnd = Sys_GetWindowHandle(windowIDX);
 
     if(!hWnd)
     {
         suspendMsgPump = true;
-        MessageBoxA(HWND_DESKTOP,
-                    ("Sys_CriticalMessage: Main window not available."), NULL,
-                    MB_ICONERROR | MB_OK);
+        MessageBox(HWND_DESKTOP,
+                   TEXT("Sys_CriticalMessage: Main window not available."), NULL,
+                   MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return false;
     }
@@ -162,11 +166,8 @@ int Sys_CriticalMessage(char *msg)
     ShowCursor(TRUE);
     ShowCursor(TRUE);
     suspendMsgPump = true;
-    GetWindowTextA(hWnd, buf, 255);
-    ret =
-        (MessageBoxA(hWnd, (msg), (buf),
-                     MB_OK | MB_ICONEXCLAMATION) ==
-         IDYES);
+    GetWindowText(hWnd, buf, 255);
+    ret = (MessageBox(hWnd, WIN_STRING(msg), buf, MB_OK | MB_ICONEXCLAMATION) == IDYES);
     suspendMsgPump = false;
     ShowCursor(FALSE);
     ShowCursor(FALSE);
@@ -222,23 +223,27 @@ void Sys_Quit(void)
 void Sys_MessageBox(const char *msg, boolean iserror)
 {
 #ifdef WIN32
+#ifdef UNICODE
+    wchar_t title[300];
+#else
     char    title[300];
+#endif
     HWND    hWnd = Sys_GetWindowHandle(windowIDX);
 
     if(!hWnd)
     {
         suspendMsgPump = true;
-        MessageBoxA(HWND_DESKTOP,
-                    "Sys_MessageBox: Main window not available.", NULL,
-                    MB_ICONERROR | MB_OK);
+        MessageBox(HWND_DESKTOP,
+                   TEXT("Sys_MessageBox: Main window not available."), NULL,
+                   MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return;
     }
 
     suspendMsgPump = true;
-    GetWindowTextA(hWnd, title, 300);
-    MessageBoxA(hWnd, msg, title,
-                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
+    GetWindowText(hWnd, title, 300);
+    MessageBox(hWnd, WIN_STRING(msg), title,
+               MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
     suspendMsgPump = false;
 #endif
 #ifdef UNIX

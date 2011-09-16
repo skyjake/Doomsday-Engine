@@ -12,7 +12,8 @@ SUBDIRS += jdoom jheretic jhexen
 # Experimental games.
 SUBDIRS += jdoom64
 
-contains(DENG_PLUGINS, openal) {
+# Optional plugins.
+deng_openal {
     SUBDIRS += openal
 }
 

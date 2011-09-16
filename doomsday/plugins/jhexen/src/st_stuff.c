@@ -949,11 +949,11 @@ void ST_createWidgets(int player)
     STlib_InitNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, dpINumbers,
                   &hud->armorLevel, ST_ARMORWIDTH, 1);
 
-    // ManaA count.
+    // Mana A count.
     STlib_InitNum(&hud->wManaACount, ST_MANAAX, ST_MANAAY,
                   dpSmallNumbers, &hud->manaACount, ST_MANAAWIDTH, 1);
 
-    // ManaB count.
+    // Mana B count.
     STlib_InitNum(&hud->wManaBCount, ST_MANABX, ST_MANABY,
                   dpSmallNumbers, &hud->manaBCount, ST_MANABWIDTH, 1);
 

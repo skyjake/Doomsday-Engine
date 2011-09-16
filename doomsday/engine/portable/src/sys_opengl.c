@@ -226,12 +226,12 @@ static void createDummyWindow(application_t* app)
     boolean             ok = true;
 
     // Create the window.
-    hWnd = CreateWindowExA(WS_EX_APPWINDOW, MAINWCLASS, "dummy",
-                           (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
-                           CW_USEDEFAULT, CW_USEDEFAULT,
-                           CW_USEDEFAULT, CW_USEDEFAULT,
-                           NULL, NULL,
-                           app->hInstance, NULL);
+    hWnd = CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, TEXT("dummy"),
+                          (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          CW_USEDEFAULT, CW_USEDEFAULT,
+                          NULL, NULL,
+                          app->hInstance, NULL);
     if(hWnd)
     {   // Initialize.
         PIXELFORMATDESCRIPTOR pfd;

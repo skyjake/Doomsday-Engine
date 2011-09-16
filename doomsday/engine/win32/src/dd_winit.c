@@ -72,18 +72,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 uint windowIDX = 0; // Main window.
+application_t app;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-application_t app;
+#ifdef UNICODE
+static LPWSTR convBuf;
+static LPSTR utf8ConvBuf;
+#endif
 
 // CODE --------------------------------------------------------------------
 
+#ifdef UNICODE
+LPCWSTR ToWideString(const char* str)
+{
+    // Determine the length of the output string.
+    int wideChars = MultiByteToWideChar(CP_UTF8, 0, str, -1, 0, 0);
+
+    // Allocate the right amount of memory.
+    int bufSize = wideChars * sizeof(wchar_t) + 1;
+    convBuf = realloc(convBuf, bufSize);
+    memset(convBuf, 0, bufSize);
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, convBuf, wideChars);
+
+    return convBuf;
+}
+
+LPCSTR ToAnsiString(const wchar_t* wstr)
+{
+    // Determine how much memory is needed for the output string.
+    int utfBytes = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, 0, 0, 0, 0);
+
+    // Allocate the right amount of memory.
+    utf8ConvBuf = realloc(utf8ConvBuf, utfBytes);
+
+    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, utf8ConvBuf, utfBytes, 0, 0);
+
+    return utf8ConvBuf;
+}
+#endif
+
 BOOL InitApplication(application_t *app)
 {
-    WNDCLASSEXA wcex;
+    WNDCLASSEX wcex;
 
-    if(GetClassInfoExA(app->hInstance, app->className, &wcex))
+    if(GetClassInfoEx(app->hInstance, app->className, &wcex))
         return TRUE; // Already registered a window class.
 
     // Initialize a window class for our window.
@@ -104,7 +138,7 @@ BOOL InitApplication(application_t *app)
     wcex.lpszMenuName = NULL;
 
     // Register our window class.
-    return RegisterClassExA(&wcex);
+    return RegisterClassEx(&wcex);
 }
 
 static void determineGlobalPaths(application_t *app)
@@ -127,9 +161,15 @@ static void determineGlobalPaths(application_t *app)
     ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
 #else
     {
-    char                path[256];
-    GetModuleFileNameA(app->hInstance, path, 255);
-    Dir_FileDir(path, &ddBinDir);
+#ifdef UNICODE
+        wchar_t path[256];
+        GetModuleFileName(app->hInstance, path, 255);
+        Dir_FileDir(ToAnsiString(path), &ddBinDir);
+#else
+        char path[256];
+        GetModuleFileName(app->hInstance, path, 255);
+        Dir_FileDir(path, &ddBinDir);
+#endif
     }
 #endif
 
@@ -165,7 +205,7 @@ static boolean loadGamePlugin(application_t *app, const char *libPath)
         return false;
 
     // Now, load the library and get the API/exports.
-    app->hInstGame = LoadLibraryA(libPath);
+    app->hInstGame = LoadLibrary(WIN_STRING(libPath));
     if(!app->hInstGame)
     {
         DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %i).\n",
@@ -202,7 +242,7 @@ static int loadPlugin(application_t *app, const char *filename)
     for(i = 0; app->hInstPlug[i]; ++i);
 
     // Try to load it.
-    if(!(app->hInstPlug[i] = LoadLibraryA(filename)))
+    if(!(app->hInstPlug[i] = LoadLibrary(WIN_STRING(filename))))
         return FALSE;           // Failed!
 
     // That was all; the plugin registered itself when it was loaded.
@@ -271,7 +311,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
-        DD_InitCommandLine(GetCommandLineA());
+        DD_InitCommandLine(UTF_STRING(GetCommandLine()));
 
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
@@ -369,7 +409,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     CoUninitialize();
 
     // Unregister our window class.
-    UnregisterClassA(app.className, app.hInstance);
+    UnregisterClass(app.className, app.hInstance);
 
     // Bye!
     return exitCode;
@@ -505,6 +545,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 void DD_Shutdown(void)
 {
     int         i;
+
+#ifdef UNICODE
+    free(convBuf); convBuf = 0;
+    free(utf8ConvBuf); utf8ConvBuf = 0;
+#endif
 
     // Shutdown all subsystems.
     DD_ShutdownAll();

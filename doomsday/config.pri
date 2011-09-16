@@ -1,4 +1,16 @@
+# The Doomsday Engine Project
+# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+
+# CONFIG options for Doomsday:
+# - deng_nofixedasm         Disable assembler fixed-point math
+# - deng_openal             Build the OpenAL sound driver
+# - deng_rangecheck         Parameter range checking/value assertions
+# - deng_snowberry          Include Snowberry in installation
+# - deng_snowleopard        (Mac OS X) Use 10.6 SDK
+# - deng_writertypecheck    Enable type checking in Writer/Reader
+
 QT -= core gui
+CONFIG *= thread
 
 # Directories ----------------------------------------------------------------
 
@@ -30,7 +42,7 @@ defineTest(echo) {
 CONFIG(debug, debug|release) {
     echo(Debug build.)
     DEFINES += _DEBUG
-    DENG_CONFIG += rangecheck
+    CONFIG += deng_rangecheck
 } else {
     echo(Release build.)
     DEFINES += NDEBUG
@@ -43,10 +55,13 @@ win32 {
 
     DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
 
+    # Not all of our dependencies support a UNICODE build.
+    #DEFINES -= UNICODE
+
     DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
     # Also build the OpenAL plugin.
-    DENG_PLUGINS += openal
+    CONFIG += deng_openal
 }
 unix {
     # Unix/Mac build options.
@@ -61,7 +76,7 @@ unix {
 }
 unix:!macx {
     # Generic Unix build options.
-    DENG_CONFIG += nofixedasm installsb
+    CONFIG += deng_nofixedasm deng_snowberry
 
     # Link against standard math library.
     LIBS += -lm
@@ -76,7 +91,7 @@ unix:!macx {
     DENG_LIB_DIR = $$PREFIX/lib
 
     contains(QMAKE_HOST.arch, x86_64) {
-        message(64-bit architecture detected.)
+        echo(64-bit architecture detected.)
         DEFINES += HOST_IS_64BIT
 
         exists($$PREFIX/lib64) {
@@ -90,38 +105,38 @@ unix:!macx {
     DENG_BASE_DIR = $$PREFIX/share/doomsday
     DENG_DATA_DIR = $$DENG_BASE_DIR/data
 
-    message(Binary directory: $$DENG_BIN_DIR)
-    message(Library directory: $$DENG_LIB_DIR)
-    message(Doomsday base directory: $$DENG_BASE_DIR)
+    echo(Binary directory: $$DENG_BIN_DIR)
+    echo(Library directory: $$DENG_LIB_DIR)
+    echo(Doomsday base directory: $$DENG_BASE_DIR)
 }
 macx {
     # Mac OS X build options.
-    DENG_CONFIG += snowleopard nofixedasm
+    CONFIG += deng_snowleopard deng_nofixedasm
 
     DEFINES += MACOSX
 
     QMAKE_LFLAGS += -flat_namespace -undefined suppress
 
     # Select OS version.
-    contains(DENG_CONFIG, snowleopard) {
-        message("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
+    deng_snowleopard {
+        echo("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         CONFIG += x86 x86_64
     }
     else {
-        message("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
+        echo("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
         CONFIG += x86 ppc
     }
 }
 
-# Apply DENG_CONFIG ----------------------------------------------------------
+# Apply Configuration --------------------------------------------------------
 
-contains(DENG_CONFIG, nofixedasm) {
+deng_nofixedasm {
     DEFINES += NO_FIXED_ASM
 }
-!contains(DENG_CONFIG, rangecheck) {
+!deng_rangecheck {
     DEFINES += NORANGECHECKING
 }

@@ -11,7 +11,7 @@ include(../config.pri)
 system(cd $$PWD/scripts/ && python packres.py $$OUT_PWD/..)
 
 # Install the launcher.
-contains(DENG_CONFIG, installsb) {
+deng_snowberry {
     SB_ROOT = ../../snowberry
     SB_DIR = $$DENG_BASE_DIR/snowberry
 
