@@ -549,7 +549,8 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
                           (unsigned long) (size + 2), result) );
 #endif
     if(result < 0 || (size_t) result != size + 2)
-    {        perror("Socket error");
+    {
+        perror("Socket error");
     }
 }
 

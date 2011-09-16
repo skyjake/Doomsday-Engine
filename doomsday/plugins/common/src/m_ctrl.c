@@ -400,9 +400,7 @@ void Hu_MenuInitControlsPage(void)
 
 static void drawSmallText(const char* string, int x, int y, float alpha)
 {
-    int height;
-
-    height = FR_TextHeight(string);
+    int height = FR_TextHeight(string);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

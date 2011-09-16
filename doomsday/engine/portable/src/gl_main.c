@@ -551,7 +551,11 @@ void GL_Shutdown(void)
             GL_DoUpdate();
         } while(++i < 3);
     }
-    GL_ShutdownDeferredTask();    FR_Shutdown();    Rend_DestroySkySphere();    Rend_Reset();    GL_ShutdownRefresh();
+    GL_ShutdownDeferredTask();
+    FR_Shutdown();
+    Rend_DestroySkySphere();
+    Rend_Reset();
+    GL_ShutdownRefresh();
 
     // Shutdown OpenGL.
     Sys_GLShutdown();

@@ -2336,7 +2336,8 @@ void P_UseLines(player_t* player)
     {
 #ifdef _DEBUG
         Con_Message("P_UseLines: Sending a use request for player %i.\n", (int) (player - players));
-#endif        NetCl_PlayerActionRequest(player, GPA_USE, 0);
+#endif
+        NetCl_PlayerActionRequest(player, GPA_USE, 0);
         return;
     }
 
