@@ -1059,6 +1059,9 @@ void R_RenderPlayerView(int num)
     vd->sharp.angle = viewAngle; /* $unifiedangles */
     vd->sharp.pitch = viewPitch;
 
+    if(vd->window.width == 0 || vd->window.height == 0)
+        return; // Too early? Game has not configured the view window?
+
     // Setup for rendering the frame.
     R_SetupFrame(player);
     if(!freezeRLs)
