@@ -909,14 +909,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\cl_oldframe.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\cl_oldworld.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\cl_player.c"
 				>
 			</File>
@@ -1341,6 +1333,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\reader.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\rend_bias.c"
 				>
 			</File>
@@ -1422,6 +1418,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\s_wav.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\smoother.c"
 				>
 			</File>
 			<File
@@ -1598,6 +1598,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\ui_panel.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\writer.c"
 				>
 			</File>
 			<Filter
@@ -2630,15 +2634,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_api.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_def.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_gl.h"
 				>
 			</File>
 			<File
@@ -2658,23 +2654,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_maptypes.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_pinit.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_plugin.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_share.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_types.h"
 				>
 			</File>
 			<File
@@ -2767,10 +2747,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\def_share.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\doomsday.h"
 				>
 			</File>
 			<File
@@ -3174,10 +3150,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\sys_audiod.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_audiod_dummy.h"
 				>
 			</File>
@@ -3186,15 +3158,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_audiod_sdlmixer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\sys_audiod_sfx.h"
 				>
 			</File>
 			<File
@@ -3839,10 +3803,74 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\engine\api\doomsday.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_api.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_gl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_maptypes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_plugin.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_share.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_types.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_world.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\doomsday.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\reader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\smoother.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod_sfx.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\writer.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\engine\api\doomsday.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>
