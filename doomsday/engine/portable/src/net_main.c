@@ -396,6 +396,7 @@ void Net_ResetTimer(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        if(!clients[i].connected || !clients[i].smoother) continue;
         Smoother_Clear(clients[i].smoother);
     }
 }

@@ -1034,12 +1034,15 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
 #endif
 
     // Clear the smoother for this client.
-    Smoother_Clear(clients[plrNum].smoother);
+    if(clients[plrNum].smoother)
+    {
+        Smoother_Clear(clients[plrNum].smoother);
+    }
 }
 
 void Sv_Ticker(timespan_t ticLength)
 {
-    int                 i;
+    int i;
 
     // Note last angles for all players.
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -1049,8 +1052,11 @@ void Sv_Ticker(timespan_t ticLength)
         if(!plr->shared.inGame || !plr->shared.mo)
             continue;
 
-        // Update the smoother.
-        Smoother_Advance(clients[i].smoother, ticLength);
+        // Update the smoother?
+        if(clients[i].smoother)
+        {
+            Smoother_Advance(clients[i].smoother, ticLength);
+        }
 
         if(DD_IsSharpTick())
         {
