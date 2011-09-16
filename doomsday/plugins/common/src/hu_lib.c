@@ -777,9 +777,9 @@ void MNPage_Initialize(mn_page_t* page)
             break;
         case MN_BUTTON: {
             mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-            if(NULL != btn->text && ((unsigned int)btn->text < NUMTEXT))
+            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
             {
-                btn->text = GET_TXT((unsigned int)btn->text);
+                btn->text = GET_TXT(PTR2INT(btn->text));
                 MNObject_SetShortcut(obj, btn->text[0]);
             }
 
@@ -792,9 +792,9 @@ void MNPage_Initialize(mn_page_t* page)
           }
         case MN_EDIT: {
             mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-            if(NULL != edit->emptyString && ((unsigned int)edit->emptyString < NUMTEXT))
+            if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
             {
-                edit->emptyString = GET_TXT((unsigned int)edit->emptyString);
+                edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
             }
             // Update text.
             //memset(obj->text, 0, sizeof(obj->text));
@@ -807,9 +807,9 @@ void MNPage_Initialize(mn_page_t* page)
             for(j = 0; j < list->count; ++j)
             {
                 mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[j];
-                if(NULL != item->text && ((unsigned int)item->text < NUMTEXT))
+                if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
                 {
-                    item->text = GET_TXT((unsigned int)item->text);
+                    item->text = GET_TXT(PTR2INT(item->text));
                 }
             }
 
