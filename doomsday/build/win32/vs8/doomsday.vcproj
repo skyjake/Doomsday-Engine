@@ -1549,6 +1549,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\sys_audio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\sys_audiod_dummy.h"
 				>
 			</File>
@@ -1558,10 +1562,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_audiod_sdlmixer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\sys_audiod_sfx.h"
 				>
 			</File>
 			<File
@@ -2242,15 +2242,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\sys_audio.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\api\sys_audiod.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod_sfx.h"
 				>
 			</File>
 			<File
