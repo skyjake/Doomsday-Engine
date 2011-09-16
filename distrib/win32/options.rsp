@@ -1,0 +1,16 @@
+-wnd
+-file doomsday.pk3
+
+-game jdoom
+-iwad \Users\skyjake\Dropbox\IWADs\Doom.wad
+-file jdoom.pk3
+
+--
+
+-game jheretic
+-iwad \Users\skyjake\Dropbox\IWADs\Heretic.wad
+-file jheretic.pk3
+
+-game jhexen
+-iwad \Users\skyjake\Dropbox\IWADs\Hexen.wad
+-file jhexen.pk3
