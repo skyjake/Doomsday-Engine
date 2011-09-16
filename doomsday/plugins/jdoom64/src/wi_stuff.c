@@ -889,33 +889,34 @@ static void maybeAdvanceState(void)
 
         if(player->brain.attack)
         {
-            if(player->brain.attack)
+            if(!player->attackDown)
             {
-                if(!player->attackDown)
-                {
-                    if(IS_CLIENT)
-                        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
-                    else
-                        IN_SkipToNext();
-                }
-                player->attackDown = true;
+                if(IS_CLIENT)
+                    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                else
+                    IN_SkipToNext();
             }
-            else
-                player->attackDown = false;
+            player->attackDown = true;
+        }
+        else
+        {
+            player->attackDown = false;
+        }
 
-            if(player->brain.use)
+        if(player->brain.use)
+        {
+            if(!player->useDown)
             {
-                if(!player->useDown)
-                {
-                    if(IS_CLIENT)
-                        NetCl_PlayerActionRequest(player, GPA_USE, 0);
-                    else
-                        IN_SkipToNext();
-                }
-                player->useDown = true;
+                if(IS_CLIENT)
+                    NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                else
+                    IN_SkipToNext();
             }
-            else
-                player->useDown = false;
+            player->useDown = true;
+        }
+        else
+        {
+            player->useDown = false;
         }
     }
 }
