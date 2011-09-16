@@ -3492,7 +3492,7 @@ int Hu_MenuSelectSingleplayer(mn_object_t* obj, mn_actionid_t action, void* para
 int Hu_MenuSelectMultiplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
     /// \fixme Find object by id.
-    mn_object_t* labelObj = &MultiplayerMenu.objects[1];
+    mn_object_t* labelObj = &MultiplayerMenu.objects[0];
     mndata_button_t* btn = (mndata_button_t*)labelObj->_typedata;
     if(MNA_ACTIVEOUT != action) return 1;
     // Set the appropriate label.
