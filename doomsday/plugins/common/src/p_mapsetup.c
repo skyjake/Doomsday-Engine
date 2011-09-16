@@ -651,30 +651,31 @@ static void spawnMapObjects(void)
 
         // A spot that should auto-spawn one (or more) mobjs.
 
-        // Check for things that clients don't spawn on their own.
-        if(IS_CLIENT)
-        {
-            // Client is allowed to spawn objects that are flagged local.
-            // The server will not send any information about them.
-            if(!(MOBJINFO[type].flags & MF_LOCAL))
-            {
-                if(!P_IsClientAllowedToSpawn(spot->doomEdNum))
-                    continue;
-            }
-        }
-
         // Find which type to spawn.
-        if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) != MT_NONE)
-        {   // A known type; spawn it!
+        type = P_DoomEdNumToMobjType(spot->doomEdNum);
+        if(type != MT_NONE)
+        {
             mobj_t* mo;
+
+            // Check for things that clients don't spawn on their own.
+            if(IS_CLIENT)
+            {
+                // Client is allowed to spawn objects that are flagged local.
+                // The server will not send any information about them.
+                if(!(MOBJINFO[type].flags & MF_LOCAL))
+                {
+                    if(!P_IsClientAllowedToSpawn(spot->doomEdNum))
+                        continue;
+                }
+            }
+
 /*#if _DEBUG
-Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
-        spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
-        spot->doomedNum, spot->flags);
+            Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
+                    spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
+                    spot->doomedNum, spot->flags);
 #endif*/
 
-            if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle,
-                                    spot->flags)))
+            if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle, spot->flags)))
             {
                 if(mo->tics > 0)
                     mo->tics = 1 + (P_Random() % mo->tics);
