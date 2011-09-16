@@ -138,13 +138,25 @@ void NetCl_UpdateGameState(Reader* msg)
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-    if(gsGameMode != gameMode)
+#pragma message("!!!WARNING: NetCl_UpdateGameState presently overrides gameMode mismatches.")
+    /**
+     * \kludge
+     * djs: 2010-09-20 23:31 GMT
+     * Dedicated servers are presently built from the master branch and as such
+     * our gameMode will never match that returned by the server. However, this
+     * is now protected against at a much higher level during game initialization
+     * so we don't really need to be worrying about that here.
+     *
+     * For now we'll override it using our local gameMode value.
+     */
+    gsGameMode = gameMode;
+    /*if(gsGameMode != gameMode)
     {   // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
         // Stop the demo if one is being played.
         DD_Execute(false, "stopdemo");
         return;
-    }
+    } kludge end */
 
     deathmatch = gsDeathmatch;
     noMonstersParm = !gsMonsters;
