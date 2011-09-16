@@ -1,4 +1,4 @@
-/**\file con_buffer.h
+/**\file cbuffer.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,20 +22,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Console history buffer.
- */
-
 #ifndef LIBDENG_CONSOLE_BUFFER_H
 #define LIBDENG_CONSOLE_BUFFER_H
 
-#include "sys_system.h"
-
 /**
  * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
+ *
+ * These correspond to the good old text mode VGA colors.
+ * @{
  */
-/*@{*/
-// These correspond the good old text mode VGA colors.
 #define CBLF_BLACK          0x00000001
 #define CBLF_BLUE           0x00000002
 #define CBLF_GREEN          0x00000004
@@ -49,73 +44,78 @@
 #define CBLF_CENTER         0x00000400
 /*@}*/
 
-// A console buffer line.
 typedef struct cbline_s {
-    uint            len; // This is the length of the line (no term).
-    char*           text; // This is the text.
-    int             flags;
+    uint len; /// Length of the line in characters (no terminator).
+    char* text; /// Text line.
+    int flags; /// @see consoleBufferLineFlags
 } cbline_t;
 
+/**
+ * @defgroup consoleBufferFlags Console Buffer Flags.
+ * @{
+ */
 #define CBF_ALWAYSFLUSH  0x00000001 // don't leave data in the write buffer.
+/**@}*/
 
-// A console buffer.
-typedef struct {
-    mutex_t         mutex;
-    int             flags; // CBF_* flags.
-    uint            numLines; // How many lines are there in the buffer?
-    uint            maxLines; // Maximum number of lines for the buffer.
-    uint            maxLineLen; // Maximum length of a line.
+/**
+ * CBuffer. Console text buffer.
+ * @ingroup console
+ */
+struct cbuffer_s; // The cbuffer instance (opaque).
+typedef struct cbuffer_s CBuffer;
 
-    void*           headptr;
-    void*           tailptr;
-    void*           unused;
+/**
+ * Construct a new (empty) console buffer.
+ *
+ * @param maxNumLines  Maximum number of lines the buffer can hold.
+ * @param maxLineLength  Maximum length of a text line in characters.
+ * @param flags  @see consoleBufferFlags
+ */
+CBuffer* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags);
 
-    cbline_t**      index; // Used when indexing the buffer for read.
-    uint            indexSize;
-    boolean         indexGood; // If the index needs updating.
-
-    char*           writebuf; // write buffer.
-    uint            wbc; // write buffer cursor.
-    int             wbFlags; // write buffer line flags.
-} cbuffer_t;
-
-cbuffer_t* Con_NewBuffer(uint maxNumLines, uint maxLineLength, int cbflags);
-void Con_DestroyBuffer(cbuffer_t* buf);
+void CBuffer_Delete(CBuffer* cb);
 
 /**
  * Write the given text string (plus optional flags) to the buffer.
  *
- * @param buf  Ptr to the buffer to write to.
  * @param flags  @see consoleBufferLineFlags
  * @param txt  Ptr to the text string to be written.
  */
-void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt);
+void CBuffer_Write(CBuffer* cb, int flags, const char* txt);
 
-void Con_BufferFlush(cbuffer_t* buf);
-void Con_BufferClear(cbuffer_t* buf);
+/// Flush the content of the write buffer.
+void CBuffer_Flush(CBuffer* cb);
+
+/// Clear the text content of the buffer.
+void CBuffer_Clear(CBuffer* cb);
 
 /// @return  Current maximum line length in characters.
-uint Con_BufferMaxLineLength(cbuffer_t* buf);
+uint CBuffer_MaxLineLength(CBuffer* cb);
 
 /**
- * Change the maximum line length for the given console history buffer.
- * Existing lines are unaffected, the change only impacts new lines.
- *
- * @param buf  Ptr to the buffer to be changed.
- * @param length  Length to set the max line length to.
+ * Change the maximum line length.
+ * \note Existing lines are unaffected, the change only impacts new lines.
+ * @param length  New max line length, in characters.
  */
-void Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length);
+void CBuffer_SetMaxLineLength(CBuffer* cb, uint length);
 
-uint Con_BufferNumLines(cbuffer_t* buf);
+/// @return  Number of lines present in the buffer.
+uint CBuffer_NumLines(CBuffer* cb);
 
-const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
+/**
+ * Retrieve an immutable ptr to the text line at index @a idx.
+ *
+ * @param idx  Index of the line to retrieve.
+ * @return  Text line at index @a idx, or @c NULL if invalid index.
+ */
+const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx);
 
 /**
  * @defgroup bufferLineFlags Buffer Line Flags.
  */
 /*@{*/
-#define BLF_OMIT_RULER      0x1 // Ignore rulers.
-#define BLF_OMIT_EMPTYLINE  0x2 // Ignore empty lines.
+#define BLF_OMIT_RULER      0x1 /// Ignore rulers.
+#define BLF_OMIT_EMPTYLINE  0x2 /// Ignore empty lines.
 /*@}*/
 
 /**
@@ -132,6 +132,6 @@ const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
  *
  * @return              The number of elements written back to the buffer.
  */
-uint Con_BufferGetLines2(cbuffer_t* buf, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
-uint Con_BufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx, cbline_t const** list);
+uint CBuffer_GetLines2(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
+uint CBuffer_GetLines(CBuffer* cb, uint reqCount, int firstIdx, cbline_t const** list); /* blflags = 0 */
 #endif /* LIBDENG_CONSOLE_BUFFER_H */

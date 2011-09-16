@@ -36,8 +36,10 @@
 #include "de_ui.h"
 
 #include "math.h"
-#include "rend_console.h"
 #include "materialvariant.h"
+#include "cbuffer.h"
+
+#include "rend_console.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -158,10 +160,10 @@ void Rend_ConsoleCursorResetBlink(void)
     ConsoleBlink = 0;
 }
 
-// Calculate the average of the given colors.
+// Calculate the average of the given color flags.
 static void calcAvgColor(int fl, float rgb[3])
 {
-    assert(inited && NULL != rgb);
+    assert(inited && rgb);
     {
     int count = 0;
     rgb[CR] = rgb[CG] = rgb[CB] = 0;
@@ -582,14 +584,12 @@ static void drawConsole(float consoleAlpha)
 #define PADDING             (2)
 #define LOCALBUFFSIZE       (CMDLINE_SIZE +1/*prompt length*/ +1/*terminator*/)
 
-    extern uint bLineOff;
-
     assert(inited);
     {
     static const cbline_t** lines = 0;
     static int bufferSize = 0;
 
-    cbuffer_t* buffer = Con_HistoryBuffer();
+    CBuffer* buffer = Con_HistoryBuffer();
     uint cmdCursor = Con_CommandLineCursorPosition();
     char* cmdLine = Con_CommandLine();
     float scale[2], y, fontScaledY, gtosMulY = theWindow->height / 200.0f;
@@ -636,10 +636,10 @@ static void drawConsole(float consoleAlpha)
     reqLines = MAX_OF(0, ceil(y / fontScaledY)+1);
     if(reqLines != 0)
     {
-        uint count, totalLines = Con_BufferNumLines(buffer);
+        uint count, totalLines = CBuffer_NumLines(buffer);
         int firstIdx;
 
-        firstIdx = -((long)(reqLines + bLineOff));
+        firstIdx = -((long)(reqLines + Con_HistoryOffset()));
         if(firstIdx < -((long)totalLines))
             firstIdx = -((long)totalLines);
 
@@ -650,7 +650,7 @@ static void drawConsole(float consoleAlpha)
             bufferSize = reqLines;
         }
 
-        count = Con_BufferGetLines2(buffer, reqLines, firstIdx, lines, BLF_OMIT_EMPTYLINE);
+        count = CBuffer_GetLines2(buffer, reqLines, firstIdx, lines, BLF_OMIT_EMPTYLINE);
         if(count != 0)
         {
             glEnable(GL_TEXTURE_2D);
@@ -715,7 +715,7 @@ static void drawConsole(float consoleAlpha)
     y = ConsoleY * gtosMulY - (lineHeight * scale[1]) - textOffsetY;
 
     cmdLineLength = (uint)strlen(cmdLine);
-    maxLineLength = Con_BufferMaxLineLength(buffer) - 1/*prompt length*/;
+    maxLineLength = CBuffer_MaxLineLength(buffer) - 1/*prompt length*/;
 
     if(cmdLineLength >= maxLineLength)
     {

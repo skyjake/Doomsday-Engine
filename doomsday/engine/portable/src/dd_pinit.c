@@ -183,15 +183,6 @@ void DD_InitCommandLine(const char* cmdLine)
 }
 
 /**
- * Sets the level of verbosity that was requested using the -verbose
- * option(s).
- */
-void DD_Verbosity(void)
-{
-    verbose = ArgExists("-verbose");
-}
-
-/**
  * Called early on during the startup process so that we can get the console
  * online ready for printing ASAP.
  */
@@ -209,9 +200,6 @@ void DD_ConsoleInit(void)
     else
     {
         setbuf(outFile, NULL); // Don't buffer much.
-
-        // Determine the requested degree of verbosity.
-        DD_Verbosity();
 
         // Get the console online ASAP.
         if(!Con_Init())

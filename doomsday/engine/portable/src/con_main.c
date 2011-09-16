@@ -57,6 +57,7 @@
 #include "de_defs.h"
 #include "de_filesys.h"
 
+#include "cbuffer.h"
 #include "font.h"
 
 // MACROS ------------------------------------------------------------------
@@ -144,15 +145,16 @@ byte    consoleDump = true;
 int     consoleActiveKey = '`'; // Tilde.
 byte    consoleSnapBackOnPrint = false;
 
-char   *prbuff = NULL;          // Print buffer, used by conPrintf.
+char* prbuff = NULL; // Print buffer, used by conPrintf.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static cbuffer_t *histBuf = NULL; // The console history buffer (log).
-uint bLineOff; // How many lines from the last in the histBuf?
+static CBuffer* histBuf = NULL; // The console history buffer (log).
+static uint bLineOff; // How many lines from the last in the histBuf?
 
-static cbuffer_t *oldCmds = NULL; // The old commands buffer.
-uint ocPos;    // How many cmds from the last in the oldCmds buffer.
+static char** oldCmds = NULL; // The old commands buffer.
+static uint oldCmdsSize = 0, oldCmdsMax = 0;
+static uint ocPos; // How many cmds from the last in the oldCmds buffer.
 
 static boolean ConsoleInited;   // Has Con_Init() been called?
 static boolean ConsoleActive;   // Is the console active?
@@ -163,9 +165,9 @@ static uint cmdCursor;          // Position of the cursor on the command line.
 static boolean cmdInsMode;      // Are we in insert input mode.
 static boolean conInputLock;    // While locked, most user input is disabled.
 
-static execbuff_t *exBuff;
+static execbuff_t* exBuff;
 static int exBuffSize;
-static execbuff_t *curExec;
+static execbuff_t* curExec;
 
 // The console font.
 static fontnum_t consoleFont;
@@ -259,7 +261,7 @@ void Con_ResizeHistoryBuffer(void)
         }
     }
 
-    Con_BufferSetMaxLineLength(Con_HistoryBuffer(), maxLength);
+    CBuffer_SetMaxLineLength(Con_HistoryBuffer(), maxLength);
 }
 
 static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
@@ -373,14 +375,28 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 #undef IS_ESC_CHAR
 }
 
+static void clearCommandHistory(void)
+{
+    if(!oldCmds) return;
+
+    { uint i;
+    for(i = 0; i < oldCmdsSize; ++i)
+    {
+        free(oldCmds[i]);
+    }}
+    free(oldCmds), oldCmds = NULL;
+    oldCmdsSize = 0, oldCmdsMax = 0;
+}
+
 boolean Con_Init(void)
 {
     Con_Message("Initializing the console...\n");
 
-    histBuf = Con_NewBuffer(512, 70, 0);
+    histBuf = CBuffer_New(512, 70, 0);
     bLineOff = 0;
 
-    oldCmds = Con_NewBuffer(0, CMDLINE_SIZE, CBF_ALWAYSFLUSH);
+    oldCmds = NULL;
+    oldCmdsSize = 0, oldCmdsMax = 0;
     ocPos = 0; // No commands yet.
 
     exBuff = NULL;
@@ -417,8 +433,8 @@ void Con_Shutdown(void)
     if(prbuff)
         M_Free(prbuff); // Free the print buffer.
 
-    Con_DestroyBuffer(histBuf); // The console history buffer.
-    Con_DestroyBuffer(oldCmds); // The old commands buffer.
+    CBuffer_Delete(histBuf); // The console history buffer.
+    clearCommandHistory();
 }
 
 boolean Con_IsActive(void)
@@ -441,9 +457,14 @@ char* Con_CommandLine(void)
     return cmdLine;
 }
 
-cbuffer_t* Con_HistoryBuffer(void)
+CBuffer* Con_HistoryBuffer(void)
 {
     return histBuf;
+}
+
+uint Con_HistoryOffset(void)
+{
+    return bLineOff;
 }
 
 uint Con_CommandLineCursorPosition(void)
@@ -1319,6 +1340,45 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
+static const char* getCommandFromHistory(uint idx)
+{
+    if(idx < oldCmdsSize) return oldCmds[idx];
+    return NULL;
+}
+
+static void expandCommandHistory(void)
+{
+    if(!oldCmds || oldCmdsSize > oldCmdsMax)
+    {
+        if(!oldCmdsMax)
+            oldCmdsMax = 16;
+        else
+            oldCmdsMax *= 2;
+
+        oldCmds = (char**)realloc(oldCmds, oldCmdsMax * sizeof *oldCmds);
+        if(!oldCmds) Con_Error("expandCommandHistory: Failed on (re)allocation of %lu bytes.", (unsigned long) (oldCmdsMax * sizeof *oldCmds));
+    }
+}
+
+static void addCommandToHistory(const char* cmd)
+{
+    char** oldCmdAdr;
+    size_t cmdLength;
+
+    if(!cmd) return;
+
+    cmdLength = strlen(cmd);
+
+    ++oldCmdsSize;
+    expandCommandHistory();
+    oldCmdAdr = &oldCmds[oldCmdsSize-1];
+    *oldCmdAdr = (char*)malloc(cmdLength+1);
+    if(!*oldCmdAdr) Con_Error("addCommandToHistory: Failed on allocation of %lu bytes for new command.", (unsigned long) cmdLength);
+
+    memcpy(*oldCmdAdr, cmd, cmdLength);
+    (*oldCmdAdr)[cmdLength] = '\0';
+}
+
 static void processCmd(byte src)
 {
     DD_ClearKeyRepeaters();
@@ -1326,8 +1386,8 @@ static void processCmd(byte src)
     // Add the command line to the oldCmds buffer.
     if(strlen(cmdLine) > 0)
     {
-        Con_BufferWrite(oldCmds, 0, cmdLine);
-        ocPos = Con_BufferNumLines(oldCmds);
+        addCommandToHistory(cmdLine);
+        ocPos = oldCmdsSize;
     }
 
     Con_Execute(src, cmdLine, false, false);
@@ -1335,10 +1395,14 @@ static void processCmd(byte src)
 
 static void updateCmdLine(void)
 {
-    if(ocPos >= Con_BufferNumLines(oldCmds))
+    if(ocPos >= oldCmdsSize)
+    {
         memset(cmdLine, 0, sizeof(cmdLine));
+    }
     else
-        strncpy(cmdLine, Con_BufferGetLine(oldCmds, ocPos)->text, CMDLINE_SIZE);
+    {
+        strncpy(cmdLine, getCommandFromHistory(ocPos), CMDLINE_SIZE);
+    }
 
     cmdCursor = complPos = (uint) strlen(cmdLine);
 }
@@ -1374,7 +1438,7 @@ void Con_Open(int yes)
     {
         complPos = 0;
         lastCompletion = 0;
-        ocPos = Con_BufferNumLines(oldCmds);
+        ocPos = oldCmdsSize;
         ConsoleActive = false;
     }
 
@@ -1479,7 +1543,7 @@ boolean Con_Responder(ddevent_t* ev)
         if(conInputLock)
             break;
 
-        if(ocPos > 0)
+        if(ocPos != 0)
             ocPos--;
         // Update the command line.
         updateCmdLine();
@@ -1487,35 +1551,29 @@ boolean Con_Responder(ddevent_t* ev)
         return true;
 
     case DDKEY_DOWNARROW:
-    {
-        uint                num;
-
         if(conInputLock)
             break;
 
-        num = Con_BufferNumLines(oldCmds);
-        if(ocPos < num)
+        if(ocPos < oldCmdsSize)
             ocPos++;
 
         updateCmdLine();
         updateDedicatedConsoleCmdLine();
         return true;
-    }
-    case DDKEY_PGUP:
-    {
-        uint                num;
+
+    case DDKEY_PGUP: {
+        uint num;
 
         if(conInputLock)
             break;
 
-        num = Con_BufferNumLines(histBuf);
+        num = CBuffer_NumLines(histBuf);
         if(num > 0)
         {
             bLineOff = MIN_OF(bLineOff + 3, num - 1);
         }
         return true;
-    }
-
+      }
     case DDKEY_PGDN:
         if(conInputLock)
             break;
@@ -1532,7 +1590,7 @@ boolean Con_Responder(ddevent_t* ev)
     case DDKEY_HOME:
         if(conInputLock)
             break;
-        bLineOff = Con_BufferNumLines(histBuf);
+        bLineOff = CBuffer_NumLines(histBuf);
         if(bLineOff != 0)
             bLineOff--;
         return true;
@@ -1637,16 +1695,13 @@ boolean Con_Responder(ddevent_t* ev)
         {
             if(cmdLine[cmdCursor] == 0)
             {
-                uint        num;
-                const cbline_t   *line;
-
-                num = Con_BufferNumLines(oldCmds);
-                if(num > 0 && ocPos > 0)
+                if(oldCmdsSize != 0 && ocPos > 0)
                 {
-                    line = Con_BufferGetLine(oldCmds, ocPos - 1);
-                    if(line && cmdCursor < line->len)
+                    const char* oldCmd = getCommandFromHistory(ocPos - 1);
+                    size_t oldCmdLength = (oldCmd? strlen(oldCmd) : 0);
+                    if(oldCmd && cmdCursor < oldCmdLength)
                     {
-                        cmdLine[cmdCursor] = line->text[cmdCursor];
+                        cmdLine[cmdCursor] = oldCmd[cmdCursor];
                         cmdCursor++;
                         updateDedicatedConsoleCmdLine();
                     }
@@ -1731,7 +1786,7 @@ void Con_PrintRuler(void)
     if(!ConsoleInited || ConsoleSilent)
         return;
 
-    Con_BufferWrite(histBuf, CBLF_RULER, NULL);
+    CBuffer_Write(histBuf, CBLF_RULER, NULL);
 
     if(consoleDump)
     {
@@ -1798,7 +1853,7 @@ static void conPrintf(int flags, const char* format, va_list args)
         if(flags & CPF_LIGHT)   cblFlags |= CBLF_LIGHT;
         if(flags & CPF_CENTER)  cblFlags |= CBLF_CENTER;
 
-        Con_BufferWrite(histBuf, cblFlags, text);
+        CBuffer_Write(histBuf, cblFlags, text);
 
         if(consoleSnapBackOnPrint)
         {
@@ -1953,15 +2008,12 @@ void Con_Error(const char* error, ...)
     if(histBuf != NULL)
     {
         // Flush anything still in the write buffer.
-        Con_BufferFlush(histBuf);
-        numBufLines = Con_BufferNumLines(histBuf);
+        CBuffer_Flush(histBuf);
+        numBufLines = CBuffer_NumLines(histBuf);
         for(i = 5; i > 1; i--)
         {
-            const cbline_t *cbl =
-                Con_BufferGetLine(histBuf, numBufLines - i);
-
-            if(!cbl || !cbl->text)
-                continue;
+            const cbline_t* cbl = CBuffer_GetLine(histBuf, numBufLines - i);
+            if(!cbl || !cbl->text) continue;
             strcat(buff, cbl->text);
             strcat(buff, "\n");
         }
@@ -2069,7 +2121,7 @@ D_CMD(Help)
 
 D_CMD(Clear)
 {
-    Con_BufferClear(histBuf);
+    CBuffer_Clear(histBuf);
     bLineOff = 0;
     return true;
 }

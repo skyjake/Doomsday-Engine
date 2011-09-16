@@ -47,6 +47,7 @@
 
 #include "image.h"
 #include "texturecontent.h"
+#include "cbuffer.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -522,14 +523,14 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 /**
  * @return              Number of new lines since the old ones.
  */
-static int GetBufLines(cbuffer_t* buffer, cbline_t const **oldLines)
+static int GetBufLines(CBuffer* buffer, cbline_t const **oldLines)
 {
     cbline_t const*     bufLines[LINE_COUNT + 1];
     int                 count;
     int                 newCount = 0;
     int                 i, k;
 
-    count = Con_BufferGetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
+    count = CBuffer_GetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
     for(i = 0; i < count; ++i)
     {
         for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
@@ -559,7 +560,7 @@ lineIsNotNew:;
  */
 void Con_BusyDrawConsoleOutput(void)
 {
-    cbuffer_t*          buffer;
+    CBuffer*          buffer;
     static cbline_t const* visibleBusyLines[2 * LINE_COUNT];
     static float        scroll = 0;
     static float        scrollStartTime = 0;

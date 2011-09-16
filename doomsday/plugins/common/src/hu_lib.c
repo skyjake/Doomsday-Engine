@@ -1162,12 +1162,11 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
     char buf[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
     float light = 1, textAlpha = rs.pageAlpha;
     const char* string;
-    boolean isActive = ((obj->_flags & MNF_ACTIVE) && (obj->_flags & MNF_FOCUS));
 
     x += MNDATA_EDIT_OFFSET_X;
     y += MNDATA_EDIT_OFFSET_Y;
 
-    if(isActive)
+    if((obj->_flags & MNF_ACTIVE) && (obj->_flags & MNF_FOCUS))
     {
         if((menuTime & 8) && strlen(edit->text) < MNDATA_EDIT_TEXT_MAX_LENGTH)
         {
@@ -1210,9 +1209,19 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CG] = cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX][CG];
         color[CB] = cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX][CB];
 
-        if(isActive)
+        if(obj->_flags & MNF_FOCUS)
         {
-            float t = (menuFlashCounter <= 50? (menuFlashCounter / 50.0f) : ((100 - menuFlashCounter) / 50.0f));
+            float t;
+
+            if(obj->_flags & MNF_ACTIVE)
+            {
+                t = 0;
+            }
+            else
+            {
+                t = (menuFlashCounter <= 50? (menuFlashCounter / 50.0f) :
+                                             ((100 - menuFlashCounter) / 50.0f));
+            }
 
             color[CR] *= t;
             color[CG] *= t;
@@ -1693,7 +1702,9 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
     {
         float t = (menuFlashCounter <= 50? menuFlashCounter / 50.0f : (100 - menuFlashCounter) / 50.0f);
         color[CR] *= t; color[CG] *= t; color[CB] *= t;
-        color[CR] += cfg.menuTextFlashColor[CR] * (1 - t); color[CG] += cfg.menuTextFlashColor[CG] * (1 - t); color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
+        color[CR] += cfg.menuTextFlashColor[CR] * (1 - t);
+        color[CG] += cfg.menuTextFlashColor[CG] * (1 - t);
+        color[CB] += cfg.menuTextFlashColor[CB] * (1 - t);
     }
 
     FR_SetFont(fontNum);

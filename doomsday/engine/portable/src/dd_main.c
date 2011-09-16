@@ -1319,15 +1319,17 @@ int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
 
-    // Bring the console online as soon as we can.
-    DD_ConsoleInit();
+    // Determine the requested degree of verbosity.
+    verbose = ArgExists("-verbose");
 
-    // The memory zone must be online before attempting to populate the
-    // console command, variable (etc...) databases.
+    // The memory zone must be online before the console module.
     if(!Z_Init())
     {
         DD_ErrorBox(true, "Error initializing memory zone.");
     }
+
+    // Bring the console online as soon as we can.
+    DD_ConsoleInit();
 
     Con_InitDatabases();
 
