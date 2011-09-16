@@ -402,7 +402,16 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             ST_HUDUnHide(plrNum, HUE_ON_DAMAGE);
 
         pl->health = health;
-        pl->plr->mo->health = pl->health;
+        if(pl->plr->mo)
+        {
+            pl->plr->mo->health = pl->health;
+        }
+        else
+        {
+#if _DEBUG
+            Con_Message("FIXME: NetCl_UpdatePlayerState: Player mobj not yet allocated at this time, ignoring.\n");
+#endif
+        }
     }
 
     if(flags & PSF_ARMOR_POINTS)
