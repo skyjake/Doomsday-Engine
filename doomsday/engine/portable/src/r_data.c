@@ -1848,11 +1848,14 @@ static void loadPatchCompositeDefs(void)
                 if(!Str_CompareIgnoreCase(&orig->name, Str_Text(&custom->name)))
                 {   // This is a newer version of an IWAD doomtexturedef.
                     if(!(custom->flags & TXDF_IWAD))
+                    {
                         hasReplacement = true; // Uses a non-IWAD patch.
+                    }
                     else if(custom->height     == orig->height &&
                             custom->width      == orig->width  &&
                             custom->patchCount == orig->patchCount)
-                    {   // Check the patches.
+                    {
+                        // Check the patches.
                         short k = 0;
 
                         while(k < orig->patchCount && (custom->flags & TXDF_IWAD))
@@ -1867,12 +1870,17 @@ static void loadPatchCompositeDefs(void)
                                 custom->flags &= ~TXDF_IWAD;
                             }
                             else
+                            {
                                 k++;
+                            }
                         }
 
                         hasReplacement = true;
                     }
 
+                    // The non-drawable flag must pass to the replacement.
+                    if(hasReplacement && (orig->flags & TXDF_NODRAW))
+                        custom->flags |= TXDF_NODRAW;
                     break;
                 }
             }
