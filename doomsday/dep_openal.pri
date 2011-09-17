@@ -1,8 +1,12 @@
 # Build configuration for OpenAL.
 win32 {
+    isEmpty(OPENAL_DIR) {
+        error("dep_openal: OpenAL SDK path not defined, check your config_user.pri")
+    }
+
     # Windows.
-    INCLUDEPATH += "C:/SDK/OpenAL 1.1 SDK/include"
-    LIBS += -L"C:/SDK/OpenAL 1.1 SDK/libs/win32" -lopenal32
+    INCLUDEPATH += $$OPENAL_DIR/include
+    LIBS += -L$$OPENAL_DIR/libs/win32 -lopenal32
 }
 else:macx {
     # Mac OS X.

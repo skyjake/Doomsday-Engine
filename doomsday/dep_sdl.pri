@@ -1,7 +1,11 @@
 # Build configuration for SDL.
 win32 {
-    SDL_DIR = C:/SDK/SDL-1.2.14
-    SDL_MIXER_DIR = C:/SDK/SDL_mixer-1.2.11
+    isEmpty(SDL_DIR) {
+        error("dep_sdl: SDL path not defined, check your config_user.pri")
+    }
+    isEmpty(SDL_MIXER_DIR) {
+        error("dep_sdl: SDL_mixer path not defined, check your config_user.pri")
+    }
 
     # Windows.
     INCLUDEPATH += \

@@ -1,6 +1,8 @@
 # Build configuration for cURL.
 win32 {
-    CURL_DIR = "C:/SDK/curl"
+    isEmpty(CURL_DIR) {
+        error("dep_curl: cURL SDK path not defined, check your config_user.pri")
+    }
 
     INCLUDEPATH += $$CURL_DIR/include
     LIBS += -l$$CURL_DIR/libcurl_imp

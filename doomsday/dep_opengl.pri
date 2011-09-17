@@ -1,7 +1,11 @@
 # Build configuration for OpenGL.
 win32 {
+    isEmpty(OPENGL_DIR) {
+        error("dep_opengl: OpenGL SDK path not defined, check your config_user.pri")
+    }
+
     # Windows.
-    INCLUDEPATH += C:/SDK/OpenGL
+    INCLUDEPATH += $$OPENGL_DIR
 }
 else:macx {
     # Mac OS X.

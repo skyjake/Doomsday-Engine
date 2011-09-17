@@ -55,9 +55,6 @@ win32 {
 
     DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
 
-    # Not all of our dependencies support a UNICODE build.
-    #DEFINES -= UNICODE
-
     DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
     # Also build the OpenAL plugin.
@@ -130,6 +127,11 @@ macx {
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
         CONFIG += x86 ppc
     }
+}
+
+# Options defined by the user (may not exist).
+exists(config_user.pri) {
+    include(config_user.pri)
 }
 
 # Apply Configuration --------------------------------------------------------

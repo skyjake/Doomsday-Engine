@@ -1,12 +1,8 @@
 @echo off
 REM -- Does a complete Win32 Binary Release distribution.
 
-REM -- Visual C++ environment.
-call "c:\Program Files\Microsoft Visual Studio 9.0\vc\vcvarsall.bat"
-
-REM -- Qt environment.
-SET JOM="c:\QtSDK\QtCreator\bin\jom.exe"
-call "c:\QtSDK\Desktop\Qt\4.7.4\msvc2008\bin\qtenv2.bat"
+REM -- Set up the build environment.
+call ..\..\doomsday\build\win32\envconfig.bat
 
 REM -- Build number.
 SET DOOMSDAY_BUILD=%1

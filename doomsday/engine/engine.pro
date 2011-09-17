@@ -29,6 +29,13 @@ win32 {
 
 DEFINES += __DOOMSDAY__
 
+!isEmpty(DENG_BUILD) {
+    echo(DENG_BUILD $$DENG_BUILD)
+    DEFINES += DOOMSDAY_BUILD_TEXT=\\\"$$DENG_BUILD\\\"
+} else {
+    echo(DENG_BUILD is not defined.)
+}
+
 unix:!macx {
     DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
     DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
