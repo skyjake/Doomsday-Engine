@@ -100,10 +100,12 @@ material_env_class_t S_MaterialClassForName(const Uri* path)
             if(Uri_Equality(ref, path))
             {   // A match!
                 // See if we recognise the material name.
-                material_env_class_t k;
+                int k;
                 for(k = 0; k < NUM_MATERIAL_ENV_CLASSES; ++k)
+                {
                     if(!stricmp(env->id, matInfo[k].name))
-                        return k;
+                        return MEC_FIRST + k;
+                }
                 return MEC_UNKNOWN;
             }
         }
