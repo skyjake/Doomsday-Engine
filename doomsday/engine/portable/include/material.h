@@ -125,6 +125,9 @@ boolean Material_HasGlow(material_t* mat);
 /// @return  @c true if one or more light decorations are defined.
 boolean Material_HasDecorations(material_t* mat);
 
+/// @return  @c true if there is an active translation.
+boolean Material_HasTranslation(const material_t* mat);
+
 /// @return  Number of layers.
 int Material_LayerCount(const material_t* mat);
 

@@ -178,6 +178,13 @@ boolean Material_HasDecorations(material_t* mat)
     return NULL != Materials_DecorationDef(Materials_ToMaterialNum(mat));
 }
 
+boolean Material_HasTranslation(const material_t* mat)
+{
+    assert(mat);
+    /// \todo Separate meanings.
+    return Material_IsGroupAnimated(mat);
+}
+
 int Material_LayerCount(const material_t* mat)
 {
     assert(mat);
