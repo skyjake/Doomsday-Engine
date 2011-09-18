@@ -113,10 +113,12 @@ int ZipFile_LumpCount(zipfile_t* zip);
  * Static members:
  */
 
-/**
+/** 
  * Does the specified file appear to be in Zip format.
+ * @param sf  Stream file handle/wrapper to the file being interpreted.
+ * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(streamfile_t* file);
+boolean ZipFile_Recognise(streamfile_t* sf, size_t baseOffset);
 
 #endif

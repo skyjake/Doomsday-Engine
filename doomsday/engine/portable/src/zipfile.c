@@ -216,7 +216,7 @@ static boolean ZipFile_LocateCentralDirectory(zipfile_t* file)
     // Start from the earliest location where the signature might be.
     while(pos < MAXIMUM_COMMENT_SIZE)
     {
-        F_Seek(&file->_base._stream, -pos, SEEK_END);
+        F_Seek(&file->_base._stream, file->_base._info.baseOffset + -pos, SEEK_END);
 
         // Is this the signature?
         F_Read(&file->_base._stream, (uint8_t*)&signature, 4);
@@ -268,7 +268,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
     if(NULL == centralDirectory)
         Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for "
             "temporary copy of the central centralDirectory.", (unsigned long) ULONG(summary.size));
-    F_Seek(&file->_base._stream, ULONG(summary.offset), SEEK_SET);
+    F_Seek(&file->_base._stream, file->_base._info.baseOffset + ULONG(summary.offset), SEEK_SET);
     F_Read(&file->_base._stream, (uint8_t*)centralDirectory, ULONG(summary.size));
 
     /**
@@ -366,7 +366,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
             info->lastModified = AbstractFile_LastModified((abstractfile_t*)file);
 
             // Read the local file header, which contains the extra field size (Info-ZIP!).
-            F_Seek(&file->_base._stream, ULONG(header->relOffset), SEEK_SET);
+            F_Seek(&file->_base._stream, file->_base._info.baseOffset + ULONG(header->relOffset), SEEK_SET);
             F_Read(&file->_base._stream, (uint8_t*)&localHeader, sizeof(localHeader));
 
             info->baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t) + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
@@ -528,7 +528,7 @@ static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, siz
 static size_t ZipFile_BufferLump(zipfile_t* file, const lumpinfo_t* lumpInfo, uint8_t* buffer)
 {
     assert(NULL != file && NULL != lumpInfo && NULL != buffer);
-    F_Seek(&file->_base._stream, lumpInfo->baseOffset, SEEK_SET);
+    F_Seek(&file->_base._stream, file->_base._info.baseOffset + lumpInfo->baseOffset, SEEK_SET);
     if(lumpInfo->compressedSize != lumpInfo->size)
     {
         boolean result;
@@ -709,12 +709,12 @@ int ZipFile_LumpCount(zipfile_t* file)
     return file->_lumpCount;
 }
 
-boolean ZipFile_Recognise(streamfile_t* sf)
+boolean ZipFile_Recognise(streamfile_t* sf, size_t baseOffset)
 {
     boolean knownFormat = false;
     localfileheader_t hdr;
     size_t readBytes, initPos = F_Tell(sf);
-    F_Seek(sf, 0, SEEK_SET);
+    F_Seek(sf, baseOffset, SEEK_SET);
     readBytes = F_Read(sf, (uint8_t*)&hdr, sizeof(hdr));
     if(!(readBytes < sizeof(hdr)))
     {

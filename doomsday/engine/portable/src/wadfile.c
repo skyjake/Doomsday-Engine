@@ -48,13 +48,13 @@ typedef struct {
 
 static void WadFile_ReadLumpDirectory(wadfile_t* file);
 
-static boolean WadFile_ReadArchiveHeader(streamfile_t* sf, wadheader_t* hdr)
+static boolean WadFile_ReadArchiveHeader(streamfile_t* sf, size_t baseOffset, wadheader_t* hdr)
 {
     assert(NULL != sf && NULL != hdr);
     {
     size_t readBytes, initPos = F_Tell(sf);
     // Seek to the start of the header.
-    F_Seek(sf, 0, SEEK_SET);
+    F_Seek(sf, baseOffset, SEEK_SET);
     readBytes = F_Read(sf, (uint8_t*)hdr, sizeof(wadheader_t));
     // Return the stream to its original position.
     F_Seek(sf, initPos, SEEK_SET);
@@ -86,7 +86,7 @@ static lumpinfo_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
             "temporary lump directory buffer.\n", (unsigned long) lumpRecordsSize);
 
     // Buffer the archived lump directory.
-    F_Seek(&file->_base._stream, lumpRecordOffset, SEEK_SET);
+    F_Seek(&file->_base._stream, file->_base._info.baseOffset + lumpRecordOffset, SEEK_SET);
     F_Read(&file->_base._stream, (uint8_t*)lumpRecords, lumpRecordsSize);
 
     // Allocate and populate the final lump info list.
@@ -131,7 +131,7 @@ wadfile_t* WadFile_New(const lumpinfo_t* info, streamfile_t* sf)
     wadfile_t* file;
     wadheader_t hdr;
 
-    if(!WadFile_ReadArchiveHeader(sf, &hdr))
+    if(!WadFile_ReadArchiveHeader(sf, info->baseOffset, &hdr))
         Con_Error("WadFile::Construct: File %s does not appear to be of WAD format."
             " Missing a call to WadFile::Recognise?", Str_Text(&info->path));
 
@@ -303,7 +303,7 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(&file->_base._stream, info->baseOffset + startOffset, SEEK_SET);
+    F_Seek(&file->_base._stream, file->_base._info.baseOffset + info->baseOffset + startOffset, SEEK_SET);
     readBytes = F_Read(&file->_base._stream, buffer, length);
     if(readBytes < length)
     {
@@ -442,11 +442,11 @@ int WadFile_LumpCount(wadfile_t* file)
     return file->_lumpCount;
 }
 
-boolean WadFile_Recognise(streamfile_t* sf)
+boolean WadFile_Recognise(streamfile_t* sf, size_t baseOffset)
 {
     boolean knownFormat = false;
     wadheader_t hdr;
-    if(WadFile_ReadArchiveHeader(sf, &hdr) &&
+    if(WadFile_ReadArchiveHeader(sf, baseOffset, &hdr) &&
        !(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)))
     {
         knownFormat = true;

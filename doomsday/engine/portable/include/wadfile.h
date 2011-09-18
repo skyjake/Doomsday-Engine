@@ -120,8 +120,10 @@ int WadFile_LumpCount(wadfile_t* wad);
 
 /**
  * Does the specified file appear to be in WAD format.
+ * @param sf  Stream file handle/wrapper to the file being interpreted.
+ * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
-boolean WadFile_Recognise(streamfile_t* sf);
+boolean WadFile_Recognise(streamfile_t* sf, size_t baseOffset);
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

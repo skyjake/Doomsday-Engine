@@ -777,7 +777,7 @@ int F_LumpCount(void)
     return 0;
 }
 
-lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, boolean silent)
+lumpnum_t F_OpenAuxiliary4(const char* path, streamfile_t* prevOpened, size_t baseOffset, boolean silent)
 {
     ddstring_t* foundPath = NULL;
     streamfile_t temp;
@@ -822,7 +822,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, boolean s
         foundPath = Str_New(), Str_Set(foundPath, path);
     }
 
-    if(WadFile_Recognise(prevOpened))
+    if(WadFile_Recognise(prevOpened, baseOffset))
     {
         lumpinfo_t info;
         wadfile_t* wad;
@@ -839,6 +839,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, boolean s
         Str_Set(&info.path, Str_Text(foundPath));
         Str_Strip(&info.path);
         F_FixSlashes(&info.path, &info.path);
+        info.baseOffset = baseOffset;
         info.lastModified = F_LastModified(Str_Text(foundPath));
 
         Str_Delete(foundPath);
@@ -865,9 +866,14 @@ lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, boolean s
     return -1;
 }
 
+lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, size_t baseOffset)
+{
+    return F_OpenAuxiliary4(path, prevOpened, baseOffset, false);
+}
+
 lumpnum_t F_OpenAuxiliary2(const char* path, streamfile_t* prevOpened)
 {
-    return F_OpenAuxiliary3(path, prevOpened, false);
+    return F_OpenAuxiliary3(path, prevOpened, 0);
 }
 
 lumpnum_t F_OpenAuxiliary(const char* path)
@@ -1518,7 +1524,7 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
 static abstractfile_t* tryOpenAsZipFile(const lumpinfo_t* info, streamfile_t* sf)
 {
     zipfile_t* zip = NULL;
-    if(inited && ZipFile_Recognise(sf))
+    if(inited && ZipFile_Recognise(sf, info->baseOffset))
     {
         zip = newZipFile(info, sf);
     }
@@ -1528,7 +1534,7 @@ static abstractfile_t* tryOpenAsZipFile(const lumpinfo_t* info, streamfile_t* sf
 static abstractfile_t* tryOpenAsWadFile(const lumpinfo_t* info, streamfile_t* sf)
 {
     wadfile_t* wad = NULL;
-    if(inited && WadFile_Recognise(sf))
+    if(inited && WadFile_Recognise(sf, info->baseOffset))
     {
         wad = newWadFile(info, sf);
     }
@@ -1581,7 +1587,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, streamfile_t* sf)
     }
 }
 
-static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean allowDuplicate)
+static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
     ddstring_t searchPath, *foundPath = NULL;
     boolean dontBuffer, reqRealFile;
@@ -1652,6 +1658,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean a
     Str_Set(&info.path, Str_Text(&searchPath));
     Str_Strip(&info.path);
     F_FixSlashes(&info.path, &info.path);
+    info.baseOffset = baseOffset;
     info.lastModified = F_LastModified(Str_Text(foundPath));
 
     Str_Free(&searchPath);
@@ -1667,9 +1674,9 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, boolean a
     return fsObject;
 }
 
-abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplicate)
+abstractfile_t* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
-    abstractfile_t* fsObject = tryOpenFile(path, mode, allowDuplicate);
+    abstractfile_t* fsObject = tryOpenFile(path, mode, baseOffset, allowDuplicate);
     /// \note We do not link lump files into the openFiles list.
     if(fsObject && AbstractFile_Type(fsObject) != FT_LUMPFILE)
     {
@@ -1678,9 +1685,14 @@ abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplica
     return fsObject;
 }
 
+abstractfile_t* F_Open2(const char* path, const char* mode, size_t baseOffset)
+{
+    return F_Open3(path, mode, baseOffset, true);
+}
+
 abstractfile_t* F_Open(const char* path, const char* mode)
 {
-    return F_Open2(path, mode, true);
+    return F_Open2(path, mode, 0);
 }
 
 int F_Access(const char* path)
@@ -1695,9 +1707,9 @@ int F_Access(const char* path)
     return false;
 }
 
-boolean F_AddFile(const char* path, boolean allowDuplicate)
+boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 {
-    abstractfile_t* fsObject = F_Open2(path, "rb", allowDuplicate);
+    abstractfile_t* fsObject = F_Open3(path, "rb", baseOffset, allowDuplicate);
 
     if(!fsObject)
     {
@@ -1743,19 +1755,19 @@ boolean F_AddFile(const char* path, boolean allowDuplicate)
     return true;
 }
 
-boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
+boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
 {
     boolean succeeded = false;
     { size_t i;
     for(i = 0; i < num; ++i)
     {
-        if(F_AddFile(filenames[i], allowDuplicate))
+        if(F_AddFile(paths[i], 0, allowDuplicate))
         {
-            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(filenames[i])) );
+            VERBOSE2( Con_Message("Done loading %s\n", F_PrettyPath(paths[i])) );
             succeeded = true; // At least one has been loaded.
         }
         else
-            Con_Message("Warning: Errors occured while loading %s\n", filenames[i]);
+            Con_Message("Warning: Errors occured while loading %s\n", paths[i]);
     }}
 
     // A changed file list may alter the main lump directory.
