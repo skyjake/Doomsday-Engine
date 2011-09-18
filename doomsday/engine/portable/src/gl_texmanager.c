@@ -2492,13 +2492,37 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
 
 // Posts are runs of non masked source pixels.
 typedef struct {
-    byte topdelta; // @c -1 is the last post in a column.
+    byte topOffset; // @c 0xff is the last post in a column.
     byte length;
-    // Length data bytes follows.
+    // Length palette indices follow.
 } post_t;
 
 // column_t is a list of 0 or more post_t, (uint8_t)-1 terminated
 typedef post_t column_t;
+
+static boolean validPatch(const uint8_t* buffer, size_t len)
+{
+    const doompatch_header_t* hdr = (const doompatch_header_t*)buffer;
+    const int32_t* colOffsets;
+    int width, height, col;
+    int32_t offset;
+
+    if(len <= sizeof *hdr) return false;
+
+    width  = SHORT(hdr->width);
+    height = SHORT(hdr->height);
+    if(width <= 0 || height <= 0 || len <= sizeof *hdr + width * sizeof(int32_t)) return false;
+
+    // Validate column map.
+    // Column offsets begin immediately following the header.
+    colOffsets = (const int32_t*)(buffer + sizeof *hdr);
+    for(col = 0; col < width; ++col)
+    {
+        offset = LONG(colOffsets[col]);
+        if(offset < 0 || (unsigned)offset >= len) return false;
+    }
+    return true;
+}
 
 /**
  * \important: The buffer must have room for the new alpha data!
@@ -2544,17 +2568,17 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
         top = -1;
 
         // Step through the posts in a column
-        while(column->topdelta != 0xff)
+        while(column->topOffset != 0xff)
         {
             source = (uint8_t*) column + 3;
 
             if(x < 0 || x >= texwidth)
                 break; // Out of bounds.
 
-            if(column->topdelta <= top)
-                top += column->topdelta;
+            if(column->topOffset <= top)
+                top += column->topOffset;
             else
-                top = column->topdelta;
+                top = column->topOffset;
 
             if((count = column->length) > 0)
             {
@@ -2713,41 +2737,38 @@ static byte loadPatchLump(image_t* image, abstractfile_t* file, int tclass, int 
     }
     else
     {   // A DOOM patch.
-        const doompatch_header_t* patch;
         size_t fileLength = F_Length(AbstractFile_Handle(file));
-        uint8_t* buf;
+        if(fileLength > sizeof(doompatch_header_t))
+        {
+            const doompatch_header_t* patch =
+                (const doompatch_header_t*) F_CacheLump(file, 0, PU_APPSTATIC);
 
-        if(fileLength < sizeof(doompatch_header_t))
+            if(validPatch((const uint8_t*)patch, fileLength))
+            {
+                GL_InitImage(image);
+                image->width  = SHORT(patch->width)  + border*2;
+                image->height = SHORT(patch->height) + border*2;
+                image->pixelSize = 1;
+                image->paletteId = defaultColorPalette;
+                image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+                if(NULL == image->pixels)
+                    Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
+                        "image pixel buffer.", (unsigned long) (2 * image->width * image->height));
+
+                loadDoomPatch(image->pixels, image->width, image->height, patch,
+                    border, border, tclass, tmap, false);
+                if(palettedIsMasked(image->pixels, image->width, image->height))
+                    image->flags |= IMGF_IS_MASKED;
+                result = 1;
+            }
+            F_CacheChangeTag(file, 0, PU_CACHE);
+        }
+
+        if(!result)
         {
             Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_Path(file))));
             return result;
         }
-
-        buf = (uint8_t*) malloc(fileLength);
-        if(NULL == buf)
-            Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                "temporary lump buffer.", (unsigned long) (fileLength));
-        F_Read(AbstractFile_Handle(file), buf, fileLength);
-        patch = (const doompatch_header_t*)buf;
-
-        GL_InitImage(image);
-
-        image->width  = SHORT(patch->width)  + border*2;
-        image->height = SHORT(patch->height) + border*2;
-        image->pixelSize = 1;
-        image->paletteId = defaultColorPalette;
-        image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
-        if(NULL == image->pixels)
-            Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                "image pixel buffer.", (unsigned long) (2 * image->width * image->height));
-
-        loadDoomPatch(image->pixels, image->width, image->height, patch,
-            border, border, tclass, tmap, false);
-        if(palettedIsMasked(image->pixels, image->width, image->height))
-            image->flags |= IMGF_IS_MASKED;
-
-        free(buf);
-        result = 1;
     }
     return result;
     }
@@ -2838,11 +2859,13 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
         int lumpIdx;
         abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const uint8_t* patch = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-
-        // Draw the patch in the buffer.
-        loadDoomPatch(image->pixels, image->width, image->height,
-            (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
-
+        
+        if(validPatch(patch, F_LumpInfo(fsObject, lumpIdx)->size))
+        {
+            // Draw the patch in the buffer.
+            loadDoomPatch(image->pixels, image->width, image->height,
+                (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
+        }
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
@@ -2902,17 +2925,19 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
         abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
-        if(texDef->patchCount != 1)
+        if(validPatch((const uint8_t*)patch, F_LumpInfo(fsObject, lumpIdx)->size))
         {
-            offX = patchDef->offX;
-            offY = patchDef->offY;
+            if(texDef->patchCount != 1)
+            {
+                offX = patchDef->offX;
+                offY = patchDef->offY;
+            }
+            else
+            {
+                offX = offY = 0;
+            }
+            loadDoomPatch(image->pixels, image->width, image->height, patch, offX, offY, 0, 0, zeroMask);
         }
-        else
-        {
-            offX = offY = 0;
-        }
-
-        loadDoomPatch(image->pixels, image->width, image->height, patch, offX, offY, 0, 0, zeroMask);
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }}
 
