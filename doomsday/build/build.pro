@@ -60,3 +60,11 @@ deng_snowberry {
 
     INSTALLS += sb conf plugins
 }
+
+deng_aptunstable {
+    # Include the Unstable repository for apt.
+    INSTALLS += repo
+
+    repo.files = ../../distrib/linux/doomsday-builds-unstable.list
+    repo.path = /etc/apt/source.list.d
+}

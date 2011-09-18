@@ -2,6 +2,7 @@
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 # CONFIG options for Doomsday:
+# - deng_aptunstable        Include the unstable apt repository
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_openal             Build the OpenAL sound driver
 # - deng_rangecheck         Parameter range checking/value assertions
@@ -75,11 +76,16 @@ unix:!macx {
     # Generic Unix build options.
     CONFIG += deng_nofixedasm deng_snowberry
 
+    # Choose the apt repository to include in the distribution.
+    CONFIG += deng_aptunstable
+
     # Link against standard math library.
     LIBS += -lm
 
     # Install prefix.
-    PREFIX = /usr
+    isEmpty(PREFIX) {
+        PREFIX = /usr
+    }
 
     # Binary location.
     DENG_BIN_DIR = $$PREFIX/bin

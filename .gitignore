@@ -4,3 +4,7 @@
 /doomsday/build/win32/license.txt
 *.user.*
 *-build-*
+*.dsc
+*.tar.gz
+*.deb
+*.changes

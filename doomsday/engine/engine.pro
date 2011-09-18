@@ -528,7 +528,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx desktop aptrepo
+    INSTALLS += target data startupgfx desktop
 
     target.path = $$DENG_BIN_DIR
 
@@ -539,8 +539,4 @@ else:unix:!macx {
 
     desktop.files = ../../distrib/doomsday-engine.desktop
     desktop.path = /usr/share/applications
-
-    # TODO: Choose the repository based on release type (Unstable/Stable).
-    aptrepo.files = ../../distrib/doomsday-builds.list
-    aptrepo.path = /etc/apt/sources.list.d
 }
