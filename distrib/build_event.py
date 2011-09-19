@@ -120,7 +120,14 @@ def builds_by_time():
     builds.sort()
     builds.reverse()
     return builds
-    
+
+
+def aptrepo_by_time(arch):
+    files = []
+    for fn in os.listdir(os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-' + arch)):
+        if fn[-4:] == '.deb':
+            files.append(fn)
+    return files
     
 def count_log_word(fn, word):
     txt = unicode(gzip.open(fn).read(), 'latin1').lower()
@@ -275,19 +282,36 @@ def collated(s):
 
 
 def update_changes(fromTag=None, toTag=None, debChanges=False):
-    # Determine automatically?
-    if fromTag is None or toTag is None:
-        builds = builds_by_time()
-        if len(builds) < 2: return
-        fromTag = builds[1][1]
-        toTag = builds[0][1]
+    if debChanges:
+        # Use the apt repo for determining fromTag.
+        os.system('dpkg --print-architecture > debarch.tmp')
+        arch = file('debarch.tmp', 'rt').read().strip()
+        os.remove('debarch.tmp')
+        debs = aptrepo_by_time(arch)
+        
+        biggest = 0
+        for deb in debs:
+            number = int(deb[deb.find('-build')+6 : deb.find('_'+arch)])
+            biggest = max(biggest, number)
+        
+        fromTag = 'build' + str(biggest)
+        toTag = 'HEAD' # Everything up to now.
+    else:
+        # Determine automatically?
+        if fromTag is None or toTag is None:
+            builds = builds_by_time()
+            if len(builds) < 2: return
+            fromTag = builds[1][1]
+            toTag = builds[0][1]
 
     # Generate a changelog.
-    buildDir = os.path.join(EVENT_DIR, toTag)
     if not debChanges:
+        buildDir = os.path.join(EVENT_DIR, toTag)
         fn = os.path.join(buildDir, 'changes.html')
         changes = file(fn, 'wt')
         print >> changes, '<ol>'
+    else:
+        buildDir = EVENT_DIR
     
     tmpName = os.path.join(buildDir, 'ctmp')
     
@@ -325,8 +349,9 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
             # If there is a single dot at the end of the subject, remove it.
             if subject[-1] == '.' and subject[-2] != '.':
                 subject = subject[:-1]
-        
-        changeEntries.append(subject)
+
+        if subject not in changeEntries:
+            changeEntries.append(subject)
         
         # Do the replace.
         logText = logText[:pos] + subject + logText[end+16:]
@@ -343,9 +368,10 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
     if not debChanges:
         print >> changes, '</ol>'
         changes.close()
+        os.remove(tmpName)
     else:
         # Append the changes to the debian package changelog.
-        os.chdir(os.path.join(LAUNCH_DIR, 'linux'))
+        os.chdir(os.path.join(DISTRIB_DIR, 'linux'))
         
         # First we need to update the version.
         build_version.find_version()
@@ -356,13 +382,13 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
             # Quote it for the command line.
             qch = ch.replace('"', '\\"').replace('!', '\\!')
             if first:
-                os.system("dch -v %s \"%s\"" % (debVersion, qch))
+                print 'First entry:', qch
+                os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, qch))
                 first = False
             else:
-                os.system("dch -a \"%s\"" % qch)
+                print 'Entry:', qch
+                os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
             
-    os.remove(tmpName)
-
 
 def create_build_event():
     print 'Creating a new build event.'
