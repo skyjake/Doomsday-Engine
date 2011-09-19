@@ -210,10 +210,10 @@ def win_release():
         
 """The Linux release procedure."""
 def linux_release():
-    os.chdir(WORK_DIR)
+    os.chdir(LAUNCH_DIR)
     
     # Generate a launcher script.
-    f = file('launch-doomsday', 'wt')
+    f = file('linux/launch-doomsday', 'wt')
     print >> f, """#!/usr/bin/python
 import os, sys
 os.chdir('/usr/share/doomsday/snowberry')
@@ -222,15 +222,24 @@ sys.path += '.'
 import snowberry"""
     f.close()
     
-    if os.system('cmake -D SYSTEMARCH=`dpkg --print-architecture`' + 
-                 ' -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
-                 ' -D DOOMSDAY_BUILD=' + DOOMSDAY_BUILD +
-                 ' -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '"' +
-                 ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && fakeroot make package'):
+    def clean_products():
+        # Remove previously build deb packages.
+        os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
+        
+    clean_products()
+       
+    #if os.system('cmake -D SYSTEMARCH=`dpkg --print-architecture`' + 
+    #             ' -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
+    #             ' -D DOOMSDAY_BUILD=' + DOOMSDAY_BUILD +
+    #             ' -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '"' +
+    #             ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && fakeroot make package'):
+    if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
         
     # Place the result in the output directory.
-    shutil.copy(glob.glob('doomsday*deb')[0], OUTPUT_DIR) 
+    shutil.copy(glob.glob('../doomsday*.deb')[0], OUTPUT_DIR)
+    shutil.copy(glob.glob('../doomsday*.changes')[0], OUTPUT_DIR)  
+    clean_products()
            
 
 def main():
