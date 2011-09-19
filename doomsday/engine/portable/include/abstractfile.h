@@ -60,6 +60,9 @@ typedef struct abstractfile_s {
     /// File stream abstraction wrapper/handle.
     streamfile_t _stream;
 
+    /// Offset from start of owning package.
+    size_t _baseOffset;
+
     /// Info descriptor (file metadata).
     lumpinfo_t _info;
 
@@ -67,14 +70,27 @@ typedef struct abstractfile_s {
     uint _order;
 } abstractfile_t;
 
-/// Initialize this resource.
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, const lumpinfo_t* info);
+/**
+ * Initialize this resource.
+ *
+ * @param type  File type identifier.
+ * @param baseOffset  Offset from the start of the file in bytes to begin.
+ * @param info  Lump info descriptor for the file. A copy is made.
+ * @param sf  Stream file handle/wrapper to the file being interpreted.
+ *      A copy is made unless @c NULL in which case a default-stream is initialized.
+ * @return  Same as @a file for convenience (chaining).
+ */
+abstractfile_t* AbstractFile_Init(abstractfile_t* file, filetype_t type, size_t baseOffset,
+    const lumpinfo_t* info, streamfile_t* sf);
 
 /// @return  Type of this resource @see filetype_t
 filetype_t AbstractFile_Type(const abstractfile_t* file);
 
 /// @return  Immutable copy of the info descriptor for this resource.
 const lumpinfo_t* AbstractFile_Info(abstractfile_t* file);
+
+/// @return  Owning package else @c NULL if not contained.
+abstractfile_t* AbstractFile_Container(const abstractfile_t* file);
 
 /**
  * Accessors:
@@ -100,6 +116,8 @@ boolean AbstractFile_HasIWAD(const abstractfile_t* file);
 
 /// Mark this resource as "IWAD".
 void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes);
+
+size_t AbstractFile_BaseOffset(const abstractfile_t* file);
 
 /**
  * Abstract interface (minimal, data caching interface not expected):

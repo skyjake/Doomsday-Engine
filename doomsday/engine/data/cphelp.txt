@@ -358,6 +358,10 @@ desc = Execute a command if the condition is true.
 [inc]
 desc = Add 1 to a cvar.
 
+[inspectmaterial]
+desc = Print extended information about a Material to the console.
+inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
+
 [keymap]
 desc = Load a DKM keymap file.
 inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.

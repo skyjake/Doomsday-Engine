@@ -140,9 +140,10 @@ lumpnum_t F_CheckLumpNumForName(const char* name);
  *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t F_OpenAuxiliary3(const char* fileName, streamfile_t* prevOpened, boolean silent);
-lumpnum_t F_OpenAuxiliary2(const char* fileName, streamfile_t* prevOpened);
-lumpnum_t F_OpenAuxiliary(const char* fileName);
+lumpnum_t F_OpenAuxiliary4(const char* fileName, streamfile_t* prevOpened, size_t baseOffset, boolean silent);
+lumpnum_t F_OpenAuxiliary3(const char* fileName, streamfile_t* prevOpened, size_t baseOffset); /* silent = false */
+lumpnum_t F_OpenAuxiliary2(const char* fileName, streamfile_t* prevOpened); /* baseOffset = 0 */
+lumpnum_t F_OpenAuxiliary(const char* fileName); /* prevOpened = NULL */
 
 void F_CloseAuxiliary(void);
 
@@ -169,16 +170,23 @@ lumpnum_t Zip_Find(const char* searchPath);
  * Files with a .wad extension are archived data files with multiple 'lumps',
  * other files are single lumps whose base filename will become the lump name.
  *
- * \note Lump names can appear multiple times. The name searcher looks backwards,
- * so a later file can override an earlier one.
- *
+ * @param path  Path to the file to be opened. Either a "real" file in the local
+ *      file system, or a "virtual" file in the virtual file system.
+ * @param baseOffset  Offset from the start of the file in bytes to begin.
+ * @param allowDuplicate  @c true = allow opening multiple copies of the same file.
  * @return  @c true, if the operation is successful.
  */
-boolean F_AddFile(const char* fileName, boolean allowDuplicate);
-boolean F_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
+boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate);
 
-boolean F_RemoveFile(const char* fileName);
-boolean F_RemoveFiles(const char* const* filenames, size_t num);
+/**
+ * Remove a file from the virtual file system.
+ *
+ * @return @c true if the operation is successful.
+ */
+boolean F_RemoveFile(const char* path);
+
+boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate);
+boolean F_RemoveFiles(const char* const* paths, size_t num);
 
 /**
  * @return  @c true if the file can be opened for reading.
@@ -198,11 +206,13 @@ int F_Access(const char* path);
  *      'b' = binary
  *      'f' = must be a real file in the local file system
  *      'x' = don't buffer anything
+ * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @param allowDuplicate  @c false = open only if not already opened.
  * @return  Opened file reference/handle else @c NULL.
  */
-abstractfile_t* F_Open2(const char* path, const char* mode, boolean allowDuplicate);
-abstractfile_t* F_Open(const char* path, const char* mode); /* allowDuplicate = true */
+abstractfile_t* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate);
+abstractfile_t* F_Open2(const char* path, const char* mode, size_t baseOffset); /* allowDuplicate = true */
+abstractfile_t* F_Open(const char* path, const char* mode); /* baseOffset = 0 */
 
 /**
  * Try to locate the specified lump for reading.

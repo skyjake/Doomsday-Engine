@@ -451,11 +451,10 @@ void LumpDirectory_Print(lumpdirectory_t* ld)
     {
         lumpdirectory_lumprecord_t* rec = ld->_records + i;
         const lumpinfo_t* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
-        printf("%04i - \"%s:(%-8s | %s)\" (offset: %lu, size: %lu bytes%s)\n", i,
+        printf("%04i - \"%s:(%-8s | %s)\" (size: %lu bytes%s)\n", i,
             F_PrettyPath(Str_Text(AbstractFile_Path(rec->fsObject))),
             (info->name[0]? info->name : "N/A"), F_PrettyPath(Str_Text(&info->path)),
-            (unsigned long) info->baseOffset, (unsigned long) info->size,
-            (info->compressedSize != info->size? " compressed" : ""));
+            (unsigned long) info->size, (info->compressedSize != info->size? " compressed" : ""));
     }}
     printf("---End of lumps---\n");
 }

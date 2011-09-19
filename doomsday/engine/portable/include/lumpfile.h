@@ -41,7 +41,7 @@ typedef struct lumpfile_s {
     void** _cacheData;
 } lumpfile_t;
 
-lumpfile_t* LumpFile_New(const lumpinfo_t* info);
+lumpfile_t* LumpFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
 void LumpFile_Delete(lumpfile_t* lump);
 
 /// Close this file if open and release any acquired file identifiers.

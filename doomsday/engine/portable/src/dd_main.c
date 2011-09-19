@@ -226,7 +226,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        F_AddFile(token, false);
+        F_AddFile(token, 0, false);
         token = strtok(NULL, ATWSEPS);
     }
     free(buffer);
@@ -498,7 +498,7 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, NULL, true);
+    lumpnum_t auxLumpBase = F_OpenAuxiliary4(filePath, NULL, 0, true);
     boolean result;
 
     if(auxLumpBase == -1)
@@ -667,7 +667,7 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass)
                 { const ddstring_t* path;
                 if(0 != (path = ResourceRecord_ResolvedPath(*records, false)))
                 {
-                    F_AddFile(Str_Text(path), false);
+                    F_AddFile(Str_Text(path), 0, false);
                 }}
                 break;
             default:
@@ -770,7 +770,7 @@ static int autoDataAdder(const ddstring_t* fileName, pathdirectory_nodetype_t ty
         autoload_t* data = (autoload_t*)paramaters;
         if(data->loadFiles)
         {
-            if(F_AddFile(Str_Text(fileName), false))
+            if(F_AddFile(Str_Text(fileName), 0, false))
                 ++data->count;
         }
         else
@@ -934,7 +934,7 @@ static int DD_ChangeGameWorker(void* paramaters)
                 resourcetype_t resType = F_GuessResourceTypeByName(Str_Text(gameResourceFileList[i]));
                 if((pass == 0 && resType == RT_ZIP) ||
                    (pass == 1 && resType == RT_WAD))
-                    F_AddFile(Str_Text(gameResourceFileList[i]), false);
+                    F_AddFile(Str_Text(gameResourceFileList[i]), 0, false);
             }
         }
 
@@ -1508,7 +1508,7 @@ int DD_Main(void)
             continue;
 
         while(++p != Argc() && !ArgIsOption(p))
-            F_AddFile(Argv(p), false);
+            F_AddFile(Argv(p), 0, false);
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }}
@@ -1704,7 +1704,7 @@ static int DD_StartupWorker(void* parm)
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
     if(0 == F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath) ||
-       !F_AddFile(Str_Text(&foundPath), false))
+       !F_AddFile(Str_Text(&foundPath), 0, false))
     {
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     }
@@ -2429,7 +2429,7 @@ D_CMD(Load)
         Str_Strip(&searchPath);
 
         if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
-           F_AddFile(Str_Text(&foundPath), false))
+           F_AddFile(Str_Text(&foundPath), 0, false))
             didLoadResource = true;
     }
     Str_Free(&foundPath);
