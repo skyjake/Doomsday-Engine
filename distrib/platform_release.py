@@ -85,7 +85,8 @@ def mac_release():
     os.chdir(WORK_DIR)
     mkdir('release_build')
     os.chdir('release_build')
-    if os.system('cmake -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '" -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
+    #if os.system('cmake -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '" -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
+    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ../../../doomsday/doomsday.pro && make && make install' % (DOOMSDAY_BUILD_NUMBER)):
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.

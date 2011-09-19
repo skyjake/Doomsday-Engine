@@ -119,20 +119,6 @@ macx {
     DEFINES += MACOSX
 
     QMAKE_LFLAGS += -flat_namespace -undefined suppress
-
-    # Select OS version.
-    deng_snowleopard {
-        echo("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-        CONFIG += x86 x86_64
-    }
-    else {
-        echo("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
-        CONFIG += x86 ppc
-    }
 }
 
 # Options defined by the user (may not exist).
@@ -147,4 +133,19 @@ deng_nofixedasm {
 }
 !deng_rangecheck {
     DEFINES += NORANGECHECKING
+}
+macx {
+    # Select OS version.
+    deng_snowleopard {
+        echo("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
+        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+        CONFIG += x86 x86_64
+    }
+    else {
+        echo("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
+        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
+        CONFIG += x86 ppc
+    }
 }
