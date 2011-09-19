@@ -27,25 +27,36 @@
 
 #include "abstractfile.h"
 
-void AbstractFile_Init(abstractfile_t* file, filetype_t type, const lumpinfo_t* info)
+abstractfile_t* AbstractFile_Init(abstractfile_t* file, filetype_t type,
+    size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    assert(NULL != file && NULL != info);
+    assert(NULL != file && VALID_FILETYPE(type) && NULL != info);
 
     file->_order = fileCounter++;
     file->_type = type;
     file->_flags.open = false;
     file->_flags.startup = false;
     file->_flags.iwad = false;
+    file->_baseOffset = baseOffset;
 
     F_CopyLumpInfo(&file->_info, info);
 
-    file->_stream.eof = false;
-    file->_stream.size = 0;
-    file->_stream.hndl = NULL;
-    file->_stream.data = NULL;
-    file->_stream.pos = 0;
+    if(sf)
+    {
+        // Copy the stream handle.
+        memcpy(&file->_stream, sf, sizeof(file->_stream));
+    }
+    else
+    {
+        file->_stream.eof = false;
+        file->_stream.size = 0;
+        file->_stream.hndl = NULL;
+        file->_stream.data = NULL;
+        file->_stream.pos = 0;
+    }
+    return file;
 }
 
 filetype_t AbstractFile_Type(const abstractfile_t* file)
@@ -58,6 +69,18 @@ const lumpinfo_t* AbstractFile_Info(abstractfile_t* file)
 {
     assert(NULL != file);
     return &file->_info;
+}
+
+abstractfile_t* AbstractFile_Container(const abstractfile_t* file)
+{
+    assert(NULL != file);
+    return file->_info.container;
+}
+
+size_t AbstractFile_BaseOffset(const abstractfile_t* file)
+{
+    assert(NULL != file);
+    return file->_baseOffset;
 }
 
 const ddstring_t* AbstractFile_Path(const abstractfile_t* file)

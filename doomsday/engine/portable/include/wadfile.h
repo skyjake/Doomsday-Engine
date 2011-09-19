@@ -25,12 +25,15 @@
 #ifndef LIBDENG_FILESYS_WADFILE_H
 #define LIBDENG_FILESYS_WADFILE_H
 
-#include <stdio.h>
-
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
+
+typedef struct {
+    size_t baseOffset;
+    lumpinfo_t info;
+} wadfile_lumprecord_t;
 
 /**
  * WadFile. Runtime representation of a WAD file.
@@ -42,11 +45,11 @@ typedef struct wadfile_s {
     abstractfile_t _base;
     int _lumpCount;
     size_t _lumpRecordsOffset;
-    lumpinfo_t* _lumpInfo;
+    wadfile_lumprecord_t* _lumpRecords;
     void** _lumpCache;
 } wadfile_t;
 
-wadfile_t* WadFile_New(const lumpinfo_t* info, streamfile_t* sf);
+wadfile_t* WadFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
 void WadFile_Delete(wadfile_t* wad);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -120,10 +123,10 @@ int WadFile_LumpCount(wadfile_t* wad);
 
 /**
  * Does the specified file appear to be in WAD format.
- * @param sf  Stream file handle/wrapper to the file being interpreted.
  * @param baseOffset  Offset from the start of the file in bytes to begin.
+ * @param sf  Stream file handle/wrapper to the file being interpreted.
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
-boolean WadFile_Recognise(streamfile_t* sf, size_t baseOffset);
+boolean WadFile_Recognise(size_t baseOffset, streamfile_t* sf);
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

@@ -25,12 +25,15 @@
 #ifndef LIBDENG_FILESYS_ZIPFILE_H
 #define LIBDENG_FILESYS_ZIPFILE_H
 
-#include <stdio.h>
-
 #include "lumpinfo.h"
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
+
+typedef struct {
+    size_t baseOffset;
+    lumpinfo_t info;
+} zipfile_lumprecord_t;
 
 /**
  * ZipFile. Runtime representation of Zip files.
@@ -43,11 +46,11 @@ typedef struct {
     // Base file.
     abstractfile_t _base;
     int _lumpCount;
-    lumpinfo_t* _lumpInfo;
+    zipfile_lumprecord_t* _lumpRecords;
     void** _lumpCache;
 } zipfile_t;
 
-zipfile_t* ZipFile_New(const lumpinfo_t* info, streamfile_t* sf);
+zipfile_t* ZipFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
 void ZipFile_Delete(zipfile_t* zip);
 
 /// Close this file if open and release any acquired file identifiers.
@@ -115,10 +118,10 @@ int ZipFile_LumpCount(zipfile_t* zip);
 
 /** 
  * Does the specified file appear to be in Zip format.
- * @param sf  Stream file handle/wrapper to the file being interpreted.
  * @param baseOffset  Offset from the start of the file in bytes to begin.
+ * @param sf  Stream file handle/wrapper to the file being interpreted.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(streamfile_t* sf, size_t baseOffset);
+boolean ZipFile_Recognise(size_t baseOffset, streamfile_t* sf);
 
 #endif

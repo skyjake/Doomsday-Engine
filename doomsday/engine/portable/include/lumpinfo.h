@@ -27,17 +27,20 @@
 
 #include "dd_string.h"
 
+struct abstractfile_s;
+
 /**
  * LumpInfo record. POD.
  * @ingroup fs
  */
 typedef struct {
-    lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
-    ddstring_t path; /// Absolute variable-length path in the vfs.
-    size_t baseOffset; /// Offset from start of owning package.
+    uint lastModified; /// Unix timestamp.
+    int lumpIdx; /// Relative index of this lump in the owning package else zero.
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.
-    uint lastModified; /// Unix timestamp.
+    struct abstractfile_s* container; /// Owning package else @c NULL.
+    lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
+    ddstring_t path; /// Absolute variable-length path in the vfs.
 } lumpinfo_t;
 
 void F_InitLumpInfo(lumpinfo_t* info);

@@ -29,16 +29,15 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-lumpfile_t* LumpFile_New(const lumpinfo_t* info)
+lumpfile_t* LumpFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
     lumpfile_t* file = (lumpfile_t*)malloc(sizeof(*file));
     if(NULL == file)
         Con_Error("LumpFile::Construct:: Failed on allocation of %lu bytes for new LumpFile.",
             (unsigned long) sizeof(*file));
 
-    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, info);
+    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, baseOffset, info, sf);
     file->_cacheData = NULL;
-
     return file;
 }
 
@@ -110,7 +109,7 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(&file->_base._stream, info->baseOffset + startOffset, SEEK_SET);
+    F_Seek(&file->_base._stream, file->_base._baseOffset + startOffset, SEEK_SET);
     readBytes = F_Read(&file->_base._stream, buffer, length);
     if(readBytes < length)
     {

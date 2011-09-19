@@ -173,33 +173,27 @@ static int findFileNodeIndexForPath(FileList* list, const char* path_)
  * Open a new pseudo-stream on the specified lump for reading.
  *
  * @param file  File object used to represent this file in our vfs once read.
- * @param hndl  File stream abstraction handle for the file.
- * @param container  File system record for the file containing the lump to be read.
- * @param lump  Index of the lump in @a container.
  * @param dontBuffer  @c true= only test for access and do not buffer anything.
- *
- * @return  Same as @a file for convenience.
+ * @return  Same as @a file for convenience (chaining).
  */
-static abstractfile_t* openFromLump(abstractfile_t* file, abstractfile_t* container,
-    int lumpIdx, boolean dontBuffer)
+static abstractfile_t* openFromLump(abstractfile_t* file, boolean dontBuffer)
 {
-    assert(NULL != file && NULL != container);
+    assert(NULL != file);
     // Init and load in the lump data.
     file->_flags.open = true;
     if(!dontBuffer)
     {
-        streamfile_t* dfile = &file->_stream;
-        const lumpinfo_t* info = F_LumpInfo(container, lumpIdx);
-        assert(info);
-        dfile->size = info->size;
-        dfile->pos = dfile->data = (uint8_t*)malloc(dfile->size);
-        if(NULL == dfile->data)
+        const lumpinfo_t* info = AbstractFile_Info(file);
+        streamfile_t* sf = &file->_stream;
+        sf->size = info->size;
+        sf->pos = sf->data = (uint8_t*)malloc(sf->size);
+        if(NULL == sf->data)
             Con_Error("openFromLump: Failed on allocation of %lu bytes for buffered data.",
-                (unsigned long) dfile->size);
+                (unsigned long) sf->size);
 #if _DEBUG
         VERBOSE2( Con_Printf("Next FILE read from openFromLump.\n") )
 #endif
-        F_ReadLumpSection(container, lumpIdx, (uint8_t*)dfile->data, 0, info->size);
+        F_ReadLumpSection(info->container, info->lumpIdx, (uint8_t*)sf->data, 0, info->size);
     }
     return file;
 }
@@ -207,45 +201,38 @@ static abstractfile_t* openFromLump(abstractfile_t* file, abstractfile_t* contai
 /**
  * Open a new stream on the specified file for reading.
  *
- * @param file  File handle used to reference the file in our vfs once read.
- * @param hndl  System file handle to the data to be read.
- *
+ * @param file  File object used to represent this file in our vfs once read.
  * @return  Same as @a file for convenience.
  */
-static abstractfile_t* openFromFile(abstractfile_t* file, FILE* hndl)
+static abstractfile_t* openFromFile(abstractfile_t* file)
 {
-    assert(NULL != file && NULL != hndl);
+    assert(NULL != file);
     file->_flags.open = true;
-    file->_stream.hndl = hndl;
-    file->_stream.data = NULL;
     return file;
 }
 
-static abstractfile_t* newUnknownFile(const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* newUnknownFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
     abstractfile_t* file = (abstractfile_t*)malloc(sizeof *file);
     if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof *file);
-    AbstractFile_Init(file, FT_UNKNOWNFILE, info);
-    return openFromFile(file, sf->hndl);
+    AbstractFile_Init(file, FT_UNKNOWNFILE, baseOffset, info, sf);
+    return openFromFile(file);
 }
 
-static zipfile_t* newZipFile(const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* newZipFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
-    abstractfile_t* file = (abstractfile_t*)ZipFile_New(info, sf);
-    return (zipfile_t*) openFromFile(file, sf->hndl);
+    return openFromFile((abstractfile_t*)ZipFile_New(baseOffset, info, sf));
 }
 
-static wadfile_t* newWadFile(const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* newWadFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
-    abstractfile_t* file = (abstractfile_t*)WadFile_New(info, sf);
-    return (wadfile_t*) openFromFile(file, sf->hndl);
+    return openFromFile((abstractfile_t*)WadFile_New(baseOffset, info, sf));
 }
 
-static lumpfile_t* newLumpFile(const lumpinfo_t* info, streamfile_t* sf,
-    abstractfile_t* fsObject, int lumpIdx, boolean dontBuffer)
+static abstractfile_t* newLumpFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf,
+    boolean dontBuffer)
 {
-    abstractfile_t* file = (abstractfile_t*)LumpFile_New(info);
-    return (lumpfile_t*) openFromLump(file, fsObject, lumpIdx, dontBuffer);
+    return openFromLump((abstractfile_t*)LumpFile_New(baseOffset, info, sf), dontBuffer);
 }
 
 static int pruneLumpsFromDirectorysByFile(abstractfile_t* fsObject)
@@ -506,10 +493,11 @@ void F_InitLumpInfo(lumpinfo_t* info)
     assert(info);
     memset(info->name, 0, sizeof info->name);
     Str_Init(&info->path);
-    info->baseOffset = 0;
+    info->lumpIdx = 0;
     info->size = 0;
     info->compressedSize = 0;
     info->lastModified = 0;
+    info->container = NULL;
 }
 
 void F_CopyLumpInfo(lumpinfo_t* dst, const lumpinfo_t* src)
@@ -519,10 +507,11 @@ void F_CopyLumpInfo(lumpinfo_t* dst, const lumpinfo_t* src)
     Str_Init(&dst->path);
     if(!Str_IsEmpty(&src->path))
         Str_Set(&dst->path, Str_Text(&src->path));
-    dst->baseOffset = src->baseOffset;
+    dst->lumpIdx = src->lumpIdx;
     dst->size = src->size;
     dst->compressedSize = src->compressedSize;
     dst->lastModified = src->lastModified;
+    dst->container = src->container;
 }
 
 void F_DestroyLumpInfo(lumpinfo_t* info)
@@ -822,10 +811,10 @@ lumpnum_t F_OpenAuxiliary4(const char* path, streamfile_t* prevOpened, size_t ba
         foundPath = Str_New(), Str_Set(foundPath, path);
     }
 
-    if(WadFile_Recognise(prevOpened, baseOffset))
+    if(WadFile_Recognise(baseOffset, prevOpened))
     {
+        abstractfile_t* fsObject;
         lumpinfo_t info;
-        wadfile_t* wad;
 
         if(auxiliaryWadLumpDirectoryInUse)
         {
@@ -839,15 +828,14 @@ lumpnum_t F_OpenAuxiliary4(const char* path, streamfile_t* prevOpened, size_t ba
         Str_Set(&info.path, Str_Text(foundPath));
         Str_Strip(&info.path);
         F_FixSlashes(&info.path, &info.path);
-        info.baseOffset = baseOffset;
         info.lastModified = F_LastModified(Str_Text(foundPath));
 
         Str_Delete(foundPath);
 
-        wad = newWadFile(&info, prevOpened);
-        FileList_AddBack(loadedFiles, (abstractfile_t*)wad);
-        FileList_AddBack(openFiles,   (abstractfile_t*)wad);
-        WadFile_PublishLumpsToDirectory(wad, ActiveWadLumpDirectory);
+        fsObject = newWadFile(baseOffset, &info, prevOpened);
+        FileList_AddBack(loadedFiles, fsObject);
+        FileList_AddBack(openFiles,   fsObject);
+        WadFile_PublishLumpsToDirectory((wadfile_t*)fsObject, ActiveWadLumpDirectory);
 
         // We're done with the descriptor.
         F_DestroyLumpInfo(&info);
@@ -1489,7 +1477,6 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     Str_Set(&info.path, absolutePath);
     Str_Strip(&info.path);
     F_FixSlashes(&info.path, &info.path);
-    info.baseOffset = 0;
 
     // Prepare the name of this single-lump file.
     if(isDehackedPatch)
@@ -1514,40 +1501,38 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
         info.name[LUMPNAME_T_LASTINDEX] = '\0';
     }
 
-    fsObject = (abstractfile_t*)newLumpFile(&info, NULL, container, lumpIdx, dontBuffer);
+    fsObject = (abstractfile_t*)newLumpFile(0, &info, NULL, dontBuffer);
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
     return fsObject;
 }
 
-static abstractfile_t* tryOpenAsZipFile(const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* tryOpenAsZipFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
-    zipfile_t* zip = NULL;
-    if(inited && ZipFile_Recognise(sf, info->baseOffset))
+    if(inited && ZipFile_Recognise(baseOffset, sf))
     {
-        zip = newZipFile(info, sf);
+        return newZipFile(baseOffset, info, sf);
     }
-    return (abstractfile_t*)zip;
+    return NULL;
 }
 
-static abstractfile_t* tryOpenAsWadFile(const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* tryOpenAsWadFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
-    wadfile_t* wad = NULL;
-    if(inited && WadFile_Recognise(sf, info->baseOffset))
+    if(inited && WadFile_Recognise(baseOffset, sf))
     {
-        wad = newWadFile(info, sf);
+        return newWadFile(baseOffset, info, sf);
     }
-    return (abstractfile_t*)wad;
+    return NULL;
 }
 
-static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* tryOpenFile2(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
 {
     assert(NULL != sf && NULL != info);
     {
     struct filehandler_s {
         resourcetype_t resourceType;
-        abstractfile_t* (*tryOpenFile)(const lumpinfo_t* info, streamfile_t* sf);
+        abstractfile_t* (*tryOpenFile)(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
     } static const handlers[] = {
         { RT_ZIP,  tryOpenAsZipFile },
         { RT_WAD,  tryOpenAsWadFile },
@@ -1561,7 +1546,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, streamfile_t* sf)
     {
         if(hdlr->resourceType != resourceType) continue;
 
-        fsObject = hdlr->tryOpenFile(info, sf);
+        fsObject = hdlr->tryOpenFile(baseOffset, info, sf);
         break;
     }
 
@@ -1572,7 +1557,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, streamfile_t* sf)
     {
         if(hdlr != &handlers[n]) // We already know its not in this format.
         {
-            fsObject = handlers[n].tryOpenFile(info, sf);
+            fsObject = handlers[n].tryOpenFile(baseOffset, info, sf);
         }
         ++n;
     }}
@@ -1580,7 +1565,7 @@ static abstractfile_t* tryOpenFile2(const lumpinfo_t* info, streamfile_t* sf)
     // If still not loaded; this an unknown format.
     if(!fsObject)
     {
-        fsObject = newUnknownFile(info, sf);
+        fsObject = newUnknownFile(baseOffset, info, sf);
     }
 
     return fsObject;
@@ -1612,8 +1597,8 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
     // First check for lumps?
     if(!reqRealFile)
     {
-        fsObject = findLumpFile(Str_Text(&searchPath), &lumpIdx);
-        if(fsObject)
+        abstractfile_t* container = findLumpFile(Str_Text(&searchPath), &lumpIdx);
+        if(container)
         {
             resourcetype_t type;
 
@@ -1626,7 +1611,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
             // DeHackEd patch files require special handling...
             type = F_GuessResourceTypeByName(path);
 
-            fsObject = (abstractfile_t*)openAsLumpFile(fsObject, lumpIdx, Str_Text(&searchPath), (type == RT_DEH), dontBuffer);
+            fsObject = openAsLumpFile(container, lumpIdx, Str_Text(&searchPath), (type == RT_DEH), dontBuffer);
             Str_Free(&searchPath);
             return fsObject;
         }
@@ -1658,7 +1643,6 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
     Str_Set(&info.path, Str_Text(&searchPath));
     Str_Strip(&info.path);
     F_FixSlashes(&info.path, &info.path);
-    info.baseOffset = baseOffset;
     info.lastModified = F_LastModified(Str_Text(foundPath));
 
     Str_Free(&searchPath);
@@ -1667,7 +1651,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
     // Search path is used here rather than found path as the latter may have
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
-    fsObject = tryOpenFile2(&info, &temp);
+    fsObject = tryOpenFile2(baseOffset, &info, &temp);
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
@@ -1815,21 +1799,9 @@ abstractfile_t* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
     abstractfile_t* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(container)
     {
-        abstractfile_t* fsObject;
-        lumpinfo_t info;
-
-        // Prepare the temporary info descriptor.
-        F_InitLumpInfo(&info);
-        F_CopyLumpInfo(&info, F_LumpInfo(container, lumpIdx));
-        info.baseOffset = 0;
-
         /// \todo All lumps should be attributed with an absolute file path not just those from Zips.
         /// \note We do not link LumpFiles into the openFiles list.
-        fsObject = openFromLump((abstractfile_t*)LumpFile_New(&info), container, lumpIdx, dontBuffer);
-
-        // We're done with the info descriptor.
-        F_DestroyLumpInfo(&info);
-        return fsObject;
+        return openFromLump((abstractfile_t*)LumpFile_New(0, F_LumpInfo(container, lumpIdx), NULL), dontBuffer);
     }
     return 0;
 }
