@@ -5,6 +5,7 @@ import platform
 import shutil
 import time
 import glob
+import build_version
 
 LAUNCH_DIR = os.getcwd()
 DOOMSDAY_DIR = os.path.join(os.getcwd(), '..', 'doomsday')
@@ -57,37 +58,15 @@ def copytree(s, d):
    
     
 def find_version():
-    print "Determining Doomsday version...",
+    build_version.find_version()
     
-    versionBase = None
-    versionName = None
-    releaseType = "Unstable"
-    
-    f = file(os.path.join(DOOMSDAY_DIR, "engine", "portable", "include", "dd_version.h"), 'rt')
-    for line in f.readlines():
-        line = line.strip()
-        if line[:7] != "#define": continue
-        baseAt = line.find("DOOMSDAY_VERSION_BASE")
-        nameAt = line.find("DOOMSDAY_RELEASE_NAME")
-        typeAt = line.find("DOOMSDAY_RELEASE_TYPE")
-        if baseAt > 0:
-            versionBase = line[baseAt + 21:].replace('\"','').strip()
-        if nameAt > 0:
-            versionName = line[nameAt + 21:].replace('\"','').strip()
-        if typeAt > 0:
-            releaseType = line[typeAt + 21:].replace('\"','').strip()
-
     global DOOMSDAY_VERSION
     global DOOMSDAY_VERSION_PLAIN
     global DOOMSDAY_RELEASE_TYPE
     
-    DOOMSDAY_RELEASE_TYPE = releaseType
-    DOOMSDAY_VERSION_PLAIN = versionBase
-    DOOMSDAY_VERSION = versionBase
-    if versionName:
-        DOOMSDAY_VERSION += "-" + versionName    
-        
-    print DOOMSDAY_VERSION + " (%s)" % releaseType
+    DOOMSDAY_RELEASE_TYPE = build_version.DOOMSDAY_RELEASE_TYPE
+    DOOMSDAY_VERSION_PLAIN = build_version.DOOMSDAY_VERSION_PLAIN
+    DOOMSDAY_VERSION = build_version.DOOMSDAY_VERSION
 
 
 def prepare_work_dir():
@@ -228,11 +207,6 @@ import snowberry"""
         
     clean_products()
        
-    #if os.system('cmake -D SYSTEMARCH=`dpkg --print-architecture`' + 
-    #             ' -D DOOMSDAY_VERSION=' + DOOMSDAY_VERSION + 
-    #             ' -D DOOMSDAY_BUILD=' + DOOMSDAY_BUILD +
-    #             ' -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '"' +
-    #             ' -D CMAKE_INSTALL_PREFIX=/usr ../../doomsday && fakeroot make package'):
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
         

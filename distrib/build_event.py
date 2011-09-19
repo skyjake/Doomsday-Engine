@@ -13,6 +13,7 @@ import glob
 import platform
 import gzip
 import codecs
+import build_version
 
 BUILD_URI = "http://code.iki.fi/builds"
 
@@ -273,7 +274,7 @@ def collated(s):
     return s
 
 
-def update_changes(fromTag=None, toTag=None):
+def update_changes(fromTag=None, toTag=None, debChanges=False):
     # Determine automatically?
     if fromTag is None or toTag is None:
         builds = builds_by_time()
@@ -283,9 +284,10 @@ def update_changes(fromTag=None, toTag=None):
 
     # Generate a changelog.
     buildDir = os.path.join(EVENT_DIR, toTag)
-    fn = os.path.join(buildDir, 'changes.html')
-    changes = file(fn, 'wt')
-    print >> changes, '<ol>'
+    if not debChanges:
+        fn = os.path.join(buildDir, 'changes.html')
+        changes = file(fn, 'wt')
+        print >> changes, '<ol>'
     
     tmpName = os.path.join(buildDir, 'ctmp')
     
@@ -308,6 +310,7 @@ def update_changes(fromTag=None, toTag=None):
     # Check that the subject lines are not too long.
     MAX_SUBJECT = 100
     pos = 0
+    changeEntries = []
     while True:
         pos = logText.find('[[subjectline]]', pos)
         if pos < 0: break
@@ -323,6 +326,8 @@ def update_changes(fromTag=None, toTag=None):
             if subject[-1] == '.' and subject[-2] != '.':
                 subject = subject[:-1]
         
+        changeEntries.append(subject)
+        
         # Do the replace.
         logText = logText[:pos] + subject + logText[end+16:]
         
@@ -331,13 +336,32 @@ def update_changes(fromTag=None, toTag=None):
             bq = logText.find('<blockquote>', pos)
             logText = logText[:bq+12] + extra + logText[bq+12:]            
     
-    logText = logText.replace('\n\n', '<br/><br/>').replace('\n', ' ').replace('</blockquote><br/>', '</blockquote>')
-    print >> changes, logText
+    if not debChanges:
+        logText = logText.replace('\n\n', '<br/><br/>').replace('\n', ' ').replace('</blockquote><br/>', '</blockquote>')
+        print >> changes, logText
 
+    if not debChanges:
+        print >> changes, '</ol>'
+        changes.close()
+    else:
+        # Append the changes to the debian package changelog.
+        os.chdir(os.path.join(LAUNCH_DIR, 'linux'))
+        
+        # First we need to update the version.
+        build_version.find_version()
+        debVersion = build_version.DOOMSDAY_VERSION_PLAIN + '-' + todays_build_tag()
+        first = True
+        changeEntries.reverse()
+        for ch in changeEntries:
+            # Quote it for the command line.
+            qch = ch.replace('"', '\\"').replace('!', '\\!')
+            if first:
+                os.system("dch -v %s \"%s\"" % (debVersion, qch))
+                first = False
+            else:
+                os.system("dch -a \"%s\"" % qch)
+            
     os.remove(tmpName)
-
-    print >> changes, '</ol>'
-    changes.close()
 
 
 def create_build_event():
@@ -519,6 +543,10 @@ elif sys.argv[1] == 'apt':
     
 elif sys.argv[1] == 'changes':
     update_changes()
+    
+elif sys.argv[1] == 'debchanges':
+    # Update debian changelog.
+    update_changes(None, None, True)
     
 elif sys.argv[1] == 'purge':
     purge_obsolete()
