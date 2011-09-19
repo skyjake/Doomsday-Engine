@@ -278,7 +278,7 @@ boolean Mus_IsMUSLump(lumpnum_t lumpNum)
     char buf[4];
     int lumpIdx;
     abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
-    if(!fsObject) false;
+    if(!fsObject) return false;
     
     F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)buf, 0, 4);
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
