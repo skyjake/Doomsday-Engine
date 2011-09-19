@@ -236,7 +236,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* file)
 {
     assert(NULL != file);
     {
-    zipfile_lumprecord_t* record;
+    zipfile_lumprecord_t* record = NULL; // Shutup gcc!
     int index, entryCount, pass;
     void* centralDirectory;
     ddstring_t entryPath;
