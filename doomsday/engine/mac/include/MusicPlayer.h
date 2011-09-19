@@ -21,6 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#import <Quartz/Quartz.h>
+#import <CALayer.h>
 #import <Cocoa/Cocoa.h>
 #import <QTKit/QTKit.h>
 

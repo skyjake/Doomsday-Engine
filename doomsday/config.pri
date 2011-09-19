@@ -145,7 +145,15 @@ macx {
     else {
         echo("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
+        QMAKE_CFLAGS += -mmacosx-version-min=10.4
         CONFIG += x86 ppc
+    }
+    
+    defineTest(useFramework) {
+        LIBS += -framework $$1
+        INCLUDEPATH += $$QMAKE_MAC_SDK/System/Library/Frameworks/$${1}.framework/Headers
+        export(LIBS)
+        export(INCLUDEPATH)
+        return(true)
     }
 }

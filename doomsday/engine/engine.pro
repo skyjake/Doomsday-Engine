@@ -43,7 +43,9 @@ unix:!macx {
     QMAKE_LFLAGS += -rdynamic
 }
 macx {
-    LIBS += -framework Cocoa -framework QTKit
+    useFramework(Foundation)
+    useFramework(Cocoa)
+    useFramework(QTKit)
 }
 win32 {
     DEFINES += WIN32_GAMMA
