@@ -34,7 +34,7 @@ else:macx {
         $${SDL_FRAMEWORK_DIR}/SDL.framework/Headers \
         $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework/Headers
 
-    QMAKE_LFLAGS += -F$${SDL_FRAMEWORK_DIR}
+    QMAKE_LFLAGS += -F$${SDL_FRAMEWORK_DIR} -F$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework/Frameworks
 
     LIBS += -framework SDL -framework SDL_mixer
 }
