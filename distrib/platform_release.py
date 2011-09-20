@@ -8,8 +8,8 @@ import glob
 import build_version
 
 LAUNCH_DIR = os.getcwd()
-DOOMSDAY_DIR = os.path.join(os.getcwd(), '..', 'doomsday')
-SNOWBERRY_DIR = os.path.join(LAUNCH_DIR, '..', 'snowberry')
+DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
+SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
 WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
 OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
 DOOMSDAY_VERSION = "0.0.0-Name"
@@ -99,7 +99,7 @@ def mac_release():
     print "Building the release..."
     # Must work in the deng root for qmake (resource bundling apparently 
     # fails otherwise).
-    MAC_WORK_DIR = os.path.join(DOOMSDAY_DIR, '../macx_release_build')
+    MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
     if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) + 
