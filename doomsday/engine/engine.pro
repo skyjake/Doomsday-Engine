@@ -43,7 +43,6 @@ unix:!macx {
     QMAKE_LFLAGS += -rdynamic
 }
 macx {
-    useFramework(Foundation)
     useFramework(Cocoa)
     useFramework(QTKit)
 }

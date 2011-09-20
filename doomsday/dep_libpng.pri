@@ -9,8 +9,15 @@ win32 {
     pnglibs.path = $$DENG_WIN_PRODUCTS_DIR
 }
 else:macx {
-    INCLUDEPATH += $$QMAKE_MAC_SDK/usr/X11/include
-    LIBS += -L$$QMAKE_MAC_SDK/usr/X11/lib -lpng
+    deng_snowleopard {
+        # Use libpng in the SDK.
+        INCLUDEPATH += $$QMAKE_MAC_SDK/usr/X11/include
+        LIBS += -L$$QMAKE_MAC_SDK/usr/X11/lib -lpng
+    } else {
+        # Use a static libpng from MacPorts (ppc+i386).
+        INCLUDEPATH += /opt/local/include
+		LIBS += /opt/local/lib/libpng.a
+    }
 }
 else {
     # Generic Unix.
