@@ -147,12 +147,12 @@ macx {
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
         QMAKE_CFLAGS += -mmacosx-version-min=10.4
         DEFINES += MACOS_10_4
-        CONFIG += x86 ppc
-        
-        # Not using Qt, and anyway these would not point to the 10.4u SDK.
-        QMAKE_INCDIR_QT = ""
-        QMAKE_LIBDIR_QT = ""
+        CONFIG += x86 ppc       
     }
+
+    # Not using Qt, and anyway these would not point to the chosen SDK.
+    QMAKE_INCDIR_QT = ""
+    QMAKE_LIBDIR_QT = ""
     
     defineTest(useFramework) {
         LIBS += -framework $$1

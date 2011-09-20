@@ -16,7 +16,7 @@ else:macx {
     } else {
         # Use a static libpng from MacPorts (ppc+i386).
         INCLUDEPATH += /opt/local/include
-		LIBS += /opt/local/lib/libpng.a
+        LIBS += /opt/local/lib/libpng.a
     }
 }
 else {

@@ -28,7 +28,9 @@ win32 {
 }
 else:macx {
     # Mac OS X.
-    SDL_FRAMEWORK_DIR = $$(HOME)/Library/Frameworks
+    isEmpty(SDL_FRAMEWORK_DIR) {
+        error("dep_sdl: SDL framework path not defined, check your config_user.pri")
+    }
 
     INCLUDEPATH += \
         $${SDL_FRAMEWORK_DIR}/SDL.framework/Headers \
