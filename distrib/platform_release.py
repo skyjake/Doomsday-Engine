@@ -86,6 +86,15 @@ def mac_os_version():
 
 """The Mac OS X release procedure."""
 def mac_release():
+    # Check Python dependencies.
+    try:
+        import wx
+    except ImportError:
+        raise Exception("Python: wx not found!")
+    try:
+        import py2app
+    except ImportError:
+        raise Exception("Python: py2app not found!")
     # First we need to make a release build.
     print "Building the release..."
     # Must work in the deng root for qmake (resource bundling apparently 
@@ -167,7 +176,11 @@ def mac_release():
     
     masterDmg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION
-    shutil.copy(SNOWBERRY_DIR + '/template-image/template.dmg', 'imaging.dmg')
+    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.dmg')
+    if not os.path.exists(templateFile):
+        print 'Template .dmg not found, trying to extract from compressed archive...'
+        os.system('bunzip2 -k "%s.bz2"' % templateFile)
+    shutil.copy(templateFile, 'imaging.dmg')
     remkdir('imaging')
     os.system('hdiutil attach imaging.dmg -noautoopen -quiet -mountpoint imaging')
     shutil.rmtree('imaging/Doomsday Engine.app', True)
