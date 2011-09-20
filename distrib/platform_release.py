@@ -8,8 +8,8 @@ import glob
 import build_version
 
 LAUNCH_DIR = os.getcwd()
-DOOMSDAY_DIR = os.path.join(os.getcwd(), '..', 'doomsday')
-SNOWBERRY_DIR = os.path.join(LAUNCH_DIR, '..', 'snowberry')
+DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
+SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
 WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
 OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
 DOOMSDAY_VERSION = "0.0.0-Name"
@@ -55,6 +55,10 @@ def copytree(s, d):
     except Exception, x:
         print x
         print 'Cannot copy', s, 'to', d
+
+
+def duptree(s, d):
+    os.system('cp -fRp "%s" "%s"' % (s, d))
    
     
 def find_version():
@@ -77,16 +81,30 @@ def prepare_work_dir():
 def mac_os_version():
     return platform.mac_ver()[0][:4]
     
+    
+    
 
 """The Mac OS X release procedure."""
 def mac_release():
+    # Check Python dependencies.
+    try:
+        import wx
+    except ImportError:
+        raise Exception("Python: wx not found!")
+    try:
+        import py2app
+    except ImportError:
+        raise Exception("Python: py2app not found!")
     # First we need to make a release build.
     print "Building the release..."
-    os.chdir(WORK_DIR)
-    mkdir('release_build')
-    os.chdir('release_build')
-    #if os.system('cmake -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '" -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
-    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ../../../doomsday/doomsday.pro && make && ../../../doomsday/build/mac/bundleapp.sh ../../../doomsday' % (DOOMSDAY_BUILD_NUMBER)):
+    # Must work in the deng root for qmake (resource bundling apparently 
+    # fails otherwise).
+    MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
+    remkdir(MAC_WORK_DIR)
+    os.chdir(MAC_WORK_DIR)
+    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) + 
+                 '../doomsday/doomsday.pro && make -w ' + 
+                 '&& ../doomsday/build/mac/bundleapp.sh ../doomsday'):
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
@@ -143,25 +161,31 @@ def mac_release():
     f.close()
     os.system('python buildapp.py py2app')
     
-    # Back to the work dir.
+    # Back to the normal work dir.
     os.chdir(WORK_DIR)
     copytree(SNOWBERRY_DIR + '/dist/Doomsday Engine.app', 'Doomsday Engine.app')
     
     print 'Coping release binaries into the launcher bundle.'
-    copytree('release_build/engine/Doomsday.app', 'Doomsday Engine.app/Contents/Doomsday.app')
-    for f in glob.glob('release_build/engine/*.bundle'):
-        copytree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
+    duptree(os.path.join(MAC_WORK_DIR, 'engine/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
+    for f in glob.glob(os.path.join(MAC_WORK_DIR, 'engine/*.bundle')):
+        # Exclude jDoom64.
+        if not 'jDoom64' in f:
+            duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
         
     print 'Creating disk image:', target
     
     masterDmg = target
     volumeName = "Doomsday Engine " + DOOMSDAY_VERSION
-    shutil.copy(SNOWBERRY_DIR + '/template-image/template.dmg', 'imaging.dmg')
+    templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.dmg')
+    if not os.path.exists(templateFile):
+        print 'Template .dmg not found, trying to extract from compressed archive...'
+        os.system('bunzip2 -k "%s.bz2"' % templateFile)
+    shutil.copy(templateFile, 'imaging.dmg')
     remkdir('imaging')
     os.system('hdiutil attach imaging.dmg -noautoopen -quiet -mountpoint imaging')
     shutil.rmtree('imaging/Doomsday Engine.app', True)
     remove('imaging/Read Me.rtf')
-    copytree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+    duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
     shutil.copy(LAUNCH_DIR + "/mac/Read Me.rtf", 'imaging/Read Me.rtf')
     
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + 

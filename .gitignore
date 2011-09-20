@@ -1,6 +1,6 @@
 .directory
 .DS_Store
-
+macx_release_build
 /doomsday/build/win32/license.txt
 *.user.*
 *-build-*

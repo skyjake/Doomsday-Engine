@@ -506,8 +506,11 @@ macx {
 
     packdata.files = $$OUT_PWD/../doomsday.pk3
     packdata.path = Contents/Resources
+    
+    startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
+    startupgfx.path = Contents/Resources/Data/Graphics
 
-    QMAKE_BUNDLE_DATA += sdl_frameworks res packdata
+    QMAKE_BUNDLE_DATA += sdl_frameworks res packdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
