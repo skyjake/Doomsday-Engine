@@ -55,6 +55,10 @@ def copytree(s, d):
     except Exception, x:
         print x
         print 'Cannot copy', s, 'to', d
+
+
+def duptree(s, d):
+    os.system('cp -fRp "%s" "%s"' % (s, d))
    
     
 def find_version():
@@ -76,6 +80,8 @@ def prepare_work_dir():
 
 def mac_os_version():
     return platform.mac_ver()[0][:4]
+    
+    
     
 
 """The Mac OS X release procedure."""
@@ -151,11 +157,11 @@ def mac_release():
     copytree(SNOWBERRY_DIR + '/dist/Doomsday Engine.app', 'Doomsday Engine.app')
     
     print 'Coping release binaries into the launcher bundle.'
-    copytree(os.path.join(MAC_WORK_DIR, 'engine/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
+    duptree(os.path.join(MAC_WORK_DIR, 'engine/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
     for f in glob.glob(os.path.join(MAC_WORK_DIR, 'engine/*.bundle')):
         # Exclude jDoom64.
         if not 'jDoom64' in f:
-            copytree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
+            duptree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
         
     print 'Creating disk image:', target
     
@@ -166,7 +172,7 @@ def mac_release():
     os.system('hdiutil attach imaging.dmg -noautoopen -quiet -mountpoint imaging')
     shutil.rmtree('imaging/Doomsday Engine.app', True)
     remove('imaging/Read Me.rtf')
-    copytree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+    duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
     shutil.copy(LAUNCH_DIR + "/mac/Read Me.rtf", 'imaging/Read Me.rtf')
     
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + 
