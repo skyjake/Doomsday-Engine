@@ -82,11 +82,14 @@ def mac_os_version():
 def mac_release():
     # First we need to make a release build.
     print "Building the release..."
-    os.chdir(WORK_DIR)
-    mkdir('release_build')
-    os.chdir('release_build')
-    #if os.system('cmake -D DOOMSDAY_BUILD_TEXT="' + DOOMSDAY_BUILD_NUMBER + '" -D MACOS_VERSION=' + mac_os_version() + ' ' + DOOMSDAY_DIR + ' && make'):
-    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ../../../doomsday/doomsday.pro && make && ../../../doomsday/build/mac/bundleapp.sh ../../../doomsday' % (DOOMSDAY_BUILD_NUMBER)):
+    # Must work in the deng root for qmake (resource bundling apparently 
+    # fails otherwise).
+    MAC_WORK_DIR = os.path.join(DOOMSDAY_DIR, '../macx_release_build')
+    remkdir(MAC_WORK_DIR)
+    os.chdir(MAC_WORK_DIR)
+    if os.system('qmake -r -spec macx-g++ CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) + 
+                 '../doomsday/doomsday.pro && make -w ' + 
+                 '&& ../doomsday/build/mac/bundleapp.sh ../doomsday'):
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
@@ -143,14 +146,16 @@ def mac_release():
     f.close()
     os.system('python buildapp.py py2app')
     
-    # Back to the work dir.
+    # Back to the normal work dir.
     os.chdir(WORK_DIR)
     copytree(SNOWBERRY_DIR + '/dist/Doomsday Engine.app', 'Doomsday Engine.app')
     
     print 'Coping release binaries into the launcher bundle.'
-    copytree('release_build/engine/Doomsday.app', 'Doomsday Engine.app/Contents/Doomsday.app')
-    for f in glob.glob('release_build/engine/*.bundle'):
-        copytree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
+    copytree(os.path.join(MAC_WORK_DIR, 'engine/Doomsday.app'), 'Doomsday Engine.app/Contents/Doomsday.app')
+    for f in glob.glob(os.path.join(MAC_WORK_DIR, 'engine/*.bundle')):
+        # Exclude jDoom64.
+        if not 'jDoom64' in f:
+            copytree(f, 'Doomsday Engine.app/Contents/' + os.path.basename(f))
         
     print 'Creating disk image:', target
     
