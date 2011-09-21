@@ -29,7 +29,6 @@
 #include "fs_util.h"
 #include "sys_reslocator.h" /// \todo Does not belong here (higher level abstraction).
 #include "sys_direc.h"
-#include "sys_file.h"
 #include "sys_findfile.h"
 
 #ifdef UNIX

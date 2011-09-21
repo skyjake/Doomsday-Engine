@@ -30,7 +30,7 @@
 #define LIBDENG_M_MISC_H
 
 #include "dd_types.h"
-#include "sys_file.h"
+#include "dfile.h"
 
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
@@ -73,7 +73,7 @@ void            M_Strip(char* str, size_t len);
 char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
-void            M_ReadLine(char* buffer, size_t len, streamfile_t* sf);
+void            M_ReadLine(char* buffer, size_t len, DFile* file);
 
 boolean         M_IsComment(const char* text);
 

@@ -39,8 +39,6 @@ struct filelist_s
     DFile** _table;
 };
 
-static volatile int numInstances = 0;
-
 static void expandHandleTable(FileList* fl)
 {
     assert(fl);
@@ -64,15 +62,10 @@ FileList* FileList_New(void)
     if(!fl)
         Con_Error("FileList::New: Failed on allocation of %lu bytes for new FileList.",
             (unsigned long) sizeof *fl);
-    if(numInstances == 0)
-    {
-        DFileBuilder_Init();
-    }
-    ++numInstances;
     return fl;
 }
 
-FileList* FileList_NewWithFiles(abstractfile_t** files, int count)
+FileList* FileList_NewWithFiles(DFile** files, int count)
 {
     FileList* fl = FileList_New();
     if(files && count)
@@ -95,7 +88,7 @@ FileList* FileList_NewCopy(FileList* fl)
     int i;
     for(i = 0; i < fl->_size; ++i)
     {
-        FileList_AddBack(clone, DFile_File(fl->_table[i]));
+        FileList_AddBack(clone, DFileBuilder_NewCopy(fl->_table[i]));
     }
     return clone;
     }
@@ -110,22 +103,12 @@ void FileList_Delete(FileList* fl)
         free(fl->_table);
     }
     free(fl);
-    if(numInstances == 1)
-    {
-        DFileBuilder_Shutdown();
-    }
-    --numInstances;
 }
 
 void FileList_Clear(FileList* fl)
 {
     if(!FileList_Empty(fl))
     {
-        int i;
-        for(i = 0; i < fl->_size; ++i)
-        {
-            DFile_Delete(fl->_table[i], true);
-        }
         memset(fl->_table, 0, fl->_tableSize * sizeof *fl->_table);
         fl->_size = 0;
     }
@@ -176,16 +159,15 @@ abstractfile_t* FileList_BackFile(FileList* fl)
     return NULL;
 }
 
-abstractfile_t* FileList_RemoveAt(FileList* fl, int idx)
+DFile* FileList_RemoveAt(FileList* fl, int idx)
 {
     assert(fl);
     {
-    abstractfile_t* file = NULL;
+    DFile* file = NULL;
     if(idx < 0) idx += fl->_size;
     if(idx >= 0 && idx < fl->_size)
     {
-        file = DFile_File(fl->_table[idx]);
-        DFile_Delete(fl->_table[idx], true);
+        file = fl->_table[idx];
         if(idx < fl->_size-1)
             memmove(fl->_table + idx, fl->_table + idx + 1, (fl->_size - 1) * sizeof *fl->_table);
         --fl->_size;
@@ -194,31 +176,31 @@ abstractfile_t* FileList_RemoveAt(FileList* fl, int idx)
     }
 }
 
-abstractfile_t* FileList_AddFront(FileList* fl, abstractfile_t* file)
+DFile* FileList_AddFront(FileList* fl, DFile* file)
 {
     assert(fl && file);
     ++fl->_size;
     expandHandleTable(fl);
     memmove(fl->_table, fl->_table + 1, (fl->_size-1) * sizeof *fl->_table);
-    fl->_table[0] = DFileBuilder_CreateNew(file, fl);
-    return file;
+    DFile_SetList(file, fl);
+    return (fl->_table[0] = file);
 }
 
-abstractfile_t* FileList_AddBack(FileList* fl, abstractfile_t* file)
+DFile* FileList_AddBack(FileList* fl, DFile* file)
 {
     assert(fl && file);
     ++fl->_size;
     expandHandleTable(fl);
-    fl->_table[fl->_size-1] = DFileBuilder_CreateNew(file, fl);
-    return file;
+    DFile_SetList(file, fl);
+    return (fl->_table[fl->_size-1] = file);
 }
 
-abstractfile_t* FileList_RemoveFront(FileList* fl)
+DFile* FileList_RemoveFront(FileList* fl)
 {
     return FileList_RemoveAt(fl, 0);
 }
 
-abstractfile_t* FileList_RemoveBack(FileList* fl)
+DFile* FileList_RemoveBack(FileList* fl)
 {
     return FileList_RemoveAt(fl, -1);
 }
@@ -418,13 +400,13 @@ ddstring_t* FileList_ToString(FileList* fl)
 #if _DEBUG
 void FileList_Print(FileList* fl)
 {
-    DFile* hndl;
+    DFile* file;
     int i;
     for(i = 0; i < fl->_size; ++i)
     {
-        hndl = fl->_table[i];
-        Con_Printf(" %c%u: ", AbstractFile_HasStartup(DFile_File(hndl))? '*':' ', i);
-        DFile_Print(hndl);
+        file = fl->_table[i];
+        Con_Printf(" %c%u: ", AbstractFile_HasStartup(DFile_File(file))? '*':' ', i);
+        DFile_Print(file);
     }
 }
 #endif

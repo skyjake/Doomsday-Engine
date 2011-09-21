@@ -415,8 +415,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
             {   // Its an external file.
                 // The song may be in a virtual file, so we must buffer
                 // it ourselves.
-                abstractfile_t* file = F_Open(Str_Text(&path), "rb");
-                size_t len = F_Length(AbstractFile_Handle(file));
+                DFile* file = F_Open(Str_Text(&path), "rb");
+                size_t len = DFile_Length(file);
 
                 if(!iMusic->Play)
                 {   // Music interface does not offer buffer playback.
@@ -437,7 +437,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         }
 
                         // Write the song into the buffer file.
-                        F_Read(AbstractFile_Handle(file), buf, len);
+                        DFile_Read(file, buf, len);
                         fwrite(buf, 1, len, outFile);
                         fclose(outFile);
                         F_Delete(file);
@@ -463,7 +463,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         def->id, F_PrettyPath(Str_Text(&path)), (unsigned long) len) )
 
                     ptr = iMusic->SongBuffer(len);
-                    F_Read(AbstractFile_Handle(file), (uint8_t*)ptr, len);
+                    DFile_Read(file, (uint8_t*)ptr, len);
                     F_Delete(file);
 
                     return iMusic->Play(looped);

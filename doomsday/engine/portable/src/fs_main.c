@@ -169,107 +169,60 @@ static int findFileNodeIndexForPath(FileList* list, const char* path_)
     return found;
 }
 
-/**
- * Open a new pseudo-stream on the specified lump for reading.
- *
- * @param file  File object used to represent this file in our vfs once read.
- * @param dontBuffer  @c true= only test for access and do not buffer anything.
- * @return  Same as @a file for convenience (chaining).
- */
-static abstractfile_t* openFromLump(abstractfile_t* file, boolean dontBuffer)
+static abstractfile_t* newUnknownFile(DFile* file, const lumpinfo_t* info)
 {
-    assert(NULL != file);
-    // Init and load in the lump data.
-    file->_flags.open = true;
-    if(!dontBuffer)
-    {
-        const lumpinfo_t* info = AbstractFile_Info(file);
-        streamfile_t* sf = &file->_stream;
-        sf->size = info->size;
-        sf->pos = sf->data = (uint8_t*)malloc(sf->size);
-        if(NULL == sf->data)
-            Con_Error("openFromLump: Failed on allocation of %lu bytes for buffered data.",
-                (unsigned long) sf->size);
-#if _DEBUG
-        VERBOSE2( Con_Printf("Next FILE read from openFromLump.\n") )
-#endif
-        F_ReadLumpSection(info->container, info->lumpIdx, (uint8_t*)sf->data, 0, info->size);
-    }
-    return file;
+    abstractfile_t* af = (abstractfile_t*)malloc(sizeof *af);
+    if(!af) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.",
+        (unsigned long) sizeof *af);
+    return AbstractFile_Init(af, FT_UNKNOWNFILE, file, info);
 }
 
-/**
- * Open a new stream on the specified file for reading.
- *
- * @param file  File object used to represent this file in our vfs once read.
- * @return  Same as @a file for convenience.
- */
-static abstractfile_t* openFromFile(abstractfile_t* file)
+static abstractfile_t* newZipFile(DFile* file, const lumpinfo_t* info)
 {
-    assert(NULL != file);
-    file->_flags.open = true;
-    return file;
+    return (abstractfile_t*)ZipFile_New(file, info);
 }
 
-static abstractfile_t* newUnknownFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* newWadFile(DFile* file, const lumpinfo_t* info)
 {
-    abstractfile_t* file = (abstractfile_t*)malloc(sizeof *file);
-    if(!file) Con_Error("newUnknownFile: Failed on allocation of %lu bytes for new abstractfile_t.", (unsigned long) sizeof *file);
-    AbstractFile_Init(file, FT_UNKNOWNFILE, baseOffset, info, sf);
-    return openFromFile(file);
+    return (abstractfile_t*)WadFile_New(file, info);
 }
 
-static abstractfile_t* newZipFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+static abstractfile_t* newLumpFile(DFile* file, const lumpinfo_t* info)
 {
-    return openFromFile((abstractfile_t*)ZipFile_New(baseOffset, info, sf));
+    return (abstractfile_t*)LumpFile_New(file, info);
 }
 
-static abstractfile_t* newWadFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+static int pruneLumpsFromDirectorysByFile(abstractfile_t* af)
 {
-    return openFromFile((abstractfile_t*)WadFile_New(baseOffset, info, sf));
-}
-
-static abstractfile_t* newLumpFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf,
-    boolean dontBuffer)
-{
-    return openFromLump((abstractfile_t*)LumpFile_New(baseOffset, info, sf), dontBuffer);
-}
-
-static int pruneLumpsFromDirectorysByFile(abstractfile_t* fsObject)
-{
-    int pruned = LumpDirectory_PruneByFile(zipLumpDirectory, fsObject);
-    pruned += LumpDirectory_PruneByFile(primaryWadLumpDirectory, fsObject);
+    int pruned = LumpDirectory_PruneByFile(zipLumpDirectory, af);
+    pruned += LumpDirectory_PruneByFile(primaryWadLumpDirectory, af);
     if(auxiliaryWadLumpDirectoryInUse)
-        pruned += LumpDirectory_PruneByFile(auxiliaryWadLumpDirectory, fsObject);
+        pruned += LumpDirectory_PruneByFile(auxiliaryWadLumpDirectory, af);
     return pruned;
 }
 
 static boolean removeLoadedFile(int loadedFilesNodeIndex)
 {
-    DFile* hndl = FileList_Get(loadedFiles, loadedFilesNodeIndex);
-    abstractfile_t* fsObject = DFile_File(hndl);
-    assert(fsObject);
-    switch(AbstractFile_Type(fsObject))
+    DFile* file = FileList_Get(loadedFiles, loadedFilesNodeIndex);
+    abstractfile_t* af = DFile_File(file);
+
+    switch(AbstractFile_Type(af))
     {
     case FT_UNKNOWNFILE: break;
 
-    case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( zipfile_t*)fsObject); break;
-    case FT_WADFILE:  WadFile_ClearLumpCache( ( wadfile_t*)fsObject); break;
-    case FT_LUMPFILE: LumpFile_ClearLumpCache((lumpfile_t*)fsObject); break;
+    case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( zipfile_t*)af); break;
+    case FT_WADFILE:  WadFile_ClearLumpCache( ( wadfile_t*)af); break;
+    case FT_LUMPFILE: LumpFile_ClearLumpCache((lumpfile_t*)af); break;
 
     default:
-        Con_Error("WadCollection::removeLoadedFile: Invalid file type %i.", AbstractFile_Type(fsObject));
+        Con_Error("WadCollection::removeLoadedFile: Invalid file type %i.", AbstractFile_Type(af));
         exit(1); // Unreachable.
     }
 
-    F_ReleaseFileId(Str_Text(AbstractFile_Path(fsObject)));
+    F_ReleaseFileId(Str_Text(AbstractFile_Path(af)));
+    pruneLumpsFromDirectorysByFile(af);
 
-    pruneLumpsFromDirectorysByFile(fsObject);
-    FileList_RemoveAt(loadedFiles, loadedFilesNodeIndex);
-
-    // Close the file; we don't need it any more.
-    F_Close(fsObject);
-    F_Delete(fsObject);
+    F_Delete(FileList_RemoveAt(loadedFiles, loadedFilesNodeIndex));
     return true;
 }
 
@@ -328,7 +281,7 @@ static void clearOpenFiles(void)
     int i;
     for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
     {
-        F_Delete(FileList_GetFile(openFiles, i));
+        F_Delete(FileList_Get(openFiles, i));
     }
     FileList_Clear(openFiles);
 }
@@ -527,6 +480,8 @@ void F_Init(void)
     // This'll force the loader NOT to flag new files as "runtime".
     loadingForStartup = true;
 
+    DFileBuilder_Init();
+
     openFiles     = FileList_New();
     loadedFiles   = FileList_New();
 
@@ -555,8 +510,9 @@ void F_Shutdown(void)
     FileList_Delete(openFiles), openFiles = NULL;
 
     clearFileIds(); // Should be null-op if bookkeeping is correct.
-
     clearLumpDirectorys();
+
+    DFileBuilder_Shutdown();
 
     inited = false;
 }
@@ -632,24 +588,6 @@ int F_Reset(void)
         F_InitVirtualDirectoryMappings();
     }
     return unloaded;
-}
-
-void F_CloseFile(streamfile_t* sf)
-{
-    assert(NULL != sf);
-    if(sf->hndl)
-    {
-        fclose(sf->hndl);
-        sf->hndl = NULL;
-    }
-    else
-    {   // Free the stored data.
-        if(sf->data)
-        {
-            free(sf->data), sf->data = NULL;
-        }
-    }
-    sf->pos = NULL;
 }
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
@@ -766,54 +704,42 @@ int F_LumpCount(void)
     return 0;
 }
 
-lumpnum_t F_OpenAuxiliary4(const char* path, streamfile_t* prevOpened, size_t baseOffset, boolean silent)
+lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
 {
     ddstring_t* foundPath = NULL;
-    streamfile_t temp;
+    ddstring_t searchPath;
+    DFile* dfile;
+    FILE* file;
 
-    errorIfNotInited("F_OpenAuxiliary3");
+    errorIfNotInited("F_OpenAuxiliary");
 
-    if(prevOpened == NULL)
+    if(!path || !path[0])
+        return -1;
+
+    // Make it a full path.
+    Str_Init(&searchPath); Str_Set(&searchPath, path);
+    F_FixSlashes(&searchPath, &searchPath);
+    F_ExpandBasePath(&searchPath, &searchPath);
+    // We must have an absolute path, so prepend the current working directory if necessary.
+    F_PrependWorkPath(&searchPath, &searchPath);
+
+    /// \todo Allow opening WAD/ZIP files from lumps in other containers.
+    file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
+    Str_Free(&searchPath);
+    if(!file)
     {
-        // Try to open the file.
-        ddstring_t searchPath;
-        FILE* file;
- 
-        if(!path || !path[0])
-            return -1;
-
-        // Make it a full path.
-        Str_Init(&searchPath); Str_Set(&searchPath, path);
-        F_FixSlashes(&searchPath, &searchPath);
-        F_ExpandBasePath(&searchPath, &searchPath);
-        // We must have an absolute path, so prepend the current working directory if necessary.
-        F_PrependWorkPath(&searchPath, &searchPath);
-
-        /// \todo Allow opening WAD/ZIP files from lumps in other containers.
-        file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
-        Str_Free(&searchPath);
-        if(!file)
+        Str_Delete(foundPath);
+        if(!silent)
         {
-            Str_Delete(foundPath);
-            if(!silent)
-            {
-                Con_Message("Warning:F_OpenAuxiliary: Resource \"%s\" not found, aborting.\n", path);
-            }
-            return -1;
+            Con_Message("Warning:F_OpenAuxiliary: Resource \"%s\" not found, aborting.\n", path);
         }
-
-        memset(&temp, 0, sizeof temp);
-        temp.hndl = file;
-        prevOpened = &temp;
-    }
-    else
-    {
-        foundPath = Str_New(), Str_Set(foundPath, path);
+        return -1;
     }
 
-    if(WadFile_Recognise(baseOffset, prevOpened))
+    dfile = DFileBuilder_NewFromFile(file, baseOffset);
+
+    if(WadFile_Recognise(dfile))
     {
-        abstractfile_t* fsObject;
         lumpinfo_t info;
 
         if(auxiliaryWadLumpDirectoryInUse)
@@ -832,10 +758,10 @@ lumpnum_t F_OpenAuxiliary4(const char* path, streamfile_t* prevOpened, size_t ba
 
         Str_Delete(foundPath);
 
-        fsObject = newWadFile(baseOffset, &info, prevOpened);
-        FileList_AddBack(loadedFiles, fsObject);
-        FileList_AddBack(openFiles,   fsObject);
-        WadFile_PublishLumpsToDirectory((wadfile_t*)fsObject, ActiveWadLumpDirectory);
+        dfile = DFileBuilder_NewFromAbstractFile(newWadFile(dfile, &info));
+        FileList_AddBack(openFiles,   dfile);
+        FileList_AddBack(loadedFiles, DFileBuilder_NewCopy(dfile));
+        WadFile_PublishLumpsToDirectory((wadfile_t*)DFile_File(dfile), ActiveWadLumpDirectory);
 
         // We're done with the descriptor.
         F_DestroyLumpInfo(&info);
@@ -854,19 +780,14 @@ lumpnum_t F_OpenAuxiliary4(const char* path, streamfile_t* prevOpened, size_t ba
     return -1;
 }
 
-lumpnum_t F_OpenAuxiliary3(const char* path, streamfile_t* prevOpened, size_t baseOffset)
+lumpnum_t F_OpenAuxiliary2(const char* path, size_t baseOffset)
 {
-    return F_OpenAuxiliary4(path, prevOpened, baseOffset, false);
-}
-
-lumpnum_t F_OpenAuxiliary2(const char* path, streamfile_t* prevOpened)
-{
-    return F_OpenAuxiliary3(path, prevOpened, 0);
+    return F_OpenAuxiliary3(path, baseOffset, false);
 }
 
 lumpnum_t F_OpenAuxiliary(const char* path)
 {
-    return F_OpenAuxiliary2(path, NULL);
+    return F_OpenAuxiliary2(path, 0);
 }
 
 void F_CloseAuxiliary(void)
@@ -882,60 +803,44 @@ void F_CloseAuxiliary(void)
 
 void F_ReleaseFile(abstractfile_t* fsObject)
 {
-    DFile* hndl;
+    DFile* file;
     int i;
     if(!fsObject) return;
     for(i = FileList_Size(openFiles) - 1; i >= 0; i--)
     {
-        hndl = FileList_Get(openFiles, i);
-        if(DFile_File(hndl) == fsObject)
+        file = FileList_Get(openFiles, i);
+        if(DFile_File(file) == fsObject)
         {
             FileList_RemoveAt(openFiles, i);
         }
     }
 }
 
-void F_Close(abstractfile_t* fsObject)
+void F_Close(DFile* file)
 {
-    assert(fsObject);
-    switch(AbstractFile_Type(fsObject))
-    {
-    case FT_UNKNOWNFILE:
-        if(fsObject->_flags.open)
-            F_CloseFile(AbstractFile_Handle(fsObject));
-        fsObject->_flags.open = false;
-        break;
-
-    case FT_ZIPFILE:     ZipFile_Close( ( zipfile_t*)fsObject); break;
-    case FT_WADFILE:     WadFile_Close( ( wadfile_t*)fsObject); break;
-    case FT_LUMPFILE:    LumpFile_Close((lumpfile_t*)fsObject); break;
-    default:
-        Con_Error("F_Close: Invalid file type %i.", AbstractFile_Type(fsObject));
-        exit(1); // Unreachable.
-    }
+    DFile_Close(file);
 }
 
-void F_Delete(abstractfile_t* fsObject)
+void F_Delete(DFile* file)
 {
-    assert(fsObject);
-    switch(AbstractFile_Type(fsObject))
+    abstractfile_t* af = DFile_File(file);
+    DFile_Close(file);
+    switch(AbstractFile_Type(af))
     {
     case FT_UNKNOWNFILE:
-        if(fsObject->_flags.open)
-            F_CloseFile(AbstractFile_Handle(fsObject));
-        fsObject->_flags.open = false;
-        F_ReleaseFile(fsObject);
-        F_DestroyLumpInfo(&fsObject->_info);
-        free(fsObject);
+        F_ReleaseFile(af);
+        AbstractFile_Destroy(af);
+        free(af);
         break;
 
-    case FT_ZIPFILE:  ZipFile_Delete( ( zipfile_t*)fsObject); break;
-    case FT_WADFILE:  WadFile_Delete( ( wadfile_t*)fsObject); break;
-    case FT_LUMPFILE: LumpFile_Delete((lumpfile_t*)fsObject); break;
+    case FT_ZIPFILE:  ZipFile_Delete( ( zipfile_t*)af); break;
+    case FT_WADFILE:  WadFile_Delete( ( wadfile_t*)af); break;
+    case FT_LUMPFILE: LumpFile_Delete((lumpfile_t*)af); break;
     default:
-        Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(fsObject));
+        Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(af));
         exit(1); // Unreachable.
     }
+    DFile_Delete(file, true);
 }
 
 const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
@@ -1126,14 +1031,13 @@ lumpnum_t Zip_Find(const char* searchPath)
 uint F_GetLastModified(const char* fileName)
 {
     // Try to open the file, but don't buffer any contents.
-    abstractfile_t* file = F_Open(fileName, "rx");
-    unsigned int modified = 0;
-
-    if(!file)
-        return 0;
-
-    modified = AbstractFile_LastModified(file);
-    F_Delete(file);
+    DFile* file = F_Open(fileName, "rx");
+    uint modified = 0;
+    if(file)
+    {
+        modified = AbstractFile_LastModified(DFile_File(file));
+        F_Delete(file);
+    }
     return modified;
 }
 
@@ -1465,11 +1369,11 @@ static abstractfile_t* findLumpFile(const char* path, int* lumpIdx)
     return NULL;
 }
 
-static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
+static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     const char* absolutePath, boolean isDehackedPatch, boolean dontBuffer)
 {
-    abstractfile_t* fsObject;
     lumpinfo_t info;
+    DFile* file;
 
     // Prepare the temporary info descriptor.
     F_InitLumpInfo(&info);
@@ -1501,85 +1405,84 @@ static abstractfile_t* openAsLumpFile(abstractfile_t* container, int lumpIdx,
         info.name[LUMPNAME_T_LASTINDEX] = '\0';
     }
 
-    fsObject = (abstractfile_t*)newLumpFile(0, &info, NULL, dontBuffer);
+    file = DFileBuilder_NewFromAbstractFile(
+        newLumpFile(DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, dontBuffer), &info));
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
-    return fsObject;
+    return file;
 }
 
-static abstractfile_t* tryOpenAsZipFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+static DFile* tryOpenAsZipFile(DFile* file, const lumpinfo_t* info)
 {
-    if(inited && ZipFile_Recognise(baseOffset, sf))
+    if(inited && ZipFile_Recognise(file))
     {
-        return newZipFile(baseOffset, info, sf);
+        return DFileBuilder_NewFromAbstractFile(newZipFile(file, info));
     }
     return NULL;
 }
 
-static abstractfile_t* tryOpenAsWadFile(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+static DFile* tryOpenAsWadFile(DFile* file, const lumpinfo_t* info)
 {
-    if(inited && WadFile_Recognise(baseOffset, sf))
+    if(inited && WadFile_Recognise(file))
     {
-        return newWadFile(baseOffset, info, sf);
+        return DFileBuilder_NewFromAbstractFile(newWadFile(file, info));
     }
     return NULL;
 }
 
-static abstractfile_t* tryOpenFile2(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+static DFile* tryOpenFile2(DFile* file, const lumpinfo_t* info)
 {
-    assert(NULL != sf && NULL != info);
+    assert(file && info);
     {
-    struct filehandler_s {
+    static const struct filehandler_s {
         resourcetype_t resourceType;
-        abstractfile_t* (*tryOpenFile)(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
-    } static const handlers[] = {
+        DFile* (*tryOpenFile)(DFile* file, const lumpinfo_t* info);
+    } handlers[] = {
         { RT_ZIP,  tryOpenAsZipFile },
         { RT_WAD,  tryOpenAsWadFile },
         { RT_NONE, NULL }
     }, *hdlr = NULL;
     resourcetype_t resourceType = F_GuessResourceTypeByName(Str_Text(&info->path));
-    abstractfile_t* fsObject = NULL;
+    DFile* hndl = NULL;
 
     // Firstly try the expected format given the file name.
     for(hdlr = handlers; NULL != hdlr->tryOpenFile; hdlr++)
     {
         if(hdlr->resourceType != resourceType) continue;
 
-        fsObject = hdlr->tryOpenFile(baseOffset, info, sf);
+        hndl = hdlr->tryOpenFile(file, info);
         break;
     }
 
     // If not yet loaded; try each recognisable format.
     /// \todo Order here should be determined by the resource locator.
     { int n = 0;
-    while(NULL == fsObject && NULL != handlers[n].tryOpenFile)
+    while(NULL == hndl && NULL != handlers[n].tryOpenFile)
     {
         if(hdlr != &handlers[n]) // We already know its not in this format.
         {
-            fsObject = handlers[n].tryOpenFile(baseOffset, info, sf);
+            hndl = handlers[n].tryOpenFile(file, info);
         }
         ++n;
     }}
 
     // If still not loaded; this an unknown format.
-    if(!fsObject)
+    if(!hndl)
     {
-        fsObject = newUnknownFile(baseOffset, info, sf);
+        hndl = DFileBuilder_NewFromAbstractFile(newUnknownFile(file, info));
     }
-
-    return fsObject;
+    assert(hndl);
+    return hndl;
     }
 }
 
-static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
+static DFile* tryOpenFile(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
     ddstring_t searchPath, *foundPath = NULL;
     boolean dontBuffer, reqRealFile;
-    abstractfile_t* fsObject;
     lumpinfo_t info;
-    int lumpIdx;
-    streamfile_t temp;
+    DFile* dfile;
     FILE* file;
 
     if(!path || !path[0])
@@ -1597,6 +1500,7 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
     // First check for lumps?
     if(!reqRealFile)
     {
+        int lumpIdx;
         abstractfile_t* container = findLumpFile(Str_Text(&searchPath), &lumpIdx);
         if(container)
         {
@@ -1611,9 +1515,9 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
             // DeHackEd patch files require special handling...
             type = F_GuessResourceTypeByName(path);
 
-            fsObject = openAsLumpFile(container, lumpIdx, Str_Text(&searchPath), (type == RT_DEH), dontBuffer);
+            dfile = openAsLumpFile(container, lumpIdx, Str_Text(&searchPath), (type == RT_DEH), dontBuffer);
             Str_Free(&searchPath);
-            return fsObject;
+            return dfile;
         }
     }
 
@@ -1635,10 +1539,10 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
         return NULL;
     }
 
-    memset(&temp, 0, sizeof temp);
-    temp.hndl = file;
-
     // Prepare the temporary info descriptor.
+    // Search path is used here rather than found path as the latter may have
+    // been mapped to another location. We want the file to be attributed with
+    // the path it is to be known by throughout the virtual file system.
     F_InitLumpInfo(&info);
     Str_Set(&info.path, Str_Text(&searchPath));
     Str_Strip(&info.path);
@@ -1648,33 +1552,26 @@ static abstractfile_t* tryOpenFile(const char* path, const char* mode, size_t ba
     Str_Free(&searchPath);
     Str_Delete(foundPath);
 
-    // Search path is used here rather than found path as the latter may have
-    // been mapped to another location. We want the file to be attributed with
-    // the path it is to be known by throughout the virtual file system.
-    fsObject = tryOpenFile2(baseOffset, &info, &temp);
+    dfile = tryOpenFile2(DFileBuilder_NewFromFile(file, baseOffset), &info);
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
-    return fsObject;
+    return dfile;
 }
 
-abstractfile_t* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
+DFile* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
-    abstractfile_t* fsObject = tryOpenFile(path, mode, baseOffset, allowDuplicate);
-    /// \note We do not link lump files into the openFiles list.
-    if(fsObject && AbstractFile_Type(fsObject) != FT_LUMPFILE)
-    {
-        FileList_AddBack(openFiles, fsObject);
-    }
-    return fsObject;
+    DFile* file = tryOpenFile(path, mode, baseOffset, allowDuplicate);
+    if(file) return FileList_AddBack(openFiles, file);
+    return NULL;
 }
 
-abstractfile_t* F_Open2(const char* path, const char* mode, size_t baseOffset)
+DFile* F_Open2(const char* path, const char* mode, size_t baseOffset)
 {
     return F_Open3(path, mode, baseOffset, true);
 }
 
-abstractfile_t* F_Open(const char* path, const char* mode)
+DFile* F_Open(const char* path, const char* mode)
 {
     return F_Open2(path, mode, 0);
 }
@@ -1682,7 +1579,7 @@ abstractfile_t* F_Open(const char* path, const char* mode)
 int F_Access(const char* path)
 {
     // Open for reading, but don't buffer anything.
-    abstractfile_t* file = F_Open(path, "rx");
+    DFile* file = F_Open(path, "rx");
     if(file)
     {
         F_Delete(file);
@@ -1693,9 +1590,10 @@ int F_Access(const char* path)
 
 boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 {
-    abstractfile_t* fsObject = F_Open3(path, "rb", baseOffset, allowDuplicate);
+    DFile* file = F_Open3(path, "rb", baseOffset, allowDuplicate);
+    abstractfile_t* fsObject;
 
-    if(!fsObject)
+    if(!file)
     {
         if(allowDuplicate)
         {
@@ -1707,12 +1605,13 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
         }
         return false;
     }
+    fsObject = DFile_File(file);
 
     VERBOSE( Con_Message("Loading \"%s\"...\n", F_PrettyPath(Str_Text(AbstractFile_Path(fsObject)))) )
 
     if(loadingForStartup)
         AbstractFile_SetStartup(fsObject, true);
-    FileList_AddBack(loadedFiles, fsObject);
+    FileList_AddBack(loadedFiles, DFileBuilder_NewCopy(file));
 
     // Publish lumps to one or more LumpDirectorys.
     switch(AbstractFile_Type(fsObject))
@@ -1793,17 +1692,20 @@ boolean F_RemoveFiles(const char* const* filenames, size_t num)
     return succeeded;
 }
 
-abstractfile_t* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
+DFile* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
 {
     int lumpIdx;
     abstractfile_t* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(container)
     {
         /// \todo All lumps should be attributed with an absolute file path not just those from Zips.
-        /// \note We do not link LumpFiles into the openFiles list.
-        return openFromLump((abstractfile_t*)LumpFile_New(0, F_LumpInfo(container, lumpIdx), NULL), dontBuffer);
+        abstractfile_t* fsObject = newLumpFile(DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, dontBuffer), F_LumpInfo(container, lumpIdx));
+        if(fsObject)
+        {
+            return FileList_AddBack(openFiles, DFileBuilder_NewFromAbstractFile(fsObject));
+        }
     }
-    return 0;
+    return NULL;
 }
 
 static void clearLDMappings(void)

@@ -25,9 +25,7 @@
 #ifndef LIBDENG_FILESYS_ABSTRACTFILE_H
 #define LIBDENG_FILESYS_ABSTRACTFILE_H
 
-#include <stdio.h>
-
-#include "sys_file.h"
+#include "dfile.h"
 #include "lumpinfo.h"
 
 // File types.
@@ -52,16 +50,12 @@ typedef struct abstractfile_s {
     filetype_t _type;
 
     struct abstractfile_flags_s {
-        uint open:1; // Presently open.
         uint startup:1; // Loaded during the startup process.
         uint iwad:1; // Owned by or is an "iwad" resource.
     } _flags;
 
-    /// File stream abstraction wrapper/handle.
-    streamfile_t _stream;
-
-    /// Offset from start of owning package.
-    size_t _baseOffset;
+    /// protected: File stream handle/wrapper.
+    DFile* _file;
 
     /// Info descriptor (file metadata).
     lumpinfo_t _info;
@@ -74,57 +68,59 @@ typedef struct abstractfile_s {
  * Initialize this resource.
  *
  * @param type  File type identifier.
- * @param baseOffset  Offset from the start of the file in bytes to begin.
+ * @param file  Handle to the file. AbstractFile takes ownership of the handle.
  * @param info  Lump info descriptor for the file. A copy is made.
- * @param sf  Stream file handle/wrapper to the file being interpreted.
- *      A copy is made unless @c NULL in which case a default-stream is initialized.
- * @return  Same as @a file for convenience (chaining).
+ * @return  Same as @a af for convenience (chaining).
  */
-abstractfile_t* AbstractFile_Init(abstractfile_t* file, filetype_t type, size_t baseOffset,
-    const lumpinfo_t* info, streamfile_t* sf);
+abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
+    DFile* file, const lumpinfo_t* info);
+
+/**
+ * Release all memory acquired for objects linked with this resource.
+ */
+void AbstractFile_Destroy(abstractfile_t* af);
 
 /// @return  Type of this resource @see filetype_t
-filetype_t AbstractFile_Type(const abstractfile_t* file);
+filetype_t AbstractFile_Type(const abstractfile_t* af);
 
 /// @return  Immutable copy of the info descriptor for this resource.
-const lumpinfo_t* AbstractFile_Info(abstractfile_t* file);
+const lumpinfo_t* AbstractFile_Info(abstractfile_t* af);
 
 /// @return  Owning package else @c NULL if not contained.
-abstractfile_t* AbstractFile_Container(const abstractfile_t* file);
+abstractfile_t* AbstractFile_Container(const abstractfile_t* af);
 
 /**
  * Accessors:
  */
 
 /// @return  Absolute (i.e., resolved but possibly virtual/mapped) path to this resource.
-const ddstring_t* AbstractFile_Path(const abstractfile_t* file);
+const ddstring_t* AbstractFile_Path(const abstractfile_t* af);
 
 /// @return  Load order index for this resource.
-uint AbstractFile_LoadOrderIndex(const abstractfile_t* file);
+uint AbstractFile_LoadOrderIndex(const abstractfile_t* af);
 
 /// @return  "Last modified" timestamp of the resource.
-uint AbstractFile_LastModified(const abstractfile_t* file);
+uint AbstractFile_LastModified(const abstractfile_t* af);
 
 /// @return  @c true if the resource is marked "startup".
-boolean AbstractFile_HasStartup(const abstractfile_t* file);
+boolean AbstractFile_HasStartup(const abstractfile_t* af);
 
 /// Mark this resource as "startup".
-void AbstractFile_SetStartup(abstractfile_t* file, boolean yes);
+void AbstractFile_SetStartup(abstractfile_t* af, boolean yes);
 
 /// @return  @c true if the resource is marked "IWAD".
-boolean AbstractFile_HasIWAD(const abstractfile_t* file);
+boolean AbstractFile_HasIWAD(const abstractfile_t* af);
 
 /// Mark this resource as "IWAD".
-void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes);
+void AbstractFile_SetIWAD(abstractfile_t* af, boolean yes);
 
-size_t AbstractFile_BaseOffset(const abstractfile_t* file);
+size_t AbstractFile_BaseOffset(const abstractfile_t* af);
+
+DFile* AbstractFile_Handle(abstractfile_t* af);
 
 /**
  * Abstract interface (minimal, data caching interface not expected):
  */
-
-/// Close this resource if open and release any acquired identifiers.
-void AbstractFile_Close(abstractfile_t* file);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.
@@ -133,20 +129,13 @@ void AbstractFile_Close(abstractfile_t* file);
  * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @return  Number of bytes read.
  */
-size_t AbstractFile_ReadLump(abstractfile_t* file, int lumpIdx, uint8_t* buffer);
-
-/**
- * Retrieve the low-level file handle used for direct manipulation of a stream.
- * \note Higher-level derivatives of AbstractFile should not expose this method
- *      publicly if they are designed to abstract access to the underlying stream.
- */
-streamfile_t* AbstractFile_Handle(abstractfile_t* file);
+size_t AbstractFile_ReadLump(abstractfile_t* af, int lumpIdx, uint8_t* buffer);
 
 /**
  * Accessors:
  */
 
 /// @return  Number of "lumps" contained within this resource.
-int AbstractFile_LumpCount(abstractfile_t* file);
+int AbstractFile_LumpCount(abstractfile_t* af);
 
 #endif /* LIBDENG_FILESYS_ABSTRACTFILE_H */

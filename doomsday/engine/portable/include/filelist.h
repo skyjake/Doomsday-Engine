@@ -49,10 +49,14 @@ typedef struct filelist_s FileList;
 /// Construct a new (empty) FileList.
 FileList* FileList_New(void);
 
-/// Construct a new FileList, populating it with references to @a files.
-FileList* FileList_NewWithFiles(struct abstractfile_s** files, int count);
+/// Construct a new FileList, populating it with references @a files.
+FileList* FileList_NewWithFiles(DFile** files, int count);
 
-/// Perform a deep-copy of the list, returning a fully cloned object.
+/**
+ * Perform a deep-copy of the list, returning a fully cloned object.
+ * New handles are constructed to the referenced files while the files themselves
+ * can thusly be considered "shared" by the new list.
+ */
 FileList* FileList_NewCopy(FileList* fl);
 
 /// Completely destroy the list, releasing all memory acquired for this instance.
@@ -88,30 +92,30 @@ struct abstractfile_s* FileList_BackFile(FileList* fl);
 /**
  * Push a new file reference onto the front.
  *
- * @param file  File to insert a new reference to.
+ * @param file  File reference being inserted into the list.
  * @return  Equal to @a file for convenience (chaining).
  */
-struct abstractfile_s* FileList_AddFront(FileList* fl, struct abstractfile_s* file);
+DFile* FileList_AddFront(FileList* fl, DFile* file);
 
 /**
  * Push a new file reference onto the end.
  *
- * @param file  File to insert a new reference to.
+ * @param file  File reference being inserted into the list.
  * @return  Equal to @a file for convenience (chaining).
  */
-struct abstractfile_s* FileList_AddBack(FileList* fl, struct abstractfile_s* file);
+DFile* FileList_AddBack(FileList* fl, DFile* file);
 
 /**
  * Remove the file reference at the front.
  * @return  Ptr to file referenced by the removed node if successful else @c NULL.
  */
-struct abstractfile_s* FileList_RemoveFront(FileList* fl);
+DFile* FileList_RemoveFront(FileList* fl);
 
 /**
  * Remove the file reference at the back.
  * @return  Ptr to file referenced by the removed node if successful else @c NULL.
  */
-struct abstractfile_s* FileList_RemoveBack(FileList* fl);
+DFile* FileList_RemoveBack(FileList* fl);
 
 /**
  * Remove file reference at position @idx.
@@ -119,7 +123,7 @@ struct abstractfile_s* FileList_RemoveBack(FileList* fl);
  * @param idx  Index of the reference to be removed. Negative indexes allowed.
  * @return  Ptr to file referenced by the removed node if successful else @c NULL.
  */
-struct abstractfile_s* FileList_RemoveAt(FileList* fl, int idx);
+DFile* FileList_RemoveAt(FileList* fl, int idx);
 
 /**
  * @param size  If not @c NULL the number of elements in the resultant
@@ -154,7 +158,7 @@ abstractfile_t** FileList_ToArray(FileList* fl, int* size);
  *      no longer needed. Always returns a valid (but perhaps zero-length)
  *      string object.
  */
-struct ddstring_s* FileList_ToString4(FileList* fl, int flags, const char* delimiter, boolean (*predicate)(DFile* hndl, void* paramaters), void* paramaters);
+struct ddstring_s* FileList_ToString4(FileList* fl, int flags, const char* delimiter, boolean (*predicate)(DFile* file, void* paramaters), void* paramaters);
 struct ddstring_s* FileList_ToString3(FileList* fl, int flags, const char* delimiter); /* predicate = NULL, paramaters = NULL */
 struct ddstring_s* FileList_ToString2(FileList* fl, int flags); /* delimiter = " " */
 struct ddstring_s* FileList_ToString(FileList* fl); /* flags = DEFAULT_PATHTOSTRINGFLAGS */
@@ -170,23 +174,46 @@ void FileList_Print(FileList* fl);
 void DFileBuilder_Init(void);
 void DFileBuilder_Shutdown(void);
 
-DFile* DFileBuilder_CreateNew(struct abstractfile_s* file, FileList* list);
+/**
+ * Open a new read-only stream on the specified file.
+ *
+ * @param af  File system object representing the file being opened.
+ */
+DFile* DFileBuilder_NewFromAbstractFile(abstractfile_t* af);
+
+/**
+ * Open a new read-only stream on the specified lump-file.
+ *
+ * @param af  File system object representing the container of the lump to be opened.
+ * @param lumpIdx  Logical index of the lump within @a container to be opened.
+ * @param dontBuffer  @c true= do not buffer a copy of the lump.
+ */
+DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* af, int lumpIdx, boolean dontBuffer);
+
+/**
+ * Open a new read-only stream on the specified system file.
+ * @param file  File system handle to the file being opened.
+ * @param baseOffset  Offset from the start of the file in bytes to begin.
+ */
+DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset);
+
+DFile* DFileBuilder_NewCopy(DFile* file);
 
 DFile* DFile_New(void);
 
-void DFile_Delete(DFile* hndl, boolean recycle);
+void DFile_Delete(DFile* file, boolean recycle);
 
 /// @return  File object represented by this handle.
-struct abstractfile_s* DFile_File(DFile* hndl);
+struct abstractfile_s* DFile_File(DFile* file);
 
-void DFile_SetFile(DFile* hndl, struct abstractfile_s* file);
+void DFile_SetFile(DFile* file, struct abstractfile_s* af);
 
 /// @return  FileList object which owns this handle.
-FileList* DFile_List(DFile* hndl);
+FileList* DFile_List(DFile* file);
 
-void DFile_SetList(DFile* hndl, FileList* list);
+void DFile_SetList(DFile* file, FileList* list);
 
 /// @return  File object represented by this handle.
-const struct abstractfile_s* DFile_File_Const(const DFile* hndl);
+const struct abstractfile_s* DFile_File_Const(const DFile* file);
 
 #endif /* LIBDENG_FILESYS_FILELIST_H */
