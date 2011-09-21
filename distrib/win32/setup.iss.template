@@ -59,6 +59,7 @@ Source: "jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: En
 
 ; Libraries
 Source: "SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "SDL_net.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libvorbis-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine

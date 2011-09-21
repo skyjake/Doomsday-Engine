@@ -32,7 +32,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-//#include <SDL_net.h>
+#ifdef DENG_SDLNET_DUMMY
+#  include "sdlnet_dummy.h"
+#else
+#  include <SDL_net.h>
+#endif
+
 #include <errno.h>
 
 #ifndef WIN32
@@ -44,8 +49,6 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
-
-#include "sdlnet_dummy.h"
 
 // MACROS ------------------------------------------------------------------
 

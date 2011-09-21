@@ -50,12 +50,14 @@ win32 {
     DEFINES += WIN32_GAMMA
 
     RC_FILE = win32/res/doomsday.rc
-
-    QMAKE_LFLAGS += /NODEFAULTLIB:libcmt /DEF:$$DENG_API_DIR/doomsday.def /IMPLIB:$$DENG_EXPORT_LIB
     OTHER_FILES += api/doomsday.def
 
-    LIBS += \
-        -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
+    QMAKE_LFLAGS += \
+        /NODEFAULTLIB:libcmt \
+        /DEF:$$DENG_API_DIR/doomsday.def \
+        /IMPLIB:$$DENG_EXPORT_LIB
+
+    LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
         -lopengl32 -lglu32
 }
 
@@ -83,7 +85,9 @@ DENG_API_HEADERS = \
     api/sys_audiod_sfx.h \
     api/writer.h
 
-HEADERS += portable/include/sdlnet_dummy.h
+deng_sdlnetdummy {
+    HEADERS += portable/include/sdlnet_dummy.h
+}
 
 DENG_HEADERS = \
     portable/include/b_command.h \
@@ -493,12 +497,9 @@ SOURCES += ../plugins/common/src/m_fixed.c
 # Resources ------------------------------------------------------------------
 
 macx {
-    #sdl_frameworks.files = \
-    #    $${SDL_FRAMEWORK_DIR}/SDL.framework/ \
-    #    $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework/
-    #sdl_frameworks.path = Contents/Frameworks
-
-    QMAKE_POST_LINK = "mkdir -p $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/SDL.framework && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/SDL_mixer.framework"
+    # Since qmake is unable to copy directories as bundle data, let's copy
+    # the frameworks manually.
+    QMAKE_POST_LINK = "rm -rf $${OUT_PWD}/doomsday.app/Contents/Frameworks && mkdir $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/"
 
     res.files = \
         mac/res/English.lproj \
