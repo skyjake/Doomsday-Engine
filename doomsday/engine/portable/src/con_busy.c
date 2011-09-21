@@ -779,7 +779,7 @@ void Con_DrawTransition(void)
       }
     case TS_DOOM: {
         // As above but drawn with whole pixel columns.
-        float s = 0, colWidth = 1.0f / SCREENSHOT_TEXTURE_SIZE;
+        float s = 0, colWidth = 1.f / SCREENWIDTH;
         int x = 0, y, i;
 
         sampleDoomWipe();
