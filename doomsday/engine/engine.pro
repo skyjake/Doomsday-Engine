@@ -493,10 +493,12 @@ SOURCES += ../plugins/common/src/m_fixed.c
 # Resources ------------------------------------------------------------------
 
 macx {
-    sdl_frameworks.files = \
-        $${SDL_FRAMEWORK_DIR}/SDL.framework \
-        $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework
-    sdl_frameworks.path = Contents/Frameworks
+    #sdl_frameworks.files = \
+    #    $${SDL_FRAMEWORK_DIR}/SDL.framework/ \
+    #    $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework/
+    #sdl_frameworks.path = Contents/Frameworks
+
+    QMAKE_POST_LINK = "mkdir -p $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/SDL.framework && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/SDL_mixer.framework"
 
     res.files = \
         mac/res/English.lproj \
@@ -510,7 +512,7 @@ macx {
     startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
     startupgfx.path = Contents/Resources/Data/Graphics
 
-    QMAKE_BUNDLE_DATA += sdl_frameworks res packdata startupgfx
+    QMAKE_BUNDLE_DATA += res packdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
