@@ -137,13 +137,13 @@ deng_nofixedasm {
 macx {
     # Select OS version.
     deng_snowleopard {
-        echo("Using Mac OS 10.6 SDK (Universal 32/64-bit, no PowerPC binary).")
+        echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         CONFIG += x86 x86_64
     }
     else {
-        echo("Using Mac OS 10.4 SDK (Universal 32-bit Intel/PowerPC binary.)")
+        echo("Using Mac OS 10.4 SDK (32-bit Intel + PowerPC).")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
         QMAKE_CFLAGS += -mmacosx-version-min=10.4
         DEFINES += MACOS_10_4
