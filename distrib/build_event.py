@@ -313,7 +313,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
     else:
         buildDir = EVENT_DIR
     
-    tmpName = os.path.join(buildDir, 'ctmp')
+    tmpName = os.path.abspath(os.path.join(buildDir, 'ctmp'))
     
     format = '{{{{li}}}}{{{{b}}}}[[subjectline]]%s[[/subjectline]]{{{{/b}}}}' + \
              '{{{{br/}}}}by {{{{i}}}}%an{{{{/i}}}} on ' + \
@@ -368,7 +368,6 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
     if not debChanges:
         print >> changes, '</ol>'
         changes.close()
-        os.remove(tmpName)
     else:
         # Append the changes to the debian package changelog.
         os.chdir(os.path.join(DISTRIB_DIR, 'linux'))
@@ -376,19 +375,20 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         # First we need to update the version.
         build_version.find_version()
         debVersion = build_version.DOOMSDAY_VERSION_PLAIN + '-' + todays_build_tag()
-        first = True
-        changeEntries.reverse()
+        
+        # Always make one entry.
+        print 'Marking new version...'
+        msg = 'New release: unstable ' + todays_build_tag() + '.'
+        os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
+
         for ch in changeEntries:
             # Quote it for the command line.
             qch = ch.replace('"', '\\"').replace('!', '\\!')
-            if first:
-                print 'First entry:', qch
-                os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, qch))
-                first = False
-            else:
-                print 'Entry:', qch
-                os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
-            
+            print 'Entry:', qch
+            os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
+
+    os.remove(tmpName)
+           
 
 def create_build_event():
     print 'Creating a new build event.'
