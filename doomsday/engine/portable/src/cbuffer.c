@@ -237,7 +237,7 @@ CBuffer* CBuffer_New(uint maxNumLines, uint maxLineLength, int flags)
     return cb;
 }
 
-static void clear(CBuffer* cb, boolean recycle)
+static void clearText(CBuffer* cb, boolean recycle)
 {
     cbnode_t* n, *np;
     assert(cb);
@@ -289,7 +289,7 @@ static void clearUsedNodes(CBuffer* cb)
 void CBuffer_Clear(CBuffer* cb)
 {
     lock(cb, true);
-    clear(cb, true);
+    clearText(cb, true);
     lock(cb, false);
 }
 
@@ -299,7 +299,7 @@ void CBuffer_Delete(CBuffer* cb)
 
     lock(cb, true);
 
-    clear(cb, false);
+    clearText(cb, false);
     clearWriteBuffer(cb);
     clearIndex(cb);
     clearUsedNodes(cb);

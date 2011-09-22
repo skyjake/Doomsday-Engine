@@ -2533,7 +2533,7 @@ int DED_Read(ded_t* ded, const char* path)
     ddstring_t transPath;
     size_t bufferedDefSize;
     char* bufferedDef;
-    abstractfile_t* file;
+    DFile* file;
     int result;
 
     // Compose the (possibly-translated) path.
@@ -2544,7 +2544,7 @@ int DED_Read(ded_t* ded, const char* path)
 
     // Attempt to open a definition file on this path.
     file = F_Open(Str_Text(&transPath), "rb");
-    if(NULL == file)
+    if(!file)
     {
         SetError("File could not be opened for reading.");
         Str_Free(&transPath);
@@ -2552,9 +2552,9 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // We will buffer a local copy of the file. How large a buffer do we need?
-    F_Seek(AbstractFile_Handle(file), 0, SEEK_END);
-    bufferedDefSize = F_Tell(AbstractFile_Handle(file));
-    F_Rewind(AbstractFile_Handle(file));
+    DFile_Seek(file, 0, SEEK_END);
+    bufferedDefSize = DFile_Tell(file);
+    DFile_Rewind(file);
     bufferedDef = (char*) calloc(1, bufferedDefSize + 1);
     if(NULL == bufferedDef)
     {
@@ -2564,7 +2564,7 @@ int DED_Read(ded_t* ded, const char* path)
     }
 
     // Copy the file into the local buffer and parse definitions.
-    F_Read(AbstractFile_Handle(file), (uint8_t*)bufferedDef, bufferedDefSize);
+    DFile_Read(file, (uint8_t*)bufferedDef, bufferedDefSize);
     F_Delete(file);
     result = DED_ReadData(ded, bufferedDef, Str_Text(&transPath));
 

@@ -46,18 +46,18 @@ typedef struct {
 } wadlumprecord_t;
 #pragma pack()
 
-static void WadFile_ReadLumpDirectory(wadfile_t* file);
+static void WadFile_ReadLumpDirectory(wadfile_t* wad);
 
-static boolean WadFile_ReadArchiveHeader(streamfile_t* sf, size_t baseOffset, wadheader_t* hdr)
+static boolean WadFile_ReadArchiveHeader(DFile* file, wadheader_t* hdr)
 {
-    assert(NULL != sf && NULL != hdr);
+    assert(file && hdr);
     {
-    size_t readBytes, initPos = F_Tell(sf);
+    size_t readBytes, initPos = DFile_Tell(file);
     // Seek to the start of the header.
-    F_Seek(sf, baseOffset, SEEK_SET);
-    readBytes = F_Read(sf, (uint8_t*)hdr, sizeof(wadheader_t));
+    DFile_Seek(file, 0, SEEK_SET);
+    readBytes = DFile_Read(file, (uint8_t*)hdr, sizeof(wadheader_t));
     // Return the stream to its original position.
-    F_Seek(sf, initPos, SEEK_SET);
+    DFile_Seek(file, initPos, SEEK_SET);
     if(!(readBytes < sizeof(wadheader_t)))
     {
         hdr->lumpRecordsCount  = LONG(hdr->lumpRecordsCount);
@@ -70,10 +70,10 @@ static boolean WadFile_ReadArchiveHeader(streamfile_t* sf, size_t baseOffset, wa
 
 // We'll load the lump directory using one continous read into a temporary
 // local buffer before we process it into our runtime representation.
-static wadfile_lumprecord_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
+static wadfile_lumprecord_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* wad,
     size_t lumpDirOffset, int lumpDirRecordCount, int* numLumpsRead)
 {
-    assert(NULL != file);
+    assert(wad);
     {
     size_t lumpDirSize = lumpDirRecordCount * sizeof(wadlumprecord_t);
     wadlumprecord_t* lumpDir = (wadlumprecord_t*)malloc(lumpDirSize);
@@ -86,8 +86,8 @@ static wadfile_lumprecord_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
             "temporary lump directory buffer.\n", (unsigned long) lumpDirSize);
 
     // Buffer the archived lump directory.
-    F_Seek(&file->_base._stream, file->_base._baseOffset + lumpDirOffset, SEEK_SET);
-    F_Read(&file->_base._stream, (uint8_t*)lumpDir, lumpDirSize);
+    DFile_Seek(wad->_base._file, lumpDirOffset, SEEK_SET);
+    DFile_Read(wad->_base._file, (uint8_t*)lumpDir, lumpDirSize);
 
     // Allocate and populate the final lump info list.
     lumpRecords = (wadfile_lumprecord_t*)malloc(lumpDirRecordCount * sizeof *lumpRecords);
@@ -112,10 +112,10 @@ static wadfile_lumprecord_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
         dst->baseOffset = (size_t)LONG(src->filePos);
         dst->info.size = dst->info.compressedSize = (size_t)LONG(src->size);
         dst->info.lumpIdx = i;
-        dst->info.container = (abstractfile_t*)file;
+        dst->info.container = (abstractfile_t*)wad;
 
         // The modification date is inherited from the real file (note recursion).
-        dst->info.lastModified = AbstractFile_LastModified((abstractfile_t*)file);
+        dst->info.lastModified = AbstractFile_LastModified((abstractfile_t*)wad);
     }
     // We are finished with the temporary lump records.
     free(lumpDir);
@@ -126,124 +126,122 @@ static wadfile_lumprecord_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* file,
     }
 }
 
-wadfile_t* WadFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info)
 {
-    assert(NULL != info && NULL != sf);
+    assert(info);
     {
-    wadfile_t* file;
+    wadfile_t* wad;
     wadheader_t hdr;
 
-    if(!WadFile_ReadArchiveHeader(sf, baseOffset, &hdr))
+    if(!WadFile_ReadArchiveHeader(file, &hdr))
         Con_Error("WadFile::Construct: File %s does not appear to be of WAD format."
             " Missing a call to WadFile::Recognise?", Str_Text(&info->path));
 
-    file = (wadfile_t*)malloc(sizeof(*file));
-    if(NULL == file)
-        Con_Error("WadFile::Construct:: Failed on allocation of %lu bytes for new WadFile.",
-            (unsigned long) sizeof(*file));
+    wad = (wadfile_t*)malloc(sizeof *wad);
+    if(!wad) Con_Error("WadFile::Construct:: Failed on allocation of %lu bytes for new WadFile.",
+                (unsigned long) sizeof *wad);
 
-    AbstractFile_Init((abstractfile_t*)file, FT_WADFILE, baseOffset, info, sf);
-    file->_lumpCount = hdr.lumpRecordsCount;
-    file->_lumpRecordsOffset = hdr.lumpRecordsOffset;
-    file->_lumpRecords = NULL;
-    file->_lumpCache = NULL;
+    AbstractFile_Init((abstractfile_t*)wad, FT_WADFILE, file, info);
+    wad->_lumpCount = hdr.lumpRecordsCount;
+    wad->_lumpRecordsOffset = hdr.lumpRecordsOffset;
+    wad->_lumpRecords = NULL;
+    wad->_lumpCache = NULL;
 
     if(!strncmp(hdr.identification, "IWAD", 4))
-        AbstractFile_SetIWAD((abstractfile_t*)file, true); // Found an IWAD!
+        AbstractFile_SetIWAD((abstractfile_t*)wad, true); // Found an IWAD!
 
-    return file;
+    return wad;
     }
 }
 
-int WadFile_PublishLumpsToDirectory(wadfile_t* file, lumpdirectory_t* directory)
+int WadFile_PublishLumpsToDirectory(wadfile_t* wad, lumpdirectory_t* directory)
 {
-    assert(NULL != file && NULL != directory);
+    assert(wad && directory);
     {
     int numPublished = 0;
-    WadFile_ReadLumpDirectory(file);
-    if(file->_lumpCount > 0)
+    WadFile_ReadLumpDirectory(wad);
+    if(wad->_lumpCount > 0)
     {
         // Insert the lumps into their rightful places in the directory.
-        LumpDirectory_Append(directory, (abstractfile_t*)file, 0, file->_lumpCount);
-        numPublished += file->_lumpCount;
+        LumpDirectory_Append(directory, (abstractfile_t*)wad, 0, wad->_lumpCount);
+        numPublished += wad->_lumpCount;
     }
     return numPublished;
     }
 }
 
-const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx)
+const lumpinfo_t* WadFile_LumpInfo(wadfile_t* wad, int lumpIdx)
 {
-    assert(NULL != file);
-    if(lumpIdx < 0 || lumpIdx >= file->_lumpCount)
+    assert(wad);
+    if(lumpIdx < 0 || lumpIdx >= wad->_lumpCount)
     {
-        Con_Error("WadFile::LumpInfo: Invalid lump index %i (valid range: [0...%i)).", lumpIdx, file->_lumpCount);
+        Con_Error("WadFile::LumpInfo: Invalid lump index %i (valid range: [0...%i]).", lumpIdx, wad->_lumpCount);
         exit(1); // Unreachable.
     }
-    return &file->_lumpRecords[lumpIdx].info;
+    return &wad->_lumpRecords[lumpIdx].info;
 }
 
-void WadFile_Delete(wadfile_t* file)
+void WadFile_Delete(wadfile_t* wad)
 {
-    assert(NULL != file);
-    WadFile_Close(file);
-    F_ReleaseFile((abstractfile_t*)file);
-    WadFile_ClearLumpCache(file);
-    if(file->_lumpCount > 1 && NULL != file->_lumpCache)
+    assert(NULL != wad);
+    F_ReleaseFile((abstractfile_t*)wad);
+    WadFile_ClearLumpCache(wad);
+    if(wad->_lumpCount > 1 && NULL != wad->_lumpCache)
     {
-        free(file->_lumpCache);
+        free(wad->_lumpCache);
     }
-    if(file->_lumpRecords)
+    if(wad->_lumpRecords)
     {
         int i;
-        for(i = 0; i < file->_lumpCount; ++i)
-            F_DestroyLumpInfo(&file->_lumpRecords[i].info);
-        free(file->_lumpRecords);
+        for(i = 0; i < wad->_lumpCount; ++i)
+            F_DestroyLumpInfo(&wad->_lumpRecords[i].info);
+        free(wad->_lumpRecords);
     }
-    F_DestroyLumpInfo(&file->_base._info);
-    free(file);
+    AbstractFile_Destroy((abstractfile_t*)wad);
+    free(wad);
 }
 
-void WadFile_ClearLumpCache(wadfile_t* file)
+void WadFile_ClearLumpCache(wadfile_t* wad)
 {
-    assert(NULL != file);
+    assert(NULL != wad);
 
-    if(file->_lumpCount == 1)
+    if(wad->_lumpCount == 1)
     {
-        if(file->_lumpCache)
+        if(wad->_lumpCache)
         {
             // If the block has a user, it must be explicitly freed.
-            if(Z_GetTag(file->_lumpCache) < PU_MAP)
-                Z_ChangeTag(file->_lumpCache, PU_MAP);
+            if(Z_GetTag(wad->_lumpCache) < PU_MAP)
+                Z_ChangeTag(wad->_lumpCache, PU_MAP);
             // Mark the memory pointer in use, but unowned.
-            Z_ChangeUser(file->_lumpCache, (void*) 0x2);
+            Z_ChangeUser(wad->_lumpCache, (void*) 0x2);
         }
         return;
     }
 
-    if(NULL == file->_lumpCache) return;
+    if(NULL == wad->_lumpCache) return;
 
     { int i;
-    for(i = 0; i < file->_lumpCount; ++i)
+    for(i = 0; i < wad->_lumpCount; ++i)
     {
-        if(!file->_lumpCache[i]) continue;
+        if(!wad->_lumpCache[i]) continue;
 
         // If the block has a user, it must be explicitly freed.
-        if(Z_GetTag(file->_lumpCache[i]) < PU_MAP)
-            Z_ChangeTag(file->_lumpCache[i], PU_MAP);
+        if(Z_GetTag(wad->_lumpCache[i]) < PU_MAP)
+            Z_ChangeTag(wad->_lumpCache[i], PU_MAP);
         // Mark the memory pointer in use, but unowned.
-        Z_ChangeUser(file->_lumpCache[i], (void*) 0x2);
+        Z_ChangeUser(wad->_lumpCache[i], (void*) 0x2);
     }}
 }
 
-uint WadFile_CalculateCRC(const wadfile_t* file)
+uint WadFile_CalculateCRC(const wadfile_t* wad)
 {
-    assert(NULL != file);
+    assert(wad);
     {
     int i, k;
     uint crc = 0;
-    for(i = 0; i < file->_lumpCount; ++i)
+    for(i = 0; i < wad->_lumpCount; ++i)
     {
-        const lumpinfo_t* info = &file->_lumpRecords[i].info;
+        const lumpinfo_t* info = &wad->_lumpRecords[i].info;
         crc += (uint) info->size;
         for(k = 0; k < LUMPNAME_T_LASTINDEX; ++k)
             crc += info->name[k];
@@ -252,39 +250,39 @@ uint WadFile_CalculateCRC(const wadfile_t* file)
     }
 }
 
-size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
+size_t WadFile_ReadLumpSection2(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
-    assert(NULL != file);
+    assert(wad);
     {
-    const lumpinfo_t* info = WadFile_LumpInfo(file, lumpIdx);
+    const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
     size_t readBytes;
 
     if(!info) return 0;
 
     VERBOSE2(
         Con_Printf("WadFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length) )
 
     // Try to avoid a file system read by checking for a cached copy.
-    if(tryCache && NULL != file->_lumpCache)
+    if(tryCache && NULL != wad->_lumpCache)
     {
         boolean isCached;
         void** cachePtr;
 
-        if(file->_lumpCount > 1)
+        if(wad->_lumpCount > 1)
         {
             const uint cacheIdx = lumpIdx;
-            cachePtr = &file->_lumpCache[cacheIdx];
-            isCached = (NULL != file->_lumpCache[cacheIdx]);
+            cachePtr = &wad->_lumpCache[cacheIdx];
+            isCached = (NULL != wad->_lumpCache[cacheIdx]);
         }
         else
         {
-            cachePtr = (void**)&file->_lumpCache;
-            isCached = (NULL != file->_lumpCache);
+            cachePtr = (void**)&wad->_lumpCache;
+            isCached = (NULL != wad->_lumpCache);
         }
 
         if(isCached)
@@ -297,8 +295,8 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(&file->_base._stream, file->_base._baseOffset + file->_lumpRecords[info->lumpIdx].baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read(&file->_base._stream, buffer, length);
+    DFile_Seek(wad->_base._file, wad->_lumpRecords[info->lumpIdx].baseOffset + startOffset, SEEK_SET);
+    readBytes = DFile_Read(wad->_base._file, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -309,53 +307,51 @@ size_t WadFile_ReadLumpSection2(wadfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 }
 
-size_t WadFile_ReadLumpSection(wadfile_t* file, int lumpIdx, uint8_t* buffer,
+size_t WadFile_ReadLumpSection(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
-    return WadFile_ReadLumpSection2(file, lumpIdx, buffer, startOffset, length, true);
+    return WadFile_ReadLumpSection2(wad, lumpIdx, buffer, startOffset, length, true);
 }
 
-size_t WadFile_ReadLump2(wadfile_t* file, int lumpIdx, uint8_t* buffer, boolean tryCache)
+size_t WadFile_ReadLump2(wadfile_t* wad, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
-    assert(NULL != file);
+    const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
+    if(!info) return 0;
+    return WadFile_ReadLumpSection2(wad, lumpIdx, buffer, 0, info->size, tryCache);
+}
+
+size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* buffer)
+{
+    return WadFile_ReadLump2(wad, lumpIdx, buffer, true);
+}
+
+const uint8_t* WadFile_CacheLump(wadfile_t* wad, int lumpIdx, int tag)
+{
+    assert(wad);
     {
-    const lumpinfo_t* info = WadFile_LumpInfo(file, lumpIdx);
-    return WadFile_ReadLumpSection2(file, lumpIdx, buffer, 0, info->size, tryCache);
-    }
-}
-
-size_t WadFile_ReadLump(wadfile_t* file, int lumpIdx, uint8_t* buffer)
-{
-    return WadFile_ReadLump2(file, lumpIdx, buffer, true);
-}
-
-const uint8_t* WadFile_CacheLump(wadfile_t* file, int lumpIdx, int tag)
-{
-    assert(NULL != file);
-    {
-    const lumpinfo_t* info = WadFile_LumpInfo(file, lumpIdx);
+    const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
     const uint cacheIdx = lumpIdx;
     boolean isCached;
     void** cachePtr;
 
     VERBOSE2(
         Con_Printf("WadFile::CacheLump: \"%s:%s\" (%lu bytes%s)",
-                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : "")) )
 
-    if(file->_lumpCount > 1)
+    if(wad->_lumpCount > 1)
     {
         // Time to allocate the cache ptr table?
-        if(NULL == file->_lumpCache)
-            file->_lumpCache = (void**)calloc(file->_lumpCount, sizeof(*file->_lumpCache));
-        cachePtr = &file->_lumpCache[cacheIdx];
-        isCached = (NULL != file->_lumpCache[cacheIdx]);
+        if(NULL == wad->_lumpCache)
+            wad->_lumpCache = (void**)calloc(wad->_lumpCount, sizeof(*wad->_lumpCache));
+        cachePtr = &wad->_lumpCache[cacheIdx];
+        isCached = (NULL != wad->_lumpCache[cacheIdx]);
     }
     else
     {
-        cachePtr = (void**)&file->_lumpCache;
-        isCached = (NULL != file->_lumpCache);
+        cachePtr = (void**)&wad->_lumpCache;
+        isCached = (NULL != wad->_lumpCache);
     }
 
     VERBOSE2( Con_Printf(" %s\n", isCached? "hit":"miss") )
@@ -366,7 +362,7 @@ const uint8_t* WadFile_CacheLump(wadfile_t* file, int lumpIdx, int tag)
         if(NULL == ptr)
             Con_Error("WadFile::CacheLump: Failed on allocation of %lu bytes for "
                 "cache copy of lump #%i.", (unsigned long) info->size, lumpIdx);
-        WadFile_ReadLump2(file, lumpIdx, ptr, false);
+        WadFile_ReadLump2(wad, lumpIdx, ptr, false);
     }
     else
     {
@@ -377,69 +373,67 @@ const uint8_t* WadFile_CacheLump(wadfile_t* file, int lumpIdx, int tag)
     }
 }
 
-void WadFile_ChangeLumpCacheTag(wadfile_t* file, int lumpIdx, int tag)
+void WadFile_ChangeLumpCacheTag(wadfile_t* wad, int lumpIdx, int tag)
 {
-    assert(NULL != file);
+    assert(wad);
     {
     boolean isCached;
     void** cachePtr;
 
-    if(file->_lumpCount > 1)
+    if(wad->_lumpCount > 1)
     {
         const uint cacheIdx = lumpIdx;
-        if(NULL == file->_lumpCache) return; // Obviously not cached.
+        if(NULL == wad->_lumpCache) return; // Obviously not cached.
 
-        cachePtr = &file->_lumpCache[cacheIdx];
-        isCached = (NULL != file->_lumpCache[cacheIdx]);
+        cachePtr = &wad->_lumpCache[cacheIdx];
+        isCached = (NULL != wad->_lumpCache[cacheIdx]);
     }
     else
     {
-        cachePtr = (void**)&file->_lumpCache;
-        isCached = (NULL != file->_lumpCache);
+        cachePtr = (void**)&wad->_lumpCache;
+        isCached = (NULL != wad->_lumpCache);
     }
 
     if(isCached)
     {
+        VERBOSE2(
+            const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
+            Con_Printf("WadFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
+                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
+                    (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
+
         Z_ChangeTag2(*cachePtr, tag);
     }
     }
 }
 
-static void WadFile_ReadLumpDirectory(wadfile_t* file)
+static void WadFile_ReadLumpDirectory(wadfile_t* wad)
 {
-    assert(NULL != file);
+    assert(wad);
     /// \fixme What if the directory is already loaded?
-    if(file->_lumpCount > 0)
+    if(wad->_lumpCount > 0)
     {
-        file->_lumpRecords = WadFile_ReadArchiveLumpDirectory(file, file->_lumpRecordsOffset,
-            file->_lumpCount, &file->_lumpCount);
+        wad->_lumpRecords = WadFile_ReadArchiveLumpDirectory(wad, wad->_lumpRecordsOffset,
+            wad->_lumpCount, &wad->_lumpCount);
     }
     else
     {
-        file->_lumpRecords = NULL;
-        file->_lumpCount = 0;
+        wad->_lumpRecords = NULL;
+        wad->_lumpCount = 0;
     }
 }
 
-void WadFile_Close(wadfile_t* file)
+int WadFile_LumpCount(wadfile_t* wad)
 {
-    assert(NULL != file);
-    if(file->_base._flags.open)
-        F_CloseFile(&file->_base._stream);
-    file->_base._flags.open = false;
+    assert(wad);
+    return wad->_lumpCount;
 }
 
-int WadFile_LumpCount(wadfile_t* file)
-{
-    assert(NULL != file);
-    return file->_lumpCount;
-}
-
-boolean WadFile_Recognise(size_t baseOffset, streamfile_t* sf)
+boolean WadFile_Recognise(DFile* file)
 {
     boolean knownFormat = false;
     wadheader_t hdr;
-    if(WadFile_ReadArchiveHeader(sf, baseOffset, &hdr) &&
+    if(WadFile_ReadArchiveHeader(file, &hdr) &&
        !(memcmp(hdr.identification, "IWAD", 4) && memcmp(hdr.identification, "PWAD", 4)))
     {
         knownFormat = true;

@@ -173,29 +173,29 @@ static void drawCharacter(unsigned char ch, font_t* font)
     glEnd();
 }
 
-static byte inByte(streamfile_t* sf)
+static byte inByte(DFile* file)
 {
-    assert(sf);
+    assert(file);
     {
     byte b;
-    F_Read(sf, (uint8_t*)&b, sizeof(b));
+    DFile_Read(file, (uint8_t*)&b, sizeof(b));
     return b;
     }
 }
 
-static unsigned short inShort(streamfile_t* sf)
+static unsigned short inShort(DFile* file)
 {
-    assert(sf);
+    assert(file);
     {
     unsigned short s;
-    F_Read(sf, (uint8_t*)&s, sizeof(s));
+    DFile_Read(file, (uint8_t*)&s, sizeof(s));
     return USHORT(s);
     }
 }
 
-static void* readFormat0(font_t* font, streamfile_t* sf)
+static void* readFormat0(font_t* font, DFile* file)
 {
-    assert(font != NULL && font->_type == FT_BITMAP && NULL != sf);
+    assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
     {
     int i, c, bitmapFormat, numPels, avgWidth, avgHeight, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
@@ -206,9 +206,9 @@ static void* readFormat0(font_t* font, streamfile_t* sf)
     font->_marginWidth = font->_marginHeight = 0;
 
     // Load in the data.
-    bf->_texWidth  = inShort(sf);
-    bf->_texHeight = inShort(sf);
-    glyphCount = inShort(sf);
+    bf->_texWidth  = inShort(file);
+    bf->_texHeight = inShort(file);
+    glyphCount = inShort(file);
     VERBOSE2( Con_Printf("readFormat: Dimensions %i x %i, with %i chars.\n",
                          bf->_texWidth, bf->_texHeight, glyphCount) );
 
@@ -217,10 +217,10 @@ static void* readFormat0(font_t* font, streamfile_t* sf)
     {
         bitmapfont_char_t* ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
 
-        ch->x = inShort(sf);
-        ch->y = inShort(sf);
-        ch->w = inByte(sf);
-        ch->h = inByte(sf);
+        ch->x = inShort(file);
+        ch->y = inShort(file);
+        ch->w = inByte(file);
+        ch->h = inByte(file);
 
         avgWidth  += ch->w;
         avgHeight += ch->h;
@@ -230,7 +230,7 @@ static void* readFormat0(font_t* font, streamfile_t* sf)
     font->_noCharHeight = avgHeight / glyphCount;
 
     // The bitmap.
-    bitmapFormat = inByte(sf);
+    bitmapFormat = inByte(file);
     if(bitmapFormat > 0)
     {
         Con_Error("readFormat: Font %s uses unknown bitmap bitmapFormat %i.\n",
@@ -241,7 +241,7 @@ static void* readFormat0(font_t* font, streamfile_t* sf)
     image = calloc(1, numPels * sizeof(int));
     for(c = i = 0; i < (numPels + 7) / 8; ++i)
     {
-        int bit, mask = inByte(sf);
+        int bit, mask = inByte(file);
 
         for(bit = 7; bit >= 0; bit--, ++c)
         {
@@ -256,16 +256,16 @@ static void* readFormat0(font_t* font, streamfile_t* sf)
     }
 }
 
-static void* readFormat2(font_t* font, streamfile_t* sf)
+static void* readFormat2(font_t* font, DFile* file)
 {
-    assert(font != NULL && font->_type == FT_BITMAP && NULL != sf);
+    assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
     {
     int i, numPels, dataHeight, avgWidth, avgHeight, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
     byte bitmapFormat = 0;
     uint32_t* image, *ptr;
 
-    bitmapFormat = inByte(sf);
+    bitmapFormat = inByte(file);
     if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
     {
         Con_Error("FR_ReadFormat2: Bitmap format %i not implemented.\n", bitmapFormat);
@@ -274,25 +274,25 @@ static void* readFormat2(font_t* font, streamfile_t* sf)
     font->_flags |= FF_COLORIZE|FF_SHADOWED;
 
     // Load in the data.
-    bf->_texWidth = inShort(sf);
-    dataHeight = inShort(sf);
+    bf->_texWidth = inShort(file);
+    dataHeight = inShort(file);
     bf->_texHeight = M_CeilPow2(dataHeight);
-    glyphCount = inShort(sf);
-    font->_marginWidth = font->_marginHeight = inShort(sf);
+    glyphCount = inShort(file);
+    font->_marginWidth = font->_marginHeight = inShort(file);
 
-    font->_leading = inShort(sf);
-    /*font->_glyphHeight =*/ inShort(sf); // Unused.
-    font->_ascent = inShort(sf);
-    font->_descent = inShort(sf);
+    font->_leading = inShort(file);
+    /*font->_glyphHeight =*/ inShort(file); // Unused.
+    font->_ascent = inShort(file);
+    font->_descent = inShort(file);
 
     avgWidth = avgHeight = 0;
     for(i = 0; i < glyphCount; ++i)
     {
-        ushort code = inShort(sf);
-        ushort x = inShort(sf);
-        ushort y = inShort(sf);
-        ushort w = inShort(sf);
-        ushort h = inShort(sf);
+        ushort code = inShort(file);
+        ushort x = inShort(file);
+        ushort y = inShort(file);
+        ushort w = inShort(file);
+        ushort h = inShort(file);
 
         if(code < MAX_CHARS)
         {
@@ -320,10 +320,10 @@ static void* readFormat2(font_t* font, streamfile_t* sf)
     {
         for(i = 0; i < numPels; ++i)
         {
-            byte red   = inByte(sf);
-            byte green = inByte(sf);
-            byte blue  = inByte(sf);
-            byte alpha = inByte(sf);
+            byte red   = inByte(file);
+            byte green = inByte(file);
+            byte blue  = inByte(file);
+            byte alpha = inByte(file);
 
             *ptr++ = ULONG(red | (green << 8) | (blue << 16) | (alpha << 24));
         }
@@ -332,8 +332,8 @@ static void* readFormat2(font_t* font, streamfile_t* sf)
     {
         for(i = 0; i < numPels; ++i)
         {
-            byte luminance = inByte(sf);
-            byte alpha = inByte(sf);
+            byte luminance = inByte(file);
+            byte alpha = inByte(file);
             *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) |
                       (alpha << 24));
         }
@@ -388,10 +388,10 @@ int BitmapFont_CharHeight(font_t* font, unsigned char ch)
 
 void BitmapFont_Prepare(font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
+    assert(font && font->_type == FT_BITMAP);
     {
     bitmapfont_t* bf = (bitmapfont_t*)font;
-    abstractfile_t* file;
+    DFile* file;
     void* image = 0;
     int version;
 
@@ -399,22 +399,19 @@ void BitmapFont_Prepare(font_t* font)
         return; // Already prepared.
 
     file = F_Open(Str_Text(&bf->_filePath), "rb");
-    if(NULL != file)
+    if(file)
     {
-        streamfile_t* sf = AbstractFile_Handle(file);
-        assert(sf);
-
         BitmapFont_DeleteGLDisplayLists(font);
         BitmapFont_DeleteGLTexture(font);
 
         // Load the font glyph map from the file.
-        version = inByte(sf);
+        version = inByte(file);
         switch(version)
         {
         // Original format.
-        case 0: image = readFormat0(font, sf); break;
+        case 0: image = readFormat0(font, file); break;
         // Enhanced format.
-        case 2: image = readFormat2(font, sf); break;
+        case 2: image = readFormat2(font, file); break;
         default: break;
         }
         if(!image)

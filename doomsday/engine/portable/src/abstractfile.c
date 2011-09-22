@@ -27,107 +27,99 @@
 
 #include "abstractfile.h"
 
-abstractfile_t* AbstractFile_Init(abstractfile_t* file, filetype_t type,
-    size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
+    DFile* file, const lumpinfo_t* info)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
-    assert(NULL != file && VALID_FILETYPE(type) && NULL != info);
+    assert(af && VALID_FILETYPE(type) && info);
 
-    file->_order = fileCounter++;
-    file->_type = type;
-    file->_flags.open = false;
-    file->_flags.startup = false;
-    file->_flags.iwad = false;
-    file->_baseOffset = baseOffset;
+    af->_order = fileCounter++;
+    af->_type = type;
+    af->_file = file;
+    af->_flags.startup = false;
+    af->_flags.iwad = false;
+    F_CopyLumpInfo(&af->_info, info);
 
-    F_CopyLumpInfo(&file->_info, info);
-
-    if(sf)
-    {
-        // Copy the stream handle.
-        memcpy(&file->_stream, sf, sizeof(file->_stream));
-    }
-    else
-    {
-        file->_stream.eof = false;
-        file->_stream.size = 0;
-        file->_stream.hndl = NULL;
-        file->_stream.data = NULL;
-        file->_stream.pos = 0;
-    }
-    return file;
+    return af;
 }
 
-filetype_t AbstractFile_Type(const abstractfile_t* file)
+void AbstractFile_Destroy(abstractfile_t* af)
 {
-    assert(NULL != file);
-    return file->_type;
+    assert(af);
+    F_DestroyLumpInfo(&af->_info);
+    if(af->_file)
+        DFile_Delete(af->_file, true);
 }
 
-const lumpinfo_t* AbstractFile_Info(abstractfile_t* file)
+filetype_t AbstractFile_Type(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    return &file->_info;
+    assert(af);
+    return af->_type;
 }
 
-abstractfile_t* AbstractFile_Container(const abstractfile_t* file)
+const lumpinfo_t* AbstractFile_Info(abstractfile_t* af)
 {
-    assert(NULL != file);
-    return file->_info.container;
+    assert(af);
+    return &af->_info;
 }
 
-size_t AbstractFile_BaseOffset(const abstractfile_t* file)
+abstractfile_t* AbstractFile_Container(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    return file->_baseOffset;
+    assert(af);
+    return af->_info.container;
 }
 
-const ddstring_t* AbstractFile_Path(const abstractfile_t* file)
+size_t AbstractFile_BaseOffset(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    return &file->_info.path;
+    assert(af);
+    return (af->_file? DFile_BaseOffset(af->_file) : 0);
 }
 
-uint AbstractFile_LoadOrderIndex(const abstractfile_t* file)
+DFile* AbstractFile_Handle(abstractfile_t* af)
 {
-    assert(NULL != file);
-    return file->_order;
+    assert(af);
+    return af->_file;
 }
 
-uint AbstractFile_LastModified(const abstractfile_t* file)
+const ddstring_t* AbstractFile_Path(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    return file->_info.lastModified;
+    assert(af);
+    return &af->_info.path;
 }
 
-streamfile_t* AbstractFile_Handle(abstractfile_t* file)
+uint AbstractFile_LoadOrderIndex(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    if(!file->_flags.open) return NULL;
-    return &file->_stream;
+    assert(af);
+    return af->_order;
 }
 
-boolean AbstractFile_HasStartup(const abstractfile_t* file)
+uint AbstractFile_LastModified(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    return (file->_flags.startup != 0);
+    assert(af);
+    return af->_info.lastModified;
 }
 
-void AbstractFile_SetStartup(abstractfile_t* file, boolean yes)
+boolean AbstractFile_HasStartup(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    file->_flags.startup = yes;
+    assert(af);
+    return (af->_flags.startup != 0);
 }
 
-boolean AbstractFile_HasIWAD(const abstractfile_t* file)
+void AbstractFile_SetStartup(abstractfile_t* af, boolean yes)
 {
-    assert(NULL != file);
-    return (file->_flags.iwad != 0);
+    assert(af);
+    af->_flags.startup = yes;
 }
 
-void AbstractFile_SetIWAD(abstractfile_t* file, boolean yes)
+boolean AbstractFile_HasIWAD(const abstractfile_t* af)
 {
-    assert(NULL != file);
-    file->_flags.iwad = yes;
+    assert(af);
+    return (af->_flags.iwad != 0);
+}
+
+void AbstractFile_SetIWAD(abstractfile_t* af, boolean yes)
+{
+    assert(af);
+    af->_flags.iwad = yes;
 }

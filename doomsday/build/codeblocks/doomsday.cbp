@@ -364,7 +364,6 @@
 		<Unit filename="..\..\engine\portable\include\sys_audiod_sdlmixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_console.h" />
 		<Unit filename="..\..\engine\portable\include\sys_direc.h" />
-		<Unit filename="..\..\engine\portable\include\sys_file.h" />
 		<Unit filename="..\..\engine\portable\include\sys_findfile.h" />
 		<Unit filename="..\..\engine\portable\include\sys_input.h" />
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
@@ -818,9 +817,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_audiod_sdlmixer.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\sys_filein.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_master.c">

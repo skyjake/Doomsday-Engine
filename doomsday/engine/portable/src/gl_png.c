@@ -62,7 +62,7 @@ void PNGAPI user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
 
 void PNGAPI my_read_data(png_structp read_ptr, png_bytep data, png_size_t length)
 {
-    F_Read(png_get_io_ptr(read_ptr), (uint8_t*)data, length);
+    DFile_Read(png_get_io_ptr(read_ptr), (uint8_t*)data, length);
 }
 
 const char* PNG_LastError(void)
@@ -72,11 +72,11 @@ const char* PNG_LastError(void)
     return 0;
 }
 
-uint8_t* PNG_Load(streamfile_t* file, int* width, int* height, int* pixelSize)
+uint8_t* PNG_Load(DFile* file, int* width, int* height, int* pixelSize)
 {
     assert(file && width && height && pixelSize);
     {
-    size_t initPos = F_Tell(file);
+    size_t initPos = DFile_Tell(file);
     png_structp png_ptr = 0;
     png_infop png_info = 0, end_info = 0;
     png_bytep* rows, pixel;
@@ -191,7 +191,7 @@ uint8_t* PNG_Load(streamfile_t* file, int* width, int* height, int* pixelSize)
     }
 
     png_destroy_read_struct(&png_ptr, &png_info, &end_info);
-    F_Seek(file, initPos, SEEK_SET);
+    DFile_Seek(file, initPos, SEEK_SET);
     return retbuf;
     }
 }

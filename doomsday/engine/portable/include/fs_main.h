@@ -1,4 +1,4 @@
-/**\file sys_file.h
+/**\file fs_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -50,6 +50,7 @@
 #include "zipfile.h"
 #include "wadfile.h"
 #include "lumpfile.h"
+#include "filelist.h"
 #include "pathdirectory.h"
 
 #define AUXILIARY_BASE      100000000
@@ -120,7 +121,7 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
  * \post The active LumpDirectory may have changed!
  *
  * @param absoluteLumpNum  Logical lumpnum associated to the file being looked up.
- * @param lumpNum  If not @c NULL the translated lumpnum within the owning file object is written here.
+ * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.
  * @return  Found file object else @c NULL
  */
 abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
@@ -134,37 +135,22 @@ lumpnum_t F_CheckLumpNumForName(const char* name);
 
 /**
  * Try to open the specified WAD archive into the auxiliary lump cache.
- *
- * @param prevOpened  If not @c NULL re-use this previously opened file rather
- *      than opening a new one. WAD loader takes ownership of the file.
- *      Release with F_CloseAuxiliary.
  * @return  Base index for lumps in this archive.
  */
-lumpnum_t F_OpenAuxiliary4(const char* fileName, streamfile_t* prevOpened, size_t baseOffset, boolean silent);
-lumpnum_t F_OpenAuxiliary3(const char* fileName, streamfile_t* prevOpened, size_t baseOffset); /* silent = false */
-lumpnum_t F_OpenAuxiliary2(const char* fileName, streamfile_t* prevOpened); /* baseOffset = 0 */
-lumpnum_t F_OpenAuxiliary(const char* fileName); /* prevOpened = NULL */
+lumpnum_t F_OpenAuxiliary3(const char* fileName, size_t baseOffset, boolean silent);
+lumpnum_t F_OpenAuxiliary2(const char* fileName, size_t baseOffset); /* silent = false */
+lumpnum_t F_OpenAuxiliary(const char* fileName); /* baseOffset = 0 */
 
 void F_CloseAuxiliary(void);
 
 /**
- * Close the file if open. Note that this clears any previously cached data.
- * \todo This really doesn't sit well in the object hierarchy. Why not move
- *      this responsibility to AbstractFile derivatives?
- */
-void F_CloseFile(streamfile_t* sf);
-
-/// @return  The name of the Zip archive where the referenced file resides.
-const char* Zip_SourceFile(lumpnum_t lumpNum);
-
-/**
- * Find a specific path in the Zip LumpDirectory.
+ * Find a lump in the Zip LumpDirectory.
  *
- * @param searchPath  Path to search for. Relative paths are converted are made absolute.
- *
- * @return  Non-zero if something is found.
+ * @param path  Path to search for. Relative paths are made absolute if necessary.
+ * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.
+ * @return  File system object representing the file which contains the found lump else @c NULL.
  */
-lumpnum_t Zip_Find(const char* searchPath);
+abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
@@ -205,24 +191,22 @@ int F_Access(const char* path);
  *      't' = text mode (with real files, lumps are always binary)
  *      'b' = binary
  *      'f' = must be a real file in the local file system
- *      'x' = don't buffer anything
  * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @param allowDuplicate  @c false = open only if not already opened.
  * @return  Opened file reference/handle else @c NULL.
  */
-abstractfile_t* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate);
-abstractfile_t* F_Open2(const char* path, const char* mode, size_t baseOffset); /* allowDuplicate = true */
-abstractfile_t* F_Open(const char* path, const char* mode); /* baseOffset = 0 */
+DFile* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate);
+DFile* F_Open2(const char* path, const char* mode, size_t baseOffset); /* allowDuplicate = true */
+DFile* F_Open(const char* path, const char* mode); /* baseOffset = 0 */
 
 /**
  * Try to locate the specified lump for reading.
  *
  * @param lumpNum  Absolute index of the lump to open.
- * @param dontBuffer  Just test for access (don't buffer anything).
  *
  * @return  Handle to the opened file if found.
  */
-abstractfile_t* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
+DFile* F_OpenLump(lumpnum_t lumpNum);
 
 /**
  * @return  The time when the file was last modified, as seconds since
@@ -266,11 +250,11 @@ void F_PrintLumpDirectory(void);
 /// Clear all references to this file.
 void F_ReleaseFile(abstractfile_t* file);
 
-/// Close this file; clear references and any acquired identifiers.
-void F_Close(abstractfile_t* file);
+/// Close this file.
+void F_Close(DFile* file);
 
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
-void F_Delete(abstractfile_t* file);
+void F_Delete(DFile* file);
 
 const lumpinfo_t* F_LumpInfo(abstractfile_t* file, int lumpIdx);
 

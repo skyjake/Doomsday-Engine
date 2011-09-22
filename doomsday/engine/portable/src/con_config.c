@@ -176,7 +176,7 @@ static boolean writeBindingsState(const char* fileName)
 
 boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 {
-    abstractfile_t* file;
+    DFile* file;
     char buff[512];   
 
     // Is this supposed to be the default?
@@ -195,18 +195,16 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
     // This file is filled with console commands.
     // Each line is a command.
     { int line = 1;
-    streamfile_t* sf = AbstractFile_Handle(file);
-    assert(sf);
     for(;;)
     {
-        M_ReadLine(buff, 512, sf);
+        M_ReadLine(buff, 512, file);
         if(buff[0] && !M_IsComment(buff))
         {
             // Execute the commands silently.
             if(!Con_Execute(CMDS_CONFIG, buff, setdefault, false))
                 Con_Message("%s(%d): error executing command\n \"%s\"\n", F_PrettyPath(fileName), line, buff);
         }
-        if(F_AtEnd(sf))
+        if(DFile_AtEnd(file))
             break;
         line++;
     }}

@@ -29,76 +29,74 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-lumpfile_t* LumpFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf)
+lumpfile_t* LumpFile_New(DFile* file, const lumpinfo_t* info)
 {
-    lumpfile_t* file = (lumpfile_t*)malloc(sizeof(*file));
-    if(NULL == file)
-        Con_Error("LumpFile::Construct:: Failed on allocation of %lu bytes for new LumpFile.",
-            (unsigned long) sizeof(*file));
+    lumpfile_t* lf = (lumpfile_t*)malloc(sizeof *lf);
+    if(!lf) Con_Error("LumpFile::Construct: Failed on allocation of %lu bytes for new LumpFile.",
+                (unsigned long) sizeof *lf);
 
-    AbstractFile_Init((abstractfile_t*)file, FT_LUMPFILE, baseOffset, info, sf);
-    file->_cacheData = NULL;
-    return file;
+    AbstractFile_Init((abstractfile_t*)lf, FT_LUMPFILE, file, info);
+    lf->_cacheData = NULL;
+    return lf;
 }
 
-void LumpFile_Delete(lumpfile_t* file)
+void LumpFile_Delete(lumpfile_t* lf)
 {
-    assert(NULL != file);
-    LumpFile_Close(file);
-    F_ReleaseFile((abstractfile_t*)file);
-    LumpFile_ClearLumpCache(file);
-    F_DestroyLumpInfo(&file->_base._info);
-    free(file);
+    assert(lf);
+    F_ReleaseFile((abstractfile_t*)lf);
+    LumpFile_ClearLumpCache(lf);
+    AbstractFile_Destroy((abstractfile_t*)lf);
+    free(lf);
 }
 
-int LumpFile_PublishLumpsToDirectory(lumpfile_t* file, lumpdirectory_t* directory)
+int LumpFile_PublishLumpsToDirectory(lumpfile_t* lf, lumpdirectory_t* directory)
 {
-    assert(NULL != file && NULL != directory);
+    assert(lf && directory);
     // Insert the lumps into their rightful places in the directory.
-    LumpDirectory_Append(directory, (abstractfile_t*)file, 0, 1);
+    LumpDirectory_Append(directory, (abstractfile_t*)lf, 0, 1);
     return 1;
 }
 
-const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* file, int lumpIdx)
+const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx)
 {
-    assert(NULL != file);
+    assert(lf);
     /// Lump files are special cases for this *is* the lump.
-    return AbstractFile_Info((abstractfile_t*)file);
+    return AbstractFile_Info((abstractfile_t*)lf);
 }
 
-void LumpFile_ClearLumpCache(lumpfile_t* file)
+void LumpFile_ClearLumpCache(lumpfile_t* lf)
 {
-    assert(NULL != file);
-    if(file->_cacheData)
+    assert(lf);
+    if(lf->_cacheData)
     {
         // If the block has a user, it must be explicitly freed.
-        if(Z_GetTag(file->_cacheData) < PU_MAP)
-            Z_ChangeTag(file->_cacheData, PU_MAP);
+        if(Z_GetTag(lf->_cacheData) < PU_MAP)
+            Z_ChangeTag(lf->_cacheData, PU_MAP);
         // Mark the memory pointer in use, but unowned.
-        Z_ChangeUser(file->_cacheData, (void*) 0x2);
+        Z_ChangeUser(lf->_cacheData, (void*) 0x2);
     }
 }
 
-size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection2(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
-    assert(NULL != file);
+    assert(lf);
     {
-    const lumpinfo_t* info = LumpFile_LumpInfo(file, lumpIdx);
+    const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
     size_t readBytes;
 
     VERBOSE2(
         Con_Printf("LumpFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
-                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lf))),
                 (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
                 (unsigned long) startOffset, (unsigned long)length) )
 
     // Try to avoid a file system read by checking for a cached copy.
-    if(tryCache && NULL != file->_cacheData)
+    if(tryCache && lf->_cacheData)
     {
-        boolean isCached = (NULL != file->_cacheData);
-        void** cachePtr = (void**)&file->_cacheData;
+        boolean isCached = (NULL != lf->_cacheData);
+        void** cachePtr = (void**)&lf->_cacheData;
         if(isCached)
         {
             VERBOSE2( Con_Printf(" from cache\n") )
@@ -109,8 +107,8 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 
     VERBOSE2( Con_Printf("\n") )
-    F_Seek(&file->_base._stream, file->_base._baseOffset + startOffset, SEEK_SET);
-    readBytes = F_Read(&file->_base._stream, buffer, length);
+    DFile_Seek(lf->_base._file, startOffset, SEEK_SET);
+    readBytes = DFile_Read(lf->_base._file, buffer, length);
     if(readBytes < length)
     {
         /// \todo Do not do this here.
@@ -121,40 +119,37 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
     }
 }
 
-size_t LumpFile_ReadLumpSection(lumpfile_t* file, int lumpIdx, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
-    return LumpFile_ReadLumpSection2(file, lumpIdx, buffer, startOffset, length, true);
+    return LumpFile_ReadLumpSection2(lf, lumpIdx, buffer, startOffset, length, true);
 }
 
-size_t LumpFile_ReadLump2(lumpfile_t* file, int lumpIdx, uint8_t* buffer, boolean tryCache)
+size_t LumpFile_ReadLump2(lumpfile_t* lf, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
-    assert(NULL != file);
+    const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+    if(!info) return 0;
+    return LumpFile_ReadLumpSection2(lf, lumpIdx, buffer, 0, info->size, tryCache);
+}
+
+size_t LumpFile_ReadLump(lumpfile_t* lf, int lumpIdx, uint8_t* buffer)
+{
+    return LumpFile_ReadLump2(lf, lumpIdx, buffer, true);
+}
+
+const uint8_t* LumpFile_CacheLump(lumpfile_t* lf, int lumpIdx, int tag)
+{
+    assert(lf);
     {
-    const lumpinfo_t* info = LumpFile_LumpInfo(file, lumpIdx);
-    assert(NULL != info);
-    return LumpFile_ReadLumpSection2(file, lumpIdx, buffer, 0, info->size, tryCache);
-    }
-}
-
-size_t LumpFile_ReadLump(lumpfile_t* file, int lumpIdx, uint8_t* buffer)
-{
-    return LumpFile_ReadLump2(file, lumpIdx, buffer, true);
-}
-
-const uint8_t* LumpFile_CacheLump(lumpfile_t* file, int lumpIdx, int tag)
-{
-    assert(NULL != file);
-    {
-    const lumpinfo_t* info = LumpFile_LumpInfo(file, lumpIdx);
-    boolean isCached = (NULL != file->_cacheData);
-    void** cachePtr = (void**)&file->_cacheData;
+    const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+    boolean isCached = (NULL != lf->_cacheData);
+    void** cachePtr = (void**)&lf->_cacheData;
 
     VERBOSE2(
         Con_Printf("LumpFile::CacheLump: \"%s:%s\" (%lu bytes%s) %s\n",
-                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)file))),
-                (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
-                (info->compressedSize != info->size? ", compressed" : ""),
+                F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lf))),
+                (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))),
+                (unsigned long) info->size, (info->compressedSize != info->size? ", compressed" : ""),
                 isCached? "hit":"miss") )
 
     if(!isCached)
@@ -165,7 +160,7 @@ const uint8_t* LumpFile_CacheLump(lumpfile_t* file, int lumpIdx, int tag)
         if(NULL == ptr)
             Con_Error("LumpFile::CacheLump: Failed on allocation of %lu bytes for "
                 "cache copy of lump #%i.", (unsigned long) info->size, lumpIdx);
-        LumpFile_ReadLump2(file, lumpIdx, ptr, false);
+        LumpFile_ReadLump2(lf, lumpIdx, ptr, false);
     }
     else
     {
@@ -176,28 +171,26 @@ const uint8_t* LumpFile_CacheLump(lumpfile_t* file, int lumpIdx, int tag)
     }
 }
 
-void LumpFile_ChangeLumpCacheTag(lumpfile_t* file, int lumpIdx, int tag)
+void LumpFile_ChangeLumpCacheTag(lumpfile_t* lf, int lumpIdx, int tag)
 {
-    assert(NULL != file);
+    assert(lf);
     {
-    boolean isCached = (NULL != file->_cacheData);
-    void** cachePtr = (void**)&file->_cacheData;
+    boolean isCached = (NULL != lf->_cacheData);
+    void** cachePtr = (void**)&lf->_cacheData;
     if(isCached)
     {
+        VERBOSE2(
+            const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+            Con_Printf("LumpFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
+                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lf))),
+                    (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
+
         Z_ChangeTag2(*cachePtr, tag);
     }
     }
 }
 
-void LumpFile_Close(lumpfile_t* file)
-{
-    assert(NULL != file);
-    if(file->_base._flags.open)
-        F_CloseFile(&file->_base._stream);
-    file->_base._flags.open = false;
-}
-
-int LumpFile_LumpCount(lumpfile_t* file)
+int LumpFile_LumpCount(lumpfile_t* lf)
 {
     return 1; // Always.
 }

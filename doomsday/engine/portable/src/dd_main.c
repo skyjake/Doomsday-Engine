@@ -498,7 +498,7 @@ void DD_StartTitle(void)
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
-    lumpnum_t auxLumpBase = F_OpenAuxiliary4(filePath, NULL, 0, true);
+    lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, 0, true);
     boolean result;
 
     if(auxLumpBase == -1)
@@ -564,12 +564,12 @@ static boolean isRequiredResource(gameinfo_t* info, const char* absolutePath)
     boolean found = false;
     if(records)
     {
-        // Is this resource from an archive?
-        lumpnum_t lumpNum = Zip_Find(absolutePath);
-        if(lumpNum >= 0)
+        // Is this resource from a container?
+        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        if(file)
         {
-            // Yes; use the archive path instead.
-            absolutePath = Zip_SourceFile(lumpNum);
+            // Yes; use the container's path instead.
+            absolutePath = Str_Text(AbstractFile_Path(file));
         }
 
         do

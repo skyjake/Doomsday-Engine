@@ -49,11 +49,8 @@ typedef struct wadfile_s {
     void** _lumpCache;
 } wadfile_t;
 
-wadfile_t* WadFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
+wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info);
 void WadFile_Delete(wadfile_t* wad);
-
-/// Close this file if open and release any acquired file identifiers.
-void WadFile_Close(wadfile_t* wad);
 
 int WadFile_PublishLumpsToDirectory(wadfile_t* file, struct lumpdirectory_s* directory);
 
@@ -63,12 +60,12 @@ const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx);
  * Read the data associated with the specified lump index into @a buffer.
  *
  * @param lumpIdx  Lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t WadFile_ReadLump2(wadfile_t* wad, int lumpIdx, uint8_t* dest, boolean tryCache);
-size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* dest);
+size_t WadFile_ReadLump2(wadfile_t* wad, int lumpIdx, uint8_t* buffer, boolean tryCache);
+size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with the specified lump index into @a buffer.
@@ -80,10 +77,10 @@ size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* dest);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t WadFile_ReadLumpSection2(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length, boolean tryCache);
-size_t WadFile_ReadLumpSection(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
-    size_t startOffset, size_t length);
+size_t WadFile_ReadLumpSection2(wadfile_t* wad, int lumpIdx,
+    uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
+size_t WadFile_ReadLumpSection(wadfile_t* wad, int lumpIdx,
+    uint8_t* buffer, size_t startOffset, size_t length);
 
 /**
  * Read the data associated with the specified lump index into the cache.
@@ -123,10 +120,9 @@ int WadFile_LumpCount(wadfile_t* wad);
 
 /**
  * Does the specified file appear to be in WAD format.
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- * @param sf  Stream file handle/wrapper to the file being interpreted.
+ * @param file  Stream file handle/wrapper to the file being interpreted.
  * @return  @c true iff this is a file that can be represented using WadFile.
  */
-boolean WadFile_Recognise(size_t baseOffset, streamfile_t* sf);
+boolean WadFile_Recognise(DFile* file);
 
 #endif /* LIBDENG_FILESYS_WADFILE_H */

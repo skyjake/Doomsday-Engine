@@ -146,7 +146,6 @@
  .\..\..\engine\portable\src\sys_master.c
  .\..\..\engine\win32\src\sys_input.c
  .\..\..\engine\win32\src\sys_findfile.c
- .\..\..\engine\portable\src\sys_filein.c
  .\..\..\engine\portable\src\sys_direc.c
  .\..\..\engine\win32\src\sys_console.c
  .\..\..\engine\portable\src\sys_reslocator.c

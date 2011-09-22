@@ -50,21 +50,18 @@ typedef struct {
     void** _lumpCache;
 } zipfile_t;
 
-zipfile_t* ZipFile_New(size_t baseOffset, const lumpinfo_t* info, streamfile_t* sf);
+zipfile_t* ZipFile_New(DFile* file, const lumpinfo_t* info);
 void ZipFile_Delete(zipfile_t* zip);
 
-/// Close this file if open and release any acquired file identifiers.
-void ZipFile_Close(zipfile_t* zip);
+int ZipFile_PublishLumpsToDirectory(zipfile_t* zip, struct lumpdirectory_s* directory);
 
-int ZipFile_PublishLumpsToDirectory(zipfile_t* file, struct lumpdirectory_s* directory);
-
-const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* file, int lumpIdx);
+const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* zip, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.
  *
  * @param lumpIdx  Lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
@@ -118,10 +115,9 @@ int ZipFile_LumpCount(zipfile_t* zip);
 
 /** 
  * Does the specified file appear to be in Zip format.
- * @param baseOffset  Offset from the start of the file in bytes to begin.
- * @param sf  Stream file handle/wrapper to the file being interpreted.
+ * @param file  Stream file handle/wrapper to the file being interpreted.
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
-boolean ZipFile_Recognise(size_t baseOffset, streamfile_t* sf);
+boolean ZipFile_Recognise(DFile* file);
 
 #endif

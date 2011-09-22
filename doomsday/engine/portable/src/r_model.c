@@ -199,13 +199,13 @@ static void R_VertexNormals(model_t *mdl)
 }
 #endif
 
-static void* AllocAndLoad(abstractfile_t* file, int offset, int len)
+static void* AllocAndLoad(DFile* file, int offset, int len)
 {
     uint8_t* ptr = (uint8_t*)malloc(len);
     if(!ptr)
         Con_Error("AllocAndLoad: Failed on allocation of %lu bytes for load buffer.", (unsigned long)len);
-    F_Seek(AbstractFile_Handle(file), offset, SEEK_SET);
-    F_Read(AbstractFile_Handle(file), ptr, len);
+    DFile_Seek(file, offset, SEEK_SET);
+    DFile_Read(file, ptr, len);
     return ptr;
 }
 
@@ -215,7 +215,7 @@ static void R_MissingModel(const char* fn)
     Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
 }
 
-static void R_LoadModelMD2(abstractfile_t* file, model_t* mdl)
+static void R_LoadModelMD2(DFile* file, model_t* mdl)
 {
     md2_header_t oldhd;
     dmd_header_t* hd = &mdl->header;
@@ -226,7 +226,7 @@ static void R_LoadModelMD2(abstractfile_t* file, model_t* mdl)
     const int axis[3] = { 0, 2, 1 };
 
     // Read the header.
-    F_Read(AbstractFile_Handle(file), (uint8_t*)&oldhd, sizeof(oldhd));
+    DFile_Read(file, (uint8_t*)&oldhd, sizeof(oldhd));
 
     // Convert it to DMD.
     hd->magic = MD2_MAGIC;
@@ -254,14 +254,12 @@ static void R_LoadModelMD2(abstractfile_t* file, model_t* mdl)
     inf->offsetEnd = LONG(oldhd.offsetEnd);
 
     // The frames need to be unpacked.
-    frames =
-        AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
+    frames = AllocAndLoad(file, inf->offsetFrames, inf->frameSize * inf->numFrames);
     mdl->frames = M_Malloc(sizeof(model_frame_t) * inf->numFrames);
     for(i = 0, frame = mdl->frames; i < inf->numFrames; ++i, frame++)
     {
-        md2_packedFrame_t *pfr =
-            (md2_packedFrame_t *) (frames + inf->frameSize * i);
-        md2_triangleVertex_t *pVtx;
+        md2_packedFrame_t* pfr = (md2_packedFrame_t*) (frames + inf->frameSize * i);
+        md2_triangleVertex_t* pVtx;
 
         memcpy(frame->name, pfr->name, sizeof(pfr->name));
         frame->vertices = M_Malloc(sizeof(model_vertex_t) * inf->numVertices);
@@ -270,8 +268,7 @@ static void R_LoadModelMD2(abstractfile_t* file, model_t* mdl)
         // Translate each vertex.
         for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; ++k, pVtx++)
         {
-            memcpy(frame->normals[k].xyz,
-                   avertexnormals[pVtx->lightNormalIndex], sizeof(float) * 3);
+            memcpy(frame->normals[k].xyz, avertexnormals[pVtx->lightNormalIndex], sizeof(float) * 3);
 
             for(c = 0; c < 3; ++c)
             {
@@ -304,12 +301,12 @@ static void R_LoadModelMD2(abstractfile_t* file, model_t* mdl)
         Con_Error("R_LoadModelMD2: Failed on allocation of %lu bytes for skin list.",
             (unsigned long) (sizeof(*mdl->skins) * inf->numSkins));
 
-    F_Seek(AbstractFile_Handle(file), inf->offsetSkins, SEEK_SET);
+    DFile_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(AbstractFile_Handle(file), (uint8_t*)mdl->skins[i].name, 64);
+        DFile_Read(file, (uint8_t*)mdl->skins[i].name, 64);
 }
 
-static void R_LoadModelDMD(abstractfile_t* file, model_t* mo)
+static void R_LoadModelDMD(DFile* file, model_t* mo)
 {
     dmd_chunk_t chunk;
     char* temp;
@@ -320,14 +317,14 @@ static void R_LoadModelDMD(abstractfile_t* file, model_t* mo)
     const int axis[3] = { 0, 2, 1 };
 
     // Read the chunks.
-    F_Read(AbstractFile_Handle(file), (uint8_t*)&chunk, sizeof(chunk));
+    DFile_Read(file, (uint8_t*)&chunk, sizeof(chunk));
 
     while(LONG(chunk.type) != DMC_END)
     {
         switch (LONG(chunk.type))
         {
         case DMC_INFO:          // Standard DMD information chunk.
-            F_Read(AbstractFile_Handle(file), (uint8_t*)inf, LONG(chunk.length));
+            DFile_Read(file, (uint8_t*)inf, LONG(chunk.length));
             inf->skinWidth = LONG(inf->skinWidth);
             inf->skinHeight = LONG(inf->skinHeight);
             inf->frameSize = LONG(inf->frameSize);
@@ -346,18 +343,18 @@ static void R_LoadModelDMD(abstractfile_t* file, model_t* mo)
         default:
             // Just skip all unknown chunks.
             temp = M_Malloc(LONG(chunk.length));
-            F_Read(AbstractFile_Handle(file), (uint8_t*)temp, LONG(chunk.length));
+            DFile_Read(file, (uint8_t*)temp, LONG(chunk.length));
             free(temp);
         }
         // Read the next chunk header.
-        F_Read(AbstractFile_Handle(file), (uint8_t*)&chunk, sizeof(chunk));
+        DFile_Read(file, (uint8_t*)&chunk, sizeof(chunk));
     }
 
     // Allocate and load in the data.
     mo->skins = M_Calloc(sizeof(dmd_skin_t) * inf->numSkins);
-    F_Seek(AbstractFile_Handle(file), inf->offsetSkins, SEEK_SET);
+    DFile_Seek(file, inf->offsetSkins, SEEK_SET);
     for(i = 0; i < inf->numSkins; ++i)
-        F_Read(AbstractFile_Handle(file), (uint8_t*)mo->skins[i].name, 64);
+        DFile_Read(file, (uint8_t*)mo->skins[i].name, 64);
 
     temp = AllocAndLoad(file, inf->offsetFrames,
         inf->frameSize * inf->numFrames);
@@ -396,8 +393,8 @@ static void R_LoadModelDMD(abstractfile_t* file, model_t* mo)
     }
     M_Free(temp);
 
-    F_Seek(AbstractFile_Handle(file), inf->offsetLODs, SEEK_SET);
-    F_Read(AbstractFile_Handle(file), (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
+    DFile_Seek(file, inf->offsetLODs, SEEK_SET);
+    DFile_Read(file, (uint8_t*)mo->lodInfo, sizeof(dmd_levelOfDetail_t) * inf->numLODs);
 
     for(i = 0; i < inf->numLODs; ++i)
     {
@@ -445,7 +442,7 @@ static int R_LoadModel(const Uri* uri)
 {
     const char* searchPath;
     ddstring_t foundPath;
-    abstractfile_t* file = 0;
+    DFile* file = NULL;
     model_t* mdl;
     int index;
 
@@ -459,10 +456,12 @@ static int R_LoadModel(const Uri* uri)
     if(F_FindResource2(RC_MODEL, searchPath, &foundPath) != 0)
     {
         // Has this been already loaded?
-        if((index = R_FindModelFor(Str_Text(&foundPath))) < 0)
+        index = R_FindModelFor(Str_Text(&foundPath));
+        if(index < 0)
         {
             // Not loaded yet, try to open the file.
-            if((file = F_Open(Str_Text(&foundPath), "rb")) == NULL)
+            file = F_Open(Str_Text(&foundPath), "rb");
+            if(!file)
             {
                 R_MissingModel(Str_Text(&foundPath));
                 Str_Free(&foundPath);
@@ -470,7 +469,8 @@ static int R_LoadModel(const Uri* uri)
             }
 
             // Allocate a new model_t.
-            if((index = R_NewModelFor(/*Str_Text(&foundPath)*/)) < 0)
+            index = R_NewModelFor(/*Str_Text(&foundPath)*/);
+            if(index < 0)
             {
                 F_Delete(file);
                 Str_Free(&foundPath);
@@ -488,17 +488,16 @@ static int R_LoadModel(const Uri* uri)
     mdl = modellist[index];
     if(mdl->loaded)
     {
-        if(file)
-            F_Delete(file);
+        if(file) F_Delete(file);
         Str_Free(&foundPath);
         return index; // Already loaded.
     }
 
     // Now we can load in the data.
-    F_Read(AbstractFile_Handle(file), (uint8_t*)&mdl->header, sizeof(mdl->header));
+    DFile_Read(file, (uint8_t*)&mdl->header, sizeof(mdl->header));
     if(LONG(mdl->header.magic) == MD2_MAGIC)
     {   // Load as MD2.
-        F_Rewind(AbstractFile_Handle(file));
+        DFile_Rewind(file);
         R_LoadModelMD2(file, mdl);
     }
     else if(LONG(mdl->header.magic) == DMD_MAGIC)

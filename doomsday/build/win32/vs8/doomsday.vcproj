@@ -1573,10 +1573,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\sys_file.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_findfile.h"
 				>
 			</File>
@@ -2936,10 +2932,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\sys_direc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\sys_filein.c"
 				>
 			</File>
 			<File
