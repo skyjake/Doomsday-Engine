@@ -1,4 +1,5 @@
 vcconfig.bat
+envconfig.bat
 *.pk3
 *.dll
 obj

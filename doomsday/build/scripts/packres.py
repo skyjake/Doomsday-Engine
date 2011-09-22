@@ -11,7 +11,7 @@ if len(sys.argv) < 2:
     sys.exit(0)
 
 deng_dir = os.path.join('..', '..')
-target_dir = sys.argv[1]
+target_dir = os.path.abspath(sys.argv[1])
 
 class Pack:
     def __init__(self):

@@ -527,9 +527,9 @@ int WinMIDIStreamer::IsPlaying(void)
     return playing;
 }
 
-void CALLBACK WinMIDIStreamer::Callback(HMIDIOUT hmo, UINT uMsg,
+void CALLBACK WinMIDIStreamer::Callback(HMIDIOUT /*hmo*/, UINT uMsg,
                                         DWORD_PTR dwInstance, DWORD dwParam1,
-                                        DWORD dwParam2)
+                                        DWORD /*dwParam2*/)
 {
     WinMIDIStreamer*    me = (WinMIDIStreamer*) dwInstance;
     LPMIDIHDR           mh;

@@ -1,0 +1,21 @@
+Source: doomsday
+Section: universe/games
+Priority: optional
+Maintainer: Jaakko Keränen <jaakko.keranen@iki.fi>
+Build-Depends: debhelper (>= 7.0.50~)
+Standards-Version: 3.9.1
+Homepage: http://dengine.net/
+Vcs-Git: git://deng.git.sourceforge.net/gitroot/deng/deng
+Vcs-Browser: http://deng.git.sourceforge.net/git/gitweb.cgi?p=deng/deng;a=summary
+
+Package: doomsday
+Architecture: ${Arch}
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-wxgtk2.8, libsdl1.2debian, libsdl-net1.2, libsdl-mixer1.2, libcurl3
+Description: Doom/Heretic/Hexen port with enhanced graphics
+ The Doomsday Engine is a portable version of the classic first person 
+ shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games
+ using modern technology, including high-resolution OpenGL graphics, 3D 
+ models, and dynamic lighting effects. Data files from the original games
+ are not included; you must acquire a copy of the original games from 
+ id Software and/or Raven Software.
+

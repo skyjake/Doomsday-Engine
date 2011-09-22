@@ -2,4 +2,4 @@ LIBRARY			JDOOM
 
 EXPORTS
     DP_Initialize   @1
-	GetGameAPI		@2
+    GetGameAPI      @2

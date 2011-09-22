@@ -372,7 +372,6 @@ typedef struct {
 
 #if !defined( NO_FIXED_ASM ) && !defined( GNU_X86_FIXED_ASM )
 
-    /* *INDENT-OFF* */
     __inline fixed_t FixedMul(fixed_t a, fixed_t b) {
         __asm {
             // The parameters in eax and ebx.
@@ -399,7 +398,6 @@ typedef struct {
         }
         // A value is returned regardless of the compiler warning.
     }
-    /* *INDENT-ON* */
 
 #else
 

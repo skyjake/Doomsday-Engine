@@ -30,7 +30,7 @@
 #ifndef LIBDENG_TYPES_H
 #define LIBDENG_TYPES_H
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
 #  define __64BIT__
 #endif
 
@@ -105,8 +105,9 @@ typedef unsigned long long   uintmax_t;
 typedef unsigned int    uint;
 typedef unsigned short  ushort;
 #else
-typedef uint32_t        uint;
-typedef uint16_t        ushort;
+#  include <sys/types.h>
+//typedef uint32_t        uint;
+//typedef uint16_t        ushort;
 #endif
 typedef unsigned char   byte;
 typedef int32_t         fixed_t;

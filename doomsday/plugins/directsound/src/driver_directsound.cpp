@@ -207,7 +207,7 @@ int DS_Init(void)
     DSCAPS              dsoundCaps;
     HWND                hWnd;
     HRESULT             hr;
-    uint                numHW3DBuffers = 0;
+    //uint                numHW3DBuffers = 0;
     boolean             useEAX, eaxAvailable = false,
                         primaryBuffer3D = false, primaryBufferHW = false;
     boolean             haveInstance = false;
@@ -477,7 +477,7 @@ void DS_Shutdown(void)
  * The Event function is called to tell the driver about certain critical
  * events like the beginning and end of an update cycle.
  */
-void DS_Event(int type)
+void DS_Event(int /*type*/)
 {
     // Do nothing...
 }

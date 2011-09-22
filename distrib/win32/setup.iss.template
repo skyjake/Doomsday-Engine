@@ -17,15 +17,15 @@ VersionInfoVersion=${VERSION_PLAIN}
 DefaultDirName={pf}\Doomsday
 DefaultGroupName=Doomsday Engine
 AllowNoIcons=yes
-SetupIconFile=..\..\..\snowberry\graphics\snowberry.ico
-UninstallIconFile=..\..\..\snowberry\graphics\snowberry.ico
-SourceDir=..\..\doomsday\build\win32
-OutputDir=..\..\..\distrib\releases
-LicenseFile=license.txt
+SetupIconFile=..\..\snowberry\graphics\snowberry.ico
+UninstallIconFile=..\..\snowberry\graphics\snowberry.ico
+SourceDir=..\products
+OutputDir=..\releases
+LicenseFile=LICENSE
 Compression=lzma/max
 ;Compression=zip/1
 SolidCompression=yes
-WizardImageFile=installerbg.bmp
+WizardImageFile=..\..\doomsday\build\win32\installerbg.bmp
 
 [Components]
 Name: "Engine"; Description: "Doomsday Engine"; Types: full compact custom; Flags: fixed checkablealone;
@@ -50,12 +50,12 @@ Name: "{app}\doc"
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
-Source: "Bin\Release\Doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "Bin\Release\ds*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "Bin\Release\dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "Bin\Release\jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
-Source: "Bin\Release\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
-Source: "Bin\Release\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
+Source: "Doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "ds*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
+Source: "jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
+Source: "jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
 
 ; Libraries
 Source: "SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
@@ -67,34 +67,36 @@ Source: "libvorbisfile-3.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Compo
 Source: "mikmod.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "..\..\external\lzss\win32\lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "..\..\external\zlib\win32\zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "..\..\external\libpng\win32\libpng13.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "curllib.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "openldap.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "libpng13.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 
 ; Snowberry
-Source: "..\..\..\snowberry\dist\*"; DestDir: "{app}\snowberry"; Flags: ignoreversion; Components: Launcher
-Source: "..\..\..\snowberry\graphics\*.bmp"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
-Source: "..\..\..\snowberry\graphics\*.png"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
-Source: "..\..\..\snowberry\graphics\*.jpg"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
-Source: "..\..\..\snowberry\graphics\*.ico"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
-Source: "..\..\..\snowberry\lang\*.lang"; DestDir: "{app}\snowberry\lang"; Components: Launcher
-Source: "..\..\..\snowberry\plugins\*.py"; DestDir: "{app}\snowberry\plugins"; Excludes: "observer.py"; Components: Launcher
-Source: "..\..\..\snowberry\plugins\tab30.plugin\Contents\tab30\*.py"; DestDir: "{app}\snowberry\plugins\tab30.plugin\Contents\tab30"; Components: Launcher
-Source: "..\..\..\snowberry\profiles\*.prof"; DestDir: "{app}\snowberry\profiles"; Components: Launcher
-Source: "..\..\..\snowberry\conf\*.conf"; DestDir: "{app}\snowberry\conf"; Components: Launcher
+Source: "..\..\snowberry\dist\*"; DestDir: "{app}\snowberry"; Flags: ignoreversion; Components: Launcher
+Source: "..\..\snowberry\graphics\*.bmp"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
+Source: "..\..\snowberry\graphics\*.png"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
+Source: "..\..\snowberry\graphics\*.jpg"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
+Source: "..\..\snowberry\graphics\*.ico"; DestDir: "{app}\snowberry\graphics"; Components: Launcher
+Source: "..\..\snowberry\lang\*.lang"; DestDir: "{app}\snowberry\lang"; Components: Launcher
+Source: "..\..\snowberry\plugins\*.py"; DestDir: "{app}\snowberry\plugins"; Excludes: "observer.py"; Components: Launcher
+Source: "..\..\snowberry\plugins\tab30.plugin\Contents\tab30\*.py"; DestDir: "{app}\snowberry\plugins\tab30.plugin\Contents\tab30"; Components: Launcher
+Source: "..\..\snowberry\profiles\*.prof"; DestDir: "{app}\snowberry\profiles"; Components: Launcher
+Source: "..\..\snowberry\conf\*.conf"; DestDir: "{app}\snowberry\conf"; Components: Launcher
 ; Documentation
-Source: "..\..\plugins\jdoom\doc\LICENSE"; DestDir: "{app}\doc\jdoom"; Components: Engine\jDoom
-Source: "..\..\plugins\jheretic\doc\LICENSE"; DestDir: "{app}\doc\jheretic"; Components: Engine\jHeretic
-Source: "..\..\plugins\jhexen\doc\LICENSE"; DestDir: "{app}\doc\jhexen"; Components: Engine\jHexen
+Source: "..\..\doomsday\plugins\jdoom\doc\LICENSE"; DestDir: "{app}\doc\jdoom"; Components: Engine\jDoom
+Source: "..\..\doomsday\plugins\jheretic\doc\LICENSE"; DestDir: "{app}\doc\jheretic"; Components: Engine\jHeretic
+Source: "..\..\doomsday\plugins\jhexen\doc\LICENSE"; DestDir: "{app}\doc\jhexen"; Components: Engine\jHexen
 
 ; Resources
 Source: "doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
-Source: "..\..\engine\data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\engine\data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\engine\data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\engine\data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\engine\data\fonts\normal12.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
-Source: "..\..\engine\data\fonts\normal18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
+Source: "..\..\doomsday\engine\data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "..\..\doomsday\engine\data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "..\..\doomsday\engine\data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "..\..\doomsday\engine\data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "..\..\doomsday\engine\data\fonts\normal12.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
+Source: "..\..\doomsday\engine\data\fonts\normal18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
 Source: "jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\jDoom
 Source: "jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\jHeretic
 Source: "jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\jHexen

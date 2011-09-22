@@ -13,6 +13,7 @@ import glob
 import platform
 import gzip
 import codecs
+import build_version
 
 BUILD_URI = "http://code.iki.fi/builds"
 
@@ -119,7 +120,14 @@ def builds_by_time():
     builds.sort()
     builds.reverse()
     return builds
-    
+
+
+def aptrepo_by_time(arch):
+    files = []
+    for fn in os.listdir(os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-' + arch)):
+        if fn[-4:] == '.deb':
+            files.append(fn)
+    return files
     
 def count_log_word(fn, word):
     txt = unicode(gzip.open(fn).read(), 'latin1').lower()
@@ -273,21 +281,39 @@ def collated(s):
     return s
 
 
-def update_changes(fromTag=None, toTag=None):
-    # Determine automatically?
-    if fromTag is None or toTag is None:
-        builds = builds_by_time()
-        if len(builds) < 2: return
-        fromTag = builds[1][1]
-        toTag = builds[0][1]
+def update_changes(fromTag=None, toTag=None, debChanges=False):
+    if debChanges:
+        # Use the apt repo for determining fromTag.
+        os.system('dpkg --print-architecture > debarch.tmp')
+        arch = file('debarch.tmp', 'rt').read().strip()
+        os.remove('debarch.tmp')
+        debs = aptrepo_by_time(arch)
+        
+        biggest = 0
+        for deb in debs:
+            number = int(deb[deb.find('-build')+6 : deb.find('_'+arch)])
+            biggest = max(biggest, number)
+        
+        fromTag = 'build' + str(biggest)
+        toTag = 'HEAD' # Everything up to now.
+    else:
+        # Determine automatically?
+        if fromTag is None or toTag is None:
+            builds = builds_by_time()
+            if len(builds) < 2: return
+            fromTag = builds[1][1]
+            toTag = builds[0][1]
 
     # Generate a changelog.
-    buildDir = os.path.join(EVENT_DIR, toTag)
-    fn = os.path.join(buildDir, 'changes.html')
-    changes = file(fn, 'wt')
-    print >> changes, '<ol>'
+    if not debChanges:
+        buildDir = os.path.join(EVENT_DIR, toTag)
+        fn = os.path.join(buildDir, 'changes.html')
+        changes = file(fn, 'wt')
+        print >> changes, '<ol>'
+    else:
+        buildDir = EVENT_DIR
     
-    tmpName = os.path.join(buildDir, 'ctmp')
+    tmpName = os.path.abspath(os.path.join(buildDir, 'ctmp'))
     
     format = '{{{{li}}}}{{{{b}}}}[[subjectline]]%s[[/subjectline]]{{{{/b}}}}' + \
              '{{{{br/}}}}by {{{{i}}}}%an{{{{/i}}}} on ' + \
@@ -308,6 +334,7 @@ def update_changes(fromTag=None, toTag=None):
     # Check that the subject lines are not too long.
     MAX_SUBJECT = 100
     pos = 0
+    changeEntries = []
     while True:
         pos = logText.find('[[subjectline]]', pos)
         if pos < 0: break
@@ -322,6 +349,9 @@ def update_changes(fromTag=None, toTag=None):
             # If there is a single dot at the end of the subject, remove it.
             if subject[-1] == '.' and subject[-2] != '.':
                 subject = subject[:-1]
+
+        if subject not in changeEntries:
+            changeEntries.append(subject)
         
         # Do the replace.
         logText = logText[:pos] + subject + logText[end+16:]
@@ -331,14 +361,34 @@ def update_changes(fromTag=None, toTag=None):
             bq = logText.find('<blockquote>', pos)
             logText = logText[:bq+12] + extra + logText[bq+12:]            
     
-    logText = logText.replace('\n\n', '<br/><br/>').replace('\n', ' ').replace('</blockquote><br/>', '</blockquote>')
-    print >> changes, logText
+    if not debChanges:
+        logText = logText.replace('\n\n', '<br/><br/>').replace('\n', ' ').replace('</blockquote><br/>', '</blockquote>')
+        print >> changes, logText
+
+    if not debChanges:
+        print >> changes, '</ol>'
+        changes.close()
+    else:
+        # Append the changes to the debian package changelog.
+        os.chdir(os.path.join(DISTRIB_DIR, 'linux'))
+        
+        # First we need to update the version.
+        build_version.find_version()
+        debVersion = build_version.DOOMSDAY_VERSION_PLAIN + '-' + todays_build_tag()
+        
+        # Always make one entry.
+        print 'Marking new version...'
+        msg = 'New release: unstable ' + todays_build_tag() + '.'
+        os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
+
+        for ch in changeEntries:
+            # Quote it for the command line.
+            qch = ch.replace('"', '\\"').replace('!', '\\!')
+            print 'Entry:', qch
+            os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
 
     os.remove(tmpName)
-
-    print >> changes, '</ol>'
-    changes.close()
-
+           
 
 def create_build_event():
     print 'Creating a new build event.'
@@ -519,6 +569,10 @@ elif sys.argv[1] == 'apt':
     
 elif sys.argv[1] == 'changes':
     update_changes()
+    
+elif sys.argv[1] == 'debchanges':
+    # Update debian changelog.
+    update_changes(None, None, True)
     
 elif sys.argv[1] == 'purge':
     purge_obsolete()

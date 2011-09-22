@@ -95,8 +95,8 @@ void DD_ErrorBox(boolean error, char* format, ...)
 
 #ifdef WIN32
     suspendMsgPump = true;
-    MessageBox(NULL, (LPCTSTR) buff,
-               (LPCTSTR) (DOOMSDAY_NICENAME" " DOOMSDAY_VERSION_TEXT),
+    MessageBox(NULL, WIN_STRING(buff),
+               TEXT(DOOMSDAY_NICENAME) DOOMSDAY_VERSION_TEXT_WSTR,
                (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
     suspendMsgPump = false;
 #endif

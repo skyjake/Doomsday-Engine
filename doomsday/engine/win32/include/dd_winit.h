@@ -32,11 +32,15 @@
 #include "dd_pinit.h"
 #include <windows.h>
 
-#define MAINWCLASS          "DoomsdayMainWClass"
+#define MAINWCLASS          TEXT("DoomsdayMainWClass")
 
 typedef struct {
     HINSTANCE hInstance;
+#ifdef UNICODE
+    LPCWSTR className;
+#else
     LPCSTR className;
+#endif
     BOOL suspendMsgPump; /// @c true = do not pump the Windows message thread.
 
     /// @c true = We are using a custom user dir specified on the command line.
@@ -50,5 +54,15 @@ extern uint windowIDX; // Main window.
 extern application_t app;
 
 void DD_Shutdown(void);
+
+#ifdef UNICODE
+LPCWSTR ToWideString(const char* str);
+LPCSTR  ToAnsiString(const wchar_t* wstr);
+#  define WIN_STRING(s)     (ToWideString(s))
+#  define UTF_STRING(ws)    (ToAnsiString(ws))
+#else
+#  define WIN_STRING(s)     (s)
+#  define UTF_STRING(ws)    (ws)
+#endif
 
 #endif /* LIBDENG_WINIT_H */

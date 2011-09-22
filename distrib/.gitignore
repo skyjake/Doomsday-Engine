@@ -1,3 +1,7 @@
+*.pyc
+builddir
+build-stamp
 work
 plugins
 build*.txt
+products

@@ -209,7 +209,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
         {
             suspendMsgPump = true;
             MessageBox(HWND_DESKTOP,
-                       "GL_GetGammaRamp: Main window not available.", NULL,
+                       TEXT("GL_GetGammaRamp: Main window not available."), NULL,
                        MB_ICONERROR | MB_OK);
             suspendMsgPump = false;
         }
@@ -300,7 +300,7 @@ void GL_SetGammaRamp(unsigned short* ramp)
     else
     {
         suspendMsgPump = true;
-        MessageBox(HWND_DESKTOP, "GL_SetGammaRamp: Main window not available.", 0, MB_ICONERROR | MB_OK);
+        MessageBox(HWND_DESKTOP, TEXT("GL_SetGammaRamp: Main window not available."), 0, MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
     }}
 #endif

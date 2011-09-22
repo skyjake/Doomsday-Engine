@@ -1,8 +1,8 @@
 @echo off
 REM -- Does a complete Win32 Binary Release distribution.
 
-REM -- Visual C++ environment.
-call "c:\Program Files\Microsoft Visual Studio 10.0\vc\vcvarsall.bat"
+REM -- Set up the build environment.
+call ..\..\doomsday\build\win32\envconfig.bat
 
 REM -- Build number.
 SET DOOMSDAY_BUILD=%1
@@ -13,17 +13,19 @@ cd ..\..\snowberry
 call build.bat
 cd ..\distrib\win32
 
-REM -- Recompile resource packages.
-cd ..\..\doomsday\build\scripts
-packres.py ../win32
-cd ..\..\..\distrib\win32
-
 REM -- Recompile.
 SET BUILDFAILURE=0
-cd ..\..\doomsday\build\win32
-call vcbuild.bat all
+rd/s/q work
+md work
+cd work
+qmake ..\..\..\doomsday\doomsday.pro CONFIG+=release DENG_BUILD=%DOOMSDAY_BUILD%
 IF %ERRORLEVEL% == 1 SET BUILDFAILURE=1
-cd ..\..\..\distrib\win32
+%JOM%
+IF %ERRORLEVEL% == 1 SET BUILDFAILURE=1
+%JOM% install
+IF %ERRORLEVEL% == 1 SET BUILDFAILURE=1
+cd ..
+rd/s/q work
 
 IF %BUILDFAILURE% == 1 GOTO Failure
 
@@ -33,6 +35,7 @@ REM -- Run the Inno Setup Compiler.
 goto TheEnd
 
 :Failure
+echo Failure during build!
 exit /b 1
 
 :TheEnd

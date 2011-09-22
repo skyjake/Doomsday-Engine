@@ -1380,6 +1380,24 @@ int DD_Main(void)
     boolean noCenter = false;
     int exitCode = 0;
 
+#ifdef _DEBUG
+    // Type size check.
+    {
+        void* ptr = 0;
+        int32_t int32 = 0;
+        int16_t int16 = 0;
+        float float32 = 0;
+        ASSERT_32BIT(int32);
+        ASSERT_16BIT(int16);
+        ASSERT_32BIT(float32);
+#ifdef __64BIT__
+        ASSERT_64BIT(ptr);
+#else
+        ASSERT_NOT_64BIT(ptr);
+#endif
+    }
+#endif
+
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
         winWidth = atoi(ArgNext());
@@ -2615,7 +2633,7 @@ int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
     str[size - 1] = 0;
     return result;
 #else
-    return result >= size? -1 : size;
+    return result >= (int)size? -1 : (int)size;
 #endif
 }
 

@@ -161,7 +161,7 @@ audiodriver_t* Sys_LoadAudioDriver(const char* name)
         Str_Appendf(&libPath, "%sds%s.dll", ddBinPath, name);
 
         // Load the audio driver library and import symbols.
-        hInstExt = LoadLibrary(Str_Text(&libPath));
+        hInstExt = LoadLibrary(WIN_STRING(Str_Text(&libPath)));
         if(NULL != hInstExt)
         {
             ad = importExternal();

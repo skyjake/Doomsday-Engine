@@ -78,9 +78,9 @@ static int sendMCICmd(char* returnInfo, int returnLength,
     dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
 
-    if((error = mciSendString(buf, returnInfo, returnLength, NULL)))
+    if((error = mciSendStringA(buf, returnInfo, returnLength, NULL)))
     {
-        mciGetErrorString(error, buf, 300);
+        mciGetErrorStringA(error, buf, 300);
         Con_Message("DM_WinCD: %s\n", buf);
 
         return false;

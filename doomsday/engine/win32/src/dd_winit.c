@@ -73,17 +73,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 uint windowIDX = 0; // Main window.
+application_t app;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-application_t app;
+#ifdef UNICODE
+static LPWSTR convBuf;
+static LPSTR utf8ConvBuf;
+#endif
 
 // CODE --------------------------------------------------------------------
+
+#ifdef UNICODE
+LPCWSTR ToWideString(const char* str)
+{
+    // Determine the length of the output string.
+    int wideChars = MultiByteToWideChar(CP_UTF8, 0, str, -1, 0, 0);
+
+    // Allocate the right amount of memory.
+    int bufSize = wideChars * sizeof(wchar_t) + 1;
+    convBuf = realloc(convBuf, bufSize);
+    memset(convBuf, 0, bufSize);
+
+    MultiByteToWideChar(CP_ACP, 0, str, -1, convBuf, wideChars);
+
+    return convBuf;
+}
+
+LPCSTR ToAnsiString(const wchar_t* wstr)
+{
+    // Determine how much memory is needed for the output string.
+    int utfBytes = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, 0, 0, 0, 0);
+
+    // Allocate the right amount of memory.
+    utf8ConvBuf = realloc(utf8ConvBuf, utfBytes);
+
+    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, utf8ConvBuf, utfBytes, 0, 0);
+
+    return utf8ConvBuf;
+}
+#endif
 
 /**
  * \note GetLastError() should only be called when we *know* an error was thrown.
  * The result of calling this any other time is undefined.
-
+ *
  * @return              Ptr to a string containing a textual representation of
  *                      the last error thrown in the current thread else @c NULL.
  */
@@ -94,8 +128,8 @@ static const char* getLastWINAPIErrorMessage(void)
 
     LPVOID lpMsgBuf;
     DWORD dw = GetLastError(), lpMsgBufLen;
-    lpMsgBufLen = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
+    lpMsgBufLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
     if(!lpMsgBuf || lpMsgBufLen == 0)
         return "";
 
@@ -142,7 +176,7 @@ static BOOL loadPlugin(const char* absolutePath)
     void (*initializer)(void);
     HINSTANCE plugin, *handle;
 
-    if(0 != (plugin = LoadLibrary(absolutePath)) &&
+    if(0 != (plugin = LoadLibrary(WIN_STRING(absolutePath))) &&
        0 != (initializer = (void*)GetProcAddress(plugin, _T("DP_Initialize"))) &&
        0 != (handle = findFirstUnusedPluginHandle(&app)))
     {
@@ -266,7 +300,7 @@ static BOOL initApplication(application_t* app)
 
     // Register our window class.
     return RegisterClassEx(&wcex);
-    }
+    }   
 }
 
 static void determineGlobalPaths(application_t* app)
@@ -292,13 +326,19 @@ static void determineGlobalPaths(application_t* app)
     Dir_Delete(temp);
     }
 #else
-    { filename_t path;
-    directory_t* temp;
-    GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
-
-    temp = Dir_ConstructFromPathDir(path);
-    strncpy(ddBinPath, Dir_Path(temp), FILENAME_T_MAXLEN);
-    Dir_Delete(temp);
+    {
+        directory_t* temp;
+#ifdef UNICODE
+        wchar_t path[FILENAME_T_MAXLEN];
+        GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
+        temp = Dir_ConstructFromPathDir(ToAnsiString(path));
+#else
+        filename_t path;
+        GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
+        temp = Dir_ConstructFromPathDir(path);
+#endif
+        strncpy(ddBinPath, Dir_Path(temp), FILENAME_T_MAXLEN);
+        Dir_Delete(temp);
     }
 #endif
 
@@ -367,7 +407,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
-        DD_InitCommandLine(GetCommandLine());
+        DD_InitCommandLine(UTF_STRING(GetCommandLine()));
 
         // First order of business: are we running in dedicated mode?
         isDedicated = ArgCheck("-dedicated");
@@ -564,4 +604,9 @@ void DD_Shutdown(void)
 {
     DD_ShutdownAll(); // Stop all engine subsystems.
     unloadAllPlugins(&app);
+
+#ifdef UNICODE
+    free(convBuf); convBuf = 0;
+    free(utf8ConvBuf); utf8ConvBuf = 0;
+#endif
 }

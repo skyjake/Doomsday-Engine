@@ -29,7 +29,7 @@ typedef uint64_t      io_user_reference_t;
 #import "../include/DoomsdayRunner.h"
 
 /* Use this flag to determine whether we use SDLMain.nib or not */
-#define		SDL_USE_NIB_FILE	0
+//#define SDL_USE_NIB_FILE
 
 
 int     gArgc;
@@ -42,7 +42,7 @@ static BOOL   gFinderLaunch;
 /* Set when the startup window is created. */
 /*StartupWindowController* gStartupWindowController;*/
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
 /* A helper category for NSString */
 @interface NSString (ReplaceSubString)
 - (NSString *)stringByReplacingRange:(NSRange)aRange with:(NSString *)aString;
@@ -96,7 +96,7 @@ static BOOL   gFinderLaunch;
     }
 }
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
 
 /* Fix menu to contain the real app name instead of "SDL App" */
 - (void)fixMenu:(NSMenu *)aMenu withAppName:(NSString *)appName
@@ -125,6 +125,7 @@ static BOOL   gFinderLaunch;
 
 void setupAppleMenu(void)
 {
+#if 0
     /* warning: this code is very odd */
     NSAppleMenuController *appleMenuController;
     NSMenu *appleMenu;
@@ -146,6 +147,7 @@ void setupAppleMenu(void)
     [[NSApp mainMenu] removeItem:appleMenuItem];
     [appleMenu release];
     [appleMenuItem release];
+#endif
 }
 
 /* Create a window menu */
@@ -218,10 +220,10 @@ void CloseStartupWindow(void)
 }
 
 /* Replacement for NSApplicationMain */
-void CustomApplicationMain (argc, argv)
+void CustomApplicationMain (int argc, char** argv)
 {
-    NSAutoreleasePool	*pool = [[NSAutoreleasePool alloc] init];
-    SDLMain				*sdlMain;
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    SDLMain *sdlMain;
 
     /* Ensure the application object is initialised */
     [SDLApplication sharedApplication];
@@ -256,7 +258,7 @@ void CustomApplicationMain (argc, argv)
     /* Set the working directory to the .app's parent directory */
     [self setupWorkingDirectory:gFinderLaunch];
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
     /* Set the main menu to contain the real app name instead of "SDL App" */
     [self fixMenu:[NSApp mainMenu] withAppName:[[NSProcessInfo processInfo] processName]];
 #endif
@@ -345,7 +347,7 @@ int main (int argc, char *argv[])
         gArgv[i] = argv[i];
     gArgv[i] = NULL;
 
-#if SDL_USE_NIB_FILE
+#ifdef SDL_USE_NIB_FILE
     [SDLApplication poseAsClass:[NSApplication class]];
     NSApplicationMain (argc, argv);
 #else

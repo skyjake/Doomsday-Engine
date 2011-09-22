@@ -296,7 +296,7 @@ static void createDummyWindow(application_t* app)
     boolean             ok = true;
 
     // Create the window.
-    hWnd = CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, "dummy",
+    hWnd = CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, TEXT("dummy"),
                           (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
                           CW_USEDEFAULT, CW_USEDEFAULT,
                           CW_USEDEFAULT, CW_USEDEFAULT,
