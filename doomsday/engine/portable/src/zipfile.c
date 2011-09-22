@@ -680,6 +680,12 @@ void ZipFile_ChangeLumpCacheTag(zipfile_t* zip, int lumpIdx, int tag)
 
     if(isCached)
     {
+        VERBOSE2(
+            const lumpinfo_t* info = ZipFile_LumpInfo(zip, lumpIdx);
+            Con_Printf("ZipFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
+                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
+                    (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
+
         Z_ChangeTag2(*cachePtr, tag);
     }
     }

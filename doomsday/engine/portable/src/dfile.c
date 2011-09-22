@@ -120,7 +120,9 @@ DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* container, int lumpI
             Con_Error("DFileBuilder::NewFromAbstractFileLump: Failed on allocation of %lu bytes for data buffer.",
                 (unsigned long) file->_size);
 #if _DEBUG
-        VERBOSE2( Con_Printf("Next FILE read from DFileBuilder::NewFromAbstractFileLump.\n") )
+        VERBOSE2( Con_Printf("DFile [%p] buffering \"%s:%s\"...\n", (void*)file,
+            F_PrettyPath(Str_Text(AbstractFile_Path(container))),
+            (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path)))) )
 #endif
         F_ReadLumpSection(container, lumpIdx, (uint8_t*)file->_data, 0, info->size);
     }

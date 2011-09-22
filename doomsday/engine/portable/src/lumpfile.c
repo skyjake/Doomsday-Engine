@@ -179,6 +179,12 @@ void LumpFile_ChangeLumpCacheTag(lumpfile_t* lf, int lumpIdx, int tag)
     void** cachePtr = (void**)&lf->_cacheData;
     if(isCached)
     {
+        VERBOSE2(
+            const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+            Con_Printf("LumpFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
+                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lf))),
+                    (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
+
         Z_ChangeTag2(*cachePtr, tag);
     }
     }

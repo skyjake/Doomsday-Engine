@@ -396,6 +396,12 @@ void WadFile_ChangeLumpCacheTag(wadfile_t* wad, int lumpIdx, int tag)
 
     if(isCached)
     {
+        VERBOSE2(
+            const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
+            Con_Printf("WadFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
+                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
+                    (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
+
         Z_ChangeTag2(*cachePtr, tag);
     }
     }
