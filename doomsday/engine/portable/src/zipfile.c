@@ -246,13 +246,13 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
     centralend_t summary;
     char* pos;
 
-    VERBOSE( Con_Message("ZipFile::readArchiveFileDirectory: \"%s\"\n",
+    VERBOSE( Con_Message("ZipFile::readLumpDirectory: \"%s\"\n",
         F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip)))) );
 
     // Scan the end of the file for the central centralDirectory end record.
     if(!ZipFile_LocateCentralDirectory(zip))
     {
-        Con_Error("ZipFile::readArchiveFileDirectory: Central centralDirectory in %s not found!",
+        Con_Error("ZipFile::readLumpDirectory: Central centralDirectory in %s not found!",
             Str_Text(AbstractFile_Path((abstractfile_t*)zip)));
     }
 
@@ -262,14 +262,14 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
     // Does the summary say something we don't like?
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
     {
-        Con_Error("ZipFile::readArchiveFileDirectory: Multipart Zip file \"%s\" not supported.",
+        Con_Error("ZipFile::readLumpDirectory: Multipart Zip file \"%s\" not supported.",
             Str_Text(AbstractFile_Path((abstractfile_t*)zip)));
     }
 
     // Read the entire central centralDirectory into memory.
     centralDirectory = malloc(ULONG(summary.size));
     if(NULL == centralDirectory)
-        Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for "
+        Con_Error("ZipFile::readLumpDirectory: Failed on allocation of %lu bytes for "
             "temporary copy of the central centralDirectory.", (unsigned long) ULONG(summary.size));
     DFile_Seek(zip->_base._file, ULONG(summary.offset), SEEK_SET);
     DFile_Read(zip->_base._file, (uint8_t*)centralDirectory, ULONG(summary.size));
@@ -290,7 +290,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
             // We can now allocate the record list.
             zip->_lumpRecords = (zipfile_lumprecord_t*)malloc(entryCount * sizeof *zip->_lumpRecords);
             if(NULL == zip->_lumpRecords)
-                Con_Error("ZipFile::readArchiveFileDirectory: Failed on allocation of %lu bytes for record list.",
+                Con_Error("ZipFile::readLumpDirectory: Failed on allocation of %lu bytes for record list.",
                     (unsigned long) (entryCount * sizeof *zip->_lumpRecords));
             zip->_lumpCount = entryCount;
 
@@ -392,7 +392,7 @@ zipfile_t* ZipFile_New(DFile* file, const lumpinfo_t* info)
     assert(info);
     {
     zipfile_t* zip = (zipfile_t*)malloc(sizeof *zip);
-    if(!zip) Con_Error("ZipFile::Construct: Failed on allocation of %lu bytes for new ZipFile.",
+    if(!zip) Con_Error("ZipFile::New: Failed on allocation of %lu bytes for new ZipFile.",
                 (unsigned long) sizeof *zip);
 
     AbstractFile_Init((abstractfile_t*)zip, FT_ZIPFILE, file, info);

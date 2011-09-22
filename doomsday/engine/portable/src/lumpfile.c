@@ -32,7 +32,7 @@
 lumpfile_t* LumpFile_New(DFile* file, const lumpinfo_t* info)
 {
     lumpfile_t* lf = (lumpfile_t*)malloc(sizeof *lf);
-    if(!lf) Con_Error("LumpFile::Construct:: Failed on allocation of %lu bytes for new LumpFile.",
+    if(!lf) Con_Error("LumpFile::Construct: Failed on allocation of %lu bytes for new LumpFile.",
                 (unsigned long) sizeof *lf);
 
     AbstractFile_Init((abstractfile_t*)lf, FT_LUMPFILE, file, info);

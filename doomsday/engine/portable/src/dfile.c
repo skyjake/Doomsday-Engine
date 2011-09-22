@@ -147,13 +147,15 @@ DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset)
     return file;
 }
 
-DFile* DFileBuilder_NewCopy(DFile* file)
+DFile* DFileBuilder_NewCopy(const DFile* file)
 {
     assert(inited && file);
     {
     DFile* clone = DFile_New();
-    memcpy(clone, file, sizeof(DFile));
-    return file;
+    clone->_flags.open = true;
+    clone->_flags.reference = true;
+    clone->_file = DFile_File_Const(file);
+    return clone;
     }
 }
 
@@ -255,21 +257,19 @@ abstractfile_t* DFile_File(DFile* file)
     return file->_file;
 }
 
-const abstractfile_t* DFile_File_Const(const DFile* file)
+abstractfile_t* DFile_File_Const(const DFile* file)
 {
     errorIfNotValid(file, "DFile::File const");
     return file->_file;
 }
 
-void DFile_SetFile(DFile* file, struct abstractfile_s* af)
-{
-    assert(file);
-    file->_file = af;
-}
-
 size_t DFile_BaseOffset(const DFile* file)
 {
     assert(file);
+    if(file->_flags.reference)
+    {
+        return DFile_BaseOffset(AbstractFile_Handle(file->_file));
+    }
     return file->_baseOffset;
 }
 

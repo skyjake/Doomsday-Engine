@@ -197,7 +197,7 @@ DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* af, int lumpIdx, boo
  */
 DFile* DFileBuilder_NewFromFile(FILE* hndl, size_t baseOffset);
 
-DFile* DFileBuilder_NewCopy(DFile* file);
+DFile* DFileBuilder_NewCopy(const DFile* file);
 
 DFile* DFile_New(void);
 
@@ -206,14 +206,12 @@ void DFile_Delete(DFile* file, boolean recycle);
 /// @return  File object represented by this handle.
 struct abstractfile_s* DFile_File(DFile* file);
 
-void DFile_SetFile(DFile* file, struct abstractfile_s* af);
-
 /// @return  FileList object which owns this handle.
 FileList* DFile_List(DFile* file);
 
 void DFile_SetList(DFile* file, FileList* list);
 
 /// @return  File object represented by this handle.
-const struct abstractfile_s* DFile_File_Const(const DFile* file);
+struct abstractfile_s* DFile_File_Const(const DFile* file);
 
 #endif /* LIBDENG_FILESYS_FILELIST_H */
