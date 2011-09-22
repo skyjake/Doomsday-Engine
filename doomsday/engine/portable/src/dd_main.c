@@ -564,12 +564,12 @@ static boolean isRequiredResource(gameinfo_t* info, const char* absolutePath)
     boolean found = false;
     if(records)
     {
-        // Is this resource from an archive?
-        lumpnum_t lumpNum = Zip_Find(absolutePath);
-        if(lumpNum >= 0)
+        // Is this resource from a container?
+        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        if(file)
         {
-            // Yes; use the archive path instead.
-            absolutePath = Zip_SourceFile(lumpNum);
+            // Yes; use the container's path instead.
+            absolutePath = Str_Text(AbstractFile_Path(file));
         }
 
         do

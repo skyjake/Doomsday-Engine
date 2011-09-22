@@ -105,7 +105,6 @@ static void clearVDMappings(void);
 static boolean applyVDMapping(ddstring_t* path, vdmapping_t* vdm);
 
 static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** foundPath);
-static abstractfile_t* findLumpFile(const char* path, int* lumpIdx);
 
 void F_Register(void)
 {
@@ -1006,28 +1005,6 @@ void F_PrintLumpDirectory(void)
     LumpDirectory_Print(primaryWadLumpDirectory);
 }
 
-const char* Zip_SourceFile(lumpnum_t lumpNum)
-{
-    return Str_Text(AbstractFile_Path(LumpDirectory_SourceFile(zipLumpDirectory, lumpNum)));
-}
-
-lumpnum_t Zip_Find(const char* searchPath)
-{
-    lumpnum_t result = -1;
-    if(inited)
-    {
-        ddstring_t absSearchPath;
-        // Convert to an absolute path.
-        Str_Init(&absSearchPath); Str_Set(&absSearchPath, searchPath);
-        F_PrependBasePath(&absSearchPath, &absSearchPath);
-
-        // Perform the search.
-        result = LumpDirectory_IndexForPath(zipLumpDirectory, Str_Text(&absSearchPath));
-        Str_Free(&absSearchPath);
-    }
-    return result;
-}
-
 typedef struct foundentry_s {
     ddstring_t path;
     int attrib;
@@ -1158,13 +1135,13 @@ typedef struct {
 
     /// Current search pattern.
     const ddstring_t* pattern;
-} findziplumpworker_paramaters_t;
+} findlumpworker_paramaters_t;
 
-static int findZipLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
+static int findLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
 {
     assert(NULL != lumpInfo && NULL != paramaters);
     {
-    findziplumpworker_paramaters_t* p = (findziplumpworker_paramaters_t*)paramaters;
+    findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
     if(F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(p->pattern)))
     {
         return p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
@@ -1191,12 +1168,12 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
     F_PrependBasePath(&searchPattern, &searchPattern);
 
     // Check the Zip directory.
-    { findziplumpworker_paramaters_t p;
+    { findlumpworker_paramaters_t p;
     p.callback = callback;
     p.paramaters = paramaters;
     p.pattern = &searchPattern;
 
-    result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findZipLumpWorker, (void*)&p);
+    result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
     if(0 != result)
     {   // Find didn't finish.
         goto searchEnded;
@@ -1299,13 +1276,13 @@ static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** fou
     return NULL;
 }
 
-static abstractfile_t* findLumpFile(const char* path, int* lumpIdx)
+abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx)
 {
     ddstring_t absSearchPath;
     lumpnum_t lumpNum;
 
-    if(!path || !path[0] || !inited)
-        return false;
+    if(!inited || !path || !path[0])
+        return NULL;
 
     /**
      * First check the Zip directory.
@@ -1494,7 +1471,7 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     if(!reqRealFile)
     {
         int lumpIdx;
-        abstractfile_t* container = findLumpFile(Str_Text(&searchPath), &lumpIdx);
+        abstractfile_t* container = F_FindLumpFile(Str_Text(&searchPath), &lumpIdx);
         if(container)
         {
             resourcetype_t type;

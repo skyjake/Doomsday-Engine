@@ -121,7 +121,7 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
  * \post The active LumpDirectory may have changed!
  *
  * @param absoluteLumpNum  Logical lumpnum associated to the file being looked up.
- * @param lumpNum  If not @c NULL the translated lumpnum within the owning file object is written here.
+ * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.
  * @return  Found file object else @c NULL
  */
 abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
@@ -143,17 +143,14 @@ lumpnum_t F_OpenAuxiliary(const char* fileName); /* baseOffset = 0 */
 
 void F_CloseAuxiliary(void);
 
-/// @return  The name of the Zip archive where the referenced file resides.
-const char* Zip_SourceFile(lumpnum_t lumpNum);
-
 /**
- * Find a specific path in the Zip LumpDirectory.
+ * Find a lump in the Zip LumpDirectory.
  *
- * @param searchPath  Path to search for. Relative paths are converted are made absolute.
- *
- * @return  Non-zero if something is found.
+ * @param path  Path to search for. Relative paths are made absolute if necessary.
+ * @param lumpIdx  If not @c NULL the translated lumpnum within the owning file object is written here.
+ * @return  File system object representing the file which contains the found lump else @c NULL.
  */
-lumpnum_t Zip_Find(const char* searchPath);
+abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
