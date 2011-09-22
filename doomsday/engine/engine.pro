@@ -67,6 +67,10 @@ deng_writertypecheck {
     DEFINES += DENG_WRITER_TYPECHECK
 }
 
+deng_sdlnetdummy {
+    HEADERS += portable/include/sdlnet_dummy.h
+}
+
 # Source Files ---------------------------------------------------------------
 
 DENG_API_HEADERS = \
@@ -84,10 +88,6 @@ DENG_API_HEADERS = \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
     api/writer.h
-
-deng_sdlnetdummy {
-    HEADERS += portable/include/sdlnet_dummy.h
-}
 
 DENG_HEADERS = \
     portable/include/b_command.h \
@@ -544,6 +544,6 @@ else:unix:!macx {
     startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
-    desktop.files = ../../distrib/doomsday-engine.desktop
+    desktop.files = ../../distrib/linux/doomsday-engine.desktop
     desktop.path = /usr/share/applications
 }
