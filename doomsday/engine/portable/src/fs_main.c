@@ -1028,19 +1028,6 @@ lumpnum_t Zip_Find(const char* searchPath)
     return result;
 }
 
-uint F_GetLastModified(const char* fileName)
-{
-    // Try to open the file, but don't buffer any contents.
-    DFile* file = F_Open(fileName, "rx");
-    uint modified = 0;
-    if(file)
-    {
-        modified = AbstractFile_LastModified(DFile_File(file));
-        F_Delete(file);
-    }
-    return modified;
-}
-
 typedef struct foundentry_s {
     ddstring_t path;
     int attrib;
@@ -1431,7 +1418,7 @@ static DFile* tryOpenAsWadFile(DFile* file, const lumpinfo_t* info)
     return NULL;
 }
 
-static DFile* tryOpenFile2(DFile* file, const lumpinfo_t* info)
+static DFile* tryOpenFile3(DFile* file, const lumpinfo_t* info)
 {
     assert(file && info);
     {
@@ -1477,7 +1464,13 @@ static DFile* tryOpenFile2(DFile* file, const lumpinfo_t* info)
     }
 }
 
-static DFile* tryOpenFile(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
+/**
+ * @param mode 'b' = binary mode
+ *             't' = text mode
+ *             'f' = must be a real file in the local file system.
+ *             'x' = skip buffering (used with file-access and metadata-acquire processes).
+ */
+static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
     ddstring_t searchPath, *foundPath = NULL;
     boolean dontBuffer, reqRealFile;
@@ -1489,7 +1482,7 @@ static DFile* tryOpenFile(const char* path, const char* mode, size_t baseOffset,
         return NULL;
 
     if(NULL == mode) mode = "";
-    dontBuffer  = (strchr(mode, 'x') != NULL);
+    dontBuffer = (strchr(mode, 'x') != NULL);
     reqRealFile = (strchr(mode, 'f') != NULL);
 
     // Make it a full path.
@@ -1552,18 +1545,32 @@ static DFile* tryOpenFile(const char* path, const char* mode, size_t baseOffset,
     Str_Free(&searchPath);
     Str_Delete(foundPath);
 
-    dfile = tryOpenFile2(DFileBuilder_NewFromFile(file, baseOffset), &info);
+    dfile = tryOpenFile3(DFileBuilder_NewFromFile(file, baseOffset), &info);
 
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
     return dfile;
 }
 
-DFile* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
+static DFile* tryOpenFile(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
 {
-    DFile* file = tryOpenFile(path, mode, baseOffset, allowDuplicate);
+    DFile* file = tryOpenFile2(path, mode, baseOffset, allowDuplicate);
     if(file) return FileList_AddBack(openFiles, file);
     return NULL;
+}
+
+DFile* F_Open3(const char* path, const char* mode, size_t baseOffset, boolean allowDuplicate)
+{
+#if _DEBUG
+    uint i;
+    assert(path && mode);
+    for(i = 0; mode[i]; ++i)
+    {
+        if(mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
+            Con_Error("F_Open: Unsupported file open-op in mode string %s for path \"%s\"\n", mode, path);
+    }
+#endif
+    return tryOpenFile(path, mode, baseOffset, allowDuplicate);
 }
 
 DFile* F_Open2(const char* path, const char* mode, size_t baseOffset)
@@ -1578,14 +1585,26 @@ DFile* F_Open(const char* path, const char* mode)
 
 int F_Access(const char* path)
 {
-    // Open for reading, but don't buffer anything.
-    DFile* file = F_Open(path, "rx");
+    DFile* file = tryOpenFile(path, "rx", 0, true);
     if(file)
     {
         F_Delete(file);
         return true;
     }
     return false;
+}
+
+uint F_GetLastModified(const char* fileName)
+{
+    // Try to open the file, but don't buffer any contents.
+    DFile* file = tryOpenFile(fileName, "rx", 0, true);
+    uint modified = 0;
+    if(file)
+    {
+        modified = AbstractFile_LastModified(DFile_File(file));
+        F_Delete(file);
+    }
+    return modified;
 }
 
 boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
@@ -1692,14 +1711,14 @@ boolean F_RemoveFiles(const char* const* filenames, size_t num)
     return succeeded;
 }
 
-DFile* F_OpenLump(lumpnum_t absoluteLumpNum, boolean dontBuffer)
+DFile* F_OpenLump(lumpnum_t absoluteLumpNum)
 {
     int lumpIdx;
     abstractfile_t* container = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
     if(container)
     {
         /// \todo All lumps should be attributed with an absolute file path not just those from Zips.
-        abstractfile_t* fsObject = newLumpFile(DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, dontBuffer), F_LumpInfo(container, lumpIdx));
+        abstractfile_t* fsObject = newLumpFile(DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false), F_LumpInfo(container, lumpIdx));
         if(fsObject)
         {
             return FileList_AddBack(openFiles, DFileBuilder_NewFromAbstractFile(fsObject));

@@ -919,7 +919,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         {
             if(flat->lumpNum >= 0)
             {
-                DFile* file = F_OpenLump(flat->lumpNum, false);
+                DFile* file = F_OpenLump(flat->lumpNum);
                 loadResult = GL_LoadFlatLump(image, file);
                 F_Delete(file);
             }
@@ -954,7 +954,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         {
             if(pTex->lumpNum >= 0)
             {
-                DFile* file = F_OpenLump(pTex->lumpNum, false);
+                DFile* file = F_OpenLump(pTex->lumpNum);
                 loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, pTex);
                 F_Delete(file);
             }
@@ -999,7 +999,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         {
             if(sprTex->lumpNum >= 0)
             {
-                DFile* file = F_OpenLump(sprTex->lumpNum, false);
+                DFile* file = F_OpenLump(sprTex->lumpNum);
                 loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, sprTex);
                 F_Delete(file);
             }
@@ -1021,7 +1021,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
             lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
             if(lumpNum >= 0)
             {
-                DFile* file = F_OpenLump(lumpNum, false);
+                DFile* file = F_OpenLump(lumpNum);
                 loadResult = GL_LoadDetailTextureLump(image, file);
                 F_Delete(file);
             }
@@ -2967,7 +2967,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     }
     else if(r->lumpNum >= 0)
     {
-        DFile* file = F_OpenLump(r->lumpNum, false);
+        DFile* file = F_OpenLump(r->lumpNum);
         if(file)
         {
             if(0 != GL_LoadImageFromFile(image, file))

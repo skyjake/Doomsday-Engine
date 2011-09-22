@@ -194,7 +194,6 @@ int F_Access(const char* path);
  *      't' = text mode (with real files, lumps are always binary)
  *      'b' = binary
  *      'f' = must be a real file in the local file system
- *      'x' = don't buffer anything
  * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @param allowDuplicate  @c false = open only if not already opened.
  * @return  Opened file reference/handle else @c NULL.
@@ -207,11 +206,10 @@ DFile* F_Open(const char* path, const char* mode); /* baseOffset = 0 */
  * Try to locate the specified lump for reading.
  *
  * @param lumpNum  Absolute index of the lump to open.
- * @param dontBuffer  Just test for access (don't buffer anything).
  *
  * @return  Handle to the opened file if found.
  */
-DFile* F_OpenLump(lumpnum_t lumpNum, boolean dontBuffer);
+DFile* F_OpenLump(lumpnum_t lumpNum);
 
 /**
  * @return  The time when the file was last modified, as seconds since
