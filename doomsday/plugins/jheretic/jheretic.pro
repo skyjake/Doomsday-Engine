@@ -56,9 +56,7 @@ HEADERS += \
     include/info.h \
     include/jheretic.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \
@@ -104,7 +102,7 @@ SOURCES += \
     src/tables.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:$$PWD/api/jheretic.def
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/jheretic.def\"
     OTHER_FILES += api/jheretic.def
 
     RC_FILE = res/jheretic.rc

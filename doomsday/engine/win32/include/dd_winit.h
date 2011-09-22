@@ -32,7 +32,7 @@
 #include "dd_pinit.h"
 #include <windows.h>
 
-#define MAINWCLASS          TEXT("DoomsdayMainWClass")
+#define MAINWCLASS          "DoomsdayMainWClass"
 
 typedef struct {
     HINSTANCE hInstance;

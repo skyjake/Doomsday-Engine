@@ -47,9 +47,7 @@ HEADERS += \
     include/info.h \
     include/jdoom64.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \
@@ -91,7 +89,7 @@ SOURCES += \
     src/wi_stuff.c \
 
 win32 {
-    QMAKE_LFLAGS += /DEF:$$PWD/api/jdoom64.def
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/jdoom64.def\"
     OTHER_FILES += api/jdoom64.def
 
     RC_FILE = res/jdoom64.rc

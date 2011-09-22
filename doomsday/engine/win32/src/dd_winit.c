@@ -129,7 +129,7 @@ static const char* getLastWINAPIErrorMessage(void)
     LPVOID lpMsgBuf;
     DWORD dw = GetLastError(), lpMsgBufLen;
     lpMsgBufLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                 0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
+                                 0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&lpMsgBuf, 0, 0);
     if(!lpMsgBuf || lpMsgBufLen == 0)
         return "";
 

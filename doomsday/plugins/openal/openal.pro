@@ -18,7 +18,7 @@ SOURCES += src/driver_openal.c
 win32 {
     RC_FILE = res/openal.rc
 
-    QMAKE_LFLAGS += /DEF:$$PWD/api/dsopenal.def
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsopenal.def\"
     OTHER_FILES += api/dsopenal.def
 
     INSTALLS += target

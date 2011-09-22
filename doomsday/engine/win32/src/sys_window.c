@@ -578,7 +578,7 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
 
     // Create the window.
     win->hWnd =
-        CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, WIN_STRING(title),
+        CreateWindowEx(WS_EX_APPWINDOW, TEXT(MAINWCLASS), WIN_STRING(title),
                        WINDOWEDSTYLE,
                        CW_USEDEFAULT, CW_USEDEFAULT,
                        CW_USEDEFAULT, CW_USEDEFAULT,
