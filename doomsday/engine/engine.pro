@@ -273,7 +273,6 @@ DENG_HEADERS = \
     portable/include/sys_audiod_sdlmixer.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
-    portable/include/sys_file.h \
     portable/include/sys_findfile.h \
     portable/include/sys_input.h \
     portable/include/sys_master.h \
@@ -527,7 +526,6 @@ SOURCES += \
     portable/src/sys_audiod_dummy.c \
     portable/src/sys_audiod_sdlmixer.c \
     portable/src/sys_direc.c \
-    portable/src/sys_filein.c \
     portable/src/sys_master.c \
     portable/src/sys_network.c \
     portable/src/sys_opengl.c \
