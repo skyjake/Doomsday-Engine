@@ -91,7 +91,7 @@ SOURCES += \
     src/wi_stuff.c \
 
 win32 {
-    QMAKE_LFLAGS += /DEF:$$PWD/api/jdoom64.def
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/jdoom64.def\"
     OTHER_FILES += api/jdoom64.def
 
     RC_FILE = res/jdoom64.rc

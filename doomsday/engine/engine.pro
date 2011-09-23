@@ -54,8 +54,8 @@ win32 {
 
     QMAKE_LFLAGS += \
         /NODEFAULTLIB:libcmt \
-        /DEF:$$DENG_API_DIR/doomsday.def \
-        /IMPLIB:$$DENG_EXPORT_LIB
+        /DEF:\"$$DENG_API_DIR/doomsday.def\" \
+        /IMPLIB:\"$$DENG_EXPORT_LIB\"
 
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
         -lopengl32 -lglu32

@@ -119,7 +119,7 @@ SOURCES += \
     src/x_api.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:$$PWD/api/jhexen.def
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/jhexen.def\"
     OTHER_FILES += api/jhexen.def
 
     RC_FILE = res/jhexen.rc

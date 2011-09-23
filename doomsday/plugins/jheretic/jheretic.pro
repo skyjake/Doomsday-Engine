@@ -104,7 +104,7 @@ SOURCES += \
     src/tables.c
 
 win32 {
-    QMAKE_LFLAGS += /DEF:$$PWD/api/jheretic.def
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/jheretic.def\"
     OTHER_FILES += api/jheretic.def
 
     RC_FILE = res/jheretic.rc

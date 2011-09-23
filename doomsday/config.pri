@@ -58,6 +58,9 @@ win32 {
 
     DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
+    # Tell rc where to get the API headers.
+    QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
+
     # Also build the OpenAL plugin.
     CONFIG += deng_openal
 }

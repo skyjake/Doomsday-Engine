@@ -19,7 +19,7 @@ HEADERS += include/version.h
 SOURCES += src/driver_directsound.cpp
 
 RC_FILE = res/directsound.rc
-QMAKE_LFLAGS += /DEF:$$PWD/api/dsdirectsound.def
+QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsdirectsound.def\"
 OTHER_FILES += api/dsdirectsound.def
 
 INSTALLS += target
