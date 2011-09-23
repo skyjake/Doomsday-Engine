@@ -3,6 +3,7 @@
 
 # CONFIG options for Doomsday:
 # - deng_aptunstable        Include the unstable apt repository
+# - deng_nativesdk          (Mac OS X) Use the current OS's SDK
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_openal             Build the OpenAL sound driver
 # - deng_rangecheck         Parameter range checking/value assertions
@@ -117,7 +118,7 @@ unix:!macx {
 }
 macx {
     # Mac OS X build options.
-    CONFIG += deng_snowleopard deng_nofixedasm
+    CONFIG += deng_nativesdk deng_nofixedasm
 
     DEFINES += MACOSX
 
@@ -139,7 +140,12 @@ deng_nofixedasm {
 }
 macx {
     # Select OS version.
-    deng_snowleopard {
+    deng_nativesdk {
+        echo("Using your Mac OS version (32/64-bit Intel).")
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+        CONFIG += x86 x86_64
+    }
+    else:deng_snowleopard {
         echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
         QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
@@ -153,9 +159,11 @@ macx {
         CONFIG += x86 ppc       
     }
 
-    # Not using Qt, and anyway these would not point to the chosen SDK.
-    QMAKE_INCDIR_QT = ""
-    QMAKE_LIBDIR_QT = ""
+    !deng_nativesdk {
+        # Not using Qt, and anyway these would not point to the chosen SDK.
+        QMAKE_INCDIR_QT = ""
+        QMAKE_LIBDIR_QT = ""
+    }
     
     defineTest(useFramework) {
         LIBS += -framework $$1
