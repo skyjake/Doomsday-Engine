@@ -29,6 +29,8 @@
 #ifndef LIBDENG_M_MISC_H
 #define LIBDENG_M_MISC_H
 
+#include <stdio.h>
+
 #include "dd_types.h"
 #include "dfile.h"
 
