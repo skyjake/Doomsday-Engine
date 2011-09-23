@@ -8,7 +8,7 @@ include(../config.pri)
 # This project file contains tasks that are done in the beginning of a build.
 
 # Update the PK3 files.
-system(cd $$PWD/scripts/ && python packres.py $$OUT_PWD/..)
+system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
 
 # Install the launcher.
 deng_snowberry {
