@@ -33,6 +33,8 @@
 #include "rend_list.h"
 #include "r_things.h"
 
+#define GLOW_HEIGHT_MAX       (1024.0f) // Absolute max glow height.
+
 extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
 extern byte smoothTexAnim, devMobjVLights;
 extern float viewsidex, viewsidey;
@@ -43,7 +45,14 @@ extern int rAmbient;
 extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
 extern int devRendSkyMode;
-extern float glowingTextures;
+
+extern int useDynLights;
+extern float dynlightFactor, dynlightFogBright;
+
+extern int useWallGlow;
+extern float glowFactor, glowHeightFactor;
+extern int glowHeightMax;
+
 extern int useShinySurfaces;
 
 void            Rend_Register(void);

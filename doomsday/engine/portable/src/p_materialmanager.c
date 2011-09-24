@@ -1369,7 +1369,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
 
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
-    snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowingTextures;
+    snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowFactor;
     snapshot->isOpaque = NULL != texUnits[MTU_PRIMARY].tex &&
         !TextureVariant_IsMasked(texUnits[MTU_PRIMARY].tex);
 

@@ -107,6 +107,7 @@ static lumlistnode_t** subLumObjList = NULL;
  */
 void LO_Register(void)
 {
+    C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
     C_VAR_INT("rend-light-num", &loMaxLumobjs, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("rend-light-radius-scale", &loRadiusFactor, 0, 0.1f, 10);
     C_VAR_INT("rend-light-radius-max", &loMaxRadius, 0, 64, 512);

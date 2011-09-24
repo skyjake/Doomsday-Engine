@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_dyn.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,24 +23,21 @@
  */
 
 /**
- * rend_dyn.h: Dynamic Lights.
+ * Dynamic Light Projections and Projection Lists.
  */
 
-#ifndef __DOOMSDAY_DYNLIGHTS_H__
-#define __DOOMSDAY_DYNLIGHTS_H__
+#ifndef LIBDENG_RENDER_DYNLIGHT_H
+#define LIBDENG_RENDER_DYNLIGHT_H
 
-#include "p_object.h"
-#include "rend_list.h"
-
-#define DYN_ASPECT          (1.1f) // 1.2f is just too round for Doom.
-
-#define MAX_GLOWHEIGHT      (1024.0f) // Absolute max glow height.
-
-// Flags for DL_ProjectOnSurface
-#define DLF_SORT_LUMADSC    0x1 // Sort dynlights by luma, brightest to dullest.
-#define DLF_NO_PLANAR       0x2 // Surface is not lit by planar lights.
-#define DLF_TEX_FLOOR       0x4 // Prefer the "floor" slot when picking textures.
-#define DLF_TEX_CEILING     0x8 // Prefer the "ceiling" slot when picking textures.
+/**
+ * @defgroup dynlightProjectFlags  Flags for DL_ProjectOnSurface.
+ * @{
+ */
+#define DLF_SORT_LUMINOUSE_DESC 0x1 /// Sort by descending luminosity, brightest to dullest.
+#define DLF_NO_PLANAR           0x2 /// Surface is not lit by planar lights.
+#define DLF_TEX_FLOOR           0x4 /// Prefer the "floor" slot when picking textures.
+#define DLF_TEX_CEILING         0x8 /// Prefer the "ceiling" slot when picking textures.
+/**@}*/
 
 /**
  * The data of a projected dynamic light is stored in this structure.
@@ -48,29 +45,51 @@
  * in a frame.
  */
 typedef struct dynlight_s {
-    float           s[2], t[2];
-    float           color[3];
-    DGLuint         texture;
+    DGLuint texture;
+    float s[2], t[2];
+    float color[3];
 } dynlight_t;
 
-extern int useDynLights, dlBlend;
-extern float dlFactor, dlFogBright;
-extern int useWallGlow, glowHeightMax;
-extern float glowHeightFactor;
+/**
+ * Initialize the dynlight system in preparation for rendering view(s) of the
+ * game world. Called by R_InitLevel().
+ */
+void DL_InitForMap(void);
 
-// Initialization
-void            DL_Register(void);
+/**
+ * Moves all used dynlight nodes to the list of unused nodes, so they
+ * can be reused.
+ */
+void DL_InitForNewFrame(void);
 
-// Setup.
-void            DL_InitForMap(void);
-void            DL_InitForNewFrame(void);
+/**
+ * Project all objects affecting the given quad (world space), calculate
+ * coordinates (in texture space) then store into a new list of projections.
+ *
+ * \assume The coordinates of the given quad must be contained wholly within
+ * the subsector specified. This is due to an optimization within the lumobj
+ * management which separates them according to their position in the BSP.
+ *
+ * @param ssec  Subsector within which the quad wholly resides.
+ * @param topLeft  Coordinates of the top left corner of the quad.
+ * @param bottomRight  Coordinates of the bottom right corner of the quad.
+ * @param normal  Normalized normal of the quad.
+ * @param flags  @see dynlightProjectFlags
+ *
+ * @return  Dynlight list name if the quad is lit by one or more light sources else @c 0.
+ */
+uint DL_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
+    const vectorcomp_t bottomRight[3], const vectorcomp_t normal[3], int flags);
 
-// Action.
-uint            DL_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
-                                    const vectorcomp_t bottomRight[3],
-                                    const vectorcomp_t normal[3], byte flags);
-// Helpers.
-boolean         DL_ListIterator(uint listIdx, void* data,
-                                boolean (*func) (const dynlight_t*, void*));
+/**
+ * Calls func for all projected dynlights in the given list.
+ *
+ * @param listIdx  Identifier of the list to process.
+ * @param data  Ptr to pass to the callback.
+ * @param func  Callback to make for each object.
+ *
+ * @return  @c true, iff every callback returns @c true.
+ */
+boolean DL_ListIterator(uint listIdx, void* data, boolean (*func) (const dynlight_t*, void*));
 
-#endif
+#endif /* LIBDENG_RENDER_DYNLIGHT_H */

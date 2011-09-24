@@ -1647,7 +1647,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
            (LUM_PLANE(lum)->color[0] > 0 || LUM_PLANE(lum)->color[1] > 0 ||
             LUM_PLANE(lum)->color[2] > 0))
         {
-            float glowHeight = (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
+            float glowHeight = (GLOW_HEIGHT_MAX * LUM_PLANE(lum)->intensity) * glowHeightFactor;
 
             // Don't make too small or too large glows.
             if(glowHeight > 2)

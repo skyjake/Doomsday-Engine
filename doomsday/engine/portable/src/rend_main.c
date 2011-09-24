@@ -68,7 +68,7 @@ static DGLuint constructBBox(DGLuint name, float br);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int useDynLights, translucentIceCorpse;
+extern int translucentIceCorpse;
 extern int loMaxRadius;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -78,8 +78,15 @@ float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
 int useShinySurfaces = true;
-// Glowing textures are always rendered fullbright.
-float glowingTextures = 1.0f;
+
+int useDynLights = true;
+float dynlightFactor = .7f;
+float dynlightFogBright = .15f;
+
+int useWallGlow = true;
+float glowFactor = 1.0f;
+float glowHeightFactor = 3; // Glow height as a multiplier.
+int glowHeightMax = 100; // 100 is the default (0-1024).
 
 float vx, vy, vz, vang, vpitch;
 float viewsidex, viewsidey;
@@ -127,16 +134,26 @@ static boolean firstsubsector; // No range checking for the first one.
 void Rend_Register(void)
 {
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
-    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
-    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
+
+    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 1);
+    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
+    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
+    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
+
+    C_VAR_INT2("rend-light", &useDynLights, 0, 0, 1, LO_UnlinkMobjLumobjs);
     C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
+    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-light-bright", &dynlightFactor, 0, 0, 1);
+    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
+    C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
     C_VAR_BYTE2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_BYTE2("rend-light-sky-balance", &rendSkyLightBalance, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+
+    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
+    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
 
     C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 2);
     C_VAR_BYTE("rend-dev-sky-always", &devRendSkyAlways, CVF_NO_ARCHIVE, 0, 1);
@@ -154,7 +171,8 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-surface-show-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
 
     RL_Register();
-    DL_Register();
+    LO_Register();
+    Rend_DecorRegister();
     SB_Register();
     LG_Register();
     R_SkyRegister();
@@ -2048,7 +2066,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         }
 
         // Dynamic lights.
-        if(addDLights && params.glowing < 1)
+        if(addDLights && params.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
             params.lightListIdx = DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
                 (DLF_NO_PLANAR | (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
@@ -2303,8 +2321,8 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                 glowing = ms.glowing;
             }
 
-            if(addDLights && msA.glowing < 1)
-                lightListIdx = DL_ProjectOnSurface(ssec, texTL, texBR, SEG_SIDEDEF(seg)->SW_middlenormal, ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
+            if(addDLights && msA.glowing < 1 && !(!useDynLights && !useWallGlow))
+                lightListIdx = DL_ProjectOnSurface(ssec, texTL, texBR, SEG_SIDEDEF(seg)->SW_middlenormal, ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMINOUSE_DESC : 0));
 
             addFakeRadio = ((addFakeRadio && glowing == 0)? true : false);
 
