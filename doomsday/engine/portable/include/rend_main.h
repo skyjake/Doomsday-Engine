@@ -33,7 +33,8 @@
 #include "rend_list.h"
 #include "r_things.h"
 
-#define GLOW_HEIGHT_MAX       (1024.0f) // Absolute max glow height.
+#define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
+#define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
 extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
 extern byte smoothTexAnim, devMobjVLights;

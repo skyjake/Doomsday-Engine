@@ -1,4 +1,4 @@
-/**\file rend_dyn.h
+/**\file r_textureprojection.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,44 +23,43 @@
  */
 
 /**
- * Dynamic Light Projections and Projection Lists.
+ * Texture Projections and Surface-Projection Lists
  */
 
-#ifndef LIBDENG_RENDER_DYNLIGHT_H
-#define LIBDENG_RENDER_DYNLIGHT_H
+#ifndef LIBDENG_REFRESH_TEXTUREPROJECTION_H
+#define LIBDENG_REFRESH_TEXTUREPROJECTION_H
 
 /**
- * @defgroup dynlightProjectFlags  Flags for DL_ProjectOnSurface.
+ * @defgroup surfaceProjectFlags  Flags for R_ProjectOnSurface.
  * @{
  */
 #define DLF_SORT_LUMINOUSE_DESC 0x1 /// Sort by descending luminosity, brightest to dullest.
-#define DLF_NO_PLANAR           0x2 /// Surface is not lit by planar lights.
+#define DLF_NO_PLANE           0x2 /// Surface is not lit by planar lights.
 #define DLF_TEX_FLOOR           0x4 /// Prefer the "floor" slot when picking textures.
 #define DLF_TEX_CEILING         0x8 /// Prefer the "ceiling" slot when picking textures.
 /**@}*/
 
 /**
  * The data of a projected dynamic light is stored in this structure.
- * A list of these is associated with each surface lit by texture mapped lights
- * in a frame.
+ * A list of these is associated with each surface lit by texture mapped
+ * lights in a frame.
  */
-typedef struct dynlight_s {
+typedef struct {
     DGLuint texture;
     float s[2], t[2];
     float color[3];
-} dynlight_t;
+} textureprojection_t;
 
 /**
- * Initialize the dynlight system in preparation for rendering view(s) of the
- * game world. Called by R_InitLevel().
+ * Initialize the surface projection system in preparation prior to rendering
+ * view(s) of the game world.
  */
-void DL_InitForMap(void);
+void R_InitSurfaceProjectionListsForMap(void);
 
 /**
- * Moves all used dynlight nodes to the list of unused nodes, so they
- * can be reused.
+ * Initialize the surface projection system to begin a new refresh frame. 
  */
-void DL_InitForNewFrame(void);
+void R_InitSurfaceProjectionListsForNewFrame(void);
 
 /**
  * Project all objects affecting the given quad (world space), calculate
@@ -74,22 +73,25 @@ void DL_InitForNewFrame(void);
  * @param topLeft  Coordinates of the top left corner of the quad.
  * @param bottomRight  Coordinates of the bottom right corner of the quad.
  * @param normal  Normalized normal of the quad.
- * @param flags  @see dynlightProjectFlags
+ * @param flags  @see surfaceProjectFlags
  *
  * @return  Dynlight list name if the quad is lit by one or more light sources else @c 0.
  */
-uint DL_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
+uint R_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
     const vectorcomp_t bottomRight[3], const vectorcomp_t normal[3], int flags);
 
 /**
- * Calls func for all projected dynlights in the given list.
+ * Iterate over projections in the identified surface-projection list, making
+ * a callback for each visited. Iteration ends when all selected projections
+ * have been visited or a callback returns non-zero.
  *
- * @param listIdx  Identifier of the list to process.
- * @param data  Ptr to pass to the callback.
- * @param func  Callback to make for each object.
+ * @param listIdx  Unique identifier of the list to process.
+ * @param callback  Callback to make for each visited projection.
+ * @param paramaters  Passed to the callback.
  *
- * @return  @c true, iff every callback returns @c true.
+ * @return  @c 0 iff iteration completed wholly.
  */
-boolean DL_ListIterator(uint listIdx, void* data, boolean (*func) (const dynlight_t*, void*));
+int R_IterateSurfaceProjections2(uint listIdx, int (*callback) (const textureprojection_t*, void*), void* paramaters);
+int R_IterateSurfaceProjections(uint listIdx, int (*callback) (const textureprojection_t*, void*)); /* paramaters = NULL */
 
-#endif /* LIBDENG_RENDER_DYNLIGHT_H */
+#endif /* LIBDENG_REFRESH_TEXTUREPROJECTION_H */

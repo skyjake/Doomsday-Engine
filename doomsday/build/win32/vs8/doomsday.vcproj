@@ -1417,6 +1417,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\r_textureprojection.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\r_things.h"
 				>
 			</File>
@@ -1442,10 +1446,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\rend_decor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\rend_dyn.h"
 				>
 			</File>
 			<File
@@ -2775,6 +2775,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\r_textureprojection.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\r_things.c"
 				>
 			</File>
@@ -2800,10 +2804,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\rend_decor.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\rend_dyn.c"
 				>
 			</File>
 			<File

@@ -325,6 +325,7 @@
 		<Unit filename="..\..\engine\portable\include\r_model.h" />
 		<Unit filename="..\..\engine\portable\include\r_shadow.h" />
 		<Unit filename="..\..\engine\portable\include\r_sky.h" />
+		<Unit filename="..\..\engine\portable\include\r_textureprojection.h" />
 		<Unit filename="..\..\engine\portable\include\r_things.h" />
 		<Unit filename="..\..\engine\portable\include\r_util.h" />
 		<Unit filename="..\..\engine\portable\include\r_world.h" />
@@ -332,7 +333,6 @@
 		<Unit filename="..\..\engine\portable\include\rend_clip.h" />
 		<Unit filename="..\..\engine\portable\include\rend_console.h" />
 		<Unit filename="..\..\engine\portable\include\rend_decor.h" />
-		<Unit filename="..\..\engine\portable\include\rend_dyn.h" />
 		<Unit filename="..\..\engine\portable\include\rend_fakeradio.h" />
 		<Unit filename="..\..\engine\portable\include\rend_font.h" />
 		<Unit filename="..\..\engine\portable\include\rend_halo.h" />
@@ -720,6 +720,9 @@
 		<Unit filename="..\..\engine\portable\src\r_sky.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\r_textureprojection.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_things.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -739,9 +742,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\rend_decor.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\rend_dyn.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\rend_fakeradio.c">

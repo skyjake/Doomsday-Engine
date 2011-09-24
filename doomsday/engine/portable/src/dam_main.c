@@ -43,6 +43,11 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct listnode_s {
+    void*       data;
+    struct listnode_s* next;
+} listnode_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

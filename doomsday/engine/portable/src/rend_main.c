@@ -829,12 +829,11 @@ static void selectSurfaceColors(const float** topColor,
     }
 }
 
-boolean RLIT_DynGetFirst(const dynlight_t* dyn, void* data)
+int RLIT_DynGetFirst(const textureprojection_t* dyn, void* paramaters)
 {
-    dynlight_t**        ptr = data;
-
-    *ptr = (dynlight_t*) dyn;
-    return false; // Stop iteration.
+    textureprojection_t** ptr = (textureprojection_t**)paramaters;
+    *ptr = (textureprojection_t*)dyn;
+    return 1; // Stop iteration.
 }
 
 /**
@@ -892,13 +891,13 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
-        dynlight_t*         dyn = NULL;
+        textureprojection_t* dyn = NULL;
 
         /**
          * The dynlights will have already been sorted so that the brightest
          * and largest of them is first in the list. So grab that one.
          */
-        DL_ListIterator(lightListIdx, &dyn, RLIT_DynGetFirst);
+        R_IterateSurfaceProjections2(lightListIdx, RLIT_DynGetFirst, (void*)&dyn);
 
         vis->data.wall.modTex = dyn->texture;
         vis->data.wall.modTexCoord[0][0] = dyn->s[0];
@@ -1042,33 +1041,33 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
 }
 
 typedef struct {
-    uint            lastIdx;
+    uint lastIdx;
     const rvertex_t* rvertices;
-    uint            numVertices, realNumVertices;
-    const float*    texTL, *texBR;
-    boolean         isWall;
+    uint numVertices, realNumVertices;
+    const float* texTL, *texBR;
+    boolean isWall;
     const walldiv_t* divs;
 } dynlightiterparams_t;
 
-boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
+int RLIT_DynLightWrite(const textureprojection_t* dyn, void* paramaters)
 {
-    dynlightiterparams_t* params = data;
+    dynlightiterparams_t* p = (dynlightiterparams_t*)paramaters;
 
     // If multitexturing is in use, we skip the first light.
-    if(!(RL_IsMTexLights() && params->lastIdx == 0))
+    if(!(RL_IsMTexLights() && p->lastIdx == 0))
     {
-        uint                i;
-        rvertex_t*          rvertices;
-        rtexcoord_t*        rtexcoords;
-        rcolor_t*           rcolors;
-        rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
+        rvertex_t* rvertices;
+        rtexcoord_t* rtexcoords;
+        rcolor_t* rcolors;
+        rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+        uint i, c;
 
         memset(rTU, 0, sizeof(rTU));
 
         // Allocate enough for the divisions too.
-        rvertices = R_AllocRendVertices(params->realNumVertices);
-        rtexcoords = R_AllocRendTexCoords(params->realNumVertices);
-        rcolors = R_AllocRendColors(params->realNumVertices);
+        rvertices = R_AllocRendVertices(p->realNumVertices);
+        rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
+        rcolors = R_AllocRendColors(p->realNumVertices);
 
         rTU[TU_PRIMARY].tex = dyn->texture;
         rTU[TU_PRIMARY].magMode = GL_LINEAR;
@@ -1077,10 +1076,9 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
         rTU[TU_INTER].tex = 0;
         rTU[TU_INTER_DETAIL].tex = 0;
 
-        for(i = 0; i < params->numVertices; ++i)
+        for(i = 0; i < p->numVertices; ++i)
         {
-            uint                c;
-            rcolor_t*           col = &rcolors[i];
+            rcolor_t* col = &rcolors[i];
 
             // Each vertex uses the light's color.
             for(c = 0; c < 3; ++c)
@@ -1088,19 +1086,19 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
             col->rgba[3] = 1;
         }
 
-        if(params->isWall)
+        if(p->isWall)
         {
             rtexcoords[1].st[0] = rtexcoords[0].st[0] = dyn->s[0];
             rtexcoords[1].st[1] = rtexcoords[3].st[1] = dyn->t[0];
             rtexcoords[3].st[0] = rtexcoords[2].st[0] = dyn->s[1];
             rtexcoords[2].st[1] = rtexcoords[0].st[1] = dyn->t[1];
 
-            if(params->divs)
+            if(p->divs)
             {   // We need to subdivide the dynamic light quad.
-                float               bL, tL, bR, tR;
-                rvertex_t           origVerts[4];
-                rcolor_t            origColors[4];
-                rtexcoord_t         origTexCoords[4];
+                float bL, tL, bR, tR;
+                rvertex_t origVerts[4];
+                rcolor_t origColors[4];
+                rtexcoord_t origTexCoords[4];
 
                 /**
                  * Need to swap indices around into fans set the position
@@ -1108,61 +1106,60 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
                  * color.
                  */
 
-                memcpy(origVerts, params->rvertices, sizeof(rvertex_t) * 4);
+                memcpy(origVerts, p->rvertices, sizeof(rvertex_t) * 4);
                 memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
                 memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
 
-                bL = params->rvertices[0].pos[VZ];
-                tL = params->rvertices[1].pos[VZ];
-                bR = params->rvertices[2].pos[VZ];
-                tR = params->rvertices[3].pos[VZ];
+                bL = p->rvertices[0].pos[VZ];
+                tL = p->rvertices[1].pos[VZ];
+                bR = p->rvertices[2].pos[VZ];
+                tR = p->rvertices[3].pos[VZ];
 
-                R_DivVerts(rvertices, origVerts, params->divs);
-                R_DivTexCoords(rtexcoords, origTexCoords, params->divs, bL, tL, bR, tR);
-                R_DivVertColors(rcolors, origColors, params->divs, bL, tL, bR, tR);
+                R_DivVerts(rvertices, origVerts, p->divs);
+                R_DivTexCoords(rtexcoords, origTexCoords, p->divs, bL, tL, bR, tR);
+                R_DivVertColors(rcolors, origColors, p->divs, bL, tL, bR, tR);
             }
             else
             {
-                memcpy(rvertices, params->rvertices, sizeof(rvertex_t) * params->numVertices);
+                memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
             }
         }
         else
         {   // It's a flat.
-            uint                i;
-            float               width, height;
+            float width, height;
 
-            width  = params->texBR[VX] - params->texTL[VX];
-            height = params->texBR[VY] - params->texTL[VY];
+            width  = p->texBR[VX] - p->texTL[VX];
+            height = p->texBR[VY] - p->texTL[VY];
 
-            for(i = 0; i < params->numVertices; ++i)
+            for(i = 0; i < p->numVertices; ++i)
             {
-                rtexcoords[i].st[0] = ((params->texBR[VX] - params->rvertices[i].pos[VX]) / width * dyn->s[0]) +
-                    ((params->rvertices[i].pos[VX] - params->texTL[VX]) / width * dyn->s[1]);
+                rtexcoords[i].st[0] = ((p->texBR[VX] - p->rvertices[i].pos[VX]) / width * dyn->s[0]) +
+                    ((p->rvertices[i].pos[VX] - p->texTL[VX]) / width * dyn->s[1]);
 
-                rtexcoords[i].st[1] = ((params->texBR[VY] - params->rvertices[i].pos[VY]) / height * dyn->t[0]) +
-                    ((params->rvertices[i].pos[VY] - params->texTL[VY]) / height * dyn->t[1]);
+                rtexcoords[i].st[1] = ((p->texBR[VY] - p->rvertices[i].pos[VY]) / height * dyn->t[0]) +
+                    ((p->rvertices[i].pos[VY] - p->texTL[VY]) / height * dyn->t[1]);
             }
 
-            memcpy(rvertices, params->rvertices, sizeof(rvertex_t) * params->numVertices);
+            memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
         }
 
-        if(params->isWall && params->divs)
+        if(p->isWall && p->divs)
         {
-            RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices + 3 + params->divs[0].num,
-                       rtexcoords + 3 + params->divs[0].num, NULL, NULL,
-                       rcolors + 3 + params->divs[0].num,
-                       3 + params->divs[1].num, 0,
+            RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices + 3 + p->divs[0].num,
+                       rtexcoords + 3 + p->divs[0].num, NULL, NULL,
+                       rcolors + 3 + p->divs[0].num,
+                       3 + p->divs[1].num, 0,
                        0, NULL, rTU);
             RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices, rtexcoords, NULL, NULL,
-                       rcolors, 3 + params->divs[0].num, 0,
+                       rcolors, 3 + p->divs[0].num, 0,
                        0, NULL, rTU);
         }
         else
         {
-            RL_AddPoly(params->isWall? PT_TRIANGLE_STRIP : PT_FAN,
+            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN,
                        RPT_LIGHT,
                        rvertices, rtexcoords, NULL, NULL,
-                       rcolors, params->numVertices, 0,
+                       rcolors, p->numVertices, 0,
                        0, NULL, rTU);
         }
 
@@ -1170,9 +1167,9 @@ boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
         R_FreeRendTexCoords(rtexcoords);
         R_FreeRendColors(rcolors);
     }
-    params->lastIdx++;
+    p->lastIdx++;
 
-    return true; // Continue iteration.
+    return 0; // Continue iteration.
 }
 
 static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
@@ -1450,9 +1447,9 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
              */
             if(useLights && RL_IsMTexLights())
             {
-                dynlight_t*         dyn = NULL;
+                textureprojection_t* dyn = NULL;
 
-                DL_ListIterator(p->lightListIdx, &dyn, RLIT_DynGetFirst);
+                R_IterateSurfaceProjections2(p->lightListIdx, RLIT_DynGetFirst, (void*)&dyn);
 
                 rtexcoords5 = R_AllocRendTexCoords(realNumVertices);
 
@@ -1710,7 +1707,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         dlparams.texTL = p->texTL;
         dlparams.texBR = p->texBR;
 
-        DL_ListIterator(p->lightListIdx, &dlparams, RLIT_DynLightWrite);
+        R_IterateSurfaceProjections2(p->lightListIdx, RLIT_DynLightWrite, (void*)&dlparams);
         numLights += dlparams.lastIdx;
         if(RL_IsMTexLights())
             numLights -= 1;
@@ -2068,8 +2065,8 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         // Dynamic lights.
         if(addDLights && params.glowing < 1 && !(!useDynLights && !useWallGlow))
         {
-            params.lightListIdx = DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
-                (DLF_NO_PLANAR | (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
+            params.lightListIdx = R_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
+                (DLF_NO_PLANE | (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
         }
     }
 
@@ -2322,7 +2319,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             }
 
             if(addDLights && msA.glowing < 1 && !(!useDynLights && !useWallGlow))
-                lightListIdx = DL_ProjectOnSurface(ssec, texTL, texBR, SEG_SIDEDEF(seg)->SW_middlenormal, ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMINOUSE_DESC : 0));
+                lightListIdx = R_ProjectOnSurface(ssec, texTL, texBR, SEG_SIDEDEF(seg)->SW_middlenormal, ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMINOUSE_DESC : 0));
 
             addFakeRadio = ((addFakeRadio && glowing == 0)? true : false);
 
@@ -4614,7 +4611,7 @@ void Rend_RenderMap(void)
              * the projections are sensitive to distance from the viewer
              * (e.g. some may fade out when far away).
              */
-            DL_InitForNewFrame();
+            R_InitSurfaceProjectionListsForNewFrame();
         }
 
         // Add the backside clipping range (if vpitch allows).

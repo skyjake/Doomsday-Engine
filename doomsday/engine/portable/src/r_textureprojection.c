@@ -1,4 +1,4 @@
-/**\file rend_dyn.c
+/**\file r_textureprojection.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -33,10 +33,10 @@
 #include "de_render.h"
 #include "de_play.h"
 
-typedef struct dynnode_s {
-    struct dynnode_s* next, *nextUsed;
-    dynlight_t dyn;
-} dynnode_t;
+typedef struct listnode_s {
+    struct listnode_s* next, *nextUsed;
+    textureprojection_t projection;
+} listnode_t;
 
 /**
  * @defgroup projectionListFlags  Projection List Flags
@@ -47,131 +47,148 @@ typedef struct dynnode_s {
 
 typedef struct dynlist_s {
     int flags; /// @see projectionListFlags
-    dynnode_t* head;
-} dynlist_t;
+    listnode_t* head;
+} projectionlist_t;
 
+/// Orientation is toward the projectee.
 typedef struct {
-    int flags; /// @see dynlightProjectFlags
+    int flags; /// @see surfaceProjectFlags
     vec3_t v1; /// Top left vertex of the surface being projected to.
     vec3_t v2; /// Bottom right vertex of the surface being projected to.
     vec3_t normal; /// Normalized normal of the surface being projected to.
 } surfaceprojectparams_t;
 
-// Dynlight nodes.
-static dynnode_t* dynFirst, *dynCursor;
+// List nodes.
+static listnode_t* firstNode, *cursorNode;
 
-// Surface light link lists.
-static uint numDynlightLinkLists = 0, dynlightLinkListCursor = 0;
-static dynlist_t* dynlightLinkLists;
+// Surface projection lists.
+static uint projectionListCount, cursorList;
+static projectionlist_t* projectionLists;
 
-void DL_InitForMap(void)
+void R_InitSurfaceProjectionListsForMap(void)
 {
-    dynlightLinkLists = NULL;
-    numDynlightLinkLists = 0, dynlightLinkListCursor = 0;
+    static boolean firstTime = true;
+    if(firstTime)
+    {
+        firstNode = NULL;
+        cursorNode = NULL;
+        firstTime = false;
+    }
+    // All memory for the lists is allocated from Zone so we can "forget" it.
+    projectionLists = NULL;
+    projectionListCount = 0;
+    cursorList = 0;
 }
 
-void DL_InitForNewFrame(void)
+void R_InitSurfaceProjectionListsForNewFrame(void)
 {
     // Start reusing nodes from the first one in the list.
-    dynCursor = dynFirst;
+    cursorNode = firstNode;
 
-    // Clear the surface light link lists.
-    dynlightLinkListCursor = 0;
-    if(numDynlightLinkLists)
-        memset(dynlightLinkLists, 0, numDynlightLinkLists * sizeof(dynlist_t));
+    // Clear the lists.
+    cursorList = 0;
+    if(projectionListCount)
+    {
+        memset(projectionLists, 0, projectionListCount * sizeof *projectionLists);
+    }
 }
 
 /**
- * Create a new dynlight list.
+ * Create a new projection list.
  *
  * @param flags  @see projectionListFlags
- * @return  Identifier for the new list.
+ * @return  Unique identifier attributed to the new list.
  */
-static uint newDynlightList(int flags)
+static uint newList(int flags)
 {
-    dynlist_t* list;
+    projectionlist_t* list;
 
-    // Ran out of light link lists?
-    if(++dynlightLinkListCursor >= numDynlightLinkLists)
+    // Do we need to allocate more lists?
+    if(++cursorList >= projectionListCount)
     {
-        uint newNum = numDynlightLinkLists * 2;
-        if(!newNum) newNum = 2;
+        projectionListCount *= 2;
+        if(!projectionListCount) projectionListCount = 2;
 
-        dynlightLinkLists = Z_Realloc(dynlightLinkLists, newNum * sizeof(dynlist_t), PU_MAP);
-        numDynlightLinkLists = newNum;
+        projectionLists = (projectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
+        if(!projectionLists) Con_Error(__FILE__":newList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof *projectionLists));
     }
 
-    list = &dynlightLinkLists[dynlightLinkListCursor-1];
+    list = &projectionLists[cursorList-1];
     list->head = NULL;
     list->flags = flags;
 
-    return dynlightLinkListCursor - 1;
+    return cursorList - 1;
 }
 
-static dynnode_t* newDynNode(void)
+static listnode_t* newListNode(void)
 {
-    dynnode_t* node;
+    listnode_t* node;
 
-    // Have we run out of nodes?
-    if(dynCursor == NULL)
+    // Do we need to allocate mode nodes?
+    if(cursorNode == NULL)
     {
-        node = Z_Malloc(sizeof(dynnode_t), PU_APPSTATIC, NULL);
+        node = (listnode_t*)Z_Malloc(sizeof *node, PU_APPSTATIC, NULL);
+        if(!node) Con_Error(__FILE__":newListNode failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
 
         // Link the new node to the list.
-        node->nextUsed = dynFirst;
-        dynFirst = node;
+        node->nextUsed = firstNode;
+        firstNode = node;
     }
     else
     {
-        node = dynCursor;
-        dynCursor = dynCursor->nextUsed;
+        node = cursorNode;
+        cursorNode = cursorNode->nextUsed;
     }
 
     node->next = NULL;
     return node;
 }
 
-static dynnode_t* newDynLight(DGLuint texture, const float s[2], const float t[2],
-    const float color[3])
+static listnode_t* newProjection(DGLuint texture, const float s[2],
+    const float t[2], const float color[3])
 {
     assert(texture != 0 && s && t && color);
     {
-    dynnode_t* node = newDynNode();
-    dynlight_t* dyn = &node->dyn;
+    listnode_t* node = newListNode();
+    textureprojection_t* tp = &node->projection;
 
-    dyn->texture = texture;
-    dyn->s[0] = s[0];
-    dyn->s[1] = s[1];
-    dyn->t[0] = t[0];
-    dyn->t[1] = t[1];
-    dyn->color[CR] = color[CR];
-    dyn->color[CG] = color[CG];
-    dyn->color[CB] = color[CB];
+    tp->texture = texture;
+    tp->s[0] = s[0];
+    tp->s[1] = s[1];
+    tp->t[0] = t[0];
+    tp->t[1] = t[1];
+    tp->color[CR] = color[CR];
+    tp->color[CG] = color[CG];
+    tp->color[CB] = color[CB];
 
     return node;
     }
 }
 
-static void linkDynNodeToList(dynnode_t* node, uint listIndex)
+static float calcProjectionLuminosity(const textureprojection_t* tp)
 {
-    dynlist_t* list = &dynlightLinkLists[listIndex];
+    assert(tp);
+    return (tp->color[CR] + tp->color[CG] + tp->color[CB]) / 3;
+}
 
+static void linkProjectionToList(listnode_t* node, projectionlist_t* list)
+{
+    assert(node && list);
     if((list->flags & PLF_SORT_LUMINOUS_DESC) && list->head)
     {
-        float light = (node->dyn.color[0] + node->dyn.color[1] + node->dyn.color[2]) / 3;
-        dynnode_t* last, *iter;
-
-        last = iter = list->head;
+        float luma = calcProjectionLuminosity(&node->projection);
+        listnode_t* iter = list->head, *last = iter;
         do
         {
-            // Is this brighter than the one being added?
-            if((iter->dyn.color[0] + iter->dyn.color[1] + iter->dyn.color[2]) / 3 > light)
+            // Is this brighter than that being added?
+            if(calcProjectionLuminosity(&iter->projection) > luma)
             {
                 last = iter;
                 iter = iter->next;
             }
             else
-            {   // Need to insert it here.
+            {
+                // Insert it here.
                 node->next = last->next;
                 last->next = node;
                 return;
@@ -187,11 +204,11 @@ static void linkDynNodeToList(dynnode_t* node, uint listIndex)
  * Blend the given light value with the lumobj's color, apply any global
  * modifiers and output the result.
  *
- * @param outRGB  The location the calculated result will be written to.
- * @param lum  Ptr to the lumobj from which the color will be used.
- * @param light  The light value to be used in the calculation.
+ * @param outRGB  Calculated result will be written here.
+ * @param color  Lumobj color.
+ * @param light  Ambient light level of the surface being projected to.
  */
-static void calcDynLightColor(float* outRGB, const float* inRGB, float light)
+static void calcDynlightColor(float outRGB[3], const float color[3], float light)
 {
     uint i;
 
@@ -203,20 +220,21 @@ static void calcDynLightColor(float* outRGB, const float* inRGB, float light)
     // Multiply with the light color.
     for(i = 0; i < 3; ++i)
     {
-        outRGB[i] = light * inRGB[i];
+        outRGB[i] = light * color[i];
     }
 }
 
 /**
- * Project a plane glow onto the surface. If valid and contacted a new projection
- * node will constructed and returned.
+ * Project a plane glow onto the surface. If valid and the surface is
+ * contacted a new projection node will constructed and returned.
  *
  * @param lum  Lumobj representing the light being projected.
  * @param spParams  Surface projection paramaters.
  *
  * @return  Resultant projection node else @c NULL.
  */
-static dynnode_t* projectPlaneLightOnSurface(const lumobj_t* lum, const surfaceprojectparams_t* spParams)
+static listnode_t* projectPlaneLightOnSurface(const lumobj_t* lum,
+    const surfaceprojectparams_t* spParams)
 {
     assert(lum && spParams);
     {
@@ -257,8 +275,8 @@ static dynnode_t* projectPlaneLightOnSurface(const lumobj_t* lum, const surfacep
     s[0] = 0;
     s[1] = 1;
 
-    calcDynLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
-    return newDynLight(LUM_PLANE(lum)->tex, s, t, color);
+    calcDynlightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
+    return newProjection(LUM_PLANE(lum)->tex, s, t, color);
     }
 }
 
@@ -290,7 +308,8 @@ static void buildUpRight(pvec3_t up, pvec3_t right, const pvec3_t normal)
     if(fabsf(fn[VX] - 1.0f) < FLT_EPSILON ||
        fabsf(fn[VY] - 1.0f) < FLT_EPSILON ||
        fabsf(fn[VZ] - 1.0f) < FLT_EPSILON)
-    {   // We must build the right vector manually.
+    {
+        // We must build the right vector manually.
         if(axis == VX && normal[VX] > 0.f)
         {
             V3_Set(right, 0.f, 1.f, 0.f);
@@ -325,20 +344,20 @@ static void buildUpRight(pvec3_t up, pvec3_t right, const pvec3_t normal)
 }
 
 /**
- * Generate texcoords on surface centered on point.
+ * Generate texcoords on the surface centered on point.
  *
- * @param point  Point on surface around which texture is centered.
- * @param scale  Scale multiplier for texture.
  * @param s  Texture s coords written back here.
  * @param t  Texture t coords written back here.
+ * @param point  Point on surface around which texture is centered.
+ * @param scale  Scale multiplier for texture.
  * @param v1  Top left vertex of the surface being projected on.
  * @param v2  Bottom right vertex of the surface being projected on.
  * @param normal  Normal of the surface being projected on.
  *
  * @return  @c true, if the generated coords are within bounds.
  */
-static boolean genTexCoords(const pvec3_t point, float scale, pvec2_t s,
-    pvec2_t t, const pvec3_t v1, const pvec3_t v2, const pvec3_t normal)
+static boolean genTexCoords(pvec2_t s, pvec2_t t, const pvec3_t point, float scale,
+    const pvec3_t v1, const pvec3_t v2, const pvec3_t normal)
 {
     vec3_t vToPoint, right, up;
 
@@ -363,21 +382,32 @@ static boolean genTexCoords(const pvec3_t point, float scale, pvec2_t s,
     return true;
 }
 
+static float calcOmniLightAttenuationFactor(const lumobj_t* lum, float distance)
+{
+    assert(lum && lum->type == LT_OMNI);
+    if(distance == 0 || distance > lum->maxDistance)
+        return 0;
+    if(distance > .67f * lum->maxDistance)
+        return (lum->maxDistance - distance) / (.33f * lum->maxDistance);
+    return 1;
+}
+
 /**
- * Project an omni light onto the surface. If valid and contacted a new projection
- * node will constructed and returned.
+ * Project a omni light onto the surface. If valid and the surface is
+ * contacted a new projection node will constructed and returned.
  *
  * @param lum  Lumobj representing the light being projected.
  * @param spParams  Surface projection paramaters.
  *
  * @return  Resultant projection node else @c NULL.
  */
-static dynnode_t* projectOmniLightOnSurface(const lumobj_t* lum, surfaceprojectparams_t* spParams)
+static listnode_t* projectOmniLightOnSurface(const lumobj_t* lum,
+    surfaceprojectparams_t* spParams)
 {
     assert(lum && spParams);
     {
     vec3_t lumCenter, vToLum;
-    dynnode_t* node = NULL;
+    listnode_t* node = NULL;
     uint lumIdx;
     DGLuint tex;
 
@@ -400,7 +430,7 @@ static dynnode_t* projectOmniLightOnSurface(const lumobj_t* lum, surfaceprojectp
     // On the right side?
     if(V3_DotProduct(vToLum, spParams->normal) < 0.f)
     {
-        float dist, lightBrightness;
+        float dist, luma;
         vec3_t point;
 
         // Calculate 3D distance between surface and lumobj.
@@ -408,33 +438,25 @@ static dynnode_t* projectOmniLightOnSurface(const lumobj_t* lum, surfaceprojectp
         dist = V3_Distance(point, lumCenter);
         if(dist > 0 && dist <= LUM_OMNI(lum)->radius)
         {
-            lightBrightness = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
+            luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
 
-            // If a max distance limit is set, lumobjs fade out.
+            // If distance limit is set this light will fade out.
             if(lum->maxDistance > 0)
             {
-                float distFromViewer = LO_DistanceToViewer(lumIdx, viewPlayer - ddPlayers);
-
-                if(distFromViewer > lum->maxDistance)
-                    lightBrightness = 0;
-
-                if(distFromViewer > .67f * lum->maxDistance)
-                {
-                    lightBrightness *= (lum->maxDistance - distFromViewer) /
-                        (.33f * lum->maxDistance);
-                }
+                float distanceFromViewer = LO_DistanceToViewer(lumIdx, viewPlayer - ddPlayers);
+                luma *= calcOmniLightAttenuationFactor(lum, distanceFromViewer);
             }
 
-            if(lightBrightness >= .05f)
+            if(luma >= OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
             {
                 float scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
                 vec2_t s, t;
 
-                if(genTexCoords(point, scale, s, t, spParams->v1, spParams->v2, spParams->normal))
+                if(genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->normal))
                 {
                     float color[3];
-                    calcDynLightColor(color, LUM_OMNI(lum)->color, lightBrightness);
-                    node = newDynLight(tex, s, t, color);
+                    calcDynlightColor(color, LUM_OMNI(lum)->color, luma);
+                    node = newProjection(tex, s, t, color);
                 }
             }
         }
@@ -445,16 +467,15 @@ static dynnode_t* projectOmniLightOnSurface(const lumobj_t* lum, surfaceprojectp
 }
 
 typedef struct {
-    boolean haveList;
     uint listIdx;
     surfaceprojectparams_t spParams;
 } surfacelumobjiterparams_t;
 
-boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
+boolean RIT_SurfaceLumobjContacts(void* ptr, void* data)
 {
     lumobj_t* lum = (lumobj_t*)ptr;
     surfacelumobjiterparams_t* p = (surfacelumobjiterparams_t*)data;
-    dynnode_t* node = NULL;
+    listnode_t* node = NULL;
 
     switch(lum->type)
     {
@@ -463,70 +484,71 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
         break;
 
     case LT_PLANE:
-        if(!(p->spParams.flags & DLF_NO_PLANAR))
+        if(!(p->spParams.flags & DLF_NO_PLANE))
         {
             node = projectPlaneLightOnSurface(lum, &p->spParams);
         }
         break;
 
     default:
-        Con_Error("DLIT_SurfaceLumobjContacts: Invalid value, lum->type = %i.", (int) lum->type);
+        Con_Error("RIT_SurfaceLumobjContacts: Invalid value, lum->type = %i.", (int) lum->type);
         exit(1); // Unreachable.
     }
 
     if(node)
     {
-        // Got a list for this surface yet?
-        if(!p->haveList)
+        // Do we need to allocate a list for this surface?
+        if(!p->listIdx)
         {
             int flags = 0 | ((p->spParams.flags & DLF_SORT_LUMINOUSE_DESC)? PLF_SORT_LUMINOUS_DESC : 0);
-            p->listIdx = newDynlightList(flags);
-            p->haveList = true;
+            p->listIdx = newList(flags) + 1; // 1-based index.
         }
 
-        linkDynNodeToList(node, p->listIdx);
+        linkProjectionToList(node, &projectionLists[p->listIdx-1]);
     }
 
     return true; // Continue iteration.
 }
 
-static uint processSubSector(subsector_t* ssec, surfacelumobjiterparams_t* params)
+static uint processSubsector(subsector_t* ssec, surfacelumobjiterparams_t* params)
 {
-    // Process each node contacting the subsector.
-    R_IterateSubsectorContacts(ssec, OT_LUMOBJ, DLIT_SurfaceLumobjContacts, params);
-    // Did we generate a projection list?
-    if(params->haveList)
-        return params->listIdx + 1;
-    return 0; // Nope.
+    R_IterateSubsectorContacts(ssec, OT_LUMOBJ, RIT_SurfaceLumobjContacts, params);
+    // Did we produce a projection list?
+    return params->listIdx;
 }
 
-uint DL_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
+uint R_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
     const vectorcomp_t bottomRight[3], const vectorcomp_t normal[3], int flags)
 {
     surfacelumobjiterparams_t p;
 
-    p.haveList = false;
     p.listIdx = 0;
-
     p.spParams.flags = flags;
     V3_Copy(p.spParams.v1, topLeft);
     V3_Copy(p.spParams.v2, bottomRight);
-    V3_Set(p.spParams.normal, normal[VX], normal[VY], normal[VZ]);
+    V3_Copy(p.spParams.normal, normal);
 
-    return processSubSector(ssec, &p);
+    return processSubsector(ssec, &p);
 }
 
-boolean DL_ListIterator(uint listIdx, void* data, boolean (*func) (const dynlight_t*, void*))
+int R_IterateSurfaceProjections2(uint listIdx,
+    int (*callback) (const textureprojection_t*, void*), void* paramaters)
 {
-    boolean result = true; // Continue iteration.
-    if(listIdx != 0 && listIdx <= numDynlightLinkLists)
+    int result = 0; // Continue iteration.
+    if(callback && listIdx != 0 && listIdx <= projectionListCount)
     {
-        dynnode_t* node = dynlightLinkLists[listIdx-1].head;
+        listnode_t* node = projectionLists[listIdx-1].head;
         while(node)
         {
-            result = func(&node->dyn, data);
-            node = (result? node->next : NULL /* Early out */);
+            result = callback(&node->projection, paramaters);
+            node = (!result? node->next : NULL /* Early out */);
         }
     }
     return result;
+}
+
+int R_IterateSurfaceProjections(uint listIdx,
+    int (*callback) (const textureprojection_t*, void*))
+{
+    return R_IterateSurfaceProjections2(listIdx, callback, NULL);
 }
