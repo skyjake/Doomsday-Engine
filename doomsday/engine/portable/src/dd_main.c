@@ -2558,34 +2558,47 @@ static int C_DECL compareGameInfoByName(const void* a, const void* b)
 
 D_CMD(ListGames)
 {
-    int i, numAvailableGames = 0, numCompleteGames = 0;
-    gameinfo_t** infoPtrs;
-
-    Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
-    Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
-    Con_PrintRuler();
-
-    // Sort a copy of gameInfo so we get a nice alphabetical list.
-    infoPtrs = malloc(sizeof(*infoPtrs) * gameInfoCount);
-    memcpy(infoPtrs, gameInfo, sizeof(*infoPtrs) * gameInfoCount);
-    qsort(infoPtrs, gameInfoCount, sizeof(*infoPtrs), compareGameInfoByName);
+    int i, numAvailableGames = 0;
 
     for(i = 0; i < gameInfoCount; ++i)
     {
-        gameinfo_t* info = infoPtrs[i];
-        if(DD_IsNullGameInfo(info))
-            continue;
-
-        Con_Printf(" %s %-16s %s (%s)\n", DD_GameInfo() == info? "*" : !allGameResourcesFound(info)? "!" : " ", Str_Text(GameInfo_IdentityKey(info)), Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
-
-        numAvailableGames++;
-        if(allGameResourcesFound(info))
-            numCompleteGames++;
+        if(DD_IsNullGameInfo(gameInfo[i])) continue;
+        ++numAvailableGames;
     }
-    Con_PrintRuler();
-    Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
 
-    free(infoPtrs);
+    if(numAvailableGames)
+    {
+        int numCompleteGames = 0;
+        gameinfo_t** infoPtrs;
+
+        Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
+        Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
+        Con_PrintRuler();
+
+        // Sort a copy of gameInfo so we get a nice alphabetical list.
+        infoPtrs = (gameinfo_t**)malloc(gameInfoCount * sizeof *infoPtrs);
+        if(!infoPtrs) Con_Error("CCmdListGames: Failed on allocation of %lu bytes for sorted GameInfo list.", (unsigned long) (gameInfoCount * sizeof *infoPtrs));
+        memcpy(infoPtrs, gameInfo, gameInfoCount * sizeof *infoPtrs);
+        qsort(infoPtrs, gameInfoCount, sizeof *infoPtrs, compareGameInfoByName);
+
+        for(i = 0; i < gameInfoCount; ++i)
+        {
+            gameinfo_t* info = infoPtrs[i];
+            if(DD_IsNullGameInfo(info)) continue;
+            Con_Printf(" %s %-16s %s (%s)\n", DD_GameInfo() == info? "*" : !allGameResourcesFound(info)? "!" : " ", Str_Text(GameInfo_IdentityKey(info)), Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
+            if(allGameResourcesFound(info))
+                numCompleteGames++;
+        }
+        Con_PrintRuler();
+        Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
+
+        free(infoPtrs);
+    }
+    else
+    {
+        Con_Printf("No Registered Games.\n");
+    }
+
     return true;
 }
 
