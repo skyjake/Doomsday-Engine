@@ -283,6 +283,9 @@ def collated(s):
 
 def update_changes(fromTag=None, toTag=None, debChanges=False):
     if debChanges:
+        # Make sure we have the latest changes.
+        git_pull()
+        
         # Use the apt repo for determining fromTag.
         os.system('dpkg --print-architecture > debarch.tmp')
         arch = file('debarch.tmp', 'rt').read().strip()
