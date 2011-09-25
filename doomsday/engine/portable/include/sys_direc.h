@@ -29,10 +29,7 @@
 #ifndef LIBDENG_DIREC_H
 #define LIBDENG_DIREC_H
 
-/// \todo dj: Refactor me away
-#define FILENAME_T_MAXLEN 256
-#define FILENAME_T_LASTINDEX 255
-typedef char filename_t[FILENAME_T_MAXLEN];
+#include "dd_types.h"
 
 typedef struct directory_s {
     int drive;

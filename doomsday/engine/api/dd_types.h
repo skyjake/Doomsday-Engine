@@ -138,7 +138,9 @@ typedef int32_t         int_from_pointer_t;
 #define PTR2INT(x)      ( (int_from_pointer_t) ((void*)(x)) )
 #define INT2PTR(type,x) ( (type*) ((int_from_pointer_t)(x)) )
 
+/// \todo dj: Refactor me away
 #define FILENAME_T_MAXLEN 256
+#define FILENAME_T_LASTINDEX 255
 typedef char            filename_t[FILENAME_T_MAXLEN];
 
 /**
