@@ -229,19 +229,25 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
         if(seg->length == 0)
             seg->length = 0.01f; // Hmm...
 
-        // Calculate the surface normals
+        // Calculate the tangent space surface vectors.
         // Front first
         if(seg->lineDef && SEG_SIDEDEF(seg))
         {
-            sidedef_t*          side = SEG_SIDEDEF(seg);
-            surface_t*          surface = &side->SW_topsurface;
+            sidedef_t* side = SEG_SIDEDEF(seg);
+            surface_t* surface = &side->SW_topsurface;
 
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
+            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-            // All surfaces of a sidedef have the same normal.
+            // All surfaces of a sidedef have the same tangent space vectors.
+            memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+            memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
     }

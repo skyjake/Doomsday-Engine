@@ -109,9 +109,31 @@ typedef struct rvertex_s {
     float           pos[3];
 } rvertex_t;
 
+/**
+ * RColor4f. RColor4f is intended as a handy POD structure for easy manipulation
+ * of four piece red+green+blue+alpha value sets.
+ */
 typedef struct rcolor_s {
-    float           rgba[4];
+    union {
+        // Straight RGBA vector representation.
+        float rgba[4];
+        // Hybrid RGB plus alpha component representation.
+        struct {
+            float rgb[3];
+            float alpha;
+        };
+        // Component-wise representation.
+        struct {
+            float red;
+            float green;
+            float blue;
+            float _alpha;
+        };
+    };
 } rcolor_t;
+
+float RColor_AverageColor(rcolor_t* color);
+float RColor_AverageColorMulAlpha(rcolor_t* color);
 
 typedef struct rtexcoord_s {
     float           st[2];

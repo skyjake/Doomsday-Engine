@@ -2426,7 +2426,7 @@ byte GL_LoadExtTextureEX(image_t* image, const char* searchPath, const char* opt
 
 DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 {
-    struct lstex_s {
+    static const struct lstex_s {
         const char*     name;
         int             wrapS, wrapT;
     } lstexes[NUM_LIGHTING_TEXTURES] = {

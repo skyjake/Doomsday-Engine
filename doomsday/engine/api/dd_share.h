@@ -588,6 +588,16 @@ enum /* Do not change the numerical values of the constants! */
     DMU_Y,
     DMU_XY,
 
+    DMU_TANGENT_X,
+    DMU_TANGENT_Y,
+    DMU_TANGENT_Z,
+    DMU_TANGENT_XYZ,
+
+    DMU_BITANGENT_X,
+    DMU_BITANGENT_Y,
+    DMU_BITANGENT_Z,
+    DMU_BITANGENT_XYZ,
+
     DMU_NORMAL_X,
     DMU_NORMAL_Y,
     DMU_NORMAL_Z,

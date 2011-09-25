@@ -1105,8 +1105,8 @@ desc = Sector light range compression (brighten dark areas / darken light areas)
 [rend-dev-light-mod]
 desc = Show the light-level mod range.
 
-[rend-dev-surface-show-normals]
-desc = 1=Enable drawing of world surface normals, for debug.
+[rend-dev-surface-show-vectors]
+desc = 3-bit bitfield. Show surface tangent-space vectors (red:tangent, green:bitangent, blue:normal).
 
 [rend-dev-vertex-show-indices]
 desc = 1=Enable drawing of vertex indices, for debug.

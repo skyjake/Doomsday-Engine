@@ -578,7 +578,9 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     memset(&plane->surface, 0, sizeof(plane->surface));
     suf = &plane->surface;
     suf->header.type = DMU_SURFACE; // Setup header for DMU.
-    suf->normal[VZ] = suf->oldNormal[VZ] = 1;
+    suf->normal[VZ] = 1;
+    V3_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
+
     suf->owner = (void*) plane;
     // \todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
@@ -1488,6 +1490,23 @@ boolean R_IsGlowingPlane(const plane_t* pln)
             GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
     return ((mat && !Material_IsDrawable(mat)) || ms.glowing > 0 ||
             R_IsSkySurface(&pln->surface));
+}
+
+float R_GlowStrength(const plane_t* pln)
+{
+    material_t* mat = pln->surface.material;
+    if(mat)
+    {
+        if(Material_IsDrawable(mat) && !R_IsSkySurface(&pln->surface))
+        {
+            material_snapshot_t ms;
+            Materials_Prepare(&ms, mat, true,
+                Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+                    GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
+            return ms.glowing;
+        }
+    }
+    return 0;
 }
 
 /**

@@ -217,6 +217,15 @@ boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 /// @return  Radius of the mobj as it would visually appear to be.
 float R_VisualRadius(struct mobj_s* mo);
 
+/**
+ * Calculate the strength of the shadow this mobj should cast.
+ * \note Implemented using a greatly simplified version of the lighting equation;
+ * no light diminishing or light range compression.
+ */
+float R_ShadowStrength(struct mobj_s* mo);
+
+float R_Alpha(struct mobj_s* mo);
+
 float           R_GetBobOffset(struct mobj_s* mo);
 float           R_MovementYaw(float momx, float momy);
 float           R_MovementPitch(float momx, float momy, float momz);

@@ -658,6 +658,105 @@ float R_VisualRadius(mobj_t* mo)
     return mo->radius;
 }
 
+float R_ShadowStrength(mobj_t* mo)
+{
+    float ambientLightLevel;
+    assert(mo);
+
+    // Is this mobj in a valid state for shadow casting?
+    if(!mo->state || !mo->subsector) return 0;
+
+    // Should this mobj even have a shadow?
+    if((mo->state->flags & STF_FULLBRIGHT) ||
+       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
+        return 0;
+
+    // Sample the ambient light level at the mobj's position.
+    if(useBias)
+    {
+        // Evaluate in the light grid.
+        vec3_t point; V3_Set(point, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+        ambientLightLevel = LG_EvaluateLightLevel(point);
+    }
+    else
+    {
+        ambientLightLevel = mo->subsector->sector->lightLevel;
+        Rend_ApplyLightAdaptation(&ambientLightLevel);
+    }
+
+    /// \note This equation is the same as that used for fakeradio.
+    return (0.6f - ambientLightLevel * 0.4f) * 0.65f * R_Alpha(mo);
+}
+
+float R_Alpha(mobj_t* mo)
+{
+    modeldef_t* mf = NULL;
+    float alpha;
+    int i;
+
+    assert(mo);
+
+    // Check for a 3D model.
+    if(useModels)
+    {
+        modeldef_t* nextmf;
+        R_CheckModelFor(mo, &mf, &nextmf);
+    }
+
+    /**
+     * The three highest bits of the selector are used for an alpha level.
+     * 0 = opaque (alpha -1)
+     * 1 = 1/8 transparent
+     * 4 = 1/2 transparent
+     * 7 = 7/8 transparent
+     */
+    i = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
+    if(i & 0xe0)
+    {
+        alpha = 1 - ((i & 0xe0) >> 5) / 8.0f;
+    }
+    else
+    {
+        if(mo->translucency)
+            alpha = 1 - mo->translucency * reciprocal255;
+        else
+            alpha = -1;
+    }
+
+    // If a model is not in use this is a sprite.
+    if(!mf)
+    {
+        // Sprites are subject to an additional set of alpha flags.
+        if(useSpriteAlpha)
+        {
+            boolean brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
+            boolean shadow       = (mo->ddFlags & DDMF_SHADOW)       != 0;
+            boolean altShadow    = (mo->ddFlags & DDMF_ALTSHADOW)    != 0;
+            float flaggedAlpha;
+
+            if(missileBlend && brightShadow)
+                flaggedAlpha = .8f; // 80 %.
+            else if(shadow)
+                flaggedAlpha = .333f; // One third.
+            else if(altShadow)
+                flaggedAlpha = .666f; // Two thirds.
+            else
+                flaggedAlpha = 1;
+
+            // Sprite has a custom alpha multiplier?
+            if(alpha >= 0)
+                alpha *= flaggedAlpha;
+            else
+                alpha = flaggedAlpha;
+        }
+        else
+        {
+            alpha = 1;
+        }
+    }
+    return alpha;
+}
+
 /**
  * Called at frame start.
  */
@@ -1029,11 +1128,9 @@ void R_ProjectSprite(mobj_t* mo)
     vec3_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;
-    int i, tmap = 0, tclass = 0;
-    unsigned rot;
+    int tmap = 0, tclass = 0;
     boolean matFlipS, matFlipT;
     vissprite_t* vis;
-    angle_t ang;
     boolean align, fullBright, viewAlign, floorAdjust;
     modeldef_t* mf = NULL, *nextmf = NULL;
     float interp = 0, distance, gzt;
@@ -1046,18 +1143,16 @@ void R_ProjectSprite(mobj_t* mo)
     material_snapshot_t ms;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
-       mo->state == NULL || mo->state == states)
-    {
-        // Never make a vissprite when DDMF_DONTDRAW is set or when
-        // the mo is fully transparent, or when the mo hasn't got
-        // a valid state.
-        return;
-    }
-    if(sect->SP_floorvisheight >= sect->SP_ceilvisheight)
-    {   // Never make a vissprite when the mobj's origin sector is of zero height.
-        return;
-    }
+    // Never make a vissprite when DDMF_DONTDRAW is set or when
+    // when the mo hasn't got a valid state.
+    if(mo->ddFlags & DDMF_DONTDRAW || mo->state == NULL || mo->state == states) return;
+
+    // Never make a vissprite when the mobj's origin sector is of zero height.
+    if(sect->SP_floorvisheight >= sect->SP_ceilvisheight) return;
+
+    alpha = R_Alpha(mo);
+    // Never make a vissprite when the mobj is fully transparent.
+    if(alpha <= 0) return;
 
     // Transform the origin point.
     pos[VX] = mo->pos[VX] - viewData->current.pos[VX];
@@ -1098,8 +1193,8 @@ void R_ProjectSprite(mobj_t* mo)
 
     if(sprFrame->rotate && !mf)
     {   // Choose a different rotation based on player view.
-        ang = R_PointToAngle(mo->pos[VX], mo->pos[VY]);
-        rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
+        angle_t ang = R_PointToAngle(mo->pos[VX], mo->pos[VY]);
+        uint rot = (ang - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29;
         mat = sprFrame->mats[rot];
         matFlipS = (boolean) sprFrame->flip[rot];
     }
@@ -1258,26 +1353,6 @@ void R_ProjectSprite(mobj_t* mo)
             pitch = 0;
     }
 
-    /**
-     * The three highest bits of the selector are used for an alpha level.
-     * 0 = opaque (alpha -1)
-     * 1 = 1/8 transparent
-     * 4 = 1/2 transparent
-     * 7 = 7/8 transparent
-     */
-    i = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
-    if(i & 0xe0)
-    {
-        alpha = 1 - ((i & 0xe0) >> 5) / 8.0f;
-    }
-    else
-    {
-        if(mo->translucency)
-            alpha = 1 - mo->translucency * reciprocal255;
-        else
-            alpha = -1;
-    }
-
     // Determine possible short-range visual offset.
     V3_Set(visOff, 0, 0, 0);
 
@@ -1310,32 +1385,13 @@ void R_ProjectSprite(mobj_t* mo)
         boolean altShadow = (mo->ddFlags & DDMF_ALTSHADOW)? true : false;
         boolean fitTop = (mo->ddFlags & DDMF_FITTOP)? true : false;
         boolean fitBottom = (mo->ddFlags & DDMF_NOFITBOTTOM)? false : true;
-        float finalAlpha;
         blendmode_t blendMode;
-
-        if(useSpriteAlpha)
-        {
-            if(missileBlend && brightShadow)
-                finalAlpha = .8f; // 80 %.
-            else if(shadow)
-                finalAlpha = .333f; // One third.
-            else if(altShadow)
-                finalAlpha = .666f; // Two thirds.
-            else
-                finalAlpha = 1;
-
-            // Sprite has a custom alpha multiplier?
-            if(alpha >= 0)
-                finalAlpha *= alpha;
-        }
-        else
-            finalAlpha = 1;
 
         if(missileBlend && brightShadow)
         {   // Additive blending.
             blendMode = BM_ADD;
         }
-        else if(noSpriteTrans && finalAlpha >= .98f)
+        else if(noSpriteTrans && alpha >= .98f)
         {   // Use the "no translucency" blending mode.
             blendMode = BM_ZEROALPHA;
         }
@@ -1371,7 +1427,7 @@ void R_ProjectSprite(mobj_t* mo)
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
                                       floorClip, gzt, mat, matFlipS, matFlipT, blendMode,
-                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], finalAlpha,
+                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
                                       vLightListIdx,
                                       tmap,
                                       tclass,
@@ -1495,36 +1551,32 @@ if(!mat)
 }
 
 typedef struct {
-    subsector_t*        ssec;
+    subsector_t* ssec;
 } addspriteparams_t;
 
-boolean RIT_AddSprite(void* ptr, void* data)
+int RIT_AddSprite(void* ptr, void* paramaters)
 {
-    mobj_t*             mo = (mobj_t*) ptr;
-    addspriteparams_t*  params = (addspriteparams_t*) data;
-    sector_t*           sec = params->ssec->sector;
+    mobj_t* mo = (mobj_t*) ptr;
+    addspriteparams_t* params = (addspriteparams_t*)paramaters;
+    sector_t* sec = params->ssec->sector;
 
     if(mo->addFrameCount != frameCount)
     {
         material_t* mat;
-
         R_ProjectSprite(mo);
 
         // Hack: Sprites have a tendency to extend into the ceiling in
         // sky sectors. Here we will raise the skyfix dynamically, to make sure
         // that no sprites get clipped by the sky.
         // Only check
-        if((mat = R_GetMaterialForSprite(mo->sprite, mo->frame)) &&
-           R_IsSkySurface(&sec->SP_ceilsurface))
+        mat = R_GetMaterialForSprite(mo->sprite, mo->frame);
+        if(mat && R_IsSkySurface(&sec->SP_ceilsurface))
         {
             if(!(mo->dPlayer && mo->dPlayer->flags & DDPF_CAMERA) && // Cameramen don't exist!
                mo->pos[VZ] <= sec->SP_ceilheight &&
                mo->pos[VZ] >= sec->SP_floorheight)
             {
-                float               visibleTop;
-
-                visibleTop = mo->pos[VZ] + Material_Height(mat);
-
+                float visibleTop = mo->pos[VZ] + Material_Height(mat);
                 if(visibleTop > skyFix[PLN_CEILING].height)
                 {
                     // Raise skyfix ceiling.
@@ -1532,24 +1584,21 @@ boolean RIT_AddSprite(void* ptr, void* data)
                 }
             }
         }
-
         mo->addFrameCount = frameCount;
     }
-
-    return true; // Continue iteration.
+    return 0; // Continue iteration.
 }
 
 void R_AddSprites(subsector_t* ssec)
 {
     addspriteparams_t params;
 
-    // Don't use validCount, because other parts of the renderer may
-    // change it.
+    // Do not use validCount because other parts of the renderer may change it.
     if(ssec->addSpriteCount == frameCount)
         return; // Already added.
 
     params.ssec = ssec;
-    R_IterateSubsectorContacts(ssec, OT_MOBJ, RIT_AddSprite, &params);
+    R_IterateSubsectorContacts2(ssec, OT_MOBJ, RIT_AddSprite, &params);
 
     ssec->addSpriteCount = frameCount;
 }
@@ -1615,20 +1664,19 @@ void R_SortVisSprites(void)
 /**
  * Iterator for processing light sources around a vissprite.
  */
-boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
+int RIT_VisSpriteLightIterator(const lumobj_t* lum, float xyDist, void* paramaters)
 {
-    vlightiterparams_t* params = (vlightiterparams_t*) data;
+    vlightiterparams_t* params = (vlightiterparams_t*)paramaters;
     boolean addLight = false;
     float dist, intensity;
 
     if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
-        return true; // Continue iteration.
+        return 0; // Continue iteration.
 
     // Is the light close enough to make the list?
     switch(lum->type)
     {
-    case LT_OMNI:
-        {
+    case LT_OMNI: {
         float zDist = params->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
 
         dist = P_ApproxDistance(xyDist, zDist);
@@ -1641,7 +1689,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                 addLight = true;
         }
         break;
-        }
+      }
     case LT_PLANE:
         if(LUM_PLANE(lum)->intensity &&
            (LUM_PLANE(lum)->color[0] > 0 || LUM_PLANE(lum)->color[1] > 0 ||
@@ -1671,18 +1719,14 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
         break;
 
     default:
-        Con_Error("visSpriteLightIterator: Invalid value, lum->type = %i.",
-                  (int) lum->type);
-        break;
+        Con_Error("RIT_VisSpriteLightIterator: Invalid value, lum->type = %i.", (int) lum->type);
+        exit(1); // Unreachable.
     }
 
     // If the light is not close enough, skip it.
     if(addLight)
     {
-        vlightnode_t* node = NULL;
-
-        node = newVLight();
-
+        vlightnode_t* node = newVLight();
         if(node)
         {
             vlight_t* vlight = &node->vlight;
@@ -1731,22 +1775,22 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
 
             default:
                 Con_Error("visSpriteLightIterator: Invalid value, lum->type = %i.", (int) lum->type);
-                break;
+                exit(1); // Unreachable.
             }
 
             linkVLightNodeToList(node, params->listIdx);
         }
     }
 
-    return true; // Continue iteration.
+    return 0; // Continue iteration.
 }
 
 uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
 {
-    uint                vLightListIdx;
-    uint                i;
-    vlightnode_t*       node;
-    vlight_t*           vlight;
+    uint vLightListIdx;
+    vlightnode_t* node;
+    vlight_t* vlight;
+    uint i;
 
     if(!params)
         return 0;
@@ -1798,9 +1842,8 @@ uint R_CollectAffectingLights(const collectaffectinglights_params_t* params)
         vars.haveList = true;
         vars.listIdx = vLightListIdx;
 
-        LO_LumobjsRadiusIterator(params->subsector, params->center[VX],
-                                 params->center[VY], (float) loMaxRadius,
-                                 &vars, visSpriteLightIterator);
+        LO_LumobjsRadiusIterator2(params->subsector, params->center[VX], params->center[VY],
+            (float) loMaxRadius, RIT_VisSpriteLightIterator, (void*)&vars);
     }
 
     return vLightListIdx + 1;

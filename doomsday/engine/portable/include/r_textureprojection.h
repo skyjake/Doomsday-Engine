@@ -30,24 +30,22 @@
 #define LIBDENG_REFRESH_TEXTUREPROJECTION_H
 
 /**
- * @defgroup surfaceProjectFlags  Flags for R_ProjectOnSurface.
+ * @defgroup projectLightFlags  Flags for R_ProjectLightsToSurface.
  * @{
  */
-#define DLF_SORT_LUMINOUSE_DESC 0x1 /// Sort by descending luminosity, brightest to dullest.
-#define DLF_NO_PLANE           0x2 /// Surface is not lit by planar lights.
-#define DLF_TEX_FLOOR           0x4 /// Prefer the "floor" slot when picking textures.
-#define DLF_TEX_CEILING         0x8 /// Prefer the "ceiling" slot when picking textures.
+#define PLF_SORT_LUMINOSITY_DESC    0x1 /// Sort by descending luminosity, brightest to dullest.
+#define PLF_NO_PLANE                0x2 /// Surface is not lit by planar lights.
+#define PLF_TEX_FLOOR               0x4 /// Prefer the "floor" slot when picking textures.
+#define PLF_TEX_CEILING             0x8 /// Prefer the "ceiling" slot when picking textures.
 /**@}*/
 
 /**
- * The data of a projected dynamic light is stored in this structure.
- * A list of these is associated with each surface lit by texture mapped
- * lights in a frame.
+ * TextureProjection. Texture Projection (POD) stores the results of projection.
  */
 typedef struct {
     DGLuint texture;
     float s[2], t[2];
-    float color[3];
+    rcolor_t color;
 } textureprojection_t;
 
 /**
@@ -62,23 +60,49 @@ void R_InitSurfaceProjectionListsForMap(void);
 void R_InitSurfaceProjectionListsForNewFrame(void);
 
 /**
- * Project all objects affecting the given quad (world space), calculate
+ * Project all lights affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
  * \assume The coordinates of the given quad must be contained wholly within
  * the subsector specified. This is due to an optimization within the lumobj
  * management which separates them according to their position in the BSP.
  *
+ * @param flags  @see surfaceProjectLightFlags
  * @param ssec  Subsector within which the quad wholly resides.
- * @param topLeft  Coordinates of the top left corner of the quad.
- * @param bottomRight  Coordinates of the bottom right corner of the quad.
- * @param normal  Normalized normal of the quad.
- * @param flags  @see surfaceProjectFlags
+ * @param blendFactor  Multiplied with projection alpha.
+ * @param topLeft  Top left coordinates of the surface being projected to.
+ * @param bottomRight  Bottom right coordinates of the surface being projected to.
+ * @param topLeft  Top left coordinates of the surface being projected to.
+ * @param bottomRight  Bottom right coordinates of the surface being projected to.
+ * @param tangent  Normalized tangent of the surface being projected to.
+ * @param bitangent  Normalized bitangent of the surface being projected to.
+ * @param normal  Normalized normal of the surface being projected to.
  *
- * @return  Dynlight list name if the quad is lit by one or more light sources else @c 0.
+ * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint R_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
-    const vectorcomp_t bottomRight[3], const vectorcomp_t normal[3], int flags);
+uint R_ProjectLightsToSurface(int flags, subsector_t* ssec, float blendFactor,
+    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
+
+/**
+ * Project all mobj shadows affecting the given quad (world space), calculate
+ * coordinates (in texture space) then store into a new list of projections.
+ *
+ * \assume The coordinates of the given quad must be contained wholly within
+ * the subsector specified. This is due to an optimization within the mobj
+ * management which separates them according to their position in the BSP.
+ *
+ * @param ssec  Subsector within which the quad wholly resides.
+ * @param blendFactor  Multiplied with projection alpha.
+ * @param topLeft  Top left coordinates of the surface being projected to.
+ * @param bottomRight  Bottom right coordinates of the surface being projected to.
+ * @param tangent  Normalized tangent of the surface being projected to.
+ * @param bitangent  Normalized bitangent of the surface being projected to.
+ * @param normal  Normalized normal of the surface being projected to.
+ *
+ * @return  Projection list identifier if surface is lit else @c 0.
+ */
+uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
+    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
 
 /**
  * Iterate over projections in the identified surface-projection list, making

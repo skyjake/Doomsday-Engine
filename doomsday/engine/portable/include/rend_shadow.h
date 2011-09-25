@@ -1,9 +1,10 @@
-/**\file
+/**\file rend_shadow.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,17 +22,24 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * rend_shadow.h: Map Object Shadows
+/**
+ * Map Object Shadows
  */
 
-#ifndef __DOOMSDAY_RENDER_SHADOW_H__
-#define __DOOMSDAY_RENDER_SHADOW_H__
+#ifndef LIBDENG_RENDER_MOBJ_SHADOW_H
+#define LIBDENG_RENDER_MOBJ_SHADOW_H
 
-//extern int      useShadows, shadowMaxRad, shadowMaxDist;
-//extern float    shadowFactor;
+/**
+ * This value defines the offset from the shadowed surface applied to
+ * a shadow during render. As shadows are drawn using additional primitives
+ * on top of the surface they touch a small visual offset is used in order
+ * to prevent z-fighting.
+ */
+#define SHADOW_ZOFFSET              (.8f)
 
-void            Rend_ShadowRegister(void);
-void            Rend_RenderShadows(void);
+/// @return  @c true if rendering of mobj shadows is currently enabled.
+boolean Rend_MobjShadowsEnabled(void);
 
-#endif
+void Rend_RenderMobjShadows(void);
+
+#endif /* LIBDENG_RENDER_MOBJ_SHADOW_H */

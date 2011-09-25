@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <float.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -39,23 +38,26 @@ typedef struct listnode_s {
 } listnode_t;
 
 /**
- * @defgroup projectionListFlags  Projection List Flags
+ * @defgroup surfaceProjectionListFlags  Surface Projection List Flags
  * @{
  */
-#define PLF_SORT_LUMINOUS_DESC  0x1 /// Sort by luminosity in descending order.
+#define SPLF_SORT_LUMINOUS_DESC  0x1 /// Sort by luminosity in descending order.
 /**@}*/
 
-typedef struct dynlist_s {
-    int flags; /// @see projectionListFlags
+typedef struct {
+    int flags; /// @see surfaceProjectionListFlags
     listnode_t* head;
-} projectionlist_t;
+} surfaceprojectionlist_t;
 
 /// Orientation is toward the projectee.
 typedef struct {
-    int flags; /// @see surfaceProjectFlags
-    vec3_t v1; /// Top left vertex of the surface being projected to.
-    vec3_t v2; /// Bottom right vertex of the surface being projected to.
-    vec3_t normal; /// Normalized normal of the surface being projected to.
+    int flags; /// @see surfaceProjectLightFlags
+    float blendFactor; /// Multiplied with projection alpha.
+    pvec3_t v1; /// Top left vertex of the surface being projected to.
+    pvec3_t v2; /// Bottom right vertex of the surface being projected to.
+    pvec3_t tangent; /// Normalized tangent of the surface being projected to.
+    pvec3_t bitangent; /// Normalized bitangent of the surface being projected to.
+    pvec3_t normal; /// Normalized normal of the surface being projected to.
 } surfaceprojectparams_t;
 
 // List nodes.
@@ -63,7 +65,7 @@ static listnode_t* firstNode, *cursorNode;
 
 // Surface projection lists.
 static uint projectionListCount, cursorList;
-static projectionlist_t* projectionLists;
+static surfaceprojectionlist_t* projectionLists;
 
 void R_InitSurfaceProjectionListsForMap(void)
 {
@@ -96,12 +98,12 @@ void R_InitSurfaceProjectionListsForNewFrame(void)
 /**
  * Create a new projection list.
  *
- * @param flags  @see projectionListFlags
+ * @param flags  @see surfaceProjectionListFlags
  * @return  Unique identifier attributed to the new list.
  */
 static uint newList(int flags)
 {
-    projectionlist_t* list;
+    surfaceprojectionlist_t* list;
 
     // Do we need to allocate more lists?
     if(++cursorList >= projectionListCount)
@@ -109,7 +111,7 @@ static uint newList(int flags)
         projectionListCount *= 2;
         if(!projectionListCount) projectionListCount = 2;
 
-        projectionLists = (projectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
+        projectionLists = (surfaceprojectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
         if(!projectionLists) Con_Error(__FILE__":newList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof *projectionLists));
     }
 
@@ -117,7 +119,24 @@ static uint newList(int flags)
     list->head = NULL;
     list->flags = flags;
 
-    return cursorList - 1;
+    return cursorList;
+}
+
+/**
+ * @param listIdx  Address holding the list index to retrieve.
+ *      If the referenced list index is non-zero return the associated list.
+ *      Otherwise allocate a new list and write it's index back to this address.
+ * @param flags  @see ProjectionListFlags
+ * @return  ProjectionList associated with the (possibly newly attributed) index.
+ */
+static surfaceprojectionlist_t* getList(uint* listIdx, int flags)
+{
+    // Do we need to allocate a list?
+    if(!(*listIdx))
+    {
+        *listIdx = newList(flags);
+    }
+    return projectionLists + ((*listIdx)-1); // 1-based index.
 }
 
 static listnode_t* newListNode(void)
@@ -145,7 +164,7 @@ static listnode_t* newListNode(void)
 }
 
 static listnode_t* newProjection(DGLuint texture, const float s[2],
-    const float t[2], const float color[3])
+    const float t[2], const float color[3], float alpha)
 {
     assert(texture != 0 && s && t && color);
     {
@@ -157,24 +176,26 @@ static listnode_t* newProjection(DGLuint texture, const float s[2],
     tp->s[1] = s[1];
     tp->t[0] = t[0];
     tp->t[1] = t[1];
-    tp->color[CR] = color[CR];
-    tp->color[CG] = color[CG];
-    tp->color[CB] = color[CB];
+    tp->color.rgba[CR] = color[CR];
+    tp->color.rgba[CG] = color[CG];
+    tp->color.rgba[CB] = color[CB];
+    tp->color.rgba[CA] = MINMAX_OF(0, alpha, 1);
 
     return node;
     }
 }
 
-static float calcProjectionLuminosity(const textureprojection_t* tp)
+static __inline float calcProjectionLuminosity(textureprojection_t* tp)
 {
     assert(tp);
-    return (tp->color[CR] + tp->color[CG] + tp->color[CB]) / 3;
+    return RColor_AverageColorMulAlpha(&tp->color);
 }
 
-static void linkProjectionToList(listnode_t* node, projectionlist_t* list)
+/// @return  Same as @a node for convenience (chaining).
+static listnode_t* linkProjectionToList(listnode_t* node, surfaceprojectionlist_t* list)
 {
     assert(node && list);
-    if((list->flags & PLF_SORT_LUMINOUS_DESC) && list->head)
+    if((list->flags & SPLF_SORT_LUMINOUS_DESC) && list->head)
     {
         float luma = calcProjectionLuminosity(&node->projection);
         listnode_t* iter = list->head, *last = iter;
@@ -191,13 +212,35 @@ static void linkProjectionToList(listnode_t* node, projectionlist_t* list)
                 // Insert it here.
                 node->next = last->next;
                 last->next = node;
-                return;
+                return node;
             }
         } while(iter);
     }
 
     node->next = list->head;
     list->head = node;
+    return node;
+}
+
+/**
+ * Construct a new surface projection (and a list, if one has not already been
+ * constructed for the referenced index).
+ *
+ * @param listIdx  Address holding the list index to retrieve.
+ *      If the referenced list index is non-zero return the associated list.
+ *      Otherwise allocate a new list and write it's index back to this address.
+ * @param flags  @see ProjectionListFlags
+ *      Used when constructing a new projection list to configure it.
+ * @param texture  GL identifier to texture attributed to the new projection.
+ * @param s  GL texture coordinates on the S axis [left, right] in texture space.
+ * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
+ * @param colorRGB  RGB color attributed to the new projection.
+ * @param alpha  Alpha attributed to the new projection.
+ */
+void R_NewTextureProjection(uint* listIdx, int flags, DGLuint texture,
+    const float s[2], const float t[2], const float colorRGB[3], float alpha)
+{
+    linkProjectionToList(newProjection(texture, s, t, colorRGB, alpha), getList(listIdx, flags));
 }
 
 /**
@@ -208,48 +251,54 @@ static void linkProjectionToList(listnode_t* node, projectionlist_t* list)
  * @param color  Lumobj color.
  * @param light  Ambient light level of the surface being projected to.
  */
-static void calcDynlightColor(float outRGB[3], const float color[3], float light)
+static void calcLightColor(float outRGB[3], const float color[3], float light)
 {
-    uint i;
-
     light = MINMAX_OF(0, light, 1) * dynlightFactor;
     // In fog additive blending is used; the normal fog color is way too bright.
-    if(usingFog)
-        light *= dynlightFogBright;
+    if(usingFog) light *= dynlightFogBright;
 
-    // Multiply with the light color.
+    // Multiply light with (ambient) color.
+    { int i;
     for(i = 0; i < 3; ++i)
     {
         outRGB[i] = light * color[i];
-    }
+    }}
 }
+
+typedef struct {
+    uint listIdx;
+    surfaceprojectparams_t spParams;
+} projectlighttosurfaceiteratorparams_t;
 
 /**
  * Project a plane glow onto the surface. If valid and the surface is
  * contacted a new projection node will constructed and returned.
  *
  * @param lum  Lumobj representing the light being projected.
- * @param spParams  Surface projection paramaters.
+ * @param paramaters  ProjectLightToSurfaceIterator paramaters.
  *
- * @return  Resultant projection node else @c NULL.
+ * @return  @c 0 = continue iteration.
  */
-static listnode_t* projectPlaneLightOnSurface(const lumobj_t* lum,
-    const surfaceprojectparams_t* spParams)
+static int projectPlaneLightToSurface(const lumobj_t* lum, void* paramaters)
 {
-    assert(lum && spParams);
+    assert(lum && paramaters);
     {
+    projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
+    surfaceprojectparams_t* spParams = &p->spParams;
     float bottom = spParams->v2[VZ], top = spParams->v1[VZ];
     float glowHeight, s[2], t[2], color[3];
 
+    if(spParams->flags & PLF_NO_PLANE) return 0; // Continue iteration.
+    
     // No lightmap texture?
-    if(!LUM_PLANE(lum)->tex) return NULL;
+    if(!LUM_PLANE(lum)->tex) return 0; // Continue iteration.
 
     // No height?
-    if(bottom >= top) return NULL;
+    if(bottom >= top) return 0; // Continue iteration.
 
     // Do not make too small glows.
     glowHeight = (GLOW_HEIGHT_MAX * LUM_PLANE(lum)->intensity) * glowHeightFactor;
-    if(glowHeight <= 2) return NULL;
+    if(glowHeight <= 2) return 0; // Continue iteration.
 
     if(glowHeight > glowHeightMax)
         glowHeight = glowHeightMax;
@@ -269,127 +318,36 @@ static listnode_t* projectPlaneLightOnSurface(const lumobj_t* lum,
     }
 
     // Above/below on the Y axis?
-    if(!(t[0] <= 1 || t[1] >= 0)) return NULL; 
+    if(!(t[0] <= 1 || t[1] >= 0)) return 0; // Continue iteration.
 
     // The horizontal direction is easy.
     s[0] = 0;
     s[1] = 1;
 
-    calcDynlightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
-    return newProjection(LUM_PLANE(lum)->tex, s, t, color);
+    calcLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
+
+    R_NewTextureProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
+        LUM_PLANE(lum)->tex, s, t, color, 1 * spParams->blendFactor);
+
+    return 0; // Continue iteration.
     }
 }
 
-/**
- * Given a normalized normal, construct up and right vectors, oriented to
- * the original normal. Note all vectors and normals are in world-space.
- *
- * @param up  The up vector will be written back here.
- * @param right  The right vector will be written back here.
- * @param normal  Normal to construct vectors for.
- */
-static void buildUpRight(pvec3_t up, pvec3_t right, const pvec3_t normal)
+static boolean genTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float scale,
+    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
 {
-    const vec3_t rotm[3] = {
-        {0.f, 0.f, 1.f},
-        {0.f, 0.f, 1.f},
-        {0.f, 0.f, 1.f}
-    };
-    int axis = VX;
-    vec3_t fn;
-
-    V3_Set(fn, fabsf(normal[VX]), fabsf(normal[VY]), fabsf(normal[VZ]));
-
-    if(fn[VY] > fn[axis])
-        axis = VY;
-    if(fn[VZ] > fn[axis])
-        axis = VZ;
-
-    if(fabsf(fn[VX] - 1.0f) < FLT_EPSILON ||
-       fabsf(fn[VY] - 1.0f) < FLT_EPSILON ||
-       fabsf(fn[VZ] - 1.0f) < FLT_EPSILON)
-    {
-        // We must build the right vector manually.
-        if(axis == VX && normal[VX] > 0.f)
-        {
-            V3_Set(right, 0.f, 1.f, 0.f);
-        }
-        else if(axis == VX)
-        {
-            V3_Set(right, 0.f, -1.f, 0.f);
-        }
-
-        if(axis == VY && normal[VY] > 0.f)
-        {
-            V3_Set(right, -1.f, 0.f, 0.f);
-        }
-        else if(axis == VY)
-        {
-            V3_Set(right, 1.f, 0.f, 0.f);
-        }
-
-        if(axis == VZ)
-        {
-            V3_Set(right, 1.f, 0.f, 0.f);
-        }
-    }
-    else
-    {   // Can use a cross product of the surface normal.
-        V3_CrossProduct(right, (pvec3_t) rotm[axis], normal);
-        V3_Normalize(right);
-    }
-
-    V3_CrossProduct(up, right, normal);
-    V3_Normalize(up);
+    // Counteract aspect correction slightly (not too round mind).
+    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
 }
 
-/**
- * Generate texcoords on the surface centered on point.
- *
- * @param s  Texture s coords written back here.
- * @param t  Texture t coords written back here.
- * @param point  Point on surface around which texture is centered.
- * @param scale  Scale multiplier for texture.
- * @param v1  Top left vertex of the surface being projected on.
- * @param v2  Bottom right vertex of the surface being projected on.
- * @param normal  Normal of the surface being projected on.
- *
- * @return  @c true, if the generated coords are within bounds.
- */
-static boolean genTexCoords(pvec2_t s, pvec2_t t, const pvec3_t point, float scale,
-    const pvec3_t v1, const pvec3_t v2, const pvec3_t normal)
+static DGLuint chooseOmniLightTexture(lumobj_t* lum, const surfaceprojectparams_t* spParams)
 {
-    vec3_t vToPoint, right, up;
-
-    buildUpRight(up, right, normal);
-    up[VZ] *= 1.08f; // Counteract aspect correction slightly (not too round mind).
-    V3_Subtract(vToPoint, v1, point);
-    s[0] = V3_DotProduct(vToPoint, right) * scale + .5f;
-    t[0] = V3_DotProduct(vToPoint, up)    * scale + .5f;
-
-    // Is the origin point visible?
-    if(s[0] >= 1 || t[0] >= 1)
-        return false; // Right on the X axis or below on the Y axis.
-
-    V3_Subtract(vToPoint, v2, point);
-    s[1] = V3_DotProduct(vToPoint, right) * scale + .5f;
-    t[1] = V3_DotProduct(vToPoint, up)    * scale + .5f;
-
-    // Is the end point visible?
-    if(s[1] <= 0 || t[1] <= 0)
-        return false; // Left on the X axis or above on the Y axis.
-
-    return true;
-}
-
-static float calcOmniLightAttenuationFactor(const lumobj_t* lum, float distance)
-{
-    assert(lum && lum->type == LT_OMNI);
-    if(distance == 0 || distance > lum->maxDistance)
-        return 0;
-    if(distance > .67f * lum->maxDistance)
-        return (lum->maxDistance - distance) / (.33f * lum->maxDistance);
-    return 1;
+    assert(lum && lum->type == LT_OMNI && spParams);
+    if(spParams->flags & PLF_TEX_CEILING)
+        return LUM_OMNI(lum)->ceilTex;
+    if(spParams->flags & PLF_TEX_FLOOR)
+        return LUM_OMNI(lum)->floorTex;
+    return LUM_OMNI(lum)->tex;
 }
 
 /**
@@ -397,138 +355,243 @@ static float calcOmniLightAttenuationFactor(const lumobj_t* lum, float distance)
  * contacted a new projection node will constructed and returned.
  *
  * @param lum  Lumobj representing the light being projected.
- * @param spParams  Surface projection paramaters.
+ * @param paramaters  ProjectLightToSurfaceIterator paramaters.
  *
- * @return  Resultant projection node else @c NULL.
+ * @return  @c 0 = continue iteration.
  */
-static listnode_t* projectOmniLightOnSurface(const lumobj_t* lum,
-    surfaceprojectparams_t* spParams)
+static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
 {
-    assert(lum && spParams);
+    assert(lum && paramaters);
     {
+    projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
+    surfaceprojectparams_t* spParams = &p->spParams;
+    float dist, luma, scale, color[3];
     vec3_t lumCenter, vToLum;
-    listnode_t* node = NULL;
+    vec3_t point;
     uint lumIdx;
     DGLuint tex;
+    vec2_t s, t;
+
+    // Early test of the external blend factor for quick rejection.
+    if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
 
     // No lightmap texture?
-    if(spParams->flags & DLF_TEX_CEILING)
-        tex = LUM_OMNI(lum)->ceilTex;
-    else if(spParams->flags & DLF_TEX_FLOOR)
-        tex = LUM_OMNI(lum)->floorTex;
-    else
-        tex = LUM_OMNI(lum)->tex;
-    if(!tex) return NULL;
+    tex = chooseOmniLightTexture(lum, spParams);
+    if(!tex) return 0; // Continue iteration.
 
     // Has this already been occluded?
     lumIdx = LO_ToIndex(lum);
-    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return NULL;
+    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return 0; // Continue iteration.
 
     V3_Set(lumCenter, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
     V3_Subtract(vToLum, spParams->v1, lumCenter);
 
     // On the right side?
-    if(V3_DotProduct(vToLum, spParams->normal) < 0.f)
+    if(V3_DotProduct(vToLum, spParams->normal) > 0.f) return 0; // Continue iteration.
+
+    // Calculate 3D distance between surface and lumobj.
+    V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, lumCenter);
+    dist = V3_Distance(point, lumCenter);
+    if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return 0; // Continue iteration.
+
+    // Calculate the final surface light attribution factor.
+    luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
+
+    // If distance limit is set this light will fade out.
+    if(lum->maxDistance > 0)
     {
-        float dist, luma;
-        vec3_t point;
-
-        // Calculate 3D distance between surface and lumobj.
-        V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, lumCenter);
-        dist = V3_Distance(point, lumCenter);
-        if(dist > 0 && dist <= LUM_OMNI(lum)->radius)
-        {
-            luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
-
-            // If distance limit is set this light will fade out.
-            if(lum->maxDistance > 0)
-            {
-                float distanceFromViewer = LO_DistanceToViewer(lumIdx, viewPlayer - ddPlayers);
-                luma *= calcOmniLightAttenuationFactor(lum, distanceFromViewer);
-            }
-
-            if(luma >= OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
-            {
-                float scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
-                vec2_t s, t;
-
-                if(genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->normal))
-                {
-                    float color[3];
-                    calcDynlightColor(color, LUM_OMNI(lum)->color, luma);
-                    node = newProjection(tex, s, t, color);
-                }
-            }
-        }
+        float distance = LO_DistanceToViewer(lumIdx, viewPlayer - ddPlayers);
+        luma *= LO_AttenuationFactor(lumIdx, distance);
     }
 
-    return node;
+    // Would this light be seen?
+    if(luma * spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
+
+    // Project this light.
+    scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
+    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return 0; // Continue iteration.
+
+    // Attach to the projection list.
+    calcLightColor(color, LUM_OMNI(lum)->color, luma);
+    R_NewTextureProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
+        tex, s, t, color, 1 * spParams->blendFactor);
+
+    return 0; // Continue iteration.
     }
+}
+
+/**
+ * @param paramaters  ProjectLightToSurfaceIterator paramaters.
+ *
+ * @return  @c 0 = continue iteration.
+ */
+int RIT_ProjectLightToSurfaceIterator(void* obj, void* paramaters)
+{
+    lumobj_t* lum = (lumobj_t*)obj;
+    assert(obj);
+    switch(lum->type)
+    {
+    case LT_OMNI:  return  projectOmniLightToSurface(lum, paramaters);
+    case LT_PLANE: return projectPlaneLightToSurface(lum, paramaters);
+    default:
+        Con_Error("RIT_ProjectLightToSurface: Invalid lumobj type %i.", (int) lum->type);
+        exit(1); // Unreachable.
+    }
+}
+
+uint R_ProjectLightsToSurface(int flags, subsector_t* ssec, float blendFactor,
+    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
+{
+    projectlighttosurfaceiteratorparams_t p;
+
+    p.listIdx = 0;
+    p.spParams.blendFactor = blendFactor;
+    p.spParams.flags = flags;
+    p.spParams.v1 = topLeft;
+    p.spParams.v2 = bottomRight;
+    p.spParams.tangent = tangent;
+    p.spParams.bitangent = bitangent;
+    p.spParams.normal = normal;
+
+    R_IterateSubsectorContacts2(ssec, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void*)&p);
+    // Did we produce a projection list?
+    return p.listIdx;
 }
 
 typedef struct {
     uint listIdx;
     surfaceprojectparams_t spParams;
-} surfacelumobjiterparams_t;
+} projectshadowonsurfaceiteratorparams_t;
 
-boolean RIT_SurfaceLumobjContacts(void* ptr, void* data)
+/**
+ * Project a mobj shadow onto the surface. If valid and the surface is
+ * contacted a new projection node will constructed and returned.
+ *
+ * @param mobj  Mobj for which a shadow may be projected.
+ * @param paramaters  ProjectShadowToSurfaceIterator paramaters.
+ *
+ * @return  @c 0 = continue iteration.
+ */
+int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
 {
-    lumobj_t* lum = (lumobj_t*)ptr;
-    surfacelumobjiterparams_t* p = (surfacelumobjiterparams_t*)data;
-    listnode_t* node = NULL;
-
-    switch(lum->type)
+    assert(obj && paramaters);
     {
-    case LT_OMNI:
-        node = projectOmniLightOnSurface(lum, &p->spParams);
-        break;
+    static const float black[3] = { 0, 0, 0 };
+    mobj_t* mo = (mobj_t*)obj;
+    projectshadowonsurfaceiteratorparams_t* p = (projectshadowonsurfaceiteratorparams_t*)paramaters;
+    surfaceprojectparams_t* spParams = &p->spParams;
+    float distanceFromViewer = 0, mobjHeight, halfMobjHeight, distanceFromSurface, scale;
+    float shadowRadius, shadowStrength;
+    vec3_t mobjOrigin, point;
+    vec2_t s, t;
 
-    case LT_PLANE:
-        if(!(p->spParams.flags & DLF_NO_PLANE))
-        {
-            node = projectPlaneLightOnSurface(lum, &p->spParams);
-        }
-        break;
+    // Early test of the external blend factor for quick rejection.
+    if(spParams->blendFactor < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
 
-    default:
-        Con_Error("RIT_SurfaceLumobjContacts: Invalid value, lum->type = %i.", (int) lum->type);
-        exit(1); // Unreachable.
+    V3_Set(mobjOrigin, mo->pos[VX], mo->pos[VY], mo->pos[VZ]);
+
+    // Is this too far?
+    if(shadowMaxDistance > 0)
+    {
+        distanceFromViewer = Rend_PointDist2D(mobjOrigin);
+        if(distanceFromViewer > shadowMaxDistance) return 0; // Continue iteration.
     }
 
-    if(node)
-    {
-        // Do we need to allocate a list for this surface?
-        if(!p->listIdx)
-        {
-            int flags = 0 | ((p->spParams.flags & DLF_SORT_LUMINOUSE_DESC)? PLF_SORT_LUMINOUS_DESC : 0);
-            p->listIdx = newList(flags) + 1; // 1-based index.
-        }
+    // Should this mobj even have a shadow?
+    shadowStrength = R_ShadowStrength(mo) * shadowFactor;
+    if(usingFog) shadowStrength /= 2;
+    if(shadowStrength <= 0) return 0; // Continue iteration.
 
-        linkProjectionToList(node, &projectionLists[p->listIdx-1]);
+    // Calculate the radius of the shadow.
+    shadowRadius = R_VisualRadius(mo);
+    if(shadowRadius <= 0) return 0; // Continue iteration.
+    if(shadowRadius > (float) shadowMaxRadius)
+        shadowRadius = (float) shadowMaxRadius;
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVO && mo->state && mo->tics >= 0)
+    {
+        float mul = mo->tics / (float) mo->state->tics;
+        mobjOrigin[VX] += mo->srvo[VX] * mul;
+        mobjOrigin[VY] += mo->srvo[VY] * mul;
+        mobjOrigin[VZ] += mo->srvo[VZ] * mul;
+    }
+    mobjOrigin[VZ] -= mo->floorClip;
+    if(mo->ddFlags & DDMF_BOB)
+        mobjOrigin[VZ] -= R_GetBobOffset(mo);
+
+    mobjHeight = mo->height;
+    if(!mobjHeight) mobjHeight = 1;
+
+    // If this were a light this is where we would check whether the origin is on
+    // the right side of the surface. However this is a shadow and light is moving
+    // in the opposite direction (inward toward the mobj's origin), therefore this
+    // has "volume/depth".
+    //
+    // vec3_t vToMobj;
+    // V3_Subtract(vToMobj, spParams->v1, mobjOrigin);
+    // if(V3_DotProduct(vToMobj, spParams->normal) > 0) return 0; // Continue iteration
+
+    // Calculate 3D distance between surface and mobj.
+    V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, mobjOrigin);
+    distanceFromSurface = V3_Distance(point, mobjOrigin);
+
+    // Too far above or below the shadowed surface?
+    if(distanceFromSurface > mo->height) return 0; // Continue iteration.
+    if(mobjOrigin[VZ] + mo->height < point[VZ]) return 0; // Continue iteration.
+    if(distanceFromSurface > shadowRadius) return 0; // Continue iteration.
+
+    // Calculate the final strength of the shadow's attribution to the surface.
+    shadowStrength *= 1.5f - 1.5f * distanceFromSurface / shadowRadius;
+
+    // Fade at half mobj height for smooth fade out when embedded in the surface.
+    halfMobjHeight = mobjHeight / 2;
+    if(distanceFromSurface > halfMobjHeight)
+    {
+        shadowStrength *= 1 - (distanceFromSurface - halfMobjHeight) / (mobjHeight - halfMobjHeight);
     }
 
-    return true; // Continue iteration.
+    // Fade when nearing the maximum distance?
+    if(shadowMaxDistance > 0 && distanceFromViewer > 3 * shadowMaxDistance / 4)
+    {
+        shadowStrength *= (shadowMaxDistance - distanceFromViewer) / (shadowMaxDistance / 4);
+    }
+
+    // Apply the external blending factor.
+    shadowStrength *= spParams->blendFactor;
+
+    // Would this shadow be seen?
+    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
+
+    // Project this shadow.
+    scale = 1.0f / ((2.f * shadowRadius) - distanceFromSurface);
+    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return 0; // Continue iteration.
+
+    // Attach to the projection list.
+    R_NewTextureProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
+        GL_PrepareLSTexture(LST_DYNAMIC), s, t, black, shadowStrength);
+
+    return 0; // Continue iteration.
+    }
 }
 
-static uint processSubsector(subsector_t* ssec, surfacelumobjiterparams_t* params)
+uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
+    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
 {
-    R_IterateSubsectorContacts(ssec, OT_LUMOBJ, RIT_SurfaceLumobjContacts, params);
-    // Did we produce a projection list?
-    return params->listIdx;
-}
-
-uint R_ProjectOnSurface(subsector_t* ssec, const vectorcomp_t topLeft[3],
-    const vectorcomp_t bottomRight[3], const vectorcomp_t normal[3], int flags)
-{
-    surfacelumobjiterparams_t p;
+    projectshadowonsurfaceiteratorparams_t p;
 
     p.listIdx = 0;
-    p.spParams.flags = flags;
-    V3_Copy(p.spParams.v1, topLeft);
-    V3_Copy(p.spParams.v2, bottomRight);
-    V3_Copy(p.spParams.normal, normal);
+    p.spParams.blendFactor = blendFactor;
+    p.spParams.flags = 0;
+    p.spParams.v1 = topLeft;
+    p.spParams.v2 = bottomRight;
+    p.spParams.tangent = tangent;
+    p.spParams.bitangent = bitangent;
+    p.spParams.normal = normal;
 
-    return processSubsector(ssec, &p);
+    R_IterateSubsectorContacts2(ssec, OT_MOBJ, RIT_ProjectShadowToSurfaceIterator, (void*)&p);
+    // Did we produce a projection list?
+    return p.listIdx;
 }
 
 int R_IterateSurfaceProjections2(uint listIdx,

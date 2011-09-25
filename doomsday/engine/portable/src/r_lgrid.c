@@ -870,13 +870,7 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 END_PROF( PROF_GRID_UPDATE );
 }
 
-/**
- * Calculate the light level for a 3D point in the world.
- *
- * @param point         3D point.
- * @param color         Evaluated color of the point (return value).
- */
-void LG_Evaluate(const float *point, float *color)
+void LG_Evaluate(const vectorcomp_t point[3], float color[3])
 {
     int x, y, i;
     //float dz = 0, dimming;
@@ -968,6 +962,14 @@ void LG_Evaluate(const float *point, float *color)
         for(i = 0; i < 3; ++i)
             color[i] += Rend_GetLightAdaptVal(color[i]);
     }
+}
+
+float LG_EvaluateLightLevel(const vectorcomp_t point[3])
+{
+    float color[3];
+    LG_Evaluate(point, color);
+    /// \todo Do not do this at evaluation time; store into another grid.
+    return (color[CR] + color[CG] + color[CB]) / 3;
 }
 
 /**

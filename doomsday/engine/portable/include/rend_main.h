@@ -34,7 +34,10 @@
 #include "r_things.h"
 
 #define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
+
 #define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
+
+#define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
 extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
 extern byte smoothTexAnim, devMobjVLights;
@@ -47,12 +50,17 @@ extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
 extern int devRendSkyMode;
 
-extern int useDynLights;
+extern int useDynlights;
 extern float dynlightFactor, dynlightFogBright;
 
 extern int useWallGlow;
 extern float glowFactor, glowHeightFactor;
 extern int glowHeightMax;
+
+extern int useShadows;
+extern float shadowFactor;
+extern int shadowMaxRadius;
+extern int shadowMaxDistance;
 
 extern int useShinySurfaces;
 

@@ -760,7 +760,7 @@ void R_BeginWorldFrame(void)
     {
         LG_Update();
         SB_BeginFrame();
-        LO_ClearForFrame();
+        LO_BeginWorldFrame();
         R_ClearObjLinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.

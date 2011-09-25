@@ -1,4 +1,4 @@
-/**\file
+/**\file p_objlink.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,13 @@
  */
 
 /**
- * r_objlink.h: Objlink management.
+ * Object > Surface Contact Lists
+ *
+ * Implements subsector contact spreading.
  */
 
-#ifndef __DOOMSDAY_OBJLINK_H__
-#define __DOOMSDAY_OBJLINK_H__
+#ifndef LIBDENG_REFRESH_OBJLINK_H
+#define LIBDENG_REFRESH_OBJLINK_H
 
 typedef enum {
     OT_MOBJ,
@@ -35,23 +37,64 @@ typedef enum {
     NUM_OBJ_TYPES
 } objtype_t;
 
-void            R_InitObjLinksForMap(void);
-void R_DestroyObjLinks(void);
-void            R_ClearObjLinksForFrame(void);
+#define VALID_OBJTYPE(v) ((v) >= OT_MOBJ && (v) <= OT_LUMOBJ)
 
-void            R_ObjLinkCreate(void* obj, objtype_t type);
-void            R_LinkObjs(void);
-void            R_InitForSubsector(subsector_t* ssec);
-void            R_InitForNewFrame(void);
+void R_InitObjLinksForMap(void);
+
+void R_DestroyObjLinks(void);
+
+/**
+ * Called at the begining of each frame (iff the render lists are not frozen)
+ * by R_BeginWorldFrame().
+ */
+void R_ClearObjLinksForFrame(void);
+
+/**
+ * Initialize the obj > subsector contact lists ready for adding new
+ * luminous objects. Called by R_BeginWorldFrame() at the beginning of a new
+ * frame (if the render lists are not frozen).
+ */
+void R_InitForNewFrame(void);
+
+/**
+ * Called by R_BeginWorldFrame() at the beginning of render tic (iff the
+ * render lists are not frozen) to link all objlinks into the objlink
+ * blockmap.
+ */
+void R_LinkObjs(void);
+
+void R_ObjLinkCreate(void* object, objtype_t type);
+
+/**
+ * Perform any processing needed before we can draw surfaces within the
+ * specified subsector.
+ *
+ * @param ssec  Subsector to process.
+ */
+void R_InitForSubsector(subsector_t* ssec);
 
 typedef struct {
-    void*               obj;
-    objtype_t           type;
+    void* obj;
+    objtype_t type;
 } linkobjtossecparams_t;
 
-boolean         RIT_LinkObjToSubSector(subsector_t* subsector, void* params);
+int RIT_LinkObjToSubsector(subsector_t* ssec, void* paramaters);
 
-boolean         R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
-                                           boolean (*func) (void*, void*),
-                                           void* data);
-#endif
+/**
+ * Iterate over subsector contacts of the specified type, making a callback for
+ * each visited. Iteration ends when all selected contacts have been visited or
+ * a callback returns non-zero.
+ *
+ * @param ssec  Subsector whoose contact list to process.
+ * @param type  Type of objects to be processed.
+ * @param callback  Callback to make for each visited contact.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int R_IterateSubsectorContacts2(subsector_t* ssec, objtype_t type,
+    int (*callback) (void* object, void* paramaters), void* paramaters);
+int R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
+    int (*callback) (void* object, void* paramaters)); /* paramaters = NULL */
+
+#endif /* LIBDENG_REFRESH_OBJLINK_H */

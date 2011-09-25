@@ -55,7 +55,7 @@ END_PROF_TIMERS()
 typedef struct lumlistnode_s {
     struct lumlistnode_s* next;
     struct lumlistnode_s* nextUsed;
-    void*           data;
+    void* data;
 } lumlistnode_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -64,9 +64,7 @@ typedef struct lumlistnode_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean      iterateSubsectorLumObjs(subsector_t* ssec,
-                                            boolean (*func) (void*, void*),
-                                            void* data);
+static boolean iterateSubsectorLumObjs(subsector_t* ssec, boolean (*func) (void*, void*), void* data);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -102,9 +100,6 @@ static lumlistnode_t** subLumObjList = NULL;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Registers the cvars and ccmds for lumobj management.
- */
 void LO_Register(void)
 {
     C_VAR_INT("rend-mobj-light-auto", &useMobjAutoLights, 0, 0, 1);
@@ -118,7 +113,7 @@ void LO_Register(void)
 
 static lumlistnode_t* allocListNode(void)
 {
-    lumlistnode_t*         ln;
+    lumlistnode_t* ln;
 
     if(listNodeCursor == NULL)
     {
@@ -153,12 +148,10 @@ static void linkLumObjToSSec(lumobj_t* lum, subsector_t* ssec)
 
 static uint lumToIndex(const lumobj_t* lum)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < numLuminous; ++i)
         if(luminousList[i] == lum)
             return i;
-
     Con_Error("lumToIndex: Invalid lumobj.\n");
     return 0;
 }
@@ -166,17 +159,12 @@ static uint lumToIndex(const lumobj_t* lum)
 void LO_InitForMap(void)
 {
     // First initialize the subsector links (root pointers).
-    subLumObjList =
-        Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0);
+    subLumObjList = Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
 }
 
-/**
- * Release any system resources acquired by the objlink + obj contact
- * management subsystem.
- */
 void LO_Clear(void)
 {
     if(luminousBlockSet)
@@ -202,11 +190,7 @@ void LO_Clear(void)
     maxLuminous = numLuminous = 0;
 }
 
-/**
- * Called at the begining of each frame (iff the render lists are not frozen)
- * by R_BeginWorldFrame().
- */
-void LO_ClearForFrame(void)
+void LO_BeginWorldFrame(void)
 {
 #ifdef DD_PROFILE
     static int i;
@@ -226,9 +210,6 @@ void LO_ClearForFrame(void)
     numLuminous = 0;
 }
 
-/**
- * @return              The number of active lumobjs for this frame.
- */
 uint LO_GetNumLuminous(void)
 {
     return numLuminous;
@@ -238,22 +219,20 @@ static lumobj_t* allocLumobj(void)
 {
 #define LUMOBJ_BATCH_SIZE       (32)
 
-    lumobj_t*           lum;
+    lumobj_t* lum;
 
     // Only allocate memory when it's needed.
     // \fixme No upper limit?
     if(++numLuminous > maxLuminous)
     {
-        uint                i, newMax = maxLuminous + LUMOBJ_BATCH_SIZE;
+        uint i, newMax = maxLuminous + LUMOBJ_BATCH_SIZE;
 
         if(!luminousBlockSet)
         {
-            luminousBlockSet =
-                ZBlockSet_New(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
+            luminousBlockSet = ZBlockSet_New(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
         }
 
-        luminousList =
-            M_Realloc(luminousList, sizeof(lumobj_t*) * newMax);
+        luminousList = M_Realloc(luminousList, sizeof(lumobj_t*) * newMax);
 
         // Add the new lums to the end of the list.
         for(i = maxLuminous; i < newMax; ++i)
@@ -292,71 +271,63 @@ static lumobj_t* createLuminous(lumtype_t type, subsector_t* ssec)
     return lum;
 }
 
-/**
- * Allocate a new lumobj.
- *
- * @return              Index (name) by which the lumobj should be referred.
- */
 uint LO_NewLuminous(lumtype_t type, subsector_t* ssec)
 {
     createLuminous(type, ssec);
     return numLuminous; // == index + 1
 }
 
-/**
- * Retrieve a ptr to the lumobj with the given index. A public interface to
- * the lumobj list.
- *
- * @return              Ptr to the lumobj with the given 1-based index.
- */
 lumobj_t* LO_GetLuminous(uint idx)
 {
     if(!(idx == 0 || idx > numLuminous))
         return luminousList[idx - 1];
-
     return NULL;
 }
 
-/**
- * @return              Index of the specified lumobj.
- */
 uint LO_ToIndex(const lumobj_t* lum)
 {
     return lumToIndex(lum)+1;
 }
 
-/**
- * Is the specified lumobj clipped for the current display player?
- */
 boolean LO_IsClipped(uint idx, int i)
 {
     if(!(idx == 0 || idx > numLuminous))
         return (luminousClipped[idx - 1]? true : false);
-
     return false;
 }
 
-/**
- * Is the specified lumobj hidden for the current display player?
- */
 boolean LO_IsHidden(uint idx, int i)
 {
     if(!(idx == 0 || idx > numLuminous))
         return (luminousClipped[idx - 1] == 2? true : false);
-
     return false;
 }
 
-/**
- * @return              Approximated distance between the lumobj and the
- *                      viewer.
- */
 float LO_DistanceToViewer(uint idx, int i)
 {
     if(!(idx == 0 || idx > numLuminous))
         return luminousDist[idx - 1];
-
     return 0;
+}
+
+float LO_AttenuationFactor(uint idx, float distance)
+{
+    lumobj_t* lum = LO_GetLuminous(idx);
+    if(lum)
+    switch(lum->type)
+    {
+    case LT_OMNI:
+        if(distance <= 0) return 1;
+        if(distance > lum->maxDistance) return 0;
+        if(distance > .67f * lum->maxDistance)
+            return (lum->maxDistance - distance) / (.33f * lum->maxDistance);
+        break;
+    case LT_PLANE: break;
+    default:
+        Con_Error("LO_AttenuationFactor: Invalid lumobj type %i.", (int)lum->type);
+        exit(1); // Unreachable.
+    }
+    return 1;
 }
 
 /**
@@ -508,25 +479,16 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
     }
 }
 
-/**
- * Used to sort lumobjs by distance from viewpoint.
- */
+/// Used to sort lumobjs by distance from viewpoint.
 static int C_DECL lumobjSorter(const void* e1, const void* e2)
 {
-    float               a = luminousDist[*(const uint *) e1];
-    float               b = luminousDist[*(const uint *) e2];
-
-    if(a > b)
-        return 1;
-    else if(a < b)
-        return -1;
-    else
-        return 0;
+    float a = luminousDist[*(const uint *) e1];
+    float b = luminousDist[*(const uint *) e2];
+    if(a > b) return 1;
+    if(a < b) return -1;
+    return 0;
 }
 
-/**
- * Called by Rend_RenderMap() if the render lists are not frozen.
- */
 void LO_BeginFrame(void)
 {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -641,12 +603,12 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 
         params.obj = lum;
         params.type = OT_LUMOBJ;
-        RIT_LinkObjToSubSector(sec->ssectors[0], &params);
+        RIT_LinkObjToSubsector(sec->ssectors[0], (void*)&params);
         { uint i;
         for(i = 1; i < sec->ssectorCount; ++i)
         {
             linkLumObjToSSec(lum, sec->ssectors[i]);
-            RIT_LinkObjToSubSector(sec->ssectors[i], &params);
+            RIT_LinkObjToSubsector(sec->ssectors[i], (void*)&params);
         }}
         break;
         }
@@ -660,17 +622,14 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
     return true;
 }
 
-/**
- * Create lumobjs for all sector-linked mobjs who want them.
- */
 void LO_AddLuminousMobjs(void)
 {
-    if(!useDynLights && !useWallGlow)
+    if(!useDynlights && !useWallGlow)
         return;
 
 BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
-    if(useDynLights)
+    if(useDynlights)
     {
         sector_t* seciter;
         uint i;
@@ -696,62 +655,51 @@ END_PROF( PROF_LUMOBJ_INIT_ADD );
 }
 
 typedef struct lumobjiterparams_s {
-    float           origin[2];
-    float           radius;
-    void*           data;
-    boolean       (*func) (const lumobj_t*, float, void* data);
+    float origin[2];
+    float radius;
+    void* paramaters;
+    int (*callback) (const lumobj_t*, float distance, void* paramaters);
 } lumobjiterparams_t;
 
-boolean LOIT_RadiusLumobjs(void* ptr, void* data)
+int LOIT_RadiusLumobjs(void* ptr, void* paramaters)
 {
-    const lumobj_t*  lum = (const lumobj_t*) ptr;
-    lumobjiterparams_t* params = data;
-    float           dist =
-        P_ApproxDistance(lum->pos[VX] - params->origin[VX],
-                         lum->pos[VY] - params->origin[VY]);
-
-    if(dist <= params->radius && !params->func(lum, dist, params->data))
-        return false; // Stop iteration.
-
-    return true; // Continue iteration.
+    const lumobj_t* lum = (const lumobj_t*) ptr;
+    lumobjiterparams_t* p = (lumobjiterparams_t*)paramaters;
+    float dist = P_ApproxDistance(lum->pos[VX] - p->origin[VX], lum->pos[VY] - p->origin[VY]);
+    int result = 0; // Continue iteration.
+    if(dist <= p->radius)
+    {
+        result = p->callback(lum, dist, p->paramaters);
+    }
+    return result;
 }
 
-/**
- * Calls func for all luminous objects within the specified origin range.
- *
- * @param subsector     The subsector in which the origin resides.
- * @param x             X coordinate of the origin (must be within subsector).
- * @param y             Y coordinate of the origin (must be within subsector).
- * @param radius        Radius of the range around the origin point.
- * @param data          Ptr to pass to the callback.
- * @param func          Callback to make for each object.
- *
- * @return              @c true, iff every callback returns @c true, else @c false.
- */
-boolean LO_LumobjsRadiusIterator(subsector_t* ssec, float x, float y,
-                                 float radius, void* data,
-                                 boolean (*func) (const lumobj_t*, float, void*))
+int LO_LumobjsRadiusIterator2(subsector_t* ssec, float x, float y, float radius,
+    int (*callback) (const lumobj_t*, float distance, void* paramaters), void* paramaters)
 {
-    lumobjiterparams_t  params;
+    lumobjiterparams_t p;
+    if(!ssec || !callback) return 0;
 
-    if(!ssec)
-        return true;
+    p.origin[VX] = x;
+    p.origin[VY] = y;
+    p.radius = radius;
+    p.callback = callback;
+    p.paramaters = paramaters;
 
-    params.origin[VX] = x;
-    params.origin[VY] = y;
-    params.radius = radius;
-    params.func = func;
-    params.data = data;
+    return R_IterateSubsectorContacts2(ssec, OT_LUMOBJ, LOIT_RadiusLumobjs, (void*) &p);
+}
 
-    return R_IterateSubsectorContacts(ssec, OT_LUMOBJ, LOIT_RadiusLumobjs,
-                                      (void*) &params);
+int LO_LumobjsRadiusIterator(subsector_t* ssec, float x, float y, float radius,
+    int (*callback) (const lumobj_t*, float distance, void* paramaters))
+{
+    return LO_LumobjsRadiusIterator2(ssec, x, y, radius, callback, NULL);
 }
 
 boolean LOIT_ClipLumObj(void* data, void* context)
 {
-    lumobj_t*           lum = (lumobj_t*) data;
-    uint                lumIdx = lumToIndex(lum);
-    vec3_t              pos;
+    lumobj_t* lum = (lumobj_t*) data;
+    uint lumIdx = lumToIndex(lum);
+    vec3_t pos;
 
     if(lum->type != LT_OMNI)
         return true; // Only interested in omnilights.
@@ -793,11 +741,6 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     return true; // Continue iteration.
 }
 
-/**
- * Clip lumobj, omni lights in the given subsector.
- *
- * @param ssecidx       Subsector index in which lights will be clipped.
- */
 void LO_ClipInSubsector(uint ssecidx)
 {
     iterateSubsectorLumObjs(&ssectors[ssecidx], LOIT_ClipLumObj, NULL);
@@ -805,17 +748,17 @@ void LO_ClipInSubsector(uint ssecidx)
 
 boolean LOIT_ClipLumObjBySight(void* data, void* context)
 {
-    lumobj_t*           lum = (lumobj_t*) data;
-    uint                lumIdx = lumToIndex(lum);
-    subsector_t*        ssec = (subsector_t*) context;
+    lumobj_t* lum = (lumobj_t*) data;
+    uint lumIdx = lumToIndex(lum);
+    subsector_t* ssec = (subsector_t*) context;
 
     if(lum->type != LT_OMNI)
         return true; // Only interested in omnilights.
 
     if(!luminousClipped[lumIdx])
     {
-        uint                i;
-        vec2_t              eye;
+        vec2_t eye;
+        uint i;
 
         V2_Set(eye, vx, vz);
 
@@ -823,17 +766,15 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
         // between the viewpoint and the lumobj.
         for(i = 0; i < ssec->polyObj->numSegs; ++i)
         {
-            seg_t*              seg = ssec->polyObj->segs[i];
+            seg_t* seg = ssec->polyObj->segs[i];
 
             // Ignore segs facing the wrong way.
             if(seg->frameFlags & SEGINF_FACINGFRONT)
             {
-                vec2_t              source;
+                vec2_t source;
 
                 V2_Set(source, lum->pos[VX], lum->pos[VY]);
-
-                if(V2_Intercept2(source, eye, seg->SG_v1pos,
-                                 seg->SG_v2pos, NULL, NULL, NULL))
+                if(V2_Intercept2(source, eye, seg->SG_v1pos, seg->SG_v2pos, NULL, NULL, NULL))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;
@@ -845,34 +786,21 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
     return true; // Continue iteration.
 }
 
-/**
- * In the situation where a subsector contains both lumobjs and a polyobj,
- * the lumobjs must be clipped more carefully. Here we check if the line of
- * sight intersects any of the polyobj segs that face the camera.
- *
- * @param ssecidx       Subsector index in which lumobjs will be clipped.
- */
 void LO_ClipInSubsectorBySight(uint ssecidx)
 {
-    iterateSubsectorLumObjs(&ssectors[ssecidx], LOIT_ClipLumObjBySight,
-                              &ssectors[ssecidx]);
+    iterateSubsectorLumObjs(&ssectors[ssecidx], LOIT_ClipLumObjBySight, &ssectors[ssecidx]);
 }
 
-static boolean iterateSubsectorLumObjs(subsector_t* ssec,
-                                       boolean (*func) (void*, void*),
-                                       void* data)
+static boolean iterateSubsectorLumObjs(subsector_t* ssec, boolean (*func) (void*, void*),
+    void* data)
 {
-    lumlistnode_t*      ln;
-
-    ln = subLumObjList[GET_SUBSECTOR_IDX(ssec)];
+    lumlistnode_t* ln = subLumObjList[GET_SUBSECTOR_IDX(ssec)];
     while(ln)
     {
         if(!func(ln->data, data))
             return false;
-
         ln = ln->next;
     }
-
     return true;
 }
 
@@ -884,13 +812,12 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
 boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 {
     LO_UnlinkMobjLumobj((mobj_t*) th);
-
     return true; // Continue iteration.
 }
 
 void LO_UnlinkMobjLumobjs(void)
 {
-    if(!useDynLights)
+    if(!useDynlights)
     {
         // Mobjs are always public.
         P_IterateThinkers(gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);
@@ -900,9 +827,8 @@ void LO_UnlinkMobjLumobjs(void)
 void LO_DrawLumobjs(void)
 {
     static const float  black[4] = { 0, 0, 0, 0 };
-    //static const float  white[4] = { 1, 1, 1, 1 };
-    float               color[4];
-    uint                i;
+    float color[4];
+    uint i;
 
     if(!devDrawLums)
         return;
@@ -912,8 +838,8 @@ void LO_DrawLumobjs(void)
 
     for(i = 0; i < numLuminous; ++i)
     {
-        lumobj_t*           lum = luminousList[i];
-        vec3_t              lumCenter;
+        lumobj_t* lum = luminousList[i];
+        vec3_t lumCenter;
 
         if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
             continue;
@@ -932,9 +858,8 @@ void LO_DrawLumobjs(void)
 
         switch(lum->type)
         {
-        case LT_OMNI:
-            {
-            float               scale = LUM_OMNI(lum)->radius;
+        case LT_OMNI: {
+            float scale = LUM_OMNI(lum)->radius;
 
             color[CR] = LUM_OMNI(lum)->color[CR];
             color[CG] = LUM_OMNI(lum)->color[CG];
@@ -967,11 +892,9 @@ void LO_DrawLumobjs(void)
             }
             glEnd();
             break;
-            }
-
-        case LT_PLANE:
-            {
-            float               scale = LUM_PLANE(lum)->intensity * 200;
+          }
+        case LT_PLANE: {
+            float scale = LUM_PLANE(lum)->intensity * 200;
 
             color[CR] = LUM_PLANE(lum)->color[CR];
             color[CG] = LUM_PLANE(lum)->color[CG];
@@ -990,10 +913,8 @@ void LO_DrawLumobjs(void)
             }
             glEnd();
             break;
-            }
-
-        default:
-            break;
+          }
+        default: break;
         }
 
         glMatrixMode(GL_MODELVIEW);
@@ -1003,4 +924,3 @@ void LO_DrawLumobjs(void)
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 }
-

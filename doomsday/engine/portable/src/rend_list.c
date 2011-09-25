@@ -123,7 +123,7 @@ typedef enum listmode_e {
 enum {
     TCA_MAIN, // Main texture.
     TCA_BLEND, // Blendtarget texture.
-    TCA_LIGHT, // Dynlight texture coordinates.
+    TCA_LIGHT, // Dynlight texture.
     NUM_TEXCOORD_ARRAYS
 };
 

@@ -1,4 +1,4 @@
-/**\file
+/**\file m_vector.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * m_vector.h: Vector Math
+ * Vector Math
  */
 
-#ifndef __DOOMSDAY_MISC_VECTOR_H__
-#define __DOOMSDAY_MISC_VECTOR_H__
+#ifndef LIBDENG_DATA_VECTOR_H
+#define LIBDENG_DATA_VECTOR_H
 
 typedef float         vectorcomp_t;
 typedef vectorcomp_t  vec2_t[2];
@@ -85,17 +85,35 @@ void            V3_Sum(pvec3_t dest, const_pvec3_t src1, const_pvec3_t src2);
 void            V3_Subtract(pvec3_t dest, const_pvec3_t src1,
                             const_pvec3_t src2);
 float           V3_DotProduct(const_pvec3_t a, const_pvec3_t b);
-void            V3_CrossProduct(pvec3_t dest, const pvec3_t src1,
-                                const pvec3_t src2);
+void            V3_CrossProduct(pvec3_t dest, const_pvec3_t src1, const_pvec3_t src2);
 void            V3_PointCrossProduct(pvec3_t dest, const pvec3_t v1,
                                      const pvec3_t v2, const pvec3_t v3);
-float           V3_ClosestPointOnPlane(pvec3_t dest,
-                                       const pvec3_t planeNormal,
-                                       const pvec3_t planePoint,
-                                       const pvec3_t arbPoint);
+
+/**
+ * Find the closest point in the plane, to an arbitary point.
+ *
+ * @param dest  Result will be written back here.
+ * @param planeNormal  The normalized plane normal.
+ * @param planePoint  A point already on the plane.
+ * @param arbPoint  The arbitrary point to find the closest point too.
+ *
+ * @return  Distance from the closest point on the plane to the specified arbitary point.
+ */
+float V3_ClosestPointOnPlane(pvec3_t dest, const_pvec3_t planeNormal, const_pvec3_t planePoint, const_pvec3_t arbPoint);
+
 int             V3_MajorAxis(const pvec3_t vec);
 boolean         V3_IsZero(const pvec3_t vec);
 void            V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b, float c);
+
+/**
+ * Given a normalized normal, construct up and right vectors, oriented about
+ * @a normal in our right-handed world coordinate space.
+ *
+ * @param tangent  The 'right' vector will be written back here.
+ * @param bitangent  The 'up' vector will be written back here.
+ * @param normal  Normal to construct tangents for.
+ */
+void V3_BuildTangents(pvec3_t tangent, pvec3_t bitangent, const_pvec3_t normal);
 
 // 4-dimensions:
 void            V4_Set(pvec4_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z, vectorcomp_t w);
@@ -109,4 +127,5 @@ void            V4_Sum(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2);
 void            V4_Subtract(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2);
 boolean         V4_IsZero(const pvec4_t vec);
 void            V4_Lerp(pvec4_t dest, const pvec4_t a, const pvec4_t b, float c);
-#endif
+
+#endif /* LIBDENG_DATA_VECTOR_H */

@@ -166,8 +166,9 @@ typedef struct surface_s {
     int                 oldFlags;
     material_t*         material;
     blendmode_t         blendMode;
-    float               normal[3];     // Surface normal
-    float               oldNormal[3];
+    float               tangent[3];
+    float               bitangent[3];
+    float               normal[3];
     float               offset[2];     // [X, Y] Planar offset to surface material origin.
     float               oldOffset[2][2];
     float               visOffset[2];
@@ -185,6 +186,8 @@ typedef enum {
     NUM_PLANE_TYPES
 } planetype_t;
 
+#define PS_tangent              surface.tangent
+#define PS_bitangent            surface.bitangent
 #define PS_normal               surface.normal
 #define PS_material             surface.material
 #define PS_offset               surface.offset
@@ -213,6 +216,8 @@ typedef struct plane_s {
 
 #define SP_planesurface(n)      SP_plane(n)->surface
 #define SP_planeheight(n)       SP_plane(n)->height
+#define SP_planetangent(n)      SP_plane(n)->surface.tangent
+#define SP_planebitangent(n)    SP_plane(n)->surface.bitangent
 #define SP_planenormal(n)       SP_plane(n)->surface.normal
 #define SP_planematerial(n)     SP_plane(n)->surface.material
 #define SP_planeoffset(n)       SP_plane(n)->surface.offset
@@ -224,6 +229,8 @@ typedef struct plane_s {
 
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
 #define SP_ceilheight           SP_planeheight(PLN_CEILING)
+#define SP_ceiltangent          SP_planetangent(PLN_CEILING)
+#define SP_ceilbitangent        SP_planebitangent(PLN_CEILING)
 #define SP_ceilnormal           SP_planenormal(PLN_CEILING)
 #define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
 #define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
@@ -235,6 +242,8 @@ typedef struct plane_s {
 
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
 #define SP_floorheight          SP_planeheight(PLN_FLOOR)
+#define SP_floortangent         SP_planetangent(PLN_FLOOR)
+#define SP_floorbitangent       SP_planebitangent(PLN_FLOOR)
 #define SP_floornormal          SP_planenormal(PLN_FLOOR)
 #define SP_floormaterial        SP_planematerial(PLN_FLOOR)
 #define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
@@ -305,6 +314,8 @@ typedef enum segsection_e {
 #define SW_surfaceflags(n)      SW_surface(n).flags
 #define SW_surfaceinflags(n)    SW_surface(n).inFlags
 #define SW_surfacematerial(n)   SW_surface(n).material
+#define SW_surfacetangent(n)    SW_surface(n).tangent
+#define SW_surfacebitangent(n)  SW_surface(n).bitangent
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfaceoffset(n)     SW_surface(n).offset
 #define SW_surfacevisoffset(n)  SW_surface(n).visOffset
@@ -315,6 +326,8 @@ typedef enum segsection_e {
 #define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
 #define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
 #define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
+#define SW_middletangent        SW_surfacetangent(SEG_MIDDLE)
+#define SW_middlebitangent      SW_surfacebitangent(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
 #define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
@@ -326,6 +339,8 @@ typedef enum segsection_e {
 #define SW_topflags             SW_surfaceflags(SEG_TOP)
 #define SW_topinflags           SW_surfaceinflags(SEG_TOP)
 #define SW_topmaterial          SW_surfacematerial(SEG_TOP)
+#define SW_toptangent           SW_surfacetangent(SEG_TOP)
+#define SW_topbitangent         SW_surfacebitangent(SEG_TOP)
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
 #define SW_topoffset            SW_surfaceoffset(SEG_TOP)
@@ -336,6 +351,8 @@ typedef enum segsection_e {
 #define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
 #define SW_bottominflags        SW_surfaceinflags(SEG_BOTTOM)
 #define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
+#define SW_bottomtangent        SW_surfacetangent(SEG_BOTTOM)
+#define SW_bottombitangent      SW_surfacebitangent(SEG_BOTTOM)
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
 #define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
