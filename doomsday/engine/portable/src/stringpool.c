@@ -227,7 +227,7 @@ StringPoolInternId StringPool_Intern(StringPool* pool, const ddstring_t* str)
         }
         return internId;
     }
-    Con_Error("StringPool::Intern: Attempted with zero-length/null string.");
+    Con_Error("StringPool::Intern: Attempted with null string.");
     exit(1); // Unreachable.
 }
 
