@@ -1245,15 +1245,25 @@ static void DD_AutoLoad(void)
 
 static int countAvailableGames(void)
 {
-    int i, numAvailableGames = 0;
+    int i, count = 0;
+    for(i = 0; i < gameInfoCount; ++i)
+    {
+        if(DD_IsNullGameInfo(gameInfo[i])) continue;
+        ++count;
+    }
+    return count;
+}
+
+static int countPlayableGames(void)
+{
+    int i, count = 0;
     for(i = 0; i < gameInfoCount; ++i)
     {
         gameinfo_t* info = gameInfo[i];
-        if(DD_IsNullGameInfo(info) || !allGameResourcesFound(info))
-            continue;
-        ++numAvailableGames;
+        if(DD_IsNullGameInfo(info) || !allGameResourcesFound(info)) continue;
+        ++count;
     }
-    return numAvailableGames;
+    return count;
 }
 
 /**
@@ -1261,12 +1271,12 @@ static int countAvailableGames(void)
  */
 void DD_AutoselectGame(void)
 {
-    int numAvailableGames = countAvailableGames();
+    int numPlayableGames = countPlayableGames();
 
-    if(0 >= numAvailableGames)
+    if(0 >= numPlayableGames)
         return;
 
-    if(1 == numAvailableGames)
+    if(1 == numPlayableGames)
     {   // Find this game and select it.
         int i;
         for(i = 0; i < gameInfoCount; ++i)
@@ -1645,7 +1655,6 @@ int DD_Main(void)
         if(!ArgExists("-noautoselect"))
             Con_Printf("Automatic game selection failed.\n");
         Con_Execute(CMDS_DDAY, "listgames", false, false);
-        Con_Message("Use the 'load' command to load a game. For example: \"load gamename\".\n");
     }
 
     // Start the game loop.
@@ -2558,17 +2567,10 @@ static int C_DECL compareGameInfoByName(const void* a, const void* b)
 
 D_CMD(ListGames)
 {
-    int i, numAvailableGames = 0;
-
-    for(i = 0; i < gameInfoCount; ++i)
-    {
-        if(DD_IsNullGameInfo(gameInfo[i])) continue;
-        ++numAvailableGames;
-    }
-
+    int numAvailableGames = countAvailableGames();
     if(numAvailableGames)
     {
-        int numCompleteGames = 0;
+        int i, numCompleteGames = 0;
         gameinfo_t** infoPtrs;
 
         Con_FPrintf(CPF_YELLOW, "Registered Games:\n");
@@ -2591,6 +2593,7 @@ D_CMD(ListGames)
         }
         Con_PrintRuler();
         Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
+        Con_Printf("Use the 'load' command to load a game. For example: \"load gamename\".\n");
 
         free(infoPtrs);
     }
