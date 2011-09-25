@@ -11,7 +11,9 @@ win32 {
     INSTALLS += curllibs
     curllibs.files = \
         $$CURL_DIR/curllib.dll \
-        $$CURL_DIR/openldap.dll
+        $$CURL_DIR/openldap.dll \
+        $$CURL_DIR/ssleay32.dll \
+        $$CURL_DIR/libeay32.dll
     curllibs.path = $$DENG_WIN_PRODUCTS_DIR
 }
 else:macx {
