@@ -218,7 +218,7 @@ const ddstring_t* StringPool_String(StringPool* pool, StringPoolInternId internI
 StringPoolInternId StringPool_Intern(StringPool* pool, const ddstring_t* str)
 {
     if(!pool) Con_Error("StringPool::Intern: Invalid StringPool");
-    if(!str)
+    if(str)
     {
         StringPoolInternId internId = StringPool_IsInterned(pool, str);
         if(0 == internId)
