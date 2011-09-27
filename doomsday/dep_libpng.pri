@@ -1,11 +1,11 @@
 # Build configuration for libpng.
 win32 {
     INCLUDEPATH += $$PWD/external/libpng/portable/include
-    LIBS += -L$$PWD/external/libpng/win32 -llibpng13
+    LIBS += -L$$PWD/external/libpng/win32 -llibpng15
 
     # Installed shared libraries.
     INSTALLS += pnglibs
-    pnglibs.files = $$PWD/external/libpng/win32/libpng13.dll
+    pnglibs.files = $$PWD/external/libpng/win32/libpng15.dll
     pnglibs.path = $$DENG_WIN_PRODUCTS_DIR
 }
 else:macx {
