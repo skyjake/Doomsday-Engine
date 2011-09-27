@@ -564,7 +564,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             // currentMap to be set first.
             P_SetCurrentMap(map);
 
-            R_InitSectorShadows();
+            R_InitFakeRadioForMap();
 
             { uint startTime = Sys_GetRealTime();
             R_InitSkyFix();

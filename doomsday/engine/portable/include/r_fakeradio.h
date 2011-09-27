@@ -1,4 +1,4 @@
-/**\file
+/**\file r_fakeradio.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,14 +23,32 @@
  */
 
 /**
- * r_shadow.h: Runtime Map Shadowing (FakeRadio)
+ * Faked Radiosity Lighting.
+ *
+ * Perhaps the most distinctive characteristic of radiosity lighting
+ * is that the corners of a room are slightly dimmer than the rest of
+ * the surfaces.  (It's not the only characteristic, however.)  We
+ * will fake these shadowed areas by generating shadow polygons for
+ * wall segments and determining, which subsector vertices will be
+ * shadowed.
+ *
+ * In other words, walls use shadow polygons (over entire segs), while
+ * planes use vertex lighting.  Since planes are usually tesselated
+ * into a great deal of subsectors (and triangles), they are better
+ * suited for vertex lighting.  In some cases we will be forced to
+ * split a subsector into smaller pieces than strictly necessary in
+ * order to achieve better accuracy in the shadow effect.
  */
 
-#ifndef __DOOMSDAY_REFRESH_SHADOW_H__
-#define __DOOMSDAY_REFRESH_SHADOW_H__
+#ifndef LIBDENG_REFRESH_FAKERADIO_H
+#define LIBDENG_REFRESH_FAKERADIO_H
 
-void            R_InitSectorShadows(void);
+/**
+ * To be called after map load to perform necessary initialization within this module.
+ */
+void R_InitFakeRadioForMap(void);
 
-boolean         R_IsShadowingLinedef(linedef_t *line);
+/// @return  @c true if @a lineDef qualifies as a (edge) shadow caster.
+boolean R_IsShadowingLinedef(linedef_t* lineDef);
 
-#endif
+#endif /* LIBDENG_REFRESH_FAKERADIO_H */

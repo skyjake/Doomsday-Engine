@@ -1,4 +1,4 @@
-/**\file r_shadow.c
+/**\file r_fakeradio.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -209,26 +209,22 @@ for(i = subsector->shadows; i; i = i->next)
 }
 
 typedef struct shadowlinkerparms_s {
-    linedef_t          *lineDef;
-    byte                side;
+    linedef_t* lineDef;
+    byte side;
 } shadowlinkerparms_t;
 
 /**
  * If the shadow polygon (parm) contacts the subsector, link the poly
  * to the subsector's shadow list.
  */
-boolean RIT_ShadowSubsectorLinker(subsector_t *subsector, void *parm)
+boolean RIT_ShadowSubsectorLinker(subsector_t* subsector, void *parm)
 {
-    shadowlinkerparms_t *data = (shadowlinkerparms_t*) parm;
-
+    shadowlinkerparms_t* data = (shadowlinkerparms_t*) parm;
     linkShadowLineDefToSSec(data->lineDef, data->side, subsector);
     return true;
 }
 
-/**
- * Does the given linedef qualify as an edge shadow caster?
- */
-boolean R_IsShadowingLinedef(linedef_t *line)
+boolean R_IsShadowingLinedef(linedef_t* line)
 {
     if(line)
     {
@@ -243,11 +239,7 @@ boolean R_IsShadowingLinedef(linedef_t *line)
     return false;
 }
 
-/**
- * Calculate sector edge shadow points, create the shadow polygons and link
- * them to the subsectors.
- */
-void R_InitSectorShadows(void)
+void R_InitFakeRadioForMap(void)
 {
     uint            startTime = Sys_GetRealTime();
 
@@ -312,5 +304,5 @@ void R_InitSectorShadows(void)
             }
     }
 
-    VERBOSE2( Con_Message("R_InitSectorShadows: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+    VERBOSE2( Con_Message("R_InitFakeRadioForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }

@@ -22,26 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Faked Radiosity Lighting.
- *
- * Perhaps the most distinctive characteristic of radiosity lighting
- * is that the corners of a room are slightly dimmer than the rest of
- * the surfaces.  (It's not the only characteristic, however.)  We
- * will fake these shadowed areas by generating shadow polygons for
- * wall segments and determining, which subsector vertices will be
- * shadowed.
- *
- * In other words, walls use shadow polygons (over entire segs), while
- * planes use vertex lighting.  Since planes are usually tesselated
- * into a great deal of subsectors (and triangles), they are better
- * suited for vertex lighting.  In some cases we will be forced to
- * split a subsector into smaller pieces than strictly necessary in
- * order to achieve better accuracy in the shadow effect.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
@@ -54,8 +34,6 @@
 #include "sys_opengl.h"
 #include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define MIN_OPEN                (.1f)
 #define EDGE_OPEN_THRESHOLD     (8) // world units (Z axis)
 
@@ -65,37 +43,19 @@
 #define BOTTOM                  (0)
 #define TOP                     (1)
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct edge_s {
-    boolean         done;
-    linedef_t*      line;
-    sector_t*       sector;
-    float           length;
-    binangle_t      diff;
+    boolean done;
+    linedef_t* line;
+    sector_t* sector;
+    float length;
+    binangle_t diff;
 } edge_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void scanEdges(shadowcorner_t topCorners[2],
-                      shadowcorner_t bottomCorners[2],
-                      shadowcorner_t sideCorners[2], edgespan_t spans[2],
-                      const linedef_t* line, boolean backSide);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
+    shadowcorner_t sideCorners[2], edgespan_t spans[2], const linedef_t* line, boolean backSide);
 
 int rendFakeRadio = true; // cvar
 float rendFakeRadioDarkness = 1.2f; // cvar
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void Rend_RadioRegister(void)
 {
@@ -108,33 +68,26 @@ float Rend_RadioCalcShadowDarkness(float lightLevel)
     return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
-/**
- * Called to update the shadow properties used when doing FakeRadio for the
- * given linedef.
- */
 void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
 {
-    sidedef_t*          s;
+    sidedef_t* s;
 
-    if(!rendFakeRadio || levelFullBright || // Disabled?
-       !line)
-        return;
+    if(!rendFakeRadio || levelFullBright || !line) return;
 
     // Have we yet determined the shadow properties to be used with segs
     // on this sidedef?
     s = line->sideDefs[backSide? BACK : FRONT];
     if(s->fakeRadioUpdateCount != frameCount)
-    {   // Not yet. Calculate now.
-        uint                i;
-
+    {
+        // Not yet. Calculate now.
+        uint i;
         for(i = 0; i < 2; ++i)
         {
             s->spans[i].length = line->length;
             s->spans[i].shift = 0;
         }
 
-        scanEdges(s->topCorners, s->bottomCorners, s->sideCorners,
-                  s->spans, line, backSide);
+        scanEdges(s->topCorners, s->bottomCorners, s->sideCorners, s->spans, line, backSide);
         s->fakeRadioUpdateCount = frameCount; // Mark as done.
     }
 }
@@ -155,9 +108,7 @@ static void setRendpolyColor(rcolor_t* rcolors, uint num, const float shadowRGB[
     }
 }
 
-/**
- * @return              @c true, if there is open space in the sector.
- */
+/// @return  @c true, if there is open space in the sector.
 static __inline boolean isSectorOpen(sector_t* sector)
 {
     return (sector && sector->SP_ceilheight > sector->SP_floorheight);
@@ -166,35 +117,27 @@ static __inline boolean isSectorOpen(sector_t* sector)
 /**
  * Set the rendpoly's X offset and texture size.
  *
- * @param length        If negative; implies that the texture is flipped
- *                      horizontally.
+ * @param length  If negative; implies that the texture is flipped horizontally.
  */
-static __inline
-float calcTexCoordX(float lineLength, float segOffset)
+static __inline float calcTexCoordX(float lineLength, float segOffset)
 {
-    if(lineLength > 0)
-        return segOffset;
-
+    if(lineLength > 0) return segOffset;
     return lineLength + segOffset;
 }
 
 /**
  * Set the rendpoly's Y offset and texture size.
  *
- * @param size          If negative; implies that the texture is flipped
- *                      vertically.
+ * @param size  If negative; implies that the texture is flipped vertically.
  */
-static __inline
-float calcTexCoordY(float z, float bottom, float top, float texHeight)
+static __inline float calcTexCoordY(float z, float bottom, float top, float texHeight)
 {
-    if(texHeight > 0)
-        return top - z;
-
+    if(texHeight > 0) return top - z;
     return bottom - z;
 }
 
 static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
-                         edge_t* edge, boolean toLeft)
+    edge_t* edge, boolean toLeft)
 {
 #define SEP             (10)
 
@@ -1197,11 +1140,8 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
     }
 }
 
-/**
- * Render FakeRadio for the given seg section.
- */
 void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
-                          const rendsegradio_params_t* params)
+    const rendsegradio_params_t* params)
 {
     if(!rendFakeRadio || levelFullBright) // Disabled?
         return;
@@ -1660,9 +1600,6 @@ static void drawPoint(float pos[3], float radius, const float color[4])
     glEnd();
 }
 
-/**
- * Render the shadow poly vertices, for debug.
- */
 void Rend_DrawShadowOffsetVerts(void)
 {
     static const float  red[4] = { 1.f, .2f, .2f, 1.f};

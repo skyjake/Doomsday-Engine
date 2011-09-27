@@ -319,11 +319,11 @@
 		<Unit filename="..\..\engine\portable\include\pathdirectory.h" />
 		<Unit filename="..\..\engine\portable\include\r_data.h" />
 		<Unit filename="..\..\engine\portable\include\r_draw.h" />
+		<Unit filename="..\..\engine\portable\include\r_fakeradio.h" />
 		<Unit filename="..\..\engine\portable\include\r_lgrid.h" />
 		<Unit filename="..\..\engine\portable\include\r_lumobjs.h" />
 		<Unit filename="..\..\engine\portable\include\r_main.h" />
 		<Unit filename="..\..\engine\portable\include\r_model.h" />
-		<Unit filename="..\..\engine\portable\include\r_shadow.h" />
 		<Unit filename="..\..\engine\portable\include\r_sky.h" />
 		<Unit filename="..\..\engine\portable\include\r_textureprojection.h" />
 		<Unit filename="..\..\engine\portable\include\r_things.h" />
@@ -702,6 +702,9 @@
 		<Unit filename="..\..\engine\portable\src\r_draw.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\r_fakeradio.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_lgrid.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -712,9 +715,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_model.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\r_shadow.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_sky.c">

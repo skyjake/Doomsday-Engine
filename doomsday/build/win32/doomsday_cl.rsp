@@ -67,11 +67,11 @@
  .\..\..\engine\portable\src\rend_font.c
  .\..\..\engine\portable\src\rend_decor.c
  .\..\..\engine\portable\src\rend_clip.c
+ .\..\..\engine\portable\src\r_fakeradio.c
  .\..\..\engine\portable\src\r_world.c
  .\..\..\engine\portable\src\r_util.c
  .\..\..\engine\portable\src\r_things.c
  .\..\..\engine\portable\src\r_sky.c
- .\..\..\engine\portable\src\r_shadow.c
  .\..\..\engine\portable\src\r_textureprojection.c
  .\..\..\engine\portable\src\r_model.c
  .\..\..\engine\portable\src\r_main.c

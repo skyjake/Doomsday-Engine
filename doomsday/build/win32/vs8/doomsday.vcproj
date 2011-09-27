@@ -1393,6 +1393,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\r_fakeradio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\r_lgrid.h"
 				>
 			</File>
@@ -1406,10 +1410,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\r_model.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\r_shadow.h"
 				>
 			</File>
 			<File
@@ -2751,6 +2751,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\r_fakeradio.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\r_lgrid.c"
 				>
 			</File>
@@ -2764,10 +2768,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\r_model.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\r_shadow.c"
 				>
 			</File>
 			<File

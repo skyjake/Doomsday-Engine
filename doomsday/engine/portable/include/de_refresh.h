@@ -36,7 +36,7 @@
 #include "r_lumobjs.h"
 #include "r_main.h"
 #include "r_model.h"
-#include "r_shadow.h"
+#include "r_fakeradio.h"
 #include "r_sky.h"
 #include "r_textureprojection.h"
 #include "r_things.h"
