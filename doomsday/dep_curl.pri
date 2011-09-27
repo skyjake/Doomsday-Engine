@@ -5,15 +5,11 @@ win32 {
     }
 
     INCLUDEPATH += $$CURL_DIR/include
-    LIBS += -l$$CURL_DIR/libcurl_imp
-
+    LIBS += -l$$CURL_DIR/libcurl
+    
     # Install the libcurl shared library.
     INSTALLS += curllibs
-    curllibs.files = \
-        $$CURL_DIR/curllib.dll \
-        $$CURL_DIR/openldap.dll \
-        $$CURL_DIR/ssleay32.dll \
-        $$CURL_DIR/libeay32.dll
+    curllibs.files = $$CURL_DIR/libcurl.dll 
     curllibs.path = $$DENG_WIN_PRODUCTS_DIR
 }
 else:macx {
