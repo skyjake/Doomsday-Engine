@@ -461,11 +461,30 @@ if(!mat)
         mo->lumIdx = LO_NewLuminous(LT_OMNI, mo->subsector);
 
         l = LO_GetLuminous(mo->lumIdx);
-        l->pos[VX] = mo->pos[VX];
-        l->pos[VY] = mo->pos[VY];
-        l->pos[VZ] = mo->pos[VZ];
         l->maxDistance = 0;
         l->decorSource = NULL;
+
+        // Determine the exact center point of the light.
+        V3_Set(l->pos, 0, 0, 0);
+        if(mo->state && mo->tics >= 0)
+        {
+            V3_Copy(l->pos, mo->srvo);
+            V3_Scale(l->pos, (mo->tics - frameTimePos) / (float) mo->state->tics);
+        }
+
+        if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
+           !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
+           !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
+        {
+            // Use the object's momentum to calculate a short-range offset.
+            vec3_t tmp;
+            V3_Copy(tmp, mo->mom);
+            V3_Scale(tmp, frameTimePos);
+            V3_Sum(l->pos, l->pos, tmp);
+        }
+
+        // Translate to world-space origin.
+        V3_Sum(l->pos, l->pos, mo->pos);
 
         // Don't make too large a light.
         if(radius > loMaxRadius)
