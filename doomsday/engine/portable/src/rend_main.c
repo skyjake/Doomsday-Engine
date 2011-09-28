@@ -843,10 +843,10 @@ static void selectSurfaceColors(const float** topColor,
     }
 }
 
-int RIT_TextureProjectionGetFirst(const dynlight_t* tp, void* paramaters)
+int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
 {
     const dynlight_t** ptr = (dynlight_t**)paramaters;
-    *ptr = tp;
+    *ptr = dyn;
     return 1; // Stop iteration.
 }
 
@@ -905,21 +905,21 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
-        const dynlight_t* tp = NULL;
+        const dynlight_t* dyn = NULL;
 
         /**
          * The dynlights will have already been sorted so that the brightest
          * and largest of them is first in the list. So grab that one.
          */
-        LO_IterateProjections2(lightListIdx, RIT_TextureProjectionGetFirst, (void*)&tp);
+        LO_IterateProjections2(lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
 
-        vis->data.wall.modTex = tp->texture;
-        vis->data.wall.modTexCoord[0][0] = tp->s[0];
-        vis->data.wall.modTexCoord[0][1] = tp->s[1];
-        vis->data.wall.modTexCoord[1][0] = tp->t[0];
-        vis->data.wall.modTexCoord[1][1] = tp->t[1];
+        vis->data.wall.modTex = dyn->texture;
+        vis->data.wall.modTexCoord[0][0] = dyn->s[0];
+        vis->data.wall.modTexCoord[0][1] = dyn->s[1];
+        vis->data.wall.modTexCoord[1][0] = dyn->t[0];
+        vis->data.wall.modTexCoord[1][1] = dyn->t[1];
         for(c = 0; c < 4; ++c)
-            vis->data.wall.modColor[c] = tp->color.rgba[c];
+            vis->data.wall.modColor[c] = dyn->color.rgba[c];
     }
     else
     {
@@ -1327,7 +1327,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             {
                 dynlight_t* dyn = NULL;
 
-                LO_IterateProjections2(p->lightListIdx, RIT_TextureProjectionGetFirst, (void*)&dyn);
+                LO_IterateProjections2(p->lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
 
                 rtexcoords5 = R_AllocRendTexCoords(realNumVertices);
 
