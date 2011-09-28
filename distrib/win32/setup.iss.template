@@ -71,6 +71,7 @@ Source: "lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engi
 Source: "zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libpng15.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libcurl.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "msvcr100.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 
 ; Snowberry
 Source: "..\..\snowberry\dist\*"; DestDir: "{app}\snowberry"; Flags: ignoreversion; Components: Launcher

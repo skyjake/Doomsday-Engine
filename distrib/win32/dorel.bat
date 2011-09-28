@@ -13,6 +13,9 @@ cd ..\..\snowberry
 call build.bat
 cd ..\distrib\win32
 
+REM -- Extra dependencies.
+copy %windir%\system32\msvcr100.dll ..\products
+
 REM -- Recompile.
 SET BUILDFAILURE=0
 rd/s/q work
