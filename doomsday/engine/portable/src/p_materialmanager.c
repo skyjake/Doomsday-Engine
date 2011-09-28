@@ -1573,7 +1573,8 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
         Str_Delete(path);
     }
 
-    *variantIdx++;
+    ++(*variantIdx);
+
     return 0; // Continue iteration.
     }
 }

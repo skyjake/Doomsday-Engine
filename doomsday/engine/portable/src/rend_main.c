@@ -845,7 +845,7 @@ static void selectSurfaceColors(const float** topColor,
 
 int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
 {
-    const dynlight_t** ptr = (dynlight_t**)paramaters;
+    const dynlight_t** ptr = (const dynlight_t**)paramaters;
     *ptr = dyn;
     return 1; // Stop iteration.
 }
