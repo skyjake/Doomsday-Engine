@@ -64,11 +64,6 @@ typedef struct maplumpinfo_s {
     size_t      length;
 } maplumpinfo_t;
 
-typedef struct listnode_s {
-    void*       data;
-    struct listnode_s* next;
-} listnode_t;
-
 typedef struct archivedmap_s {
     char        identifier[9];
     int         numLumps;

@@ -35,8 +35,6 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
-#include "p_dmu.h"
-
 // MACROS ------------------------------------------------------------------
 
 #define SLOPERANGE      2048
@@ -501,6 +499,30 @@ void R_HSVToRGB(float* rgb, float h, float s, float v)
         rgb[2] = q;
         break;
     }
+}
+
+boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xScale, float yScale,
+    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
+{
+    vec3_t vToPoint;
+
+    V3_Subtract(vToPoint, v1, point);
+    s[0] = V3_DotProduct(vToPoint, tangent)   * xScale + .5f;
+    t[0] = V3_DotProduct(vToPoint, bitangent) * yScale + .5f;
+
+    // Is the origin point visible?
+    if(s[0] >= 1 || t[0] >= 1)
+        return false; // Right on the X axis or below on the Y axis.
+
+    V3_Subtract(vToPoint, v2, point);
+    s[1] = V3_DotProduct(vToPoint, tangent)   * xScale + .5f;
+    t[1] = V3_DotProduct(vToPoint, bitangent) * yScale + .5f;
+
+    // Is the end point visible?
+    if(s[1] <= 0 || t[1] <= 0)
+        return false; // Left on the X axis or above on the Y axis.
+
+    return true;
 }
 
 /**

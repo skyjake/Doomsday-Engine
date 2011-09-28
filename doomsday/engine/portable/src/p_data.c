@@ -387,7 +387,7 @@ boolean P_LoadMap(const char *mapID)
 
         R_InitObjLinksForMap();
         LO_InitForMap(); // Lumobj management.
-        DL_InitForMap(); // Projected dynlights (from lumobjs) management.
+        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
         // Init Particle Generator links.

@@ -43,6 +43,11 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct listnode_s {
+    void*       data;
+    struct listnode_s* next;
+} listnode_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -559,7 +564,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             // currentMap to be set first.
             P_SetCurrentMap(map);
 
-            R_InitSectorShadows();
+            R_InitFakeRadioForMap();
 
             { uint startTime = Sys_GetRealTime();
             R_InitSkyFix();

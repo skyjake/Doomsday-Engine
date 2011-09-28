@@ -3065,3 +3065,15 @@ boolean R_DrawVLightVector(const vlight_t* light, void* context)
     }
     return true; // Continue iteration.
 }
+
+float RColor_AverageColor(rcolor_t* c)
+{
+    assert(c);
+    return (c->red + c->green + c->blue) / 3;
+}
+
+float RColor_AverageColorMulAlpha(rcolor_t* c)
+{
+    assert(c);
+    return (c->red + c->green + c->blue) / 3 * c->alpha;
+}

@@ -319,6 +319,7 @@
 		<Unit filename="..\..\engine\portable\include\pathdirectory.h" />
 		<Unit filename="..\..\engine\portable\include\r_data.h" />
 		<Unit filename="..\..\engine\portable\include\r_draw.h" />
+		<Unit filename="..\..\engine\portable\include\r_fakeradio.h" />
 		<Unit filename="..\..\engine\portable\include\r_lgrid.h" />
 		<Unit filename="..\..\engine\portable\include\r_lumobjs.h" />
 		<Unit filename="..\..\engine\portable\include\r_main.h" />
@@ -332,7 +333,7 @@
 		<Unit filename="..\..\engine\portable\include\rend_clip.h" />
 		<Unit filename="..\..\engine\portable\include\rend_console.h" />
 		<Unit filename="..\..\engine\portable\include\rend_decor.h" />
-		<Unit filename="..\..\engine\portable\include\rend_dyn.h" />
+		<Unit filename="..\..\engine\portable\include\rend_dynlight.h" />
 		<Unit filename="..\..\engine\portable\include\rend_fakeradio.h" />
 		<Unit filename="..\..\engine\portable\include\rend_font.h" />
 		<Unit filename="..\..\engine\portable\include\rend_halo.h" />
@@ -702,6 +703,9 @@
 		<Unit filename="..\..\engine\portable\src\r_draw.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\r_fakeradio.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_lgrid.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -741,7 +745,7 @@
 		<Unit filename="..\..\engine\portable\src\rend_decor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\rend_dyn.c">
+		<Unit filename="..\..\engine\portable\src\rend_dynlight.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\rend_fakeradio.c">

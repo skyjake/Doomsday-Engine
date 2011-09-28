@@ -244,6 +244,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
     void* centralDirectory;
     ddstring_t entryPath;
     centralend_t summary;
+    uint lumpIdx;
     char* pos;
 
     VERBOSE( Con_Message("ZipFile::readLumpDirectory: \"%s\"\n",
@@ -299,6 +300,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
         }
 
         // Read all the entries.
+        lumpIdx = 0;
         for(index = 0; index < USHORT(summary.totalEntryCount);
             ++index, pos += sizeof(centralfileheader_t))
         {
@@ -372,7 +374,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
             DFile_Seek(zip->_base._file, ULONG(header->relOffset), SEEK_SET);
             DFile_Read(zip->_base._file, (uint8_t*)&localHeader, sizeof(localHeader));
 
-            record->info.lumpIdx = index;
+            record->info.lumpIdx = lumpIdx++;
             record->info.container = (abstractfile_t*)zip;
             record->baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t) + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
 

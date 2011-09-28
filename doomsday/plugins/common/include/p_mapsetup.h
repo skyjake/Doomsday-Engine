@@ -1,4 +1,4 @@
-/**\file
+/**\file p_mapsetup.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_setup.c: Common map setup routines.
+ * Common map setup routines
  */
 
 #ifndef LIBCOMMON_PLAYSETUP_H

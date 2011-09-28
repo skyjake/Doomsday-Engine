@@ -123,7 +123,7 @@ typedef enum listmode_e {
 enum {
     TCA_MAIN, // Main texture.
     TCA_BLEND, // Blendtarget texture.
-    TCA_LIGHT, // Dynlight texture coordinates.
+    TCA_LIGHT, // Dynlight texture.
     NUM_TEXCOORD_ARRAYS
 };
 
@@ -207,7 +207,7 @@ typedef struct listhash_s {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern byte devRendSkyAlways;
-extern int useDynLights, dlBlend, skySimple;
+extern int skySimple;
 extern boolean usingFog;
 
 extern byte freezeRLs;
@@ -218,6 +218,9 @@ int renderTextures = true;
 int renderWireframe = false;
 int useMultiTexLights = true;
 int useMultiTexDetails = true;
+
+// Rendering paramaters for dynamic lights.
+int dynlightBlend = 0;
 
 // Rendering parameters for detail textures.
 float detailFactor = .5f;
@@ -263,6 +266,8 @@ static float blackColor[4] = { 0, 0, 0, 0 };
 void RL_Register(void)
 {
     // \todo Move cvars here.
+    C_VAR_INT("rend-light-multitex", &useMultiTexLights, 0, 0, 1);
+    C_VAR_INT("rend-light-blend", &dynlightBlend, 0, 0, 2);
 }
 
 static void rlBind(DGLuint tex, int magMode)
@@ -1823,7 +1828,7 @@ BEGIN_PROF( PROF_RL_RENDER_LIGHT );
 
     // If multitexturing is available, we'll use it to our advantage
     // when rendering lights.
-    if(IS_MTEX_LIGHTS && dlBlend != 2)
+    if(IS_MTEX_LIGHTS && dynlightBlend != 2)
     {
         if(IS_MUL)
         {
@@ -1881,7 +1886,7 @@ BEGIN_PROF( PROF_RL_RENDER_LIGHT );
      * Draw all dynamic lights (always additive).
      */
     count = collectLists(dynHash, lists);
-    if(dlBlend != 2)
+    if(dynlightBlend != 2)
         renderLists(LM_LIGHTS, lists, count);
 
 END_PROF( PROF_RL_RENDER_LIGHT );
@@ -1901,7 +1906,7 @@ END_PROF( PROF_RL_RENDER_LIGHT );
         }
         else
         {
-            if(IS_MTEX_LIGHTS && dlBlend != 2)
+            if(IS_MTEX_LIGHTS && dynlightBlend != 2)
             {
                 renderLists(LM_MOD_TEXTURE_MANY_LIGHTS, lists, count);
             }

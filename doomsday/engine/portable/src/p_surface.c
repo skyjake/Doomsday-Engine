@@ -458,6 +458,34 @@ boolean Surface_GetProperty(const surface_t* suf, setargs_t* args)
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VX], args, 0);
         DMU_GetValue(DMT_SURFACE_OFFSET, &suf->offset[VY], args, 1);
         break;
+    case DMU_TANGENT_X:
+        DMU_GetValue(DMT_SURFACE_TANGENT, &suf->tangent[VX], args, 0);
+        break;
+    case DMU_TANGENT_Y:
+        DMU_GetValue(DMT_SURFACE_TANGENT, &suf->tangent[VY], args, 0);
+        break;
+    case DMU_TANGENT_Z:
+        DMU_GetValue(DMT_SURFACE_TANGENT, &suf->tangent[VZ], args, 0);
+        break;
+    case DMU_TANGENT_XYZ:
+        DMU_GetValue(DMT_SURFACE_TANGENT, &suf->tangent[VX], args, 0);
+        DMU_GetValue(DMT_SURFACE_TANGENT, &suf->tangent[VY], args, 1);
+        DMU_GetValue(DMT_SURFACE_TANGENT, &suf->tangent[VZ], args, 2);
+        break;
+    case DMU_BITANGENT_X:
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &suf->bitangent[VX], args, 0);
+        break;
+    case DMU_BITANGENT_Y:
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &suf->bitangent[VY], args, 0);
+        break;
+    case DMU_BITANGENT_Z:
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &suf->bitangent[VZ], args, 0);
+        break;
+    case DMU_BITANGENT_XYZ:
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &suf->bitangent[VX], args, 0);
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &suf->bitangent[VY], args, 1);
+        DMU_GetValue(DMT_SURFACE_BITANGENT, &suf->bitangent[VZ], args, 2);
+        break;
     case DMU_NORMAL_X:
         DMU_GetValue(DMT_SURFACE_NORMAL, &suf->normal[VX], args, 0);
         break;

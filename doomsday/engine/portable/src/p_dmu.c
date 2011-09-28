@@ -112,6 +112,14 @@ const char* DMU_Str(uint prop)
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
         { DMU_XY, "DMU_XY" },
+        { DMU_TANGENT_X, "DMU_TANGENT_X" },
+        { DMU_TANGENT_Y, "DMU_TANGENT_Y" },
+        { DMU_TANGENT_Z, "DMU_TANGENT_Z" },
+        { DMU_TANGENT_XYZ, "DMU_TANGENT_XYZ" },
+        { DMU_BITANGENT_X, "DMU_BITANGENT_X" },
+        { DMU_BITANGENT_Y, "DMU_BITANGENT_Y" },
+        { DMU_BITANGENT_Z, "DMU_BITANGENT_Z" },
+        { DMU_BITANGENT_XYZ, "DMU_BITANGENT_XYZ" },
         { DMU_NORMAL_X, "DMU_NORMAL_X" },
         { DMU_NORMAL_Y, "DMU_NORMAL_Y" },
         { DMU_NORMAL_Z, "DMU_NORMAL_Z" },
@@ -1002,6 +1010,14 @@ static int setProperty(void* obj, void* context)
         case DMU_OFFSET_X:
         case DMU_OFFSET_Y:
         case DMU_OFFSET_XY:
+        case DMU_TANGENT_X:
+        case DMU_TANGENT_Y:
+        case DMU_TANGENT_Z:
+        case DMU_TANGENT_XYZ:
+        case DMU_BITANGENT_X:
+        case DMU_BITANGENT_Y:
+        case DMU_BITANGENT_Z:
+        case DMU_BITANGENT_XYZ:
         case DMU_NORMAL_X:
         case DMU_NORMAL_Y:
         case DMU_NORMAL_Z:
@@ -1447,6 +1463,14 @@ static int getProperty(void* obj, void* context)
         case DMU_OFFSET_X:
         case DMU_OFFSET_Y:
         case DMU_OFFSET_XY:
+        case DMU_TANGENT_X:
+        case DMU_TANGENT_Y:
+        case DMU_TANGENT_Z:
+        case DMU_TANGENT_XYZ:
+        case DMU_BITANGENT_X:
+        case DMU_BITANGENT_Y:
+        case DMU_BITANGENT_Z:
+        case DMU_BITANGENT_XYZ:
         case DMU_NORMAL_X:
         case DMU_NORMAL_Y:
         case DMU_NORMAL_Z:

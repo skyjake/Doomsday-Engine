@@ -55,6 +55,7 @@
  .\..\..\engine\portable\src\rend_bias.c
  .\..\..\engine\portable\src\edit_bias.c
  .\..\..\engine\portable\src\edit_map.c
+ .\..\..\engine\portable\src\rend_dynlight.c
  .\..\..\engine\portable\src\rend_sprite.c
  .\..\..\engine\portable\src\rend_sky.c
  .\..\..\engine\portable\src\rend_shadow.c
@@ -65,14 +66,14 @@
  .\..\..\engine\portable\src\rend_halo.c
  .\..\..\engine\portable\src\rend_fakeradio.c
  .\..\..\engine\portable\src\rend_font.c
- .\..\..\engine\portable\src\rend_dyn.c
  .\..\..\engine\portable\src\rend_decor.c
  .\..\..\engine\portable\src\rend_clip.c
+ .\..\..\engine\portable\src\r_fakeradio.c
  .\..\..\engine\portable\src\r_world.c
  .\..\..\engine\portable\src\r_util.c
  .\..\..\engine\portable\src\r_things.c
- .\..\..\engine\portable\src\r_sky.c
  .\..\..\engine\portable\src\r_shadow.c
+ .\..\..\engine\portable\src\r_sky.c
  .\..\..\engine\portable\src\r_model.c
  .\..\..\engine\portable\src\r_main.c
  .\..\..\engine\portable\src\r_draw.c

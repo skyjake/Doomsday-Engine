@@ -1,4 +1,4 @@
-/**\file
+/**\file r_util.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,13 @@
  */
 
 /**
- * r_util.h: Refresh Utility Routines
+ * Refresh Utility Routines
  */
 
-#ifndef __DOOMSDAY_REFRESH_UTIL_H__
-#define __DOOMSDAY_REFRESH_UTIL_H__
+#ifndef LIBDENG_REFRESH_UTIL_H
+#define LIBDENG_REFRESH_UTIL_H
+
+#include "m_vector.h"
 
 int             R_PointOnSide(const float x, const float y,
                               const partition_t* par);
@@ -43,9 +45,28 @@ boolean         R_IsPointInSector2(const float x, const float y,
                                    const sector_t* sector);
 boolean         R_IsPointInSubsector(const float x, const float y,
                                      const subsector_t* ssec);
+sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
+
 void            R_ScaleAmbientRGB(float* out, const float* in, float mul);
 void            R_HSVToRGB(float* rgb, float h, float s, float v);
-sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
+
+/**
+ * Generate texcoords on the surface centered on point.
+ *
+ * @param s  Texture s coords written back here.
+ * @param t  Texture t coords written back here.
+ * @param point  Point on surface around which texture is centered.
+ * @param xScale  Scale multiplier on the horizontal axis.
+ * @param yScale  Scale multiplier on the vertical axis.
+ * @param v1  Top left vertex of the surface being projected on.
+ * @param v2  Bottom right vertex of the surface being projected on.
+ * @param tangent  Tangent vector of the surface being projected on.
+ * @param bitangent  Bitangent vector of the surface being projected on.
+ *
+ * @return  @c true if the generated coords are within bounds.
+ */
+boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xScale, float yScale,
+    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent);
 
 /**
  * Choose an alignment mode and/or calculate the appropriate scaling factor
@@ -84,4 +105,4 @@ scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availH
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode);
 
-#endif
+#endif /* LIBDENG_REFRESH_UTIL_H */

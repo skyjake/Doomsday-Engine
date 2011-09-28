@@ -1163,20 +1163,19 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
 
-    for(pass = ((origTextFlags & DTF_NO_SHADOW) != 0? 1 : 0); pass < 2; ++pass)
+    for(pass = ((origTextFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
+        pass < ((origTextFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
     {
         // Configure the next pass.
         cx = (float) x;
         cy = (float) y;
         curCase = -1;
         charCount = 0;
-        if(pass == 0)
+        switch(pass)
         {
-            textFlags = origTextFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER);
-        }
-        else
-        {
-            textFlags = origTextFlags | (DTF_NO_SHADOW);
+        case 0: textFlags = origTextFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER); break;
+        case 1: textFlags = origTextFlags | (DTF_NO_SHADOW |DTF_NO_GLITTER);   break;
+        case 2: textFlags = origTextFlags | (DTF_NO_SHADOW |DTF_NO_CHARACTER); break;
         }
 
         // Apply defaults.

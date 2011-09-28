@@ -32,7 +32,7 @@
 #include "r_data.h"
 
 // Multiplicative blending for dynamic lights?
-#define IS_MUL              (dlBlend != 1 && !usingFog)
+#define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
 // Types of rendering primitives.
 typedef enum primtype_e {
@@ -65,7 +65,11 @@ extern int renderTextures;
 extern int renderWireframe;
 extern int useMultiTexLights;
 extern int useMultiTexDetails;
+
+extern int dynlightBlend;
+
 extern float detailFactor, detailScale;
+
 extern int torchAdditive;
 extern float torchColor[];
 

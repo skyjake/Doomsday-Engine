@@ -2189,16 +2189,13 @@ uint MPE_PlaneCreate(uint sector, float height, materialnum_t material,
     Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
     Surface_SetColorRGBA(&pln->surface, r, g, b, a);
     Surface_SetMaterialOffsetXY(&pln->surface, matOffsetX, matOffsetY);
-    pln->PS_normal[VX] = normalX;
-    pln->PS_normal[VY] = normalY;
-    pln->PS_normal[VZ] = normalZ;
-    if(pln->PS_normal[VZ] < 0)
-        pln->type = PLN_CEILING;
-    else
-        pln->type = PLN_FLOOR;
-    M_Normalize(pln->PS_normal);
-    pln->sector = s;
+    V3_Set(pln->PS_normal, normalX, normalY, normalZ);
+    V3_Normalize(pln->PS_normal);
+    V3_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
 
+    pln->type = (pln->PS_normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
+
+    pln->sector = s;
     newList = M_Malloc(sizeof(plane_t*) * (++s->planeCount + 1));
     for(i = 0; i < s->planeCount - 1; ++i)
     {

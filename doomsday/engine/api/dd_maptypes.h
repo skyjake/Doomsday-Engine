@@ -31,7 +31,9 @@
 #define DMT_SURFACE_FLAGS DDVT_INT     // SUF_ flags
 #define DMT_SURFACE_MATERIAL DDVT_PTR
 #define DMT_SURFACE_BLENDMODE DDVT_BLENDMODE
-#define DMT_SURFACE_NORMAL DDVT_FLOAT  // Surface normal
+#define DMT_SURFACE_BITANGENT DDVT_FLOAT
+#define DMT_SURFACE_TANGENT DDVT_FLOAT
+#define DMT_SURFACE_NORMAL DDVT_FLOAT
 #define DMT_SURFACE_OFFSET DDVT_FLOAT  // [X, Y] Planar offset to surface material origin.
 #define DMT_SURFACE_RGBA DDVT_FLOAT    // Surface color tint
 

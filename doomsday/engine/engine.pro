@@ -237,7 +237,7 @@ DENG_HEADERS = \
     portable/include/rend_clip.h \
     portable/include/rend_console.h \
     portable/include/rend_decor.h \
-    portable/include/rend_dyn.h \
+    portable/include/rend_dynlight.h \
     portable/include/rend_fakeradio.h \
     portable/include/rend_font.h \
     portable/include/rend_halo.h \
@@ -252,6 +252,7 @@ DENG_HEADERS = \
     portable/include/resourcerecord.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
+    portable/include/r_fakeradio.h \
     portable/include/r_lgrid.h \
     portable/include/r_lumobjs.h \
     portable/include/r_main.h \
@@ -481,6 +482,7 @@ SOURCES += \
     portable/src/p_vertex.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \
+    portable/src/r_fakeradio.c \
     portable/src/r_lgrid.c \
     portable/src/r_lumobjs.c \
     portable/src/r_main.c \
@@ -495,7 +497,7 @@ SOURCES += \
     portable/src/rend_clip.c \
     portable/src/rend_console.c \
     portable/src/rend_decor.c \
-    portable/src/rend_dyn.c \
+    portable/src/rend_dynlight.c \
     portable/src/rend_fakeradio.c \
     portable/src/rend_font.c \
     portable/src/rend_halo.c \

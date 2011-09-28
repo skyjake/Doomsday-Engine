@@ -140,7 +140,8 @@ void            R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln);
  */
 void R_UpdateMapSurfacesOnMaterialChange(material_t* material);
 
-boolean         R_IsGlowingPlane(const plane_t* pln);
+boolean R_IsGlowingPlane(const plane_t* pln);
+float R_GlowStrength(const plane_t* pln);
 
 lineowner_t*    R_GetVtxLineOwner(const vertex_t* vtx, const linedef_t* line);
 linedef_t*      R_FindLineNeighbor(const sector_t* sector,
