@@ -20,7 +20,4 @@ win32 {
 
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsopenal.def\"
     OTHER_FILES += api/dsopenal.def
-
-    INSTALLS += target
-    target.path = $$DENG_WIN_PRODUCTS_DIR
 }

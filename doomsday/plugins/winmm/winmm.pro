@@ -31,6 +31,3 @@ LIBS += -lwinmm
 
 QMAKE_LFLAGS += /DEF:\"$$PWD/api/dswinmm.def\"
 OTHER_FILES += api/dswinmm.def
-
-INSTALLS += target
-target.path = $$DENG_WIN_PRODUCTS_DIR

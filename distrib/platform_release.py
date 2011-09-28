@@ -7,7 +7,7 @@ import time
 import glob
 import build_version
 
-LAUNCH_DIR = os.getcwd()
+LAUNCH_DIR = os.path.abspath(os.getcwd())
 DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
 SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
 WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
@@ -80,9 +80,7 @@ def prepare_work_dir():
 
 def mac_os_version():
     return platform.mac_ver()[0][:4]
-    
-    
-    
+       
 
 """The Mac OS X release procedure."""
 def mac_release():
@@ -198,6 +196,11 @@ def mac_release():
 
 """The Mac OS X release procedure."""
 def win_release():
+    PROD_DIR = os.path.join(LAUNCH_DIR, 'products')
+    if not os.path.exists(PROD_DIR):
+        print "Creating the products directory."
+        os.mkdir(PROD_DIR)
+
     # Generate the Inno Setup configuration file.
     script = file('win32\setup.iss.template', 'rt').read()
     file('win32\setup.iss', 'wt').write(script

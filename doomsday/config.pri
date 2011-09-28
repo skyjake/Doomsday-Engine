@@ -21,6 +21,7 @@ DENG_UNIX_INCLUDE_DIR = $$PWD/engine/unix/include
 DENG_MAC_INCLUDE_DIR = $$PWD/engine/mac/include
 DENG_WIN_INCLUDE_DIR = $$PWD/engine/win32/include
 
+# Binaries and generated files are placed here.
 DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
 # Versions -------------------------------------------------------------------
@@ -56,7 +57,8 @@ win32 {
 
     DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
 
-    DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
+    DESTDIR = $$DENG_WIN_PRODUCTS_DIR
+    DENG_EXPORT_LIB = $$DENG_WIN_PRODUCTS_DIR/doomsday.lib
 
     # Tell rc where to get the API headers.
     QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"

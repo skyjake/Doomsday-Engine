@@ -583,18 +583,12 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
-data.files = $$OUT_PWD/../doomsday.pk3
-
 win32 {
     # Windows installation.
-    INSTALLS += target license data
-
-    target.path = $$DENG_WIN_PRODUCTS_DIR
+    INSTALLS += license
 
     license.files = doc/LICENSE
     license.path = $$DENG_WIN_PRODUCTS_DIR
-
-    data.path = $$DENG_WIN_PRODUCTS_DIR
 }
 else:unix:!macx {
     # Generic Unix installation.
@@ -602,6 +596,7 @@ else:unix:!macx {
 
     target.path = $$DENG_BIN_DIR
 
+    data.files = $$OUT_PWD/../doomsday.pk3
     data.path = $$DENG_DATA_DIR
 
     startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png

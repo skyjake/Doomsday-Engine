@@ -68,12 +68,10 @@ Source: "mikmod.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: En
 Source: "SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "curllib.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "openldap.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "ssleay32.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libeay32.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libpng13.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "libpng15.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "libcurl.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "msvcr100.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 
 ; Snowberry
 Source: "..\..\snowberry\dist\*"; DestDir: "{app}\snowberry"; Flags: ignoreversion; Components: Launcher
