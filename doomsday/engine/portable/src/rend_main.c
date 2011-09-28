@@ -4509,7 +4509,6 @@ void Rend_Vertexes(void)
 void Rend_RenderMap(void)
 {
     binangle_t viewside;
-    boolean doLums = (useDynlights || haloMode || spriteLight || useLightDecorations);
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;

@@ -451,7 +451,7 @@ uint CBuffer_GetLines(CBuffer* cb, uint reqCount, int firstIdx,
 
 const cbline_t* CBuffer_GetLine(CBuffer* cb, uint idx)
 {
-    const cbline_t* line;
+    const cbline_t* line = NULL;
     cbnode_t* node;
     lock(cb, true);
     node = bufferGetLine(cb, idx);
