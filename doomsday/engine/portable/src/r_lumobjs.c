@@ -400,7 +400,7 @@ if(!mat)
         texInst = ms.units[MTU_PRIMARY].texInst;
 
         size = texInst->data.sprite.lumSize;
-        yOffset = texInst->data.sprite.flareY;
+        yOffset = ms.height * texInst->data.sprite.flareY;
         // Does the mobj have an active light definition?
         if(def)
         {
