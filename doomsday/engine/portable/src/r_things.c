@@ -1527,7 +1527,7 @@ if(!mat)
         
         flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = (pl->originX - (float) ms.width / 2) - (sprTex->offX - (float) ms.width / 2);
+        xOffset = ms.width * pl->originX - sprTex->offX;
 
         // Does the mobj have an active light definition?
         if(def)

@@ -754,7 +754,7 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
         return; // Not good...
 
     size = pl->brightMul;
-    yOffset = pl->originY;
+    yOffset = ms.height * pl->originY;
     // Does the mobj have an active light definition?
     if(def)
     {
