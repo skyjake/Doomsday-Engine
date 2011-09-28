@@ -386,7 +386,6 @@ boolean P_LoadMap(const char *mapID)
 
         R_InitObjLinksForMap();
         LO_InitForMap(); // Lumobj management.
-        R_InitSurfaceProjectionListsForMap(); // Projected dynlights.
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 

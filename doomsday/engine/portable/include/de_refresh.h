@@ -40,7 +40,7 @@
 #include "r_model.h"
 #include "r_shadow.h"
 #include "r_sky.h"
-#include "r_textureprojection.h"
+#include "rend_dynlight.h"
 #include "r_things.h"
 #include "r_util.h"
 #include "r_world.h"

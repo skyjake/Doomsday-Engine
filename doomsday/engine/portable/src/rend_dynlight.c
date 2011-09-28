@@ -1,4 +1,4 @@
-/**\file r_textureprojection.c
+/**\file rend_dynlight.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,460 +22,143 @@
  * Boston, MA  02110-1301  USA
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
-#include "de_play.h"
 
-typedef struct listnode_s {
-    struct listnode_s* next, *nextUsed;
-    textureprojection_t projection;
-} listnode_t;
-
-/**
- * @defgroup surfaceProjectionListFlags  Surface Projection List Flags
- * @{
- */
-#define SPLF_SORT_LUMINOUS_DESC  0x1 /// Sort by luminosity in descending order.
-/**@}*/
-
-typedef struct {
-    int flags; /// @see surfaceProjectionListFlags
-    listnode_t* head;
-} surfaceprojectionlist_t;
-
-/// Orientation is toward the projectee.
-typedef struct {
-    int flags; /// @see surfaceProjectLightFlags
-    float blendFactor; /// Multiplied with projection alpha.
-    pvec3_t v1; /// Top left vertex of the surface being projected to.
-    pvec3_t v2; /// Bottom right vertex of the surface being projected to.
-    pvec3_t tangent; /// Normalized tangent of the surface being projected to.
-    pvec3_t bitangent; /// Normalized bitangent of the surface being projected to.
-    pvec3_t normal; /// Normalized normal of the surface being projected to.
-} surfaceprojectparams_t;
-
-// List nodes.
-static listnode_t* firstNode, *cursorNode;
-
-// Surface projection lists.
-static uint projectionListCount, cursorList;
-static surfaceprojectionlist_t* projectionLists;
-
-void R_InitSurfaceProjectionListsForMap(void)
+/// Generates a new primitive for each light projection.
+int RIT_RenderLightProjectionIterator(const dynlight_t* dyn, void* paramaters)
 {
-    static boolean firstTime = true;
-    if(firstTime)
+    renderlightprojectionparams_t* p = (renderlightprojectionparams_t*)paramaters;
+    // If multitexturing is in use we skip the first.
+    if(!(RL_IsMTexLights() && p->lastIdx == 0))
     {
-        firstNode = NULL;
-        cursorNode = NULL;
-        firstTime = false;
-    }
-    // All memory for the lists is allocated from Zone so we can "forget" it.
-    projectionLists = NULL;
-    projectionListCount = 0;
-    cursorList = 0;
-}
+        rvertex_t* rvertices;
+        rtexcoord_t* rtexcoords;
+        rcolor_t* rcolors;
+        rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+        uint i, c;
 
-void R_InitSurfaceProjectionListsForNewFrame(void)
-{
-    // Start reusing nodes from the first one in the list.
-    cursorNode = firstNode;
+        memset(rTU, 0, sizeof(rTU));
 
-    // Clear the lists.
-    cursorList = 0;
-    if(projectionListCount)
-    {
-        memset(projectionLists, 0, projectionListCount * sizeof *projectionLists);
-    }
-}
+        // Allocate enough for the divisions too.
+        rvertices = R_AllocRendVertices(p->realNumVertices);
+        rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
+        rcolors = R_AllocRendColors(p->realNumVertices);
 
-/**
- * Create a new projection list.
- *
- * @param flags  @see surfaceProjectionListFlags
- * @return  Unique identifier attributed to the new list.
- */
-static uint newList(int flags)
-{
-    surfaceprojectionlist_t* list;
+        rTU[TU_PRIMARY].tex = dyn->texture;
+        rTU[TU_PRIMARY].magMode = GL_LINEAR;
 
-    // Do we need to allocate more lists?
-    if(++cursorList >= projectionListCount)
-    {
-        projectionListCount *= 2;
-        if(!projectionListCount) projectionListCount = 2;
+        rTU[TU_PRIMARY_DETAIL].tex = 0;
+        rTU[TU_INTER].tex = 0;
+        rTU[TU_INTER_DETAIL].tex = 0;
 
-        projectionLists = (surfaceprojectionlist_t*)Z_Realloc(projectionLists, projectionListCount * sizeof *projectionLists, PU_MAP);
-        if(!projectionLists) Con_Error(__FILE__":newList failed on allocation of %lu bytes resizing the projection list.", (unsigned long) (projectionListCount * sizeof *projectionLists));
-    }
-
-    list = &projectionLists[cursorList-1];
-    list->head = NULL;
-    list->flags = flags;
-
-    return cursorList;
-}
-
-/**
- * @param listIdx  Address holding the list index to retrieve.
- *      If the referenced list index is non-zero return the associated list.
- *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @see ProjectionListFlags
- * @return  ProjectionList associated with the (possibly newly attributed) index.
- */
-static surfaceprojectionlist_t* getList(uint* listIdx, int flags)
-{
-    // Do we need to allocate a list?
-    if(!(*listIdx))
-    {
-        *listIdx = newList(flags);
-    }
-    return projectionLists + ((*listIdx)-1); // 1-based index.
-}
-
-static listnode_t* newListNode(void)
-{
-    listnode_t* node;
-
-    // Do we need to allocate mode nodes?
-    if(cursorNode == NULL)
-    {
-        node = (listnode_t*)Z_Malloc(sizeof *node, PU_APPSTATIC, NULL);
-        if(!node) Con_Error(__FILE__":newListNode failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
-
-        // Link the new node to the list.
-        node->nextUsed = firstNode;
-        firstNode = node;
-    }
-    else
-    {
-        node = cursorNode;
-        cursorNode = cursorNode->nextUsed;
-    }
-
-    node->next = NULL;
-    return node;
-}
-
-static listnode_t* newProjection(DGLuint texture, const float s[2],
-    const float t[2], const float color[3], float alpha)
-{
-    assert(texture != 0 && s && t && color);
-    {
-    listnode_t* node = newListNode();
-    textureprojection_t* tp = &node->projection;
-
-    tp->texture = texture;
-    tp->s[0] = s[0];
-    tp->s[1] = s[1];
-    tp->t[0] = t[0];
-    tp->t[1] = t[1];
-    tp->color.rgba[CR] = color[CR];
-    tp->color.rgba[CG] = color[CG];
-    tp->color.rgba[CB] = color[CB];
-    tp->color.rgba[CA] = MINMAX_OF(0, alpha, 1);
-
-    return node;
-    }
-}
-
-static __inline float calcProjectionLuminosity(textureprojection_t* tp)
-{
-    assert(tp);
-    return RColor_AverageColorMulAlpha(&tp->color);
-}
-
-/// @return  Same as @a node for convenience (chaining).
-static listnode_t* linkProjectionToList(listnode_t* node, surfaceprojectionlist_t* list)
-{
-    assert(node && list);
-    if((list->flags & SPLF_SORT_LUMINOUS_DESC) && list->head)
-    {
-        float luma = calcProjectionLuminosity(&node->projection);
-        listnode_t* iter = list->head, *last = iter;
-        do
+        for(i = 0; i < p->numVertices; ++i)
         {
-            // Is this brighter than that being added?
-            if(calcProjectionLuminosity(&iter->projection) > luma)
+            rcolor_t* col = &rcolors[i];
+            for(c = 0; c < 4; ++c)
+                col->rgba[c] = dyn->color.rgba[c];
+        }
+
+        if(p->isWall)
+        {
+            rtexcoords[1].st[0] = rtexcoords[0].st[0] = dyn->s[0];
+            rtexcoords[1].st[1] = rtexcoords[3].st[1] = dyn->t[0];
+            rtexcoords[3].st[0] = rtexcoords[2].st[0] = dyn->s[1];
+            rtexcoords[2].st[1] = rtexcoords[0].st[1] = dyn->t[1];
+
+            if(p->divs)
             {
-                last = iter;
-                iter = iter->next;
+                // We need to subdivide the projection quad.
+                float bL, tL, bR, tR;
+                rvertex_t origVerts[4];
+                rcolor_t origColors[4];
+                rtexcoord_t origTexCoords[4];
+
+                /**
+                 * Need to swap indices around into fans set the position
+                 * of the division vertices, interpolate texcoords and
+                 * color.
+                 */
+
+                memcpy(origVerts, p->rvertices, sizeof(rvertex_t) * 4);
+                memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+                memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
+
+                bL = p->rvertices[0].pos[VZ];
+                tL = p->rvertices[1].pos[VZ];
+                bR = p->rvertices[2].pos[VZ];
+                tR = p->rvertices[3].pos[VZ];
+
+                R_DivVerts(rvertices, origVerts, p->divs);
+                R_DivTexCoords(rtexcoords, origTexCoords, p->divs, bL, tL, bR, tR);
+                R_DivVertColors(rcolors, origColors, p->divs, bL, tL, bR, tR);
             }
             else
             {
-                // Insert it here.
-                node->next = last->next;
-                last->next = node;
-                return node;
+                memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
             }
-        } while(iter);
-    }
-
-    node->next = list->head;
-    list->head = node;
-    return node;
-}
-
-/**
- * Construct a new surface projection (and a list, if one has not already been
- * constructed for the referenced index).
- *
- * @param listIdx  Address holding the list index to retrieve.
- *      If the referenced list index is non-zero return the associated list.
- *      Otherwise allocate a new list and write it's index back to this address.
- * @param flags  @see ProjectionListFlags
- *      Used when constructing a new projection list to configure it.
- * @param texture  GL identifier to texture attributed to the new projection.
- * @param s  GL texture coordinates on the S axis [left, right] in texture space.
- * @param t  GL texture coordinates on the T axis [bottom, top] in texture space.
- * @param colorRGB  RGB color attributed to the new projection.
- * @param alpha  Alpha attributed to the new projection.
- */
-void R_NewTextureProjection(uint* listIdx, int flags, DGLuint texture,
-    const float s[2], const float t[2], const float colorRGB[3], float alpha)
-{
-    linkProjectionToList(newProjection(texture, s, t, colorRGB, alpha), getList(listIdx, flags));
-}
-
-/**
- * Blend the given light value with the lumobj's color, apply any global
- * modifiers and output the result.
- *
- * @param outRGB  Calculated result will be written here.
- * @param color  Lumobj color.
- * @param light  Ambient light level of the surface being projected to.
- */
-static void calcLightColor(float outRGB[3], const float color[3], float light)
-{
-    light = MINMAX_OF(0, light, 1) * dynlightFactor;
-    // In fog additive blending is used; the normal fog color is way too bright.
-    if(usingFog) light *= dynlightFogBright;
-
-    // Multiply light with (ambient) color.
-    { int i;
-    for(i = 0; i < 3; ++i)
-    {
-        outRGB[i] = light * color[i];
-    }}
-}
-
-typedef struct {
-    uint listIdx;
-    surfaceprojectparams_t spParams;
-} projectlighttosurfaceiteratorparams_t;
-
-/**
- * Project a plane glow onto the surface. If valid and the surface is
- * contacted a new projection node will constructed and returned.
- *
- * @param lum  Lumobj representing the light being projected.
- * @param paramaters  ProjectLightToSurfaceIterator paramaters.
- *
- * @return  @c 0 = continue iteration.
- */
-static int projectPlaneLightToSurface(const lumobj_t* lum, void* paramaters)
-{
-    assert(lum && paramaters);
-    {
-    projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
-    surfaceprojectparams_t* spParams = &p->spParams;
-    float bottom = spParams->v2[VZ], top = spParams->v1[VZ];
-    float glowHeight, s[2], t[2], color[3];
-
-    if(spParams->flags & PLF_NO_PLANE) return 0; // Continue iteration.
-    
-    // No lightmap texture?
-    if(!LUM_PLANE(lum)->tex) return 0; // Continue iteration.
-
-    // No height?
-    if(bottom >= top) return 0; // Continue iteration.
-
-    // Do not make too small glows.
-    glowHeight = (GLOW_HEIGHT_MAX * LUM_PLANE(lum)->intensity) * glowHeightFactor;
-    if(glowHeight <= 2) return 0; // Continue iteration.
-
-    if(glowHeight > glowHeightMax)
-        glowHeight = glowHeightMax;
-
-    // Calculate texture coords for the light.
-    if(LUM_PLANE(lum)->normal[VZ] < 0)
-    {
-        // Light is cast downwards.
-        t[1] = t[0] = (lum->pos[VZ] - top) / glowHeight;
-        t[1]+= (top - bottom) / glowHeight;
-    }
-    else
-    {
-        // Light is cast upwards.
-        t[0] = t[1] = (bottom - lum->pos[VZ]) / glowHeight;
-        t[0]+= (top - bottom) / glowHeight;
-    }
-
-    // Above/below on the Y axis?
-    if(!(t[0] <= 1 || t[1] >= 0)) return 0; // Continue iteration.
-
-    // The horizontal direction is easy.
-    s[0] = 0;
-    s[1] = 1;
-
-    calcLightColor(color, LUM_PLANE(lum)->color, LUM_PLANE(lum)->intensity);
-
-    R_NewTextureProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
-        LUM_PLANE(lum)->tex, s, t, color, 1 * spParams->blendFactor);
-
-    return 0; // Continue iteration.
-    }
-}
-
-static boolean genTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float scale,
-    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
-{
-    // Counteract aspect correction slightly (not too round mind).
-    return R_GenerateTexCoords(s, t, point, scale, scale * 1.08f, v1, v2, tangent, bitangent);
-}
-
-static DGLuint chooseOmniLightTexture(lumobj_t* lum, const surfaceprojectparams_t* spParams)
-{
-    assert(lum && lum->type == LT_OMNI && spParams);
-    if(spParams->flags & PLF_TEX_CEILING)
-        return LUM_OMNI(lum)->ceilTex;
-    if(spParams->flags & PLF_TEX_FLOOR)
-        return LUM_OMNI(lum)->floorTex;
-    return LUM_OMNI(lum)->tex;
-}
-
-/**
- * Project a omni light onto the surface. If valid and the surface is
- * contacted a new projection node will constructed and returned.
- *
- * @param lum  Lumobj representing the light being projected.
- * @param paramaters  ProjectLightToSurfaceIterator paramaters.
- *
- * @return  @c 0 = continue iteration.
- */
-static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
-{
-    assert(lum && paramaters);
-    {
-    projectlighttosurfaceiteratorparams_t* p = (projectlighttosurfaceiteratorparams_t*)paramaters;
-    surfaceprojectparams_t* spParams = &p->spParams;
-    float dist, luma, scale, color[3];
-    vec3_t lumCenter, vToLum;
-    vec3_t point;
-    uint lumIdx;
-    DGLuint tex;
-    vec2_t s, t;
-
-    // Early test of the external blend factor for quick rejection.
-    if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
-
-    // No lightmap texture?
-    tex = chooseOmniLightTexture(lum, spParams);
-    if(!tex) return 0; // Continue iteration.
-
-    // Has this already been occluded?
-    lumIdx = LO_ToIndex(lum);
-    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return 0; // Continue iteration.
-
-    V3_Set(lumCenter, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
-    V3_Subtract(vToLum, spParams->v1, lumCenter);
-
-    // On the right side?
-    if(V3_DotProduct(vToLum, spParams->normal) > 0.f) return 0; // Continue iteration.
-
-    // Calculate 3D distance between surface and lumobj.
-    V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, lumCenter);
-    dist = V3_Distance(point, lumCenter);
-    if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return 0; // Continue iteration.
-
-    // Calculate the final surface light attribution factor.
-    luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
-
-    // If distance limit is set this light will fade out.
-    if(lum->maxDistance > 0)
-    {
-        float distance = LO_DistanceToViewer(lumIdx, viewPlayer - ddPlayers);
-        luma *= LO_AttenuationFactor(lumIdx, distance);
-    }
-
-    // Would this light be seen?
-    if(luma * spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
-
-    // Project this light.
-    scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
-    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return 0; // Continue iteration.
-
-    // Attach to the projection list.
-    calcLightColor(color, LUM_OMNI(lum)->color, luma);
-    R_NewTextureProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
-        tex, s, t, color, 1 * spParams->blendFactor);
-
-    return 0; // Continue iteration.
-    }
-}
-
-/**
- * @param paramaters  ProjectLightToSurfaceIterator paramaters.
- *
- * @return  @c 0 = continue iteration.
- */
-int RIT_ProjectLightToSurfaceIterator(void* obj, void* paramaters)
-{
-    lumobj_t* lum = (lumobj_t*)obj;
-    assert(obj);
-    switch(lum->type)
-    {
-    case LT_OMNI:  return  projectOmniLightToSurface(lum, paramaters);
-    case LT_PLANE: return projectPlaneLightToSurface(lum, paramaters);
-    default:
-        Con_Error("RIT_ProjectLightToSurface: Invalid lumobj type %i.", (int) lum->type);
-        exit(1); // Unreachable.
-    }
-}
-
-uint R_ProjectLightsToSurface(int flags, subsector_t* ssec, float blendFactor,
-    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal)
-{
-    projectlighttosurfaceiteratorparams_t p;
-
-    p.listIdx = 0;
-    p.spParams.blendFactor = blendFactor;
-    p.spParams.flags = flags;
-    p.spParams.v1 = topLeft;
-    p.spParams.v2 = bottomRight;
-    p.spParams.tangent = tangent;
-    p.spParams.bitangent = bitangent;
-    p.spParams.normal = normal;
-
-    R_IterateSubsectorContacts2(ssec, OT_LUMOBJ, RIT_ProjectLightToSurfaceIterator, (void*)&p);
-    // Did we produce a projection list?
-    return p.listIdx;
-}
-
-int R_IterateSurfaceProjections2(uint listIdx,
-    int (*callback) (const textureprojection_t*, void*), void* paramaters)
-{
-    int result = 0; // Continue iteration.
-    if(callback && listIdx != 0 && listIdx <= projectionListCount)
-    {
-        listnode_t* node = projectionLists[listIdx-1].head;
-        while(node)
-        {
-            result = callback(&node->projection, paramaters);
-            node = (!result? node->next : NULL /* Early out */);
         }
+        else
+        {
+            // It's a flat.
+            float width, height;
+
+            width  = p->texBR[VX] - p->texTL[VX];
+            height = p->texBR[VY] - p->texTL[VY];
+
+            for(i = 0; i < p->numVertices; ++i)
+            {
+                rtexcoords[i].st[0] = ((p->texBR[VX] - p->rvertices[i].pos[VX]) / width * dyn->s[0]) +
+                    ((p->rvertices[i].pos[VX] - p->texTL[VX]) / width * dyn->s[1]);
+
+                rtexcoords[i].st[1] = ((p->texBR[VY] - p->rvertices[i].pos[VY]) / height * dyn->t[0]) +
+                    ((p->rvertices[i].pos[VY] - p->texTL[VY]) / height * dyn->t[1]);
+            }
+
+            memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+        }
+
+        if(p->isWall && p->divs)
+        {
+            RL_AddPoly(PT_FAN, RPT_LIGHT,
+                       rvertices + 3 + p->divs[0].num,
+                       rtexcoords + 3 + p->divs[0].num, NULL, NULL,
+                       rcolors + 3 + p->divs[0].num,
+                       3 + p->divs[1].num, 0,
+                       0, NULL, rTU);
+            RL_AddPoly(PT_FAN, RPT_LIGHT,
+                       rvertices, rtexcoords, NULL, NULL,
+                       rcolors, 3 + p->divs[0].num, 0,
+                       0, NULL, rTU);
+        }
+        else
+        {
+            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_LIGHT,
+                       rvertices, rtexcoords, NULL, NULL,
+                       rcolors, p->numVertices, 0,
+                       0, NULL, rTU);
+        }
+
+        R_FreeRendVertices(rvertices);
+        R_FreeRendTexCoords(rtexcoords);
+        R_FreeRendColors(rcolors);
     }
-    return result;
+    p->lastIdx++;
+
+    return 0; // Continue iteration.
 }
 
-int R_IterateSurfaceProjections(uint listIdx,
-    int (*callback) (const textureprojection_t*, void*))
+uint Rend_RenderLightProjections(uint listIdx, renderlightprojectionparams_t* p)
 {
-    return R_IterateSurfaceProjections2(listIdx, callback, NULL);
+    uint numRendered = p->lastIdx;
+    assert(p);
+
+    LO_IterateProjections2(listIdx, RIT_RenderLightProjectionIterator, (void*)p);
+
+    numRendered = p->lastIdx - numRendered;
+    if(RL_IsMTexLights())
+        numRendered -= 1;
+    return numRendered;
 }

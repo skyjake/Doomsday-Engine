@@ -55,6 +55,7 @@
  .\..\..\engine\portable\src\rend_bias.c
  .\..\..\engine\portable\src\edit_bias.c
  .\..\..\engine\portable\src\edit_map.c
+ .\..\..\engine\portable\src\rend_dynlight.c
  .\..\..\engine\portable\src\rend_sprite.c
  .\..\..\engine\portable\src\rend_sky.c
  .\..\..\engine\portable\src\rend_shadow.c
@@ -73,7 +74,6 @@
  .\..\..\engine\portable\src\r_things.c
  .\..\..\engine\portable\src\r_shadow.c
  .\..\..\engine\portable\src\r_sky.c
- .\..\..\engine\portable\src\r_textureprojection.c
  .\..\..\engine\portable\src\r_model.c
  .\..\..\engine\portable\src\r_main.c
  .\..\..\engine\portable\src\r_draw.c

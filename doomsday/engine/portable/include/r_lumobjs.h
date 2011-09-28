@@ -63,6 +63,15 @@ typedef struct lumobj_s {
     } data;
 } lumobj_t;
 
+/**
+ * Dynlight. Lumobj Projection (POD) stores the results of projection.
+ */
+typedef struct {
+    DGLuint texture;
+    float s[2], t[2];
+    rcolor_t color;
+} dynlight_t;
+
 extern boolean loInited;
 
 extern uint loMaxLumobjs;
@@ -170,6 +179,54 @@ int LO_LumobjsRadiusIterator2(subsector_t* subsector, float x, float y, float ra
     int (*callback) (const lumobj_t* lum, float distance, void* paramaters), void* paramaters);
 int LO_LumobjsRadiusIterator(subsector_t* subsector, float x, float y, float radius,
     int (*callback) (const lumobj_t* lum, float distance, void* paramaters)); /* paramaters = NULL */
+
+/**
+ * @defgroup projectLightFlags  Flags for LO_ProjectToSurface.
+ * @{
+ */
+#define PLF_SORT_LUMINOSITY_DESC    0x1 /// Sort by descending luminosity, brightest to dullest.
+#define PLF_NO_PLANE                0x2 /// Surface is not lit by planar lights.
+#define PLF_TEX_FLOOR               0x4 /// Prefer the "floor" slot when picking textures.
+#define PLF_TEX_CEILING             0x8 /// Prefer the "ceiling" slot when picking textures.
+/**@}*/
+
+/**
+ * Project all lights affecting the given quad (world space), calculate
+ * coordinates (in texture space) then store into a new list of projections.
+ *
+ * \assume The coordinates of the given quad must be contained wholly within
+ * the subsector specified. This is due to an optimization within the lumobj
+ * management which separates them according to their position in the BSP.
+ *
+ * @param flags  @see projectLightFlags
+ * @param ssec  Subsector within which the quad wholly resides.
+ * @param blendFactor  Multiplied with projection alpha.
+ * @param topLeft  Top left coordinates of the surface being projected to.
+ * @param bottomRight  Bottom right coordinates of the surface being projected to.
+ * @param topLeft  Top left coordinates of the surface being projected to.
+ * @param bottomRight  Bottom right coordinates of the surface being projected to.
+ * @param tangent  Normalized tangent of the surface being projected to.
+ * @param bitangent  Normalized bitangent of the surface being projected to.
+ * @param normal  Normalized normal of the surface being projected to.
+ *
+ * @return  Projection list identifier if surface is lit else @c 0.
+ */
+uint LO_ProjectToSurface(int flags, subsector_t* ssec, float blendFactor,
+    vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
+
+/**
+ * Iterate over projections in the identified surface-projection list, making
+ * a callback for each visited. Iteration ends when all selected projections
+ * have been visited or a callback returns non-zero.
+ *
+ * @param listIdx  Unique identifier of the list to process.
+ * @param callback  Callback to make for each visited projection.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int LO_IterateProjections2(uint listIdx, int (*callback) (const dynlight_t*, void*), void* paramaters);
+int LO_IterateProjections(uint listIdx, int (*callback) (const dynlight_t*, void*)); /* paramaters = NULL */
 
 void LO_DrawLumobjs(void);
 
