@@ -218,6 +218,12 @@ boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 float R_VisualRadius(struct mobj_s* mo);
 
 /**
+ * Calculate the visible @a origin of the @a mobj in world space, including
+ * any short range offset.
+ */
+void R_VisualOrigin(struct mobj_s* mobj, float origin[3]);
+
+/**
  * Calculate the strength of the shadow this mobj should cast.
  * \note Implemented using a greatly simplified version of the lighting equation;
  * no light diminishing or light range compression.

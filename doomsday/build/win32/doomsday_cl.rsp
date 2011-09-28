@@ -71,6 +71,7 @@
  .\..\..\engine\portable\src\r_world.c
  .\..\..\engine\portable\src\r_util.c
  .\..\..\engine\portable\src\r_things.c
+ .\..\..\engine\portable\src\r_shadow.c
  .\..\..\engine\portable\src\r_sky.c
  .\..\..\engine\portable\src\r_textureprojection.c
  .\..\..\engine\portable\src\r_model.c

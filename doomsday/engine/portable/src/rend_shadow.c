@@ -39,20 +39,9 @@ typedef struct {
 /// instantiation in drawShadowPrimitive()
 static shadowprim_t rshadow, *rs = &rshadow;
 
-static boolean shadowPlaneIterator(sector_t* sector, void* paramaters)
+boolean Rend_MobjShadowsEnabled(void)
 {
-    plane_t** highest = (plane_t**)paramaters;
-    plane_t* compare = sector->SP_plane(PLN_FLOOR);
-    if(compare->visHeight > (*highest)->visHeight)
-        *highest = compare;
-    return true; // Continue iteration.
-}
-
-static plane_t* findShadowPlane(mobj_t* mo)
-{
-    plane_t* plane = mo->subsector->sector->SP_plane(PLN_FLOOR);
-    P_MobjSectorsIterator(mo, shadowPlaneIterator, (void*)&plane);
-    return plane;
+    return (useShadows && !levelFullBright);
 }
 
 static void drawShadowPrimitive(const vectorcomp_t pos[3], float radius, float alpha)
@@ -92,9 +81,7 @@ static void processMobjShadow(mobj_t* mo)
     float mobjOrigin[3], shadowRadius, shadowStrength;
     plane_t* plane;
 
-    mobjOrigin[VX] = mo->pos[VX];
-    mobjOrigin[VY] = mo->pos[VY];
-    mobjOrigin[VZ] = mo->pos[VZ];
+    R_VisualOrigin(mo, mobjOrigin);
 
     // Is this too far?
     if(shadowMaxDistance > 0)
@@ -109,15 +96,6 @@ static void processMobjShadow(mobj_t* mo)
 
     shadowRadius = R_VisualRadius(mo);
     if(shadowRadius <= 0) return;
-
-    // Apply a Short Range Visual Offset?
-    if(useSRVO && mo->state && mo->tics >= 0)
-    {
-        float mul = mo->tics / (float) mo->state->tics;
-        mobjOrigin[VX] += mo->srvo[VX] * mul;
-        mobjOrigin[VY] += mo->srvo[VY] * mul;
-        mobjOrigin[VZ] += mo->srvo[VZ] * mul;
-    }
 
     // Check the height.
     moz = mo->pos[VZ] - mo->floorClip;
@@ -139,25 +117,23 @@ static void processMobjShadow(mobj_t* mo)
     }
 
     // Fade when nearing the maximum distance?
-    if(shadowMaxDistance > 0 && distanceFromViewer > 3 * shadowMaxDistance / 4)
-    {
-        shadowStrength *= (shadowMaxDistance - distanceFromViewer) / (shadowMaxDistance / 4);
-    }
+    shadowStrength *= R_ShadowAttenuationFactor(distanceFromViewer);
 
     // Figure out the visible floor height...
-    plane = findShadowPlane(mo);
-
-    // Glowing planes inversely diminish shadow strength.
-    shadowStrength *= (1 - R_GlowStrength(plane));
-
-    // Would this shadow be seen?
-    if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;
+    plane = R_FindShadowPlane(mo);
+    if(!plane) return;
 
     // Do not draw shadows above the shadow caster.
     if(plane->visHeight >= moz + mo->height) return; 
 
     // View height might prevent us from seeing the shadow.
     if(vy < plane->visHeight) return;
+
+    // Glowing planes inversely diminish shadow strength.
+    shadowStrength *= (1 - R_GlowStrength(plane));
+
+    // Would this shadow be seen?
+    if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;
 
     mobjOrigin[VZ] = plane->visHeight;
     drawShadowPrimitive(mobjOrigin, shadowRadius, shadowStrength);
@@ -191,19 +167,13 @@ static void initShadowPrimitive(void)
 #undef SETCOLOR_BLACK
 }
 
-boolean Rend_MobjShadowsEnabled(void)
-{
-    return (useShadows && !levelFullBright);
-}
-
 void Rend_RenderMobjShadows(void)
 {
     const sector_t* sec;
     mobj_t* mo;
     uint i;
 
-    if(!Rend_MobjShadowsEnabled()) return;
-
+    // Disabled for now, awaiting a heuristic analyser to enable it on selective mobjs.
     return;
 
     // Initialize the invariant parts of our global shadow primitive now.
@@ -224,4 +194,131 @@ void Rend_RenderMobjShadows(void)
             processMobjShadow(mo);
         }
     }
+}
+
+/// Generates a new primitive for each shadow projection.
+int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* paramaters)
+{
+    static const float black[3] = { 0, 0, 0 };
+    rendershadowprojectionparams_t* p = (rendershadowprojectionparams_t*)paramaters;
+    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+    rvertex_t* rvertices;
+    rtexcoord_t* rtexcoords;
+    rcolor_t* rcolors;
+    uint i, c;
+
+    memset(rTU, 0, sizeof(rTU));
+
+    // Allocate enough for the divisions too.
+    rvertices = R_AllocRendVertices(p->realNumVertices);
+    rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
+    rcolors = R_AllocRendColors(p->realNumVertices);
+
+    rTU[TU_PRIMARY].tex = GL_PrepareLSTexture(LST_DYNAMIC);
+    rTU[TU_PRIMARY].magMode = GL_LINEAR;
+    rTU[TU_PRIMARY].blend = 1;
+
+    rTU[TU_PRIMARY_DETAIL].tex = 0;
+    rTU[TU_INTER].tex = 0;
+    rTU[TU_INTER_DETAIL].tex = 0;
+
+    for(i = 0; i < p->numVertices; ++i)
+    {
+        rcolor_t* col = &rcolors[i];
+        // Shadows are black.
+        for(c = 0; c < 3; ++c) col->rgba[c] = black[c];
+        // Blend factor.
+        col->alpha = sp->alpha;
+    }
+
+    if(p->isWall)
+    {
+        rtexcoords[1].st[0] = rtexcoords[0].st[0] = sp->s[0];
+        rtexcoords[1].st[1] = rtexcoords[3].st[1] = sp->t[0];
+        rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp->s[1];
+        rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp->t[1];
+
+        if(p->divs)
+        {
+            // We need to subdivide the projection quad.
+            float bL, tL, bR, tR;
+            rvertex_t origVerts[4];
+            rcolor_t origColors[4];
+            rtexcoord_t origTexCoords[4];
+
+            /**
+             * Need to swap indices around into fans set the position
+             * of the division vertices, interpolate texcoords and
+             * color.
+             */
+
+            memcpy(origVerts, p->rvertices, sizeof(rvertex_t) * 4);
+            memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+            memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
+
+            bL = p->rvertices[0].pos[VZ];
+            tL = p->rvertices[1].pos[VZ];
+            bR = p->rvertices[2].pos[VZ];
+            tR = p->rvertices[3].pos[VZ];
+
+            R_DivVerts(rvertices, origVerts, p->divs);
+            R_DivTexCoords(rtexcoords, origTexCoords, p->divs, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, p->divs, bL, tL, bR, tR);
+        }
+        else
+        {
+            memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+        }
+    }
+    else
+    {
+        // It's a flat.
+        float width, height;
+
+        width  = p->texBR[VX] - p->texTL[VX];
+        height = p->texBR[VY] - p->texTL[VY];
+
+        for(i = 0; i < p->numVertices; ++i)
+        {
+            rtexcoords[i].st[0] = ((p->texBR[VX] - p->rvertices[i].pos[VX]) / width * sp->s[0]) +
+                ((p->rvertices[i].pos[VX] - p->texTL[VX]) / width * sp->s[1]);
+
+            rtexcoords[i].st[1] = ((p->texBR[VY] - p->rvertices[i].pos[VY]) / height * sp->t[0]) +
+                ((p->rvertices[i].pos[VY] - p->texTL[VY]) / height * sp->t[1]);
+        }
+
+        memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+    }
+
+    if(p->isWall && p->divs)
+    {
+        RL_AddPoly(PT_FAN, RPT_SHADOW,
+                   rvertices + 3 + p->divs[0].num,
+                   rtexcoords + 3 + p->divs[0].num, NULL, NULL,
+                   rcolors + 3 + p->divs[0].num,
+                   3 + p->divs[1].num, 0,
+                   0, NULL, rTU);
+        RL_AddPoly(PT_FAN, RPT_SHADOW,
+                   rvertices, rtexcoords, NULL, NULL,
+                   rcolors, 3 + p->divs[0].num, 0,
+                   0, NULL, rTU);
+    }
+    else
+    {
+        RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHADOW,
+                   rvertices, rtexcoords, NULL, NULL,
+                   rcolors, p->numVertices, 0,
+                   0, NULL, rTU);
+    }
+
+    R_FreeRendVertices(rvertices);
+    R_FreeRendTexCoords(rtexcoords);
+    R_FreeRendColors(rcolors);
+
+    return 0; // Continue iteration.
+}
+
+void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* p)
+{
+    R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void*)p);
 }

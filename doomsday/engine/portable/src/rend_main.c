@@ -1058,14 +1058,15 @@ typedef struct {
     const rvertex_t* rvertices;
     uint numVertices, realNumVertices;
     const float* texTL, *texBR;
-    boolean isWall, skipFirst, isShadow;
+    boolean isWall;
     const walldiv_t* divs;
 } textureprojectionparams_t;
 
 int RIT_TextureProjectionWrite(const textureprojection_t* tp, void* paramaters)
 {
     textureprojectionparams_t* p = (textureprojectionparams_t*)paramaters;
-    if(!(p->skipFirst && p->lastIdx == 0))
+    // If multitexturing is in use we skip the first.
+    if(!(RL_IsMTexLights() && p->lastIdx == 0))
     {
         rvertex_t* rvertices;
         rtexcoord_t* rtexcoords;
@@ -1082,8 +1083,6 @@ int RIT_TextureProjectionWrite(const textureprojection_t* tp, void* paramaters)
 
         rTU[TU_PRIMARY].tex = tp->texture;
         rTU[TU_PRIMARY].magMode = GL_LINEAR;
-        if(p->isShadow)
-            rTU[TU_PRIMARY].blend = 1;
 
         rTU[TU_PRIMARY_DETAIL].tex = 0;
         rTU[TU_INTER].tex = 0;
@@ -1157,21 +1156,20 @@ int RIT_TextureProjectionWrite(const textureprojection_t* tp, void* paramaters)
 
         if(p->isWall && p->divs)
         {
-            RL_AddPoly(PT_FAN, (p->isShadow? RPT_SHADOW : RPT_LIGHT),
+            RL_AddPoly(PT_FAN, RPT_LIGHT,
                        rvertices + 3 + p->divs[0].num,
                        rtexcoords + 3 + p->divs[0].num, NULL, NULL,
                        rcolors + 3 + p->divs[0].num,
                        3 + p->divs[1].num, 0,
                        0, NULL, rTU);
-            RL_AddPoly(PT_FAN, (p->isShadow? RPT_SHADOW : RPT_LIGHT),
+            RL_AddPoly(PT_FAN, RPT_LIGHT,
                        rvertices, rtexcoords, NULL, NULL,
                        rcolors, 3 + p->divs[0].num, 0,
                        0, NULL, rTU);
         }
         else
         {
-            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN,
-                       (p->isShadow? RPT_SHADOW : RPT_LIGHT),
+            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_LIGHT,
                        rvertices, rtexcoords, NULL, NULL,
                        rcolors, p->numVertices, 0,
                        0, NULL, rTU);
@@ -1405,7 +1403,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     rcolor_t*           shinyColors = NULL;
     rtexcoord_t*        shinyTexCoords = NULL;
     boolean             useLights = false, useShadows = false;
-    uint                numLights = 0, numShadows = 0;
+    uint                numLights = 0;
     DGLuint             modTex = 0;
     float               modTexTC[2][2];
     float               modColor[3];
@@ -1718,9 +1716,6 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         params.realNumVertices = realNumVertices;
         params.lastIdx = 0;
         params.isWall = p->isWall;
-        params.isShadow = false;
-        // If multitexturing is in use we skip the first.
-        params.skipFirst = RL_IsMTexLights();
         params.divs = divs;
         params.texTL = p->texTL;
         params.texBR = p->texBR;
@@ -1733,22 +1728,18 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
     if(p->type != RPT_SKY_MASK && useShadows)
     {
-        // Generate a new primitive for each shadow affecting the surface.
-        textureprojectionparams_t params;
+        // Render all shadows projected onto this surface.
+        rendershadowprojectionparams_t params;
 
         params.rvertices = rvertices;
         params.numVertices = numVertices;
         params.realNumVertices = realNumVertices;
-        params.lastIdx = 0;
         params.isWall = p->isWall;
-        params.isShadow = true;
-        params.skipFirst = false;
-        params.divs = divs;
         params.texTL = p->texTL;
         params.texBR = p->texBR;
+        params.divs = divs;
 
-        R_IterateSurfaceProjections2(p->shadowListIdx, RIT_TextureProjectionWrite, (void*)&params);
-        numShadows += params.lastIdx;
+        Rend_RenderShadowProjections(p->shadowListIdx, &params);
     }
 
     // Write multiple polys depending on rend params.
@@ -4696,6 +4687,11 @@ void Rend_RenderMap(void)
             R_InitSurfaceProjectionListsForNewFrame();
         }
 
+        if(Rend_MobjShadowsEnabled())
+        {
+            R_InitShadowProjectionListsForNewFrame();
+        }
+
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
@@ -4725,7 +4721,10 @@ void Rend_RenderMap(void)
             Rend_RenderSubsector(0);
         }
 
-        Rend_RenderMobjShadows();
+        if(Rend_MobjShadowsEnabled())
+        {
+            Rend_RenderMobjShadows();
+        }
     }
     RL_RenderAllLists();
 

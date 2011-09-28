@@ -324,6 +324,7 @@
 		<Unit filename="..\..\engine\portable\include\r_lumobjs.h" />
 		<Unit filename="..\..\engine\portable\include\r_main.h" />
 		<Unit filename="..\..\engine\portable\include\r_model.h" />
+		<Unit filename="..\..\engine\portable\include\r_shadow.h" />
 		<Unit filename="..\..\engine\portable\include\r_sky.h" />
 		<Unit filename="..\..\engine\portable\include\r_textureprojection.h" />
 		<Unit filename="..\..\engine\portable\include\r_things.h" />
@@ -715,6 +716,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_model.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\engine\portable\src\r_shadow.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_sky.c">

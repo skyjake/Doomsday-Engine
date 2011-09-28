@@ -1413,6 +1413,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\r_shadow.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\r_sky.h"
 				>
 			</File>
@@ -2768,6 +2772,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\r_model.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\r_shadow.c"
 				>
 			</File>
 			<File

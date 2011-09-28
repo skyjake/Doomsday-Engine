@@ -1,4 +1,4 @@
-/**\file r_textureprojection.h
+/**\file r_shadow.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,55 +23,45 @@
  */
 
 /**
- * Texture Projections and Surface-Projection Lists
+ * Map Object Shadows
  */
 
-#ifndef LIBDENG_REFRESH_TEXTUREPROJECTION_H
-#define LIBDENG_REFRESH_TEXTUREPROJECTION_H
+#ifndef LIBDENG_REFRESH_MOBJ_SHADOW_H
+#define LIBDENG_REFRESH_MOBJ_SHADOW_H
+
+struct mobj_s;
 
 /**
- * @defgroup projectLightFlags  Flags for R_ProjectLightsToSurface.
- * @{
- */
-#define PLF_SORT_LUMINOSITY_DESC    0x1 /// Sort by descending luminosity, brightest to dullest.
-#define PLF_NO_PLANE                0x2 /// Surface is not lit by planar lights.
-#define PLF_TEX_FLOOR               0x4 /// Prefer the "floor" slot when picking textures.
-#define PLF_TEX_CEILING             0x8 /// Prefer the "ceiling" slot when picking textures.
-/**@}*/
-
-/**
- * TextureProjection. Texture Projection (POD) stores the results of projection.
+ * ShadowProjection. Shadow Projection (POD) stores the results of projection.
  */
 typedef struct {
-    DGLuint texture;
     float s[2], t[2];
-    rcolor_t color;
-} textureprojection_t;
+    float alpha;
+} shadowprojection_t;
 
 /**
- * Initialize the surface projection system in preparation prior to rendering
- * view(s) of the game world.
+ * To be called after map load to initialize this module in preparation for
+ * rendering view(s) of the game world.
  */
-void R_InitSurfaceProjectionListsForMap(void);
+void R_InitShadowProjectionListsForMap(void);
 
 /**
- * Initialize the surface projection system to begin a new refresh frame. 
+ * To be called when begining a new render frame to perform necessary initialization.
  */
-void R_InitSurfaceProjectionListsForNewFrame(void);
+void R_InitShadowProjectionListsForNewFrame(void);
+
+float R_ShadowAttenuationFactor(float distance);
 
 /**
- * Project all lights affecting the given quad (world space), calculate
+ * Project all mobj shadows affecting the given quad (world space), calculate
  * coordinates (in texture space) then store into a new list of projections.
  *
  * \assume The coordinates of the given quad must be contained wholly within
- * the subsector specified. This is due to an optimization within the lumobj
+ * the subsector specified. This is due to an optimization within the mobj
  * management which separates them according to their position in the BSP.
  *
- * @param flags  @see surfaceProjectLightFlags
  * @param ssec  Subsector within which the quad wholly resides.
  * @param blendFactor  Multiplied with projection alpha.
- * @param topLeft  Top left coordinates of the surface being projected to.
- * @param bottomRight  Bottom right coordinates of the surface being projected to.
  * @param topLeft  Top left coordinates of the surface being projected to.
  * @param bottomRight  Bottom right coordinates of the surface being projected to.
  * @param tangent  Normalized tangent of the surface being projected to.
@@ -80,11 +70,11 @@ void R_InitSurfaceProjectionListsForNewFrame(void);
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint R_ProjectLightsToSurface(int flags, subsector_t* ssec, float blendFactor,
+uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
     vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
 
 /**
- * Iterate over projections in the identified surface-projection list, making
+ * Iterate over projections in the identified shadow-projection list, making
  * a callback for each visited. Iteration ends when all selected projections
  * have been visited or a callback returns non-zero.
  *
@@ -94,7 +84,15 @@ uint R_ProjectLightsToSurface(int flags, subsector_t* ssec, float blendFactor,
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int R_IterateSurfaceProjections2(uint listIdx, int (*callback) (const textureprojection_t*, void*), void* paramaters);
-int R_IterateSurfaceProjections(uint listIdx, int (*callback) (const textureprojection_t*, void*)); /* paramaters = NULL */
+int R_IterateShadowProjections2(uint listIdx, int (*callback) (const shadowprojection_t*, void*), void* paramaters);
+int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojection_t*, void*)); /* paramaters = NULL */
 
-#endif /* LIBDENG_REFRESH_TEXTUREPROJECTION_H */
+/**
+ * Find the highest plane beneath @a mobj onto which it's shadow should be cast.
+ * Used with the simple, non-projective method for mobj shadows.
+ *
+ * @return  Found plane else @c NULL if @a mobj is not presently sector-linked.
+ */
+plane_t* R_FindShadowPlane(struct mobj_s* mobj);
+
+#endif /* LIBDENG_REFRESH_SHADOW_H */
