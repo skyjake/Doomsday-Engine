@@ -24,6 +24,11 @@
  * @file Common definitions for libdeng2.
  */
 
+/*
+ * The LIBDENG2_PUBLIC macro is used to declare symbols for exporting. It must
+ * be applied in all exported classes and functions. DEF files are not used for
+ * exporting symbols out of libdeng2.
+ */
 #if defined(_WIN32) && defined(_MSC_VER)
 #  ifdef __DENG2__
 // This is defined when compiling the library.

@@ -37,8 +37,8 @@ extern "C" {
 struct LegacyCore_s;
 typedef LegacyCore_s LegacyCore;
 
-LegacyCore* LIBDENG2_PUBLIC LegacyCore_New(int* argc, char** argv);
-void        LIBDENG2_PUBLIC LegacyCore_Delete(LegacyCore* lc);
+LIBDENG2_PUBLIC LegacyCore* LegacyCore_New(int* argc, char** argv);
+LIBDENG2_PUBLIC void        LegacyCore_Delete(LegacyCore* lc);
 
 #ifdef __cplusplus
 } // extern "C"
