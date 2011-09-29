@@ -20,27 +20,45 @@
 #ifndef LIBDENG2_LEGACYCORE_H
 #define LIBDENG2_LEGACYCORE_H
 
-#include <QCoreApplication>
-
 namespace de {
 
 /**
- * Transitional kernel for supporting legacy Dooomsday C code to access
- * libdeng2 functionality. The legacy engine needs to construct one of
- * these via the deng2 C API and make sure it gets destroyed at shutdown.
+ * Transitional kernel for supporting legacy Dooomsday C code in accessing
+ * libdeng2 functionality. The legacy engine needs to construct one of these
+ * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
+ * can be used to access functionality in LegacyCore.
  */
 class LegacyCore
 {
 public:
-    LegacyCore();
+    /**
+     * Initializes the legacy core.
+     *
+     * @param argc  Reference to the application's command line argument
+     *              count. Note that this may be modified in this method.
+     * @param argv  Command line arguments of the application. Note that
+     *              this may be modified in the this method.
+     */
+    LegacyCore(int& argc, char** argv);
+
+    ~LegacyCore();
 
     /**
-     * Starts the libdeng2 kernel. A deng2 event loop is sta
+     * Starts the libdeng2 kernel. A deng2 event loop is started in a separate
+     * thread, where deng2-specific events are handled.
      */
     void start();
 
+    /**
+     * Stops the kernel. This is automatically called when the core is
+     * destroyed.
+     */
+    void stop();
+
 private:
-    QCoreApplication* _app;
+    // Private instance data.
+    struct Instance;
+    Instance* d;
 };
 
 } // namespace de

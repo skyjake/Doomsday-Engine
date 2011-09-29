@@ -3,16 +3,20 @@
 
 TEMPLATE = lib
 TARGET = deng2
-QT += core network
 
 # Build Configuration --------------------------------------------------------
 
 include(../config.pri)
 
+# Using Qt.
+QT += core network
+
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
 }
+
+INCLUDEPATH += include
 
 # Source Files ---------------------------------------------------------------
 
