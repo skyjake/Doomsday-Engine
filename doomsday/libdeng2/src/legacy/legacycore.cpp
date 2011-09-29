@@ -26,7 +26,7 @@
 using namespace de;
 
 /**
- * Private thread for running the legacy core's event loop.
+ * @internal Private thread for running the legacy core's event loop.
  */
 class CoreEventThread : public QThread
 {
@@ -46,12 +46,19 @@ private:
     QCoreApplication& _app;
 };
 
+/**
+ * @internal Private instance data for LegacyCore.
+ */
 struct LegacyCore::Instance
 {
     QCoreApplication* app;
     CoreEventThread* thread;
 
     Instance() : app(0), thread(0) {}
+    ~Instance() {
+        delete thread;
+        delete app;
+    }
 };
 
 LegacyCore::LegacyCore(int& argc, char** argv)
@@ -69,8 +76,6 @@ LegacyCore::~LegacyCore()
 {
     stop();
 
-    delete d->thread;
-    delete d->app;
     delete d;
 }
 

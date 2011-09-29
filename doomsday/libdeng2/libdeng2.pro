@@ -8,6 +8,8 @@ TARGET = deng2
 
 include(../config.pri)
 
+DEFINES += __DENG2__
+
 # Using Qt.
 QT += core network
 
@@ -21,8 +23,11 @@ INCLUDEPATH += include
 # Source Files ---------------------------------------------------------------
 
 HEADERS += \
+    include/de/c_wrapper.h \
+    include/de/libdeng2.h \
     include/de/LegacyCore \
     include/de/legacy/legacycore.h
 
 SOURCES += \
+    src/c_wrapper.cpp \
     src/legacy/legacycore.cpp
