@@ -321,7 +321,7 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
 
     while(LONG(chunk.type) != DMC_END)
     {
-        switch (LONG(chunk.type))
+        switch(LONG(chunk.type))
         {
         case DMC_INFO:          // Standard DMD information chunk.
             DFile_Read(file, (uint8_t*)inf, LONG(chunk.length));
@@ -342,9 +342,8 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
 
         default:
             // Just skip all unknown chunks.
-            temp = M_Malloc(LONG(chunk.length));
-            DFile_Read(file, (uint8_t*)temp, LONG(chunk.length));
-            free(temp);
+            DFile_Seek(file, LONG(chunk.length), SEEK_CUR);
+            break;
         }
         // Read the next chunk header.
         DFile_Read(file, (uint8_t*)&chunk, sizeof(chunk));
