@@ -2217,8 +2217,10 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             }
             else
             {
+                material_t* surfaceMaterial = ((!surface->material ||
+                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))? Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":missing")) : surface->material);
                 material_snapshot_t ms;
-                Materials_Prepare(&ms, surface->material, true,
+                Materials_Prepare(&ms, surfaceMaterial, true,
                     Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
                         GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
                 glowing = ms.glowing;
