@@ -1,6 +1,9 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-
+#
+# Do not modify this file. Custom options can be specified on the qmake
+# command line or in config_user.pri.
+#
 # CONFIG options for Doomsday:
 # - deng_aptunstable        Include the unstable apt repository
 # - deng_nativesdk          (Mac OS X) Use the current OS's SDK
