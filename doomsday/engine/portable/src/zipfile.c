@@ -170,21 +170,41 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         resourceclass_t rclass;
         ddstring_t mapped;
 
-        /// \kludge Treat DeHackEd patches as packages so they are mapped to Data.
-        rclass = (type == RT_DEH? RC_PACKAGE : F_DefaultResourceClassForType(type));
+        /// \kludge
+        // Some files require special handling...
+        switch(type)
+        {
+        case RT_DEH: // Treat DeHackEd patches as packages so they are mapped to Data.
+            rclass = RC_PACKAGE;
+            break;
+        case RT_NONE: { // *.lmp files must be mapped to Data.
+            const char* ext = F_FindFileExtension(Str_Text(src));
+            if(ext && !stricmp("lmp", ext))
+            {
+                rclass = RC_PACKAGE;
+            }
+            else
+            {
+                rclass = RC_UNKNOWN;
+            }
+            break;
+          }
+        default:
+            rclass = F_DefaultResourceClassForType(type);
+            break;
+        }
         /// < kludge end
 
         Str_Init(&mapped);
         switch(rclass)
         {
-        case RC_UNKNOWN: // Not mapped.
+        case RC_PACKAGE: // Mapped to the Data directory.
+            Str_Appendf(&mapped, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
             break;
         case RC_DEFINITION: // Mapped to the Defs directory.
             Str_Appendf(&mapped, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DefsPath(DD_GameInfo())));
             break;
-        default: // Some other type of known resource. Mapped to the Data directory.
-            Str_Appendf(&mapped, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
-            break;
+        default: /* Not mapped */ break;
         }
         Str_Append(&mapped, Str_Text(src));
         Str_Copy(dest, &mapped);
