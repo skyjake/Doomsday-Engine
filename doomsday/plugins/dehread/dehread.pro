@@ -14,9 +14,6 @@ SOURCES += src/dehmain.c
 
 win32 {
     RC_FILE = res/dehread.rc
-
-    INSTALLS += target
-    target.path = $$DENG_WIN_PRODUCTS_DIR
 }
 unix:!macx {
     INSTALLS += target

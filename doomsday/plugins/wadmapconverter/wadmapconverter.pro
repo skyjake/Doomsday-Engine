@@ -20,9 +20,6 @@ SOURCES += \
 
 win32 {
     RC_FILE = res/wadmapconverter.rc
-
-    INSTALLS += target
-    target.path = $$DENG_WIN_PRODUCTS_DIR
 }
 unix:!macx {
     INSTALLS += target

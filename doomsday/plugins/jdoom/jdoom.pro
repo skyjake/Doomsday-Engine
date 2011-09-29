@@ -15,10 +15,7 @@ VERSION = $$JDOOM_VERSION
 gamedata.files = $$OUT_PWD/../../jdoom.pk3
 
 win32 {
-    INSTALLS += target gamedata
-
-    target.path = $$DENG_WIN_PRODUCTS_DIR
-    gamedata.path = $$DENG_WIN_PRODUCTS_DIR
+    # Output directly to staging.
 }
 else:macx {
     gamedata.path = Contents/Resources

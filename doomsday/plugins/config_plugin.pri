@@ -9,7 +9,7 @@ win32 {
     TARGET_EXT = .dll
 
     # Link against the engine's export library.
-    LIBS += -l$$OUT_PWD/../../engine/doomsday
+    LIBS += -l$$DENG_WIN_PRODUCTS_DIR/doomsday
 }
 
 INCLUDEPATH += $$DENG_API_DIR

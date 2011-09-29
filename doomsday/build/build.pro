@@ -1,14 +1,19 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 
+# This project file contains tasks that are done in the beginning of a build.
+
 TEMPLATE = subdirs
 
 include(../config.pri)
 
-# This project file contains tasks that are done in the beginning of a build.
-
 # Update the PK3 files.
-system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
+win32 {
+    PK3_OUT_DIR = $$DENG_WIN_PRODUCTS_DIR
+} else {
+    PK3_OUT_DIR = $$OUT_PWD/..
+}
+system(cd $$PWD/scripts/ && python packres.py \"$$PK3_OUT_DIR\")
 
 # Install the launcher.
 deng_snowberry {

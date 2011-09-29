@@ -79,7 +79,10 @@
 #elif defined(DOOMSDAY_RELEASE_NAME)
 #  define DOOMSDAY_VERSION_TEXT (DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME)
 #else
-#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE
+#  define DOOMSDAY_VERSION_TEXT         DOOMSDAY_VERSION_BASE
+#  if defined(WIN32) && defined(UNICODE)
+#    define DOOMSDAY_VERSION_TEXT_WSTR    TEXT(DOOMSDAY_VERSION_BASE)
+#  endif
 #endif
 
 #define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"

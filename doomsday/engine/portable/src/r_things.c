@@ -1586,9 +1586,7 @@ if(!mat)
 
         flareSize = texInst->data.sprite.lumSize;
         // X offset to the flare position.
-        xOffset = (texInst->data.sprite.flareX - (float) ms.width / 2) -
-            (spriteTextures[texInst->tex->ofTypeID]->offX -
-                (float) ms.width / 2);
+        xOffset = ms.width * texInst->data.sprite.flareX - spriteTextures[texInst->tex->ofTypeID]->offX;
 
         // Does the mobj have an active light definition?
         if(def)
