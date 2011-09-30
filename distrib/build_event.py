@@ -387,7 +387,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         for ch in changeEntries:
             # Quote it for the command line.
             qch = ch.replace('"', '\\"').replace('!', '\\!')
-            print 'Entry:', qch
+            print ' *', qch
             os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
 
     os.remove(tmpName)
