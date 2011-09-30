@@ -79,7 +79,6 @@ else:macx {
 
     # Link against libdeng2.
     LIBS += -L../libdeng2 -ldeng2
-    QMAKE_LFLAGS += -F$$OUT_PWD/../libdeng2
 }
 else {
     # Allow exporting symbols out of the main executable.
@@ -529,7 +528,7 @@ macx {
     doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtNetwork.framework $$FW_DIR")
 
     # libdeng2 dynamic library.
-    doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2.1.dylib $$FW_DIR")
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2*dylib $$FW_DIR")
 
     # Fix the dynamic linker paths so they point to ../Frameworks/.
     defineTest(fixInstallName) {
