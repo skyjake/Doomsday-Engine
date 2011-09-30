@@ -253,46 +253,47 @@ const char* Def_GetMobjName(int num)
 
 int Def_GetStateNum(const char* id)
 {
-    int                 i;
-
-    if(!id || !id[0])
-        return -1;
-
-    for(i = 0; i < defs.count.states.num; ++i)
-        if(!strcmp(defs.states[i].id, id))
-            return i;
-
-    return -1;
+    int idx = -1;
+    if(id && id[0] && defs.count.states.num)
+    {
+        int i = 0;
+        do
+        {
+            if(!stricmp(defs.states[i].id, id))
+                idx = i;
+        } while(idx == -1 && ++i < defs.count.states.num);
+    }
+    return idx;
 }
 
-int Def_GetModelNum(const char *id)
+int Def_GetModelNum(const char* id)
 {
-    int                 i;
-
-    if(!id[0])
-        return -1;
-
-    for(i = 0; i < defs.count.models.num; ++i)
-        if(!strcmp(defs.models[i].id, id))
-            return i;
-
-    return -1;
+    int idx = -1;
+    if(id && id[0] && defs.count.models.num)
+    {
+        int i = 0;
+        do
+        {
+            if(!stricmp(defs.models[i].id, id))
+                idx = i;
+        } while(idx == -1 && ++i < defs.count.models.num);
+    }
+    return idx;
 }
 
 int Def_GetSoundNum(const char* id)
 {
-    int                 i;
-
-    if(!id || !id[0])
-        return -1;
-
-    for(i = 0; i < defs.count.sounds.num; ++i)
+    int idx = -1;
+    if(id && id[0] && defs.count.sounds.num)
     {
-        if(!strcmp(defs.sounds[i].id, id))
-            return i;
+        int i = 0;
+        do
+        {
+            if(!stricmp(defs.sounds[i].id, id))
+                idx = i;
+        } while(idx == -1 && ++i < defs.count.sounds.num);
     }
-
-    return -1;
+    return idx;
 }
 
 /**
@@ -315,16 +316,17 @@ int Def_GetSoundNumForName(const char* name)
 
 int Def_GetMusicNum(const char* id)
 {
-    int                 i;
-
-    if(!id || !id[0])
-        return -1;
-
-    for(i = 0; i < defs.count.music.num; ++i)
-        if(!strcmp(defs.music[i].id, id))
-            return i;
-
-    return -1;
+    int idx = -1;
+    if(id && id[0] && defs.count.music.num)
+    {
+        int i = 0;
+        do
+        {
+            if(!stricmp(defs.music[i].id, id))
+                idx = i;
+        } while(idx == -1 && ++i < defs.count.music.num);
+    }
+    return idx;
 }
 
 acfnptr_t Def_GetActionPtr(const char* name)
@@ -340,7 +342,7 @@ acfnptr_t Def_GetActionPtr(const char* name)
     if((link = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK)))
     {
         for(; link->name; link++)
-            if(!strcmp(name, link->name))
+            if(!stricmp(name, link->name))
                 return link->func;
     }}
     return 0;
@@ -635,16 +637,17 @@ int Def_EvalFlags(char* ptr)
 
 int Def_GetTextNumForName(const char* name)
 {
-    int                 i;
-
-    if(!name[0])
-        return -1;
-
-    for(i = defs.count.text.num -1; i >= 0; --i)
-        if(!(strcmp(defs.text[i].id, name)))
-            return i;
-
-    return -1;
+    int idx = -1;
+    if(name && name[0] && defs.count.text.num)
+    {
+        int i = 0;
+        do
+        {
+            if(!stricmp(defs.text[i].id, name))
+                idx = i;
+        } while(idx == -1 && ++i < defs.count.text.num);
+    }
+    return idx;
 }
 
 /**
@@ -1198,7 +1201,7 @@ void Def_Read(void)
             continue;
 
         for(k = i + 1; k < countTexts.num; ++k)
-            if(!strcmp(defs.text[i].id, defs.text[k].id) && texts[k].text)
+            if(!stricmp(defs.text[i].id, defs.text[k].id) && texts[k].text)
             {
                 // Update the earlier string.
                 texts[i].text =
