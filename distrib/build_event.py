@@ -298,7 +298,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
             biggest = max(biggest, number)
         
         fromTag = 'build' + str(biggest)
-        toTag = 'HEAD' # Everything up to now.
+        toTag = 'master' # Everything up to now.
     else:
         # Determine automatically?
         if fromTag is None or toTag is None:

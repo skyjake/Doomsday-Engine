@@ -464,7 +464,12 @@ if(!mat)
         l->maxDistance = 0;
         l->decorSource = NULL;
 
-        // Determine the exact center point of the light.
+        /**
+         *  Determine the exact center point of the light.
+         *
+         * \todo We cannot use smoothing here because this could move the
+         * light into another subsector (thereby breaking the rules of the
+         * optimized subsector contact/spread algorithm).
         V3_Set(l->pos, 0, 0, 0);
         if(mo->state && mo->tics >= 0)
         {
@@ -485,6 +490,8 @@ if(!mat)
 
         // Translate to world-space origin.
         V3_Sum(l->pos, l->pos, mo->pos);
+        */
+        V3_Copy(l->pos, mo->pos);
 
         // Don't make too large a light.
         if(radius > loMaxRadius)
