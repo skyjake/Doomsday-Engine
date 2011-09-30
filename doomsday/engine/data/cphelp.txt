@@ -812,7 +812,7 @@ desc = Maximum angle for slanted sprites (spralign 2).
 desc = 1=Enable variable translucency on sprites.
 
 [rend-sprite-blend]
-desc = 1=Use additive blending for explosions.
+desc = 1=Use additive blending for sprites.
 
 [rend-sprite-lights]
 desc = Maximum number of light sources on sprites.

@@ -75,6 +75,7 @@ typedef struct {
     float           offset[3];
     byte            alpha;
     uint            shinySkin; // Skinname ID (index)
+    blendmode_t     blendMode;
 } submodeldef_t;
 
 #define MODELDEF_ID_MAXLEN      32

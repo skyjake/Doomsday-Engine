@@ -68,6 +68,7 @@ float maxSpriteAngle = 60;
 // If true - use the "no translucency" blending mode for sprites/masked walls
 byte noSpriteTrans = false;
 int useSpriteAlpha = 1;
+int useSpriteBlend = 1;
 
 byte devNoSprites = false;
 
@@ -81,7 +82,7 @@ void Rend_SpriteRegister(void)
     C_VAR_INT("rend-sprite-align", &alwaysAlign, 0, 0, 3);
     C_VAR_FLOAT("rend-sprite-align-angle", &maxSpriteAngle, 0, 0, 90);
     C_VAR_INT("rend-sprite-alpha", &useSpriteAlpha, 0, 0, 1);
-    C_VAR_INT("rend-sprite-blend", &missileBlend, 0, 0, 1);
+    C_VAR_INT("rend-sprite-blend", &useSpriteBlend, 0, 0, 1);
     C_VAR_INT("rend-sprite-lights", &spriteLight, 0, 0, 10);
     C_VAR_BYTE("rend-sprite-mode", &noSpriteTrans, 0, 0, 1);
     C_VAR_INT("rend-sprite-noz", &noSpriteZWrite, 0, 0, 1);

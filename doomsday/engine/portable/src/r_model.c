@@ -1010,8 +1010,45 @@ static void setupModel(ded_model_t* def)
         if(sub->frameRange < 1)
             sub->frameRange = 1;
 
+        sub->alpha = (byte) (255 - subdef->alpha * 255);
+        sub->blendMode = subdef->blendMode;
+
         // Submodel-specific flags cancel out model-scope flags!
         sub->flags = modelScopeFlags ^ subdef->flags;
+
+        // Flags may override alpha and/or blendmode.
+        if(sub->flags & MFF_BRIGHTSHADOW)
+        {
+            sub->alpha = .80f;
+            sub->blendMode = BM_ADD;
+        }
+        else if(sub->flags & MFF_BRIGHTSHADOW2)
+        {
+            sub->blendMode = BM_ADD;
+        }
+        else if(sub->flags & MFF_DARKSHADOW)
+        {
+            sub->blendMode = BM_DARK;
+        }
+        else if(sub->flags & MFF_SHADOW2)
+        {
+            sub->alpha = .2f;
+        }
+        else if(sub->flags & MFF_SHADOW1)
+        {
+            sub->alpha = .62f;
+        }
+
+        // Extra blendmodes:
+        if(sub->flags & MFF_REVERSE_SUBTRACT)
+        {
+            sub->blendMode = BM_REVERSE_SUBTRACT;
+        }
+        else if(sub->flags & MFF_SUBTRACT)
+        {
+            sub->blendMode = BM_SUBTRACT;
+        }
+
         if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
@@ -1030,8 +1067,6 @@ static void setupModel(ded_model_t* def)
         // Offset within the model.
         for(k = 0; k < 3; ++k)
             sub->offset[k] = subdef->offset[k];
-
-        sub->alpha = (byte) (subdef->alpha * 255);
 
         sub->shinySkin = R_RegisterSkin(NULL, subdef->shinySkin, modellist[sub->model]->fileName, true);
 

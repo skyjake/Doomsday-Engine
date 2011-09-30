@@ -105,7 +105,6 @@ byte freezeRLs = false;
 int devRendSkyMode = false;
 byte devRendSkyAlways = false;
 
-int missileBlend = 1;
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar.
 // The value chosen for rAmbient occurs in Rend_CalcLightModRange

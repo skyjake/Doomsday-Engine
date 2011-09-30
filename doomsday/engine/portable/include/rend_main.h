@@ -42,7 +42,6 @@
 extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
 extern byte smoothTexAnim, devMobjVLights;
 extern float viewsidex, viewsidey;
-extern int missileBlend;
 extern boolean usingFog;
 extern float fogColor[4];
 extern int rAmbient;
