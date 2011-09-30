@@ -8,10 +8,11 @@ TARGET = deng2
 
 include(../config.pri)
 
-DEFINES += __DENG2__
-
 # Using Qt.
 QT += core network
+include(../dep_qt.pri)
+
+DEFINES += __DENG2__
 
 win32 {
     # Keep the version number out of the file name.

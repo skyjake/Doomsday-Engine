@@ -25,7 +25,9 @@ win32 {
     include(../dep_directx.pri)
 }
 
-# Common Definitions ---------------------------------------------------------
+QT += core network
+
+# Definitions ----------------------------------------------------------------
 
 DEFINES += __DOOMSDAY__
 
@@ -36,22 +38,33 @@ DEFINES += __DOOMSDAY__
     echo(DENG_BUILD is not defined.)
 }
 
-unix:!macx {
-    DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
-    DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
-
-    QMAKE_LFLAGS += -rdynamic
-}
-macx {
-    useFramework(Cocoa)
-    useFramework(QTKit)
-}
 win32 {
     DEFINES += WIN32_GAMMA
 
     RC_FILE = win32/res/doomsday.rc
     OTHER_FILES += api/doomsday.def
+}
+else:macx {
+}
+else {
+    # Generic Unix.
+    DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
+    DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
+}
 
+# Build Configuration --------------------------------------------------------
+
+deng_writertypecheck {
+    DEFINES += DENG_WRITER_TYPECHECK
+}
+
+deng_sdlnetdummy {
+    HEADERS += portable/include/sdlnet_dummy.h
+}
+
+# Linking --------------------------------------------------------------------
+
+win32 {
     QMAKE_LFLAGS += \
         /NODEFAULTLIB:libcmt \
         /DEF:\"$$DENG_API_DIR/doomsday.def\" \
@@ -60,15 +73,17 @@ win32 {
     LIBS += -lkernel32 -lgdi32 -lole32 -luser32 -lwsock32 -lwinmm \
         -lopengl32 -lglu32
 }
+else:macx {
+    useFramework(Cocoa)
+    useFramework(QTKit)
 
-# Engine Configuration -------------------------------------------------------
-
-deng_writertypecheck {
-    DEFINES += DENG_WRITER_TYPECHECK
+    # Link against libdeng2.
+    LIBS += -L../libdeng2 -ldeng2
+    QMAKE_LFLAGS += -F$$OUT_PWD/../libdeng2
 }
-
-deng_sdlnetdummy {
-    HEADERS += portable/include/sdlnet_dummy.h
+else {
+    # Allow exporting symbols out of the main executable.
+    QMAKE_LFLAGS += -rdynamic
 }
 
 # Source Files ---------------------------------------------------------------
@@ -497,9 +512,32 @@ SOURCES += ../plugins/common/src/m_fixed.c
 # Resources ------------------------------------------------------------------
 
 macx {
+    FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
+
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    QMAKE_POST_LINK = "rm -rf $${OUT_PWD}/doomsday.app/Contents/Frameworks && mkdir $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/"
+    doPostLink("rm -rf $$FW_DIR")
+    doPostLink("mkdir $$FW_DIR")
+    doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
+    doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
+    !deng_sdlnetdummy {
+        doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $$FW_DIR")
+    }
+
+    # Qt frameworks.
+    doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtCore.framework $$FW_DIR")
+    doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtNetwork.framework $$FW_DIR")
+
+    # libdeng2 dynamic library.
+    doPostLink("cp -fRp $$OUT_PWD/../libdeng2/libdeng2.1.dylib $$FW_DIR")
+
+    # Fix the dynamic linker paths so they point to ../Frameworks/.
+    defineTest(fixInstallName) {
+        doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 doomsday.app/Contents/MacOS/doomsday")
+    }
+    fixInstallName("libdeng2.1.dylib")
+    fixInstallName("QtCore.framework/Versions/4/QtCore")
+    fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
 
     res.files = \
         mac/res/English.lproj \
