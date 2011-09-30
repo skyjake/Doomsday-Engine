@@ -450,67 +450,43 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     model_frame_t *frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t *nextFrame = NULL;
 
-    //int mainFlags = mf->flags;
     int         subFlags = smf->flags;
     int         numVerts;
     int         useSkin;
     int         i, c;
     float       endPos, offset;
-    float       alpha, customAlpha;
+    float       alpha;
     float       delta[3], color[4];
     float       ambient[4];
     float       shininess, *shinyColor;
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
-    blendmode_t blending = mf->def->sub[number].blendMode;
+    blendmode_t blending;
     DGLuint     skinTexture = 0, shinyTexture = 0;
     int         zSign = (params->mirror? -1 : 1);
 
-    if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0)
+    // Do not bother with infinitely small models...
+    if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
+ 
+    alpha = params->ambientColor[CA];
+    // Is the submodel-defined alpha multiplier in effect?
+    if(!(params->flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
-        // Why bother? It's infinitely small...
-        return;
+        alpha *= smf->alpha * reciprocal255;
     }
 
-    // Submodel can define a custom Transparency level.
-    customAlpha = 1 - smf->alpha / 255.0f;
+    // Would this be visible?
+    if(alpha <= 0) return;
 
-    if(missileBlend &&
-       ((params->flags & DDMF_BRIGHTSHADOW) || (subFlags & MFF_BRIGHTSHADOW)))
+    // Is the submodel-defined blend mode in effect?
+    if(params->flags & DDMF_BRIGHTSHADOW)
     {
-        alpha = .80f;
         blending = BM_ADD;
     }
-    else if(subFlags & MFF_BRIGHTSHADOW2)
-    {
-        alpha = customAlpha;
-        blending = BM_ADD;
-    }
-    else if(subFlags & MFF_DARKSHADOW)
-    {
-        alpha = customAlpha;
-        blending = BM_DARK;
-    }
-    else if((params->flags & DDMF_SHADOW) || (subFlags & MFF_SHADOW2))
-        alpha = .2f;
-    else if((params->flags & DDMF_ALTSHADOW) || (subFlags & MFF_SHADOW1))
-        alpha = .62f;
     else
-        alpha = customAlpha;
-
-    // More custom alpha?
-    if(params->ambientColor[CA] >= 0)
-        alpha *= params->ambientColor[CA];
-    if(alpha <= 0)
-        return; // Fully transparent.
-    if(alpha > 1)
-        alpha = 1;
-
-    // Extra blending modes.
-    if(subFlags & MFF_SUBTRACT)
-        blending = BM_SUBTRACT;
-    if(subFlags & MFF_REVERSE_SUBTRACT)
-        blending = BM_REVERSE_SUBTRACT;
+    {
+        blending = smf->blendMode;
+    }
 
     useSkin = smf->skin;
 

@@ -707,71 +707,29 @@ float R_ShadowStrength(mobj_t* mo)
 
 float R_Alpha(mobj_t* mo)
 {
-    modeldef_t* mf = NULL;
-    float alpha;
-    int i;
-
     assert(mo);
-
-    // Check for a 3D model.
-    if(useModels)
     {
-        modeldef_t* nextmf;
-        R_CheckModelFor(mo, &mf, &nextmf);
-    }
-
+    float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
+                        (mo->ddFlags & DDMF_SHADOW)? .33f :
+                     (mo->ddFlags & DDMF_ALTSHADOW)? .66f : 1;
     /**
-     * The three highest bits of the selector are used for an alpha level.
+     * The three highest bits of the selector are used for alpha.
      * 0 = opaque (alpha -1)
      * 1 = 1/8 transparent
      * 4 = 1/2 transparent
      * 7 = 7/8 transparent
      */
-    i = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
-    if(i & 0xe0)
+    int selAlpha = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
+    if(selAlpha & 0xe0)
     {
-        alpha = 1 - ((i & 0xe0) >> 5) / 8.0f;
+        alpha *= 1 - ((selAlpha & 0xe0) >> 5) / 8.0f;
     }
-    else
+    else if(mo->translucency)
     {
-        if(mo->translucency)
-            alpha = 1 - mo->translucency * reciprocal255;
-        else
-            alpha = -1;
-    }
-
-    // If a model is not in use this is a sprite.
-    if(!mf)
-    {
-        // Sprites are subject to an additional set of alpha flags.
-        if(useSpriteAlpha)
-        {
-            boolean brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
-            boolean shadow       = (mo->ddFlags & DDMF_SHADOW)       != 0;
-            boolean altShadow    = (mo->ddFlags & DDMF_ALTSHADOW)    != 0;
-            float flaggedAlpha;
-
-            if(missileBlend && brightShadow)
-                flaggedAlpha = .8f; // 80 %.
-            else if(shadow)
-                flaggedAlpha = .333f; // One third.
-            else if(altShadow)
-                flaggedAlpha = .666f; // Two thirds.
-            else
-                flaggedAlpha = 1;
-
-            // Sprite has a custom alpha multiplier?
-            if(alpha >= 0)
-                alpha *= flaggedAlpha;
-            else
-                alpha = flaggedAlpha;
-        }
-        else
-        {
-            alpha = 1;
-        }
+        alpha *= 1 - mo->translucency * reciprocal255;
     }
     return alpha;
+    }
 }
 
 /**
@@ -971,9 +929,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           uint vLightListIdx,
                                           int tMap, int tClass, subsector_t* ssec,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
-                                          boolean viewAligned,
-                                          boolean brightShadow, boolean shadow, boolean altShadow,
-                                          boolean fullBright)
+                                          boolean viewAligned)
 {
     material_snapshot_t ms;
     spritetex_t* sprTex = NULL;
@@ -1014,12 +970,12 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->matOffset[1] = MSU(&ms, MTU_PRIMARY).tex.t;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
-    params->blendMode = blendMode;
+    params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
 
     params->ambientColor[CR] = ambientColorR;
     params->ambientColor[CG] = ambientColorG;
     params->ambientColor[CB] = ambientColorB;
-    params->ambientColor[CA] = alpha;
+    params->ambientColor[CA] = (useSpriteAlpha? alpha : 1);
 
     params->vLightListIdx = vLightListIdx;
 }
@@ -1408,13 +1364,11 @@ void R_ProjectSprite(mobj_t* mo)
     if(!mf && mat)
     {
         boolean brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW)? true : false;
-        boolean shadow = (mo->ddFlags & DDMF_SHADOW)? true : false;
-        boolean altShadow = (mo->ddFlags & DDMF_ALTSHADOW)? true : false;
         boolean fitTop = (mo->ddFlags & DDMF_FITTOP)? true : false;
         boolean fitBottom = (mo->ddFlags & DDMF_NOFITBOTTOM)? false : true;
         blendmode_t blendMode;
 
-        if(missileBlend && brightShadow)
+        if(brightShadow)
         {   // Additive blending.
             blendMode = BM_ADD;
         }
@@ -1462,9 +1416,7 @@ void R_ProjectSprite(mobj_t* mo)
                                       floorAdjust,
                                       fitTop,
                                       fitBottom,
-                                      viewAlign,
-                                      brightShadow, shadow, altShadow,
-                                      fullBright);
+                                      viewAlign);
     }
     else
     {
