@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 
@@ -21,7 +22,7 @@ SOURCES += \
 win32 {
     RC_FILE = res/wadmapconverter.rc
 }
-unix:!macx {
+!macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }

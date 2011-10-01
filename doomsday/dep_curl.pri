@@ -7,8 +7,8 @@ win32 {
 
     # Install the libcurl shared library.
     INSTALLS += curllibs
-    curllibs.files = $$CURL_DIR/win32/libcurl.dll 
-    curllibs.path = $$DENG_WIN_PRODUCTS_DIR
+    curllibs.files = $$CURL_DIR/win32/libcurl.dll $$(WINDIR)/system32/msvcr100.dll
+    curllibs.path = $$DENG_LIB_DIR
 }
 else:macx {
     LIBS += -lcurl

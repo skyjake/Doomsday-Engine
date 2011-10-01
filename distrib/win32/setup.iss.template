@@ -7,7 +7,7 @@ AppName=Doomsday Engine
 AppVerName=Doomsday Engine ${VERSION}
 AppPublisher=deng Team
 AppPublisherURL=http://sourceforge.net/projects/deng/
-AppSupportURL=http://www.dengine.net/dew/
+AppSupportURL=http://dengine.net/dew/
 AppUpdatesURL=http://sourceforge.net/projects/deng/
 AppCopyright=Copyright (c) 2003-${YEAR} deng Team
 VersionInfoProductTextVersion=${VERSION}
@@ -50,28 +50,28 @@ Name: "{app}\doc"
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 ; Binaries
-Source: "Doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "ds*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
-Source: "jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
-Source: "jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
+Source: "bin\Doomsday.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\ds*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\dp*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\jDoom.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jDoom
+Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHeretic
+Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
 
 ; Libraries
-Source: "SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "SDL_net.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libvorbis-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libvorbisfile-3.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "mikmod.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libpng15.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "libcurl.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "msvcr100.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\SDL_net.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libvorbis-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libvorbisfile-3.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\mikmod.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libpng15.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\libcurl.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\msvcr100.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 
 ; Snowberry
 Source: "..\..\snowberry\dist\*"; DestDir: "{app}\snowberry"; Flags: ignoreversion; Components: Launcher
@@ -84,20 +84,21 @@ Source: "..\..\snowberry\plugins\*.py"; DestDir: "{app}\snowberry\plugins"; Excl
 Source: "..\..\snowberry\plugins\tab30.plugin\Contents\tab30\*.py"; DestDir: "{app}\snowberry\plugins\tab30.plugin\Contents\tab30"; Components: Launcher
 Source: "..\..\snowberry\profiles\*.prof"; DestDir: "{app}\snowberry\profiles"; Components: Launcher
 Source: "..\..\snowberry\conf\*.conf"; DestDir: "{app}\snowberry\conf"; Components: Launcher
+
 ; Documentation
-Source: "..\..\doomsday\plugins\jdoom\doc\LICENSE"; DestDir: "{app}\doc\jdoom"; Components: Engine\jDoom
-Source: "..\..\doomsday\plugins\jheretic\doc\LICENSE"; DestDir: "{app}\doc\jheretic"; Components: Engine\jHeretic
-Source: "..\..\doomsday\plugins\jhexen\doc\LICENSE"; DestDir: "{app}\doc\jhexen"; Components: Engine\jHexen
+Source: "doc\LICENSE"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
-Source: "doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
-Source: "..\..\doomsday\engine\data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\doomsday\engine\data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\doomsday\engine\data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "..\..\doomsday\engine\data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
-Source: "jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\jDoom
-Source: "jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\jHeretic
-Source: "jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\jHexen
+Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
+Source: "data\graphics\background.pcx"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "data\graphics\loading1.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "data\graphics\loading2.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "data\graphics\logo.png"; DestDir: "{app}\data\graphics"; Components: Engine
+Source: "data\fonts\normal12.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
+Source: "data\fonts\normal18.dfn"; DestDir: "{app}\data\fonts"; Components: Engine
+Source: "data\jdoom\jdoom.pk3"; DestDir: "{app}\data\jdoom"; Components: Engine\jDoom
+Source: "data\jheretic\jheretic.pk3"; DestDir: "{app}\data\jheretic"; Components: Engine\jHeretic
+Source: "data\jhexen\jhexen.pk3"; DestDir: "{app}\data\jhexen"; Components: Engine\jHexen
 
 [INI]
 Filename: "{app}\doomsday.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://sourceforge.net/projects/deng/"

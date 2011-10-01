@@ -5,8 +5,8 @@ win32 {
 
     # Installed shared libraries.
     INSTALLS += pnglibs
-    pnglibs.files = $$PWD/external/libpng/win32/libpng15.dll
-    pnglibs.path = $$DENG_WIN_PRODUCTS_DIR
+    pnglibs.files = $$PWD/external/libpng/win32/libpng15.dll $$(WINDIR)/system32/msvcr100.dll
+    pnglibs.path = $$DENG_LIB_DIR
 }
 else:macx {
     deng_snowleopard {
