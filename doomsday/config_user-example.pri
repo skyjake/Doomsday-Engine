@@ -17,10 +17,13 @@ DIRECTX_DIR = "c:/SDK/DirectX \(March 2009\)"
 OPENAL_DIR = "c:/SDK/OpenAL 1.1 SDK"
 
 # Location of the GL headers.
-OPENGL_DIR = c:/SDK/OpenGL
+OPENGL_DIR = "c:/SDK/OpenGL"
 
 # Location of the SDL SDK.
-SDL_DIR = c:/SDK/SDL-1.2.14
+SDL_DIR = "c:/SDK/SDL-1.2.14"
 
 # Location of the SDL_mixer SDK.
-SDL_MIXER_DIR = c:/SDK/SDL_mixer-1.2.11
+SDL_MIXER_DIR = "c:/SDK/SDL_mixer-1.2.11"
+
+# Location of the SDL_net SDK.
+SDL_NET_DIR = "c:/SDK/SDL_net-1.2.7"

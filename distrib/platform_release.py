@@ -194,12 +194,22 @@ def mac_release():
     remove('imaging.dmg')
 
 
-"""The Mac OS X release procedure."""
+"""The Windows release procedure."""
 def win_release():
     PROD_DIR = os.path.join(LAUNCH_DIR, 'products')
     if not os.path.exists(PROD_DIR):
         print "Creating the products directory."
         os.mkdir(PROD_DIR)
+
+    PROD_DATA_DIR = os.path.join(PROD_DIR, 'data')
+    if not os.path.exists(PROD_DATA_DIR):
+        print "Creating the products/data directory."
+        os.mkdir(PROD_DATA_DIR)
+
+    PROD_DOC_DIR = os.path.join(PROD_DIR, 'doc')
+    if not os.path.exists(PROD_DOC_DIR):
+        print "Creating the products/doc directory."
+        os.mkdir(PROD_DOC_DIR)
 
     # Generate the Inno Setup configuration file.
     script = file('win32\setup.iss.template', 'rt').read()

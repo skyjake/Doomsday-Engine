@@ -6,7 +6,7 @@ win32 {
     # Installed shared libraries.
     INSTALLS += zlibs
     zlibs.files = $$PWD/external/zlib/win32/zlib1.dll
-    zlibs.path = $$DENG_WIN_PRODUCTS_DIR
+    zlibs.path = $$DENG_LIB_DIR
 }
 else:macx {
     LIBS += -lz

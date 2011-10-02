@@ -23,7 +23,7 @@ win32 {
         $$SDL_MIXER_DIR/lib/mikmod.dll \
         $$SDL_MIXER_DIR/lib/SDL_mixer.dll \
         $$SDL_MIXER_DIR/lib/smpeg.dll
-    sdllibs.path = $$DENG_WIN_PRODUCTS_DIR
+    sdllibs.path = $$DENG_LIB_DIR
 
     # Also check SDL_net.
     isEmpty(SDL_NET_DIR) {

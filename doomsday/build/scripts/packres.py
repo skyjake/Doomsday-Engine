@@ -22,7 +22,7 @@ class Pack:
         
     def create(self, name):
         full_name = os.path.join(target_dir, name)
-        print "creating %s as %s" % (name, full_name)
+        print "creating %s as %s" % (os.path.normpath(name), os.path.normpath(full_name))
         
         pk3 = zipfile.ZipFile(full_name, 'w', zipfile.ZIP_DEFLATED)
         
@@ -31,18 +31,18 @@ class Pack:
             # Is this a file or a folder?
             if os.path.isfile(full_src):
                 # Write the file as is.
-                print "writing %s as %s" % (full_src, dest)
+                print "writing %s as %s" % (os.path.normpath(full_src), os.path.normpath(dest))
                 pk3.write(full_src, dest)
             elif os.path.isdir(full_src):
                 # Write the contents of the folder recursively.
                 def process_dir(path, dest_path):
-                    print "processing", path
+                    print "processing", os.path.normpath(path)
                     for file in os.listdir(path):
                         real_file = os.path.join(path, file)
                         if file[0] == '.':
                             continue # Ignore these.
                         if os.path.isfile(real_file):
-                            print "writing %s as %s" % (real_file, os.path.join(dest_path, file))
+                            print "writing %s as %s" % (os.path.normpath(real_file), os.path.normpath(os.path.join(dest_path, file)))
                             pk3.write(real_file, os.path.join(dest_path, file))
                         elif os.path.isdir(real_file):
                             process_dir(real_file, 
@@ -50,7 +50,7 @@ class Pack:
                 process_dir(full_src, dest)
             
         # Write it out.
-        print "closing", full_name
+        print "closing", os.path.normpath(full_name)
         pk3.close()
 
 # First up, doomsday.pk3.
