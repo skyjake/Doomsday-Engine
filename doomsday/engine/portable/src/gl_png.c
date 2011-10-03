@@ -76,6 +76,13 @@ void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
     F_Read(data, length, png_get_io_ptr(read_ptr));
 }
 
+static jmp_buf* png_jmpbuf2(png_structp png_ptr)
+{
+    // This avoids a compiler warning on gcc.
+    // @see png_jmpbuf() in png.h
+    return png_set_longjmp_fn(png_ptr, (png_longjmp_ptr)longjmp, sizeof(jmp_buf));
+}
+
 /**
  * Reads the given PNG image and returns a pointer to a planar RGB or
  * RGBA buffer. Width and height are set, and pixelSize is either 3 (RGB)
@@ -107,7 +114,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
             end_info = png_create_info_struct(png_ptr);
             if(end_info)
             {
-                if(!setjmp(*(jmp_buf*)&png_jmpbuf(png_ptr))) // gcc: avoid compiler warning with cast
+                if(!setjmp(*png_jmpbuf2(png_ptr)))
                 {
                     boolean canLoad;
 
