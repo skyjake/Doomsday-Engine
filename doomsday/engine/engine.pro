@@ -536,7 +536,7 @@ macx {
         doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $$FW_DIR")
     }
 
-    # Qt frameworks.
+    # Bundle the Qt frameworks.
     doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtCore.framework $$FW_DIR")
     doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtNetwork.framework $$FW_DIR")
 

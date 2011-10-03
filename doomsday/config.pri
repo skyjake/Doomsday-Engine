@@ -93,12 +93,9 @@ unix {
     # Unix/Mac build options.
     DEFINES += UNIX
 
-    # We are not interested in unused parameters (there are quite a few).
-    QMAKE_CFLAGS_WARN_ON += \
-        -Wno-unused-parameter \
-        -Wno-unused-variable \
-        -Wno-missing-field-initializers \
-        -Wno-missing-braces
+    # Ease up on the warnings. (The old C code is a bit messy.)
+    QMAKE_CFLAGS_WARN_ON -= -Wall
+    QMAKE_CFLAGS_WARN_ON -= -W
 }
 unix:!macx {
     # Generic Unix build options.

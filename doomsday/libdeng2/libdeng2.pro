@@ -10,13 +10,17 @@ include(../config.pri)
 
 # Using Qt.
 QT += core network
-include(../dep_qt.pri)
 
 DEFINES += __DENG2__
 
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
+}
+
+*-g++ {
+    # Enable strict warnings.
+    QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic
 }
 
 INCLUDEPATH += include
