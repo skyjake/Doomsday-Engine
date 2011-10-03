@@ -635,8 +635,6 @@ DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void     closeChat(void);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

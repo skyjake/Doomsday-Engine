@@ -107,11 +107,10 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
             end_info = png_create_info_struct(png_ptr);
             if(end_info)
             {
-                if(!setjmp(png_jmpbuf(png_ptr)))
+                if(!setjmp(*(jmp_buf*)&png_jmpbuf(png_ptr))) // gcc: avoid compiler warning with cast
                 {
-                    boolean     canLoad;
+                    boolean canLoad;
 
-                    //png_init_io(png_ptr, file);
                     png_set_read_fn(png_ptr, file, my_read_data);
 
                     png_read_png(png_ptr, png_info,
