@@ -20,7 +20,7 @@ macx {
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-else: {
+else {
     INSTALLS += target gamedata
 
     target.path = $$DENG_LIB_DIR
