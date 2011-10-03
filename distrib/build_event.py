@@ -298,7 +298,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
             biggest = max(biggest, number)
         
         fromTag = 'build' + str(biggest)
-        toTag = 'HEAD' # Everything up to now.
+        toTag = 'master' # Everything up to now.
     else:
         # Determine automatically?
         if fromTag is None or toTag is None:
@@ -387,7 +387,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         for ch in changeEntries:
             # Quote it for the command line.
             qch = ch.replace('"', '\\"').replace('!', '\\!')
-            print 'Entry:', qch
+            print ' *', qch
             os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
 
     os.remove(tmpName)

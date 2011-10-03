@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 include(../common/common.pri)
@@ -19,12 +20,12 @@ macx {
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-#unix:!macx {
-#    target.path = $$DENG_LIB_DIR
-#    gamedata.path = $$DENG_DATA_DIR/jdoom64
-#
-#    INSTALLS += target gamedata
-#}
+else: {
+    INSTALLS += target gamedata
+
+    target.path = $$DENG_LIB_DIR
+    gamedata.path = $$DENG_DATA_DIR/jdoom64
+}
 
 INCLUDEPATH += include
 

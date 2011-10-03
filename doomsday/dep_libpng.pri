@@ -6,7 +6,7 @@ win32 {
     # Installed shared libraries.
     INSTALLS += pnglibs
     pnglibs.files = $$PWD/external/libpng/win32/libpng15.dll
-    pnglibs.path = $$DENG_WIN_PRODUCTS_DIR
+    pnglibs.path = $$DENG_LIB_DIR
 }
 else:macx {
     deng_snowleopard|deng_nativesdk {

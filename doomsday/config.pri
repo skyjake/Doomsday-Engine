@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Jaakko Keränen §jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 #
 # Do not modify this file. Custom options can be specified on the qmake
 # command line or in config_user.pri.
@@ -72,9 +73,16 @@ win32 {
 
     DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
 
-    DESTDIR = $$DENG_WIN_PRODUCTS_DIR
-    DENG_EXPORT_LIB = $$DENG_WIN_PRODUCTS_DIR/doomsday.lib
+    # Library location.
+    DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
 
+    # Install locations:
+    DENG_BASE_DIR = $$DENG_WIN_PRODUCTS_DIR
+
+    DENG_LIB_DIR = $$DENG_BASE_DIR/bin
+    DENG_DATA_DIR = $$DENG_BASE_DIR/data
+    DENG_DOCS_DIR = $$DENG_BASE_DIR/doc
+    
     # Tell rc where to get the API headers.
     QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
 
@@ -85,12 +93,9 @@ unix {
     # Unix/Mac build options.
     DEFINES += UNIX
 
-    # We are not interested in unused parameters (there are quite a few).
-    QMAKE_CFLAGS_WARN_ON += \
-        -Wno-unused-parameter \
-        -Wno-unused-variable \
-        -Wno-missing-field-initializers \
-        -Wno-missing-braces
+    # Ease up on the warnings. (The old C code is a bit messy.)
+    QMAKE_CFLAGS_WARN_ON -= -Wall
+    QMAKE_CFLAGS_WARN_ON -= -W
 }
 unix:!macx {
     # Generic Unix build options.
