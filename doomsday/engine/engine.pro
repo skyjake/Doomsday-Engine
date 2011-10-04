@@ -545,7 +545,7 @@ macx {
     defineTest(fixInstallName) {
         doPostLink("install_name_tool -change $$1 @executable_path/../Frameworks/$$1 doomsday.app/Contents/MacOS/doomsday")
     }
-    fixInstallName("libdeng2.1.dylib")
+    fixInstallName("libdeng2.2.dylib")
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
 
