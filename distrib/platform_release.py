@@ -238,6 +238,8 @@ sys.path += '.'
 
 import snowberry"""
     f.close()
+    # Make it executable.
+    os.system('chmod a+x linux/launch-doomsday')
     
     def clean_products():
         # Remove previously build deb packages.

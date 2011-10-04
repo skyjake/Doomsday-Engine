@@ -1,4 +1,5 @@
 DENG_VERSION            = 1.9.7
+DENG2_VERSION           = 2.0.0
 
 JDOOM_VERSION           = 2.0.0
 JHERETIC_VERSION        = 2.0.0

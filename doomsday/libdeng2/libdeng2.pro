@@ -7,11 +7,11 @@ TARGET = deng2
 # Build Configuration --------------------------------------------------------
 
 include(../config.pri)
+VERSION = $$DENG2_VERSION
+DEFINES += __DENG2__
 
 # Using Qt.
 QT += core network
-
-DEFINES += __DENG2__
 
 win32 {
     # Keep the version number out of the file name.
@@ -20,7 +20,7 @@ win32 {
 
 *-g++ {
     # Enable strict warnings.
-    QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic
+    QMAKE_CXXFLAGS_WARN_ON *= -Wall -Wextra -pedantic -Wno-long-long
 }
 
 INCLUDEPATH += include
@@ -36,3 +36,13 @@ HEADERS += \
 SOURCES += \
     src/c_wrapper.cpp \
     src/legacy/legacycore.cpp
+
+# Installation ---------------------------------------------------------------
+
+win32 {
+}
+else:unix:!macx {
+    # Generic Unix installation.
+    INSTALLS += target
+    target.path = $$DENG_LIB_DIR
+}
