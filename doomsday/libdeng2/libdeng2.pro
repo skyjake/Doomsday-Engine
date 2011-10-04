@@ -27,15 +27,14 @@ INCLUDEPATH += include
 
 # Source Files ---------------------------------------------------------------
 
+include(legacy.pri)
+
 HEADERS += \
     include/de/c_wrapper.h \
-    include/de/libdeng2.h \
-    include/de/LegacyCore \
-    include/de/legacy/legacycore.h
+    include/de/libdeng2.h
 
 SOURCES += \
-    src/c_wrapper.cpp \
-    src/legacy/legacycore.cpp
+    src/c_wrapper.cpp
 
 # Installation ---------------------------------------------------------------
 

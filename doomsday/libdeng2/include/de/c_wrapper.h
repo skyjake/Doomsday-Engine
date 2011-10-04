@@ -42,6 +42,11 @@ DENG2_PUBLIC int         LegacyCore_RunEventLoop(LegacyCore* lc, void (*loopFunc
 DENG2_PUBLIC void        LegacyCore_Stop(LegacyCore* lc, int exitCode);
 DENG2_PUBLIC void        LegacyCore_Delete(LegacyCore* lc);
 
+/*
+ * LegacyNetwork
+ */
+DENG2_OPAQUE(LegacyNetwork)
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
