@@ -48,13 +48,18 @@ public:
     ~LegacyCore();
 
     /**
-     * Starts the libdeng2 kernel. A deng2 event loop is started in a separate
-     * thread, where deng2-specific events are handled.
+     * Starts the deng2 event loop in the current thread. Does not return until
+     * the loop is stopped.
+     *
+     * @param callback  Function to call periodically from the loop, as
+     *                  often as possible.
+     *
+     * @return  Exit code.
      */
     int runEventLoop(void (*callback)(void));
 
     /**
-     * Stops the kernel. This is automatically called when the core is
+     * Stops the event loop. This is automatically called when the core is
      * destroyed.
      */
     void stop(int exitCode = 0);
