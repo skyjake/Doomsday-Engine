@@ -60,7 +60,7 @@ defineTest(doPostLink) {
 CONFIG(debug, debug|release) {
     echo(Debug build.)
     DEFINES += _DEBUG
-    CONFIG += deng_rangecheck
+    CONFIG += deng_rangecheck deng_debug
 } else {
     echo(Release build.)
     DEFINES += NDEBUG

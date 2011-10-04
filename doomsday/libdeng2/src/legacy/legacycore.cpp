@@ -56,7 +56,7 @@ struct LegacyCore::Instance
 {
     QCoreApplication* app;
     //CoreEventThread* thread;
-    int (*func)(void);
+    void (*func)(void);
 
     Instance() : app(0), func(0) {}
     ~Instance() {
@@ -80,7 +80,7 @@ LegacyCore::~LegacyCore()
     delete d;
 }
 
-int LegacyCore::runEventLoop(int (*func)(void))
+int LegacyCore::runEventLoop(void (*func)(void))
 {
     qDebug() << "LegacyCore: Starting event loop...";
 

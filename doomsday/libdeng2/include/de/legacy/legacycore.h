@@ -51,7 +51,7 @@ public:
      * Starts the libdeng2 kernel. A deng2 event loop is started in a separate
      * thread, where deng2-specific events are handled.
      */
-    int runEventLoop(int (*callback)(void));
+    int runEventLoop(void (*callback)(void));
 
     /**
      * Stops the kernel. This is automatically called when the core is

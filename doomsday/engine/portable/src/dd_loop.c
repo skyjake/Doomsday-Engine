@@ -70,7 +70,7 @@ void            Net_ResetTimer(void);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void            DD_RunTics(void);
-int             DD_GameLoopCallback(void);
+void            DD_GameLoopCallback(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -134,7 +134,7 @@ int DD_GameLoop(void)
 /**
  * This gets called periodically from the deng2 application core.
  */
-int DD_GameLoopCallback(void)
+void DD_GameLoopCallback(void)
 {
     int exitCode = 0;
 #ifdef WIN32
@@ -145,6 +145,7 @@ int DD_GameLoopCallback(void)
     {
         // Time to stop the loop.
         LegacyCore_Stop(de2LegacyCore, exitCode);
+        return;
     }
 
 #ifdef WIN32

@@ -25,7 +25,7 @@ LegacyCore* LegacyCore_New(int* argc, char** argv)
     return reinterpret_cast<LegacyCore*>(new de::LegacyCore(*argc, argv));
 }
 
-int LegacyCore_RunEventLoop(LegacyCore* lc, int (*loopFunc)(void))
+int LegacyCore_RunEventLoop(LegacyCore* lc, void (*loopFunc)(void))
 {
     DENG2_SELF(LegacyCore, lc);
     return self->runEventLoop(loopFunc);

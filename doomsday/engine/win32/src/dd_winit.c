@@ -317,7 +317,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         // Prepare arguments for LegacyCore.
         legacyArgc = 1;
-        legacyArgs[0] = Argv(0);
+        legacyArgs[0] = (char*) Argv(0);
         de2LegacyCore = LegacyCore_New(&legacyArgc, legacyArgs);
 
         // First order of business: are we running in dedicated mode?
