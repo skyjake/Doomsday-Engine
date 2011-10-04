@@ -57,7 +57,8 @@
     typedef struct Name ## _s Name;
 
 /**
- * Macro for converting the opaque wrapper type to a de::type.
+ * Macro for converting an opaque wrapper type to a de::type.
+ * Asserts that the object really exists (not null).
  */
 #define DENG2_SELF(Type, Var) \
     DENG2_ASSERT(Var != 0); \

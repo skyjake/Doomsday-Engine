@@ -26,41 +26,16 @@
 
 using namespace de;
 
-#if 0
-/**
- * @internal Private thread for running the legacy core's event loop.
- */
-class CoreEventThread : public QThread
-{
-public:
-    CoreEventThread(QCoreApplication& app) : _app(app) {}
-
-    void run() {
-        qDebug() << "CoreEventThread: Event loop started.";
-
-        // Start the event loop.
-        _app.exec();
-
-        qDebug() << "CoreEventThread: Event loop stopped.";
-    }
-
-private:
-    QCoreApplication& _app;
-};
-#endif
-
 /**
  * @internal Private instance data for LegacyCore.
  */
 struct LegacyCore::Instance
 {
     QCoreApplication* app;
-    //CoreEventThread* thread;
     void (*func)(void);
 
     Instance() : app(0), func(0) {}
     ~Instance() {
-        //delete thread;
         delete app;
     }
 };

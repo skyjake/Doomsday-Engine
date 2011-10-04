@@ -14,6 +14,9 @@
 # - deng_snowberry          Include Snowberry in installation
 # - deng_snowleopard        (Mac OS X) Use 10.6 SDK
 # - deng_writertypecheck    Enable type checking in Writer/Reader
+#
+# Read-only options (set automatically):
+# - deng_debug              Debug build.
 
 QT -= core gui
 CONFIG *= thread
@@ -45,6 +48,20 @@ defineTest(echo) {
     }
 }
 
+defineTest(useLibDir) {
+    btype = ""
+    win32 {
+        deng_debug: btype = "/Debug"
+              else: btype = "/Release"
+    }
+    exists($${1}$${btype}) {
+        LIBS += -L$${1}$${btype}
+        export(LIBS)
+        return(true)
+    }
+    return(false)
+}
+
 defineTest(doPostLink) {
     isEmpty(QMAKE_POST_LINK) {
         QMAKE_POST_LINK = $$1
@@ -60,7 +77,7 @@ defineTest(doPostLink) {
 CONFIG(debug, debug|release) {
     echo(Debug build.)
     DEFINES += _DEBUG
-    CONFIG += deng_rangecheck deng_debug
+    CONFIG += deng_debug deng_rangecheck
 } else {
     echo(Release build.)
     DEFINES += NDEBUG
