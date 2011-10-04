@@ -58,7 +58,7 @@ Source: "bin\jHeretic.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Componen
 Source: "bin\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine\jHexen
 
 ; Libraries
-Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "..\win32\vcredist_x86.exe"; DestDir: "{app}\bin"; Flags: ignoreversion deleteafterinstall; Components: Engine
 Source: "bin\deng2.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
