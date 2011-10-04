@@ -37,6 +37,8 @@
 #include <limits.h>
 #include <SDL.h>
 
+#include <de/c_wrapper.h>
+
 #ifdef UNIX
 #  include "sys_dylib.h"
 #endif
@@ -304,6 +306,9 @@ int main(int argc, char** argv)
     char                buf[256];
     const char*         libName = NULL;
 
+    // Create the deng2 legacy application core.
+    de2LegacyCore = LegacyCore_New(&argc, argv);
+
     app.userDirOk = true;
 
     // Assemble a command line string.
@@ -420,6 +425,8 @@ int main(int argc, char** argv)
         exitCode = DD_Main();
     }
     DD_Shutdown();
+
+    LegacyCore_Delete(de2LegacyCore);
 
     // Bye!
     return exitCode;

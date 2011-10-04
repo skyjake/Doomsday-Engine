@@ -31,6 +31,7 @@
 
 #include "dd_share.h"
 #include "dd_api.h"
+#include <de/c_wrapper.h>
 
 // Maximum allowed number of plugins.
 #define MAX_PLUGS   32
@@ -45,5 +46,6 @@ void            DD_InitCommandLine(const char* cmdLine);
 
 extern game_import_t gi;
 extern game_export_t gx;
+extern LegacyCore* de2LegacyCore;
 
 #endif                          // __DOOMSDAY_PORTABLE_INIT_H__

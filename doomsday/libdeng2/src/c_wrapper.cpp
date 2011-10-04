@@ -22,18 +22,26 @@
 
 LegacyCore* LegacyCore_New(int* argc, char** argv)
 {
-    de::LegacyCore* lc = new de::LegacyCore(*argc, argv);
+    return reinterpret_cast<LegacyCore*>(new de::LegacyCore(*argc, argv));
+}
 
-    // Also start it right away.
-    lc->start();
+int LegacyCore_RunEventLoop(LegacyCore* lc, int (*loopFunc)(void))
+{
+    DENG2_SELF(LegacyCore, lc);
+    return self->runEventLoop(loopFunc);
+}
 
-    return reinterpret_cast<LegacyCore*>(lc);
+void LegacyCore_Stop(LegacyCore *lc, int exitCode)
+{
+    DENG2_SELF(LegacyCore, lc);
+    self->stop(exitCode);
 }
 
 void LegacyCore_Delete(LegacyCore* lc)
 {
-    de::LegacyCore* self = reinterpret_cast<de::LegacyCore*>(lc);
-
-    // It gets stopped automatically.
-    delete self;
+    if(lc)
+    {
+        // It gets stopped automatically.
+        delete reinterpret_cast<de::LegacyCore*>(lc);
+    }
 }

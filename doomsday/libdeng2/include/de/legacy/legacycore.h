@@ -20,6 +20,8 @@
 #ifndef LIBDENG2_LEGACYCORE_H
 #define LIBDENG2_LEGACYCORE_H
 
+#include <QObject>
+
 namespace de {
 
 /**
@@ -28,8 +30,10 @@ namespace de {
  * via the deng2 C API and make sure it gets destroyed at shutdown. The C API
  * can be used to access functionality in LegacyCore.
  */
-class LegacyCore
+class LegacyCore : public QObject
 {
+    Q_OBJECT
+
 public:
     /**
      * Initializes the legacy core.
@@ -47,13 +51,16 @@ public:
      * Starts the libdeng2 kernel. A deng2 event loop is started in a separate
      * thread, where deng2-specific events are handled.
      */
-    void start();
+    int runEventLoop(int (*callback)(void));
 
     /**
      * Stops the kernel. This is automatically called when the core is
      * destroyed.
      */
-    void stop();
+    void stop(int exitCode = 0);
+
+public slots:
+    void callback();
 
 private:
     // Private instance data.

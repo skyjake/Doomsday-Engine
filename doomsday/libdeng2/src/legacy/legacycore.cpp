@@ -21,10 +21,12 @@
 
 #include <QCoreApplication>
 #include <QThread>
+#include <QTimer>
 #include <QDebug>
 
 using namespace de;
 
+#if 0
 /**
  * @internal Private thread for running the legacy core's event loop.
  */
@@ -45,6 +47,7 @@ public:
 private:
     QCoreApplication& _app;
 };
+#endif
 
 /**
  * @internal Private instance data for LegacyCore.
@@ -52,11 +55,12 @@ private:
 struct LegacyCore::Instance
 {
     QCoreApplication* app;
-    CoreEventThread* thread;
+    //CoreEventThread* thread;
+    int (*func)(void);
 
-    Instance() : app(0), thread(0) {}
+    Instance() : app(0), func(0) {}
     ~Instance() {
-        delete thread;
+        //delete thread;
         delete app;
     }
 };
@@ -67,9 +71,6 @@ LegacyCore::LegacyCore(int& argc, char** argv)
 
     // Construct a new core application (must have one for the event loop).
     d->app = new QCoreApplication(argc, argv);
-
-    // The event loop thread.
-    d->thread = new CoreEventThread(*d->app);
 }
 
 LegacyCore::~LegacyCore()
@@ -79,23 +80,32 @@ LegacyCore::~LegacyCore()
     delete d;
 }
 
-void LegacyCore::start()
+int LegacyCore::runEventLoop(int (*func)(void))
 {
-    qDebug() << "LegacyCore: Starting...";
+    qDebug() << "LegacyCore: Starting event loop...";
 
-    // Run the separate Qt event loop thread. In the future this will be
-    // replaced by the application's main Qt event loop, where deng2 will
-    // hook into.
-    d->thread->start();
+    // Set up a timer to periodically call the provided callback function.
+    d->func = func;
+    QTimer::singleShot(1, this, SLOT(callback()));
+
+    // Run the Qt event loop. In the future this will be replaced by the
+    // application's main Qt event loop, where deng2 will hook into.
+    int code = d->app->exec();
+
+    qDebug() << "LegacyCore: Event loop exited with code" << code;
+    return code;
 }
 
-void LegacyCore::stop()
+void LegacyCore::stop(int exitCode)
 {
-    qDebug() << "LegacyCore: Stopping...";
+    d->app->exit(exitCode);
+}
 
-    // Stop the separate Qt event loop thread.
-    d->thread->quit();
-    d->thread->wait(5000);
-
-    qDebug() << "LegacyCore: Stopped.";
+void LegacyCore::callback()
+{
+    if(d->func)
+    {
+        d->func();
+    }
+    QTimer::singleShot(1, this, SLOT(callback()));
 }

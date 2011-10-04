@@ -292,6 +292,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     BOOL                doShutdown = TRUE;
     int                 exitCode = 0;
     int                 lnCmdShow = nCmdShow;
+    int                 legacyArgc = 0;
+    char*               legacyArgs[1] = { 0 };
 
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
@@ -304,14 +306,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
     else
     {
-        char                buf[256];
-        const char*         libName = NULL;
+        char buf[256];
+        const char* libName = NULL;
 
         // Initialize COM.
         CoInitialize(NULL);
 
         // Prepare the command line arguments.
         DD_InitCommandLine(UTF_STRING(GetCommandLine()));
+
+        // Prepare arguments for LegacyCore.
+        legacyArgc = 1;
+        legacyArgs[0] = Argv(0);
+        de2LegacyCore = LegacyCore_New(&legacyArgc, legacyArgs);
 
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
@@ -404,6 +411,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         exitCode = DD_Main();
     }
     DD_Shutdown();
+
+    LegacyCore_Delete(de2LegacyCore);
+    de2LegacyCore = 0;
 
     // No more use of COM beyond this point.
     CoUninitialize();

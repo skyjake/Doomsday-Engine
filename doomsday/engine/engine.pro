@@ -18,13 +18,14 @@ echo(Doomsday version $${DENG_VERSION}.)
 include(../dep_sdl.pri)
 include(../dep_opengl.pri)
 include(../dep_zlib.pri)
-include(../dep_libpng.pri)
+include(../dep_png.pri)
 include(../dep_curses.pri)
 include(../dep_curl.pri)
 include(../dep_lzss.pri)
 win32 {
     include(../dep_directx.pri)
 }
+include(../dep_deng2.pri)
 
 QT += core network
 
@@ -77,9 +78,6 @@ win32 {
 else:macx {
     useFramework(Cocoa)
     useFramework(QTKit)
-
-    # Link against libdeng2.
-    LIBS += -L../libdeng2 -ldeng2
 }
 else {
     # Allow exporting symbols out of the main executable.

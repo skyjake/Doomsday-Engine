@@ -70,6 +70,7 @@ void            Net_ResetTimer(void);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void            DD_RunTics(void);
+int             DD_GameLoopCallback(void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -120,68 +121,79 @@ void DD_RegisterLoop(void)
  */
 int DD_GameLoop(void)
 {
-    int                 exitCode = 0;
-#ifdef WIN32
-    MSG                 msg;
-#endif
-
     // Limit the frame rate to 35 when running in dedicated mode.
     if(isDedicated)
     {
         maxFrameRate = 35;
     }
 
-    while(!appShutdown)
-    {
-#ifdef WIN32
-        /**
-         * Start by checking Windows messages.
-         * \note Must be in the same thread as that which registered the
-         *       window it is handling messages for - DJS.
-         */
-        while(!suspendMsgPump &&
-              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-        {
-            if(msg.message == WM_QUIT)
-            {
-                appShutdown = true;
-                suspendMsgPump = true;
-                exitCode = msg.wParam;
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
+    // Start the deng2 event loop.
+    return LegacyCore_RunEventLoop(de2LegacyCore, DD_GameLoopCallback);
+}
 
-        if(appShutdown)
-            continue;
+/**
+ * This gets called periodically from the deng2 application core.
+ */
+int DD_GameLoopCallback(void)
+{
+    int exitCode = 0;
+#ifdef WIN32
+    MSG msg;
 #endif
 
-        // Frame syncronous I/O operations.
-        DD_StartFrame();
-
-        // Run at least one tic. If no tics are available (maxfps interval
-        // not reached yet), the function blocks.
-        DD_RunTics();
-
-        // Update clients.
-        Sv_TransmitFrame();
-
-        // Finish the refresh frame.
-        DD_EndFrame();
-
-        // Send out new accumulation. Drawing will take the longest.
-        //Net_Update();
-        DD_DrawAndBlit();
-        //Net_Update();
-
-        // After the first frame, start timedemo.
-        DD_CheckTimeDemo();
+    if(appShutdown)
+    {
+        // Time to stop the loop.
+        LegacyCore_Stop(de2LegacyCore, exitCode);
     }
 
-    return exitCode;
+#ifdef WIN32
+    /**
+     * Start by checking Windows messages.
+     * \note Must be in the same thread as that which registered the
+     *       window it is handling messages for - DJS.
+     */
+    while(!suspendMsgPump &&
+          PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+    {
+        if(msg.message == WM_QUIT)
+        {
+            appShutdown = true;
+            suspendMsgPump = true;
+            exitCode = msg.wParam;
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+
+    if(appShutdown)
+    {
+        LegacyCore_Stop(de2LegacyCore, exitCode);
+        return;
+    }
+#endif
+
+    // Frame syncronous I/O operations.
+    DD_StartFrame();
+
+    // Run at least one tic. If no tics are available (maxfps interval
+    // not reached yet), the function blocks.
+    DD_RunTics();
+
+    // Update clients.
+    Sv_TransmitFrame();
+
+    // Finish the refresh frame.
+    DD_EndFrame();
+
+    // Draw and show the current frame.
+    DD_DrawAndBlit();
+
+    // After the first frame, start timedemo.
+    DD_CheckTimeDemo();
 }
 
 /**

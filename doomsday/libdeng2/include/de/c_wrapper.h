@@ -24,7 +24,8 @@
 
 /**
  * @file Defines the C wrapper API for libdeng2 classes. Legacy code can use
- * this wrapper API to access libdeng2 functionality.
+ * this wrapper API to access libdeng2 functionality. Note that the identifiers
+ * in this file are not in the de namespace.
  */
 
 #ifdef __cplusplus
@@ -34,11 +35,12 @@ extern "C" {
 /*
  * LegacyCore
  */
-struct LegacyCore_s;
-typedef LegacyCore_s LegacyCore;
+DENG2_OPAQUE(LegacyCore)
 
-LIBDENG2_PUBLIC LegacyCore* LegacyCore_New(int* argc, char** argv);
-LIBDENG2_PUBLIC void        LegacyCore_Delete(LegacyCore* lc);
+DENG2_PUBLIC LegacyCore* LegacyCore_New(int* argc, char** argv);
+DENG2_PUBLIC int         LegacyCore_RunEventLoop(LegacyCore* lc, int (*loopFunc)(void));
+DENG2_PUBLIC void        LegacyCore_Stop(LegacyCore* lc, int exitCode);
+DENG2_PUBLIC void        LegacyCore_Delete(LegacyCore* lc);
 
 #ifdef __cplusplus
 } // extern "C"

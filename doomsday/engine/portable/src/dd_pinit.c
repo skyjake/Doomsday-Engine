@@ -67,6 +67,11 @@
 game_import_t __gi;
 game_export_t __gx;
 
+/*
+ * libdeng2 application core.
+ */
+LegacyCore* de2LegacyCore = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
