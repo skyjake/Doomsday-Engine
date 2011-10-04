@@ -77,12 +77,13 @@ void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
 }
 
 #ifdef MACOSX
-static jmp_buf png_jmpbuf2(png_structp png_ptr)
+static jmp_buf* png_jmpbuf3(png_structp png_ptr)
 {
-    // This avoids a compiler warning on gcc.
+    // This kludge avoids a compiler warning on gcc.
     // @see png_jmpbuf() in png.h
-    return *png_set_longjmp_fn(png_ptr, (png_longjmp_ptr)longjmp, sizeof(jmp_buf));
+    return png_set_longjmp_fn(png_ptr, (png_longjmp_ptr)longjmp, sizeof(jmp_buf));
 }
+#  define png_jmpbuf2(p) *png_jmpbuf3(p)
 #else
 #  define png_jmpbuf2(p) png_jmpbuf(p)
 #endif
