@@ -136,7 +136,8 @@ def count_log_word(fn, word):
     while True:
         pos = txt.find(unicode(word), pos)
         if pos < 0: break 
-        if txt[pos-1] not in ['/', '\\'] and txt[pos+len(word)] != 's':
+        if txt[pos-1] not in ['/', '\\'] and txt[pos+len(word)] != 's' and \
+            txt[pos-11:pos] != 'shlibdeps: ':
             count += 1            
         pos += len(word)
     return count
@@ -201,10 +202,10 @@ def html_build_description(name, encoded=True):
     for f in glob.glob(os.path.join(buildDir, 'build*txt')):
         os.system('gzip -9 %s' % f)    
     
-    oses = [('Windows', '.exe', ['win32', 'win32-32bit']),
-            ('Mac OS X', '.dmg', ['darwin', 'darwin-32bit']),
-            ('Ubuntu', 'i386.deb', ['linux2', 'linux2-32bit']),
-            ('Ubuntu (64-bit)', 'amd64.deb', ['linux2-64bit'])]
+    oses = [('Windows (x86)', '.exe', ['win32', 'win32-32bit']),
+            ('Mac OS X 10.4+ (i386/ppc)', '.dmg', ['darwin', 'darwin-32bit']),
+            ('Ubuntu (x86)', 'i386.deb', ['linux2', 'linux2-32bit']),
+            ('Ubuntu (x86_64)', 'amd64.deb', ['linux2-64bit'])]
     
     # Print out the matrix.
     msg += '<p><table cellspacing="4" border="0">'
