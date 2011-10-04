@@ -522,10 +522,23 @@ startupgfx.files = \
     data/graphics/logo.png
 
 macx {
-    FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
+    res.files = \
+        mac/res/English.lproj \
+        mac/res/Startup.nib \
+        mac/res/deng.icns
+    res.path = Contents/Resources
+
+    data.path = $${res.path}
+    startupfonts.path = $${res.path}/Data/Fonts
+    startupgfx.path = $${res.path}/Data/Graphics
+
+    QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
+
+    QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
+    FW_DIR = \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
     doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
@@ -548,21 +561,6 @@ macx {
     fixInstallName("libdeng2.2.dylib")
     fixInstallName("QtCore.framework/Versions/4/QtCore")
     fixInstallName("QtNetwork.framework/Versions/4/QtNetwork")
-
-    RES_PATH = Contents/Resources
-    res.files = \
-        mac/res/English.lproj \
-        mac/res/Startup.nib \
-        mac/res/deng.icns
-    res.path = $$RES_PATH
-
-    data.path = $$RES_PATH
-    startupfonts.path = $$RES_PATH/Data/Fonts
-    startupgfx.path = $$RES_PATH/Data/Graphics
-
-    QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
-
-    QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
 
 # Installation ---------------------------------------------------------------
