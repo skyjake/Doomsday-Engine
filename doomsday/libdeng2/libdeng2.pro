@@ -39,10 +39,7 @@ SOURCES += \
 
 # Installation ---------------------------------------------------------------
 
-win32 {
-}
-else:unix:!macx {
-    # Generic Unix installation.
+!macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
