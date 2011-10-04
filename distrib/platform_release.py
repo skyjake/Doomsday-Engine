@@ -244,7 +244,11 @@ import snowberry"""
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
         
     clean_products()
-       
+
+    # Check that the changelog exists.
+    if not os.path.exists('debian/changelog'):    
+        os.system('dch --check-dirname-level=0 --create --package doomsday -v %s-%s "Initial release."' % (DOOMSDAY_VERSION, DOOMSDAY_BUILD))
+    
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
         
