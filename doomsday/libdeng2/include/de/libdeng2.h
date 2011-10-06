@@ -24,6 +24,10 @@
  * @file Common definitions for libdeng2.
  */
 
+#ifdef __cplusplus
+#include <QtCore/qglobal.h>
+#endif
+
 #include <assert.h>
 
 /*
@@ -63,5 +67,51 @@
 #define DENG2_SELF(Type, Var) \
     DENG2_ASSERT(Var != 0); \
     de::Type* self = reinterpret_cast<de::Type*>(Var);
+
+/**
+ * Macro for iterating through an STL container.
+ *
+ * @param Iter          Name of the iterator variable. Scope is limited to the for loop.
+ * @param ContainerRef  Container.
+ * @param IterClass     Iterator type.
+ */
+#define DENG2_FOR_EACH(Iter, ContainerRef, IterClass) \
+    for(IterClass Iter = (ContainerRef).begin(); Iter != (ContainerRef).end(); ++Iter)
+
+#ifdef __cplusplus
+namespace de {
+
+/**
+ * @defgroup types Basic Types
+ * Basic numeric data types.
+ */
+
+//@{
+/// @ingroup types
+typedef qint8   dchar;      ///< 8-bit signed integer.
+typedef quint8  dbyte;      ///< 8-bit unsigned integer.
+typedef quint8  duchar;     ///< 8-bit unsigned integer.
+typedef dchar   dint8;      ///< 8-bit signed integer.
+typedef dbyte   duint8;     ///< 8-bit unsigned integer.
+typedef qint16  dint16;     ///< 16-bit signed integer.
+typedef quint16 duint16;    ///< 16-bit unsigned integer.
+typedef dint16  dshort;     ///< 16-bit signed integer.
+typedef duint16 dushort;    ///< 16-bit unsigned integer.
+typedef qint32  dint32;     ///< 32-bit signed integer.
+typedef quint32 duint32;    ///< 32-bit unsigned integer.
+typedef dint32  dint;       ///< 32-bit signed integer.
+typedef duint32 duint;      ///< 32-bit unsigned integer.
+typedef qint64  dint64;     ///< 64-bit signed integer.
+typedef quint64 duint64;    ///< 64-bit unsigned integer.
+typedef float   dfloat;     ///< 32-bit floating point number.
+typedef qreal   ddouble;    ///< 64-bit floating point number.
+typedef quint64 dsize;
+//@}
+
+} // namespace de
+
+#include "Error"
+
+#endif
 
 #endif // LIBDENG2_H

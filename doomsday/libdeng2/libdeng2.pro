@@ -27,14 +27,29 @@ INCLUDEPATH += include
 
 # Source Files ---------------------------------------------------------------
 
+include(data.pri)
 include(legacy.pri)
+include(network.pri)
+
+# Convenience headers.
+HEADERS += \
+    include/de/Error \
+    include/de/Log \
+    include/de/LogBuffer \
+    include/de/TextStyle
 
 HEADERS += \
     include/de/c_wrapper.h \
-    include/de/libdeng2.h
+    include/de/error.h \
+    include/de/libdeng2.h \
+    include/de/core/log.h \
+    include/de/core/logbuffer.h \
+    include/de/core/textstyle.h
 
 SOURCES += \
-    src/c_wrapper.cpp
+    src/c_wrapper.cpp \
+    src/core/log.cpp \
+    src/core/logbuffer.cpp
 
 # Installation ---------------------------------------------------------------
 
