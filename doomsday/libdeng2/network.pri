@@ -8,8 +8,8 @@ HEADERS += \
     include/de/net/message.h \
     include/de/net/packet.h \
     include/de/net/socket.h \
-    include/de/net/transmitter.h
-    
+    include/de/net/transmitter.h \
+
 SOURCES += \
     src/net/address.cpp \
     src/net/message.cpp \

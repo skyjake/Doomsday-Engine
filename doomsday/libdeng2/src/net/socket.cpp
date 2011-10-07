@@ -56,7 +56,7 @@ struct Socket::Instance
     QList<Message*> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
-    dsize bytesToBeWritten;
+    dint64 bytesToBeWritten;
 
     Instance() :
         receptionState(ReceivingHeader),
@@ -64,40 +64,43 @@ struct Socket::Instance
         activeChannel(0),
         socket(0),
         bytesToBeWritten(0) {}
+
+    ~Instance() {
+        // Delete received messages left in the buffer.
+        foreach(Message* msg, receivedMessages) delete msg;
+    }
 };
 
 Socket::Header::Header() : version(PROTOCOL_VERSION), huffman(false), channel(0), size(0) {}
 
 Socket::Socket(const Address& address)   
 {
-    _socket = new QTcpSocket(this);
-    _socket->connectToHost(address.host(), address.port());
+    d = new Instance;
+    d->socket = new QTcpSocket(this);
+    d->socket->connectToHost(address.host(), address.port());
     initialize();
 }
 
 Socket::Socket(QTcpSocket* existingSocket)
-    : _receptionState(Instance::ReceivingHeader),
-      _useHuffman(false),
-      _activeChannel(0),
-      _socket(existingSocket),
-      _bytesToBeWritten(0)
 {
-    _socket->setParent(this);
+    d = new Instance;
+    d->socket = existingSocket;
+    d->socket->setParent(this);
     initialize();
 }
 
 Socket::~Socket()
 {
     close();
+    delete d;
 }
 
 void Socket::initialize()
 {
-    connect(_socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
-    connect(_socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)),
-            this, SLOT(socketError(QAbstractSocket::SocketError)));
-    connect(_socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
+    connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
+    connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
 }
 
 void Socket::close()
@@ -105,30 +108,30 @@ void Socket::close()
     flush();
 
     // Prevent emitting of any more signals.
-    _socket->disconnect();
+    d->socket->disconnect();
 
-    _socket->close();
+    d->socket->close();
 }
 
 duint Socket::channel() const
 {
-    return _activeChannel;
+    return d->activeChannel;
 }
 
 void Socket::setChannel(duint number)
 {
-    Q_ASSERT(number < MAX_CHANNELS);
-    _activeChannel = number;
+    DENG2_ASSERT(number < MAX_CHANNELS);
+    d->activeChannel = number;
 }
 
 void Socket::send(const IByteArray &packet)
 {
-    send(packet, _activeChannel);
+    send(packet, d->activeChannel);
 }
 
 Socket& Socket::operator << (const IByteArray& packet)
 {
-    send(packet, _activeChannel);
+    send(packet, d->activeChannel);
     return *this;
 }
 
@@ -142,8 +145,8 @@ duint32 Socket::packHeader(const Header& header)
      */
      
     duint32 flags =
-        (header.huffman? Header::HUFFMAN : 0) |
-        (header.channel == 1? Header::CHANNEL_1 : 0);
+        (header.huffman? Huffman : 0) |
+        (header.channel == 1? Channel1 : 0);
 
     duint32 bits = ( (header.size & 0x7ffffff) |
                      ((header.version & 3) << 27) |
@@ -157,21 +160,21 @@ void Socket::unpackHeader(duint32 headerBytes, Header& header)
     duint flags = (headerBytes >> 29) & 7;
     
     header.version = (headerBytes >> 27) & 3;
-    header.huffman = ((flags & Header::HUFFMAN) != 0);
-    header.channel = (flags & Header::CHANNEL_1? 1 : 0);
+    header.huffman = ((flags & Huffman) != 0);
+    header.channel = (flags & Channel1? 1 : 0);
     header.size = headerBytes & 0x7ffffff;
 }
 
 void Socket::send(const IByteArray& packet, duint channel)
 {
-    if(!_socket) 
+    if(!d->socket)
     {
         /// @throw DisconnectedError Sending is not possible because the socket has been closed.
         throw DisconnectedError("Socket::operator << ", "Socket is unavailable");
     }
 
     // Keep track of where we are with the traffic.
-    _bytesToBeWritten += packet.size() + 4;
+    d->bytesToBeWritten += packet.size() + 4;
 
     // Write the packet header: packet length, version, possible flags.
     Header header;
@@ -180,27 +183,27 @@ void Socket::send(const IByteArray& packet, duint channel)
 
     Block dest;
     Writer(dest) << packHeader(header);
-    _socket->write(dest);
+    d->socket->write(dest);
 
     // Write the data itself.
-    _socket->write(Block(packet));
+    d->socket->write(Block(packet));
 }
 
 void Socket::readIncomingBytes()
 {
     forever
     {
-        if(_receptionState == Instance::ReceivingHeader)
+        if(d->receptionState == Instance::ReceivingHeader)
         {
-            if(_socket->bytesAvailable() >= HEADER_SIZE)
+            if(d->socket->bytesAvailable() >= HEADER_SIZE)
             {
                 // Get the header.
                 duint32 bits = 0;
-                Reader(Block(_socket->read(HEADER_SIZE))) >> bits;
-                unpackHeader(bits, _incomingHeader);
+                Reader(Block(d->socket->read(HEADER_SIZE))) >> bits;
+                unpackHeader(bits, d->incomingHeader);
 
                 // Check for valid protocols.
-                if(_incomingHeader.version > PROTOCOL_VERSION)
+                if(d->incomingHeader.version > PROTOCOL_VERSION)
                 {
                     /// @throw UnknownProtocolError The received data block's protocol version number
                     /// was not recognized. This is probably because the remote end is not a libdeng2
@@ -208,7 +211,7 @@ void Socket::readIncomingBytes()
                     throw UnknownProtocolError("Socket::readIncomingBytes", "Incoming packet has unknown protocol");
                 }
 
-                _receptionState = Instance::ReceivingPayload;
+                d->receptionState = Instance::ReceivingPayload;
             }
             else
             {
@@ -217,17 +220,17 @@ void Socket::readIncomingBytes()
             }
         }
 
-        if(_receptionState == Instance::ReceivingPayload)
+        if(d->receptionState == Instance::ReceivingPayload)
         {
-            if(_socket->bytesAvailable() >= _incomingHeader.size)
+            if(d->socket->bytesAvailable() >= d->incomingHeader.size)
             {
-                _receivedMessages.append(new Message(Address(_socket->peerAddress(),
-                                                             _socket->peerPort()),
-                                                     _incomingHeader.channel,
-                                                     Block(_socket->read(_incomingHeader.size))));
+                d->receivedMessages.append(new Message(Address(d->socket->peerAddress(),
+                                                               d->socket->peerPort()),
+                                                       d->incomingHeader.channel,
+                                                       Block(d->socket->read(d->incomingHeader.size))));
 
                 // Get the next message.
-                _receptionState = Instance::ReceivingHeader;
+                d->receptionState = Instance::ReceivingHeader;
             }
             else
             {
@@ -238,7 +241,7 @@ void Socket::readIncomingBytes()
     }
 
     // Notification about available messages.
-    if(!_receivedMessages.isEmpty())
+    if(!d->receivedMessages.isEmpty())
     {
         emit messagesReady();
     }
@@ -246,34 +249,34 @@ void Socket::readIncomingBytes()
 
 Message* Socket::receive()
 {
-    if(_receivedMessages.isEmpty())
+    if(d->receivedMessages.isEmpty())
     {
         return 0;
     }
-    return _receivedMessages.takeFirst();
+    return d->receivedMessages.takeFirst();
 }
 
 Message* Socket::peek()
 {
-    if(_receivedMessages.isEmpty())
+    if(d->receivedMessages.isEmpty())
     {
         return 0;
     }
-    return _receivedMessages.first();
+    return d->receivedMessages.first();
 }
 
 void Socket::flush()
 {
     // Wait until data has been written.
-    _socket->flush();
-    _socket->waitForBytesWritten();
+    d->socket->flush();
+    d->socket->waitForBytesWritten();
 }
 
 Address Socket::peerAddress() const
 {
     if(isOpen())
     {
-        return Address(_socket->peerAddress(), _socket->peerPort());
+        return Address(d->socket->peerAddress(), d->socket->peerPort());
     }
     /// @throw PeerError Could not determine the TCP/IP address of the socket.
     throw PeerError("Socket::peerAddress", "Socket is unavailable");
@@ -281,7 +284,7 @@ Address Socket::peerAddress() const
 
 bool Socket::isOpen() const
 {
-    return _socket && _socket->state() != QTcpSocket::UnconnectedState;
+    return d->socket && d->socket->state() != QTcpSocket::UnconnectedState;
 }
 
 void Socket::socketDisconnected()
@@ -289,25 +292,26 @@ void Socket::socketDisconnected()
     emit disconnected();
 }
 
-void Socket::socketError(QAbstractSocket::SocketError socketError)
+void Socket::socketError(QAbstractSocket::SocketError /*socketError*/)
 {
     LOG_AS("Socket::socketError");
-    LOG_WARNING(_socket->errorString());
+    LOG_WARNING(d->socket->errorString());
 
-    emit error(socketError);
+    emit disconnected(); //error(socketError);
 }
 
 bool Socket::hasIncoming() const
 {
-    return !_receivedMessages.empty();
+    return !d->receivedMessages.empty();
 }
 
 dsize Socket::bytesBuffered() const
 {
-    return _bytesToBeWritten;
+    return d->bytesToBeWritten;
 }
 
 void Socket::bytesWereWritten(qint64 bytes)
 {
-    _bytesToBeWritten -= bytes;
+    d->bytesToBeWritten -= bytes;
+    DENG2_ASSERT(d->bytesToBeWritten >= 0);
 }

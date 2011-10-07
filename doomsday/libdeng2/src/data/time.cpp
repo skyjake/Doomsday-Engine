@@ -19,6 +19,7 @@
 
 #include "de/Time"
 #include "de/Date"
+#include "de/String"
 #include "de/Writer"
 #include "de/Reader"
 

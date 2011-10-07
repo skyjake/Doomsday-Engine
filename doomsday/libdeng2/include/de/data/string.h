@@ -23,7 +23,6 @@
 #include <QString>
 
 #include "../libdeng2.h"
-#include "../Error"
 #include "../Block"
 
 namespace de {

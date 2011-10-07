@@ -34,7 +34,10 @@ namespace de {
 class LogEntry;
 
 /**
- * Buffer for log entries. The application owns one of these.
+ * Buffer for log entries. Log entries get creates in thread-specific logs and
+ * then get flushed to the LogBuffer.
+ *
+ * The application owns one of these.
  *
  * @ingroup core
  */
@@ -49,7 +52,14 @@ public:
     typedef QList<const LogEntry*> Entries;
 
 public:
-    LogBuffer(duint maxEntryCount);
+    /**
+     * Constructs a new log buffer. By default log levels starting with MESSAGE
+     * are enabled. Output goes to stdout/stderr. @see enableStandardOutput().
+     *
+     * @param maxEntryCount  Maximum number of entries to keep in memory.
+     */
+    LogBuffer(duint maxEntryCount = 1000);
+
     virtual ~LogBuffer();
 
     void setMaxEntryCount(duint maxEntryCount);
@@ -119,6 +129,18 @@ public:
     void fileBeingDeleted(const File& file);
 #endif
 
+public:
+    /**
+     * Sets the application's global log buffer. This is available to all.
+     * Ownership is not transferred, so whoever created the buffer is
+     * reponsible for deleting it after no one needs the log any more.
+     *
+     * @param appBuffer  LogBuffer instance.
+     */
+    static void setAppBuffer(LogBuffer& appBuffer);
+
+    static LogBuffer& appBuffer();
+
 public slots:
     /**
      * Flushes all unflushed entries to the defined outputs.
@@ -138,6 +160,9 @@ private:
     EntryList _toBeFlushed;
     Time _lastFlushedAt;
     QTimer* _autoFlushTimer;
+
+    /// The globally available application buffer.
+    static LogBuffer* _appBuffer;
 };
 
 } // namespace de

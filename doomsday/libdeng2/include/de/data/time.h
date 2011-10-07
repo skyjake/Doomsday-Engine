@@ -22,7 +22,6 @@
 
 #include "../libdeng2.h"
 #include "../ISerializable"
-#include "../String"
 
 #include <QDateTime>
 #include <QTextStream>
@@ -30,6 +29,7 @@
 namespace de {
 
 class Date;
+class String;
 
 /**
  * The Time class represents a single time measurement. It represents

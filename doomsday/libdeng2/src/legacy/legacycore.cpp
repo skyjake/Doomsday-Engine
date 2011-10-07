@@ -18,6 +18,7 @@
  */
 
 #include "de/LegacyCore"
+#include "de/LogBuffer"
 
 #include <QCoreApplication>
 #include <QThread>
@@ -33,6 +34,7 @@ struct LegacyCore::Instance
 {
     QCoreApplication* app;
     void (*func)(void);
+    LogBuffer logBuffer;
 
     Instance() : app(0), func(0) {}
     ~Instance() {
@@ -46,6 +48,9 @@ LegacyCore::LegacyCore(int& argc, char** argv)
 
     // Construct a new core application (must have one for the event loop).
     d->app = new QCoreApplication(argc, argv);
+
+    // The global log buffer will be available for the entire runtime of deng2.
+    LogBuffer::setAppBuffer(d->logBuffer);
 }
 
 LegacyCore::~LegacyCore()
@@ -57,7 +62,8 @@ LegacyCore::~LegacyCore()
 
 int LegacyCore::runEventLoop(void (*func)(void))
 {
-    qDebug() << "LegacyCore: Starting event loop...";
+    LOG_AS("LegacyCore::runEventLoop");
+    LOG_MSG("Starting event loop...");
 
     // Set up a timer to periodically call the provided callback function.
     d->func = func;
@@ -67,7 +73,7 @@ int LegacyCore::runEventLoop(void (*func)(void))
     // application's main Qt event loop, where deng2 will hook into.
     int code = d->app->exec();
 
-    qDebug() << "LegacyCore: Event loop exited with code" << code;
+    LOG_MSG("Event loop exited with code %i.") << code;
     return code;
 }
 

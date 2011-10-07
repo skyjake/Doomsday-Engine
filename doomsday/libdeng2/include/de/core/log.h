@@ -47,7 +47,7 @@
 #define LOG_TRACE(str)      de::Log::threadLog().enter(de::Log::TRACE, str)
 #define LOG_DEBUG(str)      de::Log::threadLog().enter(de::Log::DEBUG, str)
 #define LOG_VERBOSE(str)    de::Log::threadLog().enter(de::Log::VERBOSE, str)
-#define LOG_MESSAGE(str)    de::Log::threadLog().enter(str)
+#define LOG_MSG(str)        de::Log::threadLog().enter(str)
 #define LOG_INFO(str)       de::Log::threadLog().enter(de::Log::INFO, str)
 #define LOG_WARNING(str)    de::Log::threadLog().enter(de::Log::WARNING, str)
 #define LOG_ERROR(str)      de::Log::threadLog().enter(de::Log::ERROR, str)
@@ -63,8 +63,9 @@ class LogBuffer;
 class LogEntry;
 
 /**
- * Logs provide means for adding log entries into the log entry buffer.
- * Each thread uses its own logs.
+ * Logs provide means for adding log entries into the log entry buffer. The
+ * thread's Log keeps track of the section stack. Each thread uses its own
+ * logs.
  *
  * @ingroup core
  */
@@ -293,15 +294,15 @@ public:
 
         Type type() const { return _type; }
         dint64 intValue() const {
-            Q_ASSERT(_type == INTEGER);
+            DENG2_ASSERT(_type == INTEGER);
             return _data.intValue;
         }
         ddouble floatValue() const {
-            Q_ASSERT(_type == FLOATING_POINT);
+            DENG2_ASSERT(_type == FLOATING_POINT);
             return _data.floatValue;
         }
         QString stringValue() const {
-            Q_ASSERT(_type == STRING);
+            DENG2_ASSERT(_type == STRING);
             return *_data.stringValue;
         }
 
@@ -355,7 +356,7 @@ public:
 
     /// Appends a new argument to the entry.
     template <typename ValueType>
-    LogEntry& operator << (const ValueType& v) {
+    inline LogEntry& operator << (const ValueType& v) {
         if(!_disabled) {
             _args.push_back(new Arg(v));
         }

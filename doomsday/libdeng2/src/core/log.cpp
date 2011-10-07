@@ -20,8 +20,7 @@
 #include "de/Log"
 #include "de/Time"
 #include "de/Date"
-#include "de/TextStyle"
-#include "de/App"
+#include "de/LogTextStyle"
 #include "de/LogBuffer"
 
 #include <QMap>
@@ -56,7 +55,7 @@ static Logs logs;
 LogEntry::LogEntry(Log::LogLevel level, const String& section, const String& format)
     : _level(level), _section(section), _format(format), _disabled(false)
 {
-    if(!App::logBuffer().enabled(level))
+    if(!LogBuffer::appBuffer().enabled(level))
     {
         _disabled = true;
     }
@@ -231,7 +230,7 @@ void Log::beginSection(const char* name)
 
 void Log::endSection(const char* name)
 {
-    Q_ASSERT(_sectionStack.back() == name);
+    DENG2_ASSERT(_sectionStack.back() == name);
     _sectionStack.takeLast();
 }
 
@@ -242,7 +241,7 @@ LogEntry& Log::enter(const String& format)
 
 LogEntry& Log::enter(Log::LogLevel level, const String& format)
 {
-    if(!App::logBuffer().enabled(level))
+    if(!LogBuffer::appBuffer().enabled(level))
     {
         // If the level is disabled, no messages are entered into it.
         return *_throwawayEntry;
@@ -270,7 +269,7 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
     LogEntry* entry = new LogEntry(level, context, format);
     
     // Add it to the application's buffer. The buffer gets ownership.
-    App::logBuffer().add(entry);
+    LogBuffer::appBuffer().add(entry);
     
     return *entry;
 }

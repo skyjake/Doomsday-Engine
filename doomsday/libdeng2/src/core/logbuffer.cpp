@@ -18,7 +18,6 @@
  */
 
 #include "de/LogBuffer"
-#include "de/App"
 #include "de/Writer"
 #include "de/FixedByteArray"
 
@@ -33,10 +32,12 @@ const Time::Delta FLUSH_INTERVAL = .2;
 const duint SIMPLE_INDENT = 30;
 const duint RULER_LENGTH = 98 - SIMPLE_INDENT;
 
+LogBuffer* LogBuffer::_appBuffer = 0;
+
 LogBuffer::LogBuffer(duint maxEntryCount) 
     : _enabledOverLevel(Log::MESSAGE), 
       _maxEntryCount(maxEntryCount),
-      _standardOutput(false),
+      _standardOutput(true),
 #ifdef DENG2_FS_AVAILABLE
       _outputFile(0),
 #endif
@@ -144,8 +145,14 @@ void LogBuffer::flush()
         {
             // Error messages will go to stderr instead of stdout.
             QScopedPointer<QTextStream> os(_standardOutput?
-                                           ((*i)->level() >= Log::ERROR? new QTextStream(stderr) :
-                                            new QTextStream(stdout)) : 0);
+                                           ((*i)->level() >= Log::ERROR?
+                                    #ifdef WIN32
+                                                // Use stdout for everything on Windows.
+                                                new QTextStream(stdout) :
+                                    #else
+                                                new QTextStream(stderr) :
+                                    #endif
+                                                new QTextStream(stdout)) : 0);
 
             String message = (*i)->asText();
 
@@ -221,8 +228,19 @@ void LogBuffer::flush()
 #ifdef DENG2_FS_AVAILABLE
 void LogBuffer::fileBeingDeleted(const File& file)
 {
-    Q_ASSERT(_outputFile == &file);
+    DENG2_ASSERT(_outputFile == &file);
     flush();
     _outputFile = 0;
 }
 #endif
+
+void LogBuffer::setAppBuffer(LogBuffer &appBuffer)
+{
+    _appBuffer = &appBuffer;
+}
+
+LogBuffer& LogBuffer::appBuffer()
+{
+    DENG2_ASSERT(_appBuffer != 0);
+    return *_appBuffer;
+}

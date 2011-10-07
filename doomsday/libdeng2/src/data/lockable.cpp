@@ -65,5 +65,5 @@ bool Lockable::isLocked() const
 
 void Lockable::assertLocked() const
 {
-    Q_ASSERT(isLocked());
+    DENG2_ASSERT(isLocked());
 }

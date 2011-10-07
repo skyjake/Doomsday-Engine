@@ -36,15 +36,15 @@ HEADERS += \
     include/de/Error \
     include/de/Log \
     include/de/LogBuffer \
-    include/de/TextStyle
+    include/de/LogTextStyle \
+    include/de/core/logtextstyle.h
 
 HEADERS += \
     include/de/c_wrapper.h \
     include/de/error.h \
     include/de/libdeng2.h \
     include/de/core/log.h \
-    include/de/core/logbuffer.h \
-    include/de/core/textstyle.h
+    include/de/core/logbuffer.h
 
 SOURCES += \
     src/c_wrapper.cpp \
@@ -53,7 +53,16 @@ SOURCES += \
 
 # Installation ---------------------------------------------------------------
 
+macx {
+    # Update the library include the main app bundle.
+    doPostLink("cp -fRp libdeng2*dylib ../engine/doomsday.app/Contents/Frameworks")
+}
+
 !macx {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
+
+
+
+

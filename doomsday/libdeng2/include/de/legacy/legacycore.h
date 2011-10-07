@@ -20,6 +20,7 @@
 #ifndef LIBDENG2_LEGACYCORE_H
 #define LIBDENG2_LEGACYCORE_H
 
+#include "../libdeng2.h"
 #include <QObject>
 
 namespace de {

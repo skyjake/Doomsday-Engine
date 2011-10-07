@@ -51,6 +51,21 @@ class DENG2_PUBLIC Socket : public QObject, public Transmitter
     Q_OBJECT
 
 public:
+    /// Creating the TCP/IP connection failed. @ingroup errors
+    DENG2_ERROR(ConnectionError)
+
+    /// Error subclass for all situations where the socket is left unusable. @ingroup errors
+    DENG2_ERROR(BrokenError)
+
+    /// The TCP/IP connection was disconnected. @ingroup errors
+    DENG2_SUB_ERROR(BrokenError, DisconnectedError)
+
+    /// Incoming packet has an unknown block protocol. @ingroup errors
+    DENG2_SUB_ERROR(BrokenError, UnknownProtocolError)
+
+    /// There is no peer connected. @ingroup errors
+    DENG2_SUB_ERROR(BrokenError, PeerError)
+
     /// These flags are written to the sent headers.
     enum HeaderFlag {
         Huffman = 0x1,
@@ -152,7 +167,7 @@ public slots:
     void socketError(QAbstractSocket::SocketError socketError);
     void readIncomingBytes();
 
-protected slots:
+private slots:
     void bytesWereWritten(qint64 bytes);
 
 protected:

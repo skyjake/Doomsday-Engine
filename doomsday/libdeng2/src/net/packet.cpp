@@ -33,7 +33,7 @@ Packet::Packet(const Type& t)
 
 void Packet::setType(const Type& t)
 {
-    Q_ASSERT(t.size() == TYPE_SIZE);
+    DENG2_ASSERT(t.size() == TYPE_SIZE);
     _type = t;
 }
 

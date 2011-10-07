@@ -17,12 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBDENG2_TEXTSTYLE_H
-#define LIBDENG2_TEXTSTYLE_H
+#ifndef LIBDENG2_LOGTEXTSTYLE_H
+#define LIBDENG2_LOGTEXTSTYLE_H
 
 namespace de {
 
-enum TextStyle
+enum LogTextStyle
 {
     NORMAL,
     STRONG,
@@ -30,7 +30,7 @@ enum TextStyle
     LOG_LEVEL,
     LOG_BAD_LEVEL,
     LOG_SECTION,
-    LOG_MESSAGE
+    LOG_MSG
 };
 
 const char* TEXT_STYLE_NORMAL = "$0";
@@ -43,4 +43,4 @@ const char* TEXT_STYLE_MESSAGE = "$6";
 
 }
 
-#endif /* LIBDENG2_TEXTSTYLE_H */
+#endif /* LIBDENG2_LOGTEXTSTYLE_H */

@@ -25,6 +25,10 @@
  */
 
 #ifdef __cplusplus
+#  define DENG2_USE_QT
+#endif
+
+#ifdef DENG2_USE_QT
 #include <QtCore/qglobal.h>
 #endif
 
@@ -48,7 +52,11 @@
 #endif
 
 #ifndef NDEBUG
-#  define DENG2_ASSERT(x) assert(x)
+#  ifdef DENG2_USE_QT
+#    define DENG2_ASSERT(x) Q_ASSERT(x)
+#  else
+#    define DENG2_ASSERT(x) assert(x)
+#  endif
 #else
 #  define DENG2_ASSERT(x)
 #endif
