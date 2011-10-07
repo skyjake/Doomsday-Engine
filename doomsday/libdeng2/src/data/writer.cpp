@@ -23,6 +23,7 @@
 #include "de/ISerializable"
 #include "de/FixedByteArray"
 #include "de/data/byteorder.h"
+#include <QScopedPointer>
 
 using namespace de;
 
@@ -143,9 +144,9 @@ Writer& Writer::operator << (const FixedByteArray& fixedByteArray)
     
     // Read the entire contents of the array.
     const dsize size = fixedByteArray.size();
-    std::auto_ptr<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    fixedByteArray.get(0, data.get(), size);
-    _destination.set(_fixedOffset + _offset, data.get(), size);
+    QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
+    fixedByteArray.get(0, data.data(), size);
+    _destination.set(_fixedOffset + _offset, data.data(), size);
     _offset += size;
     return *this;
 }

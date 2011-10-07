@@ -294,7 +294,7 @@ void Socket::socketDisconnected()
 
 void Socket::socketError(QAbstractSocket::SocketError /*socketError*/)
 {
-    LOG_AS("Socket::socketError");
+    LOG_AS("Socket");
     LOG_WARNING(d->socket->errorString());
 
     emit disconnected(); //error(socketError);

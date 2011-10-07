@@ -62,7 +62,7 @@ LegacyCore::~LegacyCore()
 
 int LegacyCore::runEventLoop(void (*func)(void))
 {
-    LOG_AS("LegacyCore::runEventLoop");
+    LOG_AS("LegacyCore");
     LOG_MSG("Starting event loop...");
 
     // Set up a timer to periodically call the provided callback function.
