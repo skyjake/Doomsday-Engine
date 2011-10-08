@@ -125,10 +125,10 @@ Reader& Reader::operator >> (IByteArray& byteArray)
      * because the destination byte array is not guaranteed to be
      * a memory buffer where you can copy the contents directly.
      */
-    std::auto_ptr<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    _source.get(_offset, data.get(), size);
+    QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
+    _source.get(_offset, data.data(), size);
     _offset += size;
-    byteArray.set(0, data.get(), size);
+    byteArray.set(0, data.data(), size);
     return *this;
 }
 
@@ -140,10 +140,10 @@ Reader& Reader::operator >> (FixedByteArray& fixedByteArray)
      * a memory buffer where you can copy the contents directly.
      */
     const dsize size = fixedByteArray.size();
-    std::auto_ptr<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    _source.get(_offset, data.get(), size);
+    QScopedPointer<IByteArray::Byte> data(new IByteArray::Byte[size]);
+    _source.get(_offset, data.data(), size);
     _offset += size;
-    fixedByteArray.set(0, data.get(), size);
+    fixedByteArray.set(0, data.data(), size);
     return *this;
 }
 

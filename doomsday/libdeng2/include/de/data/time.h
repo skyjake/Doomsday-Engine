@@ -59,7 +59,7 @@ public:
         /**
          * Conversion to the numeric type (floating-point seconds).
          */
-        operator const ddouble() const { return _seconds; }
+        operator ddouble() const { return _seconds; }
 
         bool operator < (const ddouble& d) const {
             return _seconds < d;
