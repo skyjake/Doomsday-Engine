@@ -20,6 +20,10 @@
 #ifndef LIBDENG2_LOGTEXTSTYLE_H
 #define LIBDENG2_LOGTEXTSTYLE_H
 
+/**
+ * @internal @file Predefined text styles for log message text.
+ */
+
 namespace de {
 
 enum LogTextStyle
@@ -43,4 +47,4 @@ const char* TEXT_STYLE_MESSAGE = "$6";
 
 }
 
-#endif /* LIBDENG2_LOGTEXTSTYLE_H */
+#endif // LIBDENG2_LOGTEXTSTYLE_H

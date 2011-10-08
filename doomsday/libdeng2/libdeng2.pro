@@ -36,8 +36,6 @@ HEADERS += \
     include/de/Error \
     include/de/Log \
     include/de/LogBuffer \
-    include/de/LogTextStyle \
-    include/de/core/logtextstyle.h
 
 HEADERS += \
     include/de/c_wrapper.h \
@@ -45,6 +43,10 @@ HEADERS += \
     include/de/libdeng2.h \
     include/de/core/log.h \
     include/de/core/logbuffer.h
+
+# Private headers.
+HEADERS += \
+    src/core/logtextstyle.h
 
 SOURCES += \
     src/c_wrapper.cpp \

@@ -20,8 +20,8 @@
 #include "de/Log"
 #include "de/Time"
 #include "de/Date"
-#include "de/LogTextStyle"
 #include "de/LogBuffer"
+#include "logtextstyle.h"
 
 #include <QMap>
 #include <QTextStream>
