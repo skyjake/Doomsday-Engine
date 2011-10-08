@@ -378,7 +378,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         
         # First we need to update the version.
         build_version.find_version()
-        debVersion = build_version.DOOMSDAY_VERSION_PLAIN + '-' + todays_build_tag()
+        debVersion = build_version.DOOMSDAY_VERSION_FULL_PLAIN + '-' + todays_build_tag()
         
         # Always make one entry.
         print 'Marking new version...'
