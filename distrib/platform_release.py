@@ -226,8 +226,8 @@ def win_release():
     file('win32\setup.iss', 'wt').write(script
         .replace('${YEAR}', time.strftime('%Y'))
         .replace('${BUILD}', DOOMSDAY_BUILD)
-        .replace('${VERSION}', DOOMSDAY_VERSION)
-        .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_PLAIN))
+        .replace('${VERSION}', DOOMSDAY_VERSION_FULL)
+        .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_FULL_PLAIN))
     
     # Execute the win32 release script.
     os.chdir('win32')
