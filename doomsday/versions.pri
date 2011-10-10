@@ -1,6 +1,6 @@
 defineReplace(findVersion) {
     info = $$system(python \"$$PWD/../distrib/build_version.py\" \"$$PWD/$$1\")
-    # Result: base bld rtype winver
+    # Result: versionbase buildnum reltype winver
     # Just use the base version (x.y.z) for now.
     return($$member(info, 0))
 }
