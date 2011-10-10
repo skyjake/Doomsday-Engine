@@ -6,6 +6,7 @@ import shutil
 import time
 import glob
 import build_version
+import build_number
 
 LAUNCH_DIR = os.path.abspath(os.getcwd())
 DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
@@ -19,7 +20,7 @@ DOOMSDAY_VERSION_MINOR = 0
 DOOMSDAY_VERSION_REVISION = 0
 DOOMSDAY_RELEASE_TYPE = "Unstable"
 now = time.localtime()
-DOOMSDAY_BUILD_NUMBER = str((now.tm_year - 2011)*365 + now.tm_yday)
+DOOMSDAY_BUILD_NUMBER = build_number.todays_build()
 DOOMSDAY_BUILD = 'build' + DOOMSDAY_BUILD_NUMBER
 TIMESTAMP = time.strftime('%y-%m-%d')
 

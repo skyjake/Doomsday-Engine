@@ -1,3 +1,6 @@
+res = $$system(python \"$$PWD/../distrib/build_version.py\" \"$$PWD/engine/portable/include/dd_version.h\")
+message(result from script: $$res)
+
 DENG_VERSION            = 1.9.7
 
 JDOOM_VERSION           = 2.0.0
