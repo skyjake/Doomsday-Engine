@@ -1,14 +1,21 @@
-DENG_VERSION            = 1.9.7
-DENG2_VERSION           = 2.0.0
+defineReplace(findVersion) {
+    info = $$system(python \"$$PWD/../distrib/build_version.py\" \"$$PWD/$$1\")
+    # Result: versionbase buildnum reltype winver
+    # Just use the base version (x.y.z) for now.
+    return($$member(info, 0))
+}
 
-JDOOM_VERSION           = 2.0.0
-JHERETIC_VERSION        = 2.0.0
-JHEXEN_VERSION          = 2.0.0
+DENG_VERSION            = $$findVersion(engine/portable/include/dd_version.h)
+DENG2_VERSION           = 2.0.0 # not yet defined in a header
 
-DEHREAD_VERSION         = 1.2.6
-WADMAPCONVERTER_VERSION = 1.0.5
-DIRECTSOUND_VERSION     = 1.2.5
-OPENAL_VERSION          = 1.2.4
-WINMM_VERSION           = 1.0.5
+JDOOM_VERSION           = $$findVersion(plugins/jdoom/include/version.h)
+JHERETIC_VERSION        = $$findVersion(plugins/jheretic/include/version.h)
+JHEXEN_VERSION          = $$findVersion(plugins/jhexen/include/version.h)
 
-JDOOM64_VERSION         = 0.8.1
+DEHREAD_VERSION         = $$findVersion(plugins/dehread/include/version.h)
+WADMAPCONVERTER_VERSION = $$findVersion(plugins/wadmapconverter/include/version.h)
+DIRECTSOUND_VERSION     = $$findVersion(plugins/directsound/include/version.h)
+OPENAL_VERSION          = $$findVersion(plugins/openal/include/version.h)
+WINMM_VERSION           = $$findVersion(plugins/winmm/include/version.h)
+
+JDOOM64_VERSION         = $$findVersion(plugins/jdoom64/include/version.h)

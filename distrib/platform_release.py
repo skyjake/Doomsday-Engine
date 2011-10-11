@@ -6,17 +6,21 @@ import shutil
 import time
 import glob
 import build_version
+import build_number
 
 LAUNCH_DIR = os.path.abspath(os.getcwd())
 DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
 SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
 WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
 OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
-DOOMSDAY_VERSION = "0.0.0-Name"
-DOOMSDAY_VERSION_PLAIN = "0.0.0"
+DOOMSDAY_VERSION_FULL = "0.0.0-Name"
+DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
+DOOMSDAY_VERSION_MAJOR = 0
+DOOMSDAY_VERSION_MINOR = 0
+DOOMSDAY_VERSION_REVISION = 0
 DOOMSDAY_RELEASE_TYPE = "Unstable"
 now = time.localtime()
-DOOMSDAY_BUILD_NUMBER = str((now.tm_year - 2011)*365 + now.tm_yday)
+DOOMSDAY_BUILD_NUMBER = build_number.todays_build()
 DOOMSDAY_BUILD = 'build' + DOOMSDAY_BUILD_NUMBER
 TIMESTAMP = time.strftime('%y-%m-%d')
 
@@ -64,13 +68,19 @@ def duptree(s, d):
 def find_version():
     build_version.find_version()
     
-    global DOOMSDAY_VERSION
-    global DOOMSDAY_VERSION_PLAIN
+    global DOOMSDAY_VERSION_FULL
+    global DOOMSDAY_VERSION_FULL_PLAIN
+    global DOOMSDAY_VERSION_MAJOR
+    global DOOMSDAY_VERSION_MINOR
+    global DOOMSDAY_VERSION_REVISION
     global DOOMSDAY_RELEASE_TYPE
     
     DOOMSDAY_RELEASE_TYPE = build_version.DOOMSDAY_RELEASE_TYPE
-    DOOMSDAY_VERSION_PLAIN = build_version.DOOMSDAY_VERSION_PLAIN
-    DOOMSDAY_VERSION = build_version.DOOMSDAY_VERSION
+    DOOMSDAY_VERSION_FULL_PLAIN = build_version.DOOMSDAY_VERSION_FULL_PLAIN
+    DOOMSDAY_VERSION_FULL = build_version.DOOMSDAY_VERSION_FULL
+    DOOMSDAY_VERSION_MAJOR = build_version.DOOMSDAY_VERSION_MAJOR
+    DOOMSDAY_VERSION_MINOR = build_version.DOOMSDAY_VERSION_MINOR
+    DOOMSDAY_VERSION_REVISION = build_version.DOOMSDAY_VERSION_REVISION
 
 
 def prepare_work_dir():
@@ -106,7 +116,7 @@ def mac_release():
         raise Exception("Failed to build from source.")
         
     # Now we can proceed to packaging.
-    target = OUTPUT_DIR + "/doomsday_" + DOOMSDAY_VERSION + "_" + DOOMSDAY_BUILD + ".dmg"
+    target = OUTPUT_DIR + "/doomsday_" + DOOMSDAY_VERSION_FULL + "_" + DOOMSDAY_BUILD + ".dmg"
     try:
         os.remove(target)
         print 'Removed existing target file', target
@@ -155,7 +165,7 @@ def mac_release():
             shutil.copy(src, 'build/plugins')
 
     f = file('VERSION', 'wt')
-    f.write(DOOMSDAY_VERSION)
+    f.write(DOOMSDAY_VERSION_FULL)
     f.close()
     os.system('python buildapp.py py2app')
     
@@ -173,7 +183,7 @@ def mac_release():
     print 'Creating disk image:', target
     
     masterDmg = target
-    volumeName = "Doomsday Engine " + DOOMSDAY_VERSION
+    volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
     templateFile = os.path.join(SNOWBERRY_DIR, 'template-image/template.dmg')
     if not os.path.exists(templateFile):
         print 'Template .dmg not found, trying to extract from compressed archive...'
@@ -187,7 +197,7 @@ def mac_release():
     shutil.copy(LAUNCH_DIR + "/mac/Read Me.rtf", 'imaging/Read Me.rtf')
     
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + 
-        ' "' + "Doomsday Engine " + DOOMSDAY_VERSION + '"')
+        ' "' + "Doomsday Engine " + DOOMSDAY_VERSION_FULL + '"')
     
     os.system('hdiutil detach -quiet imaging')
     os.system('hdiutil convert imaging.dmg -format UDZO -imagekey zlib-level=9 -o "' + target + '"')
@@ -216,8 +226,8 @@ def win_release():
     file('win32\setup.iss', 'wt').write(script
         .replace('${YEAR}', time.strftime('%Y'))
         .replace('${BUILD}', DOOMSDAY_BUILD)
-        .replace('${VERSION}', DOOMSDAY_VERSION)
-        .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_PLAIN))
+        .replace('${VERSION}', DOOMSDAY_VERSION_FULL)
+        .replace('${VERSION_PLAIN}', DOOMSDAY_VERSION_FULL_PLAIN))
     
     # Execute the win32 release script.
     os.chdir('win32')

@@ -67,5 +67,5 @@ deng_aptunstable {
     INSTALLS += repo
 
     repo.files = ../../distrib/linux/doomsday-builds-unstable.list
-    repo.path = /etc/apt/source.list.d
+    repo.path = /etc/apt/sources.list.d
 }
