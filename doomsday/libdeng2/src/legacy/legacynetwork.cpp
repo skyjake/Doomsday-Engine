@@ -18,6 +18,9 @@
  */
 
 #include "de/LegacyNetwork"
+#include "de/Socket"
+
+#include <QList>
 
 using namespace de;
 
@@ -26,9 +29,21 @@ using namespace de;
  */
 struct LegacyNetwork::Instance
 {
-    Instance() {}
-    ~Instance() {
-    }
+    int idGen;
+
+    /// All the currently open sockets, mapped by id.
+    typedef QHash<int, Socket*> Sockets;
+    Sockets sockets;
+
+    /// Socket sets for monitoring multiple sockets conveniently.
+    struct SocketSet {
+        QList<Socket*> members;
+    };
+    typedef QHash<int, SocketSet> SocketSets;
+    SocketSets sets;
+
+    Instance() : idGen(0) {}
+    ~Instance() {}
 };
 
 LegacyNetwork::LegacyNetwork()
@@ -39,4 +54,63 @@ LegacyNetwork::LegacyNetwork()
 LegacyNetwork::~LegacyNetwork()
 {
     delete d;
+}
+
+int LegacyNetwork::openServerSocket(duint16 port)
+{
+
+}
+
+int LegacyNetwork::accept(int serverSocket)
+{
+
+}
+
+int LegacyNetwork::open(const Address& address)
+{
+
+}
+
+void LegacyNetwork::close(int socket)
+{
+}
+
+int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
+{
+
+}
+
+int LegacyNetwork::waitToReceiveBytes(int socket, int size, Block& data)
+{
+
+}
+
+int LegacyNetwork::newSocketSet()
+{
+
+}
+
+void LegacyNetwork::deleteSocketSet(int set)
+{
+
+}
+
+void LegacyNetwork::addToSet(int set, int socket)
+{
+
+}
+
+void LegacyNetwork::removeFromSet(int set, int socket)
+{
+
+}
+
+bool LegacyNetwork::checkSetForActivity(int set, const Time::Delta& wait)
+{
+
+}
+
+int LegacyNetwork::bytesReadyForSocket(int socket)
+{
+
 }
