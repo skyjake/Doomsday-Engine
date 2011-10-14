@@ -34,6 +34,29 @@ public:
     LegacyNetwork();
     ~LegacyNetwork();
 
+    int openServerSocket(duint16 port);
+    int accept(int serverSocket);
+    int open(const Address& address);
+    void close(int socket);
+
+    int sendBytes(int socket, const IByteArray& data);
+    int waitToReceiveBytes(int socket, int size, Block& data);
+
+    int newSocketSet();
+    void deleteSocketSet(int set);
+    void addToSet(int set, int socket);
+    void removeFromSet(int set, int socket);
+    bool checkSetForActivity(int set, const Time::Delta& wait);
+
+    /**
+     * Checks how many bytes have been received for a socket.
+     *
+     * @param socket  Socket id.
+     *
+     * @return  Number of received bytes ready for reading.
+     */
+    int bytesReadyForSocket(int socket);
+
 private:
     struct Instance;
     Instance* d;

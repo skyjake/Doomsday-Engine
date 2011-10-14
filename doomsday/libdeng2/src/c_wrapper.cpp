@@ -19,6 +19,8 @@
 
 #include "de/c_wrapper.h"
 #include "de/LegacyCore"
+#include "de/LegacyNetwork"
+#include "de/Address"
 
 LegacyCore* LegacyCore_New(int* argc, char** argv)
 {
@@ -45,3 +47,32 @@ void LegacyCore_Delete(LegacyCore* lc)
         delete reinterpret_cast<de::LegacyCore*>(lc);
     }
 }
+
+#define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
+
+int LegacyNetwork_OpenServerSocket(unsigned short port)
+{
+    return DENG2_LEGACYNETWORK().openServerSocket(port);
+}
+
+int LegacyNetwork_Accept(int serverSocket)
+{
+    return DENG2_LEGACYNETWORK().accept(serverSocket);
+}
+
+int LegacyNetwork_Open(const char* ipAddress, unsigned short port)
+{
+    return DENG2_LEGACYNETWORK().open(de::Address());
+}
+
+void LegacyNetwork_Close(int socket);
+
+int LegacyNetwork_Send(int socket, const unsigned char* data, int size);
+int LegacyNetwork_Receive(int socket, char* data, int size);
+int LegacyNetwork_BytesReady(int socket);
+
+int LegacyNetwork_NewSocketSet();
+void LegacyNetwork_DeleteSocketSet(int set);
+void LegacyNetwork_SocketSet_Add(int set, int socket);
+void LegacyNetwork_SocketSet_Remove(int set, int socket);
+int LegacyNetwork_SocketSet_Activity(int set, int waitMs);

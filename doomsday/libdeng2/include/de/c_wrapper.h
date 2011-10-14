@@ -50,6 +50,21 @@ DENG2_PUBLIC void        LegacyCore_Delete(LegacyCore* lc);
  */
 DENG2_OPAQUE(LegacyNetwork)
 
+DENG2_PUBLIC int  LegacyNetwork_OpenServerSocket(unsigned short port);
+DENG2_PUBLIC int  LegacyNetwork_Accept(int serverSocket);
+DENG2_PUBLIC int  LegacyNetwork_Open(const char* ipAddress, unsigned short port);
+DENG2_PUBLIC void LegacyNetwork_Close(int socket);
+
+DENG2_PUBLIC int  LegacyNetwork_Send(int socket, const unsigned char* data, int size);
+DENG2_PUBLIC int  LegacyNetwork_Receive(int socket, char* data, int size);
+DENG2_PUBLIC int  LegacyNetwork_BytesReady(int socket);
+
+DENG2_PUBLIC int  LegacyNetwork_NewSocketSet();
+DENG2_PUBLIC void LegacyNetwork_DeleteSocketSet(int set);
+DENG2_PUBLIC void LegacyNetwork_SocketSet_Add(int set, int socket);
+DENG2_PUBLIC void LegacyNetwork_SocketSet_Remove(int set, int socket);
+DENG2_PUBLIC int  LegacyNetwork_SocketSet_Activity(int set, int waitMs);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

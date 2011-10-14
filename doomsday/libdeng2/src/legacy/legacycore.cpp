@@ -18,6 +18,7 @@
  */
 
 #include "de/LegacyCore"
+#include "de/LegacyNetwork"
 #include "de/LogBuffer"
 
 #include <QCoreApplication>
@@ -27,16 +28,19 @@
 
 using namespace de;
 
+LegacyCore* LegacyCore::_appCore;
+
 /**
  * @internal Private instance data for LegacyCore.
  */
 struct LegacyCore::Instance
 {
     QCoreApplication* app;
-    void (*func)(void);
+    LegacyNetwork network;
+    void (*loopFunc)(void);
     LogBuffer logBuffer;
 
-    Instance() : app(0), func(0) {}
+    Instance() : app(0), network(0), loopFunc(0) {}
     ~Instance() {
         delete app;
     }
@@ -44,6 +48,7 @@ struct LegacyCore::Instance
 
 LegacyCore::LegacyCore(int& argc, char** argv)
 {
+    _appCore = this;
     d = new Instance;
 
     // Construct a new core application (must have one for the event loop).
@@ -57,7 +62,20 @@ LegacyCore::~LegacyCore()
 {
     stop();
 
-    delete d;
+    delete d;   
+    _appCore = 0;
+}
+
+LegacyCore& LegacyCore::instance()
+{
+    DENG2_ASSERT(_appCore != 0);
+    DENG2_ASSERT(_appCore->d != 0);
+    return _appCore;
+}
+
+LegacyNetwork& LegacyCore::network()
+{
+    return instance().d->network;
 }
 
 int LegacyCore::runEventLoop(void (*func)(void))
@@ -66,7 +84,7 @@ int LegacyCore::runEventLoop(void (*func)(void))
     LOG_MSG("Starting event loop...");
 
     // Set up a timer to periodically call the provided callback function.
-    d->func = func;
+    d->loopFunc = func;
     QTimer::singleShot(1, this, SLOT(callback()));
 
     // Run the Qt event loop. In the future this will be replaced by the
@@ -84,9 +102,9 @@ void LegacyCore::stop(int exitCode)
 
 void LegacyCore::callback()
 {
-    if(d->func)
+    if(d->loopFunc)
     {
-        d->func();
+        d->loopFunc();
     }
     QTimer::singleShot(1, this, SLOT(callback()));
 }
