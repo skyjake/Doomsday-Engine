@@ -19,6 +19,7 @@
 
 #include "de/LegacyNetwork"
 #include "de/Socket"
+#include "de/ListenSocket"
 
 #include <QList>
 
@@ -35,6 +36,9 @@ struct LegacyNetwork::Instance
     typedef QHash<int, Socket*> Sockets;
     Sockets sockets;
 
+    typedef QHash<int, ListenSocket*> ServerSockets;
+    ServerSockets serverSockets;
+
     /// Socket sets for monitoring multiple sockets conveniently.
     struct SocketSet {
         QList<Socket*> members;
@@ -43,7 +47,21 @@ struct LegacyNetwork::Instance
     SocketSets sets;
 
     Instance() : idGen(0) {}
-    ~Instance() {}
+    ~Instance() {
+        // Cleanup time! Delete all existing sockets.
+        foreach(Socket* s, sockets.values()) {
+            delete s;
+        }
+        foreach(ListenSocket* s, serverSockets.values()) {
+            delete s;
+        }
+    }
+    int nextId() {
+        /** @todo This will fail after 2.1 billion sockets have been opened.
+         * That might take a while, though...
+         */
+        return ++idGen;
+    }
 };
 
 LegacyNetwork::LegacyNetwork()
@@ -58,31 +76,80 @@ LegacyNetwork::~LegacyNetwork()
 
 int LegacyNetwork::openServerSocket(duint16 port)
 {
-
+    ListenSocket* sock = new ListenSocket(port);
+    int id = d->nextId();
+    d->serverSockets.insert(id, sock);
+    return id;
 }
 
 int LegacyNetwork::accept(int serverSocket)
 {
+    DENG2_ASSERT(d->serverSockets.contains(serverSocket));
 
+    ListenSocket* serv = d->serverSockets[serverSocket];
+    Socket* sock = serv->accept();
+    if(!sock) return 0;
+
+    int id = d->nextId();
+    d->sockets.insert(id, sock);
+    return id;
 }
 
 int LegacyNetwork::open(const Address& address)
 {
-
+    LOG_AS("LegacyNetwork::open");
+    try
+    {
+        Socket* sock = new Socket(address);
+        int id = d->nextId();
+        d->sockets.insert(id, sock);
+        return id;
+    }
+    catch(const Socket::ConnectionError& er)
+    {
+        LOG_WARNING(er.asText());
+        return 0;
+    }
 }
 
 void LegacyNetwork::close(int socket)
 {
+    DENG2_ASSERT(d->sockets.contains(socket));
+    delete d->sockets[socket];
+    d->sockets.remove(socket);
 }
 
 int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
 {
-
+    DENG2_ASSERT(d->sockets.contains(socket));
+    try
+    {
+        d->sockets[socket]->send(data);
+    }
+    catch(const Socket::BrokenError& er)
+    {
+        LOG_AS("LegacyNetwork::sendBytes");
+        LOG_WARNING("Could not send data to socket (%s): ")
+                << d->sockets[socket]->peerAddress()
+                << er.asText();
+        return 0;
+    }
+    return data.size();
 }
 
 int LegacyNetwork::waitToReceiveBytes(int socket, IByteArray& data)
 {
+    DENG2_ASSERT(d->sockets.contains(socket));
+    try
+    {
 
+    }
+    catch(const Socket::BrokenError& er)
+    {
+        LOG_AS("LegacyNetwork::waitToReceiveBytes");
+        LOG_WARNING(er.asText());
+        return 0;
+    }
 }
 
 int LegacyNetwork::newSocketSet()

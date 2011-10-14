@@ -77,8 +77,21 @@ Socket::Socket(const Address& address)
 {
     d = new Instance;
     d->socket = new QTcpSocket(this);
-    d->socket->connectToHost(address.host(), address.port());
     initialize();
+
+    // Now that the signals have been set...
+    d->socket->connectToHost(address.host(), address.port());
+    if(!d->socket->waitForConnected(5000))
+    {
+        delete d->socket;
+        delete d;
+        d = 0;
+
+        // Timed out!
+        /// @throw ConnectionError Connection did not open in time.
+        throw ConnectionError("Socket::Socket: Opening the connection to " +
+                              address.asText() + " timed out.");
+    }
 }
 
 Socket::Socket(QTcpSocket* existingSocket)
