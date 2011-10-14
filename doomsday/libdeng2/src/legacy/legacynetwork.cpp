@@ -80,7 +80,7 @@ int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
 
 }
 
-int LegacyNetwork::waitToReceiveBytes(int socket, int size, Block& data)
+int LegacyNetwork::waitToReceiveBytes(int socket, IByteArray& data)
 {
 
 }

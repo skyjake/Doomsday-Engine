@@ -20,7 +20,14 @@
 #ifndef LEGACYNETWORK_H
 #define LEGACYNETWORK_H
 
+#include "../libdeng2.h"
+#include "../Time"
+
 namespace de {
+
+class Address;
+class Block;
+class IByteArray;
 
 /**
  * Network communications for the legacy engine implementation.
@@ -40,7 +47,7 @@ public:
     void close(int socket);
 
     int sendBytes(int socket, const IByteArray& data);
-    int waitToReceiveBytes(int socket, int size, Block& data);
+    int waitToReceiveBytes(int socket, IByteArray& data);
 
     int newSocketSet();
     void deleteSocketSet(int set);

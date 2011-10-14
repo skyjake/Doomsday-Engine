@@ -1,6 +1,7 @@
 HEADERS += \
     include/de/Block \
     include/de/ByteOrder \
+    include/de/ByteRefArray \
     include/de/ByteSubArray \
     include/de/Date \
     include/de/IBlock \
@@ -17,6 +18,7 @@ HEADERS += \
     include/de/data/block.h \
     include/de/data/date.h \
     include/de/data/byteorder.h \
+    include/de/data/byterefarray.h \
     include/de/data/bytesubarray.h \
     include/de/data/fixedbytearray.h \
     include/de/data/iblock.h \
@@ -33,6 +35,7 @@ HEADERS += \
 SOURCES += \
     src/data/block.cpp \
     src/data/byteorder.cpp \
+    src/data/byterefarray.cpp \
     src/data/bytesubarray.cpp \
     src/data/date.cpp \
     src/data/fixedbytearray.cpp \

@@ -40,7 +40,7 @@ struct LegacyCore::Instance
     void (*loopFunc)(void);
     LogBuffer logBuffer;
 
-    Instance() : app(0), network(0), loopFunc(0) {}
+    Instance() : app(0), loopFunc(0) {}
     ~Instance() {
         delete app;
     }
@@ -70,7 +70,7 @@ LegacyCore& LegacyCore::instance()
 {
     DENG2_ASSERT(_appCore != 0);
     DENG2_ASSERT(_appCore->d != 0);
-    return _appCore;
+    return *_appCore;
 }
 
 LegacyNetwork& LegacyCore::network()

@@ -80,6 +80,10 @@ public:
          */
         duint64 asMilliSeconds() const;
 
+        static Delta fromMilliSeconds(duint64 milliseconds) {
+            return Delta(milliseconds/1000.0);
+        }
+
     private:
         ddouble _seconds;
     };
