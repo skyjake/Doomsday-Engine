@@ -47,22 +47,22 @@ public:
     void close(int socket);
 
     int sendBytes(int socket, const IByteArray& data);
-    int waitToReceiveBytes(int socket, IByteArray& data);
+    bool receiveBlock(int socket, Block& data);
 
     int newSocketSet();
     void deleteSocketSet(int set);
     void addToSet(int set, int socket);
     void removeFromSet(int set, int socket);
-    bool checkSetForActivity(int set, const Time::Delta& wait);
+    bool checkSetForActivity(int set);
 
     /**
-     * Checks how many bytes have been received for a socket.
+     * Checks if there is incoming data for a socket.
      *
      * @param socket  Socket id.
      *
-     * @return  Number of received bytes ready for reading.
+     * @return  @c true if there are one or more incoming messages, otherwise @c false.
      */
-    int bytesReadyForSocket(int socket);
+    bool incomingForSocket(int socket);
 
 private:
     struct Instance;

@@ -20,8 +20,10 @@
 #include "de/LegacyNetwork"
 #include "de/Socket"
 #include "de/ListenSocket"
+#include "de/Message"
 
 #include <QList>
+#include <QTimer>
 
 using namespace de;
 
@@ -137,47 +139,84 @@ int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
     return data.size();
 }
 
-int LegacyNetwork::waitToReceiveBytes(int socket, IByteArray& data)
+bool LegacyNetwork::receiveBlock(int socket, Block& data)
 {
     DENG2_ASSERT(d->sockets.contains(socket));
     try
     {
-
+        data.clear();
+        Message* msg = d->sockets[socket]->receive();
+        if(!msg)
+        {
+            // Nothing was received yet; should've checked first!
+            return false;
+        }
+        data += *msg;
+        return true;
     }
     catch(const Socket::BrokenError& er)
     {
-        LOG_AS("LegacyNetwork::waitToReceiveBytes");
+        LOG_AS("LegacyNetwork::waitToReceive");
         LOG_WARNING(er.asText());
-        return 0;
+        return false;
     }
 }
 
 int LegacyNetwork::newSocketSet()
 {
-
+    int id = d->nextId();
+    d->sets.insert(id, Instance::SocketSet());
+    return id;
 }
 
 void LegacyNetwork::deleteSocketSet(int set)
 {
-
+    d->sets.remove(set);
 }
 
 void LegacyNetwork::addToSet(int set, int socket)
 {
+    DENG2_ASSERT(d->sets.contains(set));
+    DENG2_ASSERT(d->sockets.contains(socket));
+    DENG2_ASSERT(!d->sets[set].members.contains(d->sockets[socket]));
 
+    d->sets[set].members << d->sockets[socket];
 }
 
 void LegacyNetwork::removeFromSet(int set, int socket)
 {
+    DENG2_ASSERT(d->sets.contains(set));
+    DENG2_ASSERT(d->sockets.contains(socket));
+    DENG2_ASSERT(d->sets[set].members.contains(d->sockets[socket]));
 
+    d->sets[set].members.removeOne(d->sockets[socket]);
 }
 
-bool LegacyNetwork::checkSetForActivity(int set, const Time::Delta& wait)
+bool LegacyNetwork::checkSetForActivity(int set)
 {
+    DENG2_ASSERT(d->sets.contains(set));
 
+    foreach(Socket* sock, d->sets[set].members)
+    {
+        if(!sock->isOpen())
+        {
+            // Closed sockets as reported as activity so that they can be removed
+            // from the set by the caller.
+            return true;
+        }
+        if(sock->hasIncoming())
+        {
+            // There are incoming messages ready for reading.
+            return true;
+        }
+    }
+
+    // Nothing of note.
+    return false;
 }
 
-int LegacyNetwork::bytesReadyForSocket(int socket)
+bool LegacyNetwork::incomingForSocket(int socket)
 {
-
+    DENG2_ASSERT(d->sockets.contains(socket));
+    return d->sockets[socket]->hasIncoming();
 }

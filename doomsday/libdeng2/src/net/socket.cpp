@@ -110,6 +110,9 @@ Socket::~Socket()
 
 void Socket::initialize()
 {
+    // Options.
+    d->socket->setSocketOption(QTcpSocket::LowDelayOption, 1);
+
     connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
     connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
     connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
@@ -187,6 +190,7 @@ void Socket::send(const IByteArray& packet, duint channel)
     }
 
     // Keep track of where we are with the traffic.
+    // A header is also included.
     d->bytesToBeWritten += packet.size() + 4;
 
     // Write the packet header: packet length, version, possible flags.

@@ -23,6 +23,7 @@
 #include "de/Address"
 #include "de/ByteRefArray"
 #include "de/Block"
+#include <cstring>
 
 #define DENG2_LEGACYNETWORK()   de::LegacyCore::instance().network()
 
@@ -77,15 +78,33 @@ int LegacyNetwork_Send(int socket, const unsigned char* data, int size)
     return DENG2_LEGACYNETWORK().sendBytes(socket, de::ByteRefArray(data, size));
 }
 
-int LegacyNetwork_Receive(int socket, unsigned char* data, int size)
+unsigned char* LegacyNetwork_Receive(int socket, int *size)
 {
-    de::ByteRefArray dest(data, size);
-    return DENG2_LEGACYNETWORK().waitToReceiveBytes(socket, dest);
+    de::Block data;
+    if(DENG2_LEGACYNETWORK().receiveBlock(socket, data))
+    {
+        // Successfully got a block of data. Return a copy of it.
+        unsigned char* buffer = new unsigned char[data.size()];
+        std::memcpy(buffer, data.constData(), data.size());
+        *size = data.size();
+        return buffer;
+    }
+    else
+    {
+        // We did not receive anything.
+        *size = 0;
+        return 0;
+    }
+}
+
+void LegacyNetwork_FreeBuffer(unsigned char* buffer)
+{
+    delete [] buffer;
 }
 
 int LegacyNetwork_BytesReady(int socket)
 {
-    return DENG2_LEGACYNETWORK().bytesReadyForSocket(socket);
+    return DENG2_LEGACYNETWORK().incomingForSocket(socket);
 }
 
 int LegacyNetwork_NewSocketSet()
@@ -108,7 +127,7 @@ void LegacyNetwork_SocketSet_Remove(int set, int socket)
     DENG2_LEGACYNETWORK().removeFromSet(set, socket);
 }
 
-int LegacyNetwork_SocketSet_Activity(int set, int waitMs)
+int LegacyNetwork_SocketSet_Activity(int set)
 {
-    return DENG2_LEGACYNETWORK().checkSetForActivity(set, de::Time::Delta::fromMilliSeconds(waitMs));
+    return DENG2_LEGACYNETWORK().checkSetForActivity(set);
 }
