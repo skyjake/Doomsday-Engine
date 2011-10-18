@@ -468,23 +468,6 @@ void *Huff_Encode(byte *data, size_t size, size_t *encodedSize)
     // The number of valid bits - 1 in the last byte.
     huffEnc.data[0] |= bit - 1;
 
-/*#if _DEBUG
-{
-// Test decode.
-byte           *backup = M_Malloc(huffDec.size);
-size_t          decsize;
-
-memcpy(backup, huffDec.data, huffDec.size);
-Huff_Decode(huffEnc.data, *encodedSize, &decsize);
-if(decsize != size || memcmp(huffDec.data, data, size))
-{
-    Con_Error("Huff_Encode: Data corruption!\n");
-}
-memcpy(huffDec.data, backup, huffDec.size);
-M_Free(backup);
-}
-#endif*/
-
     return huffEnc.data;
 }
 

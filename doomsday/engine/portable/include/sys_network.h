@@ -87,7 +87,7 @@ extern          "C" {
                                      nodeid_t destination);*/
     void            N_SendDataBufferReliably(void *data, size_t size,
                                              nodeid_t destination);
-    void            N_ReturnBuffer(void *handle);
+    //void            N_ReturnBuffer(void *handle);
     //uint            N_GetSendQueueCount(int player);
     //uint            N_GetSendQueueSize(int player);
     void            N_TerminateNode(nodeid_t id);

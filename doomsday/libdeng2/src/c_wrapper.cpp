@@ -68,6 +68,14 @@ int LegacyNetwork_Open(const char* ipAddress, unsigned short port)
     return DENG2_LEGACYNETWORK().open(de::Address(ipAddress, port));
 }
 
+void LegacyNetwork_GetPeerAddress(int socket, char* host, int hostMaxSize, unsigned short* port)
+{
+    de::Address peer = DENG2_LEGACYNETWORK().peerAddress(socket);
+    std::memset(host, 0, hostMaxSize);
+    std::strncpy(host, peer.host().toString().toAscii().constData(), hostMaxSize - 1);
+    if(port) *port = peer.port();
+}
+
 void LegacyNetwork_Close(int socket)
 {
     DENG2_LEGACYNETWORK().close(socket);
@@ -100,6 +108,11 @@ unsigned char* LegacyNetwork_Receive(int socket, int *size)
 void LegacyNetwork_FreeBuffer(unsigned char* buffer)
 {
     delete [] buffer;
+}
+
+int LegacyNetwork_IsDisconnected(int socket)
+{
+    return !DENG2_LEGACYNETWORK().isOpen(socket);
 }
 
 int LegacyNetwork_BytesReady(int socket)

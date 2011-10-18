@@ -45,6 +45,8 @@ public:
     int accept(int serverSocket);
     int open(const Address& address);
     void close(int socket);
+    de::Address peerAddress(int socket) const;
+    bool isOpen(int socket);
 
     int sendBytes(int socket, const IByteArray& data);
     bool receiveBlock(int socket, Block& data);

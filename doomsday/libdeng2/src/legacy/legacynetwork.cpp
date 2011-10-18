@@ -121,6 +121,27 @@ void LegacyNetwork::close(int socket)
     d->sockets.remove(socket);
 }
 
+bool LegacyNetwork::isOpen(int socket)
+{
+    DENG2_ASSERT(d->sockets.contains(socket));
+    return d->sockets[socket]->isOpen();
+}
+
+de::Address LegacyNetwork::peerAddress(int socket) const
+{
+    DENG2_ASSERT(d->sockets.contains(socket));
+    try
+    {
+        return d->sockets[socket]->peerAddress();
+    }
+    catch(const Socket::BrokenError& er)
+    {
+        LOG_AS("LegacyNetwork::peerAddress");
+        LOG_WARNING(er.asText());
+        return de::Address("0.0.0.0");
+    }
+}
+
 int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
 {
     DENG2_ASSERT(d->sockets.contains(socket));
@@ -142,24 +163,15 @@ int LegacyNetwork::sendBytes(int socket, const IByteArray& data)
 bool LegacyNetwork::receiveBlock(int socket, Block& data)
 {
     DENG2_ASSERT(d->sockets.contains(socket));
-    try
+    data.clear();
+    Message* msg = d->sockets[socket]->receive();
+    if(!msg)
     {
-        data.clear();
-        Message* msg = d->sockets[socket]->receive();
-        if(!msg)
-        {
-            // Nothing was received yet; should've checked first!
-            return false;
-        }
-        data += *msg;
-        return true;
-    }
-    catch(const Socket::BrokenError& er)
-    {
-        LOG_AS("LegacyNetwork::waitToReceive");
-        LOG_WARNING(er.asText());
+        // Nothing was received yet; should've checked first!
         return false;
     }
+    data += *msg;
+    return true;
 }
 
 int LegacyNetwork::newSocketSet()

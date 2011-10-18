@@ -53,6 +53,8 @@ DENG2_OPAQUE(LegacyNetwork)
 DENG2_PUBLIC int LegacyNetwork_OpenServerSocket(unsigned short port);
 DENG2_PUBLIC int LegacyNetwork_Accept(int serverSocket);
 DENG2_PUBLIC int LegacyNetwork_Open(const char* ipAddress, unsigned short port);
+DENG2_PUBLIC void LegacyNetwork_GetPeerAddress(int socket, char* host, int hostMaxSize, unsigned short* port);
+DENG2_PUBLIC int LegacyNetwork_IsDisconnected(int socket);
 DENG2_PUBLIC void LegacyNetwork_Close(int socket);
 
 DENG2_PUBLIC int LegacyNetwork_Send(int socket, const unsigned char* data, int size);

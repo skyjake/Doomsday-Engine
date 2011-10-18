@@ -24,16 +24,6 @@ win32 {
         $$SDL_MIXER_DIR/lib/SDL_mixer.dll \
         $$SDL_MIXER_DIR/lib/smpeg.dll
     sdllibs.path = $$DENG_LIB_DIR
-
-    # Also check SDL_net.
-    isEmpty(SDL_NET_DIR) {
-        echo("dep_sdl: SDL_net path not defined, check your config_user.pri")
-        CONFIG += deng_sdlnetdummy
-    } else {
-        INCLUDEPATH += $$SDL_NET_DIR/include
-        LIBS += -L$$SDL_NET_DIR/lib -lsdl_net
-        sdllibs.files += $$SDL_NET_DIR/lib/SDL_net.dll
-    }
 }
 else:macx {
     # Mac OS X.
@@ -48,26 +38,9 @@ else:macx {
     QMAKE_LFLAGS += -F$${SDL_FRAMEWORK_DIR} -F$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework/Frameworks
 
     LIBS += -framework SDL -framework SDL_mixer
-
-    !deng_snowleopard:!deng_nativesdk {
-        # Also include SDL_net.
-        INCLUDEPATH += $${SDL_FRAMEWORK_DIR}/SDL_net.framework/Headers
-        LIBS += -framework SDL_net
-    } else {
-        CONFIG += deng_sdlnetdummy
-    }
 }
 else {
     # Generic Unix.
     QMAKE_CFLAGS += $$system(pkg-config sdl --cflags)
     LIBS += $$system(pkg-config sdl --libs) -lSDL_mixer
-
-    # Also include SDL_net.
-    LIBS += -lSDL_net
-}
-
-# Should we use the SDL_net dummy implementation?
-deng_sdlnetdummy {
-    warning("dep_sdl: Using dummy implementation for SDL_net")
-    DEFINES += DENG_SDLNET_DUMMY
 }

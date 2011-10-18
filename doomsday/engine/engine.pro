@@ -60,10 +60,6 @@ deng_writertypecheck {
     DEFINES += DENG_WRITER_TYPECHECK
 }
 
-deng_sdlnetdummy {
-    HEADERS += portable/include/sdlnet_dummy.h
-}
-
 # Linking --------------------------------------------------------------------
 
 win32 {
@@ -543,9 +539,6 @@ macx {
     doPostLink("mkdir $$FW_DIR")
     doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $$FW_DIR")
     doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $$FW_DIR")
-    !deng_sdlnetdummy {
-        doPostLink("cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $$FW_DIR")
-    }
 
     # Bundle the Qt frameworks.
     doPostLink("cp -fRp $$[QT_INSTALL_LIBS]/QtCore.framework $$FW_DIR")
