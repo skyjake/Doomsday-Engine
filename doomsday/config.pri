@@ -6,6 +6,7 @@
 # - deng_aptunstable        Include the unstable apt repository
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_openal             Build the OpenAL sound driver
+# - deng_packres            Package the Doomsday resources
 # - deng_rangecheck         Parameter range checking/value assertions
 # - deng_snowberry          Include Snowberry in installation
 # - deng_snowleopard        (Mac OS X) Use 10.6 SDK
@@ -67,7 +68,7 @@ win32 {
     DENG_LIB_DIR = $$DENG_BASE_DIR/bin
     DENG_DATA_DIR = $$DENG_BASE_DIR/data
     DENG_DOCS_DIR = $$DENG_BASE_DIR/doc
-    
+
     # Tell rc where to get the API headers.
     QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
 
@@ -84,7 +85,7 @@ unix {
 }
 unix:!macx {
     # Generic Unix build options.
-    CONFIG += deng_nofixedasm deng_snowberry
+    CONFIG += deng_nofixedasm deng_snowberry deng_packres
 
     # Choose the apt repository to include in the distribution.
     CONFIG += deng_aptunstable
@@ -157,13 +158,13 @@ macx {
         QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.4u.sdk
         QMAKE_CFLAGS += -mmacosx-version-min=10.4
         DEFINES += MACOS_10_4
-        CONFIG += x86 ppc       
+        CONFIG += x86 ppc
     }
 
     # Not using Qt, and anyway these would not point to the chosen SDK.
     QMAKE_INCDIR_QT = ""
     QMAKE_LIBDIR_QT = ""
-    
+
     defineTest(useFramework) {
         LIBS += -framework $$1
         INCLUDEPATH += $$QMAKE_MAC_SDK/System/Library/Frameworks/$${1}.framework/Headers
