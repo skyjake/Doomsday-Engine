@@ -112,11 +112,13 @@ void LegacyNetwork_FreeBuffer(unsigned char* buffer)
 
 int LegacyNetwork_IsDisconnected(int socket)
 {
+    if(!socket) return 0;
     return !DENG2_LEGACYNETWORK().isOpen(socket);
 }
 
 int LegacyNetwork_BytesReady(int socket)
 {
+    if(!socket) return 0;
     return DENG2_LEGACYNETWORK().incomingForSocket(socket);
 }
 
@@ -142,5 +144,6 @@ void LegacyNetwork_SocketSet_Remove(int set, int socket)
 
 int LegacyNetwork_SocketSet_Activity(int set)
 {
+    if(!set) return 0;
     return DENG2_LEGACYNETWORK().checkSetForActivity(set);
 }

@@ -65,7 +65,7 @@
 typedef struct ipaddress_s {
     char host[256];
     unsigned short port;
-} IPaddress;
+} ipaddress_t;
 
 /**
  * On serverside, each client has its own network node. A node
@@ -73,15 +73,17 @@ typedef struct ipaddress_s {
  * clientside, the node zero is used always.
  */
 typedef struct netnode_s {
-    int             sock;
-    char            name[256];
+    int sock;
+    char name[256];
 
     // The node is owned by a client in the game.  This becomes true
     // when the client issues the JOIN request.
-    boolean         hasJoined;
+    boolean hasJoined;
 
     // This is the client's remote address.
-    IPaddress       addr;
+    ipaddress_t addr;
+
+    void (*expectedResponder)(struct netnode_s* node, const byte* data, int size);
 
 #if 0
     // Send queue statistics.
@@ -94,14 +96,14 @@ typedef struct netnode_s {
 typedef struct foundhost_s {
     boolean         valid;
     serverinfo_t    info;
-    IPaddress       addr;
+    ipaddress_t       addr;
 } foundhost_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void N_IPToString(char *buf, IPaddress *ip);
+void N_IPToString(char *buf, ipaddress_t *ip);
 void N_ReturnBuffer(void *handle);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -234,6 +236,8 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
  */
 void N_SystemInit(void)
 {
+    memset(netNodes, 0, sizeof(netNodes));
+
     // The MTU can be customized.
     if(ArgCheckWith("-mtu", 1))
     {
@@ -254,7 +258,7 @@ void N_SystemShutdown(void)
 /**
  * Convert an IPaddress to a string.
  */
-void N_IPToString(char *buf, IPaddress *ip)
+void N_IPToString(char *buf, ipaddress_t *ip)
 {
     sprintf(buf, "%s:%i", ip->host, ip->port);
 }
@@ -266,7 +270,7 @@ void N_IPToString(char *buf, IPaddress *ip)
  */
 boolean N_InitService(boolean inServerMode)
 {
-    IPaddress ip;
+    ipaddress_t ip;
     uint16_t  port;
 
     if(N_IsAvailable() && netServerMode == inServerMode)
@@ -523,75 +527,15 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
     return true;
 }
 
-/**
- * Maybe it would be wisest to run this in a separate thread?
- */
-boolean N_LookForHosts(const char *address, int port)
+void N_ClientHandleResponseToInfoQuery(netnode_t *svNode, const byte *data, int size)
 {
-    int         sock;
-    char        buf[256];
-    ddstring_t *response;
-    boolean     isDone;
-
-    // We must be a client.
-    if(!N_IsAvailable() || netServerMode)
-        return false;
-
-    if(!port)
-        port = DEFAULT_TCP_PORT;
-
-    // Get rid of previous findings.
-    memset(&located, 0, sizeof(located));
-    strncpy(located.addr.host, address, sizeof(located.addr.host) - 1);
-    located.addr.port = port;
-
-    // I say, anyone there?
-    sock = LegacyNetwork_Open(located.addr.host, located.addr.port);
-    if(!sock)
-    {
-        Con_Message("N_LookForHosts: No reply from %s (port %i).\n", address, port);
-        return false;
-    }
-
-    // Send an INFO query.
-    SDLNet_TCP_Send(sock, "INFO\n", 5);
-
-    Con_Message("Send INFO query.\n");
-
-    // Let's listen to the reply.
-    memset(buf, 0, sizeof(buf));
-    response = Str_New();
-    isDone = false;
-    while(!isDone)
-    {
-        int result;
-
-        if(!strstr(Str_Text(response), "END\n"))
-        {
-            memset(buf, 0, sizeof(buf));
-            Con_Message("Waiting for response.\n");
-            result = SDLNet_TCP_Recv(sock, buf, sizeof(buf) - 1);
-
-            if(result > 0)
-            {
-                Str_Appendf(response, "%s", buf);
-                Con_Message("Append to response: %s.\n", buf);
-            }
-            else // Terminated.
-            {
-                isDone = true;
-                Con_Message("result <= 0 (%i)\n", result);
-            }
-        }
-        else
-            isDone = true;
-    }
+    const char* response = (const char*) data;
 
     // Close the connection; that was all the information we need.
-    LegacyNetwork_Close(sock);
+    LegacyNetwork_Close(svNode->sock);
 
     // Did we receive what we expected to receive?
-    if(strstr(Str_Text(response), "BEGIN\n"))
+    if(size < 5 || strncmp(response, "Info\n", 5))
     {
         const char *ch;
         ddstring_t *line;
@@ -600,7 +544,7 @@ boolean N_LookForHosts(const char *address, int port)
 
         // Convert the string into a serverinfo_s.
         line = Str_New();
-        ch = Str_Text(response);
+        ch = response;
         do
         {
             ch = Str_GetLine(line, ch);
@@ -608,80 +552,81 @@ boolean N_LookForHosts(const char *address, int port)
         }
         while(*ch);
         Str_Delete(line);
-        Str_Delete(response);
 
         // Show the information in the console.
         Con_Message("%i server%s been found.\n", N_GetHostCount(),
                    N_GetHostCount() != 1 ? "s have" : " has");
         Net_PrintServerInfo(0, NULL);
         Net_PrintServerInfo(0, &located.info);
-        return true;
     }
     else
     {
-        Str_Delete(response);
-        Con_Message("N_LookForHosts: Reply from %s (port %i) was invalid.\n",
-                    address, port);
-        return false;
+        Con_Message("N_ClientHandleResponseToInfoQuery: Reply from %s (port %i) was invalid.\n",
+                    svNode->addr.host, svNode->addr.port);
     }
+
+    memset(svNode, 0, sizeof(*svNode));
 }
 
 /**
- * Connect a client to the server identified with 'index'.  We enter
- * clientside mode during this routine.
+ * Maybe it would be wisest to run this in a separate thread?
  */
-boolean N_Connect(int index)
+boolean N_LookForHosts(const char *address, int port)
 {
-    netnode_t *svNode;
-    foundhost_t *host;
-    char    buf[128], *pName;
+    netnode_t* svNode = &netNodes[0];
 
-    if(!N_IsAvailable() || netServerMode || index != 0)
+    // We must be a client.
+    if(!N_IsAvailable() || netServerMode)
         return false;
 
-    Demo_StopPlayback();
+    if(!port)
+        port = DEFAULT_TCP_PORT;
 
-    // Call game DLL's NetConnect.
-    gx.NetConnect(true);
+    memset(svNode, 0, sizeof(*svNode));
 
-    host = &located;
+    // Get rid of previous findings.
+    memset(&located, 0, sizeof(located));
+    strncpy(located.addr.host, address, sizeof(located.addr.host) - 1);
+    located.addr.port = port;
+    memcpy(&svNode->addr, &located.addr, sizeof(located.addr));
 
-    // We'll use node number zero for all communications.
-    svNode = &netNodes[0];
-    if(!(svNode->sock = LegacyNetwork_Open(host->addr.host, host->addr.port)))
+    // I say, anyone there?
+    svNode->sock = LegacyNetwork_Open(located.addr.host, located.addr.port);
+    if(!svNode->sock)
     {
-        N_IPToString(buf, &host->addr);
-        Con_Message("N_Connect: No reply from %s.\n", buf);
+        Con_Message("N_LookForHosts: No reply from %s (port %i).\n", address, port);
+        memset(svNode, 0, sizeof(*svNode));
         return false;
     }
-    memcpy(&svNode->addr, &located.addr, sizeof(IPaddress));
 
-    // Connect by issuing: "JOIN (my-udp) (myname)"
-    pName = playerName;
-    if(!pName || !pName[0])
-        pName = "Anonymous";
-    sprintf(buf, "JOIN %04x %s\n", 0 /*recvUDPPort*/, pName);
-    SDLNet_TCP_Send(svNode->sock, buf, (int) strlen(buf));
+    // Send an INFO query.
+    LegacyNetwork_Send(svNode->sock, "Info?", 5);
+    Con_Message("N_LookForHosts: Sent info query to %s (port %i).\n", address, port);
 
-    VERBOSE(Con_Message("N_Connect: %s", buf));
+    svNode->expectedResponder = N_ClientHandleResponseToInfoQuery;
+    return true;
+}
 
-    // What is the reply?
-    memset(buf, 0, sizeof(buf));
-    if(SDLNet_TCP_Recv(svNode->sock, buf, 64) <= 0 || strncmp(buf, "ENTER ", 6))
+/**
+ * Handles the server's response to a client's join request.
+ */
+void N_ClientHandleResponseToJoin(struct netnode_s* svNode, const byte* data, int size)
+{
+    const char* buf = (const char*) data;
+
+    if(size < 6 || strncmp(buf, "Enter ", 6))
     {
-        LegacyNetwork_Close(svNode->sock);
-        memset(svNode, 0, sizeof(svNode));
         Con_Message("N_Connect: Server refused connection.\n");
-        if(buf[0])
-            Con_Message("  Reply: %s", buf);
-        return false;
+        N_Disconnect();
+        return;
     }
-
-    VERBOSE(Con_Message("  Server responds: %s", buf));
 
     // Put the server's socket in a socket set so we may listen to it.
     joinedSockSet = LegacyNetwork_NewSocketSet();
     LegacyNetwork_SocketSet_Add(joinedSockSet, svNode->sock);
+
+    // We'll switch to joined mode.
+    svNode->expectedResponder = NULL;
 
     // Clients are allowed to send packets to the server.
     svNode->hasJoined = true;
@@ -701,6 +646,51 @@ boolean N_Connect(int index)
     // G'day mate!  The client is responsible for beginning the
     // handshake.
     Cl_SendHello();
+}
+
+/**
+ * Connect a client to the server identified with 'index'.  We enter
+ * clientside mode during this routine.
+ */
+boolean N_Connect(int index)
+{
+    netnode_t *svNode;
+    foundhost_t *host;
+    char buf[300], *pName;
+
+    if(!N_IsAvailable() || netServerMode || index != 0)
+        return false;
+
+    Demo_StopPlayback();
+
+    // Call game DLL's NetConnect.
+    gx.NetConnect(true);
+
+    host = &located;
+
+    // We'll use node number zero for all communications.
+    svNode->expectedResponder = NULL;
+    svNode = &netNodes[0];
+    if(!(svNode->sock = LegacyNetwork_Open(host->addr.host, host->addr.port)))
+    {
+        N_IPToString(buf, &host->addr);
+        Con_Message("N_Connect: No reply from %s.\n", buf);
+        return false;
+    }
+    memcpy(&svNode->addr, &located.addr, sizeof(ipaddress_t));
+
+    // Connect by issuing: "Join (myname)"
+    pName = playerName;
+    if(!pName || !pName[0])
+    {
+        pName = "Anonymous";
+    }
+    sprintf(buf, "Join %s", pName);
+    LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));
+
+    VERBOSE(Con_Message("N_Connect: %s", buf));
+
+    svNode->expectedResponder = N_ClientHandleResponseToJoin;
     return true;
 }
 
@@ -709,7 +699,7 @@ boolean N_Connect(int index)
  */
 boolean N_Disconnect(void)
 {
-    netnode_t *svNode;
+    netnode_t *svNode = &netNodes[0];
 
     if(!N_IsAvailable())
         return false;
@@ -718,26 +708,25 @@ boolean N_Disconnect(void)
     if(gx.NetDisconnect)
         gx.NetDisconnect(true);
 
+    // Close the control connection.  This will let the server know
+    // that we are no more.
+    LegacyNetwork_Close(svNode->sock);
+
+    // Stop the TCP receiver thread.
+    N_StopJoinedListener();
+
+    LegacyNetwork_DeleteSocketSet(joinedSockSet);
+    joinedSockSet = 0;
+
+    // Reset the node completely.
+    memset(svNode, 0, sizeof(svNode));
+
     Net_StopGame();
     N_ClearMessages();
 
     // Tell the Game that the disconnection is now complete.
     if(gx.NetDisconnect)
         gx.NetDisconnect(false);
-
-    // This'll prevent the sending of further packets.
-    svNode = &netNodes[0];
-    svNode->hasJoined = false;
-
-    // Stop the TCP receiver thread.
-    N_StopJoinedListener();
-
-    // Close the control connection.  This will let the server know
-    // that we are no more.
-    LegacyNetwork_Close(svNode->sock);
-
-    LegacyNetwork_DeleteSocketSet(joinedSockSet);
-    joinedSockSet = 0;
 
     return true;
 }
@@ -802,83 +791,59 @@ boolean N_ServerClose(void)
 
 /**
  * Validate and process the command, which has been sent by a remote
- * agent. Anyone is free to connect to a server using telnet and issue
- * queries.
+ * agent.
  *
  * If the command is invalid, the node is immediately closed. We don't
  * have time to fool around with badly behaving clients.
  */
-static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
+static boolean N_ServerHandleNodeRequest(nodeid_t node, const char *command, int length)
 {
-    char command[80], *ch, buf[256];
-    const char *in;
     int sock = netNodes[node].sock;
     serverinfo_t info;
     ddstring_t msg;
-    uint16_t  port;
 
     // If the command is too long, it'll be considered invalid.
-    if(length >= 80)
+    if(length >= 256)
     {
         N_TerminateNode(node);
         return false;
     }
 
-    // Make a copy of the command.
-    memset(command, 0, sizeof(command));
-    for(ch = command, in = input;
-        *in && *in != '\r' && *in != '\n' && in - input < length;)
-        *ch++ = *in++;
-
-    Con_Message("N_DoNodeCommand: %s\n", command);
-
     // Status query?
-    if(!strcmp(command, "INFO"))
+    if(length == 5 && !strcmp(command, "Info?"))
     {
-        int result = 0;
         Sv_GetInfo(&info);
         Str_Init(&msg);
-        Str_Appendf(&msg, "BEGIN\n");
+        Str_Appendf(&msg, "Info\n");
         Sv_InfoToString(&info, &msg);
-        Str_Appendf(&msg, "END\n");
-        Con_Message("Sending: %s\n", Str_Text(&msg));
-        result = SDLNet_TCP_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
-        Con_Message("Result = %i\n", result);
+#ifdef _DEBUG
+        Con_Message("N_ServerHandleNodeRequest: Sending: %s\n", Str_Text(&msg));
+#endif
+        LegacyNetwork_Send(sock, Str_Text(&msg), (int) Str_Length(&msg));
         Str_Free(&msg);
     }
-    else if(!strncmp(command, "JOIN ", 5) && length > 10)
+    else if(length >= 5 && !strncmp(command, "Join ", 5))
     {
-        // Which UDP port does the client use?
-        memset(buf, 0, 5);
-        strncpy(buf, command + 5, 4);
-        port = strtol(buf, &ch, 16);
-        if(*ch) // || !port)
-        {
-            N_TerminateNode(node);
-            return false;
-        }
+        ddstring_t name;
+        Str_Init(&name);
+        Str_PartAppend(&name, command, 5, length - 5);
 
         // Read the client's name and convert the network node into a
         // real client network node (which has a transmitter).
-        if(N_JoinNode(node, /*port,*/ command + 10))
+        if(N_JoinNode(node, Str_Text(&name)))
         {
             // Successful! Send a reply.
-            sprintf(buf, "ENTER %04x\n", 0 /*recvUDPPort*/);
-            SDLNet_TCP_Send(sock, buf, (int) strlen(buf));
+            LegacyNetwork_Send(sock, "Enter", 5);
         }
         else
         {
             // Couldn't join the game, so close the connection.
-            SDLNet_TCP_Send(sock, "BYE\n", 4);
+            LegacyNetwork_Send(sock, "Bye", 3);
             N_TerminateNode(node);
         }
+        Str_Delete(&name);
     }
-    else if(!strcmp(command, "TIME"))
-    {
-        sprintf(buf, "%.3f\n", Sys_GetSeconds());
-        SDLNet_TCP_Send(sock, buf, (int) strlen(buf));
-    }
-    else if(!strcmp(command, "BYE"))
+    else if(length == 3 && !strcmp(command, "Bye"))
     {
         // Request for the server to terminate the connection.
         N_TerminateNode(node);
@@ -886,7 +851,6 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     else
     {
         // Too bad, scoundrel! Goodbye.
-        SDLNet_TCP_Send(sock, "Huh?\n", 5);
         N_TerminateNode(node);
         return false;
     }
@@ -895,15 +859,9 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     return true;
 }
 
-void N_ListenUnjoinedNodes(void)
+void N_ServerListenUnjoinedNodes(void)
 {
     int sock;
-
-    if(!netServerMode)
-    {
-        // This is only for the server.
-        return;
-    }
 
     // Any incoming connections on the listening socket?
     while((sock = LegacyNetwork_Accept(serverSock)) != 0)
@@ -929,7 +887,7 @@ void N_ListenUnjoinedNodes(void)
             if(LegacyNetwork_IsDisconnected(node->sock))
             {
                 // Close this socket & node.
-                Con_Message("N_ListenUnjoinedNodes: Connection closed on node %i.\n", i);
+                Con_Message("N_ServerListenUnjoinedNodes: Connection closed on node %i.\n", i);
                 N_TerminateNode(i);
                 continue;
             }
@@ -939,9 +897,71 @@ void N_ListenUnjoinedNodes(void)
             {
                 int size = 0;
                 byte* message = LegacyNetwork_Receive(node->sock, &size);
-                N_DoNodeCommand(i, message, size);
+                N_ServerHandleNodeRequest(i, (const char*) message, size);
+                LegacyNetwork_FreeBuffer(message);
             }
         }
+    }
+}
+
+/**
+ * Handles messages from the server when the client is connected but has not
+ * yet joined to game.
+ */
+void N_ClientListenUnjoined(void)
+{
+    netnode_t *svNode = &netNodes[0];
+
+    if(!svNode->sock)
+    {
+        // Not connected.
+        return;
+    }
+
+    if(LegacyNetwork_IsDisconnected(svNode->sock))
+    {
+        // Connection to the server has been closed.
+        N_Disconnect();
+        return;
+    }
+
+    // Any incoming messages?
+    while(LegacyNetwork_BytesReady(svNode->sock))
+    {
+        int size = 0;
+        byte* data = LegacyNetwork_Receive(svNode->sock, &size);
+        if(data)
+        {
+            if(svNode->expectedResponder)
+            {
+                // The responder may change during the execution of this.
+                svNode->expectedResponder(svNode, data, size);
+            }
+            else
+            {
+                Con_Message("N_ClientListenUnjoinNodes: Unexpected message from server (%i bytes), ignoring.\n", size);
+            }
+            LegacyNetwork_FreeBuffer(data);
+        }
+        else
+        {
+            // An error!
+            Con_Message("N_ClientListenUnjoinedNodes: Connection closed.\n");
+            N_Disconnect();
+        }
+    }
+}
+
+void N_ListenUnjoinedNodes(void)
+{
+    if(netServerMode)
+    {
+        // This is only for the server.
+        N_ServerListenUnjoinedNodes();
+    }
+    else
+    {
+        N_ClientListenUnjoined();
     }
 }
 
