@@ -75,7 +75,7 @@ extern          "C" {
     void            N_PrintInfo(void);
     boolean         N_LookForHosts(const char *address, int port);
     void            N_Listen(void);
-    void            N_ListenUnjoinedNodes(void);
+    void            N_ListenNodes(void);
 
     boolean         N_Connect(int index);
     boolean         N_Disconnect(void);

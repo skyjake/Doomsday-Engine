@@ -108,8 +108,6 @@ void N_ReturnBuffer(void *handle);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int C_DECL N_JoinedListenerThread(void* param);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -130,9 +128,6 @@ static int serverSock;
 static netnode_t netNodes[MAX_NODES];
 static int sockSet;
 static int joinedSockSet;
-static mutex_t mutexJoinedSockSet;
-static thread_t joinedListener;
-static volatile boolean stopJoinedListener;
 static foundhost_t located;
 
 // CODE --------------------------------------------------------------------
@@ -143,26 +138,6 @@ void N_Register(void)
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
     C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
     //C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
-}
-
-static void N_StartJoinedListener(void)
-{
-    Con_Message("N_StartJoinedListener.\n");
-
-    stopJoinedListener = false;
-    joinedListener = Sys_StartThread(N_JoinedListenerThread, 0);
-}
-
-static void N_StopJoinedListener(void)
-{
-    if(joinedListener)
-    {
-        Con_Message("N_StopJoinedListener.\n");
-
-        stopJoinedListener = true;
-        Sys_WaitThread(joinedListener);
-        joinedListener = 0;
-    }
 }
 
 /**
@@ -282,9 +257,6 @@ boolean N_InitService(boolean inServerMode)
     // Get rid of the currently active service provider.
     N_ShutdownService();
 
-    // Mutex for the socket set.
-    mutexJoinedSockSet = Sys_CreateMutex("sockSet");
-
     if(inServerMode)
     {
         port = (!nptIPPort ? defaultTCPPort : nptIPPort);
@@ -299,9 +271,6 @@ boolean N_InitService(boolean inServerMode)
         // client sockets.
         sockSet = LegacyNetwork_NewSocketSet();
         joinedSockSet = LegacyNetwork_NewSocketSet();
-
-        // We can start the listener immediately.
-        N_StartJoinedListener();
     }
     else
     {
@@ -335,8 +304,6 @@ void N_ShutdownService(void)
     // Any queued messages will be destroyed.
     N_ClearMessages();
 
-    N_StopJoinedListener();
-
     if(netServerMode)
     {
         // Close the listening socket.
@@ -358,9 +325,6 @@ void N_ShutdownService(void)
         // Let's forget about servers found earlier.
         located.valid = false;
     }
-
-    Sys_DestroyMutex(mutexJoinedSockSet);
-    mutexJoinedSockSet = 0;
 
     netIsActive = false;
     netServerMode = false;
@@ -423,18 +387,13 @@ void N_TerminateNode(nodeid_t id)
 {
     netnode_t *node = &netNodes[id];
     netevent_t netEvent;
-#if 0
-    sqpack_t *i;
-#endif
 
     if(!node->sock)
         return;                 // There is nothing here...
 
     if(netServerMode && node->hasJoined)
     {
-        Sys_Lock(mutexJoinedSockSet);
         LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
-        Sys_Unlock(mutexJoinedSockSet);
 
         // This causes a network event.
         netEvent.type = NE_CLIENT_EXIT;
@@ -511,9 +470,7 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
 
     // Move it to the joined socket set.
     LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
-    Sys_Lock(mutexJoinedSockSet);
     LegacyNetwork_SocketSet_Remove_Add(joinedSockSet, node->sock);
-    Sys_Unlock(mutexJoinedSockSet);
 
     // \fixme We should use more discretion with the name. It has
     // been provided by an untrusted source.
@@ -631,9 +588,6 @@ void N_ClientHandleResponseToJoin(struct netnode_s* svNode, const byte* data, in
     // Clients are allowed to send packets to the server.
     svNode->hasJoined = true;
 
-    // Start the TCP receiver thread.
-    N_StartJoinedListener();
-
     allowSending = true;
     handshakeReceived = false;
     netGame = true;             // Allow sending/receiving of packets.
@@ -711,9 +665,6 @@ boolean N_Disconnect(void)
     // Close the control connection.  This will let the server know
     // that we are no more.
     LegacyNetwork_Close(svNode->sock);
-
-    // Stop the TCP receiver thread.
-    N_StopJoinedListener();
 
     LegacyNetwork_DeleteSocketSet(joinedSockSet);
     joinedSockSet = 0;
@@ -843,11 +794,12 @@ static boolean N_ServerHandleNodeRequest(nodeid_t node, const char *command, int
         }
         Str_Delete(&name);
     }
+    /*
     else if(length == 3 && !strcmp(command, "Bye"))
     {
         // Request for the server to terminate the connection.
         N_TerminateNode(node);
-    }
+    }*/
     else
     {
         // Too bad, scoundrel! Goodbye.
@@ -863,6 +815,8 @@ void N_ServerListenUnjoinedNodes(void)
 {
     int sock;
 
+    if(!serverSock) return;
+
     // Any incoming connections on the listening socket?
     while((sock = LegacyNetwork_Accept(serverSock)) != 0)
     {
@@ -876,7 +830,7 @@ void N_ServerListenUnjoinedNodes(void)
     }
 
     // Any activity on the client sockets? (Don't wait.)
-    if(LegacyNetwork_SocketSet_Activity(sockSet))
+    while(LegacyNetwork_SocketSet_Activity(sockSet))
     {
         int i;
         for(i = 0; i < MAX_NODES; ++i)
@@ -912,11 +866,8 @@ void N_ClientListenUnjoined(void)
 {
     netnode_t *svNode = &netNodes[0];
 
-    if(!svNode->sock)
-    {
-        // Not connected.
+    if(!svNode->sock || svNode->hasJoined)
         return;
-    }
 
     if(LegacyNetwork_IsDisconnected(svNode->sock))
     {
@@ -952,87 +903,67 @@ void N_ClientListenUnjoined(void)
     }
 }
 
-void N_ListenUnjoinedNodes(void)
+void N_ServerListenJoinedNodes(void)
+{
+    if(!joinedSockSet) return;
+
+    // Any activity on the client sockets?
+    while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
+    {
+        int i;
+        for(i = 0; i < MAX_NODES; ++i)
+        {
+            netnode_t* node = netNodes + i;
+
+            // Does this socket have got any activity?
+            if(node->hasJoined && LegacyNetwork_BytesReady(node->sock))
+            {
+                if(!N_ReceiveReliably(i))
+                {
+                    netevent_t nev;
+                    nev.type = NE_TERMINATE_NODE;
+                    nev.id = i;
+                    N_NEPost(&nev);
+                }
+            }
+        }
+    }
+}
+
+void N_ClientListen(void)
+{
+    if(!joinedSockSet) return;
+
+    // Clientside listening.  On clientside, the socket set only
+    // includes the server's socket.
+    while(LegacyNetwork_SocketSet_Activity(joinedSockSet))
+    {
+        if(!N_ReceiveReliably(0))
+        {
+            netevent_t nev;
+            nev.id = 0;
+            nev.type = NE_END_CONNECTION;
+            N_NEPost(&nev);
+
+            // No point in continuing with the listener.
+            break;
+        }
+    }
+}
+
+void N_ListenNodes(void)
 {
     if(netServerMode)
     {
         // This is only for the server.
         N_ServerListenUnjoinedNodes();
+        N_ServerListenJoinedNodes();
     }
     else
     {
         N_ClientListenUnjoined();
+        N_ClientListen();
     }
-}
-
-/**
- * TCP sockets receiver thread for joined nodes.
- */
-static int C_DECL N_JoinedListenerThread(void* param)
-{
-    while(!stopJoinedListener || !joinedSockSet)
-    {
-        if(netServerMode)
-        {
-            Sys_Lock(mutexJoinedSockSet);
-
-            // Any activity on the client sockets?
-            if(LegacyNetwork_SocketSet_Activity(joinedSockSet))
-            {
-                int i;
-                Sys_Unlock(mutexJoinedSockSet);
-                for(i = 0; i < MAX_NODES; ++i)
-                {
-                    netnode_t* node = netNodes + i;
-
-                    // Does this socket have got any activity?
-                    if(node->hasJoined && LegacyNetwork_BytesReady(node->sock))
-                    {
-                        if(!N_ReceiveReliably(i))
-                        {
-                            netevent_t nev;
-                            nev.type = NE_TERMINATE_NODE;
-                            nev.id = i;
-                            N_NEPost(&nev);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                Sys_Unlock(mutexJoinedSockSet);
-            }
-        }
-        else
-        {
-            Sys_Lock(mutexJoinedSockSet);
-
-            // Clientside listening.  On clientside, the socket set only
-            // includes the server's socket.
-            if(LegacyNetwork_SocketSet_Activity(joinedSockSet))
-            {
-                Sys_Unlock(mutexJoinedSockSet);
-
-                if(!N_ReceiveReliably(0))
-                {
-                    netevent_t nev;
-                    nev.id = 0;
-                    nev.type = NE_END_CONNECTION;
-                    N_NEPost(&nev);
-
-                    // No point in continuing with the listener.
-                    break;
-                }
-            }
-            else
-            {
-                Sys_Unlock(mutexJoinedSockSet);
-            }
-        }
-
-        Sys_Sleep(1);
-    }
-    return 0;
 }
 
 /**

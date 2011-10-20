@@ -20,6 +20,7 @@
 #include "de/LogBuffer"
 #include "de/Writer"
 #include "de/FixedByteArray"
+#include "de/Guard"
 
 #include <stdio.h>
 #include <QTextStream>
@@ -42,7 +43,10 @@ LogBuffer::LogBuffer(duint maxEntryCount)
       _outputFile(0),
 #endif
       _autoFlushTimer(0)
-{}
+{
+    _autoFlushTimer = new QTimer(this);
+    connect(_autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
+}
 
 LogBuffer::~LogBuffer()
 {
@@ -52,6 +56,8 @@ LogBuffer::~LogBuffer()
 
 void LogBuffer::clear()
 {
+    DENG2_GUARD(this);
+
     flush();
     DENG2_FOR_EACH(i, _entries, EntryList::iterator)
     {
@@ -62,11 +68,13 @@ void LogBuffer::clear()
 
 dsize LogBuffer::size() const
 {
+    DENG2_GUARD(this);
     return _entries.size();
 }
 
 void LogBuffer::latestEntries(Entries& entries, int count) const
 {
+    DENG2_GUARD(this);
     entries.clear();
     for(int i = _entries.size() - 1; i >= 0; --i)
     {
@@ -85,6 +93,8 @@ void LogBuffer::setMaxEntryCount(duint maxEntryCount)
 
 void LogBuffer::add(LogEntry* entry)
 {       
+    DENG2_GUARD(this);
+
     // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
     if(_lastFlushedAt.since() > FLUSH_INTERVAL)
@@ -96,11 +106,9 @@ void LogBuffer::add(LogEntry* entry)
     _toBeFlushed.push_back(entry);
 
     // Should we start autoflush?
-    if(!_autoFlushTimer && qApp)
+    if(!_autoFlushTimer->isActive() && qApp)
     {
         // Every now and then the buffer will be flushed.
-        _autoFlushTimer = new QTimer(this);
-        connect(_autoFlushTimer, SIGNAL(timeout()), this, SLOT(flush()));
         _autoFlushTimer->start(FLUSH_INTERVAL * 1000);
     }
 }
@@ -130,6 +138,8 @@ void LogBuffer::setOutputFile(const String& /*path*/)
 
 void LogBuffer::flush()
 {
+    DENG2_GUARD(this);
+
     if(!_toBeFlushed.isEmpty())
     {
         Writer* writer = 0;

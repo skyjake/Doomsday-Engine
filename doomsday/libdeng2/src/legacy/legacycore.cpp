@@ -24,7 +24,6 @@
 #include <QCoreApplication>
 #include <QThread>
 #include <QTimer>
-#include <QDebug>
 
 using namespace de;
 

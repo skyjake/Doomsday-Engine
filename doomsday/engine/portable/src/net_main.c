@@ -484,9 +484,7 @@ static void Net_DoUpdate(void)
 void Net_Update(void)
 {
     Net_DoUpdate();
-
-    // Check for new arrivals and unjoined net commands.
-    N_ListenUnjoinedNodes();
+    N_ListenNodes();
 
     // Check for received packets.
     if(isClient)

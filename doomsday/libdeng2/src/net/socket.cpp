@@ -22,6 +22,8 @@
 #include "de/Writer"
 #include "de/Reader"
 
+#include <QThread>
+
 using namespace de;
 
 /// Version of the block transfer protocol.
@@ -76,7 +78,7 @@ Socket::Header::Header() : version(PROTOCOL_VERSION), huffman(false), channel(0)
 Socket::Socket(const Address& address)   
 {
     d = new Instance;
-    d->socket = new QTcpSocket(this);
+    d->socket = new QTcpSocket;
     initialize();
 
     // Now that the signals have been set...
@@ -89,8 +91,7 @@ Socket::Socket(const Address& address)
 
         // Timed out!
         /// @throw ConnectionError Connection did not open in time.
-        throw ConnectionError("Socket::Socket: Opening the connection to " +
-                              address.asText() + " timed out.");
+        throw ConnectionError("Socket: Opening the connection to " + address.asText() + " timed out.");
     }
 }
 
@@ -98,13 +99,13 @@ Socket::Socket(QTcpSocket* existingSocket)
 {
     d = new Instance;
     d->socket = existingSocket;
-    d->socket->setParent(this);
     initialize();
 }
 
 Socket::~Socket()
 {
     close();
+    delete d->socket;
     delete d;
 }
 
@@ -115,7 +116,7 @@ void Socket::initialize()
 
     connect(d->socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
     connect(d->socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
-    connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(d->socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)), Qt::DirectConnection);
     connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
 }
 

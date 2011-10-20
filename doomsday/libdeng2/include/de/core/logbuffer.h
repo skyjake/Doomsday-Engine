@@ -41,7 +41,7 @@ class LogEntry;
  *
  * @ingroup core
  */
-class LogBuffer : public QObject
+class LogBuffer : public QObject, public Lockable
 #ifdef DENG2_FS_AVAILABLE
     , OBSERVES(File, Deletion)
 #endif
