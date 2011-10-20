@@ -4,23 +4,25 @@ HEADERS += \
     include/de/ByteRefArray \
     include/de/ByteSubArray \
     include/de/Date \
+    include/de/FixedByteArray \
+    include/de/Guard \
     include/de/IBlock \
     include/de/IByteArray \
     include/de/IReadable \
     include/de/ISerializable \
     include/de/IWritable \
-    include/de/FixedByteArray \
     include/de/Lockable \
     include/de/String \
     include/de/Reader \
     include/de/Time \
     include/de/Writer \
     include/de/data/block.h \
-    include/de/data/date.h \
     include/de/data/byteorder.h \
     include/de/data/byterefarray.h \
     include/de/data/bytesubarray.h \
+    include/de/data/date.h \
     include/de/data/fixedbytearray.h \
+    include/de/data/guard.h \
     include/de/data/iblock.h \
     include/de/data/ibytearray.h \
     include/de/data/ireadable.h \
@@ -39,6 +41,7 @@ SOURCES += \
     src/data/bytesubarray.cpp \
     src/data/date.cpp \
     src/data/fixedbytearray.cpp \
+    src/data/guard.cpp \
     src/data/lockable.cpp \
     src/data/string.cpp \
     src/data/reader.cpp \
