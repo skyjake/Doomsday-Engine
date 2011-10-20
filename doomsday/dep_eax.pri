@@ -10,5 +10,5 @@ win32 {
     # Libraries for the built products.
     INSTALLS += eaxlibs
     eaxlibs.files = $$EAX2_DIR/dll/eax.dll
-    eaxlibs.path = $$DENG_WIN_PRODUCTS_DIR
+    eaxlibs.path = $$DENG_LIB_DIR
 }

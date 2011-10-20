@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 TARGET = doomsday
@@ -561,24 +562,35 @@ SOURCES += ../plugins/common/src/m_fixed.c
 
 # Resources ------------------------------------------------------------------
 
+data.files = $$OUT_PWD/../doomsday.pk3
+
+startupfonts.files = \
+    data/fonts/normal12.dfn \
+    data/fonts/normal18.dfn
+
+startupgfx.files = \
+    data/graphics/background.pcx \
+    data/graphics/loading1.png \
+    data/graphics/loading2.png \
+    data/graphics/logo.png
+
 macx {
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
     QMAKE_POST_LINK = "rm -rf $${OUT_PWD}/doomsday.app/Contents/Frameworks && mkdir $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/"
 
+    RES_PATH = Contents/Resources
     res.files = \
         mac/res/English.lproj \
         mac/res/Startup.nib \
         mac/res/deng.icns
-    res.path = Contents/Resources
+    res.path = $$RES_PATH
 
-    packdata.files = $$OUT_PWD/../doomsday.pk3
-    packdata.path = Contents/Resources
-    
-    startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
-    startupgfx.path = Contents/Resources/Data/Graphics
+    data.path = $$RES_PATH
+    startupfonts.path = $$RES_PATH/Data/Fonts
+    startupgfx.path = $$RES_PATH/Data/Graphics
 
-    QMAKE_BUNDLE_DATA += res packdata startupgfx
+    QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
@@ -587,10 +599,16 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += license
+    INSTALLS += target data startupgfx startupfonts license
+
+    target.path = $$DENG_LIB_DIR
+
+    data.path = $$DENG_DATA_DIR
+    startupfonts.path = $$DENG_DATA_DIR/fonts
+    startupgfx.path = $$DENG_DATA_DIR/graphics
 
     license.files = doc/LICENSE
-    license.path = $$DENG_WIN_PRODUCTS_DIR
+    license.path = $$DENG_DOCS_DIR
 }
 else:unix:!macx {
     # Generic Unix installation.
@@ -598,10 +616,8 @@ else:unix:!macx {
 
     target.path = $$DENG_BIN_DIR
 
-    data.files = $$OUT_PWD/../doomsday.pk3
     data.path = $$DENG_DATA_DIR
-
-    startupgfx.files = data/graphics/loading1.png data/graphics/loading2.png
+    startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
     desktop.files = ../../distrib/linux/doomsday-engine.desktop

@@ -94,7 +94,7 @@ uint8_t* PNG_Load(DFile* file, int* width, int* height, int* pixelSize)
             end_info = png_create_info_struct(png_ptr);
             if(end_info)
             {
-                if(!setjmp(png_jmpbuf(png_ptr)))
+                if(!setjmp(*(jmp_buf*)&png_jmpbuf(png_ptr))) // gcc: avoid compiler warning with cast
                 {
                     boolean canLoad;
 

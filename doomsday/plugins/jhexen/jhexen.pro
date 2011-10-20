@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 
 include(../config_plugin.pri)
 include(../common/common.pri)
@@ -14,19 +15,16 @@ VERSION = $$JHEXEN_VERSION
 
 gamedata.files = $$OUT_PWD/../../jhexen.pk3
 
-win32 {
-    # Output directly to staging.
-}
-else:macx {
+macx {
     gamedata.path = Contents/Resources
 
     QMAKE_BUNDLE_DATA += gamedata
 }
-else:unix:!macx {
+else: {
+    INSTALLS += target gamedata
+
     target.path = $$DENG_LIB_DIR
     gamedata.path = $$DENG_DATA_DIR/jhexen
-
-    INSTALLS += target gamedata
 }
 
 INCLUDEPATH += include

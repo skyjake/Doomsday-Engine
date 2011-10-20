@@ -1,5 +1,6 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 
 # This project file contains tasks that are done in the beginning of a build.
 
@@ -8,12 +9,9 @@ TEMPLATE = subdirs
 include(../config.pri)
 
 # Update the PK3 files.
-win32 {
-    PK3_OUT_DIR = $$DENG_WIN_PRODUCTS_DIR
-} else {
-    PK3_OUT_DIR = $$OUT_PWD/..
+deng_packres {
+    system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
 }
-system(cd $$PWD/scripts/ && python packres.py \"$$PK3_OUT_DIR\")
 
 # Install the launcher.
 deng_snowberry {
@@ -71,5 +69,5 @@ deng_aptunstable {
     INSTALLS += repo
 
     repo.files = ../../distrib/linux/doomsday-builds-unstable.list
-    repo.path = /etc/apt/source.list.d
+    repo.path = /etc/apt/sources.list.d
 }

@@ -12,7 +12,7 @@ win32 {
     # Installed shared libs.
     INSTALLS += lzsslibs
     lzsslibs.files = $$DENG_LZSS_DIR/win32/lzss.dll
-    lzsslibs.path = $$DENG_WIN_PRODUCTS_DIR
+    lzsslibs.path = $$DENG_LIB_DIR
 }
 else {
     SOURCES += \

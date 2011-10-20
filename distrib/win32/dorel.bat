@@ -14,19 +14,19 @@ call build.bat
 cd ..\distrib\win32
 
 REM -- Extra dependencies.
-copy %windir%\system32\msvcr100.dll ..\products
+REM copy %windir%\system32\msvcr100.dll ..\products
 
 REM -- Recompile.
 SET BUILDFAILURE=0
 rd/s/q work
 md work
 cd work
-qmake ..\..\..\doomsday\doomsday.pro CONFIG+=release DENG_BUILD=%DOOMSDAY_BUILD%
-IF %ERRORLEVEL% == 1 SET BUILDFAILURE=1
+qmake ..\..\..\doomsday\doomsday.pro CONFIG+="release deng_packres" DENG_BUILD=%DOOMSDAY_BUILD%
+IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1
 %JOM%
-IF %ERRORLEVEL% == 1 SET BUILDFAILURE=1
+IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1
 %JOM% install
-IF %ERRORLEVEL% == 1 SET BUILDFAILURE=1
+IF NOT %ERRORLEVEL% == 0 SET BUILDFAILURE=1
 cd ..
 rd/s/q work
 
