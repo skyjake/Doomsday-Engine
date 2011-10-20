@@ -69,13 +69,8 @@ protected slots:
     void acceptNewConnection();
 
 private:
-    /// Pointer to the internal socket data.
-    QTcpServer* _socket;
-
-    duint16 _port;
-
-    /// Incoming connections.
-    QList<QTcpSocket*> _incoming;
+    struct Instance;
+    Instance* d;
 };
 
 }
