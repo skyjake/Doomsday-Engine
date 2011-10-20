@@ -55,7 +55,16 @@ void LegacyCore_Delete(LegacyCore* lc)
 
 int LegacyNetwork_OpenServerSocket(unsigned short port)
 {
-    return DENG2_LEGACYNETWORK().openServerSocket(port);
+    try
+    {
+        return DENG2_LEGACYNETWORK().openServerSocket(port);
+    }
+    catch(const de::Error& er)
+    {
+        LOG_AS("LegacyNetwork_OpenServerSocket");
+        LOG_WARNING(er.asText());
+        return 0;
+    }
 }
 
 int LegacyNetwork_Accept(int serverSocket)

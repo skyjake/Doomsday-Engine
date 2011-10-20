@@ -116,9 +116,20 @@ int LegacyNetwork::open(const Address& address)
 
 void LegacyNetwork::close(int socket)
 {
-    DENG2_ASSERT(d->sockets.contains(socket));
-    delete d->sockets[socket];
-    d->sockets.remove(socket);
+    if(d->sockets.contains(socket))
+    {
+        delete d->sockets[socket];
+        d->sockets.remove(socket);
+    }
+    else if(d->serverSockets.contains(socket))
+    {
+        delete d->serverSockets[socket];
+        d->serverSockets.remove(socket);
+    }
+    else
+    {
+        DENG2_ASSERT(false /* neither a socket or server socket */);
+    }
 }
 
 bool LegacyNetwork::isOpen(int socket)

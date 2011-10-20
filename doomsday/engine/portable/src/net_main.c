@@ -1239,7 +1239,7 @@ int Net_ConnectWorker(void *ptr)
         }
 
         if(!returnValue)
-            Con_Printf("No response from %s.\n", param->address);
+            Con_Message("No response from %s.\n", param->address);
     }
     else
     {

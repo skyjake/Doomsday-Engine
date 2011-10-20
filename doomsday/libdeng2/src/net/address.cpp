@@ -26,8 +26,17 @@ Address::Address() : _port(0)
 {}
 
 Address::Address(const char* address, duint16 port)
-    : _host(QHostAddress(address)), _port(port)
-{}
+    : _port(port)
+{
+    if(QLatin1String(address) == "localhost")
+    {
+        _host = QHostAddress(QHostAddress::LocalHost);
+    }
+    else
+    {
+        _host = QHostAddress(address);
+    }
+}
 
 Address::Address(const QHostAddress& host, duint16 port)
     : _host(host), _port(port)

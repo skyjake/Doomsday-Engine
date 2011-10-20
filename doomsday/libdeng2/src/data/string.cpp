@@ -432,7 +432,7 @@ String String::patternFormat(String::const_iterator& formatIter,
     case 'X':
         output << uppercasedigits;
     case 'x':
-        output << hex << dint(arg.asNumber()) << dec << lowercasedigits;
+        output << "0x" << hex << dint64(arg.asNumber()) << dec << lowercasedigits;
         break;
         
     case 'f':

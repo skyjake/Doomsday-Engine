@@ -245,8 +245,7 @@ void N_IPToString(char *buf, ipaddress_t *ip)
  */
 boolean N_InitService(boolean inServerMode)
 {
-    ipaddress_t ip;
-    uint16_t  port;
+    uint16_t port;
 
     if(N_IsAvailable() && netServerMode == inServerMode)
     {
@@ -264,7 +263,7 @@ boolean N_InitService(boolean inServerMode)
         Con_Message("N_InitService: Listening TCP socket on port %i.\n", port);
 
         // Open a listening TCP socket. It will accept client connections.
-        if(!(serverSock = LegacyNetwork_OpenServerSocket(ip.port)))
+        if(!(serverSock = LegacyNetwork_OpenServerSocket(port)))
             return false;
 
         // Allocate socket sets, which we'll use for listening to the

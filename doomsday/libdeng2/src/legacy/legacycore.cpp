@@ -22,7 +22,6 @@
 #include "de/LogBuffer"
 
 #include <QCoreApplication>
-#include <QThread>
 #include <QTimer>
 
 using namespace de;
@@ -79,8 +78,7 @@ LegacyNetwork& LegacyCore::network()
 
 int LegacyCore::runEventLoop(void (*func)(void))
 {
-    LOG_AS("LegacyCore");
-    LOG_MSG("Starting event loop...");
+    LOG_MSG("Starting LegacyCore event loop...");
 
     // Set up a timer to periodically call the provided callback function.
     d->loopFunc = func;

@@ -22,8 +22,6 @@
 #include "de/Writer"
 #include "de/Reader"
 
-#include <QThread>
-
 using namespace de;
 
 /// Version of the block transfer protocol.
@@ -77,6 +75,8 @@ Socket::Header::Header() : version(PROTOCOL_VERSION), huffman(false), channel(0)
 
 Socket::Socket(const Address& address)   
 {
+    LOG_AS("Socket");
+
     d = new Instance;
     d->socket = new QTcpSocket;
     initialize();
@@ -85,14 +85,19 @@ Socket::Socket(const Address& address)
     d->socket->connectToHost(address.host(), address.port());
     if(!d->socket->waitForConnected(5000))
     {
+        QString msg = d->socket->errorString();
         delete d->socket;
         delete d;
         d = 0;
 
         // Timed out!
         /// @throw ConnectionError Connection did not open in time.
-        throw ConnectionError("Socket: Opening the connection to " + address.asText() + " timed out.");
+        throw ConnectionError("Socket", "Opening the connection to " + address.asText() + " failed: " + msg);
     }
+
+    LOG_MSG("Connection opened to %s.") << address.asText();
+    DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
+                 d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
 Socket::Socket(QTcpSocket* existingSocket)
@@ -122,10 +127,8 @@ void Socket::initialize()
 
 void Socket::close()
 {
-    flush();
-
-    // Prevent emitting of any more signals.
-    d->socket->disconnect();
+    d->socket->disconnectFromHost();
+    d->socket->waitForDisconnected();
 
     d->socket->close();
 }

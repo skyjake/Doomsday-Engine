@@ -321,6 +321,12 @@ public:
             if(_type == STRING) {
                 return *_data.stringValue;
             }
+            else if(_type == INTEGER) {
+                return String::number(_data.intValue);
+            }
+            else if(_type == FLOATING_POINT) {
+                return String::number(_data.floatValue);
+            }
             throw TypeError("Log::Arg::asText",
                 "Number argument cannot be used a string");
         }
