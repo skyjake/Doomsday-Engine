@@ -2145,7 +2145,7 @@ void R_InitSpriteTextures(void)
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     ddstack_t* stack;
 
-    VERBOSE( Con_Message("Initializing Sprites...\n") )
+    VERBOSE( Con_Message("Initializing sprite textures...\n") )
 
     clearSpriteTextures();
     assert(spriteTexturesCount == 0);
