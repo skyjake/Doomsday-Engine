@@ -452,6 +452,7 @@ void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
     assert(NULL != var);
     {
     boolean changed = false;
+    size_t oldLen, newLen;
 
     if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
     {
@@ -467,15 +468,24 @@ void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
         return; // Unreachable.
     }
 
-    if((!CV_CHARPTR(var) && strlen(text) != 0) || stricmp(text, CV_CHARPTR(var)))
+    oldLen = (!CV_CHARPTR(var)? 0 : strlen(CV_CHARPTR(var)));
+    newLen = (!text           ? 0 : strlen(text));
+
+    if(oldLen == 0 && newLen == 0)
+        return;
+
+    if(oldLen != newLen || stricmp(text, CV_CHARPTR(var)))
         changed = true;
 
     // Free the old string, if one exists.
     if((var->flags & CVF_CAN_FREE) && CV_CHARPTR(var))
         free(CV_CHARPTR(var));
+
     // Allocate a new string.
     var->flags |= CVF_CAN_FREE;
-    CV_CHARPTR(var) = malloc(strlen(text) + 1);
+    CV_CHARPTR(var) = (char*)malloc(newLen + 1);
+    if(!CV_CHARPTR(var))
+        Con_Error("CVar::SetString: Failed on allocation of %lu bytes for new string value.", (unsigned long) (newLen + 1));
     strcpy(CV_CHARPTR(var), text);
 
     // Make the change notification callback
