@@ -128,7 +128,10 @@ void Socket::initialize()
 void Socket::close()
 {
     d->socket->disconnectFromHost();
-    d->socket->waitForDisconnected();
+    if(d->socket->state() != QAbstractSocket::UnconnectedState)
+    {
+        d->socket->waitForDisconnected();
+    }
 
     d->socket->close();
 }
@@ -202,12 +205,18 @@ void Socket::send(const IByteArray& packet, duint channel)
     header.channel = channel;
     header.size = packet.size();
 
+    //qDebug() << "Socket:" << packet.size() + 4 << "bytes were prepared for" << d->socket->peerAddress().toString();
+
     Block dest;
     Writer(dest) << packHeader(header);
     d->socket->write(dest);
 
     // Write the data itself.
     d->socket->write(Block(packet));
+
+    // Wait until the data is sent.
+    /// @todo Blocking is not needed with the real event loop.
+    d->socket->waitForBytesWritten(-1);
 }
 
 void Socket::readIncomingBytes()
@@ -313,16 +322,21 @@ void Socket::socketDisconnected()
     emit disconnected();
 }
 
-void Socket::socketError(QAbstractSocket::SocketError /*socketError*/)
+void Socket::socketError(QAbstractSocket::SocketError socketError)
 {
-    LOG_AS("Socket");
-    LOG_WARNING(d->socket->errorString());
+    if(socketError != QAbstractSocket::SocketTimeoutError)
+    {
+        LOG_AS("Socket");
+        LOG_WARNING(d->socket->errorString());
 
-    emit disconnected(); //error(socketError);
+        emit disconnected(); //error(socketError);
+    }
 }
 
 bool Socket::hasIncoming() const
 {
+    d->socket->waitForReadyRead(1);
+
     return !d->receivedMessages.empty();
 }
 
@@ -333,6 +347,8 @@ dsize Socket::bytesBuffered() const
 
 void Socket::bytesWereWritten(qint64 bytes)
 {
+    //qDebug() << "Socket:" << bytes << "were written to" << d->socket->peerAddress().toString();
+
     d->bytesToBeWritten -= bytes;
     DENG2_ASSERT(d->bytesToBeWritten >= 0);
 }

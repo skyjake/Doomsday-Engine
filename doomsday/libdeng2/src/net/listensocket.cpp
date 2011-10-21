@@ -20,52 +20,24 @@
 #include "de/ListenSocket"
 #include "de/Address"
 #include "de/Socket"
+#include "doorman.h"
 
 #include <QCoreApplication>
 #include <QThread>
 
 using namespace de;
 
-class TcpServer : public QTcpServer
+void internal::Doorman::run()
 {
-public:
-    TcpServer() : QTcpServer() {}
-
-    void incomingConnection(int handle)
-    {
-        qDebug() << "TcpServer: Incoming connection available, handle" << handle;
-    }
-};
-
-class Doorman : public QThread
-{
-public:
-    Doorman(duint16 port) : _port(port), _socket(0), _shouldStop(false) {}
-    void run();
-    void stopAndWait() {
-        _shouldStop = true;
-        wait();
-    }
-
-private:
-    duint16 _port;
-    TcpServer* _socket;
-    volatile bool _shouldStop;
-};
-
-void Doorman::run()
-{
-    _socket = new TcpServer;
+    _socket = new internal::TcpServer;
     _socket->listen(QHostAddress::Any, _port);
     Q_ASSERT(_socket->isListening());
 
+    connect(_socket, SIGNAL(takeIncomingSocketDesc(int)), this, SIGNAL(incomingSocketDesc(int)));
+
     while(!_shouldStop)
     {
-        if(_socket->waitForNewConnection(100))
-        {
-            // Got a new connection!
-
-        }
+        _socket->waitForNewConnection(100);
     }
 
     delete _socket;
@@ -74,7 +46,7 @@ void Doorman::run()
 struct ListenSocket::Instance
 {
     /// Pointer to the internal socket data.
-    Doorman* doorman;
+    internal::Doorman* doorman;
 
     duint16 port;
 
@@ -93,7 +65,10 @@ ListenSocket::ListenSocket(duint16 port)
     LOG_AS("ListenSocket");
 
     d = new Instance;
-    d->doorman = new Doorman(port);
+
+    d->doorman = new internal::Doorman(port);
+    connect(d->doorman, SIGNAL(incomingSocketDesc(int)), this, SLOT(acceptNewConnection(int)));
+
     d->doorman->start();
 
 /*    if(!d->socket->listen(QHostAddress::Any, d->port))
@@ -112,16 +87,17 @@ ListenSocket::~ListenSocket()
     delete d;
 }
 
-void ListenSocket::acceptNewConnection()
+void ListenSocket::acceptNewConnection(int handle)
 {
     LOG_AS("ListenSocket::acceptNewConnection");
-/*
-    QTcpSocket* s = d->socket->nextPendingConnection();
+
+    QTcpSocket* s = new QTcpSocket;
+    s->setSocketDescriptor(handle);
     d->incoming.append(s);
 
     LOG_MSG("Accepted new connection from %s.") << s->peerAddress().toString();
 
-    emit incomingConnection();*/
+    emit incomingConnection();
 }
 
 Socket* ListenSocket::accept()

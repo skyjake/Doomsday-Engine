@@ -433,6 +433,10 @@ static boolean N_RegisterNewSocket(int sock)
             // Add this socket to the set of client sockets.
             LegacyNetwork_SocketSet_Add(sockSet, sock);
 
+#ifdef _DEBUG
+            Con_Message("N_RegisterNewSocket: Socket %i as node %i.\n", sock, i);
+#endif
+
             found = true;
         }
     }
@@ -491,7 +495,7 @@ void N_ClientHandleResponseToInfoQuery(netnode_t *svNode, const byte *data, int 
     LegacyNetwork_Close(svNode->sock);
 
     // Did we receive what we expected to receive?
-    if(size < 5 || strncmp(response, "Info\n", 5))
+    if(size >= 5 && !strncmp(response, "Info\n", 5))
     {
         const char *ch;
         ddstring_t *line;

@@ -12,6 +12,10 @@ HEADERS += \
     include/de/net/socket.h \
     include/de/net/transmitter.h \
 
+# Private headers.
+HEADERS += \
+    src/net/doorman.h
+
 SOURCES += \
     src/net/address.cpp \
     src/net/message.cpp \

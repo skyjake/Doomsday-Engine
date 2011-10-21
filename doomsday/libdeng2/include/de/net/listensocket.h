@@ -25,6 +25,8 @@
 #include <QObject>
 #include <QTcpServer>
 #include <QList>
+#include <QThread>
+#include <QDebug>
 
 namespace de {
 
@@ -66,13 +68,13 @@ signals:
     void incomingConnection();
 
 protected slots:
-    void acceptNewConnection();
+    void acceptNewConnection(int handle);
 
 private:
     struct Instance;
     Instance* d;
 };
 
-}
+} // namespace de
 
 #endif // LIBDENG2_LISTENSOCKET_H
