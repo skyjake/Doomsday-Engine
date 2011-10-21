@@ -457,7 +457,7 @@ static void MasterWorker_Shutdown(void)
     // Wake up the worker.
     Sem_V(semPending);
 
-    VERBOSE( Con_Message("MasterWorker_Shutdown: Waiting for thread to stop.\n") );
+    VERBOSE( Con_Message("MasterWorker_Shutdown: Waiting for thread to stop...\n") );
     Sys_WaitThread(worker);
 
     Sys_DestroyMutex(mwaMutex);
