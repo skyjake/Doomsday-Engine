@@ -24,7 +24,7 @@
  */
 
 /**
- * Music Subsystem.
+ * Music Subsystem
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -175,12 +175,12 @@ boolean Mus_Init(void)
         Con_Message("Music configuration:\n");
         for(i = 0; i < NUM_INTERFACES; ++i)
         {
-            if(*interfaces[i].ip && !(*interfaces[i].ip)->Get(MUSIP_ID, buf))
+            if(!(*interfaces[i].ip))
+                strcpy(buf, "N/A");
+            else if( !(*interfaces[i].ip)->Get(MUSIP_ID, buf))
                 strcpy(buf, "?");
-            Con_Message("  %s: %s\n", interfaces[i].name, buf);
+            Con_Message(" %s", buf);
         }
-
-        Con_Message("\n");
     }
 
     currentSong = -1;
