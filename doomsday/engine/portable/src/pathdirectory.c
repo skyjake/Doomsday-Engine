@@ -622,7 +622,7 @@ ddstring_t* PathDirectory_ComposePath(pathdirectory_t* pd, const pathdirectory_n
     assert(NULL != pd && NULL != node);
     if(NULL == foundPath && length != NULL)
     {
-        PathDirectory_CalcPathLength(pd, node, delimiter);
+        *length = PathDirectory_CalcPathLength(pd, node, delimiter);
         return foundPath;
     }
     else
