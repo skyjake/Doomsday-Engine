@@ -174,6 +174,17 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // Wait for the busy thread to stop.
     Con_BusyLoop();
 
+    // Free resources.
+    Con_BusyDeleteTextures();
+    if(busyTaskName)
+        M_Free(busyTaskName);
+    busyTaskName = NULL;
+
+    if(busyError)
+    {
+        Con_AbnormalShutdown((const char*) busyError);
+    }
+
     if(!transitionInProgress)
     {
         // Clear any input events that might have accumulated whilst busy.
@@ -184,17 +195,6 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     {
         transitionStartTime = Sys_GetTime();
         transitionPosition = 0;
-    }
-
-    // Free resources.
-    Con_BusyDeleteTextures();
-    if(busyTaskName)
-        M_Free(busyTaskName);
-    busyTaskName = NULL;
-
-    if(busyError)
-    {
-        Con_AbnormalShutdown((const char*) busyError);
     }
 
     // Make sure the worker finishes before we continue.
