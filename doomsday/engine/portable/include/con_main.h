@@ -350,9 +350,9 @@ void Con_PrintRuler(void);
  * @param pathList  A series of file/resource names/paths separated by @a delimiter.
  * @param flags @see printPathFlags.
  */
-void Con_PrintPathList4(const char* pathList, char delimiter, const char* seperator, int flags);
-void Con_PrintPathList3(const char* pathList, char delimiter, const char* seperator); /* flags = DEFAULT_PRINTPATHFLAGS */
-void Con_PrintPathList2(const char* pathList, char delimiter); /* seperator = " " */
+void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags);
+void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator); /* flags = DEFAULT_PRINTPATHFLAGS */
+void Con_PrintPathList2(const char* pathList, char delimiter); /* separator = " " */
 void Con_PrintPathList(const char* pathList); /* delimiter = ';' */
 
 void Con_PrintCVar(cvar_t* cvar, char* prefix);

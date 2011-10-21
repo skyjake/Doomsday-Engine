@@ -1897,7 +1897,7 @@ static void printListPath(const ddstring_t* path, int flags, int index)
     Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(path)) : Str_Text(path));
 }
 
-void Con_PrintPathList4(const char* pathList, char delimiter, const char* seperator, int flags)
+void Con_PrintPathList4(const char* pathList, char delimiter, const char* separator, int flags)
 {
     assert(pathList && pathList[0]);
     {
@@ -1908,16 +1908,14 @@ void Con_PrintPathList4(const char* pathList, char delimiter, const char* sepera
     while((p = Str_CopyDelim2(&path, p, delimiter, CDF_OMIT_DELIMITER)))
     {
         printListPath(&path, flags, n++);
-        if(seperator && !(flags & PPF_MULTILINE) && strchr(p, delimiter) != 0)
-            Con_Printf("%s", seperator);
+        if(separator && !(flags & PPF_MULTILINE) && p && p[0])
+            Con_Printf("%s", separator);
         if(flags & PPF_MULTILINE)
             Con_Printf("\n");
     }
     if(Str_Length(&path) != 0)
     {
         printListPath(&path, flags, n++);
-        if(seperator && !(flags & PPF_MULTILINE) && strchr(p, delimiter) != 0)
-            Con_Printf("%s", seperator);
         if(flags & PPF_MULTILINE)
             Con_Printf("\n");
     }
@@ -1925,9 +1923,9 @@ void Con_PrintPathList4(const char* pathList, char delimiter, const char* sepera
     }
 }
 
-void Con_PrintPathList3(const char* pathList, char delimiter, const char* seperator)
+void Con_PrintPathList3(const char* pathList, char delimiter, const char* separator)
 {
-    Con_PrintPathList4(pathList, delimiter, seperator, DEFAULT_PRINTPATHFLAGS);
+    Con_PrintPathList4(pathList, delimiter, separator, DEFAULT_PRINTPATHFLAGS);
 }
 
 void Con_PrintPathList2(const char* pathList, char delimiter)
