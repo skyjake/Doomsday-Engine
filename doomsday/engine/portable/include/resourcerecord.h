@@ -84,7 +84,7 @@ const ddstring_t* ResourceRecord_ResolvedPath(resourcerecord_t* rec, boolean can
 void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus);
 
 /**
- * @return  String list of paths separated (and terminated) with semicolons ';'.
+ * @return  String list of paths delimited with semicolons.
  */
 ddstring_t* ResourceRecord_SearchPathsAsStringList(resourcerecord_t* rec);
 

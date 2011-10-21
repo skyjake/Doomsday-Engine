@@ -39,26 +39,29 @@ static ddstring_t* buildSearchPathList(resourcerecord_t* rec)
 {
     assert(rec);
     {
-    int requiredLength = 0;
+    int i, requiredLength = 0;
     ddstring_t* pathList;
 
-    { int i;
+    if(!rec->_namesCount)
+        return 0;
+
     for(i = 0; i < rec->_namesCount; ++i)
         requiredLength += Str_Length(rec->_names[i]);
-    }
-    requiredLength += rec->_namesCount;
+    requiredLength += rec->_namesCount - 1;
 
-    if(requiredLength == 0)
+    if(!requiredLength)
         return 0;
 
     // Build path list in reverse; newer paths have precedence.
     pathList = Str_New();
     Str_Reserve(pathList, requiredLength);
     Str_Clear(pathList);
-    { int i;
-    for(i = rec->_namesCount-1; i >= 0; i--)
-        Str_Appendf(pathList, "%s;", Str_Text(rec->_names[i]));
-    }
+
+    i = rec->_namesCount-1;
+    Str_Set(pathList, Str_Text(rec->_names[i--]));
+    for(; i >= 0; i--)
+        Str_Appendf(pathList, ";%s", Str_Text(rec->_names[i]));
+
     return pathList;
     }
 }
