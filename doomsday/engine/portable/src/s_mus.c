@@ -171,7 +171,7 @@ boolean Mus_Init(void)
                 strcpy(buf, "N/A");
             else if( !(*interfaces[i].ip)->Get(MUSIP_ID, buf))
                 strcpy(buf, "?");
-            Con_Message(" %s\n", buf);
+            Con_Message("  %s: %s\n", interfaces[i].name, buf);
         }
     }
 
