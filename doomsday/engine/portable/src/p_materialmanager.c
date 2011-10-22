@@ -1516,12 +1516,6 @@ struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
             "not yet initialized.");
     return getVariantSpecificationForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
         minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
-/*=======
-    if(DD_IsSharpTick())
-    {
-        animateAnimGroups();
-    }
->>>>>>> master*/
 }
 
 materialvariant_t* Materials_ChooseVariant(material_t* mat,
@@ -2118,6 +2112,12 @@ D_CMD(ListMaterials)
     materialnamespaceid_t namespaceId = MN_ANY;
     const char* like = NULL;
     Uri* uri = NULL;
+
+    if(!Materials_Count())
+    {
+        Con_Message("There are currently no materials defined/loaded.\n");
+        return true;
+    }
 
     // "listmaterials [namespace] [name]"
     if(argc > 2)
