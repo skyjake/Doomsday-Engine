@@ -1886,10 +1886,15 @@ int Def_Set(int type, int index, int value, const void* ptr)
  */
 D_CMD(ListMobjs)
 {
-    int                 i;
+    int i;
+
+    if(defs.count.mobjs.num <= 0)
+    {
+        Con_Message("There are currently no mobjtypes defined/loaded.\n");
+        return true;
+    }
 
     Con_Printf("Registered Mobjs (ID | Name):\n");
-
     for(i = 0; i < defs.count.mobjs.num; ++i)
     {
         if(defs.mobjs[i].name[0])
