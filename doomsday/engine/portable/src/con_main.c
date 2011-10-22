@@ -2224,11 +2224,15 @@ static boolean cvarAddSub(const char* name, float delta, boolean force)
     float val;
 
     if(!cvar)
+    {
+        if(name && name[0])
+            Con_Printf("%s is not a known (cvar) name.\n", name);
         return false;
+    }
 
     if(cvar->flags & CVF_READ_ONLY)
     {
-        Con_Printf("%s (cvar) is read-only. It can not be changed (not even with force)\n", name);
+        Con_Printf("%s (cvar) is read-only. It can not be changed (not even with force).\n", name);
         return false;
     }
 
