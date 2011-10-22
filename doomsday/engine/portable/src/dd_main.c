@@ -473,7 +473,7 @@ void DD_StartTitle(void)
     ddstring_t setupCmds;
     ddfinale_t fin;
 
-    if(!Def_Get(DD_DEF_FINALE, "background", &fin))
+    if(isDedicated || !Def_Get(DD_DEF_FINALE, "background", &fin))
         return;
 
     Str_Init(&setupCmds);
