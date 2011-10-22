@@ -2123,8 +2123,9 @@ D_CMD(Clear)
 
 D_CMD(Version)
 {
-    Con_Printf("%s %s (" __TIME__ ") %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT, DOOMSDAY_HOMEURL);
-    Con_Printf("%s\n", DENGPROJECT_HOMEURL);
+    Con_Printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
+    Con_Printf("Homepage: %s\n", DOOMSDAY_HOMEURL);
+    Con_Printf("Project homepage: %s\n", DENGPROJECT_HOMEURL);
     // Print the version info of the current game if loaded.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
