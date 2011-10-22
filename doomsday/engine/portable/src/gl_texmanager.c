@@ -1543,8 +1543,8 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
 
 void GL_DestroyRuntimeTextures(void)
 {
-    if(!texInited)
-        Con_Error("GL_DestroyRuntimeTextures: Textures collection not yet initialized.");
+    if(!texInited) return;
+
     destroyTextures(TN_FLATS);
     destroyTextures(TN_TEXTURES);
     destroyTextures(TN_PATCHES);
@@ -1561,8 +1561,8 @@ void GL_DestroyRuntimeTextures(void)
 
 void GL_DestroySystemTextures(void)
 {
-    if(!texInited)
-        Con_Error("GL_DestroySystemTextures: Textures collection not yet initialized.");
+    if(!texInited) return;
+
     destroyTextures(TN_SYSTEM);
     GL_PruneTextureVariantSpecifications();
 }
@@ -1576,8 +1576,7 @@ void GL_DestroyTextures(void)
 
 void GL_ShutdownTextureManager(void)
 {
-    if(!texInited)
-        return; // Already been here?
+    if(!texInited) return;
 
     destroyVariantSpecifications();
     destroyTextures(TN_ANY);
