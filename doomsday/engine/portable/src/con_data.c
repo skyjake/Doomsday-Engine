@@ -430,7 +430,7 @@ const ddstring_t* CVar_TypeName(cvartype_t type)
         { "CVT_BYTE" },
         { "CVT_INT" },
         { "CVT_FLOAT" },
-        { "CVT_CHATPTR"},
+        { "CVT_CHARPTR"},
     };
     return &names[(VALID_CVARTYPE(type)? type : 0)];
 }
