@@ -795,25 +795,24 @@ ddstring_t* PathDirectory_CollectPaths(pathdirectory_t* pd, int flags, char deli
         pathdirectory_nodetype_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
         pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
-        ddstring_t** pathPtr;
+        ddstring_t* pathPtr;
         ushort hash;
 
-        paths = (ddstring_t*) malloc(sizeof(*paths) * (count + 1));
+        paths = (ddstring_t*) malloc(sizeof *paths * count);
         if(NULL == paths)
             Con_Error("PathDirectory::AllPaths: Failed on allocation of %lu bytes for "
-                "new path list.", (unsigned long) sizeof(*paths));
-        pathPtr = &paths;
+                "new path list.", (unsigned long) (sizeof *paths * count));
+        pathPtr = paths;
 
         for(; type <= lastType; ++type)
         for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
         for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
             NULL != node; node = node->next)
         {
-            Str_Init(*pathPtr);
-            PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, *pathPtr, NULL, delimiter);
+            Str_Init(pathPtr);
+            PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, pathPtr, NULL, delimiter);
             pathPtr++;
         }
-        *pathPtr = NULL;
     }
     if(retCount)
         *retCount = count;
