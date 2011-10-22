@@ -772,14 +772,14 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
         if((ccmd->flags & CMDF_NO_NULLGAME) && DD_IsNullGameInfo(DD_GameInfo()))
         {
-            Con_Printf("executeSubCmd: '%s' impossible with no game loaded.\n", ccmd->name);
+            Con_Printf("Execution of command '%s' not possible with no game loaded.\n", ccmd->name);
             return true;
         }
 
         // A dedicated server, trying to execute a ccmd not available to us?
         if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
         {
-            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n", ccmd->name);
+            Con_Printf("Execution of command '%s' not possible in dedicated mode.\n", ccmd->name);
             return true;
         }
 
@@ -789,7 +789,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             // Is the command permitted for use by clients?
             if(ccmd->flags & CMDF_CLIENT)
             {
-                Con_Printf("executeSubCmd: Blocked command. A client attempted to use '%s'.\n"
+                Con_Printf("Execution of command '%s' blocked (client attempted invocation).\n"
                            "This command is not permitted for use by clients\n", ccmd->name);
                 // \todo Tell the client!
                 return true;
@@ -814,10 +814,8 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             case CMDS_PROFILE:
             case CMDS_CMDLINE:
             case CMDS_SCRIPT:
-                Con_Printf("executeSubCmd: Blocked command. A client"
-                           " attempted to use '%s' via %s.\n"
-                           "This invocation method is not permitted "
-                           "by clients\n", ccmd->name, CMDTYPESTR(src));
+                Con_Printf("Execution of command '%s' blocked (client attempted invocation via %s).\n"
+                           "This method is not permitted by clients.\n", ccmd->name, CMDTYPESTR(src));
                 // \todo Tell the client!
                 return true;
 
@@ -879,8 +877,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         if(!canExecute)
         {
-            Con_Printf("Error: '%s' cannot be executed via %s.\n",
-                       ccmd->name, CMDTYPESTR(src));
+            Con_Printf("Error: '%s' cannot be executed via %s.\n", ccmd->name, CMDTYPESTR(src));
             return true;
         }
 
