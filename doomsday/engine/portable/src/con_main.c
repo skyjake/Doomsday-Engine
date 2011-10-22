@@ -178,7 +178,7 @@ static float consoleFontScale[2];
 static void (*consolePrintFilter) (char* text); // Maybe alters text.
 
 static uint complPos; // Where is the completion cursor?
-static uint lastCompletion; // The last completed known word match.
+static uint lastCompletion; // The last completed known word match (1-based index).
 
 // CODE --------------------------------------------------------------------
 
@@ -1124,11 +1124,11 @@ static int completeWord(int mode)
     uint numMatches;
 
     if(mode == 1)
-        cp = complPos - 1;
-    memset(unambiguous, 0, sizeof(unambiguous));
-
+        cp = (int)complPos - 1;
     if(cp < 0)
         return 0;
+
+    memset(unambiguous, 0, sizeof(unambiguous));
 
     // Skip over any whitespace behind the cursor.
     while(cp > 0 && cmdLine[cp] == ' ')
@@ -1168,13 +1168,15 @@ static int completeWord(int mode)
         // Completion Mode 1: Cycle through the possible completions.
         uint idx;
 
-        if(lastCompletion + 1 >= numMatches)
-            idx = 0;
+        /// \note lastCompletion uses a 1-based index.
+        if(lastCompletion == 0 /* first completion attempt? */||
+           lastCompletion >= numMatches /* reached the end? */)
+            idx = 1;
         else
             idx = lastCompletion + 1;
         lastCompletion = idx;
 
-        completeWord = matches[idx];
+        completeWord = matches[idx-1];
     }
     else
     {
@@ -1235,7 +1237,6 @@ static int completeWord(int mode)
             if(!updated)
             {
                 completeWord = *match;
-                lastCompletion = match - matches;
                 updated = true;
             }
 
@@ -1648,23 +1649,26 @@ boolean Con_Responder(ddevent_t* ev)
         return true;
 
     case DDKEY_TAB:
+        if(cmdLine[0] != 0)
         {
-        int mode;
+            int mode;
 
-        if(shiftDown) // one time toggle of completion mode.
-        {
-            mode = (conCompMode == 0)? 1 : 0;
-            conInputLock = true; // prevent most user input.
-        }
-        else
-            mode = conCompMode;
+            if(shiftDown) // one time toggle of completion mode.
+            {
+                mode = (conCompMode == 0)? 1 : 0;
+                conInputLock = true; // prevent most user input.
+            }
+            else
+            {
+                mode = conCompMode;
+            }
 
-        // Attempt to complete the word.
-        completeWord(mode);
-        updateDedicatedConsoleCmdLine();
-        if(0 == mode)
-            bLineOff = 0;
-        Rend_ConsoleCursorResetBlink();
+            // Attempt to complete the word.
+            completeWord(mode);
+            updateDedicatedConsoleCmdLine();
+            if(0 == mode)
+                bLineOff = 0;
+            Rend_ConsoleCursorResetBlink();
         }
         return true;
 
@@ -1725,9 +1729,9 @@ boolean Con_Responder(ddevent_t* ev)
         Con_Execute(CMDS_DDAY, "clear", true, false);
         break;
 
-    default:                    // Check for a character.
-    {
-        byte    ch;
+    default: { // Check for a character.
+        byte ch;
+        size_t len;
 
         if(conInputLock)
             break;
@@ -1747,11 +1751,11 @@ boolean Con_Responder(ddevent_t* ev)
             return true;
         }
 
+        len = strlen(cmdLine);
+
         // If not in insert mode, push the rest of the command-line forward.
         if(!cmdInsMode)
         {
-            size_t len = strlen(cmdLine);
-
             if(!(len < CMDLINE_SIZE))
                 return true; // Can't place character.
 
@@ -1767,12 +1771,17 @@ boolean Con_Responder(ddevent_t* ev)
 
         cmdLine[cmdCursor] = ch;
         if(cmdCursor < CMDLINE_SIZE)
+        {
             ++cmdCursor;
-        complPos = cmdCursor;   //strlen(cmdLine);
+            // Do we need to replace the terminator?
+            if(cmdCursor == len+1)
+                cmdLine[cmdCursor] = 0;
+        }
+        complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
         updateDedicatedConsoleCmdLine();
         return true;
-    }
+      }
     }
     // The console is very hungry for keys...
     return true;
