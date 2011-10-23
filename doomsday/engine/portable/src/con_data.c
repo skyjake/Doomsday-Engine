@@ -56,7 +56,9 @@ D_CMD(HelpWhat);
 D_CMD(ListAliases);
 D_CMD(ListCmds);
 D_CMD(ListVars);
-D_CMD(VarStats);
+#if _DEBUG
+D_CMD(PrintVarStats);
+#endif
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -98,7 +100,9 @@ void Con_DataRegister(void)
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
-    C_CMD("varstats",       NULL,   VarStats);
+#if _DEBUG
+    C_CMD("varstats",       NULL,   PrintVarStats);
+#endif
 }
 
 static int markStringVariableFreed(struct pathdirectory_node_s* node, void* paramaters)
@@ -1576,7 +1580,8 @@ D_CMD(ListVars)
     return true;
 }
 
-D_CMD(VarStats)
+#if _DEBUG
+D_CMD(PrintVarStats)
 {
     cvartype_t type;
     countvariableparams_t p;
@@ -1599,6 +1604,7 @@ D_CMD(VarStats)
     PathDirectory_Print(cvarDirectory, CVARDIRECTORY_DELIMITER);
     return true;
 }
+#endif
 
 D_CMD(ListAliases)
 {
