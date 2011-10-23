@@ -375,6 +375,8 @@ static void printDebugInfo(int player)
     player_t* plr = &players[player];
     char lumpName[9], textBuffer[256];
     subsector_t* sub;
+    ddstring_t* path;
+    Uri* uri;
 
     if(!plr->plr->mo || !userGame)
         return;
@@ -389,12 +391,19 @@ static void printDebugInfo(int player)
     Con_Message("%s", textBuffer);
     sub = plr->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
-    Con_Message("  FloorZ:%g Material:%s\n",
-                P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
-                Str_Text(Materials_GetSymbolicName(P_GetPtrp(sub, DMU_FLOOR_MATERIAL))));
-    Con_Message("  CeilingZ:%g Material:%s\n",
-                P_GetFloatp(sub, DMU_CEILING_HEIGHT),
-                Str_Text(Materials_GetSymbolicName(P_GetPtrp(sub, DMU_CEILING_MATERIAL))));
+
+    uri = Materials_GetUri(P_GetPtrp(sub, DMU_FLOOR_MATERIAL));
+    path = Uri_ToString(uri);
+    Con_Message("  FloorZ:%g Material:%s\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
+    Str_Delete(path);
+    Uri_Delete(uri);
+
+    uri = Materials_GetUri(P_GetPtrp(sub, DMU_CEILING_MATERIAL));
+    path = Uri_ToString(uri);
+    Con_Message("  CeilingZ:%g Material:%s\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT), Str_Text(path));
+    Str_Delete(path);
+    Uri_Delete(uri);
+
     Con_Message("Player height:%g   Player radius:%g\n",
                 plr->plr->mo->height, plr->plr->mo->radius);
 }

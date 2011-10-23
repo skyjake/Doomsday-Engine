@@ -26,8 +26,6 @@
  * Materials collection, namespaces, bindings and other management.
  */
 
-#include <ctype.h> // For tolower()
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -43,8 +41,13 @@
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
+#include "pathdirectory.h"
 
-#define MATERIALS_BLOCK_ALLOC (32) // Num materials to allocate per block.
+/// Number of materials to block-allocate.
+#define MATERIALS_BLOCK_ALLOC (32)
+
+/// Number of elements to block-allocate in the material index to materialbind map.
+#define MATERIALS_BINDINGMAP_BLOCK_ALLOC (32)
 
 typedef struct materialvariantspecificationlist_node_s {
     struct materialvariantspecificationlist_node_s* next;
@@ -68,7 +71,7 @@ typedef struct variantcachequeue_node_s {
 typedef variantcachequeue_node_t variantcachequeue_t;
 
 /**
- * Info is attached to a MaterialBind upon successfully preparing the first
+ * Info attached to a MaterialBind upon successfull preparation of the first
  * derived variant of the associated Material.
  */
 typedef struct materialbindinfo_s {
@@ -79,22 +82,29 @@ typedef struct materialbindinfo_s {
 } materialbindinfo_t;
 
 typedef struct materialbind_s {
-    material_t*     _material;
-    ddstring_t      _name;
-    materialnamespaceid_t _mnamespace;
+    /// Pointer to this binding's node in the directory.
+    struct pathdirectory_node_s* _directoryNode;
+
+    /// Bound material.
+    material_t* _material;
+
+    /// Unique identifier for this binding.
+    materialnum_t _id;
+
+    /// Extended info about this binding if present.
     materialbindinfo_t* _info;
 } materialbind_t;
 
-/// @return  Material associated with this else @c NULL
+/// @return  Unique identifier associated with this.
+materialnum_t MaterialBind_Id(const materialbind_t* mb);
+
+/// @return  Material associated with this else @c NULL.
 material_t* MaterialBind_Material(const materialbind_t* mb);
 
-/// @return  Symbolic name.
-const ddstring_t* MaterialBind_Name(const materialbind_t* mb);
+/// @return  PathDirectory node associated with this.
+struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb);
 
-/// @return  Namespace in which this is present.
-materialnamespaceid_t MaterialBind_Namespace(const materialbind_t* mb);
-
-/// @return  Extended info owned by this else @c NULL
+/// @return  Extended info owned by this else @c NULL.
 materialbindinfo_t* MaterialBind_Info(materialbind_t* mb);
 
 /**
@@ -124,18 +134,6 @@ ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb);
 
 static void updateMaterialBindInfo(materialbind_t* mb);
 
-#define MATERIALNAMESPACE_NAMEHASH_SIZE (512)
-
-typedef struct materialnamespace_namehash_node_s {
-    struct materialnamespace_namehash_node_s* next;
-    materialnum_t bindId;
-} materialnamespace_namehash_node_t;
-typedef materialnamespace_namehash_node_t* materialnamespace_namehash_t[MATERIALNAMESPACE_NAMEHASH_SIZE];
-
-typedef struct materialnamespace_s {
-    materialnamespace_namehash_t nameHash;
-} materialnamespace_t;
-
 typedef struct animframe_s {
     material_t*     mat;
     ushort          tics;
@@ -157,6 +155,9 @@ static animgroup_t* groups;
 
 D_CMD(InspectMaterial);
 D_CMD(ListMaterials);
+#if _DEBUG
+D_CMD(PrintMaterialStats);
+#endif
 
 static void animateAnimGroups(void);
 
@@ -189,14 +190,32 @@ static materiallist_t* materials;
 
 static materialnum_t bindingsCount;
 static materialnum_t bindingsMax;
-static materialbind_t* bindings;
+static materialbind_t** bindings;
 
-static materialnamespace_t namespaces[MATERIALNAMESPACE_COUNT];
+static pathdirectory_t* namespaces[MATERIALNAMESPACE_COUNT];
 
 void P_MaterialsRegister(void)
 {
     C_CMD("inspectmaterial", "s",   InspectMaterial);
     C_CMD("listmaterials",  NULL,   ListMaterials);
+    C_CMD("materialstats",  NULL,   PrintMaterialStats);
+}
+
+static __inline pathdirectory_t* directoryForMaterialNamespaceId(materialnamespaceid_t id)
+{
+    assert(VALID_MATERIALNAMESPACEID(id));
+    return namespaces[id-MATERIALNAMESPACE_FIRST];
+}
+
+static materialnamespaceid_t namespaceIdForMaterialDirectory(pathdirectory_t* pd)
+{
+    materialnamespaceid_t id;
+    assert(pd);
+    for(id = MATERIALNAMESPACE_FIRST; id <= MATERIALNAMESPACE_LAST; ++id)
+        if(namespaces[id-MATERIALNAMESPACE_FIRST] == pd) return id;
+    // Should never happen.
+    Con_Error("Materials::namespaceIdForMaterialDirectory: Failed to determine id for directory %p.", (void*)pd);
+    exit(1); // Unreachable.
 }
 
 static const ddstring_t* nameForMaterialNamespaceId(materialnamespaceid_t id)
@@ -388,62 +407,27 @@ static materialvariant_t* chooseVariant(material_t* mat,
 
 static materialbind_t* bindByIndex(uint bindId)
 {
-    if(0 != bindId) return &bindings[bindId-1];
+    if(0 != bindId) return bindings[bindId-1];
     return 0;
-}
-
-static int compareMaterialBindByName(const void* e1, const void* e2)
-{
-    return stricmp(Str_Text(MaterialBind_Name(*(const materialbind_t**)e1)),
-                   Str_Text(MaterialBind_Name(*(const materialbind_t**)e2)));
-}
-
-/**
- * This is a hash function. Given a material name it generates a
- * somewhat-random number between 0 and MATERIALNAMESPACE_NAMEHASH_SIZE.
- *
- * @return  The generated hash index.
- */
-static uint hashForName(const char* name)
-{
-    ushort key = 0;
-    size_t i = 0;
-    // Stop when name ends.
-    for(; *name; name++)
-    {
-        switch(i)
-        {
-        case 0: key ^= (int) (*name); break;
-        case 1: key *= (int) (*name); break;
-        case 2: key -= (int) (*name); break;
-        }
-        i = (i == 2? 0 : i+1);
-    }
-    return key % MATERIALNAMESPACE_NAMEHASH_SIZE;
 }
 
 /**
  * Given a name and namespace, search the materials db for a match.
- * \assume Caller knows what it's doing; params arn't validity checked.
  *
- * @param name  Name of the material to search for. Must have been transformed
- *      to all lower case.
- * @param namespaceId  Specific MG_* material namespace NOT @c MN_ANY.
+ * @param name  Name of the material to search for.
+ * @param namespaceId  Specific MN_* material namespace NOT @c MN_ANY.
  * @return  Unique number of the found material, else zero.
  */
-static materialnum_t getMaterialNumForName(const char* name, uint hash,
+static materialnum_t getMaterialNumForName(const char* name,
     materialnamespaceid_t namespaceId)
 {
-    materialnamespace_t* mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
-    materialnamespace_namehash_node_t* node;
-    for(node = (materialnamespace_namehash_node_t*)mn->nameHash[hash];
-        NULL != node; node = node->next)
-    {
-        materialbind_t* mb = bindByIndex(node->bindId);
-        if(!strncmp(Str_Text(MaterialBind_Name(mb)), name, 8))
-            return node->bindId;
-    }
-    return 0; // Not found.
+    pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+    struct pathdirectory_node_s* node;
+    materialbind_t* mb;
+    node = DD_SearchPathDirectory(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, name, MATERIALDIRECTORY_DELIMITER);
+    if(!node) return 0; // Not found.
+    mb = (materialbind_t*) PathDirectoryNode_UserData(node);
+    return Materials_ToMaterialNum(MaterialBind_Material(mb));
 }
 
 static void updateMaterialBindInfo(materialbind_t* mb)
@@ -484,33 +468,43 @@ static void updateMaterialBindInfo(materialbind_t* mb)
 }
 
 static void newMaterialNameBinding(material_t* material, const char* name,
-    materialnamespaceid_t namespaceId, uint hash)
+    materialnamespaceid_t namespaceId)
 {
-    materialnamespace_namehash_node_t* node;
-    materialnamespace_t* mn;
+    pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+    struct pathdirectory_node_s* node;
     materialbind_t* mb;
 
-    if(++bindingsCount > bindingsMax)
-    {   // Allocate more memory.
-        bindingsMax += MATERIALS_BLOCK_ALLOC;
-        bindings = (materialbind_t*) realloc(bindings, sizeof(*bindings) * bindingsMax);
+    node = PathDirectory_Insert(matDirectory, name, MATERIALDIRECTORY_DELIMITER);
+    if(PathDirectoryNode_UserData(node))
+    {
+        Con_Error("Materials::newMaterialNameBinding: A material by the name '%s' is already known!", name);
+        exit(1); // Unreachable.
     }
 
-    mb = &bindings[bindingsCount - 1];
-    Str_Init(&mb->_name); Str_Set(&mb->_name, name);
+    mb = (materialbind_t*) malloc(sizeof *mb);
+    if(!mb)
+    {
+        Con_Error("Materials::newMaterialNameBinding: Failed on allocation of %lu bytes for new MaterialBind.",
+            (unsigned long) sizeof *mb);
+        exit(1); // Unreachable.
+    }
+    mb->_directoryNode = node;
     mb->_material = material;
-    mb->_mnamespace = namespaceId;
     mb->_info = NULL;
+    mb->_id = ++bindingsCount; // 1-based index;
+    PathDirectoryNode_AttachUserData(node, mb);
 
-    // We also hash the name for faster searching.
-    mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
-    node = (materialnamespace_namehash_node_t*) malloc(sizeof(*node));
-    if(NULL == node)
-        Con_Error("Materials::newMaterialNameBinding: Failed on allocation of %lu bytes for"
-            "new MaterialNamespace::NameHash::Node.", (unsigned long) sizeof(*node));
-    node->next = mn->nameHash[hash];
-    node->bindId = bindingsCount; // 1-based index;
-    mn->nameHash[hash] = node;
+    // Add the new binding to the bindings index/map.
+    if(bindingsCount > bindingsMax)
+    {
+        // Allocate more memory.
+        bindingsMax += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
+        bindings = (materialbind_t**) realloc(bindings, sizeof *bindings * bindingsMax);
+        if(!bindings)
+            Con_Error("Materials:newMaterialNameBinding: Failed on (re)allocation of %lu bytes for MaterialBind map.",
+                (unsigned long) sizeof *bindings * bindingsMax);
+    }
+    bindings[bindingsCount-1] = mb; /* 1-based index */
 
     Material_SetBindId(material, bindingsCount /* 1-based index */);
 }
@@ -541,7 +535,7 @@ static material_t* linkMaterialToGlobalList(material_t* mat)
 static __inline material_t* getMaterialByIndex(materialnum_t num)
 {
     if(num < bindingsCount)
-        return MaterialBind_Material(&bindings[num]);
+        return MaterialBind_Material(bindings[num]);
     Con_Error("getMaterialByIndex: Invalid index #%u.", (unsigned int) num);
     return NULL; // Unreachable.
 }
@@ -554,18 +548,15 @@ void Materials_Initialize(void)
     variantSpecs = NULL;
     variantCacheQueue = NULL;
 
-    bindings = NULL;
-    bindingsCount = bindingsMax = 0;
-
     materialsBlockSet = BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
     materials = NULL;
 
-    // Clear the name bind hash tables.
+    bindings = NULL;
+    bindingsCount = bindingsMax = 0;
     { int i;
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
-        materialnamespace_t* mn = &namespaces[i];
-        memset(mn->nameHash, 0, sizeof(mn->nameHash));
+        namespaces[i] = PathDirectory_New();
     }}
 
     initedOk = true;
@@ -591,40 +582,32 @@ static void destroyMaterials(void)
     materialsBlockSet = NULL;
 }
 
+static int clearBinding(struct pathdirectory_node_s* node, void* paramaters)
+{
+    materialbind_t* mb = PathDirectoryNode_DetachUserData(node);
+    materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
+    if(info)
+    {
+        free(info);
+    }
+    free(mb);
+    return 0; // Continue iteration.
+}
+
 static void destroyBindings(void)
 {
     assert(initedOk);
 
-    // Empty the namespace namehash tables.
     { int i;
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
-        materialnamespace_t* mn = &namespaces[i];
-        int j;
-        for(j = 0; j < MATERIALNAMESPACE_NAMEHASH_SIZE; ++j)
-        {
-            materialnamespace_namehash_node_t* next;
-            while(NULL != mn->nameHash[j])
-            {
-                next = mn->nameHash[j]->next;
-                free(mn->nameHash[j]);
-                mn->nameHash[j] = next;
-            }
-        }
+        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearBinding);
+        PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
     }}
 
-    // Destroy the bindings themselves.
-    if(NULL != bindings)
+    // Clear the binding index/map.
+    if(bindings)
     {
-        materialnum_t i;
-        for(i = 0; i < bindingsCount; ++i)
-        {
-            materialbind_t* mb = &bindings[i];
-            materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
-            if(NULL != info)
-                free(info);
-            Str_Free(&mb->_name);
-        }
         free(bindings);
         bindings = NULL;
     }
@@ -645,27 +628,36 @@ void Materials_Shutdown(void)
     initedOk = false;
 }
 
+static int clearBindingDefinitionLinks(const struct pathdirectory_node_s* node, void* paramaters)
+{
+    materialbind_t* mb = (materialbind_t*)PathDirectoryNode_UserData(node);
+    materialbindinfo_t* info = MaterialBind_Info(mb);
+    if(info)
+    {
+        info->decorationDefs[0]    = info->decorationDefs[1]    = NULL;
+        info->detailtextureDefs[0] = info->detailtextureDefs[1] = NULL;
+        info->ptcgenDefs[0]        = info->ptcgenDefs[1]        = NULL;
+        info->reflectionDefs[0]    = info->reflectionDefs[1]    = NULL;
+    }
+    return 0; // Continue iteration.
+}
+
 void Materials_ClearDefinitionLinks(void)
 {
-    assert(initedOk);
-    {
     materiallist_node_t* node;
-    materialnum_t i;
+    materialnamespaceid_t namespaceId;
+
+    assert(initedOk);
     for(node = materials; node; node = node->next)
     {
         material_t* mat = node->mat;
         Material_SetDefinition(mat, NULL);
     }
-    for(i = 0; i < bindingsCount; ++i)
+
+    for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
     {
-        materialbind_t* mb = &bindings[i];
-        materialbindinfo_t* info = MaterialBind_Info(mb);
-        if(NULL == info) continue;
-        info->decorationDefs[0]     = info->decorationDefs[1] = NULL;
-        info->detailtextureDefs[0]  = info->detailtextureDefs[1] = NULL;
-        info->ptcgenDefs[0]         = info->ptcgenDefs[1] = NULL;
-        info->reflectionDefs[0]     = info->reflectionDefs[1] = NULL;
-    }
+        pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+        PathDirectory_Iterate_Const(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearBindingDefinitionLinks);
     }
 }
 
@@ -743,27 +735,17 @@ static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant,
     }
 }
 
-static void releaseGLTexturesForMaterial(material_t* mat)
+static int releaseGLTexturesForMaterial(struct pathdirectory_node_s* node, void* paramaters)
 {
-    Material_IterateVariants(mat, releaseGLTexturesForMaterialWorker, NULL);
+    materialbind_t* mb = PathDirectoryNode_UserData(node);
+    material_t* material = MaterialBind_Material(mb);
+    Material_IterateVariants(material, releaseGLTexturesForMaterialWorker, NULL);
+    return 0; // Continue iteration.
 }
 
-void Materials_ReleaseGLTextures(const char* namespaceName)
+void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId)
 {
-    materialnamespaceid_t namespaceId = MN_ANY;
-
-    if(namespaceName && namespaceName[0])
-    {
-        namespaceId = DD_ParseMaterialNamespace(namespaceName);
-        if(!VALID_MATERIALNAMESPACEID(namespaceId))
-        {
-#if _DEBUG
-            Con_Message("Warning:Materials_ReleaseGLTextures: Attempt to delete in "
-                "unknown namespace (%s), ignoring.\n", namespaceName);
-#endif
-            return;
-        }
-    }
+    pathdirectory_t* matDirectory;
 
     if(namespaceId == MN_ANY)
     {   // Delete the lot.
@@ -775,25 +757,8 @@ void Materials_ReleaseGLTextures(const char* namespaceName)
         Con_Error("Materials_ReleaseGLTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) namespaceId);
 
-    if(bindings)
-    {
-        materialnamespace_t* mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
-        int i;
-        for(i = 0; i < MATERIALNAMESPACE_NAMEHASH_SIZE; ++i)
-        {
-            materialnamespace_namehash_node_t* node;
-
-            if(NULL == mn->nameHash[i]) continue;
-
-            for(node = (materialnamespace_namehash_node_t*) mn->nameHash[i];
-                NULL != node; node = node->next)
-            {
-                materialbind_t* mb = bindByIndex(node->bindId);
-                material_t* material = MaterialBind_Material(mb);
-                releaseGLTexturesForMaterial(material);
-            }
-        }
-    }
+    matDirectory = directoryForMaterialNamespaceId(namespaceId);
+    PathDirectory_Iterate(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, releaseGLTexturesForMaterial);
 }
 
 const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
@@ -815,8 +780,7 @@ materialnum_t Materials_ToMaterialNum(material_t* mat)
     if(mat)
     {
         materialbind_t* mb = bindByIndex(Material_BindId(mat));
-        if(NULL != mb)
-            return (mb - bindings) + 1; // 1-based index.
+        if(mb) return MaterialBind_Id(mb);
     }
     return 0;
 }
@@ -831,8 +795,6 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     const texture_t* tex = NULL;
     byte flags = def->flags;
     material_t* mat;
-    char name[9];
-    uint hash;
 
     if(!initedOk)
         return NULL;
@@ -868,15 +830,6 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         return 0;
     }
 
-    // Prepare 'name'.
-    { const char* c = Str_Text(Uri_Path(rawName));
-    int n;
-    for(n = 0; *c && n < 8; ++n, ++c)
-        name[n] = tolower(*c);
-    name[n] = '\0';
-    }
-    hash = hashForName(name);
-
     namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
     if(!VALID_MATERIALNAMESPACEID(namespaceId))
@@ -888,7 +841,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         return NULL;
     }
 
-    { materialnum_t matNum = getMaterialNumForName(name, hash, namespaceId);
+    { materialnum_t matNum = getMaterialNumForName(Str_Text(Uri_Path(rawName)), namespaceId);
     if(0 != matNum)
     {
 #if _DEBUG
@@ -912,7 +865,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     mat->_width  = MAX_OF(0, width);
     mat->_height = MAX_OF(0, height);
     mat->_envClass = S_MaterialClassForName(rawName);
-    newMaterialNameBinding(mat, name, namespaceId, hash);
+    newMaterialNameBinding(mat, Str_Text(Uri_Path(rawName)), namespaceId);
 
     return mat;
     }
@@ -922,10 +875,8 @@ static materialnum_t Materials_CheckNumForPath2(const Uri* uri)
 {
     assert(initedOk && uri);
     {
-    const char* rawName = Str_Text(Uri_Path(uri));
+    const char* name = Str_Text(Uri_Path(uri));
     materialnamespaceid_t namespaceId;
-    uint hash;
-    char name[9];
 
     // In original DOOM, texture name references beginning with the
     // hypen '-' character are always treated as meaning "no reference"
@@ -943,31 +894,23 @@ Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
         return 0;
     }
 
-    // Prepare 'name'.
-    { int n;
-    for(n = 0; *rawName && n < 8; ++n, rawName++)
-        name[n] = tolower(*rawName);
-    name[n] = '\0';
-    }
-    hash = hashForName(name);
-
     if(namespaceId == MN_ANY)
     {   // Caller doesn't care which namespace.
-        materialnum_t       matNum;
+        materialnum_t matNum;
 
         // Check for the material in these namespaces, in priority order.
-        if((matNum = getMaterialNumForName(name, hash, MN_SPRITES)))
+        if((matNum = getMaterialNumForName(name, MN_SPRITES)))
             return matNum;
-        if((matNum = getMaterialNumForName(name, hash, MN_TEXTURES)))
+        if((matNum = getMaterialNumForName(name, MN_TEXTURES)))
             return matNum;
-        if((matNum = getMaterialNumForName(name, hash, MN_FLATS)))
+        if((matNum = getMaterialNumForName(name, MN_FLATS)))
             return matNum;
 
         return 0; // Not found.
     }
 
     // Caller wants a material in a specific namespace.
-    return getMaterialNumForName(name, hash, namespaceId);
+    return getMaterialNumForName(name, namespaceId);
     }
 }
 
@@ -1008,24 +951,11 @@ materialnum_t Materials_IndexForName(const char* path)
     return 0;
 }
 
-/// \note Part of the Doomsday public API.
-const ddstring_t* Materials_GetSymbolicName(material_t* mat)
-{
-    materialnum_t num;
-    if(!initedOk)
-        return NULL;
-    if(NULL == mat)
-        return NULL;
-    if(0 == (num = Materials_ToMaterialNum(mat)))
-        return NULL; // Should never happen. 
-    return MaterialBind_Name(&bindings[num-1]);
-}
-
 Uri* Materials_GetUri(material_t* mat)
 {
-    materialbind_t* mb;
-    Uri* uri;
+    struct pathdirectory_node_s* node;
     ddstring_t path;
+    Uri* uri;
 
     if(!mat)
     {
@@ -1035,14 +965,11 @@ Uri* Materials_GetUri(material_t* mat)
         return 0;
     }
 
+    node = MaterialBind_DirectoryNode(bindByIndex(Material_BindId(mat)));
     Str_Init(&path);
-    mb = bindByIndex(Material_BindId(mat));
-    if(NULL != mb)
-    {
-        Str_Appendf(&path, "%s:%s", Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))),
-            Str_Text(Materials_GetSymbolicName(mat)));
-    }
+    PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, &path, NULL, MATERIALDIRECTORY_DELIMITER);
     uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+    Uri_SetScheme(uri, Str_Text(nameForMaterialNamespaceId(namespaceIdForMaterialDirectory(PathDirectoryNode_Directory(node)))));
     Str_Free(&path);
     return uri;
 }
@@ -1619,70 +1546,99 @@ static void printMaterialOverview(const materialbind_t* mb, boolean printNamespa
         Str_Delete((ddstring_t*)path);
 }
 
+/**
+ * \todo A horridly inefficent algorithm. This should be implemented in PathDirectory
+ * itself and not force users of this class to implement this sort of thing themselves.
+ * However this is only presently used for the material search/listing console commands
+ * so is not hugely important right now.
+ */
+typedef struct {
+    const char* like;
+    size_t idx;
+    materialbind_t** storage;
+} collectmaterialworker_paramaters_t;
+
+static int collectMaterialWorker(const struct pathdirectory_node_s* node, void* paramaters)
+{
+    materialbind_t* mb = (materialbind_t*)PathDirectoryNode_UserData(node);
+    collectmaterialworker_paramaters_t* p = (collectmaterialworker_paramaters_t*)paramaters;
+
+    if(p->like && p->like[0])
+    {
+        Uri* uri = Materials_GetUri(MaterialBind_Material(mb));
+        int delta = strnicmp(Str_Text(Uri_Path(uri)), p->like, strlen(p->like));
+        Uri_Delete(uri);
+        if(delta) return 0; // Continue iteration.
+    }
+
+    if(p->storage)
+    {
+        p->storage[p->idx++] = mb;
+    }
+    else
+    {
+        ++p->idx;
+    }
+
+    return 0; // Continue iteration.
+}
+
 static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
     const char* like, size_t* count, materialbind_t** storage)
 {
-    size_t n = 0;
+    collectmaterialworker_paramaters_t p;
+    materialnamespaceid_t fromId, toId, iterId;
 
     if(VALID_MATERIALNAMESPACEID(namespaceId))
     {
-        if(bindings)
-        {
-            materialnamespace_t* mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
-            int i;
-            for(i = 0; i < MATERIALNAMESPACE_NAMEHASH_SIZE; ++i)
-            {
-                materialnamespace_namehash_node_t* node;
-
-                if(NULL == mn->nameHash[i]) continue;
-
-                for(node = (materialnamespace_namehash_node_t*) mn->nameHash[i];
-                    NULL != node; node = node->next)
-                {
-                    materialbind_t* mb = bindByIndex(node->bindId);
-                    if(!(like && like[0] && strnicmp(Str_Text(MaterialBind_Name(mb)), like, strlen(like))))
-                    {
-                        if(storage)
-                            storage[n++] = mb;
-                        else
-                            ++n;
-                    }
-                }
-            }
-        }
+        // Only consider materials in this namespace.
+        fromId = toId = namespaceId;
     }
     else
-    {   // Any.
-        materialnum_t i;
-        for(i = 0; i < bindingsCount; ++i)
-        {
-            materialbind_t* mb = &bindings[i];
-            if(like && like[0] && strnicmp(Str_Text(MaterialBind_Name(mb)), like, strlen(like)))
-                continue;
-            if(storage)
-                storage[n++] = mb;
-            else
-                ++n;
-        }
+    {
+        // Consider materials in any namespace.
+        fromId = MATERIALNAMESPACE_FIRST;
+        toId   = MATERIALNAMESPACE_LAST;
+    }
+
+    p.idx = 0;
+    p.like = like;
+    p.storage = storage;
+    for(iterId  = fromId; iterId <= toId; ++iterId)
+    {
+        pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(iterId);
+        PathDirectory_Iterate2_Const(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
+            PATHDIRECTORY_PATHHASH_SIZE, collectMaterialWorker, (void*)&p);
     }
 
     if(storage)
     {
-        storage[n] = 0; // Terminate.
-        if(count)
-            *count = n;
+        storage[p.idx] = 0; // Terminate.
+        if(count) *count = p.idx;
         return storage;
     }
 
-    if(n == 0)
+    if(p.idx == 0)
     {
-        if(count)
-            *count = 0;
+        if(count) *count = 0;
         return 0;
     }
 
-    storage = malloc(sizeof(materialbind_t*) * (n+1));
+    storage = (materialbind_t**)malloc(sizeof *storage * (p.idx+1));
+    if(!storage)
+        Con_Error("collectMaterials: Failed on allocation of %lu bytes for new collection.",
+            (unsigned long) (sizeof* storage * (p.idx+1)));
     return collectMaterials(namespaceId, like, count, storage);
+}
+
+static int compareMaterialBindByPath(const void* mbA, const void* mbB)
+{
+    Uri* a = Materials_GetUri(MaterialBind_Material(*(const materialbind_t**)mbA));
+    Uri* b = Materials_GetUri(MaterialBind_Material(*(const materialbind_t**)mbB));
+    int delta = stricmp(Str_Text(Uri_Path(a)), Str_Text(Uri_Path(b)));
+    Uri_Delete(b);
+    Uri_Delete(a);
+    return delta;
 }
 
 static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like,
@@ -1711,7 +1667,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByName);
+    qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByPath);
 
     { materialbind_t* const* ptr;
     for(ptr = foundMaterials; *ptr; ++ptr)
@@ -2016,22 +1972,22 @@ void Materials_ResetAnimGroups(void)
     animateAnimGroups();
 }
 
+materialnum_t MaterialBind_Id(const materialbind_t* mb)
+{
+    assert(mb);
+    return mb->_id;
+}
+
 material_t* MaterialBind_Material(const materialbind_t* mb)
 {
     assert(mb);
     return mb->_material;
 }
 
-const ddstring_t* MaterialBind_Name(const materialbind_t* mb)
+struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb)
 {
     assert(mb);
-    return &mb->_name;
-}
-
-materialnamespaceid_t MaterialBind_Namespace(const materialbind_t* mb)
-{
-    assert(mb);
-    return mb->_mnamespace;
+    return mb->_directoryNode;
 }
 
 materialbindinfo_t* MaterialBind_Info(materialbind_t* mb)
@@ -2048,12 +2004,11 @@ void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
     if(NULL != mb->_info)
     {
 #if _DEBUG
-        ddstring_t name; Str_Init(&name);
-        Str_Appendf(&name, "%s:%s", Str_Text(MaterialBind_Name(mb)),
-            Str_Text(nameForMaterialNamespaceId(MaterialBind_Namespace(mb))));
-        Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.",
-            Str_Text(&name));
-        Str_Free(&name);
+        Uri* uri = Materials_GetUri(mb->_material);
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
 #endif
         free(mb->_info);
     }
@@ -2192,3 +2147,24 @@ D_CMD(InspectMaterial)
     Uri_Delete(search);
     return true;
 }
+
+#if _DEBUG
+D_CMD(PrintMaterialStats)
+{
+    materialnamespaceid_t namespaceId;
+    Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
+    for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
+    {
+        pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+        uint size;
+
+        if(!matDirectory) continue;
+
+        size = PathDirectory_Size(matDirectory);
+        Con_Printf("Namespace: %s (%u %s)\n", Str_Text(nameForMaterialNamespaceId(namespaceId)), size, size==1? "material":"materials");
+        PathDirectory_PrintHashDistribution(matDirectory);
+        PathDirectory_Print(matDirectory, MATERIALDIRECTORY_DELIMITER);
+    }
+    return true;
+}
+#endif

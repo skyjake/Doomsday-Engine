@@ -2342,8 +2342,7 @@ int DD_SearchPathDirectoryCompare(struct pathdirectory_node_s* node, void* param
 struct pathdirectory_node_s* DD_SearchPathDirectory(pathdirectory_t* pd, int flags,
     const char* searchPath, char delimiter)
 {
-    assert(NULL != pd);
-    if(NULL != searchPath && searchPath[0])
+    if(searchPath && searchPath[0] && PathDirectory_Size(pd))
     {
         int result;
         struct pathdirectory_node_s* node;

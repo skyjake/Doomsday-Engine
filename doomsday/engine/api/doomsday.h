@@ -345,9 +345,8 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     // Play: Materials.
     materialnum_t   Materials_IndexForUri(const Uri* uri);
     materialnum_t   Materials_IndexForName(const char* path);
-    Uri*        Materials_GetUri(struct material_s* mat);
+    Uri*            Materials_GetUri(struct material_s* mat);
 
-    const ddstring_t* Materials_GetSymbolicName(struct material_s* mat);
     int             Materials_CreateAnimGroup(int flags);
     void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
 

@@ -33,6 +33,9 @@ struct texturevariantspecification_s;
 struct materialvariant_s;
 struct material_snapshot_s;
 
+// Substrings in Material names are delimited by this character.
+#define MATERIALDIRECTORY_DELIMITER '/'
+
 void P_MaterialsRegister(void);
 
 void Materials_Initialize(void);
@@ -82,7 +85,7 @@ void Materials_Precache(struct material_s* mat, struct materialvariantspecificat
  * @param mnamespace @c MN_ANY = delete everything, ELSE
  *      Only delete those currently in use by materials in the specified namespace.
  */
-void Materials_ReleaseGLTextures(const char* namespaceName);
+void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId);
 
 void Materials_Ticker(timespan_t elapsed);
 
@@ -137,16 +140,6 @@ struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
  */
 materialnum_t Materials_IndexForUri(const Uri* uri);
 materialnum_t Materials_IndexForName(const char* path);
-
-/**
- * Given a unique material identifier, lookup the associated name.
- * \note Part of the Doomsday public API.
- *
- * @param mat  The material to lookup the name for.
- *
- * @return  The associated name.
- */
-const ddstring_t* Materials_GetSymbolicName(struct material_s* mat);
 
 Uri* Materials_GetUri(struct material_s* mat);
 
