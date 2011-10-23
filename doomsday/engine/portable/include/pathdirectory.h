@@ -96,13 +96,20 @@ typedef struct pathdirectory_s {
         StringPool* strings;
         ushort* idHashMap; // Index by @c StringPoolInternId-1
     } _internPool;
+
     /// Path hash map.
     pathdirectory_pathhash_t* _pathHash;
+
+    /// Number of unique paths in the directory.
+    uint _size;
 } pathdirectory_t;
 
 pathdirectory_t* PathDirectory_New(void);
 
 void PathDirectory_Delete(pathdirectory_t* pd);
+
+/// @return  Number of unique paths in the directory.
+uint PathDirectory_Size(pathdirectory_t* pd);
 
 /// @return  Print-ready name for node @a type.
 const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type);

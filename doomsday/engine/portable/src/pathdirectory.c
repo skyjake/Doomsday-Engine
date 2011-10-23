@@ -370,16 +370,18 @@ static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* pd, const char* pa
     }
 }
 
-static pathdirectory_node_t* addPath(pathdirectory_t* fd, const char* path,
+static pathdirectory_node_t* addPath(pathdirectory_t* pd, const char* path,
     char delimiter, void* userData)
 {
-    assert(NULL != fd && NULL != path);
+    pathdirectory_node_t* node = buildDirecNodes(pd, path, delimiter, NULL);
+    if(node)
     {
-    pathdirectory_node_t* node = buildDirecNodes(fd, path, delimiter, NULL);
-    if(NULL != node && NULL != userData)
-        PathDirectoryNode_AttachUserData(node, userData);
-    return node;
+        // There is now one more unique path in the directory.
+        ++pd->_size;
+        if(userData)
+            PathDirectoryNode_AttachUserData(node, userData);
     }
+    return node;
 }
 
 static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* parent,
@@ -476,6 +478,7 @@ pathdirectory_t* PathDirectory_New(void)
     pd->_internPool.strings = NULL;
     pd->_internPool.idHashMap = NULL;
     pd->_pathHash = NULL;
+    pd->_size = 0;
 
     if(numInstances == 0)
     {
@@ -487,7 +490,7 @@ pathdirectory_t* PathDirectory_New(void)
 
 void PathDirectory_Delete(pathdirectory_t* pd)
 {
-    assert(NULL != pd);
+    assert(pd);
     clearPathHash(pd->_pathHash);
     destroyPathHash(pd);
     clearInternPool(pd);
@@ -499,6 +502,12 @@ void PathDirectory_Delete(pathdirectory_t* pd)
         Sys_DestroyMutex(fragmentBuffer_Mutex);
         fragmentBuffer_Mutex = 0;
     }
+}
+
+uint PathDirectory_Size(pathdirectory_t* pd)
+{
+    assert(pd);
+    return pd->_size;
 }
 
 const ddstring_t* PathDirectory_NodeTypeName(pathdirectory_nodetype_t type)
@@ -516,6 +525,7 @@ void PathDirectory_Clear(pathdirectory_t* pd)
     assert(NULL != pd);
     clearPathHash(pd->_pathHash);
     clearInternPool(pd);
+    pd->_size = 0;
 }
 
 pathdirectory_node_t* PathDirectory_Insert2(pathdirectory_t* pd, const char* path, char delimiter,
