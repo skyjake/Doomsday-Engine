@@ -46,6 +46,7 @@ static void destroyVariants(material_t* mat)
         free(mat->_variants);
         mat->_variants = next;
     }
+    mat->_prepared = 0;
 }
 
 void Material_Initialize(material_t* mat)
@@ -195,6 +196,18 @@ void Material_SetGroupAnimated(material_t* mat, boolean yes)
 {
     assert(mat);
     mat->_inAnimGroup = yes;
+}
+
+byte Material_Prepared(const material_t* mat)
+{
+    assert(mat);
+    return mat->_prepared;
+}
+
+void Material_SetPrepared(material_t* mat, byte state)
+{
+    assert(mat && state <= 2);
+    mat->_prepared = state;
 }
 
 uint Material_BindId(const material_t* mat)

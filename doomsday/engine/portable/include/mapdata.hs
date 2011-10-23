@@ -155,6 +155,7 @@ struct material
     -       texture_s*  _detailTex;
     -       texture_s*  _shinyTex;
     -       texture_s*  _shinyMaskTex;
+    -       byte        _prepared;
 end
 
 internal

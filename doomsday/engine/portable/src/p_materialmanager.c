@@ -83,8 +83,6 @@ typedef struct materialbind_s {
     ddstring_t      _name;
     materialnamespaceid_t _mnamespace;
     materialbindinfo_t* _info;
-
-    byte            prepared;
 } materialbind_t;
 
 /// @return  Material associated with this else @c NULL
@@ -503,8 +501,6 @@ static void newMaterialNameBinding(material_t* material, const char* name,
     mb->_material = material;
     mb->_mnamespace = namespaceId;
     mb->_info = NULL;
-
-    mb->prepared = 0;
 
     // We also hash the name for faster searching.
     mn = &namespaces[namespaceId-MATERIALNAMESPACE_FIRST];
@@ -1300,8 +1296,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
            (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
             // Primary texture was (re)prepared.
-            /// Update the prepared status. This should be moved out of the binding.
-            mb->prepared = result == PTR_UPLOADED_ORIGINAL? 1 : 2;
+            Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
             updateMaterialTextureLinks(mat);
 
             // Are we inheriting the logical dimensions from the texture?
@@ -1475,12 +1470,12 @@ const ded_decor_t* Materials_DecorationDef(materialnum_t num)
 {
     if(num > 0)
     {
-        const materialbind_t* mb = bindByIndex(Material_BindId(Materials_ToMaterial(num)));
-        if(!mb->prepared)
-            Materials_Prepare(NULL, MaterialBind_Material(mb), false,
+        material_t* mat = Materials_ToMaterial(num);
+        if(!Material_Prepared(mat))
+            Materials_Prepare(NULL, mat, false,
                 Materials_VariantSpecificationForContext(MC_MAPSURFACE,
                     0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return MaterialBind_DecorationDef(mb);
+        return MaterialBind_DecorationDef(bindByIndex(Material_BindId(mat)));
     }
     return 0;
 }
@@ -1489,12 +1484,12 @@ const ded_ptcgen_t* Materials_PtcGenDef(materialnum_t num)
 {
     if(num > 0)
     {
-        const materialbind_t* mb = bindByIndex(Material_BindId(Materials_ToMaterial(num)));
-        if(!mb->prepared)
-            Materials_Prepare(NULL, MaterialBind_Material(mb), false,
+        material_t* mat = Materials_ToMaterial(num);
+        if(!Material_Prepared(mat))
+            Materials_Prepare(NULL, mat, false,
                 Materials_VariantSpecificationForContext(MC_MAPSURFACE,
                     0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return MaterialBind_PtcGenDef(mb);
+        return MaterialBind_PtcGenDef(bindByIndex(Material_BindId(mat)));
     }
     return 0;
 }
@@ -2078,33 +2073,29 @@ materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb)
 ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 == mb->prepared || NULL == mb->_info)
-        return NULL;
-    return mb->_info->detailtextureDefs[mb->prepared-1];
+    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    return mb->_info->detailtextureDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 == mb->prepared || NULL == mb->_info)
-        return NULL;
-    return mb->_info->decorationDefs[mb->prepared-1];
+    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    return mb->_info->decorationDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 == mb->prepared || NULL == mb->_info)
-        return NULL;
-    return mb->_info->ptcgenDefs[mb->prepared-1];
+    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    return mb->_info->ptcgenDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(0 == mb->prepared || NULL == mb->_info)
-        return NULL;
-    return mb->_info->reflectionDefs[mb->prepared-1];
+    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    return mb->_info->reflectionDefs[Material_Prepared(mb->_material)-1];
 }
 
 D_CMD(ListMaterials)

@@ -134,6 +134,17 @@ int Material_LayerCount(const material_t* mat);
 /// Change the group animation status.
 void Material_SetGroupAnimated(material_t* mat, boolean yes);
 
+/// @return  Prepared state of this material.
+byte Material_Prepared(const material_t* mat);
+
+/**
+ * Change the prepared status of this material.
+ * @param state  @c 0: Not yet prepared.
+ *               @c 1: Prepared from IWAD-original textures.
+ *               @c 2: Prepared from custom or replacement textures.
+ */
+void Material_SetPrepared(material_t* mat, byte state);
+
 /// @return  MaterialBind identifier associated with this.
 uint Material_BindId(const material_t* mat);
 

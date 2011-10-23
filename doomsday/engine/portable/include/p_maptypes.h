@@ -141,6 +141,7 @@ typedef struct material_s {
     struct texture_s*   _detailTex;
     struct texture_s*   _shinyTex;
     struct texture_s*   _shinyMaskTex;
+    byte                _prepared;
 } material_t;
 
 // Internal surface flags:
