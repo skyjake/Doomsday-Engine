@@ -265,10 +265,10 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     }
     else
     {
-        ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(SV_ReadLong()));
-        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-        Str_Free(&path);
+        Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadLong()), RC_NULL);
+        Uri_SetScheme(uri, MN_FLATS_NAME);
+        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+        Uri_Delete(uri);
     }
 
     mov->setSectorType = SV_ReadLong();

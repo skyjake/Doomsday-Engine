@@ -269,7 +269,7 @@ void Rend_ConsoleUpdateBackground(void)
 {
     assert(inited);
     consoleBackgroundMaterial = Materials_ToMaterial(
-        Materials_IndexForName(consoleBackgroundMaterialName));
+        Materials_IndexForUriCString(consoleBackgroundMaterialName));
 }
 
 void Rend_ConsoleToggleFullscreen(void)

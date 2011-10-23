@@ -268,10 +268,10 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             material_t* material;
             
             if(renderTextures == 2)
-                material = Materials_ToMaterial(Materials_IndexForName(
+                material = Materials_ToMaterial(Materials_IndexForUriCString(
                     MN_SYSTEM_NAME":gray" ));
             else
-                material = Materials_ToMaterial(Materials_IndexForName(
+                material = Materials_ToMaterial(Materials_IndexForUriCString(
                     MN_SYSTEM_NAME":missing" ));
 
             Materials_Prepare(&ms, material, true,

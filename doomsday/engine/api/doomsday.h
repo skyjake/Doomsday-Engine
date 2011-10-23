@@ -344,7 +344,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 
     // Play: Materials.
     materialnum_t   Materials_IndexForUri(const Uri* uri);
-    materialnum_t   Materials_IndexForName(const char* path);
+    materialnum_t   Materials_IndexForUriCString(const char* path);
     Uri*            Materials_GetUri(struct material_s* mat);
 
     int             Materials_CreateAnimGroup(int flags);

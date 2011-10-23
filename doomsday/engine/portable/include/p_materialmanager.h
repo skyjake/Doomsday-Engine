@@ -131,15 +131,11 @@ struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
     const struct materialvariantspecification_s* spec);
 
 /**
- * Search the Materials db for a match.
- * \note Part of the Doomsday public API.
- *
- * @param path  Path of the material to search for.
- *
- * @return  Unique identifier of the found material, else zero.
+ * Search the Materials collection for a material associated with @a uri.
+ * @return  Unique identifier of the found material else @c 0
  */
 materialnum_t Materials_IndexForUri(const Uri* uri);
-materialnum_t Materials_IndexForName(const char* path);
+materialnum_t Materials_IndexForUriCString(const char* uri);
 
 Uri* Materials_GetUri(struct material_s* mat);
 

@@ -1288,16 +1288,16 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
-    ddstring_t path;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    Uri* uri;
+    int tag;
 
-    Str_Init(&path);
-    Str_Appendf(&path, MN_FLATS_NAME":%s", GetACString(Pop()));
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-    Str_Free(&path);
+    uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
+    Uri_SetScheme(uri, MN_FLATS_NAME);
+    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    Uri_Delete(uri);
 
     tag = Pop();
 
@@ -1317,17 +1317,17 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
-    ddstring_t path;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    Uri* uri;
+    int tag;
 
     tag = LONG(*PCodePtr++);
-    Str_Init(&path);
-    Str_Appendf(&path, MN_FLATS_NAME":%s", GetACString(LONG(*PCodePtr++)));
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-    Str_Free(&path);
+    uri = Uri_NewWithPath2(GetACString(LONG(*PCodePtr++)), RC_NULL);
+    Uri_SetScheme(uri, MN_FLATS_NAME);
+    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    Uri_Delete(uri);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1345,16 +1345,16 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
-    ddstring_t path;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    Uri* uri;
+    int tag;
 
-    Str_Init(&path);
-    Str_Appendf(&path, MN_FLATS_NAME":%s", GetACString(Pop()));
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-    Str_Free(&path);
+    uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
+    Uri_SetScheme(uri, MN_FLATS_NAME);
+    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    Uri_Delete(uri);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1373,17 +1373,17 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
-    ddstring_t path;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    Uri* uri;
+    int tag;
 
     tag = LONG(*PCodePtr++);
-    Str_Init(&path);
-    Str_Appendf(&path, MN_FLATS_NAME":%s", GetACString(LONG(*PCodePtr++)));
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-    Str_Free(&path);
+    uri = Uri_NewWithPath2(GetACString(LONG(*PCodePtr++)), RC_NULL);
+    Uri_SetScheme(uri, MN_FLATS_NAME);
+    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    Uri_Delete(uri);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1722,16 +1722,16 @@ static int CmdSoundSequence(void)
 
 static int CmdSetLineTexture(void)
 {
-    int                 lineTag, side, position;
-    material_t*         mat;
-    linedef_t*          line;
-    iterlist_t*         list;
-    ddstring_t path;
+    int lineTag, side, position;
+    material_t* mat;
+    linedef_t* line;
+    iterlist_t* list;
+    Uri* uri;
 
-    Str_Init(&path);
-    Str_Appendf(&path, MN_TEXTURES_NAME":%s", GetACString(Pop()));
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-    Str_Free(&path);
+    uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
+    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    Uri_Delete(uri);
 
     position = Pop();
     side = Pop();

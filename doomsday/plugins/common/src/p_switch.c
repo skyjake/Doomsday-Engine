@@ -164,8 +164,9 @@ static int numswitches;
 void P_InitSwitchList(void)
 {
     int i, index;
-    ddstring_t path;
-    Str_Init(&path);
+    Uri* uri = Uri_New();
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
+
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
@@ -177,15 +178,13 @@ void P_InitSwitchList(void)
         if(!switchInfo[i].soundID)
             break;
 
-        Str_Clear(&path);
-        Str_Appendf(&path, MN_TEXTURES_NAME":%s", switchInfo[i].name1);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
+        Uri_SetPath(uri, switchInfo[i].name1);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
 
-        Str_Clear(&path);
-        Str_Appendf(&path, MN_TEXTURES_NAME":%s", switchInfo[i].name2);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
+        Uri_SetPath(uri, switchInfo[i].name2);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
     }
-    Str_Free(&path);
+    Uri_Delete(uri);
 
     numswitches = index / 2;
     switchlist[index] = 0;
@@ -260,10 +259,10 @@ void P_InitSwitchList(void)
                 break;
             Str_Clear(&path);
             Str_Appendf(&path, MN_TEXTURES_NAME":%s", sList[i].name1);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUriCString(Str_Text(&path)));
             Str_Clear(&path);
             Str_Appendf(&path, MN_TEXTURES_NAME":%s", sList[i].name2);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUriCString(Str_Text(&path)));
             if(verbose > (lumpNum > 0? 1 : 2))
             {
                 Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);

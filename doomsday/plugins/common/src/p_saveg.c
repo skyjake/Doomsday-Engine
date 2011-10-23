@@ -3083,13 +3083,15 @@ static int SV_ReadFloor(floor_t* floor)
         floor->newSpecial = SV_ReadLong();
 
         if(ver >= 2)
+        {
             floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
+        }
         else
         {
-            ddstring_t path; Str_Init(&path);
-            Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(SV_ReadShort()));
-            floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-            Str_Free(&path);
+            Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadShort()), RC_NULL);
+            Uri_SetScheme(uri, MN_FLATS_NAME);
+            floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+            Uri_Delete(uri);
         }
 
         floor->floorDestHeight = (float) SV_ReadShort();
@@ -3135,10 +3137,10 @@ static int SV_ReadFloor(floor_t* floor)
 #endif
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
-        { ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(SV_ReadShort()));
-        floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-        Str_Free(&path);
+        { Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadShort()), RC_NULL);
+        Uri_SetScheme(uri, MN_FLATS_NAME);
+        floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+        Uri_Delete(uri);
         }
 
         floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());

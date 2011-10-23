@@ -169,7 +169,7 @@ void P_InitMapInfo(void)
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material = Materials_IndexForName(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
+    defMapInfo.sky1Material = Materials_IndexForUriCString(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;
@@ -253,28 +253,34 @@ void P_InitMapInfo(void)
                 info->cdTrack = sc_Number;
                 break;
 
-            case MCMD_SKY1:
+            case MCMD_SKY1: {
+                Uri* uri;
+
                 SC_MustGetString();
-                { ddstring_t path; Str_Init(&path);
-                Str_Appendf(&path, MN_TEXTURES_NAME":%s", sc_String);
-                info->sky1Material = Materials_IndexForName(Str_Text(&path));
-                Str_Free(&path);
-                }
+
+                uri = Uri_NewWithPath2(sc_String, RC_NULL);
+                Uri_SetScheme(uri, MN_TEXTURES_NAME);
+                info->sky1Material = Materials_IndexForUri(uri);
+                Uri_Delete(uri);
+
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
                 break;
+              }
+            case MCMD_SKY2: {
+                Uri* uri;
 
-            case MCMD_SKY2:
                 SC_MustGetString();
-                { ddstring_t path; Str_Init(&path);
-                Str_Appendf(&path, MN_TEXTURES_NAME":%s", sc_String);
-                info->sky2Material = Materials_IndexForName(Str_Text(&path));
-                Str_Free(&path);
-                }
+
+                uri = Uri_NewWithPath2(sc_String, RC_NULL);
+                Uri_SetScheme(uri, MN_TEXTURES_NAME);
+                info->sky2Material = Materials_IndexForUri(uri);
+                Uri_Delete(uri);
+
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;
                 break;
-
+              }
             case MCMD_DOUBLESKY:
                 info->doubleSky = true;
                 break;

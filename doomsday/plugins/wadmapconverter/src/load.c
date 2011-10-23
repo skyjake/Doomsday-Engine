@@ -232,15 +232,22 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
         }
         else
         {
-            ddstring_t path; Str_Init(&path);
+            Uri* uri;
+
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
+
             // First try the prefered namespace, then any.
-            Str_Appendf(&path, "%s%s", isFlat? MN_FLATS_NAME":" : MN_TEXTURES_NAME":", m->name);
-            m->num = Materials_IndexForName(Str_Text(&path));
+            uri = Uri_NewWithPath2(m->name, RC_NULL);
+            Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
+            m->num = Materials_IndexForUri(uri);
+
             if(m->num == 0)
-                m->num = Materials_IndexForName(name);
-            Str_Free(&path);
+            {
+                Uri_SetScheme(uri, "");
+                m->num = Materials_IndexForUri(uri);
+            }
+            Uri_Delete(uri);
         }
 
         // Add it to the list of known materials.

@@ -384,10 +384,10 @@ static void buildSpriteRotations(void)
             link = true;
         }
 
-        { ddstring_t path; Str_Init(&path);
-        Str_Appendf(&path, MN_SPRITES_NAME":%s", name);
-        frame->mat = Materials_ToMaterial(Materials_IndexForName(Str_Text(&path)));
-        Str_Free(&path);
+        { Uri* uri = Uri_NewWithPath2(name, RC_NULL);
+        Uri_SetScheme(uri, MN_SPRITES_NAME);
+        frame->mat = Materials_ToMaterial(Materials_IndexForUri(uri));
+        Uri_Delete(uri);
         }
 
         frame->frame[0]    = name[4] - 'A' + 1;

@@ -1529,7 +1529,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials_IndexForName(def->iparmStr[k]);
+                    l->iparm[k] = Materials_IndexForUriCString(def->iparmStr[k]);
             }
         }
         else if(a & MAP_MUS)

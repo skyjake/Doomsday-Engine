@@ -2171,11 +2171,11 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             else if(texMode == 1)
                 // For debug, render the "missing" texture instead of the texture
                 // chosen for surfaces to fix the HOMs.
-                mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":missing"));
+                mat = Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":missing"));
             else // texMode == 2
                 // For lighting debug, render all solid surfaces using the gray
                 // texture.
-                mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray"));
+                mat = Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray"));
 
             // Make any necessary adjustments to the surface flags to suit the
             // current texture mode.
@@ -2217,7 +2217,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             else
             {
                 material_t* surfaceMaterial = ((!surface->material ||
-                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))? Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":missing")) : surface->material);
+                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))? Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":missing")) : surface->material);
                 material_snapshot_t ms;
                 Materials_Prepare(&ms, surfaceMaterial, true,
                     Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
@@ -3475,7 +3475,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 
             memset(rTU, 0, sizeof(rTU));
             setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?ffloor->PS_material:Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray")), false);
+            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?ffloor->PS_material:Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray")), false);
             RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
         }
         segPtr++;
@@ -3570,7 +3570,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 
             memset(rTU, 0, sizeof(rTU));
             setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray")), false);
+            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray")), false);
             RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
         }
         segPtr++;
@@ -3697,7 +3697,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 
             memset(rTU, 0, sizeof(rTU));
             setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray")), false);
+            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray")), false);
             RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
         }
 
@@ -3975,10 +3975,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":missing"));
+            mat = Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":missing"));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray"));
+            mat = Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray"));
 
         V2_Copy(texOffset, suf->visOffset);
 
@@ -4024,7 +4024,7 @@ static void Rend_RenderSubsector(uint ssecidx)
             const plane_t* plane = sect->SP_plane(PLN_FLOOR);
             const surface_t* suf = &plane->surface;
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, plane->PS_tangent, plane->PS_bitangent, plane->PS_normal,
-                             renderTextures!=2? sect->SP_floormaterial : Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray")),
+                             renderTextures!=2? sect->SP_floormaterial : Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray")),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (devRendSkyMode != 0), (devRendSkyMode != 0),
@@ -4036,7 +4036,7 @@ static void Rend_RenderSubsector(uint ssecidx)
             const plane_t* plane = sect->SP_plane(PLN_CEILING);
             const surface_t* suf = &plane->surface;
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, plane->PS_tangent, plane->PS_bitangent, plane->PS_normal,
-                             renderTextures!=2? sect->SP_ceilmaterial : Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":gray")),
+                             renderTextures!=2? sect->SP_ceilmaterial : Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":gray")),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              devRendSkyMode != 0, false,
@@ -4959,7 +4959,7 @@ static void Rend_RenderBoundingBoxes(void)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = Materials_ToMaterial(Materials_IndexForName(MN_SYSTEM_NAME":bbox"));
+    mat = Materials_ToMaterial(Materials_IndexForUriCString(MN_SYSTEM_NAME":bbox"));
     Materials_Prepare(&ms, mat, true,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));

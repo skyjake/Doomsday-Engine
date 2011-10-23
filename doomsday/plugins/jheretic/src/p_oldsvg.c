@@ -605,10 +605,10 @@ typedef struct {
 
     floor->state = (int) SV_v13_ReadLong();
     floor->newSpecial = SV_v13_ReadLong();
-    { ddstring_t path; Str_Init(&path);
-    Str_Appendf(&path, MN_FLATS_NAME":%s", W_LumpName(SV_v13_ReadShort()));
-    floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForName(Str_Text(&path)));
-    Str_Free(&path);
+    { Uri* uri = Uri_NewWithPath2(W_LumpName(SV_v13_ReadShort()), RC_NULL);
+    Uri_SetScheme(uri, MN_FLATS_NAME);
+    floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    Uri_Delete(uri);
     }
     floor->floorDestHeight = FIX2FLT(SV_v13_ReadLong());
     floor->speed = FIX2FLT(SV_v13_ReadLong());

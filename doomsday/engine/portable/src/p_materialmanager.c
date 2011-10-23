@@ -871,7 +871,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 }
 
-static materialnum_t Materials_CheckNumForPath2(const Uri* uri)
+static materialnum_t Materials_IndexForUri2(const Uri* uri)
 {
     assert(initedOk && uri);
     {
@@ -888,7 +888,7 @@ static materialnum_t Materials_CheckNumForPath2(const Uri* uri)
     if(namespaceId != MN_ANY && !VALID_MATERIALNAMESPACEID(namespaceId))
     {
 #if _DEBUG
-Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
+Con_Message("Materials::IndexForUri2: Internal error, invalid namespace '%i'\n",
             (int) namespaceId);
 #endif
         return 0;
@@ -914,32 +914,23 @@ Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
     }
 }
 
-static materialnum_t Materials_NumForPath2(const Uri* path)
+materialnum_t Materials_IndexForUri(const Uri* uri)
 {
-    materialnum_t result;
-    if(!initedOk)
-        return 0;
-    result = Materials_CheckNumForPath2(path);
-    // Not found?
-    if(verbose && result == 0 && !ddMapSetup) // Don't announce during map setup.
+    materialnum_t foundIdx = 0;
+    if(initedOk && uri)
     {
-        ddstring_t* nicePath = Uri_ToString(path);
-        Con_Message("Materials::NumForName: \"%s\" not found!\n", Str_Text(nicePath));
-        Str_Delete(nicePath);
+        foundIdx = Materials_IndexForUri2(uri);
+        if(!foundIdx && verbose && !ddMapSetup) // Don't announce during map setup.
+        {
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Materials::IndexForUri: \"%s\" not found!\n", Str_Text(path));
+            Str_Delete(path);
+        }
     }
-    return result;
+    return foundIdx;
 }
 
-materialnum_t Materials_IndexForUri(const Uri* path)
-{
-    if(path)
-    {
-        return Materials_CheckNumForPath2(path);
-    }
-    return 0;
-}
-
-materialnum_t Materials_IndexForName(const char* path)
+materialnum_t Materials_IndexForUriCString(const char* path)
 {
     if(path && path[0])
     {

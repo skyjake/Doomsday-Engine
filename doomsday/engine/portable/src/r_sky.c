@@ -103,7 +103,7 @@ static void configureDefaultSky(void)
         skylayer_t* slayer = &skyLayers[i];
 
         slayer->flags = (i == 0? SLF_ENABLED : 0);
-        slayer->material = Materials_IndexForName(MN_TEXTURES_NAME":SKY1");
+        slayer->material = Materials_IndexForUriCString(MN_TEXTURES_NAME":SKY1");
         slayer->offset = 0;
         // Default the fadeout to black.
         slayer->fadeout.use = (i == 0);
