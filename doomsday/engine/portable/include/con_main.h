@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include "dd_share.h"
+#include "dd_types.h"
 #include "de_system.h"
 #include "dd_input.h"
 
@@ -44,6 +45,7 @@
 #define CV_BYTE(var)        (*(byte*) var->ptr)
 #define CV_FLOAT(var)       (*(float*) var->ptr)
 #define CV_CHARPTR(var)     (*(char**) var->ptr)
+#define CV_URIPTR(var)      (*(Uri**) var->ptr)
 
 struct cbuffer_s;
 
@@ -99,16 +101,20 @@ typedef struct cvar_s {
 
 const ddstring_t* CVar_TypeName(cvartype_t type);
 
+/// @return  @see consoleVariableFlags
+int CVar_Flags(const cvar_t* var);
+
 /// @return  Type of the variable.
 cvartype_t CVar_Type(const cvar_t* var);
 
 /// @return  Full symbolic name/path-to the variable. Must be destroyed with Str_Delete().
-ddstring_t* CVar_ComposeName(cvar_t* var);
+ddstring_t* CVar_ComposeName(const cvar_t* var);
 
 int CVar_Integer(const cvar_t* var);
 float CVar_Float(const cvar_t* var);
 byte CVar_Byte(const cvar_t* var);
 char* CVar_String(const cvar_t* var);
+Uri* CVar_Uri(const cvar_t* var);
 
 /**
  * \note Also used with @c CVT_BYTE.
@@ -122,6 +128,9 @@ void CVar_SetFloat(cvar_t* var, float value);
 
 void CVar_SetString2(cvar_t* var, const char* text, int svflags);
 void CVar_SetString(cvar_t* var, const char* text);
+
+void CVar_SetUri2(cvar_t* var, const Uri* uri, int svflags);
+void CVar_SetUri(cvar_t* var, const Uri* uri);
 
 typedef enum {
     WT_ANY = -1,
@@ -241,6 +250,7 @@ int Con_GetInteger(const char* name);
 float Con_GetFloat(const char* name);
 byte Con_GetByte(const char* name);
 char* Con_GetString(const char* name);
+Uri* Con_GetUri(const char* name);
 
 void Con_SetInteger2(const char* name, int value, int svflags);
 void Con_SetInteger(const char* name, int value);
@@ -250,6 +260,9 @@ void Con_SetFloat(const char* name, float value);
 
 void Con_SetString2(const char* name, const char* text, int svflags);
 void Con_SetString(const char* name, const char* text);
+
+void Con_SetUri2(const char* name, const Uri* uri, int svflags);
+void Con_SetUri(const char* name, const Uri* uri);
 
 calias_t* Con_AddAlias(const char* name, const char* command);
 

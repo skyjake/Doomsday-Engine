@@ -933,42 +933,52 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                            Str_Text(name), Str_Text(name), argptr);
                 Str_Delete(name);
             }
-            else if(cvar->type == CVT_BYTE)
+            else
             {
-                byte    val = (byte) strtol(argptr, NULL, 0);
-
-                if(!forced &&
-                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
-                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
-                    out_of_range = true;
-                else
-                    CVar_SetInteger(cvar, val);
-            }
-            else if(cvar->type == CVT_INT)
-            {
-                int     val = strtol(argptr, NULL, 0);
-
-                if(!forced &&
-                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
-                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
-                    out_of_range = true;
-                else
-                    CVar_SetInteger(cvar, val);
-            }
-            else if(cvar->type == CVT_FLOAT)
-            {
-                float   val = strtod(argptr, NULL);
-
-                if(!forced &&
-                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
-                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
-                    out_of_range = true;
-                else
-                    CVar_SetFloat(cvar, val);
-            }
-            else if(cvar->type == CVT_CHARPTR)
-            {
-                CVar_SetString(cvar, argptr);
+                switch(cvar->type)
+                {
+                case CVT_BYTE: {
+                    byte val = (byte) strtol(argptr, NULL, 0);
+                    if(!forced &&
+                       ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
+                        (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
+                        out_of_range = true;
+                    else
+                        CVar_SetInteger(cvar, val);
+                    break;
+                  }
+                case CVT_INT: {
+                    int val = strtol(argptr, NULL, 0);
+                    if(!forced &&
+                       ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
+                        (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
+                        out_of_range = true;
+                    else
+                        CVar_SetInteger(cvar, val);
+                    break;
+                  }
+                case CVT_FLOAT: {
+                    float val = strtod(argptr, NULL);
+                    if(!forced &&
+                       ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
+                        (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
+                        out_of_range = true;
+                    else
+                        CVar_SetFloat(cvar, val);
+                    break;
+                  }
+                case CVT_CHARPTR:
+                    CVar_SetString(cvar, argptr);
+                    break;
+                case CVT_URIPTR: {
+                    /// \fixme Sanitize and validate against known schemas.
+                    Uri* uri = Uri_NewWithPath2(argptr, RC_NULL);
+                    CVar_SetUri(cvar, uri);
+                    Uri_Delete(uri);
+                    break;
+                  }
+                default: break;
+                }
             }
         }
 

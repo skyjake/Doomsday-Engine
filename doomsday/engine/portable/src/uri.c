@@ -366,6 +366,7 @@ ddstring_t* Uri_ComposePath(const Uri* uri)
 
 ddstring_t* Uri_ToString(const Uri* uri)
 {
+    if(!uri) return Str_Set(Str_New(), "(nullptr)");
     // Just compose it for now, we can worry about making it 'pretty' later.
     return Uri_ComposePath(uri);
 }

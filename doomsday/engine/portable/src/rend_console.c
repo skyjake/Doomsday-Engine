@@ -62,7 +62,7 @@ float consoleMoveSpeed = .5f; // Speed of console opening/closing.
 
 float consoleBackgroundAlpha = .75f;
 float consoleBackgroundLight = .14f;
-char* consoleBackgroundMaterialName = "";
+Uri* consoleBackgroundMaterialUri = NULL;
 int consoleBackgroundTurn = 0; // The rotation variable.
 float consoleBackgroundZoom = 1.0f;
 
@@ -94,7 +94,7 @@ void Rend_ConsoleRegister(void)
 {
     C_VAR_FLOAT("con-background-alpha", &consoleBackgroundAlpha, 0, 0, 1);
     C_VAR_FLOAT("con-background-light", &consoleBackgroundLight, 0, 0, 1);
-    C_VAR_CHARPTR2("con-background-material", &consoleBackgroundMaterialName,
+    C_VAR_URIPTR2("con-background-material", &consoleBackgroundMaterialUri,
         0, 0, 0, Rend_ConsoleUpdateBackground);
     C_VAR_INT("con-background-turn", &consoleBackgroundTurn, CVF_NO_MIN|CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("con-background-zoom", &consoleBackgroundZoom, 0, 0.1f, 100.0f);
@@ -268,8 +268,7 @@ void Rend_ConsoleUpdateTitle(void)
 void Rend_ConsoleUpdateBackground(void)
 {
     assert(inited);
-    consoleBackgroundMaterial = Materials_ToMaterial(
-        Materials_IndexForUriCString(consoleBackgroundMaterialName));
+    consoleBackgroundMaterial = Materials_ToMaterial(Materials_IndexForUri(consoleBackgroundMaterialUri));
 }
 
 void Rend_ConsoleToggleFullscreen(void)

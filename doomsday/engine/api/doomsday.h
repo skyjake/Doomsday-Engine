@@ -74,7 +74,6 @@ struct font_s;
 #include "smoother.h"
 #include "stringpool.h"
 #include "writer.h"
-#include "uri.h"
 
 //------------------------------------------------------------------------
 //
@@ -195,11 +194,15 @@ materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNam
     void            Con_AddVariable(const cvartemplate_t* var);
     void            Con_AddCommandList(const ccmdtemplate_t* cmdList);
     void            Con_AddVariableList(const cvartemplate_t* varList);
+
 cvartype_t Con_GetVariableType(const char* name);
-    byte            Con_GetByte(const char* name);
-    int             Con_GetInteger(const char* name);
-    float           Con_GetFloat(const char* name);
-    char*           Con_GetString(const char* name);
+
+byte Con_GetByte(const char* name);
+int Con_GetInteger(const char* name);
+float Con_GetFloat(const char* name);
+char* Con_GetString(const char* name);
+Uri* Con_GetUri(const char* name);
+
 void Con_SetInteger2(const char* name, int value, int svflags);
 void Con_SetInteger(const char* name, int value);
 
@@ -208,6 +211,10 @@ void Con_SetFloat(const char* name, float value);
 
 void Con_SetString2(const char* name, const char* text, int svflags);
 void Con_SetString(const char* name, const char* text);
+
+void Con_SetUri2(const char* name, const Uri* uri, int svflags);
+void Con_SetUri(const char* name, const Uri* uri);
+
 void Con_Printf(const char* format, ...) PRINTF_F(1,2);
 void Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
 void Con_PrintRuler(void);

@@ -91,6 +91,7 @@ static uint numKnownWords;
 static boolean knownWordsNeedUpdate;
 
 static char* emptyString = "";
+static Uri* emptyUri;
 
 // CODE --------------------------------------------------------------------
 
@@ -105,15 +106,22 @@ void Con_DataRegister(void)
 #endif
 }
 
-static int markStringVariableFreed(struct pathdirectory_node_s* node, void* paramaters)
+static int markVariableUserDataFreed(struct pathdirectory_node_s* node, void* paramaters)
 {
     assert(NULL != node && NULL != paramaters);
     {
     cvar_t* var = PathDirectoryNode_DetachUserData(node);
-    char** ptr = (char**) paramaters;
-    if(NULL != var && CVT_CHARPTR == CVar_Type(var) && *ptr == CV_CHARPTR(var))
+    void** ptr = (void**) paramaters;
+    if(var)
+    switch(CVar_Type(var))
     {
-        var->flags &= ~CVF_CAN_FREE;
+    case CVT_CHARPTR:
+        if(*ptr == CV_CHARPTR(var)) var->flags &= ~CVF_CAN_FREE;
+        break;
+    case CVT_URIPTR:
+        if(*ptr == CV_URIPTR(var)) var->flags &= ~CVF_CAN_FREE;
+        break;
+    default: break;
     }
     return 0; // Continue iteration.
     }
@@ -122,17 +130,40 @@ static int markStringVariableFreed(struct pathdirectory_node_s* node, void* para
 static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 {
     cvar_t* var = PathDirectoryNode_DetachUserData(node);
-    if(NULL != var)
+    if(var)
     {
         assert(PT_LEAF == PathDirectoryNode_Type(node));
-        if((var->flags & CVF_CAN_FREE) && var->type == CVT_CHARPTR)
+        if(CVar_Flags(var) & CVF_CAN_FREE)
         {
-            char** ptr = (char**) var->ptr;
-            // \note Multiple vars could be using the same pointer (so ensure
-            // that we attempt to free only once).
-            PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, markStringVariableFreed, ptr);
-            free(*ptr);
-            *ptr = emptyString;
+            void** ptr = NULL;
+            switch(CVar_Type(var))
+            {
+            case CVT_CHARPTR:
+                if(!CV_CHARPTR(var)) break;
+
+                ptr = (void**)var->ptr;
+                // \note Multiple vars could be using the same pointer (so only free once).
+                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, markVariableUserDataFreed, ptr);
+                free(*ptr), *ptr = emptyString;
+                break;
+            case CVT_URIPTR:
+                if(!CV_URIPTR(var)) break;
+
+                ptr = (void**)var->ptr;
+                // \note Multiple vars could be using the same pointer (so only free once).
+                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, markVariableUserDataFreed, ptr);
+                Uri_Delete((Uri*)*ptr), *ptr = emptyUri;
+                break;
+            default: {
+#if _DEBUG
+                ddstring_t* name = CVar_ComposeName(var);
+                Con_Message("Warning:clearVariable: Attempt to free user data for non-pointer type variable %s [%p], ignoring.\n",
+                    Str_Text(name), (void*)var);
+                Str_Delete(name);
+#endif
+                break;
+              }
+            }
         }
         free(var);
     }
@@ -435,20 +466,75 @@ const ddstring_t* CVar_TypeName(cvartype_t type)
         { "CVT_INT" },
         { "CVT_FLOAT" },
         { "CVT_CHARPTR"},
+        { "CVT_URIPTR" }
     };
     return &names[(VALID_CVARTYPE(type)? type : 0)];
 }
 
 cvartype_t CVar_Type(const cvar_t* var)
 {
-    assert(NULL != var);
+    assert(var);
     return var->type;
 }
 
-ddstring_t* CVar_ComposeName(cvar_t* var)
+int CVar_Flags(const cvar_t* var)
 {
-    assert(NULL != var);
+    assert(var);
+    return var->flags;
+}
+
+ddstring_t* CVar_ComposeName(const cvar_t* var)
+{
+    assert(var);
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(var->directoryNode), var->directoryNode, Str_New(), NULL, CVARDIRECTORY_DELIMITER);
+}
+
+void CVar_SetUri2(cvar_t* var, const Uri* uri, int svFlags)
+{
+    assert(var);
+    {
+    Uri* newUri = NULL;
+    boolean changed = false;
+
+    if((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
+    {
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Printf("%s (var) is read-only. It can't be changed (not even with force)\n", Str_Text(name));
+        Str_Delete(name);
+        return;
+    }
+
+    if(var->type != CVT_URIPTR)
+    {
+        Con_Error("CVar::SetUri: Not of type %s.", Str_Text(CVar_TypeName(CVT_URIPTR)));
+        return; // Unreachable.
+    }
+
+    if(!CV_URIPTR(var) && !uri)
+        return;
+
+    // Compose the new uri.
+    newUri = Uri_NewCopy(uri);
+
+    if(!CV_URIPTR(var) || !Uri_Equality(CV_URIPTR(var), newUri))
+        changed = true;
+
+    // Free the old uri, if one exists.
+    if((var->flags & CVF_CAN_FREE) && CV_URIPTR(var))
+        Uri_Delete(CV_URIPTR(var));
+
+    var->flags |= CVF_CAN_FREE;
+    CV_URIPTR(var) = newUri;
+
+    // Make the change notification callback
+    if(var->notifyChanged != NULL && changed)
+        var->notifyChanged();
+    }
+}
+
+void CVar_SetUri(cvar_t* var, const Uri* uri)
+{
+    CVar_SetUri2(var, uri, 0);
 }
 
 void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
@@ -468,7 +554,7 @@ void CVar_SetString2(cvar_t* var, const char* text, int svFlags)
 
     if(var->type != CVT_CHARPTR)
     {
-        Con_Error("CVar::SetString: Not of type CVT_CHARPTR.");
+        Con_Error("CVar::SetString: Not of type %s.", Str_Text(CVar_TypeName(CVT_CHARPTR)));
         return; // Unreachable.
     }
 
@@ -536,7 +622,7 @@ void CVar_SetInteger2(cvar_t* var, int value, int svFlags)
         break;
     default: {
         ddstring_t* name = CVar_ComposeName(var);
-        Con_Message("Warning:Con_SetInteger: Attempt to set incompatible var %s to %i, ignoring.\n",
+        Con_Message("Warning:CVar::SetInteger: Attempt to set incompatible var %s to %i, ignoring.\n",
             Str_Text(name), value);
         Str_Delete(name);
         return;
@@ -587,7 +673,7 @@ void CVar_SetFloat2(cvar_t* var, float value, int svFlags)
         break;
     default: {
         ddstring_t* name = CVar_ComposeName(var);
-        Con_Message("Warning:Con_SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.\n",
+        Con_Message("Warning:CVar::SetFloat: Attempt to set incompatible cvar %s to %g, ignoring.\n",
             Str_Text(name), value);
         Str_Delete(name);
         return;
@@ -607,61 +693,109 @@ void CVar_SetFloat(cvar_t* var, float value)
 
 int CVar_Integer(const cvar_t* var)
 {
-    assert(NULL != var);
+    assert(var);
     switch(var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
-    default: break;
+    default: {
+#if _DEBUG
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:CVar::Integer: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+            Str_Text(name), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
+        Str_Delete(name);
+#endif
+        return 0;
+      }
     }
-    // Unreachable (hopefully).
-    return 0;
 }
 
 float CVar_Float(const cvar_t* var)
 {
-    assert(NULL != var);
+    assert(var);
     switch(var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
-    default: break;
+    default: {
+#if _DEBUG
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:CVar::Float: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+            Str_Text(name), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
+        Str_Delete(name);
+#endif
+        return 0;
+      }
     }
-    // Unreachable (hopefully).
-    return 0;
 }
 
 byte CVar_Byte(const cvar_t* var)
 {
-    assert(NULL != var);
+    assert(var);
     switch(var->type)
     {
     case CVT_BYTE:      return CV_BYTE(var);
     case CVT_INT:       return CV_INT(var);
     case CVT_FLOAT:     return CV_FLOAT(var);
     case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
-    default: break;
+    default: {
+#if _DEBUG
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:CVar::Byte: Attempted on incompatible variable %s [%p type:%s], returning 0\n",
+            Str_Text(name), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
+        Str_Delete(name);
+#endif
+        return 0;
+      }
     }
-    // Unreachable (hopefully).
-    return 0;
 }
 
 char* CVar_String(const cvar_t* var)
 {
-    assert(NULL != var);
-    if(var->type != CVT_CHARPTR)
-        return "";
-    return CV_CHARPTR(var);
+    assert(var);
+    /// \todo Why not implement in-place value to string conversion?
+    switch(var->type)
+    {
+    case CVT_CHARPTR:   return CV_CHARPTR(var);
+    default: {
+#if _DEBUG
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyString\n",
+            Str_Text(name), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
+        Str_Delete(name);
+#endif
+        return emptyString;
+      }
+    }
+}
+
+Uri* CVar_Uri(const cvar_t* var)
+{
+    assert(var);
+    /// \todo Why not implement in-place string to uri conversion?
+    switch(var->type)
+    {
+    case CVT_URIPTR:   return CV_URIPTR(var);
+    default: {
+#if _DEBUG
+        ddstring_t* name = CVar_ComposeName(var);
+        Con_Message("Warning:CVar::String: Attempted on incompatible variable %s [%p type:%s], returning emptyUri\n",
+            Str_Text(name), (void*)var, Str_Text(CVar_TypeName(CVar_Type(var))));
+        Str_Delete(name);
+#endif
+        return emptyUri;
+      }
+    }
 }
 
 void Con_AddVariable(const cvartemplate_t* tpl)
 {
     assert(inited);
-    if(NULL == tpl)
+    if(!tpl)
     {
         Con_Message("Warning:Con_AddVariable: Passed invalid value for argument 'tpl', ignoring.\n");
         return;
@@ -669,11 +803,11 @@ void Con_AddVariable(const cvartemplate_t* tpl)
     if(CVT_NULL == tpl->type)
     {
         Con_Message("Warning:Con_AddVariable: Attempt to register variable '%s' as type "
-            "CVT_NULL, ignoring.\n", tpl->name);
+            "%s, ignoring.\n", Str_Text(CVar_TypeName(CVT_NULL)), tpl->name);
         return;
     }
 
-    if(NULL != Con_FindVariable(tpl->name))
+    if(Con_FindVariable(tpl->name))
         Con_Error("Error: A CVAR with the name '%s' is already registered.", tpl->name);
 
     addVariable(tpl);
@@ -713,7 +847,7 @@ cvar_t* Con_FindVariable(const char* name)
 cvartype_t Con_GetVariableType(const char* name)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return CVT_NULL;
+    if(!var) return CVT_NULL;
     return var->type;
 }
 
@@ -740,6 +874,11 @@ void Con_PrintCVar(cvar_t* var, char* prefix)
     case CVT_INT:       Con_Printf("%s %c %d",       Str_Text(name), equals, CV_INT(var)); break;
     case CVT_FLOAT:     Con_Printf("%s %c %g",       Str_Text(name), equals, CV_FLOAT(var)); break;
     case CVT_CHARPTR:   Con_Printf("%s %c \"%s\"",   Str_Text(name), equals, CV_CHARPTR(var)); break;
+    case CVT_URIPTR: {
+        ddstring_t* uri = (CV_URIPTR(var)? Uri_ToString(CV_URIPTR(var)) : NULL);
+        Con_Printf("%s %c \"%s\"",   Str_Text(name), equals, (CV_URIPTR(var)? Str_Text(uri) : "")); break;
+        if(uri) Str_Delete(uri);
+      }
     default:            Con_Printf("%s (bad type!)", Str_Text(name)); break;
     }
     Str_Delete(name);
@@ -1334,6 +1473,8 @@ void Con_InitDatabases(void)
     numKnownWords = 0;
     knownWordsNeedUpdate = false;
 
+    emptyUri = Uri_New();
+
     inited = true;
 }
 
@@ -1346,6 +1487,8 @@ void Con_ShutdownDatabases(void)
     clearAliases();
     clearCommands();
     clearVariables();
+
+    Uri_Delete(emptyUri), emptyUri = NULL;
 
     inited = false;
 }
@@ -1489,10 +1632,24 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
 }
 
 /// \note Part of the Doomsday public API.
+void Con_SetUri2(const char* name, const Uri* uri, int svFlags)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(!var) return;
+    CVar_SetUri2(var, uri, svFlags);
+}
+
+/// \note Part of the Doomsday public API.
+void Con_SetUri(const char* name, const Uri* uri)
+{
+    Con_SetUri2(name, uri, 0);
+}
+
+/// \note Part of the Doomsday public API.
 void Con_SetString2(const char* name, const char* text, int svFlags)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return;
+    if(!var) return;
     CVar_SetString2(var, text, svFlags);
 }
 
@@ -1506,7 +1663,7 @@ void Con_SetString(const char* name, const char* text)
 void Con_SetInteger2(const char* name, int value, int svFlags)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return;
+    if(!var) return;
     CVar_SetInteger2(var, value, svFlags);
 }
 
@@ -1520,7 +1677,7 @@ void Con_SetInteger(const char* name, int value)
 void Con_SetFloat2(const char* name, float value, int svFlags)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return;
+    if(!var) return;
     CVar_SetFloat2(var, value, svFlags);
 }
 
@@ -1534,7 +1691,7 @@ void Con_SetFloat(const char* name, float value)
 int Con_GetInteger(const char* name)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return 0;
+    if(!var) return 0;
     return CVar_Integer(var);
 }
 
@@ -1550,7 +1707,7 @@ float Con_GetFloat(const char* name)
 byte Con_GetByte(const char* name)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return 0;
+    if(!var) return 0;
     return CVar_Byte(var);
 }
 
@@ -1558,8 +1715,16 @@ byte Con_GetByte(const char* name)
 char* Con_GetString(const char* name)
 {
     cvar_t* var = Con_FindVariable(name);
-    if(NULL == var) return "";
+    if(!var) return emptyString;
     return CVar_String(var);
+}
+
+/// \note Part of the Doomsday public API.
+Uri* Con_GetUri(const char* name)
+{
+    cvar_t* var = Con_FindVariable(name);
+    if(!var) return emptyUri;
+    return CVar_Uri(var);
 }
 
 D_CMD(ListCmds)

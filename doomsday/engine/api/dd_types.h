@@ -227,6 +227,7 @@ struct surface_s;
 struct material_s;
 
 #include "dd_string.h"
+#include "uri.h"
 
 #endif /* LIBDENG_TYPES_H */
 

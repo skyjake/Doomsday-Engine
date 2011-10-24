@@ -3137,8 +3137,20 @@ int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
     const mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     cvartype_t varType = Con_GetVariableType(edit->data1);
     if(MNA_MODIFIED != action) return 1;
-    if(CVT_CHARPTR != varType) return 0;
-    Con_SetString2(edit->data1, MNEdit_Text(obj), SVF_WRITE_OVERRIDE);
+    switch(varType)
+    {
+    case CVT_CHARPTR:
+        Con_SetString2(edit->data1, MNEdit_Text(obj), SVF_WRITE_OVERRIDE);
+        break;
+    case CVT_URIPTR: {
+        /// \fixme Sanitize and validate against known schemas.
+        Uri* uri = Uri_NewWithPath2(MNEdit_Text(obj), RC_NULL);
+        Con_SetUri2(edit->data1, uri, SVF_WRITE_OVERRIDE);
+        Uri_Delete(uri);
+        break;
+      }
+    default: break;
+    }
     return 0;
     }
 }

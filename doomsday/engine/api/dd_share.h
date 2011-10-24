@@ -1279,10 +1279,11 @@ typedef enum {
     CVT_INT,
     CVT_FLOAT,
     CVT_CHARPTR, // ptr points to a char*, which points to the string.
+    CVT_URIPTR, // ptr points to a Uri*, which points to the uri.
     CVARTYPE_COUNT
 } cvartype_t;
 
-#define VALID_CVARTYPE(val) ((val) >= CVT_NULL && (val) <= CVARTYPE_COUNT)
+#define VALID_CVARTYPE(val) ((val) >= CVT_NULL && (val) < CVARTYPE_COUNT)
 
 /**
  * Console variable template. Used with Con_AddVariable.
@@ -1326,6 +1327,9 @@ typedef struct cvartemplate_s {
 #define C_VAR_CHARPTR(name, ptr, flags, min, max) \
     C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, NULL)
 
+#define C_VAR_URIPTR(name, ptr, flags, min, max) \
+    C_VAR(name, ptr, CVT_URIPTR, flags, min, max, NULL)
+
 // Same as above but allow for a change notification callback func
 #define C_VAR_BYTE2(name, ptr, flags, min, max, notifyChanged)    \
     C_VAR(name, ptr, CVT_BYTE, flags, min, max, notifyChanged)
@@ -1339,7 +1343,10 @@ typedef struct cvartemplate_s {
 #define C_VAR_CHARPTR2(name, ptr, flags, min, max, notifyChanged) \
     C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
 
-    //------------------------------------------------------------------------
+#define C_VAR_URIPTR2(name, ptr, flags, min, max, notifyChanged) \
+    C_VAR(name, ptr, CVT_URIPTR, flags, min, max, notifyChanged)
+
+//------------------------------------------------------------------------
     //
     // Networking
     //

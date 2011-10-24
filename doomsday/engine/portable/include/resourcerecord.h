@@ -24,8 +24,8 @@
 #ifndef LIBDENG_RESOURCERECORD_H
 #define LIBDENG_RESOURCERECORD_H
 
-#include "uri.h"
 #include "dd_string.h"
+#include "uri.h"
 
 /**
  * Resource Record.  Used to record high-level metadata for a known resource.

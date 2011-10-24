@@ -91,18 +91,34 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     fprintf(file, "%s ", Str_Text(name));
     if(var->flags & CVF_PROTECTED)
         fprintf(file, "force ");
-    if(var->type == CVT_BYTE)
-        fprintf(file, "%d", *(byte*) var->ptr);
-    if(var->type == CVT_INT)
-        fprintf(file, "%d", *(int*) var->ptr);
-    if(var->type == CVT_FLOAT)
-        fprintf(file, "%s", M_TrimmedFloat(*(float*) var->ptr));
-    if(var->type == CVT_CHARPTR)
+    switch(var->type)
     {
+    case CVT_BYTE:
+        fprintf(file, "%d", *(byte*) var->ptr);
+        break;
+    case CVT_INT:
+        fprintf(file, "%d", *(int*) var->ptr);
+        break;
+    case CVT_FLOAT:
+        fprintf(file, "%s", M_TrimmedFloat(*(float*) var->ptr));
+        break;
+    case CVT_CHARPTR:
         fprintf(file, "\"");
-        if(*(char**) var->ptr)
-            M_WriteTextEsc(file, *(char**) var->ptr);
+        if(CV_CHARPTR(var))
+            M_WriteTextEsc(file, CV_CHARPTR(var));
         fprintf(file, "\"");
+        break;
+    case CVT_URIPTR:
+        fprintf(file, "\"");
+        if(CV_URIPTR(var))
+        {
+            ddstring_t* path = Uri_ComposePath(CV_URIPTR(var));
+            fprintf(file, "%s", Str_Text(path));
+            Str_Delete(path);
+        }
+        fprintf(file, "\"");
+        break;
+    default: break;
     }
     fprintf(file, "\n\n");
 
