@@ -90,6 +90,10 @@ typedef struct {
 #define PATHDIRECTORY_PATHHASH_SIZE 512
 typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
 
+/// Identifier used with the search and iteration algorithms in place of a hash
+/// when the caller does not wish to narrow the set of considered nodes.
+#define PATHDIRECTORY_NOHASH PATHDIRECTORY_PATHHASH_SIZE
+
 typedef struct pathdirectory_s {
     /// Path name fragment intern pool.
     struct pathdirectory_internpool_s {

@@ -143,7 +143,7 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 
                 ptr = (void**)var->ptr;
                 // \note Multiple vars could be using the same pointer (so only free once).
-                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, markVariableUserDataFreed, ptr);
+                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
                 free(*ptr), *ptr = emptyString;
                 break;
             case CVT_URIPTR:
@@ -151,7 +151,7 @@ static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 
                 ptr = (void**)var->ptr;
                 // \note Multiple vars could be using the same pointer (so only free once).
-                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, markVariableUserDataFreed, ptr);
+                PathDirectory_Iterate2(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, markVariableUserDataFreed, ptr);
                 Uri_Delete((Uri*)*ptr), *ptr = emptyUri;
                 break;
             default: {
@@ -178,7 +178,7 @@ static void clearVariables(void)
 #else
     int flags = PCF_NO_BRANCH;
 #endif
-    PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearVariable);
+    PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_NOHASH, clearVariable);
     PathDirectory_Delete(cvarDirectory), cvarDirectory = NULL;
     cvarCount = 0;
 }
@@ -387,7 +387,7 @@ static void updateKnownWords(void)
     countCVarParams.type = -1;
     countCVarParams.hidden = false;
     countCVarParams.ignoreHidden = true;
-    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &countCVarParams);
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
 
     knownGames = 0;
     { int i, gameInfoCount = DD_GameInfoCount();
@@ -421,7 +421,7 @@ static void updateKnownWords(void)
     if(0 != countCVarParams.count)
     {
         /// \note cvars are NOT sorted.
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, addVariableToKnownWords, &c);
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, addVariableToKnownWords, &c);
     }
 
     // Add aliases?
@@ -1757,13 +1757,13 @@ D_CMD(PrintVarStats)
     {
         p.count = 0;
         p.type = type;
-        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
+        PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
         Con_Printf("%12s: %u\n", Str_Text(CVar_TypeName(type)), p.count);
     }
     p.count = 0;
     p.type = -1;
     p.hidden = true;
-    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, countVariable, &p);
+    PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
     Con_Printf("       Total: %u\n      Hidden: %u\n\n", cvarCount, p.count);
     PathDirectory_PrintHashDistribution(cvarDirectory);
     PathDirectory_Print(cvarDirectory, CVARDIRECTORY_DELIMITER);

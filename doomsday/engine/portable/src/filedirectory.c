@@ -121,7 +121,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* p
             {
                 if(PT_BRANCH == PathDirectoryNode_Type(node))
                 {
-                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, PATHDIRECTORY_PATHHASH_SIZE, callback, paramaters);
+                    PathDirectory_Iterate2_Const(fd->_pathDirectory, PCF_MATCH_PARENT, node, PATHDIRECTORY_NOHASH, callback, paramaters);
                 }
                 else
                 {
@@ -267,7 +267,7 @@ static void clearNodeInfo(filedirectory_t* fd)
 {
     assert(NULL != fd);
     if(NULL == fd->_pathDirectory) return;
-    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, PATHDIRECTORY_PATHHASH_SIZE, freeNodeInfo);
+    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, PATHDIRECTORY_NOHASH, freeNodeInfo);
 }
 
 void FileDirectory_Delete(filedirectory_t* fd)

@@ -601,7 +601,7 @@ static void destroyBindings(void)
     { int i;
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
-        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearBinding);
+        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBinding);
         PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
     }}
 
@@ -657,7 +657,7 @@ void Materials_ClearDefinitionLinks(void)
     for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
     {
         pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
-        PathDirectory_Iterate_Const(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, clearBindingDefinitionLinks);
+        PathDirectory_Iterate_Const(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBindingDefinitionLinks);
     }
 }
 
@@ -758,7 +758,7 @@ void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId)
                   "invalid materialgroup '%i'.", (int) namespaceId);
 
     matDirectory = directoryForMaterialNamespaceId(namespaceId);
-    PathDirectory_Iterate(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_PATHHASH_SIZE, releaseGLTexturesForMaterial);
+    PathDirectory_Iterate(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, releaseGLTexturesForMaterial);
 }
 
 const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
@@ -1599,7 +1599,7 @@ static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
     {
         pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(iterId);
         PathDirectory_Iterate2_Const(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
-            PATHDIRECTORY_PATHHASH_SIZE, collectMaterialWorker, (void*)&p);
+            PATHDIRECTORY_NOHASH, collectMaterialWorker, (void*)&p);
     }
 
     if(storage)

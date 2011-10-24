@@ -397,8 +397,12 @@ static int iteratePaths(pathdirectory_t* pd, int flags, pathdirectory_node_t* pa
         pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
 
-        if(hash < PATHDIRECTORY_PATHHASH_SIZE)
+        if(hash != PATHDIRECTORY_NOHASH)
         {
+            if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
+                Con_Error("PathDirectory:iteratePaths: Invalid hash %u (valid range is [0...%u]).",
+                    hash, PATHDIRECTORY_PATHHASH_SIZE-1);
+
             for(; type <= lastType; ++type)
             for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
                 NULL != node; node = node->next)
@@ -439,8 +443,12 @@ static int iteratePaths_const(const pathdirectory_t* pd, int flags, const pathdi
         pathdirectory_nodetype_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
         pathdirectory_node_t* node;
 
-        if(hash < PATHDIRECTORY_PATHHASH_SIZE)
+        if(hash != PATHDIRECTORY_NOHASH)
         {
+            if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
+                Con_Error("PathDirectory:iteratePaths_const: Invalid hash %u (valid range is [0...%u]).",
+                    hash, PATHDIRECTORY_PATHHASH_SIZE-1);
+
             for(; type <= lastType; ++type)
             for(node = (pathdirectory_node_t*) (*pd->_pathHash)[hash].head[type];
                 NULL != node; node = node->next)
@@ -681,7 +689,7 @@ static size_t splitSearchPath(const char* searchPath, size_t searchPathLen, char
             storage->from = (*from == delimiter? from + 1 : from);
             storage->to   = to;
             // Hashing is deferred; means not-hashed yet.
-            storage->hash = PATHDIRECTORY_PATHHASH_SIZE;
+            storage->hash = PATHDIRECTORY_NOHASH;
         }
 
         // Are there no more parent directories?
@@ -1312,7 +1320,7 @@ boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, pathd
     for(i = 0; i < s->fragments; ++i)
     {
         // Is it time to compute the hash for this path fragment?
-        if(info->hash == PATHDIRECTORY_PATHHASH_SIZE)
+        if(info->hash == PATHDIRECTORY_NOHASH)
         {
             info->hash = hashName(info->from, (info->to - info->from) + 1, s->delimiter);
         }
