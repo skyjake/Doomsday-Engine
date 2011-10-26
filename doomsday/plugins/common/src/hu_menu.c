@@ -1629,7 +1629,7 @@ ccmdtemplate_t menuCCmds[] = {
 void Hu_MenuRegister(void)
 {
     int i;
-    for(i = 0; menuCVars[i].name; ++i)
+    for(i = 0; menuCVars[i].path; ++i)
         Con_AddVariable(menuCVars + i);
     for(i = 0; menuCCmds[i].name; ++i)
         Con_AddCommand(menuCCmds + i);

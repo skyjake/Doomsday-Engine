@@ -109,7 +109,7 @@ void D_NetConsoleRegistration(void)
     int i;
     for(i = 0; netCCmds[i].name; ++i)
         Con_AddCommand(netCCmds + i);
-    for(i = 0; netCVars[i].name; ++i)
+    for(i = 0; netCVars[i].path; ++i)
         Con_AddVariable(netCVars + i);
 }
 

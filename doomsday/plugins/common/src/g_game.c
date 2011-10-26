@@ -436,7 +436,7 @@ void G_Register(void)
 {
     int i;
 
-    for(i = 0; gamestatusCVars[i].name; ++i)
+    for(i = 0; gamestatusCVars[i].path; ++i)
         Con_AddVariable(gamestatusCVars + i);
 
     for(i = 0; gameCmds[i].name; ++i)
@@ -812,10 +812,12 @@ void R_LoadVectorGraphics(void)
  */
 fontnum_t R_MustFindFontForName(const char* name)
 {
-    fontnum_t id = Fonts_IndexForName(name);
-    if(id == 0)
-        Con_Error("Failed loading font \"%s\".", name);
-    return id;
+    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
+    fontnum_t fontNum = Fonts_IndexForUri(uri);
+    Uri_Delete(uri);
+    if(fontNum) return fontNum;
+    Con_Error("Failed loading font \"%s\".", name);
+    exit(1); // Unreachable.
 }
 
 void R_InitRefresh(void)

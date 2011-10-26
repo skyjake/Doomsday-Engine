@@ -60,7 +60,7 @@ cvartemplate_t chatCVars[] = {
 void UIChat_Register(void)
 {
     int i;
-    for(i = 0; chatCVars[i].name; ++i)
+    for(i = 0; chatCVars[i].path; ++i)
         Con_AddVariable(chatCVars + i);
 }
 

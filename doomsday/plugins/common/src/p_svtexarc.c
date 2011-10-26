@@ -49,7 +49,7 @@
 #define UNKNOWN_MATERIALNAME    "DD_BADTX"  
 
 typedef struct materialarchive_record_s {
-    Uri* path;
+    Uri* uri;
     material_t* material;
 } materialarchive_record_t;
 
@@ -64,7 +64,7 @@ static void destroy(materialarchive_t* mArc)
     {
         uint i;
         for(i = 0; i < mArc->count; ++i)
-            Uri_Delete(mArc->table[i].path);
+            Uri_Delete(mArc->table[i].uri);
         free(mArc->table);
     }
     free(mArc);
@@ -79,60 +79,42 @@ static void init(materialarchive_t* mArc)
 }
 
 static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t serialId,
-    const Uri* path, material_t* material)
+    const Uri* uri, material_t* material)
 {
-    assert(path);
-    {
     materialarchive_record_t* rec;
 
     mArc->table = realloc(mArc->table, ++mArc->count * sizeof(materialarchive_record_t));
     rec = &mArc->table[mArc->count-1];
 
-    rec->path = Uri_NewCopy(path);
+    rec->uri = Uri_NewCopy(uri);
     rec->material = material;
-    }
 }
 
 static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* mArc,
     material_t* mat)
 {
-    assert(mat);
-    {
-    Uri* path = Materials_GetUri(mat);
-    if(NULL != path)
-    {
-        // Insert a new element in the index.
-        insertSerialId(mArc, mArc->count+1, path, mat);
-        Uri_Delete(path);
-        return mArc->count; // 1-based index.
-    }
-    return 0; // Should never happen.
-    }
+    Uri* uri = Materials_ComposeUri(mat);
+    // Insert a new element in the index.
+    insertSerialId(mArc, mArc->count+1, uri, mat);
+    Uri_Delete(uri);
+    return mArc->count; // 1-based index.
 }
 
 static materialarchive_serialid_t getSerialIdForMaterial(materialarchive_t* mArc,
     material_t* mat)
 {
-    assert(mat);
-    {
     materialarchive_serialid_t id = 0;
-    Uri* path = Materials_GetUri(mat);
-    if(NULL != path)
+    uint i;
+    for(i = 0; i < mArc->count; ++i)
     {
-        uint i;
-        for(i = 0; i < mArc->count; ++i)
+        const materialarchive_record_t* rec = &mArc->table[i];
+        if(rec->material == mat)
         {
-            const materialarchive_record_t* rec = &mArc->table[i];
-            if(rec->material == mat)
-            {
-                id = i + 1; // Yes. Return existing serial.
-                break;
-            }
+            id = i + 1; // Yes. Return existing serial.
+            break;
         }
-        Uri_Delete(path);
     }
     return id;
-    }
 }
 
 static materialarchive_record_t* getRecord(const materialarchive_t* mArc,
@@ -143,7 +125,7 @@ static materialarchive_record_t* getRecord(const materialarchive_t* mArc,
     if(mArc->version < 1 && group == 1) // Group 1 = Flats:
         serialId += mArc->numFlats;
     rec = &mArc->table[serialId];
-    if(!Str_CompareIgnoreCase(Uri_Path(rec->path), UNKNOWN_MATERIALNAME))
+    if(!Str_CompareIgnoreCase(Uri_Path(rec->uri), UNKNOWN_MATERIALNAME))
         return 0;
     return rec;
 }
@@ -157,7 +139,7 @@ static material_t* materialForSerialId(const materialarchive_t* mArc,
     if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
     {
         if(rec->material == 0)
-            rec->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(rec->path));
+            rec->material = Materials_MaterialForUri(rec->uri);
         return rec->material;
     }
     return 0;
@@ -182,7 +164,7 @@ static void populate(materialarchive_t* mArc)
 
 static int writeRecord(const materialarchive_t* mArc, materialarchive_record_t* rec)
 {
-    ddstring_t* path = Uri_ComposePath(rec->path);
+    ddstring_t* path = Uri_ComposePath(rec->uri);
     int length = (int) Str_Length(path);
     SV_WriteLong(length);
     SV_Write(Str_Text(path), length);
@@ -198,9 +180,9 @@ static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
         char* buf = malloc(length + 1);
         buf[length] = 0;
         SV_Read(buf, length);
-        if(!rec->path)
-            rec->path = Uri_New();
-        Uri_SetUri3(rec->path, buf, RC_NULL);
+        if(!rec->uri)
+            rec->uri = Uri_New();
+        Uri_SetUri3(rec->uri, buf, RC_NULL);
         free(buf);
     }
     else
@@ -211,18 +193,18 @@ static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
         SV_Read(name, 8);
         name[8] = 0;
 
-        if(!rec->path)
-            rec->path = Uri_New();
+        if(!rec->uri)
+            rec->uri = Uri_New();
 
         oldMNI = SV_ReadByte();
         switch(oldMNI % 4)
         {
-        case 0: Uri_SetScheme(rec->path, MN_TEXTURES_NAME); break;
-        case 1: Uri_SetScheme(rec->path, MN_FLATS_NAME);    break;
-        case 2: Uri_SetScheme(rec->path, MN_SPRITES_NAME);  break;
-        case 3: Uri_SetScheme(rec->path, MN_SYSTEM_NAME);   break;
+        case 0: Uri_SetScheme(rec->uri, MN_TEXTURES_NAME); break;
+        case 1: Uri_SetScheme(rec->uri, MN_FLATS_NAME);    break;
+        case 2: Uri_SetScheme(rec->uri, MN_SPRITES_NAME);  break;
+        case 3: Uri_SetScheme(rec->uri, MN_SYSTEM_NAME);   break;
         }
-        Uri_SetPath(rec->path, name);
+        Uri_SetPath(rec->uri, name);
     }
     return true; // Continue iteration.
 }
@@ -237,11 +219,11 @@ static int readRecord_v186(materialarchive_record_t* rec, const char* mnamespace
     ddstring_t path;
     SV_Read(buf, 8);
     buf[8] = 0;
-    if(!rec->path)
-        rec->path = Uri_New();
+    if(!rec->uri)
+        rec->uri = Uri_New();
     Str_Init(&path);
     Str_Appendf(&path, "%s:%s", mnamespace, buf);
-    Uri_SetUri(rec->path, &path);
+    Uri_SetUri(rec->uri, &path);
     Str_Free(&path);
     return true; // Continue iteration.
 }
@@ -262,9 +244,9 @@ static void readMaterialGroup(materialarchive_t* mArc, const char* defaultNamesp
         else
             readRecord_v186(&temp, mArc->version <= 1? defaultNamespace : 0);
 
-        insertSerialId(mArc, mArc->count+1, temp.path, 0);
-        if(temp.path)
-            Uri_Delete(temp.path);
+        insertSerialId(mArc, mArc->count+1, temp.uri, 0);
+        if(temp.uri)
+            Uri_Delete(temp.uri);
     }}
 }
 
@@ -375,7 +357,7 @@ void MaterialArchive_Print(const materialarchive_t* materialArchive)
     for(i = 0; i < materialArchive->count; ++i)
     {
         materialarchive_record_t* rec = &materialArchive->table[i];
-        ddstring_t* path = rec->path? Uri_ToString(rec->path) : 0;
+        ddstring_t* path = rec->uri? Uri_ToString(rec->uri) : 0;
         Con_Printf("[%u]: %s\n", i, path? Str_Text(path) : "");
         Str_Delete(path);
     }

@@ -169,9 +169,9 @@ ccmdtemplate_t  controlCmds[] = {
  */
 void G_ControlRegister(void)
 {
-    uint        i;
+    uint i;
 
-    for(i = 0; controlCVars[i].name; ++i)
+    for(i = 0; controlCVars[i].path; ++i)
         Con_AddVariable(controlCVars + i);
 
     for(i = 0; controlCmds[i].name; ++i)

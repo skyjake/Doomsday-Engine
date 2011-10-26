@@ -166,10 +166,9 @@ static materialterraintype_t* getMaterialTerrainType(material_t* mat, uint idx)
 void P_InitTerrainTypes(void)
 {
     struct matttypedef_s {
-        const char* matPath;
+        const char* materialUri;
         const char* ttName;
-    } matTTypeDefs[] =
-    {
+    } defs[] = {
 #if __JDOOM__ || __JDOOM64__
         { MN_FLATS_NAME":FWATER1",  "Water" },
         { MN_FLATS_NAME":LAVA1",    "Lava" },
@@ -199,19 +198,17 @@ void P_InitTerrainTypes(void)
     numMaterialTTypes = maxMaterialTTypes = 0;
 
     { uint i;
-    for(i = 0; matTTypeDefs[i].matPath; ++i)
+    for(i = 0; defs[i].materialUri; ++i)
     {
-        uint idx = findTerrainTypeNumForName(matTTypeDefs[i].ttName);
-        if(idx)
-        {
-            material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUriCString(matTTypeDefs[i].matPath));
-            if(mat)
-            {
-                VERBOSE( Con_Message("P_InitTerrainTypes: Material \"%s\" linked to terrain type '%s'.\n",
-                            matTTypeDefs[i].matPath, matTTypeDefs[i].ttName) )
-                getMaterialTerrainType(mat, idx);
-            }
-        }
+        material_t* mat;
+        uint idx = findTerrainTypeNumForName(defs[i].ttName);
+        if(!idx) continue;
+
+        mat = Materials_MaterialForUriCString(defs[i].materialUri);
+        if(!mat) continue;
+
+        VERBOSE( Con_Message("P_InitTerrainTypes: Material \"%s\" linked to terrain type '%s'.\n", defs[i].materialUri, defs[i].ttName) )
+        getMaterialTerrainType(mat, idx);
     }}
 }
 

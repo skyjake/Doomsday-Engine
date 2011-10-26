@@ -107,8 +107,8 @@ int CVar_Flags(const cvar_t* var);
 /// @return  Type of the variable.
 cvartype_t CVar_Type(const cvar_t* var);
 
-/// @return  Full symbolic name/path-to the variable. Must be destroyed with Str_Delete().
-ddstring_t* CVar_ComposeName(const cvar_t* var);
+/// @return  Symbolic name/path-to the variable. Must be destroyed with Str_Delete().
+ddstring_t* CVar_ComposePath(const cvar_t* var);
 
 int CVar_Integer(const cvar_t* var);
 float CVar_Float(const cvar_t* var);
@@ -241,28 +241,28 @@ ccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args);
 
 void Con_AddVariable(const cvartemplate_t* tpl);
 void Con_AddVariableList(const cvartemplate_t* tplList);
-cvar_t* Con_FindVariable(const char* name);
+cvar_t* Con_FindVariable(const char* path);
 
-/// @return  Type of the variable associated with @a name if found else @c CVT_NULL
-cvartype_t Con_GetVariableType(const char* name);
+/// @return  Type of the variable associated with @a path if found else @c CVT_NULL
+cvartype_t Con_GetVariableType(const char* path);
 
-int Con_GetInteger(const char* name);
-float Con_GetFloat(const char* name);
-byte Con_GetByte(const char* name);
-char* Con_GetString(const char* name);
-Uri* Con_GetUri(const char* name);
+int Con_GetInteger(const char* path);
+float Con_GetFloat(const char* path);
+byte Con_GetByte(const char* path);
+char* Con_GetString(const char* path);
+Uri* Con_GetUri(const char* path);
 
-void Con_SetInteger2(const char* name, int value, int svflags);
-void Con_SetInteger(const char* name, int value);
+void Con_SetInteger2(const char* path, int value, int svflags);
+void Con_SetInteger(const char* path, int value);
 
-void Con_SetFloat2(const char* name, float value, int svflags);
-void Con_SetFloat(const char* name, float value);
+void Con_SetFloat2(const char* path, float value, int svflags);
+void Con_SetFloat(const char* path, float value);
 
-void Con_SetString2(const char* name, const char* text, int svflags);
-void Con_SetString(const char* name, const char* text);
+void Con_SetString2(const char* path, const char* text, int svflags);
+void Con_SetString(const char* path, const char* text);
 
-void Con_SetUri2(const char* name, const Uri* uri, int svflags);
-void Con_SetUri(const char* name, const Uri* uri);
+void Con_SetUri2(const char* path, const Uri* uri, int svflags);
+void Con_SetUri(const char* path, const Uri* uri);
 
 calias_t* Con_AddAlias(const char* name, const char* command);
 

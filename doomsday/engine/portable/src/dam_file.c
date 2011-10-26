@@ -180,7 +180,7 @@ static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 //    dictentry_t*e = &dict->table[idx];
 //    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
         return NULL;
-//    return Materials_ToMaterial(Materials_IndexForUriCString(Str_Text(&e->path), e->mnamespace));
+//    return Materials_MaterialForUriCString(Str_Text(&e->path), e->mnamespace);
 }
 
 static boolean openMapFile(const char* path, boolean write)

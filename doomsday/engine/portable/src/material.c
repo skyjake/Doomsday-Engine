@@ -176,7 +176,7 @@ boolean Material_HasDecorations(material_t* mat)
 {
     assert(mat);
     /// \fixme We should not need to prepare to determine this.
-    return NULL != Materials_DecorationDef(Materials_ToMaterialNum(mat));
+    return NULL != Materials_DecorationDef(mat);
 }
 
 boolean Material_HasTranslation(const material_t* mat)
@@ -210,13 +210,13 @@ void Material_SetPrepared(material_t* mat, byte state)
     mat->_prepared = state;
 }
 
-uint Material_BindId(const material_t* mat)
+uint Material_PrimaryBindId(const material_t* mat)
 {
     assert(mat);
     return mat->_bindId;
 }
 
-void Material_SetBindId(material_t* mat, uint bindId)
+void Material_SetPrimaryBindId(material_t* mat, uint bindId)
 {
     assert(mat);
     mat->_bindId = bindId;

@@ -228,26 +228,36 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
 
             sprintf(m->name, "UNK%05i", idx);
             m->name[8] = '\0';
-            m->num = DD_MaterialForTextureIndex(1+idx, (isFlat? TN_FLATS : TN_TEXTURES));
+            m->num = P_ToIndex(DD_MaterialForTextureIndex(1+idx, (isFlat? TN_FLATS : TN_TEXTURES)));
         }
         else
         {
-            Uri* uri;
-
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
 
-            // First try the prefered namespace, then any.
-            uri = Uri_NewWithPath2(m->name, RC_NULL);
-            Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
-            m->num = Materials_IndexForUri(uri);
-
-            if(m->num == 0)
+            // In original DOOM, texture name references beginning with the
+            // hypen '-' character are always treated as meaning "no reference"
+            // or "invalid texture" and surfaces using them were not drawn.
+            if(!isFlat && !stricmp(m->name, "-"))
             {
-                Uri_SetScheme(uri, "");
-                m->num = Materials_IndexForUri(uri);
+                // All we need do is make this a null-reference as the engine will
+                // determine the best course of action.
+                m->num = 0;
             }
-            Uri_Delete(uri);
+            else
+            {
+                // First try the prefered namespace, then any.
+                Uri* uri = Uri_NewWithPath2(m->name, RC_NULL);
+                Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
+                m->num = P_ToIndex(Materials_MaterialForUri(uri));
+
+                if(!m->num)
+                {
+                    Uri_SetScheme(uri, "");
+                    m->num = P_ToIndex(Materials_MaterialForUri(uri));
+                }
+                Uri_Delete(uri);
+            }
         }
 
         // Add it to the list of known materials.

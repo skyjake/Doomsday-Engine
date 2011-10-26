@@ -2316,20 +2316,22 @@ const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
     return namespaceNames + 0;
 }
 
-materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
+struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
 {
     const texture_t* tex;
-    if(index != 0 && (tex = GL_TextureByIndex(index-1, texNamespace)))
-    {
-        materialnum_t result;
-        Uri* uri = Uri_New();
-        Uri_SetPath(uri, Texture_Name(tex));
-        Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
-        result = Materials_IndexForUri(uri);
-        Uri_Delete(uri);
-        return result;
-    }
-    return 0;
+    material_t* mat;
+    Uri* uri;
+
+    if(index == 0) return NULL;
+    tex = GL_TextureByIndex(index-1, texNamespace);
+    if(!tex) return NULL;
+
+    uri = Uri_New();
+    Uri_SetPath(uri, Texture_Name(tex));
+    Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
+    mat = Materials_MaterialForUri(uri);
+    Uri_Delete(uri);
+    return mat;
 }
 
 int DD_SearchPathDirectoryCompare(struct pathdirectory_node_s* node, void* paramaters)

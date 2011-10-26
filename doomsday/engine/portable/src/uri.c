@@ -316,12 +316,12 @@ void Uri_SetPath(Uri* uri, const char* path)
     Str_Set(&uri->_path, path);
 }
 
-void Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass)
+Uri* Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass)
 {
     if(!uri)
     {
         Con_Error("Attempted Uri::SetUri with invalid reference (this==0).");
-        return; // Unreachable.
+        exit(1); // Unreachable.
     }
     if(!path)
     {
@@ -329,7 +329,7 @@ void Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClas
         Con_Message("Attempted Uri::SetUri with invalid reference (@a path==0).\n");
 #endif
         Uri_Clear(uri);
-        return;
+        return uri;
     }
     Str_Set(&uri->_path, path);
     Str_Strip(&uri->_path);
@@ -337,16 +337,17 @@ void Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClas
     // for compatibility with the sys_filein routines.
     F_FixSlashes(&uri->_path, &uri->_path);
     parseScheme(uri, defaultResourceClass);
+    return uri;
 }
 
-void Uri_SetUri2(Uri* uri, const char* path)
+Uri* Uri_SetUri2(Uri* uri, const char* path)
 {
-    Uri_SetUri3(uri, path, RC_UNKNOWN);
+    return Uri_SetUri3(uri, path, RC_UNKNOWN);
 }
 
-void Uri_SetUri(Uri* uri, const ddstring_t* path)
+Uri* Uri_SetUri(Uri* uri, const ddstring_t* path)
 {
-    Uri_SetUri2(uri, path != 0? Str_Text(path) : 0);
+    return Uri_SetUri2(uri, path != 0? Str_Text(path) : 0);
 }
 
 ddstring_t* Uri_ComposePath(const Uri* uri)

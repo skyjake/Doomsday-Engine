@@ -233,8 +233,13 @@ static void* readFormat0(font_t* font, DFile* file)
     bitmapFormat = inByte(file);
     if(bitmapFormat > 0)
     {
-        Con_Error("readFormat: Font %s uses unknown bitmap bitmapFormat %i.\n",
-                  Str_Text(Fonts_GetSymbolicName(font)), bitmapFormat);
+        char buf[256];
+        Uri* uri = Fonts_ComposeUri(font);
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Uri_Delete(uri);
+        dd_snprintf(buf, 256, "%s", Str_Text(uriStr));
+        Str_Delete(uriStr);
+        Con_Error("readFormat: Font \"%s\" uses unknown bitmap bitmapFormat %i.\n", buf, bitmapFormat);
     }
 
     numPels = bf->_texWidth * bf->_texHeight;
@@ -421,7 +426,7 @@ void BitmapFont_Prepare(font_t* font)
         if(!novideo && !isDedicated)
         {
             VERBOSE2(
-                Uri* uri = Fonts_GetUri(font);
+                Uri* uri = Fonts_ComposeUri(font);
                 ddstring_t* path = Uri_ToString(uri);
                 Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
                 Str_Delete(path);

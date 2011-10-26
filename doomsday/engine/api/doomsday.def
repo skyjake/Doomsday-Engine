@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 591 <--
-; Other free ordinals: none
+; Other free ordinals: 533, 534, 535
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -369,10 +369,10 @@ EXPORTS
     P_GetPolyobj                @424 NONAME
     P_SetPolyobjCallback        @83 NONAME
 
-; Play: Materials.
-    Materials_GetUri            @494 NONAME
-    Materials_IndexForUri       @496 NONAME
-    Materials_IndexForUriCString @495 NONAME
+; Materials.
+    Materials_ComposeUri        @494 NONAME
+    Materials_MaterialForUri    @495 NONAME
+    Materials_MaterialForUriCString @496 NONAME
     Materials_CreateAnimGroup   @241 NONAME
     Materials_AddAnimGroupFrame @242 NONAME
 
@@ -567,9 +567,6 @@ EXPORTS
 
 ; Fonts.
     Fonts_IndexForUri           @532 NONAME
-    Fonts_IndexForName          @533 NONAME
-    Fonts_GetUri                @534 NONAME
-    Fonts_GetSymbolicName       @535 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

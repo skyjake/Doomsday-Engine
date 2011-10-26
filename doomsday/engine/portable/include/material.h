@@ -145,14 +145,14 @@ byte Material_Prepared(const material_t* mat);
  */
 void Material_SetPrepared(material_t* mat, byte state);
 
-/// @return  MaterialBind identifier associated with this.
-uint Material_BindId(const material_t* mat);
+/// @return  Identifier of the primary MaterialBind associated with this (may return @c 0 - no binding).
+uint Material_PrimaryBindId(const material_t* mat);
 
 /**
- * Change associated material binding identifier.
+ * Change the identifier of the primary binding associated with this.
  * @param bindId  New identifier.
  */
-void Material_SetBindId(material_t* mat, uint bindId);
+void Material_SetPrimaryBindId(material_t* mat, uint bindId);
 
 /// @return  MaterialEnvironmentClass.
 material_env_class_t Material_EnvironmentClass(const material_t* mat);

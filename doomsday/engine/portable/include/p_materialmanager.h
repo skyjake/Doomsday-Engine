@@ -32,6 +32,7 @@
 struct texturevariantspecification_s;
 struct materialvariant_s;
 struct material_snapshot_s;
+struct materialbind_s;
 
 // Substrings in Material names are delimited by this character.
 #define MATERIALDIRECTORY_DELIMITER '/'
@@ -52,10 +53,10 @@ void Materials_ClearDefinitionLinks(void);
  * Update the Material according to the supplied definition.
  * To be called after an engine update/reset.
  *
- * @parma mat  Material to be updated.
+ * @parma material  Material to be updated.
  * @param def  Material definition to update using.
  */
-void Materials_Rebuild(struct material_s* mat, struct ded_material_s* def);
+void Materials_Rebuild(struct material_s* material, struct ded_material_s* def);
 
 /**
  * Empty the Material cache queue, cancelling all outstanding tasks.
@@ -70,14 +71,14 @@ void Materials_ProcessCacheQueue(void);
 /**
  * Add a MaterialVariantSpecification to the cache queue.
  *
- * @param mat  Base Material from which to derive a variant.
+ * @param material  Base Material from which to derive a variant.
  * @param spec  Specification of the desired variant.
  * @param cacheGroup  @c true = variants for all Materials in any applicable
  *      animation groups are desired, else just this specific Material.
  */
-void Materials_Precache2(struct material_s* mat, struct materialvariantspecification_s* spec,
+void Materials_Precache2(struct material_s* material, struct materialvariantspecification_s* spec,
     boolean cacheGroup);
-void Materials_Precache(struct material_s* mat, struct materialvariantspecification_s* spec);
+void Materials_Precache(struct material_s* material, struct materialvariantspecification_s* spec);
 
 /**
  * Deletes all GL texture instances, linked to materials.
@@ -105,8 +106,11 @@ struct material_s* Materials_CreateFromDef(ded_material_t* def);
 /// @return  Material associated with the specified unique name else @c NULL.
 struct material_s* Materials_ToMaterial(materialnum_t num);
 
-/// @return  Unique name associated with the specified Material.
-materialnum_t Materials_ToMaterialNum(struct material_s* mat);
+/// @return  Unique identifier associated with @a material.
+materialnum_t Materials_ToMaterialNum(struct material_s* material);
+
+/// @return  Primary MaterialBind associated with @a material else @c NULL.
+struct materialbind_s* Materials_PrimaryBind(struct material_s* material);
 
 /**
  * Prepare a MaterialVariantSpecification according to usage context.
@@ -127,35 +131,36 @@ struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
 
-struct materialvariant_s* Materials_ChooseVariant(struct material_s* mat,
+struct materialvariant_s* Materials_ChooseVariant(struct material_s* material,
     const struct materialvariantspecification_s* spec);
 
 /**
  * Search the Materials collection for a material associated with @a uri.
- * @return  Unique identifier of the found material else @c 0
+ * @return  Found material else @c 0
  */
-materialnum_t Materials_IndexForUri(const Uri* uri);
-materialnum_t Materials_IndexForUriCString(const char* uri);
+struct material_s* Materials_MaterialForUri(const Uri* uri);
+struct material_s* Materials_MaterialForUriCString(const char* uri);
 
-Uri* Materials_GetUri(struct material_s* mat);
+/// @return  Full symbolic name/path-to the Material. Must be destroyed with Uri_Delete().
+Uri* Materials_ComposeUri(struct material_s* material);
 
 uint Materials_Count(void);
 
-const ded_decor_t*  Materials_DecorationDef(materialnum_t num);
-const ded_ptcgen_t* Materials_PtcGenDef(materialnum_t num);
+const ded_decor_t*  Materials_DecorationDef(struct material_s* material);
+const ded_ptcgen_t* Materials_PtcGenDef(struct material_s* material);
 
 struct materialvariant_s* Materials_Prepare(struct material_snapshot_s* snapshot,
-    struct material_s* mat, boolean smoothed, struct materialvariantspecification_s* spec);
+    struct material_s* material, boolean smoothed, struct materialvariantspecification_s* spec);
 
 int Materials_AnimGroupCount(void);
 void Materials_ResetAnimGroups(void);
 void Materials_DestroyAnimGroups(void);
 
 int Materials_CreateAnimGroup(int flags);
-void Materials_AddAnimGroupFrame(int animGroupNum, materialnum_t num, int tics, int randomTics);
-boolean Materials_MaterialLinkedToAnimGroup(int animGroupNum, struct material_s* mat);
+void Materials_AddAnimGroupFrame(int animGroupNum, struct material_s* material, int tics, int randomTics);
+boolean Materials_MaterialLinkedToAnimGroup(int animGroupNum, struct material_s* material);
 
-void Materials_ClearTranslation(struct material_s* mat);
+void Materials_ClearTranslation(struct material_s* material);
 
 // @todo Refactor interface, doesn't fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int groupNum);

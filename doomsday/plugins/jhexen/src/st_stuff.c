@@ -265,7 +265,7 @@ void ST_Register(void)
         { NULL }
     };
     int i;
-    for(i = 0; cvars[i].name; ++i)
+    for(i = 0; cvars[i].path; ++i)
         Con_AddVariable(cvars + i);
     for(i = 0; ccmds[i].name; ++i)
         Con_AddCommand(ccmds + i);

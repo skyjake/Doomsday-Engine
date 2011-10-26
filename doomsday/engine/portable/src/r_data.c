@@ -2440,45 +2440,24 @@ boolean R_IsValidLightDecoration(const ded_decorlight_t *lightDef)
              lightDef->color[2] != 0));
 }
 
-boolean R_IsAllowedDecoration(ded_decor_t* def, const material_t* mat,
-    boolean hasExternal)
+boolean R_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom)
 {
-    if(hasExternal)
-    {
-        return (def->flags & DCRF_EXTERNAL) != 0;
-    }
-
-    if(!Material_IsCustom(mat))
-        return !(def->flags & DCRF_NO_IWAD);
-
+    if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & DCRF_NO_IWAD ) == 0;
     return (def->flags & DCRF_PWAD) != 0;
 }
 
-boolean R_IsAllowedReflection(ded_reflection_t* def, const material_t* mat,
-    boolean hasExternal)
+boolean R_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom)
 {
-    if(hasExternal)
-    {
-        return (def->flags & REFF_EXTERNAL) != 0;
-    }
-
-    if(!Material_IsCustom(mat))
-        return !(def->flags & REFF_NO_IWAD);
-
+    if(hasExternal) return (def->flags & REFF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & REFF_NO_IWAD ) == 0;
     return (def->flags & REFF_PWAD) != 0;
 }
 
-boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, const material_t* mat,
-    boolean hasExternal)
+boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom)
 {
-    if(hasExternal)
-    {
-        return (def->flags & DTLF_EXTERNAL) != 0;
-    }
-
-    if(!Material_IsCustom(mat))
-        return !(def->flags & DTLF_NO_IWAD);
-
+    if(hasExternal) return (def->flags & DTLF_EXTERNAL) != 0;
+    if(!isCustom)   return (def->flags & DTLF_NO_IWAD ) == 0;
     return (def->flags & DTLF_PWAD) != 0;
 }
 
@@ -2652,21 +2631,20 @@ void R_InitAnimGroup(ded_group_t* def)
     for(i = 0; i < def->count.num; ++i)
     {
         ded_group_member_t* gm = &def->members[i];
-        materialnum_t num;
+        material_t* mat;
 
-        if(!gm->material)
-            continue;
+        if(!gm->material) continue;
 
-        if((num = Materials_IndexForUri(gm->material)) != 0)
+        mat = Materials_MaterialForUri(gm->material);
+        if(!mat) continue;
+
+        // Only create a group when the first texture is found.
+        if(groupNumber == -1)
         {
-            // Only create a group when the first texture is found.
-            if(groupNumber == -1)
-            {
-                groupNumber = Materials_CreateAnimGroup(def->flags);
-            }
-
-            Materials_AddAnimGroupFrame(groupNumber, num, gm->tics, gm->randomTics);
+            groupNumber = Materials_CreateAnimGroup(def->flags);
         }
+
+        Materials_AddAnimGroupFrame(groupNumber, mat, gm->tics, gm->randomTics);
     }
 }
 

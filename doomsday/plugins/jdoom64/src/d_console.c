@@ -227,9 +227,8 @@ ccmdtemplate_t  gameCCmds[] = {
  */
 void G_ConsoleRegistration(void)
 {
-    uint                i;
-
-    for(i = 0; gameCVars[i].name; ++i)
+    int i;
+    for(i = 0; gameCVars[i].path; ++i)
         Con_AddVariable(&gameCVars[i]);
     for(i = 0; gameCCmds[i].name; ++i)
         Con_AddCommand(&gameCCmds[i]);

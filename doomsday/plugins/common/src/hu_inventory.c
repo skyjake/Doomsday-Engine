@@ -132,9 +132,8 @@ cvartemplate_t hudInvCVars[] = {
  */
 void Hu_InventoryRegister(void)
 {
-    int                 i;
-
-    for(i = 0; hudInvCVars[i].name; ++i)
+    int i;
+    for(i = 0; hudInvCVars[i].path; ++i)
         Con_AddVariable(hudInvCVars + i);
 }
 

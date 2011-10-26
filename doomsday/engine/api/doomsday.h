@@ -143,7 +143,7 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
-materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
+struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -349,13 +349,13 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     struct polyobj_s* P_GetPolyobj(uint num);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
-    // Play: Materials.
-    materialnum_t   Materials_IndexForUri(const Uri* uri);
-    materialnum_t   Materials_IndexForUriCString(const char* path);
-    Uri*            Materials_GetUri(struct material_s* mat);
+// Play: Materials.
+struct material_s* Materials_MaterialForUri(const Uri* uri);
+struct material_s* Materials_MaterialForUriCString(const char* path);
+Uri* Materials_ComposeUri(struct material_s* material);
 
-    int             Materials_CreateAnimGroup(int flags);
-    void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
+int Materials_CreateAnimGroup(int flags);
+void Materials_AddAnimGroupFrame(int groupNum, struct material_s* material, int tics, int randomTics);
 
     // Play: Thinkers.
     void            DD_InitThinkers(void);
@@ -373,9 +373,6 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 //------------------------------------------------------------------------
 
 fontnum_t Fonts_IndexForUri(const Uri* uri);
-fontnum_t Fonts_IndexForName(const char* path);
-Uri* Fonts_GetUri(struct font_s* font);
-const ddstring_t* Fonts_GetSymbolicName(struct font_s* font);
 
 //------------------------------------------------------------------------
 //
@@ -407,9 +404,6 @@ scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHe
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 const ddstring_t* R_GetPatchName(patchid_t id);
     void            R_SetViewPortPlayer(int consoleNum, int viewPlayer);
-    int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, materialnum_t num,
-                                     int tics, int randomTics);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);

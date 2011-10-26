@@ -386,7 +386,7 @@ static void buildSpriteRotations(void)
 
         { Uri* uri = Uri_NewWithPath2(name, RC_NULL);
         Uri_SetScheme(uri, MN_SPRITES_NAME);
-        frame->mat = Materials_ToMaterial(Materials_IndexForUri(uri));
+        frame->mat = Materials_MaterialForUri(uri);
         Uri_Delete(uri);
         }
 

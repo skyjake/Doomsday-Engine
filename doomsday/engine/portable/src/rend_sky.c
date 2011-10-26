@@ -265,16 +265,14 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
         else
         {
             material_snapshot_t ms;
-            material_t* material;
+            material_t* mat;
             
             if(renderTextures == 2)
-                material = Materials_ToMaterial(Materials_IndexForUriCString(
-                    MN_SYSTEM_NAME":gray" ));
+                mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
             else
-                material = Materials_ToMaterial(Materials_IndexForUriCString(
-                    MN_SYSTEM_NAME":missing" ));
+                mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":missing");
 
-            Materials_Prepare(&ms, material, true,
+            Materials_Prepare(&ms, mat, true,
                 Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                     TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                     1, 1, 0, false, true, false, false));
@@ -476,10 +474,11 @@ static void internalSkyParams(int layer, int param, void* data)
         R_SkyLayerMasked(layer, *((int*)data) == DD_YES);
         break;
 
-    case DD_MATERIAL:
-        R_SkyLayerSetMaterial(layer, *((materialnum_t*) data));
+    case DD_MATERIAL: {
+        material_t* mat = Materials_ToMaterial(*((materialnum_t*) data));
+        R_SkyLayerSetMaterial(layer, mat);
         break;
-
+      }
     case DD_OFFSET:
         R_SkyLayerSetOffset(layer, *((float*) data));
         break;

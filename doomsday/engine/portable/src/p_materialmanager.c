@@ -104,8 +104,17 @@ material_t* MaterialBind_Material(const materialbind_t* mb);
 /// @return  PathDirectory node associated with this.
 struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb);
 
+/// @return  Unique identifier of the namespace within which this binding resides.
+materialnamespaceid_t MaterialBind_NamespaceId(const materialbind_t* mb);
+
+/// @return  Symbolic name/path-to this binding. Must be destroyed with Str_Delete().
+ddstring_t* MaterialBind_ComposePath(const materialbind_t* mb);
+
+/// @return  Fully qualified/absolute Uri to this binding. Must be destroyed with Uri_Delete().
+Uri* MaterialBind_ComposeUri(const materialbind_t* mb);
+
 /// @return  Extended info owned by this else @c NULL.
-materialbindinfo_t* MaterialBind_Info(materialbind_t* mb);
+materialbindinfo_t* MaterialBind_Info(const materialbind_t* mb);
 
 /**
  * Attach extended info data to this. If existing info is present it is replaced.
@@ -132,7 +141,7 @@ ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb);
 /// @return  Reflection definition associated with this else @c NULL
 ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb);
 
-static void updateMaterialBindInfo(materialbind_t* mb);
+static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate);
 
 typedef struct animframe_s {
     material_t*     mat;
@@ -405,108 +414,105 @@ static materialvariant_t* chooseVariant(material_t* mat,
     }
 }
 
-static materialbind_t* bindByIndex(uint bindId)
+static materialbind_t* bindById(uint bindId)
 {
-    if(0 != bindId) return bindings[bindId-1];
-    return 0;
+    if(0 == bindId || bindId > bindingsCount) return 0;
+    return bindings[bindId-1];
 }
 
-/**
- * Given a name and namespace, search the materials db for a match.
- *
- * @param name  Name of the material to search for.
- * @param namespaceId  Specific MN_* material namespace NOT @c MN_ANY.
- * @return  Unique number of the found material, else zero.
- */
-static materialnum_t getMaterialNumForName(const char* name,
-    materialnamespaceid_t namespaceId)
-{
-    pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
-    struct pathdirectory_node_s* node;
-    materialbind_t* mb;
-    node = DD_SearchPathDirectory(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, name, MATERIALDIRECTORY_DELIMITER);
-    if(!node) return 0; // Not found.
-    mb = (materialbind_t*) PathDirectoryNode_UserData(node);
-    return Materials_ToMaterialNum(MaterialBind_Material(mb));
-}
-
-static void updateMaterialBindInfo(materialbind_t* mb)
+static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
 {
     assert(initedOk && mb);
     {
     materialbindinfo_t* info = MaterialBind_Info(mb);
-    boolean attachInfo = false;
-    
-    if(NULL == info)
+    material_t* mat = MaterialBind_Material(mb);
+    materialnum_t matNum = Materials_ToMaterialNum(mat);
+    boolean isCustom = (mat? Material_IsCustom(mat) : false);
+
+    if(!info)
     {
-        info = (materialbindinfo_t*) malloc(sizeof(*info));
-        if(NULL == info)
+        if(!canCreate) return;
+
+        // Create new info and attach to this binding.
+        info = (materialbindinfo_t*) malloc(sizeof *info);
+        if(!info)
             Con_Error("MaterialBind::LinkDefinitions: Failed on allocation of %lu bytes for "
-                "new MaterialBindInfo.", (unsigned long) sizeof(*info));
-        attachInfo = true;
+                "new MaterialBindInfo.", (unsigned long) sizeof *info);
+        MaterialBind_AttachInfo(mb, info);
     }
 
     // Surface decorations (lights and models).
-    info->decorationDefs[0] = Def_GetDecoration(mb->_material, 0);
-    info->decorationDefs[1] = Def_GetDecoration(mb->_material, 1);
+    info->decorationDefs[0] = Def_GetDecoration(matNum, 0, isCustom);
+    info->decorationDefs[1] = Def_GetDecoration(matNum, 1, isCustom);
 
     // Reflection (aka shiny surface).
-    info->reflectionDefs[0] = Def_GetReflection(mb->_material, 0);
-    info->reflectionDefs[1] = Def_GetReflection(mb->_material, 1);
+    info->reflectionDefs[0] = Def_GetReflection(matNum, 0, isCustom);
+    info->reflectionDefs[1] = Def_GetReflection(matNum, 1, isCustom);
 
     // Generator (particles).
-    info->ptcgenDefs[0] = Def_GetGenerator(mb->_material, 0);
-    info->ptcgenDefs[1] = Def_GetGenerator(mb->_material, 1);
+    info->ptcgenDefs[0] = Def_GetGenerator(matNum, 0, isCustom);
+    info->ptcgenDefs[1] = Def_GetGenerator(matNum, 1, isCustom);
 
     // Detail texture.
-    info->detailtextureDefs[0] = Def_GetDetailTex(mb->_material, 0);
-    info->detailtextureDefs[1] = Def_GetDetailTex(mb->_material, 1);
-
-    if(attachInfo)
-        MaterialBind_AttachInfo(mb, info);
+    info->detailtextureDefs[0] = Def_GetDetailTex(matNum, 0, isCustom);
+    info->detailtextureDefs[1] = Def_GetDetailTex(matNum, 1, isCustom);
     }
 }
 
-static void newMaterialNameBinding(material_t* material, const char* name,
-    materialnamespaceid_t namespaceId)
+static boolean newMaterialBind(const Uri* uri, material_t* material)
 {
-    pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+    pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri))));
     struct pathdirectory_node_s* node;
     materialbind_t* mb;
 
-    node = PathDirectory_Insert(matDirectory, name, MATERIALDIRECTORY_DELIMITER);
-    if(PathDirectoryNode_UserData(node))
-    {
-        Con_Error("Materials::newMaterialNameBinding: A material by the name '%s' is already known!", name);
-        exit(1); // Unreachable.
-    }
+    node = PathDirectory_Insert(matDirectory, Str_Text(Uri_Path(uri)), MATERIALDIRECTORY_DELIMITER);
 
-    mb = (materialbind_t*) malloc(sizeof *mb);
+    // Is this a new binding?
+    mb = (materialbind_t*) PathDirectoryNode_UserData(node);
     if(!mb)
     {
-        Con_Error("Materials::newMaterialNameBinding: Failed on allocation of %lu bytes for new MaterialBind.",
-            (unsigned long) sizeof *mb);
-        exit(1); // Unreachable.
+        // Acquire a new unique identifier for this binding.
+        const materialnum_t bindId = ++bindingsCount;
+
+        mb = (materialbind_t*) malloc(sizeof *mb);
+        if(!mb)
+        {
+            Con_Error("Materials::newMaterialUriBinding: Failed on allocation of %lu bytes for new MaterialBind.",
+                (unsigned long) sizeof *mb);
+            exit(1); // Unreachable.
+        }
+
+        // Init the new binding.
+        mb->_material = NULL;
+        mb->_info = NULL;
+
+        mb->_directoryNode = node;
+        PathDirectoryNode_AttachUserData(node, mb);
+
+        mb->_id = bindId;
+        if(material)
+        {
+            Material_SetPrimaryBindId(material, bindId);
+        }
+
+        // Add the new binding to the bindings index/map.
+        if(bindingsCount > bindingsMax)
+        {
+            // Allocate more memory.
+            bindingsMax += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
+            bindings = (materialbind_t**) realloc(bindings, sizeof *bindings * bindingsMax);
+            if(!bindings)
+                Con_Error("Materials:newMaterialUriBinding: Failed on (re)allocation of %lu bytes for MaterialBind map.",
+                    (unsigned long) sizeof *bindings * bindingsMax);
+        }
+        bindings[bindingsCount-1] = mb; /* 1-based index */
     }
-    mb->_directoryNode = node;
+
+    // (Re)configure the binding.
     mb->_material = material;
-    mb->_info = NULL;
-    mb->_id = ++bindingsCount; // 1-based index;
-    PathDirectoryNode_AttachUserData(node, mb);
+    updateMaterialBindInfo(mb, false/*do not create, only update if present*/);
 
-    // Add the new binding to the bindings index/map.
-    if(bindingsCount > bindingsMax)
-    {
-        // Allocate more memory.
-        bindingsMax += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
-        bindings = (materialbind_t**) realloc(bindings, sizeof *bindings * bindingsMax);
-        if(!bindings)
-            Con_Error("Materials:newMaterialNameBinding: Failed on (re)allocation of %lu bytes for MaterialBind map.",
-                (unsigned long) sizeof *bindings * bindingsMax);
-    }
-    bindings[bindingsCount-1] = mb; /* 1-based index */
-
-    Material_SetBindId(material, bindingsCount /* 1-based index */);
+    return true;
 }
 
 static material_t* allocMaterial(void)
@@ -522,28 +528,20 @@ static material_t* allocMaterial(void)
  */
 static material_t* linkMaterialToGlobalList(material_t* mat)
 {
-    materiallist_node_t* node;
-    if(NULL == (node = malloc(sizeof(*node))))
+    materiallist_node_t* node = (materiallist_node_t*)malloc(sizeof *node);
+    if(!node)
         Con_Error("linkMaterialToGlobalList: Failed on allocation of %lu bytes for "
-            "new MaterialList::Node.", (unsigned long) sizeof(*node));
+            "new MaterialList::Node.", (unsigned long) sizeof *node);
+
     node->mat = mat;
     node->next = materials;
     materials = node;
     return mat;
 }
 
-static __inline material_t* getMaterialByIndex(materialnum_t num)
-{
-    if(num < bindingsCount)
-        return MaterialBind_Material(bindings[num]);
-    Con_Error("getMaterialByIndex: Invalid index #%u.", (unsigned int) num);
-    return NULL; // Unreachable.
-}
-
 void Materials_Initialize(void)
 {
-    if(initedOk)
-        return; // Already been here.
+    if(initedOk) return; // Already been here.
 
     variantSpecs = NULL;
     variantCacheQueue = NULL;
@@ -663,34 +661,29 @@ void Materials_ClearDefinitionLinks(void)
 
 void Materials_Rebuild(material_t* mat, ded_material_t* def)
 {
-    assert(initedOk);
-    {
-    uint bindId;
-    materialbind_t* mb;
-
-    if(NULL == mat || NULL == def)
-        return;
+    if(!initedOk || !mat || !def) return;
 
     /// \todo We should be able to rebuild the variants.
     Material_DestroyVariants(mat);
     Material_SetDefinition(mat, def);
     Material_SetFlags(mat, def->flags);
     Material_SetDimensions(mat, def->width, def->height);
-    Material_SetEnvironmentClass(mat, S_MaterialClassForName(def->id));
+    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->id));
 
     // Textures are updated automatically at prepare-time, so just clear them.
     Material_SetDetailTexture(mat, NULL);
     Material_SetShinyTexture(mat, NULL);
     Material_SetShinyMaskTexture(mat, NULL);
 
-    bindId = Material_BindId(mat);
-    if(0 == bindId)
-        return;
-    mb = bindByIndex(bindId);
-    if(NULL == MaterialBind_Info(mb))
-        return;
-    updateMaterialBindInfo(mb);
-    }
+    // Update bindings.
+    { materialnum_t i;
+    for(i = 0; i < bindingsCount; ++i)
+    {
+        materialbind_t* mb = bindings[i];
+        if(MaterialBind_Material(mb) != mat) continue;
+
+        updateMaterialBindInfo(mb, false /*do not create, only update if present*/);
+    }}
 }
 
 void Materials_PurgeCacheQueue(void)
@@ -738,8 +731,11 @@ static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant,
 static int releaseGLTexturesForMaterial(struct pathdirectory_node_s* node, void* paramaters)
 {
     materialbind_t* mb = PathDirectoryNode_UserData(node);
-    material_t* material = MaterialBind_Material(mb);
-    Material_IterateVariants(material, releaseGLTexturesForMaterialWorker, NULL);
+    material_t* mat = MaterialBind_Material(mb);
+    if(mat)
+    {
+        Material_IterateVariants(mat, releaseGLTexturesForMaterialWorker, NULL);
+    }
     return 0; // Continue iteration.
 }
 
@@ -768,43 +764,224 @@ const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_
 
 material_t* Materials_ToMaterial(materialnum_t num)
 {
-    if(!initedOk)
-        return NULL;
-    if(num != 0 && num <= bindingsCount)
-        return getMaterialByIndex(num - 1); // 1-based index.
-    return NULL;
+    materialbind_t* mb;
+    if(!initedOk) return NULL;
+    mb = bindById((uint)num);
+    if(!mb) return NULL;
+    return MaterialBind_Material(mb);
 }
 
 materialnum_t Materials_ToMaterialNum(material_t* mat)
 {
-    if(mat)
+    materialbind_t* mb;
+    if(!initedOk) return 0;
+    if(!mat) return 0;
+    mb = bindById(Material_PrimaryBindId(mat));
+    if(!mb) return 0;
+    return MaterialBind_Id(mb);
+}
+
+materialbind_t* Materials_PrimaryBind(material_t* mat)
+{
+    return bindById(Material_PrimaryBindId(mat));
+}
+
+/**
+ * @defgroup validateMaterialUriFlags  Validate Material Uri Flags
+ * @{
+ */
+#define VMUF_ALLOW_NAMESPACE_ANY 0x1 /// The Scheme component of the uri may be of zero-length; signifying "any namespace".
+/**@}*/
+
+/**
+ * @param uri  Uri to be validated.
+ * @param flags  @see validateMaterialUriFlags
+ * @param quiet  @c true= Do not output validation remarks to the log.
+ * @return  @c true if @a Uri passes validation.
+ */
+static boolean validateMaterialUri2(const Uri* uri, int flags, boolean quiet)
+{
+    materialnamespaceid_t namespaceId;
+
+    if(!uri || Str_IsEmpty(Uri_Path(uri)))
     {
-        materialbind_t* mb = bindByIndex(Material_BindId(mat));
-        if(mb) return MaterialBind_Id(mb);
+        if(!quiet)
+        {
+            ddstring_t* uriStr = Uri_ToString(uri);
+            Con_Message("Invalid path '%s' in Material uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
+            Str_Delete(uriStr);
+        }
+        return false;
     }
-    return 0;
+
+    namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+    if(!((flags & VMUF_ALLOW_NAMESPACE_ANY) && namespaceId == MN_ANY) &&
+       !VALID_MATERIALNAMESPACEID(namespaceId))
+    {
+        if(!quiet)
+        {
+            ddstring_t* uriStr = Uri_ToString(uri);
+            Con_Message("Unknown namespace '%s' in Material uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
+            Str_Delete(uriStr);
+        }
+        return false;
+    }
+
+    return true;
+}
+
+static boolean validateMaterialUri(const Uri* uri, int flags)
+{
+    return validateMaterialUri2(uri, flags, false);
+}
+
+/**
+ * Given a directory and path, search the Materials collection for a match.
+ *
+ * @param directory  Namespace-specific PathDirectory to search in.
+ * @param path  Path of the material to search for.
+ * @return  Found Material else @c 0
+ */
+static material_t* findMaterialForPath(pathdirectory_t* matDirectory, const char* path)
+{
+    struct pathdirectory_node_s* node = DD_SearchPathDirectory(matDirectory,
+        PCF_NO_BRANCH|PCF_MATCH_FULL, path, MATERIALDIRECTORY_DELIMITER);
+    if(node)
+    {
+        return MaterialBind_Material((materialbind_t*) PathDirectoryNode_UserData(node));
+    }
+    return NULL; // Not found.
+}
+
+/// \assume @a uri has already been validated and is well-formed.
+static material_t* findMaterialForUri(const Uri* uri)
+{
+    materialnamespaceid_t namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
+    const char* path = Str_Text(Uri_Path(uri));
+    material_t* mat = NULL;
+    if(namespaceId != MN_ANY)
+    {
+        // Caller wants a material in a specific namespace.
+        mat = findMaterialForPath(directoryForMaterialNamespaceId(namespaceId), path);
+    }
+    else
+    {
+        // Caller does not care which namespace.
+        // Check for the material in these namespaces in priority order.
+        static const materialnamespaceid_t order[] = {
+            MN_SPRITES, MN_TEXTURES, MN_FLATS, MN_ANY
+        };
+        int n = 0;
+        do
+        {
+            mat = findMaterialForPath(directoryForMaterialNamespaceId(order[n]), path);
+        } while(!mat && order[++n] != MN_ANY);
+    }
+    return mat;
+}
+
+material_t* Materials_MaterialForUri(const Uri* uri)
+{
+    material_t* mat;
+    if(!initedOk || !uri) return NULL;
+    if(!validateMaterialUri2(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
+    {
+#if _DEBUG
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Con_Message("Warning:Materials::MaterialForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Str_Delete(uriStr);
+#endif
+        return NULL;
+    }
+
+    // Perform the search.
+    mat = findMaterialForUri(uri);
+    if(mat) return mat;
+
+    // Not found.
+    if(verbose && !ddMapSetup) // Do not announce during map setup.
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Materials::MaterialForUri: \"%s\" not found!\n", Str_Text(path));
+        Str_Delete(path);
+    }
+    return NULL;
+}
+
+material_t* Materials_MaterialForUriCString(const char* path)
+{
+    if(path && path[0])
+    {
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
+        material_t* mat = Materials_MaterialForUri(uri);
+        Uri_Delete(uri);
+        return mat;
+    }
+    return NULL;
+}
+
+/// \note Part of the Doomsday public API.
+Uri* Materials_ComposeUri(material_t* mat)
+{
+    materialbind_t* mb;
+    if(!mat)
+    {
+#if _DEBUG
+        Con_Message("Warning:Materials::ComposeUri: Attempted with invalid index (num==0), returning null-object.\n");
+#endif
+        return Uri_New();
+    }
+    mb = Materials_PrimaryBind(mat);
+    if(!mb)
+    {
+#if _DEBUG
+        Con_Message("Warning:Materials::ComposeUri: Attempted with non-bound material [%p], returning null-object.\n", (void*)mat);
+#endif
+        return Uri_New();
+    }
+    return MaterialBind_ComposeUri(mb);
 }
 
 material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     assert(def);
     {
-    materialnamespaceid_t namespaceId = MN_ANY;
-    int width = def->width, height = def->height;
-    const Uri* rawName = def->id;
-    const texture_t* tex = NULL;
-    byte flags = def->flags;
+    const Uri* uri = def->id;
+    const texture_t* tex;
     material_t* mat;
 
-    if(!initedOk)
-        return NULL;
+    if(!initedOk) return NULL;
 
+    // We require a properly formed uri.
+    if(!validateMaterialUri2(uri, 0, (verbose >= 1)))
+    {
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Con_Message("Warning, failed to create Material \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
+        Str_Delete(uriStr);
+        return NULL;
+    }
+
+    // Have we already created a material for this?
+    mat = findMaterialForUri(uri);
+    if(mat)
+    {
+#if _DEBUG
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning:Materials::CreateFromDef: A Material with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
+        Str_Delete(path);
+#endif
+        return mat;
+    }
+
+    // Ensure the primary layer has a valid texture reference.
+    tex = NULL;
     if(def->layers[0].stageCount.num > 0)
     {
         const ded_material_layer_t* l = &def->layers[0];
         if(l->stages[0].texture) // Not unused.
         {
-            if(!(tex = GL_TextureByUri(l->stages[0].texture)))
+            tex = GL_TextureByUri(l->stages[0].texture);
+            if(!tex)
             {
                 ddstring_t* materialPath = Uri_ToString(def->id);
                 ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
@@ -815,154 +992,20 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             }
         }
     }
-
-    // In original DOOM, texture name references beginning with the
-    // hypen '-' character are always treated as meaning "no reference"
-    // or "invalid texture" and surfaces using them were not drawn.
-    if(!rawName || Str_IsEmpty(Uri_Path(rawName)) || !Str_CompareIgnoreCase(Uri_Path(rawName), "-"))
-    {
-#if _DEBUG
-        ddstring_t* path = Uri_ToString(rawName);
-        Con_Message("Warning, attempted to create Material with invalid path \"%s\", ignoring.\n",
-            Str_Text(path));
-        Str_Delete(path);
-#endif
-        return 0;
-    }
-
-    namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(rawName)));
-    // Check if we've already created a material for this.
-    if(!VALID_MATERIALNAMESPACEID(namespaceId))
-    {
-#if _DEBUG
-        Con_Message("Warning, attempted to create Material in unknown Namespace '%i', ignoring.\n",
-            (int) namespaceId);
-#endif
-        return NULL;
-    }
-
-    { materialnum_t matNum = getMaterialNumForName(Str_Text(Uri_Path(rawName)), namespaceId);
-    if(0 != matNum)
-    {
-#if _DEBUG
-        ddstring_t* path = Uri_ToString(rawName);
-        Con_Message("Warning, a Material with the path \"%s\" already exists, returning existing.\n",
-            Str_Text(path));
-        Str_Delete(path);
-#endif
-        return getMaterialByIndex(matNum);
-    }}
-
-    // Only create complete Materials.
-    if(NULL == tex)
-        return NULL;
+    if(!tex) return NULL;
 
     // A new Material.
     mat = linkMaterialToGlobalList(allocMaterial());
-    mat->_flags = flags;
+    mat->_flags = def->flags;
     mat->_isCustom = !Texture_IsFromIWAD(tex);
     mat->_def    = def;
-    mat->_width  = MAX_OF(0, width);
-    mat->_height = MAX_OF(0, height);
-    mat->_envClass = S_MaterialClassForName(rawName);
-    newMaterialNameBinding(mat, Str_Text(Uri_Path(rawName)), namespaceId);
+    mat->_width  = MAX_OF(0, def->width);
+    mat->_height = MAX_OF(0, def->height);
+    mat->_envClass = S_MaterialEnvClassForUri(uri);
+    newMaterialBind(uri, mat);
 
     return mat;
     }
-}
-
-static materialnum_t Materials_IndexForUri2(const Uri* uri)
-{
-    assert(initedOk && uri);
-    {
-    const char* name = Str_Text(Uri_Path(uri));
-    materialnamespaceid_t namespaceId;
-
-    // In original DOOM, texture name references beginning with the
-    // hypen '-' character are always treated as meaning "no reference"
-    // or "invalid texture" and surfaces using them were not drawn.
-    if(Str_IsEmpty(Uri_Path(uri)) || !Str_CompareIgnoreCase(Uri_Path(uri), "-"))
-        return 0;
-
-    namespaceId = DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri)));
-    if(namespaceId != MN_ANY && !VALID_MATERIALNAMESPACEID(namespaceId))
-    {
-#if _DEBUG
-Con_Message("Materials::IndexForUri2: Internal error, invalid namespace '%i'\n",
-            (int) namespaceId);
-#endif
-        return 0;
-    }
-
-    if(namespaceId == MN_ANY)
-    {   // Caller doesn't care which namespace.
-        materialnum_t matNum;
-
-        // Check for the material in these namespaces, in priority order.
-        if((matNum = getMaterialNumForName(name, MN_SPRITES)))
-            return matNum;
-        if((matNum = getMaterialNumForName(name, MN_TEXTURES)))
-            return matNum;
-        if((matNum = getMaterialNumForName(name, MN_FLATS)))
-            return matNum;
-
-        return 0; // Not found.
-    }
-
-    // Caller wants a material in a specific namespace.
-    return getMaterialNumForName(name, namespaceId);
-    }
-}
-
-materialnum_t Materials_IndexForUri(const Uri* uri)
-{
-    materialnum_t foundIdx = 0;
-    if(initedOk && uri)
-    {
-        foundIdx = Materials_IndexForUri2(uri);
-        if(!foundIdx && verbose && !ddMapSetup) // Don't announce during map setup.
-        {
-            ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Materials::IndexForUri: \"%s\" not found!\n", Str_Text(path));
-            Str_Delete(path);
-        }
-    }
-    return foundIdx;
-}
-
-materialnum_t Materials_IndexForUriCString(const char* path)
-{
-    if(path && path[0])
-    {
-        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        materialnum_t result = Materials_IndexForUri(uri);
-        Uri_Delete(uri);
-        return result;
-    }
-    return 0;
-}
-
-Uri* Materials_GetUri(material_t* mat)
-{
-    struct pathdirectory_node_s* node;
-    ddstring_t path;
-    Uri* uri;
-
-    if(!mat)
-    {
-#if _DEBUG
-        Con_Message("Warning:Materials_GetUri: Attempted with invalid reference (mat==0), returning 0.\n");
-#endif
-        return 0;
-    }
-
-    node = MaterialBind_DirectoryNode(bindByIndex(Material_BindId(mat)));
-    Str_Init(&path);
-    PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, &path, NULL, MATERIALDIRECTORY_DELIMITER);
-    uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(nameForMaterialNamespaceId(namespaceIdForMaterialDirectory(PathDirectoryNode_Directory(node)))));
-    Str_Free(&path);
-    return uri;
 }
 
 static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_t* spec)
@@ -1082,25 +1125,18 @@ static texture_t* findShinyMaskTextureLinkedToMaterialBinding(const materialbind
     }
 }
 
-static void updateMaterialTextureLinks(material_t* mat)
+static void updateMaterialTextureLinks(materialbind_t* mb)
 {
-    assert(mat);
-    {
-    materialbind_t* mb;
-    uint bindId = Material_BindId(mat);
+    material_t* mat = MaterialBind_Material(mb);
 
-    if(0 == bindId)
-        return;
+    // We may need to need to construct and attach the info.
+    updateMaterialBindInfo(mb, true /* create if not present */);
 
-    mb = bindByIndex(bindId);
-    // Do we need to construct and attach the info data?
-    if(NULL == MaterialBind_Info(mb))
-        updateMaterialBindInfo(mb);
+    if(!mat) return;
 
     Material_SetDetailTexture(mat,    findDetailTextureLinkedToMaterialBinding(mb));
     Material_SetShinyTexture(mat,     findShinyTextureLinkedToMaterialBinding(mb));
     Material_SetShinyMaskTexture(mat, findShinyMaskTextureLinkedToMaterialBinding(mb));
-    }
 }
 
 static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_t* tex,
@@ -1156,7 +1192,6 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     } static texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     const ded_reflection_t* shinyTexDef = NULL;
     const ded_detailtexture_t* detailDef = NULL;
-    const ded_decor_t* decorDef = NULL;
     materialvariant_t* variant;
     materialbind_t* mb;
 
@@ -1164,7 +1199,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
 
     // Have we already registered a suitable variant?
     variant = Materials_ChooseVariant(mat, spec);
-    if(NULL == variant)
+    if(!variant)
     {   // We need to create at least one variant.
         variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
 
@@ -1180,7 +1215,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
                 for(k = 0; k < group->count; ++k)
                 {
                     material_t* other = group->frames[k].mat;
-                    if(mat != other && NULL == Materials_ChooseVariant(other, spec))
+                    if(mat != other && !Materials_ChooseVariant(other, spec))
                     {
                         Material_AddVariant(other, MaterialVariant_New(other, spec));
                     }
@@ -1194,7 +1229,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         variant = MaterialVariant_TranslationCurrent(variant);
         mat = MaterialVariant_GeneralCase(variant);
     }
-    mb = bindByIndex(Material_BindId(mat));
+    mb = Materials_PrimaryBind(mat);
 
     // Ensure all resources needed to visualize this Material's layers have been prepared.
     { int i, layerCount = Material_LayerCount(mat);
@@ -1210,22 +1245,26 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         tex = GL_ToTexture(ml->tex);
         texUnits[i].tex = GL_PrepareTextureVariant2(tex, spec->primarySpec, &result);
 
-        if(0 == i && NULL != mb &&
-           (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
+        if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
             // Primary texture was (re)prepared.
             Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
-            updateMaterialTextureLinks(mat);
+
+            if(mb)
+            {
+                updateMaterialTextureLinks(mb);
+            }
 
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
+            {
                 Material_SetDimensions(mat, Texture_Width(tex), Texture_Height(tex));
+            }
         }
     }}
 
-    if(NULL != mb)
+    if(mb)
     {
-        decorDef    = MaterialBind_DecorationDef(mb);
         detailDef   = MaterialBind_DetailTextureDef(mb);
         shinyTexDef = MaterialBind_ReflectionDef(mb);
 
@@ -1233,7 +1272,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         if(detailDef && r_detail)
         {
             texture_t* tex = Material_DetailTexture(mat);
-            if(NULL != tex)
+            if(tex)
             {
                 float contrast = detailDef->strength * detailFactor;
                 texturevariantspecification_t* texSpec =
@@ -1247,7 +1286,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         if(shinyTexDef && useShinySurfaces)
         {
             texture_t* tex = Material_ShinyTexture(mat);
-            if(tex != NULL)
+            if(tex)
             {
                 texturevariantspecification_t* texSpec =
                     GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
@@ -1257,7 +1296,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
                 texUnits[MTU_REFLECTION].tex = GL_PrepareTextureVariant(tex, texSpec);
 
                 // We are only interested in a mask if we have a shiny texture.
-                if(NULL != texUnits[MTU_REFLECTION].tex && NULL != (tex = Material_ShinyMaskTexture(mat)))
+                if(texUnits[MTU_REFLECTION].tex && (tex = Material_ShinyMaskTexture(mat)))
                 {
                     texSpec = GL_TextureVariantSpecificationForContext(
                         TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
@@ -1285,7 +1324,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         !TextureVariant_IsMasked(texUnits[MTU_PRIMARY].tex);
 
     // Setup the primary texture unit.
-    if(NULL != texUnits[MTU_PRIMARY].tex)
+    if(texUnits[MTU_PRIMARY].tex)
     {
         const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
         int magMode = glmode[texMagMode];
@@ -1309,7 +1348,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     if(!Material_IsSkyMasked(mat))
     {
         // Setup the detail texture unit?
-        if(NULL != texUnits[MTU_DETAIL].tex && detailDef && snapshot->isOpaque)
+        if(texUnits[MTU_DETAIL].tex && detailDef && snapshot->isOpaque)
         {
             const texturevariant_t* tex = texUnits[MTU_DETAIL].tex;
             float width  = Texture_Width(TextureVariant_GeneralCase(tex));
@@ -1325,16 +1364,16 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         }
 
         // Setup the shiny texture units?
-        if(NULL != shinyTexDef)
+        if(shinyTexDef)
         {
-            if(NULL != texUnits[MTU_REFLECTION].tex)
+            if(texUnits[MTU_REFLECTION].tex)
             {
                 const texturevariant_t* tex = texUnits[MTU_REFLECTION].tex;
                 setTexUnit(snapshot, MTU_REFLECTION, tex, shinyTexDef->blendMode,
                     GL_LINEAR, 1, 1, 0, 0, shinyTexDef->shininess);
             }
 
-            if(NULL != texUnits[MTU_REFLECTION_MASK].tex)
+            if(texUnits[MTU_REFLECTION_MASK].tex)
             {
                 const texturevariant_t* tex = texUnits[MTU_REFLECTION_MASK].tex;
 
@@ -1347,14 +1386,14 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         }
     }
 
-    if(MC_MAPSURFACE == spec->context && NULL != shinyTexDef)
+    if(MC_MAPSURFACE == spec->context && shinyTexDef)
     {
         snapshot->shinyMinColor[CR] = shinyTexDef->minColor[CR];
         snapshot->shinyMinColor[CG] = shinyTexDef->minColor[CG];
         snapshot->shinyMinColor[CB] = shinyTexDef->minColor[CB];
     }
 
-    if(MC_SKYSPHERE == spec->context && NULL != texUnits[MTU_PRIMARY].tex)
+    if(MC_SKYSPHERE == spec->context && texUnits[MTU_PRIMARY].tex)
     {
         const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
         const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
@@ -1365,8 +1404,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         snapshot->topColor[CB] = avgTopColor->color[CB];
     }
 
-    if((MC_MAPSURFACE == spec->context || MC_SKYSPHERE == spec->context) &&
-       NULL != texUnits[MTU_PRIMARY].tex)
+    if((MC_MAPSURFACE == spec->context || MC_SKYSPHERE == spec->context) && texUnits[MTU_PRIMARY].tex)
     {
         const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
         const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
@@ -1384,32 +1422,24 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     }
 }
 
-const ded_decor_t* Materials_DecorationDef(materialnum_t num)
+const ded_decor_t* Materials_DecorationDef(material_t* mat)
 {
-    if(num > 0)
-    {
-        material_t* mat = Materials_ToMaterial(num);
-        if(!Material_Prepared(mat))
-            Materials_Prepare(NULL, mat, false,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return MaterialBind_DecorationDef(bindByIndex(Material_BindId(mat)));
-    }
-    return 0;
+    if(!mat) return 0;
+    if(!Material_Prepared(mat))
+        Materials_Prepare(NULL, mat, false,
+            Materials_VariantSpecificationForContext(MC_MAPSURFACE,
+                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
+    return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
 }
 
-const ded_ptcgen_t* Materials_PtcGenDef(materialnum_t num)
+const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
-    if(num > 0)
-    {
-        material_t* mat = Materials_ToMaterial(num);
-        if(!Material_Prepared(mat))
-            Materials_Prepare(NULL, mat, false,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
-        return MaterialBind_PtcGenDef(bindByIndex(Material_BindId(mat)));
-    }
-    return 0;
+    if(!mat) return 0;
+    if(!Material_Prepared(mat))
+        Materials_Prepare(NULL, mat, false,
+            Materials_VariantSpecificationForContext(MC_MAPSURFACE,
+                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
+    return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
 }
 
 uint Materials_Count(void)
@@ -1454,9 +1484,9 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     {
         materialvariant_t* cur = MaterialVariant_TranslationCurrent(variant);
         float inter = MaterialVariant_TranslationPoint(variant);
-        Uri* curUri = Materials_GetUri(MaterialVariant_GeneralCase(cur));
+        Uri* curUri = Materials_ComposeUri(MaterialVariant_GeneralCase(cur));
         ddstring_t* curPath = Uri_ToString(curUri);
-        Uri* nextUri = Materials_GetUri(MaterialVariant_GeneralCase(next));
+        Uri* nextUri = Materials_ComposeUri(MaterialVariant_GeneralCase(next));
         ddstring_t* nextPath = Uri_ToString(nextUri);
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
@@ -1490,22 +1520,21 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     }
 }
 
-static void printMaterialInfo(materialbind_t* mb)
+static void printMaterialInfo(material_t* mat)
 {
-    material_t* mat = MaterialBind_Material(mb);
-    Uri* uri = Materials_GetUri(mat);
+    Uri* uri = Materials_ComposeUri(mat);
     ddstring_t* path = Uri_ToString(uri);
     int variantIdx = 0;
 
     Con_Printf("Material \"%s\" [%p] uid:%u origin:%s"
         "\nDimensions: %d x %d Layers:%i InGroup:%s Drawable:%s EnvClass:%s"
         "\nDecorated:%s Detailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
-        F_PrettyPath(Str_Text(path)), (void*) mat, (uint) Material_BindId(mat),
+        F_PrettyPath(Str_Text(path)), (void*) mat, (uint) Materials_ToMaterialNum(mat),
         !Material_IsCustom(mat)     ? "iwad" : (Material_Definition(mat)->autoGenerated? "addon" : "def"),
         Material_Width(mat), Material_Height(mat), Material_LayerCount(mat),
         Material_IsGroupAnimated(mat)? "yes" : "no",
         Material_IsDrawable(mat)     ? "yes" : "no",
-        Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialClassName(Material_EnvironmentClass(mat)),
+        Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(mat)),
         Material_HasDecorations(mat) ? "yes" : "no",
         Material_DetailTexture(mat)  ? "yes" : "no",
         Material_HasGlow(mat)        ? "yes" : "no",
@@ -1519,17 +1548,16 @@ static void printMaterialInfo(materialbind_t* mb)
     Uri_Delete(uri);
 }
 
-static void printMaterialOverview(const materialbind_t* mb, boolean printNamespace)
+static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
-    int numDigits = M_NumDigits(bindingsCount);
-    material_t* mat = MaterialBind_Material(mb);
-    Uri* uri = Materials_GetUri(mat);
+    int numDigits = M_NumDigits(Materials_Count());
+    Uri* uri = Materials_ComposeUri(mat);
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
-    Con_Printf(" %*u: %-*s %5d x %-5d %-8s %s\n", numDigits, (unsigned int) Material_BindId(mat),
+    Con_Printf(" %*u: %-*s %5d x %-5d %-8s %s\n", numDigits, (unsigned int) Materials_ToMaterialNum(mat),
         printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         Material_Width(mat), Material_Height(mat),
-        Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialClassName(Material_EnvironmentClass(mat)),
+        Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(mat)),
         !Material_IsCustom(mat) ? "iwad" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
     Uri_Delete(uri);
@@ -1556,7 +1584,7 @@ static int collectMaterialWorker(const struct pathdirectory_node_s* node, void* 
 
     if(p->like && p->like[0])
     {
-        Uri* uri = Materials_GetUri(MaterialBind_Material(mb));
+        Uri* uri = MaterialBind_ComposeUri(mb);
         int delta = strnicmp(Str_Text(Uri_Path(uri)), p->like, strlen(p->like));
         Uri_Delete(uri);
         if(delta) return 0; // Continue iteration.
@@ -1624,8 +1652,8 @@ static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
 
 static int compareMaterialBindByPath(const void* mbA, const void* mbB)
 {
-    Uri* a = Materials_GetUri(MaterialBind_Material(*(const materialbind_t**)mbA));
-    Uri* b = Materials_GetUri(MaterialBind_Material(*(const materialbind_t**)mbB));
+    Uri* a = MaterialBind_ComposeUri(*(const materialbind_t**)mbA);
+    Uri* b = MaterialBind_ComposeUri(*(const materialbind_t**)mbB);
     int delta = stricmp(Str_Text(Uri_Path(a)), Str_Text(Uri_Path(b)));
     Uri_Delete(b);
     Uri_Delete(a);
@@ -1635,7 +1663,7 @@ static int compareMaterialBindByPath(const void* mbA, const void* mbB)
 static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like,
     boolean printNamespace)
 {
-    int numDigits = M_NumDigits(bindingsCount);
+    int numDigits = M_NumDigits(Materials_Count());
     size_t count = 0;
     materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, 0);
 
@@ -1664,7 +1692,9 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     for(ptr = foundMaterials; *ptr; ++ptr)
     {
         const materialbind_t* mb = *ptr;
-        printMaterialOverview(mb, printNamespace);
+        material_t* mat = MaterialBind_Material(mb);
+        if(!mat) continue;
+        printMaterialOverview(mat, printNamespace);
     }}
 
     free(foundMaterials);
@@ -1759,34 +1789,28 @@ void Materials_DestroyAnimGroups(void)
     }
 }
 
-/**
- * \note Part of the Doomsday public API.
- */
-void Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics,
-                      int randomTics)
+/// \note Part of the Doomsday public API.
+void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics, int randomTics)
 {
-    animgroup_t*        group;
-    animframe_t*        frame;
-    material_t*  mat;
+    animgroup_t* group = getAnimGroup(groupNum);
+    animframe_t* frame;
 
-    group = getAnimGroup(groupNum);
     if(!group)
-        Con_Error("Materials_AddAnimGroupFrame: Unknown anim group '%i'\n.", groupNum);
+        Con_Error("Materials::AddAnimGroupFrame: Unknown anim group '%i', ignoring.\n", groupNum);
 
-    if(0 == num || num > bindingsCount)
+    if(!mat)
     {
-        Con_Message("Materials_AddAnimGroupFrame: Invalid material num '%i'\n.", num);
+#if _DEBUG
+        Con_Message("Warning::Materials::AddAnimGroupFrame: Invalid material (ref=0), ignoring.\n");
+#endif
         return;
     }
-    mat = getMaterialByIndex(num - 1); // 1-based index.
 
     // Mark the material as being in an animgroup.
     Material_SetGroupAnimated(mat, true);
 
     // Allocate a new animframe.
-    group->frames =
-        Z_Realloc(group->frames, sizeof(animframe_t) * ++group->count,
-                  PU_APPSTATIC);
+    group->frames = Z_Realloc(group->frames, sizeof(animframe_t) * ++group->count, PU_APPSTATIC);
 
     frame = &group->frames[group->count - 1];
 
@@ -1981,7 +2005,27 @@ struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb
     return mb->_directoryNode;
 }
 
-materialbindinfo_t* MaterialBind_Info(materialbind_t* mb)
+materialnamespaceid_t MaterialBind_NamespaceId(const materialbind_t* mb)
+{
+    return namespaceIdForMaterialDirectory(PathDirectoryNode_Directory(MaterialBind_DirectoryNode(mb)));
+}
+
+ddstring_t* MaterialBind_ComposePath(const materialbind_t* mb)
+{
+    struct pathdirectory_node_s* node = mb->_directoryNode;
+    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, MATERIALDIRECTORY_DELIMITER);
+}
+
+Uri* MaterialBind_ComposeUri(const materialbind_t* mb)
+{
+    ddstring_t* path = MaterialBind_ComposePath(mb);
+    Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
+    Uri_SetScheme(uri, Str_Text(nameForMaterialNamespaceId(MaterialBind_NamespaceId(mb))));
+    Str_Delete(path);
+    return uri;
+}
+
+materialbindinfo_t* MaterialBind_Info(const materialbind_t* mb)
 {
     assert(mb);
     return mb->_info;
@@ -1990,12 +2034,12 @@ materialbindinfo_t* MaterialBind_Info(materialbind_t* mb)
 void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
 {
     assert(mb);
-    if(NULL == info)
+    if(!info)
         Con_Error("MaterialBind::AttachInfo: Attempted with invalid info.");
-    if(NULL != mb->_info)
+    if(mb->_info)
     {
 #if _DEBUG
-        Uri* uri = Materials_GetUri(mb->_material);
+        Uri* uri = MaterialBind_ComposeUri(mb);
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
         Str_Delete(path);
@@ -2019,28 +2063,28 @@ materialbindinfo_t* MaterialBind_DetachInfo(materialbind_t* mb)
 ded_detailtexture_t* MaterialBind_DetailTextureDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->detailtextureDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_decor_t* MaterialBind_DecorationDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->decorationDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_ptcgen_t* MaterialBind_PtcGenDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->ptcgenDefs[Material_Prepared(mb->_material)-1];
 }
 
 ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb)
 {
     assert(mb);
-    if(!mb->_info || !Material_Prepared(mb->_material)) return NULL;
+    if(!mb->_info || !mb->_material || !Material_Prepared(mb->_material)) return NULL;
     return mb->_info->reflectionDefs[Material_Prepared(mb->_material)-1];
 }
 
@@ -2124,10 +2168,10 @@ D_CMD(InspectMaterial)
         }
     }
 
-    mat = Materials_ToMaterial(Materials_IndexForUri(search));
+    mat = Materials_MaterialForUri(search);
     if(mat)
     {
-        printMaterialInfo(bindByIndex(Material_BindId(mat)));
+        printMaterialInfo(mat);
     }
     else
     {

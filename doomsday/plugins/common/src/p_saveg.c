@@ -482,7 +482,7 @@ cvartemplate_t cvars[] = {
 void SV_Register(void)
 {
     int i;
-    for(i = 0; cvars[i].name; ++i)
+    for(i = 0; cvars[i].path; ++i)
         Con_AddVariable(cvars + i);
 }
 
@@ -2360,8 +2360,8 @@ static void SV_ReadSector(sector_t* sec)
 #if !__JHEXEN__
     if(hdr.version == 1)
     {   // Flat numbers are the original flat lump indices - (lump) "F_START".
-        floorMaterial   = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(SV_ReadShort()+1, TN_FLATS));
-        ceilingMaterial = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureIndex(SV_ReadShort()+1, TN_FLATS));
+        floorMaterial   = DD_MaterialForTextureIndex(SV_ReadShort()+1, TN_FLATS);
+        ceilingMaterial = DD_MaterialForTextureIndex(SV_ReadShort()+1, TN_FLATS);
     }
     else if(hdr.version >= 4)
 #endif
@@ -3090,7 +3090,7 @@ static int SV_ReadFloor(floor_t* floor)
         {
             Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadShort()), RC_NULL);
             Uri_SetScheme(uri, MN_FLATS_NAME);
-            floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+            floor->material = Materials_MaterialForUri(uri);
             Uri_Delete(uri);
         }
 
@@ -3139,7 +3139,7 @@ static int SV_ReadFloor(floor_t* floor)
         floor->newSpecial = SV_ReadLong();
         { Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadShort()), RC_NULL);
         Uri_SetScheme(uri, MN_FLATS_NAME);
-        floor->material = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+        floor->material = Materials_MaterialForUri(uri);
         Uri_Delete(uri);
         }
 

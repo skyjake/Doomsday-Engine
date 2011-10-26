@@ -57,7 +57,10 @@ font_t* FontBind_Font(const fontbind_t* fb);
 const ddstring_t* FontBind_Name(const fontbind_t* fb);
 
 /// @return  Namespace in which this is present.
-fontnamespaceid_t FontBind_Namespace(const fontbind_t* fb);
+fontnamespaceid_t FontBind_NamespaceId(const fontbind_t* fb);
+
+/// @return  Full symbolic name/path-to the Font. Must be destroyed with Uri_Delete().
+Uri* FontBind_ComposeUri(const fontbind_t* fb);
 
 #define FONTNAMESPACE_NAMEHASH_SIZE (512)
 
@@ -327,10 +330,17 @@ const ddstring_t* FontBind_Name(const fontbind_t* fb)
     return &fb->_name;
 }
 
-fontnamespaceid_t FontBind_Namespace(const fontbind_t* fb)
+fontnamespaceid_t FontBind_NamespaceId(const fontbind_t* fb)
 {
     assert(fb);
     return fb->_namespace;
+}
+
+Uri* FontBind_ComposeUri(const fontbind_t* fb)
+{
+    Uri* uri = Uri_NewWithPath2(Str_Text(FontBind_Name(fb)), RC_NULL);
+    Uri_SetScheme(uri, Str_Text(nameForFontNamespaceId(FontBind_NamespaceId(fb))));
+    return uri;
 }
 
 void Fonts_Init(void)
@@ -703,64 +713,40 @@ font_t* Fonts_LoadExternal(const char* name, const char* searchPath)
     }
 }
 
-fontnum_t Fonts_IndexForUri(const Uri* path)
+font_t* Fonts_FontForUri(const Uri* uri)
 {
-    if(path)
+    if(uri)
     {
-        return Fonts_CheckNumForPath(path);
+        return Fonts_ToFont(Fonts_CheckNumForPath(uri));
     }
-    return 0;
-}
-
-fontnum_t Fonts_IndexForName(const char* path)
-{
-    if(path && path[0])
-    {
-        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        fontnum_t result = Fonts_IndexForUri(uri);
-        Uri_Delete(uri);
-        return result;
-    }
-    return 0;
+    return NULL;
 }
 
 /// \note Part of the Doomsday public API.
-const ddstring_t* Fonts_GetSymbolicName(font_t* font)
+fontnum_t Fonts_IndexForUri(const Uri* uri)
 {
-    fontnum_t num;
-    if(!inited)
-        return NULL;
-    if(NULL == font)
-        return NULL;
-    if(0 == (num = Fonts_ToIndex(font)))
-        return NULL; // Should never happen. 
-    return FontBind_Name(&bindings[num-1]);
+    return Fonts_ToIndex(Fonts_FontForUri(uri));
 }
 
-Uri* Fonts_GetUri(font_t* font)
+Uri* Fonts_ComposeUri(font_t* font)
 {
     fontbind_t* fb;
-    Uri* uri;
-    ddstring_t path;
-
     if(!font)
     {
 #if _DEBUG
-        Con_Message("Warning:Fonts::GetUri: Attempted with invalid reference (font==0), returning 0.\n");
+        Con_Message("Warning:Fonts::ComposeUri: Attempted with invalid index (num==0), returning null-object.\n");
 #endif
-        return 0;
+        return Uri_New();
     }
-
-    Str_Init(&path);
     fb = bindByIndex(Font_BindId(font));
-    if(NULL != fb)
+    if(!fb)
     {
-        Str_Appendf(&path, "%s:%s", Str_Text(nameForFontNamespaceId(FontBind_Namespace(fb))),
-            Str_Text(Fonts_GetSymbolicName(font)));
+#if _DEBUG
+        Con_Message("Warning:Fonts::ComposeUri: Attempted with non-bound font [%p], returning null-object.\n", (void*)font);
+#endif
+        return Uri_New();
     }
-    uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
-    Str_Free(&path);
-    return uri;
+    return FontBind_ComposeUri(fb);
 }
 
 void Fonts_ReleaseGLTexturesByNamespace(fontnamespaceid_t namespaceId)
@@ -781,7 +767,7 @@ void Fonts_ReleaseGLTexturesByNamespace(fontnamespaceid_t namespaceId)
         if(!(namespaceId == FN_ANY || !Font_BindId(font)))
         {
             fontbind_t* fb = bindByIndex(Font_BindId(font));
-            if(fb && FontBind_Namespace(fb) != namespaceId)
+            if(fb && FontBind_NamespaceId(fb) != namespaceId)
                 continue;
         }
 
@@ -830,7 +816,7 @@ void Fonts_ReleaseGLResourcesByNamespace(fontnamespaceid_t namespaceId)
         if(!(namespaceId == FN_ANY || !Font_BindId(font)))
         {
             fontbind_t* fb = bindByIndex(Font_BindId(font));
-            if(fb && FontBind_Namespace(fb) != namespaceId)
+            if(fb && FontBind_NamespaceId(fb) != namespaceId)
                 continue;
         }
 
@@ -943,12 +929,12 @@ ddstring_t** Fonts_CollectNames(int* count)
 
 static void printFontInfo(const fontbind_t* fb, boolean printNamespace)
 {
-    int numDigits = M_NumDigits(bindingsCount);
+    int numDigits = M_NumDigits(Fonts_Count());
     font_t* font = FontBind_Font(fb);
 
-    Con_Printf(" %*u: \"", numDigits, (unsigned int) Font_BindId(font));
+    Con_Printf(" %*u: \"", numDigits, (unsigned int) Fonts_ToIndex(font));
     if(printNamespace)
-        Con_Printf("%s:", Str_Text(nameForFontNamespaceId(FontBind_Namespace(fb))));
+        Con_Printf("%s:", Str_Text(nameForFontNamespaceId(FontBind_NamespaceId(fb))));
     Con_Printf("%s\" %s ", Str_Text(FontBind_Name(fb)), Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
     if(Font_IsPrepared(font))
     {

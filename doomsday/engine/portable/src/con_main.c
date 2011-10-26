@@ -921,13 +921,13 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             setting = true;
             if(cvar->flags & CVF_READ_ONLY)
             {
-                ddstring_t* name = CVar_ComposeName(cvar);
+                ddstring_t* name = CVar_ComposePath(cvar);
                 Con_Printf("%s is read-only. It can't be changed (not even with force)\n", Str_Text(name));
                 Str_Delete(name);
             }
             else if((cvar->flags & CVF_PROTECTED) && !forced)
             {
-                ddstring_t* name = CVar_ComposeName(cvar);
+                ddstring_t* name = CVar_ComposePath(cvar);
                 Con_Printf("%s is protected. You shouldn't change its value.\n"
                            "Use the command: '%s force %s' to modify it anyway.\n",
                            Str_Text(name), Str_Text(name), argptr);
@@ -984,7 +984,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         if(out_of_range)
         {
-            ddstring_t* name = CVar_ComposeName(cvar);
+            ddstring_t* name = CVar_ComposePath(cvar);
             if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
                 char temp[20];
@@ -1207,7 +1207,7 @@ static int completeWord(int mode)
             {
             case WT_CVAR: {
                 cvar_t* cvar = (cvar_t*)(*match)->data;
-                foundName = CVar_ComposeName(cvar);
+                foundName = CVar_ComposePath(cvar);
                 foundWord = Str_Text(foundName);
                 if(printCompletions)
                     Con_PrintCVar(cvar, "  ");
@@ -1266,7 +1266,7 @@ static int completeWord(int mode)
         case WT_CALIAS:   str = ((calias_t*)completeWord->data)->name; break;
         case WT_CCMD:     str = ((ccmd_t*)completeWord->data)->name; break;
         case WT_CVAR:
-            foundName = CVar_ComposeName((cvar_t*)completeWord->data);
+            foundName = CVar_ComposePath((cvar_t*)completeWord->data);
             str = Str_Text(foundName);
             break;
         case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
@@ -2496,8 +2496,10 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "default"))
     {
-        fontnum_t newFont = Fonts_IndexForName(R_ChooseFixedFont());
-        if(0 != newFont)
+        Uri* uri = Uri_NewWithPath2(R_ChooseFixedFont(), RC_NULL);
+        fontnum_t newFont = Fonts_IndexForUri(uri);
+        Uri_Delete(uri);
+        if(newFont)
         {
             Con_SetFont(newFont);
             Con_SetFontScale(1, 1);
@@ -2509,10 +2511,12 @@ D_CMD(Font)
 
     if(!stricmp(argv[1], "name") && argc == 3)
     {
-        fontnum_t newFont = Fonts_IndexForName(argv[2]);
-        if(0 != newFont)
+        Uri* uri = Uri_SetUri3(Uri_New(), argv[2], RC_NULL);
+        fontnum_t newFont = Fonts_IndexForUri(uri);
+        Uri_Delete(uri);
+        if(newFont)
         {
-            Uri* uri = Fonts_GetUri(Fonts_ToFont(newFont));
+            Uri* uri = Fonts_ComposeUri(Fonts_ToFont(newFont));
             Con_SetFont(newFont);
             if(!Str_CompareIgnoreCase(Uri_Scheme(uri), FN_GAME_NAME))
             {
@@ -2520,6 +2524,7 @@ D_CMD(Font)
                 Con_SetFontLeading(1.25f);
                 Con_SetFontTracking(1);
             }
+            Uri_Delete(uri);
             return true;
         }
         Con_Printf("Unknown font '%s'\n", argv[2]);

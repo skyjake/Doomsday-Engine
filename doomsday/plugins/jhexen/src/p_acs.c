@@ -1296,7 +1296,7 @@ static int CmdChangeFloor(void)
 
     uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
     Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    mat = Materials_MaterialForUri(uri);
     Uri_Delete(uri);
 
     tag = Pop();
@@ -1326,7 +1326,7 @@ static int CmdChangeFloorDirect(void)
     tag = LONG(*PCodePtr++);
     uri = Uri_NewWithPath2(GetACString(LONG(*PCodePtr++)), RC_NULL);
     Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    mat = Materials_MaterialForUri(uri);
     Uri_Delete(uri);
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1353,7 +1353,7 @@ static int CmdChangeCeiling(void)
 
     uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
     Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    mat = Materials_MaterialForUri(uri);
     Uri_Delete(uri);
     tag = Pop();
 
@@ -1382,7 +1382,7 @@ static int CmdChangeCeilingDirect(void)
     tag = LONG(*PCodePtr++);
     uri = Uri_NewWithPath2(GetACString(LONG(*PCodePtr++)), RC_NULL);
     Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    mat = Materials_MaterialForUri(uri);
     Uri_Delete(uri);
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1730,7 +1730,7 @@ static int CmdSetLineTexture(void)
 
     uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
     Uri_SetScheme(uri, MN_TEXTURES_NAME);
-    mat = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+    mat = Materials_MaterialForUri(uri);
     Uri_Delete(uri);
 
     position = Pop();

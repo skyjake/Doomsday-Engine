@@ -76,19 +76,19 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     {
     FILE* file = (FILE*)paramaters;
     cvar_t* var = (cvar_t*)word->data;
-    ddstring_t* name;
+    ddstring_t* path;
 
     if(var->flags & CVF_NO_ARCHIVE)
         return 0; // Continue iteration.
 
-    name = CVar_ComposeName(var);
+    path = CVar_ComposePath(var);
     // First print the comment (help text).
     { const char* str;
-    if(NULL != (str = DH_GetString(DH_Find(Str_Text(name)), HST_DESCRIPTION)))
+    if(NULL != (str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION)))
         M_WriteCommented(file, str);
     }
 
-    fprintf(file, "%s ", Str_Text(name));
+    fprintf(file, "%s ", Str_Text(path));
     if(var->flags & CVF_PROTECTED)
         fprintf(file, "force ");
     switch(var->type)
@@ -112,9 +112,9 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
         fprintf(file, "\"");
         if(CV_URIPTR(var))
         {
-            ddstring_t* path = Uri_ComposePath(CV_URIPTR(var));
-            fprintf(file, "%s", Str_Text(path));
-            Str_Delete(path);
+            ddstring_t* valPath = Uri_ComposePath(CV_URIPTR(var));
+            fprintf(file, "%s", Str_Text(valPath));
+            Str_Delete(valPath);
         }
         fprintf(file, "\"");
         break;
@@ -122,7 +122,7 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
     }
     fprintf(file, "\n\n");
 
-    Str_Delete(name);
+    Str_Delete(path);
     return 0; // Continue iteration.
     }
 }

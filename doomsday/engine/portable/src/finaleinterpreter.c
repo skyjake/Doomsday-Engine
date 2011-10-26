@@ -1213,7 +1213,7 @@ DEFFC(BGFlat)
 {
     ddstring_t path; Str_Init(&path);
     Str_Appendf(&path, MN_FLATS_NAME":%s", OP_CSTRING(0));
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_IndexForUriCString(Str_Text(&path))));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_MaterialForUriCString(Str_Text(&path)));
     Str_Free(&path);
 }
 
@@ -1221,7 +1221,7 @@ DEFFC(BGTexture)
 {
     ddstring_t path; Str_Init(&path);
     Str_Appendf(&path, MN_TEXTURES_NAME":%s", OP_CSTRING(0));
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_IndexForUriCString(Str_Text(&path))));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_MaterialForUriCString(Str_Text(&path)));
     Str_Free(&path);
 }
 
@@ -1969,16 +1969,18 @@ DEFFC(PredefinedColor)
 
 DEFFC(PredefinedFont)
 {
-    const char* fontName = OP_CSTRING(1);
-    fontnum_t font = Fonts_IndexForName(fontName);
-    if(font != 0)
+    const char* fontPath = OP_CSTRING(1);
+    Uri* uri = Uri_SetUri3(Uri_New(), fontPath, RC_NULL);
+    fontnum_t fontNum = Fonts_IndexForUri(uri);
+    Uri_Delete(uri);
+    if(fontNum)
     {
         int idx = MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS)-1;
-        FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], idx, font);
-        FIPage_SetPredefinedFont(fi->_pages[PAGE_PICS], idx, font);
+        FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], idx, fontNum);
+        FIPage_SetPredefinedFont(fi->_pages[PAGE_PICS], idx, fontNum);
         return;
     }
-    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", fontName);
+    Con_Message("FIC_PredefinedFont: Warning, unknown font '%s'.\n", fontPath);
 }
 
 DEFFC(TextRGB)
@@ -2045,14 +2047,16 @@ DEFFC(TextLineHeight)
 DEFFC(Font)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    const char* fontName = OP_CSTRING(1);
-    fontnum_t font = Fonts_IndexForName(fontName);
-    if(font != 0)
+    const char* fontPath = OP_CSTRING(1);
+    Uri* uri = Uri_SetUri3(Uri_New(), fontPath, RC_NULL);
+    fontnum_t fontNum = Fonts_IndexForUri(uri);
+    Uri_Delete(uri);
+    if(fontNum)
     {
-        FIData_TextSetFont(obj, font);
+        FIData_TextSetFont(obj, fontNum);
         return;
     }
-    Con_Message("FIC_Font: Warning, unknown font '%s'.\n", fontName);
+    Con_Message("FIC_Font: Warning, unknown font '%s'.\n", fontPath);
 }
 
 DEFFC(FontA)

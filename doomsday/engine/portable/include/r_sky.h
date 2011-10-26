@@ -48,7 +48,7 @@ typedef struct {
 
 typedef struct {
     int flags;
-    materialnum_t material;
+    material_t* material;
     float offset;
     fadeout_t fadeout;
 
@@ -132,7 +132,7 @@ void R_SkyLayerEnable(int layer, boolean yes);
 void R_SkyLayerMasked(int layer, boolean yes);
 boolean R_SkyLayerIsEnabled(int layer);
 boolean R_SkyLayerIsMasked(int layer);
-void R_SkyLayerSetMaterial(int layer, materialnum_t material);
+void R_SkyLayerSetMaterial(int layer, struct material_s* material);
 void R_SkyLayerSetFadeoutLimit(int layer, float limit);
 void R_SkyLayerSetOffset(int layer, float offset);
 

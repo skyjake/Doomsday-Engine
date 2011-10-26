@@ -402,9 +402,9 @@ ccmdtemplate_t xgCCmds[] =
  */
 void XG_Register(void)
 {
-    int                 i;
+    int i;
 
-    for(i = 0; xgCVars[i].name; ++i)
+    for(i = 0; xgCVars[i].path; ++i)
         Con_AddVariable(xgCVars + i);
     for(i = 0; xgCCmds[i].name; ++i)
         Con_AddCommand(xgCCmds + i);

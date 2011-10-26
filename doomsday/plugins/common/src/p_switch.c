@@ -179,10 +179,10 @@ void P_InitSwitchList(void)
             break;
 
         Uri_SetPath(uri, switchInfo[i].name1);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+        switchlist[index++] = Materials_MaterialForUri(uri);
 
         Uri_SetPath(uri, switchInfo[i].name2);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUri(uri));
+        switchlist[index++] = Materials_MaterialForUri(uri);
     }
     Uri_Delete(uri);
 
@@ -217,7 +217,7 @@ void P_InitSwitchList(void)
     int i, index, episode;
     lumpnum_t lumpNum = W_CheckLumpNumForName2("SWITCHES", true);
     switchlist_t* sList = switchInfo;
-    ddstring_t path; Str_Init(&path);
+    Uri* uri;
 
 # if __JHERETIC__
     if(gameMode == heretic_shareware)
@@ -246,6 +246,8 @@ void P_InitSwitchList(void)
         VERBOSE( Con_Message("Registering default switches...\n") );
     }
 
+    uri = Uri_New();
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
@@ -255,14 +257,13 @@ void P_InitSwitchList(void)
 
         if(SHORT(sList[i].episode) <= episode)
         {
-            if(!SHORT(sList[i].episode))
-                break;
-            Str_Clear(&path);
-            Str_Appendf(&path, MN_TEXTURES_NAME":%s", sList[i].name1);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUriCString(Str_Text(&path)));
-            Str_Clear(&path);
-            Str_Appendf(&path, MN_TEXTURES_NAME":%s", sList[i].name2);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_IndexForUriCString(Str_Text(&path)));
+            if(!SHORT(sList[i].episode)) break;
+
+            Uri_SetPath(uri, sList[i].name1);
+            switchlist[index++] = Materials_MaterialForUri(uri);
+
+            Uri_SetPath(uri, sList[i].name2);
+            switchlist[index++] = Materials_MaterialForUri(uri);
             if(verbose > (lumpNum > 0? 1 : 2))
             {
                 Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
@@ -270,7 +271,7 @@ void P_InitSwitchList(void)
         }
     }
 
-    Str_Free(&path);
+    Uri_Delete(uri);
 
     if(lumpNum > 0)
         W_CacheChangeTag(lumpNum, PU_CACHE);

@@ -461,116 +461,126 @@ ded_compositefont_t* Def_GetCompositeFont(const Uri* uri)
     return def;
 }
 
-ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
+ded_decor_t* Def_GetDecoration(materialnum_t matNum, boolean hasExternal, boolean isCustom)
 {
-    ded_decor_t* def;
-    int i;
-    for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
+    material_t* mat = Materials_ToMaterial(matNum);
+    if(mat)
     {
-        material_t* defMat;
-
-        if(!def->material)
-            continue;
-
-        defMat = Materials_ToMaterial(Materials_IndexForUri(def->material));
-        // Is this suitable?
-        if(mat == defMat && R_IsAllowedDecoration(def, mat, hasExt))
-            return def;
-    }
-    return 0;
-}
-
-ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
-{
-    ded_reflection_t* def;
-    int i;
-    for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
-    {
-        material_t* defMat;
-
-        if(!def->material)
-            continue;
-
-        defMat = Materials_ToMaterial(Materials_IndexForUri(def->material));
-        // Is this suitable?
-        if(mat == defMat && R_IsAllowedReflection(def, mat, hasExt))
-            return def;
-    }
-    return 0;
-}
-
-ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
-{
-    ded_detailtexture_t* def;
-    int i;
-    for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
-    {
-        if(def->material1)
+        ded_decor_t* def;
+        int i;
+        for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
         {
-            material_t* defMat = Materials_ToMaterial(Materials_IndexForUri(def->material1));
-            // Is this suitable?
-            if(mat == defMat && R_IsAllowedDetailTex(def, mat, hasExt))
-                return def;
-        }
+            material_t* defMat;
 
-        if(def->material2)
-        {
-            material_t* defMat = Materials_ToMaterial(Materials_IndexForUri(def->material2));
+            if(!def->material) continue;
+
             // Is this suitable?
-            if(mat == defMat && R_IsAllowedDetailTex(def, mat, hasExt))
+            defMat = Materials_MaterialForUri(def->material);
+            if(mat == defMat && R_IsAllowedDecoration(def, hasExternal, isCustom))
                 return def;
         }
     }
     return 0;
 }
 
-ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
+ded_reflection_t* Def_GetReflection(materialnum_t matNum, boolean hasExternal, boolean isCustom)
 {
-    assert(mat);
+    material_t* mat = Materials_ToMaterial(matNum);
+    if(mat)
     {
-    ded_ptcgen_t* def;
-    int i;
-    for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+        ded_reflection_t* def;
+        int i;
+        for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
+        {
+            material_t* defMat;
+
+            if(!def->material) continue;
+
+            // Is this suitable?
+            defMat = Materials_MaterialForUri(def->material);
+            if(mat == defMat && R_IsAllowedReflection(def, hasExternal, isCustom))
+                return def;
+        }
+    }
+    return 0;
+}
+
+ded_detailtexture_t* Def_GetDetailTex(materialnum_t matNum, boolean hasExternal, boolean isCustom)
+{
+    material_t* mat = Materials_ToMaterial(matNum);
+    if(mat)
     {
-        material_t* defMat;
-
-        if(!def->material)
-            continue;
-
-        if(!(defMat = Materials_ToMaterial(Materials_IndexForUri(def->material))))
-            continue;
-
-        // Is this suitable?
-        if(def->flags & PGF_GROUP)
-        {   // Generator triggered by all materials in the (animation) group.
-            /**
-             * A search is necessary only if we know both the used material and
-             * the specified material in this definition are in *a* group.
-             */
-            if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
+        ded_detailtexture_t* def;
+        int i;
+        for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
+        {
+            if(def->material1)
             {
-                int g, numGroups = Materials_AnimGroupCount();
+                material_t* defMat = Materials_MaterialForUri(def->material1);
+                // Is this suitable?
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                    return def;
+            }
 
-                for(g = 0; g < numGroups; ++g)
+            if(def->material2)
+            {
+                material_t* defMat = Materials_MaterialForUri(def->material2);
+                // Is this suitable?
+                if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
+                    return def;
+            }
+        }
+    }
+    return 0;
+}
+
+ded_ptcgen_t* Def_GetGenerator(materialnum_t matNum, boolean hasExternal, boolean isCustom)
+{
+    material_t* mat = Materials_ToMaterial(matNum);
+    if(mat)
+    {
+        ded_ptcgen_t* def;
+        int i;
+        for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
+        {
+            material_t* defMat;
+
+            if(!def->material) continue;
+            defMat = Materials_MaterialForUri(def->material);
+            if(!defMat) continue;
+
+            // Is this suitable?
+            if(def->flags & PGF_GROUP)
+            {
+                /**
+                 * Generator triggered by all materials in the (animation) group.
+                 * A search is necessary only if we know both the used material and
+                 * the specified material in this definition are in *a* group.
+                 */
+                if(Material_IsGroupAnimated(defMat) && Material_IsGroupAnimated(mat))
                 {
-                    if(Materials_IsPrecacheAnimGroup(g))
-                        continue; // Precache groups don't apply.
+                    int g, numGroups = Materials_AnimGroupCount();
 
-                    if(Materials_MaterialLinkedToAnimGroup(g, defMat) &&
-                       Materials_MaterialLinkedToAnimGroup(g, mat))
+                    for(g = 0; g < numGroups; ++g)
                     {
-                        // Both are in this group! This def will do.
-                        return def;
+                        if(Materials_IsPrecacheAnimGroup(g))
+                            continue; // Precache groups don't apply.
+
+                        if(Materials_MaterialLinkedToAnimGroup(g, defMat) &&
+                           Materials_MaterialLinkedToAnimGroup(g, mat))
+                        {
+                            // Both are in this group! This def will do.
+                            return def;
+                        }
                     }
                 }
             }
-        }
 
-        if(mat == defMat)
-            return def;
+            if(mat == defMat)
+                return def;
+        }
     }
     return 0; // Not found.
-    }
 }
 
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
@@ -1020,8 +1030,8 @@ void Def_Read(void)
     for(i = 0; i < defs.count.compositeFonts.num; ++i)
     {
         ded_compositefont_t* def = defs.compositeFonts + i;
-        font_t* font = Fonts_ToFont(Fonts_IndexForUri(def->id));
-        if(NULL == font)
+        font_t* font = Fonts_FontForUri(def->id);
+        if(!font)
         {   // A new Font.
             Fonts_CreateBitmapCompositeFromDef(def);
             continue;
@@ -1117,9 +1127,10 @@ void Def_Read(void)
     for(i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t* def = &defs.materials[i];
-        material_t* mat = Materials_ToMaterial(Materials_IndexForUri(def->id));
-        if(NULL == mat)
-        {   // A new Material.
+        material_t* mat = Materials_MaterialForUri(def->id);
+        if(!mat)
+        {
+            // A new Material.
             Materials_CreateFromDef(def);
             continue;
         }
@@ -1492,12 +1503,12 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->wallSection = def->wallSection;
 
     if(def->actMaterial)
-        l->actMaterial = Materials_IndexForUri(def->actMaterial);
+        l->actMaterial = Materials_ToMaterialNum(Materials_MaterialForUri(def->actMaterial));
     else
         l->actMaterial = 0;
 
     if(def->deactMaterial)
-        l->deactMaterial = Materials_IndexForUri(def->deactMaterial);
+        l->deactMaterial = Materials_ToMaterialNum(Materials_MaterialForUri(def->deactMaterial));
     else
         l->deactMaterial = 0;
 
@@ -1529,7 +1540,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials_IndexForUriCString(def->iparmStr[k]);
+                    l->iparm[k] = Materials_ToMaterialNum(Materials_MaterialForUriCString(def->iparmStr[k]));
             }
         }
         else if(a & MAP_MUS)

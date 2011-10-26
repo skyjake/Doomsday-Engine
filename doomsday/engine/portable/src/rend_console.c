@@ -268,7 +268,8 @@ void Rend_ConsoleUpdateTitle(void)
 void Rend_ConsoleUpdateBackground(void)
 {
     assert(inited);
-    consoleBackgroundMaterial = Materials_ToMaterial(Materials_IndexForUri(consoleBackgroundMaterialUri));
+    if(!consoleBackgroundMaterialUri || Str_IsEmpty(Uri_Path(consoleBackgroundMaterialUri))) return;
+    consoleBackgroundMaterial = Materials_MaterialForUri(consoleBackgroundMaterialUri);
 }
 
 void Rend_ConsoleToggleFullscreen(void)

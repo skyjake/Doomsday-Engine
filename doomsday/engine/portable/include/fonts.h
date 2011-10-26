@@ -91,17 +91,17 @@ font_t* Fonts_ToFont(fontnum_t num);
 /// @return  Unique name associated with the specified Font.
 fontnum_t Fonts_ToIndex(font_t* font);
 
-/// @return  Unique name associated with the found Font.
+/// @return  Font associated with @a uri else @c NULL.
+font_t* Fonts_FontForUri(const Uri* uri);
+
+/**
+ * \deprecated Only exists because font_t* is not a public reference.
+ * @return  Unique identifier associated with the found font else @c 0
+ */
 fontnum_t Fonts_IndexForUri(const Uri* uri);
 
-/// @return  Unique name associated with the found Font.
-fontnum_t Fonts_IndexForName(const char* path);
-
-/// @return  Symbolic name associated with specified font.
-const ddstring_t* Fonts_GetSymbolicName(font_t* font);
-
 /// @return  New Uri composed for the specified font (release with Uri_Delete).
-Uri* Fonts_GetUri(font_t* font);
+Uri* Fonts_ComposeUri(font_t* font);
 
 /// Load an external font from a local file.
 font_t* Fonts_LoadExternal(const char* name, const char* filepath);
@@ -113,7 +113,7 @@ font_t* Fonts_CreateBitmapCompositeFromDef(struct ded_compositefont_s* def);
  * Update the Font according to the supplied definition.
  * To be called after an engine update/reset.
  *
- * @parma font  Font to be updated.
+ * @param font  Font to be updated.
  * @param def  font definition to update using.
  */
 void Fonts_RebuildBitmapComposite(font_t* font, struct ded_compositefont_s* def);

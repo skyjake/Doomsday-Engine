@@ -81,8 +81,7 @@ cvartemplate_t xhairCVars[] = {
 void X_Register(void)
 {
     int i;
-
-    for(i = 0; xhairCVars[i].name; ++i)
+    for(i = 0; xhairCVars[i].path; ++i)
         Con_AddVariable(xhairCVars + i);
 }
 

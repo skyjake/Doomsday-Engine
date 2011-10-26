@@ -291,7 +291,7 @@ void P_MapSpawnPlaneParticleGens(void)
         for(j = 0; j < 2; ++j)
         {
             plane_t* plane = sector->SP_plane(j);
-            const ded_ptcgen_t* def = Materials_PtcGenDef(Materials_ToMaterialNum(plane->PS_material));
+            const ded_ptcgen_t* def = Materials_PtcGenDef(plane->PS_material);
             P_SpawnPlaneParticleGen(def, plane);
         }}
     }}
@@ -1619,7 +1619,7 @@ void P_UpdateParticleGens(void)
             else if(NULL != gen->plane && NULL != def->material)
             {
                 material_t* mat = gen->plane->PS_material;
-                material_t* defMat = Materials_ToMaterial(Materials_IndexForUri(def->material));
+                material_t* defMat = Materials_MaterialForUri(def->material);
 
                 if(def->flags & PGF_FLOOR_SPAWN)
                     mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;

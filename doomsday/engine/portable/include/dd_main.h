@@ -91,7 +91,7 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
 fontnamespaceid_t DD_ParseFontNamespace(const char* str);
 
-materialnum_t DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
+struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
 
 int DD_SearchPathDirectoryCompare(struct pathdirectory_node_s* node, void* paramaters);
 

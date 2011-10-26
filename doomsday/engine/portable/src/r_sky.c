@@ -103,7 +103,7 @@ static void configureDefaultSky(void)
         skylayer_t* slayer = &skyLayers[i];
 
         slayer->flags = (i == 0? SLF_ENABLED : 0);
-        slayer->material = Materials_IndexForUriCString(MN_TEXTURES_NAME":SKY1");
+        slayer->material = Materials_MaterialForUriCString(MN_TEXTURES_NAME":SKY1");
         slayer->offset = 0;
         // Default the fadeout to black.
         slayer->fadeout.use = (i == 0);
@@ -159,14 +159,10 @@ static void prepareSkySphere(void)
     for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
     {
         material_snapshot_t ms;
-        material_t* material;
 
-        if(!(slayer->flags & SLF_ENABLED) || !slayer->material)
-            continue;
+        if(!(slayer->flags & SLF_ENABLED) || !slayer->material) continue;
 
-        material = Materials_ToMaterial(slayer->material);
-
-        Materials_Prepare(&ms, material, false,
+        Materials_Prepare(&ms, slayer->material, false,
             Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                 TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
                 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false));
@@ -272,10 +268,10 @@ void R_SetupSky(ded_sky_t* sky)
             R_SkyLayerMasked(i, (def->flags & SLF_MASKED) != 0);
             if(def->material)
             {
-                materialnum_t material = Materials_IndexForUri(def->material);
-                if(0 != material)
+                material_t* mat = Materials_MaterialForUri(def->material);
+                if(mat)
                 {
-                    R_SkyLayerSetMaterial(i, material);
+                    R_SkyLayerSetMaterial(i, mat);
                 }
                 else
                 {
@@ -465,15 +461,13 @@ boolean R_SkyLayerIsMasked(int layer)
     return false;
 }
 
-void R_SkyLayerSetMaterial(int layer, materialnum_t material)
+void R_SkyLayerSetMaterial(int layer, material_t* mat)
 {
     skylayer_t* slayer;
-    if(!VALID_SKY_LAYERID(layer))
-        return;
+    if(!VALID_SKY_LAYERID(layer)) return;
     slayer = &skyLayers[layer-1];
-    if(slayer->material == material)
-        return;
-    slayer->material = material;
+    if(slayer->material == mat) return;
+    slayer->material = mat;
     slayer->tex = 0; // Invalidate the currently prepared layer (if any).
 }
 

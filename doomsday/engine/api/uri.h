@@ -49,9 +49,9 @@ const ddstring_t* Uri_Path(const Uri* uri);
 void Uri_SetScheme(Uri* uri, const char* scheme);
 void Uri_SetPath(Uri* uri, const char* path);
 
-void Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass);
-void Uri_SetUri2(Uri* uri, const char* path);
-void Uri_SetUri(Uri* uri, const ddstring_t* path);
+Uri* Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass);
+Uri* Uri_SetUri2(Uri* uri, const char* path);
+Uri* Uri_SetUri(Uri* uri, const ddstring_t* path);
 
 ddstring_t* Uri_ComposePath(const Uri* uri);
 

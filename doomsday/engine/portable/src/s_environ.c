@@ -77,14 +77,14 @@ static ownernode_t *unusedNodeList = NULL;
 
 // CODE --------------------------------------------------------------------
 
-const char* S_MaterialClassName(material_env_class_t mclass)
+const char* S_MaterialEnvClassName(material_env_class_t mclass)
 {
     if(VALID_MATERIAL_ENV_CLASS(mclass))
         return matInfo[mclass - MEC_FIRST].name;
     return "";
 }
 
-material_env_class_t S_MaterialClassForName(const Uri* path)
+material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
 {
     ded_tenviron_t* env;
     int i;
@@ -97,7 +97,7 @@ material_env_class_t S_MaterialClassForName(const Uri* path)
 
             if(!ref) continue;
 
-            if(Uri_Equality(ref, path))
+            if(Uri_Equality(ref, uri))
             {   // A match!
                 // See if we recognise the material name.
                 int k;

@@ -519,20 +519,17 @@ rawtex_t**      R_CollectRawTexs(int* count);
 /**
  * @return  @c true if the given decoration works under the specified circumstances.
  */
-boolean R_IsAllowedDecoration(ded_decor_t* def, const struct material_s* mat,
-    boolean hasExternal);
+boolean R_IsAllowedDecoration(ded_decor_t* def, boolean hasExternal, boolean isCustom);
 
 /**
  * @return  @c true if the given reflection works under the specified circumstances.
  */
-boolean R_IsAllowedReflection(ded_reflection_t* def, const struct material_s* mat,
-    boolean hasExternal);
+boolean R_IsAllowedReflection(ded_reflection_t* def, boolean hasExternal, boolean isCustom);
 
 /**
  * @return  @c true if the given decoration works under the specified circumstances.
  */
-boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, const struct material_s* mat,
-    boolean hasExternal);
+boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, boolean isCustom);
 
 boolean R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
