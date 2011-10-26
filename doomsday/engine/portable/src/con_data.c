@@ -108,9 +108,9 @@ void Con_DataRegister(void)
 
 static int markVariableUserDataFreed(struct pathdirectory_node_s* node, void* paramaters)
 {
-    assert(NULL != node && NULL != paramaters);
+    assert(node && paramaters);
     {
-    cvar_t* var = PathDirectoryNode_DetachUserData(node);
+    cvar_t* var = PathDirectoryNode_UserData(node);
     void** ptr = (void**) paramaters;
     if(var)
     switch(CVar_Type(var))
@@ -129,7 +129,7 @@ static int markVariableUserDataFreed(struct pathdirectory_node_s* node, void* pa
 
 static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
 {
-    cvar_t* var = PathDirectoryNode_DetachUserData(node);
+    cvar_t* var = (cvar_t*)PathDirectoryNode_DetachUserData(node);
     if(var)
     {
         assert(PT_LEAF == PathDirectoryNode_Type(node));
@@ -179,7 +179,7 @@ static void clearVariables(void)
     int flags = PCF_NO_BRANCH;
 #endif
     PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_NOHASH, clearVariable);
-    PathDirectory_Delete(cvarDirectory), cvarDirectory = NULL;
+    PathDirectory_Clear(cvarDirectory);
     cvarCount = 0;
 }
 
@@ -1476,18 +1476,22 @@ void Con_InitDatabases(void)
     inited = true;
 }
 
-void Con_ShutdownDatabases(void)
+void Con_ClearDatabases(void)
 {
-    if(!inited)
-        return;
-
+    if(!inited) return;
     clearKnownWords();
     clearAliases();
     clearCommands();
     clearVariables();
+}
 
+void Con_ShutdownDatabases(void)
+{
+    if(!inited) return;
+
+    Con_ClearDatabases();
+    PathDirectory_Delete(cvarDirectory), cvarDirectory = NULL;
     Uri_Delete(emptyUri), emptyUri = NULL;
-
     inited = false;
 }
 

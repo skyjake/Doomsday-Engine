@@ -169,6 +169,7 @@ boolean Con_Init(void);
 void Con_Shutdown(void);
 
 void Con_InitDatabases(void);
+void Con_ClearDatabases(void);
 void Con_ShutdownDatabases(void);
 
 void Con_Ticker(timespan_t time);

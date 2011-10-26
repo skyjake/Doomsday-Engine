@@ -1125,7 +1125,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Sfx_InitLogical();
         P_InitThinkerLists(0x1|0x2);
 
-        Con_ShutdownDatabases();
+        Con_ClearDatabases();
 
         // This is now the current game.
         currentGameInfoIndex = gameInfoIndex(findGameInfoForIdentityKey("null-game"));
