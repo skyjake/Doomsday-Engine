@@ -38,11 +38,14 @@
 
 struct ded_compositefont_s;
 
+// Substrings in Font names are delimited by this character.
+#define FONTDIRECTORY_DELIMITER '/'
+
 /// Register the console commands, variables, etc..., of this module.
 void Fonts_Register(void);
 
 /// Initialize this module.
-void Fonts_Init(void);
+void Fonts_Initialize(void);
 
 /// Shutdown this module.
 void Fonts_Shutdown(void);
@@ -89,7 +92,7 @@ ddstring_t** Fonts_CollectNames(int* count);
 font_t* Fonts_ToFont(fontnum_t num);
 
 /// @return  Unique name associated with the specified Font.
-fontnum_t Fonts_ToIndex(font_t* font);
+fontnum_t Fonts_ToFontNum(font_t* font);
 
 /// @return  Font associated with @a uri else @c NULL.
 font_t* Fonts_FontForUri(const Uri* uri);

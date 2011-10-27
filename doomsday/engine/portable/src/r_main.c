@@ -189,7 +189,7 @@ static fontnum_t loadSystemFont(const char* name)
         Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
         return 0;
     }
-    return Fonts_ToIndex(font);
+    return Fonts_ToFontNum(font);
     }
 }
 

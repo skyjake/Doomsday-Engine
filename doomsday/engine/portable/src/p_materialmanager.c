@@ -205,9 +205,11 @@ static pathdirectory_t* namespaces[MATERIALNAMESPACE_COUNT];
 
 void P_MaterialsRegister(void)
 {
-    C_CMD("inspectmaterial", "s",   InspectMaterial);
-    C_CMD("listmaterials",  NULL,   ListMaterials);
-    C_CMD("materialstats",  NULL,   PrintMaterialStats);
+    C_CMD("inspectmaterial", "s",   InspectMaterial)
+    C_CMD("listmaterials",  NULL,   ListMaterials)
+#if _DEBUG
+    C_CMD("materialstats",  NULL,   PrintMaterialStats)
+#endif
 }
 
 static __inline pathdirectory_t* directoryForMaterialNamespaceId(materialnamespaceid_t id)
@@ -543,6 +545,8 @@ void Materials_Initialize(void)
 {
     if(initedOk) return; // Already been here.
 
+    VERBOSE( Con_Message("Initializing Materials collection...\n") )
+
     variantSpecs = NULL;
     variantCacheQueue = NULL;
 
@@ -614,8 +618,7 @@ static void destroyBindings(void)
 
 void Materials_Shutdown(void)
 {
-    if(!initedOk)
-        return;
+    if(!initedOk) return;
 
     Materials_PurgeCacheQueue();
 
@@ -880,6 +883,7 @@ static material_t* findMaterialForUri(const Uri* uri)
     return mat;
 }
 
+/// \note Part of the Doomsday public API.
 material_t* Materials_MaterialForUri(const Uri* uri)
 {
     material_t* mat;
@@ -908,6 +912,7 @@ material_t* Materials_MaterialForUri(const Uri* uri)
     return NULL;
 }
 
+/// \note Part of the Doomsday public API.
 material_t* Materials_MaterialForUriCString(const char* path)
 {
     if(path && path[0])
@@ -1573,7 +1578,7 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
  */
 typedef struct {
     const char* like;
-    size_t idx;
+    int idx;
     materialbind_t** storage;
 } collectmaterialworker_paramaters_t;
 
@@ -1603,7 +1608,7 @@ static int collectMaterialWorker(const struct pathdirectory_node_s* node, void* 
 }
 
 static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
-    const char* like, size_t* count, materialbind_t** storage)
+    const char* like, int* count, materialbind_t** storage)
 {
     collectmaterialworker_paramaters_t p;
     materialnamespaceid_t fromId, toId, iterId;
@@ -1664,8 +1669,8 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     boolean printNamespace)
 {
     int numDigits = M_NumDigits(Materials_Count());
-    size_t count = 0;
-    materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, 0);
+    int count = 0;
+    materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, NULL);
 
     if(!printNamespace)
         Con_FPrintf(CPF_YELLOW, "Known materials in namespace '%s'", Str_Text(nameForMaterialNamespaceId(namespaceId)));
@@ -1686,7 +1691,7 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByPath);
+    qsort(foundMaterials, (size_t)count, sizeof *foundMaterials, compareMaterialBindByPath);
 
     { materialbind_t* const* ptr;
     for(ptr = foundMaterials; *ptr; ++ptr)

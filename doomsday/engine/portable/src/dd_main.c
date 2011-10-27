@@ -1466,7 +1466,7 @@ int DD_Main(void)
     Sys_Init();
     F_Init();
 
-    Fonts_Init();
+    Fonts_Initialize();
     if(!isDedicated)
     {
         FR_Init();

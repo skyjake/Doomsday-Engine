@@ -1071,7 +1071,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 if(font)
                 {
                     (*strPtr) += strlen(*strPtr);
-                    state->fontNum = Fonts_ToIndex(font);
+                    state->fontNum = Fonts_ToFontNum(font);
                     continue;
                 }
 

@@ -288,7 +288,7 @@ static void Con_BusyPrepareResources(void)
         font_t* font = Fonts_LoadExternal(fonts[fontIdx].name, fonts[fontIdx].path);
         if(NULL != font)
         {
-            busyFont = Fonts_ToIndex(font);
+            busyFont = Fonts_ToFontNum(font);
             FR_SetFont(busyFont);
             FR_LoadDefaultAttrib();
             busyFontHgt = FR_SingleLineHeight("Busy");
