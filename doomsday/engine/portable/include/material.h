@@ -173,6 +173,24 @@ struct texture_s* Material_DetailTexture(material_t* mat);
  */
 void Material_SetDetailTexture(material_t* mat, struct texture_s* tex);
 
+/// @return  Detail Texture blending factor for this [0...1].
+float Material_DetailStrength(material_t* mat);
+
+/**
+ * Change the Detail Texture strength factor for this.
+ * @param strength  New strength value (will be clamped to [0...1]).
+ */
+void Material_SetDetailStrength(material_t* mat, float strength);
+
+/// @return  Detail Texture scale factor for this [0...1].
+float Material_DetailScale(material_t* mat);
+
+/**
+ * Change the Detail Texture scale factor for this.
+ * @param scale  New scale value (will be clamped to [0...1]).
+ */
+void Material_SetDetailScale(material_t* mat, float scale);
+
 /// @return  Shiny Texture linked to this else @c NULL
 struct texture_s* Material_ShinyTexture(material_t* mat);
 
@@ -181,6 +199,33 @@ struct texture_s* Material_ShinyTexture(material_t* mat);
  * @param tex  Texture to be linked with.
  */
 void Material_SetShinyTexture(material_t* mat, struct texture_s* tex);
+
+/// @return  Shiny Texture blendmode for this.
+blendmode_t Material_ShinyBlendmode(material_t* mat);
+
+/**
+ * Change the Shiny Texture blendmode for this.
+ * @param blendmode  New blendmode value.
+ */
+void Material_SetShinyBlendmode(material_t* mat, blendmode_t blendmode);
+
+/// @return  Shiny Texture strength factor for this.
+float Material_ShinyStrength(material_t* mat);
+
+/**
+ * Change the Shiny Texture strength factor for this.
+ * @param strength  New strength value (will be clamped to [0...1]).
+ */
+void Material_SetShinyStrength(material_t* mat, float strength);
+
+/// @return  Shiny Texture minColor (RGB triplet) for this.
+const float* Material_ShinyMinColor(material_t* mat);
+
+/**
+ * Change the Shiny Texture minColor for this.
+ * @param colorRGB  New RGB color values (each component will be clamped to [0...1]).
+ */
+void Material_SetShinyMinColor(material_t* mat, const float colorRGB[3]);
 
 /// @return  ShinyMask Texture linked to this else @c NULL
 struct texture_s* Material_ShinyMaskTexture(material_t* mat);

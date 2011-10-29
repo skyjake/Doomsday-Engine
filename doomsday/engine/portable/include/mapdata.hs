@@ -153,7 +153,12 @@ struct material
     -       boolean     _inAnimGroup // @c true if belongs to some animgroup.
     -       boolean     _isCustom
     -       texture_s*  _detailTex;
+    _       float       _detailScale;
+    -       float       _detailStrength;
     -       texture_s*  _shinyTex;
+    -       blendmode_t _shinyBlendmode;
+    -       float[3]    _shinyMinColor;
+    -       float       _shinyStrength;
     -       texture_s*  _shinyMaskTex;
     -       byte        _prepared;
 end

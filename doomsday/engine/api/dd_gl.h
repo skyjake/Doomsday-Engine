@@ -135,6 +135,8 @@ typedef enum blendmode_e {
     BM_ALPHA_SUBTRACT
 } blendmode_t;
 
+#define VALID_BLENDMODE(val) ((val) >= BM_ZEROALPHA && (val) <= BM_ALPHA_SUBTRACT)
+
 typedef struct dgl_vertex_s {
     float           xyz[4]; // The fourth is padding.
 } dgl_vertex_t;

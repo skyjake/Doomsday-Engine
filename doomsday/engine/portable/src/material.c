@@ -248,6 +248,30 @@ void Material_SetDetailTexture(material_t* mat, texture_t* tex)
     mat->_detailTex = tex;
 }
 
+float Material_DetailStrength(material_t* mat)
+{
+    assert(mat);
+    return mat->_detailStrength;
+}
+
+void Material_SetDetailStrength(material_t* mat, float strength)
+{
+    assert(mat);
+    mat->_detailStrength = MINMAX_OF(0, strength, 1);
+}
+
+float Material_DetailScale(material_t* mat)
+{
+    assert(mat);
+    return mat->_detailScale;
+}
+
+void Material_SetDetailScale(material_t* mat, float scale)
+{
+    assert(mat);
+    mat->_detailScale = MINMAX_OF(0, scale, 1);
+}
+
 texture_t* Material_ShinyTexture(material_t* mat)
 {
     assert(mat);
@@ -258,6 +282,44 @@ void Material_SetShinyTexture(material_t* mat, texture_t* tex)
 {
     assert(mat);
     mat->_shinyTex = tex;
+}
+
+blendmode_t Material_ShinyBlendmode(material_t* mat)
+{
+    assert(mat);
+    return mat->_shinyBlendmode;
+}
+
+void Material_SetShinyBlendmode(material_t* mat, blendmode_t blendmode)
+{
+    assert(mat && VALID_BLENDMODE(blendmode));
+    mat->_shinyBlendmode = blendmode;
+}
+
+const float* Material_ShinyMinColor(material_t* mat)
+{
+    assert(mat);
+    return mat->_shinyMinColor;
+}
+
+void Material_SetShinyMinColor(material_t* mat, const float colorRGB[3])
+{
+    assert(mat && colorRGB);
+    mat->_shinyMinColor[CR] = MINMAX_OF(0, colorRGB[CR], 1);
+    mat->_shinyMinColor[CG] = MINMAX_OF(0, colorRGB[CG], 1);
+    mat->_shinyMinColor[CB] = MINMAX_OF(0, colorRGB[CB], 1);
+}
+
+float Material_ShinyStrength(material_t* mat)
+{
+    assert(mat);
+    return mat->_shinyStrength;
+}
+
+void Material_SetShinyStrength(material_t* mat, float strength)
+{
+    assert(mat);
+    mat->_shinyStrength = MINMAX_OF(0, strength, 1);
 }
 
 texture_t* Material_ShinyMaskTexture(material_t* mat)

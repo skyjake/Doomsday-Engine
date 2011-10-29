@@ -1096,48 +1096,33 @@ void Materials_Ticker(timespan_t time)
     }
 }
 
-static texture_t* findDetailTextureLinkedToMaterialBinding(const materialbind_t* mb)
+static texture_t* findDetailTextureForDef(const ded_detailtexture_t* def)
 {
-    assert(mb);
+    assert(def);
     {
-    const ded_detailtexture_t* def;
-    detailtex_t* dTex;
-    if(NULL != (def  = MaterialBind_DetailTextureDef(mb)) &&
-       NULL != (dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal)))
-    {
-        return GL_ToTexture(dTex->id);
-    }
-    return NULL;
+    detailtex_t* dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal);
+    if(!dTex) return NULL;
+    return GL_ToTexture(dTex->id);
     }
 }
 
-static texture_t* findShinyTextureLinkedToMaterialBinding(const materialbind_t* mb)
+static texture_t* findShinyTextureForDef(const ded_reflection_t* def)
 {
-    assert(mb);
+    assert(def);
     {
-    const ded_reflection_t* def;
-    shinytex_t* sTex;
-    if(NULL != (def  = MaterialBind_ReflectionDef(mb)) &&
-       NULL != (sTex = R_FindShinyTextureForName(def->shinyMap)))
-    {
-        return GL_ToTexture(sTex->id);
-    }
-    return NULL;
+    shinytex_t* sTex = R_FindShinyTextureForName(def->shinyMap);
+    if(!sTex) return NULL;
+    return GL_ToTexture(sTex->id);
     }
 }
 
-static texture_t* findShinyMaskTextureLinkedToMaterialBinding(const materialbind_t* mb)
+static texture_t* findShinyMaskTextureForDef(const ded_reflection_t* def)
 {
-    assert(mb);
+    assert(def);
     {
-    const ded_reflection_t* def;
-    masktex_t* mTex;
-    if(NULL != (def  = MaterialBind_ReflectionDef(mb)) &&
-       NULL != (mTex = R_FindMaskTextureForName(def->maskMap)))
-    {
-        return GL_ToTexture(mTex->id);
-    }
-    return NULL;
+    masktex_t* mTex = R_FindMaskTextureForName(def->maskMap);
+    if(!mTex) return NULL;
+    return GL_ToTexture(mTex->id);
     }
 }
 
@@ -1150,9 +1135,20 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
 
     if(!mat) return;
 
-    Material_SetDetailTexture(mat,    findDetailTextureLinkedToMaterialBinding(mb));
-    Material_SetShinyTexture(mat,     findShinyTextureLinkedToMaterialBinding(mb));
-    Material_SetShinyMaskTexture(mat, findShinyMaskTextureLinkedToMaterialBinding(mb));
+    { const ded_detailtexture_t* def = MaterialBind_DetailTextureDef(mb);
+    Material_SetDetailTexture(mat, (def? findDetailTextureForDef(def) : NULL));
+    Material_SetDetailStrength(mat, (def? def->strength : 0));
+    Material_SetDetailScale(mat, (def? def->scale : 0));
+    }
+
+    { const ded_reflection_t* def = MaterialBind_ReflectionDef(mb);
+    float black[3] = { 0, 0, 0 };
+    Material_SetShinyTexture(mat, (def? findShinyTextureForDef(def) : NULL));
+    Material_SetShinyMaskTexture(mat, (def? findShinyMaskTextureForDef(def) : NULL));
+    Material_SetShinyBlendmode(mat, (def? def->blendMode : BM_ADD));
+    Material_SetShinyMinColor(mat, (def? def->minColor : black));
+    Material_SetShinyStrength(mat, (def? def->shininess : 0));
+    }
 }
 
 static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_t* tex,
@@ -1206,10 +1202,7 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     struct materialtextureunit_s {
         const texturevariant_t* tex;
     } static texUnits[NUM_MATERIAL_TEXTURE_UNITS];
-    const ded_reflection_t* shinyTexDef = NULL;
-    const ded_detailtexture_t* detailDef = NULL;
     materialvariant_t* variant;
-    materialbind_t* mb;
 
     memset(texUnits, 0, sizeof(texUnits));
 
@@ -1245,7 +1238,6 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         variant = MaterialVariant_TranslationCurrent(variant);
         mat = MaterialVariant_GeneralCase(variant);
     }
-    mb = Materials_PrimaryBind(mat);
 
     // Ensure all resources needed to visualize this Material's layers have been prepared.
     { int i, layerCount = Material_LayerCount(mat);
@@ -1263,6 +1255,8 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
+            materialbind_t* mb = Materials_PrimaryBind(mat);
+
             // Primary texture was (re)prepared.
             Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
 
@@ -1279,54 +1273,44 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         }
     }}
 
-    if(mb)
+    // Do we need to prepare a DetailTexture?
+    if(r_detail)
     {
-        detailDef   = MaterialBind_DetailTextureDef(mb);
-        shinyTexDef = MaterialBind_ReflectionDef(mb);
-
-        // Do we need to prepare a DetailTexture?
-        if(detailDef && r_detail)
+        texture_t* tex = Material_DetailTexture(mat);
+        if(tex)
         {
-            texture_t* tex = Material_DetailTexture(mat);
-            if(tex)
-            {
-                float contrast = detailDef->strength * detailFactor;
-                texturevariantspecification_t* texSpec =
-                    GL_DetailTextureVariantSpecificationForContext(contrast);
-
-                texUnits[MTU_DETAIL].tex = GL_PrepareTextureVariant(tex, texSpec);
-            }
+            const float contrast = Material_DetailStrength(mat) * detailFactor;
+            texturevariantspecification_t* texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
+            texUnits[MTU_DETAIL].tex = GL_PrepareTextureVariant(tex, texSpec);
         }
+    }
 
-        // Do we need to prepare a shiny texture (and possibly a mask)?
-        if(shinyTexDef && useShinySurfaces)
+    // Do we need to prepare a shiny texture (and possibly a mask)?
+    if(useShinySurfaces)
+    {
+        texture_t* tex = Material_ShinyTexture(mat);
+        if(tex)
         {
-            texture_t* tex = Material_ShinyTexture(mat);
-            if(tex)
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                    false, false, false, false);
+
+            texUnits[MTU_REFLECTION].tex = GL_PrepareTextureVariant(tex, texSpec);
+
+            // We are only interested in a mask if we have a shiny texture.
+            if(texUnits[MTU_REFLECTION].tex && (tex = Material_ShinyMaskTexture(mat)))
             {
-                texturevariantspecification_t* texSpec =
-                    GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                        false, false, false, false);
-
-                texUnits[MTU_REFLECTION].tex = GL_PrepareTextureVariant(tex, texSpec);
-
-                // We are only interested in a mask if we have a shiny texture.
-                if(texUnits[MTU_REFLECTION].tex && (tex = Material_ShinyMaskTexture(mat)))
-                {
-                    texSpec = GL_TextureVariantSpecificationForContext(
-                        TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                        -1, -1, -1, true, false, false, false);
-
-                    texUnits[MTU_REFLECTION_MASK].tex = GL_PrepareTextureVariant(tex, texSpec);
-                }
+                texSpec = GL_TextureVariantSpecificationForContext(
+                              TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                              -1, -1, -1, true, false, false, false);
+                texUnits[MTU_REFLECTION_MASK].tex = GL_PrepareTextureVariant(tex, texSpec);
             }
         }
     }
 
     // If we aren't taking a snapshot; get out of here.
-    if(!snapshot)
-        return variant;
+    if(!snapshot) return variant;
 
     Materials_InitSnapshot(snapshot);
 
@@ -1364,12 +1348,12 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     if(!Material_IsSkyMasked(mat))
     {
         // Setup the detail texture unit?
-        if(texUnits[MTU_DETAIL].tex && detailDef && snapshot->isOpaque)
+        if(texUnits[MTU_DETAIL].tex && snapshot->isOpaque)
         {
             const texturevariant_t* tex = texUnits[MTU_DETAIL].tex;
-            float width  = Texture_Width(TextureVariant_GeneralCase(tex));
-            float height = Texture_Height(TextureVariant_GeneralCase(tex));
-            float scale = MAX_OF(1, detailDef->scale);
+            const float width  = Texture_Width(TextureVariant_GeneralCase(tex));
+            const float height = Texture_Height(TextureVariant_GeneralCase(tex));
+            float scale = Material_DetailScale(mat);
 
             // Apply the global scaling factor.
             if(detailScale > .0001f)
@@ -1380,33 +1364,33 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
         }
 
         // Setup the shiny texture units?
-        if(shinyTexDef)
+        if(texUnits[MTU_REFLECTION].tex)
         {
-            if(texUnits[MTU_REFLECTION].tex)
-            {
-                const texturevariant_t* tex = texUnits[MTU_REFLECTION].tex;
-                setTexUnit(snapshot, MTU_REFLECTION, tex, shinyTexDef->blendMode,
-                    GL_LINEAR, 1, 1, 0, 0, shinyTexDef->shininess);
-            }
+            const texturevariant_t* tex = texUnits[MTU_REFLECTION].tex;
+            const blendmode_t blendmode = Material_ShinyBlendmode(mat);
+            const float strength = Material_ShinyStrength(mat);
 
-            if(texUnits[MTU_REFLECTION_MASK].tex)
-            {
-                const texturevariant_t* tex = texUnits[MTU_REFLECTION_MASK].tex;
+            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, GL_LINEAR, 1, 1, 0, 0, strength);
+        }
 
-                setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
-                    snapshot->units[MTU_PRIMARY].magMode,
-                    1.f / (snapshot->width * Texture_Width(TextureVariant_GeneralCase(tex))),
-                    1.f / (snapshot->height * Texture_Height(TextureVariant_GeneralCase(tex))),
-                    snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
-            }
+        if(texUnits[MTU_REFLECTION_MASK].tex)
+        {
+            const texturevariant_t* tex = texUnits[MTU_REFLECTION_MASK].tex;
+
+            setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
+                snapshot->units[MTU_PRIMARY].magMode,
+                1.f / (snapshot->width * Texture_Width(TextureVariant_GeneralCase(tex))),
+                1.f / (snapshot->height * Texture_Height(TextureVariant_GeneralCase(tex))),
+                snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
         }
     }
 
-    if(MC_MAPSURFACE == spec->context && shinyTexDef)
+    if(MC_MAPSURFACE == spec->context && texUnits[MTU_REFLECTION].tex)
     {
-        snapshot->shinyMinColor[CR] = shinyTexDef->minColor[CR];
-        snapshot->shinyMinColor[CG] = shinyTexDef->minColor[CG];
-        snapshot->shinyMinColor[CB] = shinyTexDef->minColor[CB];
+        const float* minColor = Material_ShinyMinColor(mat);
+        snapshot->shinyMinColor[CR] = minColor[CR];
+        snapshot->shinyMinColor[CG] = minColor[CG];
+        snapshot->shinyMinColor[CB] = minColor[CB];
     }
 
     if(MC_SKYSPHERE == spec->context && texUnits[MTU_PRIMARY].tex)

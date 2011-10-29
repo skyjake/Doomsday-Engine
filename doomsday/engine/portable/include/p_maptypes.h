@@ -139,7 +139,12 @@ typedef struct material_s {
     boolean             _inAnimGroup;  // @c true if belongs to some animgroup.
     boolean             _isCustom;
     struct texture_s*   _detailTex;
+    float               _detailScale;
+    float               _detailStrength;
     struct texture_s*   _shinyTex;
+    blendmode_t         _shinyBlendmode;
+    float               _shinyMinColor[3];
+    float               _shinyStrength;
     struct texture_s*   _shinyMaskTex;
     byte                _prepared;
 } material_t;
