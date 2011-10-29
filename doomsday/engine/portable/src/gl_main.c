@@ -976,18 +976,18 @@ void GL_SetMaterialUI(material_t* mat)
     if(!mat)
         return; // \fixme we need a "NULL material".
 
-    Materials_Prepare(&ms, mat, true,
+    Materials_Prepare(&ms, mat,
         Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false), true);
     GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
 {
     material_snapshot_t ms;
-    Materials_Prepare(&ms, mat, true,
+    Materials_Prepare(&ms, mat,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
-            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false));
+            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true);
     GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 }
 

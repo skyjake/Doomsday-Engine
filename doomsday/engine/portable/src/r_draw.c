@@ -247,9 +247,9 @@ void R_DrawViewBorder(void)
     if(mat)
     {
         material_snapshot_t ms;
-        Materials_Prepare(&ms, mat, true,
+        Materials_Prepare(&ms, mat,
             Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0,
-                GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false));
+                GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false), true);
         GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, (filterUI ? GL_LINEAR : GL_NEAREST));
         GL_DrawCutRectTiled(0, 0, port->dimensions.width, port->dimensions.height, ms.width, ms.height, 0, 0,
                             vd->window.x - border, vd->window.y - border,

@@ -708,7 +708,7 @@ void Materials_ProcessCacheQueue(void)
     while(variantCacheQueue)
     {
         variantcachequeue_node_t* next = variantCacheQueue->next;
-        Materials_Prepare(NULL, variantCacheQueue->mat, true, variantCacheQueue->spec);
+        Materials_Prepare(NULL, variantCacheQueue->mat, variantCacheQueue->spec, true);
         free(variantCacheQueue);
         variantCacheQueue = next;
     }
@@ -1195,7 +1195,7 @@ void Materials_InitSnapshot(material_snapshot_t* ss)
 }
 
 materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
-    boolean smoothed, materialvariantspecification_t* spec)
+    materialvariantspecification_t* spec, boolean smoothed)
 {
     assert(mat && spec);
     {
@@ -1426,9 +1426,9 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
 {
     if(!mat) return 0;
     if(!Material_Prepared(mat))
-        Materials_Prepare(NULL, mat, false,
+        Materials_Prepare(NULL, mat,
             Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
+                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false);
     return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
 }
 
@@ -1436,9 +1436,9 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
     if(!mat) return 0;
     if(!Material_Prepared(mat))
-        Materials_Prepare(NULL, mat, false,
+        Materials_Prepare(NULL, mat,
             Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
+                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false);
     return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
 }
 
@@ -1855,8 +1855,8 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
     setmaterialtranslationworker_paramaters_t* params =
         (setmaterialtranslationworker_paramaters_t*) paramaters;
     materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
-    materialvariant_t* current = Materials_Prepare(NULL, params->current, false, spec);
-    materialvariant_t* next    = Materials_Prepare(NULL, params->next,    false, spec);
+    materialvariant_t* current = Materials_Prepare(NULL, params->current, spec, false);
+    materialvariant_t* next    = Materials_Prepare(NULL, params->next, spec, false);
 
     MaterialVariant_SetTranslation(variant, current, next);
     return 0; // Continue iteration.

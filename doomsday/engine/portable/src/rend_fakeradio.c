@@ -1425,9 +1425,9 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
     { material_snapshot_t ms;
     rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
 
-    Materials_Prepare(&ms, pln->PS_material, true,
+    Materials_Prepare(&ms, pln->PS_material,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false));
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true);
     if(ms.glowing > 0)
         return;
 

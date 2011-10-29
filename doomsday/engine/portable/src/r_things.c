@@ -605,9 +605,9 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     sprFrame = &sprDef->spriteFrames[frame];
     mat = sprFrame->mats[0];
 
-    Materials_Prepare(&ms, mat, false,
+    Materials_Prepare(&ms, mat,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false), false);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -648,9 +648,9 @@ float R_VisualRadius(mobj_t* mo)
     if(material)
     {
         material_snapshot_t ms;
-        Materials_Prepare(&ms, material, true,
+        Materials_Prepare(&ms, material,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
         return ms.width / 2;
     }
 
@@ -938,9 +938,9 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     if(!params)
         return; // Wha?
 
-    Materials_Prepare(&ms, mat, true,
+    Materials_Prepare(&ms, mat,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -1188,9 +1188,9 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    Materials_Prepare(&ms, mat, true,
+    Materials_Prepare(&ms, mat,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
-            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false));
+            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -1468,9 +1468,9 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat, true,
+        Materials_Prepare(&ms, mat,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false));
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false), true);
         pl = (const pointlight_analysis_t*) Texture_Analysis(
             MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)

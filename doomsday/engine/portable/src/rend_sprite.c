@@ -336,9 +336,9 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    Materials_Prepare(&ms, sprFrame->mats[0], true,
+    Materials_Prepare(&ms, sprFrame->mats[0],
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false));
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
@@ -426,9 +426,9 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
         material_snapshot_t ms;
 
-        Materials_Prepare(&ms, mat, true,
+        Materials_Prepare(&ms, mat,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false));
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false), true);
         GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
@@ -941,12 +941,12 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     if(mat)
     {
         // Might we need a colour translation?
-        Materials_Prepare(&ms, mat, true,
+        Materials_Prepare(&ms, mat,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0,
                 (renderTextures == 1? 1 : 0),
                 (renderTextures == 1? params->tClass : 0),
                 (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                1, -2, -1, true, true, true, false) );
+                1, -2, -1, true, true, true, false), true);
         GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }

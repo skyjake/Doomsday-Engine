@@ -759,9 +759,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         if(mat)
         {
             material_snapshot_t ms;
-            Materials_Prepare(&ms, mat, true,
+            Materials_Prepare(&ms, mat,
                 Materials_VariantSpecificationForContext(MC_MODELSKIN,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false));
+                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false), true);
             skinTexture = MSU(&ms, MTU_PRIMARY).tex.glName;
         }
         else

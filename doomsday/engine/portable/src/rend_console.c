@@ -500,9 +500,9 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
     {
         material_snapshot_t ms;
 
-        Materials_Prepare(&ms, consoleBackgroundMaterial, Con_IsActive(),
+        Materials_Prepare(&ms, consoleBackgroundMaterial,
             Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                0, 1, 0, false, false, false, false));
+                0, 1, 0, false, false, false, false), Con_IsActive());
         GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
 
         bgX = (int) (ms.width  * consoleBackgroundZoom);

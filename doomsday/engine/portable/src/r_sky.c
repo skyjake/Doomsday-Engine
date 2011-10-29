@@ -162,10 +162,10 @@ static void prepareSkySphere(void)
 
         if(!(slayer->flags & SLF_ENABLED) || !slayer->material) continue;
 
-        Materials_Prepare(&ms, slayer->material, false,
+        Materials_Prepare(&ms, slayer->material,
             Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                 TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
-                0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false));
+                0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false), false);
 
         slayer->tex = MSU(&ms, MTU_PRIMARY).tex.glName;
         Texture_Dimensions(MSU(&ms, MTU_PRIMARY).tex.texture,
