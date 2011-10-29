@@ -31,8 +31,8 @@ extern "C" {
 #include "dd_types.h"
 
 /**
- * String Pool.  Simple data structure for managing a set of unique strings
- * with integral interning mechanism.
+ * String Pool.  Simple data structure for managing a set of unique case-insensitive
+ * strings with integral interning mechanism.
  *
  * @ingroup data
  */
@@ -47,7 +47,7 @@ typedef uint StringPoolInternId;
  * @param count  Number of strings to be interned.
  */
 StringPool* StringPool_New(void);
-StringPool* StringPool_NewWithStrings(ddstring_t** strings, uint count);
+StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count);
 void StringPool_Delete(StringPool* pool);
 
 /// Clear the string pool (reset to default initial state).
@@ -78,6 +78,7 @@ const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_
 
 /**
  * Have we already interned @a str?
+ *
  * @param str  Candidate string to look for.
  * @return  Id associated with the interned copy of @a str if found, else @c 0
  */
@@ -86,12 +87,28 @@ StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str
 /**
  * Retrieve an immutable copy of the interned string associated with @a internId.
  *
- * \note If @a internId is invalid this method does not return and a fatal error is thrown.
- *
  * @param internId  Id of the interned string to retrieve.
  * @return  Interned string associated with @a internId.
  */
 const ddstring_t* StringPool_String(StringPool* pool, StringPoolInternId internId);
+
+/**
+ * Remove an interned string from the pool.
+ *
+ * @param str  String to be removed.
+ * @return  @c true if string @a str was present and subsequently removed.
+ */
+boolean StringPool_Remove(StringPool* pool, ddstring_t* str);
+
+/// Same as StringPool::Remove except the argument is StringPoolInternId.
+boolean StringPool_RemoveIntern(StringPool* pool, StringPoolInternId internId);
+
+#if _DEBUG
+/**
+ * Print contents of the pool. For debug.
+ */
+void StringPool_Print(StringPool* pool);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"
