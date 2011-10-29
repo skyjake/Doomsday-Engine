@@ -284,7 +284,7 @@ font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet)
 /// \note Part of the Doomsday public API.
 font_t* Fonts_FontForUri(const Uri* uri)
 {
-    return Fonts_FontForUri2(uri, (verbose >= 1)/*log warnings if verbose*/);
+    return Fonts_FontForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 font_t* Fonts_FontForUriCString2(const char* path, boolean quiet)
@@ -302,7 +302,7 @@ font_t* Fonts_FontForUriCString2(const char* path, boolean quiet)
 /// \note Part of the Doomsday public API.
 font_t* Fonts_FontForUriCString(const char* path)
 {
-    return Fonts_FontForUriCString2(path, (verbose >= 1)/*log warnings if verbose*/);
+    return Fonts_FontForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 /// \note Part of the Doomsday public API.

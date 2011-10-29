@@ -914,7 +914,7 @@ material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet)
 /// \note Part of the Doomsday public API.
 material_t* Materials_MaterialForUri(const Uri* uri)
 {
-    return Materials_MaterialForUri2(uri, (verbose >= 1)/*log warnings if verbose*/);
+    return Materials_MaterialForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 
 }
 
@@ -933,7 +933,7 @@ material_t* Materials_MaterialForUriCString2(const char* path, boolean quiet)
 /// \note Part of the Doomsday public API.
 material_t* Materials_MaterialForUriCString(const char* path)
 {
-    return Materials_MaterialForUriCString2(path, (verbose >= 1)/*log warnings if verbose*/);
+    return Materials_MaterialForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 /// \note Part of the Doomsday public API.
