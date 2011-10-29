@@ -202,7 +202,7 @@ material_snapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, mate
     return ms;
 }
 
-material_snapshot_t* MateriVariant_DetachSnapshot(materialvariant_t* mat)
+material_snapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat)
 {
     assert(mat);
     {
