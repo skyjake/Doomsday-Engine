@@ -390,6 +390,14 @@ static void clearCommandHistory(void)
 
 boolean Con_Init(void)
 {
+    if(ConsoleInited)
+    {
+#if _DEBUG
+        Con_Error("Con_Init: Console already initialized!");
+#endif
+        return true;
+    }
+
     Con_Message("Initializing the console...\n");
 
     histBuf = CBuffer_New(512, 70, 0);
@@ -426,15 +434,22 @@ boolean Con_Init(void)
 
 void Con_Shutdown(void)
 {
+    if(!ConsoleInited) return;
+
     Con_Message("Shuting down the console...\n");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
-    if(prbuff)
-        M_Free(prbuff); // Free the print buffer.
 
-    CBuffer_Delete(histBuf); // The console history buffer.
+    if(prbuff)
+        M_Free(prbuff), prbuff = NULL;
+
+    if(histBuf)
+        CBuffer_Delete(histBuf), histBuf = NULL;
+
     clearCommandHistory();
+
+    ConsoleInited = false;
 }
 
 boolean Con_IsActive(void)
