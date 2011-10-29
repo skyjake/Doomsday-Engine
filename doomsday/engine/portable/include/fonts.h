@@ -95,6 +95,7 @@ font_t* Fonts_ToFont(fontnum_t num);
 fontnum_t Fonts_ToFontNum(font_t* font);
 
 /// @return  Font associated with @a uri else @c NULL.
+font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet);
 font_t* Fonts_FontForUri(const Uri* uri);
 
 /**

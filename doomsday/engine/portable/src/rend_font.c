@@ -1066,7 +1066,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 Uri* uri;
                 (*strPtr) += 4;
                 uri = Uri_NewWithPath2(*strPtr, RC_NULL);
-                font = Fonts_FontForUri(uri);
+                font = Fonts_FontForUri2(uri, true/*quiet please*/);
                 Uri_Delete(uri);
                 if(font)
                 {

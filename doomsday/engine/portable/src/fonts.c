@@ -253,8 +253,7 @@ static font_t* findFontForUri(const Uri* uri)
     return font;
 }
 
-/// \note Part of the Doomsday public API.
-font_t* Fonts_FontForUri(const Uri* uri)
+font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet)
 {
     font_t* font;
     if(!inited || !uri) return NULL;
@@ -273,7 +272,7 @@ font_t* Fonts_FontForUri(const Uri* uri)
     if(font) return font;
 
     // Not found.
-    if(verbose)
+    if(!quiet)
     {
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Fonts::FontForUri: \"%s\" not found!\n", Str_Text(path));
@@ -283,16 +282,27 @@ font_t* Fonts_FontForUri(const Uri* uri)
 }
 
 /// \note Part of the Doomsday public API.
-font_t* Fonts_FontForUriCString(const char* path)
+font_t* Fonts_FontForUri(const Uri* uri)
+{
+    return Fonts_FontForUri2(uri, (verbose >= 1)/*log warnings if verbose*/);
+}
+
+font_t* Fonts_FontForUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        font_t* font = Fonts_FontForUri(uri);
+        font_t* font = Fonts_FontForUri2(uri, quiet);
         Uri_Delete(uri);
         return font;
     }
     return NULL;
+}
+
+/// \note Part of the Doomsday public API.
+font_t* Fonts_FontForUriCString(const char* path)
+{
+    return Fonts_FontForUriCString2(path, (verbose >= 1)/*log warnings if verbose*/);
 }
 
 /// \note Part of the Doomsday public API.

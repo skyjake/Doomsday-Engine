@@ -1030,7 +1030,7 @@ void Def_Read(void)
     for(i = 0; i < defs.count.compositeFonts.num; ++i)
     {
         ded_compositefont_t* def = defs.compositeFonts + i;
-        font_t* font = Fonts_FontForUri(def->id);
+        font_t* font = Fonts_FontForUri2(def->id, true/*quiet please*/);
         if(!font)
         {   // A new Font.
             Fonts_CreateBitmapCompositeFromDef(def);
