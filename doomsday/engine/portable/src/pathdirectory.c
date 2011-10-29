@@ -1355,10 +1355,10 @@ void PathDirectoryNode_AttachUserData(pathdirectory_node_t* node, void* data)
 {
     assert(NULL != node);
 #if _DEBUG
-    if(NULL != node->_pair.data)
+    if(node->_pair.data)
     {
         Con_Message("Warning:PathDirectoryNode::AttachUserData: Data is already associated "
-            "with this node, will be replaced.");
+            "with this node, will be replaced.\n");
     }
 #endif
     node->_pair.data = data;

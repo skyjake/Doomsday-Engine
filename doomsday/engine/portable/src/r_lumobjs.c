@@ -715,7 +715,8 @@ static void addLuminous(mobj_t* mo)
     spritetex_t* sprTex;
     material_t* mat;
     float autoLightColor[3];
-    material_snapshot_t ms;
+    material_snapshot_t* ms;
+    materialvariant_t* variant;
     const pointlight_analysis_t* pl;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -745,16 +746,17 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
 #endif
 
     // Ensure we have up-to-date information about the material.
-    Materials_Prepare(&ms, mat,
+    variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
     pl = (const pointlight_analysis_t*) Texture_Analysis(
-        MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
+        MSU(ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
     if(NULL == pl)
         return; // Not good...
 
     size = pl->brightMul;
-    yOffset = ms.height * pl->originY;
+    yOffset = ms->height * pl->originY;
     // Does the mobj have an active light definition?
     if(def)
     {
@@ -768,13 +770,13 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
     autoLightColor[CG] = pl->color[CG];
     autoLightColor[CB] = pl->color[CB];
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
 
     center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->pos[VZ] + sprTex->offY - (float) ms.height - mo->subsector->sector->SP_floorheight;
+    mul = mo->pos[VZ] + sprTex->offY - (float) ms->height - mo->subsector->sector->SP_floorheight;
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.
@@ -954,13 +956,15 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
 {
     assert(l && surface);
     {
-    material_snapshot_t ms;
-    Materials_Prepare(&ms, surface->material,
+    material_snapshot_t* ms;
+    materialvariant_t* variant = Materials_Prepare(surface->material,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true);
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
+
     V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
-    V3_Copy(LUM_PLANE(l)->color, ms.colorAmplified);
-    LUM_PLANE(l)->intensity = ms.glowing;
+    V3_Copy(LUM_PLANE(l)->color, ms->colorAmplified);
+    LUM_PLANE(l)->intensity = ms->glowing;
     LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
     l->maxDistance = 0;
     l->decorSource = 0;
@@ -975,15 +979,14 @@ static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
  */
 static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 {
-    static material_snapshot_t ms;
-
     switch(DMU_GetType(suf->owner))
     {
-    case DMU_PLANE:
-        {
+    case DMU_PLANE: {
         plane_t* pln = (plane_t*)suf->owner;
         sector_t* sec = pln->sector;
         linkobjtossecparams_t params;
+        materialvariant_t* variant;
+        material_snapshot_t* ms;
         lumobj_t* lum;
 
         // Only produce a light for sectors with open space.
@@ -992,10 +995,11 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
             return true; // Continue iteration.
 
         // Are we glowing at this moment in time?
-        Materials_Prepare(&ms, suf->material,
+        variant = Materials_Prepare(suf->material,
             Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true);
-        if(!(ms.glowing > .0001f))
+                GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
+        ms = MaterialVariant_Snapshot(variant);
+        if(!(ms->glowing > .0001f))
             return true; // Continue iteration.
 
         // \note Plane lights do not spread so simply link to all subsectors of this sector.
@@ -1013,7 +1017,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
             RIT_LinkObjToSubsector(sec->ssectors[i], (void*)&params);
         }}
         break;
-        }
+      }
     case DMU_SIDEDEF:
         return true; // Not yet supported by this algorithm.
 

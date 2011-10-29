@@ -971,24 +971,27 @@ int GL_GetTexAnisoMul(int level)
 
 void GL_SetMaterialUI(material_t* mat)
 {
-    material_snapshot_t ms;
+    materialvariant_t* variant;
+    material_snapshot_t* ms;
 
-    if(!mat)
-        return; // \fixme we need a "NULL material".
+    if(!mat) return; // \fixme we need a "NULL material".
 
-    Materials_Prepare(&ms, mat,
+    variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false), true);
-    GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
+    GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
 {
-    material_snapshot_t ms;
-    Materials_Prepare(&ms, mat,
+    materialvariant_t* variant;
+    material_snapshot_t* ms;
+    variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
-            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true);
-    GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
+            tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
+    GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)

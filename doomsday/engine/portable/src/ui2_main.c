@@ -526,11 +526,12 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     DGLuint tex;
     if(p->_bg.material)
     {
-        material_snapshot_t ms;
-        Materials_Prepare(&ms, p->_bg.material,
+        material_snapshot_t* ms;
+        materialvariant_t* variant = Materials_Prepare(p->_bg.material,
             Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                0, 1, 0, false, false, false, false), true);
-        tex = ms.units[MTU_PRIMARY].tex.glName;
+                0, 1, 0, false, false, false, false), true, true);
+        ms = MaterialVariant_Snapshot(variant);
+        tex = ms->units[MTU_PRIMARY].tex.glName;
     }
     else
     {
@@ -997,23 +998,22 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             material_t* mat;
             if((mat = f->texRef.material))
             {
-                material_snapshot_t ms;
-
-                memset(&ms, 0, sizeof(ms));               
-                Materials_Prepare(&ms, mat,
+                material_snapshot_t* ms;
+                materialvariant_t* variant = Materials_Prepare(mat,
                     Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-                        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false), true);
+                        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false), true, true);
+                ms = MaterialVariant_Snapshot(variant);
 
-                if(ms.units[MTU_PRIMARY].tex.glName)
+                if(ms->units[MTU_PRIMARY].tex.glName)
                 {
-                    const texturevariantspecification_t* spec = MSU(&ms, MTU_PRIMARY).tex.spec;
+                    const texturevariantspecification_t* spec = MSU(ms, MTU_PRIMARY).tex.spec;
 
                     /// \todo Utilize *all* properties of the Material.
-                    glTexName = MSU(&ms, MTU_PRIMARY).tex.glName;
-                    V3_Set(offset, -MSU(&ms, MTU_PRIMARY).offset[0], -MSU(&ms, MTU_PRIMARY).offset[1], 0);
-                    V3_Set(dimensions, ms.width  + TS_GENERAL(spec)->border*2,
-                                       ms.height + TS_GENERAL(spec)->border*2, 0);
-                    V2_Set(texScale, MSU(&ms, MTU_PRIMARY).tex.s, MSU(&ms, MTU_PRIMARY).tex.t);
+                    glTexName = MSU(ms, MTU_PRIMARY).tex.glName;
+                    V3_Set(offset, -MSU(ms, MTU_PRIMARY).offset[0], -MSU(ms, MTU_PRIMARY).offset[1], 0);
+                    V3_Set(dimensions, ms->width  + TS_GENERAL(spec)->border*2,
+                                       ms->height + TS_GENERAL(spec)->border*2, 0);
+                    V2_Set(texScale, MSU(ms, MTU_PRIMARY).tex.s, MSU(ms, MTU_PRIMARY).tex.t);
                 }
             }
             break;

@@ -1422,13 +1422,13 @@ static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, cons
     V2_Copy(outer[0], lineDef->L_vpos(side));
     V2_Copy(outer[1], lineDef->L_vpos(side^1));
 
-    { material_snapshot_t ms;
+    { material_snapshot_t* ms;
     rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
-
-    Materials_Prepare(&ms, pln->PS_material,
+    materialvariant_t* variant = Materials_Prepare(pln->PS_material,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true);
-    if(ms.glowing > 0)
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
+    if(ms->glowing > 0)
         return;
 
     memset(rTU, 0, sizeof(rTU));

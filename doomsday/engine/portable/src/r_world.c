@@ -1498,11 +1498,12 @@ void R_ClearSectorFlags(void)
 boolean R_IsGlowingPlane(const plane_t* pln)
 {
     material_t* mat = pln->surface.material;
-    material_snapshot_t ms;
-    Materials_Prepare(&ms, mat,
+    material_snapshot_t* ms;
+    materialvariant_t* variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true);
-    return ((mat && !Material_IsDrawable(mat)) || ms.glowing > 0 ||
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
+    return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 ||
             R_IsSkySurface(&pln->surface));
 }
 
@@ -1513,11 +1514,12 @@ float R_GlowStrength(const plane_t* pln)
     {
         if(Material_IsDrawable(mat) && !R_IsSkySurface(&pln->surface))
         {
-            material_snapshot_t ms;
-            Materials_Prepare(&ms, mat,
+            material_snapshot_t* ms;
+            materialvariant_t* variant = Materials_Prepare(mat,
                 Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                    GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true);
-            return ms.glowing;
+                    GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
+            ms = MaterialVariant_Snapshot(variant);
+            return ms->glowing;
         }
     }
     return 0;

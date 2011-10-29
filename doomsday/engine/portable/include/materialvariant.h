@@ -129,6 +129,9 @@ typedef struct materialvariant_s {
 
     /// Specification used to derive this variant.
     materialvariantspecification_t* _spec;
+
+    /// Cached copy of current state if any.
+    material_snapshot_t* _snapshot;
 } materialvariant_t;
 
 materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
@@ -159,6 +162,20 @@ materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* ma
  * @return  MaterialVariantLayer for the specified layer index.
  */
 const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int layer);
+
+/**
+ * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
+ * @return  Same as @a materialSnapshot for caller convenience.
+ */
+material_snapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, material_snapshot_t* materialSnapshot);
+
+/**
+ * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
+ */
+material_snapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat);
+
+/// @return  MaterialSnapshot data associated with this.
+material_snapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat);
 
 /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);

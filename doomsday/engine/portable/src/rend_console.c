@@ -498,15 +498,16 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
 
     if(consoleBackgroundMaterial)
     {
-        material_snapshot_t ms;
-
-        Materials_Prepare(&ms, consoleBackgroundMaterial,
+        material_snapshot_t* ms;
+        materialvariant_t* variant = Materials_Prepare(consoleBackgroundMaterial,
             Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                0, 1, 0, false, false, false, false), Con_IsActive());
-        GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
+                0, 1, 0, false, false, false, false), Con_IsActive(), true);
+        ms = MaterialVariant_Snapshot(variant);
 
-        bgX = (int) (ms.width  * consoleBackgroundZoom);
-        bgY = (int) (ms.height * consoleBackgroundZoom);
+        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+
+        bgX = (int) (ms->width  * consoleBackgroundZoom);
+        bgY = (int) (ms->height * consoleBackgroundZoom);
 
         glEnable(GL_TEXTURE_2D);
         if(consoleBackgroundTurn != 0)

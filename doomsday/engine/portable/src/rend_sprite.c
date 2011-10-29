@@ -319,7 +319,8 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     const spritedef_t* sprDef;
     const spritetex_t* sprTex;
     const spriteframe_t* sprFrame;
-    material_snapshot_t ms;
+    material_snapshot_t* ms;
+    materialvariant_t* variant;
     boolean flip;
     const variantspecification_t* spec;
 
@@ -336,23 +337,24 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    Materials_Prepare(&ms, sprFrame->mats[0],
+    variant = Materials_Prepare(sprFrame->mats[0],
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
-    spec = TS_GENERAL(MSU(&ms, MTU_PRIMARY).tex.spec);
+    spec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
     assert(NULL != spec);
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -spec->border;
     params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -spec->border;
-    params->width = ms.width + spec->border*2;
-    params->height = ms.height + spec->border*2;
+    params->width = ms->width + spec->border*2;
+    params->height = ms->height + spec->border*2;
 
     // Calculate texture coordinates.
-    params->texOffset[0] = MSU(&ms, MTU_PRIMARY).tex.s;
-    params->texOffset[1] = MSU(&ms, MTU_PRIMARY).tex.t;
+    params->texOffset[0] = MSU(ms, MTU_PRIMARY).tex.s;
+    params->texOffset[1] = MSU(ms, MTU_PRIMARY).tex.t;
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
@@ -424,12 +426,12 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
-        material_snapshot_t ms;
-
-        Materials_Prepare(&ms, mat,
+        material_snapshot_t* ms;
+        materialvariant_t* variant = Materials_Prepare(mat,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false), true);
-        GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false), true, true);
+        ms = MaterialVariant_Snapshot(variant);
+        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -929,7 +931,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     float spriteCenter[3];
     float surfaceNormal[3];
     material_t* mat = NULL;
-    material_snapshot_t ms;
+    material_snapshot_t* ms;
     int i;
 
     if(renderTextures == 1)
@@ -941,13 +943,14 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     if(mat)
     {
         // Might we need a colour translation?
-        Materials_Prepare(&ms, mat,
+        materialvariant_t* variant = Materials_Prepare(mat,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0,
                 (renderTextures == 1? 1 : 0),
                 (renderTextures == 1? params->tClass : 0),
                 (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                1, -2, -1, true, true, true, false), true);
-        GL_BindTexture(MSU(&ms, MTU_PRIMARY).tex.glName, MSU(&ms, MTU_PRIMARY).magMode);
+                1, -2, -1, true, true, true, false), true, true);
+        ms = MaterialVariant_Snapshot(variant);
+        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
     else

@@ -803,25 +803,27 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 {
     spritedef_t* spr = &sprites[sprite];
-    material_snapshot_t ms;
+    materialvariant_t* variant;
+    material_snapshot_t* ms;
     spritetex_t* sprTex;
     int off;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
 
-    Materials_Prepare(&ms, spr->spriteFrames[frame].mats[0],
+    variant = Materials_Prepare(spr->spriteFrames[frame].mats[0],
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
 
-    off = sprTex->offY - ms.height;
+    off = sprTex->offY - ms->height;
     if(off < 0)
         off = 0;
 
-    R_ScaleModel(mf, ms.height, off);
+    R_ScaleModel(mf, ms->height, off);
 }
 
 float R_GetModelVisualRadius(modeldef_t* mf)

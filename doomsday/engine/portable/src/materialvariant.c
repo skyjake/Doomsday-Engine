@@ -46,6 +46,7 @@ materialvariant_t* MaterialVariant_New(material_t* generalCase,
     mat->_spec = spec;
     mat->_current = mat->_next = mat;
     mat->_inter = 0;
+    mat->_snapshot = NULL;
 
     // Initialize layers.
     { int i;
@@ -65,6 +66,8 @@ materialvariant_t* MaterialVariant_New(material_t* generalCase,
 void MaterialVariant_Delete(materialvariant_t* mat)
 {
     assert(mat);
+    if(mat->_snapshot)
+        free(mat->_snapshot), mat->_snapshot = NULL;
     free(mat);
 }
 
@@ -182,6 +185,37 @@ const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int
     if(layer >= 0 && layer < Material_LayerCount(mat->_generalCase))
         return &mat->_layers[layer];
     return NULL;
+}
+
+material_snapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, material_snapshot_t* ms)
+{
+    assert(mat && ms);
+    if(mat->_snapshot)
+    {
+#if _DEBUG
+        Con_Message("Warning:MaterialVariant::AttachSnapshot: A snapshot is already attached to %p, "
+                    "it will be replaced.\n", (void*) mat);
+#endif
+        free(mat->_snapshot);
+    }
+    mat->_snapshot = ms;
+    return ms;
+}
+
+material_snapshot_t* MateriVariant_DetachSnapshot(materialvariant_t* mat)
+{
+    assert(mat);
+    {
+    material_snapshot_t* ms = mat->_snapshot;
+    mat->_snapshot = NULL;
+    return ms;
+    }
+}
+
+material_snapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat)
+{
+    assert(mat);
+    return mat->_snapshot;
 }
 
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat)

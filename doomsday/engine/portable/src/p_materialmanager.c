@@ -708,7 +708,7 @@ void Materials_ProcessCacheQueue(void)
     while(variantCacheQueue)
     {
         variantcachequeue_node_t* next = variantCacheQueue->next;
-        Materials_Prepare(NULL, variantCacheQueue->mat, variantCacheQueue->spec, true);
+        Materials_Prepare(variantCacheQueue->mat, variantCacheQueue->spec, true, false);
         free(variantCacheQueue);
         variantCacheQueue = next;
     }
@@ -1182,26 +1182,37 @@ static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_
     }
 }
 
-void Materials_InitSnapshot(material_snapshot_t* ss)
+void Materials_InitSnapshot(material_snapshot_t* ms)
 {
-    assert(ss);
+    assert(ms);
+
+    memset(ms, 0, sizeof(material_snapshot_t));
+    ms->width = ms->height = 0;
+
     { int i;
     for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
-        setTexUnit(ss, i, NULL, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
-    }
-    V3_Set(ss->topColor, 1, 1, 1);
-    V3_Set(ss->color, 1, 1, 1);
-    V3_Set(ss->colorAmplified, 1, 1, 1);
+    {
+        setTexUnit(ms, i, NULL, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
+    }}
+
+    V3_Set(ms->topColor, 1, 1, 1);
+    V3_Set(ms->color, 1, 1, 1);
+    V3_Set(ms->colorAmplified, 1, 1, 1);
+    V3_Set(ms->shinyMinColor, 0, 0, 0);
+
+    ms->glowing = 0;
+    ms->isOpaque = true;
 }
 
-materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* mat,
-    materialvariantspecification_t* spec, boolean smoothed)
+materialvariant_t* Materials_Prepare(material_t* mat, materialvariantspecification_t* spec,
+    boolean smoothed, boolean updateSnapshot)
 {
     assert(mat && spec);
     {
     struct materialtextureunit_s {
         const texturevariant_t* tex;
     } static texUnits[NUM_MATERIAL_TEXTURE_UNITS];
+    material_snapshot_t* snapshot;
     materialvariant_t* variant;
 
     memset(texUnits, 0, sizeof(texUnits));
@@ -1310,8 +1321,18 @@ materialvariant_t* Materials_Prepare(material_snapshot_t* snapshot, material_t* 
     }
 
     // If we aren't taking a snapshot; get out of here.
-    if(!snapshot) return variant;
+    if(!updateSnapshot) return variant;
 
+    // Acquire the snapshot we will be updating.
+    snapshot = MaterialVariant_Snapshot(variant);
+    if(!snapshot)
+    {
+        // Time to allocate the snapshot.
+        snapshot = (material_snapshot_t*)malloc(sizeof *snapshot);
+        if(!snapshot)
+            Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
+        snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
+    }
     Materials_InitSnapshot(snapshot);
 
     if(0 == Material_Width(mat) && 0 == Material_Height(mat))
@@ -1426,9 +1447,9 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
 {
     if(!mat) return 0;
     if(!Material_Prepared(mat))
-        Materials_Prepare(NULL, mat,
+        Materials_Prepare(mat,
             Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false);
+                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false, false);
     return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
 }
 
@@ -1436,9 +1457,9 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
     if(!mat) return 0;
     if(!Material_Prepared(mat))
-        Materials_Prepare(NULL, mat,
+        Materials_Prepare(mat,
             Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false);
+                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false, false);
     return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
 }
 
@@ -1855,8 +1876,8 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
     setmaterialtranslationworker_paramaters_t* params =
         (setmaterialtranslationworker_paramaters_t*) paramaters;
     materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
-    materialvariant_t* current = Materials_Prepare(NULL, params->current, spec, false);
-    materialvariant_t* next    = Materials_Prepare(NULL, params->next, spec, false);
+    materialvariant_t* current = Materials_Prepare(params->current, spec, false, false);
+    materialvariant_t* next    = Materials_Prepare(params->next, spec, false, false);
 
     MaterialVariant_SetTranslation(variant, current, next);
     return 0; // Continue iteration.

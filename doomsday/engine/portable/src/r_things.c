@@ -583,7 +583,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     spriteframe_t* sprFrame;
     spritetex_t* sprTex;
     material_t* mat;
-    material_snapshot_t ms;
+    materialvariant_t* variant;
+    material_snapshot_t* ms;
     const variantspecification_t* spec;
 
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -605,13 +606,14 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     sprFrame = &sprDef->spriteFrames[frame];
     mat = sprFrame->mats[0];
 
-    Materials_Prepare(&ms, mat,
+    variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false), false);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, -1, false, true, true, false), false, true);
+    ms = MaterialVariant_Snapshot(variant);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
-    spec = TS_GENERAL(MSU(&ms, MTU_PRIMARY).tex.spec);
+    spec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
     assert(NULL != spec);
 
     info->numFrames = sprDef->numFrames;
@@ -619,10 +621,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->flip = sprFrame->flip[0];
     info->offset    = sprTex->offX + -spec->border;
     info->topOffset = sprTex->offY + spec->border;
-    info->width  = ms.width  + spec->border*2;
-    info->height = ms.height + spec->border*2;
-    info->texCoord[0] = MSU(&ms, MTU_PRIMARY).tex.s;
-    info->texCoord[1] = MSU(&ms, MTU_PRIMARY).tex.t;
+    info->width  = ms->width  + spec->border*2;
+    info->height = ms->height + spec->border*2;
+    info->texCoord[0] = MSU(ms, MTU_PRIMARY).tex.s;
+    info->texCoord[1] = MSU(ms, MTU_PRIMARY).tex.t;
 
     return true;
 }
@@ -647,11 +649,12 @@ float R_VisualRadius(mobj_t* mo)
     material = R_GetMaterialForSprite(mo->sprite, mo->frame);
     if(material)
     {
-        material_snapshot_t ms;
-        Materials_Prepare(&ms, material,
+        material_snapshot_t* ms;
+        materialvariant_t* variant = Materials_Prepare(material,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
-        return ms.width / 2;
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
+        ms = MaterialVariant_Snapshot(variant);
+        return ms->width / 2;
     }
 
     // Use the physical radius.
@@ -931,24 +934,26 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
                                           boolean viewAligned)
 {
-    material_snapshot_t ms;
+    materialvariant_t* variant;
+    material_snapshot_t* ms;
     spritetex_t* sprTex = NULL;
     const variantspecification_t* spec;
 
     if(!params)
         return; // Wha?
 
-    Materials_Prepare(&ms, mat,
+    variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
+            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
-    spec = TS_GENERAL(MSU(&ms, MTU_PRIMARY).tex.spec);
+    spec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
     assert(NULL != spec);
 
-    params->width  =  ms.width + spec->border*2;
-    params->height = ms.height + spec->border*2;
+    params->width  =  ms->width + spec->border*2;
+    params->height = ms->height + spec->border*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -966,8 +971,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = tMap;
     params->tClass = tClass;
-    params->matOffset[0] = MSU(&ms, MTU_PRIMARY).tex.s;
-    params->matOffset[1] = MSU(&ms, MTU_PRIMARY).tex.t;
+    params->matOffset[0] = MSU(ms, MTU_PRIMARY).tex.s;
+    params->matOffset[1] = MSU(ms, MTU_PRIMARY).tex.t;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
@@ -1113,7 +1118,8 @@ void R_ProjectSprite(mobj_t* mo)
     float ambientColor[3];
     uint vLightListIdx = 0;
     material_t* mat;
-    material_snapshot_t ms;
+    materialvariant_t* variant;
+    material_snapshot_t* ms;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     float moPos[3];
 
@@ -1188,11 +1194,12 @@ void R_ProjectSprite(mobj_t* mo)
     }
     matFlipT = false;
 
-    Materials_Prepare(&ms, mat,
+    variant = Materials_Prepare(mat,
         Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, mo->tclass,
-            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true);
+            mo->tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
+    ms = MaterialVariant_Snapshot(variant);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(&ms, MTU_PRIMARY).tex.texture));
+    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);
 
     // Align to the view plane?
@@ -1383,27 +1390,27 @@ void R_ProjectSprite(mobj_t* mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms.height < secCeil - secFloor)
+        if(ms->height < secCeil - secFloor)
         {   // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
             if(floorAdjust && fitBottom &&
-               gzt - ms.height < secFloor)
-                gzt = secFloor + ms.height;
+               gzt - ms->height < secFloor)
+                gzt = secFloor + ms->height;
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
         getLightingParams(vis->center[VX], vis->center[VY],
-                          gzt - ms.height / 2.0f,
+                          gzt - ms->height / 2.0f,
                           mo->subsector, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->center[VX], vis->center[VY],
-                                      gzt - ms.height / 2.0f,
+                                      gzt - ms->height / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
@@ -1446,7 +1453,8 @@ void R_ProjectSprite(mobj_t* mo)
         spritedef_t* sprDef;
         spriteframe_t* sprFrame;
         material_t* mat;
-        material_snapshot_t ms;
+        materialvariant_t* variant;
+        material_snapshot_t* ms;
         const pointlight_analysis_t* pl;
 
         // Determine the sprite frame lump of the source.
@@ -1468,11 +1476,13 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Materials_Prepare(&ms, mat,
+        variant = Materials_Prepare(mat,
             Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false), true);
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false), true, true);
+        ms = MaterialVariant_Snapshot(variant);
+
         pl = (const pointlight_analysis_t*) Texture_Analysis(
-            MSU(&ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
+            MSU(ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
         if(NULL == pl)
             return; // Not good...
 
@@ -1489,7 +1499,7 @@ if(!mat)
         
         flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms.width * pl->originX - sprTex->offX;
+        xOffset = ms->width * pl->originX - sprTex->offX;
 
         // Does the mobj have an active light definition?
         if(def)

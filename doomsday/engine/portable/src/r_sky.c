@@ -158,23 +158,25 @@ static void prepareSkySphere(void)
     skylayer_t* slayer;
     for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
     {
-        material_snapshot_t ms;
+        materialvariant_t* variant;
+        material_snapshot_t* ms;
 
         if(!(slayer->flags & SLF_ENABLED) || !slayer->material) continue;
 
-        Materials_Prepare(&ms, slayer->material,
+        variant = Materials_Prepare(slayer->material,
             Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                 TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
-                0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false), false);
+                0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false), false, true);
+        ms = MaterialVariant_Snapshot(variant);
 
-        slayer->tex = MSU(&ms, MTU_PRIMARY).tex.glName;
-        Texture_Dimensions(MSU(&ms, MTU_PRIMARY).tex.texture,
+        slayer->tex = MSU(ms, MTU_PRIMARY).tex.glName;
+        Texture_Dimensions(MSU(ms, MTU_PRIMARY).tex.texture,
             &slayer->texWidth, &slayer->texHeight);
-        slayer->texMagMode = MSU(&ms, MTU_PRIMARY).magMode;
+        slayer->texMagMode = MSU(ms, MTU_PRIMARY).magMode;
 
-        slayer->fadeout.rgb[CR] = ms.topColor[CR];
-        slayer->fadeout.rgb[CG] = ms.topColor[CG];
-        slayer->fadeout.rgb[CB] = ms.topColor[CB];
+        slayer->fadeout.rgb[CR] = ms->topColor[CR];
+        slayer->fadeout.rgb[CG] = ms->topColor[CG];
+        slayer->fadeout.rgb[CB] = ms->topColor[CB];
 
         // Is the fadeout in use?
         if(slayer->fadeout.rgb[CR] <= slayer->fadeout.limit ||
@@ -186,9 +188,9 @@ static void prepareSkySphere(void)
 
         if(!(skyModelsInited && !alwaysDrawSphere))
         {
-            avgMaterialColor[CR] += ms.colorAmplified[CR];
-            avgMaterialColor[CG] += ms.colorAmplified[CG];
-            avgMaterialColor[CB] += ms.colorAmplified[CB];
+            avgMaterialColor[CR] += ms->colorAmplified[CR];
+            avgMaterialColor[CG] += ms->colorAmplified[CG];
+            avgMaterialColor[CB] += ms->colorAmplified[CB];
             ++avgCount;
         }
     }}
