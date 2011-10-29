@@ -1660,6 +1660,7 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseTexturesForRawImages();
 
     R_ReleaseGLTexturesForSkins();
+    R_ReleaseGLTexturesForSkies();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeGLTextures();
 }
@@ -3256,7 +3257,6 @@ static int doTexReset(void* parm)
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
-    R_SkyUpdate();
 
     GL_PruneTextureVariantSpecifications();
 

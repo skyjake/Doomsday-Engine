@@ -388,7 +388,7 @@ void R_SkyTicker(void)
     }
 }
 
-void R_SkyUpdate(void)
+void R_ReleaseGLTexturesForSkies(void)
 {
     if(novideo || isDedicated)
         return;

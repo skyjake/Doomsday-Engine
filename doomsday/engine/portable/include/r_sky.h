@@ -113,7 +113,7 @@ void R_SetupSky(ded_sky_t* sky);
 /**
  * Mark all skies as requiring a full update. Called during engine/renderer reset.
  */
-void R_SkyUpdate(void);
+void R_ReleaseGLTexturesForSkies(void);
 
 void R_SetupSkyModels(ded_sky_t* sky);
 void R_SetupSkySphereParamsForSkyLayer(rendskysphereparams_t* params, int layer);
