@@ -243,7 +243,7 @@ void R_DrawViewBorder(void)
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    mat = Materials_MaterialForUri(borderGraphicsNames[BG_BACKGROUND]);
+    mat = Materials_MaterialForUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/);
     if(mat)
     {
         material_snapshot_t ms;

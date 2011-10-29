@@ -268,7 +268,7 @@ void R_SetupSky(ded_sky_t* sky)
             R_SkyLayerMasked(i, (def->flags & SLF_MASKED) != 0);
             if(def->material)
             {
-                material_t* mat = Materials_MaterialForUri(def->material);
+                material_t* mat = Materials_MaterialForUri2(def->material, true/*quiet please*/);
                 if(mat)
                 {
                     R_SkyLayerSetMaterial(i, mat);

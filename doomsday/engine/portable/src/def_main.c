@@ -475,7 +475,7 @@ ded_decor_t* Def_GetDecoration(materialnum_t matNum, boolean hasExternal, boolea
             if(!def->material) continue;
 
             // Is this suitable?
-            defMat = Materials_MaterialForUri(def->material);
+            defMat = Materials_MaterialForUri2(def->material, true/*quiet please*/);
             if(mat == defMat && R_IsAllowedDecoration(def, hasExternal, isCustom))
                 return def;
         }
@@ -497,7 +497,7 @@ ded_reflection_t* Def_GetReflection(materialnum_t matNum, boolean hasExternal, b
             if(!def->material) continue;
 
             // Is this suitable?
-            defMat = Materials_MaterialForUri(def->material);
+            defMat = Materials_MaterialForUri2(def->material, true/*quiet please*/);
             if(mat == defMat && R_IsAllowedReflection(def, hasExternal, isCustom))
                 return def;
         }
@@ -516,7 +516,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialnum_t matNum, boolean hasExternal,
         {
             if(def->material1)
             {
-                material_t* defMat = Materials_MaterialForUri(def->material1);
+                material_t* defMat = Materials_MaterialForUri2(def->material1, true/*quiet please*/);
                 // Is this suitable?
                 if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                     return def;
@@ -524,7 +524,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialnum_t matNum, boolean hasExternal,
 
             if(def->material2)
             {
-                material_t* defMat = Materials_MaterialForUri(def->material2);
+                material_t* defMat = Materials_MaterialForUri2(def->material2, true/*quiet please*/);
                 // Is this suitable?
                 if(mat == defMat && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                     return def;
@@ -546,7 +546,7 @@ ded_ptcgen_t* Def_GetGenerator(materialnum_t matNum, boolean hasExternal, boolea
             material_t* defMat;
 
             if(!def->material) continue;
-            defMat = Materials_MaterialForUri(def->material);
+            defMat = Materials_MaterialForUri2(def->material, true/*quiet please*/);
             if(!defMat) continue;
 
             // Is this suitable?
@@ -1127,7 +1127,7 @@ void Def_Read(void)
     for(i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t* def = &defs.materials[i];
-        material_t* mat = Materials_MaterialForUri(def->id);
+        material_t* mat = Materials_MaterialForUri2(def->id, true/*quiet please*/);
         if(!mat)
         {
             // A new Material.
@@ -1503,12 +1503,12 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->wallSection = def->wallSection;
 
     if(def->actMaterial)
-        l->actMaterial = Materials_ToMaterialNum(Materials_MaterialForUri(def->actMaterial));
+        l->actMaterial = Materials_ToMaterialNum(Materials_MaterialForUri2(def->actMaterial, true/*quiet please*/));
     else
         l->actMaterial = 0;
 
     if(def->deactMaterial)
-        l->deactMaterial = Materials_ToMaterialNum(Materials_MaterialForUri(def->deactMaterial));
+        l->deactMaterial = Materials_ToMaterialNum(Materials_MaterialForUri2(def->deactMaterial, true/*quiet please*/));
     else
         l->deactMaterial = 0;
 
@@ -1540,7 +1540,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials_ToMaterialNum(Materials_MaterialForUriCString(def->iparmStr[k]));
+                    l->iparm[k] = Materials_ToMaterialNum(Materials_MaterialForUriCString2(def->iparmStr[k], true/*quiet please*/));
             }
         }
         else if(a & MAP_MUS)

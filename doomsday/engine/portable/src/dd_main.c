@@ -2329,7 +2329,7 @@ struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t t
     uri = Uri_New();
     Uri_SetPath(uri, Texture_Name(tex));
     Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
-    mat = Materials_MaterialForUri(uri);
+    mat = Materials_MaterialForUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     return mat;
 }

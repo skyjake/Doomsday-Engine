@@ -883,8 +883,7 @@ static material_t* findMaterialForUri(const Uri* uri)
     return mat;
 }
 
-/// \note Part of the Doomsday public API.
-material_t* Materials_MaterialForUri(const Uri* uri)
+material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet)
 {
     material_t* mat;
     if(!initedOk || !uri) return NULL;
@@ -903,7 +902,7 @@ material_t* Materials_MaterialForUri(const Uri* uri)
     if(mat) return mat;
 
     // Not found.
-    if(verbose && !ddMapSetup) // Do not announce during map setup.
+    if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Materials::MaterialForUri: \"%s\" not found!\n", Str_Text(path));
@@ -913,16 +912,28 @@ material_t* Materials_MaterialForUri(const Uri* uri)
 }
 
 /// \note Part of the Doomsday public API.
-material_t* Materials_MaterialForUriCString(const char* path)
+material_t* Materials_MaterialForUri(const Uri* uri)
+{
+    return Materials_MaterialForUri2(uri, (verbose >= 1)/*log warnings if verbose*/);
+
+}
+
+material_t* Materials_MaterialForUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        material_t* mat = Materials_MaterialForUri(uri);
+        material_t* mat = Materials_MaterialForUri2(uri, quiet);
         Uri_Delete(uri);
         return mat;
     }
     return NULL;
+}
+
+/// \note Part of the Doomsday public API.
+material_t* Materials_MaterialForUriCString(const char* path)
+{
+    return Materials_MaterialForUriCString2(path, (verbose >= 1)/*log warnings if verbose*/);
 }
 
 /// \note Part of the Doomsday public API.

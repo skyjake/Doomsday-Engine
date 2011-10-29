@@ -1616,10 +1616,10 @@ void P_UpdateParticleGens(void)
                 found = true;
             }
             // A flat generator?
-            else if(NULL != gen->plane && NULL != def->material)
+            else if(gen->plane && def->material)
             {
                 material_t* mat = gen->plane->PS_material;
-                material_t* defMat = Materials_MaterialForUri(def->material);
+                material_t* defMat = Materials_MaterialForUri2(def->material, true/*quiet please*/);
 
                 if(def->flags & PGF_FLOOR_SPAWN)
                     mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;

@@ -2635,7 +2635,7 @@ void R_InitAnimGroup(ded_group_t* def)
 
         if(!gm->material) continue;
 
-        mat = Materials_MaterialForUri(gm->material);
+        mat = Materials_MaterialForUri2(gm->material, true/*quiet please*/);
         if(!mat) continue;
 
         // Only create a group when the first texture is found.

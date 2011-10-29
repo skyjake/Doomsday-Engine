@@ -138,7 +138,9 @@ struct materialvariant_s* Materials_ChooseVariant(struct material_s* material,
  * Search the Materials collection for a material associated with @a uri.
  * @return  Found material else @c 0
  */
+struct material_s* Materials_MaterialForUri2(const Uri* uri, boolean quiet);
 struct material_s* Materials_MaterialForUri(const Uri* uri);
+struct material_s* Materials_MaterialForUriCString2(const char* uri, boolean quiet);
 struct material_s* Materials_MaterialForUriCString(const char* uri);
 
 /// @return  Full symbolic name/path-to the Material. Must be destroyed with Uri_Delete().
