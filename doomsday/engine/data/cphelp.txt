@@ -748,6 +748,9 @@ desc = Distance at which halos are no longer visible.
 [rend-halo-fade-near]
 desc = Distance to begin fading halos.
 
+[rend-map-material-precache]
+desc = 1=Precache materials during map setup.
+
 [rend-tex]
 desc = 1=Render with textures. 2=Render with gray texture.
 
@@ -824,7 +827,7 @@ desc = 1=Draw sprites and masked walls with hard edges.
 desc = 1=Don't write sprites in the Z buffer.
 
 [rend-sprite-precache]
-desc = 1=Precache sprites at level setup (slow).
+desc = 1=Precache sprites during map setup (slow).
 
 [rend-model]
 desc = Render using 3D models when possible.

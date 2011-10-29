@@ -212,6 +212,14 @@ void P_MaterialsRegister(void)
 #endif
 }
 
+static void errorIfNotInited(const char* callerName)
+{
+    if(initedOk) return;
+    Con_Error("%s: Materials collection is not presently initialized.", callerName);
+    // Unreachable. Prevents static analysers from getting rather confused, poor things.
+    exit(1);
+}
+
 static __inline pathdirectory_t* directoryForMaterialNamespaceId(materialnamespaceid_t id)
 {
     assert(VALID_MATERIALNAMESPACEID(id));
@@ -293,10 +301,8 @@ static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
     assert(a && b);
-    if(a == b)
-        return 0;
-    if(a->context != b->context)
-        return 1;
+    if(a == b) return 0;
+    if(a->context != b->context) return 1;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
 }
 
@@ -648,7 +654,8 @@ void Materials_ClearDefinitionLinks(void)
     materiallist_node_t* node;
     materialnamespaceid_t namespaceId;
 
-    assert(initedOk);
+    errorIfNotInited("Materials::ClearDefinitionLinks");
+
     for(node = materials; node; node = node->next)
     {
         material_t* mat = node->mat;
@@ -691,8 +698,7 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
 
 void Materials_PurgeCacheQueue(void)
 {
-    if(!initedOk)
-        Con_Error("Materials::PurgeCacheQueue: Materials collection not yet initialized.");
+    errorIfNotInited("Materials::PurgeCacheQueue");
     while(variantCacheQueue)
     {
         variantcachequeue_node_t* next = variantCacheQueue->next;
@@ -703,12 +709,11 @@ void Materials_PurgeCacheQueue(void)
 
 void Materials_ProcessCacheQueue(void)
 {
-    if(!initedOk)
-        Con_Error("Materials::PurgeCacheQueue: Materials collection not yet initialized.");
+    errorIfNotInited("Materials::ProcessCacheQueue");
     while(variantCacheQueue)
     {
         variantcachequeue_node_t* next = variantCacheQueue->next;
-        Materials_Prepare(variantCacheQueue->mat, variantCacheQueue->spec, true, false);
+        Materials_ChooseAndPrepare(variantCacheQueue->mat, variantCacheQueue->spec, true, false);
         free(variantCacheQueue);
         variantCacheQueue = next;
     }
@@ -1042,7 +1047,9 @@ static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_
 void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
     boolean cacheGroup)
 {
-    assert(initedOk && mat && spec);
+    assert(mat && spec);
+
+    errorIfNotInited("Materials::Precache");
 
     // Don't precache when playing demo.
     if(isDedicated || playback)
@@ -1204,51 +1211,18 @@ void Materials_InitSnapshot(material_snapshot_t* ms)
     ms->isOpaque = true;
 }
 
-materialvariant_t* Materials_Prepare(material_t* mat, materialvariantspecification_t* spec,
-    boolean smoothed, boolean updateSnapshot)
+const material_snapshot_t* Materials_Prepare(materialvariant_t* variant, boolean updateSnapshot)
 {
-    assert(mat && spec);
+    assert(variant);
     {
     struct materialtextureunit_s {
         const texturevariant_t* tex;
     } static texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     material_snapshot_t* snapshot;
-    materialvariant_t* variant;
+    material_t* mat = MaterialVariant_GeneralCase(variant);
+    const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
 
     memset(texUnits, 0, sizeof(texUnits));
-
-    // Have we already registered a suitable variant?
-    variant = Materials_ChooseVariant(mat, spec);
-    if(!variant)
-    {   // We need to create at least one variant.
-        variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
-
-        // Create all other required variants for any Materials in all linked groups.
-        if(Material_IsGroupAnimated(mat))
-        {
-            int i, k;
-            for(i = 0; i < numgroups; ++i)
-            {
-                const animgroup_t* group = &groups[i];
-                if(!isInAnimGroup(group, mat)) continue;
-
-                for(k = 0; k < group->count; ++k)
-                {
-                    material_t* other = group->frames[k].mat;
-                    if(mat != other && !Materials_ChooseVariant(other, spec))
-                    {
-                        Material_AddVariant(other, MaterialVariant_New(other, spec));
-                    }
-                }
-            }
-        }
-    }
-
-    if(smoothed)
-    {
-        variant = MaterialVariant_TranslationCurrent(variant);
-        mat = MaterialVariant_GeneralCase(variant);
-    }
 
     // Ensure all resources needed to visualize this Material's layers have been prepared.
     { int i, layerCount = Material_LayerCount(mat);
@@ -1320,9 +1294,6 @@ materialvariant_t* Materials_Prepare(material_t* mat, materialvariantspecificati
         }
     }
 
-    // If we aren't taking a snapshot; get out of here.
-    if(!updateSnapshot) return variant;
-
     // Acquire the snapshot we will be updating.
     snapshot = MaterialVariant_Snapshot(variant);
     if(!snapshot)
@@ -1332,12 +1303,19 @@ materialvariant_t* Materials_Prepare(material_t* mat, materialvariantspecificati
         if(!snapshot)
             Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
         snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
+        Materials_InitSnapshot(snapshot);
+
+        // Update the snapshot now.
+        updateSnapshot = true;
     }
-    Materials_InitSnapshot(snapshot);
+
+    // If we aren't updating a snapshot; get out of here.
+    if(!updateSnapshot) return snapshot;
 
     if(0 == Material_Width(mat) && 0 == Material_Height(mat))
-        return variant;
+        return snapshot;
 
+    Materials_InitSnapshot(snapshot);
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
     snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowFactor;
@@ -1439,17 +1417,25 @@ materialvariant_t* Materials_Prepare(material_t* mat, materialvariantspecificati
         snapshot->colorAmplified[CB] = ambientLight->colorAmplified[CB];
     }
 
-    return variant;
+    return snapshot;
     }
+}
+
+const material_snapshot_t* Materials_ChooseAndPrepare(material_t* mat,
+    const materialvariantspecification_t* spec, boolean smooth, boolean updateSnapshot)
+{
+    return Materials_Prepare(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
 const ded_decor_t* Materials_DecorationDef(material_t* mat)
 {
     if(!mat) return 0;
     if(!Material_Prepared(mat))
-        Materials_Prepare(mat,
-            Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false, false);
+    {
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        Materials_ChooseAndPrepare(mat, spec, false, false);
+    }
     return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
 }
 
@@ -1457,9 +1443,11 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
     if(!mat) return 0;
     if(!Material_Prepared(mat))
-        Materials_Prepare(mat,
-            Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), false, false);
+    {
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        Materials_ChooseAndPrepare(mat, spec, false, false);
+    }
     return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
 }
 
@@ -1475,19 +1463,31 @@ struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    if(!initedOk)
-        Con_Error("Materials::VariantSpecificationForContext: Materials collection "
-            "not yet initialized.");
+    errorIfNotInited("Materials::VariantSpecificationForContext");
     return getVariantSpecificationForContext(mc, flags, border, tClass, tMap, wrapS, wrapT,
         minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
 materialvariant_t* Materials_ChooseVariant(material_t* mat,
-    const materialvariantspecification_t* spec)
+    const materialvariantspecification_t* spec, boolean smoothed, boolean canCreate)
 {
-    if(!initedOk)
-        Con_Error("Materials::ChooseVariant: Materials collection not yet initialized.");
-    return chooseVariant(mat, spec);
+    materialvariant_t* variant;
+
+    errorIfNotInited("Materials::ChooseVariant");
+
+    variant = chooseVariant(mat, spec);
+    if(!variant)
+    {
+        if(!canCreate) return NULL;
+        variant = Material_AddVariant(mat, MaterialVariant_New(mat, spec));
+    }
+
+    if(smoothed)
+    {
+        variant = MaterialVariant_TranslationCurrent(variant);
+    }
+
+    return variant;
 }
 
 static int printVariantInfo(materialvariant_t* variant, void* paramaters)
@@ -1767,10 +1767,7 @@ int Materials_AnimGroupCount(void)
     return numgroups;
 }
 
-/**
- * Create a new animation group. Returns the group number.
- * \note Part of the Doomsday public API.
- */
+/// \note Part of the Doomsday public API.
 int Materials_CreateAnimGroup(int flags)
 {
     animgroup_t* group;
@@ -1789,18 +1786,14 @@ int Materials_CreateAnimGroup(int flags)
     return group->id;
 }
 
-/**
- * Called during engine reset to clear the existing animation groups.
- */
 void Materials_DestroyAnimGroups(void)
 {
-    int                 i;
-
     if(numgroups > 0)
     {
+        int i;
         for(i = 0; i < numgroups; ++i)
         {
-            animgroup_t*        group = &groups[i];
+            animgroup_t* group = &groups[i];
             Z_Free(group->frames);
         }
 
@@ -1842,14 +1835,9 @@ void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics,
 
 boolean Materials_IsPrecacheAnimGroup(int groupNum)
 {
-    animgroup_t*        group;
-
-    if((group = getAnimGroup(groupNum)))
-    {
-        return (group->flags & AGF_PRECACHE)? true : false;
-    }
-
-    return false;
+    animgroup_t* group = getAnimGroup(groupNum);
+    if(!group) return false;
+    return ((group->flags & AGF_PRECACHE) != 0);
 }
 
 static int clearVariantTranslationWorker(materialvariant_t* variant, void* paramaters)
@@ -1860,8 +1848,7 @@ static int clearVariantTranslationWorker(materialvariant_t* variant, void* param
 
 void Materials_ClearTranslation(material_t* mat)
 {
-    if(!initedOk)
-        Con_Error("Materials::ClearTranslation: Materials collection not yet initialized.");
+    errorIfNotInited("Materials::ClearTranslation");
     Material_IterateVariants(mat, clearVariantTranslationWorker, NULL);
 }
 
@@ -1875,10 +1862,9 @@ static int setVariantTranslationWorker(materialvariant_t* variant, void* paramat
     {
     setmaterialtranslationworker_paramaters_t* params =
         (setmaterialtranslationworker_paramaters_t*) paramaters;
-    materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
-    materialvariant_t* current = Materials_Prepare(params->current, spec, false, false);
-    materialvariant_t* next    = Materials_Prepare(params->next, spec, false, false);
-
+    const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
+    materialvariant_t* current = Materials_ChooseVariant(params->current, spec, false, true/*create if necessary*/);
+    materialvariant_t* next    = Materials_ChooseVariant(params->next, spec, false, true/*create if necessary*/);
     MaterialVariant_SetTranslation(variant, current, next);
     return 0; // Continue iteration.
     }
@@ -1976,10 +1962,6 @@ static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* paramaters)
     return 0; // Continue iteration.
 }
 
-/**
- * All animation groups are reset back to their original state.
- * Called when setting up a map.
- */
 void Materials_ResetAnimGroups(void)
 {
     { materiallist_node_t* node;

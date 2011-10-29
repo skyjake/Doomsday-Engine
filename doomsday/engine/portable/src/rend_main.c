@@ -161,6 +161,8 @@ void Rend_Register(void)
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
 
+    C_VAR_BYTE("rend-map-material-precache", &precacheMapMaterials, 0, 0, 1);
+
     C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
     C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 2);
     C_VAR_INT("rend-shadow-far", &shadowMaxDistance, CVF_NO_MAX, 0, 0);
@@ -442,15 +444,11 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside, boolean ignore
 
         if(side->SW_middlematerial)
         {
-            material_t* mat = side->SW_middlematerial;
-            material_snapshot_t* ms;
-            materialvariant_t* variant;
-
             // Ensure we have up to date info.
-            variant = Materials_Prepare(mat,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-            ms = MaterialVariant_Snapshot(variant);
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+            material_t* mat = side->SW_middlematerial;
+            const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
 
             if(ignoreAlpha || (ms->isOpaque && !side->SW_middleblendmode && side->SW_middlergba[3] >= 1))
             {
@@ -1054,7 +1052,7 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
     tc->st[1] = shinyVertical(vy - xyz[VZ], distance);
 }
 
-static float getSnapshots(material_snapshot_t** msA, material_snapshot_t** msB,
+static float getSnapshots(const material_snapshot_t** msA, const material_snapshot_t** msB,
     material_t* mat)
 {
     assert(msA);
@@ -1062,29 +1060,27 @@ static float getSnapshots(material_snapshot_t** msA, material_snapshot_t** msB,
     materialvariantspecification_t* spec =
         Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
             GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-    materialvariant_t* variant;
     float interPos = 0;
 
-    variant = Materials_Prepare(mat, spec, true, true);
-    *msA = MaterialVariant_Snapshot(variant);
+    *msA = Materials_ChooseAndPrepare(mat, spec, true, true);
 
     // Smooth Texture Animation?
     if(msB)
     {
-        variant = Materials_ChooseVariant(mat, spec);
+        materialvariant_t* variant = Materials_ChooseVariant(mat, spec, false, false);
         if(MaterialVariant_TranslationCurrent(variant) != MaterialVariant_TranslationNext(variant))
         {
+            materialvariant_t* matB = MaterialVariant_TranslationNext(variant);
+
             // Prepare the inter texture.
-            material_t* matB = MaterialVariant_GeneralCase(MaterialVariant_TranslationNext(variant));
-            variant = Materials_Prepare(matB, spec, false, true);
-            *msB = MaterialVariant_Snapshot(variant);
+            *msB = Materials_Prepare(matB, true);
 
             // If fog is active, inter=0 is accepted as well. Otherwise
             // flickering may occur if the rendering passes don't match for
             // blended and unblended surfaces.
-            if(!(!usingFog && MaterialVariant_TranslationPoint(variant) < 0))
+            if(!(!usingFog && MaterialVariant_TranslationPoint(matB) < 0))
             {
-                interPos = MaterialVariant_TranslationPoint(variant);
+                interPos = MaterialVariant_TranslationPoint(matB);
             }
         }
         else
@@ -1957,12 +1953,10 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
         }
         else
         {
-            material_snapshot_t* ms;
             surface_t* suf = &ssec->sector->planes[elmIdx]->surface;
-            materialvariant_t* variant = Materials_Prepare(suf->material,
-                Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                    GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-            ms = MaterialVariant_Snapshot(variant);
+            materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+            const material_snapshot_t* ms = Materials_ChooseAndPrepare(suf->material, spec, true, true);
             params.glowing = ms->glowing;
         }
 
@@ -2227,11 +2221,10 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             {
                 material_t* surfaceMaterial = ((!surface->material ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))? Materials_MaterialForUriCString(MN_SYSTEM_NAME":missing") : surface->material);
-                material_snapshot_t* ms;
-                materialvariant_t* variant = Materials_Prepare(surfaceMaterial,
-                    Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                        GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-                ms = MaterialVariant_Snapshot(variant);
+                materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                    MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+                const material_snapshot_t* ms = Materials_ChooseAndPrepare(surfaceMaterial, spec, true, true);
+
                 glowing = ms->glowing;
             }
 
@@ -2767,7 +2760,7 @@ static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
 }
 
 void lightGeometry(rendpolytype_t type, size_t count, rvertex_t* rvertices, rcolor_t* rcolors,
-    rcolor_t* rcolorsShiny, rtexmapunit_t* rTU, rtexmapunit_t* rTUs, material_snapshot_t* msA,
+    rcolor_t* rcolorsShiny, rtexmapunit_t* rTU, rtexmapunit_t* rTUs, const material_snapshot_t* msA,
     const float* surfaceNormal, const float* surfaceColor, float surfaceAlpha, const float* surfaceColor2,
     const float* ambientLightColor, float ambientLightLevel, float lightLevelDeltaLeft, float lightLevelDeltaRight, float lightLevelDeltaBottom, float lightLevelDeltaTop,
     biassurface_t* bsuf, void* mapObject, uint elmIdx, float glowing, boolean isWall, boolean drawAsVisSprite)
@@ -2898,24 +2891,20 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
     biassurface_t* bsuf, void* mapObject, uint elmIdx, float glowing, float wallLength, boolean isWall,
     material_t* mat, boolean drawAsVisSprite)
 {
-    material_snapshot_t* ms;
-    materialvariant_t* variant;
+    materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
 
     // In devRendSkyMode mode we render all polys destined for the skymask as
     // regular world polys (with a few obvious properties).
 
-    variant = Materials_Prepare(mat,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-    ms = MaterialVariant_Snapshot(variant);
-
-    rTU[TU_PRIMARY].tex = MSU(ms, MTU_PRIMARY).tex.glName;
-    rTU[TU_PRIMARY].magMode = MSU(ms, MTU_PRIMARY).magMode;
-    rTU[TU_PRIMARY].scale[0] = MSU(ms, MTU_PRIMARY).scale[0];
-    rTU[TU_PRIMARY].scale[1] = MSU(ms, MTU_PRIMARY).scale[1];
+    rTU[TU_PRIMARY].tex       = MSU(ms, MTU_PRIMARY).tex.glName;
+    rTU[TU_PRIMARY].magMode   = MSU(ms, MTU_PRIMARY).magMode;
+    rTU[TU_PRIMARY].scale[0]  = MSU(ms, MTU_PRIMARY).scale[0];
+    rTU[TU_PRIMARY].scale[1]  = MSU(ms, MTU_PRIMARY).scale[1];
     rTU[TU_PRIMARY].offset[0] = MSU(ms, MTU_PRIMARY).offset[0] * rTU[TU_PRIMARY].scale[0];
     rTU[TU_PRIMARY].offset[1] = MSU(ms, MTU_PRIMARY).offset[1] * rTU[TU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].blend = MSU(ms, MTU_PRIMARY).alpha;
+    rTU[TU_PRIMARY].blend     = MSU(ms, MTU_PRIMARY).alpha;
     rTU[TU_PRIMARY].blendMode = MSU(ms, MTU_PRIMARY).blendMode;
 
     if(rtexcoords)
@@ -4947,11 +4936,11 @@ static void Rend_RenderBoundingBoxes(void)
     static const float green[3] = { 0.2f, 1, 0.2f}; // solid objects
     static const float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
-    uint i;
-    float eye[3];
+    materialvariantspecification_t* spec;
+    const material_snapshot_t* ms;
     material_t* mat;
-    materialvariant_t* variant;
-    material_snapshot_t* ms;
+    float eye[3];
+    uint i;
 
     if(!devMobjBBox && !devPolyobjBBox)
         return;
@@ -4973,10 +4962,9 @@ static void Rend_RenderBoundingBoxes(void)
     glDisable(GL_CULL_FACE);
 
     mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":bbox");
-    variant = Materials_Prepare(mat,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
-    ms = MaterialVariant_Snapshot(variant);
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
+    ms = Materials_ChooseAndPrepare(mat, spec, true, true);
 
     GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
     GL_BlendMode(BM_ADD);

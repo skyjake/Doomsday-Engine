@@ -520,17 +520,17 @@ static void useColor(const animator_t* color, int components)
     }
 }
 
-static void drawPageBackground(fi_page_t* p, float x, float y, float width, float height, float light, float alpha)
+static void drawPageBackground(fi_page_t* p, float x, float y, float width, float height,
+    float light, float alpha)
 {
     vec3_t topColor, bottomColor;
     DGLuint tex;
     if(p->_bg.material)
     {
-        material_snapshot_t* ms;
-        materialvariant_t* variant = Materials_Prepare(p->_bg.material,
-            Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                0, 1, 0, false, false, false, false), true, true);
-        ms = MaterialVariant_Snapshot(variant);
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
+        const material_snapshot_t* ms = Materials_ChooseAndPrepare(p->_bg.material, spec, true, true);
+
         tex = ms->units[MTU_PRIMARY].tex.glName;
     }
     else
@@ -998,11 +998,9 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             material_t* mat;
             if((mat = f->texRef.material))
             {
-                material_snapshot_t* ms;
-                materialvariant_t* variant = Materials_Prepare(mat,
-                    Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-                        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false), true, true);
-                ms = MaterialVariant_Snapshot(variant);
+                materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                    MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+                const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
 
                 if(ms->units[MTU_PRIMARY].tex.glName)
                 {

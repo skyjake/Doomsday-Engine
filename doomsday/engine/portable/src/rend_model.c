@@ -758,11 +758,10 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
         if(mat)
         {
-            material_snapshot_t* ms;
-            materialvariant_t* variant = Materials_Prepare(mat,
-                Materials_VariantSpecificationForContext(MC_MODELSKIN,
-                    0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false), true, true);
-            ms = MaterialVariant_Snapshot(variant);
+            materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
+            const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+
             skinTexture = MSU(ms, MTU_PRIMARY).tex.glName;
         }
         else

@@ -30,7 +30,7 @@
 #include "materialvariant.h"
 
 materialvariant_t* MaterialVariant_New(material_t* generalCase,
-    materialvariantspecification_t* spec)
+    const materialvariantspecification_t* spec)
 {
     assert(generalCase && spec);
     {
@@ -173,7 +173,7 @@ material_t* MaterialVariant_GeneralCase(materialvariant_t* mat)
     return mat->_generalCase;
 }
 
-materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat)
+const materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat)
 {
     assert(mat);
     return mat->_spec;

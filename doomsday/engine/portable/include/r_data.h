@@ -260,7 +260,7 @@ extern nodepile_t* mobjNodes, *lineNodes;
 
 extern int levelFullBright;
 extern byte rendInfoRPolys;
-extern byte precacheSprites, precacheSkins;
+extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 
 extern byte* translationTables;
 

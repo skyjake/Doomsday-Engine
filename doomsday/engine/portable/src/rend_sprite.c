@@ -319,10 +319,10 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     const spritedef_t* sprDef;
     const spritetex_t* sprTex;
     const spriteframe_t* sprFrame;
-    material_snapshot_t* ms;
-    materialvariant_t* variant;
+    const material_snapshot_t* ms;
+    materialvariantspecification_t* spec;
     boolean flip;
-    const variantspecification_t* spec;
+    const variantspecification_t* texSpec;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -337,20 +337,19 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
 
-    variant = Materials_Prepare(sprFrame->mats[0],
-        Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false), true, true);
-    ms = MaterialVariant_Snapshot(variant);
+    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
+    ms = Materials_ChooseAndPrepare(sprFrame->mats[0], spec, true, true);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
-    assert(NULL != sprTex);
-    spec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
-    assert(NULL != spec);
+    assert(sprTex);
+    texSpec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
+    assert(spec);
 
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -spec->border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -spec->border;
-    params->width = ms->width + spec->border*2;
-    params->height = ms->height + spec->border*2;
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -texSpec->border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -texSpec->border;
+    params->width = ms->width + texSpec->border*2;
+    params->height = ms->height + texSpec->border*2;
 
     // Calculate texture coordinates.
     params->texOffset[0] = MSU(ms, MTU_PRIMARY).tex.s;
@@ -426,11 +425,10 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
-        material_snapshot_t* ms;
-        materialvariant_t* variant = Materials_Prepare(mat,
-            Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false), true, true);
-        ms = MaterialVariant_Snapshot(variant);
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
+        const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+
         GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
@@ -931,7 +929,6 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     float spriteCenter[3];
     float surfaceNormal[3];
     material_t* mat = NULL;
-    material_snapshot_t* ms;
     int i;
 
     if(renderTextures == 1)
@@ -943,13 +940,12 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     if(mat)
     {
         // Might we need a colour translation?
-        materialvariant_t* variant = Materials_Prepare(mat,
-            Materials_VariantSpecificationForContext(MC_SPRITE, 0,
-                (renderTextures == 1? 1 : 0),
-                (renderTextures == 1? params->tClass : 0),
-                (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                1, -2, -1, true, true, true, false), true, true);
-        ms = MaterialVariant_Snapshot(variant);
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_SPRITE, 0, (renderTextures == 1? 1 : 0), (renderTextures == 1? params->tClass : 0),
+            (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+            1, -2, -1, true, true, true, false);
+        const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+
         GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }

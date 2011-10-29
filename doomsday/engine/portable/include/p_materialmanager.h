@@ -132,7 +132,7 @@ struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
 
 struct materialvariant_s* Materials_ChooseVariant(struct material_s* material,
-    const struct materialvariantspecification_s* spec);
+    const struct materialvariantspecification_s* spec, boolean smoothed, boolean canCreate);
 
 /**
  * Search the Materials collection for a material associated with @a uri.
@@ -151,14 +151,33 @@ uint Materials_Count(void);
 const ded_decor_t*  Materials_DecorationDef(struct material_s* material);
 const ded_ptcgen_t* Materials_PtcGenDef(struct material_s* material);
 
-struct materialvariant_s* Materials_Prepare(struct material_s* material,
-    struct materialvariantspecification_s* spec, boolean smoothed, boolean updateSnapshot);
+/**
+ * Choose/create a variant of @a material which fulfills @a spec and then
+ * prepare it for render (e.g., upload textures if necessary).
+ *
+ * @param material  Material to derive the variant from.
+ * @param spec  Specification for the derivation of @a material.
+ * @param smooth  @c true= Select the current frame if the material is group-animated.
+ * @param updateSnapshot  @c true= Force an update the variant's state snapshot.
+ *
+ * @return  Snapshot for the chosen and prepared MaterialVariant.
+ */
+const material_snapshot_t* Materials_ChooseAndPrepare(material_t* material,
+    const materialvariantspecification_t* spec, boolean smooth, boolean updateSnapshot);
+
+/// Same as Materials::ChooseAndPrepare except the caller specifies the variant.
+const material_snapshot_t* Materials_Prepare(materialvariant_t* material, boolean updateSnapshot);
 
 int Materials_AnimGroupCount(void);
 void Materials_ResetAnimGroups(void);
 void Materials_DestroyAnimGroups(void);
 
+/**
+ * Create a new animation group.
+ * @return  Logical identifier of the new group.
+ */
 int Materials_CreateAnimGroup(int flags);
+
 void Materials_AddAnimGroupFrame(int animGroupNum, struct material_s* material, int tics, int randomTics);
 boolean Materials_MaterialLinkedToAnimGroup(int animGroupNum, struct material_s* material);
 

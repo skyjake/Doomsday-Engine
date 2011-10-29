@@ -128,14 +128,14 @@ typedef struct materialvariant_s {
     float _inter;
 
     /// Specification used to derive this variant.
-    materialvariantspecification_t* _spec;
+    const materialvariantspecification_t* _spec;
 
     /// Cached copy of current state if any.
     material_snapshot_t* _snapshot;
 } materialvariant_t;
 
 materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
-    materialvariantspecification_t* spec);
+    const materialvariantspecification_t* spec);
 
 void MaterialVariant_Delete(materialvariant_t* mat);
 
@@ -154,7 +154,7 @@ void MaterialVariant_ResetAnim(materialvariant_t* mat);
 struct material_s* MaterialVariant_GeneralCase(materialvariant_t* mat);
 
 /// @return  MaterialVariantSpecification from which this variant is derived.
-materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat);
+const materialvariantspecification_t* MaterialVariant_Spec(const materialvariant_t* mat);
 
 /**
  * Retrieve a handle for a staged animation layer form this variant.

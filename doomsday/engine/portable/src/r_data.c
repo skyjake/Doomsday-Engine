@@ -96,6 +96,7 @@ extern boolean mapSetup; // We are currently setting up a map.
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 byte precacheSkins = true;
+byte precacheMapMaterials = true;
 byte precacheSprites = true;
 
 byte* translationTables = NULL;
@@ -2541,7 +2542,6 @@ void R_PrecacheMobjNum(int num)
 
 void R_PrecacheForMap(void)
 {
-    materialvariantspecification_t* spec;
     float startTime;
 
     // Don't precache when playing demo.
@@ -2552,43 +2552,43 @@ void R_PrecacheForMap(void)
     Con_SetProgress(100);
 
     startTime = Sys_GetSeconds();
-    spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-        GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
 
-    { uint i;
-    for(i = 0; i < numSideDefs; ++i)
+    if(precacheMapMaterials)
     {
-        sidedef_t* side = SIDE_PTR(i);
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        uint i, j;
 
-        if(NULL != side->SW_middlematerial)
-            Materials_Precache(side->SW_middlematerial, spec);
-
-        if(NULL != side->SW_topmaterial)
-            Materials_Precache(side->SW_topmaterial, spec);
-
-        if(NULL != side->SW_bottommaterial)
-            Materials_Precache(side->SW_bottommaterial, spec);
-    }}
-
-    { uint i;
-    for(i = 0; i < numSectors; ++i)
-    {
-        sector_t* sec = SECTOR_PTR(i);
-        if(0 == sec->lineDefCount)
-            continue;
-        { uint j;
-        for(j = 0; j < sec->planeCount; ++j)
+        for(i = 0; i < numSideDefs; ++i)
         {
-            Materials_Precache(sec->SP_planematerial(j), spec);
-        }}
-    }}
+            sidedef_t* side = SIDE_PTR(i);
 
-    // Precache sprites?
+            if(side->SW_middlematerial)
+                Materials_Precache(side->SW_middlematerial, spec);
+
+            if(side->SW_topmaterial)
+                Materials_Precache(side->SW_topmaterial, spec);
+
+            if(side->SW_bottommaterial)
+                Materials_Precache(side->SW_bottommaterial, spec);
+        }
+
+        for(i = 0; i < numSectors; ++i)
+        {
+            sector_t* sec = SECTOR_PTR(i);
+            if(!sec->lineDefCount) continue;
+            for(j = 0; j < sec->planeCount; ++j)
+            {
+                Materials_Precache(sec->SP_planematerial(j), spec);
+            }
+        }
+    }
+
     if(precacheSprites)
     {
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         int i;
-        spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];

@@ -161,17 +161,12 @@ boolean Material_IsDrawable(const material_t* mat)
 
 boolean Material_HasGlow(material_t* mat)
 {
-    assert(mat);
-    {
     /// \fixme We should not need to prepare to determine this.
-    materialvariant_t* variant;
-    material_snapshot_t* ms;
-    variant = Materials_Prepare(mat,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-    ms = MaterialVariant_Snapshot(variant);
+    materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+
     return (ms->glowing > .0001f);
-    }
 }
 
 boolean Material_HasDecorations(material_t* mat)

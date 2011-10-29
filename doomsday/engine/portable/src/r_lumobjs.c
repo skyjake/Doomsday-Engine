@@ -715,8 +715,8 @@ static void addLuminous(mobj_t* mo)
     spritetex_t* sprTex;
     material_t* mat;
     float autoLightColor[3];
-    material_snapshot_t* ms;
-    materialvariant_t* variant;
+    const material_snapshot_t* ms;
+    materialvariantspecification_t* spec;
     const pointlight_analysis_t* pl;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -746,10 +746,10 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
 #endif
 
     // Ensure we have up-to-date information about the material.
-    variant = Materials_Prepare(mat,
-        Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
-            GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false), true, true);
-    ms = MaterialVariant_Snapshot(variant);
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
+    ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+
     pl = (const pointlight_analysis_t*) Texture_Analysis(
         MSU(ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
     if(NULL == pl)
@@ -952,15 +952,13 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
 END_PROF( PROF_LUMOBJ_FRAME_SORT );
 }
 
-static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
+static void setGlowLightProps(lumobj_t* l, surface_t* surface)
 {
     assert(l && surface);
     {
-    material_snapshot_t* ms;
-    materialvariant_t* variant = Materials_Prepare(surface->material,
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-    ms = MaterialVariant_Snapshot(variant);
+    materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    const material_snapshot_t* ms = Materials_ChooseAndPrepare(surface->material, spec, true, true);
 
     V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
     V3_Copy(LUM_PLANE(l)->color, ms->colorAmplified);
@@ -985,8 +983,8 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         plane_t* pln = (plane_t*)suf->owner;
         sector_t* sec = pln->sector;
         linkobjtossecparams_t params;
-        materialvariant_t* variant;
-        material_snapshot_t* ms;
+        materialvariantspecification_t* spec;
+        const material_snapshot_t* ms;
         lumobj_t* lum;
 
         // Only produce a light for sectors with open space.
@@ -995,10 +993,9 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
             return true; // Continue iteration.
 
         // Are we glowing at this moment in time?
-        variant = Materials_Prepare(suf->material,
-            Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-                GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false), true, true);
-        ms = MaterialVariant_Snapshot(variant);
+        spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        ms = Materials_ChooseAndPrepare(suf->material, spec, true, true);
         if(!(ms->glowing > .0001f))
             return true; // Continue iteration.
 

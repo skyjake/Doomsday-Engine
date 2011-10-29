@@ -324,7 +324,7 @@ typedef enum {
     PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
     PTR_FOUND,              /// Success. Reusing a cached resource.
     PTR_UPLOADED_ORIGINAL,  /// Success. Prepared and cached using an original-game resource.
-    PTR_UPLOADED_EXTERNAL,  /// Success. Prepared and cached using an external-replacement resource.
+    PTR_UPLOADED_EXTERNAL   /// Success. Prepared and cached using an external-replacement resource.
 } preparetextureresult_t;
 
 /**

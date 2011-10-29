@@ -246,11 +246,10 @@ void R_DrawViewBorder(void)
     mat = Materials_MaterialForUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/);
     if(mat)
     {
-        material_snapshot_t* ms;
-        materialvariant_t* variant = Materials_Prepare(mat,
-            Materials_VariantSpecificationForContext(MC_UI, 0, 0, 0, 0,
-                GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false), true, true);
-        ms = MaterialVariant_Snapshot(variant);
+        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
+        const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+
         GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, (filterUI ? GL_LINEAR : GL_NEAREST));
         GL_DrawCutRectTiled(0, 0, port->dimensions.width, port->dimensions.height, ms->width, ms->height, 0, 0,
                             vd->window.x - border, vd->window.y - border,
