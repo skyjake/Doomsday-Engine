@@ -2501,7 +2501,7 @@ boolean findSpriteOwner(thinker_t* th, void* context)
 /// \note Part of the Doomsday public API.
 void R_PrecacheMobjNum(int num)
 {
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
 
     if(novideo || !((useModels && precacheSkins) || precacheSprites))
         return;
@@ -2555,7 +2555,7 @@ void R_PrecacheForMap(void)
 
     if(precacheMapMaterials)
     {
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         uint i, j;
 
@@ -2586,7 +2586,7 @@ void R_PrecacheForMap(void)
 
     if(precacheSprites)
     {
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         int i;
         for(i = 0; i < numSprites; ++i)

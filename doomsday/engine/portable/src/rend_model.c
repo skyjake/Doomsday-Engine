@@ -758,7 +758,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
         if(mat)
         {
-            materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
 

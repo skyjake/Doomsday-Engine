@@ -498,7 +498,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
 
     if(consoleBackgroundMaterial)
     {
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(consoleBackgroundMaterial,
             spec, Con_IsActive(), true);

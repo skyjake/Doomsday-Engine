@@ -583,7 +583,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     spriteframe_t* sprFrame;
     spritetex_t* sprTex;
     material_t* mat;
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     const variantspecification_t* texSpec;
 
@@ -648,7 +648,7 @@ float R_VisualRadius(mobj_t* mo)
     material = R_GetMaterialForSprite(mo->sprite, mo->frame);
     if(material)
     {
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(material, spec, true, true);
         return ms->width / 2;
@@ -931,7 +931,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean floorAdjust, boolean fitTop, boolean fitBottom,
                                           boolean viewAligned)
 {
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     spritetex_t* sprTex;
     const variantspecification_t* texSpec;
@@ -1114,7 +1114,7 @@ void R_ProjectSprite(mobj_t* mo)
     float ambientColor[3];
     uint vLightListIdx = 0;
     material_t* mat;
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     float moPos[3];

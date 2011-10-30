@@ -716,7 +716,7 @@ static void addLuminous(mobj_t* mo)
     material_t* mat;
     float autoLightColor[3];
     const materialsnapshot_t* ms;
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const pointlight_analysis_t* pl;
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -956,7 +956,7 @@ static void setGlowLightProps(lumobj_t* l, surface_t* surface)
 {
     assert(l && surface);
     {
-    materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     const materialsnapshot_t* ms = Materials_Prepare(surface->material, spec, true, true);
 
@@ -983,7 +983,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         plane_t* pln = (plane_t*)suf->owner;
         sector_t* sec = pln->sector;
         linkobjtossecparams_t params;
-        materialvariantspecification_t* spec;
+        const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
         lumobj_t* lum;
 

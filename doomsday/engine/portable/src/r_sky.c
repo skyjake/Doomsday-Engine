@@ -158,7 +158,7 @@ static void prepareSkySphere(void)
     skylayer_t* slayer;
     for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
     {
-        materialvariantspecification_t* spec;
+        const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
 
         if(!(slayer->flags & SLF_ENABLED) || !slayer->material) continue;

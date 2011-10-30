@@ -320,9 +320,9 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     const spritetex_t* sprTex;
     const spriteframe_t* sprFrame;
     const materialsnapshot_t* ms;
-    materialvariantspecification_t* spec;
-    boolean flip;
+    const materialvariantspecification_t* spec;
     const variantspecification_t* texSpec;
+    boolean flip;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -425,7 +425,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
 
@@ -940,7 +940,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     if(mat)
     {
         // Might we need a colour translation?
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, (renderTextures == 1? 1 : 0), (renderTextures == 1? params->tClass : 0),
             (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
             1, -2, -1, true, true, true, false);

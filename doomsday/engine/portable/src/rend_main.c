@@ -1057,9 +1057,8 @@ static float getSnapshots(const materialsnapshot_t** msA, const materialsnapshot
 {
     assert(msA);
     {
-    materialvariantspecification_t* spec =
-        Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
-            GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     float interPos = 0;
 
     *msA = Materials_Prepare(mat, spec, true, true);
@@ -1954,7 +1953,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
         else
         {
             surface_t* suf = &ssec->sector->planes[elmIdx]->surface;
-            materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                 MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(suf->material, spec, true, true);
             params.glowing = ms->glowing;
@@ -2221,7 +2220,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             {
                 material_t* surfaceMaterial = ((!surface->material ||
                     ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))? Materials_MaterialForUriCString(MN_SYSTEM_NAME":missing") : surface->material);
-                materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                     MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
                 const materialsnapshot_t* ms = Materials_Prepare(surfaceMaterial, spec, true, true);
 
@@ -2891,7 +2890,7 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
     biassurface_t* bsuf, void* mapObject, uint elmIdx, float glowing, float wallLength, boolean isWall,
     material_t* mat, boolean drawAsVisSprite)
 {
-    materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
 
@@ -4936,7 +4935,7 @@ static void Rend_RenderBoundingBoxes(void)
     static const float green[3] = { 0.2f, 1, 0.2f}; // solid objects
     static const float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     material_t* mat;
     float eye[3];

@@ -971,7 +971,7 @@ int GL_GetTexAnisoMul(int level)
 
 void GL_SetMaterialUI(material_t* mat)
 {
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
 
     if(!mat) return; // \fixme we need a "NULL material".
@@ -984,7 +984,7 @@ void GL_SetMaterialUI(material_t* mat)
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
 {
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
 
     if(!mat) return; // \fixme we need a "NULL material".

@@ -65,7 +65,7 @@ typedef materiallist_node_t materiallist_t;
 typedef struct variantcachequeue_node_s {
     struct variantcachequeue_node_s* next;
     material_t* mat;
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     boolean smooth;
 } variantcachequeue_node_t;
 
@@ -1030,7 +1030,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 }
 
-static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_t* spec, boolean smooth)
+static void pushVariantCacheQueue(material_t* mat, const materialvariantspecification_t* spec, boolean smooth)
 {
     assert(initedOk && mat && spec);
     {
@@ -1046,7 +1046,7 @@ static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_
     }
 }
 
-void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
+void Materials_Precache2(material_t* mat, const materialvariantspecification_t* spec,
     boolean smooth, boolean cacheGroup)
 {
     assert(mat && spec);
@@ -1081,7 +1081,7 @@ void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
     }
 }
 
-void Materials_Precache(material_t* mat, materialvariantspecification_t* spec, boolean smooth)
+void Materials_Precache(material_t* mat, const materialvariantspecification_t* spec, boolean smooth)
 {
     Materials_Precache2(mat, spec, smooth, true);
 }
@@ -1434,7 +1434,7 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
     if(!mat) return 0;
     if(!Material_Prepared(mat))
     {
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         Materials_Prepare(mat, spec, false, false);
     }
@@ -1446,7 +1446,7 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
     if(!mat) return 0;
     if(!Material_Prepared(mat))
     {
-        materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         Materials_Prepare(mat, spec, false, false);
     }
@@ -1460,7 +1460,7 @@ uint Materials_Count(void)
     return 0;
 }
 
-struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
+const struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
     materialcontext_t mc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)

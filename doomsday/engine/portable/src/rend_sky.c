@@ -264,7 +264,7 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
         }
         else
         {
-            materialvariantspecification_t* spec;
+            const materialvariantspecification_t* spec;
             const materialsnapshot_t* ms;
             material_t* mat;
             

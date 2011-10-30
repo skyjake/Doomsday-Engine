@@ -803,7 +803,7 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 {
     spritedef_t* spr = &sprites[sprite];
-    materialvariantspecification_t* spec;
+    const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
     spritetex_t* sprTex;
     int off;

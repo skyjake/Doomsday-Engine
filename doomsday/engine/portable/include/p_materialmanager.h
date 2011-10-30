@@ -141,7 +141,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def);
  *
  * @return  Rationalized (and interned) copy of the final specification.
  */
-struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
+const struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
     materialcontext_t materialContext, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
@@ -164,8 +164,8 @@ void Materials_Rebuild(material_t* material, struct ded_material_s* def);
  * @param cacheGroups  @c true= variants for all Materials in any applicable
  *      animation groups are desired, else just this specific Material.
  */
-void Materials_Precache2(material_t* material, struct materialvariantspecification_s* spec, boolean smooth, boolean cacheGroups);
-void Materials_Precache(material_t* material, struct materialvariantspecification_s* spec, boolean smooth); /*cacheGroups=true*/
+void Materials_Precache2(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth, boolean cacheGroups);
+void Materials_Precache(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth); /*cacheGroups=true*/
 
 /**
  * Choose/create a variant of @a material which fulfills @a spec and then
