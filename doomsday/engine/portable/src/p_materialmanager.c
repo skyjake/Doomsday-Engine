@@ -714,7 +714,7 @@ void Materials_ProcessCacheQueue(void)
     while(variantCacheQueue)
     {
         variantcachequeue_node_t* node = variantCacheQueue, *next = node->next;
-        Materials_Prepare(node->mat, node->spec, node->smooth, false);
+        Materials_Prepare(node->mat, node->spec, node->smooth);
         free(node);
         variantCacheQueue = next;
     }
@@ -1213,7 +1213,7 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
     ms->isOpaque = true;
 }
 
-const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant, boolean updateSnapshot)
+const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, boolean updateSnapshot)
 {
     assert(variant);
     {
@@ -1307,19 +1307,26 @@ const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant, b
         snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
         Materials_InitSnapshot(snapshot);
 
-        // Update the snapshot now.
+        // Update the snapshot right away.
+        updateSnapshot = true;
+    }
+    else if(MaterialVariant_SnapshotPrepareFrame(variant) != frameCount)
+    {
+        // Time to update the snapshot.
         updateSnapshot = true;
     }
 
     // If we aren't updating a snapshot; get out of here.
     if(!updateSnapshot) return snapshot;
 
-    if(0 == Material_Width(mat) && 0 == Material_Height(mat))
-        return snapshot;
+    MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
 
     Materials_InitSnapshot(snapshot);
     snapshot->width = Material_Width(mat);
     snapshot->height = Material_Height(mat);
+
+    if(0 == snapshot->width && 0 == snapshot->height) return snapshot;
+
     snapshot->glowing = MaterialVariant_Layer(variant, 0)->glow * glowFactor;
     snapshot->isOpaque = NULL != texUnits[MTU_PRIMARY].tex &&
         !TextureVariant_IsMasked(texUnits[MTU_PRIMARY].tex);
@@ -1423,10 +1430,21 @@ const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant, b
     }
 }
 
-const materialsnapshot_t* Materials_Prepare(material_t* mat,
-    const materialvariantspecification_t* spec, boolean smooth, boolean updateSnapshot)
+const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant)
 {
-    return Materials_PrepareVariant(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
+    return Materials_PrepareVariant2(variant, false/*do not force a snapshot update*/);
+}
+
+const materialsnapshot_t* Materials_Prepare2(material_t* mat, const materialvariantspecification_t* spec,
+    boolean smooth, boolean updateSnapshot)
+{
+    return Materials_PrepareVariant2(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
+}
+
+const materialsnapshot_t* Materials_Prepare(material_t* mat, const materialvariantspecification_t* spec,
+    boolean smooth)
+{
+    return Materials_Prepare2(mat, spec, smooth, false/*do not force a snapshot update*/);
 }
 
 const ded_decor_t* Materials_DecorationDef(material_t* mat)
@@ -1436,7 +1454,7 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        Materials_Prepare(mat, spec, false, false);
+        Materials_Prepare(mat, spec, false);
     }
     return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
 }
@@ -1448,7 +1466,7 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        Materials_Prepare(mat, spec, false, false);
+        Materials_Prepare(mat, spec, false);
     }
     return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
 }

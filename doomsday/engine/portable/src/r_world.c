@@ -1495,7 +1495,7 @@ boolean R_IsGlowingPlane(const plane_t* pln)
     material_t* mat = pln->surface.material;
     const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-    const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
+    const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
     return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 || R_IsSkySurface(&pln->surface));
 }
@@ -1510,7 +1510,7 @@ float R_GlowStrength(const plane_t* pln)
             /// \fixme We should not need to prepare to determine this.
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                 MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
             return ms->glowing;
         }

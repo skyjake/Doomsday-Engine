@@ -173,17 +173,17 @@ void Materials_Precache(material_t* material, const struct materialvariantspecif
  *
  * \note A convenient shorthand of the call tree:
  *
- *    Materials_PrepareVariant( Materials_ChooseVariant( @a material, @a spec, @a smooth, @c true ), @a updateSnapshot )
+ *    Materials_PrepareVariant( Materials_ChooseVariant( @a material, @a spec, @a smooth, @c true ), @a forceSnapshotUpdate )
  *
  * @param material  Base Material from which to derive a variant.
  * @param spec  Specification for the derivation of @a material.
  * @param smooth  @c true= Select the current frame if the material is group-animated.
- * @param updateSnapshot  @c true= Force an update of the variant's state snapshot.
+ * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
  *
  * @return  Snapshot for the chosen and prepared variant of Material.
  */
-const struct materialsnapshot_s* Materials_Prepare(material_t* material,
-    const struct materialvariantspecification_s* spec, boolean smooth, boolean updateSnapshot);
+const struct materialsnapshot_s* Materials_Prepare2(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth, boolean forceSnapshotUpdate);
+const struct materialsnapshot_s* Materials_Prepare(material_t* material, const struct materialvariantspecification_s* spec, boolean smooth); /*forceSnapshotUpdate=false*/
 
 /**
  * Prepare variant @a material for render (e.g., upload textures if necessary).
@@ -192,12 +192,12 @@ const struct materialsnapshot_s* Materials_Prepare(material_t* material,
  * @see Materials::ChooseVariant
  *
  * @param material  MaterialVariant to be prepared.
- * @param updateSnapshot  @c true= Force an update of the variant's state snapshot.
+ * @param forceSnapshotUpdate  @c true= Force an update of the variant's state snapshot.
  *
  * @return  Snapshot for the chosen and prepared variant of Material.
  */
-const struct materialsnapshot_s* Materials_PrepareVariant(struct materialvariant_s* material,
-    boolean updateSnapshot);
+const struct materialsnapshot_s* Materials_PrepareVariant2(struct materialvariant_s* material, boolean forceSnapshotUpdate);
+const struct materialsnapshot_s* Materials_PrepareVariant(struct materialvariant_s* material); /*forceSnapshotUpdate=false*/
 
 /**
  * Choose/create a variant of @a material which fulfills @a spec.

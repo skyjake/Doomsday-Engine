@@ -529,7 +529,7 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        const materialsnapshot_t* ms = Materials_Prepare(p->_bg.material, spec, true, true);
+        const materialsnapshot_t* ms = Materials_Prepare(p->_bg.material, spec, true);
 
         tex = ms->units[MTU_PRIMARY].tex.glName;
     }
@@ -1000,7 +1000,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             {
                 const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                     MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
-                const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
+                const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
                 if(ms->units[MTU_PRIMARY].tex.glName)
                 {

@@ -131,6 +131,9 @@ typedef struct materialvariant_s {
 
     /// Cached copy of current state if any.
     materialsnapshot_t* _snapshot;
+
+    /// Frame count when MaterialVariant::_snapshot was last prepared/updated.
+    int _snapshotPrepareFrame;
 } materialvariant_t;
 
 materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
@@ -175,6 +178,15 @@ materialsnapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat);
 
 /// @return  MaterialSnapshot data associated with this.
 materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat);
+
+/// @return  Frame count when the snapshot was last prepared/updated.
+int MaterialVariant_SnapshotPrepareFrame(const materialvariant_t* mat);
+
+/**
+ * Change the frame when the snapshot was last prepared/updated.
+ * @param frame  Frame to mark the snapshot with.
+ */
+void MaterialVariant_SetSnapshotPrepareFrame(materialvariant_t* mat, int frame);
 
 /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);

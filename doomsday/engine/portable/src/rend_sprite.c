@@ -339,7 +339,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
-    ms = Materials_Prepare(sprFrame->mats[0], spec, true, true);
+    ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(sprTex);
@@ -427,7 +427,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
-        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
+        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
         GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
@@ -944,7 +944,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
             MC_SPRITE, 0, (renderTextures == 1? 1 : 0), (renderTextures == 1? params->tClass : 0),
             (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
             1, -2, -1, true, true, true, false);
-        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
+        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
         GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);

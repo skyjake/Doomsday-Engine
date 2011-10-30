@@ -813,7 +813,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    ms = Materials_Prepare(spr->spriteFrames[frame].mats[0], spec, true, true);
+    ms = Materials_Prepare(spr->spriteFrames[frame].mats[0], spec, true);
 
     sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
     assert(NULL != sprTex);

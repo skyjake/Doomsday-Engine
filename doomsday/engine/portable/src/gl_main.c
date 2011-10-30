@@ -978,7 +978,7 @@ void GL_SetMaterialUI(material_t* mat)
 
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
-    ms = Materials_Prepare(mat, spec, true, true);
+    ms = Materials_Prepare(mat, spec, true);
     GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
 }
 
@@ -991,7 +991,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
-    ms = Materials_Prepare(mat, spec, true, true);
+    ms = Materials_Prepare(mat, spec, true);
     GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
 }
 

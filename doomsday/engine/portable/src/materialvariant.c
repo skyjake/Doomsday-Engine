@@ -218,6 +218,18 @@ materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat)
     return mat->_snapshot;
 }
 
+int MaterialVariant_SnapshotPrepareFrame(const materialvariant_t* mat)
+{
+    assert(mat);
+    return mat->_snapshotPrepareFrame;
+}
+
+void MaterialVariant_SetSnapshotPrepareFrame(materialvariant_t* mat, int frame)
+{
+    assert(mat);
+    mat->_snapshotPrepareFrame;
+}
+
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat)
 {
     assert(mat);

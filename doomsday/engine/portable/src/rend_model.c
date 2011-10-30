@@ -760,7 +760,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
             skinTexture = MSU(ms, MTU_PRIMARY).tex.glName;
         }
