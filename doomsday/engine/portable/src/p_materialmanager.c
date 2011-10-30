@@ -1756,7 +1756,7 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
     Con_Printf("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Material" : "Materials");
 }
 
-boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)
+boolean Materials_IsMaterialInAnimGroup(material_t* mat, int groupNum)
 {
     animgroup_t* group = getAnimGroup(groupNum);
     if(NULL != group)
@@ -1848,9 +1848,9 @@ static int clearVariantTranslationWorker(materialvariant_t* variant, void* param
     return 0; // Continue iteration.
 }
 
-void Materials_ClearTranslation(material_t* mat)
+static void Materials_ClearTranslation(material_t* mat)
 {
-    errorIfNotInited("Materials::ClearTranslation");
+    assert(initedOk);
     Material_IterateVariants(mat, clearVariantTranslationWorker, NULL);
 }
 

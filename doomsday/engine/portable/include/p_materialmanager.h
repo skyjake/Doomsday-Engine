@@ -218,6 +218,9 @@ const ded_decor_t*  Materials_DecorationDef(material_t* material);
 /// @return  (Particle) Generator definition associated with @a material else @c NULL.
 const ded_ptcgen_t* Materials_PtcGenDef(material_t* material);
 
+/// @return  @c true iff @a material is linked to the identified @a animGroupNum.
+boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
+
 /**
  * Create a new animation group.
  * @return  Logical (unique) identifier reference associated with the new group.
@@ -233,12 +236,6 @@ int Materials_CreateAnimGroup(int flags);
  * @param randomTics  Extra frame duration in tics (randomized on each cycle).
  */
 void Materials_AddAnimGroupFrame(int animGroupNum, material_t* material, int tics, int randomTics);
-
-/// @return  @c true iff @a material is linked to the identified @a animGroupNum.
-boolean Materials_MaterialLinkedToAnimGroup(int animGroupNum, material_t* material);
-
-/// Clear all group-animation translations for @a material.
-void Materials_ClearTranslation(material_t* material);
 
 /// \todo Refactor; does not fit the current design.
 boolean Materials_IsPrecacheAnimGroup(int animGroupNum);
