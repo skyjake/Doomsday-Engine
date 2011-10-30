@@ -64,8 +64,9 @@ typedef materiallist_node_t materiallist_t;
 
 typedef struct variantcachequeue_node_s {
     struct variantcachequeue_node_s* next;
-    materialvariantspecification_t* spec;
     material_t* mat;
+    materialvariantspecification_t* spec;
+    boolean smooth;
 } variantcachequeue_node_t;
 
 typedef variantcachequeue_node_t variantcachequeue_t;
@@ -307,10 +308,10 @@ static int compareVariantSpecifications(const materialvariantspecification_t* a,
 }
 
 static materialvariantspecification_t* applyVariantSpecification(
-    materialvariantspecification_t* spec, materialvariantusagecontext_t mc,
+    materialvariantspecification_t* spec, materialcontext_t mc,
     texturevariantspecification_t* primarySpec)
 {
-    assert(spec && (mc == MC_UNKNOWN || VALID_MATERIALVARIANTUSAGECONTEXT(mc)) && primarySpec);
+    assert(spec && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)) && primarySpec);
     spec->context = mc;
     spec->primarySpec = primarySpec;
     return spec;
@@ -350,12 +351,12 @@ static materialvariantspecification_t* findVariantSpecification(
 }
 
 static materialvariantspecification_t* getVariantSpecificationForContext(
-    materialvariantusagecontext_t mc, int flags, byte border, int tClass,
+    materialcontext_t mc, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     static materialvariantspecification_t tpl;
-    assert(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALVARIANTUSAGECONTEXT(mc)));
+    assert(initedOk && (mc == MC_UNKNOWN || VALID_MATERIALCONTEXT(mc)));
     {
     texturevariantspecification_t* primarySpec;
     texturevariantusagecontext_t primaryContext;
@@ -712,9 +713,9 @@ void Materials_ProcessCacheQueue(void)
     errorIfNotInited("Materials::ProcessCacheQueue");
     while(variantCacheQueue)
     {
-        variantcachequeue_node_t* next = variantCacheQueue->next;
-        Materials_ChooseAndPrepare(variantCacheQueue->mat, variantCacheQueue->spec, true, false);
-        free(variantCacheQueue);
+        variantcachequeue_node_t* node = variantCacheQueue, *next = node->next;
+        Materials_Prepare(node->mat, node->spec, node->smooth, false);
+        free(node);
         variantCacheQueue = next;
     }
 }
@@ -1029,23 +1030,24 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 }
 
-static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_t* spec)
+static void pushVariantCacheQueue(material_t* mat, materialvariantspecification_t* spec, boolean smooth)
 {
     assert(initedOk && mat && spec);
     {
     variantcachequeue_node_t* node = (variantcachequeue_node_t*) malloc(sizeof(*node));
-    if(NULL == node)
+    if(!node)
         Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for "
             "new VariantCacheQueueNode.", (unsigned long) sizeof(*node));
     node->mat = mat;
     node->spec = spec;
+    node->smooth = smooth;
     node->next = variantCacheQueue;
     variantCacheQueue = node;
     }
 }
 
 void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
-    boolean cacheGroup)
+    boolean smooth, boolean cacheGroup)
 {
     assert(mat && spec);
 
@@ -1062,7 +1064,7 @@ void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
             return;
     }
 
-    pushVariantCacheQueue(mat, spec);
+    pushVariantCacheQueue(mat, spec, smooth);
 
     if(cacheGroup && Material_IsGroupAnimated(mat))
     {   // Material belongs in one or more animgroups; precache the group.
@@ -1073,15 +1075,15 @@ void Materials_Precache2(material_t* mat, materialvariantspecification_t* spec,
 
             { int k;
             for(k = 0; k < groups[i].count; ++k)
-                Materials_Precache2(groups[i].frames[k].mat, spec, false);
+                Materials_Precache2(groups[i].frames[k].mat, spec, smooth, false);
             }
         }
     }
 }
 
-void Materials_Precache(material_t* mat, materialvariantspecification_t* spec)
+void Materials_Precache(material_t* mat, materialvariantspecification_t* spec, boolean smooth)
 {
-    Materials_Precache2(mat, spec, true);
+    Materials_Precache2(mat, spec, smooth, true);
 }
 
 void Materials_Ticker(timespan_t time)
@@ -1158,7 +1160,7 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
     }
 }
 
-static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_t* tex,
+static void setTexUnit(materialsnapshot_t* ss, byte unit, const texturevariant_t* tex,
     blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
     float tOffset, float alpha)
 {
@@ -1189,11 +1191,11 @@ static void setTexUnit(material_snapshot_t* ss, byte unit, const texturevariant_
     }
 }
 
-void Materials_InitSnapshot(material_snapshot_t* ms)
+void Materials_InitSnapshot(materialsnapshot_t* ms)
 {
     assert(ms);
 
-    memset(ms, 0, sizeof(material_snapshot_t));
+    memset(ms, 0, sizeof(materialsnapshot_t));
     ms->width = ms->height = 0;
 
     { int i;
@@ -1211,14 +1213,14 @@ void Materials_InitSnapshot(material_snapshot_t* ms)
     ms->isOpaque = true;
 }
 
-const material_snapshot_t* Materials_Prepare(materialvariant_t* variant, boolean updateSnapshot)
+const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant, boolean updateSnapshot)
 {
     assert(variant);
     {
     struct materialtextureunit_s {
         const texturevariant_t* tex;
     } static texUnits[NUM_MATERIAL_TEXTURE_UNITS];
-    material_snapshot_t* snapshot;
+    materialsnapshot_t* snapshot;
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
 
@@ -1299,7 +1301,7 @@ const material_snapshot_t* Materials_Prepare(materialvariant_t* variant, boolean
     if(!snapshot)
     {
         // Time to allocate the snapshot.
-        snapshot = (material_snapshot_t*)malloc(sizeof *snapshot);
+        snapshot = (materialsnapshot_t*)malloc(sizeof *snapshot);
         if(!snapshot)
             Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
         snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
@@ -1421,10 +1423,10 @@ const material_snapshot_t* Materials_Prepare(materialvariant_t* variant, boolean
     }
 }
 
-const material_snapshot_t* Materials_ChooseAndPrepare(material_t* mat,
+const materialsnapshot_t* Materials_Prepare(material_t* mat,
     const materialvariantspecification_t* spec, boolean smooth, boolean updateSnapshot)
 {
-    return Materials_Prepare(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
+    return Materials_PrepareVariant(Materials_ChooseVariant(mat, spec, smooth, true), updateSnapshot);
 }
 
 const ded_decor_t* Materials_DecorationDef(material_t* mat)
@@ -1434,7 +1436,7 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
     {
         materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        Materials_ChooseAndPrepare(mat, spec, false, false);
+        Materials_Prepare(mat, spec, false, false);
     }
     return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
 }
@@ -1446,7 +1448,7 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
     {
         materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-        Materials_ChooseAndPrepare(mat, spec, false, false);
+        Materials_Prepare(mat, spec, false, false);
     }
     return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
 }
@@ -1459,7 +1461,7 @@ uint Materials_Count(void)
 }
 
 struct materialvariantspecification_s* Materials_VariantSpecificationForContext(
-    materialvariantusagecontext_t mc, int flags, byte border, int tClass, int tMap,
+    materialcontext_t mc, int flags, byte border, int tClass, int tMap,
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
@@ -1786,7 +1788,7 @@ int Materials_CreateAnimGroup(int flags)
     return group->id;
 }
 
-void Materials_DestroyAnimGroups(void)
+void Materials_ClearAnimGroups(void)
 {
     if(numgroups > 0)
     {

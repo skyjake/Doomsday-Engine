@@ -1414,7 +1414,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
-    Materials_DestroyAnimGroups();
+    Materials_ClearAnimGroups();
     for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(&defs.groups[i]);

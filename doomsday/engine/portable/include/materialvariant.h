@@ -27,26 +27,25 @@
 struct texturevariantspecification_s;
 struct texturevariant_s;
 
+/// Material (Usage) Context identifiers.
 typedef enum {
     MC_UNKNOWN = -1,
-    MATERIALVARIANTUSAGECONTEXT_FIRST = 0,
-    MC_UI = MATERIALVARIANTUSAGECONTEXT_FIRST,
+    MATERIALCONTEXT_FIRST = 0,
+    MC_UI = MATERIALCONTEXT_FIRST,
     MC_MAPSURFACE,
     MC_SPRITE,
     MC_MODELSKIN,
     MC_PSPRITE,
     MC_SKYSPHERE,
-    MATERIALVARIANTUSAGECONTEXT_LAST = MC_SKYSPHERE
-} materialvariantusagecontext_t;
+    MATERIALCONTEXT_LAST = MC_SKYSPHERE
+} materialcontext_t;
 
-#define MATERIALVARIANTUSAGECONTEXT_COUNT (\
-    MATERIALVARIANTUSAGECONTEXT_LAST + 1 - MATERIALVARIANTUSAGECONTEXT_FIRST )
+#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
 
-#define VALID_MATERIALVARIANTUSAGECONTEXT(mc) (\
-    (mc) >= MATERIALVARIANTUSAGECONTEXT_FIRST && (mc) <= MATERIALVARIANTUSAGECONTEXT_LAST)
+#define VALID_MATERIALCONTEXT(mc) ((mc) >= MATERIALCONTEXT_FIRST && (mc) <= MATERIALCONTEXT_LAST)
 
 typedef struct materialvariantspecification_s {
-    materialvariantusagecontext_t context;
+    materialcontext_t context;
     struct texturevariantspecification_s* primarySpec;
 } materialvariantspecification_t;
 
@@ -83,7 +82,7 @@ typedef struct material_textureunit_s {
     float alpha;
 } material_textureunit_t;
 
-typedef struct material_snapshot_s {
+typedef struct materialsnapshot_s {
     /// "Virtual" texturing units.
     material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
 
@@ -104,7 +103,7 @@ typedef struct material_snapshot_s {
     float glowing;
 
     boolean isOpaque;
-} material_snapshot_t;
+} materialsnapshot_t;
 
 #define MSU(ms, u) ((ms)->units[u])
 
@@ -131,7 +130,7 @@ typedef struct materialvariant_s {
     const materialvariantspecification_t* _spec;
 
     /// Cached copy of current state if any.
-    material_snapshot_t* _snapshot;
+    materialsnapshot_t* _snapshot;
 } materialvariant_t;
 
 materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
@@ -167,15 +166,15 @@ const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int
  * Attach MaterialSnapshot data to this. MaterialVariant is given ownership of @a materialSnapshot.
  * @return  Same as @a materialSnapshot for caller convenience.
  */
-material_snapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, material_snapshot_t* materialSnapshot);
+materialsnapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, materialsnapshot_t* materialSnapshot);
 
 /**
  * Detach MaterialSnapshot data from this. Ownership of the data is relinquished to the caller.
  */
-material_snapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat);
+materialsnapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat);
 
 /// @return  MaterialSnapshot data associated with this.
-material_snapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat);
+materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat);
 
 /// @return  Translated 'next' (or target) MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);

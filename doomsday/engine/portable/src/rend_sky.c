@@ -265,7 +265,7 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
         else
         {
             materialvariantspecification_t* spec;
-            const material_snapshot_t* ms;
+            const materialsnapshot_t* ms;
             material_t* mat;
             
             if(renderTextures == 2)
@@ -276,7 +276,7 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
             spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
                 TSF_NO_COMPRESSION | TSF_ZEROMASK, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                 1, 1, 0, false, true, false, false);
-            ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+            ms = Materials_Prepare(mat, spec, true, true);
 
             tex     = MSU(ms, MTU_PRIMARY).tex.glName;
             Texture_Dimensions(MSU(ms, MTU_PRIMARY).tex.texture, &skyTexWidth, &skyTexHeight);

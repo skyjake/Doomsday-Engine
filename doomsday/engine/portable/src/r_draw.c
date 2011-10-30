@@ -248,7 +248,7 @@ void R_DrawViewBorder(void)
     {
         materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
-        const material_snapshot_t* ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true, true);
 
         GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, (filterUI ? GL_LINEAR : GL_NEAREST));
         GL_DrawCutRectTiled(0, 0, port->dimensions.width, port->dimensions.height, ms->width, ms->height, 0, 0,

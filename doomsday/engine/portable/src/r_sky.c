@@ -159,14 +159,14 @@ static void prepareSkySphere(void)
     for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
     {
         materialvariantspecification_t* spec;
-        const material_snapshot_t* ms;
+        const materialsnapshot_t* ms;
 
         if(!(slayer->flags & SLF_ENABLED) || !slayer->material) continue;
 
         spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
             TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
             0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false);
-        ms = Materials_ChooseAndPrepare(slayer->material, spec, false, true);
+        ms = Materials_Prepare(slayer->material, spec, false, true);
 
         slayer->tex = MSU(ms, MTU_PRIMARY).tex.glName;
         Texture_Dimensions(MSU(ms, MTU_PRIMARY).tex.texture,

@@ -187,7 +187,7 @@ const materialvariant_layer_t* MaterialVariant_Layer(materialvariant_t* mat, int
     return NULL;
 }
 
-material_snapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, material_snapshot_t* ms)
+materialsnapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, materialsnapshot_t* ms)
 {
     assert(mat && ms);
     if(mat->_snapshot)
@@ -202,17 +202,17 @@ material_snapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, mate
     return ms;
 }
 
-material_snapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat)
+materialsnapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat)
 {
     assert(mat);
     {
-    material_snapshot_t* ms = mat->_snapshot;
+    materialsnapshot_t* ms = mat->_snapshot;
     mat->_snapshot = NULL;
     return ms;
     }
 }
 
-material_snapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat)
+materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat)
 {
     assert(mat);
     return mat->_snapshot;

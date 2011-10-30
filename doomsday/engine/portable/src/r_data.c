@@ -2534,7 +2534,7 @@ void R_PrecacheMobjNum(int num)
                 spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
                 int k;
                 for(k = 0; k < 8; ++k)
-                    Materials_Precache(sprFrame->mats[k], spec);
+                    Materials_Precache(sprFrame->mats[k], spec, true);
             }
         }
     }}
@@ -2564,13 +2564,13 @@ void R_PrecacheForMap(void)
             sidedef_t* side = SIDE_PTR(i);
 
             if(side->SW_middlematerial)
-                Materials_Precache(side->SW_middlematerial, spec);
+                Materials_Precache(side->SW_middlematerial, spec, true);
 
             if(side->SW_topmaterial)
-                Materials_Precache(side->SW_topmaterial, spec);
+                Materials_Precache(side->SW_topmaterial, spec, true);
 
             if(side->SW_bottommaterial)
-                Materials_Precache(side->SW_bottommaterial, spec);
+                Materials_Precache(side->SW_bottommaterial, spec, true);
         }
 
         for(i = 0; i < numSectors; ++i)
@@ -2579,7 +2579,7 @@ void R_PrecacheForMap(void)
             if(!sec->lineDefCount) continue;
             for(j = 0; j < sec->planeCount; ++j)
             {
-                Materials_Precache(sec->SP_planematerial(j), spec);
+                Materials_Precache(sec->SP_planematerial(j), spec, true);
             }
         }
     }
@@ -2603,7 +2603,7 @@ void R_PrecacheForMap(void)
                     spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
                     int k;
                     for(k = 0; k < 8; ++k)
-                        Materials_Precache(sprFrame->mats[k], spec);
+                        Materials_Precache(sprFrame->mats[k], spec, true);
                 }
             }
         }

@@ -972,26 +972,26 @@ int GL_GetTexAnisoMul(int level)
 void GL_SetMaterialUI(material_t* mat)
 {
     materialvariantspecification_t* spec;
-    const material_snapshot_t* ms;
+    const materialsnapshot_t* ms;
 
     if(!mat) return; // \fixme we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
-    ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+    ms = Materials_Prepare(mat, spec, true, true);
     GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
 {
     materialvariantspecification_t* spec;
-    const material_snapshot_t* ms;
+    const materialsnapshot_t* ms;
 
     if(!mat) return; // \fixme we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
-    ms = Materials_ChooseAndPrepare(mat, spec, true, true);
+    ms = Materials_Prepare(mat, spec, true, true);
     GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
 }
 
