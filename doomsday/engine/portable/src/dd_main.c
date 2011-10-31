@@ -2311,7 +2311,7 @@ const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
         /* TN_LIGHTMAPS */              { TN_LIGHTMAPS_NAME },
         /* TN_FLAREMAPS */              { TN_FLAREMAPS_NAME }
     };
-    if(VALID_TEXTURENAMESPACE(id))
+    if(VALID_TEXTURENAMESPACEID(id))
         return namespaceNames + 1 + (id - TEXTURENAMESPACE_FIRST);
     return namespaceNames + 0;
 }
@@ -2319,18 +2319,20 @@ const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
 struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
 {
     const texture_t* tex;
+    ddstring_t* texPath;
     material_t* mat;
     Uri* uri;
 
     if(index == 0) return NULL;
-    tex = GL_TextureByIndex(index-1, texNamespace);
+    tex = Textures_TextureForTypeIndex(index-1, texNamespace);
     if(!tex) return NULL;
 
-    uri = Uri_New();
-    Uri_SetPath(uri, Texture_Name(tex));
+    texPath = Texture_ComposePath(tex);
+    uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
     Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
     mat = Materials_MaterialForUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
+    Str_Delete(texPath);
     return mat;
 }
 
