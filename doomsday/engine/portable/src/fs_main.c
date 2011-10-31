@@ -689,10 +689,10 @@ const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
     return "";
 }
 
-boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
+boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
     abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
-    if(fsObject) return AbstractFile_HasIWAD(fsObject);
+    if(fsObject) return !AbstractFile_HasIWAD(fsObject);
     return false;
 }
 

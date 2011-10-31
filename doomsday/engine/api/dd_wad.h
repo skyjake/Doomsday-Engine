@@ -49,8 +49,8 @@ uint W_LumpLastModified(lumpnum_t lumpNum);
 ///     Always returns a valid filename (or an empty string).
 const char* W_LumpSourceFile(lumpnum_t lumpNum);
 
-/// @return  @c true iff the data associated with @a lumpNum resides in an IWAD.
-boolean W_LumpIsFromIWAD(lumpnum_t lumpNum);
+/// @return  @c true iff the data associated with @a lumpNum does not originate from the current game.
+boolean W_LumpIsCustom(lumpnum_t lumpNum);
 
 /**
  * @param name  Name of the lump to search for.

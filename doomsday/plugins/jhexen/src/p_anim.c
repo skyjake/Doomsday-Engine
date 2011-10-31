@@ -107,9 +107,8 @@ void P_InitPicAnims(void)
     lumpnum_t lumpNum = W_CheckLumpNumForName("ANIMDEFS");
     boolean isCustom, isTexture = false; // Shut up compiler!
 
-    if(lumpNum == -1)
-        return;
-    isCustom = !W_LumpIsFromIWAD(lumpNum);
+    if(lumpNum == -1) return;
+    isCustom = W_LumpIsCustom(lumpNum);
 
     SC_OpenLump(lumpNum);
     while(SC_GetString())

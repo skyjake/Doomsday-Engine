@@ -143,7 +143,7 @@ EXPORTS
     W_LumpName                  @17 NONAME
     W_LumpLastModified          @585 NONAME
     W_LumpSourceFile            @22 NONAME
-    W_LumpIsFromIWAD            @239 NONAME
+    W_LumpIsCustom              @239 NONAME
 
 ; Base: Zone.
     Z_Malloc                    @24 NONAME

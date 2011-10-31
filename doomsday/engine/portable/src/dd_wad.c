@@ -79,14 +79,14 @@ const char* W_LumpSourceFile(lumpnum_t absoluteLumpNum)
     return Str_Text(AbstractFile_Path(fsObject));
 }
 
-boolean W_LumpIsFromIWAD(lumpnum_t absoluteLumpNum)
+boolean W_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
     if(!F_IsValidLumpNum(absoluteLumpNum))
     {
-        W_Error("W_LumpIsFromIWAD: Invalid lumpnum %i.", absoluteLumpNum);
+        W_Error("W_LumpIsCustom: Invalid lumpnum %i.", absoluteLumpNum);
         return false;
     }
-    return F_LumpIsFromIWAD(absoluteLumpNum);
+    return F_LumpIsCustom(absoluteLumpNum);
 }
 
 lumpnum_t W_CheckLumpNumForName2(const char* name, boolean silent)

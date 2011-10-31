@@ -153,7 +153,7 @@ const char* P_GenerateUniqueMapId(const char* mapID)
     Str_Init(&fileName);
     F_FileName(&fileName, F_LumpSourceFile(lumpNum));
     dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
-        (F_LumpIsFromIWAD(lumpNum) ? "iwad" : "pwad"), Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
+        (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
     strlwr(uid);
 
     Str_Free(&fileName);
@@ -313,7 +313,7 @@ boolean P_MapIsCustom(const char* uriCString)
     Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
     lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
     Uri_Delete(uri);
-    return (lumpNum >= 0 && !W_LumpIsFromIWAD(lumpNum));
+    return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
 }
 
 /// \note Part of the Doomsday public API.

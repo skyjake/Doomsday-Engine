@@ -1138,7 +1138,7 @@ patchid_t R_RegisterPatch(const char* name)
      */
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
-    p->isCustom = !F_LumpIsFromIWAD(lumpNum);
+    p->isCustom = F_LumpIsCustom(lumpNum);
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
@@ -1737,7 +1737,7 @@ typedef struct {
             j = 0;
             while(j < texDef->patchCount && (texDef->flags & TXDF_IWAD))
             {
-                if(!F_LumpIsFromIWAD(texDef->patches[j].lumpNum))
+                if(F_LumpIsCustom(texDef->patches[j].lumpNum))
                     texDef->flags &= ~TXDF_IWAD;
                 else
                     j++;
@@ -1801,7 +1801,7 @@ static void loadPatchCompositeDefs(void)
 
         if(!strncmp(name, "TEXTURE1", 8) || !strncmp(name, "TEXTURE2", 8))
         {
-            boolean isFromIWAD = F_LumpIsFromIWAD(i);
+            boolean isFromIWAD = !F_LumpIsCustom(i);
             int newNumTexDefs;
             patchcompositetex_t** newTexDefs;
 
@@ -2103,7 +2103,7 @@ void R_InitFlatTextures(void)
         if(!Stack_Height(stack))
             continue;
 
-        R_NewFlat(name, (lumpnum_t)i, !F_LumpIsFromIWAD(i));
+        R_NewFlat(name, (lumpnum_t)i, F_LumpIsCustom(i));
     }}
 
     while(Stack_Height(stack))
@@ -2212,7 +2212,7 @@ void R_InitSpriteTextures(void)
             if(!Str_CompareIgnoreCase(&spriteTextures[j]->name, name))
             {
                 // Update metadata and move the sprite to the end (relative indices must be respected).
-                spriteTextures[j]->isCustom = F_LumpIsFromIWAD(i);
+                spriteTextures[j]->isCustom = F_LumpIsCustom(i);
                 spriteTextures[j]->lumpNum = (lumpnum_t) i;
                 if(j != spriteTexturesCount-1)
                 {
@@ -2234,7 +2234,7 @@ void R_InitSpriteTextures(void)
         Str_Init(&sprTex->name);
         Str_Set(&sprTex->name, name);
         sprTex->lumpNum = (lumpnum_t)i;
-        sprTex->isCustom = !F_LumpIsFromIWAD(i);
+        sprTex->isCustom = F_LumpIsCustom(i);
     }}
 
     while(Stack_Height(stack))

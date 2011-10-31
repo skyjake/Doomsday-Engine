@@ -578,7 +578,7 @@ void R_LoadColorPalettes(void)
     uint8_t data[PALENTRIES*3];
 
     // Record whether we are using a custom palette.
-    customPal = !W_LumpIsFromIWAD(lumpNum);
+    customPal = W_LumpIsCustom(lumpNum);
 
     W_ReadLumpSection(lumpNum, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);

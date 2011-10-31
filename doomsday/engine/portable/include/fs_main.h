@@ -105,7 +105,7 @@ int F_LumpCount(void);
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum);
 
-boolean F_LumpIsFromIWAD(lumpnum_t absoluteLumpNum);
+boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum);
 
 const char* F_LumpName(lumpnum_t absoluteLumpNum);
 

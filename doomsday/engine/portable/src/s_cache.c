@@ -575,7 +575,7 @@ static sfxsample_t* cacheSample(int id, const sfxinfo_t* info)
          * external resource (probably a custom sound).
          * \fixme should be a cvar.
          */
-        if(info->lumpNum < 0 || F_LumpIsFromIWAD(info->lumpNum))
+        if(info->lumpNum < 0 || !F_LumpIsCustom(info->lumpNum))
         {
             ddstring_t foundPath; Str_Init(&foundPath);
 
