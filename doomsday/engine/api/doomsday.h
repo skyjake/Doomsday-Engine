@@ -251,8 +251,8 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 //
 //------------------------------------------------------------------------
 
-    boolean         MPE_Begin(const char* name);
-    boolean         MPE_End(void);
+boolean MPE_Begin(const char* mapUri);
+boolean MPE_End(void);
 
     uint            MPE_VertexCreate(float x, float y);
     boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);

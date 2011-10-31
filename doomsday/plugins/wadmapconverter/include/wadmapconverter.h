@@ -143,7 +143,6 @@ typedef enum {
 } mapformatid_t;
 
 typedef struct map_s {
-    char            name[9];
     uint            numVertexes;
     uint            numSectors;
     uint            numLines;

@@ -1766,14 +1766,13 @@ boolean LoadMap(const lumpnum_t* lumpList, int numLumps)
 
 boolean TransferMap(void)
 {
-    uint                startTime = Sys_GetRealTime();
-
-    uint                i;
-    boolean             result;
+    uint startTime = Sys_GetRealTime();
+    uint i;
+    boolean result;
 
     VERBOSE2(Con_Message("WadMapConverter::TransferMap...\n"));
 
-    MPE_Begin(map->name);
+    MPE_Begin("");
 
     // Create all the data structures.
     VERBOSE2(Con_Message("WadMapConverter::Transfering vertexes...\n"));
@@ -1782,11 +1781,10 @@ boolean TransferMap(void)
     VERBOSE2(Con_Message("WadMapConverter::Transfering sectors...\n"));
     for(i = 0; i < map->numSectors; ++i)
     {
-        msector_t*          sec = &map->sectors[i];
-        uint                sectorIDX;
+        msector_t* sec = &map->sectors[i];
+        uint sectorIDX;
 
-        sectorIDX =
-            MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
+        sectorIDX = MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
 
         MPE_PlaneCreate(sectorIDX, sec->floorHeight,
                         sec->floorMaterial->num,

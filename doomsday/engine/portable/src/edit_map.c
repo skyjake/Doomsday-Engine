@@ -276,13 +276,12 @@ static void destroyMap(void)
     destroyEditablePolyObjs(map);
 }
 
-static int C_DECL vertexCompare(const void *p1, const void *p2)
+static int C_DECL vertexCompare(const void* p1, const void* p2)
 {
-    const vertex_t     *a = *((const void **) p1);
-    const vertex_t     *b = *((const void **) p2);
+    const vertex_t* a = *((const void**) p1);
+    const vertex_t* b = *((const void**) p2);
 
-    if(a == b)
-        return 0;
+    if(a == b) return 0;
 
     if((int) a->buildData.pos[VX] != (int) b->buildData.pos[VX])
         return (int) a->buildData.pos[VX] - (int) b->buildData.pos[VX];
@@ -589,7 +588,7 @@ void MPE_FreeUnclosedSectorList(void)
 /**
  * Called to begin the map building process.
  */
-boolean MPE_Begin(const char* mapId)
+boolean MPE_Begin(const char* mapUri)
 {
     if(editMapInited)
         return true; // Already been here.
@@ -602,11 +601,6 @@ boolean MPE_Begin(const char* mapId)
     map->gameObjData.objLists = NULL;
 
     destroyMap();
-
-    if(mapId && mapId[0])
-    {
-        strncpy(map->mapId, mapId, 8);
-    }
 
     editMapInited = true;
     return true;

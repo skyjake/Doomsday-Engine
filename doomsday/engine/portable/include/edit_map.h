@@ -34,25 +34,24 @@
 
 // Editable map.
 typedef struct editmap_s {
-    char            mapId[9];
-    uint            numVertexes;
-    vertex_t**      vertexes;
-    uint            numLineDefs;
-    linedef_t**     lineDefs;
-    uint            numSideDefs;
-    sidedef_t**     sideDefs;
-    uint            numSectors;
-    sector_t**      sectors;
-    uint            numPolyObjs;
-    polyobj_t**     polyObjs;
+    uint numVertexes;
+    vertex_t** vertexes;
+    uint numLineDefs;
+    linedef_t** lineDefs;
+    uint numSideDefs;
+    sidedef_t** sideDefs;
+    uint numSectors;
+    sector_t** sectors;
+    uint numPolyObjs;
+    polyobj_t** polyObjs;
 
     // The following is for game-specific map object data.
-    gameobjdata_t   gameObjData;
+    gameobjdata_t gameObjData;
 } editmap_t;
 
 editmap_t editMap;
 
-boolean         MPE_Begin(const char* mapId);
+boolean         MPE_Begin(const char* mapUri);
 boolean         MPE_End(void);
 
 uint            MPE_VertexCreate(float x, float y);
