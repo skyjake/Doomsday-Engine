@@ -352,22 +352,18 @@ Uri* Uri_SetUri(Uri* uri, const ddstring_t* path)
 
 ddstring_t* Uri_ComposePath(const Uri* uri)
 {
-    if(!uri)
-    {
-        Con_Error("Attempted Uri::ComposePath with invalid reference (this==0).");
-        return 0; // Unreachable.
-    }
-    { ddstring_t* out = Str_New(); Str_Init(out);
+    ddstring_t* out;
+    if(!uri) return Str_Set(Str_New(), "(nullptr)");
+
+    out = Str_New();
     if(!Str_IsEmpty(&uri->_scheme))
         Str_Appendf(out, "%s:", Str_Text(&uri->_scheme));
     Str_Append(out, Str_Text(&uri->_path));
     return out;
-    }
 }
 
 ddstring_t* Uri_ToString(const Uri* uri)
 {
-    if(!uri) return Str_Set(Str_New(), "(nullptr)");
     // Just compose it for now, we can worry about making it 'pretty' later.
     return Uri_ComposePath(uri);
 }

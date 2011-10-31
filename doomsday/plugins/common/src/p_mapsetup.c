@@ -733,16 +733,16 @@ static void spawnMapObjects(void)
 }
 
 typedef struct setupmapparams_s {
-    uint            episode;
-    uint            map;
-    int             playerMask; // Unused?
-    skillmode_t     skill;
+    uint episode;
+    uint map;
+    skillmode_t skill;
 } setupmapparams_t;
 
-int P_SetupMapWorker(void* ptr)
+int P_SetupMapWorker(void* paramaters)
 {
-    setupmapparams_t*   param = ptr;
-    char                mapID[9];
+    setupmapparams_t* param = (setupmapparams_t*)paramaters;
+    ddstring_t* mapPath;
+    Uri* mapUri;
 
     // It begins...
     mapSetup = true;
@@ -764,11 +764,15 @@ int P_SetupMapWorker(void* ptr)
     P_ClearBodyQueue();
 #endif
 
-    P_MapId(param->episode, param->map, mapID);
-    if(!P_LoadMap(mapID))
+    mapUri = G_ComposeMapUri(param->episode, param->map);
+    mapPath = Uri_ComposePath(mapUri);
+    if(!P_LoadMap(Str_Text(mapPath)))
     {
-        Con_Error("P_SetupMap: Failed loading map \"%s\".\n", mapID);
+        ddstring_t* path = Uri_ToString(mapUri);
+        Con_Error("P_SetupMap: Failed loading map \"%s\".\n", Str_Text(path));
     }
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 
     DD_InitThinkers();
 #if __JHERETIC__
@@ -787,9 +791,12 @@ int P_SetupMapWorker(void* ptr)
 #if __JHEXEN__
     PO_InitForMap();
 
+    { lumpname_t mapId;
+    G_MapId(param->episode, param->map, mapId);
     Con_Message("Load ACS scripts\n");
     // \fixme Should be interpreted by the map converter.
-    P_LoadACScripts(W_GetLumpNumForName(mapID) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    P_LoadACScripts(W_GetLumpNumForName(mapId) + 11 /*ML_BEHAVIOR*/); // ACS object code
+    }
 #endif
 
     HU_UpdatePsprites();
@@ -833,7 +840,7 @@ int P_SetupMapWorker(void* ptr)
             { GM_ANY,   MT_ROCKETPUFF },
             { 0,        0}
         };
-        uint                i;
+        uint i;
 #endif
 
         R_PrecachePSprites();
@@ -871,11 +878,10 @@ int P_SetupMapWorker(void* ptr)
  */
 void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
 {
-    setupmapparams_t  param;
+    setupmapparams_t param;
 
     param.episode = episode;
     param.map = map;
-    param.playerMask = playerMask; // Unused?
     param.skill = skill;
 
     DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
@@ -1060,9 +1066,9 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
 
 boolean P_IsMapFromIWAD(uint episode, uint map)
 {
-    char lumpName[9];
-    P_MapId(episode, map, lumpName);
-    return W_LumpIsFromIWAD(W_GetLumpNumForName(lumpName));
+    lumpname_t mapId;
+    G_MapId(episode, map, mapId);
+    return W_LumpIsFromIWAD(W_GetLumpNumForName(mapId));
 }
 
 const char* P_GetMapAuthor(boolean supressGameAuthor)

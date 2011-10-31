@@ -117,9 +117,26 @@ void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
 
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
-boolean         P_MapExists(uint episode, uint map);
-const char*     P_MapSourceFile(uint episode, uint map);
-void            P_MapId(uint episode, uint map, char* id);
+/// return  @c true= The identified @a episode @a map is available.
+boolean P_MapExists(uint episode, uint map);
+
+/// return  Name of the source file containing the map if available else @c NULL.
+const char* P_MapSourceFile(uint episode, uint map);
+
+/**
+ * Compose a Uri for the identified @a episode and @a map combination.
+ *
+ * @param episode  Logical episode number.
+ * @param map  Logical map number.
+ * @return  Resultant Uri. Caller should destroy with Uri_Delete.
+ */
+Uri* G_ComposeMapUri(uint episode, uint map);
+
+/**
+ * Compose the name of the map identifier.
+ * \note Deprecated. Prefer to use G_ComposeMapUri
+ */
+void G_MapId(uint episode, uint map, lumpname_t mapId);
 
 void            G_WorldDone(void);
 

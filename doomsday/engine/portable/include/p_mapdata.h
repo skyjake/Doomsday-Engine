@@ -189,7 +189,7 @@ typedef struct {
 /**
  * The map data arrays are accessible globally inside the engine.
  */
-extern char mapID[9];
+extern Uri* mapUri;
 extern uint numVertexes;
 extern vertex_t* vertexes;
 
@@ -219,8 +219,8 @@ extern surfacelist_t* glowingSurfaceList;
 extern float mapGravity;
 
 typedef struct gamemap_s {
-    char            mapID[9];
-    char            uniqueID[256];
+    Uri* uri;
+    char            uniqueId[256];
 
     float           bBox[4];
 
@@ -270,12 +270,29 @@ typedef struct gamemap_s {
 gamemap_t*      P_GetCurrentMap(void);
 void            P_SetCurrentMap(gamemap_t* map);
 
-const char*     P_GetMapID(gamemap_t* map);
-const char*     P_GetUniqueMapID(gamemap_t* map);
+/**
+ * This ID is the name of the lump tag that marks the beginning of map
+ * data, e.g. "MAP03" or "E2M8".
+ */
+const Uri* P_MapUri(gamemap_t* map);
+
+/// @return  The 'unique' identifier of the map.
+const char* P_GetUniqueMapId(gamemap_t* map);
+
 void            P_GetMapBounds(gamemap_t* map, float* min, float* max);
 int             P_GetMapAmbientLightLevel(gamemap_t* map);
 
-const char*     P_GenerateUniqueMapID(const char* mapID);
+const char*     P_GenerateUniqueMapId(const char* mapId);
+
+/**
+ * Begin the process of loading a new map.
+ * Can be accessed by the games via the public API.
+ *
+ * @param uri  Identifier of the map to be loaded (eg "E1M1").
+ *
+ * @return @c true, if the map was loaded successfully.
+ */
+boolean P_LoadMap(const char* uri);
 
 void            P_PolyobjChanged(polyobj_t* po);
 void            P_RegisterUnknownTexture(const char* name, boolean planeTex);

@@ -679,7 +679,7 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     Material_SetDefinition(mat, def);
     Material_SetFlags(mat, def->flags);
     Material_SetDimensions(mat, def->width, def->height);
-    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->id));
+    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
 
     // Textures are updated automatically at prepare-time, so just clear them.
     Material_SetDetailTexture(mat, NULL);
@@ -967,7 +967,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     assert(def);
     {
-    const Uri* uri = def->id;
+    const Uri* uri = def->uri;
     const texture_t* tex;
     material_t* mat;
 
@@ -1004,7 +1004,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             tex = Textures_TextureForUri2(l->stages[0].texture, true/*quiet please*/);
             if(!tex)
             {
-                ddstring_t* materialPath = Uri_ToString(def->id);
+                ddstring_t* materialPath = Uri_ToString(def->uri);
                 ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
                 VERBOSE( Con_Message("Warning, unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
                          Str_Text(texturePath), Str_Text(materialPath), 0, 0) );

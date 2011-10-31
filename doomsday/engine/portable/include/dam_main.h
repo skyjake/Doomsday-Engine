@@ -65,12 +65,12 @@ typedef struct maplumpinfo_s {
 } maplumpinfo_t;
 
 typedef struct archivedmap_s {
-    char        identifier[9];
-    int         numLumps;
-    lumpnum_t*  lumpList;
-    ddstring_t  cachedMapPath;
-    boolean     cachedMapFound;
-    boolean     lastLoadAttemptFailed;
+    Uri* uri;
+    int numLumps;
+    lumpnum_t* lumpList;
+    ddstring_t cachedMapPath;
+    boolean cachedMapFound;
+    boolean lastLoadAttemptFailed;
 } archivedmap_t;
 
 extern byte mapCache;
@@ -93,6 +93,6 @@ void DAM_Shutdown(void);
  */
 ddstring_t* DAM_ComposeCacheDir(const char* sourcePath);
 
-boolean DAM_AttemptMapLoad(const char* mapID);
+boolean DAM_AttemptMapLoad(const Uri* uri);
 
 #endif /* LIBDENG_ARCHIVED_MAP_MAIN_H */

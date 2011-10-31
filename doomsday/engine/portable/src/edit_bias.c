@@ -385,7 +385,7 @@ static void SBE_Dupe(int which)
 static boolean SBE_Save(const char* name)
 {
     gamemap_t* map = P_GetCurrentMap();
-    const char* uid = P_GetUniqueMapID(map);
+    const char* uid = P_GetUniqueMapId(map);
     ddstring_t fileName;
     source_t* s;
     FILE* file;
@@ -393,7 +393,7 @@ static boolean SBE_Save(const char* name)
     Str_Init(&fileName);
     if(NULL == name || !name[0])
     {
-        Str_Appendf(&fileName, "%s.ded", P_GetMapID(map));
+        Str_Appendf(&fileName, "%s.ded", P_MapUri(map));
     }
     else
     {
@@ -842,7 +842,7 @@ void SBE_DrawHUD(void)
     UI_TextOutEx2(buf, 18, y + h / 2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     // The map ID.
-    UI_TextOutEx2(P_GetUniqueMapID(map), 18, y - h/2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(P_GetUniqueMapId(map), 18, y - h/2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     // Stats for nearest & grabbed:
     if(numSources)

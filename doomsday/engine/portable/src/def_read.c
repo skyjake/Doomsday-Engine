@@ -1050,18 +1050,22 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             else if(!bCopyNext)
             {
                 Uri* otherMat = NULL;
+                ddstring_t* otherMatPath;
 
                 READURI(&otherMat, NULL);
                 ReadToken();
 
-                mat = Def_GetMaterial(otherMat);
-                if(NULL == mat)
+                otherMatPath = Uri_ComposePath(otherMat);
+                mat = Def_GetMaterial(Str_Text(otherMatPath));
+                Str_Delete(otherMatPath);
+                if(!mat)
                 {
                     VERBOSE(
                         ddstring_t* path = Uri_ToString(otherMat);
                         Con_Message("Warning: Unknown Material %s in %s on line #%i, will be ignored.\n",
                             Str_Text(path), source ? source->fileName : "?", source ? source->lineNumber : 0);
-                        Str_Delete(path) )
+                        Str_Delete(path)
+                        )
 
                     // We'll read into a dummy definition.
                     idx = -1;
@@ -1086,16 +1090,16 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             if(prevMaterialDefIdx >= 0 && bCopyNext)
             {
                 const ded_material_t* prevMaterial = ded->materials + prevMaterialDefIdx;
-                Uri* uri = mat->id;
+                Uri* uri = mat->uri;
 
                 memcpy(mat, prevMaterial, sizeof(*mat));
-                mat->id = uri;
-                if(NULL != prevMaterial->id)
+                mat->uri = uri;
+                if(prevMaterial->uri)
                 {
-                    if(NULL != mat->id)
-                        Uri_Copy(mat->id, prevMaterial->id);
+                    if(mat->uri)
+                        Uri_Copy(mat->uri, prevMaterial->uri);
                     else
-                        mat->id = Uri_NewCopy(prevMaterial->id);
+                        mat->uri = Uri_NewCopy(prevMaterial->uri);
                 }
 
                 // Duplicate the stage arrays.
@@ -1132,7 +1136,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 // ID cannot be changed when modifying
                 if(!bModify && ISLABEL("ID"))
                 {
-                    READURI(&mat->id, NULL);
+                    READURI(&mat->uri, NULL);
                 }
                 else RV_FLAGS("Flags", mat->flags, "matf_")
                 RV_FLT("Width", mat->width)
@@ -1452,19 +1456,29 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Map")) // Info
         {   // A new map info.
-            uint                sub;
-            ded_mapinfo_t*      mi;
+            uint sub;
+            ded_mapinfo_t* mi;
 
-            idx = DED_AddMapInfo(ded, "");
+            idx = DED_AddMapInfo(ded, NULL);
             mi = &ded->mapInfo[idx];
 
             // Should we copy the previous definition?
             if(prevMapInfoDefIdx >= 0 && bCopyNext)
             {
                 const ded_mapinfo_t* prevMapInfo = ded->mapInfo + prevMapInfoDefIdx;
+                Uri* uri = mi->uri;
                 int i;
 
                 memcpy(mi, prevMapInfo, sizeof(*mi));
+                mi->uri = uri;
+                if(prevMapInfo->uri)
+                {
+                    if(mi->uri)
+                        Uri_Copy(mi->uri, prevMapInfo->uri);
+                    else
+                        mi->uri = Uri_NewCopy(prevMapInfo->uri);
+                }
+
                 mi->execute = sdup(mi->execute);
                 for(i = 0; i < NUM_SKY_LAYERS; ++i)
                 {
@@ -1483,7 +1497,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             for(;;)
             {
                 READLABEL;
-                RV_STR("ID", mi->id)
+                RV_URI("ID", &mi->uri, NULL)
                 RV_STR("Name", mi->name)
                 RV_STR("Author", mi->author)
                 RV_FLAGS("Flags", mi->flags, "mif_")
@@ -1642,7 +1656,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     READLABEL;
                     if(ISLABEL("ID"))
                     {
-                        READURI(&cfont->id, FN_GAME_NAME)
+                        READURI(&cfont->uri, FN_GAME_NAME)
                         CHECKSC;
                     }
                     else if(M_IsStringValidInt(label))
@@ -1899,6 +1913,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
                 memcpy(gen, prevGen, sizeof(*gen));
 
+                if(gen->map) gen->map = Uri_NewCopy(gen->map);
                 if(gen->material) gen->material = Uri_NewCopy(gen->material);
 
                 // Duplicate the stages array.
@@ -1930,7 +1945,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 RV_STR("Mobj", gen->type)
                 RV_STR("Alt mobj", gen->type2)
                 RV_STR("Damage mobj", gen->damage)
-                RV_STR("Map", gen->map)
+                RV_URI("Map", &gen->map, NULL)
                 RV_FLAGS("Flags", gen->flags, "gnf_")
                 RV_FLT("Speed", gen->speed)
                 RV_FLT("Speed Rnd", gen->speedVariance)
@@ -2002,7 +2017,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Finale") || ISTOKEN("InFine"))
         {
-            ded_finale_t*       fin;
+            ded_finale_t* fin;
 
             idx = DED_AddFinale(ded);
             fin = &ded->finales[idx];
@@ -2012,16 +2027,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             {
                 READLABEL;
                 RV_STR("ID", fin->id)
-                RV_STR("Before", fin->before)
-                RV_STR("After", fin->after)
+                RV_URI("Before", &fin->before, NULL)
+                RV_URI("After", &fin->after, NULL)
                 RV_INT("Game", dummyInt)
                 if(ISLABEL("Script"))
                 {
                     // Allocate an "enormous" 64K buffer.
-                    char *temp = M_Calloc(0x10000), *ptr;
+                    char* temp = M_Calloc(0x10000), *ptr;
 
-                    if(fin->script)
-                        M_Free(fin->script);
+                    if(fin->script) M_Free(fin->script);
 
                     FINDBEGIN;
                     ptr = temp;

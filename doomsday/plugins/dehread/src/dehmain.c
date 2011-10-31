@@ -1887,9 +1887,10 @@ int PatchMisc(int dummy)
 
 int PatchPars(int dummy)
 {
-    char* space, mapname[8], *moredata;
+    char* space, *moredata;
     ded_mapinfo_t *info;
     int result, par, i;
+    Uri* uri;
 
     while((result = GetLine()))
     {
@@ -1916,36 +1917,42 @@ int PatchPars(int dummy)
             space++;
 
         moredata = strchr(space, ' ');
-
         if(moredata)
         {
             // At least 3 items on this line, must be E?M? format
-            sprintf(mapname, "E%cM%c", *Line2, *space);
+            char mapId[8];
+            sprintf(mapId, "E%cM%c", *Line2, *space);
+            uri = Uri_NewWithPath2(mapId, RC_NULL);
             par = atoi(moredata + 1);
         }
         else
         {
             // Only 2 items, must be MAP?? format
-            sprintf(mapname, "MAP%02d", atoi(Line2) % 100);
+            char mapId[8];
+            sprintf(mapId, "MAP%02d", atoi(Line2) % 100);
+            uri = Uri_NewWithPath2(mapId, RC_NULL);
             par = atoi(space);
         }
 
         info = NULL;
-        /*if (!(info = FindLevelInfo (mapname)) ) {
-           Printf (PRINT_HIGH, "No map %s\n", mapname);
-           continue;
-           } */
         for(i = 0; i < ded->count.mapInfo.num; i++)
-            if(!stricmp(ded->mapInfo[i].id, mapname))
-            {
-                info = ded->mapInfo + i;
-                break;
-            }
+        {
+            if(!ded->mapInfo[i].uri || !Uri_Equality(ded->mapInfo[i].uri, uri)) continue;
+            info = ded->mapInfo + i;
+            break;
+        }
 
         if(info)
+        {
+            ddstring_t* path = Uri_ToString(uri);
+
             info->parTime = (float) par;
 
-        LPrintf("Par for %s changed to %d\n", mapname, par);
+            LPrintf("Par for %s changed to %d\n", Str_Text(path), par);
+            Str_Delete(path);
+        }
+
+        Uri_Delete(uri);
     }
     return result;
 }

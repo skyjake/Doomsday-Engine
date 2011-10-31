@@ -114,8 +114,8 @@ typedef struct {
 } ddmapinfo_t;
 
 typedef struct {
-    char*           after;
-    char*           before;
+    const Uri*      after;
+    const Uri*      before;
     int             game;
     char*           script;
 } ddfinale_t;

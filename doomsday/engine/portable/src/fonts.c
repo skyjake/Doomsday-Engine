@@ -637,7 +637,7 @@ font_t* Fonts_CreateBitmapCompositeFromDef(ded_compositefont_t* def)
 {
     assert(def);
     {
-    const Uri* uri = def->id;
+    const Uri* uri = def->uri;
     font_t* font;
 
     errorIfNotInited("Fonts::CreateFromDef");

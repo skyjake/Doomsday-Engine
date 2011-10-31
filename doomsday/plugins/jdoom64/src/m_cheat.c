@@ -213,19 +213,22 @@ boolean Cht_PowerUpFunc(player_t* plr, cheatseq_t* cheat)
 
 void printDebugInfo(player_t* plr)
 {
-    char lumpName[9], textBuffer[256];
+    char textBuffer[256];
     subsector_t* sub;
-    ddstring_t* path;
-    Uri* uri;
+    ddstring_t* path, *mapPath;
+    Uri* uri, *mapUri;
 
     if(!plr->plr->mo || !userGame)
         return;
 
-    P_MapId(gameEpisode, gameMap, lumpName);
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            lumpName, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
+            Str_Text(mapPath), plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
             plr->plr->mo->pos[VZ]);
     P_SetMessage(plr, textBuffer, false);
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 
     // Also print some information to the console.
     Con_Message("%s", textBuffer);

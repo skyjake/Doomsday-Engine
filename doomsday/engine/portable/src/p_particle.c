@@ -252,7 +252,7 @@ void P_PtcShutdown(void)
 
 void P_PtcInitForMap(void)
 {
-    uint                startTime = Sys_GetRealTime();
+    uint startTime = Sys_GetRealTime();
 
     pgLinks = Z_Malloc(sizeof(pglink_t *) * numSectors, PU_MAP, 0);
     memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
@@ -268,7 +268,7 @@ void P_PtcInitForMap(void)
     // Spawn all type-triggered particle generators.
     // Let's hope there aren't too many...
     P_SpawnTypeParticleGens();
-    P_SpawnMapParticleGens(mapID);
+    P_SpawnMapParticleGens(mapUri);
 
     VERBOSE2( Con_Message("P_PtcInitForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
@@ -1480,25 +1480,24 @@ void P_SpawnTypeParticleGens(void)
     }
 }
 
-void P_SpawnMapParticleGens(const char* mapId)
+void P_SpawnMapParticleGens(const Uri* uri)
 {
-    int                 i;
-    ded_ptcgen_t*       def;
-    ptcgen_t*           gen;
+    ded_ptcgen_t* def;
+    ptcgen_t* gen;
+    int i;
 
-    if(isDedicated || !useParticles)
-        return;
+    if(isDedicated || !useParticles) return;
+    if(!uri) return;
 
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
     {
-        if(!def->map[0] || stricmp(def->map, mapId))
-            continue;
+        if(!def->map || !Uri_Equality(def->map, uri)) continue;
 
-        if(def->spawnAge > 0 && ddMapTime > def->spawnAge)
-            continue; // No longer spawning this generator.
+        // Are we still spawning using this generator?
+        if(def->spawnAge > 0 && ddMapTime > def->spawnAge) continue;
 
-        if(!(gen = P_NewPtcGen()))
-            return; // No more generators.
+        gen = P_NewPtcGen();
+        if(!gen) return; // No more generators.
 
         // Initialize the particle generator.
         gen->count = def->particles;
@@ -1674,7 +1673,7 @@ void P_UpdateParticleGens(void)
     }
 
     // Re-spawn map generators.
-    P_SpawnMapParticleGens(mapID);
+    P_SpawnMapParticleGens(mapUri);
 }
 
 /**

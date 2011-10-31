@@ -316,15 +316,13 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     int             P_GetImpulseControlState(int playerNum, int control);
 
     // Play: Setup.
-    boolean         P_LoadMap(const char* mapID);
+boolean P_LoadMap(const char* uri);
 
     // Play: World data access (Map Data Updates and access to other information).
 #include "dd_world.h"
 
     // Play: Misc.
-    void            P_SpawnDamageParticleGen(struct mobj_s* mo,
-                                             struct mobj_s* inflictor,
-                                             int amount);
+    void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
 
     // Play: Mobjs.
     struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z, angle_t angle, float radius, float height, int ddflags);

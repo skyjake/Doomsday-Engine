@@ -500,19 +500,22 @@ int Cht_MyPosFunc(const int* args, int player)
 
 static void printDebugInfo(player_t* plr)
 {
-    char mapId[9], textBuffer[256];
+    char textBuffer[256];
     subsector_t* sub;
-    ddstring_t* path;
-    Uri* uri;
+    ddstring_t* path, *mapPath;
+    Uri* uri, *mapUri;
 
     if(!plr->plr->mo || !userGame)
         return;
 
-    P_MapId(gameEpisode, gameMap, mapId);
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapPath = Uri_ToString(mapUri);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            mapId, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
+            Str_Text(mapPath), plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
             plr->plr->mo->pos[VZ]);
     P_SetMessage(plr, textBuffer, false);
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 
     // Also print some information to the console.
     Con_Message("%s", textBuffer);

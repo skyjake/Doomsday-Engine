@@ -122,13 +122,12 @@ void DED_Clear(ded_t* ded)
 
     if(ded->states)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.states.num; ++i)
         {
             ded_state_t* state = &ded->states[i];
-            if(state->execute)
-                free(state->execute);
-        }}
+            if(state->execute) free(state->execute);
+        }
         free(ded->states);
         ded->states = 0;
     }
@@ -141,132 +140,117 @@ void DED_Clear(ded_t* ded)
 
     if(ded->lights)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.lights.num; ++i)
         {
             ded_light_t* li = &ded->lights[i];
-            if(li->up)
-                Uri_Delete(li->up);
-            if(li->down)
-                Uri_Delete(li->down);
-            if(li->sides)
-                Uri_Delete(li->sides);
-            if(li->flare)
-                Uri_Delete(li->flare);
-        }}
+            if(li->up) Uri_Delete(li->up);
+            if(li->down) Uri_Delete(li->down);
+            if(li->sides) Uri_Delete(li->sides);
+            if(li->flare) Uri_Delete(li->flare);
+        }
         M_Free(ded->lights);
         ded->lights = 0;
     }
 
     if(ded->models)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.models.num; ++i)
         {
             ded_model_t* mdl = &ded->models[i];
-            int j;
             for(j = 0; j < DED_MAX_SUB_MODELS; ++j)
             {
                 ded_submodel_t* sub = &mdl->sub[j];
-                if(sub->filename)
-                    Uri_Delete(sub->filename);
-                if(sub->skinFilename)
-                    Uri_Delete(sub->skinFilename);
+                if(sub->filename) Uri_Delete(sub->filename);
+                if(sub->skinFilename) Uri_Delete(sub->skinFilename);
             }
-        }}
+        }
         M_Free(ded->models);
         ded->models = 0;
     }
 
     if(ded->sounds)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.sounds.num; ++i)
         {
             ded_sound_t* snd = &ded->sounds[i];
-            if(snd->ext)
-                Uri_Delete(snd->ext);
-        }}
+            if(snd->ext) Uri_Delete(snd->ext);
+        }
         M_Free(ded->sounds);
         ded->sounds = 0;
     }
 
     if(ded->music)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.music.num; ++i)
         {
             ded_music_t* song = &ded->music[i];
-            if(song->path)
-                Uri_Delete(song->path);
-        }}
+            if(song->path) Uri_Delete(song->path);
+        }
         M_Free(ded->music);
         ded->music = 0;
     }
 
     if(ded->mapInfo)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.mapInfo.num; ++i)
         {
             ded_mapinfo_t* info = &ded->mapInfo[i];
-            int j;
-            if(info->execute)
-                free(info->execute);
+
+            if(info->uri) Uri_Delete(info->uri);
+            if(info->execute) free(info->execute);
+
             for(j = 0; j < NUM_SKY_LAYERS; ++j)
             {
                 ded_skylayer_t* sl = &info->sky.layers[j];
-                if(sl->material)
-                    Uri_Delete(sl->material);
+                if(sl->material) Uri_Delete(sl->material);
             }
+
             for(j = 0; j < NUM_SKY_MODELS; ++j)
             {
                 ded_skymodel_t* sm = &info->sky.models[j];
-                if(sm->execute)
-                    free(sm->execute);
+                if(sm->execute) free(sm->execute);
             }
-        }}
+        }
         free(ded->mapInfo);
         ded->mapInfo = 0;
     }
 
     if(ded->skies)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.skies.num; ++i)
         {
             ded_sky_t* sky = &ded->skies[i];
-            int j;
             for(j = 0; j < NUM_SKY_LAYERS; ++j)
             {
                 ded_skylayer_t* sl = &sky->layers[j];
-                if(sl->material)
-                    Uri_Delete(sl->material);
+                if(sl->material) Uri_Delete(sl->material);
             }
             for(j = 0; j < NUM_SKY_MODELS; ++j)
             {
                 ded_skymodel_t* sm = &sky->models[j];
-                if(sm->execute)
-                    free(sm->execute);
+                if(sm->execute) free(sm->execute);
             }
-        }}
+        }
         M_Free(ded->skies);
         ded->skies = 0;
     }
 
     if(ded->details)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.details.num; ++i)
         {
             ded_detailtexture_t* dtex = &ded->details[i];
-            if(dtex->material1)
-                Uri_Delete(dtex->material1);
-            if(dtex->material2)
-                Uri_Delete(dtex->material2);
-            if(dtex->detailTex)
-                Uri_Delete(dtex->detailTex);
-        }}
+            if(dtex->material1) Uri_Delete(dtex->material1);
+            if(dtex->material2) Uri_Delete(dtex->material2);
+            if(dtex->detailTex) Uri_Delete(dtex->detailTex);
+        }
         M_Free(ded->details);
         ded->details = 0;
     }
@@ -277,13 +261,15 @@ void DED_Clear(ded_t* ded)
         for(i = 0; i < ded->count.materials.num; ++i)
         {
             ded_material_t* mat = &ded->materials[i];
-            if(mat->id)
-                Uri_Delete(mat->id);
+
+            if(mat->uri) Uri_Delete(mat->uri);
+
             for(j = 0; j < DED_MAX_MATERIAL_LAYERS; ++j)
             {
                 for(k = 0; k < mat->layers[j].stageCount.num; ++k)
-                    if(mat->layers[j].stages[k].texture)
-                        Uri_Delete(mat->layers[j].stages[k].texture);
+                {
+                    if(mat->layers[j].stages[k].texture) Uri_Delete(mat->layers[j].stages[k].texture);
+                }
                 free(mat->layers[j].stages);
             }
         }
@@ -293,120 +279,112 @@ void DED_Clear(ded_t* ded)
 
     if(ded->text)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.text.num; ++i)
         {
             M_Free(ded->text[i].text);
-        }}
+        }
         M_Free(ded->text);
         ded->text = 0;
     }
 
     if(ded->textureEnv)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.textureEnv.num; ++i)
         {
             ded_tenviron_t* tenv = &ded->textureEnv[i];
-            { int j;
             for(j = 0; j < tenv->count.num; ++j)
             {
-                if(tenv->materials[j])
-                    Uri_Delete(tenv->materials[j]);
-            }}
+                if(tenv->materials[j]) Uri_Delete(tenv->materials[j]);
+            }
             M_Free(tenv->materials);
-        }}
+        }
         M_Free(ded->textureEnv);
         ded->textureEnv = 0;
     }
 
     if(ded->compositeFonts)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.compositeFonts.num; ++i)
         {
             ded_compositefont_t* cfont = &ded->compositeFonts[i];
-            if(cfont->id)
-                Uri_Delete(cfont->id);
-            { int j;
+
+            if(cfont->uri) Uri_Delete(cfont->uri);
+
             for(j = 0; j < cfont->charMapCount.num; ++j)
             {
-                if(cfont->charMap[j].path)
-                    Uri_Delete(cfont->charMap[j].path);
-            }}
+                if(cfont->charMap[j].path) Uri_Delete(cfont->charMap[j].path);
+            }
             M_Free(cfont->charMap);
-        }}
+        }
         M_Free(ded->compositeFonts);
         ded->compositeFonts = 0;
     }
 
     if(ded->values)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.values.num; ++i)
         {
             M_Free(ded->values[i].id);
             M_Free(ded->values[i].text);
-        }}
+        }
         M_Free(ded->values);
         ded->values = 0;
     }
 
     if(ded->decorations)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.decorations.num; ++i)
         {
             ded_decor_t* dec = &ded->decorations[i];
-            if(dec->material)
-                Uri_Delete(dec->material);
-            { int j;
+
+            if(dec->material) Uri_Delete(dec->material);
+
             for(j = 0; j < DED_DECOR_NUM_LIGHTS; ++j)
             {
                 ded_decorlight_t* li = &dec->lights[j];
-                if(li->up)
-                    Uri_Delete(li->up);
-                if(li->down)
-                    Uri_Delete(li->down);
-                if(li->sides)
-                    Uri_Delete(li->sides);
-                if(li->flare)
-                    Uri_Delete(li->flare);
-            }}
-        }}
+
+                if(li->up) Uri_Delete(li->up);
+                if(li->down) Uri_Delete(li->down);
+                if(li->sides) Uri_Delete(li->sides);
+                if(li->flare) Uri_Delete(li->flare);
+            }
+        }
         M_Free(ded->decorations);
         ded->decorations = 0;
     }
 
     if(ded->reflections)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.reflections.num; ++i)
         {
             ded_reflection_t* ref = &ded->reflections[i];
-            if(ref->material)
-                Uri_Delete(ref->material);
-            if(ref->shinyMap)
-                Uri_Delete(ref->shinyMap);
-            if(ref->maskMap)
-                Uri_Delete(ref->maskMap);
-        }}
+
+            if(ref->material) Uri_Delete(ref->material);
+            if(ref->shinyMap) Uri_Delete(ref->shinyMap);
+            if(ref->maskMap) Uri_Delete(ref->maskMap);
+        }
         free(ded->reflections);
         ded->reflections = 0;
     }
 
     if(ded->groups)
     {
-        { int i;
+        int i, j;
         for(i = 0; i < ded->count.groups.num; ++i)
         {
             ded_group_t* group = &ded->groups[i];
-            int j;
             for(j = 0; j < group->count.num; ++j)
-                if(group->members[j].material)
-                    Uri_Delete(group->members[j].material);
+            {
+                if(group->members[j].material) Uri_Delete(group->members[j].material);
+            }
             M_Free(group->members);
-        }}
+        }
         M_Free(ded->groups);
         ded->groups = 0;
     }
@@ -419,43 +397,41 @@ void DED_Clear(ded_t* ded)
 
     if(ded->lineTypes)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.lineTypes.num; ++i)
         {
             ded_linetype_t* lt = &ded->lineTypes[i];
-            if(lt->actMaterial)
-                Uri_Delete(lt->actMaterial);
-            if(lt->deactMaterial)
-                Uri_Delete(lt->deactMaterial);
-        }}
+            if(lt->actMaterial) Uri_Delete(lt->actMaterial);
+            if(lt->deactMaterial) Uri_Delete(lt->deactMaterial);
+        }
         M_Free(ded->lineTypes);
         ded->lineTypes = 0;
     }
 
     if(ded->ptcGens)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.ptcGens.num; ++i)
         {
             ded_ptcgen_t* gen = &ded->ptcGens[i];
-            if(gen->material)
-                Uri_Delete(gen->material);
-            if(gen->stages)
-                M_Free(gen->stages);
-        }}
+            if(gen->map) Uri_Delete(gen->map);
+            if(gen->material) Uri_Delete(gen->material);
+            if(gen->stages) M_Free(gen->stages);
+        }
         M_Free(ded->ptcGens);
         ded->ptcGens = 0;
     }
 
     if(ded->finales)
     {
-        { int i;
+        int i;
         for(i = 0; i < ded->count.finales.num; ++i)
         {
             ded_finale_t* fin = &ded->finales[i];
-            if(fin->script)
-                free(fin->script);
-        }}
+            if(fin->after) Uri_Delete(fin->after);
+            if(fin->before) Uri_Delete(fin->before);
+            if(fin->script) free(fin->script);
+        }
         M_Free(ded->finales);
         ded->finales = 0;
     }
@@ -595,13 +571,10 @@ void DED_RemoveLight(ded_t *ded, int index)
                  sizeof(ded_light_t));
 }
 
-int DED_AddMaterial(ded_t* ded, const char* path)
+int DED_AddMaterial(ded_t* ded, const char* uri)
 {
     ded_material_t* mat = DED_NewEntry((void**) &ded->materials, &ded->count.materials, sizeof(ded_material_t));
-
-    if(NULL != path)
-        mat->id = Uri_NewWithPath2(path, RC_NULL);
-
+    if(uri) mat->uri = Uri_NewWithPath2(uri, RC_NULL);
     return mat - ded->materials;
 }
 
@@ -632,7 +605,7 @@ void DED_RemoveSound(ded_t *ded, int index)
                  sizeof(ded_sound_t));
 }
 
-int DED_AddMusic(ded_t *ded, char *id)
+int DED_AddMusic(ded_t* ded, char* id)
 {
     ded_music_t *mus = DED_NewEntry((void **) &ded->music,
                                     &ded->count.music, sizeof(ded_music_t));
@@ -641,20 +614,18 @@ int DED_AddMusic(ded_t *ded, char *id)
     return mus - ded->music;
 }
 
-void DED_RemoveMusic(ded_t *ded, int index)
+void DED_RemoveMusic(ded_t* ded, int index)
 {
     DED_DelEntry(index, (void **) &ded->music, &ded->count.music,
                  sizeof(ded_music_t));
 }
 
-int DED_AddMapInfo(ded_t *ded, char *str)
+int DED_AddMapInfo(ded_t* ded, char* uri)
 {
-    ded_mapinfo_t *inf = DED_NewEntry((void **) &ded->mapInfo,
-                                      &ded->count.mapInfo,
-                                      sizeof(ded_mapinfo_t));
-    int     i;
+    ded_mapinfo_t* inf = DED_NewEntry((void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
+    int i;
 
-    strcpy(inf->id, str);
+    if(uri) inf->uri = Uri_NewWithPath2(uri, RC_NULL);
     inf->gravity = 1;
     inf->parTime = -1; // unknown
 
@@ -678,10 +649,9 @@ int DED_AddMapInfo(ded_t *ded, char *str)
     return inf - ded->mapInfo;
 }
 
-void DED_RemoveMapInfo(ded_t *ded, int index)
+void DED_RemoveMapInfo(ded_t* ded, int index)
 {
-    DED_DelEntry(index, (void **) &ded->mapInfo, &ded->count.mapInfo,
-                 sizeof(ded_mapinfo_t));
+    DED_DelEntry(index, (void**) &ded->mapInfo, &ded->count.mapInfo, sizeof(ded_mapinfo_t));
 }
 
 int DED_AddText(ded_t *ded, char *id)
@@ -723,29 +693,26 @@ void DED_RemoveTextureEnv(ded_t *ded, int index)
     DED_DelEntry(index, (void**) &ded->textureEnv, &ded->count.textureEnv, sizeof(ded_tenviron_t));
 }
 
-int DED_AddCompositeFont(ded_t* ded, const char* path)
+int DED_AddCompositeFont(ded_t* ded, const char* uri)
 {
     ded_compositefont_t* cfont = DED_NewEntry((void **) &ded->compositeFonts,
         &ded->count.compositeFonts, sizeof(ded_compositefont_t));
 
-    if(NULL != path)
-        cfont->id = Uri_NewWithPath2(path, RC_NULL);
-
+    if(uri) cfont->uri = Uri_NewWithPath2(uri, RC_NULL);
     return cfont - ded->compositeFonts;
 }
 
 void DED_RemoveCompositeFont(ded_t* ded, int index)
 {
     ded_compositefont_t* cfont = ded->compositeFonts + index;
+    int i;
 
-    if(cfont->id)
-        Uri_Delete(cfont->id);
-    { int i;
+    if(cfont->uri) Uri_Delete(cfont->uri);
+
     for(i = 0; i < cfont->charMapCount.num; ++i)
     {
-        if(cfont->charMap[i].path)
-            Uri_Delete(cfont->charMap[i].path);
-    }}
+        if(cfont->charMap[i].path) Uri_Delete(cfont->charMap[i].path);
+    }
     M_Free(cfont->charMap);
 
     DED_DelEntry(index, (void**) &ded->compositeFonts, &ded->count.compositeFonts, sizeof(ded_compositefont_t));

@@ -2150,16 +2150,19 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
     ddmapinfo_t minfo;
-    char levid[8];
-
-    P_MapId(gameEpisode, gameMap, levid);
-
-    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
+    Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
+        Str_Delete(mapPath);
+        Uri_Delete(mapUri);
         G_WorldDone();
         return;
     }
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
     }
+
 #elif __JHEXEN__
     if(!deathmatch)
     {
@@ -2220,17 +2223,16 @@ void G_DoMapCompleted(void)
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData(void)
 {
-    int             i;
-    ddmapinfo_t     minfo;
-    char            levid[8];
-    wbstartstruct_t *info = &wmInfo;
+    Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    wbstartstruct_t* info = &wmInfo;
+    ddmapinfo_t minfo;
+    int i;
 
     info->maxFrags = 0;
 
-    P_MapId(gameEpisode, gameMap, levid);
-
     // See if there is a par time definition.
-    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.parTime > 0)
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.parTime > 0)
         info->parTime = TICRATE * (int) minfo.parTime;
     else
         info->parTime = -1; // Unknown.
@@ -2238,8 +2240,8 @@ void G_PrepareWIData(void)
     info->pNum = CONSOLEPLAYER;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t       *p = &players[i];
-        wbplayerstruct_t *pStats = &info->plyr[i];
+        player_t* p = &players[i];
+        wbplayerstruct_t* pStats = &info->plyr[i];
 
         pStats->inGame = p->plr->inGame;
         pStats->kills = p->killCount;
@@ -2248,6 +2250,9 @@ void G_PrepareWIData(void)
         pStats->time = mapTime;
         memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
+
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 }
 #endif
 
@@ -2412,7 +2417,7 @@ ddstring_t* G_GenerateSaveGameName(void)
     // \todo Move this logic engine-side.
     if(NULL == mapName || !mapName[0] || mapName[0] == ' ')
     {
-        P_MapId(gameEpisode, gameMap, mapIdentifier);
+        G_MapId(gameEpisode, gameMap, mapIdentifier);
         mapName = mapIdentifier;
     }
 
@@ -2695,46 +2700,48 @@ uint G_GetMapNumber(uint episode, uint map)
 #endif
 }
 
+Uri* G_ComposeMapUri(uint episode, uint map)
+{
+    lumpname_t mapId;
+    G_MapId(episode, map, mapId);
+    return Uri_NewWithPath2(mapId, RC_NULL);
+}
+
 /**
- * Compose the name of the map lump identifier.
+ * Compose the name of the map identifier.
  */
-void P_MapId(uint episode, uint map, char* lumpName)
+void G_MapId(uint episode, uint map, lumpname_t mapId)
 {
 #if __JDOOM64__
-    sprintf(lumpName, "MAP%02u", map+1);
+    dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
-        sprintf(lumpName, "MAP%02u", map+1);
+        dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
     else
-        sprintf(lumpName, "E%uM%u", episode+1, map+1);
+        dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "E%uM%u", episode+1, map+1);
 #elif  __JHERETIC__
-    sprintf(lumpName, "E%uM%u", episode+1, map+1);
+    dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "E%uM%u", episode+1, map+1);
 #else
-    sprintf(lumpName, "MAP%02u", map+1);
+    dd_snprintf(mapId, LUMPNAME_T_MAXLEN, "MAP%02u", map+1);
 #endif
 }
 
-/**
- * return               @c true if the specified map is present.
- */
 boolean P_MapExists(uint episode, uint map)
 {
-    char buf[9];
-    P_MapId(episode, map, buf);
-    return W_CheckLumpNumForName2(buf, true) >= 0;
+    lumpname_t mapId;
+    G_MapId(episode, map, mapId);
+    return W_CheckLumpNumForName2(mapId, true) >= 0;
 }
 
-/**
- * return               Name of the source file containing the map if present, else 0.
- */
 const char* P_MapSourceFile(uint episode, uint map)
 {
     lumpnum_t lumpNum;
-    char buf[9];
-    P_MapId(episode, map, buf);
-    if((lumpNum = W_CheckLumpNumForName2(buf, true)) >= 0)
-        return W_LumpSourceFile(lumpNum);
-    return 0;
+    lumpname_t mapId;
+
+    G_MapId(episode, map, mapId);
+    lumpNum = W_CheckLumpNumForName2(mapId, true);
+    if(lumpNum < 0) return NULL;
+    return W_LumpSourceFile(lumpNum);
 }
 
 /**
@@ -2994,18 +3001,21 @@ const char* P_GetShortMapName(uint episode, uint map)
 
 const char* P_GetMapName(uint episode, uint map)
 {
-    char                id[10], *ptr;
-    ddmapinfo_t         info;
-
-    // Compose the map identifier.
-    P_MapId(episode, map, id);
+    Uri* mapUri = G_ComposeMapUri(episode, map);
+    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddmapinfo_t info;
+    void* ptr;
 
     // Get the map info definition.
-    if(!Def_Get(DD_DEF_MAP_INFO, id, &info))
+    if(!Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &info))
     {
         // There is no map information for this map...
+        Str_Delete(mapPath);
+        Uri_Delete(mapUri);
         return "";
     }
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 
     if(Def_Get(DD_DEF_TEXT, info.name, &ptr) != -1)
         return ptr;
@@ -3021,7 +3031,6 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
 {
     const char* current = NULL;
     uint i, k, rangeStart = 0, len;
-    char mapId[9];
 
     for(i = 0; i < count; ++i)
     {
@@ -3039,16 +3048,27 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
             {
                 for(k = rangeStart; k < i; ++k)
                 {
-                    P_MapId(episode, k, mapId);
-                    Con_Printf("%s%s", mapId, (k != i-1) ? "," : "");
+                    Uri* mapUri = G_ComposeMapUri(episode, k);
+                    ddstring_t* path = Uri_ToString(mapUri);
+                    Con_Printf("%s%s", Str_Text(path), (k != i-1) ? "," : "");
+                    Str_Delete(path);
+                    Uri_Delete(mapUri);
                 }
             }
             else
             {
-                P_MapId(episode, rangeStart, mapId);
-                Con_Printf("%s-", mapId);
-                P_MapId(episode, i-1, mapId);
-                Con_Printf("%s", mapId);
+                Uri* mapUri = G_ComposeMapUri(episode, rangeStart);
+                ddstring_t* path = Uri_ToString(mapUri);
+
+                Con_Printf("%s-", Str_Text(path));
+                Str_Delete(path);
+                Uri_Delete(mapUri);
+
+                mapUri = G_ComposeMapUri(episode, i-1);
+                path = Uri_ToString(mapUri);
+                Con_Printf("%s", Str_Text(path));
+                Str_Delete(path);
+                Uri_Delete(mapUri);
             }
             Con_Printf(": %s\n", F_PrettyPath(current));
 
@@ -3116,16 +3136,21 @@ void G_PrintMapList(void)
  */
 int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 {
-    char mid[20];
+    ddstring_t* mapPath;
+    Uri* mapUri;
+    int result;
 
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return false;
 
     // Is there such a finale definition?
-    P_MapId(episode, map, mid);
-
-    return Def_Get(DD_DEF_FINALE_BEFORE, mid, fin);
+    mapUri = G_ComposeMapUri(episode, map);
+    mapPath = Uri_ComposePath(mapUri);
+    result = Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(mapPath), fin);
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
+    return result;
 }
 
 /**
@@ -3134,7 +3159,9 @@ int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
  */
 int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 {
-    char mid[20];
+    ddstring_t* mapPath;
+    Uri* mapUri;
+    int result;
 
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled)
@@ -3149,8 +3176,12 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
         return false;
 
     // Is there such a finale definition?
-    P_MapId(episode, map, mid);
-    return Def_Get(DD_DEF_FINALE_AFTER, mid, fin);
+    mapUri = G_ComposeMapUri(episode, map);
+    mapPath = Uri_ComposePath(mapUri);
+    result = Def_Get(DD_DEF_FINALE_AFTER, Str_Text(mapPath), fin);
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
+    return result;
 }
 
 /**

@@ -1963,14 +1963,12 @@ int DD_GetInteger(int ddvalue)
     case DD_NUMLUMPS:
         return F_LumpCount();
 
-    case DD_MAP_MUSIC:
-        { gamemap_t *map = P_GetCurrentMap();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
-        if(mapInfo)
-            return Def_GetMusicNum(mapInfo->music);
-        return -1;
-        }
+    case DD_MAP_MUSIC: {
+        gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+        if(!mapInfo) return -1;
+        return Def_GetMusicNum(mapInfo->music);
+      }
     default: break;
     }
 
@@ -2054,33 +2052,28 @@ void* DD_GetVariable(int ddvalue)
     case DD_TRANSLATIONTABLES_ADDRESS:
         return translationTables;
 
-    case DD_MAP_NAME:
-    {
-        gamemap_t *map = P_GetCurrentMap();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
+    case DD_MAP_NAME: {
+        gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
         if(mapInfo && mapInfo->name[0])
         {
-            int id;
-
-            if((id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL)) != -1)
+            int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
+            if(id != -1)
             {
                 return defs.text[id].text;
             }
-
             return mapInfo->name;
         }
         break;
-    }
-    case DD_MAP_AUTHOR:
-    {
-        gamemap_t *map = P_GetCurrentMap();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+      }
+    case DD_MAP_AUTHOR: {
+        gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
 
         if(mapInfo && mapInfo->author[0])
             return mapInfo->author;
         break;
-    }
+      }
     case DD_MAP_MIN_X:
     {
         gamemap_t  *map = P_GetCurrentMap();

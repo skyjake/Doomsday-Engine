@@ -70,7 +70,7 @@ extern boolean mapSetup;
 /**
  * These map data arrays are internal to the engine.
  */
-char mapID[9]; // Name by which the game referred to the current map.
+Uri* mapUri; // Name by which the game referred to the current map.
 uint numVertexes = 0;
 vertex_t* vertexes = NULL;
 
@@ -144,7 +144,7 @@ void P_PolyobjChanged(polyobj_t* po)
  *
  * The entire ID string will be in lowercase letters.
  */
-const char* P_GenerateUniqueMapID(const char* mapID)
+const char* P_GenerateUniqueMapId(const char* mapID)
 {
     static char uid[255];
     lumpnum_t lumpNum = F_CheckLumpNumForName2(mapID, true);
@@ -174,10 +174,13 @@ void P_SetCurrentMap(gamemap_t* map)
     {
         // \todo dj: Merge in explicit map unload from branch beta6-mapcache.
 
-        // All memory is allocated from the zone.
+        // Most memory is allocated from the zone.
         Z_FreeTags(PU_MAP, PU_PURGELEVEL-1);
 
-        memset(mapID, 0, sizeof(mapID));
+        if(mapUri)
+        {
+            Uri_Delete(mapUri), mapUri = NULL;
+        }
         numVertexes = 0;
         vertexes = 0;
 
@@ -220,7 +223,7 @@ void P_SetCurrentMap(gamemap_t* map)
         return;
     }
 
-    strncpy(mapID, map->mapID, sizeof(mapID));
+    mapUri = map->uri;
 
     numVertexes = map->numVertexes;
     vertexes = map->vertexes;
@@ -263,27 +266,16 @@ void P_SetCurrentMap(gamemap_t* map)
     currentMap = map;
 }
 
-/**
- * This ID is the name of the lump tag that marks the beginning of map
- * data, e.g. "MAP03" or "E2M8".
- */
-const char* P_GetMapID(gamemap_t* map)
+const Uri* P_MapUri(gamemap_t* map)
 {
-    if(!map)
-        return NULL;
-
-    return map->mapID;
+    if(!map) return NULL;
+    return map->uri;
 }
 
-/**
- * @return              The 'unique' identifier of the map.
- */
-const char* P_GetUniqueMapID(gamemap_t* map)
+const char* P_GetUniqueMapId(gamemap_t* map)
 {
-    if(!map)
-        return NULL;
-
-    return map->uniqueID;
+    if(!map) return NULL;
+    return map->uniqueId;
 }
 
 void P_GetMapBounds(gamemap_t* map, float* min, float* max)
@@ -306,22 +298,26 @@ int P_GetMapAmbientLightLevel(gamemap_t* map)
     return map->ambientLightLevel;
 }
 
-/**
- * Begin the process of loading a new map.
- * Can be accessed by the games via the public API.
- *
- * @param levelId       Identifier of the map to be loaded (eg "E1M1").
- *
- * @return              @c true, if the map was loaded successfully.
- */
-boolean P_LoadMap(const char *mapID)
+/// \note Part of the Doomsday public API.
+boolean P_LoadMap(const char* uriCString)
 {
-    uint                i;
+    ddstring_t* path;
+    Uri* uri;
+    uint i;
 
-    if(!mapID || !mapID[0])
+    if(!uriCString || !uriCString[0])
+    {
+#if _DEBUG
+        Con_Message("Warning:P_LoadMap: Passed invalid Uri reference, ignoring.\n");
+#endif
         return false; // Yeah, ok... :P
+    }
 
-    Con_Message("P_LoadMap: \"%s\"\n", mapID);
+    uri = Uri_NewWithPath2(uriCString, RC_NULL);
+
+    path = Uri_ToString(uri);
+    Con_Message("Loading Map \"%s\"...\n", Str_Text(path));
+    Str_Delete(path);
 
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while
@@ -339,7 +335,7 @@ boolean P_LoadMap(const char *mapID)
         // they're ready to begin receiving frames.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t           *plr = &ddPlayers[i];
+            player_t* plr = &ddPlayers[i];
 
             if(!(plr->shared.flags & DDPF_LOCAL) && clients[i].connected)
             {
@@ -351,16 +347,15 @@ boolean P_LoadMap(const char *mapID)
         }
     }
 
-    if(DAM_AttemptMapLoad(mapID))
+    if(DAM_AttemptMapLoad(uri))
     {
-        uint                i;
-        gamemap_t*          map = P_GetCurrentMap();
+        gamemap_t* map = P_GetCurrentMap();
 
         // Init the thinker lists (public and private).
         P_InitThinkerLists(0x1 | 0x2);
 
         // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(P_GetUniqueMapID(map));
+        SB_InitForMap(P_GetUniqueMapId(map));
 
         Cl_Reset();
         RL_DeleteLists();
@@ -369,7 +364,7 @@ boolean P_LoadMap(const char *mapID)
         // Invalidate old cmds and init player values.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t           *plr = &ddPlayers[i];
+            player_t* plr = &ddPlayers[i];
 
             /*
             if(isServer && plr->shared.inGame)

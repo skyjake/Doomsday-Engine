@@ -589,7 +589,7 @@ void MPE_FreeUnclosedSectorList(void)
 /**
  * Called to begin the map building process.
  */
-boolean MPE_Begin(const char *name)
+boolean MPE_Begin(const char* mapId)
 {
     if(editMapInited)
         return true; // Already been here.
@@ -603,9 +603,9 @@ boolean MPE_Begin(const char *name)
 
     destroyMap();
 
-    if(name && name[0])
+    if(mapId && mapId[0])
     {
-        strncpy(map->name, name, 8);
+        strncpy(map->mapId, mapId, 8);
     }
 
     editMapInited = true;
@@ -1895,9 +1895,9 @@ boolean MPE_End(void)
     /**
      * Are we caching this map?
      */
-    if(gamemap->mapID && gamemap->mapID[0])
+    if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
     {   // Yes, write the cached map data file.
-        lumpnum_t markerLumpNum = F_CheckLumpNumForName2(gamemap->mapID, true);
+        lumpnum_t markerLumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(gamemap->uri)), true);
         ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
         ddstring_t cachedMapPath;
 

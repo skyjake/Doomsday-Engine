@@ -150,7 +150,7 @@ boolean         P_IterateSectorLinkedPtcGens(sector_t* sector,
 
 void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source);
 void P_SpawnTypeParticleGens(void);
-void P_SpawnMapParticleGens(const char* mapID);
+void P_SpawnMapParticleGens(const Uri* mapUri);
 void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount);
 
 /**

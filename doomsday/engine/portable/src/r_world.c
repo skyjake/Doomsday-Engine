@@ -1399,7 +1399,7 @@ void R_SetupMap(int mode, int flags)
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        { ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_GetMapID(map));
+        { ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
         if(mapInfo && mapInfo->execute)
         {
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
@@ -1407,7 +1407,7 @@ void R_SetupMap(int mode, int flags)
 
         // Run the special map setup command, which the user may alias to do something useful.
         { char cmd[80];
-        sprintf(cmd, "init-%s", P_GetMapID(map));
+        sprintf(cmd, "init-%s", P_MapUri(map));
         if(Con_IsValidCommand(cmd))
         {
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
@@ -1463,7 +1463,7 @@ void R_SetupMap(int mode, int flags)
     case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
         gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_GetMapID(map));
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
 
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();

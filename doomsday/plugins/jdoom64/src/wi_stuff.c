@@ -157,22 +157,26 @@ static void drawEnteringTitle(void)
     char* mapName = NULL;
     ddmapinfo_t minfo;
     patchid_t patchId;
-    char lumpName[9];
     patchinfo_t info;
+    ddstring_t* mapPath;
+    Uri* mapUri;
 
     // See if there is a map name.
-    P_MapId(wbs->episode, wbs->nextMap, lumpName);
-    if(Def_Get(DD_DEF_MAP_INFO, lumpName, &minfo) && minfo.name)
+    mapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
+    mapPath = Uri_ComposePath(mapUri);
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
             mapName = minfo.name;
     }
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 
     // Skip the E#M# or Map #.
-    if(NULL != mapName)
+    if(mapName)
     {
         char* ptr = strchr(mapName, ':');
-        if(NULL != ptr)
+        if(ptr)
         {
             mapName = M_SkipWhite(ptr + 1);
         }

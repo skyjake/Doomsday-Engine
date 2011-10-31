@@ -55,12 +55,10 @@
  */
 void S_MapMusic(uint episode, uint map)
 {
+    Uri* mapUri = G_ComposeMapUri(episode, map);
+    ddstring_t* mapPath = Uri_ComposePath(mapUri);
     ddmapinfo_t mapInfo;
-    char mapId[8];
-
-    P_MapId(episode, map, mapId);
-
-    if(Def_Get(DD_DEF_MAP_INFO, mapId, &mapInfo))
+    if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &mapInfo))
     {
         if(S_StartMusicNum(mapInfo.music, true))
         {
@@ -68,6 +66,8 @@ void S_MapMusic(uint episode, uint map)
             gsvMapMusic = mapInfo.music;
         }
     }
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
 }
 
 /**

@@ -791,8 +791,10 @@ void GL_TotalReset(void)
  */
 void GL_TotalRestore(void)
 {
-    if(isDedicated)
-        return;
+    ded_mapinfo_t* mapInfo = NULL;
+    gamemap_t* map;
+
+    if(isDedicated) return;
 
     // Getting back up and running.
     GL_ReserveNames();
@@ -802,17 +804,17 @@ void GL_TotalRestore(void)
     R_LoadSystemFonts();
     Con_ResizeHistoryBuffer();
 
+    map = P_GetCurrentMap();
+    if(map)
     {
-    gamemap_t*          map = P_GetCurrentMap();
-    ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
+        mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+    }
 
     // Restore map's fog settings.
     if(!mapInfo || !(mapInfo->flags & MIF_FOG))
         R_SetupFogDefaults();
     else
-        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
-                   mapInfo->fogDensity, mapInfo->fogColor);
-    }
+        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
 
 #if _DEBUG
     Z_CheckHeap();

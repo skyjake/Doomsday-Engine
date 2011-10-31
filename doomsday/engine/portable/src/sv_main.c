@@ -108,7 +108,7 @@ void Sv_GetInfo(serverinfo_t *info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    strncpy(info->map, P_GetMapID(currentMap), sizeof(info->map) - 1);
+    strncpy(info->map, Str_Text(Uri_Path(P_MapUri(currentMap))), sizeof(info->map) - 1);
 
     // These are largely unused at the moment... Mainly intended for
     // the game's custom values.
