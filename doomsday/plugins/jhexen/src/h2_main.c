@@ -342,7 +342,9 @@ void X_PreInit(void)
  */
 void X_PostInit(void)
 {
+    ddstring_t* path;
     int p, warpMap;
+    Uri* uri;
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -452,10 +454,14 @@ void X_PostInit(void)
     }
 
     // Check valid episode and map.
-    if((autoStart || IS_NETGAME) && !P_MapExists(0, startMap))
+    uri = G_ComposeMapUri(0, startMap);
+    path = Uri_ComposePath(uri);
+    if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startMap = 0;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     if(G_GetGameAction() != GA_LOADGAME)
     {

@@ -358,6 +358,8 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
+    ddstring_t* path;
+    Uri* uri;
     int p;
 
     /// \kludge Border background is different in DOOM2.
@@ -474,11 +476,15 @@ void D_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && !P_MapExists((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))? startEpisode : 0, startMap))
+    uri = G_ComposeMapUri((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))? startEpisode : 0, startMap);
+    path = Uri_ComposePath(uri);
+    if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startEpisode = 0;
         startMap = 0;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     if(G_GetGameAction() != GA_LOADGAME)
     {

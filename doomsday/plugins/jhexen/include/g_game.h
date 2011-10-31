@@ -69,12 +69,6 @@ uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 
-/// return  @c true= The identified @a episode @a map is available.
-boolean P_MapExists(uint episode, uint map);
-
-/// return  Name of the source file containing the map if available else @c NULL.
-const char* P_MapSourceFile(uint episode, uint map);
-
 /**
  * Compose a Uri for the identified @a episode and @a map combination.
  *

@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 591 <--
-; Other free ordinals: 533, 534, 535
+; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -252,10 +252,14 @@ EXPORTS
     P_GetControlState           @252 NONAME
     P_GetImpulseControlState    @339 NONAME
 
-; Play: Setup.
+; Maps.
+    P_MapExists                 @533 NONAME
+    P_MapIsCustom               @534 NONAME
+    P_MapSourceFile             @535 NONAME
+
     P_LoadMap                   @254 NONAME
 
-; Play: Map Data Updates and Information Access.
+; Maps: Map Data Updates and Information Access.
     P_ToIndex                   @256 NONAME
     P_ToPtr                     @257 NONAME
     P_Callback                  @258 NONAME

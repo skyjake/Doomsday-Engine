@@ -2027,8 +2027,7 @@ void G_StartNewGame(skillmode_t skill)
  */
 void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 {
-    if(IS_CLIENT || (cyclingMaps && mapCycleNoExit))
-        return;
+    if(IS_CLIENT || (cyclingMaps && mapCycleNoExit)) return;
 
 #if __JHEXEN__
     if(gameMode == hexen_demo && newMap != DDMAXINT && newMap > 3)
@@ -2044,9 +2043,16 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 #else
     secretExit = _secretExit;
 # if __JDOOM__
-      // If no Wolf3D maps, no secret exit!
-      if(secretExit && (gameModeBits & GM_ANY_DOOM2) && !P_MapExists(0, 30))
-          secretExit = false;
+    // If no Wolf3D maps, no secret exit!
+    if(secretExit && (gameModeBits & GM_ANY_DOOM2))
+    {
+        Uri* mapUri = G_ComposeMapUri(0, 30);
+        ddstring_t* mapPath = Uri_ComposePath(mapUri);
+        if(!P_MapExists(Str_Text(mapPath)))
+            secretExit = false;
+        Str_Delete(mapPath);
+        Uri_Delete(mapUri);
+    }
 # endif
 #endif
 
@@ -2397,17 +2403,22 @@ ddstring_t* G_GenerateSaveGameName(void)
 {
     ddstring_t* str = Str_New();
     int time = mapTime / TICRATE, hours, seconds, minutes;
-    const char* baseName = NULL, *mapName = P_GetMapNiceName();
-    lumpname_t mapIdentifier;
+    const char* baseName, *mapName;
     char baseNameBuf[256];
+    ddstring_t* mapPath;
+    Uri* mapUri;
 
     hours   = time / 3600; time -= hours * 3600;
     minutes = time / 60;   time -= minutes * 60;
     seconds = time;
 
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+    mapPath = Uri_ComposePath(mapUri);
+
+    mapName = P_GetMapNiceName();
 #if __JHEXEN__
     // No map name? Try MAPINFO.
-    if(NULL == mapName)
+    if(!mapName)
     {
         mapName = P_GetMapName(gameMap);
     }
@@ -2415,21 +2426,23 @@ ddstring_t* G_GenerateSaveGameName(void)
     // Still no map name? Use the identifier.
     // Some tricksy modders provide us with an empty map name...
     // \todo Move this logic engine-side.
-    if(NULL == mapName || !mapName[0] || mapName[0] == ' ')
+    if(!mapName || !mapName[0] || mapName[0] == ' ')
     {
-        G_MapId(gameEpisode, gameMap, mapIdentifier);
-        mapName = mapIdentifier;
+        mapName = Str_Text(mapPath);
     }
 
-    if(!P_IsMapFromIWAD(gameEpisode, gameMap))
+    baseName = NULL;
+    if(P_MapIsCustom(Str_Text(mapPath)))
     {
-        F_ExtractFileBase(baseNameBuf, P_MapSourceFile(gameEpisode, gameMap), 256);
+        F_ExtractFileBase(baseNameBuf, P_MapSourceFile(Str_Text(mapPath)), 256);
         baseName = baseNameBuf;
     }
 
-    Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (NULL != baseName? baseName : ""),
-        (NULL != baseName? ":" : ""), mapName, hours, minutes, seconds);
+    Str_Appendf(str, "%s%s%s %02i:%02i:%02i", (baseName? baseName : ""),
+        (baseName? ":" : ""), mapName, hours, minutes, seconds);
 
+    Str_Delete(mapPath);
+    Uri_Delete(mapUri);
     return str;
 }
 
@@ -2707,9 +2720,6 @@ Uri* G_ComposeMapUri(uint episode, uint map)
     return Uri_NewWithPath2(mapId, RC_NULL);
 }
 
-/**
- * Compose the name of the map identifier.
- */
 void G_MapId(uint episode, uint map, lumpname_t mapId)
 {
 #if __JDOOM64__
@@ -2726,24 +2736,6 @@ void G_MapId(uint episode, uint map, lumpname_t mapId)
 #endif
 }
 
-boolean P_MapExists(uint episode, uint map)
-{
-    lumpname_t mapId;
-    G_MapId(episode, map, mapId);
-    return W_CheckLumpNumForName2(mapId, true) >= 0;
-}
-
-const char* P_MapSourceFile(uint episode, uint map)
-{
-    lumpnum_t lumpNum;
-    lumpname_t mapId;
-
-    G_MapId(episode, map, mapId);
-    lumpNum = W_CheckLumpNumForName2(mapId, true);
-    if(lumpNum < 0) return NULL;
-    return W_LumpSourceFile(lumpNum);
-}
-
 /**
  * Returns true if the specified (episode, map) pair can be used.
  * Otherwise the values are adjusted so they are valid.
@@ -2751,6 +2743,8 @@ const char* P_MapSourceFile(uint episode, uint map)
 boolean G_ValidateMap(uint* episode, uint* map)
 {
     boolean ok = true;
+    ddstring_t* path;
+    Uri* uri;
 
 #if __JDOOM64__
     if(*map > 98)
@@ -2856,13 +2850,17 @@ boolean G_ValidateMap(uint* episode, uint* map)
 #endif
 
     // Check that the map truly exists.
-    if(!P_MapExists(*episode, *map))
+    uri = G_ComposeMapUri(*episode, *map);
+    path = Uri_ComposePath(uri);
+    if(!P_MapExists(Str_Text(path)))
     {
         // (0,0) should exist always?
         *episode = 0;
         *map = 0;
         ok = false;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     return ok;
 }
@@ -3124,7 +3122,11 @@ void G_PrintMapList(void)
         // Find the name of each map (not all may exist).
         for(map = 0; map < maxMapsPerEpisode; ++map)
         {
-            sourceList[map] = P_MapSourceFile(episode, map);
+            Uri* uri = G_ComposeMapUri(episode, map);
+            ddstring_t* path = Uri_ComposePath(uri);
+            sourceList[map] = P_MapSourceFile(Str_Text(path));
+            Str_Delete(path);
+            Uri_Delete(uri);
         }
         G_PrintFormattedMapList(episode, sourceList, 99);
     }

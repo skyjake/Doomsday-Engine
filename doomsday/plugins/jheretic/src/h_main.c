@@ -371,6 +371,8 @@ void H_PreInit(void)
  */
 void H_PostInit(void)
 {
+    ddstring_t* path;
+    Uri* uri;
     int p;
 
     /// \kludge Shareware WAD has different border background.
@@ -466,11 +468,15 @@ void H_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && !P_MapExists(startEpisode, startMap))
+    uri = G_ComposeMapUri(startEpisode, startMap);
+    path = Uri_ComposePath(uri);
+    if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startEpisode = 0;
         startMap = 0;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     if(G_GetGameAction() != GA_LOADGAME)
     {

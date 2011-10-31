@@ -1064,40 +1064,25 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
     return 0;
 }
 
-boolean P_IsMapFromIWAD(uint episode, uint map)
-{
-    lumpname_t mapId;
-    G_MapId(episode, map, mapId);
-    return W_LumpIsFromIWAD(W_GetLumpNumForName(mapId));
-}
-
 const char* P_GetMapAuthor(boolean supressGameAuthor)
 {
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
-
-    if(!author || !author[0])
-        return 0;
-
-    /// \kludge We need DED Reader 2.0 to handle this the Right Way...
-    /// \todo dj: this logic can now be handled engine-side.
+    if(!author || !author[0]) return NULL;
     if(supressGameAuthor)
     {
-        if(P_IsMapFromIWAD(gameEpisode, gameMap))
-            return 0;
-
-        { ddgameinfo_t gameInfo;
-        if(DD_GetGameInfo(&gameInfo) && !stricmp(author, gameInfo.author))
-            return 0;
-        }
+        Uri* uri = G_ComposeMapUri(gameEpisode, gameMap);
+        ddstring_t* path = Uri_ComposePath(uri);
+        boolean mapIsCustom = P_MapIsCustom(Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
+        if(!mapIsCustom) return NULL;
     }
-    /// << kludge end.
-
     return author;
 }
 
 /**
  * Prints a banner to the console containing information pertinent to the
- * current map (e.g. map name, author...).
+ * current map (e.g., map name, author...).
  */
 static void P_PrintMapBanner(uint episode, uint map)
 {
@@ -1108,27 +1093,29 @@ static void P_PrintMapBanner(uint episode, uint map)
     if(lname)
     {
         char name[64];
-
 #if __JHEXEN__
-        dd_snprintf(name, 64, "Map %u (%u): %s", P_GetMapWarpTrans(map)+1,
-                    map+1, lname);
+        dd_snprintf(name, 64, "Map %u (%u): %s", P_GetMapWarpTrans(map)+1, map+1, lname);
 #else
         dd_snprintf(name, 64, "Map %u: %s", map+1, lname);
 #endif
-
         Con_FPrintf(CPF_LIGHT|CPF_BLUE, "%s\n", name);
     }
 
 #if !__JHEXEN__
     {
     static const char* unknownAuthorStr = "Unknown";
+    Uri* uri = G_ComposeMapUri(episode, map);
+    ddstring_t* path = Uri_ComposePath(uri);
     const char* lauthor;
 
-    lauthor = P_GetMapAuthor(!P_IsMapFromIWAD(episode, map));
+    lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));
     if(!lauthor)
         lauthor = unknownAuthorStr;
 
     Con_FPrintf(CPF_LIGHT|CPF_BLUE, "Author: %s\n", lauthor);
+
+    Str_Delete(path);
+    Uri_Delete(uri);
     }
 #endif
     Con_Printf("\n");

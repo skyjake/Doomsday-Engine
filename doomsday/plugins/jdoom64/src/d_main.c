@@ -352,6 +352,8 @@ void D_PreInit(void)
  */
 void D_PostInit(void)
 {
+    ddstring_t* path;
+    Uri* uri;
     int p;
 
     // Common post init routine.
@@ -445,11 +447,15 @@ void D_PostInit(void)
     }
 
     // Check valid episode and map.
-    if((autoStart || IS_NETGAME) && !P_MapExists(0, startMap))
+    uri = G_ComposeMapUri(0, startMap);
+    path = Uri_ComposePath(uri);
+    if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startEpisode = 0;
         startMap = 0;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     if(G_GetGameAction() != GA_LOADGAME)
     {

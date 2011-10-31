@@ -316,6 +316,11 @@ boolean MPE_End(void);
     int             P_GetImpulseControlState(int playerNum, int control);
 
     // Play: Setup.
+
+boolean P_MapExists(const char* uri);
+boolean P_MapIsCustom(const char* uri);
+const char* P_MapSourceFile(const char* uri);
+
 boolean P_LoadMap(const char* uri);
 
     // Play: World data access (Map Data Updates and access to other information).

@@ -299,6 +299,34 @@ int P_GetMapAmbientLightLevel(gamemap_t* map)
 }
 
 /// \note Part of the Doomsday public API.
+boolean P_MapExists(const char* uriCString)
+{
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
+    Uri_Delete(uri);
+    return (lumpNum >= 0);
+}
+
+/// \note Part of the Doomsday public API.
+boolean P_MapIsCustom(const char* uriCString)
+{
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
+    Uri_Delete(uri);
+    return (lumpNum >= 0 && !W_LumpIsFromIWAD(lumpNum));
+}
+
+/// \note Part of the Doomsday public API.
+const char* P_MapSourceFile(const char* uriCString)
+{
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
+    Uri_Delete(uri);
+    if(lumpNum < 0) return NULL;
+    return W_LumpSourceFile(lumpNum);
+}
+
+/// \note Part of the Doomsday public API.
 boolean P_LoadMap(const char* uriCString)
 {
     ddstring_t* path;

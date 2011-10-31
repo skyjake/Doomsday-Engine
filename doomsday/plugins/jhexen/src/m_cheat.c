@@ -367,6 +367,8 @@ int Cht_WarpFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
     int i, tens, ones;
+    ddstring_t* path;
+    Uri* uri;
     uint map;
 
     if(IS_NETGAME)
@@ -382,17 +384,23 @@ int Cht_WarpFunc(const int* args, int player)
 
     map = P_TranslateMap((tens * 10 + ones) - 1);
     if(userGame && map == gameMap)
-    {   // Don't try to teleport to the current map.
+    {
+        // Do not allow warping to the current map.
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
     }
 
-    // Search primary lumps.
-    if(!P_MapExists(0, map))
-    {   // Can't find.
+    uri = G_ComposeMapUri(0, map);
+    path = Uri_ComposePath(uri);
+    if(!P_MapExists(Str_Text(path)))
+    {
+        Str_Delete(path);
+        Uri_Delete(uri);
         P_SetMessage(plr, TXT_CHEATNOMAP, false);
         return false;
     }
+    Str_Delete(path);
+    Uri_Delete(uri);
 
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     P_SetMessage(plr, TXT_CHEATWARP, false);
