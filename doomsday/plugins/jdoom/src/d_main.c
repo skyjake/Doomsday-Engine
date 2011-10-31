@@ -43,6 +43,7 @@
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_player.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -709,6 +710,7 @@ void G_Shutdown(void)
     Hu_MsgShutdown();
     Hu_UnloadData();
     Hu_LogShutdown();
+    D_NetClearBuffer();
 
     if(NULL != spechit)
     {
