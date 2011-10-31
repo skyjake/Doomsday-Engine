@@ -603,6 +603,7 @@ void G_Shutdown(void)
     Hu_MsgShutdown();
     Hu_UnloadData();
     Hu_LogShutdown();
+    D_NetClearBuffer();
 
     if(NULL != spechit)
     {

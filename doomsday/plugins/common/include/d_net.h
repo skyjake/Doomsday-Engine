@@ -194,6 +194,7 @@ enum {
 
 Writer*         D_NetWrite(void);
 Reader*         D_NetRead(const byte* buffer, size_t len);
+void            D_NetClearBuffer(void);
 
 // Networking.
 int             D_NetServerOpen(int before);
